@@ -14,6 +14,9 @@ import org.junit.After;
 import org.junit.Before;
 import scala.collection.JavaConversions;
 
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
 import java.util.*;
 
 /**
@@ -106,5 +109,17 @@ public abstract class ClusterTestHarness {
 
         zkClient.close();
         zookeeper.shutdown();
+    }
+
+    protected Invocation.Builder request(String path) {
+        return ClientBuilder.newClient()
+                .target(restConnect).path(path)
+                .request();
+    }
+    protected Invocation.Builder request(String path, String templateName, Object templateValue) {
+        return ClientBuilder.newClient()
+                .target(restConnect).path(path)
+                .resolveTemplate(templateName, templateValue)
+                .request();
     }
 }
