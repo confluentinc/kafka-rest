@@ -17,7 +17,6 @@ public class BrokersResourceTest {
     private static Config config = new Config();
     private static MetadataObserver mdObserver = EasyMock.createMock(MetadataObserver.class);
     private static Context ctx = new Context(config, mdObserver);
-    private static BrokersResource resource = new BrokersResource(ctx);
 
     @ClassRule
     public static final ResourceTestRule resources = ResourceTestRule.builder()

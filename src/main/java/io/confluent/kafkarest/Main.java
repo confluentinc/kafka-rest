@@ -2,6 +2,7 @@ package io.confluent.kafkarest;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import io.confluent.kafkarest.resources.BrokersResource;
+import io.confluent.kafkarest.resources.TopicsResource;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -34,6 +35,7 @@ public class Main {
         MetadataObserver mdObserver = new MetadataObserver(config);
         Context ctx = new Context(config, mdObserver);
         resourceConfig.register(new BrokersResource(ctx));
+        resourceConfig.register(new TopicsResource(ctx));
 
         // Configure the servlet container
         ServletContainer servletContainer = new ServletContainer(resourceConfig);
