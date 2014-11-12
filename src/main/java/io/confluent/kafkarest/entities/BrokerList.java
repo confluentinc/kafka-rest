@@ -24,4 +24,28 @@ public class BrokerList {
     public void setBrokers(List<Integer> brokers) {
         this.brokers = brokers;
     }
+
+    @Override
+    public String toString() {
+        return "BrokerList{" +
+                "brokers=" + brokers +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BrokerList)) return false;
+
+        BrokerList that = (BrokerList) o;
+
+        if (!brokers.equals(that.brokers)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return brokers.hashCode();
+    }
 }

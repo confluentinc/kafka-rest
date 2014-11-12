@@ -1,5 +1,8 @@
-package io.confluent.kafkarest;
+package io.confluent.kafkarest.unit;
 
+import io.confluent.kafkarest.Config;
+import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.entities.BrokerList;
 import io.confluent.kafkarest.junit.ResourceTestRule;
 import io.confluent.kafkarest.resources.BrokersResource;

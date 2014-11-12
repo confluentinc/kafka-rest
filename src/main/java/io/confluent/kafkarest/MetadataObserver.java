@@ -5,7 +5,6 @@ import kafka.cluster.Broker;
 import kafka.utils.ZKStringSerializer$;
 import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.ZkClient;
-import scala.Option;
 import scala.collection.*;
 import scala.math.Ordering;
 
@@ -22,7 +21,7 @@ public class MetadataObserver {
     private ZkClient zkClient;
 
     public MetadataObserver(Config config) {
-        zkClient = new ZkClient(config.zkConnect, 30000, 30000, ZKStringSerializer$.MODULE$);
+        zkClient = new ZkClient(config.zookeeperConnect, 30000, 30000, ZKStringSerializer$.MODULE$);
     }
 
     public List<Integer> getBrokerIds() {

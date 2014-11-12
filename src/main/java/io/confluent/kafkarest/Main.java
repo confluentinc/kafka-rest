@@ -13,14 +13,13 @@ import org.glassfish.jersey.server.validation.ValidationFeature;
 import org.glassfish.jersey.servlet.ServletContainer;
 
 import java.io.IOException;
+import java.util.Properties;
 
 public class Main {
     /**
-     * Starts an embedded Jetty server running the REST server.
+     * Configure and create the server.
      */
-    public static void main(String[] args) throws IOException {
-        final int serverPort = 8080;
-
+    public static Server createServer(Properties props) {
         // The configuration for the JAX-RS REST service
         ResourceConfig resourceConfig = new ResourceConfig();
 
@@ -31,7 +30,9 @@ public class Main {
                 .property(ServerProperties.BV_SEND_ERROR_IN_RESPONSE, true);
 
         // Register all REST resources
-        Config config = new Config();
+        if (props == null)
+            props = new Properties();
+        Config config = new Config(props);
         MetadataObserver mdObserver = new MetadataObserver(config);
         Context ctx = new Context(config, mdObserver);
         resourceConfig.register(new BrokersResource(ctx));
@@ -40,11 +41,23 @@ public class Main {
         // Configure the servlet container
         ServletContainer servletContainer = new ServletContainer(resourceConfig);
         ServletHolder servletHolder = new ServletHolder(servletContainer);
-        Server server = new Server(serverPort);
+        Server server = new Server(config.port);
         ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/");
         context.addServlet(servletHolder, "/*");
         server.setHandler(context);
+        return server;
+    }
+
+    public static Server createServer() {
+        return createServer(null);
+    }
+
+    /**
+     * Starts an embedded Jetty server running the REST server.
+     */
+    public static void main(String[] args) throws IOException {
+        Server server = createServer();
 
         // Finally, run the server
         try {
