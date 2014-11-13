@@ -34,7 +34,8 @@ public class Main {
             props = new Properties();
         Config config = new Config(props);
         MetadataObserver mdObserver = new MetadataObserver(config);
-        Context ctx = new Context(config, mdObserver);
+        ProducerPool producerPool = new ProducerPool(config);
+        Context ctx = new Context(config, mdObserver, producerPool);
         resourceConfig.register(new BrokersResource(ctx));
         resourceConfig.register(new TopicsResource(ctx));
 

@@ -64,18 +64,28 @@ public abstract class ClusterTestHarness {
         zkConnect = String.format("localhost:%d", zkPort);
 
         configs = new Vector<KafkaConfig>();
+        String bootstrapServers = "";
         for(int i = 0; i < numBrokers; i++) {
-            Properties props = TestUtils.createBrokerConfig(i, ports.remove(), false);
+            int port = ports.remove();
+            Properties props = TestUtils.createBrokerConfig(i, port, false);
+            // Turn auto creation *off*, unlike the default. This lets us test errors that should be generated when
+            // brokers are configured that way.
+            props.setProperty("auto.create.topics.enable", "false");
             // We *must* override this to use the port we allocated (Kafka currently allocates one port that it always
             // uses for ZK
             props.setProperty("zookeeper.connect", this.zkConnect);
             configs.add(new KafkaConfig(props));
+
+            if (bootstrapServers.length() > 0)
+                bootstrapServers += ",";
+            bootstrapServers = bootstrapServers + "localhost:" + ((Integer)port).toString();
         }
 
         restProperties = new Properties();
         int restPort = ports.remove();
         restProperties.setProperty("port", ((Integer) restPort).toString());
         restProperties.setProperty("zookeeper.connect", zkConnect);
+        restProperties.setProperty("bootstrap.servers", bootstrapServers);
         restConnect = String.format("http://localhost:%d", restPort);
     }
 
@@ -89,7 +99,8 @@ public abstract class ClusterTestHarness {
         brokerList = TestUtils.getBrokerListStrFromConfigs(JavaConversions.asScalaIterable(configs).toSeq());
         servers = new Vector<KafkaServer>(configs.size());
         for(KafkaConfig config : configs) {
-            servers.add(TestUtils.createServer(config, SystemTime$.MODULE$));
+            KafkaServer server = TestUtils.createServer(config, SystemTime$.MODULE$);
+            servers.add(server);
         }
 
         restServer = Main.createServer(restProperties);

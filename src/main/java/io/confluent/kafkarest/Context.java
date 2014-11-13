@@ -6,10 +6,12 @@ package io.confluent.kafkarest;
 public class Context {
     private final Config config;
     private final MetadataObserver metadataObserver;
+    private final ProducerPool producerPool;
 
-    public Context(Config config, MetadataObserver metadataObserver) {
+    public Context(Config config, MetadataObserver metadataObserver, ProducerPool producerPool) {
         this.config = config;
         this.metadataObserver = metadataObserver;
+        this.producerPool = producerPool;
     }
 
     public Config getConfig() {
@@ -18,5 +20,9 @@ public class Context {
 
     public MetadataObserver getMetadataObserver() {
         return metadataObserver;
+    }
+
+    public ProducerPool getProducerPool() {
+        return producerPool;
     }
 }

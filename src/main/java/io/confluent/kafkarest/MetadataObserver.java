@@ -43,6 +43,14 @@ public class MetadataObserver {
         }
     }
 
+    public boolean topicExists(String topicName) {
+        List<Topic> topics = getTopics();
+        for(Topic topic : topics) {
+            if (topic.getName().equals(topicName)) return true;
+        }
+        return false;
+    }
+
     public Topic getTopic(String topicName) {
         return getTopicsData(JavaConversions.asScalaIterable(Arrays.asList(topicName)).toSeq()).get(0);
     }
