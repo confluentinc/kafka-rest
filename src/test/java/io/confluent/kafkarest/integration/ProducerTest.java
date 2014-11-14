@@ -78,8 +78,8 @@ public class ProducerTest extends ClusterTestHarness {
         ConsumerIterator<byte[], byte[]> it = stream.iterator();
         for(int i = 0; i < records.size(); i++) {
             MessageAndMetadata<byte[], byte[]> msg = it.next();
-            assertArrayEquals(records.get(i).getKeyDecoded(), msg.key());
-            assertArrayEquals(records.get(i).getValueDecoded(), msg.message());
+            assertArrayEquals(records.get(i).getKey(), msg.key());
+            assertArrayEquals(records.get(i).getValue(), msg.message());
         }
         consumer.shutdown();
     }

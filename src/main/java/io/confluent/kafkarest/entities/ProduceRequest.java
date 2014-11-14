@@ -2,9 +2,11 @@ package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.confluent.kafkarest.validation.ConstraintViolations;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
 import java.util.List;
 
 public class ProduceRequest {
@@ -22,53 +24,61 @@ public class ProduceRequest {
     }
 
     public static class ProduceRecord {
-        private String key;
+        private byte[] key;
         @NotNull
-        private String value;
+        private byte[] value;
 
-        public ProduceRecord(@JsonProperty("key") String key, @JsonProperty("value") String value) {
-            this.key = key;
-            this.value = value;
+        public ProduceRecord(@JsonProperty("key") String key, @JsonProperty("value") String value) throws IOException {
+            try {
+                if (key != null)
+                    this.key = EntityUtils.parseBase64Binary(key);
+            } catch (IllegalArgumentException e) {
+                throw ConstraintViolations.simpleException("Record key contains invalid base64 encoding");
+            }
+            try {
+                this.value = EntityUtils.parseBase64Binary(value);
+            } catch (IllegalArgumentException e) {
+                throw ConstraintViolations.simpleException("Record value contains invalid base64 encoding");
+            }
         }
 
-        public ProduceRecord(byte[] unencoded_key, byte[] unencoded_value) {
-            if (unencoded_key != null)
-                key = EntityUtils.encodeBase64Binary(unencoded_key);
-            value = EntityUtils.encodeBase64Binary(unencoded_value);
+        public ProduceRecord(byte[] key, byte[] value) {
+            this.key = key;
+            this.value = value;
         }
 
         public ProduceRecord(byte[] unencoded_value) {
             this(null, unencoded_value);
         }
 
-        @JsonProperty
-        public String getKey() {
+        @JsonIgnore
+        public byte[] getKey() {
             return key;
         }
 
-        @JsonIgnore
-        public byte[] getKeyDecoded() {
+        @JsonProperty("key")
+        public String getKeyEncoded() {
             if (key == null) return null;
-            return EntityUtils.parseBase64Binary(key);
+            return EntityUtils.encodeBase64Binary(key);
         }
 
-        @JsonProperty
-        public void setKey(String key) {
+        @JsonIgnore
+        public void setKey(byte[] key) {
             this.key = key;
         }
 
-        @JsonProperty
-        public String getValue() {
+        @JsonIgnore
+        public byte[] getValue() {
             return value;
         }
 
-        @JsonIgnore
-        public byte[] getValueDecoded() {
-            return EntityUtils.parseBase64Binary(value);
+        @JsonProperty("value")
+        public String getValueDecoded() {
+            return EntityUtils.encodeBase64Binary(value);
         }
 
-        @JsonProperty
-        public void setValue(String value) {
+        @JsonIgnore
+        public void setValue(byte[] value) {
             this.value = value;
         }
     }

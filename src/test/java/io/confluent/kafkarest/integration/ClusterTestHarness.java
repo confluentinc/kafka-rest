@@ -1,6 +1,7 @@
 package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.Main;
+import io.confluent.kafkarest.validation.JacksonMessageBodyProvider;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.SystemTime$;
@@ -124,11 +125,13 @@ public abstract class ClusterTestHarness {
 
     protected Invocation.Builder request(String path) {
         return ClientBuilder.newClient()
+                .register(JacksonMessageBodyProvider.class)
                 .target(restConnect).path(path)
                 .request();
     }
     protected Invocation.Builder request(String path, String templateName, Object templateValue) {
         return ClientBuilder.newClient()
+                .register(JacksonMessageBodyProvider.class)
                 .target(restConnect).path(path)
                 .resolveTemplate(templateName, templateValue)
                 .request();

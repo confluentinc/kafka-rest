@@ -48,7 +48,7 @@ public class TopicsResource {
         try {
             List<ProducerRecord> kafkaRecords = new Vector<ProducerRecord>();
             for(ProduceRequest.ProduceRecord record : request.getRecords()) {
-                kafkaRecords.add(new ProducerRecord(topicName, record.getKeyDecoded(), record.getValueDecoded()));
+                kafkaRecords.add(new ProducerRecord(topicName, record.getKey(), record.getValue()));
             }
             ctx.getProducerPool().produce(kafkaRecords, new ProducerPool.ProduceRequestCallback() {
                 public void onCompletion(Map<Integer, Long> partitionOffsets) {

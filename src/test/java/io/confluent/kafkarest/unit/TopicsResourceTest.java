@@ -1,15 +1,14 @@
 package io.confluent.kafkarest.unit;
 
+import com.sun.xml.internal.ws.developer.MemberSubmissionAddressing;
 import io.confluent.kafkarest.Config;
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.entities.EntityUtils;
-import io.confluent.kafkarest.entities.ProduceRequest;
-import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.entities.*;
 import io.confluent.kafkarest.junit.EmbeddedServerTestHarness;
 import io.confluent.kafkarest.resources.TopicsResource;
+import io.confluent.kafkarest.validation.ConstraintViolationExceptionMapper;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -111,7 +110,7 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
     private Response produceToTopic(String topic, List<ProduceRequest.ProduceRecord> records, final Map<Integer, Long> resultOffsets) {
         final ProduceRequest request = new ProduceRequest();
         request.setRecords(records);
-        final Capture<ProducerPool.ProduceRequestCallback> produceCallback = new Capture();
+        final Capture<ProducerPool.ProduceRequestCallback> produceCallback = new Capture<>();
         EasyMock.expect(mdObserver.topicExists(topic)).andReturn(true);
         producerPool.produce(EasyMock.<List<ProducerRecord>>anyObject(), EasyMock.capture(produceCallback));
         EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
@@ -149,5 +148,17 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
     public void testProduceToTopicFailure() {
         Response rawResponse = produceToTopic("topic1", produceRecords, null);
         assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), rawResponse.getStatus());
+    }
+
+    @Test
+    public void testProduceInvalidRequest() {
+        Response response = getJerseyTest().target("/topics/topic1")
+                .request().post(Entity.entity("{}", MediaType.APPLICATION_JSON_TYPE));
+        assertEquals(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response.getStatus());
+
+        // Invalid base64 encoding
+        response = getJerseyTest().target("/topics/topic1")
+                .request().post(Entity.entity("{\"records\":[{\"value\":\"aGVsbG8==\"}]}", MediaType.APPLICATION_JSON_TYPE));
+        assertEquals(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response.getStatus());
     }
 }

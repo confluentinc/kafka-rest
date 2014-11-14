@@ -1,17 +1,20 @@
 package io.confluent.kafkarest;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+import com.fasterxml.jackson.jaxrs.base.JsonParseExceptionMapper;
 import io.confluent.kafkarest.resources.BrokersResource;
 import io.confluent.kafkarest.resources.TopicsResource;
+import io.confluent.kafkarest.validation.ConstraintViolationExceptionMapper;
+import io.confluent.kafkarest.validation.JacksonMessageBodyProvider;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.ServerProperties;
 import org.glassfish.jersey.server.validation.ValidationFeature;
 import org.glassfish.jersey.servlet.ServletContainer;
 
+import javax.ws.rs.ext.MessageBodyReader;
+import javax.ws.rs.ext.MessageBodyWriter;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -24,10 +27,13 @@ public class Main {
         ResourceConfig resourceConfig = new ResourceConfig();
 
         // Setup Jackson-based JSON support
-        resourceConfig.register(JacksonJaxbJsonProvider.class)
-                .register(JacksonFeature.class)
+        resourceConfig
+                .register(JacksonMessageBodyProvider.class)
+                .register(JsonParseExceptionMapper.class)
                 .register(ValidationFeature.class)
                 .property(ServerProperties.BV_SEND_ERROR_IN_RESPONSE, true);
+
+        resourceConfig.register(ConstraintViolationExceptionMapper.class);
 
         // Register all REST resources
         if (props == null)
