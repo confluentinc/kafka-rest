@@ -15,8 +15,7 @@
  */
 package io.confluent.kafkarest.integration;
 
-import io.confluent.kafkarest.Main;
-import io.confluent.kafkarest.validation.JacksonMessageBodyProvider;
+import io.confluent.kafkarest.KafkaRestServer;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.SystemTime$;
@@ -30,9 +29,9 @@ import org.junit.After;
 import org.junit.Before;
 import scala.collection.JavaConversions;
 
+import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
 import java.util.*;
 
 /**
@@ -119,7 +118,7 @@ public abstract class ClusterTestHarness {
             servers.add(server);
         }
 
-        restServer = Main.createServer(restProperties);
+        restServer = KafkaRestServer.createServer(restProperties);
         restServer.start();
     }
 
@@ -139,16 +138,14 @@ public abstract class ClusterTestHarness {
     }
 
     protected Invocation.Builder request(String path) {
-        return ClientBuilder.newClient()
-                .register(JacksonMessageBodyProvider.class)
-                .target(restConnect).path(path)
-                .request();
+        Client client = ClientBuilder.newClient();
+        KafkaRestServer.configureApplication(client);
+        return client.target(restConnect).path(path).request();
     }
+
     protected Invocation.Builder request(String path, String templateName, Object templateValue) {
-        return ClientBuilder.newClient()
-                .register(JacksonMessageBodyProvider.class)
-                .target(restConnect).path(path)
-                .resolveTemplate(templateName, templateValue)
-                .request();
+        Client client = ClientBuilder.newClient();
+        KafkaRestServer.configureApplication(client);
+        return client.target(restConnect).path(path).resolveTemplate(templateName, templateValue).request();
     }
 }

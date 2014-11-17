@@ -15,22 +15,14 @@
  */
 package io.confluent.kafkarest.junit;
 
-import com.fasterxml.jackson.jaxrs.base.JsonParseExceptionMapper;
-import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import io.confluent.kafkarest.validation.ConstraintViolationExceptionMapper;
-import io.confluent.kafkarest.validation.JacksonMessageBodyProvider;
+import io.confluent.kafkarest.KafkaRestServer;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.server.ServerProperties;
-import org.glassfish.jersey.server.validation.ValidationFeature;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;
 import org.junit.Before;
 
 import javax.ws.rs.core.Application;
-import javax.ws.rs.ext.MessageBodyReader;
-import javax.ws.rs.ext.MessageBodyWriter;
 import java.util.List;
 import java.util.Vector;
 
@@ -66,12 +58,7 @@ public abstract class EmbeddedServerTestHarness {
                 @Override
                 protected Application configure() {
                     ResourceConfig config = new ResourceConfig();
-                    config
-                            .register(JacksonMessageBodyProvider.class)
-                            .register(JsonParseExceptionMapper.class)
-                            .register(ValidationFeature.class)
-                            .property(ServerProperties.BV_SEND_ERROR_IN_RESPONSE, true);
-                    config.register(ConstraintViolationExceptionMapper.class);
+                    KafkaRestServer.configureApplication(config);
                     for (Object resource : resources)
                         config.register(resource);
                     for (Class<?> resource : resourceClasses)
@@ -80,7 +67,7 @@ public abstract class EmbeddedServerTestHarness {
                 }
                 @Override
                 protected void configureClient(ClientConfig config) {
-                    config.register(JacksonMessageBodyProvider.class);
+                    KafkaRestServer.configureApplication(config);
                 }
             };
         }
