@@ -177,7 +177,7 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
         ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
 
         assertEquals(
-                Arrays.asList(new ProduceResponse.PartitionOffset(0, 1L), new ProduceResponse.PartitionOffset(1, 2L)),
+                Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
                 response.getOffsets()
         );
     }
@@ -188,7 +188,7 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
         ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
 
         assertEquals(
-                Arrays.asList(new ProduceResponse.PartitionOffset(0, 1L), new ProduceResponse.PartitionOffset(1, 2L)),
+                Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
                 response.getOffsets()
         );
     }
@@ -199,7 +199,7 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
         ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
 
         assertEquals(
-                Arrays.asList(new ProduceResponse.PartitionOffset(0, 1L), new ProduceResponse.PartitionOffset(1, 2L)),
+                Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
                 response.getOffsets()
         );
     }
@@ -210,7 +210,7 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
         ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
 
         assertEquals(
-                Arrays.asList(new ProduceResponse.PartitionOffset(0, 1L), new ProduceResponse.PartitionOffset(1, 2L)),
+                Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
                 response.getOffsets()
         );
     }

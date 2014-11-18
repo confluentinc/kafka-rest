@@ -77,7 +77,6 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness {
         );
         produceOffsets = new HashMap<>();
         produceOffsets.put(0, 1L);
-        produceOffsets.put(1, 2L);
     }
 
     @Before
@@ -170,23 +169,17 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness {
     @Test
     public void testProduceToPartitionOnlyValues() {
         Response rawResponse = produceToPartition(topicName, 0, produceRecordsOnlyValues, produceOffsets);
-        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+        PartitionOffset response = rawResponse.readEntity(PartitionOffset.class);
 
-        assertEquals(
-                Arrays.asList(new ProduceResponse.PartitionOffset(0, 1L), new ProduceResponse.PartitionOffset(1, 2L)),
-                response.getOffsets()
-        );
+        assertEquals(new PartitionOffset(0, 1L), response);
     }
 
     @Test
     public void testProduceToPartitionByKey() {
         Response rawResponse = produceToPartition(topicName, 0, produceRecordsWithKeys, produceOffsets);
-        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+        PartitionOffset response = rawResponse.readEntity(PartitionOffset.class);
 
-        assertEquals(
-                Arrays.asList(new ProduceResponse.PartitionOffset(0, 1L), new ProduceResponse.PartitionOffset(1, 2L)),
-                response.getOffsets()
-        );
+        assertEquals(new PartitionOffset(0, 1L), response);
     }
 
     @Test

@@ -44,8 +44,8 @@ public class ProducerTest extends ClusterTestHarness {
             new TopicProduceRecord("key".getBytes(), "value3".getBytes()),
             new TopicProduceRecord("key".getBytes(), "value4".getBytes())
     );
-    private final List<ProduceResponse.PartitionOffset> partitionOffsetsWithKeys = Arrays.asList(
-            new ProduceResponse.PartitionOffset(1,3)
+    private final List<PartitionOffset> partitionOffsetsWithKeys = Arrays.asList(
+            new PartitionOffset(1,3)
     );
 
     private final List<TopicProduceRecord> topicRecordsWithPartitions = Arrays.asList(
@@ -54,10 +54,10 @@ public class ProducerTest extends ClusterTestHarness {
             new TopicProduceRecord("value3".getBytes(), 0),
             new TopicProduceRecord("value4".getBytes(), 2)
     );
-    private final List<ProduceResponse.PartitionOffset> partitionOffsetsWithPartitions = Arrays.asList(
-            new ProduceResponse.PartitionOffset(0,1),
-            new ProduceResponse.PartitionOffset(1,0),
-            new ProduceResponse.PartitionOffset(2,0)
+    private final List<PartitionOffset> partitionOffsetsWithPartitions = Arrays.asList(
+            new PartitionOffset(0,1),
+            new PartitionOffset(1,0),
+            new PartitionOffset(2,0)
     );
 
     private final List<TopicProduceRecord> topicRecordsWithPartitionsAndKeys = Arrays.asList(
@@ -66,10 +66,10 @@ public class ProducerTest extends ClusterTestHarness {
             new TopicProduceRecord("key3".getBytes(), "value3".getBytes(), 1),
             new TopicProduceRecord("key4".getBytes(), "value4".getBytes(), 2)
     );
-    private final List<ProduceResponse.PartitionOffset> partitionOffsetsWithPartitionsAndKeys = Arrays.asList(
-            new ProduceResponse.PartitionOffset(0,0),
-            new ProduceResponse.PartitionOffset(1,1),
-            new ProduceResponse.PartitionOffset(2,0)
+    private final List<PartitionOffset> partitionOffsetsWithPartitionsAndKeys = Arrays.asList(
+            new PartitionOffset(0,0),
+            new PartitionOffset(1,1),
+            new PartitionOffset(2,0)
     );
 
     // Produce to partition inputs & results
@@ -79,9 +79,7 @@ public class ProducerTest extends ClusterTestHarness {
             new ProduceRecord("value3".getBytes()),
             new ProduceRecord("value4".getBytes())
     );
-    private final List<ProduceResponse.PartitionOffset> producePartitionOffsetsOnlyValues = Arrays.asList(
-            new ProduceResponse.PartitionOffset(0,3)
-    );
+    private final PartitionOffset producePartitionOffsetOnlyValues = new PartitionOffset(0,3);
 
     private final List<ProduceRecord> partitionRecordsWithKeys = Arrays.asList(
             new ProduceRecord("key".getBytes(), "value".getBytes()),
@@ -89,9 +87,7 @@ public class ProducerTest extends ClusterTestHarness {
             new ProduceRecord("key".getBytes(), "value3".getBytes()),
             new ProduceRecord("key".getBytes(), "value4".getBytes())
     );
-    private final List<ProduceResponse.PartitionOffset> producePartitionOffsetsWithKeys = Arrays.asList(
-            new ProduceResponse.PartitionOffset(0,3)
-    );
+    private final PartitionOffset producePartitionOffsetWithKeys = new PartitionOffset(0,3);
 
 
     @Before
@@ -103,7 +99,7 @@ public class ProducerTest extends ClusterTestHarness {
         TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor, JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
     }
 
-    private void testProduceToTopic(List<TopicProduceRecord> records, List<ProduceResponse.PartitionOffset> offsetResponses) {
+    private void testProduceToTopic(List<TopicProduceRecord> records, List<PartitionOffset> offsetResponses) {
         TopicProduceRequest payload = new TopicProduceRequest();
         payload.setRecords(records);
         final ProduceResponse response = request("/topics/" + topicName)
@@ -140,23 +136,23 @@ public class ProducerTest extends ClusterTestHarness {
 
 
 
-    private void testProduceToPartition(List<ProduceRecord> records, List<ProduceResponse.PartitionOffset> offsetResponses) {
+    private void testProduceToPartition(List<ProduceRecord> records, PartitionOffset offsetResponse) {
         PartitionProduceRequest payload = new PartitionProduceRequest();
         payload.setRecords(records);
-        final ProduceResponse response = request("/topics/" + topicName + "/partitions/0")
-                .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE), ProduceResponse.class);
-        assertEquals(offsetResponses, response.getOffsets());
+        final PartitionOffset response = request("/topics/" + topicName + "/partitions/0")
+                .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE), PartitionOffset.class);
+        assertEquals(offsetResponse, response);
         assertTopicContains(payload.getRecords(), (Integer)0);
     }
 
     @Test
     public void testProduceToPartitionOnlyValues() {
-        testProduceToPartition(partitionRecordsOnlyValues, producePartitionOffsetsOnlyValues);
+        testProduceToPartition(partitionRecordsOnlyValues, producePartitionOffsetOnlyValues);
     }
 
     @Test
     public void testProduceToPartitionWithKeys() {
-        testProduceToPartition(partitionRecordsWithKeys, producePartitionOffsetsWithKeys);
+        testProduceToPartition(partitionRecordsWithKeys, producePartitionOffsetWithKeys);
     }
 
 
