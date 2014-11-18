@@ -68,31 +68,24 @@ public class TopicsResource {
         if (!ctx.getMetadataObserver().topicExists(topicName))
             throw new NotFoundException();
 
-        try {
-            List<ProducerRecord> kafkaRecords = new Vector<ProducerRecord>();
-            for(TopicProduceRecord record : request.getRecords()) {
-                kafkaRecords.add(new ProducerRecord(topicName, record.getPartition(), record.getKey(), record.getValue()));
+        List<ProducerRecord> kafkaRecords = new Vector<ProducerRecord>();
+        for(TopicProduceRecord record : request.getRecords()) {
+            kafkaRecords.add(new ProducerRecord(topicName, record.getPartition(), record.getKey(), record.getValue()));
+        }
+        ctx.getProducerPool().produce(kafkaRecords, new ProducerPool.ProduceRequestCallback() {
+            public void onCompletion(Map<Integer, Long> partitionOffsets) {
+                ProduceResponse response = new ProduceResponse();
+                List<ProduceResponse.PartitionOffset> offsets = new Vector<ProduceResponse.PartitionOffset>();
+                for(Map.Entry<Integer, Long> partOff : partitionOffsets.entrySet()) {
+                    offsets.add(new ProduceResponse.PartitionOffset(partOff.getKey(), partOff.getValue()));
+                }
+                response.setOffsets(offsets);
+                asyncResponse.resume(response);
             }
-            ctx.getProducerPool().produce(kafkaRecords, new ProducerPool.ProduceRequestCallback() {
-                public void onCompletion(Map<Integer, Long> partitionOffsets) {
-                    ProduceResponse response = new ProduceResponse();
-                    List<ProduceResponse.PartitionOffset> offsets = new Vector<ProduceResponse.PartitionOffset>();
-                    for(Map.Entry<Integer, Long> partOff : partitionOffsets.entrySet()) {
-                        offsets.add(new ProduceResponse.PartitionOffset(partOff.getKey(), partOff.getValue()));
-                    }
-                    response.setOffsets(offsets);
-                    asyncResponse.resume(response);
-                }
 
-                public void onException(Exception e) {
-                    asyncResponse.resume(e);
-                }
-            });
-
-        }
-        catch (IllegalArgumentException e) {
-            // FIXME Thrown when base64 decoding fails; this should be handled by normal validation.
-            throw new NotAcceptableException();
-        }
+            public void onException(Exception e) {
+                asyncResponse.resume(e);
+            }
+        });
     }
 }
