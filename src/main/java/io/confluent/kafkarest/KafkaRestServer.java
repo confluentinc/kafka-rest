@@ -17,6 +17,7 @@ package io.confluent.kafkarest;
 
 import com.fasterxml.jackson.jaxrs.base.JsonParseExceptionMapper;
 import io.confluent.kafkarest.resources.BrokersResource;
+import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.kafkarest.validation.ConstraintViolationExceptionMapper;
 import io.confluent.kafkarest.validation.JacksonMessageBodyProvider;
@@ -53,6 +54,7 @@ public class KafkaRestServer {
         Context ctx = new Context(config, mdObserver, producerPool);
         resourceConfig.register(new BrokersResource(ctx));
         resourceConfig.register(new TopicsResource(ctx));
+        resourceConfig.register(PartitionsResource.class);
 
         // Configure the servlet container
         ServletContainer servletContainer = new ServletContainer(resourceConfig);

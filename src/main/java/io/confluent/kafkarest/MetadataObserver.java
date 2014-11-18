@@ -15,19 +15,22 @@
  */
 package io.confluent.kafkarest;
 
+import io.confluent.kafkarest.entities.Partition;
+import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
+import kafka.api.LeaderAndIsr;
 import kafka.cluster.Broker;
 import kafka.utils.ZKStringSerializer$;
 import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.ZkClient;
 import scala.collection.*;
+import scala.collection.Map;
 import scala.math.Ordering;
 
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
+import java.util.Set;
 
 /**
  * Observes metadata about the Kafka cluster.
@@ -82,5 +85,42 @@ public class MetadataObserver {
             topics.add(topic);
         }
         return topics;
+    }
+
+    public List<Partition> getTopicPartitions(String topic) {
+        return getTopicPartitions(topic, null);
+    }
+
+    public Partition getTopicPartition(String topic, int partition) {
+        List<Partition> partitions = getTopicPartitions(topic, partition);
+        if (partitions.isEmpty()) return null;
+        return partitions.get(0);
+    }
+
+    private List<Partition> getTopicPartitions(String topic, Integer partitions_filter) {
+        List<Partition> partitions = new Vector<>();
+        Map<String, Map<Object, Seq<Object>>> topicPartitions = ZkUtils.getPartitionAssignmentForTopics(
+                zkClient, JavaConversions.asScalaIterable(Arrays.asList(topic)).toSeq());
+        Map<Object, Seq<Object>> parts = topicPartitions.get(topic).get();
+        for(java.util.Map.Entry<Object,Seq<Object>> part : JavaConversions.asJavaMap(parts).entrySet()) {
+            int partId = (int)part.getKey();
+            if (partitions_filter != null && partitions_filter != partId)
+                continue;
+
+            Partition p = new Partition();
+            p.setPartition(partId);
+            LeaderAndIsr leaderAndIsr = ZkUtils.getLeaderAndIsrForPartition(zkClient, topic, partId).get();
+            p.setLeader(leaderAndIsr.leader());
+            scala.collection.immutable.Set<Integer> isr = leaderAndIsr.isr().toSet();
+            List<PartitionReplica> partReplicas = new Vector<>();
+            for(Object brokerObj : JavaConversions.asJavaCollection(part.getValue())) {
+                int broker = (int)brokerObj;
+                PartitionReplica r = new PartitionReplica(broker, (leaderAndIsr.leader() == broker), isr.contains(broker));
+                partReplicas.add(r);
+            }
+            p.setReplicas(partReplicas);
+            partitions.add(p);
+        }
+        return partitions;
     }
 }

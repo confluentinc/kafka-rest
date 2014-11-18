@@ -54,6 +54,13 @@ public class TopicsResource {
         return topic;
     }
 
+    @Path("/{topic}/partitions")
+    public PartitionsResource getPartitions(@PathParam("topic") String topicName) {
+        if (!ctx.getMetadataObserver().topicExists(topicName))
+            throw new NotFoundException();
+        return new PartitionsResource(ctx, topicName);
+    }
+
     @POST
     @Path("/{topic}")
     public void produce(final @Suspended AsyncResponse asyncResponse, @PathParam("topic") String topicName, @Valid ProduceRequest request) {

@@ -15,7 +15,6 @@
  */
 package io.confluent.kafkarest.unit;
 
-import com.sun.xml.internal.ws.developer.MemberSubmissionAddressing;
 import io.confluent.kafkarest.Config;
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.MetadataObserver;
@@ -122,6 +121,18 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
         EasyMock.verify(mdObserver);
     }
 
+    @Test
+    public void testGetPartitionsResourceInvalidTopic() {
+        EasyMock.expect(mdObserver.topicExists("nonexistanttopic")).andReturn(false);
+        EasyMock.replay(mdObserver);
+
+        Response response = getJerseyTest().target("/topics/nonexistanttopic/partitions")
+                .request().get();
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+
+        EasyMock.verify(mdObserver);
+    }
+
     private Response produceToTopic(String topic, List<ProduceRequest.ProduceRecord> records, final Map<Integer, Long> resultOffsets) {
         final ProduceRequest request = new ProduceRequest();
         request.setRecords(records);
@@ -161,6 +172,7 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
 
     @Test
     public void testProduceToTopicFailure() {
+        // null offsets triggers a generic exception
         Response rawResponse = produceToTopic("topic1", produceRecords, null);
         assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), rawResponse.getStatus());
     }
