@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.entities.BrokerList;
+import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.Topic;
 import kafka.utils.TestUtils;
 import org.junit.Before;
@@ -42,12 +43,14 @@ public class MetadataAPITest extends ClusterTestHarness {
     private static final int topic2Partitions = 2;
     private static final Topic topic2 = new Topic(topic2Name, topic2Partitions);
 
+    private static final int numReplicas = 2;
+
     @Before
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        TestUtils.createTopic(zkClient, topic1Name, topic1Partitions, 2, JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
-        TestUtils.createTopic(zkClient, topic2Name, topic2Partitions, 2, JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
+        TestUtils.createTopic(zkClient, topic1Name, topic1Partitions, numReplicas, JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
+        TestUtils.createTopic(zkClient, topic2Name, topic2Partitions, numReplicas, JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
     }
 
     @Test
@@ -69,6 +72,30 @@ public class MetadataAPITest extends ClusterTestHarness {
 
         // Get invalid topic
         final Response invalidResponse = request("/topics/{topic}", "topic", "topicdoesntexist").get();
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), invalidResponse.getStatus());
+    }
+
+    @Test
+    public void testPartitionsList() throws InterruptedException {
+        // Listing
+        final List<Partition> partitions1Response = request("/topics/"+topic1Name+"/partitions").get(new GenericType<List<Partition>>(){});
+        // Just verify some basic properties because the exact values can vary based on replica assignment, leader election
+        assertEquals(topic1Partitions, partitions1Response.size());
+        assertEquals(numReplicas, partitions1Response.get(0).getReplicas().size());
+
+        final List<Partition> partitions2Response = request("/topics/"+topic2Name+"/partitions").get(new GenericType<List<Partition>>(){});
+        assertEquals(topic2Partitions, partitions2Response.size());
+        assertEquals(numReplicas, partitions2Response.get(0).getReplicas().size());
+        assertEquals(numReplicas, partitions2Response.get(1).getReplicas().size());
+
+
+        // Get single partition
+        final Partition getPartitionResponse = request("/topics/"+topic1Name+"/partitions/0").get(Partition.class);
+        assertEquals(0, getPartitionResponse.getPartition());
+        assertEquals(numReplicas, getPartitionResponse.getReplicas().size());
+
+        // Get invalid partition
+        final Response invalidResponse = request("/topics/topic1/partitions/1000").get();
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), invalidResponse.getStatus());
     }
 }
