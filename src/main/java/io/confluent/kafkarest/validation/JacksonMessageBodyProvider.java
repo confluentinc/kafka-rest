@@ -17,6 +17,7 @@ package io.confluent.kafkarest.validation;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 
 import javax.validation.ConstraintViolationException;
@@ -55,6 +56,8 @@ public class JacksonMessageBodyProvider extends JacksonJaxbJsonProvider {
                            InputStream entityStream) throws IOException {
         try {
             return super.readFrom(type, genericType, annotations, mediaType, httpHeaders, entityStream);
+        } catch (UnrecognizedPropertyException e) {
+            throw ConstraintViolations.simpleException("Unrecognized field:" + e.getPropertyName());
         } catch (JsonMappingException e) {
             // This needs to handle 2 JSON parsing error cases. Normally you would expect to see a JsonMappingException
             // because the data couldn't be parsed, but it can also occur when the raw JSON is valid and satisfies the
