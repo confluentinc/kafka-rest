@@ -17,7 +17,8 @@ package io.confluent.kafkarest.resources;
 
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.entities.ProduceRequest;
+import io.confluent.kafkarest.entities.TopicProduceRecord;
+import io.confluent.kafkarest.entities.TopicProduceRequest;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.Topic;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -63,14 +64,14 @@ public class TopicsResource {
 
     @POST
     @Path("/{topic}")
-    public void produce(final @Suspended AsyncResponse asyncResponse, @PathParam("topic") String topicName, @Valid ProduceRequest request) {
+    public void produce(final @Suspended AsyncResponse asyncResponse, @PathParam("topic") String topicName, @Valid TopicProduceRequest request) {
         if (!ctx.getMetadataObserver().topicExists(topicName))
             throw new NotFoundException();
 
         try {
             List<ProducerRecord> kafkaRecords = new Vector<ProducerRecord>();
-            for(ProduceRequest.ProduceRecord record : request.getRecords()) {
-                kafkaRecords.add(new ProducerRecord(topicName, record.getKey(), record.getValue()));
+            for(TopicProduceRecord record : request.getRecords()) {
+                kafkaRecords.add(new ProducerRecord(topicName, record.getPartition(), record.getKey(), record.getValue()));
             }
             ctx.getProducerPool().produce(kafkaRecords, new ProducerPool.ProduceRequestCallback() {
                 public void onCompletion(Map<Integer, Long> partitionOffsets) {

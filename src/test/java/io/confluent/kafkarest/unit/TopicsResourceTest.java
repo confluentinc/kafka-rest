@@ -47,15 +47,26 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
     private ProducerPool producerPool = EasyMock.createMock(ProducerPool.class);
     private Context ctx = new Context(config, mdObserver, producerPool);
 
-    private List<ProduceRequest.ProduceRecord> produceRecords;
+    private List<TopicProduceRecord> produceRecordsWithKeys;
+    private List<TopicProduceRecord> produceRecordsWithPartitions;
+    private List<TopicProduceRecord> produceRecordsWithPartitionsAndKeys;
+    // Partition -> New offset
     private Map<Integer,Long> produceOffsets;
 
     public TopicsResourceTest() {
         addResource(new TopicsResource(ctx));
 
-        produceRecords = Arrays.asList(
-                new ProduceRequest.ProduceRecord("key".getBytes(), "value".getBytes()),
-                new ProduceRequest.ProduceRecord("key2".getBytes(), "value2".getBytes())
+        produceRecordsWithKeys = Arrays.asList(
+                new TopicProduceRecord("key".getBytes(), "value".getBytes()),
+                new TopicProduceRecord("key2".getBytes(), "value2".getBytes())
+        );
+        produceRecordsWithPartitions = Arrays.asList(
+                new TopicProduceRecord("value".getBytes(), 0),
+                new TopicProduceRecord("value2".getBytes(), 0)
+        );
+        produceRecordsWithPartitionsAndKeys = Arrays.asList(
+                new TopicProduceRecord("key".getBytes(), "value".getBytes(), 0),
+                new TopicProduceRecord("key2".getBytes(), "value2".getBytes(), 0)
         );
         produceOffsets = new HashMap<>();
         produceOffsets.put(0, 1L);
@@ -133,8 +144,8 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
         EasyMock.verify(mdObserver);
     }
 
-    private Response produceToTopic(String topic, List<ProduceRequest.ProduceRecord> records, final Map<Integer, Long> resultOffsets) {
-        final ProduceRequest request = new ProduceRequest();
+    private Response produceToTopic(String topic, List<TopicProduceRecord> records, final Map<Integer, Long> resultOffsets) {
+        final TopicProduceRequest request = new TopicProduceRequest();
         request.setRecords(records);
         final Capture<ProducerPool.ProduceRequestCallback> produceCallback = new Capture<>();
         EasyMock.expect(mdObserver.topicExists(topic)).andReturn(true);
@@ -160,8 +171,30 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
     }
 
     @Test
-    public void testProduceToTopic() {
-        Response rawResponse = produceToTopic("topic1", produceRecords, produceOffsets);
+    public void testProduceToTopicByKey() {
+        Response rawResponse = produceToTopic("topic1", produceRecordsWithKeys, produceOffsets);
+        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+
+        assertEquals(
+                Arrays.asList(new ProduceResponse.PartitionOffset(0, 1L), new ProduceResponse.PartitionOffset(1, 2L)),
+                response.getOffsets()
+        );
+    }
+
+    @Test
+    public void testProduceToTopicByPartition() {
+        Response rawResponse = produceToTopic("topic1", produceRecordsWithPartitions, produceOffsets);
+        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+
+        assertEquals(
+                Arrays.asList(new ProduceResponse.PartitionOffset(0, 1L), new ProduceResponse.PartitionOffset(1, 2L)),
+                response.getOffsets()
+        );
+    }
+
+    @Test
+    public void testProduceToTopicWithPartitionAndKey() {
+        Response rawResponse = produceToTopic("topic1", produceRecordsWithPartitionsAndKeys, produceOffsets);
         ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
 
         assertEquals(
@@ -173,7 +206,7 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
     @Test
     public void testProduceToTopicFailure() {
         // null offsets triggers a generic exception
-        Response rawResponse = produceToTopic("topic1", produceRecords, null);
+        Response rawResponse = produceToTopic("topic1", produceRecordsWithKeys, null);
         assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), rawResponse.getStatus());
     }
 

@@ -19,6 +19,7 @@ import io.confluent.kafkarest.KafkaRestServer;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
+import org.glassfish.jersey.test.TestProperties;
 import org.junit.After;
 import org.junit.Before;
 
