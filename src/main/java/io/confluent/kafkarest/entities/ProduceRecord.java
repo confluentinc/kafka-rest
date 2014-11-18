@@ -3,6 +3,7 @@ package io.confluent.kafkarest.entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.kafkarest.validation.ConstraintViolations;
+import org.apache.kafka.clients.producer.ProducerRecord;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
@@ -85,5 +86,13 @@ public class ProduceRecord {
         int result = key != null ? Arrays.hashCode(key) : 0;
         result = 31 * result + (value != null ? Arrays.hashCode(value) : 0);
         return result;
+    }
+
+    public ProducerRecord getKafkaRecord(String topic) {
+        return new ProducerRecord(topic, key, value);
+    }
+
+    public ProducerRecord getKafkaRecord(String topic, int partition) {
+        return new ProducerRecord(topic, partition, key, value);
     }
 }

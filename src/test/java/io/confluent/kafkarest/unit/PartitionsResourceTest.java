@@ -15,24 +15,26 @@
  */
 package io.confluent.kafkarest.unit;
 
-import io.confluent.kafkarest.Config;
-import io.confluent.kafkarest.Context;
-import io.confluent.kafkarest.MetadataObserver;
-import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.entities.Partition;
-import io.confluent.kafkarest.entities.PartitionReplica;
-import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.*;
+import io.confluent.kafkarest.entities.*;
 import io.confluent.kafkarest.junit.EmbeddedServerTestHarness;
 import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.kafkarest.resources.TopicsResource;
+import io.confluent.kafkarest.validation.ConstraintViolationExceptionMapper;
+import org.easymock.Capture;
 import org.easymock.EasyMock;
+import org.easymock.IAnswer;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -55,9 +57,27 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness {
             ))
     );
 
+    private List<ProduceRecord> produceRecordsOnlyValues;
+    private List<ProduceRecord> produceRecordsWithKeys;
+    // Partition -> New offset
+    private Map<Integer,Long> produceOffsets;
+
+
     public PartitionsResourceTest() {
         addResource(new TopicsResource(ctx));
         addResource(PartitionsResource.class);
+
+        produceRecordsOnlyValues = Arrays.asList(
+                new ProduceRecord("value".getBytes()),
+                new ProduceRecord("value2".getBytes())
+        );
+        produceRecordsWithKeys = Arrays.asList(
+                new ProduceRecord("key".getBytes(), "value".getBytes()),
+                new ProduceRecord("key2".getBytes(), "value2".getBytes())
+        );
+        produceOffsets = new HashMap<>();
+        produceOffsets.put(0, 1L);
+        produceOffsets.put(1, 2L);
     }
 
     @Before
@@ -116,5 +136,93 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness {
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
 
         EasyMock.verify(mdObserver);
+    }
+
+
+
+    private Response produceToPartition(String topic, int partition, List<ProduceRecord> records, final Map<Integer, Long> resultOffsets) {
+        final PartitionProduceRequest request = new PartitionProduceRequest();
+        request.setRecords(records);
+        final Capture<ProducerPool.ProduceRequestCallback> produceCallback = new Capture<>();
+        EasyMock.expect(mdObserver.topicExists(topic)).andReturn(true);
+        EasyMock.expect(mdObserver.partitionExists(topic, partition)).andReturn(true);
+        producerPool.produce(EasyMock.<ProducerRecordProxyCollection>anyObject(), EasyMock.capture(produceCallback));
+        EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+            @Override
+            public Object answer() throws Throwable {
+                if (resultOffsets == null)
+                    produceCallback.getValue().onException(new Exception());
+                else
+                    produceCallback.getValue().onCompletion(resultOffsets);
+                return null;
+            }
+        });
+        EasyMock.replay(mdObserver, producerPool);
+
+        Response response = getJerseyTest().target("/topics/" + topic + "/partitions/" + ((Integer)partition).toString())
+                .request().post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
+
+        EasyMock.verify(mdObserver, producerPool);
+
+        return response;
+    }
+
+    @Test
+    public void testProduceToPartitionOnlyValues() {
+        Response rawResponse = produceToPartition(topicName, 0, produceRecordsOnlyValues, produceOffsets);
+        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+
+        assertEquals(
+                Arrays.asList(new ProduceResponse.PartitionOffset(0, 1L), new ProduceResponse.PartitionOffset(1, 2L)),
+                response.getOffsets()
+        );
+    }
+
+    @Test
+    public void testProduceToPartitionByKey() {
+        Response rawResponse = produceToPartition(topicName, 0, produceRecordsWithKeys, produceOffsets);
+        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+
+        assertEquals(
+                Arrays.asList(new ProduceResponse.PartitionOffset(0, 1L), new ProduceResponse.PartitionOffset(1, 2L)),
+                response.getOffsets()
+        );
+    }
+
+    @Test
+    public void testProduceToPartitionFailure() {
+        // null offsets triggers a generic exception
+        Response rawResponse = produceToPartition(topicName, 0, produceRecordsWithKeys, null);
+        assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), rawResponse.getStatus());
+    }
+
+    @Test
+    public void testProduceInvalidRequest() {
+        EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
+        EasyMock.replay(mdObserver);
+        Response response = getJerseyTest().target("/topics/" + topicName + "/partitions/0")
+                .request().post(Entity.entity("{}", MediaType.APPLICATION_JSON_TYPE));
+        assertEquals(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response.getStatus());
+        EasyMock.verify();
+
+        // Invalid base64 encoding
+        EasyMock.reset(mdObserver);
+        EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
+        EasyMock.replay(mdObserver);
+        response = getJerseyTest().target("/topics/" + topicName + "/partitions/0")
+                .request().post(Entity.entity("{\"records\":[{\"value\":\"aGVsbG8==\"}]}", MediaType.APPLICATION_JSON_TYPE));
+        assertEquals(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response.getStatus());
+        EasyMock.verify();
+
+        // Invalid data -- include partition in request
+        EasyMock.reset(mdObserver);
+        EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
+        EasyMock.replay(mdObserver);
+        TopicProduceRequest topicRequest = new TopicProduceRequest();
+        topicRequest.setRecords(Arrays.asList(new TopicProduceRecord("key".getBytes(), "value".getBytes(), 0)));
+        response = getJerseyTest().target("/topics/" + topicName + "/partitions/0")
+                .request().post(Entity.entity(topicRequest, MediaType.APPLICATION_JSON_TYPE));
+        assertEquals(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response.getStatus());
+        EasyMock.verify();
     }
 }

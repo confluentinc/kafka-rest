@@ -21,7 +21,6 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -40,8 +39,8 @@ public class ProducerPool {
         this.producer = new KafkaProducer(props);
     }
 
-    public void produce(List<ProducerRecord> records, ProduceRequestCallback callback) {
-        ProduceRequest request = new ProduceRequest(records, callback);
+    public void produce(ProducerRecordProxyCollection records, ProduceRequestCallback callback) {
+        ProduceRequest request = new ProduceRequest(records.size(), callback);
         for(ProducerRecord record: records) {
             producer.send(record, request);
         }
@@ -54,14 +53,14 @@ public class ProducerPool {
 
     // Container for state associated with one REST-ful produce request, i.e. a batched send
     private static class ProduceRequest implements Callback {
-        List<ProducerRecord> records;
+        int numRecords;
         ProduceRequestCallback callback;
         int completed;
         Map<Integer, Long> partitionOffsets;
         Exception firstException;
 
-        public ProduceRequest(List<ProducerRecord> records, ProduceRequestCallback callback) {
-            this.records = records;
+        public ProduceRequest(int numRecords, ProduceRequestCallback callback) {
+            this.numRecords = numRecords;
             this.callback = callback;
             this.completed = 0;
             this.partitionOffsets = new HashMap<Integer, Long>();
@@ -81,7 +80,7 @@ public class ProducerPool {
 
             completed += 1;
 
-            if (completed == records.size()) {
+            if (completed == numRecords) {
                 if (firstException != null)
                     this.callback.onException(firstException);
                 else

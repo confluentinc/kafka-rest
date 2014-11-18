@@ -17,11 +17,10 @@ package io.confluent.kafkarest.resources;
 
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.entities.TopicProduceRecord;
+import io.confluent.kafkarest.ProducerRecordProxyCollection;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.Topic;
-import org.apache.kafka.clients.producer.ProducerRecord;
 
 import javax.validation.Valid;
 import javax.ws.rs.*;
@@ -68,24 +67,23 @@ public class TopicsResource {
         if (!ctx.getMetadataObserver().topicExists(topicName))
             throw new NotFoundException();
 
-        List<ProducerRecord> kafkaRecords = new Vector<ProducerRecord>();
-        for(TopicProduceRecord record : request.getRecords()) {
-            kafkaRecords.add(new ProducerRecord(topicName, record.getPartition(), record.getKey(), record.getValue()));
-        }
-        ctx.getProducerPool().produce(kafkaRecords, new ProducerPool.ProduceRequestCallback() {
-            public void onCompletion(Map<Integer, Long> partitionOffsets) {
-                ProduceResponse response = new ProduceResponse();
-                List<ProduceResponse.PartitionOffset> offsets = new Vector<ProduceResponse.PartitionOffset>();
-                for(Map.Entry<Integer, Long> partOff : partitionOffsets.entrySet()) {
-                    offsets.add(new ProduceResponse.PartitionOffset(partOff.getKey(), partOff.getValue()));
-                }
-                response.setOffsets(offsets);
-                asyncResponse.resume(response);
-            }
+        ctx.getProducerPool().produce(
+                new ProducerRecordProxyCollection(topicName, request.getRecords()),
+                new ProducerPool.ProduceRequestCallback() {
+                    public void onCompletion(Map<Integer, Long> partitionOffsets) {
+                        ProduceResponse response = new ProduceResponse();
+                        List<ProduceResponse.PartitionOffset> offsets = new Vector<ProduceResponse.PartitionOffset>();
+                        for (Map.Entry<Integer, Long> partOff : partitionOffsets.entrySet()) {
+                            offsets.add(new ProduceResponse.PartitionOffset(partOff.getKey(), partOff.getValue()));
+                        }
+                        response.setOffsets(offsets);
+                        asyncResponse.resume(response);
+                    }
 
-            public void onException(Exception e) {
-                asyncResponse.resume(e);
-            }
-        });
+                    public void onException(Exception e) {
+                        asyncResponse.resume(e);
+                    }
+                }
+        );
     }
 }

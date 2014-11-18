@@ -30,11 +30,13 @@ import javax.ws.rs.core.Response;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertArrayEquals;
 
 public class ProducerTest extends ClusterTestHarness {
     private static final String topicName = "topic1";
     private static final Topic topic = new Topic(topicName, 1);
+
+
+    // Produce to topic inputs & results
 
     private final List<TopicProduceRecord> topicRecordsWithKeys = Arrays.asList(
             new TopicProduceRecord("key".getBytes(), "value".getBytes()),
@@ -70,6 +72,28 @@ public class ProducerTest extends ClusterTestHarness {
             new ProduceResponse.PartitionOffset(2,0)
     );
 
+    // Produce to partition inputs & results
+    private final List<ProduceRecord> partitionRecordsOnlyValues = Arrays.asList(
+            new ProduceRecord("value".getBytes()),
+            new ProduceRecord("value2".getBytes()),
+            new ProduceRecord("value3".getBytes()),
+            new ProduceRecord("value4".getBytes())
+    );
+    private final List<ProduceResponse.PartitionOffset> producePartitionOffsetsOnlyValues = Arrays.asList(
+            new ProduceResponse.PartitionOffset(0,3)
+    );
+
+    private final List<ProduceRecord> partitionRecordsWithKeys = Arrays.asList(
+            new ProduceRecord("key".getBytes(), "value".getBytes()),
+            new ProduceRecord("key".getBytes(), "value2".getBytes()),
+            new ProduceRecord("key".getBytes(), "value3".getBytes()),
+            new ProduceRecord("key".getBytes(), "value4".getBytes())
+    );
+    private final List<ProduceResponse.PartitionOffset> producePartitionOffsetsWithKeys = Arrays.asList(
+            new ProduceResponse.PartitionOffset(0,3)
+    );
+
+
     @Before
     @Override
     public void setUp() throws Exception {
@@ -85,7 +109,7 @@ public class ProducerTest extends ClusterTestHarness {
         final ProduceResponse response = request("/topics/" + topicName)
                 .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE), ProduceResponse.class);
         assertEquals(offsetResponses, response.getOffsets());
-        assertTopicContains(payload.getRecords());
+        assertTopicContains(payload.getRecords(), null);
     }
 
     @Test
@@ -115,8 +139,31 @@ public class ProducerTest extends ClusterTestHarness {
     }
 
 
-    // Consumes messages from Kafka to verify they match the inputs
-    private void assertTopicContains(List<TopicProduceRecord> records) {
+
+    private void testProduceToPartition(List<ProduceRecord> records, List<ProduceResponse.PartitionOffset> offsetResponses) {
+        PartitionProduceRequest payload = new PartitionProduceRequest();
+        payload.setRecords(records);
+        final ProduceResponse response = request("/topics/" + topicName + "/partitions/0")
+                .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE), ProduceResponse.class);
+        assertEquals(offsetResponses, response.getOffsets());
+        assertTopicContains(payload.getRecords(), (Integer)0);
+    }
+
+    @Test
+    public void testProduceToPartitionOnlyValues() {
+        testProduceToPartition(partitionRecordsOnlyValues, producePartitionOffsetsOnlyValues);
+    }
+
+    @Test
+    public void testProduceToPartitionWithKeys() {
+        testProduceToPartition(partitionRecordsWithKeys, producePartitionOffsetsWithKeys);
+    }
+
+
+
+
+    // Consumes messages from Kafka to verify they match the inputs. Optionally add a partition to only examine that partition
+    private void assertTopicContains(List<? extends ProduceRecord> records, Integer partition) {
         ConsumerConnector consumer = Consumer.createJavaConsumerConnector(
                 new ConsumerConfig(TestUtils.createConsumerProperties(zkConnect, "testgroup", "consumer0", 200))
         );
@@ -127,12 +174,14 @@ public class ProducerTest extends ClusterTestHarness {
         ConsumerIterator<byte[], byte[]> it = stream.iterator();
         Set<String> msgSet = new TreeSet<>();
         for(int i = 0; i < records.size(); i++) {
-            msgSet.add(EntityUtils.encodeBase64Binary(it.next().message()));
+            MessageAndMetadata<byte[],byte[]> data = it.next();
+            if (partition == null || data.partition() == partition)
+                msgSet.add(EntityUtils.encodeBase64Binary(data.message()));
         }
         consumer.shutdown();
 
         Set<String> refMsgSet = new TreeSet<>();
-        for(TopicProduceRecord rec : records)
+        for(ProduceRecord rec : records)
             refMsgSet.add(EntityUtils.encodeBase64Binary(rec.getValue()));
         assertEquals(msgSet, refMsgSet);
     }

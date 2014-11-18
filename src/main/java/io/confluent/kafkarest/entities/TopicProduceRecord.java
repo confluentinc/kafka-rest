@@ -1,6 +1,7 @@
 package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.kafka.clients.producer.ProducerRecord;
 
 import javax.validation.constraints.Min;
 import java.io.IOException;
@@ -78,5 +79,15 @@ public class TopicProduceRecord extends ProduceRecord {
         int result = super.hashCode();
         result = 31 * result + (partition != null ? partition.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public ProducerRecord getKafkaRecord(String topic) {
+        return new ProducerRecord(topic, partition, this.getKey(), this.getValue());
+    }
+
+    @Override
+    public ProducerRecord getKafkaRecord(String topic, int partition) {
+        throw new UnsupportedOperationException("TopicProduceRecord cannot generate Kafka records for specific partitions.");
     }
 }

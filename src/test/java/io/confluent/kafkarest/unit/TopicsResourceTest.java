@@ -15,15 +15,11 @@
  */
 package io.confluent.kafkarest.unit;
 
-import io.confluent.kafkarest.Config;
-import io.confluent.kafkarest.Context;
-import io.confluent.kafkarest.MetadataObserver;
-import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.*;
 import io.confluent.kafkarest.entities.*;
 import io.confluent.kafkarest.junit.EmbeddedServerTestHarness;
 import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.kafkarest.validation.ConstraintViolationExceptionMapper;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -47,6 +43,7 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
     private ProducerPool producerPool = EasyMock.createMock(ProducerPool.class);
     private Context ctx = new Context(config, mdObserver, producerPool);
 
+    private List<TopicProduceRecord> produceRecordsOnlyValues;
     private List<TopicProduceRecord> produceRecordsWithKeys;
     private List<TopicProduceRecord> produceRecordsWithPartitions;
     private List<TopicProduceRecord> produceRecordsWithPartitionsAndKeys;
@@ -56,6 +53,10 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
     public TopicsResourceTest() {
         addResource(new TopicsResource(ctx));
 
+        produceRecordsOnlyValues = Arrays.asList(
+                new TopicProduceRecord("value".getBytes()),
+                new TopicProduceRecord("value2".getBytes())
+        );
         produceRecordsWithKeys = Arrays.asList(
                 new TopicProduceRecord("key".getBytes(), "value".getBytes()),
                 new TopicProduceRecord("key2".getBytes(), "value2".getBytes())
@@ -149,7 +150,7 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
         request.setRecords(records);
         final Capture<ProducerPool.ProduceRequestCallback> produceCallback = new Capture<>();
         EasyMock.expect(mdObserver.topicExists(topic)).andReturn(true);
-        producerPool.produce(EasyMock.<List<ProducerRecord>>anyObject(), EasyMock.capture(produceCallback));
+        producerPool.produce(EasyMock.<ProducerRecordProxyCollection>anyObject(), EasyMock.capture(produceCallback));
         EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
             @Override
             public Object answer() throws Throwable {
@@ -162,12 +163,23 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
         });
         EasyMock.replay(mdObserver, producerPool);
 
-        Response response = getJerseyTest().target("/topics/topic1")
+        Response response = getJerseyTest().target("/topics/" + topic)
                 .request().post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
 
         EasyMock.verify(mdObserver, producerPool);
 
         return response;
+    }
+
+    @Test
+    public void testProduceToTopicOnlyValues() {
+        Response rawResponse = produceToTopic("topic1", produceRecordsOnlyValues, produceOffsets);
+        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+
+        assertEquals(
+                Arrays.asList(new ProduceResponse.PartitionOffset(0, 1L), new ProduceResponse.PartitionOffset(1, 2L)),
+                response.getOffsets()
+        );
     }
 
     @Test
