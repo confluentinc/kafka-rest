@@ -138,18 +138,23 @@ public class ConsumerTest extends ClusterTestHarness {
         assertTrue("Consumer request should timeout approximately within the ", ((finished-started) - TIMEOUT) < TIMEOUT_SLACK);
     }
 
+    private void deleteConsumer(String instanceUri) {
+        Response response = request(instanceUri).delete();
+        assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatus());
+    }
+
     @Test
     public void testConsumeOnlyValues() {
-        String instanceId = startConsumeMessages(topicName);
+        String instanceUri = startConsumeMessages(topicName);
         produceMessages(recordsOnlyValues);
-        consumeMessages(instanceId, topicName, recordsOnlyValues);
+        consumeMessages(instanceUri, topicName, recordsOnlyValues);
     }
 
     @Test
     public void testConsumeWithKeys() {
-        String instanceId = startConsumeMessages(topicName);
+        String instanceUri = startConsumeMessages(topicName);
         produceMessages(recordsWithKeys);
-        consumeMessages(instanceId, topicName, recordsWithKeys);
+        consumeMessages(instanceUri, topicName, recordsWithKeys);
     }
 
     @Test
@@ -159,9 +164,17 @@ public class ConsumerTest extends ClusterTestHarness {
 
     @Test
     public void testConsumeTimeout() {
-        String instanceId = startConsumeMessages(topicName);
+        String instanceUri = startConsumeMessages(topicName);
         produceMessages(recordsWithKeys);
-        consumeMessages(instanceId, topicName, recordsWithKeys);
-        consumeForTimeout(instanceId, topicName);
+        consumeMessages(instanceUri, topicName, recordsWithKeys);
+        consumeForTimeout(instanceUri, topicName);
+    }
+
+    @Test
+    public void testDeleteConsumer() {
+        String instanceUri = startConsumeMessages(topicName);
+        produceMessages(recordsWithKeys);
+        consumeMessages(instanceUri, topicName, recordsWithKeys);
+        deleteConsumer(instanceUri);
     }
 }

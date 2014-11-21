@@ -83,7 +83,7 @@ public class ConsumerManager {
     public void readTopic(final String group, final String instance, final String topic, final ReadCallback callback) {
         final ConsumerState state = consumers.get(new ConsumerInstanceId(group, instance));
         if (state == null)
-            callback.onCompletion(null, new NotFoundException("Consumer instance \"" + instance + "\" in group \"" + group + "\" does not exist."));
+            callback.onCompletion(null, notFound(group, instance));
 
         // Consumer will try reading even if it doesn't exist, so we need to check this explicitly.
         if (!mdObserver.topicExists(topic))
@@ -92,9 +92,24 @@ public class ConsumerManager {
         executor.submit(new Runnable() {
             @Override
             public void run() {
-                callback.onCompletion(state.readTopic(topic), null);
+                List<ConsumerRecord> result = state.readTopic(topic);
+                if (result == null)
+                    callback.onCompletion(null, notFound(group, instance));
+                else
+                    callback.onCompletion(result, null);
             }
         });
+    }
+
+    public void deleteConsumer(String group, String instance) {
+        ConsumerState state = consumers.remove(new ConsumerInstanceId(group, instance));
+        if (state == null)
+            throw notFound(group, instance);
+        state.close();
+    }
+
+    private NotFoundException notFound(String group, String instance) {
+        return new NotFoundException("Consumer instance \"" + instance + "\" in group \"" + group + "\" does not exist.");
     }
 
     public class ConsumerInstanceId {
@@ -154,6 +169,8 @@ public class ConsumerManager {
 
         public List<ConsumerRecord> readTopic(String topic) {
             KafkaStream<byte[],byte[]> stream = getOrCreateStream(topic);
+            if (stream == null)
+                return null;
             synchronized(stream) {
                 ConsumerIterator<byte[], byte[]> iter = stream.iterator();
                 List<ConsumerRecord> messages = new Vector<>();
@@ -175,7 +192,17 @@ public class ConsumerManager {
             }
         }
 
+        public void close() {
+            synchronized(this) {
+                consumer.shutdown();
+                // Marks this state entry as no longer valid because the consumer group is being destroyed.
+                consumer = null;
+                streams = null;
+            }
+        }
+
         private synchronized KafkaStream<byte[],byte[]> getOrCreateStream(String topic) {
+            if (streams == null) return null;
             KafkaStream<byte[],byte[]> stream = streams.get(topic);
             if (stream == null) {
                 Map<String,Integer> subscriptions = new TreeMap<>();

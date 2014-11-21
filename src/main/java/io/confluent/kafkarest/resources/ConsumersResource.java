@@ -46,6 +46,12 @@ public class ConsumersResource {
         return new CreateConsumerInstanceResponse(instanceId, instanceBaseUri);
     }
 
+    @DELETE
+    @Path("/{group}/instances/{instance}")
+    public void createGroup(final @PathParam("group") String group, final @PathParam("instance") String instance) {
+        ctx.getConsumerManager().deleteConsumer(group, instance);
+    }
+
     @GET
     @Path("/{group}/instances/{instance}/topics/{topic}")
     public void readTopic(final @Suspended AsyncResponse asyncResponse, final @PathParam("group") String group,

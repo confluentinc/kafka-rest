@@ -23,6 +23,7 @@ import io.confluent.kafkarest.resources.ConsumersResource;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
+import org.easymock.IExpectationSetters;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -66,6 +67,87 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
         EasyMock.reset(mdObserver, consumerManager);
     }
 
+    @Test
+    public void testCreateInstanceRequestsNewInstance() {
+        expectCreateGroup();
+        EasyMock.replay(consumerManager);
+
+        final CreateConsumerInstanceResponse response = getJerseyTest().target("/consumers/" + groupName)
+                .request().post(Entity.entity(null, MediaType.APPLICATION_JSON_TYPE), CreateConsumerInstanceResponse.class);
+        assertEquals(instanceId, response.getInstanceId());
+        assertThat(response.getBaseUri(), allOf(startsWith("http://"), containsString(instancePath)));
+
+        EasyMock.verify(consumerManager);
+    }
+
+    @Test
+    public void testInvalidInstanceOrTopic() {
+        // Trying to access either an invalid consumer instance or a missing topic should trigger an error
+        expectCreateGroup();
+        expectReadTopic(topicName, null, new NotFoundException("Not found"));
+        EasyMock.replay(consumerManager);
+
+        final CreateConsumerInstanceResponse createResponse = getJerseyTest().target("/consumers/" + groupName)
+                .request().post(Entity.entity(null, MediaType.APPLICATION_JSON_TYPE), CreateConsumerInstanceResponse.class);
+        final Response readResponse = getJerseyTest()
+                .target(instanceBasePath(createResponse) + "/topics/" + topicName)
+                .request().get();
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), readResponse.getStatus());
+
+        EasyMock.verify(consumerManager);
+    }
+
+    @Test
+    public void testRead() {
+        List<ConsumerRecord> expected = Arrays.asList(
+                new ConsumerRecord("key1".getBytes(), "value1".getBytes(), 0),
+                new ConsumerRecord("key2".getBytes(), "value2".getBytes(), 1),
+                new ConsumerRecord("key3".getBytes(), "value3".getBytes(), 2)
+        );
+        expectCreateGroup();
+        expectReadTopic(topicName, expected, null);
+        EasyMock.replay(consumerManager);
+
+        final CreateConsumerInstanceResponse createResponse = getJerseyTest().target("/consumers/" + groupName)
+                .request().post(Entity.entity(null, MediaType.APPLICATION_JSON_TYPE), CreateConsumerInstanceResponse.class);
+        final List<ConsumerRecord> readResponse = getJerseyTest()
+                .target(instanceBasePath(createResponse) + "/topics/" + topicName)
+                .request().get(new GenericType<List<ConsumerRecord>>() {
+                });
+        assertEquals(expected, readResponse);
+
+        EasyMock.verify(consumerManager);
+    }
+
+    @Test public void testDeleteInstance() {
+        expectCreateGroup();
+        expectDeleteGroup(false);
+        EasyMock.replay(consumerManager);
+
+        final CreateConsumerInstanceResponse createResponse = getJerseyTest().target("/consumers/" + groupName)
+                .request().post(Entity.entity(null, MediaType.APPLICATION_JSON_TYPE), CreateConsumerInstanceResponse.class);
+        final Response deleteResponse = getJerseyTest()
+                .target(instanceBasePath(createResponse))
+                .request().delete();
+        assertEquals(Response.Status.NO_CONTENT.getStatusCode(), deleteResponse.getStatus());
+
+        EasyMock.verify(consumerManager);
+    }
+
+    @Test public void testDeleteInvalidInstance() {
+        expectDeleteGroup(true);
+        EasyMock.replay(consumerManager);
+
+        final Response deleteResponse = getJerseyTest()
+                .target("/consumers/" + groupName + "/instances/" + instanceId)
+                .request().delete();
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), deleteResponse.getStatus());
+
+        EasyMock.verify(consumerManager);
+    }
+
+
+
     private void expectCreateGroup() {
         EasyMock.expect(consumerManager.createConsumer(ctx,groupName)).andReturn(instanceId);
     }
@@ -82,54 +164,18 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
         });
     }
 
-    @Test
-    public void testCreateInstanceRequestsNewInstance() {
-        expectCreateGroup();
-        EasyMock.replay(consumerManager);
-
-        final CreateConsumerInstanceResponse response = getJerseyTest().target("/consumers/" + groupName)
-                .request().post(Entity.entity(null, MediaType.APPLICATION_JSON_TYPE), CreateConsumerInstanceResponse.class);
-        assertEquals(instanceId, response.getInstanceId());
-        assertThat(response.getBaseUri(), allOf(startsWith("http://"), containsString(instancePath)));
-
-        EasyMock.verify(consumerManager);
+    private String instanceBasePath(CreateConsumerInstanceResponse createResponse) {
+        try {
+            return new URI(createResponse.getBaseUri()).getPath();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException("Invalid URI in CreateConsumerInstanceResponse: \"" + createResponse.getBaseUri() + "\"");
+        }
     }
 
-    @Test
-    public void testInvalidInstanceOrTopic() throws URISyntaxException {
-        // Trying to access either an invalid consumer instance or a missing topic should trigger an error
-        expectCreateGroup();
-        expectReadTopic(topicName, null, new NotFoundException("Not found"));
-        EasyMock.replay(consumerManager);
-
-        final CreateConsumerInstanceResponse createResponse = getJerseyTest().target("/consumers/" + groupName)
-                .request().post(Entity.entity(null, MediaType.APPLICATION_JSON_TYPE), CreateConsumerInstanceResponse.class);
-        final Response readResponse = getJerseyTest()
-                .target(new URI(createResponse.getBaseUri()).getPath() + "/topics/" + topicName)
-                .request().get();
-        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), readResponse.getStatus());
-
-        EasyMock.verify(consumerManager);
-    }
-
-    @Test
-    public void testRead() throws URISyntaxException {
-        List<ConsumerRecord> expected = Arrays.asList(
-                new ConsumerRecord("key1".getBytes(), "value1".getBytes(), 0),
-                new ConsumerRecord("key2".getBytes(), "value2".getBytes(), 1),
-                new ConsumerRecord("key3".getBytes(), "value3".getBytes(), 2)
-        );
-        expectCreateGroup();
-        expectReadTopic(topicName, expected, null);
-        EasyMock.replay(consumerManager);
-
-        final CreateConsumerInstanceResponse createResponse = getJerseyTest().target("/consumers/" + groupName)
-                .request().post(Entity.entity(null, MediaType.APPLICATION_JSON_TYPE), CreateConsumerInstanceResponse.class);
-        final List<ConsumerRecord> readResponse = getJerseyTest()
-                .target(new URI(createResponse.getBaseUri()).getPath() + "/topics/" + topicName)
-                .request().get(new GenericType<List<ConsumerRecord>>(){});
-        assertEquals(expected, readResponse);
-
-        EasyMock.verify(consumerManager);
+    private void expectDeleteGroup(boolean invalid) {
+        consumerManager.deleteConsumer(groupName, instanceId);
+        IExpectationSetters expectation = EasyMock.expectLastCall();
+        if (invalid)
+            expectation.andThrow(new NotFoundException("Not found"));
     }
 }
