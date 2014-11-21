@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ConsumerManager {
 
     private final Time time;
+    private final String zookeeperConnect;
     private final MetadataObserver mdObserver;
     private final int iteratorTimeoutMs;
     private final int requestTimeoutMs;
@@ -45,6 +46,7 @@ public class ConsumerManager {
 
     public ConsumerManager(Config config, MetadataObserver mdObserver) {
         this.time = config.time;
+        this.zookeeperConnect = config.zookeeperConnect;
         this.mdObserver = mdObserver;
         this.iteratorTimeoutMs = config.consumerIteratorTimeoutMs;
         this.requestTimeoutMs = config.consumerRequestTimeoutMs;
@@ -57,11 +59,11 @@ public class ConsumerManager {
      * @param group Name of the consumer group to join
      * @return Unique consumer instance ID
      */
-    public String createConsumer(Context ctx, String group) {
+    public String createConsumer(String group) {
         String id = ((Integer)nextId.incrementAndGet()).toString();
 
         Properties props = new Properties();
-        props.put("zookeeper.connect", ctx.getConfig().zookeeperConnect);
+        props.put("zookeeper.connect", zookeeperConnect);
         props.put("group.id", group);
         props.put("consumer.id", id);
         // To support the old consumer interface with broken peek()/missing poll(timeout) functionality, we always use

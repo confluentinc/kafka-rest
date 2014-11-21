@@ -41,7 +41,7 @@ public class ConsumersResource {
     @Valid
     @Path("/{group}")
     public CreateConsumerInstanceResponse createGroup(@javax.ws.rs.core.Context UriInfo uriInfo, final @PathParam("group") String group) {
-        String instanceId = ctx.getConsumerManager().createConsumer(ctx, group);
+        String instanceId = ctx.getConsumerManager().createConsumer(group);
         String instanceBaseUri = uriInfo.getAbsolutePathBuilder().path("instances").path(instanceId).build().toString();
         return new CreateConsumerInstanceResponse(instanceId, instanceBaseUri);
     }

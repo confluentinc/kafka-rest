@@ -149,7 +149,7 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
 
 
     private void expectCreateGroup() {
-        EasyMock.expect(consumerManager.createConsumer(ctx,groupName)).andReturn(instanceId);
+        EasyMock.expect(consumerManager.createConsumer(groupName)).andReturn(instanceId);
     }
 
     private void expectReadTopic(String topicName, final List<ConsumerRecord> readResult, final Exception readException) {
