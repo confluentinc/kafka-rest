@@ -39,10 +39,10 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 
 public class PartitionsResourceTest extends EmbeddedServerTestHarness {
-    private Config config = new Config();
-    private MetadataObserver mdObserver = EasyMock.createMock(MetadataObserver.class);
-    private ProducerPool producerPool = EasyMock.createMock(ProducerPool.class);
-    private Context ctx = new Context(config, mdObserver, producerPool);
+    private Config config;
+    private MetadataObserver mdObserver;
+    private ProducerPool producerPool;
+    private Context ctx;
 
     private final String topicName = "topic1";
     Topic topic = new Topic("topic1", 2);
@@ -63,7 +63,12 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness {
     private Map<Integer,Long> produceOffsets;
 
 
-    public PartitionsResourceTest() {
+    public PartitionsResourceTest() throws ConfigurationException {
+        config = new Config();
+        mdObserver = EasyMock.createMock(MetadataObserver.class);
+        producerPool = EasyMock.createMock(ProducerPool.class);
+        ctx = new Context(config, mdObserver, producerPool, null);
+
         addResource(new TopicsResource(ctx));
         addResource(PartitionsResource.class);
 

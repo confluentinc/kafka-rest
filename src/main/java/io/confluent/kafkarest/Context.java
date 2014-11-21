@@ -22,11 +22,13 @@ public class Context {
     private final Config config;
     private final MetadataObserver metadataObserver;
     private final ProducerPool producerPool;
+    private final ConsumerManager consumerManager;
 
-    public Context(Config config, MetadataObserver metadataObserver, ProducerPool producerPool) {
+    public Context(Config config, MetadataObserver metadataObserver, ProducerPool producerPool, ConsumerManager consumerManager) {
         this.config = config;
         this.metadataObserver = metadataObserver;
         this.producerPool = producerPool;
+        this.consumerManager = consumerManager;
     }
 
     public Config getConfig() {
@@ -39,5 +41,9 @@ public class Context {
 
     public ProducerPool getProducerPool() {
         return producerPool;
+    }
+
+    public ConsumerManager getConsumerManager() {
+        return consumerManager;
     }
 }

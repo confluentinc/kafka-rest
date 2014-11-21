@@ -32,6 +32,9 @@ import scala.collection.JavaConversions;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 
 /**
@@ -58,6 +61,7 @@ public abstract class ClusterTestHarness {
     protected List<KafkaServer> servers = null;
     protected String brokerList = null;
 
+    protected String bootstrapServers = null;
     protected Properties restProperties = null;
     protected Server restServer = null;
     protected String restConnect = null;
@@ -79,7 +83,7 @@ public abstract class ClusterTestHarness {
         zkConnect = String.format("localhost:%d", zkPort);
 
         configs = new Vector<KafkaConfig>();
-        String bootstrapServers = "";
+        bootstrapServers = "";
         for(int i = 0; i < numBrokers; i++) {
             int port = ports.remove();
             Properties props = TestUtils.createBrokerConfig(i, port, false);
@@ -138,14 +142,25 @@ public abstract class ClusterTestHarness {
     }
 
     protected Invocation.Builder request(String path) {
-        Client client = ClientBuilder.newClient();
-        KafkaRestServer.configureApplication(client);
-        return client.target(restConnect).path(path).request();
+        return request(path, null, null);
     }
 
     protected Invocation.Builder request(String path, String templateName, Object templateValue) {
         Client client = ClientBuilder.newClient();
         KafkaRestServer.configureApplication(client);
-        return client.target(restConnect).path(path).resolveTemplate(templateName, templateValue).request();
+        WebTarget target;
+        URI pathUri = null;
+        try {
+            pathUri = new URI(path);
+        } catch (URISyntaxException e) {
+            // Ignore, use restConnect and assume this is a valid path part
+        }
+        if (pathUri != null && pathUri.isAbsolute())
+            target = client.target(path);
+        else
+            target = client.target(restConnect).path(path);
+        if (templateName != null && templateValue != null)
+            target = target.resolveTemplate(templateName, templateValue);
+        return target.request();
     }
 }

@@ -38,10 +38,10 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 
 public class TopicsResourceTest extends EmbeddedServerTestHarness {
-    private Config config = new Config();
-    private MetadataObserver mdObserver = EasyMock.createMock(MetadataObserver.class);
-    private ProducerPool producerPool = EasyMock.createMock(ProducerPool.class);
-    private Context ctx = new Context(config, mdObserver, producerPool);
+    private Config config;
+    private MetadataObserver mdObserver;
+    private ProducerPool producerPool;
+    private Context ctx;
 
     private List<TopicProduceRecord> produceRecordsOnlyValues;
     private List<TopicProduceRecord> produceRecordsWithKeys;
@@ -50,7 +50,12 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
     // Partition -> New offset
     private Map<Integer,Long> produceOffsets;
 
-    public TopicsResourceTest() {
+    public TopicsResourceTest() throws ConfigurationException {
+        config = new Config();
+        mdObserver = EasyMock.createMock(MetadataObserver.class);
+        producerPool = EasyMock.createMock(ProducerPool.class);
+        ctx = new Context(config, mdObserver, producerPool, null);
+
         addResource(new TopicsResource(ctx));
 
         produceRecordsOnlyValues = Arrays.asList(

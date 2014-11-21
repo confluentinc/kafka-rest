@@ -23,13 +23,15 @@ public class Main {
      * Starts an embedded Jetty server running the REST server.
      */
     public static void main(String[] args) throws IOException {
-        Server server = KafkaRestServer.createServer();
-
-        // Finally, run the server
         try {
+            Server server = KafkaRestServer.createServer();
+
             server.start();
             System.out.println("Server started, listening for requests...");
             server.join();
+        } catch (ConfigurationException e) {
+            System.out.println("Server configuration failed: " + e.getMessage());
+            System.exit(1);
         } catch (Exception e) {
             System.err.println("Server died unexpectedly: " + e.toString());
         }

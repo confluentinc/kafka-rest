@@ -17,6 +17,7 @@ package io.confluent.kafkarest;
 
 import com.fasterxml.jackson.jaxrs.base.JsonParseExceptionMapper;
 import io.confluent.kafkarest.resources.BrokersResource;
+import io.confluent.kafkarest.resources.ConsumersResource;
 import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.kafkarest.validation.ConstraintViolationExceptionMapper;
@@ -39,7 +40,7 @@ public class KafkaRestServer {
     /**
      * Configure and create the server.
      */
-    public static Server createServer(Properties props) {
+    public static Server createServer(Properties props) throws ConfigurationException {
         // The configuration for the JAX-RS REST service
         ResourceConfig resourceConfig = new ResourceConfig();
 
@@ -51,10 +52,12 @@ public class KafkaRestServer {
         Config config = new Config(props);
         MetadataObserver mdObserver = new MetadataObserver(config);
         ProducerPool producerPool = new ProducerPool(config);
-        Context ctx = new Context(config, mdObserver, producerPool);
+        ConsumerManager consumerManager = new ConsumerManager(config, mdObserver);
+        Context ctx = new Context(config, mdObserver, producerPool, consumerManager);
         resourceConfig.register(new BrokersResource(ctx));
         resourceConfig.register(new TopicsResource(ctx));
         resourceConfig.register(PartitionsResource.class);
+        resourceConfig.register(new ConsumersResource(ctx));
 
         // Configure the servlet container
         ServletContainer servletContainer = new ServletContainer(resourceConfig);
@@ -67,7 +70,7 @@ public class KafkaRestServer {
         return server;
     }
 
-    public static Server createServer() {
+    public static Server createServer() throws ConfigurationException {
         return createServer(null);
     }
 
