@@ -41,15 +41,19 @@ public class KafkaRestServer {
      * Configure and create the server.
      */
     public static Server createServer(Properties props) throws ConfigurationException {
+        Config config = createServerConfig(props);
+        return createServer(config);
+    }
+
+    /**
+     * Configure and create the server.
+     */
+    public static Server createServer(Config config) throws ConfigurationException {
         // The configuration for the JAX-RS REST service
         ResourceConfig resourceConfig = new ResourceConfig();
 
         configureApplication(resourceConfig);
 
-        // Register all REST resources
-        if (props == null)
-            props = new Properties();
-        Config config = new Config(props);
         MetadataObserver mdObserver = new MetadataObserver(config);
         ProducerPool producerPool = new ProducerPool(config);
         ConsumerManager consumerManager = new ConsumerManager(config, mdObserver);
@@ -71,7 +75,14 @@ public class KafkaRestServer {
     }
 
     public static Server createServer() throws ConfigurationException {
-        return createServer(null);
+        return createServer(createServerConfig(null));
+    }
+
+
+    public static Config createServerConfig(Properties props) throws ConfigurationException {
+        if (props == null)
+            props = new Properties();
+        return new Config(props);
     }
 
     /**

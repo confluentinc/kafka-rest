@@ -97,14 +97,7 @@ public class ConsumerManagerTest {
 
     @Test
     public void testReadInvalidInstanceFails() {
-        Future future = consumerManager.readTopic(groupName, "invalid", topicName, new ConsumerManager.ReadCallback() {
-            @Override
-            public void onCompletion(List<ConsumerRecord> records, Exception e) {
-                assertNull(records);
-                assertThat(e, instanceOf(NotFoundException.class));
-            }
-        });
-        assertNull(future);
+        readAndExpectImmediateNotFound("invalid", topicName);
     }
 
     @Test
@@ -116,14 +109,7 @@ public class ConsumerManagerTest {
         EasyMock.replay(mdObserver, consumerFactory);
 
         String instanceId = consumerManager.createConsumer(groupName);
-        Future future = consumerManager.readTopic(groupName, instanceId, invalidTopicName, new ConsumerManager.ReadCallback() {
-            @Override
-            public void onCompletion(List<ConsumerRecord> records, Exception e) {
-                assertNull(records);
-                assertThat(e, instanceOf(NotFoundException.class));
-            }
-        });
-        assertNull(future);
+        readAndExpectImmediateNotFound(instanceId, invalidTopicName);
 
         EasyMock.verify(mdObserver, consumerFactory);
     }
@@ -131,5 +117,29 @@ public class ConsumerManagerTest {
     @Test(expected=NotFoundException.class)
     public void testDeleteInvalidConsumer() {
         consumerManager.deleteConsumer(groupName, "invalidinstance");
+    }
+
+
+    private void readAndExpectNoDataRequestTimeout(String cid) throws InterruptedException, ExecutionException {
+        long started = config.time.milliseconds();
+        consumerManager.readTopic(groupName, cid, topicName, new ConsumerManager.ReadCallback() {
+            @Override
+            public void onCompletion(List<ConsumerRecord> records, Exception e) {
+                assertNull(e);
+            }
+        }).get();
+        assertEquals(started + config.consumerRequestTimeoutMs, config.time.milliseconds());
+    }
+
+    // Not found for instance or topic
+    private void readAndExpectImmediateNotFound(String cid, String topic) {
+        Future future = consumerManager.readTopic(groupName, cid, topic, new ConsumerManager.ReadCallback() {
+            @Override
+            public void onCompletion(List<ConsumerRecord> records, Exception e) {
+                assertNull(records);
+                assertThat(e, instanceOf(NotFoundException.class));
+            }
+        });
+        assertNull(future);
     }
 }

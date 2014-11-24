@@ -54,6 +54,9 @@ public class Config {
     public int consumerThreads;
     public static final String DEFAULT_CONSUMER_THREADS = "1";
 
+    /** Amount of idle time before a consumer instance is automatically destroyed. */
+    public int consumerInstanceTimeoutMs;
+    public static final String DEFAULT_CONSUMER_INSTANCE_TIMEOUT_MS = "300000";
 
     public Config() throws ConfigurationException {
         this(new Properties());
@@ -70,5 +73,6 @@ public class Config {
         consumerRequestTimeoutMs = Integer.parseInt(props.getProperty("consumer.request.timeout.ms", DEFAULT_CONSUMER_REQUEST_TIMEOUT_MS));
         consumerRequestMaxMessages = Integer.parseInt(props.getProperty("consumer.request.max.messages", DEFAULT_CONSUMER_REQUEST_MAX_MESSAGES));
         consumerThreads = Integer.parseInt(props.getProperty("consumer.threads", DEFAULT_CONSUMER_THREADS));
+        consumerInstanceTimeoutMs = Integer.parseInt(props.getProperty("consumer.instance.timeout.ms", DEFAULT_CONSUMER_INSTANCE_TIMEOUT_MS));
     }
 }

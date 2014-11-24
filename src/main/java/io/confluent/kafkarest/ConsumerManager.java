@@ -22,7 +22,6 @@ import kafka.message.MessageAndMetadata;
 
 import javax.ws.rs.NotFoundException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -40,11 +39,14 @@ public class ConsumerManager {
     private final int iteratorTimeoutMs;
     private final int requestTimeoutMs;
     private final int requestMaxMessages;
+    private final int consumerInstanceTimeoutMs;
 
     private final AtomicInteger nextId = new AtomicInteger(0);
-    private final Map<ConsumerInstanceId,ConsumerState> consumers = new ConcurrentHashMap<>();
+    private final Map<ConsumerInstanceId,ConsumerState> consumers = new HashMap<>();
     private final ExecutorService executor;
     private ConsumerFactory consumerFactory;
+    private final PriorityQueue<ConsumerState> consumersByExpiration = new PriorityQueue<>();
+    private final ExpirationThread expirationThread;
 
     public ConsumerManager(Config config, MetadataObserver mdObserver) {
         this.time = config.time;
@@ -53,8 +55,11 @@ public class ConsumerManager {
         this.iteratorTimeoutMs = config.consumerIteratorTimeoutMs;
         this.requestTimeoutMs = config.consumerRequestTimeoutMs;
         this.requestMaxMessages = config.consumerRequestMaxMessages;
+        this.consumerInstanceTimeoutMs = config.consumerInstanceTimeoutMs;
         this.executor = Executors.newFixedThreadPool(config.consumerThreads);
         this.consumerFactory = null;
+        this.expirationThread = new ExpirationThread();
+        this.expirationThread.start();
     }
 
     public ConsumerManager(Config config, MetadataObserver mdObserver, ConsumerFactory consumerFactory) {
@@ -84,7 +89,11 @@ public class ConsumerManager {
             consumer = consumerFactory.createConsumer(new ConsumerConfig(props));
 
         synchronized (this) {
-            consumers.put(new ConsumerInstanceId(group, id), new ConsumerState(consumer));
+            ConsumerInstanceId cid = new ConsumerInstanceId(group, id);
+            ConsumerState state = new ConsumerState(cid, consumer, time.milliseconds() + consumerInstanceTimeoutMs);
+            consumers.put(cid, state);
+            consumersByExpiration.add(state);
+            this.notifyAll();
         }
 
         return id;
@@ -95,10 +104,16 @@ public class ConsumerManager {
     }
 
     public Future readTopic(final String group, final String instance, final String topic, final ReadCallback callback) {
-        final ConsumerState state = consumers.get(new ConsumerInstanceId(group, instance));
-        if (state == null) {
-            callback.onCompletion(null, notFound(group, instance));
-            return null;
+        final ConsumerState state;
+        synchronized(this) {
+            state = consumers.get(new ConsumerInstanceId(group, instance));
+            if (state == null) {
+                callback.onCompletion(null, notFound(group, instance));
+                return null;
+            }
+            // Clear from the timeout queue immediately so it isn't removed during the read operation, but don't update
+            // the timeout until we finish the read since that can significantly affect the timeout.
+            consumersByExpiration.remove(state);
         }
 
         // Consumer will try reading even if it doesn't exist, so we need to check this explicitly.
@@ -111,6 +126,11 @@ public class ConsumerManager {
             @Override
             public void run() {
                 List<ConsumerRecord> result = state.readTopic(topic);
+                synchronized(this) {
+                    state.updateExpiration(time.milliseconds() + consumerInstanceTimeoutMs);
+                    consumersByExpiration.add(state);
+                    this.notifyAll();
+                }
                 if (result == null)
                     callback.onCompletion(null, notFound(group, instance));
                 else
@@ -120,9 +140,13 @@ public class ConsumerManager {
     }
 
     public void deleteConsumer(String group, String instance) {
-        ConsumerState state = consumers.remove(new ConsumerInstanceId(group, instance));
-        if (state == null)
-            throw notFound(group, instance);
+        final ConsumerState state;
+        synchronized(this) {
+            state = consumers.remove(new ConsumerInstanceId(group, instance));
+            if (state == null)
+                throw notFound(group, instance);
+            consumersByExpiration.remove(state);
+        }
         state.close();
     }
 
@@ -176,13 +200,21 @@ public class ConsumerManager {
         }
     }
 
-    private class ConsumerState {
+    private class ConsumerState implements Comparable<ConsumerState> {
+        private ConsumerInstanceId instanceId;
         private ConsumerConnector consumer;
         private Map<String, KafkaStream<byte[],byte[]>> streams;
+        private long expiration;
 
-        private ConsumerState(ConsumerConnector consumer) {
+        private ConsumerState(ConsumerInstanceId instanceId, ConsumerConnector consumer, long expiration) {
+            this.instanceId = instanceId;
             this.consumer = consumer;
             this.streams = new HashMap<>();
+            this.expiration = expiration;
+        }
+
+        public ConsumerInstanceId getId() {
+            return instanceId;
         }
 
         public List<ConsumerRecord> readTopic(String topic) {
@@ -219,6 +251,28 @@ public class ConsumerManager {
             }
         }
 
+        public boolean expired(long nowMs) {
+            return expiration <= nowMs;
+        }
+
+        public void updateExpiration(long expiration) {
+            this.expiration = expiration;
+        }
+
+        public long untilExpiration(long nowMs) {
+            return this.expiration - nowMs;
+        }
+
+        @Override
+        public int compareTo(ConsumerState o) {
+            if (this.expiration < o.expiration)
+                return -1;
+            else if (this.expiration == o.expiration)
+                return 0;
+            else
+                return 1;
+        }
+
         private synchronized KafkaStream<byte[],byte[]> getOrCreateStream(String topic) {
             if (streams == null) return null;
             KafkaStream<byte[],byte[]> stream = streams.get(topic);
@@ -231,9 +285,44 @@ public class ConsumerManager {
             }
             return stream;
         }
+
     }
 
     public interface ConsumerFactory {
         ConsumerConnector createConsumer(ConsumerConfig config);
+    }
+
+    private class ExpirationThread extends Thread {
+        public ExpirationThread() {
+            super("Consumer Expiration Thread");
+            setDaemon(true);
+        }
+
+        @Override
+        public void run() {
+            synchronized(ConsumerManager.this) {
+                try {
+                    // FIXME Currently ConsumerManager doesn't catch any shutdown signal, so this continues forever.
+                    while (true) {
+                        long now = time.milliseconds();
+                        while (!consumersByExpiration.isEmpty() && consumersByExpiration.peek().expired(now)) {
+                            final ConsumerState state = consumersByExpiration.remove();
+                            consumers.remove(state.getId());
+                            executor.submit(new Runnable() {
+                                @Override
+                                public void run() {
+                                    state.close();
+                                }
+                            });
+                        }
+                        long timeout = (consumersByExpiration.isEmpty() ? Long.MAX_VALUE : consumersByExpiration.peek().untilExpiration(now));
+                        ConsumerManager.this.wait(timeout);
+                    }
+                }
+                catch (InterruptedException e) {
+                    // Interrupted by other thread, do nothing to allow this thread to exit
+                }
+            }
+        }
     }
 }
