@@ -25,6 +25,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -43,6 +44,7 @@ public class ConsumerManager {
     private final AtomicInteger nextId = new AtomicInteger(0);
     private final Map<ConsumerInstanceId,ConsumerState> consumers = new ConcurrentHashMap<>();
     private final ExecutorService executor;
+    private ConsumerFactory consumerFactory;
 
     public ConsumerManager(Config config, MetadataObserver mdObserver) {
         this.time = config.time;
@@ -52,6 +54,12 @@ public class ConsumerManager {
         this.requestTimeoutMs = config.consumerRequestTimeoutMs;
         this.requestMaxMessages = config.consumerRequestMaxMessages;
         this.executor = Executors.newFixedThreadPool(config.consumerThreads);
+        this.consumerFactory = null;
+    }
+
+    public ConsumerManager(Config config, MetadataObserver mdObserver, ConsumerFactory consumerFactory) {
+        this(config, mdObserver);
+        this.consumerFactory = consumerFactory;
     }
 
     /**
@@ -69,7 +77,11 @@ public class ConsumerManager {
         // To support the old consumer interface with broken peek()/missing poll(timeout) functionality, we always use
         // a timeout. This can't perfectly guarantee a total request timeout, but can get as close as this timeout's value
         props.put("consumer.timeout.ms", ((Integer)iteratorTimeoutMs).toString());
-        ConsumerConnector consumer = Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
+        ConsumerConnector consumer;
+        if (consumerFactory == null)
+            consumer = Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
+        else
+            consumer = consumerFactory.createConsumer(new ConsumerConfig(props));
 
         synchronized (this) {
             consumers.put(new ConsumerInstanceId(group, id), new ConsumerState(consumer));
@@ -82,16 +94,20 @@ public class ConsumerManager {
         public void onCompletion(List<ConsumerRecord> records, Exception e);
     }
 
-    public void readTopic(final String group, final String instance, final String topic, final ReadCallback callback) {
+    public Future readTopic(final String group, final String instance, final String topic, final ReadCallback callback) {
         final ConsumerState state = consumers.get(new ConsumerInstanceId(group, instance));
-        if (state == null)
+        if (state == null) {
             callback.onCompletion(null, notFound(group, instance));
+            return null;
+        }
 
         // Consumer will try reading even if it doesn't exist, so we need to check this explicitly.
-        if (!mdObserver.topicExists(topic))
+        if (!mdObserver.topicExists(topic)) {
             callback.onCompletion(null, new NotFoundException("Topic \"" + topic + "\" not found."));
+            return null;
+        }
 
-        executor.submit(new Runnable() {
+        return executor.submit(new Runnable() {
             @Override
             public void run() {
                 List<ConsumerRecord> result = state.readTopic(topic);
@@ -215,5 +231,9 @@ public class ConsumerManager {
             }
             return stream;
         }
+    }
+
+    public interface ConsumerFactory {
+        ConsumerConnector createConsumer(ConsumerConfig config);
     }
 }

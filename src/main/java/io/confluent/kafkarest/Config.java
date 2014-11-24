@@ -22,7 +22,6 @@ import java.util.Properties;
  */
 public class Config {
     public Time time;
-    public static final String DEFAULT_TIME = "system";
 
     public int port;
     public static final String DEFAULT_PORT = "8080";
@@ -61,14 +60,7 @@ public class Config {
     }
 
     public Config(Properties props) throws ConfigurationException {
-        String timeSetting = props.getProperty("time", DEFAULT_TIME);
-        switch(timeSetting) {
-            case "system":
-                time = new SystemTime();
-                break;
-            default:
-                throw new ConfigurationException("Invalid time setting");
-        }
+        time = new SystemTime();
 
         port = Integer.parseInt(props.getProperty("port", DEFAULT_PORT));
         zookeeperConnect = props.getProperty("zookeeper.connect", DEFAULT_ZOOKEEPER_CONNECT);
