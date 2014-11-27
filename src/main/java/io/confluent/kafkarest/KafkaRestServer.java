@@ -16,6 +16,8 @@
 package io.confluent.kafkarest;
 
 import com.fasterxml.jackson.jaxrs.base.JsonParseExceptionMapper;
+import io.confluent.kafkarest.exceptions.GenericExceptionMapper;
+import io.confluent.kafkarest.exceptions.WebApplicationExceptionMapper;
 import io.confluent.kafkarest.resources.BrokersResource;
 import io.confluent.kafkarest.resources.ConsumersResource;
 import io.confluent.kafkarest.resources.PartitionsResource;
@@ -52,7 +54,7 @@ public class KafkaRestServer {
         // The configuration for the JAX-RS REST service
         ResourceConfig resourceConfig = new ResourceConfig();
 
-        configureApplication(resourceConfig);
+        configureApplication(resourceConfig, config);
 
         MetadataObserver mdObserver = new MetadataObserver(config);
         ProducerPool producerPool = new ProducerPool(config);
@@ -89,12 +91,14 @@ public class KafkaRestServer {
      * Register standard components for a Kafka REST server application for the configuration, which can be either
      * an ResourceConfig for a server or a ClientConfig for a Jersey-based REST client.
      */
-    public static void configureApplication(Configurable<?> config) {
+    public static void configureApplication(Configurable<?> config, Config restConfig) {
         config.register(JacksonMessageBodyProvider.class);
         config.register(JsonParseExceptionMapper.class);
 
         config.register(ValidationFeature.class);
         config.register(ConstraintViolationExceptionMapper.class);
+        config.register(new WebApplicationExceptionMapper(restConfig));
+        config.register(new GenericExceptionMapper(restConfig));
 
         config.property(ServerProperties.BV_SEND_ERROR_IN_RESPONSE, true);
     }

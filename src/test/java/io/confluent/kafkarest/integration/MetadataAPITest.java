@@ -18,6 +18,8 @@ package io.confluent.kafkarest.integration;
 import io.confluent.kafkarest.entities.BrokerList;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.resources.PartitionsResource;
+import io.confluent.kafkarest.resources.TopicsResource;
 import kafka.utils.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,6 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -72,7 +75,7 @@ public class MetadataAPITest extends ClusterTestHarness {
 
         // Get invalid topic
         final Response invalidResponse = request("/topics/{topic}", "topic", "topicdoesntexist").get();
-        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), invalidResponse.getStatus());
+        assertErrorResponse(Response.Status.NOT_FOUND, invalidResponse, TopicsResource.MESSAGE_TOPIC_NOT_FOUND);
     }
 
     @Test
@@ -96,6 +99,6 @@ public class MetadataAPITest extends ClusterTestHarness {
 
         // Get invalid partition
         final Response invalidResponse = request("/topics/topic1/partitions/1000").get();
-        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), invalidResponse.getStatus());
+        assertErrorResponse(Response.Status.NOT_FOUND, invalidResponse, PartitionsResource.MESSAGE_PARTITION_NOT_FOUND);
     }
 }

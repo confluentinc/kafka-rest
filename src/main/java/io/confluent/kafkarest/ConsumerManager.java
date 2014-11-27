@@ -16,6 +16,7 @@
 package io.confluent.kafkarest;
 
 import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.resources.TopicsResource;
 import kafka.consumer.*;
 import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.MessageAndMetadata;
@@ -32,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * up when consumers disappear.
  */
 public class ConsumerManager {
+    public final static String MESSAGE_CONSUMER_INSTANCE_NOT_FOUND = "Consumer instance not found.";
 
     private final Time time;
     private final String zookeeperConnect;
@@ -108,7 +110,7 @@ public class ConsumerManager {
         synchronized(this) {
             state = consumers.get(new ConsumerInstanceId(group, instance));
             if (state == null) {
-                callback.onCompletion(null, notFound(group, instance));
+                callback.onCompletion(null, new NotFoundException(MESSAGE_CONSUMER_INSTANCE_NOT_FOUND));
                 return null;
             }
             // Clear from the timeout queue immediately so it isn't removed during the read operation, but don't update
@@ -118,7 +120,7 @@ public class ConsumerManager {
 
         // Consumer will try reading even if it doesn't exist, so we need to check this explicitly.
         if (!mdObserver.topicExists(topic)) {
-            callback.onCompletion(null, new NotFoundException("Topic \"" + topic + "\" not found."));
+            callback.onCompletion(null, new NotFoundException(TopicsResource.MESSAGE_TOPIC_NOT_FOUND));
             return null;
         }
 
@@ -132,7 +134,7 @@ public class ConsumerManager {
                     this.notifyAll();
                 }
                 if (result == null)
-                    callback.onCompletion(null, notFound(group, instance));
+                    callback.onCompletion(null, new NotFoundException(MESSAGE_CONSUMER_INSTANCE_NOT_FOUND));
                 else
                     callback.onCompletion(result, null);
             }
@@ -144,14 +146,10 @@ public class ConsumerManager {
         synchronized(this) {
             state = consumers.remove(new ConsumerInstanceId(group, instance));
             if (state == null)
-                throw notFound(group, instance);
+                throw new NotFoundException(MESSAGE_CONSUMER_INSTANCE_NOT_FOUND);
             consumersByExpiration.remove(state);
         }
         state.close();
-    }
-
-    private NotFoundException notFound(String group, String instance) {
-        return new NotFoundException("Consumer instance \"" + instance + "\" in group \"" + group + "\" does not exist.");
     }
 
     public class ConsumerInstanceId {

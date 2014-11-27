@@ -35,6 +35,8 @@ import java.util.Vector;
 @Path("/topics")
 @Produces(MediaType.APPLICATION_JSON)
 public class TopicsResource {
+    public final static String MESSAGE_TOPIC_NOT_FOUND = "Topic not found.";
+
     private final Context ctx;
 
     public TopicsResource(Context ctx) {
@@ -51,14 +53,14 @@ public class TopicsResource {
     public Topic getTopic(@PathParam("topic") String topicName) {
         Topic topic = ctx.getMetadataObserver().getTopic(topicName);
         if (topic == null)
-            throw new NotFoundException();
+            throw new NotFoundException(MESSAGE_TOPIC_NOT_FOUND);
         return topic;
     }
 
     @Path("/{topic}/partitions")
     public PartitionsResource getPartitions(@PathParam("topic") String topicName) {
         if (!ctx.getMetadataObserver().topicExists(topicName))
-            throw new NotFoundException();
+            throw new NotFoundException(MESSAGE_TOPIC_NOT_FOUND);
         return new PartitionsResource(ctx, topicName);
     }
 
@@ -66,7 +68,7 @@ public class TopicsResource {
     @Path("/{topic}")
     public void produce(final @Suspended AsyncResponse asyncResponse, @PathParam("topic") String topicName, @Valid TopicProduceRequest request) {
         if (!ctx.getMetadataObserver().topicExists(topicName))
-            throw new NotFoundException();
+            throw new NotFoundException(MESSAGE_TOPIC_NOT_FOUND);
 
         ctx.getProducerPool().produce(
                 new ProducerRecordProxyCollection(topicName, request.getRecords()),

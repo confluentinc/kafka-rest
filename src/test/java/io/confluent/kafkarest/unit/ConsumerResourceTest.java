@@ -37,6 +37,7 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 
+import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.*;
 
@@ -50,6 +51,8 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
     private static final String topicName = "testtopic";
     private static final String instanceId = "uniqueid";
     private static final String instancePath = "/consumers/" + groupName + "/instances/" + instanceId;
+
+    private static final String not_found_message = "not found";
 
     public ConsumerResourceTest() throws ConfigurationException {
         config = new Config();
@@ -84,7 +87,7 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
     public void testInvalidInstanceOrTopic() {
         // Trying to access either an invalid consumer instance or a missing topic should trigger an error
         expectCreateGroup();
-        expectReadTopic(topicName, null, new NotFoundException("Not found"));
+        expectReadTopic(topicName, null, new NotFoundException(not_found_message));
         EasyMock.replay(consumerManager);
 
         final CreateConsumerInstanceResponse createResponse = getJerseyTest().target("/consumers/" + groupName)
@@ -92,7 +95,7 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
         final Response readResponse = getJerseyTest()
                 .target(instanceBasePath(createResponse) + "/topics/" + topicName)
                 .request().get();
-        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), readResponse.getStatus());
+        assertErrorResponse(Response.Status.NOT_FOUND, readResponse, not_found_message);
 
         EasyMock.verify(consumerManager);
     }
@@ -129,7 +132,7 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
         final Response deleteResponse = getJerseyTest()
                 .target(instanceBasePath(createResponse))
                 .request().delete();
-        assertEquals(Response.Status.NO_CONTENT.getStatusCode(), deleteResponse.getStatus());
+        assertErrorResponse(Response.Status.NO_CONTENT, deleteResponse, null);
 
         EasyMock.verify(consumerManager);
     }
@@ -141,7 +144,7 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
         final Response deleteResponse = getJerseyTest()
                 .target("/consumers/" + groupName + "/instances/" + instanceId)
                 .request().delete();
-        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), deleteResponse.getStatus());
+        assertErrorResponse(Response.Status.NOT_FOUND, deleteResponse, not_found_message);
 
         EasyMock.verify(consumerManager);
     }
@@ -175,7 +178,8 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
     private void expectDeleteGroup(boolean invalid) {
         consumerManager.deleteConsumer(groupName, instanceId);
         IExpectationSetters expectation = EasyMock.expectLastCall();
-        if (invalid)
-            expectation.andThrow(new NotFoundException("Not found"));
+        if (invalid) {
+            expectation.andThrow(new NotFoundException(not_found_message));
+        }
     }
 }

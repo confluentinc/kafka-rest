@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 
 public class TopicsResourceTest extends EmbeddedServerTestHarness {
     private Config config;
@@ -133,7 +134,7 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
 
         Response response = getJerseyTest().target("/topics/nonexistanttopic")
                 .request().get();
-        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+        assertErrorResponse(Response.Status.NOT_FOUND, response, TopicsResource.MESSAGE_TOPIC_NOT_FOUND);
 
         EasyMock.verify(mdObserver);
     }
@@ -145,7 +146,7 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
 
         Response response = getJerseyTest().target("/topics/nonexistanttopic/partitions")
                 .request().get();
-        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+        assertErrorResponse(Response.Status.NOT_FOUND, response, TopicsResource.MESSAGE_TOPIC_NOT_FOUND);
 
         EasyMock.verify(mdObserver);
     }
@@ -224,7 +225,7 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
     public void testProduceToTopicFailure() {
         // null offsets triggers a generic exception
         Response rawResponse = produceToTopic("topic1", produceRecordsWithKeys, null);
-        assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), rawResponse.getStatus());
+        assertErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, rawResponse, Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase());
     }
 
     @Test

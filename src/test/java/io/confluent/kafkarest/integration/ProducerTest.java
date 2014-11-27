@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.entities.*;
+import io.confluent.kafkarest.resources.TopicsResource;
 import kafka.consumer.*;
 import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.MessageAndMetadata;
@@ -29,6 +30,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
 
+import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static org.junit.Assert.assertEquals;
 
 public class ProducerTest extends ClusterTestHarness {
@@ -131,7 +133,7 @@ public class ProducerTest extends ClusterTestHarness {
         ));
         final Response response = request("/topics/topicdoesnotexist")
                 .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
-        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+        assertErrorResponse(Response.Status.NOT_FOUND, response, TopicsResource.MESSAGE_TOPIC_NOT_FOUND);
     }
 
 

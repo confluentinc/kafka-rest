@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static org.junit.Assert.assertEquals;
 
 public class PartitionsResourceTest extends EmbeddedServerTestHarness {
@@ -137,7 +138,7 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness {
 
         Response response = getJerseyTest().target("/topics/topic1/partitions/1000")
                 .request().get();
-        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+        assertErrorResponse(Response.Status.NOT_FOUND, response, PartitionsResource.MESSAGE_PARTITION_NOT_FOUND);
 
         EasyMock.verify(mdObserver);
     }
@@ -191,7 +192,7 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness {
     public void testProduceToPartitionFailure() {
         // null offsets triggers a generic exception
         Response rawResponse = produceToPartition(topicName, 0, produceRecordsWithKeys, null);
-        assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), rawResponse.getStatus());
+        assertErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, rawResponse, Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase());
     }
 
     @Test

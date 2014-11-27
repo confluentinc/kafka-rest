@@ -70,7 +70,8 @@ public class MetadataObserver {
     }
 
     public Topic getTopic(String topicName) {
-        return getTopicsData(JavaConversions.asScalaIterable(Arrays.asList(topicName)).toSeq()).get(0);
+        List<Topic> topics = getTopicsData(JavaConversions.asScalaIterable(Arrays.asList(topicName)).toSeq());
+        return (topics.isEmpty() ? null : topics.get(0));
     }
 
     private List<Topic> getTopicsData(Seq<String> topicNames) {
@@ -80,7 +81,7 @@ public class MetadataObserver {
             Map<Object, Seq<Object>> partitionMap = topicPartitions.get(topicName).get();
             int numPartitions = partitionMap.size();
             if (numPartitions == 0)
-                throw new NotFoundException();
+                continue;
             Topic topic = new Topic(topicName, numPartitions);
             topics.add(topic);
         }

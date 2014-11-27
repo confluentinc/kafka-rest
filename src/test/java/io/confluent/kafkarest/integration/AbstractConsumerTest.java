@@ -16,9 +16,12 @@
 package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.Config;
+import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.EntityUtils;
+import io.confluent.kafkarest.resources.ConsumersResource;
+import io.confluent.kafkarest.resources.TopicsResource;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -32,6 +35,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
@@ -66,7 +70,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
         // Start consuming. Since production hasn't started yet, this is expected to timeout.
         Response response = request(instanceResponse.getBaseUri() + "/topics/" + topic).get();
         if (expectFailure) {
-            assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+            assertErrorResponse(Response.Status.NOT_FOUND, response, TopicsResource.MESSAGE_TOPIC_NOT_FOUND);
         } else {
             List<ConsumerRecord> consumed = response.readEntity(new GenericType<List<ConsumerRecord>>() {});
             assertEquals(0, consumed.size());
@@ -111,11 +115,11 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     protected void consumeForNotFoundError(String instanceUri, String topic) {
         Response response = request(instanceUri + "/topics/" + topic)
                 .get();
-        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+        assertErrorResponse(Response.Status.NOT_FOUND, response, ConsumerManager.MESSAGE_CONSUMER_INSTANCE_NOT_FOUND);
     }
 
     protected void deleteConsumer(String instanceUri) {
         Response response = request(instanceUri).delete();
-        assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatus());
+        assertErrorResponse(Response.Status.NO_CONTENT, response, null);
     }
 }

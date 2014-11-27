@@ -150,7 +150,7 @@ public abstract class ClusterTestHarness {
 
     protected Invocation.Builder request(String path, String templateName, Object templateValue) {
         Client client = ClientBuilder.newClient();
-        KafkaRestServer.configureApplication(client);
+        KafkaRestServer.configureApplication(client, null);
         WebTarget target;
         URI pathUri = null;
         try {

@@ -34,6 +34,8 @@ import java.util.Vector;
 
 @Produces(MediaType.APPLICATION_JSON)
 public class PartitionsResource {
+    public final static String MESSAGE_PARTITION_NOT_FOUND = "Partition not found.";
+
     private final Context ctx;
     private final String topic;
 
@@ -52,7 +54,7 @@ public class PartitionsResource {
     public Partition getPartition(@PathParam("partition") int partition) {
         Partition part = ctx.getMetadataObserver().getTopicPartition(topic, partition);
         if (part == null)
-            throw new NotFoundException();
+            throw new NotFoundException(MESSAGE_PARTITION_NOT_FOUND);
         return part;
     }
 
@@ -60,7 +62,7 @@ public class PartitionsResource {
     @Path("/{partition}")
     public void produce(final @Suspended AsyncResponse asyncResponse, final @PathParam("partition") int partition, @Valid PartitionProduceRequest request) {
         if (!ctx.getMetadataObserver().partitionExists(topic, partition))
-            throw new NotFoundException();
+            throw new NotFoundException(MESSAGE_PARTITION_NOT_FOUND);
 
         ctx.getProducerPool().produce(
                 new ProducerRecordProxyCollection(topic, partition, request.getRecords()),

@@ -23,6 +23,9 @@ import java.util.Properties;
 public class Config {
     public Time time;
 
+    public boolean debug;
+    public static final String DEFAULT_DEBUG = "false";
+
     public int port;
     public static final String DEFAULT_PORT = "8080";
 
@@ -64,6 +67,8 @@ public class Config {
 
     public Config(Properties props) throws ConfigurationException {
         time = new SystemTime();
+
+        debug = Boolean.parseBoolean(props.getProperty("debug", DEFAULT_DEBUG));
 
         port = Integer.parseInt(props.getProperty("port", DEFAULT_PORT));
         zookeeperConnect = props.getProperty("zookeeper.connect", DEFAULT_ZOOKEEPER_CONNECT);

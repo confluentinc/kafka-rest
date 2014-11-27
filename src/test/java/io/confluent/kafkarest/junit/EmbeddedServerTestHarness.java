@@ -58,7 +58,7 @@ public abstract class EmbeddedServerTestHarness {
                 @Override
                 protected Application configure() {
                     ResourceConfig config = new ResourceConfig();
-                    KafkaRestServer.configureApplication(config);
+                    KafkaRestServer.configureApplication(config, null);
                     for (Object resource : resources)
                         config.register(resource);
                     for (Class<?> resource : resourceClasses)
@@ -67,7 +67,7 @@ public abstract class EmbeddedServerTestHarness {
                 }
                 @Override
                 protected void configureClient(ClientConfig config) {
-                    KafkaRestServer.configureApplication(config);
+                    KafkaRestServer.configureApplication(config, null);
                 }
             };
         }
