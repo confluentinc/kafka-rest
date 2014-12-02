@@ -37,6 +37,10 @@ public class TestUtils {
             new RequestMediaType(null, Versions.KAFKA_MOST_SPECIFIC_DEFAULT)
     };
 
+    public static final String[] V1_INVALID_MEDIATYPES = {
+            "text/plain"
+    };
+
     /**
      * Asserts that the response received an HTTP 200 status code, as well as some optional requirements such as the Content-Type.
      */

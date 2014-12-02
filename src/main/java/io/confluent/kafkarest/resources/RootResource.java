@@ -1,0 +1,38 @@
+/**
+ * Copyright 2014 Confluent Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.confluent.kafkarest.resources;
+
+import io.confluent.kafkarest.Versions;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import java.util.HashMap;
+import java.util.Map;
+
+@Path("/")
+@Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED, Versions.JSON_WEIGHTED})
+public class RootResource {
+
+    @GET
+    public Map<String,String> get() {
+        // Currently this just provides an endpoint that's a nop and can be used to check for liveness and can be used
+        // for tests that need to test the server setup rather than the functionality of a specific resource. Some APIs
+        // provide a listing of endpoints as their root resource; it might be nice to provide that.
+        return new HashMap<String,String>();
+    }
+
+}
