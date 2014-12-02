@@ -15,6 +15,7 @@
  */
 package io.confluent.kafkarest.integration;
 
+import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.*;
 import io.confluent.kafkarest.resources.TopicsResource;
 import kafka.consumer.*;
@@ -30,7 +31,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
 
-import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
+import static io.confluent.kafkarest.TestUtils.*;
 import static org.junit.Assert.assertEquals;
 
 public class ProducerTest extends ClusterTestHarness {
@@ -104,9 +105,11 @@ public class ProducerTest extends ClusterTestHarness {
     private void testProduceToTopic(List<TopicProduceRecord> records, List<PartitionOffset> offsetResponses) {
         TopicProduceRequest payload = new TopicProduceRequest();
         payload.setRecords(records);
-        final ProduceResponse response = request("/topics/" + topicName)
-                .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE), ProduceResponse.class);
-        assertEquals(offsetResponses, response.getOffsets());
+        Response response = request("/topics/" + topicName)
+                .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+        assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        final ProduceResponse produceResponse = response.readEntity(ProduceResponse.class);
+        assertEquals(offsetResponses, produceResponse.getOffsets());
         assertTopicContains(payload.getRecords(), null);
     }
 
@@ -133,7 +136,7 @@ public class ProducerTest extends ClusterTestHarness {
         ));
         final Response response = request("/topics/topicdoesnotexist")
                 .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
-        assertErrorResponse(Response.Status.NOT_FOUND, response, TopicsResource.MESSAGE_TOPIC_NOT_FOUND);
+        assertErrorResponse(Response.Status.NOT_FOUND, response, TopicsResource.MESSAGE_TOPIC_NOT_FOUND, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     }
 
 
@@ -141,9 +144,11 @@ public class ProducerTest extends ClusterTestHarness {
     private void testProduceToPartition(List<ProduceRecord> records, PartitionOffset offsetResponse) {
         PartitionProduceRequest payload = new PartitionProduceRequest();
         payload.setRecords(records);
-        final PartitionOffset response = request("/topics/" + topicName + "/partitions/0")
-                .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE), PartitionOffset.class);
-        assertEquals(offsetResponse, response);
+        Response response = request("/topics/" + topicName + "/partitions/0")
+                .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+        assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        final PartitionOffset poffsetResponse = response.readEntity(PartitionOffset.class);
+        assertEquals(offsetResponse, poffsetResponse);
         assertTopicContains(payload.getRecords(), (Integer)0);
     }
 

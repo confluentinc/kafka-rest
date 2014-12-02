@@ -18,21 +18,19 @@ package io.confluent.kafkarest.resources;
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.ProducerRecordProxyCollection;
+import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
-import io.confluent.kafkarest.entities.ProduceResponse;
 
 import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
-import javax.ws.rs.core.MediaType;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
-@Produces(MediaType.APPLICATION_JSON)
+@Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED, Versions.JSON_WEIGHTED})
 public class PartitionsResource {
     public final static String MESSAGE_PARTITION_NOT_FOUND = "Partition not found.";
 
@@ -46,12 +44,14 @@ public class PartitionsResource {
 
     @GET
     public List<Partition> list() {
+        checkTopicExists();
         return ctx.getMetadataObserver().getTopicPartitions(topic);
     }
 
     @GET
     @Path("/{partition}")
     public Partition getPartition(@PathParam("partition") int partition) {
+        checkTopicExists();
         Partition part = ctx.getMetadataObserver().getTopicPartition(topic, partition);
         if (part == null)
             throw new NotFoundException(MESSAGE_PARTITION_NOT_FOUND);
@@ -61,6 +61,7 @@ public class PartitionsResource {
     @POST
     @Path("/{partition}")
     public void produce(final @Suspended AsyncResponse asyncResponse, final @PathParam("partition") int partition, @Valid PartitionProduceRequest request) {
+        checkTopicExists();
         if (!ctx.getMetadataObserver().partitionExists(topic, partition))
             throw new NotFoundException(MESSAGE_PARTITION_NOT_FOUND);
 
@@ -77,5 +78,10 @@ public class PartitionsResource {
                     }
                 }
         );
+    }
+
+    private void checkTopicExists() {
+        if (!ctx.getMetadataObserver().topicExists(topic))
+            throw new NotFoundException(TopicsResource.MESSAGE_TOPIC_NOT_FOUND);
     }
 }

@@ -16,19 +16,19 @@
 package io.confluent.kafkarest.resources;
 
 import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BrokerList;
 
 import javax.validation.Valid;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 
 /**
  * Resource representing the collection of all available brokers.
  */
 @Path("/brokers")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED, Versions.JSON_WEIGHTED})
 public class BrokersResource {
     private final Context ctx;
 

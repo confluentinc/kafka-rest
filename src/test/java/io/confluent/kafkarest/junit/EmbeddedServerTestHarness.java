@@ -22,6 +22,7 @@ import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;
 import org.junit.Before;
 
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.Application;
 import java.util.List;
 import java.util.Vector;
@@ -72,5 +73,13 @@ public abstract class EmbeddedServerTestHarness {
             };
         }
         return test;
+    }
+
+
+    protected Invocation.Builder request(String target, String mediatype) {
+        Invocation.Builder builder = getJerseyTest().target(target).request();
+        if (mediatype != null)
+            builder.accept(mediatype);
+        return builder;
     }
 }

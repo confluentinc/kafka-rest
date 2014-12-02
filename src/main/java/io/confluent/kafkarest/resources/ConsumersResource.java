@@ -17,6 +17,7 @@ package io.confluent.kafkarest.resources;
 
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 
@@ -24,12 +25,11 @@ import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
 @Path("/consumers")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED, Versions.JSON_WEIGHTED})
 public class ConsumersResource {
     private final Context ctx;
 

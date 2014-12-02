@@ -16,8 +16,10 @@
 package io.confluent.kafkarest.exceptions;
 
 import io.confluent.kafkarest.Config;
+import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ErrorMessage;
 
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -33,6 +35,7 @@ import java.io.PrintStream;
  * is enabled.
  */
 @Provider
+@Produces({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON})
 public abstract class DebuggableExceptionMapper<E extends Throwable> implements ExceptionMapper<E> {
     Config config;
 
@@ -70,7 +73,6 @@ public abstract class DebuggableExceptionMapper<E extends Throwable> implements 
 
         return Response.status(status)
                 .entity(message)
-                .type(MediaType.APPLICATION_JSON)
                 .build();
     }
 

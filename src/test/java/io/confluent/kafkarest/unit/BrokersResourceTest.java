@@ -21,14 +21,15 @@ import io.confluent.kafkarest.junit.EmbeddedServerTestHarness;
 import io.confluent.kafkarest.resources.BrokersResource;
 import org.easymock.EasyMock;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static io.confluent.kafkarest.TestUtils.*;
 
 public class BrokersResourceTest extends EmbeddedServerTestHarness {
     private Config config;
@@ -53,13 +54,17 @@ public class BrokersResourceTest extends EmbeddedServerTestHarness {
 
     @Test
     public void testList() {
-        final List<Integer> brokerIds = Arrays.asList(1, 2, 3);
-        EasyMock.expect(mdObserver.getBrokerIds()).andReturn(brokerIds);
-        EasyMock.replay(mdObserver);
+        for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
+            final List<Integer> brokerIds = Arrays.asList(1, 2, 3);
+            EasyMock.expect(mdObserver.getBrokerIds()).andReturn(brokerIds);
+            EasyMock.replay(mdObserver);
 
-        final BrokerList returnedBrokerIds = getJerseyTest().target("/brokers")
-                .request().get(new GenericType<BrokerList>(){});
-        assertEquals(brokerIds, returnedBrokerIds.getBrokers());
-        EasyMock.verify(mdObserver);
+            Response response = request("/brokers", mediatype.header).get();
+            assertOKResponse(response, mediatype.expected);
+            final BrokerList returnedBrokerIds = response.readEntity(new GenericType<BrokerList>() {});
+            assertEquals(brokerIds, returnedBrokerIds.getBrokers());
+            EasyMock.verify(mdObserver);
+            EasyMock.reset(mdObserver, producerPool);
+        }
     }
 }

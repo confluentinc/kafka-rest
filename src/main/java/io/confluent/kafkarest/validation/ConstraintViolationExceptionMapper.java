@@ -15,22 +15,41 @@
  */
 package io.confluent.kafkarest.validation;
 
+import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ValidationErrorMessage;
 
 import javax.validation.ConstraintViolationException;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 @Provider
+@Produces({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON})
 public class ConstraintViolationExceptionMapper implements ExceptionMapper<ConstraintViolationException> {
-    public static final int UNPROCESSABLE_ENTITY = 422;
+    public static final int UNPROCESSABLE_ENTITY_CODE = 422;
+    public static final Response.StatusType UNPROCESSABLE_ENTITY = new Response.StatusType() {
+        @Override
+        public int getStatusCode() {
+            return UNPROCESSABLE_ENTITY_CODE;
+        }
+
+        @Override
+        public Response.Status.Family getFamily() {
+            return Response.Status.Family.CLIENT_ERROR;
+        }
+
+        @Override
+        public String getReasonPhrase() {
+            return "Unprocessable entity";
+        }
+    };
 
     @Override
     public Response toResponse(ConstraintViolationException exception) {
         final ValidationErrorMessage message = new ValidationErrorMessage(exception.getConstraintViolations());
 
-        return Response.status(UNPROCESSABLE_ENTITY)
+        return Response.status(UNPROCESSABLE_ENTITY_CODE)
                 .entity(message)
                 .build();
     }

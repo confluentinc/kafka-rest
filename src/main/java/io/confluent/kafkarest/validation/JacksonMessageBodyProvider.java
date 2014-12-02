@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+import io.confluent.kafkarest.Versions;
 
 import javax.validation.ConstraintViolationException;
 import javax.ws.rs.Consumes;
@@ -39,8 +40,8 @@ import java.lang.reflect.Type;
  * multiple times).
  */
 @Provider
-@Consumes(MediaType.WILDCARD) // NOTE: required to support "non-standard" JSON variants
-@Produces(MediaType.WILDCARD)
+@Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON})
+@Produces({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON})
 public class JacksonMessageBodyProvider extends JacksonJaxbJsonProvider {
 
     public JacksonMessageBodyProvider() {
@@ -57,7 +58,7 @@ public class JacksonMessageBodyProvider extends JacksonJaxbJsonProvider {
         try {
             return super.readFrom(type, genericType, annotations, mediaType, httpHeaders, entityStream);
         } catch (UnrecognizedPropertyException e) {
-            throw ConstraintViolations.simpleException("Unrecognized field:" + e.getPropertyName());
+            throw ConstraintViolations.simpleException("Unrecognized field: " + e.getPropertyName());
         } catch (JsonMappingException e) {
             // This needs to handle 2 JSON parsing error cases. Normally you would expect to see a JsonMappingException
             // because the data couldn't be parsed, but it can also occur when the raw JSON is valid and satisfies the

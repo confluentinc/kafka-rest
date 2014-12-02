@@ -18,6 +18,7 @@ package io.confluent.kafkarest.resources;
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.ProducerRecordProxyCollection;
+import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
 import io.confluent.kafkarest.entities.ProduceResponse;
@@ -27,13 +28,12 @@ import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
-import javax.ws.rs.core.MediaType;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
 @Path("/topics")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED, Versions.JSON_WEIGHTED})
 public class TopicsResource {
     public final static String MESSAGE_TOPIC_NOT_FOUND = "Topic not found.";
 
@@ -59,8 +59,6 @@ public class TopicsResource {
 
     @Path("/{topic}/partitions")
     public PartitionsResource getPartitions(@PathParam("topic") String topicName) {
-        if (!ctx.getMetadataObserver().topicExists(topicName))
-            throw new NotFoundException(MESSAGE_TOPIC_NOT_FOUND);
         return new PartitionsResource(ctx, topicName);
     }
 

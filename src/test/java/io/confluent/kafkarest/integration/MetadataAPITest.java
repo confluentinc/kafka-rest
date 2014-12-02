@@ -15,6 +15,7 @@
  */
 package io.confluent.kafkarest.integration;
 
+import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BrokerList;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.Topic;
@@ -31,7 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
+import static io.confluent.kafkarest.TestUtils.*;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -59,46 +60,58 @@ public class MetadataAPITest extends ClusterTestHarness {
     @Test
     public void testBrokers() throws InterruptedException {
         // Listing
-        final BrokerList brokers = request("/brokers").get(BrokerList.class);
+        Response response = request("/brokers").get();
+        assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        final BrokerList brokers = response.readEntity(BrokerList.class);
         assertEquals(new BrokerList(Arrays.asList(0, 1, 2)), brokers);
     }
 
     @Test
     public void testTopicsList() throws InterruptedException {
         // Listing
-        final List<Topic> topicsResponse = request("/topics").get(new GenericType<List<Topic>>() {});
+        Response response = request("/topics").get();
+        assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        final List<Topic> topicsResponse = response.readEntity(new GenericType<List<Topic>>() {});
         assertEquals(Arrays.asList(topic1, topic2), topicsResponse);
 
         // Get topic
-        final Topic topic1Response = request("/topics/{topic}", "topic", topic1Name).get(Topic.class);
+        Response response1 = request("/topics/{topic}", "topic", topic1Name).get();
+        assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        final Topic topic1Response = response1.readEntity(Topic.class);
         assertEquals(topic1, topic1Response);
 
         // Get invalid topic
         final Response invalidResponse = request("/topics/{topic}", "topic", "topicdoesntexist").get();
-        assertErrorResponse(Response.Status.NOT_FOUND, invalidResponse, TopicsResource.MESSAGE_TOPIC_NOT_FOUND);
+        assertErrorResponse(Response.Status.NOT_FOUND, invalidResponse, TopicsResource.MESSAGE_TOPIC_NOT_FOUND, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     }
 
     @Test
     public void testPartitionsList() throws InterruptedException {
         // Listing
-        final List<Partition> partitions1Response = request("/topics/"+topic1Name+"/partitions").get(new GenericType<List<Partition>>(){});
+        Response response = request("/topics/"+topic1Name+"/partitions").get();
+        assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        final List<Partition> partitions1Response  = response.readEntity(new GenericType<List<Partition>>(){});
         // Just verify some basic properties because the exact values can vary based on replica assignment, leader election
         assertEquals(topic1Partitions, partitions1Response.size());
         assertEquals(numReplicas, partitions1Response.get(0).getReplicas().size());
 
-        final List<Partition> partitions2Response = request("/topics/"+topic2Name+"/partitions").get(new GenericType<List<Partition>>(){});
+        response = request("/topics/"+topic2Name+"/partitions").get();
+        assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        final List<Partition> partitions2Response = response.readEntity(new GenericType<List<Partition>>(){});
         assertEquals(topic2Partitions, partitions2Response.size());
         assertEquals(numReplicas, partitions2Response.get(0).getReplicas().size());
         assertEquals(numReplicas, partitions2Response.get(1).getReplicas().size());
 
 
         // Get single partition
-        final Partition getPartitionResponse = request("/topics/"+topic1Name+"/partitions/0").get(Partition.class);
+        response = request("/topics/"+topic1Name+"/partitions/0").get();
+        assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        final Partition getPartitionResponse = response.readEntity(Partition.class);
         assertEquals(0, getPartitionResponse.getPartition());
         assertEquals(numReplicas, getPartitionResponse.getReplicas().size());
 
         // Get invalid partition
         final Response invalidResponse = request("/topics/topic1/partitions/1000").get();
-        assertErrorResponse(Response.Status.NOT_FOUND, invalidResponse, PartitionsResource.MESSAGE_PARTITION_NOT_FOUND);
+        assertErrorResponse(Response.Status.NOT_FOUND, invalidResponse, PartitionsResource.MESSAGE_PARTITION_NOT_FOUND, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     }
 }

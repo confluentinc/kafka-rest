@@ -15,12 +15,11 @@
  */
 package io.confluent.kafkarest.integration;
 
-import io.confluent.kafkarest.Config;
 import io.confluent.kafkarest.ConsumerManager;
+import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.EntityUtils;
-import io.confluent.kafkarest.resources.ConsumersResource;
 import io.confluent.kafkarest.resources.TopicsResource;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -36,6 +35,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
+import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
@@ -70,8 +70,9 @@ public class AbstractConsumerTest extends ClusterTestHarness {
         // Start consuming. Since production hasn't started yet, this is expected to timeout.
         Response response = request(instanceResponse.getBaseUri() + "/topics/" + topic).get();
         if (expectFailure) {
-            assertErrorResponse(Response.Status.NOT_FOUND, response, TopicsResource.MESSAGE_TOPIC_NOT_FOUND);
+            assertErrorResponse(Response.Status.NOT_FOUND, response, TopicsResource.MESSAGE_TOPIC_NOT_FOUND, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
         } else {
+            assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
             List<ConsumerRecord> consumed = response.readEntity(new GenericType<List<ConsumerRecord>>() {});
             assertEquals(0, consumed.size());
         }
@@ -80,9 +81,9 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     }
 
     protected void consumeMessages(String instanceUri, String topic, List<ProducerRecord> records) {
-        List<ConsumerRecord> consumed = request(instanceUri + "/topics/" + topic)
-                .get(new GenericType<List<ConsumerRecord>>() {
-                });
+        Response response = request(instanceUri + "/topics/" + topic).get();
+        assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        List<ConsumerRecord> consumed = response.readEntity(new GenericType<List<ConsumerRecord>>() {});
         assertEquals(records.size(), consumed.size());
 
         // Since this is used for unkeyed messages, this can't rely on ordering of messages
@@ -100,8 +101,9 @@ public class AbstractConsumerTest extends ClusterTestHarness {
 
     protected void consumeForTimeout(String instanceUri, String topic) {
         long started = System.currentTimeMillis();
-        List<ConsumerRecord> consumed = request(instanceUri + "/topics/" + topic)
-                .get(new GenericType<List<ConsumerRecord>>(){});
+        Response response = request(instanceUri + "/topics/" + topic).get();
+        assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        List<ConsumerRecord> consumed =response.readEntity(new GenericType<List<ConsumerRecord>>(){});
         long finished = System.currentTimeMillis();
         assertEquals(0, consumed.size());
 
@@ -115,11 +117,11 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     protected void consumeForNotFoundError(String instanceUri, String topic) {
         Response response = request(instanceUri + "/topics/" + topic)
                 .get();
-        assertErrorResponse(Response.Status.NOT_FOUND, response, ConsumerManager.MESSAGE_CONSUMER_INSTANCE_NOT_FOUND);
+        assertErrorResponse(Response.Status.NOT_FOUND, response, ConsumerManager.MESSAGE_CONSUMER_INSTANCE_NOT_FOUND, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     }
 
     protected void deleteConsumer(String instanceUri) {
         Response response = request(instanceUri).delete();
-        assertErrorResponse(Response.Status.NO_CONTENT, response, null);
+        assertErrorResponse(Response.Status.NO_CONTENT, response, null, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     }
 }
