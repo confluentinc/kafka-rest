@@ -40,12 +40,21 @@ import java.lang.reflect.Type;
  * multiple times).
  */
 @Provider
-@Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON})
-@Produces({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON})
+@Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST})
+// Note that although we don't actually want this to produce application/octet-stream (GENERIC_REQUEST), we include it here
+// so test clients are able to get this class to automatically serialize request data. The annotations on resources and
+// the tests verify that we don't allow that content type for API output.
+@Produces({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST})
 public class JacksonMessageBodyProvider extends JacksonJaxbJsonProvider {
 
     public JacksonMessageBodyProvider() {
         setMapper(new ObjectMapper());
+    }
+
+    @Override
+    protected boolean hasMatchingMediaType(MediaType mediaType) {
+        return super.hasMatchingMediaType(mediaType) ||
+                (mediaType != null && mediaType.getType().equals("application") && mediaType.getSubtype().equals("octet-stream"));
     }
 
     @Override

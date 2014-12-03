@@ -20,6 +20,7 @@ import io.confluent.kafkarest.junit.EmbeddedServerTestHarness;
 import io.confluent.kafkarest.resources.RootResource;
 import org.junit.Test;
 
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 
@@ -49,7 +50,7 @@ public class RootResourceTest extends EmbeddedServerTestHarness {
     }
 
     @Test
-    public void testInvalidMediatype() {
+    public void testInvalidAcceptMediatype() {
         for(String mediatype : TestUtils.V1_INVALID_MEDIATYPES) {
             Response response = request("/", mediatype).get();
             // We would like to check for a normal error response, but Jersey/JAX-RS and possibly the underlying
@@ -59,6 +60,19 @@ public class RootResourceTest extends EmbeddedServerTestHarness {
             assertEquals(Response.Status.NOT_ACCEPTABLE.getStatusCode(), response.getStatus());
             // These verify that we're seeing the *expected* but *incorrect* behavior.
             assertNull(response.getMediaType());
+        }
+    }
+
+    @Test
+    public void testInvalidEntityContentType() {
+        Response.Status UNSUPPORTED_MEDIA_TYPE = Response.Status.UNSUPPORTED_MEDIA_TYPE;
+        for(String mediatype : TestUtils.V1_INVALID_REQUEST_MEDIATYPES) {
+            Response response = request("/", Versions.KAFKA_MOST_SPECIFIC_DEFAULT + ", " + Versions.GENERIC_REQUEST).post(Entity.entity("", mediatype));
+            assertErrorResponse(
+                    UNSUPPORTED_MEDIA_TYPE , response,
+                    "HTTP " + UNSUPPORTED_MEDIA_TYPE.getStatusCode() + " " + UNSUPPORTED_MEDIA_TYPE.getReasonPhrase(),
+                    Versions.KAFKA_MOST_SPECIFIC_DEFAULT
+            );
         }
     }
 }

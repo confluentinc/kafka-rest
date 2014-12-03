@@ -54,7 +54,7 @@ public abstract class DebuggableExceptionMapper<E extends Throwable> implements 
      * @param msg
      * @return
      */
-    public Response createResponse(Throwable exc, Response.Status status, String msg) {
+    public Response.ResponseBuilder createResponse(Throwable exc, Response.Status status, String msg) {
         String readableMessage = msg;
         if (config != null && config.debug) {
             readableMessage += " " + exc.getClass().getName() + ": " + exc.getMessage();
@@ -72,8 +72,7 @@ public abstract class DebuggableExceptionMapper<E extends Throwable> implements 
         final ErrorMessage message = new ErrorMessage(status.getStatusCode(), readableMessage);
 
         return Response.status(status)
-                .entity(message)
-                .build();
+                .entity(message);
     }
 
 }

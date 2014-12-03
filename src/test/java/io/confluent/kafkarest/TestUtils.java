@@ -37,7 +37,18 @@ public class TestUtils {
             new RequestMediaType(null, Versions.KAFKA_MOST_SPECIFIC_DEFAULT)
     };
 
+    // Response content types we should never allow to be produced
     public static final String[] V1_INVALID_MEDIATYPES = {
+            "text/plain",
+            "application/octet-stream"
+    };
+
+    public static final String[] V1_REQUEST_ENTITY_TYPES = {
+        Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST
+    };
+
+    // Request content types we'll always ignore
+    public static final String[] V1_INVALID_REQUEST_MEDIATYPES = {
             "text/plain"
     };
 

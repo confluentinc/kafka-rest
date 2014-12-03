@@ -30,6 +30,6 @@ public class GenericExceptionMapper extends DebuggableExceptionMapper<Throwable>
     public Response toResponse(Throwable exc) {
         // There's no more specific information about the exception that can be passed back to the user, so we can only
         // use the generic message. Debug mode will append the exception info.
-        return createResponse(exc, Response.Status.INTERNAL_SERVER_ERROR, Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase());
+        return createResponse(exc, Response.Status.INTERNAL_SERVER_ERROR, Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase()).build();
     }
 }

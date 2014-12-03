@@ -61,7 +61,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     }
     protected String startConsumeMessages(String groupName, String topic, boolean expectFailure) {
         CreateConsumerInstanceResponse instanceResponse = request("/consumers/" + groupName)
-                .post(Entity.entity(null, MediaType.APPLICATION_JSON_TYPE), CreateConsumerInstanceResponse.class);
+                .post(Entity.entity(null, Versions.KAFKA_MOST_SPECIFIC_DEFAULT), CreateConsumerInstanceResponse.class);
         assertNotNull(instanceResponse.getInstanceId());
         assertTrue(instanceResponse.getInstanceId().length() > 0);
         assertTrue("Base URI should contain the consumer instance ID",

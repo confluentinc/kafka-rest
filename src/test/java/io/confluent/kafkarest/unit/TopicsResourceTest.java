@@ -165,7 +165,7 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
         }
     }
 
-    private Response produceToTopic(String topic, String acceptHeader, List<TopicProduceRecord> records, final Map<Integer, Long> resultOffsets) {
+    private Response produceToTopic(String topic, String acceptHeader, String requestMediatype, List<TopicProduceRecord> records, final Map<Integer, Long> resultOffsets) {
         final TopicProduceRequest request = new TopicProduceRequest();
         request.setRecords(records);
         final Capture<ProducerPool.ProduceRequestCallback> produceCallback = new Capture<>();
@@ -184,7 +184,7 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
         EasyMock.replay(mdObserver, producerPool);
 
         Response response = request("/topics/" + topic, acceptHeader)
-                .post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
+                .post(Entity.entity(request, requestMediatype));
 
         EasyMock.verify(mdObserver, producerPool);
 
@@ -194,91 +194,103 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
     @Test
     public void testProduceToTopicOnlyValues() {
         for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-            Response rawResponse = produceToTopic("topic1", mediatype.header, produceRecordsOnlyValues, produceOffsets);
-            assertOKResponse(rawResponse, mediatype.expected);
-            ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+            for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
+                Response rawResponse = produceToTopic("topic1", mediatype.header, requestMediatype, produceRecordsOnlyValues, produceOffsets);
+                assertOKResponse(rawResponse, mediatype.expected);
+                ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
 
-            assertEquals(
-                    Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
-                    response.getOffsets()
-            );
+                assertEquals(
+                        Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
+                        response.getOffsets()
+                );
 
-            EasyMock.reset(mdObserver, producerPool);
+                EasyMock.reset(mdObserver, producerPool);
+            }
         }
     }
 
     @Test
     public void testProduceToTopicByKey() {
         for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-            Response rawResponse = produceToTopic("topic1", mediatype.header, produceRecordsWithKeys, produceOffsets);
-            assertOKResponse(rawResponse, mediatype.expected);
-            ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+            for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
+                Response rawResponse = produceToTopic("topic1", mediatype.header, requestMediatype, produceRecordsWithKeys, produceOffsets);
+                assertOKResponse(rawResponse, mediatype.expected);
+                ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
 
-            assertEquals(
-                    Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
-                    response.getOffsets()
-            );
+                assertEquals(
+                        Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
+                        response.getOffsets()
+                );
 
-            EasyMock.reset(mdObserver, producerPool);
+                EasyMock.reset(mdObserver, producerPool);
+            }
         }
     }
 
     @Test
     public void testProduceToTopicByPartition() {
         for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-            Response rawResponse = produceToTopic("topic1", mediatype.header, produceRecordsWithPartitions, produceOffsets);
-            assertOKResponse(rawResponse, mediatype.expected);
-            ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+            for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
+                Response rawResponse = produceToTopic("topic1", mediatype.header, requestMediatype, produceRecordsWithPartitions, produceOffsets);
+                assertOKResponse(rawResponse, mediatype.expected);
+                ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
 
-            assertEquals(
-                    Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
-                    response.getOffsets()
-            );
+                assertEquals(
+                        Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
+                        response.getOffsets()
+                );
 
-            EasyMock.reset(mdObserver, producerPool);
+                EasyMock.reset(mdObserver, producerPool);
+            }
         }
     }
 
     @Test
     public void testProduceToTopicWithPartitionAndKey() {
         for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-            Response rawResponse = produceToTopic("topic1", mediatype.header, produceRecordsWithPartitionsAndKeys, produceOffsets);
-            assertOKResponse(rawResponse, mediatype.expected);
-            ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+            for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
+                Response rawResponse = produceToTopic("topic1", mediatype.header, requestMediatype, produceRecordsWithPartitionsAndKeys, produceOffsets);
+                assertOKResponse(rawResponse, mediatype.expected);
+                ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
 
-            assertEquals(
-                    Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
-                    response.getOffsets()
-            );
+                assertEquals(
+                        Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
+                        response.getOffsets()
+                );
 
-            EasyMock.reset(mdObserver, producerPool);
+                EasyMock.reset(mdObserver, producerPool);
+            }
         }
     }
 
     @Test
     public void testProduceToTopicFailure() {
         for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-            // null offsets triggers a generic exception
-            Response rawResponse = produceToTopic("topic1", mediatype.header, produceRecordsWithKeys, null);
-            assertErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, rawResponse, Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase(), mediatype.expected);
+            for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
+                // null offsets triggers a generic exception
+                Response rawResponse = produceToTopic("topic1", mediatype.header, requestMediatype, produceRecordsWithKeys, null);
+                assertErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, rawResponse, Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase(), mediatype.expected);
 
-            EasyMock.reset(mdObserver, producerPool);
+                EasyMock.reset(mdObserver, producerPool);
+            }
         }
     }
 
     @Test
     public void testProduceInvalidRequest() {
         for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-            Response response = request("/topics/topic1", mediatype.header)
-                    .post(Entity.entity("{}", MediaType.APPLICATION_JSON_TYPE));
-            assertEquals(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE, response.getStatus());
-            assertEquals(mediatype.expected, response.getMediaType().toString());
+            for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
+                Response response = request("/topics/topic1", mediatype.header)
+                        .post(Entity.entity("{}", requestMediatype));
+                assertEquals(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE, response.getStatus());
+                assertEquals(mediatype.expected, response.getMediaType().toString());
 
-            // Invalid base64 encoding
-            response = request("/topics/topic1", mediatype.header)
-                    .post(Entity.entity("{\"records\":[{\"value\":\"aGVsbG8==\"}]}", MediaType.APPLICATION_JSON_TYPE));
-            assertEquals(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE, response.getStatus());
-            assertEquals(mediatype.expected, response.getMediaType().toString());
+                // Invalid base64 encoding
+                response = request("/topics/topic1", mediatype.header)
+                        .post(Entity.entity("{\"records\":[{\"value\":\"aGVsbG8==\"}]}", requestMediatype));
+                assertEquals(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE, response.getStatus());
+                assertEquals(mediatype.expected, response.getMediaType().toString());
+            }
         }
     }
 }

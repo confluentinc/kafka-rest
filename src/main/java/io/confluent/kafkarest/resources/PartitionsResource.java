@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED, Versions.JSON_WEIGHTED})
+@Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST})
 public class PartitionsResource {
     public final static String MESSAGE_PARTITION_NOT_FOUND = "Partition not found.";
 

@@ -74,40 +74,44 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
     @Test
     public void testCreateInstanceRequestsNewInstance() {
         for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-            expectCreateGroup();
-            EasyMock.replay(consumerManager);
+            for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
+                expectCreateGroup();
+                EasyMock.replay(consumerManager);
 
-            Response response = request("/consumers/" + groupName, mediatype.header)
-                    .post(Entity.entity(null, MediaType.APPLICATION_JSON_TYPE));
-            assertOKResponse(response, mediatype.expected);
-            final CreateConsumerInstanceResponse ciResponse = response.readEntity(CreateConsumerInstanceResponse.class);
-            assertEquals(instanceId, ciResponse.getInstanceId());
-            assertThat(ciResponse.getBaseUri(), allOf(startsWith("http://"), containsString(instancePath)));
+                Response response = request("/consumers/" + groupName, mediatype.header)
+                        .post(Entity.entity(null, requestMediatype));
+                assertOKResponse(response, mediatype.expected);
+                final CreateConsumerInstanceResponse ciResponse = response.readEntity(CreateConsumerInstanceResponse.class);
+                assertEquals(instanceId, ciResponse.getInstanceId());
+                assertThat(ciResponse.getBaseUri(), allOf(startsWith("http://"), containsString(instancePath)));
 
-            EasyMock.verify(consumerManager);
-            EasyMock.reset(consumerManager);
+                EasyMock.verify(consumerManager);
+                EasyMock.reset(consumerManager);
+            }
         }
     }
 
     @Test
     public void testInvalidInstanceOrTopic() {
         for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-            // Trying to access either an invalid consumer instance or a missing topic should trigger an error
-            expectCreateGroup();
-            expectReadTopic(topicName, null, new NotFoundException(not_found_message));
-            EasyMock.replay(consumerManager);
+            for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
+                // Trying to access either an invalid consumer instance or a missing topic should trigger an error
+                expectCreateGroup();
+                expectReadTopic(topicName, null, new NotFoundException(not_found_message));
+                EasyMock.replay(consumerManager);
 
-            Response response = request("/consumers/" + groupName, mediatype.header)
-                    .post(Entity.entity(null, MediaType.APPLICATION_JSON_TYPE));
-            assertOKResponse(response, mediatype.expected);
-            final CreateConsumerInstanceResponse createResponse = response.readEntity(CreateConsumerInstanceResponse.class);
+                Response response = request("/consumers/" + groupName, mediatype.header)
+                        .post(Entity.entity(null, requestMediatype));
+                assertOKResponse(response, mediatype.expected);
+                final CreateConsumerInstanceResponse createResponse = response.readEntity(CreateConsumerInstanceResponse.class);
 
-            final Response readResponse = request(instanceBasePath(createResponse) + "/topics/" + topicName, mediatype.header)
-                    .get();
-            assertErrorResponse(Response.Status.NOT_FOUND, readResponse, not_found_message, mediatype.expected);
+                final Response readResponse = request(instanceBasePath(createResponse) + "/topics/" + topicName, mediatype.header)
+                        .get();
+                assertErrorResponse(Response.Status.NOT_FOUND, readResponse, not_found_message, mediatype.expected);
 
-            EasyMock.verify(consumerManager);
-            EasyMock.reset(consumerManager);
+                EasyMock.verify(consumerManager);
+                EasyMock.reset(consumerManager);
+            }
         }
     }
 
@@ -120,41 +124,46 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
         );
 
         for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-            expectCreateGroup();
-            expectReadTopic(topicName, expected, null);
-            EasyMock.replay(consumerManager);
+            for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
+                expectCreateGroup();
+                expectReadTopic(topicName, expected, null);
+                EasyMock.replay(consumerManager);
 
-            Response response = request("/consumers/" + groupName, mediatype.header)
-                    .post(Entity.entity(null, MediaType.APPLICATION_JSON_TYPE));
-            assertOKResponse(response, mediatype.expected);
-            final CreateConsumerInstanceResponse createResponse = response.readEntity(CreateConsumerInstanceResponse.class);
+                Response response = request("/consumers/" + groupName, mediatype.header)
+                        .post(Entity.entity(null, requestMediatype));
+                assertOKResponse(response, mediatype.expected);
+                final CreateConsumerInstanceResponse createResponse = response.readEntity(CreateConsumerInstanceResponse.class);
 
-            Response readResponse = request(instanceBasePath(createResponse) + "/topics/" + topicName, mediatype.header).get();
-            assertOKResponse(readResponse, mediatype.expected);
-            final List<ConsumerRecord> readResponseRecords = readResponse.readEntity(new GenericType<List<ConsumerRecord>>() {});
-            assertEquals(expected, readResponseRecords);
+                Response readResponse = request(instanceBasePath(createResponse) + "/topics/" + topicName, mediatype.header).get();
+                assertOKResponse(readResponse, mediatype.expected);
+                final List<ConsumerRecord> readResponseRecords = readResponse.readEntity(new GenericType<List<ConsumerRecord>>() {
+                });
+                assertEquals(expected, readResponseRecords);
 
-            EasyMock.verify(consumerManager);
-            EasyMock.reset(consumerManager);
+                EasyMock.verify(consumerManager);
+                EasyMock.reset(consumerManager);
+            }
         }
     }
 
     @Test public void testDeleteInstance() {
         for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-            expectCreateGroup();
-            expectDeleteGroup(false);
-            EasyMock.replay(consumerManager);
+            for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
+                expectCreateGroup();
+                expectDeleteGroup(false);
+                EasyMock.replay(consumerManager);
 
-            Response response = request("/consumers/" + groupName, mediatype.header)
-                    .post(Entity.entity(null, MediaType.APPLICATION_JSON_TYPE));
-            assertOKResponse(response, mediatype.expected);
-            final CreateConsumerInstanceResponse createResponse = response.readEntity(CreateConsumerInstanceResponse.class);
+                Response response = request("/consumers/" + groupName, mediatype.header)
+                        .post(Entity.entity(null, requestMediatype));
+                assertOKResponse(response, mediatype.expected);
+                final CreateConsumerInstanceResponse createResponse = response.readEntity(CreateConsumerInstanceResponse.class);
 
-            final Response deleteResponse = request(instanceBasePath(createResponse), mediatype.header).delete();
-            assertErrorResponse(Response.Status.NO_CONTENT, deleteResponse, null, mediatype.expected);
+                final Response deleteResponse = request(instanceBasePath(createResponse), mediatype.header).delete();
+                assertErrorResponse(Response.Status.NO_CONTENT, deleteResponse, null, mediatype.expected);
 
-            EasyMock.verify(consumerManager);
-            EasyMock.reset(consumerManager);
+                EasyMock.verify(consumerManager);
+                EasyMock.reset(consumerManager);
+            }
         }
     }
 

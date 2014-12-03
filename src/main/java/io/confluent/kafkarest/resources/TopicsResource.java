@@ -34,6 +34,7 @@ import java.util.Vector;
 
 @Path("/topics")
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED, Versions.JSON_WEIGHTED})
+@Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST})
 public class TopicsResource {
     public final static String MESSAGE_TOPIC_NOT_FOUND = "Topic not found.";
 

@@ -106,7 +106,7 @@ public class ProducerTest extends ClusterTestHarness {
         TopicProduceRequest payload = new TopicProduceRequest();
         payload.setRecords(records);
         Response response = request("/topics/" + topicName)
-                .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+                .post(Entity.entity(payload, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
         assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
         final ProduceResponse produceResponse = response.readEntity(ProduceResponse.class);
         assertEquals(offsetResponses, produceResponse.getOffsets());
@@ -135,7 +135,7 @@ public class ProducerTest extends ClusterTestHarness {
                 new TopicProduceRecord("key".getBytes(), "value".getBytes())
         ));
         final Response response = request("/topics/topicdoesnotexist")
-                .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+                .post(Entity.entity(payload, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
         assertErrorResponse(Response.Status.NOT_FOUND, response, TopicsResource.MESSAGE_TOPIC_NOT_FOUND, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     }
 
@@ -145,7 +145,7 @@ public class ProducerTest extends ClusterTestHarness {
         PartitionProduceRequest payload = new PartitionProduceRequest();
         payload.setRecords(records);
         Response response = request("/topics/" + topicName + "/partitions/0")
-                .post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+                .post(Entity.entity(payload, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
         assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
         final PartitionOffset poffsetResponse = response.readEntity(PartitionOffset.class);
         assertEquals(offsetResponse, poffsetResponse);

@@ -20,6 +20,7 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BrokerList;
 
 import javax.validation.Valid;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -29,6 +30,7 @@ import javax.ws.rs.Produces;
  */
 @Path("/brokers")
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED, Versions.JSON_WEIGHTED})
+@Consumes()
 public class BrokersResource {
     private final Context ctx;
 
