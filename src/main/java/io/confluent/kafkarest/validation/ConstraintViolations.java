@@ -32,12 +32,16 @@ public class ConstraintViolations {
                 v.getInvalidValue());
     }
 
-    public static List<String> formatUntyped(Set<ConstraintViolation<?>> violations) {
-        final List<String> errors = new Vector<>();
+    public static String formatUntyped(Set<ConstraintViolation<?>> violations) {
+        StringBuilder builder = new StringBuilder();
+        boolean first = true;
         for (ConstraintViolation<?> v : violations) {
-            errors.add(format(v));
+            if (!first)
+                builder.append("; ");
+            builder.append(format(v));
+            first = false;
         }
-        return errors;
+        return builder.toString();
     }
 
     public static ConstraintViolationException simpleException(String msg) {

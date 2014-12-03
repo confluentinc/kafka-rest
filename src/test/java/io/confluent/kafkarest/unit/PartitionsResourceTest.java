@@ -236,8 +236,7 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness {
                 EasyMock.replay(mdObserver);
                 Response response = request("/topics/" + topicName + "/partitions/0", mediatype.header)
                         .post(Entity.entity("{}", requestMediatype));
-                assertEquals(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE, response.getStatus());
-                assertEquals(mediatype.expected, response.getMediaType().toString());
+                assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response, null, mediatype.expected);
                 EasyMock.verify();
 
                 // Invalid base64 encoding
@@ -246,8 +245,7 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness {
                 EasyMock.replay(mdObserver);
                 response = request("/topics/" + topicName + "/partitions/0", mediatype.header)
                         .post(Entity.entity("{\"records\":[{\"value\":\"aGVsbG8==\"}]}", requestMediatype));
-                assertEquals(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE, response.getStatus());
-                assertEquals(mediatype.expected, response.getMediaType().toString());
+                assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response, null, mediatype.expected);
                 EasyMock.verify();
 
                 // Invalid data -- include partition in request
@@ -258,8 +256,7 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness {
                 topicRequest.setRecords(Arrays.asList(new TopicProduceRecord("key".getBytes(), "value".getBytes(), 0)));
                 response = request("/topics/" + topicName + "/partitions/0", mediatype.header)
                         .post(Entity.entity(topicRequest, requestMediatype));
-                assertEquals(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE, response.getStatus());
-                assertEquals(mediatype.expected, response.getMediaType().toString());
+                assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response, null, mediatype.expected);
                 EasyMock.verify();
 
                 EasyMock.reset(mdObserver, producerPool);

@@ -16,7 +16,7 @@
 package io.confluent.kafkarest.validation;
 
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.ValidationErrorMessage;
+import io.confluent.kafkarest.entities.ErrorMessage;
 
 import javax.validation.ConstraintViolationException;
 import javax.ws.rs.Produces;
@@ -47,7 +47,10 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
 
     @Override
     public Response toResponse(ConstraintViolationException exception) {
-        final ValidationErrorMessage message = new ValidationErrorMessage(exception.getConstraintViolations());
+        final ErrorMessage message = new ErrorMessage(
+                UNPROCESSABLE_ENTITY_CODE,
+                ConstraintViolations.formatUntyped(exception.getConstraintViolations())
+        );
 
         return Response.status(UNPROCESSABLE_ENTITY_CODE)
                 .entity(message)

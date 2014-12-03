@@ -282,14 +282,12 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness {
             for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
                 Response response = request("/topics/topic1", mediatype.header)
                         .post(Entity.entity("{}", requestMediatype));
-                assertEquals(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE, response.getStatus());
-                assertEquals(mediatype.expected, response.getMediaType().toString());
+                assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response, null, mediatype.expected);
 
                 // Invalid base64 encoding
                 response = request("/topics/topic1", mediatype.header)
                         .post(Entity.entity("{\"records\":[{\"value\":\"aGVsbG8==\"}]}", requestMediatype));
-                assertEquals(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE, response.getStatus());
-                assertEquals(mediatype.expected, response.getMediaType().toString());
+                assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response, null, mediatype.expected);
             }
         }
     }
