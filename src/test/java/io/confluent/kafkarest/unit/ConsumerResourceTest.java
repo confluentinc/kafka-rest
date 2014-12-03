@@ -118,9 +118,9 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
     @Test
     public void testRead() {
         List<ConsumerRecord> expected = Arrays.asList(
-                new ConsumerRecord("key1".getBytes(), "value1".getBytes(), 0),
-                new ConsumerRecord("key2".getBytes(), "value2".getBytes(), 1),
-                new ConsumerRecord("key3".getBytes(), "value3".getBytes(), 2)
+                new ConsumerRecord("key1".getBytes(), "value1".getBytes(), 0, 0),
+                new ConsumerRecord("key2".getBytes(), "value2".getBytes(), 1, 0),
+                new ConsumerRecord("key3".getBytes(), "value3".getBytes(), 2, 0)
         );
 
         for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {

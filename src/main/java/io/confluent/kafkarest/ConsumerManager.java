@@ -229,7 +229,7 @@ public class ConsumerManager {
                         if (!iter.hasNext())
                             break;
                         MessageAndMetadata<byte[], byte[]> msg = iter.next();
-                        messages.add(new ConsumerRecord(msg.key(), msg.message(), msg.partition()));
+                        messages.add(new ConsumerRecord(msg.key(), msg.message(), msg.partition(), msg.offset()));
                     } catch (ConsumerTimeoutException cte) {
                         // Ignore since we may get a few of these while still under our time limit. The while condition
                         // ensures correct behavior

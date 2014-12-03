@@ -32,7 +32,13 @@ public class ConsumerRecord {
     @Min(0)
     private int partition;
 
-    public ConsumerRecord(@JsonProperty("key") String key, @JsonProperty("value") String value, @JsonProperty("partition") int partition) throws IOException {
+    @Min(0)
+    private long offset;
+
+    public ConsumerRecord(
+            @JsonProperty("key") String key, @JsonProperty("value") String value,
+            @JsonProperty("partition") int partition, @JsonProperty("offset") long offset
+    ) throws IOException {
         try {
             if (key != null)
                 this.key = EntityUtils.parseBase64Binary(key);
@@ -45,12 +51,14 @@ public class ConsumerRecord {
             throw ConstraintViolations.simpleException("Record value contains invalid base64 encoding");
         }
         this.partition = partition;
+        this.offset = offset;
     }
 
-    public ConsumerRecord(byte[] key, byte[] value, int partition) {
+    public ConsumerRecord(byte[] key, byte[] value, int partition, long offset) {
         this.key = key;
         this.value = value;
         this.partition = partition;
+        this.offset = offset;
     }
 
     @JsonIgnore
@@ -94,6 +102,16 @@ public class ConsumerRecord {
         this.partition = partition;
     }
 
+    @JsonProperty
+    public long getOffset() {
+        return offset;
+    }
+
+    @JsonProperty
+    public void setOffset(int offset) {
+        this.offset = offset;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -102,6 +120,7 @@ public class ConsumerRecord {
         ConsumerRecord that = (ConsumerRecord) o;
 
         if (partition != that.partition) return false;
+        if (offset != that.offset) return false;
         if (!Arrays.equals(key, that.key)) return false;
         if (!Arrays.equals(value, that.value)) return false;
 
@@ -113,6 +132,7 @@ public class ConsumerRecord {
         int result = key != null ? Arrays.hashCode(key) : 0;
         result = 31 * result + Arrays.hashCode(value);
         result = 31 * result + partition;
+        result = 31 * result + (int) (offset ^ (offset >>> 32));
         return result;
     }
 }

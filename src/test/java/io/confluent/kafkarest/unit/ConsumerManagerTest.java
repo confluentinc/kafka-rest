@@ -65,9 +65,9 @@ public class ConsumerManagerTest {
     public void testConsumerNormalOps() throws InterruptedException, ExecutionException {
         // Tests create instance, read, and delete
         final List<ConsumerRecord> referenceRecords = Arrays.asList(
-                new ConsumerRecord("k1".getBytes(), "v1".getBytes(), 0),
-                new ConsumerRecord("k2".getBytes(), "v2".getBytes(), 1),
-                new ConsumerRecord("k3".getBytes(), "v3".getBytes(), 2)
+                new ConsumerRecord("k1".getBytes(), "v1".getBytes(), 0, 0),
+                new ConsumerRecord("k2".getBytes(), "v2".getBytes(), 1, 0),
+                new ConsumerRecord("k3".getBytes(), "v3".getBytes(), 2, 0)
         );
         Map<Integer,List<ConsumerRecord>> referenceSchedule = new HashMap<>();
         referenceSchedule.put(50, referenceRecords);
