@@ -17,9 +17,7 @@ package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
-import io.confluent.kafkarest.entities.EntityUtils;
+import io.confluent.kafkarest.entities.*;
 import io.confluent.kafkarest.resources.TopicsResource;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -27,7 +25,6 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.HashSet;
 import java.util.List;
@@ -111,6 +108,14 @@ public class AbstractConsumerTest extends ClusterTestHarness {
         final int TIMEOUT_SLACK = restConfig.consumerIteratorTimeoutMs + 50;
         assertTrue("Consumer request should not return before the timeout when no data is available", (finished-started) > TIMEOUT);
         assertTrue("Consumer request should timeout approximately within the ", ((finished-started) - TIMEOUT) < TIMEOUT_SLACK);
+    }
+
+    protected void commitOffsets(String instanceUri) {
+        Response response = request(instanceUri).post(Entity.entity(null, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
+        assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        // We don't verify offsets since they'll depend on how data gets distributed to partitions. Just parse to check
+        // the output is formatted validly.
+        List<TopicPartitionOffset> offsets = response.readEntity(new GenericType<List<TopicPartitionOffset>>() {});
     }
 
     // Either topic or instance not found

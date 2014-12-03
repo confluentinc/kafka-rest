@@ -58,6 +58,7 @@ public class ConsumerTest extends AbstractConsumerTest {
         String instanceUri = startConsumeMessages(groupName, topicName);
         produceMessages(recordsOnlyValues);
         consumeMessages(instanceUri, topicName, recordsOnlyValues);
+        commitOffsets(instanceUri);
     }
 
     @Test
@@ -65,6 +66,7 @@ public class ConsumerTest extends AbstractConsumerTest {
         String instanceUri = startConsumeMessages(groupName, topicName);
         produceMessages(recordsWithKeys);
         consumeMessages(instanceUri, topicName, recordsWithKeys);
+        commitOffsets(instanceUri);
     }
 
     @Test

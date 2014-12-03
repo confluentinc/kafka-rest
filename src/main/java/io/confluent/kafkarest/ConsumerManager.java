@@ -15,6 +15,7 @@
  */
 package io.confluent.kafkarest;
 
+import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.resources.TopicsResource;
 import kafka.consumer.*;
@@ -84,6 +85,7 @@ public class ConsumerManager {
         // To support the old consumer interface with broken peek()/missing poll(timeout) functionality, we always use
         // a timeout. This can't perfectly guarantee a total request timeout, but can get as close as this timeout's value
         props.put("consumer.timeout.ms", ((Integer)iteratorTimeoutMs).toString());
+        props.put("auto.commit.enable", "false");
         ConsumerConnector consumer;
         if (consumerFactory == null)
             consumer = Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
@@ -107,15 +109,11 @@ public class ConsumerManager {
 
     public Future readTopic(final String group, final String instance, final String topic, final ReadCallback callback) {
         final ConsumerState state;
-        synchronized(this) {
-            state = consumers.get(new ConsumerInstanceId(group, instance));
-            if (state == null) {
-                callback.onCompletion(null, new NotFoundException(MESSAGE_CONSUMER_INSTANCE_NOT_FOUND));
-                return null;
-            }
-            // Clear from the timeout queue immediately so it isn't removed during the read operation, but don't update
-            // the timeout until we finish the read since that can significantly affect the timeout.
-            consumersByExpiration.remove(state);
+        try {
+            state = getConsumerInstance(group, instance);
+        } catch (NotFoundException e) {
+            callback.onCompletion(null, e);
+            return null;
         }
 
         // Consumer will try reading even if it doesn't exist, so we need to check this explicitly.
@@ -128,11 +126,7 @@ public class ConsumerManager {
             @Override
             public void run() {
                 List<ConsumerRecord> result = state.readTopic(topic);
-                synchronized(this) {
-                    state.updateExpiration(time.milliseconds() + consumerInstanceTimeoutMs);
-                    consumersByExpiration.add(state);
-                    this.notifyAll();
-                }
+                updateExpiration(state);
                 if (result == null)
                     callback.onCompletion(null, new NotFoundException(MESSAGE_CONSUMER_INSTANCE_NOT_FOUND));
                 else
@@ -141,16 +135,65 @@ public class ConsumerManager {
         });
     }
 
-    public void deleteConsumer(String group, String instance) {
+    public interface CommitCallback {
+        public void onCompletion(List<TopicPartitionOffset> offsets, Exception e);
+    }
+
+    public Future commitOffsets(String group, String instance, final CommitCallback callback) {
         final ConsumerState state;
-        synchronized(this) {
-            state = consumers.remove(new ConsumerInstanceId(group, instance));
-            if (state == null)
-                throw new NotFoundException(MESSAGE_CONSUMER_INSTANCE_NOT_FOUND);
-            consumersByExpiration.remove(state);
+        try {
+            state = getConsumerInstance(group, instance);
+        } catch (NotFoundException e) {
+            callback.onCompletion(null, e);
+            return null;
         }
+
+        return executor.submit(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    List<TopicPartitionOffset> offsets = state.commitOffsets();
+                    callback.onCompletion(offsets, null);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    callback.onCompletion(null, e);
+                } finally {
+                    updateExpiration(state);
+                }
+            }
+        });
+    }
+
+    public void deleteConsumer(String group, String instance) {
+        final ConsumerState state = getConsumerInstance(group, instance, true);
         state.close();
     }
+
+    /**
+     * Gets the specified consumer instance or throws a not found exception. Also removes the consumer's expiration timeout
+     * so it is not cleaned up mid-operation.
+     */
+    private synchronized ConsumerState getConsumerInstance(String group, String instance, boolean remove) {
+        ConsumerInstanceId id = new ConsumerInstanceId(group, instance);
+        final ConsumerState state = remove ? consumers.remove(id) : consumers.get(id);
+        if (state == null)
+            throw new NotFoundException(MESSAGE_CONSUMER_INSTANCE_NOT_FOUND);
+        // Clear from the timeout queue immediately so it isn't removed during the read operation, but don't update
+        // the timeout until we finish the read since that can significantly affect the timeout.
+        consumersByExpiration.remove(state);
+        return state;
+    }
+
+    private ConsumerState getConsumerInstance(String group, String instance) {
+        return getConsumerInstance(group, instance, false);
+    }
+
+    private synchronized void updateExpiration(ConsumerState state) {
+        state.updateExpiration(time.milliseconds() + consumerInstanceTimeoutMs);
+        consumersByExpiration.add(state);
+        this.notifyAll();
+    }
+
 
     public class ConsumerInstanceId {
         private final String group;
@@ -201,13 +244,13 @@ public class ConsumerManager {
     private class ConsumerState implements Comparable<ConsumerState> {
         private ConsumerInstanceId instanceId;
         private ConsumerConnector consumer;
-        private Map<String, KafkaStream<byte[],byte[]>> streams;
+        private Map<String, TopicState> topics;
         private long expiration;
 
         private ConsumerState(ConsumerInstanceId instanceId, ConsumerConnector consumer, long expiration) {
             this.instanceId = instanceId;
             this.consumer = consumer;
-            this.streams = new HashMap<>();
+            this.topics = new HashMap<>();
             this.expiration = expiration;
         }
 
@@ -215,12 +258,12 @@ public class ConsumerManager {
             return instanceId;
         }
 
-        public List<ConsumerRecord> readTopic(String topic) {
-            KafkaStream<byte[],byte[]> stream = getOrCreateStream(topic);
-            if (stream == null)
+        public synchronized List<ConsumerRecord> readTopic(String topic) {
+            TopicState topicState = getOrCreateTopicState(topic);
+            if (topicState == null)
                 return null;
-            synchronized(stream) {
-                ConsumerIterator<byte[], byte[]> iter = stream.iterator();
+            synchronized(topicState) {
+                ConsumerIterator<byte[], byte[]> iter = topicState.stream.iterator();
                 List<ConsumerRecord> messages = new Vector<>();
                 final long started = time.milliseconds();
                 long elapsed = 0;
@@ -230,6 +273,7 @@ public class ConsumerManager {
                             break;
                         MessageAndMetadata<byte[], byte[]> msg = iter.next();
                         messages.add(new ConsumerRecord(msg.key(), msg.message(), msg.partition(), msg.offset()));
+                        topicState.consumedOffsets.put(msg.partition(), msg.offset());
                     } catch (ConsumerTimeoutException cte) {
                         // Ignore since we may get a few of these while still under our time limit. The while condition
                         // ensures correct behavior
@@ -240,12 +284,19 @@ public class ConsumerManager {
             }
         }
 
+        public List<TopicPartitionOffset> commitOffsets() {
+            List<TopicPartitionOffset> result = getOffsets(true);
+            consumer.commitOffsets();
+            setCommittedOffsets(result);
+            return result;
+        }
+
         public void close() {
             synchronized(this) {
                 consumer.shutdown();
                 // Marks this state entry as no longer valid because the consumer group is being destroyed.
                 consumer = null;
-                streams = null;
+                topics = null;
             }
         }
 
@@ -271,19 +322,61 @@ public class ConsumerManager {
                 return 1;
         }
 
-        private synchronized KafkaStream<byte[],byte[]> getOrCreateStream(String topic) {
-            if (streams == null) return null;
-            KafkaStream<byte[],byte[]> stream = streams.get(topic);
-            if (stream == null) {
+        private synchronized TopicState getOrCreateTopicState(String topic) {
+            if (topics == null) return null;
+            TopicState state = topics.get(topic);
+            if (state == null) {
                 Map<String,Integer> subscriptions = new TreeMap<>();
                 subscriptions.put(topic,1);
                 Map<String, List<KafkaStream<byte[],byte[]>>> streamsByTopic = consumer.createMessageStreams(subscriptions);
-                stream = streamsByTopic.get(topic).get(0);
-                streams.put(topic, stream);
+                KafkaStream<byte[],byte[]> stream = streamsByTopic.get(topic).get(0);
+                state = new TopicState(stream);
+                topics.put(topic, state);
             }
-            return stream;
+            return state;
         }
 
+        /**
+         * Gets a list of TopicPartitionOffsets describing the current state of consumer offsets.
+         * @param precommit if true, sets the committed offset to the consumed offset, which is useful for generating the
+         *                  result.
+         * @return
+         */
+        private synchronized List<TopicPartitionOffset> getOffsets(boolean precommit) {
+            List<TopicPartitionOffset> result = new Vector<>();
+            for(Map.Entry<String, TopicState> entry : topics.entrySet()) {
+                TopicState state = entry.getValue();
+                synchronized(entry.getValue()) {
+                    for(Map.Entry<Integer,Long> partEntry : state.consumedOffsets.entrySet()) {
+                        Long committed = precommit ? partEntry.getValue() : state.committedOffsets.get(partEntry.getKey());
+                        result.add(new TopicPartitionOffset(entry.getKey(), partEntry.getKey(),
+                                partEntry.getValue(), (committed == null ? 0 : committed)));
+                    }
+                }
+            }
+            return result;
+        }
+
+        private synchronized void setCommittedOffsets(List<TopicPartitionOffset> offsets) {
+            for(TopicPartitionOffset tpo : offsets) {
+                TopicState state = topics.get(tpo.getTopic());
+                if (state == null)
+                    continue;
+                state.committedOffsets.put(tpo.getPartition(), tpo.getCommitted());
+            }
+        }
+
+        private class TopicState {
+            KafkaStream<byte[],byte[]> stream;
+            Map<Integer, Long> consumedOffsets;
+            Map<Integer, Long> committedOffsets;
+
+            public TopicState(KafkaStream<byte[],byte[]> stream) {
+                this.stream = stream;
+                this.consumedOffsets = new HashMap<>();
+                this.committedOffsets = new HashMap<>();
+            }
+        }
     }
 
     public interface ConsumerFactory {

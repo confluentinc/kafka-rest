@@ -103,7 +103,7 @@ public class MockConsumerConnector implements ConsumerConnector {
 
     @Override
     public void commitOffsets() {
-        throw new UnsupportedOperationException();
+        return;
     }
 
     @Override

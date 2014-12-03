@@ -20,6 +20,7 @@ import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
+import io.confluent.kafkarest.entities.TopicPartitionOffset;
 
 import javax.validation.Valid;
 import javax.ws.rs.*;
@@ -45,6 +46,22 @@ public class ConsumersResource {
         String instanceId = ctx.getConsumerManager().createConsumer(group);
         String instanceBaseUri = uriInfo.getAbsolutePathBuilder().path("instances").path(instanceId).build().toString();
         return new CreateConsumerInstanceResponse(instanceId, instanceBaseUri);
+    }
+
+    @POST
+    @Path("/{group}/instances/{instance}")
+    public void commitOffsets(final @Suspended AsyncResponse asyncResponse,
+                              final @PathParam("group") String group, final @PathParam("instance") String instance)
+    {
+        ctx.getConsumerManager().commitOffsets(group, instance, new ConsumerManager.CommitCallback() {
+            @Override
+            public void onCompletion(List<TopicPartitionOffset> offsets, Exception e) {
+                if (e != null)
+                    asyncResponse.resume(e);
+                else
+                    asyncResponse.resume(offsets);
+            }
+        });
     }
 
     @DELETE

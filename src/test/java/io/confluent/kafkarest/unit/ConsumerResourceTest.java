@@ -18,6 +18,7 @@ package io.confluent.kafkarest.unit;
 import io.confluent.kafkarest.*;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
+import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.junit.EmbeddedServerTestHarness;
 import io.confluent.kafkarest.resources.ConsumersResource;
 import org.easymock.Capture;
@@ -116,17 +117,23 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
     }
 
     @Test
-    public void testRead() {
+    public void testReadCommit() {
         List<ConsumerRecord> expected = Arrays.asList(
-                new ConsumerRecord("key1".getBytes(), "value1".getBytes(), 0, 0),
-                new ConsumerRecord("key2".getBytes(), "value2".getBytes(), 1, 0),
-                new ConsumerRecord("key3".getBytes(), "value3".getBytes(), 2, 0)
+                new ConsumerRecord("key1".getBytes(), "value1".getBytes(), 0, 10),
+                new ConsumerRecord("key2".getBytes(), "value2".getBytes(), 1, 15),
+                new ConsumerRecord("key3".getBytes(), "value3".getBytes(), 2, 20)
+        );
+        List<TopicPartitionOffset> expectedOffsets = Arrays.asList(
+                new TopicPartitionOffset(topicName, 0, 10, 10),
+                new TopicPartitionOffset(topicName, 1, 15, 15),
+                new TopicPartitionOffset(topicName, 2, 20, 20)
         );
 
         for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
             for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
                 expectCreateGroup();
                 expectReadTopic(topicName, expected, null);
+                expectCommit(expectedOffsets, null);
                 EasyMock.replay(consumerManager);
 
                 Response response = request("/consumers/" + groupName, mediatype.header)
@@ -139,6 +146,12 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
                 final List<ConsumerRecord> readResponseRecords = readResponse.readEntity(new GenericType<List<ConsumerRecord>>() {
                 });
                 assertEquals(expected, readResponseRecords);
+
+                Response commitResponse = request(instanceBasePath(createResponse), mediatype.header)
+                        .post(Entity.entity(null, requestMediatype));
+                assertOKResponse(response, mediatype.expected);
+                final List<TopicPartitionOffset> committedOffsets = commitResponse.readEntity(new GenericType<List<TopicPartitionOffset>>() {});
+                assertEquals(expectedOffsets, committedOffsets);
 
                 EasyMock.verify(consumerManager);
                 EasyMock.reset(consumerManager);
@@ -194,6 +207,18 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
             @Override
             public Object answer() throws Throwable {
                 readCallback.getValue().onCompletion(readResult, readException);
+                return null;
+            }
+        });
+    }
+
+    private void expectCommit(final List<TopicPartitionOffset> commitResult, final Exception commitException) {
+        final Capture<ConsumerManager.CommitCallback> commitCallback = new Capture<>();
+        consumerManager.commitOffsets(EasyMock.eq(groupName), EasyMock.eq(instanceId), EasyMock.capture(commitCallback));
+        EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
+            @Override
+            public Object answer() throws Throwable {
+                commitCallback.getValue().onCompletion(commitResult, commitException);
                 return null;
             }
         });

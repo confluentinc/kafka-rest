@@ -20,6 +20,7 @@ import io.confluent.kafkarest.ConfigurationException;
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.mock.MockConsumerConnector;
 import io.confluent.kafkarest.mock.MockTime;
 import kafka.consumer.ConsumerConfig;
@@ -90,6 +91,17 @@ public class ConsumerManagerTest {
         }).get();
         // With # of messages < max per request, this should finish at the per-request timeout
         assertEquals(config.consumerRequestTimeoutMs, config.time.milliseconds());
+
+        consumerManager.commitOffsets(groupName, cid, new ConsumerManager.CommitCallback() {
+            @Override
+            public void onCompletion(List<TopicPartitionOffset> offsets, Exception e) {
+                assertNull(e);
+                // Mock consumer doesn't handle offsets, so we just check we get some output for the right partitions
+                assertNotNull(offsets);
+                assertEquals(3, offsets.size());
+            }
+        }).get();
+
         consumerManager.deleteConsumer(groupName, cid);
 
         EasyMock.verify(mdObserver, consumerFactory);
