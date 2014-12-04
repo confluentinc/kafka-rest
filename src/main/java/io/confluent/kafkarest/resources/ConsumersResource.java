@@ -18,6 +18,7 @@ package io.confluent.kafkarest.resources;
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
@@ -42,8 +43,12 @@ public class ConsumersResource {
     @POST
     @Valid
     @Path("/{group}")
-    public CreateConsumerInstanceResponse createGroup(@javax.ws.rs.core.Context UriInfo uriInfo, final @PathParam("group") String group) {
-        String instanceId = ctx.getConsumerManager().createConsumer(group);
+    public CreateConsumerInstanceResponse createGroup(
+            @javax.ws.rs.core.Context UriInfo uriInfo, final @PathParam("group") String group,
+            @Valid ConsumerInstanceConfig config) {
+        if (config == null)
+            config = new ConsumerInstanceConfig();
+        String instanceId = ctx.getConsumerManager().createConsumer(group, config);
         String instanceBaseUri = uriInfo.getAbsolutePathBuilder().path("instances").path(instanceId).build().toString();
         return new CreateConsumerInstanceResponse(instanceId, instanceBaseUri);
     }

@@ -19,6 +19,7 @@ import io.confluent.kafkarest.Config;
 import io.confluent.kafkarest.ConfigurationException;
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.MetadataObserver;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.mock.MockConsumerConnector;
@@ -81,7 +82,7 @@ public class ConsumerManagerTest {
 
         EasyMock.replay(mdObserver, consumerFactory);
 
-        String cid = consumerManager.createConsumer(groupName);
+        String cid = consumerManager.createConsumer(groupName, new ConsumerInstanceConfig());
         consumerManager.readTopic(groupName, cid, topicName, new ConsumerManager.ReadCallback() {
             @Override
             public void onCompletion(List<ConsumerRecord> records, Exception e) {
@@ -120,7 +121,7 @@ public class ConsumerManagerTest {
 
         EasyMock.replay(mdObserver, consumerFactory);
 
-        String instanceId = consumerManager.createConsumer(groupName);
+        String instanceId = consumerManager.createConsumer(groupName, new ConsumerInstanceConfig());
         readAndExpectImmediateNotFound(instanceId, invalidTopicName);
 
         EasyMock.verify(mdObserver, consumerFactory);

@@ -15,6 +15,7 @@
  */
 package io.confluent.kafkarest;
 
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.resources.TopicsResource;
@@ -39,6 +40,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ConsumerManager {
     public final static String MESSAGE_CONSUMER_INSTANCE_NOT_FOUND = "Consumer instance not found.";
 
+    private final Config config;
     private final Time time;
     private final String zookeeperConnect;
     private final MetadataObserver mdObserver;
@@ -55,6 +57,7 @@ public class ConsumerManager {
     private final ExpirationThread expirationThread;
 
     public ConsumerManager(Config config, MetadataObserver mdObserver) {
+        this.config = config;
         this.time = config.time;
         this.zookeeperConnect = config.zookeeperConnect;
         this.mdObserver = mdObserver;
@@ -76,10 +79,17 @@ public class ConsumerManager {
     /**
      * Creates a new consumer instance and returns its unique ID.
      * @param group Name of the consumer group to join
+     * @param config configuration parameters for the consumer
      * @return Unique consumer instance ID
      */
-    public String createConsumer(String group) {
-        String id = ((Integer)nextId.incrementAndGet()).toString();
+    public String createConsumer(String group, ConsumerInstanceConfig config) {
+        String id = config.getId();
+        if (id == null) {
+            id = "rest-consumer-";
+            if (!this.config.id.isEmpty())
+                id += this.config.id + "-";
+            id += ((Integer) nextId.incrementAndGet()).toString();
+        }
 
         Properties props = new Properties();
         props.put("zookeeper.connect", zookeeperConnect);

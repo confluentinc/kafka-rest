@@ -23,6 +23,14 @@ import java.util.Properties;
 public class Config {
     public Time time;
 
+    /**
+     * Unique ID for this REST server instance. This is used in generating unique IDs for consumers that do not specify
+     * their ID. The ID is empty by default, which makes a single server setup easier to get up and running, but is not
+     * safe for multi-server deployments where automatic consumer IDs are used.
+     */
+    public String id;
+    public static final String DEFAULT_ID = "";
+
     public boolean debug;
     public static final String DEFAULT_DEBUG = "false";
 
@@ -67,6 +75,8 @@ public class Config {
 
     public Config(Properties props) throws ConfigurationException {
         time = new SystemTime();
+
+        id = props.getProperty("id", DEFAULT_ID);
 
         debug = Boolean.parseBoolean(props.getProperty("debug", DEFAULT_DEBUG));
 

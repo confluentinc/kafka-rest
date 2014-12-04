@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.unit;
 
 import io.confluent.kafkarest.*;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
@@ -76,7 +77,7 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
     public void testCreateInstanceRequestsNewInstance() {
         for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
             for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
-                expectCreateGroup();
+                expectCreateGroup(new ConsumerInstanceConfig());
                 EasyMock.replay(consumerManager);
 
                 Response response = request("/consumers/" + groupName, mediatype.header)
@@ -93,11 +94,34 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
     }
 
     @Test
+    public void testCreateInstanceWithConfig() {
+        ConsumerInstanceConfig config = new ConsumerInstanceConfig();
+        config.setId("testid");
+
+        for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
+            for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
+                expectCreateGroup(config);
+                EasyMock.replay(consumerManager);
+
+                Response response = request("/consumers/" + groupName, mediatype.header)
+                        .post(Entity.entity(config, requestMediatype));
+                assertOKResponse(response, mediatype.expected);
+                final CreateConsumerInstanceResponse ciResponse = response.readEntity(CreateConsumerInstanceResponse.class);
+                assertEquals(instanceId, ciResponse.getInstanceId());
+                assertThat(ciResponse.getBaseUri(), allOf(startsWith("http://"), containsString(instancePath)));
+
+                EasyMock.verify(consumerManager);
+                EasyMock.reset(consumerManager);
+            }
+        }
+    }
+
+    @Test
     public void testInvalidInstanceOrTopic() {
         for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
             for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
                 // Trying to access either an invalid consumer instance or a missing topic should trigger an error
-                expectCreateGroup();
+                expectCreateGroup(new ConsumerInstanceConfig());
                 expectReadTopic(topicName, null, new NotFoundException(not_found_message));
                 EasyMock.replay(consumerManager);
 
@@ -131,7 +155,7 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
 
         for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
             for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
-                expectCreateGroup();
+                expectCreateGroup(new ConsumerInstanceConfig());
                 expectReadTopic(topicName, expected, null);
                 expectCommit(expectedOffsets, null);
                 EasyMock.replay(consumerManager);
@@ -162,7 +186,7 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
     @Test public void testDeleteInstance() {
         for(TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
             for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
-                expectCreateGroup();
+                expectCreateGroup(new ConsumerInstanceConfig());
                 expectDeleteGroup(false);
                 EasyMock.replay(consumerManager);
 
@@ -195,9 +219,8 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
     }
 
 
-
-    private void expectCreateGroup() {
-        EasyMock.expect(consumerManager.createConsumer(groupName)).andReturn(instanceId);
+    private void expectCreateGroup(ConsumerInstanceConfig config) {
+        EasyMock.expect(consumerManager.createConsumer(EasyMock.eq(groupName), EasyMock.eq(config))).andReturn(instanceId);
     }
 
     private void expectReadTopic(String topicName, final List<ConsumerRecord> readResult, final Exception readException) {
