@@ -28,6 +28,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Manages consumer instances by mapping instance IDs to consumer objects, processing read requests, and cleaning
@@ -246,57 +249,76 @@ public class ConsumerManager {
         private ConsumerConnector consumer;
         private Map<String, TopicState> topics;
         private long expiration;
+        // A read/write lock on the ConsumerState allows concurrent readTopic calls, but allows commitOffsets to safely
+        // lock the entire state in order to get correct information about all the topic/stream's current offset state.
+        // All operations on individual TopicStates must be synchronized at that level as well (so, e.g., readTopic may
+        // modify a single TopicState, but only needs read access to the ConsumerState).
+        private ReadWriteLock lock;
 
         private ConsumerState(ConsumerInstanceId instanceId, ConsumerConnector consumer, long expiration) {
             this.instanceId = instanceId;
             this.consumer = consumer;
             this.topics = new HashMap<>();
             this.expiration = expiration;
+            this.lock = new ReentrantReadWriteLock();
         }
 
         public ConsumerInstanceId getId() {
             return instanceId;
         }
 
-        public synchronized List<ConsumerRecord> readTopic(String topic) {
+        public List<ConsumerRecord> readTopic(String topic) {
             TopicState topicState = getOrCreateTopicState(topic);
             if (topicState == null)
                 return null;
-            synchronized(topicState) {
-                ConsumerIterator<byte[], byte[]> iter = topicState.stream.iterator();
-                List<ConsumerRecord> messages = new Vector<>();
-                final long started = time.milliseconds();
-                long elapsed = 0;
-                while (elapsed < requestTimeoutMs && messages.size() < requestMaxMessages) {
-                    try {
-                        if (!iter.hasNext())
-                            break;
-                        MessageAndMetadata<byte[], byte[]> msg = iter.next();
-                        messages.add(new ConsumerRecord(msg.key(), msg.message(), msg.partition(), msg.offset()));
-                        topicState.consumedOffsets.put(msg.partition(), msg.offset());
-                    } catch (ConsumerTimeoutException cte) {
-                        // Ignore since we may get a few of these while still under our time limit. The while condition
-                        // ensures correct behavior
+
+            lock.readLock().lock();
+            try {
+                synchronized (topicState) {
+                    ConsumerIterator<byte[], byte[]> iter = topicState.stream.iterator();
+                    List<ConsumerRecord> messages = new Vector<>();
+                    final long started = time.milliseconds();
+                    long elapsed = 0;
+                    while (elapsed < requestTimeoutMs && messages.size() < requestMaxMessages) {
+                        try {
+                            if (!iter.hasNext())
+                                break;
+                            MessageAndMetadata<byte[], byte[]> msg = iter.next();
+                            messages.add(new ConsumerRecord(msg.key(), msg.message(), msg.partition(), msg.offset()));
+                            topicState.consumedOffsets.put(msg.partition(), msg.offset());
+                        } catch (ConsumerTimeoutException cte) {
+                            // Ignore since we may get a few of these while still under our time limit. The while condition
+                            // ensures correct behavior
+                        }
+                        elapsed = time.milliseconds() - started;
                     }
-                    elapsed = time.milliseconds() - started;
+                    return messages;
                 }
-                return messages;
+            } finally {
+                lock.readLock().unlock();
             }
         }
 
         public List<TopicPartitionOffset> commitOffsets() {
-            List<TopicPartitionOffset> result = getOffsets(true);
-            consumer.commitOffsets();
-            setCommittedOffsets(result);
-            return result;
+            lock.writeLock().lock();
+            try {
+                consumer.commitOffsets();
+                List<TopicPartitionOffset> result = getOffsets(true);
+                return result;
+            } finally {
+                lock.writeLock().unlock();
+            }
         }
 
         public void close() {
-            synchronized(this) {
+            lock.writeLock().lock();
+            try {
                 consumer.shutdown();
                 // Marks this state entry as no longer valid because the consumer group is being destroyed.
                 consumer = null;
                 topics = null;
+            } finally {
+                lock.writeLock().unlock();
             }
         }
 
@@ -322,42 +344,65 @@ public class ConsumerManager {
                 return 1;
         }
 
-        private synchronized TopicState getOrCreateTopicState(String topic) {
-            if (topics == null) return null;
-            TopicState state = topics.get(topic);
-            if (state == null) {
-                Map<String,Integer> subscriptions = new TreeMap<>();
-                subscriptions.put(topic,1);
-                Map<String, List<KafkaStream<byte[],byte[]>>> streamsByTopic = consumer.createMessageStreams(subscriptions);
-                KafkaStream<byte[],byte[]> stream = streamsByTopic.get(topic).get(0);
+        private TopicState getOrCreateTopicState(String topic) {
+            // Try getting the topic only using the read lock
+            lock.readLock().lock();
+            try {
+                if (topics == null) return null;
+                TopicState state = topics.get(topic);
+                if (state != null) return state;
+            } finally {
+                lock.readLock().unlock();
+            }
+
+            lock.writeLock().lock();
+            try {
+                if (topics == null) return null;
+                TopicState state = topics.get(topic);
+                if (state != null) return state;
+
+                Map<String, Integer> subscriptions = new TreeMap<>();
+                subscriptions.put(topic, 1);
+                Map<String, List<KafkaStream<byte[], byte[]>>> streamsByTopic = consumer.createMessageStreams(subscriptions);
+                KafkaStream<byte[], byte[]> stream = streamsByTopic.get(topic).get(0);
                 state = new TopicState(stream);
                 topics.put(topic, state);
+                return state;
+            } finally {
+                lock.writeLock().unlock();
             }
-            return state;
         }
 
         /**
-         * Gets a list of TopicPartitionOffsets describing the current state of consumer offsets.
-         * @param precommit if true, sets the committed offset to the consumed offset, which is useful for generating the
-         *                  result.
+         * Gets a list of TopicPartitionOffsets describing the current state of consumer offsets, possibly updating
+         * the commmitted offset record. This method is not synchronized.
+         * @param updateCommitOffsets if true, updates committed offsets to be the same as the consumed offsets.
          * @return
          */
-        private synchronized List<TopicPartitionOffset> getOffsets(boolean precommit) {
+        private List<TopicPartitionOffset> getOffsets(boolean updateCommitOffsets) {
             List<TopicPartitionOffset> result = new Vector<>();
             for(Map.Entry<String, TopicState> entry : topics.entrySet()) {
                 TopicState state = entry.getValue();
-                synchronized(entry.getValue()) {
+                synchronized(state) {
                     for(Map.Entry<Integer,Long> partEntry : state.consumedOffsets.entrySet()) {
-                        Long committed = precommit ? partEntry.getValue() : state.committedOffsets.get(partEntry.getKey());
-                        result.add(new TopicPartitionOffset(entry.getKey(), partEntry.getKey(),
-                                partEntry.getValue(), (committed == null ? 0 : committed)));
+                        Integer partition = partEntry.getKey();
+                        Long offset = partEntry.getValue();
+                        Long committedOffset = 0L;
+                        if (updateCommitOffsets) {
+                            state.committedOffsets.put(partition, offset);
+                            committedOffset = offset;
+                        } else {
+                            committedOffset = state.committedOffsets.get(partition);
+                        }
+                        result.add(new TopicPartitionOffset(entry.getKey(), partition,
+                                offset, (committedOffset == null ? -1 : committedOffset)));
                     }
                 }
             }
             return result;
         }
 
-        private synchronized void setCommittedOffsets(List<TopicPartitionOffset> offsets) {
+        private void setCommittedOffsets(List<TopicPartitionOffset> offsets) {
             for(TopicPartitionOffset tpo : offsets) {
                 TopicState state = topics.get(tpo.getTopic());
                 if (state == null)
