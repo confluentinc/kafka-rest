@@ -30,4 +30,9 @@ public class SystemTime implements Time {
     public void sleep(long ms) throws InterruptedException {
         Thread.sleep(ms);
     }
+
+    @Override
+    public void waitOn(Object on, long ms) throws InterruptedException {
+        on.wait(ms);
+    }
 }

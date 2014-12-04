@@ -22,4 +22,7 @@ public interface Time {
     public long nanoseconds();
 
     public void sleep(long ms) throws InterruptedException;
+
+    // Equivalent to on.wait(ms)
+    public void waitOn(Object on, long ms) throws InterruptedException;
 }

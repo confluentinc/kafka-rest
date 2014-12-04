@@ -31,6 +31,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.NotFoundException;
+import java.lang.ref.Reference;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -46,6 +47,8 @@ public class ConsumerManagerTest {
 
     private static final String groupName = "testgroup";
     private static final String topicName = "testtopic";
+
+    private boolean sawCallback = false;
 
     @Before
     public void setUp() throws ConfigurationException {
@@ -83,25 +86,32 @@ public class ConsumerManagerTest {
         EasyMock.replay(mdObserver, consumerFactory);
 
         String cid = consumerManager.createConsumer(groupName, new ConsumerInstanceConfig());
+        sawCallback = false;
         consumerManager.readTopic(groupName, cid, topicName, new ConsumerManager.ReadCallback() {
             @Override
             public void onCompletion(List<ConsumerRecord> records, Exception e) {
+                sawCallback = true;
                 assertNull(e);
                 assertEquals(referenceRecords, records);
             }
         }).get();
-        // With # of messages < max per request, this should finish at the per-request timeout
-        assertEquals(config.consumerRequestTimeoutMs, config.time.milliseconds());
+        assertTrue(sawCallback);
+        // With # of messages < max per request, this should finish just after the per-request timeout (because the timeout
+        // perfectly coincides with a scheduled iteration when using the default settings).
+        assertEquals(config.consumerRequestTimeoutMs + config.consumerIteratorTimeoutMs, config.time.milliseconds());
 
+        sawCallback = false;
         consumerManager.commitOffsets(groupName, cid, new ConsumerManager.CommitCallback() {
             @Override
             public void onCompletion(List<TopicPartitionOffset> offsets, Exception e) {
+                sawCallback = true;
                 assertNull(e);
                 // Mock consumer doesn't handle offsets, so we just check we get some output for the right partitions
                 assertNotNull(offsets);
                 assertEquals(3, offsets.size());
             }
         }).get();
+        assertTrue(sawCallback);
 
         consumerManager.deleteConsumer(groupName, cid);
 
@@ -135,24 +145,30 @@ public class ConsumerManagerTest {
 
     private void readAndExpectNoDataRequestTimeout(String cid) throws InterruptedException, ExecutionException {
         long started = config.time.milliseconds();
+        sawCallback = false;
         consumerManager.readTopic(groupName, cid, topicName, new ConsumerManager.ReadCallback() {
             @Override
             public void onCompletion(List<ConsumerRecord> records, Exception e) {
+                sawCallback = true;
                 assertNull(e);
             }
         }).get();
+        assertTrue(sawCallback);
         assertEquals(started + config.consumerRequestTimeoutMs, config.time.milliseconds());
     }
 
     // Not found for instance or topic
     private void readAndExpectImmediateNotFound(String cid, String topic) {
+        sawCallback = false;
         Future future = consumerManager.readTopic(groupName, cid, topic, new ConsumerManager.ReadCallback() {
             @Override
             public void onCompletion(List<ConsumerRecord> records, Exception e) {
+                sawCallback = true;
                 assertNull(records);
                 assertThat(e, instanceOf(NotFoundException.class));
             }
         });
+        assertTrue(sawCallback);
         assertNull(future);
     }
 }

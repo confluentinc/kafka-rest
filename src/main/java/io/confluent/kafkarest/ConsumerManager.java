@@ -44,6 +44,12 @@ public class ConsumerManager {
 
     private final AtomicInteger nextId = new AtomicInteger(0);
     private final Map<ConsumerInstanceId,ConsumerState> consumers = new HashMap<>();
+    // Read operations are common and there may be many concurrently, so they are farmed out to worker threads that can
+    // efficiently interleave the operations. Currently we're just using a simple round-robin scheduler.
+    private final List<ConsumerWorker> workers;
+    private final AtomicInteger nextWorker;
+    // A few other operations, like commit offsets and closing a consumer can't be interleaved, but they're also
+    // comparatively rare. These are executed serially in a dedicated thread.
     private final ExecutorService executor;
     private ConsumerFactory consumerFactory;
     private final PriorityQueue<ConsumerState> consumersByExpiration = new PriorityQueue<>();
@@ -55,7 +61,14 @@ public class ConsumerManager {
         this.zookeeperConnect = config.zookeeperConnect;
         this.mdObserver = mdObserver;
         this.iteratorTimeoutMs = config.consumerIteratorTimeoutMs;
-        this.executor = Executors.newFixedThreadPool(config.consumerThreads);
+        this.workers = new Vector<ConsumerWorker>();
+        for(int i = 0; i < config.consumerThreads; i++) {
+            ConsumerWorker worker = new ConsumerWorker(config);
+            workers.add(worker);
+            worker.start();
+        }
+        nextWorker = new AtomicInteger(0);
+        this.executor = Executors.newFixedThreadPool(1);
         this.consumerFactory = null;
         this.expirationThread = new ExpirationThread();
         this.expirationThread.start();
@@ -125,15 +138,16 @@ public class ConsumerManager {
             return null;
         }
 
-        return executor.submit(new Runnable() {
+        int workerId = nextWorker.getAndIncrement() % workers.size();
+        ConsumerWorker worker = workers.get(workerId);
+        return worker.readTopic(state, topic, new ConsumerWorker.ReadCallback() {
             @Override
-            public void run() {
-                List<ConsumerRecord> result = state.readTopic(topic);
+            public void onCompletion(List<ConsumerRecord> records) {
                 updateExpiration(state);
-                if (result == null)
+                if (records == null)
                     callback.onCompletion(null, new NotFoundException(MESSAGE_CONSUMER_INSTANCE_NOT_FOUND));
                 else
-                    callback.onCompletion(result, null);
+                    callback.onCompletion(records, null);
             }
         });
     }
@@ -170,6 +184,11 @@ public class ConsumerManager {
     public void deleteConsumer(String group, String instance) {
         final ConsumerState state = getConsumerInstance(group, instance, true);
         state.close();
+    }
+
+    public void shutdown() {
+        for(ConsumerWorker worker : workers)
+            worker.shutdown();
     }
 
     /**

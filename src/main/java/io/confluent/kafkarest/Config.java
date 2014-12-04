@@ -47,12 +47,19 @@ public class Config {
     public static final String DEFAULT_PRODUCER_THREADS = "5";
 
     /**
-     * The consumer timeout used to limit consumer iterator operations. This is effectively the maximum error for the
-     * entire request timeout. It should be small enough to get reasonably close to the timeout, but large enough to
-     * not result in busy waiting.
+     * The consumer timeout used to limit consumer iterator operations. This should be very small so we can effectively
+     * peek() on the iterator.
      */
     public int consumerIteratorTimeoutMs;
-    public static final String DEFAULT_CONSUMER_ITERATOR_TIMEOUT_MS = "50";
+    public static final String DEFAULT_CONSUMER_ITERATOR_TIMEOUT_MS = "1";
+
+    /**
+     * Amount of time to backoff when an iterator runs out of data. When a consumer has a dedicated worker thread, this
+     * is effectively the maximum error for the entire request timeout. It should be small enough to get reasonably close
+     * to the timeout, but large enough to avoid busy waiting.
+     */
+    public int consumerIteratorBackoffMs;
+    public static final String DEFAULT_CONSUMER_ITERATOR_BACKOFF_MS = "50";
 
     /** The maximum total time to wait for messages for a request if the maximum number of messages has not yet been reached. */
     public int consumerRequestTimeoutMs;
@@ -85,6 +92,7 @@ public class Config {
         bootstrapServers = props.getProperty("bootstrap.servers", DEFAULT_BOOTSTRAP_SERVERS);
         producerThreads = Integer.parseInt(props.getProperty("producer.threads", DEFAULT_PRODUCER_THREADS));
         consumerIteratorTimeoutMs = Integer.parseInt(props.getProperty("consumer.iterator.timeout.ms", DEFAULT_CONSUMER_ITERATOR_TIMEOUT_MS));
+        consumerIteratorBackoffMs = Integer.parseInt(props.getProperty("consumer.iterator.backoff.ms", DEFAULT_CONSUMER_ITERATOR_BACKOFF_MS));
         consumerRequestTimeoutMs = Integer.parseInt(props.getProperty("consumer.request.timeout.ms", DEFAULT_CONSUMER_REQUEST_TIMEOUT_MS));
         consumerRequestMaxMessages = Integer.parseInt(props.getProperty("consumer.request.max.messages", DEFAULT_CONSUMER_REQUEST_MAX_MESSAGES));
         consumerThreads = Integer.parseInt(props.getProperty("consumer.threads", DEFAULT_CONSUMER_THREADS));

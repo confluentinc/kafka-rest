@@ -24,7 +24,9 @@ import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.MessageAndMetadata;
 
 import java.util.*;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 class ConsumerState implements Comparable<ConsumerState> {
@@ -52,36 +54,14 @@ class ConsumerState implements Comparable<ConsumerState> {
         return instanceId;
     }
 
-    public List<ConsumerRecord> readTopic(String topic) {
-        TopicState topicState = getOrCreateTopicState(topic);
-        if (topicState == null)
-            return null;
-
+    public void startRead(TopicState topicState) {
         lock.readLock().lock();
-        try {
-            synchronized (topicState) {
-                ConsumerIterator<byte[], byte[]> iter = topicState.stream.iterator();
-                List<ConsumerRecord> messages = new Vector<>();
-                final long started = config.time.milliseconds();
-                long elapsed = 0;
-                while (elapsed < config.consumerRequestTimeoutMs && messages.size() < config.consumerRequestMaxMessages) {
-                    try {
-                        if (!iter.hasNext())
-                            break;
-                        MessageAndMetadata<byte[], byte[]> msg = iter.next();
-                        messages.add(new ConsumerRecord(msg.key(), msg.message(), msg.partition(), msg.offset()));
-                        topicState.consumedOffsets.put(msg.partition(), msg.offset());
-                    } catch (ConsumerTimeoutException cte) {
-                        // Ignore since we may get a few of these while still under our time limit. The while condition
-                        // ensures correct behavior
-                    }
-                    elapsed = config.time.milliseconds() - started;
-                }
-                return messages;
-            }
-        } finally {
-            lock.readLock().unlock();
-        }
+        topicState.lock.lock();
+    }
+
+    public void finishRead(TopicState topicState) {
+        lock.readLock().unlock();
+        topicState.lock.unlock();
     }
 
     public List<TopicPartitionOffset> commitOffsets() {
@@ -129,7 +109,7 @@ class ConsumerState implements Comparable<ConsumerState> {
             return 1;
     }
 
-    private TopicState getOrCreateTopicState(String topic) {
+    public TopicState getOrCreateTopicState(String topic) {
         // Try getting the topic only using the read lock
         lock.readLock().lock();
         try {
@@ -168,7 +148,8 @@ class ConsumerState implements Comparable<ConsumerState> {
         List<TopicPartitionOffset> result = new Vector<>();
         for(Map.Entry<String, TopicState> entry : topics.entrySet()) {
             TopicState state = entry.getValue();
-            synchronized(state) {
+            state.lock.lock();
+            try {
                 for(Map.Entry<Integer,Long> partEntry : state.consumedOffsets.entrySet()) {
                     Integer partition = partEntry.getKey();
                     Long offset = partEntry.getValue();
@@ -182,6 +163,8 @@ class ConsumerState implements Comparable<ConsumerState> {
                     result.add(new TopicPartitionOffset(entry.getKey(), partition,
                             offset, (committedOffset == null ? -1 : committedOffset)));
                 }
+            } finally {
+                state.lock.unlock();
             }
         }
         return result;
@@ -196,7 +179,8 @@ class ConsumerState implements Comparable<ConsumerState> {
         }
     }
 
-    private class TopicState {
+    public class TopicState {
+        Lock lock = new ReentrantLock();
         KafkaStream<byte[],byte[]> stream;
         Map<Integer, Long> consumedOffsets;
         Map<Integer, Long> committedOffsets;
