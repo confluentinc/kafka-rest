@@ -101,7 +101,12 @@ public class ConsumerManager {
         // To support the old consumer interface with broken peek()/missing poll(timeout) functionality, we always use
         // a timeout. This can't perfectly guarantee a total request timeout, but can get as close as this timeout's value
         props.put("consumer.timeout.ms", ((Integer)iteratorTimeoutMs).toString());
-        props.put("auto.commit.enable", "false");
+        if (config.getAutoCommitEnable() != null)
+            props.put("auto.commit.enable", config.getAutoCommitEnable());
+        else
+            props.put("auto.commit.enable", "false");
+        if (config.getAutoOffsetReset() != null)
+            props.put("auto.offset.reset", config.getAutoOffsetReset());
         ConsumerConnector consumer;
         if (consumerFactory == null)
             consumer = Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
