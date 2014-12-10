@@ -17,10 +17,11 @@ package io.confluent.kafkarest.unit;
 
 import io.confluent.kafkarest.*;
 import io.confluent.kafkarest.entities.*;
-import io.confluent.kafkarest.junit.EmbeddedServerTestHarness;
+import io.confluent.rest.ConfigurationException;
+import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.kafkarest.resources.TopicsResource;
-import io.confluent.kafkarest.validation.ConstraintViolationExceptionMapper;
+import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -29,7 +30,6 @@ import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -40,8 +40,7 @@ import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.assertEquals;
 
-public class PartitionsResourceTest extends EmbeddedServerTestHarness {
-    private Config config;
+public class PartitionsResourceTest extends EmbeddedServerTestHarness<KafkaRestConfiguration, KafkaRestApplication> {
     private MetadataObserver mdObserver;
     private ProducerPool producerPool;
     private Context ctx;
@@ -66,7 +65,6 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness {
 
 
     public PartitionsResourceTest() throws ConfigurationException {
-        config = new Config();
         mdObserver = EasyMock.createMock(MetadataObserver.class);
         producerPool = EasyMock.createMock(ProducerPool.class);
         ctx = new Context(config, mdObserver, producerPool, null);

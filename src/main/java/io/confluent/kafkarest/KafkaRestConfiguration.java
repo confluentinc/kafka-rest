@@ -15,12 +15,15 @@
  */
 package io.confluent.kafkarest;
 
+import io.confluent.rest.Configuration;
+import io.confluent.rest.ConfigurationException;
+
 import java.util.Properties;
 
 /**
  * Settings for the REST proxy server.
  */
-public class Config {
+public class KafkaRestConfiguration extends Configuration {
     public Time time;
 
     /**
@@ -76,11 +79,11 @@ public class Config {
     public int consumerInstanceTimeoutMs;
     public static final String DEFAULT_CONSUMER_INSTANCE_TIMEOUT_MS = "300000";
 
-    public Config() throws ConfigurationException {
+    public KafkaRestConfiguration() throws ConfigurationException {
         this(new Properties());
     }
 
-    public Config(Properties props) throws ConfigurationException {
+    public KafkaRestConfiguration(Properties props) throws ConfigurationException {
         time = new SystemTime();
 
         id = props.getProperty("id", DEFAULT_ID);
@@ -97,5 +100,25 @@ public class Config {
         consumerRequestMaxMessages = Integer.parseInt(props.getProperty("consumer.request.max.messages", DEFAULT_CONSUMER_REQUEST_MAX_MESSAGES));
         consumerThreads = Integer.parseInt(props.getProperty("consumer.threads", DEFAULT_CONSUMER_THREADS));
         consumerInstanceTimeoutMs = Integer.parseInt(props.getProperty("consumer.instance.timeout.ms", DEFAULT_CONSUMER_INSTANCE_TIMEOUT_MS));
+    }
+
+    @Override
+    public boolean getDebug() {
+        return debug;
+    }
+
+    @Override
+    public int getPort() {
+        return port;
+    }
+
+    @Override
+    public Iterable<String> getPreferredResponseMediaTypes() {
+        return Versions.PREFERRED_RESPONSE_TYPES;
+    }
+
+    @Override
+    public String getDefaultResponseMediaType() {
+        return Versions.KAFKA_MOST_SPECIFIC_DEFAULT;
     }
 }

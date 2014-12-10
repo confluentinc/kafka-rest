@@ -2,7 +2,7 @@ package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.confluent.kafkarest.validation.ConstraintViolations;
+import io.confluent.rest.validation.ConstraintViolations;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import javax.validation.constraints.NotNull;

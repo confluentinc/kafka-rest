@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Worker thread for consumers that multiplexes multiple consumer operations onto a single thread.
  */
 public class ConsumerWorker extends Thread {
-    Config config;
+    KafkaRestConfiguration config;
 
     AtomicBoolean isRunning = new AtomicBoolean(true);
     CountDownLatch shutdownLatch = new CountDownLatch(1);
@@ -39,7 +39,7 @@ public class ConsumerWorker extends Thread {
     Queue<ReadTask> tasks = new LinkedList<>();
     Queue<ReadTask> backoffTasks = new LinkedList<>();
 
-    public ConsumerWorker(Config config) {
+    public ConsumerWorker(KafkaRestConfiguration config) {
         this.config = config;
     }
 

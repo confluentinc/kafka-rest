@@ -30,7 +30,6 @@ import scala.math.Ordering;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
 import java.util.*;
-import java.util.Set;
 
 /**
  * Observes metadata about the Kafka cluster.
@@ -38,7 +37,7 @@ import java.util.Set;
 public class MetadataObserver {
     private ZkClient zkClient;
 
-    public MetadataObserver(Config config) {
+    public MetadataObserver(KafkaRestConfiguration config) {
         zkClient = new ZkClient(config.zookeeperConnect, 30000, 30000, ZKStringSerializer$.MODULE$);
     }
 

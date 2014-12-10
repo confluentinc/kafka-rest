@@ -20,7 +20,8 @@ import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.kafkarest.junit.EmbeddedServerTestHarness;
+import io.confluent.rest.ConfigurationException;
+import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.kafkarest.resources.ConsumersResource;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -32,7 +33,6 @@ import org.junit.Test;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -44,8 +44,7 @@ import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.*;
 
-public class ConsumerResourceTest extends EmbeddedServerTestHarness {
-    private Config config;
+public class ConsumerResourceTest extends EmbeddedServerTestHarness<KafkaRestConfiguration, KafkaRestApplication> {
     private MetadataObserver mdObserver;
     private ConsumerManager consumerManager;
     private Context ctx;
@@ -58,7 +57,6 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness {
     private static final String not_found_message = "not found";
 
     public ConsumerResourceTest() throws ConfigurationException {
-        config = new Config();
         mdObserver = EasyMock.createMock(MetadataObserver.class);
         consumerManager = EasyMock.createMock(ConsumerManager.class);
         ctx = new Context(config, mdObserver, null, consumerManager);

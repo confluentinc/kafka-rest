@@ -15,6 +15,7 @@
  */
 package io.confluent.kafkarest;
 
+import io.confluent.rest.ConfigurationException;
 import org.eclipse.jetty.server.Server;
 import java.io.IOException;
 
@@ -24,8 +25,8 @@ public class Main {
      */
     public static void main(String[] args) throws IOException {
         try {
-            Server server = KafkaRestServer.createServer();
-
+            KafkaRestApplication app = new KafkaRestApplication();
+            Server server = app.createServer();
             server.start();
             System.out.println("Server started, listening for requests...");
             server.join();

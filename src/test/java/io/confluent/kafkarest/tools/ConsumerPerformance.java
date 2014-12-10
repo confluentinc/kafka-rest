@@ -17,7 +17,7 @@ package io.confluent.kafkarest.tools;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.kafkarest.Config;
+import io.confluent.kafkarest.KafkaRestConfiguration;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
@@ -55,7 +55,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
         // We need an approximate # of iterations per second, but we don't know how many records per request we'll receive
         // so we don't know how many iterations per second we need to hit the target rate. Get an approximate value using
         // the default max # of records per request the server will return.
-        perf.run(throughput / Integer.parseInt(Config.DEFAULT_CONSUMER_REQUEST_MAX_MESSAGES));
+        perf.run(throughput / Integer.parseInt(KafkaRestConfiguration.DEFAULT_CONSUMER_REQUEST_MAX_MESSAGES));
         perf.close();
     }
 
@@ -86,7 +86,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
 
     @Override
     protected void doIteration(PerformanceStats.Callback cb) {
-        List<UndecodedConsumerRecord> records = (List<UndecodedConsumerRecord>)request(targetUrl, "GET", null, null, new TypeReference<List<UndecodedConsumerRecord>>() {});
+        List<UndecodedConsumerRecord> records = request(targetUrl, "GET", null, null, new TypeReference<List<UndecodedConsumerRecord>>() {});
         long bytes = 0;
         for (UndecodedConsumerRecord record : records)
             bytes += record.value.length() * 3 / 4;
@@ -98,7 +98,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
         request(deleteUrl, "DELETE", null, null, null);
     }
 
-    private Object request(String target, String method, byte[] entity, String entityLength, TypeReference responseFormat) {
+    private <T> T request(String target, String method, byte[] entity, String entityLength, TypeReference<T> responseFormat) {
         HttpURLConnection connection = null;
         try {
             URL url = new URL(target);
@@ -124,7 +124,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
 
             if (method != "DELETE") {
                 InputStream is = connection.getInputStream();
-                Object result = serializer.readValue(is, responseFormat);
+                T result = serializer.readValue(is, responseFormat);
                 is.close();
                 return result;
             }

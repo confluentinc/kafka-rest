@@ -19,19 +19,19 @@ package io.confluent.kafkarest;
  * Shared, global state for the REST proxy server, including configuration and connection pools.
  */
 public class Context {
-    private final Config config;
+    private final KafkaRestConfiguration config;
     private final MetadataObserver metadataObserver;
     private final ProducerPool producerPool;
     private final ConsumerManager consumerManager;
 
-    public Context(Config config, MetadataObserver metadataObserver, ProducerPool producerPool, ConsumerManager consumerManager) {
+    public Context(KafkaRestConfiguration config, MetadataObserver metadataObserver, ProducerPool producerPool, ConsumerManager consumerManager) {
         this.config = config;
         this.metadataObserver = metadataObserver;
         this.producerPool = producerPool;
         this.consumerManager = consumerManager;
     }
 
-    public Config getConfig() {
+    public KafkaRestConfiguration getConfig() {
         return config;
     }
 

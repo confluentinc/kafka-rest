@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ConsumerManager {
     public final static String MESSAGE_CONSUMER_INSTANCE_NOT_FOUND = "Consumer instance not found.";
 
-    private final Config config;
+    private final KafkaRestConfiguration config;
     private final Time time;
     private final String zookeeperConnect;
     private final MetadataObserver mdObserver;
@@ -55,7 +55,7 @@ public class ConsumerManager {
     private final PriorityQueue<ConsumerState> consumersByExpiration = new PriorityQueue<>();
     private final ExpirationThread expirationThread;
 
-    public ConsumerManager(Config config, MetadataObserver mdObserver) {
+    public ConsumerManager(KafkaRestConfiguration config, MetadataObserver mdObserver) {
         this.config = config;
         this.time = config.time;
         this.zookeeperConnect = config.zookeeperConnect;
@@ -74,7 +74,7 @@ public class ConsumerManager {
         this.expirationThread.start();
     }
 
-    public ConsumerManager(Config config, MetadataObserver mdObserver, ConsumerFactory consumerFactory) {
+    public ConsumerManager(KafkaRestConfiguration config, MetadataObserver mdObserver, ConsumerFactory consumerFactory) {
         this(config, mdObserver);
         this.consumerFactory = consumerFactory;
     }

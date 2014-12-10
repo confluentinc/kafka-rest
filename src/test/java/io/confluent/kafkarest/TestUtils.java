@@ -15,7 +15,7 @@
  */
 package io.confluent.kafkarest;
 
-import io.confluent.kafkarest.entities.ErrorMessage;
+import io.confluent.rest.entities.ErrorMessage;
 
 import javax.ws.rs.core.Response;
 

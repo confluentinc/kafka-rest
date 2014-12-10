@@ -15,8 +15,8 @@
  */
 package io.confluent.kafkarest.unit;
 
-import io.confluent.kafkarest.Config;
-import io.confluent.kafkarest.ConfigurationException;
+import io.confluent.kafkarest.KafkaRestConfiguration;
+import io.confluent.rest.ConfigurationException;
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
@@ -31,7 +31,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.NotFoundException;
-import java.lang.ref.Reference;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -40,7 +39,7 @@ import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.*;
 
 public class ConsumerManagerTest {
-    private Config config;
+    private KafkaRestConfiguration config;
     private MetadataObserver mdObserver;
     private ConsumerManager.ConsumerFactory consumerFactory;
     private ConsumerManager consumerManager;
@@ -52,7 +51,7 @@ public class ConsumerManagerTest {
 
     @Before
     public void setUp() throws ConfigurationException {
-        config = new Config();
+        config = new KafkaRestConfiguration();
         config.time = new MockTime();
         mdObserver = EasyMock.createMock(MetadataObserver.class);
         consumerFactory = EasyMock.createMock(ConsumerManager.ConsumerFactory.class);
@@ -60,7 +59,7 @@ public class ConsumerManagerTest {
     }
 
     private ConsumerConnector expectCreate(Map<String,List<Map<Integer,List<ConsumerRecord>>>> schedules) {
-        ConsumerConnector consumer = new MockConsumerConnector(config.time, "testclient", schedules, Integer.parseInt(Config.DEFAULT_CONSUMER_ITERATOR_TIMEOUT_MS));
+        ConsumerConnector consumer = new MockConsumerConnector(config.time, "testclient", schedules, Integer.parseInt(KafkaRestConfiguration.DEFAULT_CONSUMER_ITERATOR_TIMEOUT_MS));
         EasyMock.expect(consumerFactory.createConsumer(EasyMock.<ConsumerConfig>anyObject()))
                 .andReturn(consumer);
         return consumer;

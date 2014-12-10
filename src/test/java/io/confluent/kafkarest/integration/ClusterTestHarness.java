@@ -15,8 +15,8 @@
  */
 package io.confluent.kafkarest.integration;
 
-import io.confluent.kafkarest.Config;
-import io.confluent.kafkarest.KafkaRestServer;
+import io.confluent.kafkarest.KafkaRestConfiguration;
+import io.confluent.kafkarest.KafkaRestApplication;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.SystemTime$;
@@ -64,7 +64,8 @@ public abstract class ClusterTestHarness {
 
     protected String bootstrapServers = null;
     protected Properties restProperties = null;
-    protected Config restConfig = null;
+    protected KafkaRestConfiguration restConfig = null;
+    protected KafkaRestApplication restApp = null;
     protected Server restServer = null;
     protected String restConnect = null;
 
@@ -124,8 +125,9 @@ public abstract class ClusterTestHarness {
             servers.add(server);
         }
 
-        restConfig = KafkaRestServer.createServerConfig(restProperties);
-        restServer = KafkaRestServer.createServer(restConfig);
+        restConfig = new KafkaRestConfiguration(restProperties);
+        restApp = new KafkaRestApplication(restConfig);
+        restServer = restApp.createServer();
         restServer.start();
     }
 
@@ -150,7 +152,8 @@ public abstract class ClusterTestHarness {
 
     protected Invocation.Builder request(String path, String templateName, Object templateValue) {
         Client client = ClientBuilder.newClient();
-        KafkaRestServer.configureApplication(client, null);
+        // Only configure base application here because as a client we shouldn't need the resources registered
+        restApp.configureBaseApplication(client);
         WebTarget target;
         URI pathUri = null;
         try {

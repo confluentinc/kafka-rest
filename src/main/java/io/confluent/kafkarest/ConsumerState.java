@@ -15,13 +15,9 @@
  */
 package io.confluent.kafkarest;
 
-import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import kafka.consumer.ConsumerIterator;
-import kafka.consumer.ConsumerTimeoutException;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.message.MessageAndMetadata;
 
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -30,7 +26,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 class ConsumerState implements Comparable<ConsumerState> {
-    private Config config;
+    private KafkaRestConfiguration config;
     private ConsumerInstanceId instanceId;
     private ConsumerConnector consumer;
     private Map<String, TopicState> topics;
@@ -41,7 +37,7 @@ class ConsumerState implements Comparable<ConsumerState> {
     // modify a single TopicState, but only needs read access to the ConsumerState).
     private ReadWriteLock lock;
 
-    public ConsumerState(Config config, ConsumerInstanceId instanceId, ConsumerConnector consumer) {
+    public ConsumerState(KafkaRestConfiguration config, ConsumerInstanceId instanceId, ConsumerConnector consumer) {
         this.config = config;
         this.instanceId = instanceId;
         this.consumer = consumer;
