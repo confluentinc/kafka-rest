@@ -18,6 +18,8 @@ package io.confluent.kafkarest;
 import io.confluent.rest.Configuration;
 import io.confluent.rest.ConfigurationException;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Properties;
 
 /**
@@ -83,6 +85,10 @@ public class KafkaRestConfiguration extends Configuration {
         this(new Properties());
     }
 
+    public KafkaRestConfiguration(String propsFile) throws ConfigurationException {
+        this(getPropsFromFile(propsFile));
+    }
+
     public KafkaRestConfiguration(Properties props) throws ConfigurationException {
         time = new SystemTime();
 
@@ -120,5 +126,17 @@ public class KafkaRestConfiguration extends Configuration {
     @Override
     public String getDefaultResponseMediaType() {
         return Versions.KAFKA_MOST_SPECIFIC_DEFAULT;
+    }
+
+    private static Properties getPropsFromFile(String propsFile) throws ConfigurationException {
+        Properties props = new Properties();
+        if (propsFile == null) return props;
+        try {
+            FileInputStream propStream = new FileInputStream(propsFile);
+            props.load(propStream);
+        } catch (IOException e) {
+            throw new ConfigurationException("Couldn't load properties from " + propsFile, e);
+        }
+        return props;
     }
 }

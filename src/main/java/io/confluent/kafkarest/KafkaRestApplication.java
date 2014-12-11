@@ -27,7 +27,11 @@ import java.util.Properties;
  */
 public class KafkaRestApplication extends Application<KafkaRestConfiguration> {
     public KafkaRestApplication() throws ConfigurationException {
-        this.config = new KafkaRestConfiguration(new Properties());
+        this(new Properties());
+    }
+
+    public KafkaRestApplication(Properties props) throws ConfigurationException {
+        this(new KafkaRestConfiguration(props));
     }
 
     public KafkaRestApplication(KafkaRestConfiguration config) {
