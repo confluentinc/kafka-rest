@@ -11,7 +11,7 @@
 
     <properties>
         <restutils.version>0.1-SNAPSHOT</restutils.version>
-        <jersey.version>2.13</jersey.version>
+        <jersey.version>2.6</jersey.version>
         <kafka.version>0.8.2-beta</kafka.version>
         <kafka.scala.version>2.10</kafka.scala.version>
         <!-- See note about workaround below. This should match the version used in the version of rest-utils you're using. -->
@@ -74,8 +74,8 @@
                 <version>2.5.1</version>
                 <inherited>true</inherited>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.6</source>
+                    <target>1.6</target>
                 </configuration>
             </plugin>
             <plugin>

@@ -103,12 +103,12 @@ public class MetadataObserver {
     }
 
     private List<Partition> getTopicPartitions(String topic, Integer partitions_filter) {
-        List<Partition> partitions = new Vector<>();
+        List<Partition> partitions = new Vector<Partition>();
         Map<String, Map<Object, Seq<Object>>> topicPartitions = ZkUtils.getPartitionAssignmentForTopics(
                 zkClient, JavaConversions.asScalaIterable(Arrays.asList(topic)).toSeq());
         Map<Object, Seq<Object>> parts = topicPartitions.get(topic).get();
         for(java.util.Map.Entry<Object,Seq<Object>> part : JavaConversions.asJavaMap(parts).entrySet()) {
-            int partId = (int)part.getKey();
+            int partId = (Integer)part.getKey();
             if (partitions_filter != null && partitions_filter != partId)
                 continue;
 
@@ -117,9 +117,9 @@ public class MetadataObserver {
             LeaderAndIsr leaderAndIsr = ZkUtils.getLeaderAndIsrForPartition(zkClient, topic, partId).get();
             p.setLeader(leaderAndIsr.leader());
             scala.collection.immutable.Set<Integer> isr = leaderAndIsr.isr().toSet();
-            List<PartitionReplica> partReplicas = new Vector<>();
+            List<PartitionReplica> partReplicas = new Vector<PartitionReplica>();
             for(Object brokerObj : JavaConversions.asJavaCollection(part.getValue())) {
-                int broker = (int)brokerObj;
+                int broker = (Integer)brokerObj;
                 PartitionReplica r = new PartitionReplica(broker, (leaderAndIsr.leader() == broker), isr.contains(broker));
                 partReplicas.add(r);
             }

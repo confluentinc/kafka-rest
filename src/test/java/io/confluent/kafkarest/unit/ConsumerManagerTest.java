@@ -65,6 +65,7 @@ public class ConsumerManagerTest {
         return consumer;
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testConsumerNormalOps() throws InterruptedException, ExecutionException {
         // Tests create instance, read, and delete
@@ -73,10 +74,10 @@ public class ConsumerManagerTest {
                 new ConsumerRecord("k2".getBytes(), "v2".getBytes(), 1, 0),
                 new ConsumerRecord("k3".getBytes(), "v3".getBytes(), 2, 0)
         );
-        Map<Integer,List<ConsumerRecord>> referenceSchedule = new HashMap<>();
+        Map<Integer,List<ConsumerRecord>> referenceSchedule = new HashMap<Integer,List<ConsumerRecord>>();
         referenceSchedule.put(50, referenceRecords);
 
-        Map<String,List<Map<Integer,List<ConsumerRecord>>>> schedules = new HashMap<>();
+        Map<String,List<Map<Integer,List<ConsumerRecord>>>> schedules = new HashMap<String,List<Map<Integer,List<ConsumerRecord>>>>();
         schedules.put(topicName, Arrays.asList(referenceSchedule));
 
         expectCreate(schedules);

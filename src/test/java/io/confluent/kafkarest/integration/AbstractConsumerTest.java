@@ -84,13 +84,13 @@ public class AbstractConsumerTest extends ClusterTestHarness {
         assertEquals(records.size(), consumed.size());
 
         // Since this is used for unkeyed messages, this can't rely on ordering of messages
-        Set<String> inputSet = new HashSet<>();
+        Set<String> inputSet = new HashSet<String>();
         for(ProducerRecord rec : records)
             inputSet.add(
                     (rec.key() == null ? "null" : EntityUtils.encodeBase64Binary(rec.key())) +
                             EntityUtils.encodeBase64Binary(rec.value())
             );
-        Set<String> outputSet = new HashSet<>();
+        Set<String> outputSet = new HashSet<String>();
         for(ConsumerRecord rec : consumed)
             outputSet.add((rec.getKey() == null ? "null" : rec.getKeyEncoded()) + rec.getValueEncoded());
         assertEquals(inputSet, outputSet);

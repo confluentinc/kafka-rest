@@ -222,7 +222,7 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness<KafkaRestCon
     }
 
     private void expectReadTopic(String topicName, final List<ConsumerRecord> readResult, final Exception readException) {
-        final Capture<ConsumerManager.ReadCallback> readCallback = new Capture<>();
+        final Capture<ConsumerManager.ReadCallback> readCallback = new Capture<ConsumerManager.ReadCallback>();
         consumerManager.readTopic(EasyMock.eq(groupName), EasyMock.eq(instanceId), EasyMock.eq(topicName), EasyMock.capture(readCallback));
         EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
             @Override
@@ -234,7 +234,7 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness<KafkaRestCon
     }
 
     private void expectCommit(final List<TopicPartitionOffset> commitResult, final Exception commitException) {
-        final Capture<ConsumerManager.CommitCallback> commitCallback = new Capture<>();
+        final Capture<ConsumerManager.CommitCallback> commitCallback = new Capture<ConsumerManager.CommitCallback>();
         consumerManager.commitOffsets(EasyMock.eq(groupName), EasyMock.eq(instanceId), EasyMock.capture(commitCallback));
         EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
             @Override

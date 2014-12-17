@@ -32,7 +32,7 @@ import static org.junit.Assert.*;
 
 public class MockConsumerConnector implements ConsumerConnector {
     public String clientId;
-    public Map<String, List<KafkaStream<byte[], byte[]>>> subscribedStreams = new HashMap<>();
+    public Map<String, List<KafkaStream<byte[], byte[]>>> subscribedStreams = new HashMap<String, List<KafkaStream<byte[], byte[]>>>();
 
     private Time time;
     private Map<String,List<Map<Integer,List<ConsumerRecord>>>> streamDataSchedules;
@@ -64,7 +64,7 @@ public class MockConsumerConnector implements ConsumerConnector {
 
     @Override
     public Map<String, List<KafkaStream<byte[], byte[]>>> createMessageStreams(Map<String, Integer> topicCountMap) {
-        Map<String, List<KafkaStream<byte[], byte[]>>> result = new HashMap<>();
+        Map<String, List<KafkaStream<byte[], byte[]>>> result = new HashMap<String, List<KafkaStream<byte[], byte[]>>>();
 
         for(Map.Entry<String,Integer> topicEntry : topicCountMap.entrySet()) {
             String topic = topicEntry.getKey();
@@ -74,9 +74,9 @@ public class MockConsumerConnector implements ConsumerConnector {
                     streamDataSchedules.containsKey(topic));
             assertTrue("Calls to MockConsumerConnector.createMessageStreams should request the same number of streams as provided to the constructor",
                     streamDataSchedules.get(topic).size() == topicEntry.getValue());
-            List<KafkaStream<byte[],byte[]>> streams = new Vector<>();
+            List<KafkaStream<byte[],byte[]>> streams = new Vector<KafkaStream<byte[],byte[]>>();
             for(int i = 0; i < topicEntry.getValue(); i++) {
-                streams.add(new KafkaStream<>(new MockConsumerQueue(time, streamDataSchedules.get(topic).get(i)),
+                streams.add(new KafkaStream<byte[],byte[]>(new MockConsumerQueue(time, streamDataSchedules.get(topic).get(i)),
                         consumerTimeoutMs, decoder, decoder, clientId));
             }
             subscribedStreams.put(topic, streams);

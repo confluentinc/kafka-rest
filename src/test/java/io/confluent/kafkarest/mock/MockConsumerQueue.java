@@ -35,8 +35,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class MockConsumerQueue implements BlockingQueue<FetchedDataChunk> {
     private Time time;
-    private PriorityQueue<ScheduledItems> scheduled = new PriorityQueue<>();
-    private Queue<ConsumerRecord> ready = new LinkedList<>();
+    private PriorityQueue<ScheduledItems> scheduled = new PriorityQueue<ScheduledItems>();
+    private Queue<ConsumerRecord> ready = new LinkedList<ConsumerRecord>();
 
     public MockConsumerQueue(Time time, Map<Integer,List<ConsumerRecord>> schedule) {
         this.time = time;

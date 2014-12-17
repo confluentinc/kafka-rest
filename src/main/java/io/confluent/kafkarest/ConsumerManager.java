@@ -43,7 +43,7 @@ public class ConsumerManager {
     private final int iteratorTimeoutMs;
 
     private final AtomicInteger nextId = new AtomicInteger(0);
-    private final Map<ConsumerInstanceId,ConsumerState> consumers = new HashMap<>();
+    private final Map<ConsumerInstanceId,ConsumerState> consumers = new HashMap<ConsumerInstanceId,ConsumerState>();
     // Read operations are common and there may be many concurrently, so they are farmed out to worker threads that can
     // efficiently interleave the operations. Currently we're just using a simple round-robin scheduler.
     private final List<ConsumerWorker> workers;
@@ -52,7 +52,7 @@ public class ConsumerManager {
     // comparatively rare. These are executed serially in a dedicated thread.
     private final ExecutorService executor;
     private ConsumerFactory consumerFactory;
-    private final PriorityQueue<ConsumerState> consumersByExpiration = new PriorityQueue<>();
+    private final PriorityQueue<ConsumerState> consumersByExpiration = new PriorityQueue<ConsumerState>();
     private final ExpirationThread expirationThread;
 
     public ConsumerManager(KafkaRestConfiguration config, MetadataObserver mdObserver) {

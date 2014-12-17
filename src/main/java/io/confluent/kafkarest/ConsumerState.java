@@ -41,7 +41,7 @@ class ConsumerState implements Comparable<ConsumerState> {
         this.config = config;
         this.instanceId = instanceId;
         this.consumer = consumer;
-        this.topics = new HashMap<>();
+        this.topics = new HashMap<String, TopicState>();
         this.expiration = config.time.milliseconds() + config.consumerInstanceTimeoutMs;
         this.lock = new ReentrantReadWriteLock();
     }
@@ -122,7 +122,7 @@ class ConsumerState implements Comparable<ConsumerState> {
             TopicState state = topics.get(topic);
             if (state != null) return state;
 
-            Map<String, Integer> subscriptions = new TreeMap<>();
+            Map<String, Integer> subscriptions = new TreeMap<String, Integer>();
             subscriptions.put(topic, 1);
             Map<String, List<KafkaStream<byte[], byte[]>>> streamsByTopic = consumer.createMessageStreams(subscriptions);
             KafkaStream<byte[], byte[]> stream = streamsByTopic.get(topic).get(0);
@@ -141,7 +141,7 @@ class ConsumerState implements Comparable<ConsumerState> {
      * @return
      */
     private List<TopicPartitionOffset> getOffsets(boolean updateCommitOffsets) {
-        List<TopicPartitionOffset> result = new Vector<>();
+        List<TopicPartitionOffset> result = new Vector<TopicPartitionOffset>();
         for(Map.Entry<String, TopicState> entry : topics.entrySet()) {
             TopicState state = entry.getValue();
             state.lock.lock();
@@ -183,8 +183,8 @@ class ConsumerState implements Comparable<ConsumerState> {
 
         public TopicState(KafkaStream<byte[],byte[]> stream) {
             this.stream = stream;
-            this.consumedOffsets = new HashMap<>();
-            this.committedOffsets = new HashMap<>();
+            this.consumedOffsets = new HashMap<Integer, Long>();
+            this.committedOffsets = new HashMap<Integer, Long>();
         }
     }
 }

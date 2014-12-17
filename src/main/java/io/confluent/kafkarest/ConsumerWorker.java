@@ -36,8 +36,8 @@ public class ConsumerWorker extends Thread {
     AtomicBoolean isRunning = new AtomicBoolean(true);
     CountDownLatch shutdownLatch = new CountDownLatch(1);
 
-    Queue<ReadTask> tasks = new LinkedList<>();
-    Queue<ReadTask> backoffTasks = new LinkedList<>();
+    Queue<ReadTask> tasks = new LinkedList<ReadTask>();
+    Queue<ReadTask> backoffTasks = new LinkedList<ReadTask>();
 
     public ConsumerWorker(KafkaRestConfiguration config) {
         this.config = config;
@@ -144,7 +144,7 @@ public class ConsumerWorker extends Thread {
                 if (iter == null) {
                     state.startRead(topicState);
                     iter = topicState.stream.iterator();
-                    messages = new Vector<>();
+                    messages = new Vector<ConsumerRecord>();
                     backoffExpiration = 0;
                 }
 

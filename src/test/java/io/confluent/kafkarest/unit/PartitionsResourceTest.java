@@ -80,7 +80,7 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness<KafkaRestC
                 new ProduceRecord("key".getBytes(), "value".getBytes()),
                 new ProduceRecord("key2".getBytes(), "value2".getBytes())
         );
-        produceOffsets = new HashMap<>();
+        produceOffsets = new HashMap<Integer, Long>();
         produceOffsets.put(0, 1L);
     }
 
@@ -158,7 +158,7 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness<KafkaRestC
     private Response produceToPartition(String topic, int partition, String acceptHeader, String requestMediatype, List<ProduceRecord> records, final Map<Integer, Long> resultOffsets) {
         final PartitionProduceRequest request = new PartitionProduceRequest();
         request.setRecords(records);
-        final Capture<ProducerPool.ProduceRequestCallback> produceCallback = new Capture<>();
+        final Capture<ProducerPool.ProduceRequestCallback> produceCallback = new Capture<ProducerPool.ProduceRequestCallback>();
         EasyMock.expect(mdObserver.topicExists(topic)).andReturn(true);
         EasyMock.expect(mdObserver.partitionExists(topic, partition)).andReturn(true);
         producerPool.produce(EasyMock.<ProducerRecordProxyCollection>anyObject(), EasyMock.capture(produceCallback));

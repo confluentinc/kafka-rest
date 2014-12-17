@@ -74,7 +74,7 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness<KafkaRestConfi
                 new TopicProduceRecord("key".getBytes(), "value".getBytes(), 0),
                 new TopicProduceRecord("key2".getBytes(), "value2".getBytes(), 0)
         );
-        produceOffsets = new HashMap<>();
+        produceOffsets = new HashMap<Integer, Long>();
         produceOffsets.put(0, 1L);
         produceOffsets.put(1, 2L);
     }
@@ -165,7 +165,7 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness<KafkaRestConfi
     private Response produceToTopic(String topic, String acceptHeader, String requestMediatype, List<TopicProduceRecord> records, final Map<Integer, Long> resultOffsets) {
         final TopicProduceRequest request = new TopicProduceRequest();
         request.setRecords(records);
-        final Capture<ProducerPool.ProduceRequestCallback> produceCallback = new Capture<>();
+        final Capture<ProducerPool.ProduceRequestCallback> produceCallback = new Capture<ProducerPool.ProduceRequestCallback>();
         EasyMock.expect(mdObserver.topicExists(topic)).andReturn(true);
         producerPool.produce(EasyMock.<ProducerRecordProxyCollection>anyObject(), EasyMock.capture(produceCallback));
         EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {

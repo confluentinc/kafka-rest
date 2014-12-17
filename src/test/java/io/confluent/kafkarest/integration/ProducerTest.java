@@ -170,12 +170,12 @@ public class ProducerTest extends ClusterTestHarness {
         ConsumerConnector consumer = Consumer.createJavaConsumerConnector(
                 new ConsumerConfig(TestUtils.createConsumerProperties(zkConnect, "testgroup", "consumer0", 200))
         );
-        Map<String,Integer> topicCountMap = new HashMap<>();
+        Map<String,Integer> topicCountMap = new HashMap<String, Integer>();
         topicCountMap.put(topicName, 1);
         Map<String, List<KafkaStream<byte[], byte[]>>> streams = consumer.createMessageStreams(topicCountMap);
         KafkaStream<byte[], byte[]> stream = streams.get(topicName).get(0);
         ConsumerIterator<byte[], byte[]> it = stream.iterator();
-        Set<String> msgSet = new TreeSet<>();
+        Set<String> msgSet = new TreeSet<String>();
         for(int i = 0; i < records.size(); i++) {
             MessageAndMetadata<byte[],byte[]> data = it.next();
             if (partition == null || data.partition() == partition)
@@ -183,7 +183,7 @@ public class ProducerTest extends ClusterTestHarness {
         }
         consumer.shutdown();
 
-        Set<String> refMsgSet = new TreeSet<>();
+        Set<String> refMsgSet = new TreeSet<String>();
         for(ProduceRecord rec : records)
             refMsgSet.add(EntityUtils.encodeBase64Binary(rec.getValue()));
         assertEquals(msgSet, refMsgSet);
