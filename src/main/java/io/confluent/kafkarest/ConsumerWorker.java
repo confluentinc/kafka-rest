@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Worker thread for consumers that multiplexes multiple consumer operations onto a single thread.
  */
 public class ConsumerWorker extends Thread {
-    KafkaRestConfiguration config;
+    KafkaRestConfig config;
 
     AtomicBoolean isRunning = new AtomicBoolean(true);
     CountDownLatch shutdownLatch = new CountDownLatch(1);
@@ -39,7 +39,7 @@ public class ConsumerWorker extends Thread {
     Queue<ReadTask> tasks = new LinkedList<ReadTask>();
     Queue<ReadTask> backoffTasks = new LinkedList<ReadTask>();
 
-    public ConsumerWorker(KafkaRestConfiguration config) {
+    public ConsumerWorker(KafkaRestConfig config) {
         this.config = config;
     }
 
@@ -157,7 +157,9 @@ public class ConsumerWorker extends Thread {
                     // should be set very small, so the expectation is that even in the worst case,
                     // num_messages * consumer_timeout << request_timeout, so it's safe to only check the elapsed time
                     // once this loop finishes.
-                    while (messages.size() < config.consumerRequestMaxMessages && iter.hasNext()) {
+                    while (messages.size() < config.getInt(KafkaRestConfig.CONSUMER_REQUEST_MAX_MESSAGES_CONFIG) &&
+                            iter.hasNext())
+                    {
                         MessageAndMetadata<byte[], byte[]> msg = iter.next();
                         messages.add(new ConsumerRecord(msg.key(), msg.message(), msg.partition(), msg.offset()));
                         topicState.consumedOffsets.put(msg.partition(), msg.offset());
@@ -170,9 +172,12 @@ public class ConsumerWorker extends Thread {
                 long elapsed = now - started;
                 // Compute backoff based on starting time. This makes reasoning about when timeouts should occur simpler
                 // for tests.
-                backoffExpiration = startedIteration + config.consumerIteratorBackoffMs;
+                backoffExpiration = startedIteration +
+                        config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
 
-                if (elapsed >= config.consumerRequestTimeoutMs || messages.size() >= config.consumerRequestMaxMessages) {
+                if (elapsed >= config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) ||
+                        messages.size() >= config.getInt(KafkaRestConfig.CONSUMER_REQUEST_MAX_MESSAGES_CONFIG))
+                {
                     state.finishRead(topicState);
                     finish();
                 }
@@ -213,7 +218,9 @@ public class ConsumerWorker extends Thread {
         }
 
         @Override
-        public List<ConsumerRecord> get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        public List<ConsumerRecord> get(long timeout, TimeUnit unit)
+                throws InterruptedException, ExecutionException, TimeoutException
+        {
             finished.await(timeout, unit);
             if (finished.getCount() > 0)
                 throw new TimeoutException();

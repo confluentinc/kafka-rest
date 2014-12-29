@@ -37,8 +37,8 @@ import java.util.*;
 public class MetadataObserver {
     private ZkClient zkClient;
 
-    public MetadataObserver(KafkaRestConfiguration config) {
-        zkClient = new ZkClient(config.zookeeperConnect, 30000, 30000, ZKStringSerializer$.MODULE$);
+    public MetadataObserver(KafkaRestConfig config) {
+        zkClient = new ZkClient(config.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG), 30000, 30000, ZKStringSerializer$.MODULE$);
     }
 
     public List<Integer> getBrokerIds() {

@@ -26,7 +26,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 class ConsumerState implements Comparable<ConsumerState> {
-    private KafkaRestConfiguration config;
+    private KafkaRestConfig config;
     private ConsumerInstanceId instanceId;
     private ConsumerConnector consumer;
     private Map<String, TopicState> topics;
@@ -37,12 +37,13 @@ class ConsumerState implements Comparable<ConsumerState> {
     // modify a single TopicState, but only needs read access to the ConsumerState).
     private ReadWriteLock lock;
 
-    public ConsumerState(KafkaRestConfiguration config, ConsumerInstanceId instanceId, ConsumerConnector consumer) {
+    public ConsumerState(KafkaRestConfig config, ConsumerInstanceId instanceId, ConsumerConnector consumer) {
         this.config = config;
         this.instanceId = instanceId;
         this.consumer = consumer;
         this.topics = new HashMap<String, TopicState>();
-        this.expiration = config.time.milliseconds() + config.consumerInstanceTimeoutMs;
+        this.expiration = config.time.milliseconds() +
+                config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
         this.lock = new ReentrantReadWriteLock();
     }
 
@@ -88,7 +89,8 @@ class ConsumerState implements Comparable<ConsumerState> {
     }
 
     public void updateExpiration() {
-        this.expiration = config.time.milliseconds() + config.consumerInstanceTimeoutMs;
+        this.expiration = config.time.milliseconds() +
+                config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
     }
 
     public long untilExpiration(long nowMs) {

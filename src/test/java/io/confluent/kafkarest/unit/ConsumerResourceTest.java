@@ -20,9 +20,9 @@ import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.rest.ConfigurationException;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.kafkarest.resources.ConsumersResource;
+import io.confluent.rest.RestConfigException;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -44,7 +44,7 @@ import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.*;
 
-public class ConsumerResourceTest extends EmbeddedServerTestHarness<KafkaRestConfiguration, KafkaRestApplication> {
+public class ConsumerResourceTest extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
     private MetadataObserver mdObserver;
     private ConsumerManager consumerManager;
     private Context ctx;
@@ -56,7 +56,7 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness<KafkaRestCon
 
     private static final String not_found_message = "not found";
 
-    public ConsumerResourceTest() throws ConfigurationException {
+    public ConsumerResourceTest() throws RestConfigException {
         mdObserver = EasyMock.createMock(MetadataObserver.class);
         consumerManager = EasyMock.createMock(ConsumerManager.class);
         ctx = new Context(config, mdObserver, null, consumerManager);

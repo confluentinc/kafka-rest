@@ -15,7 +15,7 @@
  */
 package io.confluent.kafkarest.integration;
 
-import io.confluent.kafkarest.KafkaRestConfiguration;
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestApplication;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
@@ -64,7 +64,7 @@ public abstract class ClusterTestHarness {
 
     protected String bootstrapServers = null;
     protected Properties restProperties = null;
-    protected KafkaRestConfiguration restConfig = null;
+    protected KafkaRestConfig restConfig = null;
     protected KafkaRestApplication restApp = null;
     protected Server restServer = null;
     protected String restConnect = null;
@@ -125,7 +125,7 @@ public abstract class ClusterTestHarness {
             servers.add(server);
         }
 
-        restConfig = new KafkaRestConfiguration(restProperties);
+        restConfig = new KafkaRestConfig(restProperties);
         restApp = new KafkaRestApplication(restConfig);
         restServer = restApp.createServer();
         restServer.start();

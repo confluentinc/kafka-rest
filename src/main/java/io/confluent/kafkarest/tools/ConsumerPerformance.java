@@ -17,7 +17,7 @@ package io.confluent.kafkarest.tools;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.kafkarest.KafkaRestConfiguration;
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
@@ -55,7 +55,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
         // We need an approximate # of iterations per second, but we don't know how many records per request we'll receive
         // so we don't know how many iterations per second we need to hit the target rate. Get an approximate value using
         // the default max # of records per request the server will return.
-        perf.run(throughput / Integer.parseInt(KafkaRestConfiguration.DEFAULT_CONSUMER_REQUEST_MAX_MESSAGES));
+        perf.run(throughput / Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_MAX_MESSAGES_DEFAULT));
         perf.close();
     }
 

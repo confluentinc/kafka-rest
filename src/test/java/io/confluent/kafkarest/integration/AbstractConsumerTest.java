@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.ConsumerManager;
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.*;
 import io.confluent.kafkarest.resources.TopicsResource;
@@ -107,8 +108,8 @@ public class AbstractConsumerTest extends ClusterTestHarness {
         // Note that this is only approximate and really only works if you assume the read call has a dedicated
         // ConsumerWorker thread. Also note that we have to include both the consumer timeout and the backoff period in
         // the slack, as well as some extra for general overhead
-        final int TIMEOUT = restConfig.consumerRequestTimeoutMs;
-        final int TIMEOUT_SLACK = restConfig.consumerIteratorTimeoutMs + 100;
+        final int TIMEOUT = restConfig.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+        final int TIMEOUT_SLACK = restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG) + 100;
         assertTrue("Consumer request should not return before the timeout when no data is available", (finished-started) > TIMEOUT);
         assertTrue("Consumer request should timeout approximately within the request timeout period", ((finished-started) - TIMEOUT) < TIMEOUT_SLACK);
     }

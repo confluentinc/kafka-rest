@@ -16,9 +16,9 @@
 package io.confluent.kafkarest.unit;
 
 import io.confluent.kafkarest.*;
-import io.confluent.rest.ConfigurationException;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.kafkarest.resources.RootResource;
+import io.confluent.rest.RestConfigException;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
@@ -30,10 +30,10 @@ import java.util.Map;
 import static io.confluent.kafkarest.TestUtils.*;
 import static org.junit.Assert.*;
 
-public class RootResourceTest extends EmbeddedServerTestHarness<KafkaRestConfiguration, KafkaRestApplication> {
+public class RootResourceTest extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
     private Context ctx;
 
-    public RootResourceTest() throws ConfigurationException {
+    public RootResourceTest() throws RestConfigException {
         ctx = new Context(config, null, null, null);
         addResource(RootResource.class);
     }

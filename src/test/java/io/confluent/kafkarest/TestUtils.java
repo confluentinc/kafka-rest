@@ -19,7 +19,7 @@ import io.confluent.rest.entities.ErrorMessage;
 
 import javax.ws.rs.core.Response;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class TestUtils {
     // Media type collections that should be tested together (i.e. expect the same raw output). The expected output
@@ -75,8 +75,10 @@ public class TestUtils {
 
         ErrorMessage response = rawResponse.readEntity(ErrorMessage.class);
         assertEquals(status.getStatusCode(), response.getErrorCode());
+        // This only checks that the start of the message is identical because debug mode will include extra information
+        // and is enabled by default.
         if (msg != null)
-            assertEquals(msg, response.getMessage());
+            assertTrue(response.getMessage().startsWith(msg));
     }
 
 

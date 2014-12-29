@@ -17,7 +17,7 @@ package io.confluent.kafkarest;
 
 import io.confluent.kafkarest.resources.*;
 import io.confluent.rest.Application;
-import io.confluent.rest.ConfigurationException;
+import io.confluent.rest.RestConfigException;
 
 import javax.ws.rs.core.Configurable;
 import java.util.Properties;
@@ -25,21 +25,21 @@ import java.util.Properties;
 /**
  * Utilities for configuring and running an embedded Kafka server.
  */
-public class KafkaRestApplication extends Application<KafkaRestConfiguration> {
-    public KafkaRestApplication() throws ConfigurationException {
+public class KafkaRestApplication extends Application<KafkaRestConfig> {
+    public KafkaRestApplication() throws RestConfigException {
         this(new Properties());
     }
 
-    public KafkaRestApplication(Properties props) throws ConfigurationException {
-        this(new KafkaRestConfiguration(props));
+    public KafkaRestApplication(Properties props) throws RestConfigException {
+        this(new KafkaRestConfig(props));
     }
 
-    public KafkaRestApplication(KafkaRestConfiguration config) {
+    public KafkaRestApplication(KafkaRestConfig config) {
         this.config = config;
     }
 
     @Override
-    public void setupResources(Configurable<?> config, KafkaRestConfiguration appConfig) {
+    public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
         MetadataObserver mdObserver = new MetadataObserver(appConfig);
         ProducerPool producerPool = new ProducerPool(appConfig);
         ConsumerManager consumerManager = new ConsumerManager(appConfig, mdObserver);
@@ -52,7 +52,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfiguration> {
     }
 
     @Override
-    public KafkaRestConfiguration configure() throws ConfigurationException {
+    public KafkaRestConfig configure() throws RestConfigException {
         return config;
     }
 }

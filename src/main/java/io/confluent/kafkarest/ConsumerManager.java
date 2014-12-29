@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ConsumerManager {
     public final static String MESSAGE_CONSUMER_INSTANCE_NOT_FOUND = "Consumer instance not found.";
 
-    private final KafkaRestConfiguration config;
+    private final KafkaRestConfig config;
     private final Time time;
     private final String zookeeperConnect;
     private final MetadataObserver mdObserver;
@@ -55,14 +55,14 @@ public class ConsumerManager {
     private final PriorityQueue<ConsumerState> consumersByExpiration = new PriorityQueue<ConsumerState>();
     private final ExpirationThread expirationThread;
 
-    public ConsumerManager(KafkaRestConfiguration config, MetadataObserver mdObserver) {
+    public ConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver) {
         this.config = config;
         this.time = config.time;
-        this.zookeeperConnect = config.zookeeperConnect;
+        this.zookeeperConnect = config.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG);
         this.mdObserver = mdObserver;
-        this.iteratorTimeoutMs = config.consumerIteratorTimeoutMs;
+        this.iteratorTimeoutMs = config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG);
         this.workers = new Vector<ConsumerWorker>();
-        for(int i = 0; i < config.consumerThreads; i++) {
+        for(int i = 0; i < config.getInt(KafkaRestConfig.CONSUMER_THREADS_CONFIG); i++) {
             ConsumerWorker worker = new ConsumerWorker(config);
             workers.add(worker);
             worker.start();
@@ -74,7 +74,7 @@ public class ConsumerManager {
         this.expirationThread.start();
     }
 
-    public ConsumerManager(KafkaRestConfiguration config, MetadataObserver mdObserver, ConsumerFactory consumerFactory) {
+    public ConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver, ConsumerFactory consumerFactory) {
         this(config, mdObserver);
         this.consumerFactory = consumerFactory;
     }
@@ -89,8 +89,9 @@ public class ConsumerManager {
         String id = config.getId();
         if (id == null) {
             id = "rest-consumer-";
-            if (!this.config.id.isEmpty())
-                id += this.config.id + "-";
+            String serverId = this.config.getString(KafkaRestConfig.ID_CONFIG);
+            if (!serverId.isEmpty())
+                id += serverId + "-";
             id += ((Integer) nextId.incrementAndGet()).toString();
         }
 

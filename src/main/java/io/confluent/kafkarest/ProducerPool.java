@@ -29,13 +29,13 @@ import java.util.Properties;
  * a batch and managing timeouts.
  */
 public class ProducerPool {
-    private KafkaRestConfiguration config;
+    private KafkaRestConfig config;
     private KafkaProducer producer;
 
-    public ProducerPool(KafkaRestConfiguration config) {
+    public ProducerPool(KafkaRestConfig config) {
         this.config = config;
         Properties props = new Properties();
-        props.setProperty("bootstrap.servers", config.bootstrapServers);
+        props.setProperty("bootstrap.servers", config.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG));
         this.producer = new KafkaProducer(props);
     }
 

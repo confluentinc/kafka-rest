@@ -17,9 +17,9 @@ package io.confluent.kafkarest.unit;
 
 import io.confluent.kafkarest.*;
 import io.confluent.kafkarest.entities.BrokerList;
-import io.confluent.rest.ConfigurationException;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.kafkarest.resources.BrokersResource;
+import io.confluent.rest.RestConfigException;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,12 +32,12 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static io.confluent.kafkarest.TestUtils.*;
 
-public class BrokersResourceTest extends EmbeddedServerTestHarness<KafkaRestConfiguration, KafkaRestApplication> {
+public class BrokersResourceTest extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
     private MetadataObserver mdObserver;
     private ProducerPool producerPool;
     private Context ctx;
 
-    public BrokersResourceTest() throws ConfigurationException {
+    public BrokersResourceTest() throws RestConfigException {
         mdObserver = EasyMock.createMock(MetadataObserver.class);
         producerPool = EasyMock.createMock(ProducerPool.class);
         ctx = new Context(config, mdObserver, producerPool, null);

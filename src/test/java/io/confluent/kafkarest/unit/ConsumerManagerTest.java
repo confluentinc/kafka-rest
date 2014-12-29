@@ -15,8 +15,7 @@
  */
 package io.confluent.kafkarest.unit;
 
-import io.confluent.kafkarest.KafkaRestConfiguration;
-import io.confluent.rest.ConfigurationException;
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
@@ -24,6 +23,7 @@ import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.mock.MockConsumerConnector;
 import io.confluent.kafkarest.mock.MockTime;
+import io.confluent.rest.RestConfigException;
 import kafka.consumer.ConsumerConfig;
 import kafka.javaapi.consumer.ConsumerConnector;
 import org.easymock.EasyMock;
@@ -39,7 +39,7 @@ import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.*;
 
 public class ConsumerManagerTest {
-    private KafkaRestConfiguration config;
+    private KafkaRestConfig config;
     private MetadataObserver mdObserver;
     private ConsumerManager.ConsumerFactory consumerFactory;
     private ConsumerManager consumerManager;
@@ -50,8 +50,8 @@ public class ConsumerManagerTest {
     private boolean sawCallback = false;
 
     @Before
-    public void setUp() throws ConfigurationException {
-        config = new KafkaRestConfiguration();
+    public void setUp() throws RestConfigException {
+        config = new KafkaRestConfig();
         config.time = new MockTime();
         mdObserver = EasyMock.createMock(MetadataObserver.class);
         consumerFactory = EasyMock.createMock(ConsumerManager.ConsumerFactory.class);
@@ -59,7 +59,7 @@ public class ConsumerManagerTest {
     }
 
     private ConsumerConnector expectCreate(Map<String,List<Map<Integer,List<ConsumerRecord>>>> schedules) {
-        ConsumerConnector consumer = new MockConsumerConnector(config.time, "testclient", schedules, Integer.parseInt(KafkaRestConfiguration.DEFAULT_CONSUMER_ITERATOR_TIMEOUT_MS));
+        ConsumerConnector consumer = new MockConsumerConnector(config.time, "testclient", schedules, Integer.parseInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT));
         EasyMock.expect(consumerFactory.createConsumer(EasyMock.<ConsumerConfig>anyObject()))
                 .andReturn(consumer);
         return consumer;
@@ -98,7 +98,7 @@ public class ConsumerManagerTest {
         assertTrue(sawCallback);
         // With # of messages < max per request, this should finish just after the per-request timeout (because the timeout
         // perfectly coincides with a scheduled iteration when using the default settings).
-        assertEquals(config.consumerRequestTimeoutMs + config.consumerIteratorTimeoutMs, config.time.milliseconds());
+        assertEquals(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG), config.time.milliseconds());
 
         sawCallback = false;
         consumerManager.commitOffsets(groupName, cid, new ConsumerManager.CommitCallback() {
@@ -154,7 +154,7 @@ public class ConsumerManagerTest {
             }
         }).get();
         assertTrue(sawCallback);
-        assertEquals(started + config.consumerRequestTimeoutMs, config.time.milliseconds());
+        assertEquals(started + config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG), config.time.milliseconds());
     }
 
     // Not found for instance or topic

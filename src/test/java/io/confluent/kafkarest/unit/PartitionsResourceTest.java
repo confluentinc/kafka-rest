@@ -17,10 +17,10 @@ package io.confluent.kafkarest.unit;
 
 import io.confluent.kafkarest.*;
 import io.confluent.kafkarest.entities.*;
-import io.confluent.rest.ConfigurationException;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.kafkarest.resources.TopicsResource;
+import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -40,7 +40,7 @@ import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.assertEquals;
 
-public class PartitionsResourceTest extends EmbeddedServerTestHarness<KafkaRestConfiguration, KafkaRestApplication> {
+public class PartitionsResourceTest extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
     private MetadataObserver mdObserver;
     private ProducerPool producerPool;
     private Context ctx;
@@ -64,7 +64,7 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness<KafkaRestC
     private Map<Integer,Long> produceOffsets;
 
 
-    public PartitionsResourceTest() throws ConfigurationException {
+    public PartitionsResourceTest() throws RestConfigException {
         mdObserver = EasyMock.createMock(MetadataObserver.class);
         producerPool = EasyMock.createMock(ProducerPool.class);
         ctx = new Context(config, mdObserver, producerPool, null);
