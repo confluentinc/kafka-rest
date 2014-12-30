@@ -26,6 +26,8 @@ import java.util.Properties;
  * Utilities for configuring and running an embedded Kafka server.
  */
 public class KafkaRestApplication extends Application<KafkaRestConfig> {
+    Context context;
+
     public KafkaRestApplication() throws RestConfigException {
         this(new Properties());
     }
@@ -43,16 +45,23 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
         MetadataObserver mdObserver = new MetadataObserver(appConfig);
         ProducerPool producerPool = new ProducerPool(appConfig);
         ConsumerManager consumerManager = new ConsumerManager(appConfig, mdObserver);
-        Context ctx = new Context(appConfig, mdObserver, producerPool, consumerManager);
+        context = new Context(appConfig, mdObserver, producerPool, consumerManager);
         config.register(RootResource.class);
-        config.register(new BrokersResource(ctx));
-        config.register(new TopicsResource(ctx));
+        config.register(new BrokersResource(context));
+        config.register(new TopicsResource(context));
         config.register(PartitionsResource.class);
-        config.register(new ConsumersResource(ctx));
+        config.register(new ConsumersResource(context));
     }
 
     @Override
     public KafkaRestConfig configure() throws RestConfigException {
         return config;
+    }
+
+    @Override
+    public void onShutdown() {
+        context.getConsumerManager().shutdown();
+        context.getProducerPool().shutdown();
+        context.getMetadataObserver().shutdown();
     }
 }

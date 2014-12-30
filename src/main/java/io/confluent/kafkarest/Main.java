@@ -27,10 +27,9 @@ public class Main {
         try {
             KafkaRestConfig config = new KafkaRestConfig((args.length > 0 ? args[0] : null));
             KafkaRestApplication app = new KafkaRestApplication(config);
-            Server server = app.createServer();
-            server.start();
+            app.start();
             System.out.println("Server started, listening for requests...");
-            server.join();
+            app.join();
         } catch (RestConfigException e) {
             System.out.println("Server configuration failed: " + e.getMessage());
             e.printStackTrace();

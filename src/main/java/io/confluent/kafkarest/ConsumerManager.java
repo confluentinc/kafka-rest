@@ -24,9 +24,11 @@ import kafka.javaapi.consumer.ConsumerConnector;
 
 import javax.ws.rs.NotFoundException;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -193,8 +195,22 @@ public class ConsumerManager {
     }
 
     public void shutdown() {
-        for(ConsumerWorker worker : workers)
-            worker.shutdown();
+        synchronized(this) {
+            for (ConsumerWorker worker : workers)
+                worker.shutdown();
+            workers.clear();
+        }
+        // Expiration thread needs to be able to acquire a lock on the ConsumerManager to make sure the shutdown will
+        // be able to complete.
+        expirationThread.shutdown();
+        synchronized(this) {
+            for (Map.Entry<ConsumerInstanceId, ConsumerState> entry : consumers.entrySet()) {
+                entry.getValue().close();
+            }
+            consumers.clear();
+            consumersByExpiration.clear();
+            executor.shutdown();
+        }
     }
 
     /**
@@ -228,6 +244,9 @@ public class ConsumerManager {
     }
 
     private class ExpirationThread extends Thread {
+        AtomicBoolean isRunning = new AtomicBoolean(true);
+        CountDownLatch shutdownLatch = new CountDownLatch(1);
+
         public ExpirationThread() {
             super("Consumer Expiration Thread");
             setDaemon(true);
@@ -237,8 +256,7 @@ public class ConsumerManager {
         public void run() {
             synchronized(ConsumerManager.this) {
                 try {
-                    // FIXME Currently ConsumerManager doesn't catch any shutdown signal, so this continues forever.
-                    while (true) {
+                    while (isRunning.get()) {
                         long now = time.milliseconds();
                         while (!consumersByExpiration.isEmpty() && consumersByExpiration.peek().expired(now)) {
                             final ConsumerState state = consumersByExpiration.remove();
@@ -257,6 +275,17 @@ public class ConsumerManager {
                 catch (InterruptedException e) {
                     // Interrupted by other thread, do nothing to allow this thread to exit
                 }
+            }
+            shutdownLatch.countDown();
+        }
+
+        public void shutdown() {
+            try {
+                isRunning.set(false);
+                this.interrupt();
+                shutdownLatch.await();
+            } catch (InterruptedException e) {
+                throw new Error("Interrupted when shutting down consumer worker thread.");
             }
         }
     }

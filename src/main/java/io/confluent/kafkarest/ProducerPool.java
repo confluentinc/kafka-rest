@@ -46,6 +46,10 @@ public class ProducerPool {
         }
     }
 
+    public void shutdown() {
+        producer.close();
+    }
+
     public interface ProduceRequestCallback {
         public void onCompletion(Map<Integer, Long> partitionOffsets);
         public void onException(Exception e);
