@@ -61,7 +61,12 @@ public class ConsumerWorker extends Thread {
                     try {
                         long now = config.time.milliseconds();
                         long nextExpiration = nextBackoffExpiration();
-                        config.time.waitOn(this, (nextExpiration == Long.MAX_VALUE ? 0 : nextExpiration - now));
+                        if (nextExpiration > now) {
+                            long timeout = (nextExpiration == Long.MAX_VALUE ?
+                                            0 : nextExpiration - now);
+                            assert(timeout >= 0);
+                            config.time.waitOn(this, timeout);
+                        }
                     } catch (InterruptedException e) {
                         // Indication of shutdown
                     }

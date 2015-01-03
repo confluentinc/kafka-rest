@@ -87,7 +87,7 @@ public class MockConsumerQueue implements BlockingQueue<FetchedDataChunk> {
             if (scheduled.isEmpty())
                 msToSleep = timeout;
             else
-                msToSleep = scheduled.peek().time - now;
+                msToSleep = Math.min(scheduled.peek().time - now, timeout);
             time.sleep(msToSleep);
             now = time.milliseconds();
         }
