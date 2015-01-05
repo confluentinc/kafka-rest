@@ -20,8 +20,10 @@ import kafka.consumer.ConsumerIterator;
 import kafka.consumer.ConsumerTimeoutException;
 import kafka.message.MessageAndMetadata;
 
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Vector;
 import java.util.concurrent.*;
@@ -37,7 +39,8 @@ public class ConsumerWorker extends Thread {
     CountDownLatch shutdownLatch = new CountDownLatch(1);
 
     Queue<ReadTask> tasks = new LinkedList<ReadTask>();
-    Queue<ReadTask> backoffTasks = new LinkedList<ReadTask>();
+    Queue<ReadTask> waitingTasks =
+        new PriorityQueue<ReadTask>(1, new ReadTaskExpirationComparator());
 
     public ConsumerWorker(KafkaRestConfig config) {
         this.config = config;
@@ -60,7 +63,7 @@ public class ConsumerWorker extends Thread {
                 if (tasks.isEmpty()) {
                     try {
                         long now = config.time.milliseconds();
-                        long nextExpiration = nextBackoffExpiration();
+                        long nextExpiration = nextWaitingExpiration();
                         if (nextExpiration > now) {
                             long timeout = (nextExpiration == Long.MAX_VALUE ?
                                             0 : nextExpiration - now);
@@ -73,15 +76,15 @@ public class ConsumerWorker extends Thread {
                 }
 
                 long now = config.time.milliseconds();
-                while (nextBackoffExpiration() <= now)
-                    tasks.add(backoffTasks.remove());
+                while (nextWaitingExpiration() <= now)
+                    tasks.add(waitingTasks.remove());
 
                 task = tasks.poll();
                 if (task != null) {
                     boolean backoff = task.doPartialRead();
                     if (!task.isDone()) {
                         if (backoff)
-                            backoffTasks.add(task);
+                            waitingTasks.add(task);
                         else
                             tasks.add(task);
                     }
@@ -91,11 +94,11 @@ public class ConsumerWorker extends Thread {
         shutdownLatch.countDown();
     }
 
-    private long nextBackoffExpiration() {
-        if (backoffTasks.isEmpty())
+    private long nextWaitingExpiration() {
+        if (waitingTasks.isEmpty())
             return Long.MAX_VALUE;
         else
-            return backoffTasks.peek().backoffExpiration;
+            return waitingTasks.peek().waitExpiration;
     }
 
     public void shutdown() {
@@ -123,7 +126,9 @@ public class ConsumerWorker extends Thread {
         List<ConsumerRecord> messages;
         final long started;
 
-        long backoffExpiration;
+        // Expiration if this task is waiting, considering both the expiration of the whole task and
+        // a single backoff, if one is in progress
+        long waitExpiration;
 
         public ReadTask(ConsumerState state, String topic, ReadCallback callback) {
             this.state = state;
@@ -150,7 +155,7 @@ public class ConsumerWorker extends Thread {
                     state.startRead(topicState);
                     iter = topicState.stream.iterator();
                     messages = new Vector<ConsumerRecord>();
-                    backoffExpiration = 0;
+                    waitExpiration = 0;
                 }
 
                 boolean backoff = false;
@@ -175,10 +180,13 @@ public class ConsumerWorker extends Thread {
 
                 long now = config.time.milliseconds();
                 long elapsed = now - started;
-                // Compute backoff based on starting time. This makes reasoning about when timeouts should occur simpler
-                // for tests.
-                backoffExpiration = startedIteration +
+                // Compute backoff based on starting time. This makes reasoning about when timeouts
+                // should occur simpler for tests.
+                long backoffExpiration = startedIteration +
                         config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
+                long requestExpiration =
+                    started + config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+                waitExpiration = Math.min(backoffExpiration, requestExpiration);
 
                 if (elapsed >= config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) ||
                         messages.size() >= config.getInt(KafkaRestConfig.CONSUMER_REQUEST_MAX_MESSAGES_CONFIG))
@@ -230,6 +238,13 @@ public class ConsumerWorker extends Thread {
             if (finished.getCount() > 0)
                 throw new TimeoutException();
             return messages;
+        }
+    }
+
+    private static class ReadTaskExpirationComparator implements Comparator<ReadTask> {
+        @Override
+        public int compare(ReadTask t1, ReadTask t2) {
+            return Long.compare(t1.waitExpiration, t2.waitExpiration);
         }
     }
 }

@@ -35,7 +35,6 @@ import java.util.Set;
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 public class AbstractConsumerTest extends ClusterTestHarness {
     protected void produceMessages(List<ProducerRecord> records) {
@@ -100,18 +99,30 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     protected void consumeForTimeout(String instanceUri, String topic) {
         long started = System.currentTimeMillis();
         Response response = request(instanceUri + "/topics/" + topic).get();
-        assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-        List<ConsumerRecord> consumed =response.readEntity(new GenericType<List<ConsumerRecord>>(){});
         long finished = System.currentTimeMillis();
+        assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        List<ConsumerRecord> consumed =
+            response.readEntity(new GenericType<List<ConsumerRecord>>(){});
         assertEquals(0, consumed.size());
 
-        // Note that this is only approximate and really only works if you assume the read call has a dedicated
-        // ConsumerWorker thread. Also note that we have to include both the consumer timeout and the backoff period in
-        // the slack, as well as some extra for general overhead
+        // Note that this is only approximate and really only works if you assume the read call has
+        // a dedicated ConsumerWorker thread. Also note that we have to include the consumer
+        // request timeout, the iterator timeout used for "peeking", and the backoff period, as well
+        // as some extra slack for general overhead (which apparently mostly comes from running the
+        // request and can be quite substantial).
         final int TIMEOUT = restConfig.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
-        final int TIMEOUT_SLACK = restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG) + 100;
-        assertTrue("Consumer request should not return before the timeout when no data is available", (finished-started) > TIMEOUT);
-        assertTrue("Consumer request should timeout approximately within the request timeout period", ((finished-started) - TIMEOUT) < TIMEOUT_SLACK);
+        final int TIMEOUT_SLACK =
+            restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG)
+            + restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG) + 150;
+        long elapsed = finished - started;
+        assertTrue(
+            "Consumer request should not return before the timeout when no data is available",
+            elapsed > TIMEOUT
+        );
+        assertTrue(
+            "Consumer request should timeout approximately within the request timeout period",
+            (elapsed - TIMEOUT) < TIMEOUT_SLACK
+        );
     }
 
     protected void commitOffsets(String instanceUri) {
