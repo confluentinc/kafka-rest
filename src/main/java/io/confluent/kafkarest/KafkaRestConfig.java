@@ -53,9 +53,9 @@ public class KafkaRestConfig extends RestConfig {
     public static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
     private static final String BOOTSTRAP_SERVERS_DOC = "A list of host/port pairs to use for establishing the "
             + "initial connection to the Kafka cluster. Data will be load " + "balanced over all servers irrespective "
-            + "of which servers are specified here for bootstrapping&mdash;this list only impacts the initial hosts "
+            + "of which servers are specified here for bootstrapping --- this list only impacts the initial hosts "
             + "used to discover the full set of servers. This list should be in the form "
-            + "<code>host1:port1,host2:port2,...</code>. Since these servers are just used for the initial connection "
+            + "host1:port1,host2:port2,... Since these servers are just used for the initial connection "
             + "to discover the full cluster membership (which may change dynamically), this list need not contain the "
             + "full set of servers (you may want more than one, though, in case a server is down). If no server in "
             + "this list is available sending data will fail until on becomes available.";
@@ -136,5 +136,9 @@ public class KafkaRestConfig extends RestConfig {
     public KafkaRestConfig(Properties props) throws RestConfigException {
         super(props);
         time = new SystemTime();
+    }
+
+    public static void main(String[] args) {
+        System.out.print(config.toRst());
     }
 }

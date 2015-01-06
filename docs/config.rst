@@ -1,15 +1,11 @@
 Configuration Options
 =====================
 
-General
--------
-
-``id``
-  Unique ID for this REST server instance. This is used in generating unique IDs for consumers that do not specify
-  their ID. The ID is empty by default, which makes a single server setup easier to get up and running, but is not
-  safe for multi-server deployments where automatic consumer IDs are used.
+``bootstrap.servers``
+  A list of host/port pairs to use for establishing the initial connection to the Kafka cluster. Data will be load balanced over all servers irrespective of which servers are specified here for bootstrapping --- this list only impacts the initial hosts used to discover the full set of servers. This list should be in the form host1:port1,host2:port2,... Since these servers are just used for the initial connection to discover the full cluster membership (which may change dynamically), this list need not contain the full set of servers (you may want more than one, though, in case a server is down). If no server in this list is available sending data will fail until on becomes available.
 
   * Type: string
+  * Default: localhost:9092
   * Importance: high
 
 ``debug``
@@ -19,6 +15,13 @@ General
   * Default: true
   * Importance: high
 
+``id``
+  Unique ID for this REST server instance. This is used in generating unique IDs for consumers that do not specify their ID. The ID is empty by default, which makes a single server setup easier to get up and running, but is not safe for multi-server deployments where automatic consumer IDs are used.
+
+  * Type: string
+  * Default:
+  * Importance: high
+
 ``port``
   Port to listen on for new connections.
 
@@ -26,63 +29,28 @@ General
   * Default: 8080
   * Importance: high
 
-``shutdown.graceful.ms``
-  Amount of time to wait after a shutdown request for outstanding requests to complete.
+``response.mediatype.default``
+  The default response media type that should be used if no specify types are requested in an Accept header.
 
-  * Type: int
-  * Default: 1000
-  * Importance: low
+  * Type: string
+  * Default: application/vnd.kafka.v1+json
+  * Importance: high
 
+``response.mediatype.preferred``
+  An ordered list of the server's preferred media types used for responses, from most preferred to least.
 
-Kafka
------
+  * Type: list
+  * Default: [application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json]
+  * Importance: high
 
 ``zookeeper.connect``
-  Specifies the ZooKeeper connection string in the form ``hostname:port`` where host and port are the host and port of
-  a ZooKeeper server. To allow connecting through other ZooKeeper nodes when that ZooKeeper machine is down you can
-  also specify multiple hosts in the form ``hostname1:port1,hostname2:port2,hostname3:port3``.
+  Specifies the ZooKeeper connection string in the form hostname:port where host and port are the host and port of a ZooKeeper server. To allow connecting through other ZooKeeper nodes when that ZooKeeper machine is down you can also specify multiple hosts in the form hostname1:port1,hostname2:port2,hostname3:port3.
 
-  The server may also have a ZooKeeper chroot path as part of it's ZooKeeper connection string which puts its data
-  under some path in the global ZooKeeper namespace. If so the consumer should use the same chroot path in its
-  connection string. For example to give a chroot path of ``/chroot/path`` you would give the connection string
-  as ``hostname1:port1,hostname2:port2,hostname3:port3/chroot/path``.
+  The server may also have a ZooKeeper chroot path as part of it's ZooKeeper connection string which puts its data under some path in the global ZooKeeper namespace. If so the consumer should use the same chroot path in its connection string. For example to give a chroot path of /chroot/path you would give the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path.
 
   * Type: string
   * Default: localhost:2181
   * Importance: high
-
-``bootstrap.servers``
-  A list of host/port pairs to use for establishing the initial connection to the Kafka cluster. Data will be load
-  balanced over all servers irrespective of which servers are specified here for bootstrapping --- this list only
-  impacts the initial hosts used to discover the full set of servers. This list should be in the form
-  ``host1:port1,host2:port2,...``. Since these servers are just used for the initial connection to discover the full
-  cluster membership (which may change dynamically), this list need not contain the full set of servers (you may want
-  more than one, though, in case a server is down). If no server in this list is available sending data will fail until
-  one becomes available.
-
-  * Type: string
-  * Default: localhost:9092
-  * Importance: high
-
-Producer
---------
-
-``producer.threads``
-  Number of threads to run produce requests on.
-
-  * Type: int
-  * Default: 5
-  * Importance: low
-
-Consumer
---------
-
-``consumer.threads``
-  Number of threads to run consumer requests on.
-
-  * Type: int
-  * Default: 1
-  * Importance: medium
 
 ``consumer.request.max.messages``
   Maximum number of messages returned in a single request.
@@ -98,6 +66,13 @@ Consumer
   * Default: 1000
   * Importance: medium
 
+``consumer.threads``
+  Number of threads to run consumer requests on.
+
+  * Type: int
+  * Default: 1
+  * Importance: medium
+
 ``consumer.instance.timeout.ms``
   Amount of idle time before a consumer instance is automatically destroyed.
 
@@ -106,19 +81,30 @@ Consumer
   * Importance: low
 
 ``consumer.iterator.backoff.ms``
-  Amount of time to backoff when an iterator runs out of data. If a consumer has a dedicated worker thread, this is
-  effectively the maximum error for the entire request timeout. It should be small enough to closely target the timeout,
-  but large enough to avoid busy waiting.
+  Amount of time to backoff when an iterator runs out of data. If a consumer has a dedicated worker thread, this is effectively the maximum error for the entire request timeout. It should be small enough to closely target the timeout, but large enough to avoid busy waiting.
 
   * Type: int
   * Default: 50
   * Importance: low
 
 ``consumer.iterator.timeout.ms``
-  Timeout for blocking consumer iterator operations. This should be set to a small enough value that it is possible to
-  effectively peek() on the iterator.
+  Timeout for blocking consumer iterator operations. This should be set to a small enough value that it is possible to effectively peek() on the iterator.
 
   * Type: int
   * Default: 1
+  * Importance: low
+
+``producer.threads``
+  Number of threads to run produce requests on.
+
+  * Type: int
+  * Default: 5
+  * Importance: low
+
+``shutdown.graceful.ms``
+  Amount of time to wait after a shutdown request for outstanding requests to complete.
+
+  * Type: int
+  * Default: 1000
   * Importance: low
 
