@@ -8,6 +8,40 @@ clients. Examples of use cases include reporting data to Kafka from any
 frontend app built in any language, ingesting messages into a stream processing
 framework that doesn't yet support Kafka, and scripting administrative actions.
 
+Quickstart
+----------
+
+Assuming you have the Kafka and Kafka REST Proxy code checked out:
+
+.. sourcecode:: bash
+
+   # Start a small local Kafka cluster for testing (1 ZK node, 1 Kafka node, and a couple of test
+   # topics)
+   $ cd kafka
+   $ bin/zookeeper-server-start.sh config/zookeeper.properties
+   $ bin/kafka-server-start.sh config/server.properties
+   $ bin/kafka-topics.sh --create --zookeeper localhost:2181 \
+         --topic test --partitions 1 --replication-factor 1
+   $ bin/kafka-topics.sh --create --zookeeper localhost:2181 \
+         --topic test2 --partitions 1 --replication-factor 1
+
+   # Start the REST proxy. The default settings automatically work with the default settings
+   # for local ZooKeeper and Kafka nodes.
+   $ cd ../kafka-rest
+   $ bin/kafka-rest-start
+
+   # Make a few requests to test the API:
+   # Get a list of topics
+   $ curl "http://localhost:8080/topics"
+     [{"name":"test","num_partitions":3},{"name":"test2","num_partitions":1}]
+   # Get info about one partition
+   $ curl "http://localhost:8080/topics/test"
+     {"name":"test","num_partitions":3}
+   # Produce a message with value "Kafka" to the topic test
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
+         --data '{"records":[{"value":"S2Fma2E="}]}' "http://localhost:8080/topics/test"
+     {"offsets":[{"partition": 3, "offset": 1}]}
+
 Installation
 ------------
 
@@ -18,9 +52,11 @@ Deployment
 ----------
 
 The REST proxy includes a built-in Jetty server. Assuming you've configured your
-classpath correctly, you can start a server with::
+classpath correctly, you can start a server with:
 
-    java io.confluent.kafkarest.Main [server.properties]
+.. sourcecode:: bash
+
+   $ java io.confluent.kafkarest.Main [server.properties]
 
 where ``server.properties`` contains configuration settings as specified by the
 ``KafkaRestConfiguration`` class. Although the properties file is not required,
@@ -38,9 +74,11 @@ To build a development version, you may need a development versions of
 `io.confluent.rest-utils <https://github.com/confluentinc/rest-utils>`_.  After
 installing ``common`` and ``rest-utils`` and compiling with Maven, you can run an instance of the
 proxy against a local Kafka cluster (using the default configuration included
-with Kafka)::
+with Kafka):
 
-    mvn exec:java
+.. sourcecode:: bash
+
+    $ mvn exec:java
 
 Contribute
 ----------
