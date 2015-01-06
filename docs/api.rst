@@ -33,7 +33,7 @@ weighted preferences::
       Accept: application/vnd.kafka.v1+json; q=0.9, application/json; q=0.5
 
 which can be useful when, for example, a new version of the API is preferred but
-you cannot be certain it is availbable yet.
+you cannot be certain it is available yet.
 
 Errors
 ^^^^^^
@@ -186,7 +186,7 @@ Partitions
 ----------
 
 The partitions resource provides per-partition metadata, including the current leaders and replicas for each partition.
-It also allows you to produce messages to single topic using ``POST`` requests.
+It also allows you to produce messages to single partition using ``POST`` requests.
 
 .. http:get:: /topics/{topic_name}/partitions
 
@@ -370,12 +370,17 @@ consumer group and consume messages from topics and partitions.
 
 Because consumers are stateful, any consumer instances created with the REST API are tied to a specific REST proxy
 instance. A full URL is provided when the instance is created and it should be used to construct any subsequent
-requests. If a REST proxy instance is shutdown, it will attempt to cleanly destroy any consumers before it is
-terminated.
+requests. Failing to use the returned URL for future consume requests will end up adding new
+consumers to the group. If a REST proxy instance is shutdown, it will attempt to cleanly destroy
+any consumers before it is terminated.
 
 .. http:post:: /consumers/(string:group_name)
 
    Create a new consumer instance in the consumer group.
+
+   Note that the response includes a URL including the host since the consumer is stateful and tied
+   to a specific REST proxy instance. Subsequent examples in this section use a ``Host`` header
+   for this specific REST proxy instance.
 
    :param string group_name: The name of the consumer group to join
    :<json string id: Unique ID for the consumer instance in this group. If omitted, one will be automatically generated
@@ -420,6 +425,9 @@ terminated.
    proxy. The returned state includes both ``consumed`` and ``committed`` offsets. After a successful commit, these
    should be identical; however, both are included so the output format is consistent with other API calls that return
    the offsets.
+
+   Note that this request *must* be made to the specific REST proxy instance holding the consumer
+   instance.
 
    :param string group_name: The name of the consumer group
    :param string instance: The ID of the consumer instance
@@ -470,6 +478,9 @@ terminated.
 
    Destroy the consumer instance.
 
+   Note that this request *must* be made to the specific REST proxy instance holding the consumer
+   instance.
+
    :param string group_name: The name of the consumer group
    :param string instance: The ID of the consumer instance
 
@@ -491,6 +502,9 @@ terminated.
 
    Consume messages from a topic. If the consumer is not yet subscribed to the topic, this adds them as a subscriber,
    possibly causing a consumer rebalance.
+
+   Note that this request *must* be made to the specific REST proxy instance holding the consumer
+   instance.
 
    :param string group_name: The name of the consumer group
    :param string instance: The ID of the consumer instance
