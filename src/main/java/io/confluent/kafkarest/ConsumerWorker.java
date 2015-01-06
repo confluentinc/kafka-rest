@@ -244,7 +244,13 @@ public class ConsumerWorker extends Thread {
     private static class ReadTaskExpirationComparator implements Comparator<ReadTask> {
         @Override
         public int compare(ReadTask t1, ReadTask t2) {
-            return Long.compare(t1.waitExpiration, t2.waitExpiration);
+            if (t1.waitExpiration == t2.waitExpiration) {
+                return 0;
+            } else if (t1.waitExpiration < t2.waitExpiration) {
+                return -1;
+            } else {
+                return 1;
+            }
         }
     }
 }
