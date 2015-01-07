@@ -18,6 +18,7 @@ package io.confluent.kafkarest;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
+import io.confluent.rest.exceptions.NotFoundException;
 import kafka.api.LeaderAndIsr;
 import kafka.cluster.Broker;
 import kafka.utils.ZKStringSerializer$;
@@ -31,7 +32,6 @@ import scala.collection.Map;
 import scala.math.Ordering;
 
 import javax.ws.rs.InternalServerErrorException;
-import javax.ws.rs.NotFoundException;
 import java.util.*;
 
 /**

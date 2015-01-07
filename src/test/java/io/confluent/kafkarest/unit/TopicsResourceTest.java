@@ -141,7 +141,9 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness<KafkaRestConfi
             EasyMock.replay(mdObserver);
 
             Response response = request("/topics/nonexistanttopic", mediatype.header).get();
-            assertErrorResponse(Response.Status.NOT_FOUND, response, TopicsResource.MESSAGE_TOPIC_NOT_FOUND, mediatype.expected);
+            assertErrorResponse(Response.Status.NOT_FOUND, response,
+                                Errors.TOPIC_NOT_FOUND_ERROR_CODE, Errors.TOPIC_NOT_FOUND_MESSAGE,
+                                mediatype.expected);
 
             EasyMock.verify(mdObserver);
             EasyMock.reset(mdObserver);
@@ -154,8 +156,11 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness<KafkaRestConfi
             EasyMock.expect(mdObserver.topicExists("nonexistanttopic")).andReturn(false);
             EasyMock.replay(mdObserver);
 
-            Response response = request("/topics/nonexistanttopic/partitions", mediatype.header).get();
-            assertErrorResponse(Response.Status.NOT_FOUND, response, TopicsResource.MESSAGE_TOPIC_NOT_FOUND, mediatype.expected);
+            Response response = request("/topics/nonexistanttopic/partitions", mediatype.header)
+                .get();
+            assertErrorResponse(Response.Status.NOT_FOUND, response,
+                                Errors.TOPIC_NOT_FOUND_ERROR_CODE, Errors.TOPIC_NOT_FOUND_MESSAGE,
+                                mediatype.expected);
 
             EasyMock.verify(mdObserver);
             EasyMock.reset(mdObserver);
@@ -266,7 +271,8 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness<KafkaRestConfi
             for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
                 // null offsets triggers a generic exception
                 Response rawResponse = produceToTopic("topic1", mediatype.header, requestMediatype, produceRecordsWithKeys, null);
-                assertErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, rawResponse, Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase(), mediatype.expected);
+                assertErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, rawResponse,
+                                    mediatype.expected);
 
                 EasyMock.reset(mdObserver, producerPool);
             }
@@ -279,12 +285,20 @@ public class TopicsResourceTest extends EmbeddedServerTestHarness<KafkaRestConfi
             for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
                 Response response = request("/topics/topic1", mediatype.header)
                         .post(Entity.entity("{}", requestMediatype));
-                assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response, null, mediatype.expected);
+                assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
+                                    response,
+                                    ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
+                                    null,
+                                    mediatype.expected);
 
                 // Invalid base64 encoding
                 response = request("/topics/topic1", mediatype.header)
                         .post(Entity.entity("{\"records\":[{\"value\":\"aGVsbG8==\"}]}", requestMediatype));
-                assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response, null, mediatype.expected);
+                assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
+                                    response,
+                                    ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
+                                    null,
+                                    mediatype.expected);
             }
         }
     }

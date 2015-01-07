@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.resources;
 
 import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.ProducerRecordProxyCollection;
 import io.confluent.kafkarest.Versions;
@@ -36,8 +37,6 @@ import java.util.Vector;
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED, Versions.JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST})
 public class TopicsResource {
-    public final static String MESSAGE_TOPIC_NOT_FOUND = "Topic not found.";
-
     private final Context ctx;
 
     public TopicsResource(Context ctx) {
@@ -54,7 +53,7 @@ public class TopicsResource {
     public Topic getTopic(@PathParam("topic") String topicName) {
         Topic topic = ctx.getMetadataObserver().getTopic(topicName);
         if (topic == null)
-            throw new NotFoundException(MESSAGE_TOPIC_NOT_FOUND);
+            throw Errors.topicNotFoundException();
         return topic;
     }
 
@@ -67,7 +66,7 @@ public class TopicsResource {
     @Path("/{topic}")
     public void produce(final @Suspended AsyncResponse asyncResponse, @PathParam("topic") String topicName, @Valid TopicProduceRequest request) {
         if (!ctx.getMetadataObserver().topicExists(topicName))
-            throw new NotFoundException(MESSAGE_TOPIC_NOT_FOUND);
+            throw Errors.topicNotFoundException();
 
         ctx.getProducerPool().produce(
                 new ProducerRecordProxyCollection(topicName, request.getRecords()),

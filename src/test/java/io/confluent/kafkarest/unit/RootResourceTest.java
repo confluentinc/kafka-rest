@@ -67,7 +67,8 @@ public class RootResourceTest extends EmbeddedServerTestHarness<KafkaRestConfig,
         for(String mediatype : TestUtils.V1_INVALID_REQUEST_MEDIATYPES) {
             Response response = request("/", Versions.KAFKA_MOST_SPECIFIC_DEFAULT + ", " + Versions.GENERIC_REQUEST).post(Entity.entity("", mediatype));
             assertErrorResponse(
-                    UNSUPPORTED_MEDIA_TYPE , response,
+                    UNSUPPORTED_MEDIA_TYPE, response,
+                    UNSUPPORTED_MEDIA_TYPE.getStatusCode(),
                     "HTTP " + UNSUPPORTED_MEDIA_TYPE.getStatusCode() + " " + UNSUPPORTED_MEDIA_TYPE.getReasonPhrase(),
                     Versions.KAFKA_MOST_SPECIFIC_DEFAULT
             );

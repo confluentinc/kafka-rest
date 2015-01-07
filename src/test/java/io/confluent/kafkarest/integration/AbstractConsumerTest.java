@@ -15,11 +15,10 @@
  */
 package io.confluent.kafkarest.integration;
 
-import io.confluent.kafkarest.ConsumerManager;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.*;
-import io.confluent.kafkarest.resources.TopicsResource;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -67,7 +66,10 @@ public class AbstractConsumerTest extends ClusterTestHarness {
         // Start consuming. Since production hasn't started yet, this is expected to timeout.
         Response response = request(instanceResponse.getBaseUri() + "/topics/" + topic).get();
         if (expectFailure) {
-            assertErrorResponse(Response.Status.NOT_FOUND, response, TopicsResource.MESSAGE_TOPIC_NOT_FOUND, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+            assertErrorResponse(Response.Status.NOT_FOUND, response,
+                                Errors.TOPIC_NOT_FOUND_ERROR_CODE,
+                                Errors.TOPIC_NOT_FOUND_MESSAGE,
+                                Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
         } else {
             assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
             List<ConsumerRecord> consumed = response.readEntity(new GenericType<List<ConsumerRecord>>() {});
@@ -137,11 +139,15 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     protected void consumeForNotFoundError(String instanceUri, String topic) {
         Response response = request(instanceUri + "/topics/" + topic)
                 .get();
-        assertErrorResponse(Response.Status.NOT_FOUND, response, ConsumerManager.MESSAGE_CONSUMER_INSTANCE_NOT_FOUND, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        assertErrorResponse(Response.Status.NOT_FOUND, response,
+                            Errors.CONSUMER_INSTANCE_NOT_FOUND_ERROR_CODE,
+                            Errors.CONSUMER_INSTANCE_NOT_FOUND_MESSAGE,
+                            Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     }
 
     protected void deleteConsumer(String instanceUri) {
         Response response = request(instanceUri).delete();
-        assertErrorResponse(Response.Status.NO_CONTENT, response, null, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        assertErrorResponse(Response.Status.NO_CONTENT, response,
+                            0, null, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     }
 }

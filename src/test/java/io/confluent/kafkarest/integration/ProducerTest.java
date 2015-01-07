@@ -15,6 +15,7 @@
  */
 package io.confluent.kafkarest.integration;
 
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.*;
 import io.confluent.kafkarest.resources.TopicsResource;
@@ -136,7 +137,9 @@ public class ProducerTest extends ClusterTestHarness {
         ));
         final Response response = request("/topics/topicdoesnotexist")
                 .post(Entity.entity(payload, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
-        assertErrorResponse(Response.Status.NOT_FOUND, response, TopicsResource.MESSAGE_TOPIC_NOT_FOUND, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        assertErrorResponse(Response.Status.NOT_FOUND, response,
+                            Errors.TOPIC_NOT_FOUND_ERROR_CODE, Errors.TOPIC_NOT_FOUND_MESSAGE,
+                            Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     }
 
 

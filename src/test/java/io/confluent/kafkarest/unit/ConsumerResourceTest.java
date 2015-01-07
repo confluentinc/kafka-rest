@@ -23,6 +23,8 @@ import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.kafkarest.resources.ConsumersResource;
 import io.confluent.rest.RestConfigException;
+import io.confluent.rest.exceptions.NotFoundException;
+
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -30,7 +32,6 @@ import org.easymock.IExpectationSetters;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
@@ -120,7 +121,7 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness<KafkaRestCon
             for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
                 // Trying to access either an invalid consumer instance or a missing topic should trigger an error
                 expectCreateGroup(new ConsumerInstanceConfig());
-                expectReadTopic(topicName, null, new NotFoundException(not_found_message));
+                expectReadTopic(topicName, null, new NotFoundException(not_found_message, 1000));
                 EasyMock.replay(consumerManager);
 
                 Response response = request("/consumers/" + groupName, mediatype.header)
@@ -130,7 +131,8 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness<KafkaRestCon
 
                 final Response readResponse = request(instanceBasePath(createResponse) + "/topics/" + topicName, mediatype.header)
                         .get();
-                assertErrorResponse(Response.Status.NOT_FOUND, readResponse, not_found_message, mediatype.expected);
+                assertErrorResponse(Response.Status.NOT_FOUND, readResponse,
+                                    1000, not_found_message, mediatype.expected);
 
                 EasyMock.verify(consumerManager);
                 EasyMock.reset(consumerManager);
@@ -194,7 +196,8 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness<KafkaRestCon
                 final CreateConsumerInstanceResponse createResponse = response.readEntity(CreateConsumerInstanceResponse.class);
 
                 final Response deleteResponse = request(instanceBasePath(createResponse), mediatype.header).delete();
-                assertErrorResponse(Response.Status.NO_CONTENT, deleteResponse, null, mediatype.expected);
+                assertErrorResponse(Response.Status.NO_CONTENT, deleteResponse,
+                                    0, null, mediatype.expected);
 
                 EasyMock.verify(consumerManager);
                 EasyMock.reset(consumerManager);
@@ -209,7 +212,8 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness<KafkaRestCon
 
             final Response deleteResponse = request("/consumers/" + groupName + "/instances/" + instanceId, mediatype.header)
                     .delete();
-            assertErrorResponse(Response.Status.NOT_FOUND, deleteResponse, not_found_message, mediatype.expected);
+            assertErrorResponse(Response.Status.NOT_FOUND, deleteResponse,
+                                1000, not_found_message, mediatype.expected);
 
             EasyMock.verify(consumerManager);
             EasyMock.reset(consumerManager);
@@ -257,7 +261,7 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness<KafkaRestCon
         consumerManager.deleteConsumer(groupName, instanceId);
         IExpectationSetters expectation = EasyMock.expectLastCall();
         if (invalid) {
-            expectation.andThrow(new NotFoundException(not_found_message));
+            expectation.andThrow(new NotFoundException(not_found_message, 1000));
         }
     }
 }

@@ -106,6 +106,9 @@ you produce messages by making ``POST`` requests to specific topics.
    :>json string name: Name of the topic
    :>json int num_partitions: Number of partitions in the topic
 
+   :statuscode 404:
+      * Error code 40401 -- Topic not found
+
    **Example request**:
 
    .. sourcecode:: http
@@ -137,6 +140,9 @@ you produce messages by making ``POST`` requests to specific topics.
 
    :>jsonarr int partition: Partition the message was published to
    :>jsonarr long offset: Offset of the message
+
+   :statuscode 404:
+      * Error code 40401 -- Topic not found
 
    **Example request**:
 
@@ -201,7 +207,10 @@ It also allows you to produce messages to single partition using ``POST`` reques
    :>jsonarr boolean replicas[i].leader: true if this broker is the leader for the partition
    :>jsonarr boolean replicas[i].in_sync: true if the replica is in sync with the leader
 
-   **Example request**:
+   :statuscode 404:
+      * Error code 40401 -- Topic not found
+
+    **Example request**:
 
    .. sourcecode:: http
 
@@ -276,6 +285,10 @@ It also allows you to produce messages to single partition using ``POST`` reques
    :>json boolean replicas[i].leader: true if this broker is the leader for the partition
    :>json boolean replicas[i].in_sync: true if the replica is in sync with the leader
 
+   :statuscode 404:
+      * Error code 40401 -- Topic not found
+      * Error code 40402 -- Partition not found
+
    **Example request**:
 
    .. sourcecode:: http
@@ -324,6 +337,10 @@ It also allows you to produce messages to single partition using ``POST`` reques
 
    :>jsonarr int partition: Partition the message was published to
    :>jsonarr long offset: Offset of the published message
+
+   :statuscode 404:
+      * Error code 40401 -- Topic not found
+      * Error code 40402 -- Partition not found
 
    **Example request**:
 
@@ -393,6 +410,8 @@ any consumers before it is terminated.
    :>json string base_uri: Base URI used to construct URIs for subsequent requests against this consumer instance. This
                            will be of the form ``http://hostname:port/consumers/consumer_group/instances/instance_id``.
 
+   **Example request**:
+
    .. sourcecode:: http
 
       POST /consumers/testgroup/ HTTP/1.1
@@ -437,6 +456,9 @@ any consumers before it is terminated.
    :>jsonarr long consumed: The offset of the most recently consumed message
    :>jsonarr long committed: The committed offset value. If the commit was successful, this should be identical to
                              ``consumed``.
+
+   :statuscode 404:
+      * Error code 40403 -- Consumer instance not found
 
    **Example request**:
 
@@ -484,6 +506,9 @@ any consumers before it is terminated.
    :param string group_name: The name of the consumer group
    :param string instance: The ID of the consumer instance
 
+   :statuscode 404:
+      * Error code 40403 -- Consumer instance not found
+
    **Example request**:
 
    .. sourcecode:: http
@@ -514,6 +539,10 @@ any consumers before it is terminated.
    :>jsonarr string value: Base64-encoded message value
    :>jsonarr int partition: Partition of the message
    :>jsonarr long offset: Offset of the message
+
+   :statuscode 404:
+      * Error code 40401 -- Topic not found
+      * Error code 40403 -- Consumer instance not found
 
    **Example request**:
 
