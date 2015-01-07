@@ -128,4 +128,8 @@ public class MetadataObserver {
         }
         return partitions;
     }
+
+    public void shutdown() {
+        zkClient.close();
+    }
 }
