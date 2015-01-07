@@ -1,13 +1,6 @@
 Configuration Options
 =====================
 
-``bootstrap.servers``
-  A list of host/port pairs to use for establishing the initial connection to the Kafka cluster. Data will be load balanced over all servers irrespective of which servers are specified here for bootstrapping --- this list only impacts the initial hosts used to discover the full set of servers. This list should be in the form host1:port1,host2:port2,... Since these servers are just used for the initial connection to discover the full cluster membership (which may change dynamically), this list need not contain the full set of servers (you may want more than one, though, in case a server is down). If no server in this list is available sending data will fail until on becomes available.
-
-  * Type: string
-  * Default: localhost:9092
-  * Importance: high
-
 ``debug``
   Boolean indicating whether extra debugging information is generated in some error response entities.
 
@@ -107,4 +100,3 @@ Configuration Options
   * Type: int
   * Default: 1000
   * Importance: low
-

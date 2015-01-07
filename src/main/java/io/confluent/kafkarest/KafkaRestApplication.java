@@ -15,9 +15,12 @@
  */
 package io.confluent.kafkarest;
 
+import org.I0Itec.zkclient.ZkClient;
+
 import io.confluent.kafkarest.resources.*;
 import io.confluent.rest.Application;
 import io.confluent.rest.RestConfigException;
+import kafka.utils.ZKStringSerializer$;
 
 import javax.ws.rs.core.Configurable;
 import java.util.Properties;
@@ -26,6 +29,7 @@ import java.util.Properties;
  * Utilities for configuring and running an embedded Kafka server.
  */
 public class KafkaRestApplication extends Application<KafkaRestConfig> {
+    ZkClient zkClient;
     Context context;
 
     public KafkaRestApplication() throws RestConfigException {
@@ -42,8 +46,9 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
     @Override
     public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-        MetadataObserver mdObserver = new MetadataObserver(appConfig);
-        ProducerPool producerPool = new ProducerPool(appConfig);
+        zkClient = new ZkClient(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG), 30000, 30000, ZKStringSerializer$.MODULE$);
+        MetadataObserver mdObserver = new MetadataObserver(appConfig, zkClient);
+        ProducerPool producerPool = new ProducerPool(zkClient);
         ConsumerManager consumerManager = new ConsumerManager(appConfig, mdObserver);
         context = new Context(appConfig, mdObserver, producerPool, consumerManager);
         config.register(RootResource.class);
@@ -63,5 +68,6 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
         context.getConsumerManager().shutdown();
         context.getProducerPool().shutdown();
         context.getMetadataObserver().shutdown();
+        zkClient.close();
     }
 }

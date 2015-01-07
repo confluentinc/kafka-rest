@@ -20,7 +20,6 @@ import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import kafka.api.LeaderAndIsr;
 import kafka.cluster.Broker;
-import kafka.utils.ZKStringSerializer$;
 import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.ZkClient;
 import org.slf4j.Logger;
@@ -42,8 +41,8 @@ public class MetadataObserver {
 
     private ZkClient zkClient;
 
-    public MetadataObserver(KafkaRestConfig config) {
-        zkClient = new ZkClient(config.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG), 30000, 30000, ZKStringSerializer$.MODULE$);
+    public MetadataObserver(KafkaRestConfig config, ZkClient zkClient) {
+        this.zkClient = zkClient;
     }
 
     public List<Integer> getBrokerIds() {
@@ -74,12 +73,15 @@ public class MetadataObserver {
     }
 
     public Topic getTopic(String topicName) {
-        List<Topic> topics = getTopicsData(JavaConversions.asScalaIterable(Arrays.asList(topicName)).toSeq());
+        List<Topic>
+            topics =
+            getTopicsData(JavaConversions.asScalaIterable(Arrays.asList(topicName)).toSeq());
         return (topics.isEmpty() ? null : topics.get(0));
     }
 
     private List<Topic> getTopicsData(Seq<String> topicNames) {
-        Map<String, Map<Object, Seq<Object>>> topicPartitions = ZkUtils.getPartitionAssignmentForTopics(zkClient, topicNames);
+        Map<String, Map<Object, Seq<Object>>> topicPartitions =
+            ZkUtils.getPartitionAssignmentForTopics(zkClient, topicNames);
         List<Topic> topics = new Vector<Topic>(topicNames.size());
         for(String topicName : JavaConversions.asJavaCollection(topicNames)) {
             Map<Object, Seq<Object>> partitionMap = topicPartitions.get(topicName).get();
@@ -136,6 +138,5 @@ public class MetadataObserver {
 
     public void shutdown() {
         log.debug("Shutting down MetadataObserver");
-        zkClient.close();
     }
 }

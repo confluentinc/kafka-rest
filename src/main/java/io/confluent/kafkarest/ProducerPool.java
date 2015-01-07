@@ -15,16 +15,24 @@
  */
 package io.confluent.kafkarest;
 
+import org.I0Itec.zkclient.ZkClient;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
+import kafka.cluster.Broker;
+import kafka.utils.ZkUtils;
+import scala.collection.JavaConversions;
+import scala.collection.Seq;
 
 /**
  * Shared pool of Kafka producers used to send messages. The pool manages batched sends, tracking all required acks for
@@ -32,15 +40,20 @@ import java.util.Properties;
  */
 public class ProducerPool {
     private static final Logger log = LoggerFactory.getLogger(ConsumerWorker.class);
-
-    private KafkaRestConfig config;
     private KafkaProducer producer;
 
-    public ProducerPool(KafkaRestConfig config) {
-        this.config = config;
+    public ProducerPool(ZkClient zkClient) {
+        Seq<Broker> brokerSeq = ZkUtils.getAllBrokersInCluster(zkClient);
+        List<Broker> brokers = JavaConversions.seqAsJavaList(brokerSeq);
+        String bootstrapBrokers = "";
+        for (int i = 0; i < brokers.size(); i++) {
+            bootstrapBrokers += brokers.get(i).connectionString();
+            if (i != (brokers.size() - 1)) {
+                bootstrapBrokers += ",";
+            }
+        }
         Properties props = new Properties();
-        props.setProperty("bootstrap.servers",
-                          config.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG));
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
         this.producer = new KafkaProducer(props);
     }
 
