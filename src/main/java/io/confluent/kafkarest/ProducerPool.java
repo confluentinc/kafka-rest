@@ -19,6 +19,8 @@ import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,18 +31,22 @@ import java.util.Properties;
  * a batch and managing timeouts.
  */
 public class ProducerPool {
+    private static final Logger log = LoggerFactory.getLogger(ConsumerWorker.class);
+
     private KafkaRestConfig config;
     private KafkaProducer producer;
 
     public ProducerPool(KafkaRestConfig config) {
         this.config = config;
         Properties props = new Properties();
-        props.setProperty("bootstrap.servers", config.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG));
+        props.setProperty("bootstrap.servers",
+                          config.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG));
         this.producer = new KafkaProducer(props);
     }
 
     public void produce(ProducerRecordProxyCollection records, ProduceRequestCallback callback) {
         ProduceRequest request = new ProduceRequest(records.size(), callback);
+        log.trace("Starting produce request " + request.toString());
         for(ProducerRecord record: records) {
             producer.send(record, request);
         }
@@ -74,8 +80,10 @@ public class ProducerPool {
         @Override
         public synchronized void onCompletion(RecordMetadata metadata, Exception exception) {
             if (exception != null) {
-                if (firstException == null)
+                if (firstException == null) {
                     firstException = exception;
+                    log.error("Producer error for request " + this.toString(), exception);
+                }
             }
             else {
                 // With a single producer, these should always arrive in order.

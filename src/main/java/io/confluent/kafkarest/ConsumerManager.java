@@ -15,6 +15,9 @@
  */
 package io.confluent.kafkarest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.ConsumerRecord;
@@ -37,6 +40,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ConsumerManager {
     public final static String MESSAGE_CONSUMER_INSTANCE_NOT_FOUND = "Consumer instance not found.";
+
+    private static final Logger log = LoggerFactory.getLogger(ConsumerManager.class);
 
     private final KafkaRestConfig config;
     private final Time time;
@@ -96,6 +101,8 @@ public class ConsumerManager {
                 id += serverId + "-";
             id += ((Integer) nextId.incrementAndGet()).toString();
         }
+
+        log.debug("Creating consumer " + id + " in group " + group);
 
         Properties props = new Properties();
         props.put("zookeeper.connect", zookeeperConnect);
@@ -180,7 +187,7 @@ public class ConsumerManager {
                     List<TopicPartitionOffset> offsets = state.commitOffsets();
                     callback.onCompletion(offsets, null);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("Failed to commit offsets for consumer " + state.getId().toString(), e);
                     callback.onCompletion(null, e);
                 } finally {
                     updateExpiration(state);
@@ -190,18 +197,23 @@ public class ConsumerManager {
     }
 
     public void deleteConsumer(String group, String instance) {
+        log.debug("Destroying consumer " + instance + " in group " + group);
         final ConsumerState state = getConsumerInstance(group, instance, true);
         state.close();
     }
 
     public void shutdown() {
+        log.debug("Shutting down consumers");
         synchronized(this) {
-            for (ConsumerWorker worker : workers)
+            for (ConsumerWorker worker : workers) {
+                log.trace("Shutting down worker " + worker.toString());
                 worker.shutdown();
+            }
             workers.clear();
         }
         // Expiration thread needs to be able to acquire a lock on the ConsumerManager to make sure the shutdown will
         // be able to complete.
+        log.trace("Shutting down consumer expiration thread");
         expirationThread.shutdown();
         synchronized(this) {
             for (Map.Entry<ConsumerInstanceId, ConsumerState> entry : consumers.entrySet()) {

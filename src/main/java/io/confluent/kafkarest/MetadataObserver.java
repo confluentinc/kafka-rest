@@ -23,6 +23,9 @@ import kafka.cluster.Broker;
 import kafka.utils.ZKStringSerializer$;
 import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.ZkClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import scala.collection.*;
 import scala.collection.Map;
 import scala.math.Ordering;
@@ -35,6 +38,8 @@ import java.util.*;
  * Observes metadata about the Kafka cluster.
  */
 public class MetadataObserver {
+    private static final Logger log = LoggerFactory.getLogger(ConsumerWorker.class);
+
     private ZkClient zkClient;
 
     public MetadataObserver(KafkaRestConfig config) {
@@ -130,6 +135,7 @@ public class MetadataObserver {
     }
 
     public void shutdown() {
+        log.debug("Shutting down MetadataObserver");
         zkClient.close();
     }
 }

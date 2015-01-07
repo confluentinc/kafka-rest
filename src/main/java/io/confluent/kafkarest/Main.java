@@ -17,9 +17,14 @@ package io.confluent.kafkarest;
 
 import io.confluent.rest.RestConfigException;
 import org.eclipse.jetty.server.Server;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 
 public class Main {
+    private static final Logger log = LoggerFactory.getLogger(Main.class);
+
     /**
      * Starts an embedded Jetty server running the REST server.
      */
@@ -28,15 +33,13 @@ public class Main {
             KafkaRestConfig config = new KafkaRestConfig((args.length > 0 ? args[0] : null));
             KafkaRestApplication app = new KafkaRestApplication(config);
             app.start();
-            System.out.println("Server started, listening for requests...");
+            log.info("Server started, listening for requests...");
             app.join();
         } catch (RestConfigException e) {
-            System.out.println("Server configuration failed: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Server configuration failed: ", e);
             System.exit(1);
         } catch (Exception e) {
-            System.err.println("Server died unexpectedly: " + e.toString());
-            e.printStackTrace();
+            log.error("Server died unexpectedly: " + e);
             System.exit(1);
         }
     }

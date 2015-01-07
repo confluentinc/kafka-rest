@@ -15,6 +15,9 @@
  */
 package io.confluent.kafkarest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.ConsumerTimeoutException;
@@ -33,6 +36,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Worker thread for consumers that multiplexes multiple consumer operations onto a single thread.
  */
 public class ConsumerWorker extends Thread {
+    private static final Logger log = LoggerFactory.getLogger(ConsumerWorker.class);
+
     KafkaRestConfig config;
 
     AtomicBoolean isRunning = new AtomicBoolean(true);
@@ -47,6 +52,8 @@ public class ConsumerWorker extends Thread {
     }
 
     public synchronized Future readTopic(ConsumerState state, String topic, ReadCallback callback) {
+        log.trace("Consumer worker " + this.toString() + " reading topic " + topic
+                  + " for " + state.getId());
         ReadTask task = new ReadTask(state, topic, callback);
         if (!task.isDone()) {
             tasks.add(task);
@@ -107,6 +114,8 @@ public class ConsumerWorker extends Thread {
             this.interrupt();
             shutdownLatch.await();
         } catch (InterruptedException e) {
+            log.error("Interrupted while "
+                      + "consumer worker thread.");
             throw new Error("Interrupted when shutting down consumer worker thread.");
         }
     }
@@ -199,7 +208,7 @@ public class ConsumerWorker extends Thread {
             } catch (Exception e) {
                 state.finishRead(topicState);
                 finish();
-                System.out.println("Unexpected exception in consumer read thread: " + e.getMessage());
+                log.error("Unexpected exception in consumer read thread: ", e);
                 return false;
             }
         }
