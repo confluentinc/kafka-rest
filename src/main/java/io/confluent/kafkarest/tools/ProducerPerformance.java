@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Confluent Inc.
+ * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,113 +12,120 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ **/
 package io.confluent.kafkarest.tools;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.TopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
 
-import java.io.*;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
 
+import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.TopicProduceRecord;
+import io.confluent.kafkarest.entities.TopicProduceRequest;
+
 public class ProducerPerformance extends AbstractPerformanceTest {
-    long iterations;
-    long iterationsPerSec;
-    int recordsPerIteration;
-    long bytesPerIteration;
 
-    String targetUrl;
-    String requestEntityLength;
-    byte[] requestEntity;
-    byte[] buffer;
+  long iterations;
+  long iterationsPerSec;
+  int recordsPerIteration;
+  long bytesPerIteration;
 
-    public static void main(String[] args) throws Exception {
-        if (args.length < 6) {
-            System.out.println(
-                    "Usage: java " + ProducerPerformance.class.getName() + " rest_url topic_name " +
-                            "num_records record_size batch_size target_records_sec"
-            );
-            System.exit(1);
-        }
+  String targetUrl;
+  String requestEntityLength;
+  byte[] requestEntity;
+  byte[] buffer;
 
-        String baseUrl = args[0];
-        String topic = args[1];
-        int numRecords = Integer.parseInt(args[2]);
-        int recordSize = Integer.parseInt(args[3]);
-        int batchSize = Integer.parseInt(args[4]);
-        int throughput = Integer.parseInt(args[5]) / batchSize;
-
-        ProducerPerformance perf = new ProducerPerformance(baseUrl, topic, numRecords/batchSize, batchSize, throughput, recordSize);
-        perf.run(throughput);
+  public static void main(String[] args) throws Exception {
+    if (args.length < 6) {
+      System.out.println(
+          "Usage: java " + ProducerPerformance.class.getName() + " rest_url topic_name " +
+          "num_records record_size batch_size target_records_sec"
+      );
+      System.exit(1);
     }
 
-    public ProducerPerformance(String baseUrl, String topic, long iterations, int recordsPerIteration, long iterationsPerSec, int recordSize) throws Exception {
-        super(iterations * recordsPerIteration);
-        this.iterations = iterations;
-        this.iterationsPerSec = iterationsPerSec;
-        this.recordsPerIteration = recordsPerIteration;
-        this.bytesPerIteration = recordsPerIteration * recordSize;
+    String baseUrl = args[0];
+    String topic = args[1];
+    int numRecords = Integer.parseInt(args[2]);
+    int recordSize = Integer.parseInt(args[3]);
+    int batchSize = Integer.parseInt(args[4]);
+    int throughput = Integer.parseInt(args[5]) / batchSize;
+
+    ProducerPerformance
+        perf =
+        new ProducerPerformance(baseUrl, topic, numRecords / batchSize, batchSize, throughput,
+                                recordSize);
+    perf.run(throughput);
+  }
+
+  public ProducerPerformance(String baseUrl, String topic, long iterations, int recordsPerIteration,
+                             long iterationsPerSec, int recordSize) throws Exception {
+    super(iterations * recordsPerIteration);
+    this.iterations = iterations;
+    this.iterationsPerSec = iterationsPerSec;
+    this.recordsPerIteration = recordsPerIteration;
+    this.bytesPerIteration = recordsPerIteration * recordSize;
 
         /* setup perf test */
-        targetUrl = baseUrl + "/topics/" + topic;
-        byte[] payload = new byte[recordSize];
-        Arrays.fill(payload, (byte) 1);
-        TopicProduceRecord record = new TopicProduceRecord(payload);
-        TopicProduceRecord[] records = new TopicProduceRecord[recordsPerIteration];
-        Arrays.fill(records, record);
-        TopicProduceRequest request = new TopicProduceRequest();
-        request.setRecords(Arrays.asList(records));
-        requestEntity = new ObjectMapper().writeValueAsBytes(request);
-        requestEntityLength = Integer.toString(requestEntity.length);
-        buffer = new byte[1024 * 1024];
+    targetUrl = baseUrl + "/topics/" + topic;
+    byte[] payload = new byte[recordSize];
+    Arrays.fill(payload, (byte) 1);
+    TopicProduceRecord record = new TopicProduceRecord(payload);
+    TopicProduceRecord[] records = new TopicProduceRecord[recordsPerIteration];
+    Arrays.fill(records, record);
+    TopicProduceRequest request = new TopicProduceRequest();
+    request.setRecords(Arrays.asList(records));
+    requestEntity = new ObjectMapper().writeValueAsBytes(request);
+    requestEntityLength = Integer.toString(requestEntity.length);
+    buffer = new byte[1024 * 1024];
+  }
+
+  @Override
+  protected void doIteration(PerformanceStats.Callback cb) {
+    HttpURLConnection connection = null;
+    try {
+      URL url = new URL(targetUrl);
+      connection = (HttpURLConnection) url.openConnection();
+      connection.setRequestMethod("POST");
+      connection.setRequestProperty("Content-Type", Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+      connection.setRequestProperty("Content-Length", requestEntityLength);
+
+      connection.setUseCaches(false);
+      connection.setDoInput(true);
+      connection.setDoOutput(true);
+
+      OutputStream os = connection.getOutputStream();
+      os.write(requestEntity);
+      os.flush();
+      os.close();
+
+      InputStream is = connection.getInputStream();
+      while (is.read(buffer) > 0) {
+        // Ignore output, just make sure we actually receive it
+      }
+      is.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      if (connection != null) {
+        connection.disconnect();
+      }
     }
+    cb.onCompletion(recordsPerIteration, bytesPerIteration);
+  }
 
-    @Override
-    protected void doIteration(PerformanceStats.Callback cb) {
-        HttpURLConnection connection = null;
-        try {
-            URL url = new URL(targetUrl);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-            connection.setRequestProperty("Content-Length", requestEntityLength);
+  @Override
+  protected boolean finished(int iteration) {
+    return iteration >= iterations;
+  }
 
-            connection.setUseCaches(false);
-            connection.setDoInput(true);
-            connection.setDoOutput(true);
-
-            OutputStream os = connection.getOutputStream();
-            os.write(requestEntity);
-            os.flush();
-            os.close();
-
-            InputStream is = connection.getInputStream();
-            while (is.read(buffer) > 0) {
-                // Ignore output, just make sure we actually receive it
-            }
-            is.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
-        cb.onCompletion(recordsPerIteration, bytesPerIteration);
-    }
-
-    @Override
-    protected boolean finished(int iteration) {
-        return iteration >= iterations;
-    }
-
-    @Override
-    protected boolean runningSlow(int iteration, float elapsed) {
-        return (iteration/elapsed < iterationsPerSec);
-    }
+  @Override
+  protected boolean runningSlow(int iteration, float elapsed) {
+    return (iteration / elapsed < iterationsPerSec);
+  }
 }
 

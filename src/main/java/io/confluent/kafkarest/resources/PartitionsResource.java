@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Confluent Inc.
+ * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,8 +12,21 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ **/
 package io.confluent.kafkarest.resources;
+
+import java.util.List;
+import java.util.Map;
+
+import javax.validation.Valid;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
 
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.Errors;
@@ -24,64 +37,67 @@ import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
 
-import javax.validation.Valid;
-import javax.ws.rs.*;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.Suspended;
-import java.util.List;
-import java.util.Map;
-
-@Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED, Versions.JSON_WEIGHTED})
-@Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST})
+@Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
+           Versions.JSON_WEIGHTED})
+@Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
+           Versions.GENERIC_REQUEST})
 public class PartitionsResource {
-    private final Context ctx;
-    private final String topic;
 
-    public PartitionsResource(Context ctx, String topic) {
-        this.ctx = ctx;
-        this.topic = topic;
+  private final Context ctx;
+  private final String topic;
+
+  public PartitionsResource(Context ctx, String topic) {
+    this.ctx = ctx;
+    this.topic = topic;
+  }
+
+  @GET
+  public List<Partition> list() {
+    checkTopicExists();
+    return ctx.getMetadataObserver().getTopicPartitions(topic);
+  }
+
+  @GET
+  @Path("/{partition}")
+  public Partition getPartition(@PathParam("partition") int partition) {
+    checkTopicExists();
+    Partition part = ctx.getMetadataObserver().getTopicPartition(topic, partition);
+    if (part == null) {
+      throw Errors.partitionNotFoundException();
+    }
+    return part;
+  }
+
+  @POST
+  @Path("/{partition}")
+  public void produce(final @Suspended AsyncResponse asyncResponse,
+                      final @PathParam("partition") int partition,
+                      @Valid PartitionProduceRequest request) {
+    checkTopicExists();
+    if (!ctx.getMetadataObserver().partitionExists(topic, partition)) {
+      throw Errors.partitionNotFoundException();
     }
 
-    @GET
-    public List<Partition> list() {
-        checkTopicExists();
-        return ctx.getMetadataObserver().getTopicPartitions(topic);
+    ctx.getProducerPool().produce(
+        new ProducerRecordProxyCollection(topic, partition, request.getRecords()),
+        new ProducerPool.ProduceRequestCallback() {
+          public void onCompletion(Map<Integer, Long> partitionOffsets) {
+            PartitionOffset
+                response =
+                new PartitionOffset(partition, partitionOffsets.get(partition));
+            asyncResponse.resume(response);
+          }
+
+          public void onException(Exception e) {
+            asyncResponse.resume(e);
+          }
+        }
+    );
+  }
+
+  private void checkTopicExists() {
+    if (!ctx.getMetadataObserver().topicExists(topic)) {
+      throw Errors.topicNotFoundException();
     }
-
-    @GET
-    @Path("/{partition}")
-    public Partition getPartition(@PathParam("partition") int partition) {
-        checkTopicExists();
-        Partition part = ctx.getMetadataObserver().getTopicPartition(topic, partition);
-        if (part == null)
-            throw Errors.partitionNotFoundException();
-        return part;
-    }
-
-    @POST
-    @Path("/{partition}")
-    public void produce(final @Suspended AsyncResponse asyncResponse, final @PathParam("partition") int partition, @Valid PartitionProduceRequest request) {
-        checkTopicExists();
-        if (!ctx.getMetadataObserver().partitionExists(topic, partition))
-            throw Errors.partitionNotFoundException();
-
-        ctx.getProducerPool().produce(
-                new ProducerRecordProxyCollection(topic, partition, request.getRecords()),
-                new ProducerPool.ProduceRequestCallback() {
-                    public void onCompletion(Map<Integer, Long> partitionOffsets) {
-                        PartitionOffset response = new PartitionOffset(partition, partitionOffsets.get(partition));
-                        asyncResponse.resume(response);
-                    }
-
-                    public void onException(Exception e) {
-                        asyncResponse.resume(e);
-                    }
-                }
-        );
-    }
-
-    private void checkTopicExists() {
-        if (!ctx.getMetadataObserver().topicExists(topic))
-            throw Errors.topicNotFoundException();
-    }
+  }
 }

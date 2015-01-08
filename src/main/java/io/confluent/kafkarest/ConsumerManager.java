@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Confluent Inc.
+ * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,20 +12,18 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ **/
 package io.confluent.kafkarest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.rest.exceptions.RestNotFoundException;
-import kafka.consumer.*;
-import kafka.javaapi.consumer.ConsumerConnector;
-
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Properties;
+import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,269 +31,299 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
+import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.rest.exceptions.RestNotFoundException;
+import kafka.consumer.Consumer;
+import kafka.consumer.ConsumerConfig;
+import kafka.javaapi.consumer.ConsumerConnector;
+
 /**
- * Manages consumer instances by mapping instance IDs to consumer objects, processing read requests, and cleaning
- * up when consumers disappear.
+ * Manages consumer instances by mapping instance IDs to consumer objects, processing read requests,
+ * and cleaning up when consumers disappear.
  */
 public class ConsumerManager {
-    private static final Logger log = LoggerFactory.getLogger(ConsumerManager.class);
 
-    private final KafkaRestConfig config;
-    private final Time time;
-    private final String zookeeperConnect;
-    private final MetadataObserver mdObserver;
-    private final int iteratorTimeoutMs;
+  private static final Logger log = LoggerFactory.getLogger(ConsumerManager.class);
 
-    private final AtomicInteger nextId = new AtomicInteger(0);
-    private final Map<ConsumerInstanceId,ConsumerState> consumers = new HashMap<ConsumerInstanceId,ConsumerState>();
-    // Read operations are common and there may be many concurrently, so they are farmed out to worker threads that can
-    // efficiently interleave the operations. Currently we're just using a simple round-robin scheduler.
-    private final List<ConsumerWorker> workers;
-    private final AtomicInteger nextWorker;
-    // A few other operations, like commit offsets and closing a consumer can't be interleaved, but they're also
-    // comparatively rare. These are executed serially in a dedicated thread.
-    private final ExecutorService executor;
-    private ConsumerFactory consumerFactory;
-    private final PriorityQueue<ConsumerState> consumersByExpiration = new PriorityQueue<ConsumerState>();
-    private final ExpirationThread expirationThread;
+  private final KafkaRestConfig config;
+  private final Time time;
+  private final String zookeeperConnect;
+  private final MetadataObserver mdObserver;
+  private final int iteratorTimeoutMs;
 
-    public ConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver) {
-        this.config = config;
-        this.time = config.time;
-        this.zookeeperConnect = config.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG);
-        this.mdObserver = mdObserver;
-        this.iteratorTimeoutMs = config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG);
-        this.workers = new Vector<ConsumerWorker>();
-        for(int i = 0; i < config.getInt(KafkaRestConfig.CONSUMER_THREADS_CONFIG); i++) {
-            ConsumerWorker worker = new ConsumerWorker(config);
-            workers.add(worker);
-            worker.start();
+  private final AtomicInteger nextId = new AtomicInteger(0);
+  private final Map<ConsumerInstanceId, ConsumerState> consumers =
+      new HashMap<ConsumerInstanceId, ConsumerState>();
+  // Read operations are common and there may be many concurrently, so they are farmed out to
+  // worker threads that can efficiently interleave the operations. Currently we're just using a
+  // simple round-robin scheduler.
+  private final List<ConsumerWorker> workers;
+  private final AtomicInteger nextWorker;
+  // A few other operations, like commit offsets and closing a consumer can't be interleaved, but
+  // they're also comparatively rare. These are executed serially in a dedicated thread.
+  private final ExecutorService executor;
+  private ConsumerFactory consumerFactory;
+  private final PriorityQueue<ConsumerState> consumersByExpiration =
+      new PriorityQueue<ConsumerState>();
+  private final ExpirationThread expirationThread;
+
+  public ConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver) {
+    this.config = config;
+    this.time = config.time;
+    this.zookeeperConnect = config.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG);
+    this.mdObserver = mdObserver;
+    this.iteratorTimeoutMs = config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG);
+    this.workers = new Vector<ConsumerWorker>();
+    for (int i = 0; i < config.getInt(KafkaRestConfig.CONSUMER_THREADS_CONFIG); i++) {
+      ConsumerWorker worker = new ConsumerWorker(config);
+      workers.add(worker);
+      worker.start();
+    }
+    nextWorker = new AtomicInteger(0);
+    this.executor = Executors.newFixedThreadPool(1);
+    this.consumerFactory = null;
+    this.expirationThread = new ExpirationThread();
+    this.expirationThread.start();
+  }
+
+  public ConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver,
+                         ConsumerFactory consumerFactory) {
+    this(config, mdObserver);
+    this.consumerFactory = consumerFactory;
+  }
+
+  /**
+   * Creates a new consumer instance and returns its unique ID.
+   *
+   * @param group  Name of the consumer group to join
+   * @param config configuration parameters for the consumer
+   * @return Unique consumer instance ID
+   */
+  public String createConsumer(String group, ConsumerInstanceConfig config) {
+    String id = config.getId();
+    if (id == null) {
+      id = "rest-consumer-";
+      String serverId = this.config.getString(KafkaRestConfig.ID_CONFIG);
+      if (!serverId.isEmpty()) {
+        id += serverId + "-";
+      }
+      id += ((Integer) nextId.incrementAndGet()).toString();
+    }
+
+    log.debug("Creating consumer " + id + " in group " + group);
+
+    Properties props = new Properties();
+    props.put("zookeeper.connect", zookeeperConnect);
+    props.put("group.id", group);
+    props.put("consumer.id", id);
+    // To support the old consumer interface with broken peek()/missing poll(timeout)
+    // functionality, we always use a timeout. This can't perfectly guarantee a total request
+    // timeout, but can get as close as this timeout's value
+    props.put("consumer.timeout.ms", ((Integer) iteratorTimeoutMs).toString());
+    if (config.getAutoCommitEnable() != null) {
+      props.put("auto.commit.enable", config.getAutoCommitEnable());
+    } else {
+      props.put("auto.commit.enable", "false");
+    }
+    if (config.getAutoOffsetReset() != null) {
+      props.put("auto.offset.reset", config.getAutoOffsetReset());
+    }
+    ConsumerConnector consumer;
+    if (consumerFactory == null) {
+      consumer = Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
+    } else {
+      consumer = consumerFactory.createConsumer(new ConsumerConfig(props));
+    }
+
+    synchronized (this) {
+      ConsumerInstanceId cid = new ConsumerInstanceId(group, id);
+      ConsumerState state = new ConsumerState(this.config, cid, consumer);
+      consumers.put(cid, state);
+      consumersByExpiration.add(state);
+      this.notifyAll();
+    }
+
+    return id;
+  }
+
+  public interface ReadCallback {
+
+    public void onCompletion(List<ConsumerRecord> records, Exception e);
+  }
+
+  public Future readTopic(final String group, final String instance, final String topic,
+                          final ReadCallback callback) {
+    final ConsumerState state;
+    try {
+      state = getConsumerInstance(group, instance);
+    } catch (RestNotFoundException e) {
+      callback.onCompletion(null, e);
+      return null;
+    }
+
+    // Consumer will try reading even if it doesn't exist, so we need to check this explicitly.
+    if (!mdObserver.topicExists(topic)) {
+      callback.onCompletion(null, Errors.topicNotFoundException());
+      return null;
+    }
+
+    int workerId = nextWorker.getAndIncrement() % workers.size();
+    ConsumerWorker worker = workers.get(workerId);
+    return worker.readTopic(state, topic, new ConsumerWorker.ReadCallback() {
+      @Override
+      public void onCompletion(List<ConsumerRecord> records) {
+        updateExpiration(state);
+        if (records == null) {
+          callback.onCompletion(null, Errors.consumerInstanceNotFoundException());
+        } else {
+          callback.onCompletion(records, null);
         }
-        nextWorker = new AtomicInteger(0);
-        this.executor = Executors.newFixedThreadPool(1);
-        this.consumerFactory = null;
-        this.expirationThread = new ExpirationThread();
-        this.expirationThread.start();
+      }
+    });
+  }
+
+  public interface CommitCallback {
+
+    public void onCompletion(List<TopicPartitionOffset> offsets, Exception e);
+  }
+
+  public Future commitOffsets(String group, String instance, final CommitCallback callback) {
+    final ConsumerState state;
+    try {
+      state = getConsumerInstance(group, instance);
+    } catch (RestNotFoundException e) {
+      callback.onCompletion(null, e);
+      return null;
     }
 
-    public ConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver, ConsumerFactory consumerFactory) {
-        this(config, mdObserver);
-        this.consumerFactory = consumerFactory;
-    }
-
-    /**
-     * Creates a new consumer instance and returns its unique ID.
-     * @param group Name of the consumer group to join
-     * @param config configuration parameters for the consumer
-     * @return Unique consumer instance ID
-     */
-    public String createConsumer(String group, ConsumerInstanceConfig config) {
-        String id = config.getId();
-        if (id == null) {
-            id = "rest-consumer-";
-            String serverId = this.config.getString(KafkaRestConfig.ID_CONFIG);
-            if (!serverId.isEmpty())
-                id += serverId + "-";
-            id += ((Integer) nextId.incrementAndGet()).toString();
-        }
-
-        log.debug("Creating consumer " + id + " in group " + group);
-
-        Properties props = new Properties();
-        props.put("zookeeper.connect", zookeeperConnect);
-        props.put("group.id", group);
-        props.put("consumer.id", id);
-        // To support the old consumer interface with broken peek()/missing poll(timeout) functionality, we always use
-        // a timeout. This can't perfectly guarantee a total request timeout, but can get as close as this timeout's value
-        props.put("consumer.timeout.ms", ((Integer)iteratorTimeoutMs).toString());
-        if (config.getAutoCommitEnable() != null)
-            props.put("auto.commit.enable", config.getAutoCommitEnable());
-        else
-            props.put("auto.commit.enable", "false");
-        if (config.getAutoOffsetReset() != null)
-            props.put("auto.offset.reset", config.getAutoOffsetReset());
-        ConsumerConnector consumer;
-        if (consumerFactory == null)
-            consumer = Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
-        else
-            consumer = consumerFactory.createConsumer(new ConsumerConfig(props));
-
-        synchronized (this) {
-            ConsumerInstanceId cid = new ConsumerInstanceId(group, id);
-            ConsumerState state = new ConsumerState(this.config, cid, consumer);
-            consumers.put(cid, state);
-            consumersByExpiration.add(state);
-            this.notifyAll();
-        }
-
-        return id;
-    }
-
-    public interface ReadCallback {
-        public void onCompletion(List<ConsumerRecord> records, Exception e);
-    }
-
-    public Future readTopic(final String group, final String instance, final String topic, final ReadCallback callback) {
-        final ConsumerState state;
+    return executor.submit(new Runnable() {
+      @Override
+      public void run() {
         try {
-            state = getConsumerInstance(group, instance);
-        } catch (RestNotFoundException e) {
-            callback.onCompletion(null, e);
-            return null;
+          List<TopicPartitionOffset> offsets = state.commitOffsets();
+          callback.onCompletion(offsets, null);
+        } catch (Exception e) {
+          log.error("Failed to commit offsets for consumer " + state.getId().toString(), e);
+          callback.onCompletion(null, e);
+        } finally {
+          updateExpiration(state);
         }
+      }
+    });
+  }
 
-        // Consumer will try reading even if it doesn't exist, so we need to check this explicitly.
-        if (!mdObserver.topicExists(topic)) {
-            callback.onCompletion(null, Errors.topicNotFoundException());
-            return null;
-        }
+  public void deleteConsumer(String group, String instance) {
+    log.debug("Destroying consumer " + instance + " in group " + group);
+    final ConsumerState state = getConsumerInstance(group, instance, true);
+    state.close();
+  }
 
-        int workerId = nextWorker.getAndIncrement() % workers.size();
-        ConsumerWorker worker = workers.get(workerId);
-        return worker.readTopic(state, topic, new ConsumerWorker.ReadCallback() {
-            @Override
-            public void onCompletion(List<ConsumerRecord> records) {
-                updateExpiration(state);
-                if (records == null)
-                    callback.onCompletion(null, Errors.consumerInstanceNotFoundException());
-                else
-                    callback.onCompletion(records, null);
-            }
-        });
+  public void shutdown() {
+    log.debug("Shutting down consumers");
+    synchronized (this) {
+      for (ConsumerWorker worker : workers) {
+        log.trace("Shutting down worker " + worker.toString());
+        worker.shutdown();
+      }
+      workers.clear();
+    }
+    // Expiration thread needs to be able to acquire a lock on the ConsumerManager to make sure
+    // the shutdown will be able to complete.
+    log.trace("Shutting down consumer expiration thread");
+    expirationThread.shutdown();
+    synchronized (this) {
+      for (Map.Entry<ConsumerInstanceId, ConsumerState> entry : consumers.entrySet()) {
+        entry.getValue().close();
+      }
+      consumers.clear();
+      consumersByExpiration.clear();
+      executor.shutdown();
+    }
+  }
+
+  /**
+   * Gets the specified consumer instance or throws a not found exception. Also removes the
+   * consumer's expiration timeout so it is not cleaned up mid-operation.
+   */
+  private synchronized ConsumerState getConsumerInstance(String group, String instance,
+                                                         boolean remove) {
+    ConsumerInstanceId id = new ConsumerInstanceId(group, instance);
+    final ConsumerState state = remove ? consumers.remove(id) : consumers.get(id);
+    if (state == null) {
+      throw Errors.consumerInstanceNotFoundException();
+    }
+    // Clear from the timeout queue immediately so it isn't removed during the read operation,
+    // but don't update the timeout until we finish the read since that can significantly affect
+    // the timeout.
+    consumersByExpiration.remove(state);
+    return state;
+  }
+
+  private ConsumerState getConsumerInstance(String group, String instance) {
+    return getConsumerInstance(group, instance, false);
+  }
+
+  private synchronized void updateExpiration(ConsumerState state) {
+    state.updateExpiration();
+    consumersByExpiration.add(state);
+    this.notifyAll();
+  }
+
+
+  public interface ConsumerFactory {
+
+    ConsumerConnector createConsumer(ConsumerConfig config);
+  }
+
+  private class ExpirationThread extends Thread {
+
+    AtomicBoolean isRunning = new AtomicBoolean(true);
+    CountDownLatch shutdownLatch = new CountDownLatch(1);
+
+    public ExpirationThread() {
+      super("Consumer Expiration Thread");
+      setDaemon(true);
     }
 
-    public interface CommitCallback {
-        public void onCompletion(List<TopicPartitionOffset> offsets, Exception e);
-    }
-
-    public Future commitOffsets(String group, String instance, final CommitCallback callback) {
-        final ConsumerState state;
+    @Override
+    public void run() {
+      synchronized (ConsumerManager.this) {
         try {
-            state = getConsumerInstance(group, instance);
-        } catch (RestNotFoundException e) {
-            callback.onCompletion(null, e);
-            return null;
-        }
-
-        return executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    List<TopicPartitionOffset> offsets = state.commitOffsets();
-                    callback.onCompletion(offsets, null);
-                } catch (Exception e) {
-                    log.error("Failed to commit offsets for consumer " + state.getId().toString(), e);
-                    callback.onCompletion(null, e);
-                } finally {
-                    updateExpiration(state);
+          while (isRunning.get()) {
+            long now = time.milliseconds();
+            while (!consumersByExpiration.isEmpty() && consumersByExpiration.peek().expired(now)) {
+              final ConsumerState state = consumersByExpiration.remove();
+              consumers.remove(state.getId());
+              executor.submit(new Runnable() {
+                @Override
+                public void run() {
+                  state.close();
                 }
+              });
             }
-        });
-    }
-
-    public void deleteConsumer(String group, String instance) {
-        log.debug("Destroying consumer " + instance + " in group " + group);
-        final ConsumerState state = getConsumerInstance(group, instance, true);
-        state.close();
+            long
+                timeout =
+                (consumersByExpiration.isEmpty() ? Long.MAX_VALUE : consumersByExpiration.peek()
+                    .untilExpiration(now));
+            ConsumerManager.this.wait(timeout);
+          }
+        } catch (InterruptedException e) {
+          // Interrupted by other thread, do nothing to allow this thread to exit
+        }
+      }
+      shutdownLatch.countDown();
     }
 
     public void shutdown() {
-        log.debug("Shutting down consumers");
-        synchronized(this) {
-            for (ConsumerWorker worker : workers) {
-                log.trace("Shutting down worker " + worker.toString());
-                worker.shutdown();
-            }
-            workers.clear();
-        }
-        // Expiration thread needs to be able to acquire a lock on the ConsumerManager to make sure the shutdown will
-        // be able to complete.
-        log.trace("Shutting down consumer expiration thread");
-        expirationThread.shutdown();
-        synchronized(this) {
-            for (Map.Entry<ConsumerInstanceId, ConsumerState> entry : consumers.entrySet()) {
-                entry.getValue().close();
-            }
-            consumers.clear();
-            consumersByExpiration.clear();
-            executor.shutdown();
-        }
+      try {
+        isRunning.set(false);
+        this.interrupt();
+        shutdownLatch.await();
+      } catch (InterruptedException e) {
+        throw new Error("Interrupted when shutting down consumer worker thread.");
+      }
     }
-
-    /**
-     * Gets the specified consumer instance or throws a not found exception. Also removes the consumer's expiration timeout
-     * so it is not cleaned up mid-operation.
-     */
-    private synchronized ConsumerState getConsumerInstance(String group, String instance, boolean remove) {
-        ConsumerInstanceId id = new ConsumerInstanceId(group, instance);
-        final ConsumerState state = remove ? consumers.remove(id) : consumers.get(id);
-        if (state == null)
-            throw Errors.consumerInstanceNotFoundException();
-        // Clear from the timeout queue immediately so it isn't removed during the read operation, but don't update
-        // the timeout until we finish the read since that can significantly affect the timeout.
-        consumersByExpiration.remove(state);
-        return state;
-    }
-
-    private ConsumerState getConsumerInstance(String group, String instance) {
-        return getConsumerInstance(group, instance, false);
-    }
-
-    private synchronized void updateExpiration(ConsumerState state) {
-        state.updateExpiration();
-        consumersByExpiration.add(state);
-        this.notifyAll();
-    }
-
-
-    public interface ConsumerFactory {
-        ConsumerConnector createConsumer(ConsumerConfig config);
-    }
-
-    private class ExpirationThread extends Thread {
-        AtomicBoolean isRunning = new AtomicBoolean(true);
-        CountDownLatch shutdownLatch = new CountDownLatch(1);
-
-        public ExpirationThread() {
-            super("Consumer Expiration Thread");
-            setDaemon(true);
-        }
-
-        @Override
-        public void run() {
-            synchronized(ConsumerManager.this) {
-                try {
-                    while (isRunning.get()) {
-                        long now = time.milliseconds();
-                        while (!consumersByExpiration.isEmpty() && consumersByExpiration.peek().expired(now)) {
-                            final ConsumerState state = consumersByExpiration.remove();
-                            consumers.remove(state.getId());
-                            executor.submit(new Runnable() {
-                                @Override
-                                public void run() {
-                                    state.close();
-                                }
-                            });
-                        }
-                        long timeout = (consumersByExpiration.isEmpty() ? Long.MAX_VALUE : consumersByExpiration.peek().untilExpiration(now));
-                        ConsumerManager.this.wait(timeout);
-                    }
-                }
-                catch (InterruptedException e) {
-                    // Interrupted by other thread, do nothing to allow this thread to exit
-                }
-            }
-            shutdownLatch.countDown();
-        }
-
-        public void shutdown() {
-            try {
-                isRunning.set(false);
-                this.interrupt();
-                shutdownLatch.await();
-            } catch (InterruptedException e) {
-                throw new Error("Interrupted when shutting down consumer worker thread.");
-            }
-        }
-    }
+  }
 }

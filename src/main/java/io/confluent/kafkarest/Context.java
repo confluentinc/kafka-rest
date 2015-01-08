@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Confluent Inc.
+ * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,38 +12,40 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ **/
 package io.confluent.kafkarest;
 
 /**
  * Shared, global state for the REST proxy server, including configuration and connection pools.
  */
 public class Context {
-    private final KafkaRestConfig config;
-    private final MetadataObserver metadataObserver;
-    private final ProducerPool producerPool;
-    private final ConsumerManager consumerManager;
 
-    public Context(KafkaRestConfig config, MetadataObserver metadataObserver, ProducerPool producerPool, ConsumerManager consumerManager) {
-        this.config = config;
-        this.metadataObserver = metadataObserver;
-        this.producerPool = producerPool;
-        this.consumerManager = consumerManager;
-    }
+  private final KafkaRestConfig config;
+  private final MetadataObserver metadataObserver;
+  private final ProducerPool producerPool;
+  private final ConsumerManager consumerManager;
 
-    public KafkaRestConfig getConfig() {
-        return config;
-    }
+  public Context(KafkaRestConfig config, MetadataObserver metadataObserver,
+                 ProducerPool producerPool, ConsumerManager consumerManager) {
+    this.config = config;
+    this.metadataObserver = metadataObserver;
+    this.producerPool = producerPool;
+    this.consumerManager = consumerManager;
+  }
 
-    public MetadataObserver getMetadataObserver() {
-        return metadataObserver;
-    }
+  public KafkaRestConfig getConfig() {
+    return config;
+  }
 
-    public ProducerPool getProducerPool() {
-        return producerPool;
-    }
+  public MetadataObserver getMetadataObserver() {
+    return metadataObserver;
+  }
 
-    public ConsumerManager getConsumerManager() {
-        return consumerManager;
-    }
+  public ProducerPool getProducerPool() {
+    return producerPool;
+  }
+
+  public ConsumerManager getConsumerManager() {
+    return consumerManager;
+  }
 }

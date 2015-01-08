@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Confluent Inc.
+ * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,33 +12,34 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ **/
 package io.confluent.kafkarest.mock;
-
-import io.confluent.kafkarest.Time;
 
 import java.util.concurrent.TimeUnit;
 
+import io.confluent.kafkarest.Time;
+
 public class MockTime implements Time {
-    volatile long currentMs = 0;
 
-    @Override
-    public long milliseconds() {
-        return currentMs;
-    }
+  volatile long currentMs = 0;
 
-    @Override
-    public long nanoseconds() {
-        return TimeUnit.NANOSECONDS.convert(currentMs, TimeUnit.MILLISECONDS);
-    }
+  @Override
+  public long milliseconds() {
+    return currentMs;
+  }
 
-    @Override
-    public void sleep(long ms) throws InterruptedException {
-        currentMs += ms;
-    }
+  @Override
+  public long nanoseconds() {
+    return TimeUnit.NANOSECONDS.convert(currentMs, TimeUnit.MILLISECONDS);
+  }
 
-    @Override
-    public void waitOn(Object on, long ms) throws InterruptedException {
-        currentMs += ms;
-    }
+  @Override
+  public void sleep(long ms) throws InterruptedException {
+    currentMs += ms;
+  }
+
+  @Override
+  public void waitOn(Object on, long ms) throws InterruptedException {
+    currentMs += ms;
+  }
 }

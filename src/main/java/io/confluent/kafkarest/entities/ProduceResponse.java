@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Confluent Inc.
+ * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,26 +12,28 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ **/
 package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import org.hibernate.validator.constraints.NotEmpty;
 
 import java.util.List;
 
 public class ProduceResponse {
-    @NotEmpty
-    private List<PartitionOffset> offsets;
 
-    @JsonProperty
-    public List<PartitionOffset> getOffsets() {
-        return offsets;
-    }
+  @NotEmpty
+  private List<PartitionOffset> offsets;
 
-    @JsonProperty
-    public void setOffsets(List<PartitionOffset> offsets) {
-        this.offsets = offsets;
-    }
+  @JsonProperty
+  public List<PartitionOffset> getOffsets() {
+    return offsets;
+  }
+
+  @JsonProperty
+  public void setOffsets(List<PartitionOffset> offsets) {
+    this.offsets = offsets;
+  }
 
 }
