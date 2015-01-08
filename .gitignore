@@ -1,6 +1,7 @@
 
 # Build products
 target/
+docs/_build/
 
 # IntelliJ data
 *.iml
