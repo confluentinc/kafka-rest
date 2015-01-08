@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
@@ -103,10 +104,12 @@ public class TopicsResourceTest
 
   @Test
   public void testList() {
+    Properties nonEmptyConfig = new Properties();
+    nonEmptyConfig.setProperty("cleanup.policy", "delete");
     final List<Topic> topics = Arrays.asList(
-        new Topic("test1", 10),
-        new Topic("test2", 1),
-        new Topic("test3", 10)
+        new Topic("test1", 10, new Properties()),
+        new Topic("test2", 1, new Properties()),
+        new Topic("test3", 10, nonEmptyConfig)
     );
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       EasyMock.expect(mdObserver.getTopics()).andReturn(topics);
@@ -125,8 +128,10 @@ public class TopicsResourceTest
 
   @Test
   public void testGetTopic() {
-    Topic topic1 = new Topic("topic1", 2);
-    Topic topic2 = new Topic("topic2", 5);
+    Properties nonEmptyConfig = new Properties();
+    nonEmptyConfig.setProperty("cleanup.policy", "delete");
+    Topic topic1 = new Topic("topic1", 2, new Properties());
+    Topic topic2 = new Topic("topic2", 5, nonEmptyConfig);
 
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       EasyMock.expect(mdObserver.getTopic("topic1"))

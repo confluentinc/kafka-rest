@@ -45,10 +45,16 @@ public class MetadataAPITest extends ClusterTestHarness {
 
   private static final String topic1Name = "topic1";
   private static final int topic1Partitions = 1;
-  private static final Topic topic1 = new Topic(topic1Name, topic1Partitions);
+  private static final Topic topic1 = new Topic(topic1Name, topic1Partitions, new Properties());
   private static final String topic2Name = "topic2";
   private static final int topic2Partitions = 2;
-  private static final Topic topic2 = new Topic(topic2Name, topic2Partitions);
+  private static final Properties topic2Configs;
+  private static final Topic topic2;
+  static {
+    topic2Configs = new Properties();
+    topic2Configs.setProperty("cleanup.policy", "delete");
+    topic2 = new Topic(topic2Name, topic2Partitions, topic2Configs);
+  }
 
   private static final int numReplicas = 2;
 
@@ -59,7 +65,7 @@ public class MetadataAPITest extends ClusterTestHarness {
     TestUtils.createTopic(zkClient, topic1Name, topic1Partitions, numReplicas,
                           JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
     TestUtils.createTopic(zkClient, topic2Name, topic2Partitions, numReplicas,
-                          JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
+                          JavaConversions.asScalaIterable(this.servers).toSeq(), topic2Configs);
   }
 
   @Test
@@ -103,7 +109,8 @@ public class MetadataAPITest extends ClusterTestHarness {
         partitions1Response =
         response.readEntity(new GenericType<List<Partition>>() {
         });
-    // Just verify some basic properties because the exact values can vary based on replica assignment, leader election
+    // Just verify some basic properties because the exact values can vary based on replica
+    // assignment, leader election
     assertEquals(topic1Partitions, partitions1Response.size());
     assertEquals(numReplicas, partitions1Response.get(0).getReplicas().size());
 

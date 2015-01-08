@@ -55,7 +55,7 @@ import static org.junit.Assert.assertEquals;
 public class ProducerTest extends ClusterTestHarness {
 
   private static final String topicName = "topic1";
-  private static final Topic topic = new Topic(topicName, 1);
+  private static final Topic topic = new Topic(topicName, 1, new Properties());
 
   // Produce to topic inputs & results
 

@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.Vector;
 
 import javax.ws.rs.InternalServerErrorException;
@@ -29,9 +30,11 @@ import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.rest.exceptions.RestNotFoundException;
+import kafka.admin.AdminUtils;
 import kafka.api.LeaderAndIsr;
 import kafka.cluster.Broker;
 import kafka.utils.ZkUtils;
+import scala.Option;
 import scala.collection.JavaConversions;
 import scala.collection.Map;
 import scala.collection.Seq;
@@ -79,8 +82,7 @@ public class MetadataObserver {
   }
 
   public Topic getTopic(String topicName) {
-    List<Topic>
-        topics =
+    List<Topic> topics =
         getTopicsData(JavaConversions.asScalaIterable(Arrays.asList(topicName)).toSeq());
     return (topics.isEmpty() ? null : topics.get(0));
   }
@@ -89,13 +91,19 @@ public class MetadataObserver {
     Map<String, Map<Object, Seq<Object>>> topicPartitions =
         ZkUtils.getPartitionAssignmentForTopics(zkClient, topicNames);
     List<Topic> topics = new Vector<Topic>(topicNames.size());
+    // Admin utils only supports getting either 1 or all topic configs. These per-topic overrides
+    // shouldn't be common, so we just grab all of them to keep this simple
+    Map<String,Properties> configs = AdminUtils.fetchAllTopicConfigs(zkClient);
     for (String topicName : JavaConversions.asJavaCollection(topicNames)) {
       Map<Object, Seq<Object>> partitionMap = topicPartitions.get(topicName).get();
       int numPartitions = partitionMap.size();
       if (numPartitions == 0) {
         continue;
       }
-      Topic topic = new Topic(topicName, numPartitions);
+      Option<Properties> topicConfigOpt = configs.get(topicName);
+      Properties topicConfigs =
+          topicConfigOpt.isEmpty() ? new Properties() : topicConfigOpt.get();
+      Topic topic = new Topic(topicName, numPartitions, topicConfigs);
       topics.add(topic);
     }
     return topics;

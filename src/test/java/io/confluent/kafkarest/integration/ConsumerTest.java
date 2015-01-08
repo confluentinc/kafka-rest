@@ -30,7 +30,7 @@ import scala.collection.JavaConversions;
 public class ConsumerTest extends AbstractConsumerTest {
 
   private static final String topicName = "topic1";
-  private static final Topic topic = new Topic(topicName, 1);
+  private static final Topic topic = new Topic(topicName, 1, new Properties());
   private static final String groupName = "testconsumergroup";
 
   private final List<ProducerRecord> recordsOnlyValues = Arrays.asList(
