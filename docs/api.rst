@@ -65,11 +65,9 @@ you produce messages by making ``POST`` requests to specific topics.
 
 .. http:get:: /topics
 
-   Get a list of Kafka topics. Each returned topic includes the topic name and
-   some basic metadata.
+   Get a list of Kafka topics.
 
-   :>jsonarr string name: Name of the topic
-   :>jsonarr int num_partitions: Number of partitions in the topic
+   :>json array topics: List of topic names
 
    **Example request**:
 
@@ -86,16 +84,7 @@ you produce messages by making ``POST`` requests to specific topics.
       HTTP/1.1 200 OK
       Content-Type: application/vnd.kafka.v1+json
 
-      [
-        {
-          "name": "topic1",
-          "num_partitions": 3
-        },
-        {
-          "name": "topic2",
-          "num_partitions": 1
-        }
-      ]
+      ["topic1", "topic2"]
 
 .. http:get:: /topics/(string:topic_name)
 

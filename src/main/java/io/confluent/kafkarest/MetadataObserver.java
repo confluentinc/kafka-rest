@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
@@ -60,6 +61,11 @@ public class MetadataObserver {
       brokerIds.add(broker.id());
     }
     return brokerIds;
+  }
+
+  public Collection<String> getTopicNames() {
+    Seq<String> topicNames = ZkUtils.getAllTopics(zkClient).sorted(Ordering.String$.MODULE$);
+    return JavaConversions.asJavaCollection(topicNames);
   }
 
   public List<Topic> getTopics() {

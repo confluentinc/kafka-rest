@@ -82,9 +82,8 @@ public class MetadataAPITest extends ClusterTestHarness {
     // Listing
     Response response = request("/topics").get();
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    final List<Topic> topicsResponse = response.readEntity(new GenericType<List<Topic>>() {
-    });
-    assertEquals(Arrays.asList(topic1, topic2), topicsResponse);
+    final List<String> topicsResponse = response.readEntity(new GenericType<List<String>>() {});
+    assertEquals(Arrays.asList(topic1Name, topic2Name), topicsResponse);
 
     // Get topic
     Response response1 = request("/topics/{topic}", "topic", topic1Name).get();

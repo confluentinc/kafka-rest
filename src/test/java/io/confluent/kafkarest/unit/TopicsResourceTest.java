@@ -104,21 +104,14 @@ public class TopicsResourceTest
 
   @Test
   public void testList() {
-    Properties nonEmptyConfig = new Properties();
-    nonEmptyConfig.setProperty("cleanup.policy", "delete");
-    final List<Topic> topics = Arrays.asList(
-        new Topic("test1", 10, new Properties()),
-        new Topic("test2", 1, new Properties()),
-        new Topic("test3", 10, nonEmptyConfig)
-    );
+    final List<String> topics = Arrays.asList("test1", "test2", "test3");
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-      EasyMock.expect(mdObserver.getTopics()).andReturn(topics);
+      EasyMock.expect(mdObserver.getTopicNames()).andReturn(topics);
       EasyMock.replay(mdObserver);
 
       Response response = request("/topics", mediatype.expected).get();
       assertOKResponse(response, mediatype.expected);
-      final List<Topic> topicsResponse = response.readEntity(new GenericType<List<Topic>>() {
-      });
+      final List<String> topicsResponse = response.readEntity(new GenericType<List<String>>() {});
       assertEquals(topics, topicsResponse);
 
       EasyMock.verify(mdObserver);
