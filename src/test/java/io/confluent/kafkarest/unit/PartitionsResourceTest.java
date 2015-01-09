@@ -65,7 +65,6 @@ public class PartitionsResourceTest
   private Context ctx;
 
   private final String topicName = "topic1";
-  Topic topic = new Topic("topic1", 2, new Properties());
   private final List<Partition> partitions = Arrays.asList(
       new Partition(0, 0, Arrays.asList(
           new PartitionReplica(0, true, true),
@@ -76,6 +75,7 @@ public class PartitionsResourceTest
           new PartitionReplica(1, true, true)
       ))
   );
+  private Topic topic = new Topic("topic1", new Properties(), partitions);
 
   private List<ProduceRecord> produceRecordsOnlyValues;
   private List<ProduceRecord> produceRecordsWithKeys;

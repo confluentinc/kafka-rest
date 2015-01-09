@@ -93,8 +93,8 @@ you produce messages by making ``POST`` requests to specific topics.
    :param string topic_name: Name of the topic to get metadata about
 
    :>json string name: Name of the topic
-   :>json int num_partitions: Number of partitions in the topic
    :>json map configs: Per-topic configuration overrides
+   :>json array partitions: List of partitions for this topic
 
    :statuscode 404:
       * Error code 40401 -- Topic not found
@@ -116,10 +116,27 @@ you produce messages by making ``POST`` requests to specific topics.
 
       {
         "name": "test",
-        "num_partitions": 3,
         "configs": {
            "cleanup.policy": "compact"
-        }
+        },
+        "partitions": [
+          {
+            "partition": 1,
+            "leader": 1,
+            "replicas": [
+              {
+                "broker": 1,
+                "leader": true,
+                "in_sync": true,
+              },
+              {
+                "broker": 2,
+                "leader": false,
+                "in_sync": true,
+              }
+            ]
+          }
+        ]
       }
 
 .. http:post:: /topics/(string:topic_name)

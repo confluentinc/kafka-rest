@@ -39,7 +39,9 @@ import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.ProducerRecordProxyCollection;
 import io.confluent.kafkarest.TestUtils;
+import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionOffset;
+import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
@@ -123,8 +125,24 @@ public class TopicsResourceTest
   public void testGetTopic() {
     Properties nonEmptyConfig = new Properties();
     nonEmptyConfig.setProperty("cleanup.policy", "delete");
-    Topic topic1 = new Topic("topic1", 2, new Properties());
-    Topic topic2 = new Topic("topic2", 5, nonEmptyConfig);
+    final List<Partition> partitions1 = Arrays.asList(
+        new Partition(0, 0, Arrays.asList(
+            new PartitionReplica(0, true, true),
+            new PartitionReplica(1, false, false)
+        )),
+        new Partition(1, 1, Arrays.asList(
+            new PartitionReplica(0, false, true),
+            new PartitionReplica(1, true, true)
+        ))
+    );
+    final List<Partition> partitions2 = Arrays.asList(
+        new Partition(0, 0, Arrays.asList(
+            new PartitionReplica(0, true, true),
+            new PartitionReplica(1, false, false)
+        ))
+    );
+    Topic topic1 = new Topic("topic1", new Properties(), partitions1);
+    Topic topic2 = new Topic("topic2", nonEmptyConfig, partitions2);
 
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       EasyMock.expect(mdObserver.getTopic("topic1"))

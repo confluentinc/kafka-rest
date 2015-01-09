@@ -19,10 +19,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.hibernate.validator.constraints.NotEmpty;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Properties;
 
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 public class Topic {
@@ -30,18 +29,18 @@ public class Topic {
   @NotEmpty
   private String name;
 
-  @Min(1)
-  private int numPartitions;
-
   @NotNull
   private Properties configs;
 
+  @NotEmpty
+  private List<Partition> partitions;
+
   public Topic(@JsonProperty("name") String name,
-               @JsonProperty("num_partitions") int numPartitions,
-               @JsonProperty("configs") Properties configs) {
+               @JsonProperty("configs") Properties configs,
+               @JsonProperty("partitions") List<Partition> partitions) {
     this.name = name;
-    this.numPartitions = numPartitions;
     this.configs = configs;
+    this.partitions = partitions;
   }
 
   @JsonProperty
@@ -54,16 +53,6 @@ public class Topic {
     this.name = name;
   }
 
-  @JsonProperty("num_partitions")
-  public int getNumPartitions() {
-    return numPartitions;
-  }
-
-  @JsonProperty("num_partitions")
-  public void setNumPartitions(int numPartitions) {
-    this.numPartitions = numPartitions;
-  }
-
   @JsonProperty
   public Properties getConfigs() {
     return configs;
@@ -72,6 +61,16 @@ public class Topic {
   @JsonProperty
   public void setConfigs(Properties configs) {
     this.configs = configs;
+  }
+
+  @JsonProperty
+  public List<Partition> getPartitions() {
+    return partitions;
+  }
+
+  @JsonProperty
+  public void setPartitions(List<Partition> partitions) {
+    this.partitions = partitions;
   }
 
   @Override
@@ -85,13 +84,13 @@ public class Topic {
 
     Topic topic = (Topic) o;
 
-    if (numPartitions != topic.numPartitions) {
-      return false;
-    }
     if (configs != null ? !configs.equals(topic.configs) : topic.configs != null) {
       return false;
     }
     if (name != null ? !name.equals(topic.name) : topic.name != null) {
+      return false;
+    }
+    if (partitions != null ? !partitions.equals(topic.partitions) : topic.partitions != null) {
       return false;
     }
 
@@ -101,7 +100,7 @@ public class Topic {
   @Override
   public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
-    result = 31 * result + numPartitions;
+    result = 31 * result + (partitions != null ? partitions.hashCode() : 0);
     result = 31 * result + (configs != null ? configs.hashCode() : 0);
     return result;
   }
