@@ -93,6 +93,16 @@ public class ProducerTest extends ClusterTestHarness {
       new PartitionOffset(2, 0)
   );
 
+  private final List<TopicProduceRecord> topicRecordsWithNullValues = Arrays.asList(
+      new TopicProduceRecord("key".getBytes(), (byte[])null),
+      new TopicProduceRecord("key".getBytes(), (byte[])null),
+      new TopicProduceRecord("key".getBytes(), (byte[])null),
+      new TopicProduceRecord("key".getBytes(), (byte[])null)
+  );
+  private final List<PartitionOffset> partitionOffsetsWithNullValues = Arrays.asList(
+      new PartitionOffset(1, 3)
+  );
+
   // Produce to partition inputs & results
   private final List<ProduceRecord> partitionRecordsOnlyValues = Arrays.asList(
       new ProduceRecord("value".getBytes()),
@@ -109,6 +119,14 @@ public class ProducerTest extends ClusterTestHarness {
       new ProduceRecord("key".getBytes(), "value4".getBytes())
   );
   private final PartitionOffset producePartitionOffsetWithKeys = new PartitionOffset(0, 3);
+
+  private final List<ProduceRecord> partitionRecordsWithNullValues = Arrays.asList(
+      new ProduceRecord("key1".getBytes(), null),
+      new ProduceRecord("key2".getBytes(), null),
+      new ProduceRecord("key3".getBytes(), null),
+      new ProduceRecord("key4".getBytes(), null)
+  );
+  private final PartitionOffset producePartitionOffsetWithNullValues = new PartitionOffset(0, 3);
 
 
   @Before
@@ -149,6 +167,11 @@ public class ProducerTest extends ClusterTestHarness {
   }
 
   @Test
+  public void testProduceToTopicWithNullValues() {
+    testProduceToTopic(topicRecordsWithNullValues, partitionOffsetsWithNullValues);
+  }
+
+  @Test
   public void testProduceToInvalidTopic() {
     TopicProduceRequest payload = new TopicProduceRequest();
     payload.setRecords(Arrays.asList(
@@ -183,6 +206,11 @@ public class ProducerTest extends ClusterTestHarness {
     testProduceToPartition(partitionRecordsWithKeys, producePartitionOffsetWithKeys);
   }
 
+  @Test
+  public void testProduceToPartitionWithNullValues() {
+    testProduceToPartition(partitionRecordsWithNullValues, producePartitionOffsetWithNullValues);
+  }
+
 
   // Consumes messages from Kafka to verify they match the inputs. Optionally add a partition to
   // only examine that partition
@@ -201,7 +229,7 @@ public class ProducerTest extends ClusterTestHarness {
     Set<String> msgSet = new TreeSet<String>();
     for (int i = 0; i < records.size(); i++) {
       MessageAndMetadata<byte[], byte[]> data = it.next();
-      if (partition == null || data.partition() == partition) {
+      if ((partition == null || data.partition() == partition) && data.message() != null) {
         msgSet.add(EntityUtils.encodeBase64Binary(data.message()));
       }
     }
@@ -209,7 +237,9 @@ public class ProducerTest extends ClusterTestHarness {
 
     Set<String> refMsgSet = new TreeSet<String>();
     for (ProduceRecord rec : records) {
-      refMsgSet.add(EntityUtils.encodeBase64Binary(rec.getValue()));
+      if (rec.getValue() != null) {
+        refMsgSet.add(EntityUtils.encodeBase64Binary(rec.getValue()));
+      }
     }
     assertEquals(msgSet, refMsgSet);
   }
