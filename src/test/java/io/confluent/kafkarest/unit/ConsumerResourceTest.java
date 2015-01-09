@@ -23,7 +23,7 @@ import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.kafkarest.resources.ConsumersResource;
 import io.confluent.rest.RestConfigException;
-import io.confluent.rest.exceptions.NotFoundException;
+import io.confluent.rest.exceptions.RestNotFoundException;
 
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -121,7 +121,8 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness<KafkaRestCon
             for(String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
                 // Trying to access either an invalid consumer instance or a missing topic should trigger an error
                 expectCreateGroup(new ConsumerInstanceConfig());
-                expectReadTopic(topicName, null, new NotFoundException(not_found_message, 1000));
+                expectReadTopic(topicName, null, new RestNotFoundException(not_found_message,
+                                                                           1000));
                 EasyMock.replay(consumerManager);
 
                 Response response = request("/consumers/" + groupName, mediatype.header)
@@ -261,7 +262,7 @@ public class ConsumerResourceTest extends EmbeddedServerTestHarness<KafkaRestCon
         consumerManager.deleteConsumer(groupName, instanceId);
         IExpectationSetters expectation = EasyMock.expectLastCall();
         if (invalid) {
-            expectation.andThrow(new NotFoundException(not_found_message, 1000));
+            expectation.andThrow(new RestNotFoundException(not_found_message, 1000));
         }
     }
 }

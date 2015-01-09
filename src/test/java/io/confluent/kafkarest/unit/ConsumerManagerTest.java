@@ -24,7 +24,7 @@ import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.mock.MockConsumerConnector;
 import io.confluent.kafkarest.mock.MockTime;
 import io.confluent.rest.RestConfigException;
-import io.confluent.rest.exceptions.NotFoundException;
+import io.confluent.rest.exceptions.RestNotFoundException;
 import kafka.consumer.ConsumerConfig;
 import kafka.javaapi.consumer.ConsumerConnector;
 import org.easymock.EasyMock;
@@ -137,7 +137,7 @@ public class ConsumerManagerTest {
         EasyMock.verify(mdObserver, consumerFactory);
     }
 
-    @Test(expected=NotFoundException.class)
+    @Test(expected=RestNotFoundException.class)
     public void testDeleteInvalidConsumer() {
         consumerManager.deleteConsumer(groupName, "invalidinstance");
     }
@@ -165,7 +165,7 @@ public class ConsumerManagerTest {
             public void onCompletion(List<ConsumerRecord> records, Exception e) {
                 sawCallback = true;
                 assertNull(records);
-                assertThat(e, instanceOf(NotFoundException.class));
+                assertThat(e, instanceOf(RestNotFoundException.class));
             }
         });
         assertTrue(sawCallback);

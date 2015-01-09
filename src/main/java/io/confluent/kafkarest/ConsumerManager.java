@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.rest.exceptions.NotFoundException;
+import io.confluent.rest.exceptions.RestNotFoundException;
 import kafka.consumer.*;
 import kafka.javaapi.consumer.ConsumerConnector;
 
@@ -139,7 +139,7 @@ public class ConsumerManager {
         final ConsumerState state;
         try {
             state = getConsumerInstance(group, instance);
-        } catch (NotFoundException e) {
+        } catch (RestNotFoundException e) {
             callback.onCompletion(null, e);
             return null;
         }
@@ -172,7 +172,7 @@ public class ConsumerManager {
         final ConsumerState state;
         try {
             state = getConsumerInstance(group, instance);
-        } catch (NotFoundException e) {
+        } catch (RestNotFoundException e) {
             callback.onCompletion(null, e);
             return null;
         }

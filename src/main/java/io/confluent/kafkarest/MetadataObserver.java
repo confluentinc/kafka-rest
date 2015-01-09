@@ -18,7 +18,7 @@ package io.confluent.kafkarest;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
-import io.confluent.rest.exceptions.NotFoundException;
+import io.confluent.rest.exceptions.RestNotFoundException;
 import kafka.api.LeaderAndIsr;
 import kafka.cluster.Broker;
 import kafka.utils.ZKStringSerializer$;
@@ -60,7 +60,7 @@ public class MetadataObserver {
             Seq<String> topicNames = ZkUtils.getAllTopics(zkClient).sorted(Ordering.String$.MODULE$);
             return getTopicsData(topicNames);
         }
-        catch(NotFoundException e) {
+        catch(RestNotFoundException e) {
             throw new InternalServerErrorException(e);
         }
     }
