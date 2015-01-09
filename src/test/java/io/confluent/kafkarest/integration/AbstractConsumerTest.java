@@ -22,6 +22,7 @@ import io.confluent.kafkarest.entities.*;
 import io.confluent.kafkarest.resources.TopicsResource;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import javax.ws.rs.client.Entity;
@@ -39,8 +40,8 @@ import static org.junit.Assert.*;
 public class AbstractConsumerTest extends ClusterTestHarness {
     protected void produceMessages(List<ProducerRecord> records) {
         Properties props = new Properties();
-        props.setProperty("bootstrap.servers", bootstrapServers);
-        props.setProperty("acks", "all");
+        props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
         Producer producer = new KafkaProducer(props);
         for(ProducerRecord rec : records) {
             try {
@@ -102,7 +103,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
         long finished = System.currentTimeMillis();
         assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
         List<ConsumerRecord> consumed =
-            response.readEntity(new GenericType<List<ConsumerRecord>>(){});
+            response.readEntity(new GenericType<List<ConsumerRecord>>() {});
         assertEquals(0, consumed.size());
 
         // Note that this is only approximate and really only works if you assume the read call has

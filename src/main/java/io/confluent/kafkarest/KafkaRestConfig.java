@@ -50,17 +50,6 @@ public class KafkaRestConfig extends RestConfig {
             + "the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path.";
     public static final String ZOOKEEPER_CONNECT_DEFAULT = "localhost:2181";
 
-    public static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
-    private static final String BOOTSTRAP_SERVERS_DOC = "A list of host/port pairs to use for establishing the "
-            + "initial connection to the Kafka cluster. Data will be load " + "balanced over all servers irrespective "
-            + "of which servers are specified here for bootstrapping --- this list only impacts the initial hosts "
-            + "used to discover the full set of servers. This list should be in the form "
-            + "host1:port1,host2:port2,... Since these servers are just used for the initial connection "
-            + "to discover the full cluster membership (which may change dynamically), this list need not contain the "
-            + "full set of servers (you may want more than one, though, in case a server is down). If no server in "
-            + "this list is available sending data will fail until on becomes available.";
-    public static final String BOOTSTRAP_SERVERS_DEFAULT = "localhost:9092";
-
     public static final String PRODUCER_THREADS_CONFIG = "producer.threads";
     private static final String PRODUCER_THREADS_DOC = "Number of threads to run produce requests on.";
     public static final String PRODUCER_THREADS_DEFAULT = "5";
@@ -107,8 +96,6 @@ public class KafkaRestConfig extends RestConfig {
                 .define(ID_CONFIG, Type.STRING, ID_DEFAULT, Importance.HIGH, ID_CONFIG_DOC)
                 .define(ZOOKEEPER_CONNECT_CONFIG, Type.STRING, ZOOKEEPER_CONNECT_DEFAULT,
                         Importance.HIGH, ZOOKEEPER_CONNECT_DOC)
-                .define(BOOTSTRAP_SERVERS_CONFIG, Type.STRING, BOOTSTRAP_SERVERS_DEFAULT,
-                        Importance.HIGH, BOOTSTRAP_SERVERS_DOC)
                 .define(PRODUCER_THREADS_CONFIG, Type.INT, PRODUCER_THREADS_DEFAULT,
                         Importance.LOW, PRODUCER_THREADS_DOC)
                 .define(CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT,

@@ -107,7 +107,6 @@ public abstract class ClusterTestHarness {
         int restPort = ports.remove();
         restProperties.setProperty("port", ((Integer) restPort).toString());
         restProperties.setProperty("zookeeper.connect", zkConnect);
-        restProperties.setProperty("bootstrap.servers", bootstrapServers);
         restConnect = String.format("http://localhost:%d", restPort);
     }
 
