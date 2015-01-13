@@ -1,10 +1,10 @@
 Summary: A REST proxy for Kafka
-Name: kafka-rest
+Name: confluent-kafka-rest
 Version: ##RPMVERSION##
 Release: ##RPMRELEASE##
 Group: Applications/Internet
 License: Apache (v2)
-Source0: kafka-rest-%{version}.tar.gz
+Source0: confluent-kafka-rest-%{version}.tar.gz
 URL: http://confluent.io
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 Vendor: Confluent, Inc.
@@ -41,7 +41,7 @@ exit 0
 %{__mkdir_p} %{buildroot}
 %{__cp} -R * %{buildroot}
 # The spec file gets included, get rid of it
-%{__rm} %{buildroot}/kafka-rest.spec
+%{__rm} %{buildroot}/confluent-kafka-rest.spec
 
 %files
 %defattr(-,root,root)

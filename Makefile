@@ -100,14 +100,14 @@ export RPM_VERSION=$(shell echo $(VERSION) | sed -e 's/-alpha[0-9]*//' -e 's/-be
 # Version=0.8.2 Release=1)
 export RPM_RELEASE_POSTFIX=$(subst -,,$(subst $(RPM_VERSION),,$(VERSION)))
 
-rpm: RPM_BUILDING/SOURCES/$(PACKAGE_TITLE)-$(RPM_VERSION).tar.gz
+rpm: RPM_BUILDING/SOURCES/$(FULL_PACKAGE_TITLE)-$(RPM_VERSION).tar.gz
 	echo "Building the rpm"
 	rpmbuild --define="_topdir `pwd`/RPM_BUILDING" -tb $<
 	find RPM_BUILDING/{,S}RPMS/ -type f | xargs -n1 -iXXX mv XXX .
 	echo
 	echo "================================================="
 	echo "The rpms have been created and can be found here:"
-	@ls -laF $(PACKAGE_TITLE)*rpm
+	@ls -laF $(FULL_PACKAGE_TITLE)*rpm
 	echo "================================================="
 
 # Unfortunately, because of version naming issues and the way rpmbuild expects
@@ -116,21 +116,21 @@ rpm: RPM_BUILDING/SOURCES/$(PACKAGE_TITLE)-$(RPM_VERSION).tar.gz
 # installed version to generate a new archive. Note that we always regenerate
 # the symlink because the RPM_VERSION doesn't include all the version info -- it
 # can leave of things like -beta, -rc1, etc.
-RPM_BUILDING/SOURCES/$(PACKAGE_TITLE)-$(RPM_VERSION).tar.gz: rpm-build-area install $(PACKAGE_TITLE).spec.in RELEASE_$(RPM_VERSION)_$(RPM_RELEASE_POSTFIX)
-	rm -rf $(PACKAGE_TITLE)-$(RPM_VERSION)
-	mkdir $(PACKAGE_TITLE)-$(RPM_VERSION)
-	cp -R $(DESTDIR)/* $(PACKAGE_TITLE)-$(RPM_VERSION)
-	./create_spec.sh $(PACKAGE_TITLE).spec.in $(PACKAGE_TITLE)-$(RPM_VERSION)/$(PACKAGE_TITLE).spec
-	rm -f $@ && tar -czf $@ $(PACKAGE_TITLE)-$(RPM_VERSION)
-	rm -rf $(PACKAGE_TITLE)-$(RPM_VERSION)
+RPM_BUILDING/SOURCES/$(FULL_PACKAGE_TITLE)-$(RPM_VERSION).tar.gz: rpm-build-area install $(FULL_PACKAGE_TITLE).spec.in RELEASE_$(RPM_VERSION)_$(RPM_RELEASE_POSTFIX)
+	rm -rf $(FULL_PACKAGE_TITLE)-$(RPM_VERSION)
+	mkdir $(FULL_PACKAGE_TITLE)-$(RPM_VERSION)
+	cp -R $(DESTDIR)/* $(FULL_PACKAGE_TITLE)-$(RPM_VERSION)
+	./create_spec.sh $(FULL_PACKAGE_TITLE).spec.in $(FULL_PACKAGE_TITLE)-$(RPM_VERSION)/$(FULL_PACKAGE_TITLE).spec
+	rm -f $@ && tar -czf $@ $(FULL_PACKAGE_TITLE)-$(RPM_VERSION)
+	rm -rf $(FULL_PACKAGE_TITLE)-$(RPM_VERSION)
 
 rpm-build-area: RPM_BUILDING/BUILD RPM_BUILDING/RPMS RPM_BUILDING/SOURCES RPM_BUILDING/SPECS RPM_BUILDING/SRPMS
 
 RPM_BUILDING/%:
 	mkdir -p $@
 
-$(PACKAGE_TITLE).spec:
-	./create_spec.sh $(PACKAGE_TITLE).spec.in $(PACKAGE_TITLE).spec
+$(FULL_PACKAGE_TITLE).spec:
+	./create_spec.sh $(FULL_PACKAGE_TITLE).spec.in $(FULL_PACKAGE_TITLE).spec
 
 RELEASE_%:
 	echo 0 > $@
