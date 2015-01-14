@@ -1,4 +1,4 @@
-kafka-rest (0.1~SNAPSHOT-1) unstable; urgency=low
+confluent-kafka-rest (0.1~SNAPSHOT-1) unstable; urgency=low
 
   * Initial release.
 

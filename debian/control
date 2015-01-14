@@ -1,4 +1,4 @@
-Source: kafka-rest
+Source: confluent-kafka-rest
 Section: misc
 Priority: optional
 Maintainer: Ewen Cheslack-Postava <ewen@confluent.io>
@@ -7,7 +7,7 @@ Build-Depends: debhelper (>= 9), java7-jdk, javahelper (>= 0.40),
 Standards-Version: 3.9.3
 Homepage: http://confluent.io
 
-Package: kafka-rest
+Package: confluent-kafka-rest
 Architecture: all
 Depends: java6-runtime, ${java:Depends}, ${misc:Depends}
 Recommends: ${java:Recommends}
