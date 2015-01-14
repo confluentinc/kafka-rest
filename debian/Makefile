@@ -12,7 +12,8 @@ VERSION=$(shell grep version pom.xml | head -n 1 | awk -F'>|<' '{ print $$3 }')
 endif
 
 export PACKAGE_TITLE=kafka-rest
-export PACKAGE_NAME=$(PACKAGE_TITLE)-$(VERSION)
+export FULL_PACKAGE_TITLE=confluent-kafka-rest
+export PACKAGE_NAME=$(FULL_PACKAGE_TITLE)-$(VERSION)
 
 # Defaults that are likely to vary by platform. These are cleanly separated so
 # it should be easy to maintain altered values on platform-specific branches
@@ -78,7 +79,7 @@ install: build
 clean:
 	rm -rf $(DESTDIR)
 	rm -rf $(CURDIR)/$(PACKAGE_NAME)*
-	rm -rf $(PACKAGE_TITLE)-$(RPM_VERSION)*rpm
+	rm -rf $(FULL_PACKAGE_TITLE)-$(RPM_VERSION)*rpm
 	rm -rf RPM_BUILDING
 
 distclean: clean
