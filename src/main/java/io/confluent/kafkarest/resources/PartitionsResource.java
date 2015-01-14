@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.resources;
 
 import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.ProducerRecordProxyCollection;
 import io.confluent.kafkarest.Versions;
@@ -33,8 +34,6 @@ import java.util.Map;
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED, Versions.JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST})
 public class PartitionsResource {
-    public final static String MESSAGE_PARTITION_NOT_FOUND = "Partition not found.";
-
     private final Context ctx;
     private final String topic;
 
@@ -55,7 +54,7 @@ public class PartitionsResource {
         checkTopicExists();
         Partition part = ctx.getMetadataObserver().getTopicPartition(topic, partition);
         if (part == null)
-            throw new NotFoundException(MESSAGE_PARTITION_NOT_FOUND);
+            throw Errors.partitionNotFoundException();
         return part;
     }
 
@@ -64,7 +63,7 @@ public class PartitionsResource {
     public void produce(final @Suspended AsyncResponse asyncResponse, final @PathParam("partition") int partition, @Valid PartitionProduceRequest request) {
         checkTopicExists();
         if (!ctx.getMetadataObserver().partitionExists(topic, partition))
-            throw new NotFoundException(MESSAGE_PARTITION_NOT_FOUND);
+            throw Errors.partitionNotFoundException();
 
         ctx.getProducerPool().produce(
                 new ProducerRecordProxyCollection(topic, partition, request.getRecords()),
@@ -83,6 +82,6 @@ public class PartitionsResource {
 
     private void checkTopicExists() {
         if (!ctx.getMetadataObserver().topicExists(topic))
-            throw new NotFoundException(TopicsResource.MESSAGE_TOPIC_NOT_FOUND);
+            throw Errors.topicNotFoundException();
     }
 }

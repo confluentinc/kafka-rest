@@ -21,11 +21,10 @@ import org.slf4j.LoggerFactory;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.kafkarest.resources.TopicsResource;
+import io.confluent.rest.exceptions.RestNotFoundException;
 import kafka.consumer.*;
 import kafka.javaapi.consumer.ConsumerConnector;
 
-import javax.ws.rs.NotFoundException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -39,8 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * up when consumers disappear.
  */
 public class ConsumerManager {
-    public final static String MESSAGE_CONSUMER_INSTANCE_NOT_FOUND = "Consumer instance not found.";
-
     private static final Logger log = LoggerFactory.getLogger(ConsumerManager.class);
 
     private final KafkaRestConfig config;
@@ -142,14 +139,14 @@ public class ConsumerManager {
         final ConsumerState state;
         try {
             state = getConsumerInstance(group, instance);
-        } catch (NotFoundException e) {
+        } catch (RestNotFoundException e) {
             callback.onCompletion(null, e);
             return null;
         }
 
         // Consumer will try reading even if it doesn't exist, so we need to check this explicitly.
         if (!mdObserver.topicExists(topic)) {
-            callback.onCompletion(null, new NotFoundException(TopicsResource.MESSAGE_TOPIC_NOT_FOUND));
+            callback.onCompletion(null, Errors.topicNotFoundException());
             return null;
         }
 
@@ -160,7 +157,7 @@ public class ConsumerManager {
             public void onCompletion(List<ConsumerRecord> records) {
                 updateExpiration(state);
                 if (records == null)
-                    callback.onCompletion(null, new NotFoundException(MESSAGE_CONSUMER_INSTANCE_NOT_FOUND));
+                    callback.onCompletion(null, Errors.consumerInstanceNotFoundException());
                 else
                     callback.onCompletion(records, null);
             }
@@ -175,7 +172,7 @@ public class ConsumerManager {
         final ConsumerState state;
         try {
             state = getConsumerInstance(group, instance);
-        } catch (NotFoundException e) {
+        } catch (RestNotFoundException e) {
             callback.onCompletion(null, e);
             return null;
         }
@@ -233,7 +230,7 @@ public class ConsumerManager {
         ConsumerInstanceId id = new ConsumerInstanceId(group, instance);
         final ConsumerState state = remove ? consumers.remove(id) : consumers.get(id);
         if (state == null)
-            throw new NotFoundException(MESSAGE_CONSUMER_INSTANCE_NOT_FOUND);
+            throw Errors.consumerInstanceNotFoundException();
         // Clear from the timeout queue immediately so it isn't removed during the read operation, but don't update
         // the timeout until we finish the read since that can significantly affect the timeout.
         consumersByExpiration.remove(state);

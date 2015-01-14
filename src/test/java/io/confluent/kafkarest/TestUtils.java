@@ -65,7 +65,8 @@ public class TestUtils {
      * This requires a custom message to check against since they should always be provided or explicitly specify the
      * default.
      */
-    public static void assertErrorResponse(Response.StatusType status, Response rawResponse, String msg, String mediatype) {
+    public static void assertErrorResponse(Response.StatusType status, Response rawResponse,
+                                           int code, String msg, String mediatype) {
         assertEquals(status.getStatusCode(), rawResponse.getStatus());
 
         // Successful deletion's return no content, so we shouldn't try to decode their entities
@@ -74,14 +75,22 @@ public class TestUtils {
         assertEquals(mediatype, rawResponse.getMediaType().toString());
 
         ErrorMessage response = rawResponse.readEntity(ErrorMessage.class);
-        assertEquals(status.getStatusCode(), response.getErrorCode());
+        assertEquals(code, response.getErrorCode());
         // This only checks that the start of the message is identical because debug mode will include extra information
         // and is enabled by default.
         if (msg != null)
             assertTrue(response.getMessage().startsWith(msg));
     }
 
-
+  /**
+   * Short-hand version of assertErrorResponse for the rare case that a default response is used,
+   * e.g. for internal server errors.
+   */
+  public static void assertErrorResponse(Response.StatusType status, Response rawResponse,
+                                         String mediatype) {
+    assertErrorResponse(status, rawResponse, status.getStatusCode(), status.getReasonPhrase(),
+                        mediatype);
+  }
 
     public static class RequestMediaType {
         public final String header;

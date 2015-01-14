@@ -146,7 +146,10 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness<KafkaRestC
             EasyMock.replay(mdObserver);
 
             Response response = request("/topics/topic1/partitions/1000", mediatype.header).get();
-            assertErrorResponse(Response.Status.NOT_FOUND, response, PartitionsResource.MESSAGE_PARTITION_NOT_FOUND, mediatype.expected);
+            assertErrorResponse(Response.Status.NOT_FOUND, response,
+                                Errors.PARTITION_NOT_FOUND_ERROR_CODE,
+                                Errors.PARTITION_NOT_FOUND_MESSAGE,
+                                mediatype.expected);
 
             EasyMock.verify(mdObserver);
             EasyMock.reset(mdObserver);
@@ -218,7 +221,7 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness<KafkaRestC
                 Response rawResponse = produceToPartition(topicName, 0, mediatype.header, requestMediatype, produceRecordsWithKeys, null);
                 assertErrorResponse(
                         Response.Status.INTERNAL_SERVER_ERROR, rawResponse,
-                        Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase(), mediatype.expected
+                        mediatype.expected
                 );
 
                 EasyMock.reset(mdObserver, producerPool);
@@ -234,7 +237,11 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness<KafkaRestC
                 EasyMock.replay(mdObserver);
                 Response response = request("/topics/" + topicName + "/partitions/0", mediatype.header)
                         .post(Entity.entity("{}", requestMediatype));
-                assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response, null, mediatype.expected);
+                assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
+                                    response,
+                                    ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
+                                    null,
+                                    mediatype.expected);
                 EasyMock.verify();
 
                 // Invalid base64 encoding
@@ -243,7 +250,11 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness<KafkaRestC
                 EasyMock.replay(mdObserver);
                 response = request("/topics/" + topicName + "/partitions/0", mediatype.header)
                         .post(Entity.entity("{\"records\":[{\"value\":\"aGVsbG8==\"}]}", requestMediatype));
-                assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response, null, mediatype.expected);
+                assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
+                                    response,
+                                    ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
+                                    null,
+                                    mediatype.expected);
                 EasyMock.verify();
 
                 // Invalid data -- include partition in request
@@ -254,7 +265,11 @@ public class PartitionsResourceTest extends EmbeddedServerTestHarness<KafkaRestC
                 topicRequest.setRecords(Arrays.asList(new TopicProduceRecord("key".getBytes(), "value".getBytes(), 0)));
                 response = request("/topics/" + topicName + "/partitions/0", mediatype.header)
                         .post(Entity.entity(topicRequest, requestMediatype));
-                assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response, null, mediatype.expected);
+                assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
+                                    response,
+                                    ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
+                                    null,
+                                    mediatype.expected);
                 EasyMock.verify();
 
                 EasyMock.reset(mdObserver, producerPool);
