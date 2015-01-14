@@ -9,7 +9,7 @@ Homepage: http://confluent.io
 
 Package: confluent-kafka-rest
 Architecture: all
-Depends: java6-runtime, ${java:Depends}, ${misc:Depends}
+Depends: java6-runtime, ${java:Depends}, ${misc:Depends}, confluent-rest-utils
 Recommends: ${java:Recommends}
 Description: A REST proxy for Kafka
  The Kafka REST Proxy provides a RESTful interface to a Kafka cluster. It makes
