@@ -23,6 +23,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
 
+import io.confluent.common.utils.AbstractPerformanceTest;
+import io.confluent.common.utils.PerformanceStats;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
@@ -124,8 +126,8 @@ public class ProducerPerformance extends AbstractPerformanceTest {
   }
 
   @Override
-  protected boolean runningSlow(int iteration, float elapsed) {
-    return (iteration / elapsed < iterationsPerSec);
+  protected boolean runningFast(int iteration, float elapsed) {
+    return (iteration / elapsed > iterationsPerSec);
   }
 }
 
