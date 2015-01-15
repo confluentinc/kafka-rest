@@ -25,6 +25,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.Random;
 
+import io.confluent.common.utils.AbstractPerformanceTest;
+import io.confluent.common.utils.PerformanceStats;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
@@ -158,8 +160,8 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
   }
 
   @Override
-  protected boolean runningSlow(int iteration, float elapsed) {
-    return (consumedRecords / elapsed < recordsPerSec);
+  protected boolean runningFast(int iteration, float elapsed) {
+    return (consumedRecords / elapsed > recordsPerSec);
   }
 
   // This version of ConsumerRecord has the same basic format, but leaves the data encoded since
