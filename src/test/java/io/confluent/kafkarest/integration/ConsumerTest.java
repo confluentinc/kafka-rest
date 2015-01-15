@@ -23,6 +23,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import io.confluent.kafkarest.entities.Partition;
+import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import kafka.utils.TestUtils;
 import scala.collection.JavaConversions;
@@ -30,7 +32,13 @@ import scala.collection.JavaConversions;
 public class ConsumerTest extends AbstractConsumerTest {
 
   private static final String topicName = "topic1";
-  private static final Topic topic = new Topic(topicName, 1);
+  private static final List<Partition> partitions = Arrays.asList(
+      new Partition(0, 0, Arrays.asList(
+          new PartitionReplica(0, true, true),
+          new PartitionReplica(1, false, false)
+      ))
+  );
+  private static final Topic topic = new Topic(topicName, new Properties(), partitions);
   private static final String groupName = "testconsumergroup";
 
   private final List<ProducerRecord> recordsOnlyValues = Arrays.asList(

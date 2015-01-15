@@ -32,8 +32,10 @@ import javax.ws.rs.core.Response;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EntityUtils;
+import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
+import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.Topic;
@@ -55,7 +57,13 @@ import static org.junit.Assert.assertEquals;
 public class ProducerTest extends ClusterTestHarness {
 
   private static final String topicName = "topic1";
-  private static final Topic topic = new Topic(topicName, 1);
+  private static final List<Partition> partitions = Arrays.asList(
+      new Partition(0, 0, Arrays.asList(
+          new PartitionReplica(0, true, true),
+          new PartitionReplica(1, false, false)
+      ))
+  );
+  private static final Topic topic = new Topic(topicName, new Properties(), partitions);
 
   // Produce to topic inputs & results
 
