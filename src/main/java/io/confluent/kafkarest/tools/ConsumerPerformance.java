@@ -165,7 +165,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
   }
 
   @Override
-  protected float targetRate(int iteration, float elapsed) {
+  protected float getTargetIterationRate(int iteration, float elapsed) {
     // Initial rate doesn't matter since it will be reevaluated after first iteration, but need
     // to avoid divide by 0
     if (iteration == 0) return 1;
