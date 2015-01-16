@@ -56,10 +56,11 @@ public class ConsumerWorker extends Thread {
     this.config = config;
   }
 
-  public synchronized Future readTopic(ConsumerState state, String topic, ReadCallback callback) {
+  public synchronized Future readTopic(ConsumerState state, String topic, long maxBytes,
+                                       ReadCallback callback) {
     log.trace("Consumer worker " + this.toString() + " reading topic " + topic
               + " for " + state.getId());
-    ReadTask task = new ReadTask(state, topic, callback);
+    ReadTask task = new ReadTask(state, topic, maxBytes, callback);
     if (!task.isDone()) {
       tasks.add(task);
       this.notifyAll();
@@ -137,21 +138,26 @@ public class ConsumerWorker extends Thread {
 
     ConsumerState state;
     String topic;
+    final long maxResponseBytes;
     ReadCallback callback;
     CountDownLatch finished;
 
     ConsumerState.TopicState topicState;
     ConsumerIterator<byte[], byte[]> iter;
     List<ConsumerRecord> messages;
+    private long bytesConsumed = 0;
     final long started;
 
     // Expiration if this task is waiting, considering both the expiration of the whole task and
     // a single backoff, if one is in progress
     long waitExpiration;
 
-    public ReadTask(ConsumerState state, String topic, ReadCallback callback) {
+    public ReadTask(ConsumerState state, String topic, long maxBytes, ReadCallback callback) {
       this.state = state;
       this.topic = topic;
+      this.maxResponseBytes = Math.min(
+          maxBytes,
+          config.getLong(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG));
       this.callback = callback;
       this.finished = new CountDownLatch(1);
 
@@ -181,19 +187,25 @@ public class ConsumerWorker extends Thread {
         boolean backoff = false;
 
         long startedIteration = config.time.milliseconds();
-
+        final int requestTimeoutMs = config.getInt(
+            KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
         try {
           // Read off as many messages as we can without triggering a timeout exception. The
           // consumer timeout should be set very small, so the expectation is that even in the
           // worst case, num_messages * consumer_timeout << request_timeout, so it's safe to only
           // check the elapsed time once this loop finishes.
-          while (
-              messages.size() < config.getInt(KafkaRestConfig.CONSUMER_REQUEST_MAX_MESSAGES_CONFIG)
-              &&
-              iter.hasNext()) {
-            MessageAndMetadata<byte[], byte[]> msg = iter.next();
-            messages
-                .add(new ConsumerRecord(msg.key(), msg.message(), msg.partition(), msg.offset()));
+          while (iter.hasNext()) {
+            MessageAndMetadata<byte[], byte[]> msg = iter.peek();
+            byte[] key = msg.key();
+            byte[] value = msg.message();
+            int roughMsgSize = (key != null ? key.length : 0) + (value != null ? value.length : 0);
+            if (bytesConsumed + roughMsgSize > maxResponseBytes) {
+              break;
+            }
+
+            iter.next();
+            messages.add(new ConsumerRecord(key, value, msg.partition(), msg.offset()));
+            bytesConsumed += roughMsgSize;
             topicState.consumedOffsets.put(msg.partition(), msg.offset());
           }
         } catch (ConsumerTimeoutException cte) {
@@ -210,9 +222,7 @@ public class ConsumerWorker extends Thread {
             started + config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
         waitExpiration = Math.min(backoffExpiration, requestExpiration);
 
-        if (elapsed >= config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) ||
-            messages.size() >= config
-                .getInt(KafkaRestConfig.CONSUMER_REQUEST_MAX_MESSAGES_CONFIG)) {
+        if (elapsed >= requestTimeoutMs || bytesConsumed >= maxResponseBytes) {
           state.finishRead(topicState);
           finish();
         }

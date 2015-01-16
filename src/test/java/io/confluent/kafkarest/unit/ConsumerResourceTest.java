@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 
@@ -164,8 +165,10 @@ public class ConsumerResourceTest
 
   @Test
   public void testReadCommit() {
-    List<ConsumerRecord> expected = Arrays.asList(
-        new ConsumerRecord("key1".getBytes(), "value1".getBytes(), 0, 10),
+    List<ConsumerRecord> expectedReadLimit = Arrays.asList(
+        new ConsumerRecord("key1".getBytes(), "value1".getBytes(), 0, 10)
+    );
+    List<ConsumerRecord> expectedReadNoLimit = Arrays.asList(
         new ConsumerRecord("key2".getBytes(), "value2".getBytes(), 1, 15),
         new ConsumerRecord("key3".getBytes(), "value3".getBytes(), 2, 20)
     );
@@ -178,7 +181,8 @@ public class ConsumerResourceTest
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
         expectCreateGroup(new ConsumerInstanceConfig());
-        expectReadTopic(topicName, expected, null);
+        expectReadTopic(topicName, 10, expectedReadLimit, null);
+        expectReadTopic(topicName, expectedReadNoLimit, null);
         expectCommit(expectedOffsets, null);
         EasyMock.replay(consumerManager);
 
@@ -189,16 +193,27 @@ public class ConsumerResourceTest
             createResponse =
             response.readEntity(CreateConsumerInstanceResponse.class);
 
-        Response
-            readResponse =
-            request(instanceBasePath(createResponse) + "/topics/" + topicName, mediatype.header)
-                .get();
+        // Read with size limit
+        String readUrl = instanceBasePath(createResponse) + "/topics/" + topicName;
+        Invocation.Builder builder = getJerseyTest().target(readUrl)
+            .queryParam("max_bytes", 10).request();
+        builder.accept(mediatype.header);
+        Response readLimitResponse = builder.get();
+        assertOKResponse(readLimitResponse, mediatype.expected);
+        final List<ConsumerRecord>
+            readLimitResponseRecords =
+            readLimitResponse.readEntity(new GenericType<List<ConsumerRecord>>() {
+            });
+        assertEquals(expectedReadLimit, readLimitResponseRecords);
+
+        // Read without size limit
+        Response readResponse = request(readUrl, mediatype.header).get();
         assertOKResponse(readResponse, mediatype.expected);
         final List<ConsumerRecord>
             readResponseRecords =
             readResponse.readEntity(new GenericType<List<ConsumerRecord>>() {
             });
-        assertEquals(expected, readResponseRecords);
+        assertEquals(expectedReadNoLimit, readResponseRecords);
 
         Response commitResponse = request(instanceBasePath(createResponse), mediatype.header)
             .post(Entity.entity(null, requestMediatype));
@@ -268,12 +283,18 @@ public class ConsumerResourceTest
 
   private void expectReadTopic(String topicName, final List<ConsumerRecord> readResult,
                                final Exception readException) {
+    expectReadTopic(topicName, Long.MAX_VALUE, readResult, readException);
+  }
+
+  private void expectReadTopic(String topicName, long maxBytes,
+                               final List<ConsumerRecord> readResult,
+                               final Exception readException) {
     final Capture<ConsumerManager.ReadCallback>
         readCallback =
         new Capture<ConsumerManager.ReadCallback>();
     consumerManager
         .readTopic(EasyMock.eq(groupName), EasyMock.eq(instanceId), EasyMock.eq(topicName),
-                   EasyMock.capture(readCallback));
+                   EasyMock.eq(maxBytes), EasyMock.capture(readCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
