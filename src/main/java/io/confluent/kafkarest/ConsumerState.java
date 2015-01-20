@@ -49,7 +49,7 @@ class ConsumerState implements Comparable<ConsumerState> {
     this.instanceId = instanceId;
     this.consumer = consumer;
     this.topics = new HashMap<String, TopicState>();
-    this.expiration = config.time.milliseconds() +
+    this.expiration = config.getTime().milliseconds() +
                       config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
     this.lock = new ReentrantReadWriteLock();
   }
@@ -96,7 +96,7 @@ class ConsumerState implements Comparable<ConsumerState> {
   }
 
   public void updateExpiration() {
-    this.expiration = config.time.milliseconds() +
+    this.expiration = config.getTime().milliseconds() +
                       config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
   }
 

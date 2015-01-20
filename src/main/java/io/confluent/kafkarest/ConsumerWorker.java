@@ -75,20 +75,20 @@ public class ConsumerWorker extends Thread {
       synchronized (this) {
         if (tasks.isEmpty()) {
           try {
-            long now = config.time.milliseconds();
+            long now = config.getTime().milliseconds();
             long nextExpiration = nextWaitingExpiration();
             if (nextExpiration > now) {
               long timeout = (nextExpiration == Long.MAX_VALUE ?
                               0 : nextExpiration - now);
               assert (timeout >= 0);
-              config.time.waitOn(this, timeout);
+              config.getTime().waitOn(this, timeout);
             }
           } catch (InterruptedException e) {
             // Indication of shutdown
           }
         }
 
-        long now = config.time.milliseconds();
+        long now = config.getTime().milliseconds();
         while (nextWaitingExpiration() <= now) {
           tasks.add(waitingTasks.remove());
         }
@@ -161,7 +161,7 @@ public class ConsumerWorker extends Thread {
       this.callback = callback;
       this.finished = new CountDownLatch(1);
 
-      started = config.time.milliseconds();
+      started = config.getTime().milliseconds();
       topicState = state.getOrCreateTopicState(topic);
       if (topicState == null) {
         finish();
@@ -186,7 +186,7 @@ public class ConsumerWorker extends Thread {
 
         boolean backoff = false;
 
-        long startedIteration = config.time.milliseconds();
+        long startedIteration = config.getTime().milliseconds();
         final int requestTimeoutMs = config.getInt(
             KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
         try {
@@ -212,7 +212,7 @@ public class ConsumerWorker extends Thread {
           backoff = true;
         }
 
-        long now = config.time.milliseconds();
+        long now = config.getTime().milliseconds();
         long elapsed = now - started;
         // Compute backoff based on starting time. This makes reasoning about when timeouts
         // should occur simpler for tests.

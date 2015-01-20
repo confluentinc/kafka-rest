@@ -34,7 +34,7 @@ public class MockTime implements Time {
   }
 
   @Override
-  public void sleep(long ms) throws InterruptedException {
+  public void sleep(long ms) {
     currentMs += ms;
   }
 

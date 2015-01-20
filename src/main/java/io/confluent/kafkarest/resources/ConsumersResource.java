@@ -87,7 +87,7 @@ public class ConsumersResource {
 
   @DELETE
   @Path("/{group}/instances/{instance}")
-  public void createGroup(final @PathParam("group") String group,
+  public void deleteGroup(final @PathParam("group") String group,
                           final @PathParam("instance") String instance) {
     ctx.getConsumerManager().deleteConsumer(group, instance);
   }
