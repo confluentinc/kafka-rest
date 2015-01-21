@@ -18,12 +18,12 @@ base_dir=$(dirname $0)/..
 
 # Development jars. `mvn package` should collect all the required dependency jars here
 for dir in $base_dir/target/kafka-rest-*-development; do
-  CLASSPATH=$CLASSPATH:$dir/share/kafka-rest/*
+  CLASSPATH=$CLASSPATH:$dir/share/java/kafka-rest/*
 done
 
 # Production jars, including kafka, rest-utils, and kafka-rest
 for library in "kafka" "confluent-common" "rest-utils" "kafka-rest"; do
-  CLASSPATH=$CLASSPATH:$base_dir/share/$library/*
+  CLASSPATH=$CLASSPATH:$base_dir/share/java/$library/*
 done
 
 # JMX settings
