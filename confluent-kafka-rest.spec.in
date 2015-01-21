@@ -46,7 +46,7 @@ exit 0
 %files
 %defattr(-,root,root)
 /usr/bin/*
-/usr/share/kafka-rest
+/usr/share/java/kafka-rest
 /usr/share/doc/kafka-rest
 
 %clean
