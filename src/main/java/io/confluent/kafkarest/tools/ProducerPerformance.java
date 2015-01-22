@@ -28,6 +28,7 @@ import io.confluent.common.utils.PerformanceStats;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.rest.entities.ErrorMessage;
 
 public class ProducerPerformance extends AbstractPerformanceTest {
 
@@ -40,6 +41,8 @@ public class ProducerPerformance extends AbstractPerformanceTest {
   String requestEntityLength;
   byte[] requestEntity;
   byte[] buffer;
+
+  private final ObjectMapper jsonDeserializer = new ObjectMapper();
 
   public static void main(String[] args) throws Exception {
     if (args.length < 6) {
@@ -105,6 +108,15 @@ public class ProducerPerformance extends AbstractPerformanceTest {
       os.flush();
       os.close();
 
+      int responseStatus = connection.getResponseCode();
+      if (responseStatus >= 400) {
+        InputStream es = connection.getErrorStream();
+        ErrorMessage errorMessage = jsonDeserializer.readValue(es, ErrorMessage.class);
+        es.close();
+        throw new RuntimeException(
+            String.format("Unexpected HTTP error status %d: %s",
+                          responseStatus, errorMessage.getMessage()));
+      }
       InputStream is = connection.getInputStream();
       while (is.read(buffer) > 0) {
         // Ignore output, just make sure we actually receive it

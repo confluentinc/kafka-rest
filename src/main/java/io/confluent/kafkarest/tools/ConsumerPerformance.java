@@ -31,6 +31,7 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
+import io.confluent.rest.entities.ErrorMessage;
 
 public class ConsumerPerformance extends AbstractPerformanceTest {
 
@@ -40,6 +41,8 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
   String targetUrl;
   String deleteUrl;
   long consumedRecords = 0;
+
+  private final ObjectMapper jsonDeserializer = new ObjectMapper();
 
   public static void main(String[] args) throws Exception {
     if (args.length < 4) {
@@ -122,22 +125,27 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
       if (entity != null) {
         connection.setRequestProperty("Content-Type", Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
         connection.setRequestProperty("Content-Length", entityLength);
-        connection.setDoInput(true);
       }
-
+      connection.setDoInput(true);
       connection.setUseCaches(false);
-      if (method != "DELETE") {
-        connection.setDoOutput(true);
-      }
-
       if (entity != null) {
+        connection.setDoOutput(true);
         OutputStream os = connection.getOutputStream();
         os.write(entity);
         os.flush();
         os.close();
       }
 
-      if (method != "DELETE") {
+      int responseStatus = connection.getResponseCode();
+      if (responseStatus >= 400) {
+        InputStream es = connection.getErrorStream();
+        ErrorMessage errorMessage = jsonDeserializer.readValue(es, ErrorMessage.class);
+        es.close();
+        throw new RuntimeException(
+            String.format("Unexpected HTTP error status %d for %s request to %s: %s",
+                          responseStatus, method, target, errorMessage.getMessage()));
+      }
+      if (responseStatus != HttpURLConnection.HTTP_NO_CONTENT) {
         InputStream is = connection.getInputStream();
         T result = serializer.readValue(is, responseFormat);
         is.close();
