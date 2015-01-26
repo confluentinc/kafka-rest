@@ -80,12 +80,16 @@ public class KafkaRestConfig extends RestConfig {
       + "request if the maximum number of messages has not yet been reached.";
   public static final String CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT = "1000";
 
-  public static final String CONSUMER_REQUEST_MAX_MESSAGES_CONFIG = "consumer.request.max.messages";
+  public static final String CONSUMER_REQUEST_MAX_BYTES_CONFIG = "consumer.request.max.bytes";
   private static final String
-      CONSUMER_REQUEST_MAX_MESSAGES_DOC =
-      "Maximum number of messages returned in a single "
-      + "request.";
-  public static final String CONSUMER_REQUEST_MAX_MESSAGES_DEFAULT = "100";
+      CONSUMER_REQUEST_MAX_BYTES_DOC =
+      "Maximum number of bytes in unencoded message keys and values returned by a single "
+      + "request. This can be used by administrators to limit the memory used by a single "
+      + "consumer and to control the memory usage required to decode responses on clients that "
+      + "cannot perform a streaming decode. Note that the actual payload will be larger due to "
+      + "overhead from base64 encoding the response data and from JSON encoding the entire "
+      + "response.";
+  public static final long CONSUMER_REQUEST_MAX_BYTES_DEFAULT = 64*1024*1024;
 
   public static final String CONSUMER_THREADS_CONFIG = "consumer.threads";
   private static final String
@@ -119,9 +123,9 @@ public class KafkaRestConfig extends RestConfig {
                 Importance.LOW, CONSUMER_ITERATOR_BACKOFF_MS_DOC)
         .define(CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT,
                 Importance.MEDIUM, CONSUMER_REQUEST_TIMEOUT_MS_DOC)
-        .define(CONSUMER_REQUEST_MAX_MESSAGES_CONFIG, Type.INT,
-                CONSUMER_REQUEST_MAX_MESSAGES_DEFAULT,
-                Importance.MEDIUM, CONSUMER_REQUEST_MAX_MESSAGES_DOC)
+        .define(CONSUMER_REQUEST_MAX_BYTES_CONFIG, Type.LONG,
+                CONSUMER_REQUEST_MAX_BYTES_DEFAULT,
+                Importance.MEDIUM, CONSUMER_REQUEST_MAX_BYTES_DOC)
         .define(CONSUMER_THREADS_CONFIG, Type.INT, CONSUMER_THREADS_DEFAULT,
                 Importance.MEDIUM, CONSUMER_THREADS_DOC)
         .define(CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT,

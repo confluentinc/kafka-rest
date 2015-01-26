@@ -544,6 +544,11 @@ any consumers before it is terminated.
    :param string group_name: The name of the consumer group
    :param string instance: The ID of the consumer instance
    :param string topic_name: The topic to consume messages from.
+   :query max_bytes: The maximum number of bytes of unencoded keys and values that should be
+                     included in the response. This provides approximate control over the size of
+                     responses and the amount of memory required to store the decoded response. The
+                     actual limit will be the minimum of this setting and the server-side
+                     configuration ``consumer.request.max.bytes``. Default is unlimited.
 
    :>jsonarr string key: Base64-encoded message key or null
    :>jsonarr string value: Base64-encoded message value

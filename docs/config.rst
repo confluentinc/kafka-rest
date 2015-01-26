@@ -45,11 +45,11 @@ Configuration Options
   * Default: localhost:2181
   * Importance: high
 
-``consumer.request.max.messages``
-  Maximum number of messages returned in a single request.
+``consumer.request.max.bytes``
+  Maximum number of bytes in unencoded message keys and values returned by a single request. This can be used by administrators to limit the memory used by a single consumer and to control the memory usage required to decode responses on clients that cannot perform a streaming decode. Note that the actual payload will be larger due to overhead from base64 encoding the response data and from JSON encoding the entire response.
 
-  * Type: int
-  * Default: 100
+  * Type: long
+  * Default: 67108864
   * Importance: medium
 
 ``consumer.request.timeout.ms``
@@ -94,9 +94,17 @@ Configuration Options
   * Default: 5
   * Importance: low
 
+``request.logger.name``
+  Name of the SLF4J logger to write the NCSA Common Log Format request log.
+
+  * Type: string
+  * Default: io.confluent.rest-utils.requests
+  * Importance: low
+
 ``shutdown.graceful.ms``
   Amount of time to wait after a shutdown request for outstanding requests to complete.
 
   * Type: int
   * Default: 1000
   * Importance: low
+

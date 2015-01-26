@@ -20,11 +20,13 @@ import java.util.List;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.UriInfo;
@@ -95,8 +97,12 @@ public class ConsumersResource {
   public void readTopic(final @Suspended AsyncResponse asyncResponse,
                         final @PathParam("group") String group,
                         final @PathParam("instance") String instance,
-                        final @PathParam("topic") String topic) {
-    ctx.getConsumerManager().readTopic(group, instance, topic, new ConsumerManager.ReadCallback() {
+                        final @PathParam("topic") String topic,
+                        @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes)
+  {
+    maxBytes = (maxBytes <= 0) ? Long.MAX_VALUE : maxBytes;
+    ctx.getConsumerManager().readTopic(group, instance, topic, maxBytes,
+                                       new ConsumerManager.ReadCallback() {
       @Override
       public void onCompletion(List<ConsumerRecord> records, Exception e) {
         if (e != null) {
