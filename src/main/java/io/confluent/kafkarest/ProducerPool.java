@@ -21,6 +21,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +42,7 @@ import scala.collection.Seq;
 public class ProducerPool {
 
   private static final Logger log = LoggerFactory.getLogger(ConsumerWorker.class);
-  private KafkaProducer producer;
+  private KafkaProducer<byte[],byte[]> producer;
 
   public ProducerPool(ZkClient zkClient) {
     Seq<Broker> brokerSeq = ZkUtils.getAllBrokersInCluster(zkClient);
@@ -54,14 +55,17 @@ public class ProducerPool {
       }
     }
     Properties props = new Properties();
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
-    this.producer = new KafkaProducer(props);
+    this.producer = new KafkaProducer<byte[],byte[]>(props);
   }
 
-  public void produce(ProducerRecordProxyCollection records, ProduceRequestCallback callback) {
+  public void produce(ProducerRecordProxyCollection<byte[],byte[]> records,
+                      ProduceRequestCallback callback) {
     ProduceRequest request = new ProduceRequest(records.size(), callback);
     log.trace("Starting produce request " + request.toString());
-    for (ProducerRecord record : records) {
+    for (ProducerRecord<byte[],byte[]> record : records) {
       producer.send(record, request);
     }
   }

@@ -120,11 +120,11 @@ public class ProduceRecord {
     return result;
   }
 
-  public ProducerRecord getKafkaRecord(String topic) {
-    return new ProducerRecord(topic, key, value);
+  public ProducerRecord<byte[],byte[]> getKafkaRecord(String topic) {
+    return new ProducerRecord<byte[],byte[]>(topic, key, value);
   }
 
-  public ProducerRecord getKafkaRecord(String topic, int partition) {
-    return new ProducerRecord(topic, partition, key, value);
+  public ProducerRecord<byte[],byte[]> getKafkaRecord(String topic, int partition) {
+    return new ProducerRecord<byte[],byte[]>(topic, partition, key, value);
   }
 }

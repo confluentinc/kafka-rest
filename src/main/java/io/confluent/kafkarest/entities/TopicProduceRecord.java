@@ -110,12 +110,12 @@ public class TopicProduceRecord extends ProduceRecord {
   }
 
   @Override
-  public ProducerRecord getKafkaRecord(String topic) {
-    return new ProducerRecord(topic, partition, this.getKey(), this.getValue());
+  public ProducerRecord<byte[],byte[]> getKafkaRecord(String topic) {
+    return new ProducerRecord<byte[],byte[]>(topic, partition, this.getKey(), this.getValue());
   }
 
   @Override
-  public ProducerRecord getKafkaRecord(String topic, int partition) {
+  public ProducerRecord<byte[],byte[]> getKafkaRecord(String topic, int partition) {
     throw new UnsupportedOperationException(
         "TopicProduceRecord cannot generate Kafka records for specific partitions.");
   }
