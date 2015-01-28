@@ -19,6 +19,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 
 import java.util.HashSet;
 import java.util.List;
@@ -46,12 +47,14 @@ import static org.junit.Assert.fail;
 
 public class AbstractConsumerTest extends ClusterTestHarness {
 
-  protected void produceMessages(List<ProducerRecord> records) {
+  protected void produceMessages(List<ProducerRecord<byte[],byte[]>> records) {
     Properties props = new Properties();
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
     props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
-    Producer producer = new KafkaProducer(props);
-    for (ProducerRecord rec : records) {
+    Producer<byte[],byte[]> producer = new KafkaProducer<byte[],byte[]>(props);
+    for (ProducerRecord<byte[],byte[]> rec : records) {
       try {
         producer.send(rec).get();
       } catch (Exception e) {
@@ -93,7 +96,8 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     return instanceResponse.getBaseUri();
   }
 
-  protected void consumeMessages(String instanceUri, String topic, List<ProducerRecord> records) {
+  protected void consumeMessages(String instanceUri, String topic,
+                                 List<ProducerRecord<byte[],byte[]>> records) {
     Response response = request(instanceUri + "/topics/" + topic).get();
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     List<ConsumerRecord> consumed = response.readEntity(new GenericType<List<ConsumerRecord>>() {
@@ -102,7 +106,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
 
     // Since this is used for unkeyed messages, this can't rely on ordering of messages
     Set<String> inputSet = new HashSet<String>();
-    for (ProducerRecord rec : records) {
+    for (ProducerRecord<byte[],byte[]> rec : records) {
       inputSet.add(
           (rec.key() == null ? "null" : EntityUtils.encodeBase64Binary(rec.key())) +
           EntityUtils.encodeBase64Binary(rec.value())
