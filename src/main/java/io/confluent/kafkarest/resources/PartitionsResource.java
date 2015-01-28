@@ -36,6 +36,7 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
+import io.confluent.rest.annotations.PerformanceMetric;
 
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
            Versions.JSON_WEIGHTED})
@@ -52,6 +53,7 @@ public class PartitionsResource {
   }
 
   @GET
+  @PerformanceMetric("partitions.list")
   public List<Partition> list() {
     checkTopicExists();
     return ctx.getMetadataObserver().getTopicPartitions(topic);
@@ -59,6 +61,7 @@ public class PartitionsResource {
 
   @GET
   @Path("/{partition}")
+  @PerformanceMetric("partition.get")
   public Partition getPartition(@PathParam("partition") int partition) {
     checkTopicExists();
     Partition part = ctx.getMetadataObserver().getTopicPartition(topic, partition);
@@ -70,6 +73,7 @@ public class PartitionsResource {
 
   @POST
   @Path("/{partition}")
+  @PerformanceMetric("partition.produce")
   public void produce(final @Suspended AsyncResponse asyncResponse,
                       final @PathParam("partition") int partition,
                       @Valid PartitionProduceRequest request) {

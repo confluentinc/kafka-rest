@@ -39,6 +39,7 @@ import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.rest.annotations.PerformanceMetric;
 
 @Path("/topics")
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
@@ -54,12 +55,14 @@ public class TopicsResource {
   }
 
   @GET
+  @PerformanceMetric("topics.list")
   public Collection<String> list() {
     return ctx.getMetadataObserver().getTopicNames();
   }
 
   @GET
   @Path("/{topic}")
+  @PerformanceMetric("topic.get")
   public Topic getTopic(@PathParam("topic") String topicName) {
     Topic topic = ctx.getMetadataObserver().getTopic(topicName);
     if (topic == null) {
@@ -75,6 +78,7 @@ public class TopicsResource {
 
   @POST
   @Path("/{topic}")
+  @PerformanceMetric("topic.produce")
   public void produce(final @Suspended AsyncResponse asyncResponse,
                       @PathParam("topic") String topicName, @Valid TopicProduceRequest request) {
     if (!ctx.getMetadataObserver().topicExists(topicName)) {

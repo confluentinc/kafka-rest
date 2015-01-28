@@ -26,6 +26,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
 import io.confluent.kafkarest.Versions;
+import io.confluent.rest.annotations.PerformanceMetric;
 
 @Path("/")
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
@@ -35,6 +36,7 @@ import io.confluent.kafkarest.Versions;
 public class RootResource {
 
   @GET
+  @PerformanceMetric("root.get")
   public Map<String, String> get() {
     // Currently this just provides an endpoint that's a nop and can be used to check for liveness
     // and can be used for tests that need to test the server setup rather than the functionality
@@ -44,6 +46,7 @@ public class RootResource {
   }
 
   @POST
+  @PerformanceMetric("root.post")
   public Map<String, String> post(@Valid Map<String, String> request) {
     // This version allows testing with posted entities
     return new HashMap<String, String>();
