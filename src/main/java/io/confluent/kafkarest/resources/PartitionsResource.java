@@ -38,6 +38,7 @@ import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.rest.annotations.PerformanceMetric;
 
+@Path("/topics/{topic}/partitions")
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
            Versions.JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
@@ -45,25 +46,24 @@ import io.confluent.rest.annotations.PerformanceMetric;
 public class PartitionsResource {
 
   private final Context ctx;
-  private final String topic;
 
-  public PartitionsResource(Context ctx, String topic) {
+  public PartitionsResource(Context ctx) {
     this.ctx = ctx;
-    this.topic = topic;
   }
 
   @GET
   @PerformanceMetric("partitions.list")
-  public List<Partition> list() {
-    checkTopicExists();
+  public List<Partition> list(final @PathParam("topic") String topic) {
+    checkTopicExists(topic);
     return ctx.getMetadataObserver().getTopicPartitions(topic);
   }
 
   @GET
   @Path("/{partition}")
   @PerformanceMetric("partition.get")
-  public Partition getPartition(@PathParam("partition") int partition) {
-    checkTopicExists();
+  public Partition getPartition(final @PathParam("topic") String topic,
+                                @PathParam("partition") int partition) {
+    checkTopicExists(topic);
     Partition part = ctx.getMetadataObserver().getTopicPartition(topic, partition);
     if (part == null) {
       throw Errors.partitionNotFoundException();
@@ -75,9 +75,10 @@ public class PartitionsResource {
   @Path("/{partition}")
   @PerformanceMetric("partition.produce")
   public void produce(final @Suspended AsyncResponse asyncResponse,
+                      final @PathParam("topic") String topic,
                       final @PathParam("partition") int partition,
                       @Valid PartitionProduceRequest request) {
-    checkTopicExists();
+    checkTopicExists(topic);
     if (!ctx.getMetadataObserver().partitionExists(topic, partition)) {
       throw Errors.partitionNotFoundException();
     }
@@ -99,7 +100,7 @@ public class PartitionsResource {
     );
   }
 
-  private void checkTopicExists() {
+  private void checkTopicExists(final String topic) {
     if (!ctx.getMetadataObserver().topicExists(topic)) {
       throw Errors.topicNotFoundException();
     }

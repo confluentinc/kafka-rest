@@ -89,7 +89,7 @@ public class PartitionsResourceTest
     ctx = new Context(config, mdObserver, producerPool, null);
 
     addResource(new TopicsResource(ctx));
-    addResource(PartitionsResource.class);
+    addResource(new PartitionsResource(ctx));
 
     produceRecordsOnlyValues = Arrays.asList(
         new ProduceRecord("value".getBytes()),
@@ -153,6 +153,23 @@ public class PartitionsResourceTest
       partition = response.readEntity(new GenericType<Partition>() {
       });
       assertEquals(partitions.get(1), partition);
+
+      EasyMock.verify(mdObserver);
+      EasyMock.reset(mdObserver);
+    }
+  }
+
+  @Test
+  public void testListPartitionsInvalidTopic() {
+    for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
+      EasyMock.expect(mdObserver.topicExists("nonexistanttopic")).andReturn(false);
+      EasyMock.replay(mdObserver);
+
+      Response response = request("/topics/nonexistanttopic/partitions", mediatype.header)
+          .get();
+      assertErrorResponse(Response.Status.NOT_FOUND, response,
+                          Errors.TOPIC_NOT_FOUND_ERROR_CODE, Errors.TOPIC_NOT_FOUND_MESSAGE,
+                          mediatype.expected);
 
       EasyMock.verify(mdObserver);
       EasyMock.reset(mdObserver);

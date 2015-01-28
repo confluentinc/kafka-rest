@@ -62,7 +62,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(RootResource.class);
     config.register(new BrokersResource(context));
     config.register(new TopicsResource(context));
-    config.register(PartitionsResource.class);
+    config.register(new PartitionsResource(context));
     config.register(new ConsumersResource(context));
   }
 

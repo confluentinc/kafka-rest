@@ -71,11 +71,6 @@ public class TopicsResource {
     return topic;
   }
 
-  @Path("/{topic}/partitions")
-  public PartitionsResource getPartitions(@PathParam("topic") String topicName) {
-    return new PartitionsResource(ctx, topicName);
-  }
-
   @POST
   @Path("/{topic}")
   @PerformanceMetric("topic.produce")

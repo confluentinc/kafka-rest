@@ -184,23 +184,6 @@ public class TopicsResourceTest
     }
   }
 
-  @Test
-  public void testGetPartitionsResourceInvalidTopic() {
-    for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-      EasyMock.expect(mdObserver.topicExists("nonexistanttopic")).andReturn(false);
-      EasyMock.replay(mdObserver);
-
-      Response response = request("/topics/nonexistanttopic/partitions", mediatype.header)
-          .get();
-      assertErrorResponse(Response.Status.NOT_FOUND, response,
-                          Errors.TOPIC_NOT_FOUND_ERROR_CODE, Errors.TOPIC_NOT_FOUND_MESSAGE,
-                          mediatype.expected);
-
-      EasyMock.verify(mdObserver);
-      EasyMock.reset(mdObserver);
-    }
-  }
-
   private Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
                                   List<TopicProduceRecord> records,
                                   final Map<Integer, Long> resultOffsets) {
