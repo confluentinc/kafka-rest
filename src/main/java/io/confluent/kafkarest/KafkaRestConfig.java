@@ -49,6 +49,11 @@ public class KafkaRestConfig extends RestConfig {
       + "the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path.";
   public static final String ZOOKEEPER_CONNECT_DEFAULT = "localhost:2181";
 
+  public static final String SCHEMA_REGISTRY_CONNECT_CONFIG = "schema.registry.connect";
+  private static final String SCHEMA_REGISTRY_CONNECT_DOC =
+      "The base URL for the schema registry that should be used by the Avro serializer.";
+  private static final String SCHEMA_REGISTRY_CONNECT_DEFAULT = "localhost:8081";
+
   public static final String PRODUCER_THREADS_CONFIG = "producer.threads";
   private static final String
       PRODUCER_THREADS_DOC =
@@ -119,6 +124,8 @@ public class KafkaRestConfig extends RestConfig {
         .define(ID_CONFIG, Type.STRING, ID_DEFAULT, Importance.HIGH, ID_CONFIG_DOC)
         .define(ZOOKEEPER_CONNECT_CONFIG, Type.STRING, ZOOKEEPER_CONNECT_DEFAULT,
                 Importance.HIGH, ZOOKEEPER_CONNECT_DOC)
+        .define(SCHEMA_REGISTRY_CONNECT_CONFIG, Type.STRING, SCHEMA_REGISTRY_CONNECT_DEFAULT,
+                Importance.HIGH, SCHEMA_REGISTRY_CONNECT_DOC)
         .define(PRODUCER_THREADS_CONFIG, Type.INT, PRODUCER_THREADS_DEFAULT,
                 Importance.LOW, PRODUCER_THREADS_DOC)
         .define(CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT,

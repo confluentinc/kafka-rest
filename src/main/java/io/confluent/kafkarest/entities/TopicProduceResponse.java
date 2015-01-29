@@ -21,18 +21,40 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 import java.util.List;
 
-public class TopicProduceRequest<RecordType extends TopicProduceRecord> extends SchemaHolder {
+public class TopicProduceResponse {
 
   @NotEmpty
-  private List<RecordType> records;
+  private List<PartitionOffset> offsets;
+
+  private Integer keySchemaId;
+
+  private Integer valueSchemaId;
 
   @JsonProperty
-  public List<RecordType> getRecords() {
-    return records;
+  public List<PartitionOffset> getOffsets() {
+    return offsets;
   }
 
   @JsonProperty
-  public void setRecords(List<RecordType> records) {
-    this.records = records;
+  public void setOffsets(List<PartitionOffset> offsets) {
+    this.offsets = offsets;
+  }
+
+  @JsonProperty("key_schema_id")
+  public Integer getKeySchemaId() {
+    return keySchemaId;
+  }
+
+  public void setKeySchemaId(Integer keySchemaId) {
+    this.keySchemaId = keySchemaId;
+  }
+
+  @JsonProperty("value_schema_id")
+  public Integer getValueSchemaId() {
+    return valueSchemaId;
+  }
+
+  public void setValueSchemaId(Integer valueSchemaId) {
+    this.valueSchemaId = valueSchemaId;
   }
 }

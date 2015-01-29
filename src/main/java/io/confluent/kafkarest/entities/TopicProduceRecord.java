@@ -16,107 +16,20 @@
 
 package io.confluent.kafkarest.entities;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+public interface TopicProduceRecord<K,V> extends ProduceRecord<K,V> {
+  // It may seem odd that this is an interface when ProduceRecord<K,V> is an abstract class. If
+  // we used an abstract class here and included the (Integer partition) field and
+  // getters/setters, then subclasses would have to inherit from this class, and reuse of the
+  // implementations of ProduceRecord would have to be via composition. This should be fine, but
+  // currently it seems to be impossible to get Jackson to behave properly during
+  // deserialization when combining that complex type hierarchy with it's unwrapping feature,
+  // which would be required to get the serialize (key,value,partition) values at the same level.
+  // This means implementations have a bit of duplication to provide the partition part of the
+  // interface.
 
-import org.apache.kafka.clients.producer.ProducerRecord;
+  public K getKey();
 
-import java.io.IOException;
+  public V getValue();
 
-import javax.validation.constraints.Min;
-
-public class TopicProduceRecord extends ProduceRecord {
-
-  // When producing to a topic, a partition may be explicitly requested.
-  @Min(0)
-  Integer partition;
-
-  public TopicProduceRecord(@JsonProperty("key") String key, @JsonProperty("value") String value,
-                            @JsonProperty("partition") Integer partition) throws IOException {
-    super(key, value);
-    this.partition = partition;
-  }
-
-  public TopicProduceRecord(String key, String value) throws IOException {
-    super(key, value);
-    this.partition = null;
-  }
-
-  public TopicProduceRecord(byte[] key, byte[] value, Integer partition) {
-    super(key, value);
-    this.partition = partition;
-  }
-
-  public TopicProduceRecord(byte[] key, byte[] value) {
-    super(key, value);
-    this.partition = null;
-  }
-
-  public TopicProduceRecord(String value, Integer partition) throws IOException {
-    super(null, value);
-    this.partition = partition;
-  }
-
-  public TopicProduceRecord(String value) throws IOException {
-    super(null, value);
-    this.partition = null;
-  }
-
-  public TopicProduceRecord(byte[] unencoded_value, Integer partition) {
-    super(unencoded_value);
-    this.partition = partition;
-  }
-
-  public TopicProduceRecord(byte[] unencoded_value) {
-    super(unencoded_value);
-    this.partition = null;
-  }
-
-  @JsonProperty
-  public Integer getPartition() {
-    return partition;
-  }
-
-  @JsonProperty
-  public void setPartition(Integer partition) {
-    this.partition = partition;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    if (!super.equals(o)) {
-      return false;
-    }
-
-    TopicProduceRecord that = (TopicProduceRecord) o;
-
-    if (partition != null ? !partition.equals(that.partition) : that.partition != null) {
-      return false;
-    }
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + (partition != null ? partition.hashCode() : 0);
-    return result;
-  }
-
-  @Override
-  public ProducerRecord<byte[],byte[]> getKafkaRecord(String topic) {
-    return new ProducerRecord<byte[],byte[]>(topic, partition, this.getKey(), this.getValue());
-  }
-
-  @Override
-  public ProducerRecord<byte[],byte[]> getKafkaRecord(String topic, int partition) {
-    throw new UnsupportedOperationException(
-        "TopicProduceRecord cannot generate Kafka records for specific partitions.");
-  }
+  public Integer getPartition();
 }

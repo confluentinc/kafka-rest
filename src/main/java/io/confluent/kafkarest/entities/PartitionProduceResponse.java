@@ -13,25 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.Min;
 
-public class PartitionOffset {
+public class PartitionProduceResponse {
 
   @Min(0)
   private int partition;
   @Min(0)
   private long offset;
+  private Integer keySchemaId;
+  private Integer valueSchemaId;
 
   @JsonCreator
-  public PartitionOffset(@JsonProperty("partition") int partition,
-                         @JsonProperty("offset") long offset) {
+  public PartitionProduceResponse(@JsonProperty("partition") int partition,
+                                  @JsonProperty("offset") long offset,
+                                  @JsonProperty("key_schema_id") Integer keySchemaId,
+                                  @JsonProperty("value_schema_id") Integer valueSchemaId) {
     this.partition = partition;
     this.offset = offset;
+    this.keySchemaId = keySchemaId;
+    this.valueSchemaId = valueSchemaId;
   }
 
   @JsonProperty
@@ -52,39 +60,26 @@ public class PartitionOffset {
     this.offset = offset;
   }
 
-  @Override
-  public String toString() {
-    return "PartitionOffset{" +
-           "partition=" + partition +
-           ", offset=" + offset +
-           '}';
+  @JsonIgnore
+  public PartitionOffset getPartitionOffset() {
+    return new PartitionOffset(partition, offset);
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof PartitionOffset)) {
-      return false;
-    }
-
-    PartitionOffset that = (PartitionOffset) o;
-
-    if (offset != that.offset) {
-      return false;
-    }
-    if (partition != that.partition) {
-      return false;
-    }
-
-    return true;
+  @JsonProperty("key_schema_id")
+  public Integer getKeySchemaId() {
+    return keySchemaId;
   }
 
-  @Override
-  public int hashCode() {
-    int result = partition;
-    result = 31 * result + (int) (offset ^ (offset >>> 32));
-    return result;
+  public void setKeySchemaId(Integer keySchemaId) {
+    this.keySchemaId = keySchemaId;
+  }
+
+  @JsonProperty("value_schema_id")
+  public Integer getValueSchemaId() {
+    return valueSchemaId;
+  }
+
+  public void setValueSchemaId(Integer valueSchemaId) {
+    this.valueSchemaId = valueSchemaId;
   }
 }

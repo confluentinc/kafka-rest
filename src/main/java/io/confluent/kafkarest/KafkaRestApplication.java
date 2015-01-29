@@ -56,7 +56,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
         new ZkClient(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG), 30000, 30000,
                      ZKStringSerializer$.MODULE$);
     MetadataObserver mdObserver = new MetadataObserver(appConfig, zkClient);
-    ProducerPool producerPool = new ProducerPool(zkClient);
+    ProducerPool producerPool = new ProducerPool(appConfig, zkClient);
     ConsumerManager consumerManager = new ConsumerManager(appConfig, mdObserver);
     context = new Context(appConfig, mdObserver, producerPool, consumerManager);
     config.register(RootResource.class);

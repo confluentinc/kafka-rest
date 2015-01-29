@@ -26,6 +26,7 @@ import java.util.Arrays;
 import io.confluent.common.utils.AbstractPerformanceTest;
 import io.confluent.common.utils.PerformanceStats;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
 import io.confluent.rest.entities.ErrorMessage;
@@ -79,7 +80,7 @@ public class ProducerPerformance extends AbstractPerformanceTest {
     targetUrl = baseUrl + "/topics/" + topic;
     byte[] payload = new byte[recordSize];
     Arrays.fill(payload, (byte) 1);
-    TopicProduceRecord record = new TopicProduceRecord(payload);
+    TopicProduceRecord record = new BinaryTopicProduceRecord(payload);
     TopicProduceRecord[] records = new TopicProduceRecord[recordsPerIteration];
     Arrays.fill(records, record);
     TopicProduceRequest request = new TopicProduceRequest();

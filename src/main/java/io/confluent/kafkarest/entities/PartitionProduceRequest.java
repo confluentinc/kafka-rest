@@ -21,18 +21,19 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 import java.util.List;
 
-public class PartitionProduceRequest {
+public class PartitionProduceRequest<RecordType extends ProduceRecord> extends SchemaHolder {
 
   @NotEmpty
-  private List<ProduceRecord> records;
+  private List<RecordType> records;
 
   @JsonProperty
-  public List<ProduceRecord> getRecords() {
+  public List<RecordType> getRecords() {
     return records;
   }
 
   @JsonProperty
-  public void setRecords(List<ProduceRecord> records) {
+  public void setRecords(List<RecordType> records) {
     this.records = records;
   }
+
 }

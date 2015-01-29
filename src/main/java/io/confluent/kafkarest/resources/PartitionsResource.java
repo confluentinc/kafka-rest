@@ -31,12 +31,15 @@ import javax.ws.rs.container.Suspended;
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.ProducerRecordProxyCollection;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.AvroProduceRecord;
+import io.confluent.kafkarest.entities.BinaryProduceRecord;
 import io.confluent.kafkarest.entities.Partition;
-import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
+import io.confluent.kafkarest.entities.PartitionProduceResponse;
+import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.rest.annotations.PerformanceMetric;
+import io.confluent.rest.validation.ConstraintViolations;
 
 @Path("/topics/{topic}/partitions")
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
@@ -73,23 +76,64 @@ public class PartitionsResource {
 
   @POST
   @Path("/{partition}")
-  @PerformanceMetric("partition.produce")
-  public void produce(final @Suspended AsyncResponse asyncResponse,
-                      final @PathParam("topic") String topic,
-                      final @PathParam("partition") int partition,
-                      @Valid PartitionProduceRequest request) {
+  @PerformanceMetric("partition.produce-binary")
+  @Consumes({Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON,
+             Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST})
+  public void produceBinary(final @Suspended AsyncResponse asyncResponse,
+                            final @PathParam("topic") String topic,
+                            final @PathParam("partition") int partition,
+                            @Valid PartitionProduceRequest<BinaryProduceRecord> request) {
+    produce(asyncResponse, topic, partition, Versions.EmbeddedFormat.BINARY, request);
+  }
+
+  @POST
+  @Path("/{partition}")
+  @PerformanceMetric("partition.produce-avro")
+  @Consumes({Versions.KAFKA_V1_JSON_AVRO})
+  public void produceAvro(final @Suspended AsyncResponse asyncResponse,
+                          final @PathParam("topic") String topic,
+                          final @PathParam("partition") int partition,
+                          @Valid PartitionProduceRequest<AvroProduceRecord> request) {
+    // Validations we can't do generically since they depend on the data format -- schemas need to
+    // be available if there are any non-null entries
+    boolean hasKeys = false, hasValues = false;
+    for(AvroProduceRecord rec : request.getRecords()) {
+      hasKeys = hasKeys || (rec.getJsonKey() != null);
+      hasValues = hasValues || (rec.getJsonValue() != null);
+    }
+    if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
+      throw ConstraintViolations.simpleException(
+          "Request includes keys but does not include key schema");
+    }
+    if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
+      throw ConstraintViolations.simpleException(
+          "Request includes values but does not include value schema");
+    }
+
+    produce(asyncResponse, topic, partition, Versions.EmbeddedFormat.AVRO, request);
+  }
+
+  protected <K, V, R extends ProduceRecord<K,V>> void produce(
+      final AsyncResponse asyncResponse,
+      final String topic,
+      final int partition,
+      final Versions.EmbeddedFormat format,
+      final PartitionProduceRequest<R> request) {
     checkTopicExists(topic);
     if (!ctx.getMetadataObserver().partitionExists(topic, partition)) {
       throw Errors.partitionNotFoundException();
     }
 
     ctx.getProducerPool().produce(
-        new ProducerRecordProxyCollection(topic, partition, request.getRecords()),
+        topic, partition, format,
+        request,
+        request.getRecords(),
         new ProducerPool.ProduceRequestCallback() {
-          public void onCompletion(Map<Integer, Long> partitionOffsets) {
-            PartitionOffset
-                response =
-                new PartitionOffset(partition, partitionOffsets.get(partition));
+          public void onCompletion(Integer keySchemaId, Integer valueSchemaId,
+                                   Map<Integer, Long> partitionOffsets) {
+            // Upon completion, schema IDs have been added to the request if they were looked up
+            PartitionProduceResponse response = new PartitionProduceResponse(
+                partition, partitionOffsets.get(partition), keySchemaId, valueSchemaId);
             asyncResponse.resume(response);
           }
 

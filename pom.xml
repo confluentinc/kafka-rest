@@ -10,12 +10,12 @@
     <name>kafka-rest</name>
 
     <properties>
-        <restutils.version>0.1-SNAPSHOT</restutils.version>
+        <confluent.version>0.1-SNAPSHOT</confluent.version>
         <jersey.version>2.6</jersey.version>
         <kafka.version>0.8.2.0</kafka.version>
         <kafka.scala.version>2.10</kafka.scala.version>
         <!-- See note about workaround below. This should match the version used in the version of rest-utils you're using. -->
-        <restutils.junit.version>4.11</restutils.junit.version>
+        <confluent.junit.version>4.11</confluent.junit.version>
         <easymock.version>3.0</easymock.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
@@ -24,18 +24,23 @@
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>rest-utils</artifactId>
-            <version>${restutils.version}</version>
+            <version>${confluent.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka_${kafka.scala.version}</artifactId>
             <version>${kafka.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-avro-serializer</artifactId>
+            <version>${confluent.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>rest-utils-test</artifactId>
-            <version>${restutils.version}</version>
+            <version>${confluent.version}</version>
             <scope>test</scope>
         </dependency>
         <!--
@@ -47,7 +52,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>${restutils.junit.version}</version>
+            <version>${confluent.junit.version}</version>
             <scope>test</scope>
         </dependency>
         <!-- End workaround -->
@@ -56,6 +61,12 @@
             <artifactId>kafka_${kafka.scala.version}</artifactId>
             <version>${kafka.version}</version>
             <classifier>test</classifier>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-schema-registry</artifactId>
+            <version>${confluent.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
