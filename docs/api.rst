@@ -65,11 +65,9 @@ you produce messages by making ``POST`` requests to specific topics.
 
 .. http:get:: /topics
 
-   Get a list of Kafka topics. Each returned topic includes the topic name and
-   some basic metadata.
+   Get a list of Kafka topics.
 
-   :>jsonarr string name: Name of the topic
-   :>jsonarr int num_partitions: Number of partitions in the topic
+   :>json array topics: List of topic names
 
    **Example request**:
 
@@ -86,16 +84,7 @@ you produce messages by making ``POST`` requests to specific topics.
       HTTP/1.1 200 OK
       Content-Type: application/vnd.kafka.v1+json
 
-      [
-        {
-          "name": "topic1",
-          "num_partitions": 3
-        },
-        {
-          "name": "topic2",
-          "num_partitions": 1
-        }
-      ]
+      ["topic1", "topic2"]
 
 .. http:get:: /topics/(string:topic_name)
 
@@ -104,7 +93,8 @@ you produce messages by making ``POST`` requests to specific topics.
    :param string topic_name: Name of the topic to get metadata about
 
    :>json string name: Name of the topic
-   :>json int num_partitions: Number of partitions in the topic
+   :>json map configs: Per-topic configuration overrides
+   :>json array partitions: List of partitions for this topic
 
    :statuscode 404:
       * Error code 40401 -- Topic not found
@@ -126,7 +116,27 @@ you produce messages by making ``POST`` requests to specific topics.
 
       {
         "name": "test",
-        "num_partitions": 3
+        "configs": {
+           "cleanup.policy": "compact"
+        },
+        "partitions": [
+          {
+            "partition": 1,
+            "leader": 1,
+            "replicas": [
+              {
+                "broker": 1,
+                "leader": true,
+                "in_sync": true,
+              },
+              {
+                "broker": 2,
+                "leader": false,
+                "in_sync": true,
+              }
+            ]
+          }
+        ]
       }
 
 .. http:post:: /topics/(string:topic_name)
@@ -534,6 +544,11 @@ any consumers before it is terminated.
    :param string group_name: The name of the consumer group
    :param string instance: The ID of the consumer instance
    :param string topic_name: The topic to consume messages from.
+   :query max_bytes: The maximum number of bytes of unencoded keys and values that should be
+                     included in the response. This provides approximate control over the size of
+                     responses and the amount of memory required to store the decoded response. The
+                     actual limit will be the minimum of this setting and the server-side
+                     configuration ``consumer.request.max.bytes``. Default is unlimited.
 
    :>jsonarr string key: Base64-encoded message key or null
    :>jsonarr string value: Base64-encoded message value

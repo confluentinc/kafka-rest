@@ -25,10 +25,12 @@ import java.net.URL;
 import java.util.List;
 import java.util.Random;
 
-import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.common.utils.AbstractPerformanceTest;
+import io.confluent.common.utils.PerformanceStats;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
+import io.confluent.rest.entities.ErrorMessage;
 
 public class ConsumerPerformance extends AbstractPerformanceTest {
 
@@ -38,6 +40,8 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
   String targetUrl;
   String deleteUrl;
   long consumedRecords = 0;
+
+  private final ObjectMapper jsonDeserializer = new ObjectMapper();
 
   public static void main(String[] args) throws Exception {
     if (args.length < 4) {
@@ -58,7 +62,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
     // request we'll receive so we don't know how many iterations per second we need to hit the
     // target rate. Get an approximate value using the default max # of records per request the
     // server will return.
-    perf.run(throughput / Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_MAX_MESSAGES_DEFAULT));
+    perf.run();
     perf.close();
   }
 
@@ -86,10 +90,11 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
         + "/topics/" + topic;
     deleteUrl = baseUrl + "/consumers/" + groupId + "/instances/" + createResponse.getInstanceId();
 
-    // Run a single read request and ignore the result to get started. This makes sure the consumer on the REST proxy
-    // is fully setup and connected.
-    request(targetUrl, "GET", null, null, new TypeReference<List<UndecodedConsumerRecord>>() {
-    });
+    // Run a single read request and ignore the result to get started. This makes sure the
+    // consumer on the REST proxy is fully setup and connected. Set max_bytes so this request
+    // doesn't consume a bunch of data, which could possibly exhaust the data in the topic
+    request(targetUrl + "?max_bytes=100", "GET", null, null,
+            new TypeReference<List<UndecodedConsumerRecord>>() {});
   }
 
   @Override
@@ -120,22 +125,27 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
       if (entity != null) {
         connection.setRequestProperty("Content-Type", Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
         connection.setRequestProperty("Content-Length", entityLength);
-        connection.setDoInput(true);
       }
-
+      connection.setDoInput(true);
       connection.setUseCaches(false);
-      if (method != "DELETE") {
-        connection.setDoOutput(true);
-      }
-
       if (entity != null) {
+        connection.setDoOutput(true);
         OutputStream os = connection.getOutputStream();
         os.write(entity);
         os.flush();
         os.close();
       }
 
-      if (method != "DELETE") {
+      int responseStatus = connection.getResponseCode();
+      if (responseStatus >= 400) {
+        InputStream es = connection.getErrorStream();
+        ErrorMessage errorMessage = jsonDeserializer.readValue(es, ErrorMessage.class);
+        es.close();
+        throw new RuntimeException(
+            String.format("Unexpected HTTP error status %d for %s request to %s: %s",
+                          responseStatus, method, target, errorMessage.getMessage()));
+      }
+      if (responseStatus != HttpURLConnection.HTTP_NO_CONTENT) {
         InputStream is = connection.getInputStream();
         T result = serializer.readValue(is, responseFormat);
         is.close();
@@ -158,8 +168,17 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
   }
 
   @Override
-  protected boolean runningSlow(int iteration, float elapsed) {
-    return (consumedRecords / elapsed < recordsPerSec);
+  protected boolean runningFast(int iteration, float elapsed) {
+    return (consumedRecords / elapsed > recordsPerSec);
+  }
+
+  @Override
+  protected float getTargetIterationRate(int iteration, float elapsed) {
+    // Initial rate doesn't matter since it will be reevaluated after first iteration, but need
+    // to avoid divide by 0
+    if (iteration == 0) return 1;
+    float recordsPerIteration = consumedRecords / (float)iteration;
+    return recordsPerSec / recordsPerIteration;
   }
 
   // This version of ConsumerRecord has the same basic format, but leaves the data encoded since

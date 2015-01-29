@@ -154,7 +154,7 @@ public class ConsumerManager {
   }
 
   public Future readTopic(final String group, final String instance, final String topic,
-                          final ReadCallback callback) {
+                          final long maxBytes, final ReadCallback callback) {
     final ConsumerState state;
     try {
       state = getConsumerInstance(group, instance);
@@ -171,7 +171,7 @@ public class ConsumerManager {
 
     int workerId = nextWorker.getAndIncrement() % workers.size();
     ConsumerWorker worker = workers.get(workerId);
-    return worker.readTopic(state, topic, new ConsumerWorker.ReadCallback() {
+    return worker.readTopic(state, topic, maxBytes, new ConsumerWorker.ReadCallback() {
       @Override
       public void onCompletion(List<ConsumerRecord> records) {
         updateExpiration(state);

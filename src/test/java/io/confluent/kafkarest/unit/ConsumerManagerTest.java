@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -59,7 +60,9 @@ public class ConsumerManagerTest {
 
   @Before
   public void setUp() throws RestConfigException {
-    config = new KafkaRestConfig();
+    Properties props = new Properties();
+    props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG, "1024");
+    config = new KafkaRestConfig(props);
     config.time = new MockTime();
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     consumerFactory = EasyMock.createMock(ConsumerManager.ConsumerFactory.class);
@@ -103,7 +106,8 @@ public class ConsumerManagerTest {
 
     String cid = consumerManager.createConsumer(groupName, new ConsumerInstanceConfig());
     sawCallback = false;
-    consumerManager.readTopic(groupName, cid, topicName, new ConsumerManager.ReadCallback() {
+    consumerManager.readTopic(groupName, cid, topicName, Long.MAX_VALUE,
+                              new ConsumerManager.ReadCallback() {
       @Override
       public void onCompletion(List<ConsumerRecord> records, Exception e) {
         sawCallback = true;
@@ -112,9 +116,9 @@ public class ConsumerManagerTest {
       }
     }).get();
     assertTrue(sawCallback);
-    // With # of messages < max per request, this should finish just after the per-request
-    // timeout (because the timeout perfectly coincides with a scheduled iteration when using the
-    // default settings).
+    // With # of bytes in messages < max bytes per response, this should finish just after
+    // the per-request timeout (because the timeout perfectly coincides with a scheduled
+    // iteration when using the default settings).
     assertEquals(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) + config
         .getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG), config.time.milliseconds());
 
@@ -130,6 +134,64 @@ public class ConsumerManagerTest {
         assertEquals(3, offsets.size());
       }
     }).get();
+    assertTrue(sawCallback);
+
+    consumerManager.deleteConsumer(groupName, cid);
+
+    EasyMock.verify(mdObserver, consumerFactory);
+  }
+
+  @Test
+  public void testConsumerMaxBytesResponse() throws InterruptedException, ExecutionException {
+    // Tests that when there are more records available than the max bytes to be included in the
+    // response, not all of it is returned.
+    final List<ConsumerRecord> referenceRecords = Arrays.asList(
+        new ConsumerRecord(null, new byte[512], 0, 0),
+        new ConsumerRecord(null, new byte[512], 1, 0),
+        new ConsumerRecord(null, new byte[512], 2, 0),
+        new ConsumerRecord(null, new byte[512], 3, 0)
+    );
+    Map<Integer, List<ConsumerRecord>> referenceSchedule
+        = new HashMap<Integer, List<ConsumerRecord>>();
+    referenceSchedule.put(50, referenceRecords);
+
+    Map<String, List<Map<Integer, List<ConsumerRecord>>>> schedules
+        = new HashMap<String, List<Map<Integer, List<ConsumerRecord>>>>();
+    schedules.put(topicName, Arrays.asList(referenceSchedule));
+
+    expectCreate(schedules);
+    EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
+    EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
+
+    EasyMock.replay(mdObserver, consumerFactory);
+
+    String cid = consumerManager.createConsumer(groupName, new ConsumerInstanceConfig());
+    sawCallback = false;
+    consumerManager.readTopic(groupName, cid, topicName, Long.MAX_VALUE,
+                              new ConsumerManager.ReadCallback() {
+      @Override
+      public void onCompletion(List<ConsumerRecord> records, Exception e) {
+        sawCallback = true;
+        assertNull(e);
+        // Should only see the first two messages since the third pushes us over the limit.
+        assertEquals(2, records.size());
+      }
+    }).get();
+    assertTrue(sawCallback);
+
+    // Also check the user-submitted limit
+    sawCallback = false;
+    consumerManager.readTopic(
+        groupName, cid, topicName, 512,
+        new ConsumerManager.ReadCallback() {
+          @Override
+          public void onCompletion(List<ConsumerRecord> records, Exception e) {
+            sawCallback = true;
+            assertNull(e);
+            // Should only see first message since the user specified an even smaller size limit
+            assertEquals(1, records.size());
+          }
+        }).get();
     assertTrue(sawCallback);
 
     consumerManager.deleteConsumer(groupName, cid);
@@ -166,7 +228,8 @@ public class ConsumerManagerTest {
       throws InterruptedException, ExecutionException {
     long started = config.time.milliseconds();
     sawCallback = false;
-    consumerManager.readTopic(groupName, cid, topicName, new ConsumerManager.ReadCallback() {
+    consumerManager.readTopic(groupName, cid, topicName, Long.MAX_VALUE,
+                              new ConsumerManager.ReadCallback() {
       @Override
       public void onCompletion(List<ConsumerRecord> records, Exception e) {
         sawCallback = true;
@@ -183,7 +246,8 @@ public class ConsumerManagerTest {
     sawCallback = false;
     Future
         future =
-        consumerManager.readTopic(groupName, cid, topic, new ConsumerManager.ReadCallback() {
+        consumerManager.readTopic(groupName, cid, topic, Long.MAX_VALUE,
+                                  new ConsumerManager.ReadCallback() {
           @Override
           public void onCompletion(List<ConsumerRecord> records, Exception e) {
             sawCallback = true;

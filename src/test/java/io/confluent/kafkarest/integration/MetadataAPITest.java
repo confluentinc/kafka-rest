@@ -29,6 +29,7 @@ import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BrokerList;
 import io.confluent.kafkarest.entities.Partition;
+import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import kafka.utils.TestUtils;
 import scala.collection.JavaConversions;
@@ -44,11 +45,31 @@ import static org.junit.Assert.assertEquals;
 public class MetadataAPITest extends ClusterTestHarness {
 
   private static final String topic1Name = "topic1";
-  private static final int topic1Partitions = 1;
-  private static final Topic topic1 = new Topic(topic1Name, topic1Partitions);
+  private static final List<Partition> topic1Partitions = Arrays.asList(
+      new Partition(0, 0, Arrays.asList(
+          new PartitionReplica(0, true, true),
+          new PartitionReplica(1, false, false)
+      ))
+  );
+  private static final Topic topic1 = new Topic(topic1Name, new Properties(), topic1Partitions);
   private static final String topic2Name = "topic2";
-  private static final int topic2Partitions = 2;
-  private static final Topic topic2 = new Topic(topic2Name, topic2Partitions);
+  private static final List<Partition> topic2Partitions = Arrays.asList(
+      new Partition(0, 0, Arrays.asList(
+          new PartitionReplica(0, true, true),
+          new PartitionReplica(1, false, false)
+      )),
+      new Partition(1, 1, Arrays.asList(
+          new PartitionReplica(0, false, true),
+          new PartitionReplica(1, true, true)
+      ))
+  );
+  private static final Properties topic2Configs;
+  private static final Topic topic2;
+  static {
+    topic2Configs = new Properties();
+    topic2Configs.setProperty("cleanup.policy", "delete");
+    topic2 = new Topic(topic2Name, topic2Configs, topic2Partitions);
+  }
 
   private static final int numReplicas = 2;
 
@@ -56,10 +77,10 @@ public class MetadataAPITest extends ClusterTestHarness {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    TestUtils.createTopic(zkClient, topic1Name, topic1Partitions, numReplicas,
+    TestUtils.createTopic(zkClient, topic1Name, topic1Partitions.size(), numReplicas,
                           JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
-    TestUtils.createTopic(zkClient, topic2Name, topic2Partitions, numReplicas,
-                          JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
+    TestUtils.createTopic(zkClient, topic2Name, topic2Partitions.size(), numReplicas,
+                          JavaConversions.asScalaIterable(this.servers).toSeq(), topic2Configs);
   }
 
   @Test
@@ -76,15 +97,19 @@ public class MetadataAPITest extends ClusterTestHarness {
     // Listing
     Response response = request("/topics").get();
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    final List<Topic> topicsResponse = response.readEntity(new GenericType<List<Topic>>() {
-    });
-    assertEquals(Arrays.asList(topic1, topic2), topicsResponse);
+    final List<String> topicsResponse = response.readEntity(new GenericType<List<String>>() {});
+    assertEquals(Arrays.asList(topic1Name, topic2Name), topicsResponse);
 
     // Get topic
     Response response1 = request("/topics/{topic}", "topic", topic1Name).get();
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     final Topic topic1Response = response1.readEntity(Topic.class);
-    assertEquals(topic1, topic1Response);
+    // Just verify some basic properties because the exact values can vary based on replica
+    // assignment, leader election
+    assertEquals(topic1.getName(), topic1Response.getName());
+    assertEquals(topic1.getConfigs(), topic1Response.getConfigs());
+    assertEquals(topic1Partitions.size(), topic1Response.getPartitions().size());
+    assertEquals(numReplicas, topic1Response.getPartitions().get(0).getReplicas().size());
 
     // Get invalid topic
     final Response invalidResponse = request("/topics/{topic}", "topic", "topicdoesntexist").get();
@@ -103,8 +128,9 @@ public class MetadataAPITest extends ClusterTestHarness {
         partitions1Response =
         response.readEntity(new GenericType<List<Partition>>() {
         });
-    // Just verify some basic properties because the exact values can vary based on replica assignment, leader election
-    assertEquals(topic1Partitions, partitions1Response.size());
+    // Just verify some basic properties because the exact values can vary based on replica
+    // assignment, leader election
+    assertEquals(topic1Partitions.size(), partitions1Response.size());
     assertEquals(numReplicas, partitions1Response.get(0).getReplicas().size());
 
     response = request("/topics/" + topic2Name + "/partitions").get();
@@ -113,7 +139,7 @@ public class MetadataAPITest extends ClusterTestHarness {
         partitions2Response =
         response.readEntity(new GenericType<List<Partition>>() {
         });
-    assertEquals(topic2Partitions, partitions2Response.size());
+    assertEquals(topic2Partitions.size(), partitions2Response.size());
     assertEquals(numReplicas, partitions2Response.get(0).getReplicas().size());
     assertEquals(numReplicas, partitions2Response.get(1).getReplicas().size());
 

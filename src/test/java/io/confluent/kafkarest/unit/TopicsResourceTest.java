@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
@@ -38,7 +39,9 @@ import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.ProducerRecordProxyCollection;
 import io.confluent.kafkarest.TestUtils;
+import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionOffset;
+import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
@@ -108,19 +111,14 @@ public class TopicsResourceTest
 
   @Test
   public void testList() {
-    final List<Topic> topics = Arrays.asList(
-        new Topic("test1", 10),
-        new Topic("test2", 1),
-        new Topic("test3", 10)
-    );
+    final List<String> topics = Arrays.asList("test1", "test2", "test3");
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-      EasyMock.expect(mdObserver.getTopics()).andReturn(topics);
+      EasyMock.expect(mdObserver.getTopicNames()).andReturn(topics);
       EasyMock.replay(mdObserver);
 
       Response response = request("/topics", mediatype.expected).get();
       assertOKResponse(response, mediatype.expected);
-      final List<Topic> topicsResponse = response.readEntity(new GenericType<List<Topic>>() {
-      });
+      final List<String> topicsResponse = response.readEntity(new GenericType<List<String>>() {});
       assertEquals(topics, topicsResponse);
 
       EasyMock.verify(mdObserver);
@@ -130,8 +128,26 @@ public class TopicsResourceTest
 
   @Test
   public void testGetTopic() {
-    Topic topic1 = new Topic("topic1", 2);
-    Topic topic2 = new Topic("topic2", 5);
+    Properties nonEmptyConfig = new Properties();
+    nonEmptyConfig.setProperty("cleanup.policy", "delete");
+    final List<Partition> partitions1 = Arrays.asList(
+        new Partition(0, 0, Arrays.asList(
+            new PartitionReplica(0, true, true),
+            new PartitionReplica(1, false, false)
+        )),
+        new Partition(1, 1, Arrays.asList(
+            new PartitionReplica(0, false, true),
+            new PartitionReplica(1, true, true)
+        ))
+    );
+    final List<Partition> partitions2 = Arrays.asList(
+        new Partition(0, 0, Arrays.asList(
+            new PartitionReplica(0, true, true),
+            new PartitionReplica(1, false, false)
+        ))
+    );
+    Topic topic1 = new Topic("topic1", new Properties(), partitions1);
+    Topic topic2 = new Topic("topic2", nonEmptyConfig, partitions2);
 
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       EasyMock.expect(mdObserver.getTopic("topic1"))

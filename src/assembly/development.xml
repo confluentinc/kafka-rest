@@ -11,7 +11,7 @@
     <includeBaseDirectory>false</includeBaseDirectory>
     <dependencySets>
         <dependencySet>
-            <outputDirectory>share/kafka-rest/</outputDirectory>
+            <outputDirectory>share/java/kafka-rest/</outputDirectory>
         </dependencySet>
     </dependencySets>
 </assembly>

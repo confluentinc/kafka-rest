@@ -20,7 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 import java.util.Vector;
 
 import javax.ws.rs.InternalServerErrorException;
@@ -29,9 +31,11 @@ import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.rest.exceptions.RestNotFoundException;
+import kafka.admin.AdminUtils;
 import kafka.api.LeaderAndIsr;
 import kafka.cluster.Broker;
 import kafka.utils.ZkUtils;
+import scala.Option;
 import scala.collection.JavaConversions;
 import scala.collection.Map;
 import scala.collection.Seq;
@@ -59,6 +63,11 @@ public class MetadataObserver {
     return brokerIds;
   }
 
+  public Collection<String> getTopicNames() {
+    Seq<String> topicNames = ZkUtils.getAllTopics(zkClient).sorted(Ordering.String$.MODULE$);
+    return JavaConversions.asJavaCollection(topicNames);
+  }
+
   public List<Topic> getTopics() {
     try {
       Seq<String> topicNames = ZkUtils.getAllTopics(zkClient).sorted(Ordering.String$.MODULE$);
@@ -79,8 +88,7 @@ public class MetadataObserver {
   }
 
   public Topic getTopic(String topicName) {
-    List<Topic>
-        topics =
+    List<Topic> topics =
         getTopicsData(JavaConversions.asScalaIterable(Arrays.asList(topicName)).toSeq());
     return (topics.isEmpty() ? null : topics.get(0));
   }
@@ -89,13 +97,19 @@ public class MetadataObserver {
     Map<String, Map<Object, Seq<Object>>> topicPartitions =
         ZkUtils.getPartitionAssignmentForTopics(zkClient, topicNames);
     List<Topic> topics = new Vector<Topic>(topicNames.size());
+    // Admin utils only supports getting either 1 or all topic configs. These per-topic overrides
+    // shouldn't be common, so we just grab all of them to keep this simple
+    Map<String,Properties> configs = AdminUtils.fetchAllTopicConfigs(zkClient);
     for (String topicName : JavaConversions.asJavaCollection(topicNames)) {
       Map<Object, Seq<Object>> partitionMap = topicPartitions.get(topicName).get();
-      int numPartitions = partitionMap.size();
-      if (numPartitions == 0) {
+      List<Partition> partitions = extractPartitionsFromZKData(partitionMap, topicName, null);
+      if (partitions.size() == 0) {
         continue;
       }
-      Topic topic = new Topic(topicName, numPartitions);
+      Option<Properties> topicConfigOpt = configs.get(topicName);
+      Properties topicConfigs =
+          topicConfigOpt.isEmpty() ? new Properties() : topicConfigOpt.get();
+      Topic topic = new Topic(topicName, topicConfigs, partitions);
       topics.add(topic);
     }
     return topics;
@@ -107,7 +121,7 @@ public class MetadataObserver {
 
   public boolean partitionExists(String topicName, int partition) {
     Topic topic = getTopic(topicName);
-    return (partition >= 0 && partition < topic.getNumPartitions());
+    return (partition >= 0 && partition < topic.getPartitions().size());
   }
 
   public Partition getTopicPartition(String topic, int partition) {
@@ -119,12 +133,17 @@ public class MetadataObserver {
   }
 
   private List<Partition> getTopicPartitions(String topic, Integer partitions_filter) {
-    List<Partition> partitions = new Vector<Partition>();
     Map<String, Map<Object, Seq<Object>>> topicPartitions = ZkUtils.getPartitionAssignmentForTopics(
         zkClient, JavaConversions.asScalaIterable(Arrays.asList(topic)).toSeq());
     Map<Object, Seq<Object>> parts = topicPartitions.get(topic).get();
-    for (java.util.Map.Entry<Object, Seq<Object>> part : JavaConversions.asJavaMap(parts)
-        .entrySet()) {
+    return extractPartitionsFromZKData(parts, topic, partitions_filter);
+  }
+
+  private List<Partition> extractPartitionsFromZKData(
+      Map<Object, Seq<Object>> parts, String topic, Integer partitions_filter) {
+    List<Partition> partitions = new Vector<Partition>();
+    java.util.Map<Object, Seq<Object>> partsJava = JavaConversions.asJavaMap(parts);
+    for (java.util.Map.Entry<Object, Seq<Object>> part : partsJava.entrySet()) {
       int partId = (Integer) part.getKey();
       if (partitions_filter != null && partitions_filter != partId) {
         continue;
@@ -132,8 +151,7 @@ public class MetadataObserver {
 
       Partition p = new Partition();
       p.setPartition(partId);
-      LeaderAndIsr
-          leaderAndIsr =
+      LeaderAndIsr leaderAndIsr =
           ZkUtils.getLeaderAndIsrForPartition(zkClient, topic, partId).get();
       p.setLeader(leaderAndIsr.leader());
       scala.collection.immutable.Set<Integer> isr = leaderAndIsr.isr().toSet();

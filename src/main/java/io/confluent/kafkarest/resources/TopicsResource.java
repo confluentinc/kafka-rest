@@ -15,6 +15,7 @@
  **/
 package io.confluent.kafkarest.resources;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -53,8 +54,8 @@ public class TopicsResource {
   }
 
   @GET
-  public List<Topic> list() {
-    return ctx.getMetadataObserver().getTopics();
+  public Collection<String> list() {
+    return ctx.getMetadataObserver().getTopicNames();
   }
 
   @GET
