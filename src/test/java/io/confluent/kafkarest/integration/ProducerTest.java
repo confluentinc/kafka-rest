@@ -234,21 +234,21 @@ public class ProducerTest extends ClusterTestHarness {
         consumer.createMessageStreams(topicCountMap);
     KafkaStream<byte[], byte[]> stream = streams.get(topicName).get(0);
     ConsumerIterator<byte[], byte[]> it = stream.iterator();
-    Set<String> msgSet = new TreeSet<String>();
+    Map<String,Integer> msgCounts = new HashMap<String,Integer>();
     for (int i = 0; i < records.size(); i++) {
       MessageAndMetadata<byte[], byte[]> data = it.next();
-      if ((partition == null || data.partition() == partition) && data.message() != null) {
-        msgSet.add(EntityUtils.encodeBase64Binary(data.message()));
+      if (partition == null || data.partition() == partition) {
+        String msg = data.message() == null ? null : EntityUtils.encodeBase64Binary(data.message());
+        msgCounts.put(msg, (msgCounts.get(msg) == null ? 0 : msgCounts.get(msg)) + 1);
       }
     }
     consumer.shutdown();
 
-    Set<String> refMsgSet = new TreeSet<String>();
+    Map<String,Integer> refMsgCounts = new HashMap<String,Integer>();
     for (ProduceRecord rec : records) {
-      if (rec.getValue() != null) {
-        refMsgSet.add(EntityUtils.encodeBase64Binary(rec.getValue()));
-      }
+      String msg = rec.getValue() == null ? null : EntityUtils.encodeBase64Binary(rec.getValue());
+      refMsgCounts.put(msg, (refMsgCounts.get(msg) == null ? 0 : refMsgCounts.get(msg)) + 1);
     }
-    assertEquals(msgSet, refMsgSet);
+    assertEquals(msgCounts, refMsgCounts);
   }
 }
