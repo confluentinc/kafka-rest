@@ -38,6 +38,7 @@ import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.rest.annotations.PerformanceMetric;
 
 @Path("/consumers")
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
@@ -55,6 +56,7 @@ public class ConsumersResource {
   @POST
   @Valid
   @Path("/{group}")
+  @PerformanceMetric("consumer.create")
   public CreateConsumerInstanceResponse createGroup(
       @javax.ws.rs.core.Context UriInfo uriInfo, final @PathParam("group") String group,
       @Valid ConsumerInstanceConfig config) {
@@ -70,6 +72,7 @@ public class ConsumersResource {
 
   @POST
   @Path("/{group}/instances/{instance}")
+  @PerformanceMetric("consumer.commit")
   public void commitOffsets(final @Suspended AsyncResponse asyncResponse,
                             final @PathParam("group") String group,
                             final @PathParam("instance") String instance) {
@@ -87,13 +90,15 @@ public class ConsumersResource {
 
   @DELETE
   @Path("/{group}/instances/{instance}")
-  public void createGroup(final @PathParam("group") String group,
+  @PerformanceMetric("consumer.delete")
+  public void deleteGroup(final @PathParam("group") String group,
                           final @PathParam("instance") String instance) {
     ctx.getConsumerManager().deleteConsumer(group, instance);
   }
 
   @GET
   @Path("/{group}/instances/{instance}/topics/{topic}")
+  @PerformanceMetric("consumer.topic.read")
   public void readTopic(final @Suspended AsyncResponse asyncResponse,
                         final @PathParam("group") String group,
                         final @PathParam("instance") String instance,

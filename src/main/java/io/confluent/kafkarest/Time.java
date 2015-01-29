@@ -16,13 +16,13 @@
 
 package io.confluent.kafkarest;
 
-public interface Time {
+public interface Time extends io.confluent.common.utils.Time {
 
   public long milliseconds();
 
   public long nanoseconds();
 
-  public void sleep(long ms) throws InterruptedException;
+  public void sleep(long ms);
 
   // Equivalent to on.wait(ms)
   public void waitOn(Object on, long ms) throws InterruptedException;

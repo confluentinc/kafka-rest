@@ -15,23 +15,7 @@
  **/
 package io.confluent.kafkarest;
 
-public class SystemTime implements Time {
-
-  @Override
-  public long milliseconds() {
-    return System.currentTimeMillis();
-  }
-
-  @Override
-  public long nanoseconds() {
-    return System.nanoTime();
-  }
-
-  @Override
-  public void sleep(long ms) throws InterruptedException {
-    Thread.sleep(ms);
-  }
-
+public class SystemTime extends io.confluent.common.utils.SystemTime implements Time {
   @Override
   public void waitOn(Object on, long ms) throws InterruptedException {
     on.wait(ms);

@@ -24,6 +24,7 @@ import javax.ws.rs.Produces;
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BrokerList;
+import io.confluent.rest.annotations.PerformanceMetric;
 
 /**
  * Resource representing the collection of all available brokers.
@@ -42,6 +43,7 @@ public class BrokersResource {
 
   @GET
   @Valid
+  @PerformanceMetric("brokers.list")
   public BrokerList list() {
     return new BrokerList(ctx.getMetadataObserver().getBrokerIds());
   }

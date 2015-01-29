@@ -27,9 +27,6 @@ import io.confluent.rest.RestConfigException;
  * Settings for the REST proxy server.
  */
 public class KafkaRestConfig extends RestConfig {
-
-  public Time time;
-
   public static final String ID_CONFIG = "id";
   private static final String ID_CONFIG_DOC =
       "Unique ID for this REST server instance. This is used in generating unique IDs for consumers that do "
@@ -105,6 +102,8 @@ public class KafkaRestConfig extends RestConfig {
       + "is automatically destroyed.";
   public static final String CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT = "300000";
 
+  private static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka-rest";
+
   private static final ConfigDef config;
 
   static {
@@ -115,6 +114,8 @@ public class KafkaRestConfig extends RestConfig {
         .defineOverride(RESPONSE_MEDIATYPE_DEFAULT_CONFIG, Type.STRING,
                         Versions.KAFKA_MOST_SPECIFIC_DEFAULT, Importance.HIGH,
                         RESPONSE_MEDIATYPE_DEFAULT_CONFIG_DOC)
+        .defineOverride(METRICS_JMX_PREFIX_CONFIG, Type.STRING,
+                        METRICS_JMX_PREFIX_DEFAULT_OVERRIDE, Importance.LOW, METRICS_JMX_PREFIX_DOC)
         .define(ID_CONFIG, Type.STRING, ID_DEFAULT, Importance.HIGH, ID_CONFIG_DOC)
         .define(ZOOKEEPER_CONNECT_CONFIG, Type.STRING, ZOOKEEPER_CONNECT_DEFAULT,
                 Importance.HIGH, ZOOKEEPER_CONNECT_DOC)
@@ -135,6 +136,8 @@ public class KafkaRestConfig extends RestConfig {
                 Importance.LOW, CONSUMER_INSTANCE_TIMEOUT_MS_DOC);
   }
 
+  private Time time;
+
   public KafkaRestConfig() throws RestConfigException {
     this(new Properties());
   }
@@ -144,8 +147,16 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   public KafkaRestConfig(Properties props) throws RestConfigException {
+    this(props, new SystemTime());
+  }
+
+  public KafkaRestConfig(Properties props, Time time) throws RestConfigException {
     super(config, props);
-    time = new SystemTime();
+    this.time = time;
+  }
+
+  public Time getTime() {
+    return time;
   }
 
   public static void main(String[] args) {

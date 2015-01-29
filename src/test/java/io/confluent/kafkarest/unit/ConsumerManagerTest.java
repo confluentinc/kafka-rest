@@ -62,8 +62,7 @@ public class ConsumerManagerTest {
   public void setUp() throws RestConfigException {
     Properties props = new Properties();
     props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG, "1024");
-    config = new KafkaRestConfig(props);
-    config.time = new MockTime();
+    config = new KafkaRestConfig(props, new MockTime());
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     consumerFactory = EasyMock.createMock(ConsumerManager.ConsumerFactory.class);
     consumerManager = new ConsumerManager(config, mdObserver, consumerFactory);
@@ -73,8 +72,9 @@ public class ConsumerManagerTest {
       Map<String, List<Map<Integer, List<ConsumerRecord>>>> schedules) {
     ConsumerConnector
         consumer =
-        new MockConsumerConnector(config.time, "testclient", schedules, Integer
-            .parseInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT));
+        new MockConsumerConnector(
+            config.getTime(), "testclient", schedules,
+            Integer.parseInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT));
     EasyMock.expect(consumerFactory.createConsumer(EasyMock.<ConsumerConfig>anyObject()))
         .andReturn(consumer);
     return consumer;
@@ -120,7 +120,8 @@ public class ConsumerManagerTest {
     // the per-request timeout (because the timeout perfectly coincides with a scheduled
     // iteration when using the default settings).
     assertEquals(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) + config
-        .getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG), config.time.milliseconds());
+        .getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG),
+                 config.getTime().milliseconds());
 
     sawCallback = false;
     consumerManager.commitOffsets(groupName, cid, new ConsumerManager.CommitCallback() {
@@ -226,7 +227,7 @@ public class ConsumerManagerTest {
 
   private void readAndExpectNoDataRequestTimeout(String cid)
       throws InterruptedException, ExecutionException {
-    long started = config.time.milliseconds();
+    long started = config.getTime().milliseconds();
     sawCallback = false;
     consumerManager.readTopic(groupName, cid, topicName, Long.MAX_VALUE,
                               new ConsumerManager.ReadCallback() {
@@ -238,7 +239,7 @@ public class ConsumerManagerTest {
     }).get();
     assertTrue(sawCallback);
     assertEquals(started + config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG),
-                 config.time.milliseconds());
+                 config.getTime().milliseconds());
   }
 
   // Not found for instance or topic

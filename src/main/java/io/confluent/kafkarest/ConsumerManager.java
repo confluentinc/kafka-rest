@@ -71,7 +71,7 @@ public class ConsumerManager {
 
   public ConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver) {
     this.config = config;
-    this.time = config.time;
+    this.time = config.getTime();
     this.zookeeperConnect = config.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG);
     this.mdObserver = mdObserver;
     this.iteratorTimeoutMs = config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG);

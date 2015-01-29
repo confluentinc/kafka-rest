@@ -47,7 +47,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   }
 
   public KafkaRestApplication(KafkaRestConfig config) {
-    this.config = config;
+    super(config);
   }
 
   @Override
@@ -62,13 +62,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(RootResource.class);
     config.register(new BrokersResource(context));
     config.register(new TopicsResource(context));
-    config.register(PartitionsResource.class);
+    config.register(new PartitionsResource(context));
     config.register(new ConsumersResource(context));
-  }
-
-  @Override
-  public KafkaRestConfig configure() throws RestConfigException {
-    return config;
   }
 
   @Override
