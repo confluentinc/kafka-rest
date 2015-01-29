@@ -17,6 +17,7 @@ package io.confluent.kafkarest;
 
 import java.util.Properties;
 
+import io.confluent.common.config.ConfigDef;
 import io.confluent.common.config.ConfigDef.Importance;
 import io.confluent.common.config.ConfigDef.Type;
 import io.confluent.rest.RestConfig;
@@ -103,9 +104,10 @@ public class KafkaRestConfig extends RestConfig {
 
   private static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka-rest";
 
+  private static final ConfigDef config;
 
   static {
-    config
+    config = baseConfigDef()
         .defineOverride(RESPONSE_MEDIATYPE_PREFERRED_CONFIG, Type.LIST,
                         Versions.PREFERRED_RESPONSE_TYPES, Importance.HIGH,
                         RESPONSE_MEDIATYPE_PREFERRED_CONFIG_DOC)
@@ -149,7 +151,7 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   public KafkaRestConfig(Properties props, Time time) throws RestConfigException {
-    super(props);
+    super(config, props);
     this.time = time;
   }
 

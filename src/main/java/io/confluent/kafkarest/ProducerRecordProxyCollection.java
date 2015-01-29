@@ -26,7 +26,7 @@ import io.confluent.kafkarest.entities.ProduceRecord;
  * Implementation of Iterable<ProducerRecord> that just wraps an underlying collection of
  * ProduceRecord entities.
  */
-public class ProducerRecordProxyCollection implements Iterable<ProducerRecord> {
+public class ProducerRecordProxyCollection<K,V> implements Iterable<ProducerRecord<byte[],byte[]>> {
 
   private final String topic;
   private final Integer partition;
@@ -50,11 +50,11 @@ public class ProducerRecordProxyCollection implements Iterable<ProducerRecord> {
   }
 
   @Override
-  public Iterator<ProducerRecord> iterator() {
+  public Iterator<ProducerRecord<byte[],byte[]>> iterator() {
     return new ProxyIterator(underlying.iterator());
   }
 
-  private class ProxyIterator implements Iterator<ProducerRecord> {
+  private class ProxyIterator implements Iterator<ProducerRecord<byte[],byte[]>> {
 
     Iterator<? extends ProduceRecord> underlying;
 
@@ -68,7 +68,7 @@ public class ProducerRecordProxyCollection implements Iterable<ProducerRecord> {
     }
 
     @Override
-    public ProducerRecord next() {
+    public ProducerRecord<byte[],byte[]> next() {
       if (partition == null) {
         return underlying.next().getKafkaRecord(topic);
       } else {
