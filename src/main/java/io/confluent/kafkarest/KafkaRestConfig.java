@@ -17,6 +17,7 @@ package io.confluent.kafkarest;
 
 import java.util.Properties;
 
+import io.confluent.common.config.ConfigDef;
 import io.confluent.common.config.ConfigDef.Importance;
 import io.confluent.common.config.ConfigDef.Type;
 import io.confluent.rest.RestConfig;
@@ -104,8 +105,10 @@ public class KafkaRestConfig extends RestConfig {
       + "is automatically destroyed.";
   public static final String CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT = "300000";
 
+  private static final ConfigDef config;
+
   static {
-    config
+    config = baseConfigDef()
         .defineOverride(RESPONSE_MEDIATYPE_PREFERRED_CONFIG, Type.LIST,
                         Versions.PREFERRED_RESPONSE_TYPES, Importance.HIGH,
                         RESPONSE_MEDIATYPE_PREFERRED_CONFIG_DOC)
@@ -141,7 +144,7 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   public KafkaRestConfig(Properties props) throws RestConfigException {
-    super(props);
+    super(config, props);
     time = new SystemTime();
   }
 
