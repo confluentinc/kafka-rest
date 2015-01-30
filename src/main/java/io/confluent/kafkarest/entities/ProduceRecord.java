@@ -31,20 +31,17 @@ import io.confluent.rest.validation.ConstraintViolations;
 public class ProduceRecord {
 
   private byte[] key;
-  @NotNull
   private byte[] value;
 
   public ProduceRecord(@JsonProperty("key") String key, @JsonProperty("value") String value)
       throws IOException {
     try {
-      if (key != null) {
-        this.key = EntityUtils.parseBase64Binary(key);
-      }
+      this.key = (key != null) ? EntityUtils.parseBase64Binary(key) : null;
     } catch (IllegalArgumentException e) {
       throw ConstraintViolations.simpleException("Record key contains invalid base64 encoding");
     }
     try {
-      this.value = EntityUtils.parseBase64Binary(value);
+      this.value = (value != null) ? EntityUtils.parseBase64Binary(value) : null;
     } catch (IllegalArgumentException e) {
       throw ConstraintViolations.simpleException("Record value contains invalid base64 encoding");
     }
@@ -84,6 +81,9 @@ public class ProduceRecord {
 
   @JsonProperty("value")
   public String getValueDecoded() {
+    if (value == null) {
+      return null;
+    }
     return EntityUtils.encodeBase64Binary(value);
   }
 

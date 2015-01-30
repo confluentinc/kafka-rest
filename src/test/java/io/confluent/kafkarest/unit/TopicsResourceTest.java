@@ -66,6 +66,7 @@ public class TopicsResourceTest
   private List<TopicProduceRecord> produceRecordsWithKeys;
   private List<TopicProduceRecord> produceRecordsWithPartitions;
   private List<TopicProduceRecord> produceRecordsWithPartitionsAndKeys;
+  private List<TopicProduceRecord> produceRecordsWithNullValues;
   // Partition -> New offset
   private Map<Integer, Long> produceOffsets;
 
@@ -91,6 +92,10 @@ public class TopicsResourceTest
     produceRecordsWithPartitionsAndKeys = Arrays.asList(
         new TopicProduceRecord("key".getBytes(), "value".getBytes(), 0),
         new TopicProduceRecord("key2".getBytes(), "value2".getBytes(), 0)
+    );
+    produceRecordsWithNullValues = Arrays.asList(
+        new TopicProduceRecord("key".getBytes(), (byte[])null),
+        new TopicProduceRecord("key2".getBytes(), (byte[])null)
     );
     produceOffsets = new HashMap<Integer, Long>();
     produceOffsets.put(0, 1L);
@@ -287,6 +292,26 @@ public class TopicsResourceTest
             rawResponse =
             produceToTopic("topic1", mediatype.header, requestMediatype,
                            produceRecordsWithPartitionsAndKeys, produceOffsets);
+        assertOKResponse(rawResponse, mediatype.expected);
+        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+
+        assertEquals(
+            Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
+            response.getOffsets()
+        );
+
+        EasyMock.reset(mdObserver, producerPool);
+      }
+    }
+  }
+
+  @Test
+  public void testProduceToTopicWithNullValues() {
+    for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
+      for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
+        Response rawResponse =
+            produceToTopic("topic1", mediatype.header, requestMediatype,
+                           produceRecordsWithNullValues, produceOffsets);
         assertOKResponse(rawResponse, mediatype.expected);
         ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
 
