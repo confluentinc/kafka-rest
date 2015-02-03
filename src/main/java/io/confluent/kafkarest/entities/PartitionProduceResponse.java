@@ -70,16 +70,8 @@ public class PartitionProduceResponse {
     return keySchemaId;
   }
 
-  public void setKeySchemaId(Integer keySchemaId) {
-    this.keySchemaId = keySchemaId;
-  }
-
   @JsonProperty("value_schema_id")
   public Integer getValueSchemaId() {
     return valueSchemaId;
-  }
-
-  public void setValueSchemaId(Integer valueSchemaId) {
-    this.valueSchemaId = valueSchemaId;
   }
 }

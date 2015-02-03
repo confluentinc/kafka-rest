@@ -37,7 +37,8 @@ import scala.collection.Seq;
 
 /**
  * Shared pool of Kafka producers used to send messages. The pool manages batched sends, tracking
- * all required acks for a batch and managing timeouts.
+ * all required acks for a batch and managing timeouts. Currently this pool only contains one
+ * producer per serialization format (e.g. byte[], Avro).
  */
 public class ProducerPool {
 
@@ -56,38 +57,31 @@ public class ProducerPool {
       }
     }
 
-    {
-      Map<String,Object> props = new HashMap<String,Object>();
-      props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
-      ByteArraySerializer keySerializer = new ByteArraySerializer();
-      keySerializer.configure(props, true);
-      ByteArraySerializer valueSerializer = new ByteArraySerializer();
-      keySerializer.configure(props, false);
-      KafkaProducer<byte[],byte[]> producer = new KafkaProducer<byte[],byte[]>(props,
-                                                                               keySerializer,
-                                                                               valueSerializer);
-      producers.put(
-          Versions.EmbeddedFormat.BINARY,
-          new BinaryRestProducer(producer,
-              keySerializer, valueSerializer));
-    }
+    Map<String,Object> props = new HashMap<String,Object>();
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
+    ByteArraySerializer keySerializer = new ByteArraySerializer();
+    keySerializer.configure(props, true);
+    ByteArraySerializer valueSerializer = new ByteArraySerializer();
+    keySerializer.configure(props, false);
+    KafkaProducer<byte[],byte[]> byteArrayProducer
+        = new KafkaProducer<byte[],byte[]>(props, keySerializer, valueSerializer);
+    producers.put(
+        Versions.EmbeddedFormat.BINARY,
+        new BinaryRestProducer(byteArrayProducer, keySerializer, valueSerializer));
 
-    {
-      Map<String,Object> props = new HashMap<String,Object>();
-      props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
-      props.put("schema.registry.url",
-                appConfig.getString(KafkaRestConfig.SCHEMA_REGISTRY_CONNECT_CONFIG));
-      final KafkaAvroSerializer avroKeySerializer = new KafkaAvroSerializer();
-      avroKeySerializer.configure(props, true);
-      final KafkaAvroSerializer avroValueSerializer = new KafkaAvroSerializer();
-      avroValueSerializer.configure(props, false);
-      KafkaProducer producer = new KafkaProducer<Object,Object>(props,
-                                                                avroKeySerializer,
-                                                                avroValueSerializer);
-      producers.put(
-          Versions.EmbeddedFormat.AVRO,
-          new AvroRestProducer(producer, avroKeySerializer, avroValueSerializer));
-    }
+    props = new HashMap<String,Object>();
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
+    props.put("schema.registry.url",
+              appConfig.getString(KafkaRestConfig.SCHEMA_REGISTRY_CONNECT_CONFIG));
+    final KafkaAvroSerializer avroKeySerializer = new KafkaAvroSerializer();
+    avroKeySerializer.configure(props, true);
+    final KafkaAvroSerializer avroValueSerializer = new KafkaAvroSerializer();
+    avroValueSerializer.configure(props, false);
+    KafkaProducer<Object,Object> avroProducer
+        = new KafkaProducer<Object,Object>(props, avroKeySerializer, avroValueSerializer);
+    producers.put(
+        Versions.EmbeddedFormat.AVRO,
+        new AvroRestProducer(avroProducer, avroKeySerializer, avroValueSerializer));
   }
 
   public <K,V> void produce(String topic, Integer partition,
