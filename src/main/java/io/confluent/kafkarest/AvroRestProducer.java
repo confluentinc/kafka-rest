@@ -49,25 +49,30 @@ public class AvroRestProducer implements RestProducer<JsonNode,JsonNode> {
                       Collection<? extends ProduceRecord<JsonNode,JsonNode>> records) {
     SchemaHolder schemaHolder = task.getSchemaHolder();
     Schema keySchema, valueSchema;
+    Integer keySchemaId = schemaHolder.getKeySchemaId();
+    Integer valueSchemaId = schemaHolder.getValueSchemaId();
     try {
-      if (schemaHolder.getKeySchemaId() != null) {
-        keySchema = keySerializer.getByID(schemaHolder.getKeySchemaId());
+      if (keySchemaId != null) {
+        keySchema = keySerializer.getByID(keySchemaId);
       } else {
         keySchema = new Schema.Parser().parse(schemaHolder.getKeySchema());
-        schemaHolder.setKeySchemaId(keySerializer.register(topic, keySchema));
+        keySchemaId = keySerializer.register(topic, keySchema);
       }
 
-      if (schemaHolder.getValueSchemaId() != null) {
-        valueSchema = valueSerializer.getByID(schemaHolder.getKeySchemaId());
+      if (valueSchemaId != null) {
+        valueSchema = valueSerializer.getByID(valueSchemaId);
       } else {
         valueSchema = new Schema.Parser().parse(schemaHolder.getValueSchema());
-        schemaHolder.setValueSchemaId(valueSerializer.register(topic, valueSchema));
+        valueSchemaId = valueSerializer.register(topic, valueSchema);
       }
     } catch (IOException e) {
       // FIXME We should return more specific error codes (unavailable vs registration failed in
       // a way that isn't retriable?).
       throw new RestException("Schema registration or lookup failed", 408, 40801, e);
     }
+
+    // Store the schema IDs in the task. These will be used to include the IDs in the response
+    task.setSchemaIds(keySchemaId, valueSchemaId);
 
     // Convert everything to Avro before doing any sends so if any conversion fails we can kill
     // the entire request so we don't get partially sent requests
