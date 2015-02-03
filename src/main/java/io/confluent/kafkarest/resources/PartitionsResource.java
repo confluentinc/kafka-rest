@@ -39,7 +39,6 @@ import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.PartitionProduceResponse;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.rest.annotations.PerformanceMetric;
-import io.confluent.rest.validation.ConstraintViolations;
 
 @Path("/topics/{topic}/partitions")
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
@@ -102,12 +101,10 @@ public class PartitionsResource {
       hasValues = hasValues || (rec.getJsonValue() != null);
     }
     if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
-      throw ConstraintViolations.simpleException(
-          "Request includes keys but does not include key schema");
+      throw Errors.keySchemaMissingException();
     }
     if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
-      throw ConstraintViolations.simpleException(
-          "Request includes values but does not include value schema");
+      throw Errors.valueSchemaMissingException();
     }
 
     produce(asyncResponse, topic, partition, Versions.EmbeddedFormat.AVRO, request);

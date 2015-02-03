@@ -190,6 +190,11 @@ you produce messages by making ``POST`` requests to specific topics.
 
    :statuscode 404:
       * Error code 40401 -- Topic not found
+   :statuscode 422:
+      * Error code 42201 -- Request includes keys and uses a format that requires schemas, but does
+        not include the ``key_schema`` or ``key_schema_id`` fields
+      * Error code 42202 -- Request includes values and uses a format that requires schemas, but
+        does not include the ``value_schema`` or ``value_schema_id`` fields
 
    **Example binary request**:
 
@@ -459,6 +464,11 @@ It also allows you to produce messages to single partition using ``POST`` reques
    :statuscode 404:
       * Error code 40401 -- Topic not found
       * Error code 40402 -- Partition not found
+   :statuscode 422:
+      * Error code 42201 -- Request includes keys and uses a format that requires schemas, but does
+        not include the ``key_schema`` or ``key_schema_id`` fields
+      * Error code 42202 -- Request includes values and uses a format that requires schemas, but
+        does not include the ``value_schema`` or ``value_schema_id`` fields
 
    **Example binary request**:
 

@@ -32,6 +32,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
 import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
@@ -199,7 +200,7 @@ public class PartitionsResourceAvroProduceTest
 
         assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
                             rawResponse,
-                            ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
+                            Errors.KEY_SCHEMA_MISSING_ERROR_CODE,
                             null,
                             mediatype.expected);
 

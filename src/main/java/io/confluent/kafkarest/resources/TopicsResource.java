@@ -42,7 +42,6 @@ import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
 import io.confluent.rest.annotations.PerformanceMetric;
-import io.confluent.rest.validation.ConstraintViolations;
 
 @Path("/topics")
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
@@ -100,12 +99,10 @@ public class TopicsResource {
       hasValues = hasValues || (rec.getJsonValue() != null);
     }
     if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
-      throw ConstraintViolations.simpleException(
-          "Request includes keys but does not include key schema");
+      throw Errors.keySchemaMissingException();
     }
     if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
-      throw ConstraintViolations.simpleException(
-          "Request includes values but does not include value schema");
+      throw Errors.valueSchemaMissingException();
     }
 
     produce(asyncResponse, topicName, Versions.EmbeddedFormat.AVRO, request);
