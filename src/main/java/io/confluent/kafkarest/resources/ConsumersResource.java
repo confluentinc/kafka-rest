@@ -103,19 +103,19 @@ public class ConsumersResource {
                         final @PathParam("group") String group,
                         final @PathParam("instance") String instance,
                         final @PathParam("topic") String topic,
-                        @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes)
-  {
+                        @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
     maxBytes = (maxBytes <= 0) ? Long.MAX_VALUE : maxBytes;
     ctx.getConsumerManager().readTopic(group, instance, topic, maxBytes,
                                        new ConsumerManager.ReadCallback() {
-      @Override
-      public void onCompletion(List<ConsumerRecord> records, Exception e) {
-        if (e != null) {
-          asyncResponse.resume(e);
-        } else {
-          asyncResponse.resume(records);
-        }
-      }
-    });
+                                         @Override
+                                         public void onCompletion(List<ConsumerRecord> records,
+                                                                  Exception e) {
+                                           if (e != null) {
+                                             asyncResponse.resume(e);
+                                           } else {
+                                             asyncResponse.resume(records);
+                                           }
+                                         }
+                                       });
   }
 }

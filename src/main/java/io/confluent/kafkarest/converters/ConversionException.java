@@ -13,27 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package io.confluent.kafkarest.entities;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+package io.confluent.kafkarest.converters;
 
-import org.hibernate.validator.constraints.NotEmpty;
+import javax.validation.ConstraintViolationException;
 
-import java.util.List;
+/**
+ * Exception thrown when conversion fails. Since this should generally be converted into a 422 HTTP
+ * status, this class extends ConstraintViolationException so you get the expected behavior if you
+ * don't catch the exception.
+ */
+public class ConversionException extends ConstraintViolationException {
 
-public class ProduceResponse {
-
-  @NotEmpty
-  private List<PartitionOffset> offsets;
-
-  @JsonProperty
-  public List<PartitionOffset> getOffsets() {
-    return offsets;
+  ConversionException(String msg) {
+    super(msg, null);
   }
-
-  @JsonProperty
-  public void setOffsets(List<PartitionOffset> offsets) {
-    this.offsets = offsets;
-  }
-
 }

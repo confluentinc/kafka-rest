@@ -12,7 +12,7 @@ Configuration Options
   Unique ID for this REST server instance. This is used in generating unique IDs for consumers that do not specify their ID. The ID is empty by default, which makes a single server setup easier to get up and running, but is not safe for multi-server deployments where automatic consumer IDs are used.
 
   * Type: string
-  * Default:
+  * Default: 
   * Importance: high
 
 ``port``
@@ -34,6 +34,13 @@ Configuration Options
 
   * Type: list
   * Default: [application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json]
+  * Importance: high
+
+``schema.registry.connect``
+  The base URL for the schema registry that should be used by the Avro serializer.
+
+  * Type: string
+  * Default: localhost:8081
   * Importance: high
 
 ``zookeeper.connect``
@@ -87,6 +94,34 @@ Configuration Options
   * Default: 1
   * Importance: low
 
+``metric.reporters``
+  A list of classes to use as metrics reporters. Implementing the <code>MetricReporter</code> interface allows plugging in classes that will be notified of new metric creation. The JmxReporter is always included to register JMX statistics.
+
+  * Type: list
+  * Default: []
+  * Importance: low
+
+``metrics.jmx.prefix``
+  Prefix to apply to metric names for the default JMX reporter.
+
+  * Type: string
+  * Default: kafka-rest
+  * Importance: low
+
+``metrics.num.samples``
+  The number of samples maintained to compute metrics.
+
+  * Type: int
+  * Default: 2
+  * Importance: low
+
+``metrics.sample.window.ms``
+  The metrics system maintains a configurable number of samples over a fixed window size. This configuration controls the size of the window. For example we might maintain two samples each measured over a 30 second period. When a window expires we erase and overwrite the oldest window.
+
+  * Type: long
+  * Default: 30000
+  * Importance: low
+
 ``producer.threads``
   Number of threads to run produce requests on.
 
@@ -107,4 +142,3 @@ Configuration Options
   * Type: int
   * Default: 1000
   * Importance: low
-

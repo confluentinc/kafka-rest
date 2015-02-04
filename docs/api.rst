@@ -7,20 +7,34 @@ Overview
 Content Types
 ^^^^^^^^^^^^^
 
-The REST proxy uses content types for both requests and responses to indicate
-the serialization format of the data as well as the version of the API being
-used. Currently, the only serialization format supported is JSON and the only
-version of the API is ``v1``. However, to remain compatible with future versions,
-you *should* specify preferred content types in requests and check the content
-types of responses.
+The REST proxy uses content types for both requests and responses to indicate 3
+properties of the data: the serialization format (e.g. ``json``), the version of
+the API (e.g. ``v1``), and the *embedded format* (e.g. ``binary`` or
+``avro``). Currently, the only serialization format supported is ``json`` and
+the only version of the API is ``v1``.
 
-The preferred format for content types is ``application/vnd.kafka.v1+json``, where
-``v1`` is the API version and ``json`` is the serialization format. However, other
-less specific content types are permitted, including
-``application/vnd.kafka+json`` to indicate no specific API version should be used
-(the most recent stable version will be used), ``application/json``, and
-``application/octet-stream``. The latter two are only supported for compatibility
-and ease of use.
+The embedded format is the format of data you are producing or consuming, which
+are embedded into requests or responses in the serialization format. For
+example, you can provide ``binary`` data in a ``json``-serialized request; in
+this case the data should be provided as a base64-encoded string. The proxy also
+supports ``avro``, in which case a JSON form of the data can be embedded
+directly and a schema (or schema ID) should be included with the request.
+
+The format for the content type is::
+
+    application/vnd.kafka[.embedded_format].[api_version]+[serialization_format]
+
+The serialization format can be omitted when there are no embedded messages
+(i.e. for metadata requests). The preferred content type is
+``application/vnd.kafka.[embedded_format].v1+json``. However, other less
+specific content types are permitted, including ``application/vnd.kafka+json``
+to indicate no specific API version requirement (the most recent stable version
+will be used), ``application/json``, and ``application/octet-stream``. The
+latter two are only supported for compatibility and ease of use. In all cases,
+if the embedded format is omitted, ``binary`` is assumed. Although using these
+less specific values is permitted, to remain compatible with future versions you
+*should* specify preferred content types in requests and check the content types
+of responses.
 
 Your requests *should* specify the most specific format and version information
 possible via the HTTP ``Accept`` header::
@@ -141,25 +155,54 @@ you produce messages by making ``POST`` requests to specific topics.
 
 .. http:post:: /topics/(string:topic_name)
 
-   Produce messages to a topic, optionally specifying keys or partitions for the messages.
+   Produce messages to a topic, optionally specifying keys or partitions for the
+   messages. For the ``avro`` embedded format, you must provide information
+   about schemas. This may be provided as the full schema encoded as a string,
+   or, after the initial request may be provided as the schema ID returned with
+   the first response.
 
    :param string topic_name: Name of the topic to produce the messages to
-   :<jsonarr string key: Base64-encoded message key or null (optional)
-   :<jsonarr string value: Base64-encoded message value (required)
-   :<jsonarr int partition: Partition to store the message in
 
-   :>jsonarr int partition: Partition the message was published to
-   :>jsonarr long offset: Offset of the message
+   :<json string key_schema: Full schema encoded as a string (e.g. JSON
+                             serialized for Avro data)
+   :<json int key_schema_id: ID returned by a previous request using the same
+                             schema. This ID corresponds to the ID of the schema
+                             in the registry.
+   :<json string value_schema: Full schema encoded as a string (e.g. JSON
+                               serialized for Avro data)
+   :<json int value_schema_id: ID returned by a previous request using the same
+                               schema. This ID corresponds to the ID of the schema
+                               in the registry.
+   :<jsonarr records: A list of records to produce to the topic.
+   :<jsonarr object records[i].key: The message key, formatted according to the
+                                    embedded format, or null to omit a key (optional)
+   :<jsonarr object records[i].value: The message value, formatted according to the
+                                      embedded format
+   :<jsonarr int records[i].partition: Partition to store the message in (optional)
+
+   :>json int key_schema_id: The ID for the schema used to produce keys, or null
+                             if keys were not used
+   :>json int value_schema_id: The ID for the schema used to produce values.
+   :>jsonarr object offests: List of partitions and offsets the messages were
+                             published to
+   :>jsonarr int offsets[i].partition: Partition the message was published to
+   :>jsonarr long offsets[i].offset: Offset of the message
 
    :statuscode 404:
       * Error code 40401 -- Topic not found
+   :statuscode 422:
+      * Error code 42201 -- Request includes keys and uses a format that requires schemas, but does
+        not include the ``key_schema`` or ``key_schema_id`` fields
+      * Error code 42202 -- Request includes values and uses a format that requires schemas, but
+        does not include the ``value_schema`` or ``value_schema_id`` fields
 
-   **Example request**:
+   **Example binary request**:
 
    .. sourcecode:: http
 
       POST /topics/test HTTP/1.1
       Host: kafkaproxy.example.com
+      Content-Type: application/vnd.kafka.binary.v1+json
       Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
 
       [
@@ -169,34 +212,79 @@ you produce messages by making ``POST`` requests to specific topics.
         },
         {
           "value": "a2Fma2E=",
-          "partition": "1"
+          "partition": 1
         },
         {
           "value": "bG9ncw=="
         }
       ]
 
-   **Example response**:
+   **Example binary response**:
 
    .. sourcecode:: http
 
       HTTP/1.1 200 OK
       Content-Type: application/vnd.kafka.v1+json
 
-      [
-        {
-          "partition": 3,
-          "offset": 100
-        },
-        {
-          "partition": 1,
-          "offset": 101
-        },
-        {
-          "partition": 2,
-          "offset": 102
-        }
-      ]
+      {
+        "offsets": [
+          {
+            "partition": 3,
+            "offset": 100
+          },
+          {
+            "partition": 1,
+            "offset": 101
+          },
+          {
+            "partition": 2,
+            "offset": 102
+          }
+        ]
+      }
+
+   **Example Avro request**:
+
+   .. sourcecode:: http
+
+      POST /topics/test HTTP/1.1
+      Host: kafkaproxy.example.com
+      Content-Type: application/vnd.kafka.avro.v1+json
+      Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
+
+      {
+        "value_schema": "{\"name\":\"int\",\"type\": \"int\"}";",
+        "records": [
+          {
+            "value": 12
+          },
+          {
+            "value": 24,
+            "partition": 1
+          }
+        ]
+      }
+
+   **Example Avro response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/vnd.kafka.v1+json
+
+      {
+        "value_schema_id": 32,
+        "offsets": [
+          {
+            "partition": 2,
+            "offset": 103
+          },
+          {
+            "partition": 1,
+            "offset": 104
+          }
+        ]
+      }
 
 Partitions
 ----------
@@ -338,55 +426,132 @@ It also allows you to produce messages to single partition using ``POST`` reques
 
 .. http:post:: /topics/(string:topic_name)/partitions/(int:partition_id)
 
-   Produce messages to one partition of the topic.
+   Produce messages to one partition of the topic. For the ``avro`` embedded
+   format, you must provide information about schemas. This may be provided as
+   the full schema encoded as a string, or, after the initial request may be
+   provided as the schema ID returned with the first response.
 
    :param string topic_name: Topic to produce the messages to
    :param int partition_id: Partition to produce the messages to
-   :<jsonarr string key: Base64-encoded message key or null (optional)
-   :<jsonarr string value: Base64-encoded message value (required)
+   :<json string key_schema: Full schema encoded as a string (e.g. JSON
+                             serialized for Avro data)
+   :<json int key_schema_id: ID returned by a previous request using the same
+                             schema. This ID corresponds to the ID of the schema
+                             in the registry.
+   :<json string value_schema: Full schema encoded as a string (e.g. JSON
+                               serialized for Avro data)
+   :<json int value_schema_id: ID returned by a previous request using the same
+                               schema. This ID corresponds to the ID of the schema
+                               in the registry.
+   :<json records: A list of records to produce to the partition.
+   :<jsonarr object records[i].key: The message key, formatted according to the
+                                    embedded format, or null to omit a key (optional)
+   :<jsonarr object records[i].value: The message value, formatted according to the
+                                      embedded format
 
-   :>jsonarr int partition: Partition the message was published to
-   :>jsonarr long offset: Offset of the published message
+   :>json int key_schema_id: The ID for the schema used to produce keys, or null
+                             if keys were not used
+   :>json int value_schema_id: The ID for the schema used to produce values.
+   :>jsonarr object offests: List of partitions and offsets the messages were
+                             published to
+   :>jsonarr int offsets[i].partition: Partition the message was published to. This
+                                       will be the same as the ``partition_id``
+                                       parameter and is provided only to maintain
+                                       consistency with responses from producing to
+                                       a topic
+   :>jsonarr long offsets[i].offset: Offset of the message
 
    :statuscode 404:
       * Error code 40401 -- Topic not found
       * Error code 40402 -- Partition not found
+   :statuscode 422:
+      * Error code 42201 -- Request includes keys and uses a format that requires schemas, but does
+        not include the ``key_schema`` or ``key_schema_id`` fields
+      * Error code 42202 -- Request includes values and uses a format that requires schemas, but
+        does not include the ``value_schema`` or ``value_schema_id`` fields
 
-   **Example request**:
+   **Example binary request**:
 
    .. sourcecode:: http
 
       POST /topics/test/partitions/1 HTTP/1.1
       Host: kafkaproxy.example.com
+      Content-Type: application/vnd.kafka.binary.v1+json
       Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
 
-      [
-        {
-          "key": "a2V5",
-          "value": "Y29uZmx1ZW50"
-        },
-        {
-          "value": "a2Fma2E="
-        }
-      ]
+      {
+        "records": [
+          {
+            "key": "a2V5",
+            "value": "Y29uZmx1ZW50"
+          },
+          {
+            "value": "a2Fma2E="
+          }
+        ]
+      }
 
-   **Example response**:
+   **Example binary response**:
 
    .. sourcecode:: http
 
       HTTP/1.1 200 OK
       Content-Type: application/vnd.kafka.v1+json
 
-      [
-        {
-          "partition": 1,
-          "offset": 100,
-        },
-        {
-          "partition": 1,
-          "offset": 101,
-        }
-      ]
+      {
+        "offsets": [
+          {
+            "partition": 1,
+            "offset": 100,
+          },
+          {
+            "partition": 1,
+            "offset": 101,
+          }
+        ]
+      }
+
+   **Example Avro request**:
+
+   .. sourcecode:: http
+
+      POST /topics/test/partitions/1 HTTP/1.1
+      Host: kafkaproxy.example.com
+      Content-Type: application/vnd.kafka.avro.v1+json
+      Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
+
+      {
+        "value_schema": "{\"name\":\"int\",\"type\": \"int\"}";",
+        "records": [
+          {
+            "value": 25
+          },
+          {
+            "value": 26
+          }
+        ]
+      }
+
+   **Example Avro response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/vnd.kafka.v1+json
+
+      {
+        "value_schema_id": 32,
+        "offsets": [
+          {
+            "partition": 1,
+            "offset": 100,
+          },
+          {
+            "partition": 1,
+            "offset": 101,
+          }
+        ]
+      }
 
 
 Consumers
@@ -625,4 +790,3 @@ The brokers resource provides access to the current state of Kafka brokers in th
       {
         "brokers": [1, 2, 3]
       }
-

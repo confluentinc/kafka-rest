@@ -99,7 +99,7 @@ public class MetadataObserver {
     List<Topic> topics = new Vector<Topic>(topicNames.size());
     // Admin utils only supports getting either 1 or all topic configs. These per-topic overrides
     // shouldn't be common, so we just grab all of them to keep this simple
-    Map<String,Properties> configs = AdminUtils.fetchAllTopicConfigs(zkClient);
+    Map<String, Properties> configs = AdminUtils.fetchAllTopicConfigs(zkClient);
     for (String topicName : JavaConversions.asJavaCollection(topicNames)) {
       Map<Object, Seq<Object>> partitionMap = topicPartitions.get(topicName).get();
       List<Partition> partitions = extractPartitionsFromZKData(partitionMap, topicName, null);

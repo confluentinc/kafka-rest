@@ -27,8 +27,10 @@ import io.confluent.rest.RestConfigException;
  * Settings for the REST proxy server.
  */
 public class KafkaRestConfig extends RestConfig {
+
   public static final String ID_CONFIG = "id";
-  private static final String ID_CONFIG_DOC =
+  private static final String
+      ID_CONFIG_DOC =
       "Unique ID for this REST server instance. This is used in generating unique IDs for consumers that do "
       + "not specify their ID. The ID is empty by default, which makes a single server setup easier to "
       + "get up and running, but is not safe for multi-server deployments where automatic consumer IDs "
@@ -48,6 +50,11 @@ public class KafkaRestConfig extends RestConfig {
       + "chroot path in its connection string. For example to give a chroot path of /chroot/path you would give "
       + "the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path.";
   public static final String ZOOKEEPER_CONNECT_DEFAULT = "localhost:2181";
+
+  public static final String SCHEMA_REGISTRY_CONNECT_CONFIG = "schema.registry.connect";
+  private static final String SCHEMA_REGISTRY_CONNECT_DOC =
+      "The base URL for the schema registry that should be used by the Avro serializer.";
+  private static final String SCHEMA_REGISTRY_CONNECT_DEFAULT = "localhost:8081";
 
   public static final String PRODUCER_THREADS_CONFIG = "producer.threads";
   private static final String
@@ -87,7 +94,7 @@ public class KafkaRestConfig extends RestConfig {
       + "cannot perform a streaming decode. Note that the actual payload will be larger due to "
       + "overhead from base64 encoding the response data and from JSON encoding the entire "
       + "response.";
-  public static final long CONSUMER_REQUEST_MAX_BYTES_DEFAULT = 64*1024*1024;
+  public static final long CONSUMER_REQUEST_MAX_BYTES_DEFAULT = 64 * 1024 * 1024;
 
   public static final String CONSUMER_THREADS_CONFIG = "consumer.threads";
   private static final String
@@ -119,6 +126,8 @@ public class KafkaRestConfig extends RestConfig {
         .define(ID_CONFIG, Type.STRING, ID_DEFAULT, Importance.HIGH, ID_CONFIG_DOC)
         .define(ZOOKEEPER_CONNECT_CONFIG, Type.STRING, ZOOKEEPER_CONNECT_DEFAULT,
                 Importance.HIGH, ZOOKEEPER_CONNECT_DOC)
+        .define(SCHEMA_REGISTRY_CONNECT_CONFIG, Type.STRING, SCHEMA_REGISTRY_CONNECT_DEFAULT,
+                Importance.HIGH, SCHEMA_REGISTRY_CONNECT_DOC)
         .define(PRODUCER_THREADS_CONFIG, Type.INT, PRODUCER_THREADS_DEFAULT,
                 Importance.LOW, PRODUCER_THREADS_DOC)
         .define(CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT,

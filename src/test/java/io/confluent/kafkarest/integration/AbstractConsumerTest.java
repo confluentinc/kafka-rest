@@ -47,14 +47,14 @@ import static org.junit.Assert.fail;
 
 public class AbstractConsumerTest extends ClusterTestHarness {
 
-  protected void produceMessages(List<ProducerRecord<byte[],byte[]>> records) {
+  protected void produceMessages(List<ProducerRecord<byte[], byte[]>> records) {
     Properties props = new Properties();
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
     props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
-    Producer<byte[],byte[]> producer = new KafkaProducer<byte[],byte[]>(props);
-    for (ProducerRecord<byte[],byte[]> rec : records) {
+    Producer<byte[], byte[]> producer = new KafkaProducer<byte[], byte[]>(props);
+    for (ProducerRecord<byte[], byte[]> rec : records) {
       try {
         producer.send(rec).get();
       } catch (Exception e) {
@@ -97,7 +97,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
   }
 
   protected void consumeMessages(String instanceUri, String topic,
-                                 List<ProducerRecord<byte[],byte[]>> records) {
+                                 List<ProducerRecord<byte[], byte[]>> records) {
     Response response = request(instanceUri + "/topics/" + topic).get();
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     List<ConsumerRecord> consumed = response.readEntity(new GenericType<List<ConsumerRecord>>() {
@@ -106,7 +106,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
 
     // Since this is used for unkeyed messages, this can't rely on ordering of messages
     Set<String> inputSet = new HashSet<String>();
-    for (ProducerRecord<byte[],byte[]> rec : records) {
+    for (ProducerRecord<byte[], byte[]> rec : records) {
       inputSet.add(
           (rec.key() == null ? "null" : EntityUtils.encodeBase64Binary(rec.key())) +
           EntityUtils.encodeBase64Binary(rec.value())

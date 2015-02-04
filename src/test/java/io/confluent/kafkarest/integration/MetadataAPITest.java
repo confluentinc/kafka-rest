@@ -25,6 +25,7 @@ import java.util.Properties;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 
+import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BrokerList;
@@ -65,6 +66,7 @@ public class MetadataAPITest extends ClusterTestHarness {
   );
   private static final Properties topic2Configs;
   private static final Topic topic2;
+
   static {
     topic2Configs = new Properties();
     topic2Configs.setProperty("cleanup.policy", "delete");
@@ -97,8 +99,11 @@ public class MetadataAPITest extends ClusterTestHarness {
     // Listing
     Response response = request("/topics").get();
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    final List<String> topicsResponse = response.readEntity(new GenericType<List<String>>() {});
-    assertEquals(Arrays.asList(topic1Name, topic2Name), topicsResponse);
+    final List<String> topicsResponse = response.readEntity(new GenericType<List<String>>() {
+    });
+    assertEquals(
+        Arrays.asList(SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC, topic1Name, topic2Name),
+        topicsResponse);
 
     // Get topic
     Response response1 = request("/topics/{topic}", "topic", topic1Name).get();

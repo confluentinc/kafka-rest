@@ -13,51 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import javax.validation.constraints.Min;
-
-public class PartitionOffset {
-
-  @Min(0)
-  private int partition;
-  @Min(0)
-  private long offset;
+public class AvroProduceRecord extends ProduceRecordBase<JsonNode, JsonNode> {
 
   @JsonCreator
-  public PartitionOffset(@JsonProperty("partition") int partition,
-                         @JsonProperty("offset") long offset) {
-    this.partition = partition;
-    this.offset = offset;
+  public AvroProduceRecord(@JsonProperty("key") JsonNode key,
+                           @JsonProperty("value") JsonNode value) {
+    super(key, value);
   }
 
-  @JsonProperty
-  public int getPartition() {
-    return partition;
-  }
-
-  public void setPartition(int partition) {
-    this.partition = partition;
-  }
-
-  @JsonProperty
-  public long getOffset() {
-    return offset;
-  }
-
-  public void setOffset(long offset) {
-    this.offset = offset;
+  public AvroProduceRecord(JsonNode value) {
+    this(null, value);
   }
 
   @Override
-  public String toString() {
-    return "PartitionOffset{" +
-           "partition=" + partition +
-           ", offset=" + offset +
-           '}';
+  public JsonNode getJsonKey() {
+    return key;
+  }
+
+  @Override
+  public JsonNode getJsonValue() {
+    return value;
   }
 
   @Override
@@ -65,16 +47,16 @@ public class PartitionOffset {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof PartitionOffset)) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
 
-    PartitionOffset that = (PartitionOffset) o;
+    AvroProduceRecord that = (AvroProduceRecord) o;
 
-    if (offset != that.offset) {
+    if (key != null ? !key.equals(that.key) : that.key != null) {
       return false;
     }
-    if (partition != that.partition) {
+    if (value != null ? !value.equals(that.value) : that.value != null) {
       return false;
     }
 
@@ -83,8 +65,8 @@ public class PartitionOffset {
 
   @Override
   public int hashCode() {
-    int result = partition;
-    result = 31 * result + (int) (offset ^ (offset >>> 32));
+    int result = key != null ? key.hashCode() : 0;
+    result = 31 * result + (value != null ? value.hashCode() : 0);
     return result;
   }
 }

@@ -16,6 +16,7 @@
 package io.confluent.kafkarest;
 
 public class SystemTime extends io.confluent.common.utils.SystemTime implements Time {
+
   @Override
   public void waitOn(Object on, long ms) throws InterruptedException {
     on.wait(ms);

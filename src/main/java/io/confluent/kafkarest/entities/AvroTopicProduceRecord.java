@@ -13,51 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.entities;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import javax.validation.constraints.Min;
 
-public class PartitionOffset {
+public class AvroTopicProduceRecord extends AvroProduceRecord
+    implements TopicProduceRecord<JsonNode, JsonNode> {
 
+  // When producing to a topic, a partition may be explicitly requested.
   @Min(0)
-  private int partition;
-  @Min(0)
-  private long offset;
+  protected Integer partition;
 
-  @JsonCreator
-  public PartitionOffset(@JsonProperty("partition") int partition,
-                         @JsonProperty("offset") long offset) {
+  public AvroTopicProduceRecord(@JsonProperty("key") JsonNode key,
+                                @JsonProperty("value") JsonNode value,
+                                @JsonProperty("partition") Integer partition) {
+    super(key, value);
     this.partition = partition;
-    this.offset = offset;
   }
 
   @JsonProperty
-  public int getPartition() {
+  public Integer getPartition() {
     return partition;
   }
 
-  public void setPartition(int partition) {
-    this.partition = partition;
-  }
-
   @JsonProperty
-  public long getOffset() {
-    return offset;
-  }
-
-  public void setOffset(long offset) {
-    this.offset = offset;
-  }
-
-  @Override
-  public String toString() {
-    return "PartitionOffset{" +
-           "partition=" + partition +
-           ", offset=" + offset +
-           '}';
+  public void setPartition(Integer partition) {
+    this.partition = partition;
   }
 
   @Override
@@ -65,16 +50,16 @@ public class PartitionOffset {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof PartitionOffset)) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
       return false;
     }
 
-    PartitionOffset that = (PartitionOffset) o;
+    AvroTopicProduceRecord that = (AvroTopicProduceRecord) o;
 
-    if (offset != that.offset) {
-      return false;
-    }
-    if (partition != that.partition) {
+    if (partition != null ? !partition.equals(that.partition) : that.partition != null) {
       return false;
     }
 
@@ -83,8 +68,8 @@ public class PartitionOffset {
 
   @Override
   public int hashCode() {
-    int result = partition;
-    result = 31 * result + (int) (offset ^ (offset >>> 32));
+    int result = super.hashCode();
+    result = 31 * result + (partition != null ? partition.hashCode() : 0);
     return result;
   }
 }

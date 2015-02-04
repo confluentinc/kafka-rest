@@ -21,6 +21,8 @@ import java.util.List;
 public class Versions {
 
   public static final String KAFKA_V1_JSON = "application/vnd.kafka.v1+json";
+  public static final String KAFKA_V1_JSON_BINARY = "application/vnd.kafka.binary.v1+json";
+  public static final String KAFKA_V1_JSON_AVRO = "application/vnd.kafka.avro.v1+json";
   public static final String KAFKA_V1_JSON_WEIGHTED = KAFKA_V1_JSON; // Default weight = 1
 
   // These are defaults that track the most recent API version. These should always be specified
@@ -40,4 +42,19 @@ public class Versions {
   // users of the API will always specify the content type, but ad hoc use may omit it. We treat
   // this as JSON since that's all we currently support.
   public static final String GENERIC_REQUEST = "application/octet-stream";
+
+  /**
+   * Permitted formats for ProduceRecords embedded in produce requests/consume responses, e.g.
+   * base64-encoded binary, JSON-encoded Avro, etc. Each of these correspond to a content type, a
+   * ProduceRecord implementation, a Producer in the ProducerPool (with corresponding Kafka
+   * serializer), ConsumerRecord implementation, and a serializer for any instantiated consumers.
+   *
+   * Note that for each type, it's assumed that the key and value can be handled by the same
+   * serializer. This means each serializer should handle both it's complex type (e.g.
+   * Indexed/Generic/SpecificRecord for Avro) and boxed primitive types (Integer, Boolean, etc.).
+   */
+  public enum EmbeddedFormat {
+    BINARY,
+    AVRO
+  }
 }

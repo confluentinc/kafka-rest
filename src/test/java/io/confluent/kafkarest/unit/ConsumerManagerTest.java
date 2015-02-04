@@ -48,6 +48,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class ConsumerManagerTest {
+
   private KafkaRestConfig config;
   private MetadataObserver mdObserver;
   private ConsumerManager.ConsumerFactory consumerFactory;
@@ -108,19 +109,20 @@ public class ConsumerManagerTest {
     sawCallback = false;
     consumerManager.readTopic(groupName, cid, topicName, Long.MAX_VALUE,
                               new ConsumerManager.ReadCallback() {
-      @Override
-      public void onCompletion(List<ConsumerRecord> records, Exception e) {
-        sawCallback = true;
-        assertNull(e);
-        assertEquals(referenceRecords, records);
-      }
-    }).get();
+                                @Override
+                                public void onCompletion(List<ConsumerRecord> records,
+                                                         Exception e) {
+                                  sawCallback = true;
+                                  assertNull(e);
+                                  assertEquals(referenceRecords, records);
+                                }
+                              }).get();
     assertTrue(sawCallback);
     // With # of bytes in messages < max bytes per response, this should finish just after
     // the per-request timeout (because the timeout perfectly coincides with a scheduled
     // iteration when using the default settings).
     assertEquals(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) + config
-        .getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG),
+                     .getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG),
                  config.getTime().milliseconds());
 
     sawCallback = false;
@@ -170,14 +172,15 @@ public class ConsumerManagerTest {
     sawCallback = false;
     consumerManager.readTopic(groupName, cid, topicName, Long.MAX_VALUE,
                               new ConsumerManager.ReadCallback() {
-      @Override
-      public void onCompletion(List<ConsumerRecord> records, Exception e) {
-        sawCallback = true;
-        assertNull(e);
-        // Should only see the first two messages since the third pushes us over the limit.
-        assertEquals(2, records.size());
-      }
-    }).get();
+                                @Override
+                                public void onCompletion(List<ConsumerRecord> records,
+                                                         Exception e) {
+                                  sawCallback = true;
+                                  assertNull(e);
+                                  // Should only see the first two messages since the third pushes us over the limit.
+                                  assertEquals(2, records.size());
+                                }
+                              }).get();
     assertTrue(sawCallback);
 
     // Also check the user-submitted limit
@@ -231,12 +234,13 @@ public class ConsumerManagerTest {
     sawCallback = false;
     consumerManager.readTopic(groupName, cid, topicName, Long.MAX_VALUE,
                               new ConsumerManager.ReadCallback() {
-      @Override
-      public void onCompletion(List<ConsumerRecord> records, Exception e) {
-        sawCallback = true;
-        assertNull(e);
-      }
-    }).get();
+                                @Override
+                                public void onCompletion(List<ConsumerRecord> records,
+                                                         Exception e) {
+                                  sawCallback = true;
+                                  assertNull(e);
+                                }
+                              }).get();
     assertTrue(sawCallback);
     assertEquals(started + config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG),
                  config.getTime().milliseconds());
@@ -249,13 +253,14 @@ public class ConsumerManagerTest {
         future =
         consumerManager.readTopic(groupName, cid, topic, Long.MAX_VALUE,
                                   new ConsumerManager.ReadCallback() {
-          @Override
-          public void onCompletion(List<ConsumerRecord> records, Exception e) {
-            sawCallback = true;
-            assertNull(records);
-            assertThat(e, instanceOf(RestNotFoundException.class));
-          }
-        });
+                                    @Override
+                                    public void onCompletion(List<ConsumerRecord> records,
+                                                             Exception e) {
+                                      sawCallback = true;
+                                      assertNull(records);
+                                      assertThat(e, instanceOf(RestNotFoundException.class));
+                                    }
+                                  });
     assertTrue(sawCallback);
     assertNull(future);
   }

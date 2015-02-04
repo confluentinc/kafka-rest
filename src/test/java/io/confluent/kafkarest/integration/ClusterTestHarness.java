@@ -33,6 +33,9 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 
+import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
+import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
+import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import kafka.server.KafkaConfig;
@@ -69,6 +72,13 @@ public abstract class ClusterTestHarness {
   protected List<KafkaServer> servers = null;
   protected String brokerList = null;
 
+  // Schema registry config
+  protected String schemaRegCompatibility = AvroCompatibilityLevel.NONE.name;
+  protected Properties schemaRegProperties = null;
+  protected String schemaRegConnect = null;
+  protected SchemaRegistryRestApplication schemaRegApp = null;
+  protected Server schemaRegServer = null;
+
   protected String bootstrapServers = null;
   protected Properties restProperties = null;
   protected KafkaRestConfig restConfig = null;
@@ -81,8 +91,8 @@ public abstract class ClusterTestHarness {
   }
 
   public ClusterTestHarness(int numBrokers) {
-    // 1 port per broker + ZK + REST server
-    this(numBrokers, numBrokers + 2);
+    // 1 port per broker + ZK + SchemaReg + REST server
+    this(numBrokers, numBrokers + 3);
   }
 
   public ClusterTestHarness(int numBrokers, int numPorts) {
@@ -112,10 +122,23 @@ public abstract class ClusterTestHarness {
       bootstrapServers = bootstrapServers + "localhost:" + ((Integer) port).toString();
     }
 
+    schemaRegProperties = new Properties();
+    int schemaRegPort = ports.remove();
+    schemaRegProperties.setProperty(SchemaRegistryConfig.PORT_CONFIG,
+                                    ((Integer) schemaRegPort).toString());
+    schemaRegProperties.setProperty(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG,
+                                    zkConnect);
+    schemaRegProperties.setProperty(SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG,
+                                    SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC);
+    schemaRegProperties.setProperty(SchemaRegistryConfig.COMPATIBILITY_CONFIG,
+                                    schemaRegCompatibility);
+    schemaRegConnect = String.format("http://localhost:%d", schemaRegPort);
+
     restProperties = new Properties();
     int restPort = ports.remove();
-    restProperties.setProperty("port", ((Integer) restPort).toString());
-    restProperties.setProperty("zookeeper.connect", zkConnect);
+    restProperties.setProperty(KafkaRestConfig.PORT_CONFIG, ((Integer) restPort).toString());
+    restProperties.setProperty(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG, zkConnect);
+    restProperties.setProperty(KafkaRestConfig.SCHEMA_REGISTRY_CONNECT_CONFIG, schemaRegConnect);
     restConnect = String.format("http://localhost:%d", restPort);
   }
 
@@ -137,6 +160,10 @@ public abstract class ClusterTestHarness {
       servers.add(server);
     }
 
+    schemaRegApp = new SchemaRegistryRestApplication(new SchemaRegistryConfig(schemaRegProperties));
+    schemaRegServer = schemaRegApp.createServer();
+    schemaRegServer.start();
+
     restConfig = new KafkaRestConfig(restProperties);
     restApp = new KafkaRestApplication(restConfig);
     restServer = restApp.createServer();
@@ -145,8 +172,15 @@ public abstract class ClusterTestHarness {
 
   @After
   public void tearDown() throws Exception {
-    restServer.stop();
-    restServer.join();
+    if (restServer != null) {
+      restServer.stop();
+      restServer.join();
+    }
+
+    if (schemaRegServer != null) {
+      schemaRegServer.stop();
+      schemaRegServer.join();
+    }
 
     for (KafkaServer server : servers) {
       server.shutdown();

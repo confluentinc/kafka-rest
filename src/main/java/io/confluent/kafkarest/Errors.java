@@ -16,8 +16,9 @@
 
 package io.confluent.kafkarest;
 
-import io.confluent.rest.exceptions.RestNotFoundException;
+import io.confluent.rest.exceptions.RestConstraintViolationException;
 import io.confluent.rest.exceptions.RestException;
+import io.confluent.rest.exceptions.RestNotFoundException;
 
 public class Errors {
 
@@ -40,6 +41,30 @@ public class Errors {
 
   public static RestException consumerInstanceNotFoundException() {
     return new RestNotFoundException(CONSUMER_INSTANCE_NOT_FOUND_MESSAGE,
-                                 CONSUMER_INSTANCE_NOT_FOUND_ERROR_CODE);
+                                     CONSUMER_INSTANCE_NOT_FOUND_ERROR_CODE);
   }
+
+  public final static String KEY_SCHEMA_MISSING_MESSAGE = "Request includes keys but does not "
+                                                          + "include key schema";
+  public final static int KEY_SCHEMA_MISSING_ERROR_CODE = 42201;
+
+  public static RestConstraintViolationException keySchemaMissingException() {
+    return new RestConstraintViolationException(KEY_SCHEMA_MISSING_MESSAGE,
+                                                KEY_SCHEMA_MISSING_ERROR_CODE);
+
+  }
+
+  ;
+
+  public final static String VALUE_SCHEMA_MISSING_MESSAGE = "Request includes values but does not "
+                                                            + "include value schema";
+  public final static int VALUE_SCHEMA_MISSING_ERROR_CODE = 42202;
+
+  public static RestConstraintViolationException valueSchemaMissingException() {
+    return new RestConstraintViolationException(VALUE_SCHEMA_MISSING_MESSAGE,
+                                                VALUE_SCHEMA_MISSING_ERROR_CODE);
+
+  }
+
+  ;
 }
