@@ -32,12 +32,13 @@ import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.SchemaHolder;
 import io.confluent.rest.exceptions.RestException;
 
-public class AvroRestProducer implements RestProducer<JsonNode,JsonNode> {
-  protected final KafkaProducer<Object,Object> producer;
+public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
+
+  protected final KafkaProducer<Object, Object> producer;
   protected final KafkaAvroSerializer keySerializer;
   protected final KafkaAvroSerializer valueSerializer;
 
-  public AvroRestProducer(KafkaProducer<Object,Object> producer,
+  public AvroRestProducer(KafkaProducer<Object, Object> producer,
                           KafkaAvroSerializer keySerializer,
                           KafkaAvroSerializer valueSerializer) {
     this.producer = producer;
@@ -46,7 +47,7 @@ public class AvroRestProducer implements RestProducer<JsonNode,JsonNode> {
   }
 
   public void produce(ProduceTask task, String topic, Integer partition,
-                      Collection<? extends ProduceRecord<JsonNode,JsonNode>> records) {
+                      Collection<? extends ProduceRecord<JsonNode, JsonNode>> records) {
     SchemaHolder schemaHolder = task.getSchemaHolder();
     Schema keySchema, valueSchema;
     Integer keySchemaId = schemaHolder.getKeySchemaId();
@@ -76,14 +77,14 @@ public class AvroRestProducer implements RestProducer<JsonNode,JsonNode> {
 
     // Convert everything to Avro before doing any sends so if any conversion fails we can kill
     // the entire request so we don't get partially sent requests
-    ArrayList<ProducerRecord<Object,Object>> kafkaRecords
-        = new ArrayList<ProducerRecord<Object,Object>>();
-    for (ProduceRecord<JsonNode,JsonNode> record : records) {
+    ArrayList<ProducerRecord<Object, Object>> kafkaRecords
+        = new ArrayList<ProducerRecord<Object, Object>>();
+    for (ProduceRecord<JsonNode, JsonNode> record : records) {
       Object key = AvroConverter.toAvro(record.getKey(), keySchema);
       Object value = AvroConverter.toAvro(record.getValue(), valueSchema);
       kafkaRecords.add(new ProducerRecord(topic, partition, key, value));
     }
-    for(ProducerRecord<Object,Object> rec : kafkaRecords) {
+    for (ProducerRecord<Object, Object> rec : kafkaRecords) {
       producer.send(rec, task);
     }
   }

@@ -21,15 +21,15 @@ import io.confluent.kafkarest.entities.ProduceRecord;
 /**
  * Wrapper for KafkaProducer that handles schemas.
  */
-public interface RestProducer<K,V> {
+public interface RestProducer<K, V> {
 
   /**
-   * Produces messages to the topic, handling any conversion, schema lookups or other
-   * operations that need to be performed before sending the messages. If schemas are looked up or
-   * registered, the SchemaHolder is updated with the resulting IDs.
+   * Produces messages to the topic, handling any conversion, schema lookups or other operations
+   * that need to be performed before sending the messages. If schemas are looked up or registered,
+   * the SchemaHolder is updated with the resulting IDs.
    */
   public void produce(ProduceTask task, String topic, Integer partition,
-                      Collection<? extends ProduceRecord<K,V>> records);
+                      Collection<? extends ProduceRecord<K, V>> records);
 
   public void close();
 }

@@ -44,6 +44,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class TestUtils {
+
   private static final ObjectMapper jsonParser = new ObjectMapper();
 
   // Media type collections that should be tested together (i.e. expect the same raw output). The
@@ -67,12 +68,14 @@ public class TestUtils {
       new RequestMediaType(null, Versions.KAFKA_MOST_SPECIFIC_DEFAULT)
   };
   public static final List<RequestMediaType> V1_ACCEPT_MEDIATYPES_BINARY;
+
   static {
     V1_ACCEPT_MEDIATYPES_BINARY =
         new ArrayList<RequestMediaType>(Arrays.asList(V1_ACCEPT_MEDIATYPES));
     V1_ACCEPT_MEDIATYPES_BINARY.add(
         new RequestMediaType(Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY));
   }
+
   public static final RequestMediaType[] V1_ACCEPT_MEDIATYPES_AVRO = {
       new RequestMediaType(Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V1_JSON_AVRO)
   };
@@ -87,10 +90,12 @@ public class TestUtils {
       Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST
   };
   public static final List<String> V1_REQUEST_ENTITY_TYPES_BINARY;
+
   static {
     V1_REQUEST_ENTITY_TYPES_BINARY = new ArrayList<String>(Arrays.asList(V1_REQUEST_ENTITY_TYPES));
     V1_REQUEST_ENTITY_TYPES_BINARY.add(Versions.KAFKA_V1_JSON_BINARY);
   }
+
   public static final List<String> V1_REQUEST_ENTITY_TYPES_AVRO = Arrays.asList(
       Versions.KAFKA_V1_JSON_AVRO
   );
@@ -157,8 +162,8 @@ public class TestUtils {
 
 
   /**
-   * Parses the given JSON string into Jackson's generic JsonNode structure. Useful for
-   * generation test data that's easier to express as a JSON-encoded string.
+   * Parses the given JSON string into Jackson's generic JsonNode structure. Useful for generation
+   * test data that's easier to express as a JSON-encoded string.
    */
   public static JsonNode jsonTree(String jsonData) {
     try {
@@ -169,7 +174,6 @@ public class TestUtils {
   }
 
 
-
   public static boolean partitionOffsetsEqual(List<PartitionOffset> a, List<PartitionOffset> b) {
     // We can't be sure these will be exactly equal since they may be random. Instead verify that
     // we have the same partitions listed and that the total offsets are equal (since we know
@@ -178,7 +182,7 @@ public class TestUtils {
       return false;
     }
     int aTotal = 0, bTotal = 0;
-    for(int i = 0; i < a.size(); i++) {
+    for (int i = 0; i < a.size(); i++) {
       PartitionOffset aOffset = a.get(i), bOffset = b.get(i);
       if (aOffset.getPartition() != bOffset.getPartition()) {
         return false;
@@ -201,7 +205,7 @@ public class TestUtils {
       return EntityUtils.encodeBase64Binary((byte[]) k);
     } else if (k instanceof JsonNode) {
       return k;
-    } else if (k instanceof IndexedRecord){
+    } else if (k instanceof IndexedRecord) {
       return k;
     } else {
       throw new RuntimeException(k.getClass().getName() + " is not handled by encodeComparable.");
@@ -212,24 +216,24 @@ public class TestUtils {
    * Consumes messages from Kafka to verify they match the inputs. Optionally add a partition to
    * only examine that partition.
    */
-  public static <K,V> void assertTopicContains(String zkConnect, String topicName,
-                                               List<? extends ProduceRecord<K,V>> records,
-                                               Integer partition,
-                                               Decoder<K> keyDecoder, Decoder<V> valueDecoder,
-                                               boolean validateContents) {
+  public static <K, V> void assertTopicContains(String zkConnect, String topicName,
+                                                List<? extends ProduceRecord<K, V>> records,
+                                                Integer partition,
+                                                Decoder<K> keyDecoder, Decoder<V> valueDecoder,
+                                                boolean validateContents) {
     ConsumerConnector consumer = Consumer.createJavaConsumerConnector(
         new ConsumerConfig(
             kafka.utils.TestUtils.createConsumerProperties(zkConnect, "testgroup", "consumer0", 200)
         ));
     Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
     topicCountMap.put(topicName, 1);
-    Map<String, List<KafkaStream<K,V>>> streams =
+    Map<String, List<KafkaStream<K, V>>> streams =
         consumer.createMessageStreams(topicCountMap, keyDecoder, valueDecoder);
-    KafkaStream<K,V> stream = streams.get(topicName).get(0);
-    ConsumerIterator<K,V> it = stream.iterator();
-    Map<Object,Integer> msgCounts = new HashMap<Object,Integer>();
+    KafkaStream<K, V> stream = streams.get(topicName).get(0);
+    ConsumerIterator<K, V> it = stream.iterator();
+    Map<Object, Integer> msgCounts = new HashMap<Object, Integer>();
     for (int i = 0; i < records.size(); i++) {
-      MessageAndMetadata<K,V> data = it.next();
+      MessageAndMetadata<K, V> data = it.next();
       if (partition == null || data.partition() == partition) {
         Object msg = TestUtils.encodeComparable(data.message());
         msgCounts.put(msg, (msgCounts.get(msg) == null ? 0 : msgCounts.get(msg)) + 1);
@@ -237,7 +241,7 @@ public class TestUtils {
     }
     consumer.shutdown();
 
-    Map<Object,Integer> refMsgCounts = new HashMap<Object,Integer>();
+    Map<Object, Integer> refMsgCounts = new HashMap<Object, Integer>();
     for (ProduceRecord rec : records) {
       Object msg = TestUtils.encodeComparable(rec.getValue());
       refMsgCounts.put(msg, (refMsgCounts.get(msg) == null ? 0 : refMsgCounts.get(msg)) + 1);
@@ -249,13 +253,13 @@ public class TestUtils {
     if (validateContents) {
       assertEquals(msgCounts, refMsgCounts);
     } else {
-      Map<Integer,Integer> refCountCounts = new HashMap<Integer,Integer>();
-      for(Map.Entry<Object,Integer> entry : refMsgCounts.entrySet()) {
+      Map<Integer, Integer> refCountCounts = new HashMap<Integer, Integer>();
+      for (Map.Entry<Object, Integer> entry : refMsgCounts.entrySet()) {
         Integer count = refCountCounts.get(entry.getValue());
         refCountCounts.put(entry.getValue(), (count == null ? 0 : count) + 1);
       }
-      Map<Integer,Integer> msgCountCounts = new HashMap<Integer,Integer>();
-      for(Map.Entry<Object,Integer> entry : msgCounts.entrySet()) {
+      Map<Integer, Integer> msgCountCounts = new HashMap<Integer, Integer>();
+      for (Map.Entry<Object, Integer> entry : msgCounts.entrySet()) {
         Integer count = msgCountCounts.get(entry.getValue());
         msgCountCounts.put(entry.getValue(), (count == null ? 0 : count) + 1);
       }

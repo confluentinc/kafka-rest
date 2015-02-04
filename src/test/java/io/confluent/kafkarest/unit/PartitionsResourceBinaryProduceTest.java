@@ -98,11 +98,11 @@ public class PartitionsResourceBinaryProduceTest
     EasyMock.reset(mdObserver, producerPool);
   }
 
-  private <K,V> Response produceToPartition(String topic, int partition, String acceptHeader,
-                                            String requestMediatype,
-                                            Versions.EmbeddedFormat recordFormat,
-                                            List<? extends ProduceRecord<K,V>> records,
-                                            final Map<Integer, Long> resultOffsets) {
+  private <K, V> Response produceToPartition(String topic, int partition, String acceptHeader,
+                                             String requestMediatype,
+                                             Versions.EmbeddedFormat recordFormat,
+                                             List<? extends ProduceRecord<K, V>> records,
+                                             final Map<Integer, Long> resultOffsets) {
     final PartitionProduceRequest request = new PartitionProduceRequest();
     request.setRecords(records);
     final Capture<ProducerPool.ProduceRequestCallback>
@@ -122,7 +122,7 @@ public class PartitionsResourceBinaryProduceTest
         if (resultOffsets == null) {
           produceCallback.getValue().onException(new Exception());
         } else {
-          produceCallback.getValue().onCompletion((Integer)null, (Integer)null, resultOffsets);
+          produceCallback.getValue().onCompletion((Integer) null, (Integer) null, resultOffsets);
         }
         return null;
       }

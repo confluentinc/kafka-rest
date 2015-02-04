@@ -94,7 +94,8 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
     // consumer on the REST proxy is fully setup and connected. Set max_bytes so this request
     // doesn't consume a bunch of data, which could possibly exhaust the data in the topic
     request(targetUrl + "?max_bytes=100", "GET", null, null,
-            new TypeReference<List<UndecodedConsumerRecord>>() {});
+            new TypeReference<List<UndecodedConsumerRecord>>() {
+            });
   }
 
   @Override
@@ -176,8 +177,10 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
   protected float getTargetIterationRate(int iteration, float elapsed) {
     // Initial rate doesn't matter since it will be reevaluated after first iteration, but need
     // to avoid divide by 0
-    if (iteration == 0) return 1;
-    float recordsPerIteration = consumedRecords / (float)iteration;
+    if (iteration == 0) {
+      return 1;
+    }
+    float recordsPerIteration = consumedRecords / (float) iteration;
     return recordsPerSec / recordsPerIteration;
   }
 

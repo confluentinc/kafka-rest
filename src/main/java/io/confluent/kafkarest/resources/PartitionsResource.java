@@ -96,7 +96,7 @@ public class PartitionsResource {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
     boolean hasKeys = false, hasValues = false;
-    for(AvroProduceRecord rec : request.getRecords()) {
+    for (AvroProduceRecord rec : request.getRecords()) {
       hasKeys = hasKeys || (rec.getJsonKey() != null);
       hasValues = hasValues || (rec.getJsonValue() != null);
     }
@@ -110,7 +110,7 @@ public class PartitionsResource {
     produce(asyncResponse, topic, partition, Versions.EmbeddedFormat.AVRO, request);
   }
 
-  protected <K, V, R extends ProduceRecord<K,V>> void produce(
+  protected <K, V, R extends ProduceRecord<K, V>> void produce(
       final AsyncResponse asyncResponse,
       final String topic,
       final int partition,

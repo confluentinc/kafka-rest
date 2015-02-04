@@ -26,7 +26,8 @@ public class SchemaHolder {
   protected String valueSchema;
   protected Integer valueSchemaId;
 
-  public SchemaHolder() {}
+  public SchemaHolder() {
+  }
 
   public SchemaHolder(String keySchema, String valueSchema) {
     this(keySchema, null, valueSchema, null);

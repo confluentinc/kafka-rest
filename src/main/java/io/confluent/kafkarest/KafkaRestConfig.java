@@ -27,8 +27,10 @@ import io.confluent.rest.RestConfigException;
  * Settings for the REST proxy server.
  */
 public class KafkaRestConfig extends RestConfig {
+
   public static final String ID_CONFIG = "id";
-  private static final String ID_CONFIG_DOC =
+  private static final String
+      ID_CONFIG_DOC =
       "Unique ID for this REST server instance. This is used in generating unique IDs for consumers that do "
       + "not specify their ID. The ID is empty by default, which makes a single server setup easier to "
       + "get up and running, but is not safe for multi-server deployments where automatic consumer IDs "
@@ -92,7 +94,7 @@ public class KafkaRestConfig extends RestConfig {
       + "cannot perform a streaming decode. Note that the actual payload will be larger due to "
       + "overhead from base64 encoding the response data and from JSON encoding the entire "
       + "response.";
-  public static final long CONSUMER_REQUEST_MAX_BYTES_DEFAULT = 64*1024*1024;
+  public static final long CONSUMER_REQUEST_MAX_BYTES_DEFAULT = 64 * 1024 * 1024;
 
   public static final String CONSUMER_THREADS_CONFIG = "consumer.threads";
   private static final String

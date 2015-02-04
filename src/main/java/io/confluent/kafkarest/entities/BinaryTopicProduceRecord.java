@@ -23,7 +23,7 @@ import java.io.IOException;
 import javax.validation.constraints.Min;
 
 public class BinaryTopicProduceRecord extends BinaryProduceRecord
-    implements TopicProduceRecord<byte[],byte[]> {
+    implements TopicProduceRecord<byte[], byte[]> {
 
   // When producing to a topic, a partition may be explicitly requested.
   @Min(0)

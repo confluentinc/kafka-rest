@@ -43,8 +43,8 @@ import scala.collection.Seq;
 public class ProducerPool {
 
   private static final Logger log = LoggerFactory.getLogger(ProducerPool.class);
-  private Map<Versions.EmbeddedFormat,RestProducer> producers =
-      new HashMap<Versions.EmbeddedFormat,RestProducer>();
+  private Map<Versions.EmbeddedFormat, RestProducer> producers =
+      new HashMap<Versions.EmbeddedFormat, RestProducer>();
 
   public ProducerPool(KafkaRestConfig appConfig, ZkClient zkClient) {
     Seq<Broker> brokerSeq = ZkUtils.getAllBrokersInCluster(zkClient);
@@ -57,19 +57,19 @@ public class ProducerPool {
       }
     }
 
-    Map<String,Object> props = new HashMap<String,Object>();
+    Map<String, Object> props = new HashMap<String, Object>();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
     ByteArraySerializer keySerializer = new ByteArraySerializer();
     keySerializer.configure(props, true);
     ByteArraySerializer valueSerializer = new ByteArraySerializer();
     keySerializer.configure(props, false);
-    KafkaProducer<byte[],byte[]> byteArrayProducer
-        = new KafkaProducer<byte[],byte[]>(props, keySerializer, valueSerializer);
+    KafkaProducer<byte[], byte[]> byteArrayProducer
+        = new KafkaProducer<byte[], byte[]>(props, keySerializer, valueSerializer);
     producers.put(
         Versions.EmbeddedFormat.BINARY,
         new BinaryRestProducer(byteArrayProducer, keySerializer, valueSerializer));
 
-    props = new HashMap<String,Object>();
+    props = new HashMap<String, Object>();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
     props.put("schema.registry.url",
               appConfig.getString(KafkaRestConfig.SCHEMA_REGISTRY_CONNECT_CONFIG));
@@ -77,18 +77,18 @@ public class ProducerPool {
     avroKeySerializer.configure(props, true);
     final KafkaAvroSerializer avroValueSerializer = new KafkaAvroSerializer();
     avroValueSerializer.configure(props, false);
-    KafkaProducer<Object,Object> avroProducer
-        = new KafkaProducer<Object,Object>(props, avroKeySerializer, avroValueSerializer);
+    KafkaProducer<Object, Object> avroProducer
+        = new KafkaProducer<Object, Object>(props, avroKeySerializer, avroValueSerializer);
     producers.put(
         Versions.EmbeddedFormat.AVRO,
         new AvroRestProducer(avroProducer, avroKeySerializer, avroValueSerializer));
   }
 
-  public <K,V> void produce(String topic, Integer partition,
-                            Versions.EmbeddedFormat recordFormat,
-                            SchemaHolder schemaHolder,
-                            Collection<? extends ProduceRecord<K,V>> records,
-                            ProduceRequestCallback callback) {
+  public <K, V> void produce(String topic, Integer partition,
+                             Versions.EmbeddedFormat recordFormat,
+                             SchemaHolder schemaHolder,
+                             Collection<? extends ProduceRecord<K, V>> records,
+                             ProduceRequestCallback callback) {
     ProduceTask task = new ProduceTask(schemaHolder, records.size(), callback);
     log.trace("Starting produce task " + task.toString());
     RestProducer restProducer = producers.get(recordFormat);
@@ -96,7 +96,7 @@ public class ProducerPool {
   }
 
   public void shutdown() {
-    for(RestProducer restProducer : producers.values()) {
+    for (RestProducer restProducer : producers.values()) {
       restProducer.close();
     }
   }

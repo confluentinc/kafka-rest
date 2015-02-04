@@ -37,10 +37,10 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
 import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.TopicProduceResponse;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.kafkarest.entities.TopicProduceResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
 
 @Path("/topics")
@@ -94,7 +94,7 @@ public class TopicsResource {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
     boolean hasKeys = false, hasValues = false;
-    for(AvroTopicProduceRecord rec : request.getRecords()) {
+    for (AvroTopicProduceRecord rec : request.getRecords()) {
       hasKeys = hasKeys || (rec.getJsonKey() != null);
       hasValues = hasValues || (rec.getJsonValue() != null);
     }
@@ -108,7 +108,7 @@ public class TopicsResource {
     produce(asyncResponse, topicName, Versions.EmbeddedFormat.AVRO, request);
   }
 
-  public <K, V, R extends TopicProduceRecord<K,V>> void produce(
+  public <K, V, R extends TopicProduceRecord<K, V>> void produce(
       final AsyncResponse asyncResponse,
       final String topicName,
       final Versions.EmbeddedFormat format,

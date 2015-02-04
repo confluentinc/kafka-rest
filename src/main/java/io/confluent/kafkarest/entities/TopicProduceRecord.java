@@ -16,7 +16,7 @@
 
 package io.confluent.kafkarest.entities;
 
-public interface TopicProduceRecord<K,V> extends ProduceRecord<K,V> {
+public interface TopicProduceRecord<K, V> extends ProduceRecord<K, V> {
   // It may seem odd that this is an interface when ProduceRecord<K,V> is an abstract class. If
   // we used an abstract class here and included the (Integer partition) field and
   // getters/setters, then subclasses would have to inherit from this class, and reuse of the

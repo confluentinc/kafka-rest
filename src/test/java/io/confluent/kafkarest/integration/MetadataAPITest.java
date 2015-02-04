@@ -66,6 +66,7 @@ public class MetadataAPITest extends ClusterTestHarness {
   );
   private static final Properties topic2Configs;
   private static final Topic topic2;
+
   static {
     topic2Configs = new Properties();
     topic2Configs.setProperty("cleanup.policy", "delete");
@@ -98,9 +99,10 @@ public class MetadataAPITest extends ClusterTestHarness {
     // Listing
     Response response = request("/topics").get();
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    final List<String> topicsResponse = response.readEntity(new GenericType<List<String>>() {});
+    final List<String> topicsResponse = response.readEntity(new GenericType<List<String>>() {
+    });
     assertEquals(
-        Arrays.asList(SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC,topic1Name, topic2Name),
+        Arrays.asList(SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC, topic1Name, topic2Name),
         topicsResponse);
 
     // Get topic

@@ -16,7 +16,9 @@
 
 package io.confluent.kafkarest.entities;
 
-public interface ProduceRecord<K,V> {
+public interface ProduceRecord<K, V> {
+
   public K getKey();
+
   public V getValue();
 }

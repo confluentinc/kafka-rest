@@ -40,9 +40,9 @@ import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.PartitionProduceResponse;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceResponse;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.kafkarest.entities.TopicProduceResponse;
 import kafka.utils.VerifiableProperties;
 import scala.collection.JavaConversions;
 
@@ -120,15 +120,16 @@ public class AvroProducerTest extends ClusterTestHarness {
     final int numPartitions = 3;
     final int replicationFactor = 1;
     kafka.utils.TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-                          JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
+                                      JavaConversions.asScalaIterable(this.servers).toSeq(),
+                                      new Properties());
 
     Properties props = new Properties();
     props.setProperty("schema.registry.url", schemaRegConnect);
     avroDecoder = new KafkaAvroDecoder(new VerifiableProperties(props));
   }
 
-  private <K,V> void testProduceToTopic(List<? extends TopicProduceRecord> records,
-                                        List<PartitionOffset> offsetResponses) {
+  private <K, V> void testProduceToTopic(List<? extends TopicProduceRecord> records,
+                                         List<PartitionOffset> offsetResponses) {
     TopicProduceRequest payload = new TopicProduceRequest();
     payload.setRecords(records);
     payload.setKeySchema(keySchemaStr);
@@ -151,8 +152,8 @@ public class AvroProducerTest extends ClusterTestHarness {
     testProduceToTopic(topicRecordsWithPartitionsAndKeys, partitionOffsetsWithPartitionsAndKeys);
   }
 
-  private <K,V> void testProduceToPartition(List<? extends ProduceRecord<K,V>> records,
-                                            PartitionOffset offsetResponse) {
+  private <K, V> void testProduceToPartition(List<? extends ProduceRecord<K, V>> records,
+                                             PartitionOffset offsetResponse) {
     PartitionProduceRequest payload = new PartitionProduceRequest();
     payload.setRecords(records);
     payload.setKeySchema(keySchemaStr);
@@ -166,8 +167,8 @@ public class AvroProducerTest extends ClusterTestHarness {
     TestUtils.assertTopicContains(zkConnect, topicName,
                                   payload.getRecords(), (Integer) 0,
                                   avroDecoder, avroDecoder, false);
-    assertEquals(poffsetResponse.getKeySchemaId(), (Integer)0);
-    assertEquals(poffsetResponse.getValueSchemaId(), (Integer)1);
+    assertEquals(poffsetResponse.getKeySchemaId(), (Integer) 0);
+    assertEquals(poffsetResponse.getValueSchemaId(), (Integer) 1);
   }
 
   @Test

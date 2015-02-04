@@ -125,7 +125,7 @@ public abstract class ClusterTestHarness {
     schemaRegProperties = new Properties();
     int schemaRegPort = ports.remove();
     schemaRegProperties.setProperty(SchemaRegistryConfig.PORT_CONFIG,
-                                    ((Integer)schemaRegPort).toString());
+                                    ((Integer) schemaRegPort).toString());
     schemaRegProperties.setProperty(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG,
                                     zkConnect);
     schemaRegProperties.setProperty(SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG,

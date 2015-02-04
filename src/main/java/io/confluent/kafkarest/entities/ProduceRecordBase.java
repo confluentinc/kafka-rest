@@ -19,7 +19,7 @@ package io.confluent.kafkarest.entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public abstract class ProduceRecordBase<K,V> implements ProduceRecord<K,V> {
+public abstract class ProduceRecordBase<K, V> implements ProduceRecord<K, V> {
 
   protected K key;
   protected V value;

@@ -75,7 +75,8 @@ public class TopicsResourceTest
 
       Response response = request("/topics", mediatype.expected).get();
       assertOKResponse(response, mediatype.expected);
-      final List<String> topicsResponse = response.readEntity(new GenericType<List<String>>() {});
+      final List<String> topicsResponse = response.readEntity(new GenericType<List<String>>() {
+      });
       assertEquals(topics, topicsResponse);
 
       EasyMock.verify(mdObserver);

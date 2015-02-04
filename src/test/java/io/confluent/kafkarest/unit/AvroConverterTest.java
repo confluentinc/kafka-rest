@@ -28,18 +28,17 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Map;
 
-import javax.swing.text.html.parser.Entity;
-
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.converters.ConversionException;
 import io.confluent.kafkarest.entities.EntityUtils;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class AvroConverterTest {
+
   private static final Schema.Parser parser = new Schema.Parser();
 
   @Test
@@ -69,7 +68,6 @@ public class AvroConverterTest {
     result = AvroConverter.toAvro(TestUtils.jsonTree("23"), createPrimitiveSchema("float"));
     assertTrue(result instanceof Float);
     assertEquals(23.0f, result);
-
 
     result = AvroConverter.toAvro(TestUtils.jsonTree("23.2"), createPrimitiveSchema("double"));
     assertTrue(result instanceof Double);
@@ -153,14 +151,14 @@ public class AvroConverterTest {
 
     Object result = AvroConverter.toAvro(TestUtils.jsonTree(json), schema);
     assertTrue(result instanceof GenericRecord);
-    GenericRecord resultRecord = (GenericRecord)result;
+    GenericRecord resultRecord = (GenericRecord) result;
     assertEquals(null, resultRecord.get("null"));
     assertEquals(true, resultRecord.get("boolean"));
     assertEquals(12, resultRecord.get("int"));
     assertEquals(5000000000L, resultRecord.get("long"));
     assertEquals(23.4f, resultRecord.get("float"));
     assertEquals(800.25, resultRecord.get("double"));
-    assertEquals("Ynl0ZXM=", EntityUtils.encodeBase64Binary((byte[])resultRecord.get("bytes")));
+    assertEquals("Ynl0ZXM=", EntityUtils.encodeBase64Binary((byte[]) resultRecord.get("bytes")));
     assertEquals("string", resultRecord.get("string"));
     // Nothing to check with default values, just want to make sure an exception wasn't thrown
     // when they values weren't specified for their fields.
@@ -210,10 +208,10 @@ public class AvroConverterTest {
         + "]}");
 
     Object result = AvroConverter.toAvro(TestUtils.jsonTree("{\"union\":\"test string\"}"), schema);
-    assertTrue(((GenericRecord)result).get("union") instanceof String);
+    assertTrue(((GenericRecord) result).get("union") instanceof String);
 
     result = AvroConverter.toAvro(TestUtils.jsonTree("{\"union\":12}"), schema);
-    assertTrue(((GenericRecord)result).get("union") instanceof Integer);
+    assertTrue(((GenericRecord) result).get("union") instanceof Integer);
 
     try {
       AvroConverter.toAvro(TestUtils.jsonTree("12.4"), schema);

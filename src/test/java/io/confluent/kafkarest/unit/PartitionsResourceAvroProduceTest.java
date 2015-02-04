@@ -103,12 +103,12 @@ public class PartitionsResourceAvroProduceTest
     EasyMock.reset(mdObserver, producerPool);
   }
 
-  private <K,V> Response produceToPartition(String topic, int partition,
-                                            PartitionProduceRequest request,
-                                            String acceptHeader,
-                                            String requestMediatype,
-                                            Versions.EmbeddedFormat recordFormat,
-                                            final Map<Integer, Long> resultOffsets) {
+  private <K, V> Response produceToPartition(String topic, int partition,
+                                             PartitionProduceRequest request,
+                                             String acceptHeader,
+                                             String requestMediatype,
+                                             Versions.EmbeddedFormat recordFormat,
+                                             final Map<Integer, Long> resultOffsets) {
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
         new Capture<ProducerPool.ProduceRequestCallback>();
@@ -118,7 +118,7 @@ public class PartitionsResourceAvroProduceTest
                          EasyMock.eq(partition),
                          EasyMock.eq(recordFormat),
                          EasyMock.<SchemaHolder>anyObject(),
-                         EasyMock.<Collection<? extends ProduceRecord<K,V>>>anyObject(),
+                         EasyMock.<Collection<? extends ProduceRecord<K, V>>>anyObject(),
                          EasyMock.capture(produceCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
@@ -159,8 +159,8 @@ public class PartitionsResourceAvroProduceTest
         PartitionProduceResponse response = rawResponse.readEntity(PartitionProduceResponse.class);
 
         assertEquals(new PartitionOffset(0, 1L), response.getPartitionOffset());
-        assertEquals((Integer)1, response.getKeySchemaId());
-        assertEquals((Integer)2, response.getValueSchemaId());
+        assertEquals((Integer) 1, response.getKeySchemaId());
+        assertEquals((Integer) 2, response.getValueSchemaId());
 
         EasyMock.reset(mdObserver, producerPool);
       }
@@ -180,8 +180,8 @@ public class PartitionsResourceAvroProduceTest
         PartitionProduceResponse response = rawResponse.readEntity(PartitionProduceResponse.class);
 
         assertEquals(new PartitionOffset(0, 1L), response.getPartitionOffset());
-        assertEquals((Integer)1, response.getKeySchemaId());
-        assertEquals((Integer)2, response.getValueSchemaId());
+        assertEquals((Integer) 1, response.getKeySchemaId());
+        assertEquals((Integer) 2, response.getValueSchemaId());
 
         EasyMock.reset(mdObserver, producerPool);
       }

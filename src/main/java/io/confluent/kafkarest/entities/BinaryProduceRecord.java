@@ -17,7 +17,6 @@
 package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.IOException;
@@ -25,7 +24,7 @@ import java.util.Arrays;
 
 import io.confluent.rest.validation.ConstraintViolations;
 
-public class BinaryProduceRecord extends ProduceRecordBase<byte[],byte[]> {
+public class BinaryProduceRecord extends ProduceRecordBase<byte[], byte[]> {
 
   @JsonCreator
   public BinaryProduceRecord(@JsonProperty("key") String key, @JsonProperty("value") String value)

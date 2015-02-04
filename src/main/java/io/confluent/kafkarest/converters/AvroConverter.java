@@ -39,7 +39,7 @@ public class AvroConverter {
       return null;
     }
 
-    switch(schema.getType()) {
+    switch (schema.getType()) {
       case ARRAY:
         if (!value.isArray()) {
           throw new ConversionException("Found non-array where schema specified an array.");
@@ -92,7 +92,7 @@ public class AvroConverter {
         if (doubleValue <= Float.MIN_VALUE || doubleValue >= Float.MAX_VALUE) {
           throw new ConversionException("Value of float field is outside valid range.");
         }
-        return (float)doubleValue;
+        return (float) doubleValue;
 
       case INT:
         if (!value.isInt()) {
@@ -113,13 +113,12 @@ public class AvroConverter {
           throw new ConversionException("Found non-object where schema specified a map.");
         }
         Schema valueSchema = schema.getValueType();
-        Map<String,Object> mapResult = new HashMap<String,Object>();
-        for (Iterator<Map.Entry<String,JsonNode>> it = value.fields(); it.hasNext(); ) {
-          Map.Entry<String,JsonNode> elem = it.next();
+        Map<String, Object> mapResult = new HashMap<String, Object>();
+        for (Iterator<Map.Entry<String, JsonNode>> it = value.fields(); it.hasNext(); ) {
+          Map.Entry<String, JsonNode> elem = it.next();
           mapResult.put(elem.getKey(), toAvro(elem.getValue(), valueSchema));
         }
         return mapResult;
-
 
       case NULL:
         if (!value.isNull()) {
@@ -132,14 +131,14 @@ public class AvroConverter {
           throw new ConversionException("Found non-object where schema specified record.");
         }
         GenericRecord recordResult = new GenericData.Record(schema);
-        for(Schema.Field field : schema.getFields()) {
+        for (Schema.Field field : schema.getFields()) {
           // Find the value, checking the named field, aliases, and defaults.
           JsonNode fieldValue = null;
           String fieldName = field.name();
           if (value.has(fieldName)) {
             fieldValue = value.get(fieldName);
           } else {
-            for(String alias : field.aliases()) {
+            for (String alias : field.aliases()) {
               if (value.has(alias)) {
                 fieldValue = value.get(alias);
                 break;
@@ -165,7 +164,7 @@ public class AvroConverter {
       case UNION:
         // We could probably inline some checks to make this process more efficient, but this
         // works as an initial implementation
-        for(Schema unionSchema : schema.getTypes()) {
+        for (Schema unionSchema : schema.getTypes()) {
           try {
             return toAvro(value, unionSchema);
           } catch (ConversionException e) {

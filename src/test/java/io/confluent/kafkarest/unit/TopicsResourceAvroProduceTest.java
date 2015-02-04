@@ -114,19 +114,19 @@ public class TopicsResourceAvroProduceTest
     EasyMock.reset(mdObserver, producerPool);
   }
 
-  private <K,V> Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
-                                        Versions.EmbeddedFormat recordFormat,
-                                        TopicProduceRequest request,
-                                        final Map<Integer, Long> resultOffsets) {
+  private <K, V> Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
+                                         Versions.EmbeddedFormat recordFormat,
+                                         TopicProduceRequest request,
+                                         final Map<Integer, Long> resultOffsets) {
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
         new Capture<ProducerPool.ProduceRequestCallback>();
     EasyMock.expect(mdObserver.topicExists(topic)).andReturn(true);
     producerPool.produce(EasyMock.eq(topic),
-                         EasyMock.eq((Integer)null),
+                         EasyMock.eq((Integer) null),
                          EasyMock.eq(recordFormat),
                          EasyMock.<SchemaHolder>anyObject(),
-                         EasyMock.<Collection<? extends ProduceRecord<K,V>>>anyObject(),
+                         EasyMock.<Collection<? extends ProduceRecord<K, V>>>anyObject(),
                          EasyMock.capture(produceCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
@@ -170,8 +170,8 @@ public class TopicsResourceAvroProduceTest
             Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
             response.getOffsets()
         );
-        assertEquals((Integer)1, response.getKeySchemaId());
-        assertEquals((Integer)2, response.getValueSchemaId());
+        assertEquals((Integer) 1, response.getKeySchemaId());
+        assertEquals((Integer) 2, response.getValueSchemaId());
 
         EasyMock.reset(mdObserver, producerPool);
       }

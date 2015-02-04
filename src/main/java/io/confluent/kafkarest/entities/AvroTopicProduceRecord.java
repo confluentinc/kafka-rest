@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import javax.validation.constraints.Min;
 
 public class AvroTopicProduceRecord extends AvroProduceRecord
-    implements TopicProduceRecord<JsonNode,JsonNode> {
+    implements TopicProduceRecord<JsonNode, JsonNode> {
 
   // When producing to a topic, a partition may be explicitly requested.
   @Min(0)

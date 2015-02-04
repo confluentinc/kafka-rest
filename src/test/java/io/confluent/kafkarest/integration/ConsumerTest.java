@@ -41,18 +41,18 @@ public class ConsumerTest extends AbstractConsumerTest {
   private static final Topic topic = new Topic(topicName, new Properties(), partitions);
   private static final String groupName = "testconsumergroup";
 
-  private final List<ProducerRecord<byte[],byte[]>> recordsOnlyValues = Arrays.asList(
-      new ProducerRecord<byte[],byte[]>(topicName, "value".getBytes()),
-      new ProducerRecord<byte[],byte[]>(topicName, "value2".getBytes()),
-      new ProducerRecord<byte[],byte[]>(topicName, "value3".getBytes()),
-      new ProducerRecord<byte[],byte[]>(topicName, "value4".getBytes())
+  private final List<ProducerRecord<byte[], byte[]>> recordsOnlyValues = Arrays.asList(
+      new ProducerRecord<byte[], byte[]>(topicName, "value".getBytes()),
+      new ProducerRecord<byte[], byte[]>(topicName, "value2".getBytes()),
+      new ProducerRecord<byte[], byte[]>(topicName, "value3".getBytes()),
+      new ProducerRecord<byte[], byte[]>(topicName, "value4".getBytes())
   );
 
-  private final List<ProducerRecord<byte[],byte[]>> recordsWithKeys = Arrays.asList(
-      new ProducerRecord<byte[],byte[]>(topicName, "key".getBytes(), "value".getBytes()),
-      new ProducerRecord<byte[],byte[]>(topicName, "key".getBytes(), "value2".getBytes()),
-      new ProducerRecord<byte[],byte[]>(topicName, "key".getBytes(), "value3".getBytes()),
-      new ProducerRecord<byte[],byte[]>(topicName, "key".getBytes(), "value4".getBytes())
+  private final List<ProducerRecord<byte[], byte[]>> recordsWithKeys = Arrays.asList(
+      new ProducerRecord<byte[], byte[]>(topicName, "key".getBytes(), "value".getBytes()),
+      new ProducerRecord<byte[], byte[]>(topicName, "key".getBytes(), "value2".getBytes()),
+      new ProducerRecord<byte[], byte[]>(topicName, "key".getBytes(), "value3".getBytes()),
+      new ProducerRecord<byte[], byte[]>(topicName, "key".getBytes(), "value4".getBytes())
   );
 
 

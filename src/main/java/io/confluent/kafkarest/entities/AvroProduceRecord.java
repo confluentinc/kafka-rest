@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class AvroProduceRecord extends ProduceRecordBase<JsonNode,JsonNode> {
+public class AvroProduceRecord extends ProduceRecordBase<JsonNode, JsonNode> {
 
   @JsonCreator
   public AvroProduceRecord(@JsonProperty("key") JsonNode key,

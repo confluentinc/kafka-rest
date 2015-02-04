@@ -93,8 +93,8 @@ public class TopicsResourceBinaryProduceTest
         new BinaryTopicProduceRecord("key2".getBytes(), "value2".getBytes(), 0)
     );
     produceRecordsWithNullValues = Arrays.asList(
-        new BinaryTopicProduceRecord("key".getBytes(), (byte[])null),
-        new BinaryTopicProduceRecord("key2".getBytes(), (byte[])null)
+        new BinaryTopicProduceRecord("key".getBytes(), (byte[]) null),
+        new BinaryTopicProduceRecord("key2".getBytes(), (byte[]) null)
     );
     produceOffsets = new HashMap<Integer, Long>();
     produceOffsets.put(0, 1L);
@@ -108,10 +108,10 @@ public class TopicsResourceBinaryProduceTest
     EasyMock.reset(mdObserver, producerPool);
   }
 
-  private <K,V> Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
-                                        Versions.EmbeddedFormat recordFormat,
-                                        List<? extends TopicProduceRecord<K,V>> records,
-                                        final Map<Integer, Long> resultOffsets) {
+  private <K, V> Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
+                                         Versions.EmbeddedFormat recordFormat,
+                                         List<? extends TopicProduceRecord<K, V>> records,
+                                         final Map<Integer, Long> resultOffsets) {
     final TopicProduceRequest request = new TopicProduceRequest();
     request.setRecords(records);
     final Capture<ProducerPool.ProduceRequestCallback>
@@ -119,10 +119,10 @@ public class TopicsResourceBinaryProduceTest
         new Capture<ProducerPool.ProduceRequestCallback>();
     EasyMock.expect(mdObserver.topicExists(topic)).andReturn(true);
     producerPool.produce(EasyMock.eq(topic),
-                         EasyMock.eq((Integer)null),
+                         EasyMock.eq((Integer) null),
                          EasyMock.eq(recordFormat),
                          EasyMock.<SchemaHolder>anyObject(),
-                         EasyMock.<Collection<? extends ProduceRecord<K,V>>>anyObject(),
+                         EasyMock.<Collection<? extends ProduceRecord<K, V>>>anyObject(),
                          EasyMock.capture(produceCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
@@ -130,7 +130,7 @@ public class TopicsResourceBinaryProduceTest
         if (resultOffsets == null) {
           produceCallback.getValue().onException(new Exception());
         } else {
-          produceCallback.getValue().onCompletion((Integer)null, (Integer)null, resultOffsets);
+          produceCallback.getValue().onCompletion((Integer) null, (Integer) null, resultOffsets);
         }
         return null;
       }

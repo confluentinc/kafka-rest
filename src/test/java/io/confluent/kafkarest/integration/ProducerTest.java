@@ -36,9 +36,9 @@ import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.PartitionProduceResponse;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceResponse;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.kafkarest.entities.TopicProduceResponse;
 import kafka.serializer.Decoder;
 import kafka.serializer.DefaultDecoder;
 import scala.collection.JavaConversions;
@@ -97,10 +97,10 @@ public class ProducerTest extends ClusterTestHarness {
   );
 
   private final List<BinaryTopicProduceRecord> topicRecordsWithNullValues = Arrays.asList(
-      new BinaryTopicProduceRecord("key".getBytes(), (byte[])null),
-      new BinaryTopicProduceRecord("key".getBytes(), (byte[])null),
-      new BinaryTopicProduceRecord("key".getBytes(), (byte[])null),
-      new BinaryTopicProduceRecord("key".getBytes(), (byte[])null)
+      new BinaryTopicProduceRecord("key".getBytes(), (byte[]) null),
+      new BinaryTopicProduceRecord("key".getBytes(), (byte[]) null),
+      new BinaryTopicProduceRecord("key".getBytes(), (byte[]) null),
+      new BinaryTopicProduceRecord("key".getBytes(), (byte[]) null)
   );
   private final List<PartitionOffset> partitionOffsetsWithNullValues = Arrays.asList(
       new PartitionOffset(1, 3)
@@ -143,8 +143,8 @@ public class ProducerTest extends ClusterTestHarness {
                                       new Properties());
   }
 
-  private <K,V> void testProduceToTopic(List<? extends TopicProduceRecord> records,
-                                        List<PartitionOffset> offsetResponses) {
+  private <K, V> void testProduceToTopic(List<? extends TopicProduceRecord> records,
+                                         List<PartitionOffset> offsetResponses) {
     TopicProduceRequest payload = new TopicProduceRequest();
     payload.setRecords(records);
     Response response = request("/topics/" + topicName)
@@ -191,8 +191,8 @@ public class ProducerTest extends ClusterTestHarness {
   }
 
 
-  private <K,V> void testProduceToPartition(List<? extends ProduceRecord<K,V>> records,
-                                            PartitionOffset offsetResponse) {
+  private <K, V> void testProduceToPartition(List<? extends ProduceRecord<K, V>> records,
+                                             PartitionOffset offsetResponse) {
     PartitionProduceRequest payload = new PartitionProduceRequest();
     payload.setRecords(records);
     Response response = request("/topics/" + topicName + "/partitions/0")

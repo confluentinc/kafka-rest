@@ -20,10 +20,11 @@ import javax.validation.ConstraintViolationException;
 
 /**
  * Exception thrown when conversion fails. Since this should generally be converted into a 422 HTTP
- * status, this class extends ConstraintViolationException so you get the expected behavior if
- * you don't catch the exception.
+ * status, this class extends ConstraintViolationException so you get the expected behavior if you
+ * don't catch the exception.
  */
 public class ConversionException extends ConstraintViolationException {
+
   ConversionException(String msg) {
     super(msg, null);
   }
