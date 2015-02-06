@@ -54,7 +54,6 @@ public class Errors {
 
   }
 
-  ;
 
   public final static String VALUE_SCHEMA_MISSING_MESSAGE = "Request includes values but does not "
                                                             + "include value schema";
@@ -66,5 +65,12 @@ public class Errors {
 
   }
 
-  ;
+  public final static String JSON_AVRO_CONVERSION_MESSAGE = "Conversion of JSON to Avro failed.";
+  public final static int JSON_AVRO_CONVERSION_ERROR_CODE = 42203;
+
+  public static RestConstraintViolationException jsonAvroConversionException() {
+    return new RestConstraintViolationException(JSON_AVRO_CONVERSION_MESSAGE,
+                                                JSON_AVRO_CONVERSION_ERROR_CODE);
+
+  }
 }
