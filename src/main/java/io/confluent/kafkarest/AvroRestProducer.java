@@ -28,6 +28,7 @@ import java.util.Collection;
 
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafkarest.converters.AvroConverter;
+import io.confluent.kafkarest.converters.ConversionException;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.SchemaHolder;
 import io.confluent.rest.exceptions.RestException;
@@ -49,20 +50,22 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
   public void produce(ProduceTask task, String topic, Integer partition,
                       Collection<? extends ProduceRecord<JsonNode, JsonNode>> records) {
     SchemaHolder schemaHolder = task.getSchemaHolder();
-    Schema keySchema, valueSchema;
+    Schema keySchema = null, valueSchema = null;
     Integer keySchemaId = schemaHolder.getKeySchemaId();
     Integer valueSchemaId = schemaHolder.getValueSchemaId();
     try {
+      // If both ID and schema are null, that may be ok. Validation of the ProduceTask by the
+      // caller should have checked this already. Any
       if (keySchemaId != null) {
         keySchema = keySerializer.getByID(keySchemaId);
-      } else {
+      } else if (schemaHolder.getKeySchema() != null) {
         keySchema = new Schema.Parser().parse(schemaHolder.getKeySchema());
         keySchemaId = keySerializer.register(topic + "-key", keySchema);
       }
 
       if (valueSchemaId != null) {
         valueSchema = valueSerializer.getByID(valueSchemaId);
-      } else {
+      } else if (schemaHolder.getValueSchema() != null) {
         valueSchema = new Schema.Parser().parse(schemaHolder.getValueSchema());
         valueSchemaId = valueSerializer.register(topic + "-value", valueSchema);
       }
@@ -79,10 +82,18 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
     // the entire request so we don't get partially sent requests
     ArrayList<ProducerRecord<Object, Object>> kafkaRecords
         = new ArrayList<ProducerRecord<Object, Object>>();
-    for (ProduceRecord<JsonNode, JsonNode> record : records) {
-      Object key = AvroConverter.toAvro(record.getKey(), keySchema);
-      Object value = AvroConverter.toAvro(record.getValue(), valueSchema);
-      kafkaRecords.add(new ProducerRecord(topic, partition, key, value));
+    try {
+      for (ProduceRecord<JsonNode, JsonNode> record : records) {
+        // Beware of null schemas and NullNodes here: we need to avoid attempting the conversion
+        // if there isn't a schema. Validation will have already checked that all the keys/values
+        // were NullNodes.
+        Object key = (keySchema != null ? AvroConverter.toAvro(record.getKey(), keySchema) : null);
+        Object value = (valueSchema != null
+                        ? AvroConverter.toAvro(record.getValue(), valueSchema) : null);
+        kafkaRecords.add(new ProducerRecord(topic, partition, key, value));
+      }
+    } catch (ConversionException e) {
+      throw Errors.jsonAvroConversionException();
     }
     for (ProducerRecord<Object, Object> rec : kafkaRecords) {
       producer.send(rec, task);

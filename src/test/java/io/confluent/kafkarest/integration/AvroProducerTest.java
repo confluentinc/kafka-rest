@@ -98,19 +98,18 @@ public class AvroProducerTest extends ClusterTestHarness {
       new AvroTopicProduceRecord(testKeys[3], testValues[3], 2)
   );
   private final List<PartitionOffset> partitionOffsetsWithPartitionsAndKeys = Arrays.asList(
-      new PartitionOffset(0, 0),
-      new PartitionOffset(1, 1),
-      new PartitionOffset(2, 0)
+      new PartitionOffset(0, 1),
+      new PartitionOffset(1, 1)
   );
 
   // Produce to partition inputs & results
-  private final List<AvroProduceRecord> partitionRecordsWithKeys = Arrays.asList(
-      new AvroProduceRecord(testKeys[0], testValues[0]),
-      new AvroProduceRecord(testKeys[0], testValues[1]),
-      new AvroProduceRecord(testKeys[0], testValues[2]),
-      new AvroProduceRecord(testKeys[0], testValues[3])
+  private final List<AvroProduceRecord> partitionRecordsOnlyValues = Arrays.asList(
+      new AvroProduceRecord(testValues[0]),
+      new AvroProduceRecord(testValues[1]),
+      new AvroProduceRecord(testValues[2]),
+      new AvroProduceRecord(testValues[3])
   );
-  private final PartitionOffset producePartitionOffsetWithKeys = new PartitionOffset(0, 3);
+  private final PartitionOffset producePartitionOffsetOnlyValues = new PartitionOffset(0, 3);
 
 
   @Before
@@ -156,7 +155,6 @@ public class AvroProducerTest extends ClusterTestHarness {
                                              PartitionOffset offsetResponse) {
     PartitionProduceRequest payload = new PartitionProduceRequest();
     payload.setRecords(records);
-    payload.setKeySchema(keySchemaStr);
     payload.setValueSchema(valueSchemaStr);
     Response response = request("/topics/" + topicName + "/partitions/0")
         .post(Entity.entity(payload, Versions.KAFKA_V1_JSON_AVRO));
@@ -167,12 +165,11 @@ public class AvroProducerTest extends ClusterTestHarness {
     TestUtils.assertTopicContains(zkConnect, topicName,
                                   payload.getRecords(), (Integer) 0,
                                   avroDecoder, avroDecoder, false);
-    assertEquals(poffsetResponse.getKeySchemaId(), (Integer) 0);
-    assertEquals(poffsetResponse.getValueSchemaId(), (Integer) 1);
+    assertEquals((Integer) 0, poffsetResponse.getValueSchemaId());
   }
 
   @Test
-  public void testProduceToPartitionWithKeys() {
-    testProduceToPartition(partitionRecordsWithKeys, producePartitionOffsetWithKeys);
+  public void testProduceToPartitionOnlyValues() {
+    testProduceToPartition(partitionRecordsOnlyValues, producePartitionOffsetOnlyValues);
   }
 }

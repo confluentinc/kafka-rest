@@ -95,8 +95,8 @@ public class TopicsResource {
     // be available if there are any non-null entries
     boolean hasKeys = false, hasValues = false;
     for (AvroTopicProduceRecord rec : request.getRecords()) {
-      hasKeys = hasKeys || (rec.getJsonKey() != null);
-      hasValues = hasValues || (rec.getJsonValue() != null);
+      hasKeys = hasKeys || !rec.getJsonKey().isNull();
+      hasValues = hasValues || !rec.getJsonValue().isNull();
     }
     if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
       throw Errors.keySchemaMissingException();
