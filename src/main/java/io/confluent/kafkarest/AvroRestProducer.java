@@ -26,13 +26,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.converters.ConversionException;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.SchemaHolder;
 import io.confluent.rest.exceptions.RestException;
-import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 
 public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
 

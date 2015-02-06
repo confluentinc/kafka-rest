@@ -41,8 +41,8 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.TestUtils;
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.SchemaHolder;
@@ -115,7 +115,7 @@ public class TopicsResourceAvroProduceTest
   }
 
   private <K, V> Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
-                                         Versions.EmbeddedFormat recordFormat,
+                                         EmbeddedFormat recordFormat,
                                          TopicProduceRequest request,
                                          final Map<Integer, Long> resultOffsets) {
     final Capture<ProducerPool.ProduceRequestCallback>
@@ -161,7 +161,7 @@ public class TopicsResourceAvroProduceTest
         Response
             rawResponse =
             produceToTopic("topic1", mediatype.header, requestMediatype,
-                           Versions.EmbeddedFormat.AVRO,
+                           EmbeddedFormat.AVRO,
                            request, produceOffsets);
         assertOKResponse(rawResponse, mediatype.expected);
         TopicProduceResponse response = rawResponse.readEntity(TopicProduceResponse.class);
@@ -187,7 +187,7 @@ public class TopicsResourceAvroProduceTest
 
         Response rawResponse =
             produceToTopic("topic1", mediatype.header, requestMediatype,
-                           Versions.EmbeddedFormat.AVRO,
+                           EmbeddedFormat.AVRO,
                            request, produceOffsets);
         assertOKResponse(rawResponse, mediatype.expected);
 

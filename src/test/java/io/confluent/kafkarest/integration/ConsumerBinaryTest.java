@@ -23,13 +23,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import javax.ws.rs.core.GenericType;
+
+import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import kafka.utils.TestUtils;
 import scala.collection.JavaConversions;
 
-public class ConsumerTest extends AbstractConsumerTest {
+public class ConsumerBinaryTest extends AbstractConsumerTest {
 
   private static final String topicName = "topic1";
   private static final List<Partition> partitions = Arrays.asList(
@@ -55,6 +60,9 @@ public class ConsumerTest extends AbstractConsumerTest {
       new ProducerRecord<byte[], byte[]>(topicName, "key".getBytes(), "value4".getBytes())
   );
 
+  private static final GenericType<List<BinaryConsumerRecord>> binaryConsumerRecordType
+      = new GenericType<List<BinaryConsumerRecord>>() {
+  };
 
   @Before
   @Override
@@ -68,38 +76,60 @@ public class ConsumerTest extends AbstractConsumerTest {
 
   @Test
   public void testConsumeOnlyValues() {
-    String instanceUri = startConsumeMessages(groupName, topicName);
-    produceMessages(recordsOnlyValues);
-    consumeMessages(instanceUri, topicName, recordsOnlyValues);
+    // Between these tests we either leave the config null or request the binary embedded format
+    // so we can test that both will result in binary consumers. We also us varying accept
+    // parameters to test that we default to Binary for various values.
+    String instanceUri = startConsumeMessages(groupName, topicName, null, null,
+                                              Versions.KAFKA_V1_JSON_BINARY);
+    produceBinaryMessages(recordsOnlyValues);
+    consumeMessages(instanceUri, topicName, recordsOnlyValues,
+                    Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
+                    binaryConsumerRecordType, null);
     commitOffsets(instanceUri);
   }
 
   @Test
   public void testConsumeWithKeys() {
-    String instanceUri = startConsumeMessages(groupName, topicName);
-    produceMessages(recordsWithKeys);
-    consumeMessages(instanceUri, topicName, recordsWithKeys);
+    String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
+                                              Versions.KAFKA_V1_JSON_BINARY,
+                                              Versions.KAFKA_V1_JSON_BINARY);
+    produceBinaryMessages(recordsWithKeys);
+    consumeMessages(instanceUri, topicName, recordsWithKeys,
+                    Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
+                    binaryConsumerRecordType, null);
     commitOffsets(instanceUri);
   }
 
   @Test
   public void testConsumeInvalidTopic() {
-    startConsumeMessages(groupName, "nonexistenttopic", true);
+    startConsumeMessages(groupName, "nonexistenttopic", null,
+                         Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY, true);
   }
 
   @Test
   public void testConsumeTimeout() {
-    String instanceUri = startConsumeMessages(groupName, topicName);
-    produceMessages(recordsWithKeys);
-    consumeMessages(instanceUri, topicName, recordsWithKeys);
-    consumeForTimeout(instanceUri, topicName);
+    String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
+                                              Versions.KAFKA_V1_JSON,
+                                              Versions.KAFKA_V1_JSON_BINARY);
+    produceBinaryMessages(recordsWithKeys);
+    consumeMessages(instanceUri, topicName, recordsWithKeys,
+                    Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
+                    binaryConsumerRecordType, null);
+    consumeForTimeout(
+        instanceUri, topicName,
+        Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY, binaryConsumerRecordType
+    );
   }
 
   @Test
   public void testDeleteConsumer() {
-    String instanceUri = startConsumeMessages(groupName, topicName);
-    produceMessages(recordsWithKeys);
-    consumeMessages(instanceUri, topicName, recordsWithKeys);
+    String instanceUri = startConsumeMessages(groupName, topicName, null,
+                                              Versions.KAFKA_DEFAULT_JSON,
+                                              Versions.KAFKA_V1_JSON_BINARY);
+    produceBinaryMessages(recordsWithKeys);
+    consumeMessages(instanceUri, topicName, recordsWithKeys,
+                    Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
+                    binaryConsumerRecordType, null);
     deleteConsumer(instanceUri);
   }
 }

@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.SchemaHolder;
 import kafka.cluster.Broker;
@@ -43,8 +44,8 @@ import scala.collection.Seq;
 public class ProducerPool {
 
   private static final Logger log = LoggerFactory.getLogger(ProducerPool.class);
-  private Map<Versions.EmbeddedFormat, RestProducer> producers =
-      new HashMap<Versions.EmbeddedFormat, RestProducer>();
+  private Map<EmbeddedFormat, RestProducer> producers =
+      new HashMap<EmbeddedFormat, RestProducer>();
 
   public ProducerPool(KafkaRestConfig appConfig, ZkClient zkClient) {
     Seq<Broker> brokerSeq = ZkUtils.getAllBrokersInCluster(zkClient);
@@ -66,7 +67,7 @@ public class ProducerPool {
     KafkaProducer<byte[], byte[]> byteArrayProducer
         = new KafkaProducer<byte[], byte[]>(props, keySerializer, valueSerializer);
     producers.put(
-        Versions.EmbeddedFormat.BINARY,
+        EmbeddedFormat.BINARY,
         new BinaryRestProducer(byteArrayProducer, keySerializer, valueSerializer));
 
     props = new HashMap<String, Object>();
@@ -80,12 +81,12 @@ public class ProducerPool {
     KafkaProducer<Object, Object> avroProducer
         = new KafkaProducer<Object, Object>(props, avroKeySerializer, avroValueSerializer);
     producers.put(
-        Versions.EmbeddedFormat.AVRO,
+        EmbeddedFormat.AVRO,
         new AvroRestProducer(avroProducer, avroKeySerializer, avroValueSerializer));
   }
 
   public <K, V> void produce(String topic, Integer partition,
-                             Versions.EmbeddedFormat recordFormat,
+                             EmbeddedFormat recordFormat,
                              SchemaHolder schemaHolder,
                              Collection<? extends ProduceRecord<K, V>> records,
                              ProduceRequestCallback callback) {

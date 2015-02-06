@@ -17,15 +17,21 @@
 package io.confluent.kafkarest.converters;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericEnumSymbol;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.IndexedRecord;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.confluent.kafkarest.entities.EntityUtils;
 
@@ -176,5 +182,92 @@ public class AvroConverter {
       default:
         throw new ConversionException("Unsupported schema type.");
     }
+  }
+
+  /**
+   * Converts Avro data (including primitive types) to their equivalent JsonNode representation.
+   *
+   * @param value the value to convert
+   * @param size  (out) the approximate size of the JSON data when serialized. Since this method is
+   *              called recursively, this out parameter should be passed in initialized to zero and
+   *              the single instance is shared by all recursive calls
+   * @return the root JsonNode representing the converted object
+   */
+  public static JsonNode toJson(Object value, AtomicInteger size) {
+    if (value == null) {
+      size.addAndGet(4);
+      return JsonNodeFactory.instance.nullNode();
+    }
+
+    if (value instanceof Boolean) {
+      size.addAndGet(5);
+      return JsonNodeFactory.instance.booleanNode((Boolean) value);
+    } else if (value instanceof Integer) {
+      // All numbers use the average number of digits expected for their size. This is just an
+      // approximation, so it's ok if these aren't entirely accurate
+      size.addAndGet(3);
+      return JsonNodeFactory.instance.numberNode((Integer) value);
+    } else if (value instanceof Long) {
+      size.addAndGet(8);
+      return JsonNodeFactory.instance.numberNode((Long) value);
+    } else if (value instanceof Float) {
+      size.addAndGet(10);
+      return JsonNodeFactory.instance.numberNode((Float) value);
+    } else if (value instanceof Double) {
+      size.addAndGet(12);
+      return JsonNodeFactory.instance.numberNode((Double) value);
+    } else if (value instanceof String) {
+      // Size of string + quotes. Probably a bit of an underestimate since there will also be
+      // escaping.
+      size.addAndGet(((String) value).length() + 2);
+      return JsonNodeFactory.instance.textNode((String) value);
+    } else if (value instanceof byte[]) {
+      // Size of base64 string + quotes
+      size.addAndGet((((byte[]) value).length * 4 / 3) + 2);
+      return JsonNodeFactory.instance.textNode(EntityUtils.encodeBase64Binary((byte[]) value));
+    } else if (value instanceof IndexedRecord) {
+      IndexedRecord src = (IndexedRecord) value;
+      ObjectNode result = JsonNodeFactory.instance.objectNode();
+      size.addAndGet(2); // Object braces
+      for (Schema.Field field : src.getSchema().getFields()) {
+        size.addAndGet(field.name().length() + 3); // name, quotes, : separator
+        result.set(field.name(), toJson(src.get(field.pos()), size));
+      }
+      return result;
+    } else if (value instanceof GenericArray) {
+      GenericArray src = (GenericArray) value;
+      ArrayNode result = JsonNodeFactory.instance.arrayNode();
+      size.addAndGet(2); // Array braces
+      for (int i = 0; i < src.size(); i++) {
+        result.add(toJson(src.get(i), size));
+      }
+      return result;
+    } else if (value instanceof GenericEnumSymbol) {
+      String enumString = ((GenericEnumSymbol) value).toString();
+      size.addAndGet(enumString.length() + 2);
+      return JsonNodeFactory.instance.textNode(enumString);
+    } else if (value instanceof Map<?, ?>) {
+      ObjectNode result = JsonNodeFactory.instance.objectNode();
+      size.addAndGet(2); // Object braces
+      for (Map.Entry entry : ((Map<?, ?>) value).entrySet()) {
+        Object keyObj = entry.getKey();
+        if (!(keyObj instanceof String)) {
+          throw new ConversionException("Map keys must be strings");
+        }
+        String key = (String) keyObj;
+        size.addAndGet(key.length() + 3); // name, quotes, : separator
+        result.set(key, toJson(entry.getValue(), size));
+      }
+      return result;
+    } else if (value instanceof Byte) { // These are last since they're unsupported, should be rare
+      throw new ConversionException("Java Byte is not supported by Avro");
+    } else if (value instanceof Character) {
+      throw new ConversionException("Java Char is not supported by Avro");
+    } else if (value instanceof Short) {
+      throw new ConversionException("Java Short is not supported by Avro");
+    }
+
+    throw new ConversionException("Unexpected type when converting Avro to JSON: "
+                                  + value.getClass().getName());
   }
 }

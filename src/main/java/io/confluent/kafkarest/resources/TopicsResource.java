@@ -36,6 +36,7 @@ import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
 import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
@@ -81,7 +82,7 @@ public class TopicsResource {
   public void produceBinary(final @Suspended AsyncResponse asyncResponse,
                             @PathParam("topic") String topicName,
                             @Valid TopicProduceRequest<BinaryTopicProduceRecord> request) {
-    produce(asyncResponse, topicName, Versions.EmbeddedFormat.BINARY, request);
+    produce(asyncResponse, topicName, EmbeddedFormat.BINARY, request);
   }
 
   @POST
@@ -105,13 +106,13 @@ public class TopicsResource {
       throw Errors.valueSchemaMissingException();
     }
 
-    produce(asyncResponse, topicName, Versions.EmbeddedFormat.AVRO, request);
+    produce(asyncResponse, topicName, EmbeddedFormat.AVRO, request);
   }
 
   public <K, V, R extends TopicProduceRecord<K, V>> void produce(
       final AsyncResponse asyncResponse,
       final String topicName,
-      final Versions.EmbeddedFormat format,
+      final EmbeddedFormat format,
       final TopicProduceRequest<R> request) {
     if (!ctx.getMetadataObserver().topicExists(topicName)) {
       throw Errors.topicNotFoundException();

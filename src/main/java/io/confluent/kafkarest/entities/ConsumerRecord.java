@@ -18,83 +18,59 @@ package io.confluent.kafkarest.entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.io.IOException;
-import java.util.Arrays;
-
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
-import io.confluent.rest.validation.ConstraintViolations;
+public abstract class ConsumerRecord<K, V> {
 
-public class ConsumerRecord {
-
-  private byte[] key;
+  protected K key;
   @NotNull
-  private byte[] value;
+  protected V value;
 
   @Min(0)
-  private int partition;
+  protected int partition;
 
   @Min(0)
-  private long offset;
+  protected long offset;
 
-  public ConsumerRecord(
-      @JsonProperty("key") String key, @JsonProperty("value") String value,
-      @JsonProperty("partition") int partition, @JsonProperty("offset") long offset
-  ) throws IOException {
-    try {
-      if (key != null) {
-        this.key = EntityUtils.parseBase64Binary(key);
-      }
-    } catch (IllegalArgumentException e) {
-      throw ConstraintViolations.simpleException("Record key contains invalid base64 encoding");
-    }
-    try {
-      this.value = EntityUtils.parseBase64Binary(value);
-    } catch (IllegalArgumentException e) {
-      throw ConstraintViolations.simpleException("Record value contains invalid base64 encoding");
-    }
-    this.partition = partition;
-    this.offset = offset;
-  }
-
-  public ConsumerRecord(byte[] key, byte[] value, int partition, long offset) {
+  public ConsumerRecord(K key, V value, int partition, long offset) {
     this.key = key;
     this.value = value;
     this.partition = partition;
     this.offset = offset;
   }
 
+  public ConsumerRecord(int partition, long offset) {
+    this(null, null, partition, offset);
+  }
+
   @JsonIgnore
-  public byte[] getKey() {
+  public K getKey() {
     return key;
   }
 
   @JsonProperty("key")
-  public String getKeyEncoded() {
-    if (key == null) {
-      return null;
-    }
-    return EntityUtils.encodeBase64Binary(key);
+  public Object getJsonKey() {
+    return key;
   }
 
   @JsonIgnore
-  public void setKey(byte[] key) {
+  public void setKey(K key) {
     this.key = key;
   }
 
   @JsonIgnore
-  public byte[] getValue() {
+  public V getValue() {
     return value;
   }
 
   @JsonProperty("value")
-  public String getValueEncoded() {
-    return EntityUtils.encodeBase64Binary(value);
+  public Object getJsonValue() {
+    return value;
   }
 
   @JsonIgnore
-  public void setValue(byte[] value) {
+  public void setValue(V value) {
     this.value = value;
   }
 
@@ -129,16 +105,16 @@ public class ConsumerRecord {
 
     ConsumerRecord that = (ConsumerRecord) o;
 
-    if (partition != that.partition) {
-      return false;
-    }
     if (offset != that.offset) {
       return false;
     }
-    if (!Arrays.equals(key, that.key)) {
+    if (partition != that.partition) {
       return false;
     }
-    if (!Arrays.equals(value, that.value)) {
+    if (key != null ? !key.equals(that.key) : that.key != null) {
+      return false;
+    }
+    if (value != null ? !value.equals(that.value) : that.value != null) {
       return false;
     }
 
@@ -147,8 +123,8 @@ public class ConsumerRecord {
 
   @Override
   public int hashCode() {
-    int result = key != null ? Arrays.hashCode(key) : 0;
-    result = 31 * result + Arrays.hashCode(value);
+    int result = key != null ? key.hashCode() : 0;
+    result = 31 * result + (value != null ? value.hashCode() : 0);
     result = 31 * result + partition;
     result = 31 * result + (int) (offset ^ (offset >>> 32));
     return result;

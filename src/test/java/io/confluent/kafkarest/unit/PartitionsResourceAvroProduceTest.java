@@ -38,8 +38,8 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.TestUtils;
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.AvroProduceRecord;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.PartitionProduceResponse;
@@ -107,7 +107,7 @@ public class PartitionsResourceAvroProduceTest
                                              PartitionProduceRequest request,
                                              String acceptHeader,
                                              String requestMediatype,
-                                             Versions.EmbeddedFormat recordFormat,
+                                             EmbeddedFormat recordFormat,
                                              final Map<Integer, Long> resultOffsets) {
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
@@ -154,7 +154,7 @@ public class PartitionsResourceAvroProduceTest
         request.setValueSchema(valueSchemaStr);
         Response rawResponse =
             produceToPartition(topicName, 0, request, mediatype.header, requestMediatype,
-                               Versions.EmbeddedFormat.AVRO, produceOffsets);
+                               EmbeddedFormat.AVRO, produceOffsets);
         assertOKResponse(rawResponse, mediatype.expected);
         PartitionProduceResponse response = rawResponse.readEntity(PartitionProduceResponse.class);
 
@@ -175,7 +175,7 @@ public class PartitionsResourceAvroProduceTest
         request.setValueSchemaId(2);
         Response rawResponse =
             produceToPartition(topicName, 0, request, mediatype.header, requestMediatype,
-                               Versions.EmbeddedFormat.AVRO, produceOffsets);
+                               EmbeddedFormat.AVRO, produceOffsets);
         assertOKResponse(rawResponse, mediatype.expected);
         PartitionProduceResponse response = rawResponse.readEntity(PartitionProduceResponse.class);
 

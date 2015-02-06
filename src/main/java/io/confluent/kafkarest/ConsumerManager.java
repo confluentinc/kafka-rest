@@ -31,10 +31,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.ws.rs.core.Response;
+
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.rest.exceptions.RestNotFoundException;
+import io.confluent.rest.exceptions.RestServerErrorException;
 import kafka.consumer.Consumer;
 import kafka.consumer.ConsumerConfig;
 import kafka.javaapi.consumer.ConsumerConnector;
@@ -54,6 +57,9 @@ public class ConsumerManager {
   private final int iteratorTimeoutMs;
 
   private final AtomicInteger nextId = new AtomicInteger(0);
+  // ConsumerState is generic, but we store them untyped here. This allows many operations to
+  // work without having to know the types for the consumer, only requiring type information
+  // during read operations.
   private final Map<ConsumerInstanceId, ConsumerState> consumers =
       new HashMap<ConsumerInstanceId, ConsumerState>();
   // Read operations are common and there may be many concurrently, so they are farmed out to
@@ -139,7 +145,19 @@ public class ConsumerManager {
 
     synchronized (this) {
       ConsumerInstanceId cid = new ConsumerInstanceId(group, id);
-      ConsumerState state = new ConsumerState(this.config, cid, consumer);
+      ConsumerState state;
+      switch (config.getFormat()) {
+        case BINARY:
+          state = new BinaryConsumerState(this.config, cid, consumer);
+          break;
+        case AVRO:
+          state = new AvroConsumerState(this.config, cid, consumer);
+          break;
+        default:
+          throw new RestServerErrorException("Invalid embedded format for new consumer.",
+                                             Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+      }
+
       consumers.put(cid, state);
       consumersByExpiration.add(state);
       this.notifyAll();
@@ -148,18 +166,28 @@ public class ConsumerManager {
     return id;
   }
 
-  public interface ReadCallback {
+  public interface ReadCallback<K, V> {
 
-    public void onCompletion(List<ConsumerRecord> records, Exception e);
+    public void onCompletion(List<? extends ConsumerRecord<K, V>> records, Exception e);
   }
 
-  public Future readTopic(final String group, final String instance, final String topic,
-                          final long maxBytes, final ReadCallback callback) {
+  // The parameter consumerStateType works around type erasure, allowing us to verify at runtime
+  // that the ConsumerState we looked up is of the expected type and will therefore contain the
+  // correct decoders
+  public <KafkaK, KafkaV, ClientK, ClientV>
+  Future readTopic(final String group, final String instance, final String topic,
+                   Class<? extends ConsumerState<KafkaK, KafkaV, ClientK, ClientV>> consumerStateType,
+                   final long maxBytes, final ReadCallback callback) {
     final ConsumerState state;
     try {
       state = getConsumerInstance(group, instance);
     } catch (RestNotFoundException e) {
       callback.onCompletion(null, e);
+      return null;
+    }
+
+    if (!consumerStateType.isInstance(state)) {
+      callback.onCompletion(null, Errors.consumerFormatMismatch());
       return null;
     }
 
@@ -171,17 +199,20 @@ public class ConsumerManager {
 
     int workerId = nextWorker.getAndIncrement() % workers.size();
     ConsumerWorker worker = workers.get(workerId);
-    return worker.readTopic(state, topic, maxBytes, new ConsumerWorker.ReadCallback() {
-      @Override
-      public void onCompletion(List<ConsumerRecord> records) {
-        updateExpiration(state);
-        if (records == null) {
-          callback.onCompletion(null, Errors.consumerInstanceNotFoundException());
-        } else {
-          callback.onCompletion(records, null);
+    return worker.readTopic(
+        state, topic, maxBytes,
+        new ConsumerWorkerReadCallback<ClientK, ClientV>() {
+          @Override
+          public void onCompletion(List<? extends ConsumerRecord<ClientK, ClientV>> records) {
+            updateExpiration(state);
+            if (records == null) {
+              callback.onCompletion(null, Errors.consumerInstanceNotFoundException());
+            } else {
+              callback.onCompletion(records, null);
+            }
+          }
         }
-      }
-    });
+    );
   }
 
   public interface CommitCallback {

@@ -37,9 +37,9 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.TestUtils;
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BinaryProduceRecord;
 import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.PartitionProduceResponse;
@@ -100,7 +100,7 @@ public class PartitionsResourceBinaryProduceTest
 
   private <K, V> Response produceToPartition(String topic, int partition, String acceptHeader,
                                              String requestMediatype,
-                                             Versions.EmbeddedFormat recordFormat,
+                                             EmbeddedFormat recordFormat,
                                              List<? extends ProduceRecord<K, V>> records,
                                              final Map<Integer, Long> resultOffsets) {
     final PartitionProduceRequest request = new PartitionProduceRequest();
@@ -147,7 +147,7 @@ public class PartitionsResourceBinaryProduceTest
         Response
             rawResponse =
             produceToPartition(topicName, 0, mediatype.header, requestMediatype,
-                               Versions.EmbeddedFormat.BINARY,
+                               EmbeddedFormat.BINARY,
                                produceRecordsOnlyValues, produceOffsets);
         assertOKResponse(rawResponse, mediatype.expected);
         PartitionProduceResponse response = rawResponse.readEntity(PartitionProduceResponse.class);
@@ -168,7 +168,7 @@ public class PartitionsResourceBinaryProduceTest
         Response
             rawResponse =
             produceToPartition(topicName, 0, mediatype.header, requestMediatype,
-                               Versions.EmbeddedFormat.BINARY,
+                               EmbeddedFormat.BINARY,
                                produceRecordsWithKeys, produceOffsets);
         assertOKResponse(rawResponse, mediatype.expected);
         PartitionProduceResponse response = rawResponse.readEntity(PartitionProduceResponse.class);
@@ -190,7 +190,7 @@ public class PartitionsResourceBinaryProduceTest
         Response
             rawResponse =
             produceToPartition(topicName, 0, mediatype.header, requestMediatype,
-                               Versions.EmbeddedFormat.BINARY,
+                               EmbeddedFormat.BINARY,
                                produceRecordsWithKeys, null);
         assertErrorResponse(
             Response.Status.INTERNAL_SERVER_ERROR, rawResponse,
