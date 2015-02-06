@@ -32,6 +32,7 @@ import io.confluent.kafkarest.converters.ConversionException;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.SchemaHolder;
 import io.confluent.rest.exceptions.RestException;
+import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 
 public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
 
@@ -69,9 +70,11 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
         valueSchema = new Schema.Parser().parse(schemaHolder.getValueSchema());
         valueSchemaId = valueSerializer.register(topic + "-value", valueSchema);
       }
-    } catch (IOException e) {
+    } catch (RestClientException e) {
       // FIXME We should return more specific error codes (unavailable vs registration failed in
       // a way that isn't retriable?).
+      throw new RestException("Schema registration or lookup failed", 408, 40801, e);
+    } catch (IOException e) {
       throw new RestException("Schema registration or lookup failed", 408, 40801, e);
     }
 
