@@ -57,14 +57,14 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
         keySchema = keySerializer.getByID(keySchemaId);
       } else {
         keySchema = new Schema.Parser().parse(schemaHolder.getKeySchema());
-        keySchemaId = keySerializer.register(topic, keySchema);
+        keySchemaId = keySerializer.register(topic + "-key", keySchema);
       }
 
       if (valueSchemaId != null) {
         valueSchema = valueSerializer.getByID(valueSchemaId);
       } else {
         valueSchema = new Schema.Parser().parse(schemaHolder.getValueSchema());
-        valueSchemaId = valueSerializer.register(topic, valueSchema);
+        valueSchemaId = valueSerializer.register(topic + "-value", valueSchema);
       }
     } catch (IOException e) {
       // FIXME We should return more specific error codes (unavailable vs registration failed in
