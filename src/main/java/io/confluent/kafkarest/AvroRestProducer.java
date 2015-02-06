@@ -55,7 +55,7 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
     Integer valueSchemaId = schemaHolder.getValueSchemaId();
     try {
       // If both ID and schema are null, that may be ok. Validation of the ProduceTask by the
-      // caller should have checked this already. Any
+      // caller should have checked this already.
       if (keySchemaId != null) {
         keySchema = keySerializer.getByID(keySchemaId);
       } else if (schemaHolder.getKeySchema() != null) {
