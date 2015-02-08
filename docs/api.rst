@@ -623,7 +623,7 @@ any consumers before it is terminated.
         "base_uri": "http://proxy-instance.kafkaproxy.example.com/consumers/testgroup/instances/my_consumer"
       }
 
-.. http:post:: /consumers/(string:group_name)/instances/(string:instance)
+.. http:post:: /consumers/(string:group_name)/instances/(string:instance)/offsets
 
    Commit offsets for the consumer. Returns a list of the partitions with the committed offsets.
 

@@ -79,7 +79,7 @@ public class ConsumersResource {
   }
 
   @POST
-  @Path("/{group}/instances/{instance}")
+  @Path("/{group}/instances/{instance}/offsets")
   @PerformanceMetric("consumer.commit")
   public void commitOffsets(final @Suspended AsyncResponse asyncResponse,
                             final @PathParam("group") String group,
