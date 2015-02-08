@@ -15,9 +15,12 @@
  **/
 package io.confluent.kafkarest.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotNull;
+
+import io.confluent.rest.exceptions.RestConstraintViolationException;
 
 public class ConsumerInstanceConfig {
 
@@ -34,15 +37,31 @@ public class ConsumerInstanceConfig {
   }
 
   public ConsumerInstanceConfig(EmbeddedFormat format) {
-    this(null, format, null, null);
+    // This constructor is only for tests so reparsing the format name is ok
+    this(null, format.name(), null, null);
   }
 
   public ConsumerInstanceConfig(@JsonProperty("id") String id,
-                                @JsonProperty("format") EmbeddedFormat format,
+                                @JsonProperty("format") String format,
                                 @JsonProperty("auto.offset.reset") String autoOffsetReset,
                                 @JsonProperty("auto.commit.enable") String autoCommitEnable) {
     this.id = id;
-    this.format = format != null ? format : DEFAULT_FORMAT;
+    if (format == null) {
+      this.format = DEFAULT_FORMAT;
+    } else {
+      String formatCanonical = format.toUpperCase();
+      for (EmbeddedFormat f : EmbeddedFormat.values()) {
+        if (f.name().equals(formatCanonical)) {
+          this.format = f;
+          break;
+        }
+      }
+      if (this.format == null) {
+        throw new RestConstraintViolationException(
+            "Invalid format type.",
+            RestConstraintViolationException.DEFAULT_ERROR_CODE);
+      }
+    }
     this.autoOffsetReset = autoOffsetReset;
     this.autoCommitEnable = autoCommitEnable;
   }
@@ -57,9 +76,14 @@ public class ConsumerInstanceConfig {
     this.id = id;
   }
 
-  @JsonProperty
+  @JsonIgnore
   public EmbeddedFormat getFormat() {
     return format;
+  }
+
+  @JsonProperty("format")
+  public String getFormatJson() {
+    return format.name().toLowerCase();
   }
 
   @JsonProperty
