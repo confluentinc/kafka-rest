@@ -33,6 +33,7 @@ import javax.ws.rs.core.UriInfo;
 
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.UriUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
@@ -64,9 +65,8 @@ public class ConsumersResource {
       config = new ConsumerInstanceConfig();
     }
     String instanceId = ctx.getConsumerManager().createConsumer(group, config);
-    String
-        instanceBaseUri =
-        uriInfo.getAbsolutePathBuilder().path("instances").path(instanceId).build().toString();
+    String instanceBaseUri = UriUtils.absoluteUriBuilder(ctx.getConfig(), uriInfo)
+        .path("instances").path(instanceId).build().toString();
     return new CreateConsumerInstanceResponse(instanceId, instanceBaseUri);
   }
 
