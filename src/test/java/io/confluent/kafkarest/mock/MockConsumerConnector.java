@@ -24,6 +24,7 @@ import java.util.Vector;
 
 import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.entities.ConsumerRecord;
+import kafka.common.MessageStreamsExistException;
 import kafka.consumer.KafkaStream;
 import kafka.consumer.TopicFilter;
 import kafka.javaapi.consumer.ConsumerConnector;
@@ -42,7 +43,8 @@ public class MockConsumerConnector implements ConsumerConnector {
   private Time time;
   private Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>> streamDataSchedules;
   private static int consumerTimeoutMs;
-
+  private boolean allowMissingSchedule;
+  private boolean messageStreamCreated;
   private static Decoder<byte[]> decoder = new DefaultDecoder(null);
 
   /**
@@ -52,17 +54,14 @@ public class MockConsumerConnector implements ConsumerConnector {
   public MockConsumerConnector(
       Time time, String clientId,
       Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>> streamDataSchedules,
-      int consumerTimeoutMs) {
+      int consumerTimeoutMs,
+      boolean allowMissingSchedule) {
     this.time = time;
     this.clientId = clientId;
     this.streamDataSchedules = streamDataSchedules;
     this.consumerTimeoutMs = consumerTimeoutMs;
-  }
-
-  public MockConsumerConnector(
-      Time time, String clientId,
-      Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>> streamDataSchedules) {
-    this(time, clientId, streamDataSchedules, -1);
+    this.allowMissingSchedule = allowMissingSchedule;
+    this.messageStreamCreated = false;
   }
 
   @Override
@@ -70,6 +69,10 @@ public class MockConsumerConnector implements ConsumerConnector {
       Map<String, Integer> topicCountMap, Decoder<K> kDecoder, Decoder<V> vDecoder) {
     assert (kDecoder instanceof DefaultDecoder);
     assert (vDecoder instanceof DefaultDecoder);
+
+    if (messageStreamCreated) {
+      throw new MessageStreamsExistException("Subscribed twice", null);
+    }
 
     Map<String, List<KafkaStream<K, V>>>
         result =
@@ -80,21 +83,28 @@ public class MockConsumerConnector implements ConsumerConnector {
       assertFalse(
           "MockConsumerConnector does not support multiple subscription requests to a topic",
           subscribedTopics.contains(topic));
-      assertTrue("MockConsumerConnector should have a predetermined schedule for requested streams",
-                 streamDataSchedules.containsKey(topic));
-      assertTrue(
-          "Calls to MockConsumerConnector.createMessageStreams should request the same number of streams as provided to the constructor",
-          streamDataSchedules.get(topic).size() == topicEntry.getValue());
-      List<KafkaStream<K, V>> streams = new Vector<KafkaStream<K, V>>();
-      for (int i = 0; i < topicEntry.getValue(); i++) {
-        streams.add(new KafkaStream<K, V>(
-            new MockConsumerQueue(time, streamDataSchedules.get(topic).get(i)),
-            consumerTimeoutMs, kDecoder, vDecoder, clientId));
+      if (!allowMissingSchedule) {
+        assertTrue(
+            "MockConsumerConnector should have a predetermined schedule for requested streams",
+            streamDataSchedules.containsKey(topic));
+        assertTrue(
+            "Calls to MockConsumerConnector.createMessageStreams should request the same number "
+            + "of streams as provided to the constructor",
+            streamDataSchedules.get(topic).size() == topicEntry.getValue());
       }
-      subscribedTopics.add(topic);
-      result.put(topic, streams);
+      if (streamDataSchedules.get(topic) != null) {
+        List<KafkaStream<K, V>> streams = new Vector<KafkaStream<K, V>>();
+        for (int i = 0; i < topicEntry.getValue(); i++) {
+          streams.add(new KafkaStream<K, V>(
+              new MockConsumerQueue(time, streamDataSchedules.get(topic).get(i)),
+              consumerTimeoutMs, kDecoder, vDecoder, clientId));
+        }
+        subscribedTopics.add(topic);
+        result.put(topic, streams);
+      }
     }
 
+    messageStreamCreated = true;
     return result;
   }
 

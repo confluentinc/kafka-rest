@@ -24,6 +24,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import kafka.common.MessageStreamsExistException;
 import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.MessageAndMetadata;
@@ -190,6 +191,8 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
       state = new ConsumerTopicState<KafkaK, KafkaV>(stream);
       topics.put(topic, state);
       return state;
+    } catch (MessageStreamsExistException e) {
+      throw Errors.consumerAlreadySubscribedException();
     } finally {
       lock.writeLock().unlock();
     }
