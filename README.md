@@ -21,7 +21,7 @@ server with
 
 where `server.properties` contains configuration settings as specified by the `KafkaRestConfiguration` class. Although the
 properties file is not required, the default configuration is not intended for production. Production deployments *should*
-specify a properties file. By default the server starts bound to port 8080, does not specify a unique instance ID (required
+specify a properties file. By default the server starts bound to port 8082, does not specify a unique instance ID (required
 to safely run multiple proxies concurrently), and expects Zookeeper to be available at `localhost:2181` and a Kafka broker
 at `localhost:9092`.
 

@@ -109,12 +109,16 @@ public class KafkaRestConfig extends RestConfig {
       + "is automatically destroyed.";
   public static final String CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT = "300000";
 
+  private static final int KAFKAREST_PORT_DEFAULT = 8082;
+
   private static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka-rest";
 
   private static final ConfigDef config;
 
   static {
     config = baseConfigDef()
+        .defineOverride(PORT_CONFIG, ConfigDef.Type.INT, KAFKAREST_PORT_DEFAULT,
+                        ConfigDef.Importance.LOW, PORT_CONFIG_DOC)
         .defineOverride(RESPONSE_MEDIATYPE_PREFERRED_CONFIG, Type.LIST,
                         Versions.PREFERRED_RESPONSE_TYPES, Importance.HIGH,
                         RESPONSE_MEDIATYPE_PREFERRED_CONFIG_DOC)

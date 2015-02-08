@@ -12,14 +12,7 @@ Configuration Options
   Unique ID for this REST server instance. This is used in generating unique IDs for consumers that do not specify their ID. The ID is empty by default, which makes a single server setup easier to get up and running, but is not safe for multi-server deployments where automatic consumer IDs are used.
 
   * Type: string
-  * Default: 
-  * Importance: high
-
-``port``
-  Port to listen on for new connections.
-
-  * Type: int
-  * Default: 8080
+  * Default:
   * Importance: high
 
 ``response.mediatype.default``
@@ -122,6 +115,13 @@ Configuration Options
   * Default: 30000
   * Importance: low
 
+``port``
+  Port to listen on for new connections.
+
+  * Type: int
+  * Default: 8082
+  * Importance: low
+
 ``producer.threads``
   Number of threads to run produce requests on.
 
@@ -142,3 +142,4 @@ Configuration Options
   * Type: int
   * Default: 1000
   * Importance: low
+
