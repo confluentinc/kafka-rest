@@ -60,7 +60,7 @@ public class KafkaRestConfig extends RestConfig {
   public static final String SCHEMA_REGISTRY_CONNECT_CONFIG = "schema.registry.connect";
   private static final String SCHEMA_REGISTRY_CONNECT_DOC =
       "The base URL for the schema registry that should be used by the Avro serializer.";
-  private static final String SCHEMA_REGISTRY_CONNECT_DEFAULT = "localhost:8081";
+  private static final String SCHEMA_REGISTRY_CONNECT_DEFAULT = "http://localhost:8081";
 
   public static final String PRODUCER_THREADS_CONFIG = "producer.threads";
   private static final String
