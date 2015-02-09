@@ -87,6 +87,13 @@ Configuration Options
   * Default: 1
   * Importance: low
 
+``host.name``
+  The host name used to generate absolute URLs in responses. If empty, the default canonical hostname is used
+
+  * Type: string
+  * Default:
+  * Importance: low
+
 ``metric.reporters``
   A list of classes to use as metrics reporters. Implementing the <code>MetricReporter</code> interface allows plugging in classes that will be notified of new metric creation. The JmxReporter is always included to register JMX statistics.
 
@@ -142,4 +149,3 @@ Configuration Options
   * Type: int
   * Default: 1000
   * Importance: low
-

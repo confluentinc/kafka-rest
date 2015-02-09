@@ -37,6 +37,12 @@ public class KafkaRestConfig extends RestConfig {
       + "are used.";
   public static final String ID_DEFAULT = "";
 
+  public static final String HOST_NAME_CONFIG = "host.name";
+  private static final String HOST_NAME_DOC =
+      "The host name used to generate absolute URLs in responses. If empty, the default canonical"
+      + " hostname is used";
+  public static final String HOST_NAME_DEFAULT = "";
+
   public static final String ZOOKEEPER_CONNECT_CONFIG = "zookeeper.connect";
   private static final String
       ZOOKEEPER_CONNECT_DOC =
@@ -128,6 +134,7 @@ public class KafkaRestConfig extends RestConfig {
         .defineOverride(METRICS_JMX_PREFIX_CONFIG, Type.STRING,
                         METRICS_JMX_PREFIX_DEFAULT_OVERRIDE, Importance.LOW, METRICS_JMX_PREFIX_DOC)
         .define(ID_CONFIG, Type.STRING, ID_DEFAULT, Importance.HIGH, ID_CONFIG_DOC)
+        .define(HOST_NAME_CONFIG, Type.STRING, HOST_NAME_DEFAULT, Importance.LOW, HOST_NAME_DOC)
         .define(ZOOKEEPER_CONNECT_CONFIG, Type.STRING, ZOOKEEPER_CONNECT_DEFAULT,
                 Importance.HIGH, ZOOKEEPER_CONNECT_DOC)
         .define(SCHEMA_REGISTRY_CONNECT_CONFIG, Type.STRING, SCHEMA_REGISTRY_CONNECT_DEFAULT,
