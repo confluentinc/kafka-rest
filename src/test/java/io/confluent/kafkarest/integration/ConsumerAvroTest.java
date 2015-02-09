@@ -25,7 +25,6 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.ws.rs.core.GenericType;
 
@@ -88,7 +87,7 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
   private static final Converter converter = new Converter() {
     @Override
     public Object convert(Object obj) {
-      return AvroConverter.toJson(obj, new AtomicInteger());
+      return AvroConverter.toJson(obj).json;
     }
   };
 

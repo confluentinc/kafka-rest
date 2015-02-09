@@ -25,18 +25,21 @@ import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericEnumSymbol;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.GenericRecordBuilder;
+import org.apache.avro.util.Utf8;
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.converters.ConversionException;
 import io.confluent.kafkarest.entities.EntityUtils;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -65,7 +68,7 @@ public class AvroConverterTest {
       + "     {\"name\": \"long_default\", \"type\": \"long\", \"default\": 4000000000},\n"
       + "     {\"name\": \"float_default\", \"type\": \"float\", \"default\": 12.3},\n"
       + "     {\"name\": \"double_default\", \"type\": \"double\", \"default\": 23.2},\n"
-      + "     {\"name\": \"bytes_default\", \"type\": \"bytes\", \"default\": \"ZGVmYXVsdA==\"},\n"
+      + "     {\"name\": \"bytes_default\", \"type\": \"bytes\", \"default\": \"bytes\"},\n"
       + "     {\"name\": \"string_default\", \"type\": \"string\", \"default\": "
       + "\"default string\"}\n"
       + "]\n"
@@ -138,16 +141,17 @@ public class AvroConverterTest {
     assertTrue(result instanceof Double);
     assertEquals(23.0, result);
 
-    result = AvroConverter.toAvro(new TextNode(EntityUtils.encodeBase64Binary("hello".getBytes())),
-                                  createPrimitiveSchema("bytes"));
-    assertTrue(result instanceof byte[]);
-    assertEquals(EntityUtils.encodeBase64Binary("hello".getBytes()), EntityUtils
-        .encodeBase64Binary((byte[]) result));
+    // We can test bytes simply using simple ASCII string since the translation is direct in that
+    // case
+    result = AvroConverter.toAvro(new TextNode("hello"), createPrimitiveSchema("bytes"));
+    assertTrue(result instanceof ByteBuffer);
+    assertEquals(EntityUtils.encodeBase64Binary("hello".getBytes()),
+                 EntityUtils.encodeBase64Binary(((ByteBuffer) result).array()));
 
     result = AvroConverter.toAvro(TestUtils.jsonTree("\"a string\""),
                                   createPrimitiveSchema("string"));
-    assertTrue(result instanceof String);
-    assertEquals("a string", result);
+    assertTrue(result instanceof Utf8);
+    assertEquals(new Utf8("a string"), result);
   }
 
   @Test
@@ -157,11 +161,13 @@ public class AvroConverterTest {
     expectConversionException(TestUtils.jsonTree("12"), createPrimitiveSchema("boolean"));
 
     expectConversionException(TestUtils.jsonTree("false"), createPrimitiveSchema("int"));
-    expectConversionException(TestUtils.jsonTree("12.1"), createPrimitiveSchema("int"));
+    // Note that we don't test real numbers => int because JsonDecoder permits this and removes
+    // the decimal part
     expectConversionException(TestUtils.jsonTree("5000000000"), createPrimitiveSchema("int"));
 
     expectConversionException(TestUtils.jsonTree("false"), createPrimitiveSchema("long"));
-    expectConversionException(TestUtils.jsonTree("12.1"), createPrimitiveSchema("long"));
+    // Note that we don't test real numbers => long because JsonDecoder permits this and removes
+    // the decimal part
 
     expectConversionException(TestUtils.jsonTree("false"), createPrimitiveSchema("float"));
 
@@ -181,8 +187,16 @@ public class AvroConverterTest {
                   + "    \"long\": 5000000000,\n"
                   + "    \"float\": 23.4,\n"
                   + "    \"double\": 800.25,\n"
-                  + "    \"bytes\": \"Ynl0ZXM=\",\n"
-                  + "    \"string_alias\": \"string\"\n" // tests aliasing
+                  + "    \"bytes\": \"hello\",\n"
+                  + "    \"string\": \"string\",\n"
+                  + "    \"null_default\": null,\n"
+                  + "    \"boolean_default\": false,\n"
+                  + "    \"int_default\": 24,\n"
+                  + "    \"long_default\": 4000000000,\n"
+                  + "    \"float_default\": 12.3,\n"
+                  + "    \"double_default\": 23.2,\n"
+                  + "    \"bytes_default\": \"bytes\",\n"
+                  + "    \"string_default\": \"default\"\n"
                   + "}";
 
     Object result = AvroConverter.toAvro(TestUtils.jsonTree(json), recordSchema);
@@ -194,8 +208,9 @@ public class AvroConverterTest {
     assertEquals(5000000000L, resultRecord.get("long"));
     assertEquals(23.4f, resultRecord.get("float"));
     assertEquals(800.25, resultRecord.get("double"));
-    assertEquals("Ynl0ZXM=", EntityUtils.encodeBase64Binary((byte[]) resultRecord.get("bytes")));
-    assertEquals("string", resultRecord.get("string"));
+    assertEquals(EntityUtils.encodeBase64Binary("hello".getBytes()),
+                 EntityUtils.encodeBase64Binary(((ByteBuffer) resultRecord.get("bytes")).array()));
+    assertEquals("string", resultRecord.get("string").toString());
     // Nothing to check with default values, just want to make sure an exception wasn't thrown
     // when they values weren't specified for their fields.
   }
@@ -206,7 +221,8 @@ public class AvroConverterTest {
 
     Object result = AvroConverter.toAvro(TestUtils.jsonTree(json), arraySchema);
     assertTrue(result instanceof GenericArray);
-    assertEquals(Arrays.asList("one", "two", "three"), result);
+    assertArrayEquals(new Utf8[]{new Utf8("one"), new Utf8("two"), new Utf8("three")},
+                      ((GenericArray) result).toArray());
   }
 
   @Test
@@ -220,11 +236,13 @@ public class AvroConverterTest {
 
   @Test
   public void testUnionToAvro() {
-    Object result = AvroConverter.toAvro(TestUtils.jsonTree("{\"union\":\"test string\"}"),
-                                         unionSchema);
-    assertTrue(((GenericRecord) result).get("union") instanceof String);
+    Object result = AvroConverter.toAvro(
+        TestUtils.jsonTree("{\"union\":{\"string\":\"test string\"}}"),
+        unionSchema);
+    Object foo = ((GenericRecord) result).get("union");
+    assertTrue(((GenericRecord) result).get("union") instanceof Utf8);
 
-    result = AvroConverter.toAvro(TestUtils.jsonTree("{\"union\":12}"), unionSchema);
+    result = AvroConverter.toAvro(TestUtils.jsonTree("{\"union\":{\"int\":12}}"), unionSchema);
     assertTrue(((GenericRecord) result).get("union") instanceof Integer);
 
     try {
@@ -248,38 +266,39 @@ public class AvroConverterTest {
 
   @Test
   public void testPrimitiveTypesToJson() {
-    // This testing doesn't check any of the size computations since they are only approximate
-    // anyway and may be tweaked, so we just share one instance.
-    AtomicInteger size = new AtomicInteger(0);
+    AvroConverter.JsonNodeAndSize result = AvroConverter.toJson((int) 0);
+    assertTrue(result.json.isNumber());
+    assertTrue(result.size > 0);
 
-    JsonNode result = AvroConverter.toJson((int) 0, size);
-    assertTrue(result.isNumber());
-    assertTrue(size.get() > 0);
+    result = AvroConverter.toJson((long) 0);
+    assertTrue(result.json.isNumber());
 
-    result = AvroConverter.toJson((long) 0, size);
-    assertTrue(result.isNumber());
+    result = AvroConverter.toJson(0.1f);
+    assertTrue(result.json.isNumber());
 
-    result = AvroConverter.toJson(0.1f, size);
-    assertTrue(result.isNumber());
+    result = AvroConverter.toJson(0.1);
+    assertTrue(result.json.isNumber());
 
-    result = AvroConverter.toJson(0.1, size);
-    assertTrue(result.isNumber());
-
-    result = AvroConverter.toJson(true, size);
-    assertTrue(result.isBoolean());
+    result = AvroConverter.toJson(true);
+    assertTrue(result.json.isBoolean());
 
     // "Primitive" here refers to Avro primitive types, which are returned as standalone objects,
     // which can't have attached schemas. This includes, for example, Strings and byte[] even
     // though they are not Java primitives
 
-    result = AvroConverter.toJson("abcdefg", size);
-    assertTrue(result.isTextual());
-    assertEquals("abcdefg", result.textValue());
+    result = AvroConverter.toJson("abcdefg");
+    assertTrue(result.json.isTextual());
+    assertEquals("abcdefg", result.json.textValue());
 
-    result = AvroConverter.toJson("hello".getBytes(), size);
-    assertTrue(result.isTextual());
-    assertEquals(EntityUtils.encodeBase64Binary("hello".getBytes()), result.textValue());
-    assertEquals("aGVsbG8=", result.textValue());
+    result = AvroConverter.toJson("hello".getBytes());
+    assertTrue(result.json.isTextual());
+    // Was generated from a string, so the Avro encoding should be equivalent to the string
+    assertEquals("hello", result.json.textValue());
+
+    result = AvroConverter.toJson("hello".getBytes());
+    assertTrue(result.json.isTextual());
+    // Was generated from a string, so the Avro encoding should be equivalent to the string
+    assertEquals("hello", result.json.textValue());
   }
 
   @Test
@@ -291,51 +310,51 @@ public class AvroConverterTest {
 
   @Test
   public void testRecordToJson() {
-    GenericRecord data = new GenericData.Record(recordSchema);
-    data.put("null", null);
-    data.put("boolean", true);
-    data.put("int", 12);
-    data.put("long", 5000000000L);
-    data.put("float", 23.4);
-    data.put("double", 800.25);
-    data.put("bytes", "bytes".getBytes());
-    data.put("string", "string");
+    GenericRecord data = new GenericRecordBuilder(recordSchema)
+        .set("null", null)
+        .set("boolean", true)
+        .set("int", 12)
+        .set("long", 5000000000L)
+        .set("float", 23.4f)
+        .set("double", 800.25)
+        .set("bytes", ByteBuffer.wrap("bytes".getBytes()))
+        .set("string", "string")
+        .build();
 
-    AtomicInteger size = new AtomicInteger(0);
-    JsonNode result = AvroConverter.toJson(data, size);
-    assertTrue(size.get() > 0);
-    assertTrue(result.isObject());
-    assertTrue(result.get("null").isNull());
-    assertTrue(result.get("boolean").isBoolean());
-    assertEquals(true, result.get("boolean").booleanValue());
-    assertTrue(result.get("int").isIntegralNumber());
-    assertEquals(12, result.get("int").intValue());
-    assertTrue(result.get("long").isIntegralNumber());
-    assertEquals(5000000000L, result.get("long").longValue());
-    assertTrue(result.get("float").isFloatingPointNumber());
-    assertEquals(23.4f, result.get("float").floatValue(), 0.1);
-    assertTrue(result.get("double").isFloatingPointNumber());
-    assertEquals(800.25, result.get("double").doubleValue(), 0.01);
-    assertTrue(result.get("bytes").isTextual());
-    assertEquals(EntityUtils.encodeBase64Binary("bytes".getBytes()),
-                 result.get("bytes").textValue());
-    assertTrue(result.get("string").isTextual());
-    assertEquals("string", result.get("string").textValue());
+    AvroConverter.JsonNodeAndSize result = AvroConverter.toJson(data);
+    assertTrue(result.size > 0);
+    assertTrue(result.json.isObject());
+    assertTrue(result.json.get("null").isNull());
+    assertTrue(result.json.get("boolean").isBoolean());
+    assertEquals(true, result.json.get("boolean").booleanValue());
+    assertTrue(result.json.get("int").isIntegralNumber());
+    assertEquals(12, result.json.get("int").intValue());
+    assertTrue(result.json.get("long").isIntegralNumber());
+    assertEquals(5000000000L, result.json.get("long").longValue());
+    assertTrue(result.json.get("float").isFloatingPointNumber());
+    assertEquals(23.4f, result.json.get("float").floatValue(), 0.1);
+    assertTrue(result.json.get("double").isFloatingPointNumber());
+    assertEquals(800.25, result.json.get("double").doubleValue(), 0.01);
+    assertTrue(result.json.get("bytes").isTextual());
+    // The bytes value was created from an ASCII string, so Avro's encoding should just give that
+    // string back to us in the JSON-serialized version
+    assertEquals("bytes", result.json.get("bytes").textValue());
+    assertTrue(result.json.get("string").isTextual());
+    assertEquals("string", result.json.get("string").textValue());
   }
 
   @Test
   public void testArrayToJson() {
     GenericData.Array<String>
         data = new GenericData.Array(arraySchema, Arrays.asList("one", "two", "three"));
-    AtomicInteger size = new AtomicInteger(0);
-    JsonNode result = AvroConverter.toJson(data, size);
-    assertTrue(size.get() > 0);
+    AvroConverter.JsonNodeAndSize result = AvroConverter.toJson(data);
+    assertTrue(result.size > 0);
 
-    assertTrue(result.isArray());
-    assertEquals(3, result.size());
-    assertEquals(JsonNodeFactory.instance.textNode("one"), result.get(0));
-    assertEquals(JsonNodeFactory.instance.textNode("two"), result.get(1));
-    assertEquals(JsonNodeFactory.instance.textNode("three"), result.get(2));
+    assertTrue(result.json.isArray());
+    assertEquals(3, result.json.size());
+    assertEquals(JsonNodeFactory.instance.textNode("one"), result.json.get(0));
+    assertEquals(JsonNodeFactory.instance.textNode("two"), result.json.get(1));
+    assertEquals(JsonNodeFactory.instance.textNode("three"), result.json.get(2));
   }
 
   @Test
@@ -343,25 +362,24 @@ public class AvroConverterTest {
     Map<String, Object> data = new HashMap<String, Object>();
     data.put("first", "one");
     data.put("second", "two");
-    AtomicInteger size = new AtomicInteger(0);
-    JsonNode result = AvroConverter.toJson(data, size);
-    assertTrue(size.get() > 0);
+    AvroConverter.JsonNodeAndSize result = AvroConverter.toJson(data);
+    assertTrue(result.size > 0);
 
-    assertTrue(result.isObject());
-    assertEquals(2, result.size());
-    assertNotNull(result.get("first"));
-    assertEquals("one", result.get("first").asText());
-    assertNotNull(result.get("second"));
-    assertEquals("two", result.get("second").asText());
+    assertTrue(result.json.isObject());
+    assertEquals(2, result.json.size());
+    assertNotNull(result.json.get("first"));
+    assertEquals("one", result.json.get("first").asText());
+    assertNotNull(result.json.get("second"));
+    assertEquals("two", result.json.get("second").asText());
   }
 
   @Test
   public void testEnumToJson() {
-    AtomicInteger size = new AtomicInteger(0);
-    JsonNode result = AvroConverter.toJson(new GenericData.EnumSymbol(enumSchema, "SPADES"), size);
-    assertTrue(size.get() > 0);
-    assertTrue(result.isTextual());
-    assertEquals("SPADES", result.textValue());
+    AvroConverter.JsonNodeAndSize result
+        = AvroConverter.toJson(new GenericData.EnumSymbol(enumSchema, "SPADES"));
+    assertTrue(result.size > 0);
+    assertTrue(result.json.isTextual());
+    assertEquals("SPADES", result.json.textValue());
   }
 
 
@@ -377,9 +395,7 @@ public class AvroConverterTest {
 
   private static void expectConversionException(Object obj) {
     try {
-      AtomicInteger size = new AtomicInteger(0);
-      AvroConverter.toJson(obj, size);
-      assertTrue(size.get() > 0);
+      AvroConverter.toJson(obj);
       fail("Expected conversion of "
            + (obj == null ? "null" : (obj.toString() + " (" + obj.getClass().getName() + ")"))
            + " to fail");

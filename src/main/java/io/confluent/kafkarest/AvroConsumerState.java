@@ -19,7 +19,6 @@ package io.confluent.kafkarest;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import io.confluent.kafka.serializers.KafkaAvroDecoder;
 import io.confluent.kafkarest.converters.AvroConverter;
@@ -61,12 +60,11 @@ public class AvroConsumerState extends ConsumerState<Object, Object, JsonNode, J
   @Override
   public ConsumerRecordAndSize<JsonNode, JsonNode> createConsumerRecord(
       MessageAndMetadata<Object, Object> msg) {
-    AtomicInteger approxSize = new AtomicInteger(0);
-    JsonNode keyNode = AvroConverter.toJson(msg.key(), approxSize);
-    JsonNode valueNode = AvroConverter.toJson(msg.message(), approxSize);
+    AvroConverter.JsonNodeAndSize keyNode = AvroConverter.toJson(msg.key());
+    AvroConverter.JsonNodeAndSize valueNode = AvroConverter.toJson(msg.message());
     return new ConsumerRecordAndSize<JsonNode, JsonNode>(
-        new AvroConsumerRecord(keyNode, valueNode, msg.partition(), msg.offset()),
-        approxSize.get()
+        new AvroConsumerRecord(keyNode.json, valueNode.json, msg.partition(), msg.offset()),
+        keyNode.size + valueNode.size
     );
   }
 }
