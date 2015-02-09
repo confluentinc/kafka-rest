@@ -37,18 +37,22 @@ import scala.collection.JavaConversions;
 
 /**
  * Mock blocking queue that can be used to back a KafkaQueue for mock consumers. This class requires
- * that all data to be produced is available at construction.
+ * that all data to be produced is available at construction. It also only works for binary
+ * consumers since it uses Kafka consumer internal classes that work with raw data before
+ * deserialization.
  */
 public class MockConsumerQueue implements BlockingQueue<FetchedDataChunk> {
 
   private Time time;
   private PriorityQueue<ScheduledItems> scheduled = new PriorityQueue<ScheduledItems>();
-  private Queue<ConsumerRecord> ready = new LinkedList<ConsumerRecord>();
+  private Queue<ConsumerRecord<byte[], byte[]>> ready
+      = new LinkedList<ConsumerRecord<byte[], byte[]>>();
 
-  public MockConsumerQueue(Time time, Map<Integer, List<ConsumerRecord>> schedule) {
+  public MockConsumerQueue(Time time, Map<Integer,
+      List<ConsumerRecord<byte[], byte[]>>> schedule) {
     this.time = time;
-    for (Map.Entry<Integer, List<ConsumerRecord>> scheduledItem : schedule.entrySet()) {
-      scheduled.add(new ScheduledItems(scheduledItem.getKey(), scheduledItem.getValue()));
+    for (Map.Entry<Integer, List<ConsumerRecord<byte[], byte[]>>> item : schedule.entrySet()) {
+      scheduled.add(new ScheduledItems(item.getKey(), item.getValue()));
     }
   }
 
@@ -108,7 +112,7 @@ public class MockConsumerQueue implements BlockingQueue<FetchedDataChunk> {
     }
 
     if (!ready.isEmpty()) {
-      ConsumerRecord c = ready.remove();
+      ConsumerRecord<byte[], byte[]> c = ready.remove();
       ByteBufferMessageSet msgSet = new ByteBufferMessageSet(
           JavaConversions.asScalaIterable(Arrays.asList(new Message(c.getValue(), c.getKey())))
               .toSeq()
@@ -223,9 +227,9 @@ public class MockConsumerQueue implements BlockingQueue<FetchedDataChunk> {
   private class ScheduledItems implements Comparable<ScheduledItems> {
 
     long time;
-    List<ConsumerRecord> records;
+    List<ConsumerRecord<byte[], byte[]>> records;
 
-    private ScheduledItems(long time, List<ConsumerRecord> records) {
+    private ScheduledItems(long time, List<ConsumerRecord<byte[], byte[]>> records) {
       this.time = time;
       this.records = records;
     }

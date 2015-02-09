@@ -64,7 +64,9 @@ public class TestUtils {
       new RequestMediaType(
           Versions.KAFKA_V1_JSON + "; q=0.8, " + Versions.KAFKA_DEFAULT_JSON + "; q=0.7, "
           + Versions.JSON + "; q=0.9", Versions.JSON),
-      // No accept header, should use most specific default media type
+      // No accept header, should use most specific default media type. Note that in cases with
+      // embedded data this won't be the most specific value since the version with the embedded
+      // type will be used instead
       new RequestMediaType(null, Versions.KAFKA_MOST_SPECIFIC_DEFAULT)
   };
   public static final List<RequestMediaType> V1_ACCEPT_MEDIATYPES_BINARY;
@@ -207,6 +209,10 @@ public class TestUtils {
       return k;
     } else if (k instanceof IndexedRecord) {
       return k;
+    } else if (k instanceof Number || k instanceof Boolean || k instanceof Character
+               || k instanceof String) {
+      // Primitive types + strings are all safe for comparison
+      return k;
     } else {
       throw new RuntimeException(k.getClass().getName() + " is not handled by encodeComparable.");
     }
@@ -249,7 +255,9 @@ public class TestUtils {
 
     // We can't always easily get the data on both ends to be easily comparable, e.g. when the
     // input data is JSON but it's stored in Avro, so in some cases we use an alternative that
-    // just checks the # of un
+    // just checks the # of each count matches up, e.g. if we have (a => 3, b => 4) input and (c
+    // => 4, d => 3), it would pass since both have (3 => 1, 4 => 1) counts, even though their
+    // encoded values differ. This, of course, assumes we don't get collisions.
     if (validateContents) {
       assertEquals(msgCounts, refMsgCounts);
     } else {

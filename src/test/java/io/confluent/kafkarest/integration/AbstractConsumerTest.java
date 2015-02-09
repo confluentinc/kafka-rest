@@ -21,21 +21,25 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 
+import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
-import io.confluent.kafkarest.entities.EntityUtils;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
@@ -47,7 +51,7 @@ import static org.junit.Assert.fail;
 
 public class AbstractConsumerTest extends ClusterTestHarness {
 
-  protected void produceMessages(List<ProducerRecord<byte[], byte[]>> records) {
+  protected void produceBinaryMessages(List<ProducerRecord<byte[], byte[]>> records) {
     Properties props = new Properties();
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
@@ -64,15 +68,61 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     producer.close();
   }
 
-  // Need to start consuming before producing since consumer is instantiated internally and
-  // starts at latest offset
-  protected String startConsumeMessages(String groupName, String topic) {
-    return startConsumeMessages(groupName, topic, false);
+  protected void produceAvroMessages(List<ProducerRecord<Object, Object>> records) {
+    HashMap<String, Object> serProps = new HashMap<String, Object>();
+    serProps.put("schema.registry.url", schemaRegConnect);
+    final KafkaAvroSerializer avroKeySerializer = new KafkaAvroSerializer();
+    avroKeySerializer.configure(serProps, true);
+    final KafkaAvroSerializer avroValueSerializer = new KafkaAvroSerializer();
+    avroValueSerializer.configure(serProps, false);
+
+    Properties props = new Properties();
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    props.put(ProducerConfig.ACKS_CONFIG, "all");
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+
+    KafkaProducer<Object, Object> producer
+        = new KafkaProducer<Object, Object>(props, avroKeySerializer, avroValueSerializer);
+    for (ProducerRecord<Object, Object> rec : records) {
+      try {
+        producer.send(rec).get();
+      } catch (Exception e) {
+        fail("Consumer test couldn't produce input messages to Kafka");
+      }
+    }
+    producer.close();
   }
 
-  protected String startConsumeMessages(String groupName, String topic, boolean expectFailure) {
+  // Need to start consuming before producing since consumer is instantiated internally and
+  // starts at latest offset
+  protected String startConsumeMessages(String groupName, String topic, EmbeddedFormat format,
+                                        String accept, String expectedMediatype) {
+    return startConsumeMessages(groupName, topic, format, accept, expectedMediatype, false);
+  }
+
+  /**
+   * Start a new consumer instance and start consuming messages. This expects that you have not
+   * produced any data so the initial read request will timeout.
+   *
+   * @param groupName         consumer group name
+   * @param topic             topic to consume
+   * @param format            embedded format to use. If null, an null ConsumerInstanceConfig is
+   *                          sent, resulting in default settings
+   * @param accept            mediatype for Accept header, or null to omit the header
+   * @param expectedMediatype expected Content-Type of response
+   * @param expectFailure     if true, expect the initial read request to generate a 404
+   * @return the new consumer instance's base URI
+   */
+  protected String startConsumeMessages(String groupName, String topic, EmbeddedFormat format,
+                                        String accept, String expectedMediatype,
+                                        boolean expectFailure) {
+    ConsumerInstanceConfig config = null;
+    if (format != null) {
+      config = new ConsumerInstanceConfig(format);
+    }
     CreateConsumerInstanceResponse instanceResponse = request("/consumers/" + groupName)
-        .post(Entity.entity(null, Versions.KAFKA_MOST_SPECIFIC_DEFAULT),
+        .post(Entity.entity(config, Versions.KAFKA_MOST_SPECIFIC_DEFAULT),
               CreateConsumerInstanceResponse.class);
     assertNotNull(instanceResponse.getInstanceId());
     assertTrue(instanceResponse.getInstanceId().length() > 0);
@@ -80,53 +130,82 @@ public class AbstractConsumerTest extends ClusterTestHarness {
                instanceResponse.getBaseUri().contains(instanceResponse.getInstanceId()));
 
     // Start consuming. Since production hasn't started yet, this is expected to timeout.
-    Response response = request(instanceResponse.getBaseUri() + "/topics/" + topic).get();
+    Response response = request(instanceResponse.getBaseUri() + "/topics/" + topic)
+        .accept(expectedMediatype).get();
     if (expectFailure) {
       assertErrorResponse(Response.Status.NOT_FOUND, response,
                           Errors.TOPIC_NOT_FOUND_ERROR_CODE,
                           Errors.TOPIC_NOT_FOUND_MESSAGE,
-                          Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+                          expectedMediatype);
     } else {
-      assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-      List<ConsumerRecord> consumed = response.readEntity(new GenericType<List<ConsumerRecord>>() {
-      });
+      assertOKResponse(response, expectedMediatype);
+      List<BinaryConsumerRecord> consumed = response.readEntity(
+          new GenericType<List<BinaryConsumerRecord>>() {
+          });
       assertEquals(0, consumed.size());
     }
 
     return instanceResponse.getBaseUri();
   }
 
-  protected void consumeMessages(String instanceUri, String topic,
-                                 List<ProducerRecord<byte[], byte[]>> records) {
-    Response response = request(instanceUri + "/topics/" + topic).get();
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    List<ConsumerRecord> consumed = response.readEntity(new GenericType<List<ConsumerRecord>>() {
-    });
+  // Interface for converter from type used by Kafka producer (e.g. GenericRecord) to the type
+  // actually consumed (e.g. JsonNode) so we can get both input and output in consistent form to
+  // generate comparable data sets for validation
+  protected static interface Converter {
+
+    public Object convert(Object obj);
+  }
+
+  // This requires a lot of type info because we use the raw ProducerRecords used to work with
+  // the Kafka producer directly (e.g. Object for GenericRecord+primitive for Avro) and the
+  // consumed data type on the receiver (JsonNode, since the data has been converted to Json).
+  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType extends ConsumerRecord<ClientK, ClientV>>
+  void consumeMessages(
+      String instanceUri, String topic, List<ProducerRecord<KafkaK, KafkaV>> records,
+      String accept, String responseMediatype,
+      GenericType<List<RecordType>> responseEntityType,
+      Converter converter) {
+    Response response = request(instanceUri + "/topics/" + topic)
+        .accept(accept).get();
+    assertOKResponse(response, responseMediatype);
+    List<RecordType> consumed = response.readEntity(responseEntityType);
     assertEquals(records.size(), consumed.size());
 
     // Since this is used for unkeyed messages, this can't rely on ordering of messages
-    Set<String> inputSet = new HashSet<String>();
-    for (ProducerRecord<byte[], byte[]> rec : records) {
-      inputSet.add(
-          (rec.key() == null ? "null" : EntityUtils.encodeBase64Binary(rec.key())) +
-          EntityUtils.encodeBase64Binary(rec.value())
-      );
+    Map<Object, Integer> inputSetCounts = new HashMap<Object, Integer>();
+    for (ProducerRecord<KafkaK, KafkaV> rec : records) {
+      Object key = TestUtils.encodeComparable(
+          (converter != null ? converter.convert(rec.key()) : rec.key())),
+          value = TestUtils.encodeComparable(
+              (converter != null ? converter.convert(rec.value()) : rec.value()));
+      inputSetCounts.put(key,
+                         (inputSetCounts.get(key) == null ? 0 : inputSetCounts.get(key)) + 1);
+      inputSetCounts.put(value,
+                         (inputSetCounts.get(value) == null ? 0 : inputSetCounts.get(value)) + 1);
     }
-    Set<String> outputSet = new HashSet<String>();
-    for (ConsumerRecord rec : consumed) {
-      outputSet.add((rec.getKey() == null ? "null" : rec.getKeyEncoded()) + rec.getValueEncoded());
+    Map<Object, Integer> outputSetCounts = new HashMap<Object, Integer>();
+    for (ConsumerRecord<ClientK, ClientV> rec : consumed) {
+      Object key = TestUtils.encodeComparable(rec.getKey()),
+          value = TestUtils.encodeComparable(rec.getValue());
+      outputSetCounts.put(
+          key,
+          (outputSetCounts.get(key) == null ? 0 : outputSetCounts.get(key)) + 1);
+      outputSetCounts.put(
+          value,
+          (outputSetCounts.get(value) == null ? 0 : outputSetCounts.get(value)) + 1);
     }
-    assertEquals(inputSet, outputSet);
+    assertEquals(inputSetCounts, outputSetCounts);
   }
 
-  protected void consumeForTimeout(String instanceUri, String topic) {
+  protected <K, V, RecordType extends ConsumerRecord<K, V>> void consumeForTimeout(
+      String instanceUri, String topic, String accept, String responseMediatype,
+      GenericType<List<RecordType>> responseEntityType) {
     long started = System.currentTimeMillis();
-    Response response = request(instanceUri + "/topics/" + topic).get();
+    Response response = request(instanceUri + "/topics/" + topic)
+        .accept(accept).get();
     long finished = System.currentTimeMillis();
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    List<ConsumerRecord> consumed =
-        response.readEntity(new GenericType<List<ConsumerRecord>>() {
-        });
+    assertOKResponse(response, responseMediatype);
+    List<RecordType> consumed = response.readEntity(responseEntityType);
     assertEquals(0, consumed.size());
 
     // Note that this is only approximate and really only works if you assume the read call has
@@ -169,7 +248,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     assertErrorResponse(Response.Status.NOT_FOUND, response,
                         Errors.CONSUMER_INSTANCE_NOT_FOUND_ERROR_CODE,
                         Errors.CONSUMER_INSTANCE_NOT_FOUND_MESSAGE,
-                        Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+                        Versions.KAFKA_V1_JSON_BINARY);
   }
 
   protected void deleteConsumer(String instanceUri) {

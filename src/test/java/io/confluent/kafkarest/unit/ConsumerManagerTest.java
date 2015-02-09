@@ -27,11 +27,14 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import io.confluent.kafkarest.BinaryConsumerState;
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
+import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.mock.MockConsumerConnector;
 import io.confluent.kafkarest.mock.MockTime;
@@ -47,6 +50,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+/**
+ * Tests basic create/read/commit/delete functionality of ConsumerManager. This only exercises the
+ * functionality for binary data because it uses a mock consumer that only works with byte[] data.
+ */
 public class ConsumerManagerTest {
 
   private KafkaRestConfig config;
@@ -70,7 +77,7 @@ public class ConsumerManagerTest {
   }
 
   private ConsumerConnector expectCreate(
-      Map<String, List<Map<Integer, List<ConsumerRecord>>>> schedules) {
+      Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>> schedules) {
     ConsumerConnector
         consumer =
         new MockConsumerConnector(
@@ -85,19 +92,19 @@ public class ConsumerManagerTest {
   @Test
   public void testConsumerNormalOps() throws InterruptedException, ExecutionException {
     // Tests create instance, read, and delete
-    final List<ConsumerRecord> referenceRecords = Arrays.asList(
-        new ConsumerRecord("k1".getBytes(), "v1".getBytes(), 0, 0),
-        new ConsumerRecord("k2".getBytes(), "v2".getBytes(), 1, 0),
-        new ConsumerRecord("k3".getBytes(), "v3".getBytes(), 2, 0)
-    );
-    Map<Integer, List<ConsumerRecord>>
+    final List<ConsumerRecord<byte[], byte[]>> referenceRecords
+        = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
+        new BinaryConsumerRecord("k1".getBytes(), "v1".getBytes(), 0, 0),
+        new BinaryConsumerRecord("k2".getBytes(), "v2".getBytes(), 1, 0),
+        new BinaryConsumerRecord("k3".getBytes(), "v3".getBytes(), 2, 0));
+    Map<Integer, List<ConsumerRecord<byte[], byte[]>>>
         referenceSchedule =
-        new HashMap<Integer, List<ConsumerRecord>>();
+        new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
     referenceSchedule.put(50, referenceRecords);
 
-    Map<String, List<Map<Integer, List<ConsumerRecord>>>>
+    Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>
         schedules =
-        new HashMap<String, List<Map<Integer, List<ConsumerRecord>>>>();
+        new HashMap<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>();
     schedules.put(topicName, Arrays.asList(referenceSchedule));
 
     expectCreate(schedules);
@@ -105,24 +112,26 @@ public class ConsumerManagerTest {
 
     EasyMock.replay(mdObserver, consumerFactory);
 
-    String cid = consumerManager.createConsumer(groupName, new ConsumerInstanceConfig());
+    String cid = consumerManager.createConsumer(
+        groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
     sawCallback = false;
-    consumerManager.readTopic(groupName, cid, topicName, Long.MAX_VALUE,
-                              new ConsumerManager.ReadCallback() {
-                                @Override
-                                public void onCompletion(List<ConsumerRecord> records,
-                                                         Exception e) {
-                                  sawCallback = true;
-                                  assertNull(e);
-                                  assertEquals(referenceRecords, records);
-                                }
-                              }).get();
+    consumerManager.readTopic(
+        groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
+        new ConsumerManager.ReadCallback<byte[], byte[]>() {
+          @Override
+          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+                                   Exception e) {
+            sawCallback = true;
+            assertNull(e);
+            assertEquals(referenceRecords, records);
+          }
+        }).get();
     assertTrue(sawCallback);
     // With # of bytes in messages < max bytes per response, this should finish just after
     // the per-request timeout (because the timeout perfectly coincides with a scheduled
     // iteration when using the default settings).
-    assertEquals(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) + config
-                     .getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG),
+    assertEquals(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)
+                 + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG),
                  config.getTime().milliseconds());
 
     sawCallback = false;
@@ -148,18 +157,19 @@ public class ConsumerManagerTest {
   public void testConsumerMaxBytesResponse() throws InterruptedException, ExecutionException {
     // Tests that when there are more records available than the max bytes to be included in the
     // response, not all of it is returned.
-    final List<ConsumerRecord> referenceRecords = Arrays.asList(
-        new ConsumerRecord(null, new byte[512], 0, 0),
-        new ConsumerRecord(null, new byte[512], 1, 0),
-        new ConsumerRecord(null, new byte[512], 2, 0),
-        new ConsumerRecord(null, new byte[512], 3, 0)
+    final List<ConsumerRecord<byte[], byte[]>> referenceRecords
+        = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
+        new BinaryConsumerRecord(null, new byte[512], 0, 0),
+        new BinaryConsumerRecord(null, new byte[512], 1, 0),
+        new BinaryConsumerRecord(null, new byte[512], 2, 0),
+        new BinaryConsumerRecord(null, new byte[512], 3, 0)
     );
-    Map<Integer, List<ConsumerRecord>> referenceSchedule
-        = new HashMap<Integer, List<ConsumerRecord>>();
+    Map<Integer, List<ConsumerRecord<byte[], byte[]>>> referenceSchedule
+        = new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
     referenceSchedule.put(50, referenceRecords);
 
-    Map<String, List<Map<Integer, List<ConsumerRecord>>>> schedules
-        = new HashMap<String, List<Map<Integer, List<ConsumerRecord>>>>();
+    Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>> schedules
+        = new HashMap<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>();
     schedules.put(topicName, Arrays.asList(referenceSchedule));
 
     expectCreate(schedules);
@@ -168,28 +178,31 @@ public class ConsumerManagerTest {
 
     EasyMock.replay(mdObserver, consumerFactory);
 
-    String cid = consumerManager.createConsumer(groupName, new ConsumerInstanceConfig());
+    String cid = consumerManager.createConsumer(groupName,
+                                                new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
     sawCallback = false;
-    consumerManager.readTopic(groupName, cid, topicName, Long.MAX_VALUE,
-                              new ConsumerManager.ReadCallback() {
-                                @Override
-                                public void onCompletion(List<ConsumerRecord> records,
-                                                         Exception e) {
-                                  sawCallback = true;
-                                  assertNull(e);
-                                  // Should only see the first two messages since the third pushes us over the limit.
-                                  assertEquals(2, records.size());
-                                }
-                              }).get();
+    consumerManager.readTopic(
+        groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
+        new ConsumerManager.ReadCallback<byte[], byte[]>() {
+          @Override
+          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+                                   Exception e) {
+            sawCallback = true;
+            assertNull(e);
+            // Should only see the first two messages since the third pushes us over the limit.
+            assertEquals(2, records.size());
+          }
+        }).get();
     assertTrue(sawCallback);
 
     // Also check the user-submitted limit
     sawCallback = false;
     consumerManager.readTopic(
-        groupName, cid, topicName, 512,
-        new ConsumerManager.ReadCallback() {
+        groupName, cid, topicName, BinaryConsumerState.class, 512,
+        new ConsumerManager.ReadCallback<byte[], byte[]>() {
           @Override
-          public void onCompletion(List<ConsumerRecord> records, Exception e) {
+          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+                                   Exception e) {
             sawCallback = true;
             assertNull(e);
             // Should only see first message since the user specified an even smaller size limit
@@ -216,7 +229,8 @@ public class ConsumerManagerTest {
 
     EasyMock.replay(mdObserver, consumerFactory);
 
-    String instanceId = consumerManager.createConsumer(groupName, new ConsumerInstanceConfig());
+    String instanceId = consumerManager.createConsumer(
+        groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
     readAndExpectImmediateNotFound(instanceId, invalidTopicName);
 
     EasyMock.verify(mdObserver, consumerFactory);
@@ -232,15 +246,16 @@ public class ConsumerManagerTest {
       throws InterruptedException, ExecutionException {
     long started = config.getTime().milliseconds();
     sawCallback = false;
-    consumerManager.readTopic(groupName, cid, topicName, Long.MAX_VALUE,
-                              new ConsumerManager.ReadCallback() {
-                                @Override
-                                public void onCompletion(List<ConsumerRecord> records,
-                                                         Exception e) {
-                                  sawCallback = true;
-                                  assertNull(e);
-                                }
-                              }).get();
+    consumerManager.readTopic(
+        groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
+        new ConsumerManager.ReadCallback<byte[], byte[]>() {
+          @Override
+          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+                                   Exception e) {
+            sawCallback = true;
+            assertNull(e);
+          }
+        }).get();
     assertTrue(sawCallback);
     assertEquals(started + config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG),
                  config.getTime().milliseconds());
@@ -251,16 +266,17 @@ public class ConsumerManagerTest {
     sawCallback = false;
     Future
         future =
-        consumerManager.readTopic(groupName, cid, topic, Long.MAX_VALUE,
-                                  new ConsumerManager.ReadCallback() {
-                                    @Override
-                                    public void onCompletion(List<ConsumerRecord> records,
-                                                             Exception e) {
-                                      sawCallback = true;
-                                      assertNull(records);
-                                      assertThat(e, instanceOf(RestNotFoundException.class));
-                                    }
-                                  });
+        consumerManager.readTopic(
+            groupName, cid, topic, BinaryConsumerState.class, Long.MAX_VALUE,
+            new ConsumerManager.ReadCallback<byte[], byte[]>() {
+              @Override
+              public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+                                       Exception e) {
+                sawCallback = true;
+                assertNull(records);
+                assertThat(e, instanceOf(RestNotFoundException.class));
+              }
+            });
     assertTrue(sawCallback);
     assertNull(future);
   }

@@ -15,35 +15,17 @@
  **/
 package io.confluent.kafkarest.unit;
 
-import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.easymock.IAnswer;
-import org.easymock.IExpectationSetters;
-import org.junit.Before;
 import org.junit.Test;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.List;
-
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 
-import io.confluent.kafkarest.ConsumerManager;
-import io.confluent.kafkarest.Context;
-import io.confluent.kafkarest.KafkaRestApplication;
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
+import io.confluent.kafkarest.BinaryConsumerState;
 import io.confluent.kafkarest.TestUtils;
+import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.kafkarest.resources.ConsumersResource;
-import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.RestNotFoundException;
 
@@ -55,33 +37,15 @@ import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
-public class ConsumerResourceTest
-    extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
-
-  private MetadataObserver mdObserver;
-  private ConsumerManager consumerManager;
-  private Context ctx;
-
-  private static final String groupName = "testgroup";
-  private static final String topicName = "testtopic";
-  private static final String instanceId = "uniqueid";
-  private static final String instancePath = "/consumers/" + groupName + "/instances/" + instanceId;
-
-  private static final String not_found_message = "not found";
+// This test evaluates non-consume functionality for ConsumerResource, exercising functionality
+// that isn't really dependent on the EmbeddedFormat, e.g. invalid requests, commit offsets,
+// delete consumer. It ends up using the BINARY default since it is sometimes required to make
+// those operations possible, but the operations shouldn't be affected by it. See
+// ConsumerResourceBinaryTest and ConsumerResourceAvroTest for format-specific tests.
+public class ConsumerResourceTest extends AbstractConsumerResourceTest {
 
   public ConsumerResourceTest() throws RestConfigException {
-    mdObserver = EasyMock.createMock(MetadataObserver.class);
-    consumerManager = EasyMock.createMock(ConsumerManager.class);
-    ctx = new Context(config, mdObserver, null, consumerManager);
-
-    addResource(new ConsumersResource(ctx));
-  }
-
-  @Before
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    EasyMock.reset(mdObserver, consumerManager);
+    super();
   }
 
   @Test
@@ -140,7 +104,8 @@ public class ConsumerResourceTest
         // Trying to access either an invalid consumer instance or a missing topic should trigger
         // an error
         expectCreateGroup(new ConsumerInstanceConfig());
-        expectReadTopic(topicName, null, new RestNotFoundException(not_found_message, 1000));
+        expectReadTopic(topicName, BinaryConsumerState.class, null,
+                        new RestNotFoundException(not_found_message, 1000));
         EasyMock.replay(consumerManager);
 
         Response response = request("/consumers/" + groupName, mediatype.header)
@@ -154,75 +119,11 @@ public class ConsumerResourceTest
             readResponse =
             request(instanceBasePath(createResponse) + "/topics/" + topicName, mediatype.header)
                 .get();
+        // Most specific default is different when retrieving embedded data
+        String expectedMediatype
+            = mediatype.header != null ? mediatype.expected : Versions.KAFKA_V1_JSON_BINARY;
         assertErrorResponse(Response.Status.NOT_FOUND, readResponse,
-                            1000, not_found_message, mediatype.expected);
-
-        EasyMock.verify(consumerManager);
-        EasyMock.reset(consumerManager);
-      }
-    }
-  }
-
-  @Test
-  public void testReadCommit() {
-    List<ConsumerRecord> expectedReadLimit = Arrays.asList(
-        new ConsumerRecord("key1".getBytes(), "value1".getBytes(), 0, 10)
-    );
-    List<ConsumerRecord> expectedReadNoLimit = Arrays.asList(
-        new ConsumerRecord("key2".getBytes(), "value2".getBytes(), 1, 15),
-        new ConsumerRecord("key3".getBytes(), "value3".getBytes(), 2, 20)
-    );
-    List<TopicPartitionOffset> expectedOffsets = Arrays.asList(
-        new TopicPartitionOffset(topicName, 0, 10, 10),
-        new TopicPartitionOffset(topicName, 1, 15, 15),
-        new TopicPartitionOffset(topicName, 2, 20, 20)
-    );
-
-    for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-      for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
-        expectCreateGroup(new ConsumerInstanceConfig());
-        expectReadTopic(topicName, 10, expectedReadLimit, null);
-        expectReadTopic(topicName, expectedReadNoLimit, null);
-        expectCommit(expectedOffsets, null);
-        EasyMock.replay(consumerManager);
-
-        Response response = request("/consumers/" + groupName, mediatype.header)
-            .post(Entity.entity(null, requestMediatype));
-        assertOKResponse(response, mediatype.expected);
-        final CreateConsumerInstanceResponse
-            createResponse =
-            response.readEntity(CreateConsumerInstanceResponse.class);
-
-        // Read with size limit
-        String readUrl = instanceBasePath(createResponse) + "/topics/" + topicName;
-        Invocation.Builder builder = getJerseyTest().target(readUrl)
-            .queryParam("max_bytes", 10).request();
-        builder.accept(mediatype.header);
-        Response readLimitResponse = builder.get();
-        assertOKResponse(readLimitResponse, mediatype.expected);
-        final List<ConsumerRecord>
-            readLimitResponseRecords =
-            readLimitResponse.readEntity(new GenericType<List<ConsumerRecord>>() {
-            });
-        assertEquals(expectedReadLimit, readLimitResponseRecords);
-
-        // Read without size limit
-        Response readResponse = request(readUrl, mediatype.header).get();
-        assertOKResponse(readResponse, mediatype.expected);
-        final List<ConsumerRecord>
-            readResponseRecords =
-            readResponse.readEntity(new GenericType<List<ConsumerRecord>>() {
-            });
-        assertEquals(expectedReadNoLimit, readResponseRecords);
-
-        Response commitResponse = request(instanceBasePath(createResponse), mediatype.header)
-            .post(Entity.entity(null, requestMediatype));
-        assertOKResponse(response, mediatype.expected);
-        final List<TopicPartitionOffset>
-            committedOffsets =
-            commitResponse.readEntity(new GenericType<List<TopicPartitionOffset>>() {
-            });
-        assertEquals(expectedOffsets, committedOffsets);
+                            1000, not_found_message, expectedMediatype);
 
         EasyMock.verify(consumerManager);
         EasyMock.reset(consumerManager);
@@ -272,68 +173,6 @@ public class ConsumerResourceTest
 
       EasyMock.verify(consumerManager);
       EasyMock.reset(consumerManager);
-    }
-  }
-
-
-  private void expectCreateGroup(ConsumerInstanceConfig config) {
-    EasyMock.expect(consumerManager.createConsumer(EasyMock.eq(groupName), EasyMock.eq(config)))
-        .andReturn(instanceId);
-  }
-
-  private void expectReadTopic(String topicName, final List<ConsumerRecord> readResult,
-                               final Exception readException) {
-    expectReadTopic(topicName, Long.MAX_VALUE, readResult, readException);
-  }
-
-  private void expectReadTopic(String topicName, long maxBytes,
-                               final List<ConsumerRecord> readResult,
-                               final Exception readException) {
-    final Capture<ConsumerManager.ReadCallback>
-        readCallback =
-        new Capture<ConsumerManager.ReadCallback>();
-    consumerManager
-        .readTopic(EasyMock.eq(groupName), EasyMock.eq(instanceId), EasyMock.eq(topicName),
-                   EasyMock.eq(maxBytes), EasyMock.capture(readCallback));
-    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
-      @Override
-      public Object answer() throws Throwable {
-        readCallback.getValue().onCompletion(readResult, readException);
-        return null;
-      }
-    });
-  }
-
-  private void expectCommit(final List<TopicPartitionOffset> commitResult,
-                            final Exception commitException) {
-    final Capture<ConsumerManager.CommitCallback>
-        commitCallback =
-        new Capture<ConsumerManager.CommitCallback>();
-    consumerManager.commitOffsets(EasyMock.eq(groupName), EasyMock.eq(instanceId),
-                                  EasyMock.capture(commitCallback));
-    EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
-      @Override
-      public Object answer() throws Throwable {
-        commitCallback.getValue().onCompletion(commitResult, commitException);
-        return null;
-      }
-    });
-  }
-
-  private String instanceBasePath(CreateConsumerInstanceResponse createResponse) {
-    try {
-      return new URI(createResponse.getBaseUri()).getPath();
-    } catch (URISyntaxException e) {
-      throw new RuntimeException(
-          "Invalid URI in CreateConsumerInstanceResponse: \"" + createResponse.getBaseUri() + "\"");
-    }
-  }
-
-  private void expectDeleteGroup(boolean invalid) {
-    consumerManager.deleteConsumer(groupName, instanceId);
-    IExpectationSetters expectation = EasyMock.expectLastCall();
-    if (invalid) {
-      expectation.andThrow(new RestNotFoundException(not_found_message, 1000));
     }
   }
 }

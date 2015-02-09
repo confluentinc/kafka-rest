@@ -558,7 +558,10 @@ Consumers
 ---------
 
 The consumers resource provides access to the current state of consumer groups, allows you to create a consumer in a
-consumer group and consume messages from topics and partitions.
+consumer group and consume messages from topics and partitions. The proxy can convert data stored
+in Kafka in serialized form into a JSON-compatible embedded format. Currently two formats are
+supported: raw binary data is encoded as base64 strings and Avro data is converted into embedded
+JSON objects.
 
 Because consumers are stateful, any consumer instances created with the REST API are tied to a specific REST proxy
 instance. A full URL is provided when the instance is created and it should be used to construct any subsequent
@@ -568,7 +571,11 @@ any consumers before it is terminated.
 
 .. http:post:: /consumers/(string:group_name)
 
-   Create a new consumer instance in the consumer group.
+   Create a new consumer instance in the consumer group. The ``format`` parameter controls the
+   deserialization of data from Kafka and the content type that *must* be used in the
+   ``Accept`` header of subsequent read API requests performed against this consumer. For
+   example, if the creation request specifies ``avro`` for the format, subsequent read requests
+   should use ``Accept: application/vnd.kafka.avro.v1+json``.
 
    Note that the response includes a URL including the host since the consumer is stateful and tied
    to a specific REST proxy instance. Subsequent examples in this section use a ``Host`` header
@@ -577,6 +584,9 @@ any consumers before it is terminated.
    :param string group_name: The name of the consumer group to join
    :<json string id: Unique ID for the consumer instance in this group. If omitted, one will be automatically generated
                      using the REST proxy ID and an auto-incrementing number
+   :<json string format: The format of consumed messages, which is used to convert messages into
+                         a JSON-compatible form. Valid values: "binary", "avro". If unspecified,
+                         defaults to "binary".
    :<json string auto.offset.reset: Sets the ``auto.offset.reset`` setting for the consumer
    :<json string auto.commit.enable: Sets the ``auto.commit.enable`` setting for the consumer
 
@@ -595,6 +605,7 @@ any consumers before it is terminated.
 
       {
         "id": "my_consumer",
+        "format": "binary"
         "auto.offset.reset": "true",
         "auto.commit.enable": "false"
       }
@@ -700,8 +711,12 @@ any consumers before it is terminated.
 
 .. http:get:: /consumers/(string:group_name)/instances/(string:instance)/topics/(string:topic_name)
 
-   Consume messages from a topic. If the consumer is not yet subscribed to the topic, this adds them as a subscriber,
-   possibly causing a consumer rebalance.
+   Consume messages from a topic. If the consumer is not yet subscribed to the topic, this adds it
+   as a subscriber, possibly causing a consumer rebalance.
+
+   The format of the embedded data returned by this request is determined by the format specified
+   in the initial consumer instance creation request and must match the format of the ``Accept``
+   header. Mismatches will result in error code ``40601``.
 
    Note that this request *must* be made to the specific REST proxy instance holding the consumer
    instance.
@@ -715,48 +730,81 @@ any consumers before it is terminated.
                      actual limit will be the minimum of this setting and the server-side
                      configuration ``consumer.request.max.bytes``. Default is unlimited.
 
-   :>jsonarr string key: Base64-encoded message key or null
-   :>jsonarr string value: Base64-encoded message value
+   :>jsonarr string key: The message key, formatted according to the embedded format
+   :>jsonarr string value: The message value, formatted according to the embedded format
    :>jsonarr int partition: Partition of the message
    :>jsonarr long offset: Offset of the message
 
    :statuscode 404:
       * Error code 40401 -- Topic not found
       * Error code 40403 -- Consumer instance not found
+   :statuscode 406:
+      * Error code 40601 -- Consumer format does not match the embedded format requested by the
+        ``Accept`` header.
 
-   **Example request**:
+   **Example binary request**:
 
    .. sourcecode:: http
 
       GET /consumers/testgroup/instances/my_consumer/topics/test_topic HTTP/1.1
       Host: proxy-instance.kafkaproxy.example.com
-      Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
+      Accept: application/vnd.kafka.binary.v1+json
 
-   **Example response**:
+   **Example binary response**:
 
    .. sourcecode:: http
 
       HTTP/1.1 200 OK
-      Content-Type: application/vnd.kafka.v1+json
+      Content-Type: application/vnd.kafka.binary.v1+json
 
       [
         {
-          "topic": "test",
+          "key": "a2V5",
+          "value": "Y29uZmx1ZW50",
           "partition": 1,
-          "consumed": 100,
-          "committed": 100
+          "offset": 100,
         },
         {
-          "topic": "test",
+          "key": "a2V5",
+          "value": "a2Fma2E=",
           "partition": 2,
-          "consumed": 200,
-          "committed": 200
+          "offset": 101,
+        }
+      ]
+
+   **Example Avro request**:
+
+   .. sourcecode:: http
+
+      GET /consumers/avrogroup/instances/my_avro_consumer/topics/test_avro_topic HTTP/1.1
+      Host: proxy-instance.kafkaproxy.example.com
+      Accept: application/vnd.kafka.avro.v1+json
+
+   **Example Avro response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/vnd.kafka.avro.v1+json
+
+      [
+        {
+          "key": 1,
+          "value": {
+            "id": 1,
+            "name": "Bill"
+          },
+          "partition": 1,
+          "offset": 100,
         },
         {
-          "topic": "test2",
-          "partition": 1,
-          "consumed": 50,
-          "committed": 50
+          "key": 2,
+          "value": {
+            "id": 2,
+            "name": "Melinda"
+          },
+          "partition": 2,
+          "offset": 101,
         }
       ]
 

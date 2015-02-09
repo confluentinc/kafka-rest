@@ -31,7 +31,10 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.UriInfo;
 
+import io.confluent.kafkarest.AvroConsumerState;
+import io.confluent.kafkarest.BinaryConsumerState;
 import io.confluent.kafkarest.ConsumerManager;
+import io.confluent.kafkarest.ConsumerState;
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.UriUtils;
 import io.confluent.kafkarest.Versions;
@@ -42,9 +45,13 @@ import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.rest.annotations.PerformanceMetric;
 
 @Path("/consumers")
-@Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
+// We include embedded formats here so you can always use these headers when interacting with
+// a consumers resource. The few cases where it isn't safe are overridden per-method
+@Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW,
+           Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
            Versions.JSON_WEIGHTED})
-@Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
+@Consumes({Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_AVRO,
+           Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
            Versions.GENERIC_REQUEST})
 public class ConsumersResource {
 
@@ -98,24 +105,52 @@ public class ConsumersResource {
 
   @GET
   @Path("/{group}/instances/{instance}/topics/{topic}")
-  @PerformanceMetric("consumer.topic.read")
-  public void readTopic(final @Suspended AsyncResponse asyncResponse,
-                        final @PathParam("group") String group,
-                        final @PathParam("instance") String instance,
-                        final @PathParam("topic") String topic,
-                        @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
+  @PerformanceMetric("consumer.topic.read-binary")
+  @Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED,
+             Versions.KAFKA_V1_JSON_WEIGHTED,
+             Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
+             Versions.JSON_WEIGHTED,
+             Versions.ANYTHING})
+  public void readTopicBinary(final @Suspended AsyncResponse asyncResponse,
+                              final @PathParam("group") String group,
+                              final @PathParam("instance") String instance,
+                              final @PathParam("topic") String topic,
+                              @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
+    readTopic(asyncResponse, group, instance, topic, maxBytes, BinaryConsumerState.class);
+  }
+
+  @GET
+  @Path("/{group}/instances/{instance}/topics/{topic}")
+  @PerformanceMetric("consumer.topic.read-avro")
+  @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED})
+  public void readTopicAvro(final @Suspended AsyncResponse asyncResponse,
+                            final @PathParam("group") String group,
+                            final @PathParam("instance") String instance,
+                            final @PathParam("topic") String topic,
+                            @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
+    readTopic(asyncResponse, group, instance, topic, maxBytes, AvroConsumerState.class);
+  }
+
+  private <KafkaK, KafkaV, ClientK, ClientV> void readTopic(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      final @PathParam("topic") String topic,
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes,
+      Class<? extends ConsumerState<KafkaK, KafkaV, ClientK, ClientV>> consumerStateType) {
     maxBytes = (maxBytes <= 0) ? Long.MAX_VALUE : maxBytes;
-    ctx.getConsumerManager().readTopic(group, instance, topic, maxBytes,
-                                       new ConsumerManager.ReadCallback() {
-                                         @Override
-                                         public void onCompletion(List<ConsumerRecord> records,
-                                                                  Exception e) {
-                                           if (e != null) {
-                                             asyncResponse.resume(e);
-                                           } else {
-                                             asyncResponse.resume(records);
-                                           }
-                                         }
-                                       });
+    ctx.getConsumerManager().readTopic(
+        group, instance, topic, consumerStateType, maxBytes,
+        new ConsumerManager.ReadCallback<ClientK, ClientV>() {
+          @Override
+          public void onCompletion(List<? extends ConsumerRecord<ClientK, ClientV>> records,
+                                   Exception e) {
+            if (e != null) {
+              asyncResponse.resume(e);
+            } else {
+              asyncResponse.resume(records);
+            }
+          }
+        });
   }
 }

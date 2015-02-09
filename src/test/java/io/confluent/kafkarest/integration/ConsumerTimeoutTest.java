@@ -18,8 +18,14 @@ package io.confluent.kafkarest.integration;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Properties;
 
+import javax.ws.rs.core.GenericType;
+
+import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
 import kafka.utils.TestUtils;
 import scala.collection.JavaConversions;
 
@@ -48,11 +54,19 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
 
   @Test
   public void testConsumerTimeout() throws InterruptedException {
-    String instanceUri = startConsumeMessages(groupName, topicName);
+    String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
+                                              Versions.KAFKA_V1_JSON_BINARY,
+                                              Versions.KAFKA_V1_JSON_BINARY);
     // Even with identical timeouts, should be able to consume multiple times without the
     // instance timing out
-    consumeForTimeout(instanceUri, topicName);
-    consumeForTimeout(instanceUri, topicName);
+    consumeForTimeout(instanceUri, topicName,
+                      Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
+                      new GenericType<List<BinaryConsumerRecord>>() {
+                      });
+    consumeForTimeout(instanceUri, topicName,
+                      Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
+                      new GenericType<List<BinaryConsumerRecord>>() {
+                      });
     // Then sleep long enough for it to expire
     Thread.sleep(instanceTimeout + slackTime);
 

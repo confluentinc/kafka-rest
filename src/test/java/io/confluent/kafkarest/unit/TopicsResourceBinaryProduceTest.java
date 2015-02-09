@@ -37,8 +37,8 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.TestUtils;
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.SchemaHolder;
@@ -109,7 +109,7 @@ public class TopicsResourceBinaryProduceTest
   }
 
   private <K, V> Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
-                                         Versions.EmbeddedFormat recordFormat,
+                                         EmbeddedFormat recordFormat,
                                          List<? extends TopicProduceRecord<K, V>> records,
                                          final Map<Integer, Long> resultOffsets) {
     final TopicProduceRequest request = new TopicProduceRequest();
@@ -152,7 +152,7 @@ public class TopicsResourceBinaryProduceTest
         Response
             rawResponse =
             produceToTopic("topic1", mediatype.header, requestMediatype,
-                           Versions.EmbeddedFormat.BINARY,
+                           EmbeddedFormat.BINARY,
                            produceRecordsOnlyValues, produceOffsets);
         assertOKResponse(rawResponse, mediatype.expected);
         TopicProduceResponse response = rawResponse.readEntity(TopicProduceResponse.class);
@@ -176,7 +176,7 @@ public class TopicsResourceBinaryProduceTest
         Response
             rawResponse =
             produceToTopic("topic1", mediatype.header, requestMediatype,
-                           Versions.EmbeddedFormat.BINARY,
+                           EmbeddedFormat.BINARY,
                            produceRecordsWithKeys, produceOffsets);
         assertOKResponse(rawResponse, mediatype.expected);
         TopicProduceResponse response = rawResponse.readEntity(TopicProduceResponse.class);
@@ -200,7 +200,7 @@ public class TopicsResourceBinaryProduceTest
         Response
             rawResponse =
             produceToTopic("topic1", mediatype.header, requestMediatype,
-                           Versions.EmbeddedFormat.BINARY,
+                           EmbeddedFormat.BINARY,
                            produceRecordsWithPartitions, produceOffsets);
         assertOKResponse(rawResponse, mediatype.expected);
         TopicProduceResponse response = rawResponse.readEntity(TopicProduceResponse.class);
@@ -224,7 +224,7 @@ public class TopicsResourceBinaryProduceTest
         Response
             rawResponse =
             produceToTopic("topic1", mediatype.header, requestMediatype,
-                           Versions.EmbeddedFormat.BINARY,
+                           EmbeddedFormat.BINARY,
                            produceRecordsWithPartitionsAndKeys, produceOffsets);
         assertOKResponse(rawResponse, mediatype.expected);
         TopicProduceResponse response = rawResponse.readEntity(TopicProduceResponse.class);
@@ -247,7 +247,7 @@ public class TopicsResourceBinaryProduceTest
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
         Response rawResponse =
             produceToTopic("topic1", mediatype.header, requestMediatype,
-                           Versions.EmbeddedFormat.BINARY,
+                           EmbeddedFormat.BINARY,
                            produceRecordsWithNullValues, produceOffsets);
         assertOKResponse(rawResponse, mediatype.expected);
         TopicProduceResponse response = rawResponse.readEntity(TopicProduceResponse.class);
@@ -272,7 +272,7 @@ public class TopicsResourceBinaryProduceTest
         Response
             rawResponse =
             produceToTopic("topic1", mediatype.header, requestMediatype,
-                           Versions.EmbeddedFormat.BINARY,
+                           EmbeddedFormat.BINARY,
                            produceRecordsWithKeys, null);
         assertErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, rawResponse,
                             mediatype.expected);

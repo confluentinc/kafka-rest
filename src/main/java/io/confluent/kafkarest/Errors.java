@@ -16,6 +16,8 @@
 
 package io.confluent.kafkarest;
 
+import javax.ws.rs.core.Response;
+
 import io.confluent.rest.exceptions.RestConstraintViolationException;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestNotFoundException;
@@ -43,6 +45,19 @@ public class Errors {
     return new RestNotFoundException(CONSUMER_INSTANCE_NOT_FOUND_MESSAGE,
                                      CONSUMER_INSTANCE_NOT_FOUND_ERROR_CODE);
   }
+
+
+  public final static String CONSUMER_FORMAT_MISMATCH_MESSAGE =
+      "The requested embedded data format does not match the deserializer for this consumer "
+      + "instance";
+  public final static int CONSUMER_FORMAT_MISMATCH_ERROR_CODE = 40601;
+
+  public static RestException consumerFormatMismatch() {
+    return new RestException(CONSUMER_FORMAT_MISMATCH_MESSAGE,
+                             Response.Status.NOT_ACCEPTABLE.getStatusCode(),
+                             CONSUMER_FORMAT_MISMATCH_ERROR_CODE);
+  }
+
 
   public final static String KEY_SCHEMA_MISSING_MESSAGE = "Request includes keys but does not "
                                                           + "include key schema";

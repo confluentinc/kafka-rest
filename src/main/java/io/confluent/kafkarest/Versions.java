@@ -21,17 +21,31 @@ import java.util.List;
 public class Versions {
 
   public static final String KAFKA_V1_JSON = "application/vnd.kafka.v1+json";
+  // This is set < 1 because it is only the most-specific type if there isn't an embedded data type.
+  public static final String KAFKA_V1_JSON_WEIGHTED = KAFKA_V1_JSON + "; qs=0.9";
   public static final String KAFKA_V1_JSON_BINARY = "application/vnd.kafka.binary.v1+json";
+  public static final String KAFKA_V1_JSON_BINARY_WEIGHTED = KAFKA_V1_JSON_BINARY;
+  // "LOW" weightings are used to permit using these for resources like consumer where it might
+  // be convenient to always use the same type, but where their use should really be discouraged
+  public static final String KAFKA_V1_JSON_BINARY_WEIGHTED_LOW = KAFKA_V1_JSON_BINARY + "; qs=0.1";
   public static final String KAFKA_V1_JSON_AVRO = "application/vnd.kafka.avro.v1+json";
-  public static final String KAFKA_V1_JSON_WEIGHTED = KAFKA_V1_JSON; // Default weight = 1
+  public static final String KAFKA_V1_JSON_AVRO_WEIGHTED = KAFKA_V1_JSON_AVRO;
+  public static final String KAFKA_V1_JSON_AVRO_WEIGHTED_LOW = KAFKA_V1_JSON_AVRO + "; qs=0.1";
 
   // These are defaults that track the most recent API version. These should always be specified
   // anywhere the latest version is produced/consumed.
   public static final String KAFKA_MOST_SPECIFIC_DEFAULT = KAFKA_V1_JSON;
   public static final String KAFKA_DEFAULT_JSON = "application/vnd.kafka+json";
-  public static final String KAFKA_DEFAULT_JSON_WEIGHTED = KAFKA_DEFAULT_JSON + "; qs=0.9";
+  public static final String KAFKA_DEFAULT_JSON_WEIGHTED = KAFKA_DEFAULT_JSON + "; qs=0.8";
   public static final String JSON = "application/json";
   public static final String JSON_WEIGHTED = JSON + "; qs=0.5";
+
+  // This is a fallback for when no type is provided. You usually should not need this. It is
+  // mostly useful if you have two resource methods for the same endpoints but different Accept
+  // or Content-Types. Adding this to one of them makes it the default even if no content type
+  // information was specified in the request headers.
+  public static final String ANYTHING = "*/*";
+
 
   public static final List<String>
       PREFERRED_RESPONSE_TYPES =
@@ -43,18 +57,4 @@ public class Versions {
   // this as JSON since that's all we currently support.
   public static final String GENERIC_REQUEST = "application/octet-stream";
 
-  /**
-   * Permitted formats for ProduceRecords embedded in produce requests/consume responses, e.g.
-   * base64-encoded binary, JSON-encoded Avro, etc. Each of these correspond to a content type, a
-   * ProduceRecord implementation, a Producer in the ProducerPool (with corresponding Kafka
-   * serializer), ConsumerRecord implementation, and a serializer for any instantiated consumers.
-   *
-   * Note that for each type, it's assumed that the key and value can be handled by the same
-   * serializer. This means each serializer should handle both it's complex type (e.g.
-   * Indexed/Generic/SpecificRecord for Avro) and boxed primitive types (Integer, Boolean, etc.).
-   */
-  public enum EmbeddedFormat {
-    BINARY,
-    AVRO
-  }
 }

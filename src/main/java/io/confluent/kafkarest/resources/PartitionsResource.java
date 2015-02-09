@@ -34,6 +34,7 @@ import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.AvroProduceRecord;
 import io.confluent.kafkarest.entities.BinaryProduceRecord;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.PartitionProduceResponse;
@@ -82,7 +83,7 @@ public class PartitionsResource {
                             final @PathParam("topic") String topic,
                             final @PathParam("partition") int partition,
                             @Valid PartitionProduceRequest<BinaryProduceRecord> request) {
-    produce(asyncResponse, topic, partition, Versions.EmbeddedFormat.BINARY, request);
+    produce(asyncResponse, topic, partition, EmbeddedFormat.BINARY, request);
   }
 
   @POST
@@ -107,14 +108,14 @@ public class PartitionsResource {
       throw Errors.valueSchemaMissingException();
     }
 
-    produce(asyncResponse, topic, partition, Versions.EmbeddedFormat.AVRO, request);
+    produce(asyncResponse, topic, partition, EmbeddedFormat.AVRO, request);
   }
 
   protected <K, V, R extends ProduceRecord<K, V>> void produce(
       final AsyncResponse asyncResponse,
       final String topic,
       final int partition,
-      final Versions.EmbeddedFormat format,
+      final EmbeddedFormat format,
       final PartitionProduceRequest<R> request) {
     checkTopicExists(topic);
     if (!ctx.getMetadataObserver().partitionExists(topic, partition)) {
