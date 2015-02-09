@@ -290,12 +290,7 @@ public class AvroConverterTest {
     assertTrue(result.json.isTextual());
     assertEquals("abcdefg", result.json.textValue());
 
-    result = AvroConverter.toJson("hello".getBytes());
-    assertTrue(result.json.isTextual());
-    // Was generated from a string, so the Avro encoding should be equivalent to the string
-    assertEquals("hello", result.json.textValue());
-
-    result = AvroConverter.toJson("hello".getBytes());
+    result = AvroConverter.toJson(ByteBuffer.wrap("hello".getBytes()));
     assertTrue(result.json.isTextual());
     // Was generated from a string, so the Avro encoding should be equivalent to the string
     assertEquals("hello", result.json.textValue());

@@ -160,7 +160,7 @@ public class AvroConverter {
       return primitiveSchemas.get("Double");
     } else if (value instanceof String) {
       return primitiveSchemas.get("String");
-    } else if (value instanceof byte[]) {
+    } else if (value instanceof byte[] || value instanceof ByteBuffer) {
       return primitiveSchemas.get("Bytes");
     } else if (value instanceof GenericContainer) {
       return ((GenericContainer) value).getSchema();
