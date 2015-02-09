@@ -45,8 +45,15 @@ Assuming you have the Kafka and Kafka REST Proxy code checked out:
 Installation
 ------------
 
-Release versions are available from the `Central
-Repository <http://search.maven.org/#search|ga|1|g%3A%22io.confluent%22%20AND%20a%3A%22kafka-rest%22>`_.
+.. ifconfig:: platform_docs
+
+   See the :ref:`installation instructions<installation>` for the Confluent Platform.
+
+.. ifconfig:: not platform_docs
+
+   You can download prebuilt versions of the Kafka REST Proxy as part of the
+   `Confluent Platform <http://confluent.io/downloads/>`_. To install from
+   source, follow the instructions in the `Development`_ section.
 
 Deployment
 ----------
@@ -72,13 +79,39 @@ Development
 To build a development version, you may need a development versions of
 `io.confluent.common <https://github.com/confluentinc/common>`_ and
 `io.confluent.rest-utils <https://github.com/confluentinc/rest-utils>`_.  After
-installing ``common`` and ``rest-utils`` and compiling with Maven, you can run an instance of the
-proxy against a local Kafka cluster (using the default configuration included
-with Kafka):
+installing ``common`` and ``rest-utils``, you can build the Kafka REST Proxy
+with Maven. All the standard lifecycle phases work. During development, use
 
 .. sourcecode:: bash
 
-    $ mvn exec:java
+   $ mvn compile
+
+to build,
+
+.. sourcecode:: bash
+
+   $ mvn test
+
+to run the unit and integration tests, and
+
+.. sourcecode:: bash
+
+     $ mvn exec:java
+
+to run an instance of the proxy against a local Kafka cluster (using the default
+configuration included with Kafka).
+
+To create a packaged version, optionally skipping the tests:
+
+.. sourcecode:: bash
+
+    $ mvn package [-DskipTests]
+
+This will produce two versions ready for production:
+``target/kafka-rest-0.1-SNAPSHOT-package`` contains a directory layout similar
+to the packaged binary versions and
+``target/kafka-rest-0.1-SNAPSHOT-standalone.jar`` is an uber-jar including all
+the dependencies.
 
 Contribute
 ----------
