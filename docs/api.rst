@@ -571,12 +571,11 @@ any consumers before it is terminated.
 
 .. http:post:: /consumers/(string:group_name)
 
-   Create a new consumer instance in the consumer group. The format data will be returned in is
-   selected by the ``format`` parameter in the request. Subsequent read calls *must* use the
-   correct mime type in the ``Accept`` header, e.g. if the creation request specifies ``avro``
-   for the format, read requests should use ``Accept: application/vnd.kafka.avro.v1+json``.
-   Specifying the incorrect type on subsequent reads will result in a consumer format mismatch
-   error (code ``40601``).
+   Create a new consumer instance in the consumer group. The ``format`` parameter controls the
+   deserialization of data from Kafka and the content type that *must* be used in the
+   ``Accept`` header of subsequent read API requests performed against this consumer. For
+   example, if the creation request specifies ``avro`` for the format, subsequent read requests
+   should use ``Accept: application/vnd.kafka.avro.v1+json``.
 
    Note that the response includes a URL including the host since the consumer is stateful and tied
    to a specific REST proxy instance. Subsequent examples in this section use a ``Host`` header

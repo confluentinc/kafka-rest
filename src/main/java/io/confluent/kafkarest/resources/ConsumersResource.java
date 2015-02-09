@@ -128,12 +128,11 @@ public class ConsumersResource {
                             final @PathParam("group") String group,
                             final @PathParam("instance") String instance,
                             final @PathParam("topic") String topic,
-                            @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes,
-                            @HeaderParam("Accept") String accept) {
+                            @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
     readTopic(asyncResponse, group, instance, topic, maxBytes, AvroConsumerState.class);
   }
 
-  public <KafkaK, KafkaV, ClientK, ClientV> void readTopic(
+  private <KafkaK, KafkaV, ClientK, ClientV> void readTopic(
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
