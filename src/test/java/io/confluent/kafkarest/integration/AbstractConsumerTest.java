@@ -229,9 +229,8 @@ public class AbstractConsumerTest extends ClusterTestHarness {
   }
 
   protected void commitOffsets(String instanceUri) {
-    Response
-        response =
-        request(instanceUri).post(Entity.entity(null, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
+    Response response = request(instanceUri + "/offsets/")
+        .post(Entity.entity(null, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     // We don't verify offsets since they'll depend on how data gets distributed to partitions.
     // Just parse to check the output is formatted validly.

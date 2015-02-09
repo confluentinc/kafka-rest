@@ -109,7 +109,8 @@ public class ConsumerResourceAvroTest extends AbstractConsumerResourceTest {
             });
         assertEquals(expectedReadNoLimit, readResponseRecords);
 
-        Response commitResponse = request(instanceBasePath(createResponse), mediatype.header)
+        String commitUrl = instanceBasePath(createResponse) + "/offsets/";
+        Response commitResponse = request(commitUrl, mediatype.header)
             .post(Entity.entity(null, requestMediatype));
         assertOKResponse(response, mediatype.expected);
         final List<TopicPartitionOffset>
