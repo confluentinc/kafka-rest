@@ -23,16 +23,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
 
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
+import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import kafka.utils.TestUtils;
 import scala.collection.JavaConversions;
+import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 
 public class ConsumerBinaryTest extends AbstractConsumerTest {
 
@@ -131,5 +137,19 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
                     Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
                     binaryConsumerRecordType, null);
     deleteConsumer(instanceUri);
+  }
+
+
+  // The following tests are only included in the binary consumer because they test functionality
+  // that isn't specific to the type of embedded data, but since they need
+  @Test
+  public void testInvalidKafkaConsumerConfig() {
+    ConsumerInstanceConfig config = new ConsumerInstanceConfig("id", "binary", "bad-config", null);
+    Response response = request("/consumers/" + groupName)
+        .post(Entity.entity(config, Versions.KAFKA_V1_JSON));
+    assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response,
+                        Errors.INVALID_CONSUMER_CONFIG_ERROR_CODE,
+                        Errors.INVALID_CONSUMER_CONFIG_MESSAGE,
+                        Versions.KAFKA_V1_JSON);
   }
 }

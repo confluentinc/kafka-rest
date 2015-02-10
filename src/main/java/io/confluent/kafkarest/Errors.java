@@ -21,6 +21,7 @@ import javax.ws.rs.core.Response;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestNotFoundException;
+import kafka.common.InvalidConfigException;
 
 public class Errors {
 
@@ -100,4 +101,14 @@ public class Errors {
                                                 JSON_AVRO_CONVERSION_ERROR_CODE);
 
   }
+
+  public final static String INVALID_CONSUMER_CONFIG_MESSAGE = "Invalid consumer configuration: ";
+  public final static int INVALID_CONSUMER_CONFIG_ERROR_CODE = 42204;
+
+  public static RestConstraintViolationException invalidConsumerConfigException(
+      InvalidConfigException e) {
+    return new RestConstraintViolationException(INVALID_CONSUMER_CONFIG_MESSAGE + e.getMessage(),
+                                                INVALID_CONSUMER_CONFIG_ERROR_CODE);
+  }
+
 }
