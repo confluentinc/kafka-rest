@@ -50,6 +50,7 @@ public class AbstractConsumerResourceTest
 
   protected static final String groupName = "testgroup";
   protected static final String topicName = "testtopic";
+  protected static final String secondTopicName = "testtopic2";
   protected static final String instanceId = "uniqueid";
   protected static final String instancePath
       = "/consumers/" + groupName + "/instances/" + instanceId;

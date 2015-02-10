@@ -780,6 +780,9 @@ error.
    :statuscode 406:
       * Error code 40601 -- Consumer format does not match the embedded format requested by the
         ``Accept`` header.
+   :statuscode 409:
+      * Error code 40901 -- Consumer has already initiated a subscription. Consumers may
+        subscribe to multiple topics, but all subscriptions must be initiated in a single request.
 
    **Example binary request**:
 

@@ -22,5 +22,5 @@ import io.confluent.kafkarest.entities.ConsumerRecord;
 
 public interface ConsumerWorkerReadCallback<K, V> {
 
-  public void onCompletion(List<? extends ConsumerRecord<K, V>> records);
+  public void onCompletion(List<? extends ConsumerRecord<K, V>> records, Exception e);
 }

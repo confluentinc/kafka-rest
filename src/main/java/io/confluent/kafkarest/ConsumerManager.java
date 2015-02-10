@@ -203,13 +203,10 @@ public class ConsumerManager {
         state, topic, maxBytes,
         new ConsumerWorkerReadCallback<ClientK, ClientV>() {
           @Override
-          public void onCompletion(List<? extends ConsumerRecord<ClientK, ClientV>> records) {
+          public void onCompletion(
+              List<? extends ConsumerRecord<ClientK, ClientV>> records, Exception e) {
             updateExpiration(state);
-            if (records == null) {
-              callback.onCompletion(null, Errors.consumerInstanceNotFoundException());
-            } else {
-              callback.onCompletion(records, null);
-            }
+            callback.onCompletion(records, e);
           }
         }
     );

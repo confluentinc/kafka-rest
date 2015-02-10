@@ -59,6 +59,18 @@ public class Errors {
   }
 
 
+  public final static String CONSUMER_ALREADY_SUBSCRIBED_MESSAGE =
+      "Consumer cannot subscribe the the specified target because it has already subscribed to "
+      + "other topics.";
+  public final static int CONSUMER_ALREADY_SUBSCRIBED_ERROR_CODE = 40901;
+
+  public static RestException consumerAlreadySubscribedException() {
+    return new RestException(CONSUMER_ALREADY_SUBSCRIBED_MESSAGE,
+                             Response.Status.CONFLICT.getStatusCode(),
+                             CONSUMER_ALREADY_SUBSCRIBED_ERROR_CODE);
+  }
+
+
   public final static String KEY_SCHEMA_MISSING_MESSAGE = "Request includes keys but does not "
                                                           + "include key schema";
   public final static int KEY_SCHEMA_MISSING_ERROR_CODE = 42201;
