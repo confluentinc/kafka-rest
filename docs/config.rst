@@ -15,20 +15,6 @@ Configuration Options
   * Default: ""
   * Importance: high
 
-``response.mediatype.default``
-  The default response media type that should be used if no specify types are requested in an Accept header.
-
-  * Type: string
-  * Default: "application/vnd.kafka.v1+json"
-  * Importance: high
-
-``response.mediatype.preferred``
-  An ordered list of the server's preferred media types used for responses, from most preferred to least.
-
-  * Type: list
-  * Default: [application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json]
-  * Importance: high
-
 ``schema.registry.url``
   The base URL for the schema registry that should be used by the Avro serializer.
 
@@ -66,6 +52,13 @@ Configuration Options
   * Default: 1
   * Importance: medium
 
+``host.name``
+  The host name used to generate absolute URLs in responses. If empty, the default canonical hostname is used
+
+  * Type: string
+  * Default: ""
+  * Importance: medium
+
 ``consumer.instance.timeout.ms``
   Amount of idle time before a consumer instance is automatically destroyed.
 
@@ -85,13 +78,6 @@ Configuration Options
 
   * Type: int
   * Default: 1
-  * Importance: low
-
-``host.name``
-  The host name used to generate absolute URLs in responses. If empty, the default canonical hostname is used
-
-  * Type: string
-  * Default: ""
   * Importance: low
 
 ``metric.reporters``
@@ -141,6 +127,20 @@ Configuration Options
 
   * Type: string
   * Default: "io.confluent.rest-utils.requests"
+  * Importance: low
+
+``response.mediatype.default``
+  The default response media type that should be used if no specify types are requested in an Accept header.
+
+  * Type: string
+  * Default: "application/vnd.kafka.v1+json"
+  * Importance: low
+
+``response.mediatype.preferred``
+  An ordered list of the server's preferred media types used for responses, from most preferred to least.
+
+  * Type: list
+  * Default: [application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json]
   * Importance: low
 
 ``shutdown.graceful.ms``

@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.rest.exceptions.RestException;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.ConsumerTimeoutException;
 import kafka.message.MessageAndMetadata;
@@ -71,10 +72,10 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
     this.finished = new CountDownLatch(1);
 
     started = parent.getConfig().getTime().milliseconds();
-    topicState = parent.getOrCreateTopicState(topic);
-    if (topicState == null) {
-      finish();
-      return;
+    try {
+      topicState = parent.getOrCreateTopicState(topic);
+    } catch (RestException e) {
+      finish(e);
     }
   }
 
@@ -147,7 +148,11 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
   }
 
   public void finish() {
-    callback.onCompletion(messages);
+    finish(null);
+  }
+
+  public void finish(Exception e) {
+    callback.onCompletion(messages, e);
     finished.countDown();
   }
 

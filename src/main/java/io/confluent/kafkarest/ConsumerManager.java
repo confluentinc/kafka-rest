@@ -38,6 +38,7 @@ import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.rest.exceptions.RestNotFoundException;
 import io.confluent.rest.exceptions.RestServerErrorException;
+import kafka.common.InvalidConfigException;
 import kafka.consumer.Consumer;
 import kafka.consumer.ConsumerConfig;
 import kafka.javaapi.consumer.ConsumerConnector;
@@ -137,10 +138,14 @@ public class ConsumerManager {
       props.put("auto.offset.reset", config.getAutoOffsetReset());
     }
     ConsumerConnector consumer;
-    if (consumerFactory == null) {
-      consumer = Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
-    } else {
-      consumer = consumerFactory.createConsumer(new ConsumerConfig(props));
+    try {
+      if (consumerFactory == null) {
+        consumer = Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
+      } else {
+        consumer = consumerFactory.createConsumer(new ConsumerConfig(props));
+      }
+    } catch (InvalidConfigException e) {
+      throw Errors.invalidConsumerConfigException(e);
     }
 
     synchronized (this) {
@@ -203,13 +208,10 @@ public class ConsumerManager {
         state, topic, maxBytes,
         new ConsumerWorkerReadCallback<ClientK, ClientV>() {
           @Override
-          public void onCompletion(List<? extends ConsumerRecord<ClientK, ClientV>> records) {
+          public void onCompletion(
+              List<? extends ConsumerRecord<ClientK, ClientV>> records, Exception e) {
             updateExpiration(state);
-            if (records == null) {
-              callback.onCompletion(null, Errors.consumerInstanceNotFoundException());
-            } else {
-              callback.onCompletion(records, null);
-            }
+            callback.onCompletion(records, e);
           }
         }
     );

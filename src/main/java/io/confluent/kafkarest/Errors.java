@@ -21,6 +21,7 @@ import javax.ws.rs.core.Response;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestNotFoundException;
+import kafka.common.InvalidConfigException;
 
 public class Errors {
 
@@ -59,6 +60,18 @@ public class Errors {
   }
 
 
+  public final static String CONSUMER_ALREADY_SUBSCRIBED_MESSAGE =
+      "Consumer cannot subscribe the the specified target because it has already subscribed to "
+      + "other topics.";
+  public final static int CONSUMER_ALREADY_SUBSCRIBED_ERROR_CODE = 40901;
+
+  public static RestException consumerAlreadySubscribedException() {
+    return new RestException(CONSUMER_ALREADY_SUBSCRIBED_MESSAGE,
+                             Response.Status.CONFLICT.getStatusCode(),
+                             CONSUMER_ALREADY_SUBSCRIBED_ERROR_CODE);
+  }
+
+
   public final static String KEY_SCHEMA_MISSING_MESSAGE = "Request includes keys but does not "
                                                           + "include key schema";
   public final static int KEY_SCHEMA_MISSING_ERROR_CODE = 42201;
@@ -88,4 +101,14 @@ public class Errors {
                                                 JSON_AVRO_CONVERSION_ERROR_CODE);
 
   }
+
+  public final static String INVALID_CONSUMER_CONFIG_MESSAGE = "Invalid consumer configuration: ";
+  public final static int INVALID_CONSUMER_CONFIG_ERROR_CODE = 42204;
+
+  public static RestConstraintViolationException invalidConsumerConfigException(
+      InvalidConfigException e) {
+    return new RestConstraintViolationException(INVALID_CONSUMER_CONFIG_MESSAGE + e.getMessage(),
+                                                INVALID_CONSUMER_CONFIG_ERROR_CODE);
+  }
+
 }

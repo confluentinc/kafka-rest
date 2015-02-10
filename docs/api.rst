@@ -54,7 +54,7 @@ Errors
 
 All API endpoints use a standard error message format for any requests that
 return an HTTP status indicating an error (any 400 or 500 statuses). For
-example, an request entity that omits a required field may generate the
+example, a request entity that omits a required field may generate the
 following response:
 
    .. sourcecode:: http
@@ -109,6 +109,16 @@ you produce messages by making ``POST`` requests to specific topics.
    :>json string name: Name of the topic
    :>json map configs: Per-topic configuration overrides
    :>json array partitions: List of partitions for this topic
+   :>json int partitions[i].partition: the ID of this partition
+   :>json int partitions[i].leader: the broker ID of the leader for this partition
+   :>json array partitions[i].replicas: list of replicas for this partition,
+                                        including the leader
+   :>json array partitions[i].replicas[j].broker: broker ID of the replica
+   :>json boolean partitions[i].replicas[j].leader: true if this replica is the
+                                                    leader for the partition
+   :>json boolean partitions[i].replicas[j].in_sync: true if this replica is
+                                                     currently in sync with the
+                                                     leader
 
    :statuscode 404:
       * Error code 40401 -- Topic not found
@@ -149,6 +159,22 @@ you produce messages by making ``POST`` requests to specific topics.
                 "in_sync": true,
               }
             ]
+          },
+          {
+            "partition": 2,
+            "leader": 2,
+            "replicas": [
+              {
+                "broker": 1,
+                "leader": false,
+                "in_sync": true,
+              },
+              {
+                "broker": 2,
+                "leader": true,
+                "in_sync": true,
+              }
+            ]
           }
         ]
       }
@@ -157,9 +183,10 @@ you produce messages by making ``POST`` requests to specific topics.
 
    Produce messages to a topic, optionally specifying keys or partitions for the
    messages. For the ``avro`` embedded format, you must provide information
-   about schemas. This may be provided as the full schema encoded as a string,
-   or, after the initial request may be provided as the schema ID returned with
-   the first response.
+   about schemas and the REST proxy must be configured with the URL to access
+   the schema registry (``schema.registry.connect``). Schemas may be provided as
+   the full schema encoded as a string, or, after the initial request may be
+   provided as the schema ID returned with the first response.
 
    :param string topic_name: Name of the topic to produce the messages to
 
@@ -227,9 +254,11 @@ you produce messages by making ``POST`` requests to specific topics.
       Content-Type: application/vnd.kafka.v1+json
 
       {
+        "key_schema_id": null,
+        "value_schema_id": null,
         "offsets": [
           {
-            "partition": 3,
+            "partition": 2,
             "offset": 100
           },
           {
@@ -253,7 +282,7 @@ you produce messages by making ``POST`` requests to specific topics.
       Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
 
       {
-        "value_schema": "{\"name\":\"int\",\"type\": \"int\"}";",
+        "value_schema": "{\"name\":\"int\",\"type\": \"int\"}"
         "records": [
           {
             "value": 12
@@ -273,6 +302,7 @@ you produce messages by making ``POST`` requests to specific topics.
       Content-Type: application/vnd.kafka.v1+json
 
       {
+        "key_schema_id": null,
         "value_schema_id": 32,
         "offsets": [
           {
@@ -292,7 +322,7 @@ Partitions
 The partitions resource provides per-partition metadata, including the current leaders and replicas for each partition.
 It also allows you to produce messages to single partition using ``POST`` requests.
 
-.. http:get:: /topics/{topic_name}/partitions
+.. http:get:: /topics/(string:topic_name)/partitions
 
    Get a list of partitions for the topic.
 
@@ -312,7 +342,7 @@ It also allows you to produce messages to single partition using ``POST`` reques
 
    .. sourcecode:: http
 
-      GET /topics/test/partitions/1 HTTP/1.1
+      GET /topics/test/partitions HTTP/1.1
       Host: kafkaproxy.example.com
       Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
 
@@ -499,6 +529,8 @@ It also allows you to produce messages to single partition using ``POST`` reques
       Content-Type: application/vnd.kafka.v1+json
 
       {
+        "key_schema_id": null,
+        "value_schema_id": null,
         "offsets": [
           {
             "partition": 1,
@@ -521,7 +553,7 @@ It also allows you to produce messages to single partition using ``POST`` reques
       Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
 
       {
-        "value_schema": "{\"name\":\"int\",\"type\": \"int\"}";",
+        "value_schema": "{\"name\":\"int\",\"type\": \"int\"}"
         "records": [
           {
             "value": 25
@@ -540,6 +572,7 @@ It also allows you to produce messages to single partition using ``POST`` reques
       Content-Type: application/vnd.kafka.v1+json
 
       {
+        "key_schema_id": null,
         "value_schema_id": 32,
         "offsets": [
           {
@@ -569,6 +602,12 @@ requests. Failing to use the returned URL for future consume requests will end u
 consumers to the group. If a REST proxy instance is shutdown, it will attempt to cleanly destroy
 any consumers before it is terminated.
 
+Consumers may not change the set of topics they are subscribed to once they have
+started consuming messages. For example, if a consumer is created without
+specifying topic subscriptions, the first read from a topic will subscribe the
+consumer to that topic and attempting to read from another topic will cause an
+error.
+
 .. http:post:: /consumers/(string:group_name)
 
    Create a new consumer instance in the consumer group. The ``format`` parameter controls the
@@ -595,6 +634,10 @@ any consumers before it is terminated.
    :>json string base_uri: Base URI used to construct URIs for subsequent requests against this consumer instance. This
                            will be of the form ``http://hostname:port/consumers/consumer_group/instances/instance_id``.
 
+   :statuscode 422:
+          * Error code 42204 -- Invalid consumer configuration. One of the settings specified in
+            the request contained an invalid value.
+
    **Example request**:
 
    .. sourcecode:: http
@@ -605,8 +648,8 @@ any consumers before it is terminated.
 
       {
         "id": "my_consumer",
-        "format": "binary"
-        "auto.offset.reset": "true",
+        "format": "binary",
+        "auto.offset.reset": "smallest",
         "auto.commit.enable": "false"
       }
 
@@ -741,6 +784,9 @@ any consumers before it is terminated.
    :statuscode 406:
       * Error code 40601 -- Consumer format does not match the embedded format requested by the
         ``Accept`` header.
+   :statuscode 409:
+      * Error code 40901 -- Consumer has already initiated a subscription. Consumers may
+        subscribe to multiple topics, but all subscriptions must be initiated in a single request.
 
    **Example binary request**:
 

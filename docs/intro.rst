@@ -11,60 +11,120 @@ framework that doesn't yet support Kafka, and scripting administrative actions.
 Quickstart
 ----------
 
-Assuming you have the Kafka and Kafka REST Proxy code checked out:
+The following assumes you have Kafka, the schema registry, and an instance of
+the REST Proxy running using the default settings and some topics already created.
 
 .. sourcecode:: bash
 
-   # Start a small local Kafka cluster for testing (1 ZK node, 1 Kafka node, and a couple of test
-   # topics)
-   $ cd kafka
-   $ bin/zookeeper-server-start.sh config/zookeeper.properties
-   $ bin/kafka-server-start.sh config/server.properties
-   $ bin/kafka-topics.sh --create --zookeeper localhost:2181 \
-         --topic test --partitions 1 --replication-factor 1
-   $ bin/kafka-topics.sh --create --zookeeper localhost:2181 \
-         --topic test2 --partitions 1 --replication-factor 1
-
-   # Start the REST proxy. The default settings automatically work with the default settings
-   # for local ZooKeeper and Kafka nodes.
-   $ cd ../kafka-rest
-   $ bin/kafka-rest-start
-
-   # Make a few requests to test the API:
    # Get a list of topics
    $ curl "http://localhost:8082/topics"
      [{"name":"test","num_partitions":3},{"name":"test2","num_partitions":1}]
+
    # Get info about one partition
    $ curl "http://localhost:8082/topics/test"
      {"name":"test","num_partitions":3}
-   # Produce a message with value "Kafka" to the topic test
-   $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
+
+   # Produce a message using binary embedded data with value "Kafka" to the topic test
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.binary.v1+json" \
          --data '{"records":[{"value":"S2Fma2E="}]}' "http://localhost:8082/topics/test"
      {"offsets":[{"partition": 3, "offset": 1}]}
+
+   # Produce a message using Avro embedded data, including the schema which will
+   # be registered with the schema registry and used to validate and serialize
+   # before storing the data in Kafka
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.avro.v1+json" \
+         --data '{"value_schema": "{\"type\": \"record\", \"name\": \"User\", \"fields\": [{\"name\": \"name\", \"type\": \"string\"}]}", "records": [{"value": {"name": "testUser"}}]}' \
+         "http://localhost:8082/topics/avrotest"
+     {"value_schema_id":0,"offsets":[{"partition":0,"offset":0}]}
+
+   # Create a consumer for binary data, starting at the beginning of the topic's
+   # log. Then consume some data from a topic.
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
+         --data '{"id": "my_instance", "format": "binary", "auto.offset.reset": "smallest"}' \
+         http://localhost:8082/consumers/my_binary_consumer
+     {"instance_id":"my_instance","base_uri":"http://localhost:8082/consumers/my_binary_consumer/instances/my_instance"}
+   $ curl -X GET -H "Accept: application/vnd.kafka.binary.v1+json" \
+         http://localhost:8082/consumers/my_binary_consumer/instances/my_instance/topics/test
+     [{"value":"S2Fma2E=","partition":0,"offset":0},{"value":"S2Fma2E=","partition":0,"offset":1}]
+
+   # Create a consumer for Avro data, starting at the beginning of the topic's
+   # log. Then consume some data from a topic, which is decoded, translated to
+   # JSON, and included in the response. The schema used for deserialization is
+   # fetched automatically from the schema registry.
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
+         --data '{"id": "my_instance", "format": "avro", "auto.offset.reset": "smallest"}' \
+         http://localhost:8082/consumers/my_avro_consumer
+     {"instance_id":"my_instance","base_uri":"http://localhost:8082/consumers/my_avro_consumer/instances/my_instance"}
+   $ curl -X GET -H "Accept: application/vnd.kafka.avro.v1+json" \
+         http://localhost:8082/consumers/my_avro_consumer/instances/my_instance/topics/avrotest
+     [{"value":{"name":"testUser"},"partition":0,"offset":0},{"value":{"name":"testUser2"},"partition":0,"offset":1}]
+
+
 
 Installation
 ------------
 
-Release versions are available from the `Central
-Repository <http://search.maven.org/#search|ga|1|g%3A%22io.confluent%22%20AND%20a%3A%22kafka-rest%22>`_.
+.. ifconfig:: platform_docs
+
+   See the :ref:`installation instructions<installation>` for the Confluent
+   Platform. Before starting the REST proxy you must start Kafka and the schema
+   registry. The :ref:`quickstart<quickstart>` explains how to start these
+   services locally for testing.
+
+.. ifconfig:: not platform_docs
+
+   You can download prebuilt versions of the Kafka REST Proxy as part of the
+   `Confluent Platform <http://confluent.io/downloads/>`_. To install from
+   source, follow the instructions in the `Development`_ section. Before
+   starting the REST proxy you must start Kafka and the schema registry.
+
+Starting the Kafka REST proxy service is simple once its dependencies are
+running:
+
+.. sourcecode:: bash
+
+   $ cd confluent-1.0/
+
+   # Start the REST proxy. The default settings automatically work with the
+   # default settings for local ZooKeeper and Kafka nodes.
+   $ bin/kafka-rest-start
+
+If you installed Debian or RPM packages, you can simply run ``kafka-rest-start``
+as it will be on your ``PATH``. If you need to override the default
+configuration, add settings to a config file and pass it as an argument when you
+start the service:
+
+.. sourcecode:: bash
+
+   $ bin/kafka-rest-start etc/kafka-rest/kafka-rest.properties
+
+Finally, if you started the service in the background, you can use the following
+command to stop it:
+
+.. sourcecode:: bash
+
+   $ bin/kafka-rest-stop
 
 Deployment
 ----------
 
-The REST proxy includes a built-in Jetty server. Assuming you've configured your
-classpath correctly, you can start a server with:
+The REST proxy includes a built-in Jetty server. The wrapper scripts
+`bin/kafka-rest-start` and `bin/kafka-rest-stop` are the recommended method of
+starting and stopping the service. However, you can also start the server
+directly yourself:
 
 .. sourcecode:: bash
 
    $ java io.confluent.kafkarest.Main [server.properties]
 
 where ``server.properties`` contains configuration settings as specified by the
-``KafkaRestConfiguration`` class. Although the properties file is not required,
-the default configuration is not intended for production. Production deployments
-*should* specify a properties file. By default the server starts bound to port
+``KafkaRestConfiguration`` class.
+Although the properties file is not required, almost all production deployments
+*should* provide one. By default the server starts bound to port
 8082, does not specify a unique instance ID (required to safely run multiple
-proxies concurrently), and expects Zookeeper to be available at ``localhost:2181``
-and a Kafka broker at ``localhost:9092``.
+proxies concurrently), and expects Zookeeper to be available at
+``localhost:2181``, a Kafka broker at ``localhost:9092``, and the schema
+registry at ``http://localhost:8081``.
 
 Development
 -----------
@@ -72,13 +132,39 @@ Development
 To build a development version, you may need a development versions of
 `io.confluent.common <https://github.com/confluentinc/common>`_ and
 `io.confluent.rest-utils <https://github.com/confluentinc/rest-utils>`_.  After
-installing ``common`` and ``rest-utils`` and compiling with Maven, you can run an instance of the
-proxy against a local Kafka cluster (using the default configuration included
-with Kafka):
+installing ``common`` and ``rest-utils``, you can build the Kafka REST Proxy
+with Maven. All the standard lifecycle phases work. During development, use
 
 .. sourcecode:: bash
 
-    $ mvn exec:java
+   $ mvn compile
+
+to build,
+
+.. sourcecode:: bash
+
+   $ mvn test
+
+to run the unit and integration tests, and
+
+.. sourcecode:: bash
+
+     $ mvn exec:java
+
+to run an instance of the proxy against a local Kafka cluster (using the default
+configuration included with Kafka).
+
+To create a packaged version, optionally skipping the tests:
+
+.. sourcecode:: bash
+
+    $ mvn package [-DskipTests]
+
+This will produce two versions ready for production:
+``target/kafka-rest-0.1-SNAPSHOT-package`` contains a directory layout similar
+to the packaged binary versions and
+``target/kafka-rest-0.1-SNAPSHOT-standalone.jar`` is an uber-jar including all
+the dependencies.
 
 Contribute
 ----------

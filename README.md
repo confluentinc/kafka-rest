@@ -9,7 +9,9 @@ into a stream processing framework that doesn't yet support Kafka, and scripting
 Installation
 ------------
 
-Release versions are available from the [Central Repository](http://search.maven.org/#search|ga|1|g%3A%22io.confluent%22%20AND%20a%3A%22kafka-rest%22).
+You can download prebuilt versions of the Kafka REST Proxy as part of the
+[Confluent Platform](http://confluent.io/downloads/). To install from source,
+follow the instructions in the Development section.
 
 Deployment
 ----------
@@ -28,9 +30,11 @@ at `localhost:9092`.
 Development
 -----------
 
-To build a development version, you may need a development version of [io.confluent.rest-utils](https://github.com/confluentinc/rest-utils).
-After installing `rest-utils` and compiling with Maven, you can run an instance of the proxy against a local Kafka cluster
-(using the default configuration included with Kafka):
+To build a development version, you may need a development version of
+[io.confluent.common](https://github.com/confluentinc/common) and [io.confluent.rest-utils](https://github.com/confluentinc/rest-utils).
+After installing `common` and `rest-utils` and compiling `kafka-rest` with
+Maven, you can run an instance of the proxy against a local Kafka cluster (using
+the default configuration included with Kafka):
 
     mvn exec:java
 
