@@ -1,13 +1,6 @@
 Configuration Options
 =====================
 
-``debug``
-  Boolean indicating whether extra debugging information is generated in some error response entities.
-
-  * Type: boolean
-  * Default: true
-  * Importance: high
-
 ``id``
   Unique ID for this REST server instance. This is used in generating unique IDs for consumers that do not specify their ID. The ID is empty by default, which makes a single server setup easier to get up and running, but is not safe for multi-server deployments where automatic consumer IDs are used.
 
@@ -78,6 +71,13 @@ Configuration Options
 
   * Type: int
   * Default: 1
+  * Importance: low
+
+``debug``
+  Boolean indicating whether extra debugging information is generated in some error response entities.
+
+  * Type: boolean
+  * Default: false
   * Importance: low
 
 ``metric.reporters``
