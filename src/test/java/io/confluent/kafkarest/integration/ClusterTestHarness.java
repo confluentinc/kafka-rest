@@ -138,7 +138,7 @@ public abstract class ClusterTestHarness {
     int restPort = ports.remove();
     restProperties.setProperty(KafkaRestConfig.PORT_CONFIG, ((Integer) restPort).toString());
     restProperties.setProperty(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG, zkConnect);
-    restProperties.setProperty(KafkaRestConfig.SCHEMA_REGISTRY_CONNECT_CONFIG, schemaRegConnect);
+    restProperties.setProperty(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegConnect);
     restConnect = String.format("http://localhost:%d", restPort);
   }
 

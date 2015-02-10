@@ -12,14 +12,14 @@ Configuration Options
   Unique ID for this REST server instance. This is used in generating unique IDs for consumers that do not specify their ID. The ID is empty by default, which makes a single server setup easier to get up and running, but is not safe for multi-server deployments where automatic consumer IDs are used.
 
   * Type: string
-  * Default:
+  * Default: ""
   * Importance: high
 
 ``response.mediatype.default``
   The default response media type that should be used if no specify types are requested in an Accept header.
 
   * Type: string
-  * Default: application/vnd.kafka.v1+json
+  * Default: "application/vnd.kafka.v1+json"
   * Importance: high
 
 ``response.mediatype.preferred``
@@ -29,11 +29,11 @@ Configuration Options
   * Default: [application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json]
   * Importance: high
 
-``schema.registry.connect``
+``schema.registry.url``
   The base URL for the schema registry that should be used by the Avro serializer.
 
   * Type: string
-  * Default: localhost:8081
+  * Default: "http://localhost:8081"
   * Importance: high
 
 ``zookeeper.connect``
@@ -42,7 +42,7 @@ Configuration Options
   The server may also have a ZooKeeper chroot path as part of it's ZooKeeper connection string which puts its data under some path in the global ZooKeeper namespace. If so the consumer should use the same chroot path in its connection string. For example to give a chroot path of /chroot/path you would give the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path.
 
   * Type: string
-  * Default: localhost:2181
+  * Default: "localhost:2181"
   * Importance: high
 
 ``consumer.request.max.bytes``
@@ -91,7 +91,7 @@ Configuration Options
   The host name used to generate absolute URLs in responses. If empty, the default canonical hostname is used
 
   * Type: string
-  * Default:
+  * Default: ""
   * Importance: low
 
 ``metric.reporters``
@@ -105,7 +105,7 @@ Configuration Options
   Prefix to apply to metric names for the default JMX reporter.
 
   * Type: string
-  * Default: kafka-rest
+  * Default: "kafka-rest"
   * Importance: low
 
 ``metrics.num.samples``
@@ -140,7 +140,7 @@ Configuration Options
   Name of the SLF4J logger to write the NCSA Common Log Format request log.
 
   * Type: string
-  * Default: io.confluent.rest-utils.requests
+  * Default: "io.confluent.rest-utils.requests"
   * Importance: low
 
 ``shutdown.graceful.ms``

@@ -73,7 +73,7 @@ public class ProducerPool {
     props = new HashMap<String, Object>();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
     props.put("schema.registry.url",
-              appConfig.getString(KafkaRestConfig.SCHEMA_REGISTRY_CONNECT_CONFIG));
+              appConfig.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
     final KafkaAvroSerializer avroKeySerializer = new KafkaAvroSerializer();
     avroKeySerializer.configure(props, true);
     final KafkaAvroSerializer avroValueSerializer = new KafkaAvroSerializer();
