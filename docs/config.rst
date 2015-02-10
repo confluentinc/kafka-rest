@@ -1,3 +1,5 @@
+.. _kafkarest_config:
+
 Configuration Options
 =====================
 

@@ -1,3 +1,5 @@
+.. _kafkarest_api:
+
 API Reference
 =============
 

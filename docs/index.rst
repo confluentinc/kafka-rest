@@ -14,3 +14,4 @@ Contents:
    intro
    api
    config
+   operations
