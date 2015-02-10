@@ -153,7 +153,7 @@ public class KafkaRestConfig extends RestConfig {
         .define(CONSUMER_THREADS_CONFIG, Type.INT, CONSUMER_THREADS_DEFAULT,
                 Importance.MEDIUM, CONSUMER_THREADS_DOC)
         .define(CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT,
-                Importance.MEDIUM, CONSUMER_INSTANCE_TIMEOUT_MS_DOC);
+                Importance.LOW, CONSUMER_INSTANCE_TIMEOUT_MS_DOC);
   }
 
   private Time time;
