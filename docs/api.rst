@@ -595,6 +595,10 @@ any consumers before it is terminated.
    :>json string base_uri: Base URI used to construct URIs for subsequent requests against this consumer instance. This
                            will be of the form ``http://hostname:port/consumers/consumer_group/instances/instance_id``.
 
+   :statuscode 422:
+          * Error code 42204 -- Invalid consumer configuration. One of the settings specified in
+            the request contained an invalid value.
+
    **Example request**:
 
    .. sourcecode:: http
