@@ -126,15 +126,15 @@ public class KafkaRestConfig extends RestConfig {
         .defineOverride(PORT_CONFIG, ConfigDef.Type.INT, KAFKAREST_PORT_DEFAULT,
                         ConfigDef.Importance.LOW, PORT_CONFIG_DOC)
         .defineOverride(RESPONSE_MEDIATYPE_PREFERRED_CONFIG, Type.LIST,
-                        Versions.PREFERRED_RESPONSE_TYPES, Importance.HIGH,
+                        Versions.PREFERRED_RESPONSE_TYPES, Importance.LOW,
                         RESPONSE_MEDIATYPE_PREFERRED_CONFIG_DOC)
         .defineOverride(RESPONSE_MEDIATYPE_DEFAULT_CONFIG, Type.STRING,
-                        Versions.KAFKA_MOST_SPECIFIC_DEFAULT, Importance.HIGH,
+                        Versions.KAFKA_MOST_SPECIFIC_DEFAULT, Importance.LOW,
                         RESPONSE_MEDIATYPE_DEFAULT_CONFIG_DOC)
         .defineOverride(METRICS_JMX_PREFIX_CONFIG, Type.STRING,
                         METRICS_JMX_PREFIX_DEFAULT_OVERRIDE, Importance.LOW, METRICS_JMX_PREFIX_DOC)
         .define(ID_CONFIG, Type.STRING, ID_DEFAULT, Importance.HIGH, ID_CONFIG_DOC)
-        .define(HOST_NAME_CONFIG, Type.STRING, HOST_NAME_DEFAULT, Importance.LOW, HOST_NAME_DOC)
+        .define(HOST_NAME_CONFIG, Type.STRING, HOST_NAME_DEFAULT, Importance.MEDIUM, HOST_NAME_DOC)
         .define(ZOOKEEPER_CONNECT_CONFIG, Type.STRING, ZOOKEEPER_CONNECT_DEFAULT,
                 Importance.HIGH, ZOOKEEPER_CONNECT_DOC)
         .define(SCHEMA_REGISTRY_CONNECT_CONFIG, Type.STRING, SCHEMA_REGISTRY_CONNECT_DEFAULT,
@@ -153,7 +153,7 @@ public class KafkaRestConfig extends RestConfig {
         .define(CONSUMER_THREADS_CONFIG, Type.INT, CONSUMER_THREADS_DEFAULT,
                 Importance.MEDIUM, CONSUMER_THREADS_DOC)
         .define(CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT,
-                Importance.LOW, CONSUMER_INSTANCE_TIMEOUT_MS_DOC);
+                Importance.MEDIUM, CONSUMER_INSTANCE_TIMEOUT_MS_DOC);
   }
 
   private Time time;
