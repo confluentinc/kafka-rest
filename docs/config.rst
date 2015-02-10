@@ -15,7 +15,7 @@ Configuration Options
   * Default: ""
   * Importance: high
 
-``schema.registry.connect``
+``schema.registry.url``
   The base URL for the schema registry that should be used by the Avro serializer.
 
   * Type: string
@@ -30,13 +30,6 @@ Configuration Options
   * Type: string
   * Default: "localhost:2181"
   * Importance: high
-
-``consumer.instance.timeout.ms``
-  Amount of idle time before a consumer instance is automatically destroyed.
-
-  * Type: int
-  * Default: 300000
-  * Importance: medium
 
 ``consumer.request.max.bytes``
   Maximum number of bytes in unencoded message keys and values returned by a single request. This can be used by administrators to limit the memory used by a single consumer and to control the memory usage required to decode responses on clients that cannot perform a streaming decode. Note that the actual payload will be larger due to overhead from base64 encoding the response data and from JSON encoding the entire response.
@@ -65,6 +58,13 @@ Configuration Options
   * Type: string
   * Default: ""
   * Importance: medium
+
+``consumer.instance.timeout.ms``
+  Amount of idle time before a consumer instance is automatically destroyed.
+
+  * Type: int
+  * Default: 300000
+  * Importance: low
 
 ``consumer.iterator.backoff.ms``
   Amount of time to backoff when an iterator runs out of data. If a consumer has a dedicated worker thread, this is effectively the maximum error for the entire request timeout. It should be small enough to closely target the timeout, but large enough to avoid busy waiting.
@@ -149,4 +149,3 @@ Configuration Options
   * Type: int
   * Default: 1000
   * Importance: low
-
