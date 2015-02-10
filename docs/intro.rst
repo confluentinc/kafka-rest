@@ -66,39 +66,44 @@ Installation
 
 .. ifconfig:: platform_docs
 
-   See the :ref:`installation instructions<installation>` for the Confluent Platform.
+   See the :ref:`installation instructions<installation>` for the Confluent
+   Platform. Before starting the REST proxy you must start Kafka and the schema
+   registry. The :ref:`quickstart<quickstart>` explains how to start these
+   services locally for testing.
 
 .. ifconfig:: not platform_docs
 
    You can download prebuilt versions of the Kafka REST Proxy as part of the
    `Confluent Platform <http://confluent.io/downloads/>`_. To install from
-   source, follow the instructions in the `Development`_ section.
+   source, follow the instructions in the `Development`_ section. Before
+   starting the REST proxy you must start Kafka and the schema registry.
 
-Once installed, start the Kafka REST proxy service and it's dependencies. The
-following commands assume you're working with the Confluent Platform; exact
-commands may vary slightly depending on your platform or if you're working with
-the source repositories.
+Starting the Kafka REST proxy service is simple once its dependencies are
+running:
 
 .. sourcecode:: bash
 
-   # Start a small local Kafka cluster (1 ZK node, 1 Kafka node, and a couple of
-   # test topics)
-   $ cd confluent-1.0
-   $ bin/zookeeper-server-start etc/kafka/zookeeper.properties &
-   $ bin/kafka-server-start etc/kafka/server.properties &
-   $ bin/kafka-topics --create --zookeeper localhost:2181 \
-         --topic test --partitions 1 --replication-factor 1
-   $ bin/kafka-topics --create --zookeeper localhost:2181 \
-         --topic test2 --partitions 1 --replication-factor 1
-
-   # Start the schema registry. This is only required if you're working with
-   # Avro data.
-   $ bin/schema-registry-start etc/schema-registry/schema-registry.properties
+   $ cd confluent-1.0/
 
    # Start the REST proxy. The default settings automatically work with the
    # default settings for local ZooKeeper and Kafka nodes.
    $ bin/kafka-rest-start
 
+If you installed Debian or RPM packages, you can simply run ``kafka-rest-start``
+as it will be on your ``PATH``. If you need to override the default
+configuration, add settings to a config file and pass it as an argument when you
+start the service:
+
+.. sourcecode:: bash
+
+   $ bin/kafka-rest-start etc/kafka-rest/kafka-rest.properties
+
+Finally, if you started the service in the background, you can use the following
+command to stop it:
+
+.. sourcecode:: bash
+
+   $ bin/kafka-rest-stop
 
 Deployment
 ----------
