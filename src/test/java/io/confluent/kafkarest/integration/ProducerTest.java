@@ -15,17 +15,21 @@
  **/
 package io.confluent.kafkarest.integration;
 
+import org.I0Itec.zkclient.ZkClient;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
-import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BinaryProduceRecord;
@@ -33,22 +37,20 @@ import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
-import io.confluent.kafkarest.entities.PartitionProduceResponse;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
-import io.confluent.kafkarest.entities.TopicProduceResponse;
+import io.confluent.kafkarest.entities.ProduceResponse;
 import kafka.serializer.Decoder;
 import kafka.serializer.DefaultDecoder;
+import kafka.utils.ZKStringSerializer$;
 import scala.collection.JavaConversions;
 
-import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
-public class ProducerTest extends ClusterTestHarness {
+public class ProducerTest extends AbstractProducerTest {
+
+  private ZkClient testZkClient;
 
   private static final String topicName = "topic1";
   private static final List<Partition> partitions = Arrays.asList(
@@ -68,20 +70,12 @@ public class ProducerTest extends ClusterTestHarness {
       new BinaryTopicProduceRecord("key".getBytes(), "value3".getBytes()),
       new BinaryTopicProduceRecord("key".getBytes(), "value4".getBytes())
   );
-  private final List<PartitionOffset> partitionOffsetsWithKeys = Arrays.asList(
-      new PartitionOffset(1, 3)
-  );
 
   private final List<BinaryTopicProduceRecord> topicRecordsWithPartitions = Arrays.asList(
       new BinaryTopicProduceRecord("value".getBytes(), 0),
       new BinaryTopicProduceRecord("value2".getBytes(), 1),
       new BinaryTopicProduceRecord("value3".getBytes(), 0),
       new BinaryTopicProduceRecord("value4".getBytes(), 2)
-  );
-  private final List<PartitionOffset> partitionOffsetsWithPartitions = Arrays.asList(
-      new PartitionOffset(0, 1),
-      new PartitionOffset(1, 0),
-      new PartitionOffset(2, 0)
   );
 
   private final List<BinaryTopicProduceRecord> topicRecordsWithPartitionsAndKeys = Arrays.asList(
@@ -90,20 +84,12 @@ public class ProducerTest extends ClusterTestHarness {
       new BinaryTopicProduceRecord("key3".getBytes(), "value3".getBytes(), 1),
       new BinaryTopicProduceRecord("key4".getBytes(), "value4".getBytes(), 2)
   );
-  private final List<PartitionOffset> partitionOffsetsWithPartitionsAndKeys = Arrays.asList(
-      new PartitionOffset(0, 0),
-      new PartitionOffset(1, 1),
-      new PartitionOffset(2, 0)
-  );
 
   private final List<BinaryTopicProduceRecord> topicRecordsWithNullValues = Arrays.asList(
       new BinaryTopicProduceRecord("key".getBytes(), (byte[]) null),
       new BinaryTopicProduceRecord("key".getBytes(), (byte[]) null),
       new BinaryTopicProduceRecord("key".getBytes(), (byte[]) null),
       new BinaryTopicProduceRecord("key".getBytes(), (byte[]) null)
-  );
-  private final List<PartitionOffset> partitionOffsetsWithNullValues = Arrays.asList(
-      new PartitionOffset(1, 3)
   );
 
   // Produce to partition inputs & results
@@ -113,7 +99,6 @@ public class ProducerTest extends ClusterTestHarness {
       new BinaryProduceRecord("value3".getBytes()),
       new BinaryProduceRecord("value4".getBytes())
   );
-  private final PartitionOffset producePartitionOffsetOnlyValues = new PartitionOffset(0, 3);
 
   private final List<BinaryProduceRecord> partitionRecordsWithKeys = Arrays.asList(
       new BinaryProduceRecord("key".getBytes(), "value".getBytes()),
@@ -121,7 +106,6 @@ public class ProducerTest extends ClusterTestHarness {
       new BinaryProduceRecord("key".getBytes(), "value3".getBytes()),
       new BinaryProduceRecord("key".getBytes(), "value4".getBytes())
   );
-  private final PartitionOffset producePartitionOffsetWithKeys = new PartitionOffset(0, 3);
 
   private final List<BinaryProduceRecord> partitionRecordsWithNullValues = Arrays.asList(
       new BinaryProduceRecord("key1".getBytes(), null),
@@ -129,8 +113,29 @@ public class ProducerTest extends ClusterTestHarness {
       new BinaryProduceRecord("key3".getBytes(), null),
       new BinaryProduceRecord("key4".getBytes(), null)
   );
-  private final PartitionOffset producePartitionOffsetWithNullValues = new PartitionOffset(0, 3);
 
+  private final List<PartitionOffset> produceOffsets = Arrays.asList(
+      new PartitionOffset(0, 0L, null, null),
+      new PartitionOffset(0, 1L, null, null),
+      new PartitionOffset(0, 2L, null, null),
+      new PartitionOffset(0, 3L, null, null)
+  );
+
+  @Override
+  protected ZkClient getZkClient(KafkaRestConfig appConfig) {
+    testZkClient = new ZkClient(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG),
+                                30000, 30000, ZKStringSerializer$.MODULE$);
+    return testZkClient;
+  }
+
+  @Override
+  protected ProducerPool getProducerPool(KafkaRestConfig appConfig) {
+    Map<String, Object> overrides = new HashMap<String, Object>();
+    // Reduce the metadata fetch timeout so requests for topics that don't exist timeout much
+    // faster than the default
+    overrides.put("metadata.fetch.timeout.ms", 5000);
+    return new ProducerPool(appConfig, testZkClient, overrides);
+  }
 
   @Before
   @Override
@@ -143,64 +148,49 @@ public class ProducerTest extends ClusterTestHarness {
                                       new Properties());
   }
 
-  private <K, V> void testProduceToTopic(List<? extends TopicProduceRecord> records,
-                                         List<PartitionOffset> offsetResponses) {
-    TopicProduceRequest payload = new TopicProduceRequest();
-    payload.setRecords(records);
-    Response response = request("/topics/" + topicName)
-        .post(Entity.entity(payload, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    final TopicProduceResponse produceResponse = response.readEntity(TopicProduceResponse.class);
-    assertTrue(TestUtils.partitionOffsetsEqual(offsetResponses, produceResponse.getOffsets()));
-    TestUtils.assertTopicContains(zkConnect, topicName,
-                                  payload.getRecords(), null,
-                                  binaryDecoder, binaryDecoder, true);
-  }
-
   @Test
   public void testProduceToTopicWithKeys() {
-    testProduceToTopic(topicRecordsWithKeys, partitionOffsetsWithKeys);
+    testProduceToTopic(topicName, topicRecordsWithKeys, binaryDecoder, binaryDecoder,
+                       produceOffsets);
   }
 
   @Test
   public void testProduceToTopicWithPartitions() {
-    testProduceToTopic(topicRecordsWithPartitions, partitionOffsetsWithPartitions);
+    testProduceToTopic(topicName, topicRecordsWithPartitions, binaryDecoder, binaryDecoder,
+                       produceOffsets);
   }
 
   @Test
   public void testProduceToTopicWithPartitionsAndKeys() {
-    testProduceToTopic(topicRecordsWithPartitionsAndKeys, partitionOffsetsWithPartitionsAndKeys);
+    testProduceToTopic(topicName, topicRecordsWithPartitionsAndKeys, binaryDecoder, binaryDecoder,
+                       produceOffsets);
   }
 
   @Test
   public void testProduceToTopicWithNullValues() {
-    testProduceToTopic(topicRecordsWithNullValues, partitionOffsetsWithNullValues);
+    testProduceToTopic(topicName, topicRecordsWithNullValues, binaryDecoder, binaryDecoder,
+                       produceOffsets);
   }
 
   @Test
   public void testProduceToInvalidTopic() {
-    TopicProduceRequest payload = new TopicProduceRequest();
-    payload.setRecords(Arrays.asList(
-        new BinaryTopicProduceRecord("key".getBytes(), "value".getBytes())
-    ));
-    final Response response = request("/topics/topicdoesnotexist")
-        .post(Entity.entity(payload, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
-    assertErrorResponse(Response.Status.NOT_FOUND, response,
-                        Errors.TOPIC_NOT_FOUND_ERROR_CODE, Errors.TOPIC_NOT_FOUND_MESSAGE,
-                        Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+    // This test turns auto-create off, so this should generate an error. Ideally it would
+    // generate a 404, but Kafka as of 0.8.2.0 doesn't generate the correct exception, see
+    // KAFKA-1884. For now this will just show up as failure to send all the messages.
+    testProduceToTopicFails("invalid-topic", topicRecordsWithKeys);
   }
 
 
   private <K, V> void testProduceToPartition(List<? extends ProduceRecord<K, V>> records,
-                                             PartitionOffset offsetResponse) {
+                                             List<PartitionOffset> offsetResponse) {
     PartitionProduceRequest payload = new PartitionProduceRequest();
     payload.setRecords(records);
     Response response = request("/topics/" + topicName + "/partitions/0")
         .post(Entity.entity(payload, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    final PartitionProduceResponse poffsetResponse
-        = response.readEntity(PartitionProduceResponse.class);
-    assertEquals(offsetResponse, poffsetResponse.getPartitionOffset());
+    final ProduceResponse poffsetResponse
+        = response.readEntity(ProduceResponse.class);
+    assertEquals(offsetResponse, poffsetResponse.getOffsets());
     TestUtils.assertTopicContains(zkConnect, topicName,
                                   payload.getRecords(), (Integer) 0,
                                   binaryDecoder, binaryDecoder, true);
@@ -208,16 +198,16 @@ public class ProducerTest extends ClusterTestHarness {
 
   @Test
   public void testProduceToPartitionOnlyValues() {
-    testProduceToPartition(partitionRecordsOnlyValues, producePartitionOffsetOnlyValues);
+    testProduceToPartition(partitionRecordsOnlyValues, produceOffsets);
   }
 
   @Test
   public void testProduceToPartitionWithKeys() {
-    testProduceToPartition(partitionRecordsWithKeys, producePartitionOffsetWithKeys);
+    testProduceToPartition(partitionRecordsWithKeys, produceOffsets);
   }
 
   @Test
   public void testProduceToPartitionWithNullValues() {
-    testProduceToPartition(partitionRecordsWithNullValues, producePartitionOffsetWithNullValues);
+    testProduceToPartition(partitionRecordsWithNullValues, produceOffsets);
   }
 }

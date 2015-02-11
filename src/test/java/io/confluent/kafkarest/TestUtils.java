@@ -175,24 +175,15 @@ public class TestUtils {
     }
   }
 
-
-  public static boolean partitionOffsetsEqual(List<PartitionOffset> a, List<PartitionOffset> b) {
+  public static void assertPartitionOffsetsEqual(List<PartitionOffset> a, List<PartitionOffset> b) {
     // We can't be sure these will be exactly equal since they may be random. Instead verify that
-    // we have the same partitions listed and that the total offsets are equal (since we know
-    // we're always starting with a newly-created topic)
-    if (a.size() != b.size()) {
-      return false;
-    }
-    int aTotal = 0, bTotal = 0;
+    // exception vs. non-exception responses match up
+    assertEquals(a.size(), b.size());
     for (int i = 0; i < a.size(); i++) {
       PartitionOffset aOffset = a.get(i), bOffset = b.get(i);
-      if (aOffset.getPartition() != bOffset.getPartition()) {
-        return false;
-      }
-      aTotal += aOffset.getOffset();
-      bTotal += bOffset.getOffset();
+      assertEquals(aOffset.getError() != null, bOffset.getError() != null);
+      assertEquals(aOffset.getOffset() != null, bOffset.getOffset() != null);
     }
-    return (aTotal == bTotal);
   }
 
   /**

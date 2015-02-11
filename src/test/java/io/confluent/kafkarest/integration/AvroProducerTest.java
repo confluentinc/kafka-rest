@@ -37,18 +37,16 @@ import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
-import io.confluent.kafkarest.entities.PartitionProduceResponse;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.ProduceRecord;
+import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
-import io.confluent.kafkarest.entities.TopicProduceResponse;
 import kafka.utils.VerifiableProperties;
 import scala.collection.JavaConversions;
 
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 // This test is much lighter than the Binary one which exercises all variants. Since binary
 // covers most code paths well, this just tries to exercise Avro-specific parts.
@@ -98,8 +96,10 @@ public class AvroProducerTest extends ClusterTestHarness {
       new AvroTopicProduceRecord(testKeys[3], testValues[3], 2)
   );
   private final List<PartitionOffset> partitionOffsetsWithPartitionsAndKeys = Arrays.asList(
-      new PartitionOffset(0, 1),
-      new PartitionOffset(1, 1)
+      new PartitionOffset(0, 0L, null, null),
+      new PartitionOffset(0, 1L, null, null),
+      new PartitionOffset(1, 0L, null, null),
+      new PartitionOffset(1, 1L, null, null)
   );
 
   // Produce to partition inputs & results
@@ -109,7 +109,12 @@ public class AvroProducerTest extends ClusterTestHarness {
       new AvroProduceRecord(testValues[2]),
       new AvroProduceRecord(testValues[3])
   );
-  private final PartitionOffset producePartitionOffsetOnlyValues = new PartitionOffset(0, 3);
+  private final List<PartitionOffset> producePartitionOffsetOnlyValues = Arrays.asList(
+      new PartitionOffset(0, 0L, null, null),
+      new PartitionOffset(0, 1L, null, null),
+      new PartitionOffset(0, 2L, null, null),
+      new PartitionOffset(0, 3L, null, null)
+  );
 
 
   @Before
@@ -136,8 +141,8 @@ public class AvroProducerTest extends ClusterTestHarness {
     Response response = request("/topics/" + topicName)
         .post(Entity.entity(payload, Versions.KAFKA_V1_JSON_AVRO));
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    final TopicProduceResponse produceResponse = response.readEntity(TopicProduceResponse.class);
-    assertTrue(TestUtils.partitionOffsetsEqual(offsetResponses, produceResponse.getOffsets()));
+    final ProduceResponse produceResponse = response.readEntity(ProduceResponse.class);
+    TestUtils.assertPartitionOffsetsEqual(offsetResponses, produceResponse.getOffsets());
     TestUtils.assertTopicContains(zkConnect, topicName,
                                   payload.getRecords(), null,
                                   avroDecoder, avroDecoder, false);
@@ -152,16 +157,16 @@ public class AvroProducerTest extends ClusterTestHarness {
   }
 
   private <K, V> void testProduceToPartition(List<? extends ProduceRecord<K, V>> records,
-                                             PartitionOffset offsetResponse) {
+                                             List<PartitionOffset> offsetResponse) {
     PartitionProduceRequest payload = new PartitionProduceRequest();
     payload.setRecords(records);
     payload.setValueSchema(valueSchemaStr);
     Response response = request("/topics/" + topicName + "/partitions/0")
         .post(Entity.entity(payload, Versions.KAFKA_V1_JSON_AVRO));
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    final PartitionProduceResponse poffsetResponse
-        = response.readEntity(PartitionProduceResponse.class);
-    assertEquals(offsetResponse, poffsetResponse.getPartitionOffset());
+    final ProduceResponse poffsetResponse
+        = response.readEntity(ProduceResponse.class);
+    assertEquals(offsetResponse, poffsetResponse.getOffsets());
     TestUtils.assertTopicContains(zkConnect, topicName,
                                   payload.getRecords(), (Integer) 0,
                                   avroDecoder, avroDecoder, false);

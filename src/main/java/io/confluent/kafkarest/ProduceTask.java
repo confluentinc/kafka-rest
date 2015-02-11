@@ -21,15 +21,15 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.confluent.kafkarest.entities.SchemaHolder;
 
 /**
  * Container for state associated with one REST-ful produce request, i.e. a batched send
  */
-class ProduceTask implements Callback {
+class ProduceTask {
 
   private static final Logger log = LoggerFactory.getLogger(ProduceTask.class);
 
@@ -37,10 +37,9 @@ class ProduceTask implements Callback {
   private final int numRecords;
   private final ProducerPool.ProduceRequestCallback callback;
   private int completed;
-  private Map<Integer, Long> partitionOffsets;
-  private Exception firstException;
   private Integer keySchemaId;
   private Integer valueSchemaId;
+  private List<RecordMetadataOrException> results;
 
   public ProduceTask(SchemaHolder schemaHolder, int numRecords,
                      ProducerPool.ProduceRequestCallback callback) {
@@ -48,30 +47,34 @@ class ProduceTask implements Callback {
     this.numRecords = numRecords;
     this.callback = callback;
     this.completed = 0;
-    this.partitionOffsets = new HashMap<Integer, Long>();
-    this.firstException = null;
+    this.results = new ArrayList<RecordMetadataOrException>();
   }
 
-  @Override
-  public synchronized void onCompletion(RecordMetadata metadata, Exception exception) {
-    if (exception != null) {
-      if (firstException == null) {
-        firstException = exception;
-        log.error("Producer error for request " + this.toString(), exception);
+  public synchronized Callback createCallback() {
+    final int index = results.size();
+    // Dummy data, which just helps us keep track of the index & ensures there's a slot for
+    // storage when we get the callback
+    results.add(null);
+    return new Callback() {
+      @Override
+      public void onCompletion(RecordMetadata metadata, Exception exception) {
+        ProduceTask.this.onCompletion(index, metadata, exception);
       }
-    } else {
-      // With a single producer, these should always arrive in order.
-      partitionOffsets.put(metadata.partition(), metadata.offset());
+    };
+  }
+
+  public synchronized void onCompletion(int messageNum, RecordMetadata metadata,
+                                        Exception exception) {
+    results.set(messageNum, new RecordMetadataOrException(metadata, exception));
+
+    if (exception != null) {
+      log.error("Producer error for request " + this.toString(), exception);
     }
 
     completed += 1;
 
     if (completed == numRecords) {
-      if (firstException != null) {
-        this.callback.onException(firstException);
-      } else {
-        this.callback.onCompletion(keySchemaId, valueSchemaId, partitionOffsets);
-      }
+      this.callback.onCompletion(keySchemaId, valueSchemaId, results);
     }
   }
 

@@ -16,6 +16,8 @@
 
 package io.confluent.kafkarest.unit;
 
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -24,9 +26,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -36,14 +36,15 @@ import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.BinaryProduceRecord;
 import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
-import io.confluent.kafkarest.entities.PartitionProduceResponse;
 import io.confluent.kafkarest.entities.ProduceRecord;
+import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.SchemaHolder;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
 import io.confluent.kafkarest.resources.PartitionsResource;
@@ -67,9 +68,8 @@ public class PartitionsResourceBinaryProduceTest
 
   private List<BinaryProduceRecord> produceRecordsOnlyValues;
   private List<BinaryProduceRecord> produceRecordsWithKeys;
-  // Partition -> New offset
-  private Map<Integer, Long> produceOffsets;
-
+  private List<RecordMetadataOrException> produceResults;
+  private final List<PartitionOffset> offsetResults;
 
   public PartitionsResourceBinaryProduceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
@@ -87,8 +87,15 @@ public class PartitionsResourceBinaryProduceTest
         new BinaryProduceRecord("key".getBytes(), "value".getBytes()),
         new BinaryProduceRecord("key2".getBytes(), "value2".getBytes())
     );
-    produceOffsets = new HashMap<Integer, Long>();
-    produceOffsets.put(0, 1L);
+    TopicPartition tp0 = new TopicPartition(topicName, 0);
+    produceResults = Arrays.asList(
+        new RecordMetadataOrException(new RecordMetadata(tp0, 0, 0), null),
+        new RecordMetadataOrException(new RecordMetadata(tp0, 0, 1), null)
+    );
+    offsetResults = Arrays.asList(
+        new PartitionOffset(0, 0L, null, null),
+        new PartitionOffset(0, 1L, null, null)
+    );
   }
 
   @Before
@@ -102,7 +109,7 @@ public class PartitionsResourceBinaryProduceTest
                                              String requestMediatype,
                                              EmbeddedFormat recordFormat,
                                              List<? extends ProduceRecord<K, V>> records,
-                                             final Map<Integer, Long> resultOffsets) {
+                                             final List<RecordMetadataOrException> results) {
     final PartitionProduceRequest request = new PartitionProduceRequest();
     request.setRecords(records);
     final Capture<ProducerPool.ProduceRequestCallback>
@@ -119,10 +126,10 @@ public class PartitionsResourceBinaryProduceTest
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
-        if (resultOffsets == null) {
-          produceCallback.getValue().onException(new Exception());
+        if (results == null) {
+          throw new Exception();
         } else {
-          produceCallback.getValue().onCompletion((Integer) null, (Integer) null, resultOffsets);
+          produceCallback.getValue().onCompletion((Integer) null, (Integer) null, results);
         }
         return null;
       }
@@ -148,11 +155,11 @@ public class PartitionsResourceBinaryProduceTest
             rawResponse =
             produceToPartition(topicName, 0, mediatype.header, requestMediatype,
                                EmbeddedFormat.BINARY,
-                               produceRecordsOnlyValues, produceOffsets);
+                               produceRecordsOnlyValues, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        PartitionProduceResponse response = rawResponse.readEntity(PartitionProduceResponse.class);
+        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
 
-        assertEquals(new PartitionOffset(0, 1L), response.getPartitionOffset());
+        assertEquals(offsetResults, response.getOffsets());
         assertEquals(null, response.getKeySchemaId());
         assertEquals(null, response.getValueSchemaId());
 
@@ -169,11 +176,11 @@ public class PartitionsResourceBinaryProduceTest
             rawResponse =
             produceToPartition(topicName, 0, mediatype.header, requestMediatype,
                                EmbeddedFormat.BINARY,
-                               produceRecordsWithKeys, produceOffsets);
+                               produceRecordsWithKeys, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        PartitionProduceResponse response = rawResponse.readEntity(PartitionProduceResponse.class);
+        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
 
-        assertEquals(new PartitionOffset(0, 1L), response.getPartitionOffset());
+        assertEquals(offsetResults, response.getOffsets());
         assertEquals(null, response.getKeySchemaId());
         assertEquals(null, response.getValueSchemaId());
 

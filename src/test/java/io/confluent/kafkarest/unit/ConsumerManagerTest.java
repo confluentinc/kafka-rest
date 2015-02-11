@@ -267,7 +267,7 @@ public class ConsumerManagerTest {
             assertNotNull(e);
             assertTrue(e instanceof RestException);
             assertEquals(Errors.CONSUMER_ALREADY_SUBSCRIBED_ERROR_CODE,
-                         ((RestException)e).getErrorCode());
+                         ((RestException) e).getErrorCode());
             assertNull(records);
           }
         }).get();

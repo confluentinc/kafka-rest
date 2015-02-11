@@ -23,6 +23,7 @@ import org.junit.Before;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Queue;
@@ -36,8 +37,10 @@ import javax.ws.rs.client.WebTarget;
 import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
-import io.confluent.kafkarest.KafkaRestApplication;
+import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.MetadataObserver;
+import io.confluent.kafkarest.ProducerPool;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.SystemTime$;
@@ -68,7 +71,7 @@ public abstract class ClusterTestHarness {
   protected int zkSessionTimeout = 6000;
 
   // Kafka Config
-  protected List<KafkaConfig> configs = null;
+  protected List<Properties> configs = null;
   protected List<KafkaServer> servers = null;
   protected String brokerList = null;
 
@@ -82,7 +85,7 @@ public abstract class ClusterTestHarness {
   protected String bootstrapServers = null;
   protected Properties restProperties = null;
   protected KafkaRestConfig restConfig = null;
-  protected KafkaRestApplication restApp = null;
+  protected TestKafkaRestApplication restApp = null;
   protected Server restServer = null;
   protected String restConnect = null;
 
@@ -103,18 +106,18 @@ public abstract class ClusterTestHarness {
     zkPort = ports.remove();
     zkConnect = String.format("localhost:%d", zkPort);
 
-    configs = new Vector<KafkaConfig>();
+    configs = new Vector<Properties>();
     bootstrapServers = "";
     for (int i = 0; i < numBrokers; i++) {
       int port = ports.remove();
       Properties props = TestUtils.createBrokerConfig(i, port, false);
       // Turn auto creation *off*, unlike the default. This lets us test errors that should be
       // generated when brokers are configured that way.
-      props.setProperty("auto.create.topics.enable", "false");
+      props.put("auto.create.topics.enable", "false");
       // We *must* override this to use the port we allocated (Kafka currently allocates one port
       // that it always uses for ZK
-      props.setProperty("zookeeper.connect", this.zkConnect);
-      configs.add(new KafkaConfig(props));
+      props.put("zookeeper.connect", this.zkConnect);
+      configs.add(props);
 
       if (bootstrapServers.length() > 0) {
         bootstrapServers += ",";
@@ -124,22 +127,26 @@ public abstract class ClusterTestHarness {
 
     schemaRegProperties = new Properties();
     int schemaRegPort = ports.remove();
-    schemaRegProperties.setProperty(SchemaRegistryConfig.PORT_CONFIG,
-                                    ((Integer) schemaRegPort).toString());
-    schemaRegProperties.setProperty(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG,
-                                    zkConnect);
-    schemaRegProperties.setProperty(SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG,
-                                    SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC);
-    schemaRegProperties.setProperty(SchemaRegistryConfig.COMPATIBILITY_CONFIG,
-                                    schemaRegCompatibility);
+    schemaRegProperties.put(SchemaRegistryConfig.PORT_CONFIG,
+                            ((Integer) schemaRegPort).toString());
+    schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG,
+                            zkConnect);
+    schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG,
+                            SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC);
+    schemaRegProperties.put(SchemaRegistryConfig.COMPATIBILITY_CONFIG,
+                            schemaRegCompatibility);
     schemaRegConnect = String.format("http://localhost:%d", schemaRegPort);
 
     restProperties = new Properties();
     int restPort = ports.remove();
-    restProperties.setProperty(KafkaRestConfig.PORT_CONFIG, ((Integer) restPort).toString());
-    restProperties.setProperty(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG, zkConnect);
-    restProperties.setProperty(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegConnect);
+    restProperties.put(KafkaRestConfig.PORT_CONFIG, ((Integer) restPort).toString());
+    restProperties.put(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG, zkConnect);
+    restProperties.put(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegConnect);
     restConnect = String.format("http://localhost:%d", restPort);
+  }
+
+  public Properties overrideBrokerProperties(int i, Properties props) {
+    return props;
   }
 
   @Before
@@ -152,10 +159,17 @@ public abstract class ClusterTestHarness {
     if (configs == null || configs.size() <= 0) {
       throw new RuntimeException("Must supply at least one server config.");
     }
-    brokerList =
-        TestUtils.getBrokerListStrFromConfigs(JavaConversions.asScalaIterable(configs).toSeq());
-    servers = new Vector<KafkaServer>(configs.size());
-    for (KafkaConfig config : configs) {
+
+    List<KafkaConfig> specializedConfigs = new ArrayList<KafkaConfig>();
+    for (int i = 0; i < configs.size(); i++) {
+      Properties refinedProps = (Properties) configs.get(i).clone();
+      refinedProps = overrideBrokerProperties(i, refinedProps);
+      specializedConfigs.add(new KafkaConfig(refinedProps));
+    }
+    brokerList = TestUtils.getBrokerListStrFromConfigs(
+        JavaConversions.asScalaIterable(specializedConfigs).toSeq());
+    servers = new Vector<KafkaServer>(specializedConfigs.size());
+    for (KafkaConfig config : specializedConfigs) {
       KafkaServer server = TestUtils.createServer(config, SystemTime$.MODULE$);
       servers.add(server);
     }
@@ -165,9 +179,28 @@ public abstract class ClusterTestHarness {
     schemaRegServer.start();
 
     restConfig = new KafkaRestConfig(restProperties);
-    restApp = new KafkaRestApplication(restConfig);
+    restApp = new TestKafkaRestApplication(restConfig, getZkClient(restConfig),
+                                           getMetadataObserver(restConfig),
+                                           getProducerPool(restConfig),
+                                           getConsumerManager(restConfig));
     restServer = restApp.createServer();
     restServer.start();
+  }
+
+  protected ZkClient getZkClient(KafkaRestConfig appConfig) {
+    return null;
+  }
+
+  protected MetadataObserver getMetadataObserver(KafkaRestConfig appConfig) {
+    return null;
+  }
+
+  protected ProducerPool getProducerPool(KafkaRestConfig appConfig) {
+    return null;
+  }
+
+  protected ConsumerManager getConsumerManager(KafkaRestConfig appConfig) {
+    return null;
   }
 
   @After

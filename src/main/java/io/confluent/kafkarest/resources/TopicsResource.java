@@ -17,7 +17,6 @@ package io.confluent.kafkarest.resources;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Vector;
 
 import javax.validation.Valid;
@@ -33,15 +32,16 @@ import javax.ws.rs.container.Suspended;
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
 import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
+import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
-import io.confluent.kafkarest.entities.TopicProduceResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
 
 @Path("/topics")
@@ -114,30 +114,30 @@ public class TopicsResource {
       final String topicName,
       final EmbeddedFormat format,
       final TopicProduceRequest<R> request) {
-    if (!ctx.getMetadataObserver().topicExists(topicName)) {
-      throw Errors.topicNotFoundException();
-    }
-
     ctx.getProducerPool().produce(
         topicName, null, format,
         request,
         request.getRecords(),
         new ProducerPool.ProduceRequestCallback() {
           public void onCompletion(Integer keySchemaId, Integer valueSchemaId,
-                                   Map<Integer, Long> partitionOffsets) {
-            TopicProduceResponse response = new TopicProduceResponse();
+                                   List<RecordMetadataOrException> results) {
+            ProduceResponse response = new ProduceResponse();
             List<PartitionOffset> offsets = new Vector<PartitionOffset>();
-            for (Map.Entry<Integer, Long> partOff : partitionOffsets.entrySet()) {
-              offsets.add(new PartitionOffset(partOff.getKey(), partOff.getValue()));
+            for (RecordMetadataOrException result : results) {
+              if (result.getException() != null) {
+                int errorCode = Errors.codeFromProducerException(result.getException());
+                String errorMessage = result.getException().getMessage();
+                offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
+              } else {
+                offsets.add(new PartitionOffset(result.getRecordMetadata().partition(),
+                                                result.getRecordMetadata().offset(),
+                                                null, null));
+              }
             }
             response.setOffsets(offsets);
             response.setKeySchemaId(keySchemaId);
             response.setValueSchemaId(valueSchemaId);
             asyncResponse.resume(response);
-          }
-
-          public void onException(Exception e) {
-            asyncResponse.resume(e);
           }
         }
     );

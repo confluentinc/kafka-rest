@@ -214,8 +214,17 @@ you produce messages by making ``POST`` requests to specific topics.
    :>json int value_schema_id: The ID for the schema used to produce values.
    :>jsonarr object offests: List of partitions and offsets the messages were
                              published to
-   :>jsonarr int offsets[i].partition: Partition the message was published to
-   :>jsonarr long offsets[i].offset: Offset of the message
+   :>jsonarr int offsets[i].partition: Partition the message was published to, or null if
+                                       publishing the message failed
+   :>jsonarr long offsets[i].offset: Offset of the message, or null if publishing the message failed
+   :>jsonarr long offsets[i].error_code: An error code classifying the reason this operation
+                                         failed, or null if it succeeded.
+
+                                         * 1 - Non-retriable Kafka exception
+                                         * 2 - Retriable Kafka exception; the message might be sent
+                                           successfully if retried
+   :>jsonarr string offsets[i].error: An error message describing why the operation failed, or
+                                      null if it succeeded
 
    :statuscode 404:
       * Error code 40401 -- Topic not found
@@ -492,6 +501,14 @@ It also allows you to produce messages to single partition using ``POST`` reques
                                        consistency with responses from producing to
                                        a topic
    :>jsonarr long offsets[i].offset: Offset of the message
+   :>jsonarr long offsets[i].error_code: An error code classifying the reason this operation
+                                         failed, or null if it succeeded.
+
+                                         * 1 - Non-retriable Kafka exception
+                                         * 2 - Retriable Kafka exception; the message might be sent
+                                           successfully if retried
+   :>jsonarr string offsets[i].error: An error message describing why the operation failed, or
+                                      null if it succeeded
 
    :statuscode 404:
       * Error code 40401 -- Topic not found

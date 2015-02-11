@@ -16,7 +16,7 @@
 package io.confluent.kafkarest.resources;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Vector;
 
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -31,14 +31,16 @@ import javax.ws.rs.container.Suspended;
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.AvroProduceRecord;
 import io.confluent.kafkarest.entities.BinaryProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.Partition;
+import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
-import io.confluent.kafkarest.entities.PartitionProduceResponse;
 import io.confluent.kafkarest.entities.ProduceRecord;
+import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
 
 @Path("/topics/{topic}/partitions")
@@ -117,9 +119,11 @@ public class PartitionsResource {
       final int partition,
       final EmbeddedFormat format,
       final PartitionProduceRequest<R> request) {
-    checkTopicExists(topic);
-    if (!ctx.getMetadataObserver().partitionExists(topic, partition)) {
-      throw Errors.partitionNotFoundException();
+    // If the topic already exists, we can proactively check for the partition
+    if (topicExists(topic)) {
+      if (!ctx.getMetadataObserver().partitionExists(topic, partition)) {
+        throw Errors.partitionNotFoundException();
+      }
     }
 
     ctx.getProducerPool().produce(
@@ -128,22 +132,35 @@ public class PartitionsResource {
         request.getRecords(),
         new ProducerPool.ProduceRequestCallback() {
           public void onCompletion(Integer keySchemaId, Integer valueSchemaId,
-                                   Map<Integer, Long> partitionOffsets) {
-            // Upon completion, schema IDs have been added to the request if they were looked up
-            PartitionProduceResponse response = new PartitionProduceResponse(
-                partition, partitionOffsets.get(partition), keySchemaId, valueSchemaId);
+                                   List<RecordMetadataOrException> results) {
+            ProduceResponse response = new ProduceResponse();
+            List<PartitionOffset> offsets = new Vector<PartitionOffset>();
+            for (RecordMetadataOrException result : results) {
+              if (result.getException() != null) {
+                int errorCode = Errors.codeFromProducerException(result.getException());
+                String errorMessage = result.getException().getMessage();
+                offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
+              } else {
+                offsets.add(new PartitionOffset(result.getRecordMetadata().partition(),
+                                                result.getRecordMetadata().offset(),
+                                                null, null));
+              }
+            }
+            response.setOffsets(offsets);
+            response.setKeySchemaId(keySchemaId);
+            response.setValueSchemaId(valueSchemaId);
             asyncResponse.resume(response);
-          }
-
-          public void onException(Exception e) {
-            asyncResponse.resume(e);
           }
         }
     );
   }
 
+  private boolean topicExists(final String topic) {
+    return ctx.getMetadataObserver().topicExists(topic);
+  }
+
   private void checkTopicExists(final String topic) {
-    if (!ctx.getMetadataObserver().topicExists(topic)) {
+    if (!topicExists(topic)) {
       throw Errors.topicNotFoundException();
     }
   }

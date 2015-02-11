@@ -23,33 +23,58 @@ import javax.validation.constraints.Min;
 public class PartitionOffset {
 
   @Min(0)
-  private int partition;
+  private Integer partition;
   @Min(0)
-  private long offset;
+  private Long offset;
+
+  private Integer errorCode;
+  private String error;
 
   @JsonCreator
-  public PartitionOffset(@JsonProperty("partition") int partition,
-                         @JsonProperty("offset") long offset) {
+  public PartitionOffset(@JsonProperty("partition") Integer partition,
+                         @JsonProperty("offset") Long offset,
+                         @JsonProperty("error_code") Integer errorCode,
+                         @JsonProperty("error") String error) {
     this.partition = partition;
     this.offset = offset;
+    this.errorCode = errorCode;
+    this.error = error;
   }
 
   @JsonProperty
-  public int getPartition() {
+  public Integer getPartition() {
     return partition;
   }
 
-  public void setPartition(int partition) {
+  public void setPartition(Integer partition) {
     this.partition = partition;
   }
 
   @JsonProperty
-  public long getOffset() {
+  public Long getOffset() {
     return offset;
   }
 
-  public void setOffset(long offset) {
+  public void setOffset(Long offset) {
     this.offset = offset;
+  }
+
+  @JsonProperty("error_code")
+  public Integer getErrorCode() {
+    return errorCode;
+  }
+
+  public void setErrorCode(Integer errorCode) {
+    this.errorCode = errorCode;
+  }
+
+  @JsonProperty("error")
+  public String getError() {
+    return error;
+  }
+
+  public void setError(String error) {
+    this.error = error;
   }
 
   @Override
@@ -57,6 +82,8 @@ public class PartitionOffset {
     return "PartitionOffset{" +
            "partition=" + partition +
            ", offset=" + offset +
+           ", errorCode=" + errorCode +
+           ", error='" + error + '\'' +
            '}';
   }
 
@@ -65,16 +92,22 @@ public class PartitionOffset {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof PartitionOffset)) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
 
     PartitionOffset that = (PartitionOffset) o;
 
-    if (offset != that.offset) {
+    if (error != null ? !error.equals(that.error) : that.error != null) {
       return false;
     }
-    if (partition != that.partition) {
+    if (errorCode != null ? !errorCode.equals(that.errorCode) : that.errorCode != null) {
+      return false;
+    }
+    if (offset != null ? !offset.equals(that.offset) : that.offset != null) {
+      return false;
+    }
+    if (partition != null ? !partition.equals(that.partition) : that.partition != null) {
       return false;
     }
 
@@ -83,8 +116,10 @@ public class PartitionOffset {
 
   @Override
   public int hashCode() {
-    int result = partition;
-    result = 31 * result + (int) (offset ^ (offset >>> 32));
+    int result = partition != null ? partition.hashCode() : 0;
+    result = 31 * result + (offset != null ? offset.hashCode() : 0);
+    result = 31 * result + (errorCode != null ? errorCode.hashCode() : 0);
+    result = 31 * result + (error != null ? error.hashCode() : 0);
     return result;
   }
 }
