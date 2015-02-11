@@ -1,3 +1,5 @@
+.. _kafkarest_intro:
+
 Kafka REST Proxy
 ================
 
