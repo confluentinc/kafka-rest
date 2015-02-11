@@ -51,8 +51,11 @@ CPUs
 
 The CPU requirements for the REST proxy mirror those of normal clients: the major computational
 costs come from compression and serialization of messages. The REST proxy can process many
-requests concurrently and can take advantage of more cores if available. We recommend using at
-least 4 cores so requests can be processed in parallel.
+requests concurrently and can take advantage of more cores if available. We recommend at
+least 16 cores, which is provides sufficient resources to handle HTTP requests in parallel and
+background threads for the producers and consumers. However, this should be adjusted for your
+workload. Low throughput deployments may use fewer cores, while a proxy that runs many consumers
+should use more because each consumer has a dedicated thread.
 
 Disks
 ^^^^^
