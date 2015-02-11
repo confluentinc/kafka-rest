@@ -24,7 +24,7 @@ Memory
 ^^^^^^
 
 The REST proxy's memory usage is primarily tied to the number of consumers because these are the
-only stateful resources managed by the proxy. Consumer messages are buffered in two ways that
+only stateful resources managed by the proxy. The consumer buffers messages in two ways that
 can affect total memory usage. First, the underlying Java consumer buffers up to
 ``fetch.max.message.bytes x queued.max.message.chunks`` bytes of data, with default values
 resulting in 2 MB per consumer. Second, during each consumer request, up to
@@ -51,7 +51,8 @@ CPUs
 
 The CPU requirements for the REST proxy mirror those of normal clients: the major computational
 costs come from compression and serialization of messages. The REST proxy can process many
-requests concurrently and can take advantage of more cores if available.
+requests concurrently and can take advantage of more cores if available. We recommend using at
+least 4 cores so requests can be processed in parallel.
 
 Disks
 ^^^^^
@@ -63,7 +64,8 @@ Network
 
 A fast and reliable network will likely have the biggest impact on the REST proxy's performance.
 It should only be used as a proxy for Kafka clusters in the same data center to ensure low
-latency access to both ZooKeeper and the Kafka brokers.
+latency access to both ZooKeeper and the Kafka brokers. Standard data center networking (1 GbE,
+10 GbE) is sufficient for most applications.
 
 JVM
 ~~~
@@ -72,9 +74,14 @@ We recommend running JDK 1.7 u51, and using the G1 collector. If you do this (an
 sure you're on u51. We tried out u21 in testing, but we had a number of problems with the GC implementation in
 that version. Our recommended GC tuning looks like this:
 
-``-Xms1g -Xmx1g -XX:PermSize=48m -XX:MaxPermSize=48m -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35``
+.. sourcecode:: bash
 
-The heap size settings should be increased for proxies that will use many consumers.
+   -Xms1g -Xmx1g -XX:PermSize=48m -XX:MaxPermSize=48m -XX:+UseG1GC -XX:MaxGCPauseMillis=20 \
+          -XX:InitiatingHeapOccupancyPercent=35
+
+The heap size setting of 1 GB should be increased for proxies that will use many consumers. However,
+instead of heap sizes larger than 8 GB we recommend running multiple instances of the REST proxy
+to avoid long GC pauses that can cause request timeout and consumer disconnections.
 
 Deployment
 ~~~~~~~~~~
@@ -104,7 +111,7 @@ because they depend on your cluster layout:
      when that ZooKeeper machine is down you can also specify multiple hosts in the form
      hostname1:port1,hostname2:port2,hostname3:port3.
 
-     The server may also have a ZooKeeper chroot path as part of it's ZooKeeper connection string
+     The server may also have a ZooKeeper chroot path as part of its ZooKeeper connection string
      which puts its data under some path in the global ZooKeeper namespace. If so the consumer
      should use the same chroot path in its connection string. For example to give a chroot path
      of /chroot/path you would give the connection string as hostname1:port1,hostname2:port2,
@@ -218,3 +225,7 @@ for the remaining consumers. This event is expected and isolated instances, for 
 hardware failure or network outage, will not cause problems. However, operators should be aware
 that this rebalance is not instantaneous and needs to be accounted for in site-wide updates, such
 as rolling restarts of all REST proxies for updates.
+
+Upgrades to newer versions are simple because there is no persistent state. A rolling restart of
+all servers, leaving sufficient time for rebalance operations as describe above, is a safe way to
+perform a zero-downtime upgrade.

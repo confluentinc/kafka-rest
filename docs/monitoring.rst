@@ -7,13 +7,13 @@ The REST proxy reports a variety of metrics through JMX. It can also be configur
 stats using additional pluggable stats reporters using the ``metrics.reporters`` configuration
 option.
 
-The easiest way to view the available metrics is it use jconsole to browse JMX MBeans. In
+The easiest way to view the available metrics is to use jconsole to browse JMX MBeans. In
 addition to the metrics specific to the REST proxy listed below, you can also view and monitor
 the metrics for the underlying producers and consumers.
 
-The REST proxy has two types of metrics. Global metrics have one instance and help you monitor
-the overall health of the service. Per-endpoint metrics have one instance for each API endpoint
-request method, prefixed by a name for the endpoint (e.g. ``brokers.list``). These help you
+The REST proxy has two types of metrics. Global metrics help you monitor the overall health of
+the service. Per-endpoint metrics monitor each API endpoint request method and are
+prefixed by a name of the endpoint (e.g. ``brokers.list``). These help you
 understand how the proxy is being used and track down specific performance problems.
 
 Global Metrics
@@ -82,7 +82,9 @@ Endpoints
 
 The following is a list of all the API endpoint methods. The naming should map intuitively to
 each of the API operations. To create a full metric name, prefix a per-endpoint metric name with
-one of these values.
+one of these values. For example, to find the rate of ``GET /brokers`` API calls, combine the
+endpoint name ``brokers.list`` with the metric name ``request-rate`` to get
+``brokers.list.request-rate``.
 
   ============================== ===================================================================
   ``brokers.list``               ``GET /brokers``
