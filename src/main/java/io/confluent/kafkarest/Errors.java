@@ -137,4 +137,13 @@ public class Errors {
       );
     }
   }
+
+
+  // This is a catch-all for consumer exceptions since we still use the old consumer and it's
+  // exceptions aren't easily classifiable (and we don't want to try to enumerate every single
+  // one with a more specific error code).
+  public static RestServerErrorException consumerGeneralOperationException(Exception e) {
+    return new RestServerErrorException("Consumer operation failed: " + e.getMessage(),
+                                        RestServerErrorException.DEFAULT_ERROR_CODE, e);
+  }
 }

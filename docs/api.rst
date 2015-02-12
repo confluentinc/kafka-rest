@@ -707,6 +707,9 @@ error.
 
    :statuscode 404:
       * Error code 40403 -- Consumer instance not found
+   :statuscode 500:
+      * Error code 500 -- General consumer error response, caused by an exception during the
+        operation. An error message is included in the standard format which explains the cause.
 
    **Example request**:
 
@@ -806,6 +809,9 @@ error.
    :statuscode 409:
       * Error code 40901 -- Consumer has already initiated a subscription. Consumers may
         subscribe to multiple topics, but all subscriptions must be initiated in a single request.
+   :statuscode 500:
+      * Error code 500 -- General consumer error response, caused by an exception during the
+        operation. An error message is included in the standard format which explains the cause.
 
    **Example binary request**:
 

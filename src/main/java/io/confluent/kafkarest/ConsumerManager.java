@@ -36,6 +36,7 @@ import javax.ws.rs.core.Response;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestNotFoundException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 import kafka.common.InvalidConfigException;
@@ -211,7 +212,20 @@ public class ConsumerManager {
           public void onCompletion(
               List<? extends ConsumerRecord<ClientK, ClientV>> records, Exception e) {
             updateExpiration(state);
-            callback.onCompletion(records, e);
+            if (e != null) {
+              // Ensure caught exceptions are converted to RestExceptions so the user gets a
+              // nice error message. Currently we don't define any more specific errors because
+              // the old consumer interface doesn't classify the errors well like the new
+              // consumer does. When the new consumer is available we may be able to update this
+              // to provide better feedback to the user.
+              Exception responseException = e;
+              if (!(e instanceof RestException)) {
+                responseException = Errors.consumerGeneralOperationException(e);
+              }
+              callback.onCompletion(null, responseException);
+            } else {
+              callback.onCompletion(records, null);
+            }
           }
         }
     );
@@ -239,7 +253,11 @@ public class ConsumerManager {
           callback.onCompletion(offsets, null);
         } catch (Exception e) {
           log.error("Failed to commit offsets for consumer " + state.getId().toString(), e);
-          callback.onCompletion(null, e);
+          Exception responseException = e;
+          if (!(e instanceof RestException)) {
+            responseException = Errors.consumerGeneralOperationException(e);
+          }
+          callback.onCompletion(null, responseException);
         } finally {
           updateExpiration(state);
         }

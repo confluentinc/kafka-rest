@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.entities.ConsumerRecord;
+import kafka.common.KafkaException;
 import kafka.consumer.FetchedDataChunk;
 import kafka.consumer.PartitionTopicInfo;
 import kafka.message.ByteBufferMessageSet;
@@ -113,6 +114,11 @@ public class MockConsumerQueue implements BlockingQueue<FetchedDataChunk> {
 
     if (!ready.isEmpty()) {
       ConsumerRecord<byte[], byte[]> c = ready.remove();
+      // Special case that schedules can use to indicate we should throw an exception
+      if (c == null) {
+        throw new KafkaException("null value in mock consumer used to trigger KafkaException");
+      }
+
       ByteBufferMessageSet msgSet = new ByteBufferMessageSet(
           JavaConversions.asScalaIterable(Arrays.asList(new Message(c.getValue(), c.getKey())))
               .toSeq()
