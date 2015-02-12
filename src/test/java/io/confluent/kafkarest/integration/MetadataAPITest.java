@@ -94,6 +94,24 @@ public class MetadataAPITest extends ClusterTestHarness {
     assertEquals(new BrokerList(Arrays.asList(0, 1, 2)), brokers);
   }
 
+  /* This should work, but due to the lack of timeouts in ZkClient, if ZK is down some calls
+   *  will just block forever, see https://issues.apache.org/jira/browse/KAFKA-1907. We should
+   *  reenable theis once we can apply timeouts to ZK operations.
+   */
+/*
+  @Test
+  public void testZkFailure() throws InterruptedException {
+    // Kill ZK so the request will generate an error.
+    zookeeper.shutdown();
+
+    // Since this is handled via an ExceptionMapper, testing one endpoint is good enough
+    Response response = request("/brokers").get();
+    assertErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, response,
+                        Errors.ZOOKEEPER_ERROR_ERROR_CODE, Errors.ZOOKEEPER_ERROR_MESSAGE,
+                        Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+  }
+*/
+
   @Test
   public void testTopicsList() throws InterruptedException {
     // Listing

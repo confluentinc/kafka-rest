@@ -146,4 +146,8 @@ public class Errors {
     return new RestServerErrorException("Consumer operation failed: " + e.getMessage(),
                                         RestServerErrorException.DEFAULT_ERROR_CODE, e);
   }
+
+
+  public final static String ZOOKEEPER_ERROR_MESSAGE = "Zookeeper error: ";
+  public final static int ZOOKEEPER_ERROR_ERROR_CODE = 50001;
 }

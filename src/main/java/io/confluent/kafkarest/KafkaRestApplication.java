@@ -21,6 +21,7 @@ import java.util.Properties;
 
 import javax.ws.rs.core.Configurable;
 
+import io.confluent.kafkarest.exceptions.ZkExceptionMapper;
 import io.confluent.kafkarest.resources.BrokersResource;
 import io.confluent.kafkarest.resources.ConsumersResource;
 import io.confluent.kafkarest.resources.PartitionsResource;
@@ -63,6 +64,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
                                         ZkClient zkClient, MetadataObserver mdObserver,
                                         ProducerPool producerPool,
                                         ConsumerManager consumerManager) {
+    config.register(new ZkExceptionMapper(appConfig));
+
     if (zkClient == null) {
       zkClient = new ZkClient(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG),
                               30000, 30000, ZKStringSerializer$.MODULE$);
