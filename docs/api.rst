@@ -73,6 +73,22 @@ Although it is good practice to check the status code, you may safely parse the
 response of any non-DELETE API calls and check for the presence of an
 ``error_code`` field to detect errors.
 
+Some error codes are used frequently across the entire API and you will probably want to have
+general purpose code to handle these, whereas most other error codes will need to be handled on a
+per-request basis.
+
+.. http:any:: *
+
+   :statuscode 404:
+          * Error code 40401 -- Topic not found.
+          * Error code 40402 -- Partition not found.
+   :statuscode 422: The request payload was either improperly formatted or contained semantic errors
+   :statuscode 500:
+          * Error code 50001 -- Zookeeper error.
+          * Error code 50002 -- Kafka error.
+          * Error code 50003 -- Retriable Kafka error. Although the operation failed, it's
+            possible that retrying the request will be successful.
+
 Topics
 ------
 

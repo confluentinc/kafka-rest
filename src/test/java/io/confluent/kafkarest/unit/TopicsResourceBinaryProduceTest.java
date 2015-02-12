@@ -136,7 +136,7 @@ public class TopicsResourceBinaryProduceTest
         new RecordMetadataOrException(null, new KafkaException(exceptionMessage))
     );
     kafkaExceptionResults = Arrays.asList(
-        new PartitionOffset(null, null, Errors.KAFKA_EXCEPTION_CODE, exceptionMessage)
+        new PartitionOffset(null, null, Errors.KAFKA_ERROR_ERROR_CODE, exceptionMessage)
     );
 
     produceKafkaRetriableExceptionResults = Arrays.asList(
@@ -144,7 +144,8 @@ public class TopicsResourceBinaryProduceTest
         })
     );
     kafkaRetriableExceptionResults = Arrays.asList(
-        new PartitionOffset(null, null, Errors.KAFKA_RETRIABLE_EXCEPTION_CODE, exceptionMessage)
+        new PartitionOffset(null, null, Errors.KAFKA_RETRIABLE_ERROR_ERROR_CODE,
+                            exceptionMessage)
     );
   }
 

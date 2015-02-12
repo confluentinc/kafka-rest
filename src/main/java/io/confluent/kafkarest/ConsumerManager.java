@@ -220,7 +220,7 @@ public class ConsumerManager {
               // to provide better feedback to the user.
               Exception responseException = e;
               if (!(e instanceof RestException)) {
-                responseException = Errors.consumerGeneralOperationException(e);
+                responseException = Errors.kafkaErrorException(e);
               }
               callback.onCompletion(null, responseException);
             } else {
@@ -255,7 +255,7 @@ public class ConsumerManager {
           log.error("Failed to commit offsets for consumer " + state.getId().toString(), e);
           Exception responseException = e;
           if (!(e instanceof RestException)) {
-            responseException = Errors.consumerGeneralOperationException(e);
+            responseException = Errors.kafkaErrorException(e);
           }
           callback.onCompletion(null, responseException);
         } finally {
