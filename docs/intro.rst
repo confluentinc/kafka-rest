@@ -70,15 +70,17 @@ Installation
 
    See the :ref:`installation instructions<installation>` for the Confluent
    Platform. Before starting the REST proxy you must start Kafka and the schema
-   registry. The :ref:`quickstart<quickstart>` explains how to start these
-   services locally for testing.
+   registry. The :ref:`Confluent Platform quickstart<quickstart>` explains how
+   to start these services locally for testing.
 
 .. ifconfig:: not platform_docs
 
    You can download prebuilt versions of the Kafka REST Proxy as part of the
    `Confluent Platform <http://confluent.io/downloads/>`_. To install from
    source, follow the instructions in the `Development`_ section. Before
-   starting the REST proxy you must start Kafka and the schema registry.
+   starting the REST proxy you must start Kafka and the Schema Registry. You can
+   find instructions for starting those services in the
+   `Schema Registry repository <http://github.com/confluentinc/schema-registry>`_.
 
 Starting the Kafka REST proxy service is simple once its dependencies are
 running:
@@ -111,7 +113,7 @@ Deployment
 ----------
 
 The REST proxy includes a built-in Jetty server. The wrapper scripts
-`bin/kafka-rest-start` and `bin/kafka-rest-stop` are the recommended method of
+``bin/kafka-rest-start`` and ``bin/kafka-rest-stop`` are the recommended method of
 starting and stopping the service. However, you can also start the server
 directly yourself:
 
@@ -132,9 +134,10 @@ Development
 -----------
 
 To build a development version, you may need a development versions of
-`io.confluent.common <https://github.com/confluentinc/common>`_ and
-`io.confluent.rest-utils <https://github.com/confluentinc/rest-utils>`_.  After
-installing ``common`` and ``rest-utils``, you can build the Kafka REST Proxy
+`common <https://github.com/confluentinc/common>`_,
+`rest-utils <https://github.com/confluentinc/rest-utils>`_, and
+`schema-registry <https://github.com/confluentinc/schema-registry>`_.  After
+installing these, you can build the Kafka REST Proxy
 with Maven. All the standard lifecycle phases work. During development, use
 
 .. sourcecode:: bash
@@ -163,9 +166,9 @@ To create a packaged version, optionally skipping the tests:
     $ mvn package [-DskipTests]
 
 This will produce two versions ready for production:
-``target/kafka-rest-0.1-SNAPSHOT-package`` contains a directory layout similar
+``target/kafka-rest-$VERSION-package`` contains a directory layout similar
 to the packaged binary versions and
-``target/kafka-rest-0.1-SNAPSHOT-standalone.jar`` is an uber-jar including all
+``target/kafka-rest-$VERSION-standalone.jar`` is an uber-jar including all
 the dependencies.
 
 Contribute
@@ -177,4 +180,4 @@ Contribute
 License
 -------
 
-The project is licensed under the Apache 2 license.
+The REST Proxy is licensed under the Apache 2 license.
