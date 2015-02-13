@@ -98,8 +98,9 @@ public class AvroProducerTest extends ClusterTestHarness {
       new AvroTopicProduceRecord(testKeys[3], testValues[3], 2)
   );
   private final List<PartitionOffset> partitionOffsetsWithPartitionsAndKeys = Arrays.asList(
-      new PartitionOffset(0, 1),
-      new PartitionOffset(1, 1)
+      new PartitionOffset(0, 0),
+      new PartitionOffset(1, 1),
+      new PartitionOffset(2, 0)
   );
 
   // Produce to partition inputs & results
@@ -141,8 +142,8 @@ public class AvroProducerTest extends ClusterTestHarness {
     TestUtils.assertTopicContains(zkConnect, topicName,
                                   payload.getRecords(), null,
                                   avroDecoder, avroDecoder, false);
-    assertEquals(produceResponse.getKeySchemaId(), (Integer) 0);
-    assertEquals(produceResponse.getValueSchemaId(), (Integer) 1);
+    assertEquals(produceResponse.getKeySchemaId(), (Integer) 1);
+    assertEquals(produceResponse.getValueSchemaId(), (Integer) 2);
   }
 
 
@@ -165,7 +166,7 @@ public class AvroProducerTest extends ClusterTestHarness {
     TestUtils.assertTopicContains(zkConnect, topicName,
                                   payload.getRecords(), (Integer) 0,
                                   avroDecoder, avroDecoder, false);
-    assertEquals((Integer) 0, poffsetResponse.getValueSchemaId());
+    assertEquals((Integer) 1, poffsetResponse.getValueSchemaId());
   }
 
   @Test
