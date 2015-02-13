@@ -78,7 +78,9 @@ Installation
    You can download prebuilt versions of the Kafka REST Proxy as part of the
    `Confluent Platform <http://confluent.io/downloads/>`_. To install from
    source, follow the instructions in the `Development`_ section. Before
-   starting the REST proxy you must start Kafka and the schema registry.
+   starting the REST proxy you must start Kafka and the Schema Registry. You can
+   find instructions for starting those services in the
+   `Schema Registry repository <http://github.com/confluentinc/schema-registry>`_.
 
 Starting the Kafka REST proxy service is simple once its dependencies are
 running:
