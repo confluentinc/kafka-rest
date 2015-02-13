@@ -19,7 +19,7 @@ understand how the proxy is being used and track down specific performance probl
 Global Metrics
 ~~~~~~~~~~~~~~
 
-**MBean: kafka-rest:type=jetty-metrics**
+**MBean: kafka.rest:type=jetty-metrics**
 
   ``connections-active``
     Total number of active TCP connections.
@@ -41,7 +41,7 @@ The following are the metrics available for each endpoint request method. Metric
 requests are also aggregated into a global instance for each one. These aggregate instances have
 no prefix in their name.
 
-**MBean: kafka-rest:type=jersey-metrics**
+**MBean: kafka.rest:type=jersey-metrics**
 
   ``<endpoint>.request-byte-rate``
     Bytes/second of incoming requests
