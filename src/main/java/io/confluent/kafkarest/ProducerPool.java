@@ -67,7 +67,7 @@ public class ProducerPool {
     // this method (only used for tests)
     Map<String, Object> props = new HashMap<String, Object>();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
-    for(String propName : originalUserProps.stringPropertyNames()) {
+    for (String propName : originalUserProps.stringPropertyNames()) {
       props.put(propName, originalUserProps.getProperty(propName));
     }
     if (producerConfigOverrides != null) {
@@ -89,7 +89,7 @@ public class ProducerPool {
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
     props.put("schema.registry.url",
               appConfig.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
-    for(String propName : originalUserProps.stringPropertyNames()) {
+    for (String propName : originalUserProps.stringPropertyNames()) {
       props.put(propName, originalUserProps.getProperty(propName));
     }
     if (producerConfigOverrides != null) {

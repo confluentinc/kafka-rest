@@ -105,7 +105,7 @@ public class ConsumerManager {
   /**
    * Creates a new consumer instance and returns its unique ID.
    *
-   * @param group  Name of the consumer group to join
+   * @param group          Name of the consumer group to join
    * @param instanceConfig configuration parameters for the consumer
    * @return Unique consumer instance ID
    */
@@ -126,7 +126,7 @@ public class ConsumerManager {
     // consumer-specific settings don't make sense to override globally (e.g. group ID, consumer
     // ID), and others we want to ensure get overridden (e.g. consumer.timeout.ms, which we
     // intentionally name differently in our own configs).
-    Properties props = (Properties)config.getOriginalProperties().clone();
+    Properties props = (Properties) config.getOriginalProperties().clone();
     props.setProperty("zookeeper.connect", zookeeperConnect);
     props.setProperty("group.id", group);
     props.setProperty("consumer.id", id);
