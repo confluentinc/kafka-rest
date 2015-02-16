@@ -106,11 +106,11 @@ public class ConsumerManager {
    * Creates a new consumer instance and returns its unique ID.
    *
    * @param group  Name of the consumer group to join
-   * @param config configuration parameters for the consumer
+   * @param instanceConfig configuration parameters for the consumer
    * @return Unique consumer instance ID
    */
-  public String createConsumer(String group, ConsumerInstanceConfig config) {
-    String id = config.getId();
+  public String createConsumer(String group, ConsumerInstanceConfig instanceConfig) {
+    String id = instanceConfig.getId();
     if (id == null) {
       id = "rest-consumer-";
       String serverId = this.config.getString(KafkaRestConfig.ID_CONFIG);
@@ -122,21 +122,25 @@ public class ConsumerManager {
 
     log.debug("Creating consumer " + id + " in group " + group);
 
-    Properties props = new Properties();
-    props.put("zookeeper.connect", zookeeperConnect);
-    props.put("group.id", group);
-    props.put("consumer.id", id);
+    // Note the ordering here. We want to allow overrides, but almost all the
+    // consumer-specific settings don't make sense to override globally (e.g. group ID, consumer
+    // ID), and others we want to ensure get overridden (e.g. consumer.timeout.ms, which we
+    // intentionally name differently in our own configs).
+    Properties props = (Properties)config.getOriginalProperties().clone();
+    props.setProperty("zookeeper.connect", zookeeperConnect);
+    props.setProperty("group.id", group);
+    props.setProperty("consumer.id", id);
     // To support the old consumer interface with broken peek()/missing poll(timeout)
     // functionality, we always use a timeout. This can't perfectly guarantee a total request
     // timeout, but can get as close as this timeout's value
-    props.put("consumer.timeout.ms", ((Integer) iteratorTimeoutMs).toString());
-    if (config.getAutoCommitEnable() != null) {
-      props.put("auto.commit.enable", config.getAutoCommitEnable());
+    props.setProperty("consumer.timeout.ms", ((Integer) iteratorTimeoutMs).toString());
+    if (instanceConfig.getAutoCommitEnable() != null) {
+      props.setProperty("auto.commit.enable", instanceConfig.getAutoCommitEnable());
     } else {
-      props.put("auto.commit.enable", "false");
+      props.setProperty("auto.commit.enable", "false");
     }
-    if (config.getAutoOffsetReset() != null) {
-      props.put("auto.offset.reset", config.getAutoOffsetReset());
+    if (instanceConfig.getAutoOffsetReset() != null) {
+      props.setProperty("auto.offset.reset", instanceConfig.getAutoOffsetReset());
     }
     ConsumerConnector consumer;
     try {
@@ -152,7 +156,7 @@ public class ConsumerManager {
     synchronized (this) {
       ConsumerInstanceId cid = new ConsumerInstanceId(group, id);
       ConsumerState state;
-      switch (config.getFormat()) {
+      switch (instanceConfig.getFormat()) {
         case BINARY:
           state = new BinaryConsumerState(this.config, cid, consumer);
           break;

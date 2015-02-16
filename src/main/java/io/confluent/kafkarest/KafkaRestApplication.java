@@ -44,7 +44,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   }
 
   public KafkaRestApplication(Properties props) throws RestConfigException {
-    this(new KafkaRestConfig(props));
+    super(new KafkaRestConfig(props));
   }
 
   public KafkaRestApplication(KafkaRestConfig config) {

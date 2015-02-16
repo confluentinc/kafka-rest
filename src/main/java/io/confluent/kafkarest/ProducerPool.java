@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
@@ -48,24 +49,32 @@ public class ProducerPool {
       new HashMap<EmbeddedFormat, RestProducer>();
 
   public ProducerPool(KafkaRestConfig appConfig, ZkClient zkClient) {
-    this(appConfig, zkClient, new HashMap<String, Object>());
+    this(appConfig, zkClient, null);
   }
 
   public ProducerPool(KafkaRestConfig appConfig, ZkClient zkClient,
-                      Map<String, Object> producerBaseConfig) {
-    Seq<Broker> brokerSeq = ZkUtils.getAllBrokersInCluster(zkClient);
-    List<Broker> brokers = JavaConversions.seqAsJavaList(brokerSeq);
-    String bootstrapBrokers = "";
-    for (int i = 0; i < brokers.size(); i++) {
-      bootstrapBrokers += brokers.get(i).connectionString();
-      if (i != (brokers.size() - 1)) {
-        bootstrapBrokers += ",";
+                      Properties producerConfigOverrides) {
+    this(appConfig, getBootstrapBrokers(zkClient), producerConfigOverrides);
+  }
+
+  public ProducerPool(KafkaRestConfig appConfig, String bootstrapBrokers,
+                      Properties producerConfigOverrides) {
+
+    Properties originalUserProps = appConfig.getOriginalProperties();
+
+    // Note careful ordering: built-in values we look up automatically first, then configs
+    // specified by user with initial KafkaRestConfig, and finally explicit overrides passed to
+    // this method (only used for tests)
+    Map<String, Object> props = new HashMap<String, Object>();
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
+    for(String propName : originalUserProps.stringPropertyNames()) {
+      props.put(propName, originalUserProps.getProperty(propName));
+    }
+    if (producerConfigOverrides != null) {
+      for (String propName : producerConfigOverrides.stringPropertyNames()) {
+        props.put(propName, producerConfigOverrides.getProperty(propName));
       }
     }
-
-    Map<String, Object> props = new HashMap<String, Object>();
-    props.putAll(producerBaseConfig);
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
     ByteArraySerializer keySerializer = new ByteArraySerializer();
     keySerializer.configure(props, true);
     ByteArraySerializer valueSerializer = new ByteArraySerializer();
@@ -77,10 +86,17 @@ public class ProducerPool {
         new BinaryRestProducer(byteArrayProducer, keySerializer, valueSerializer));
 
     props = new HashMap<String, Object>();
-    props.putAll(producerBaseConfig);
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
     props.put("schema.registry.url",
               appConfig.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
+    for(String propName : originalUserProps.stringPropertyNames()) {
+      props.put(propName, originalUserProps.getProperty(propName));
+    }
+    if (producerConfigOverrides != null) {
+      for (String propName : producerConfigOverrides.stringPropertyNames()) {
+        props.put(propName, producerConfigOverrides.getProperty(propName));
+      }
+    }
     final KafkaAvroSerializer avroKeySerializer = new KafkaAvroSerializer();
     avroKeySerializer.configure(props, true);
     final KafkaAvroSerializer avroValueSerializer = new KafkaAvroSerializer();
@@ -90,6 +106,19 @@ public class ProducerPool {
     producers.put(
         EmbeddedFormat.AVRO,
         new AvroRestProducer(avroProducer, avroKeySerializer, avroValueSerializer));
+  }
+
+  private static String getBootstrapBrokers(ZkClient zkClient) {
+    Seq<Broker> brokerSeq = ZkUtils.getAllBrokersInCluster(zkClient);
+    List<Broker> brokers = JavaConversions.seqAsJavaList(brokerSeq);
+    String bootstrapBrokers = "";
+    for (int i = 0; i < brokers.size(); i++) {
+      bootstrapBrokers += brokers.get(i).connectionString();
+      if (i != (brokers.size() - 1)) {
+        bootstrapBrokers += ",";
+      }
+    }
+    return bootstrapBrokers;
   }
 
   public <K, V> void produce(String topic, Integer partition,

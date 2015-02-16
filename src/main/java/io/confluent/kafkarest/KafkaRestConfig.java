@@ -157,6 +157,7 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   private Time time;
+  private Properties originalProperties;
 
   public KafkaRestConfig() throws RestConfigException {
     this(new Properties());
@@ -172,11 +173,16 @@ public class KafkaRestConfig extends RestConfig {
 
   public KafkaRestConfig(Properties props, Time time) throws RestConfigException {
     super(config, props);
+    this.originalProperties = props;
     this.time = time;
   }
 
   public Time getTime() {
     return time;
+  }
+
+  public Properties getOriginalProperties() {
+    return originalProperties;
   }
 
   public static void main(String[] args) {

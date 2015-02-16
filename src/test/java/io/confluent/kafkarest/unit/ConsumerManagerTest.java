@@ -15,6 +15,7 @@
  **/
 package io.confluent.kafkarest.unit;
 
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,6 +52,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 /**
  * Tests basic create/read/commit/delete functionality of ConsumerManager. This only exercises the
@@ -73,6 +75,9 @@ public class ConsumerManagerTest {
   public void setUp() throws RestConfigException {
     Properties props = new Properties();
     props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG, "1024");
+    // This setting supports the testConsumerOverrides test. It is otherwise benign and should
+    // not affect other tests.
+    props.setProperty("exclude.internal.topics", "false");
     config = new KafkaRestConfig(props, new MockTime());
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     consumerFactory = EasyMock.createMock(ConsumerManager.ConsumerFactory.class);
@@ -96,6 +101,28 @@ public class ConsumerManagerTest {
     EasyMock.expect(consumerFactory.createConsumer(EasyMock.<ConsumerConfig>anyObject()))
         .andReturn(consumer);
     return consumer;
+  }
+
+  @Test
+  public void testConsumerOverrides() {
+    ConsumerConnector consumer =
+        new MockConsumerConnector(
+            config.getTime(), "testclient", null,
+            Integer.parseInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT),
+            true);
+    final Capture<ConsumerConfig> consumerConfig = new Capture<ConsumerConfig>();
+    EasyMock.expect(consumerFactory.createConsumer(EasyMock.capture(consumerConfig)))
+        .andReturn(consumer);
+
+    EasyMock.replay(consumerFactory);
+
+    String cid = consumerManager.createConsumer(
+        groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+    // The exclude.internal.topics setting is overridden via the constructor when the
+    // ConsumerManager is created, and we can make sure it gets set properly here.
+    assertFalse(consumerConfig.getValue().excludeInternalTopics());
+
+    EasyMock.verify(consumerFactory);
   }
 
   @SuppressWarnings("unchecked")
