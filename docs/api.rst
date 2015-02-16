@@ -633,7 +633,7 @@ JSON objects.
 
 Because consumers are stateful, any consumer instances created with the REST API are tied to a specific REST proxy
 instance. A full URL is provided when the instance is created and it should be used to construct any subsequent
-requests. Failing to use the returned URL for future consume requests will end up adding new
+requests. Failing to use the returned URL for future consumer requests will end up adding new
 consumers to the group. If a REST proxy instance is shutdown, it will attempt to cleanly destroy
 any consumers before it is terminated.
 

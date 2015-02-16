@@ -117,7 +117,7 @@ public class KafkaRestConfig extends RestConfig {
 
   private static final int KAFKAREST_PORT_DEFAULT = 8082;
 
-  private static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka-rest";
+  private static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka.rest";
 
   private static final ConfigDef config;
 
