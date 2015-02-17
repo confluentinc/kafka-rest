@@ -21,7 +21,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 import java.util.List;
 
-public class TopicProduceResponse {
+public class ProduceResponse {
 
   @NotEmpty
   private List<PartitionOffset> offsets;

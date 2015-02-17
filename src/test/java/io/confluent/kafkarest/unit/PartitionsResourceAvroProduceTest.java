@@ -16,6 +16,8 @@
 
 package io.confluent.kafkarest.unit;
 
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -24,9 +26,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -37,13 +37,14 @@ import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.AvroProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
-import io.confluent.kafkarest.entities.PartitionProduceResponse;
 import io.confluent.kafkarest.entities.ProduceRecord;
+import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.SchemaHolder;
 import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.kafkarest.resources.TopicsResource;
@@ -67,8 +68,8 @@ public class PartitionsResourceAvroProduceTest
   private final String topicName = "topic1";
 
   private List<AvroProduceRecord> produceRecordsWithKeys;
-  // Partition -> New offset
-  private Map<Integer, Long> produceOffsets;
+  private List<RecordMetadataOrException> produceResults;
+  private final List<PartitionOffset> offsetResults;
 
   // This test assumes that AvroConverterTest is good enough and testing one primitive type for
   // keys and one complex type for records is sufficient.
@@ -92,8 +93,15 @@ public class PartitionsResourceAvroProduceTest
         new AvroProduceRecord(TestUtils.jsonTree("1"), TestUtils.jsonTree("{\"field\":42}")),
         new AvroProduceRecord(TestUtils.jsonTree("2"), TestUtils.jsonTree("{\"field\":84}"))
     );
-    produceOffsets = new HashMap<Integer, Long>();
-    produceOffsets.put(0, 1L);
+    TopicPartition tp0 = new TopicPartition(topicName, 0);
+    produceResults = Arrays.asList(
+        new RecordMetadataOrException(new RecordMetadata(tp0, 0, 0), null),
+        new RecordMetadataOrException(new RecordMetadata(tp0, 0, 1), null)
+    );
+    offsetResults = Arrays.asList(
+        new PartitionOffset(0, 0L, null, null),
+        new PartitionOffset(0, 1L, null, null)
+    );
   }
 
   @Before
@@ -108,7 +116,7 @@ public class PartitionsResourceAvroProduceTest
                                              String acceptHeader,
                                              String requestMediatype,
                                              EmbeddedFormat recordFormat,
-                                             final Map<Integer, Long> resultOffsets) {
+                                             final List<RecordMetadataOrException> results) {
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
         new Capture<ProducerPool.ProduceRequestCallback>();
@@ -123,10 +131,10 @@ public class PartitionsResourceAvroProduceTest
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
-        if (resultOffsets == null) {
-          produceCallback.getValue().onException(new Exception());
+        if (results == null) {
+          throw new Exception();
         } else {
-          produceCallback.getValue().onCompletion(1, 2, resultOffsets);
+          produceCallback.getValue().onCompletion(1, 2, results);
         }
         return null;
       }
@@ -154,11 +162,11 @@ public class PartitionsResourceAvroProduceTest
         request.setValueSchema(valueSchemaStr);
         Response rawResponse =
             produceToPartition(topicName, 0, request, mediatype.header, requestMediatype,
-                               EmbeddedFormat.AVRO, produceOffsets);
+                               EmbeddedFormat.AVRO, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        PartitionProduceResponse response = rawResponse.readEntity(PartitionProduceResponse.class);
+        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
 
-        assertEquals(new PartitionOffset(0, 1L), response.getPartitionOffset());
+        assertEquals(offsetResults, response.getOffsets());
         assertEquals((Integer) 1, response.getKeySchemaId());
         assertEquals((Integer) 2, response.getValueSchemaId());
 
@@ -175,11 +183,11 @@ public class PartitionsResourceAvroProduceTest
         request.setValueSchemaId(2);
         Response rawResponse =
             produceToPartition(topicName, 0, request, mediatype.header, requestMediatype,
-                               EmbeddedFormat.AVRO, produceOffsets);
+                               EmbeddedFormat.AVRO, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        PartitionProduceResponse response = rawResponse.readEntity(PartitionProduceResponse.class);
+        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
 
-        assertEquals(new PartitionOffset(0, 1L), response.getPartitionOffset());
+        assertEquals(offsetResults, response.getOffsets());
         assertEquals((Integer) 1, response.getKeySchemaId());
         assertEquals((Integer) 2, response.getValueSchemaId());
 

@@ -19,6 +19,8 @@ package io.confluent.kafkarest.unit;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import org.apache.avro.Schema;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -27,9 +29,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -40,14 +40,15 @@ import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.ProduceRecord;
+import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.SchemaHolder;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
-import io.confluent.kafkarest.entities.TopicProduceResponse;
 import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
@@ -66,6 +67,7 @@ public class TopicsResourceAvroProduceTest
   private ProducerPool producerPool;
   private Context ctx;
 
+  private static final String topicName = "topic1";
   private static final String keySchemaStr = "{\"name\":\"int\",\"type\": \"int\"}";
   private static final String valueSchemaStr = "{\"type\": \"record\", "
                                                + "\"name\":\"test\","
@@ -88,8 +90,18 @@ public class TopicsResourceAvroProduceTest
 
   private List<AvroTopicProduceRecord> produceRecordsWithPartitionsAndKeys;
 
-  // Partition -> New offset
-  private Map<Integer, Long> produceOffsets;
+  private static final TopicPartition tp0 = new TopicPartition(topicName, 0);
+  private static final TopicPartition tp1 = new TopicPartition(topicName, 1);
+  private List<RecordMetadataOrException> produceResults = Arrays.asList(
+      new RecordMetadataOrException(new RecordMetadata(tp0, 0, 0), null),
+      new RecordMetadataOrException(new RecordMetadata(tp0, 0, 1), null),
+      new RecordMetadataOrException(new RecordMetadata(tp1, 0, 0), null)
+  );
+  private static final List<PartitionOffset> offsetResults = Arrays.asList(
+      new PartitionOffset(0, 0L, null, null),
+      new PartitionOffset(0, 1L, null, null),
+      new PartitionOffset(1, 0L, null, null)
+  );
 
   public TopicsResourceAvroProduceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
@@ -102,9 +114,6 @@ public class TopicsResourceAvroProduceTest
         new AvroTopicProduceRecord(testKeys[0], testValues[0], 0),
         new AvroTopicProduceRecord(testKeys[1], testValues[1], 0)
     );
-    produceOffsets = new HashMap<Integer, Long>();
-    produceOffsets.put(0, 1L);
-    produceOffsets.put(1, 2L);
   }
 
   @Before
@@ -117,11 +126,10 @@ public class TopicsResourceAvroProduceTest
   private <K, V> Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
                                          EmbeddedFormat recordFormat,
                                          TopicProduceRequest request,
-                                         final Map<Integer, Long> resultOffsets) {
+                                         final List<RecordMetadataOrException> results) {
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
         new Capture<ProducerPool.ProduceRequestCallback>();
-    EasyMock.expect(mdObserver.topicExists(topic)).andReturn(true);
     producerPool.produce(EasyMock.eq(topic),
                          EasyMock.eq((Integer) null),
                          EasyMock.eq(recordFormat),
@@ -131,10 +139,10 @@ public class TopicsResourceAvroProduceTest
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
-        if (resultOffsets == null) {
-          produceCallback.getValue().onException(new Exception());
+        if (results == null) {
+          throw new Exception();
         } else {
-          produceCallback.getValue().onCompletion(1, 2, resultOffsets);
+          produceCallback.getValue().onCompletion(1, 2, results);
         }
         return null;
       }
@@ -160,16 +168,13 @@ public class TopicsResourceAvroProduceTest
 
         Response
             rawResponse =
-            produceToTopic("topic1", mediatype.header, requestMediatype,
+            produceToTopic(topicName, mediatype.header, requestMediatype,
                            EmbeddedFormat.AVRO,
-                           request, produceOffsets);
+                           request, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        TopicProduceResponse response = rawResponse.readEntity(TopicProduceResponse.class);
+        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
 
-        assertEquals(
-            Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
-            response.getOffsets()
-        );
+        assertEquals(offsetResults, response.getOffsets());
         assertEquals((Integer) 1, response.getKeySchemaId());
         assertEquals((Integer) 2, response.getValueSchemaId());
 
@@ -186,9 +191,9 @@ public class TopicsResourceAvroProduceTest
         request.setValueSchemaId(2);
 
         Response rawResponse =
-            produceToTopic("topic1", mediatype.header, requestMediatype,
+            produceToTopic(topicName, mediatype.header, requestMediatype,
                            EmbeddedFormat.AVRO,
-                           request, produceOffsets);
+                           request, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
 
         EasyMock.reset(mdObserver, producerPool);
@@ -214,7 +219,7 @@ public class TopicsResourceAvroProduceTest
         request.setRecords(produceRecordsWithPartitionsAndKeys);
         request.setValueSchema(valueSchemaStr);
 
-        produceToTopicExpectFailure("topic1", mediatype.header, requestMediatype,
+        produceToTopicExpectFailure(topicName, mediatype.header, requestMediatype,
                                     request, mediatype.expected,
                                     Errors.KEY_SCHEMA_MISSING_ERROR_CODE);
       }
@@ -229,7 +234,7 @@ public class TopicsResourceAvroProduceTest
         request.setRecords(produceRecordsWithPartitionsAndKeys);
         request.setKeySchema(keySchemaStr);
 
-        produceToTopicExpectFailure("topic1", mediatype.header, requestMediatype,
+        produceToTopicExpectFailure(topicName, mediatype.header, requestMediatype,
                                     request, mediatype.expected,
                                     Errors.VALUE_SCHEMA_MISSING_ERROR_CODE);
       }

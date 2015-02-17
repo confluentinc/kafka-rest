@@ -38,6 +38,7 @@ import io.confluent.kafkarest.entities.Topic;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import kafka.utils.TestUtils;
 import scala.collection.JavaConversions;
+
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 
 public class ConsumerBinaryTest extends AbstractConsumerTest {

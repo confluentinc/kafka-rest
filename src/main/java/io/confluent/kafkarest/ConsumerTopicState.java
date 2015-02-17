@@ -29,14 +29,18 @@ import kafka.consumer.KafkaStream;
  * committed offsets. It provides manual synchronization primitives to support ConsumerWorkers
  * protecting access to the state while they process a read request in their processing loop.
  */
-public class ConsumerTopicState<K, V> {
+public class ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> {
 
   private final Lock lock = new ReentrantLock();
-  private final KafkaStream<K, V> stream;
+  private final KafkaStream<KafkaK, KafkaV> stream;
   private final Map<Integer, Long> consumedOffsets;
   private final Map<Integer, Long> committedOffsets;
 
-  public ConsumerTopicState(KafkaStream<K, V> stream) {
+  // The last read task on this topic that failed. Allows the next read to pick up where this one
+  // left off, including accounting for response size limits
+  private ConsumerReadTask failedTask;
+
+  public ConsumerTopicState(KafkaStream<KafkaK, KafkaV> stream) {
     this.stream = stream;
     this.consumedOffsets = new HashMap<Integer, Long>();
     this.committedOffsets = new HashMap<Integer, Long>();
@@ -50,11 +54,11 @@ public class ConsumerTopicState<K, V> {
     lock.unlock();
   }
 
-  public KafkaStream<K, V> getStream() {
+  public KafkaStream<KafkaK, KafkaV> getStream() {
     return stream;
   }
 
-  public ConsumerIterator<K, V> getIterator() {
+  public ConsumerIterator<KafkaK, KafkaV> getIterator() {
     return stream.iterator();
   }
 
@@ -64,5 +68,15 @@ public class ConsumerTopicState<K, V> {
 
   public Map<Integer, Long> getCommittedOffsets() {
     return committedOffsets;
+  }
+
+  public ConsumerReadTask clearFailedTask() {
+    ConsumerReadTask t = failedTask;
+    failedTask = null;
+    return t;
+  }
+
+  public void setFailedTask(ConsumerReadTask failedTask) {
+    this.failedTask = failedTask;
   }
 }

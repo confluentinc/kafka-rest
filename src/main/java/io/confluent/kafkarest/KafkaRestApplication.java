@@ -21,6 +21,7 @@ import java.util.Properties;
 
 import javax.ws.rs.core.Configurable;
 
+import io.confluent.kafkarest.exceptions.ZkExceptionMapper;
 import io.confluent.kafkarest.resources.BrokersResource;
 import io.confluent.kafkarest.resources.ConsumersResource;
 import io.confluent.kafkarest.resources.PartitionsResource;
@@ -52,12 +53,34 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-    zkClient =
-        new ZkClient(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG), 30000, 30000,
-                     ZKStringSerializer$.MODULE$);
-    MetadataObserver mdObserver = new MetadataObserver(appConfig, zkClient);
-    ProducerPool producerPool = new ProducerPool(appConfig, zkClient);
-    ConsumerManager consumerManager = new ConsumerManager(appConfig, mdObserver);
+    setupInjectedResources(config, appConfig, null, null, null, null);
+  }
+
+  /**
+   * Helper that does normal setup, but uses injected components so their configs or implementations
+   * can be customized for testing. This only exists to support TestKafkaRestApplication
+   */
+  protected void setupInjectedResources(Configurable<?> config, KafkaRestConfig appConfig,
+                                        ZkClient zkClient, MetadataObserver mdObserver,
+                                        ProducerPool producerPool,
+                                        ConsumerManager consumerManager) {
+    config.register(new ZkExceptionMapper(appConfig));
+
+    if (zkClient == null) {
+      zkClient = new ZkClient(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG),
+                              30000, 30000, ZKStringSerializer$.MODULE$);
+    }
+    if (mdObserver == null) {
+      mdObserver = new MetadataObserver(appConfig, zkClient);
+    }
+    if (producerPool == null) {
+      producerPool = new ProducerPool(appConfig, zkClient);
+    }
+    if (consumerManager == null) {
+      consumerManager = new ConsumerManager(appConfig, mdObserver);
+    }
+
+    this.zkClient = zkClient;
     context = new Context(appConfig, mdObserver, producerPool, consumerManager);
     config.register(RootResource.class);
     config.register(new BrokersResource(context));

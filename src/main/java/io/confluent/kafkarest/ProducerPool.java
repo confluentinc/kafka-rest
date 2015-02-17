@@ -48,6 +48,11 @@ public class ProducerPool {
       new HashMap<EmbeddedFormat, RestProducer>();
 
   public ProducerPool(KafkaRestConfig appConfig, ZkClient zkClient) {
+    this(appConfig, zkClient, new HashMap<String, Object>());
+  }
+
+  public ProducerPool(KafkaRestConfig appConfig, ZkClient zkClient,
+                      Map<String, Object> producerBaseConfig) {
     Seq<Broker> brokerSeq = ZkUtils.getAllBrokersInCluster(zkClient);
     List<Broker> brokers = JavaConversions.seqAsJavaList(brokerSeq);
     String bootstrapBrokers = "";
@@ -59,6 +64,7 @@ public class ProducerPool {
     }
 
     Map<String, Object> props = new HashMap<String, Object>();
+    props.putAll(producerBaseConfig);
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
     ByteArraySerializer keySerializer = new ByteArraySerializer();
     keySerializer.configure(props, true);
@@ -71,6 +77,7 @@ public class ProducerPool {
         new BinaryRestProducer(byteArrayProducer, keySerializer, valueSerializer));
 
     props = new HashMap<String, Object>();
+    props.putAll(producerBaseConfig);
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
     props.put("schema.registry.url",
               appConfig.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
@@ -104,9 +111,13 @@ public class ProducerPool {
 
   public interface ProduceRequestCallback {
 
+    /**
+     * Invoked when all messages have either been recorded or received an error
+     *
+     * @param results list of responses, in the same order as the request. Each entry can be either
+     *                a RecordAndMetadata for successful responses or an exception
+     */
     public void onCompletion(Integer keySchemaId, Integer valueSchemaId,
-                             Map<Integer, Long> partitionOffsets);
-
-    public void onException(Exception e);
+                             List<RecordMetadataOrException> results);
   }
 }

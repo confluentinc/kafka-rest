@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -74,6 +75,13 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
     started = parent.getConfig().getTime().milliseconds();
     try {
       topicState = parent.getOrCreateTopicState(topic);
+
+      // If the previous call failed, restore any outstanding data into this task.
+      ConsumerReadTask previousTask = topicState.clearFailedTask();
+      if (previousTask != null) {
+        this.messages = previousTask.messages;
+        this.bytesConsumed = previousTask.bytesConsumed;
+      }
     } catch (RestException e) {
       finish(e);
     }
@@ -116,7 +124,9 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
           iter.next();
           messages.add(recordAndSize.getRecord());
           bytesConsumed += roughMsgSize;
-          topicState.getConsumedOffsets().put(msg.partition(), msg.offset());
+          // Updating the consumed offsets isn't done until we're actually going to return the
+          // data since we may encounter an error during a subsequent read, in which case we'll
+          // have to defer returning the data so we can return an HTTP error instead
         }
       } catch (ConsumerTimeoutException cte) {
         backoff = true;
@@ -134,14 +144,12 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
       waitExpiration = Math.min(backoffExpiration, requestExpiration);
 
       if (elapsed >= requestTimeoutMs || bytesConsumed >= maxResponseBytes) {
-        parent.finishRead(topicState);
         finish();
       }
 
       return backoff;
     } catch (Exception e) {
-      parent.finishRead(topicState);
-      finish();
+      finish(e);
       log.error("Unexpected exception in consumer read thread: ", e);
       return false;
     }
@@ -152,7 +160,31 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
   }
 
   public void finish(Exception e) {
-    callback.onCompletion(messages, e);
+    if (e == null) {
+      // Now it's safe to mark these messages as consumed by updating offsets since we're actually
+      // going to return the data.
+      Map<Integer, Long> consumedOffsets = topicState.getConsumedOffsets();
+      for (ConsumerRecord<ClientK, ClientV> msg : messages) {
+        consumedOffsets.put(msg.getPartition(), msg.getOffset());
+      }
+    } else {
+      // If we read any messages before the exception occurred, keep this task so we don't lose
+      // messages. Subsequent reads will add the outstanding messages before attempting to read
+      // any more from the consumer stream iterator
+      if (topicState != null && messages != null && messages.size() > 0) {
+        topicState.setFailedTask(this);
+      }
+    }
+    if (topicState != null) { // May have failed trying to get topicState
+      parent.finishRead(topicState);
+    }
+    try {
+      callback.onCompletion((e == null) ? messages : null, e);
+    } catch (Throwable t) {
+      // This protects the worker thread from any issues with the callback code. Nothing to be
+      // done here but log it since it indicates a bug in the calling code.
+      log.error("Consumer read callback threw an unhandled exception", e);
+    }
     finished.countDown();
   }
 

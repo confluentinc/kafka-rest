@@ -16,11 +16,15 @@
 
 package io.confluent.kafkarest;
 
+import org.apache.kafka.common.KafkaException;
+import org.apache.kafka.common.errors.RetriableException;
+
 import javax.ws.rs.core.Response;
 
 import io.confluent.rest.exceptions.RestConstraintViolationException;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestNotFoundException;
+import io.confluent.rest.exceptions.RestServerErrorException;
 import kafka.common.InvalidConfigException;
 
 public class Errors {
@@ -109,6 +113,48 @@ public class Errors {
       InvalidConfigException e) {
     return new RestConstraintViolationException(INVALID_CONSUMER_CONFIG_MESSAGE + e.getMessage(),
                                                 INVALID_CONSUMER_CONFIG_ERROR_CODE);
+  }
+
+  public final static String ZOOKEEPER_ERROR_MESSAGE = "Zookeeper error: ";
+  public final static int ZOOKEEPER_ERROR_ERROR_CODE = 50001;
+
+  // This is a catch-all for Kafka exceptions that can't otherwise be easily classified. For
+  // producer operations this will be embedded in the per-message response. For consumer errors,
+  // these are returned in the standard error format
+  public final static String KAFKA_ERROR_MESSAGE = "Kafka error: ";
+  public final static int KAFKA_ERROR_ERROR_CODE = 50002;
+
+  public static RestServerErrorException kafkaErrorException(Throwable e) {
+    return new RestServerErrorException(KAFKA_ERROR_MESSAGE + e.getMessage(),
+                                        KAFKA_ERROR_ERROR_CODE);
+  }
+
+  public final static String KAFKA_RETRIABLE_ERROR_MESSAGE = "Retriable Kafka error: ";
+  public final static int KAFKA_RETRIABLE_ERROR_ERROR_CODE = 50003;
+
+  public static RestServerErrorException kafkaRetriableErrorException(Throwable e) {
+    return new RestServerErrorException(KAFKA_RETRIABLE_ERROR_MESSAGE + e.getMessage(),
+                                        KAFKA_RETRIABLE_ERROR_ERROR_CODE);
+  }
+
+  public final static String UNEXPECTED_PRODUCER_EXCEPTION
+      = "Unexpected non-Kafka exception returned by Kafka";
+
+  public static int codeFromProducerException(Throwable e) {
+    if (e instanceof RetriableException) {
+      return KAFKA_RETRIABLE_ERROR_ERROR_CODE;
+    } else if (e instanceof KafkaException) {
+      return KAFKA_ERROR_ERROR_CODE;
+    } else {
+      // We shouldn't see any non-Kafka exceptions, but this covers us in case we do see an
+      // unexpected error. In that case we fail the entire request -- this loses information
+      // since some messages may have been produced correctly, but is the right thing to do from
+      // a REST perspective since there was an internal error with the service while processing
+      // the request.
+      throw new RestServerErrorException(UNEXPECTED_PRODUCER_EXCEPTION,
+                                         RestServerErrorException.DEFAULT_ERROR_CODE, e
+      );
+    }
   }
 
 }

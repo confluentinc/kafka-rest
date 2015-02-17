@@ -99,7 +99,7 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
       throw Errors.jsonAvroConversionException();
     }
     for (ProducerRecord<Object, Object> rec : kafkaRecords) {
-      producer.send(rec, task);
+      producer.send(rec, task.createCallback());
     }
   }
 

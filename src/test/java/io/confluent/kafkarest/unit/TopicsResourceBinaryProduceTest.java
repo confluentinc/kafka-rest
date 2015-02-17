@@ -16,6 +16,10 @@
 
 package io.confluent.kafkarest.unit;
 
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.KafkaException;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.RetriableException;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -24,31 +28,32 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
 import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.ProduceRecord;
+import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.SchemaHolder;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
-import io.confluent.kafkarest.entities.TopicProduceResponse;
 import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
+import io.confluent.rest.exceptions.RestServerErrorException;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
@@ -61,13 +66,24 @@ public class TopicsResourceBinaryProduceTest
   private ProducerPool producerPool;
   private Context ctx;
 
+  private static final String topicName = "topic1";
+
   private List<BinaryTopicProduceRecord> produceRecordsOnlyValues;
   private List<BinaryTopicProduceRecord> produceRecordsWithKeys;
   private List<BinaryTopicProduceRecord> produceRecordsWithPartitions;
   private List<BinaryTopicProduceRecord> produceRecordsWithPartitionsAndKeys;
   private List<BinaryTopicProduceRecord> produceRecordsWithNullValues;
-  // Partition -> New offset
-  private Map<Integer, Long> produceOffsets;
+  private List<RecordMetadataOrException> produceResults;
+  private List<PartitionOffset> offsetResults;
+
+  private List<BinaryTopicProduceRecord> produceExceptionData;
+  private List<RecordMetadataOrException> produceGenericExceptionResults;
+  private List<RecordMetadataOrException> produceKafkaExceptionResults;
+  private List<PartitionOffset> kafkaExceptionResults;
+  private List<RecordMetadataOrException> produceKafkaRetriableExceptionResults;
+  private List<PartitionOffset> kafkaRetriableExceptionResults;
+
+  private static final String exceptionMessage = "Error message";
 
   public TopicsResourceBinaryProduceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
@@ -96,9 +112,41 @@ public class TopicsResourceBinaryProduceTest
         new BinaryTopicProduceRecord("key".getBytes(), (byte[]) null),
         new BinaryTopicProduceRecord("key2".getBytes(), (byte[]) null)
     );
-    produceOffsets = new HashMap<Integer, Long>();
-    produceOffsets.put(0, 1L);
-    produceOffsets.put(1, 2L);
+
+    TopicPartition tp0 = new TopicPartition(topicName, 0);
+    produceResults = Arrays.asList(
+        new RecordMetadataOrException(new RecordMetadata(tp0, 0, 0), null),
+        new RecordMetadataOrException(new RecordMetadata(tp0, 0, 1), null)
+    );
+
+    offsetResults = Arrays.asList(
+        new PartitionOffset(0, 0L, null, null),
+        new PartitionOffset(0, 1L, null, null)
+    );
+
+    produceExceptionData = Arrays.asList(
+        new BinaryTopicProduceRecord((byte[]) null, (byte[]) null)
+    );
+
+    produceGenericExceptionResults = Arrays.asList(
+        new RecordMetadataOrException(null, new Exception(exceptionMessage))
+    );
+
+    produceKafkaExceptionResults = Arrays.asList(
+        new RecordMetadataOrException(null, new KafkaException(exceptionMessage))
+    );
+    kafkaExceptionResults = Arrays.asList(
+        new PartitionOffset(null, null, Errors.KAFKA_ERROR_ERROR_CODE, exceptionMessage)
+    );
+
+    produceKafkaRetriableExceptionResults = Arrays.asList(
+        new RecordMetadataOrException(null, new RetriableException(exceptionMessage) {
+        })
+    );
+    kafkaRetriableExceptionResults = Arrays.asList(
+        new PartitionOffset(null, null, Errors.KAFKA_RETRIABLE_ERROR_ERROR_CODE,
+                            exceptionMessage)
+    );
   }
 
   @Before
@@ -111,13 +159,12 @@ public class TopicsResourceBinaryProduceTest
   private <K, V> Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
                                          EmbeddedFormat recordFormat,
                                          List<? extends TopicProduceRecord<K, V>> records,
-                                         final Map<Integer, Long> resultOffsets) {
+                                         final List<RecordMetadataOrException> results) {
     final TopicProduceRequest request = new TopicProduceRequest();
     request.setRecords(records);
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
         new Capture<ProducerPool.ProduceRequestCallback>();
-    EasyMock.expect(mdObserver.topicExists(topic)).andReturn(true);
     producerPool.produce(EasyMock.eq(topic),
                          EasyMock.eq((Integer) null),
                          EasyMock.eq(recordFormat),
@@ -127,10 +174,10 @@ public class TopicsResourceBinaryProduceTest
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
-        if (resultOffsets == null) {
-          produceCallback.getValue().onException(new Exception());
+        if (results == null) {
+          throw new Exception();
         } else {
-          produceCallback.getValue().onCompletion((Integer) null, (Integer) null, resultOffsets);
+          produceCallback.getValue().onCompletion((Integer) null, (Integer) null, results);
         }
         return null;
       }
@@ -145,123 +192,48 @@ public class TopicsResourceBinaryProduceTest
     return response;
   }
 
-  @Test
-  public void testProduceToTopicOnlyValues() {
+  private void testProduceToTopicSuccess(List<BinaryTopicProduceRecord> records) {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
         Response
             rawResponse =
             produceToTopic("topic1", mediatype.header, requestMediatype,
-                           EmbeddedFormat.BINARY,
-                           produceRecordsOnlyValues, produceOffsets);
+                           EmbeddedFormat.BINARY, records, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        TopicProduceResponse response = rawResponse.readEntity(TopicProduceResponse.class);
+        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
 
-        assertEquals(
-            Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
-            response.getOffsets()
-        );
+        assertEquals(offsetResults, response.getOffsets());
         assertEquals(null, response.getKeySchemaId());
         assertEquals(null, response.getValueSchemaId());
 
         EasyMock.reset(mdObserver, producerPool);
       }
     }
+  }
+
+  @Test
+  public void testProduceToTopicOnlyValues() {
+    testProduceToTopicSuccess(produceRecordsOnlyValues);
   }
 
   @Test
   public void testProduceToTopicByKey() {
-    for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-      for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
-        Response
-            rawResponse =
-            produceToTopic("topic1", mediatype.header, requestMediatype,
-                           EmbeddedFormat.BINARY,
-                           produceRecordsWithKeys, produceOffsets);
-        assertOKResponse(rawResponse, mediatype.expected);
-        TopicProduceResponse response = rawResponse.readEntity(TopicProduceResponse.class);
-
-        assertEquals(
-            Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
-            response.getOffsets()
-        );
-        assertEquals(null, response.getKeySchemaId());
-        assertEquals(null, response.getValueSchemaId());
-
-        EasyMock.reset(mdObserver, producerPool);
-      }
-    }
+    testProduceToTopicSuccess(produceRecordsWithKeys);
   }
 
   @Test
   public void testProduceToTopicByPartition() {
-    for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-      for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
-        Response
-            rawResponse =
-            produceToTopic("topic1", mediatype.header, requestMediatype,
-                           EmbeddedFormat.BINARY,
-                           produceRecordsWithPartitions, produceOffsets);
-        assertOKResponse(rawResponse, mediatype.expected);
-        TopicProduceResponse response = rawResponse.readEntity(TopicProduceResponse.class);
-
-        assertEquals(
-            Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
-            response.getOffsets()
-        );
-        assertEquals(null, response.getKeySchemaId());
-        assertEquals(null, response.getValueSchemaId());
-
-        EasyMock.reset(mdObserver, producerPool);
-      }
-    }
+    testProduceToTopicSuccess(produceRecordsWithPartitions);
   }
 
   @Test
   public void testProduceToTopicWithPartitionAndKey() {
-    for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-      for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
-        Response
-            rawResponse =
-            produceToTopic("topic1", mediatype.header, requestMediatype,
-                           EmbeddedFormat.BINARY,
-                           produceRecordsWithPartitionsAndKeys, produceOffsets);
-        assertOKResponse(rawResponse, mediatype.expected);
-        TopicProduceResponse response = rawResponse.readEntity(TopicProduceResponse.class);
-
-        assertEquals(
-            Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
-            response.getOffsets()
-        );
-        assertEquals(null, response.getKeySchemaId());
-        assertEquals(null, response.getValueSchemaId());
-
-        EasyMock.reset(mdObserver, producerPool);
-      }
-    }
+    testProduceToTopicSuccess(produceRecordsWithPartitionsAndKeys);
   }
 
   @Test
   public void testProduceToTopicWithNullValues() {
-    for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-      for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
-        Response rawResponse =
-            produceToTopic("topic1", mediatype.header, requestMediatype,
-                           EmbeddedFormat.BINARY,
-                           produceRecordsWithNullValues, produceOffsets);
-        assertOKResponse(rawResponse, mediatype.expected);
-        TopicProduceResponse response = rawResponse.readEntity(TopicProduceResponse.class);
-
-        assertEquals(
-            Arrays.asList(new PartitionOffset(0, 1L), new PartitionOffset(1, 2L)),
-            response.getOffsets()
-        );
-        assertEquals(null, response.getKeySchemaId());
-        assertEquals(null, response.getValueSchemaId());
-
-        EasyMock.reset(mdObserver, producerPool);
-      }
-    }
+    testProduceToTopicSuccess(produceRecordsWithNullValues);
   }
 
   @Test
@@ -304,5 +276,50 @@ public class TopicsResourceBinaryProduceTest
                             mediatype.expected);
       }
     }
+  }
+
+  private void testProduceToTopicException(List<RecordMetadataOrException> produceResults,
+                                           List<PartitionOffset> produceExceptionResults) {
+    for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
+      for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
+        Response
+            rawResponse =
+            produceToTopic("topic1", mediatype.header, requestMediatype,
+                           EmbeddedFormat.BINARY, produceExceptionData, produceResults);
+
+        if (produceExceptionResults == null) {
+          assertErrorResponse(
+              Response.Status.INTERNAL_SERVER_ERROR, rawResponse,
+              RestServerErrorException.DEFAULT_ERROR_CODE, Errors.UNEXPECTED_PRODUCER_EXCEPTION,
+              mediatype.expected
+          );
+        } else {
+          assertOKResponse(rawResponse, mediatype.expected);
+          ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+          assertEquals(produceExceptionResults, response.getOffsets());
+          assertEquals(null, response.getKeySchemaId());
+          assertEquals(null, response.getValueSchemaId());
+        }
+
+        EasyMock.reset(mdObserver, producerPool);
+      }
+    }
+  }
+
+  @Test
+  public void testProduceToTopicGenericException() {
+    // No results expected since a non-Kafka exception should cause an HTTP-level error
+    testProduceToTopicException(produceGenericExceptionResults, null);
+  }
+
+  @Test
+  public void testProduceToTopicKafkaException() {
+    testProduceToTopicException(produceKafkaExceptionResults, kafkaExceptionResults);
+  }
+
+  @Test
+  public void testProduceToTopicKafkaRetriableException() {
+    testProduceToTopicException(produceKafkaRetriableExceptionResults,
+                                kafkaRetriableExceptionResults);
   }
 }

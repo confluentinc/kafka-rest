@@ -188,8 +188,8 @@ public class ConsumerManagerTest {
 
     EasyMock.replay(mdObserver, consumerFactory);
 
-    String cid = consumerManager.createConsumer(groupName,
-                                                new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+    String cid = consumerManager.createConsumer(
+        groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
     sawCallback = false;
     consumerManager.readTopic(
         groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
@@ -267,7 +267,7 @@ public class ConsumerManagerTest {
             assertNotNull(e);
             assertTrue(e instanceof RestException);
             assertEquals(Errors.CONSUMER_ALREADY_SUBSCRIBED_ERROR_CODE,
-                         ((RestException)e).getErrorCode());
+                         ((RestException) e).getErrorCode());
             assertNull(records);
           }
         }).get();
@@ -304,9 +304,50 @@ public class ConsumerManagerTest {
   }
 
 
-  private void readAndExpectNoDataRequestTimeout(String cid)
-      throws InterruptedException, ExecutionException {
-    long started = config.getTime().milliseconds();
+  @Test
+  public void testConsumerExceptions() throws InterruptedException, ExecutionException {
+    // We should be able to handle an exception thrown by the consumer, then issue another
+    // request that succeeds and still see all the data
+    final List<ConsumerRecord<byte[], byte[]>> referenceRecords
+        = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
+        new BinaryConsumerRecord("k1".getBytes(), "v1".getBytes(), 0, 0),
+        null, // trigger consumer exception
+        new BinaryConsumerRecord("k2".getBytes(), "v2".getBytes(), 1, 0),
+        new BinaryConsumerRecord("k3".getBytes(), "v3".getBytes(), 2, 0));
+    Map<Integer, List<ConsumerRecord<byte[], byte[]>>>
+        referenceSchedule =
+        new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
+    referenceSchedule.put(50, referenceRecords);
+
+    Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>
+        schedules =
+        new HashMap<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>();
+    schedules.put(topicName, Arrays.asList(referenceSchedule));
+
+    expectCreate(schedules);
+    EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true).times(2);
+
+    EasyMock.replay(mdObserver, consumerFactory);
+
+    String cid = consumerManager.createConsumer(
+        groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+
+    // First read should result in exception.
+    sawCallback = false;
+    consumerManager.readTopic(
+        groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
+        new ConsumerManager.ReadCallback<byte[], byte[]>() {
+          @Override
+          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+                                   Exception e) {
+            sawCallback = true;
+            assertNull(records);
+            assertNotNull(e);
+          }
+        }).get();
+    assertTrue(sawCallback);
+
+    // Second read should recover and return all the data.
     sawCallback = false;
     consumerManager.readTopic(
         groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
@@ -316,14 +357,14 @@ public class ConsumerManagerTest {
                                    Exception e) {
             sawCallback = true;
             assertNull(e);
+            assertEquals(referenceRecords, records);
           }
         }).get();
     assertTrue(sawCallback);
-    assertEquals(started + config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG),
-                 config.getTime().milliseconds());
+
+    EasyMock.verify(mdObserver, consumerFactory);
   }
 
-  // Not found for instance or topic
   private void readAndExpectImmediateNotFound(String cid, String topic) {
     sawCallback = false;
     Future

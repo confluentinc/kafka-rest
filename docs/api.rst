@@ -73,6 +73,22 @@ Although it is good practice to check the status code, you may safely parse the
 response of any non-DELETE API calls and check for the presence of an
 ``error_code`` field to detect errors.
 
+Some error codes are used frequently across the entire API and you will probably want to have
+general purpose code to handle these, whereas most other error codes will need to be handled on a
+per-request basis.
+
+.. http:any:: *
+
+   :statuscode 404:
+          * Error code 40401 -- Topic not found.
+          * Error code 40402 -- Partition not found.
+   :statuscode 422: The request payload is either improperly formatted or contains semantic errors
+   :statuscode 500:
+          * Error code 50001 -- Zookeeper error.
+          * Error code 50002 -- Kafka error.
+          * Error code 50003 -- Retriable Kafka error. Although the operation failed, it's
+            possible that retrying the request will be successful.
+
 Topics
 ------
 
@@ -214,8 +230,17 @@ you produce messages by making ``POST`` requests to specific topics.
    :>json int value_schema_id: The ID for the schema used to produce values.
    :>jsonarr object offests: List of partitions and offsets the messages were
                              published to
-   :>jsonarr int offsets[i].partition: Partition the message was published to
-   :>jsonarr long offsets[i].offset: Offset of the message
+   :>jsonarr int offsets[i].partition: Partition the message was published to, or null if
+                                       publishing the message failed
+   :>jsonarr long offsets[i].offset: Offset of the message, or null if publishing the message failed
+   :>jsonarr long offsets[i].error_code: An error code classifying the reason this operation
+                                         failed, or null if it succeeded.
+
+                                         * 1 - Non-retriable Kafka exception
+                                         * 2 - Retriable Kafka exception; the message might be sent
+                                           successfully if retried
+   :>jsonarr string offsets[i].error: An error message describing why the operation failed, or
+                                      null if it succeeded
 
    :statuscode 404:
       * Error code 40401 -- Topic not found
@@ -492,6 +517,14 @@ It also allows you to produce messages to single partition using ``POST`` reques
                                        consistency with responses from producing to
                                        a topic
    :>jsonarr long offsets[i].offset: Offset of the message
+   :>jsonarr long offsets[i].error_code: An error code classifying the reason this operation
+                                         failed, or null if it succeeded.
+
+                                         * 1 - Non-retriable Kafka exception
+                                         * 2 - Retriable Kafka exception; the message might be sent
+                                           successfully if retried
+   :>jsonarr string offsets[i].error: An error message describing why the operation failed, or
+                                      null if it succeeded
 
    :statuscode 404:
       * Error code 40401 -- Topic not found
@@ -690,6 +723,9 @@ error.
 
    :statuscode 404:
       * Error code 40403 -- Consumer instance not found
+   :statuscode 500:
+      * Error code 500 -- General consumer error response, caused by an exception during the
+        operation. An error message is included in the standard format which explains the cause.
 
    **Example request**:
 
@@ -789,6 +825,9 @@ error.
    :statuscode 409:
       * Error code 40901 -- Consumer has already initiated a subscription. Consumers may
         subscribe to multiple topics, but all subscriptions must be initiated in a single request.
+   :statuscode 500:
+      * Error code 500 -- General consumer error response, caused by an exception during the
+        operation. An error message is included in the standard format which explains the cause.
 
    **Example binary request**:
 
