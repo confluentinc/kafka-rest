@@ -3,6 +3,14 @@
 Configuration Options
 =====================
 
+In addition to the settings specified here, the Kafka REST Proxy accepts the settings for the
+Java producer and consumer (currently the new producer and old consumer). Use these to override
+the default settings of producers and consumers in the REST Proxy. When configuration options are
+exposed in the REST API, priority is given to settings in the user request, then to overrides
+provided as configuration options, and finally falls back to the default values provided by the
+Java Kafka clients.
+
+
 ``id``
   Unique ID for this REST server instance. This is used in generating unique IDs for consumers that do not specify their ID. The ID is empty by default, which makes a single server setup easier to get up and running, but is not safe for multi-server deployments where automatic consumer IDs are used.
 
