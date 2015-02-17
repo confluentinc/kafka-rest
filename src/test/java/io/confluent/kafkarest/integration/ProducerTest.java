@@ -160,7 +160,7 @@ public class ProducerTest extends AbstractProducerTest {
     Properties overrides = new Properties();
     overrides.setProperty("block.on.buffer.full", "false");
     overrides.setProperty("buffer.memory", "1");
-    // Note separate ProducerPool since the override should only be fore this test, so
+    // Note separate ProducerPool since the override should only be for this test, so
     // getProducerPool doesn't work here
     ProducerPool pool = new ProducerPool(this.restConfig, this.bootstrapServers, overrides);
 

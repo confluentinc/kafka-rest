@@ -65,44 +65,44 @@ public class ProducerPool {
     // Note careful ordering: built-in values we look up automatically first, then configs
     // specified by user with initial KafkaRestConfig, and finally explicit overrides passed to
     // this method (only used for tests)
-    Map<String, Object> props = new HashMap<String, Object>();
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
+    Map<String, Object> binaryProps = new HashMap<String, Object>();
+    binaryProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
     for (String propName : originalUserProps.stringPropertyNames()) {
-      props.put(propName, originalUserProps.getProperty(propName));
+      binaryProps.put(propName, originalUserProps.getProperty(propName));
     }
     if (producerConfigOverrides != null) {
       for (String propName : producerConfigOverrides.stringPropertyNames()) {
-        props.put(propName, producerConfigOverrides.getProperty(propName));
+        binaryProps.put(propName, producerConfigOverrides.getProperty(propName));
       }
     }
     ByteArraySerializer keySerializer = new ByteArraySerializer();
-    keySerializer.configure(props, true);
+    keySerializer.configure(binaryProps, true);
     ByteArraySerializer valueSerializer = new ByteArraySerializer();
-    keySerializer.configure(props, false);
+    keySerializer.configure(binaryProps, false);
     KafkaProducer<byte[], byte[]> byteArrayProducer
-        = new KafkaProducer<byte[], byte[]>(props, keySerializer, valueSerializer);
+        = new KafkaProducer<byte[], byte[]>(binaryProps, keySerializer, valueSerializer);
     producers.put(
         EmbeddedFormat.BINARY,
         new BinaryRestProducer(byteArrayProducer, keySerializer, valueSerializer));
 
-    props = new HashMap<String, Object>();
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
-    props.put("schema.registry.url",
+    Map<String, Object> avroProps = new HashMap<String, Object>();
+    avroProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
+    avroProps.put("schema.registry.url",
               appConfig.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
     for (String propName : originalUserProps.stringPropertyNames()) {
-      props.put(propName, originalUserProps.getProperty(propName));
+      avroProps.put(propName, originalUserProps.getProperty(propName));
     }
     if (producerConfigOverrides != null) {
       for (String propName : producerConfigOverrides.stringPropertyNames()) {
-        props.put(propName, producerConfigOverrides.getProperty(propName));
+        avroProps.put(propName, producerConfigOverrides.getProperty(propName));
       }
     }
     final KafkaAvroSerializer avroKeySerializer = new KafkaAvroSerializer();
-    avroKeySerializer.configure(props, true);
+    avroKeySerializer.configure(avroProps, true);
     final KafkaAvroSerializer avroValueSerializer = new KafkaAvroSerializer();
-    avroValueSerializer.configure(props, false);
+    avroValueSerializer.configure(avroProps, false);
     KafkaProducer<Object, Object> avroProducer
-        = new KafkaProducer<Object, Object>(props, avroKeySerializer, avroValueSerializer);
+        = new KafkaProducer<Object, Object>(avroProps, avroKeySerializer, avroValueSerializer);
     producers.put(
         EmbeddedFormat.AVRO,
         new AvroRestProducer(avroProducer, avroKeySerializer, avroValueSerializer));
