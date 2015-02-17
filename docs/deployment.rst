@@ -86,6 +86,8 @@ The heap size setting of 1 GB should be increased for proxies that will use many
 instead of heap sizes larger than 8 GB we recommend running multiple instances of the REST proxy
 to avoid long GC pauses that can cause request timeout and consumer disconnections.
 
+.. _kafkarest_deployment:
+
 Deployment
 ~~~~~~~~~~
 
