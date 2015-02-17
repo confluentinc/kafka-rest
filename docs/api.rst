@@ -82,7 +82,7 @@ per-request basis.
    :statuscode 404:
           * Error code 40401 -- Topic not found.
           * Error code 40402 -- Partition not found.
-   :statuscode 422: The request payload was either improperly formatted or contained semantic errors
+   :statuscode 422: The request payload is either improperly formatted or contains semantic errors
    :statuscode 500:
           * Error code 50001 -- Zookeeper error.
           * Error code 50002 -- Kafka error.

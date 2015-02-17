@@ -96,7 +96,7 @@ public class MetadataAPITest extends ClusterTestHarness {
 
   /* This should work, but due to the lack of timeouts in ZkClient, if ZK is down some calls
    *  will just block forever, see https://issues.apache.org/jira/browse/KAFKA-1907. We should
-   *  reenable theis once we can apply timeouts to ZK operations.
+   *  reenable this once we can apply timeouts to ZK operations.
    */
 /*
   @Test

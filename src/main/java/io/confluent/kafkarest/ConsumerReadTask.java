@@ -169,7 +169,8 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
       }
     } else {
       // If we read any messages before the exception occurred, keep this task so we don't lose
-      // messages. Subsequent reads will add the
+      // messages. Subsequent reads will add the outstanding messages before attempting to read
+      // any more from the consumer stream iterator
       if (topicState != null && messages != null && messages.size() > 0) {
         topicState.setFailedTask(this);
       }
