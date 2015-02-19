@@ -165,11 +165,18 @@ To create a packaged version, optionally skipping the tests:
 
     $ mvn package [-DskipTests]
 
-This will produce two versions ready for production:
-``target/kafka-rest-$VERSION-package`` contains a directory layout similar
-to the packaged binary versions and
-``target/kafka-rest-$VERSION-standalone.jar`` is an uber-jar including all
-the dependencies.
+This will produce a version ready for production in
+``target/kafka-rest-$VERSION-package`` containing a directory layout similar
+to the packaged binary versions. You can also produce a standalone fat jar using the
+``standalone`` profile:
+
+.. sourcecode:: bash
+
+    $ mvn package -P standalone [-DskipTests]
+
+generating
+``target/kafka-rest-$VERSION-standalone.jar``, which includes all the
+dependencies as well.
 
 Contribute
 ----------

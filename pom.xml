@@ -9,6 +9,31 @@
     <packaging>jar</packaging>
     <version>0.1-SNAPSHOT</version>
     <name>kafka-rest</name>
+    <organization>
+        <name>Confluent, Inc.</name>
+        <url>http://confluent.io</url>
+    </organization>
+    <url>http://confluent.io</url>
+    <description>
+        The Kafka REST Proxy provides a RESTful interface to a Kafka cluster, making it easy to
+        produce and consume messages, view the state of the cluster, and perform administrative
+        actions without using the native Kafka protocol or clients.
+    </description>
+
+    <licenses>
+        <license>
+            <name>Apache License 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git://github.com/confluentinc/kafka-rest.git</connection>
+        <developerConnection>scm:git:git@github.com:confluentinc/kafka-rest.git</developerConnection>
+        <url>https://github.com/confluentinc/kafka-rest</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <properties>
         <confluent.version>0.1-SNAPSHOT</confluent.version>
@@ -111,7 +136,6 @@
                 <configuration>
                     <descriptors>
                         <descriptor>src/assembly/development.xml</descriptor>
-                        <descriptor>src/assembly/standalone.xml</descriptor>
                         <descriptor>src/assembly/package.xml</descriptor>
                     </descriptors>
                     <archive>
@@ -140,4 +164,22 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>standalone</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/assembly/standalone.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
