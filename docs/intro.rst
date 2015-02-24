@@ -116,7 +116,8 @@ Just as important, here's a list of features that *aren't* yet supported:
   threads locally that each read from a separate consumer stream.
 * **Simple Consumer** - The high-level consumer should generally be
   preferred. However, it is occasionally useful to use low-level read
-  operations, for example to retrieve messages at specific offsets.
+  operations, for example to retrieve messages at specific offsets. The new
+  consumer implementation will make implementing these operations simpler.
 * **Most Producer/Consumer Overrides** - Only a few key overrides are exposed in
   the API (but global overrides can be set by the administrator). The reason is
   two-fold. First, proxies are multi-tenant and therefore most user-requested
