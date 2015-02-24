@@ -220,7 +220,8 @@ public class TestUtils {
                                                 boolean validateContents) {
     ConsumerConnector consumer = Consumer.createJavaConsumerConnector(
         new ConsumerConfig(
-            kafka.utils.TestUtils.createConsumerProperties(zkConnect, "testgroup", "consumer0", 200)
+            kafka.utils.TestUtils.createConsumerProperties(zkConnect, "testgroup", "consumer0",
+                                                           20000)
         ));
     Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
     topicCountMap.put(topicName, 1);

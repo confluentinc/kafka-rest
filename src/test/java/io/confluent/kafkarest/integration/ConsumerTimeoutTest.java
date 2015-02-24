@@ -34,7 +34,7 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
   private static final String topicName = "test";
   private static final String groupName = "testconsumergroup";
 
-  private static final Integer requestTimeout = 50;
+  private static final Integer requestTimeout = 500;
   // This is pretty large since there is sometimes significant overhead to doing a read (e.g.
   // checking topic existence in ZK)
   private static final Integer instanceTimeout = 1000;
