@@ -62,6 +62,69 @@ the REST Proxy running using the default settings and some topics already create
      [{"value":{"name":"testUser"},"partition":0,"offset":0},{"value":{"name":"testUser2"},"partition":0,"offset":1}]
 
 
+Features
+--------
+
+Eventually, the REST Proxy should be able to expose all of the functionality
+of the Java producers, consumers, and command-line tools. Here is the list of
+what is currently supported:
+
+* **Metadata** - Most metadata about the cluster -- brokers, topics,
+  partitions, and configs -- can be read using ``GET`` requests for the
+  corresponding URLs.
+* **Producers** - Instead of exposing producer objects, the API accepts produce
+  requests targeted at specific topics or partitions and routes them all through
+  a small pool of producers.
+
+  * Producer configuration - Producer instances are shared, so configs cannot
+    be set on a per-request basis. However, you can adjust settings globally by
+    passing new producer settings in the REST Proxy configuration. For example,
+    you might pass in the ``compression.type`` option to enable site-wide
+    compression to reduce storage and network overhead.
+
+* **Consumers** - The REST Proxy uses the high level consumer to implement
+  consumer-groups that can read from topics. Consumers are stateful and
+  therefore tied to specific REST Proxy instances. Offset commit can be either
+  automatic or explicitly requested by the user. Currently limited to one thread
+  per consumer; use multiple consumers for higher throughput.
+
+  * Consumer configuration - Although consumer instances are not shared, they do
+    share the underlying server resources. Therefore, limited configuration
+    options are exposed via the API. However, you can adjust settings globally
+    by passing consumer settings in the REST Proxy configuration.
+
+* **Data Formats** - The REST Proxy can read and write data using raw bytes
+  encoded with base64 or using JSON-encoded Avro. With Avro, schemas are
+  registered and validated against the Schema Registry.
+* **REST Proxy Clusters and Load Balancing** - The REST Proxy is designed to
+  support multiple instances running together to spread load and can safely be
+  run behind various load balancing mechanisms (e.g. round robin DNS, discovery
+  services, load balancers) as long as instances are
+  :ref:`configured correctly<kafkarest_deployment>`.
+
+Just as important, here's a list of features that *aren't* yet supported:
+
+* **Admin operations** - We plan to expose these, but must do so carefully, with
+  an eye toward security.
+* **Multi-topic Produce Requests** - Currently each produce request may only
+  address a single topic or topic-partition. Most use cases do not require
+  multi-topic produce requests, they introduce additional complexity into the
+  API, and clients can easily split data across multiple requests if necessary
+* **Multi-threaded Consumers** - Currently consumers subscribe to a single topic
+  and use a single stream (and therefore a single thread). You can still
+  achieve high throughput as you would with the Java clients: run multiple
+  threads locally that each read from a separate consumer stream.
+* **Simple Consumer** - The high-level consumer should generally be
+  preferred. However, it is occasionally useful to use low-level read
+  operations, for example to retrieve messages at specific offsets. The new
+  consumer implementation will make implementing these operations simpler.
+* **Most Producer/Consumer Overrides** - Only a few key overrides are exposed in
+  the API (but global overrides can be set by the administrator). The reason is
+  two-fold. First, proxies are multi-tenant and therefore most user-requested
+  overrides need additional restrictions to ensure they do not impact other
+  users. Second, tying the API too much to the implementation restricts future
+  API improvements; this is especially important with the new upcoming consumer
+  implementation.
 
 Installation
 ------------
