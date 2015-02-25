@@ -29,7 +29,7 @@ the REST Proxy running using the default settings and some topics already create
    # Produce a message using binary embedded data with value "Kafka" to the topic test
    $ curl -X POST -H "Content-Type: application/vnd.kafka.binary.v1+json" \
          --data '{"records":[{"value":"S2Fma2E="}]}' "http://localhost:8082/topics/test"
-     {"offsets":[{"partition": 3, "offset": 1}]}
+     {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
 
    # Produce a message using Avro embedded data, including the schema which will
    # be registered with the schema registry and used to validate and serialize
@@ -37,7 +37,7 @@ the REST Proxy running using the default settings and some topics already create
    $ curl -X POST -H "Content-Type: application/vnd.kafka.avro.v1+json" \
          --data '{"value_schema": "{\"type\": \"record\", \"name\": \"User\", \"fields\": [{\"name\": \"name\", \"type\": \"string\"}]}", "records": [{"value": {"name": "testUser"}}]}' \
          "http://localhost:8082/topics/avrotest"
-     {"value_schema_id":0,"offsets":[{"partition":0,"offset":0}]}
+     {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":21}
 
    # Create a consumer for binary data, starting at the beginning of the topic's
    # log. Then consume some data from a topic.
@@ -47,7 +47,7 @@ the REST Proxy running using the default settings and some topics already create
      {"instance_id":"my_instance","base_uri":"http://localhost:8082/consumers/my_binary_consumer/instances/my_instance"}
    $ curl -X GET -H "Accept: application/vnd.kafka.binary.v1+json" \
          http://localhost:8082/consumers/my_binary_consumer/instances/my_instance/topics/test
-     [{"value":"S2Fma2E=","partition":0,"offset":0},{"value":"S2Fma2E=","partition":0,"offset":1}]
+     [{"key":null,"value":"S2Fma2E=","partition":0,"offset":0}]
 
    # Create a consumer for Avro data, starting at the beginning of the topic's
    # log. Then consume some data from a topic, which is decoded, translated to
@@ -59,7 +59,7 @@ the REST Proxy running using the default settings and some topics already create
      {"instance_id":"my_instance","base_uri":"http://localhost:8082/consumers/my_avro_consumer/instances/my_instance"}
    $ curl -X GET -H "Accept: application/vnd.kafka.avro.v1+json" \
          http://localhost:8082/consumers/my_avro_consumer/instances/my_instance/topics/avrotest
-     [{"value":{"name":"testUser"},"partition":0,"offset":0},{"value":{"name":"testUser2"},"partition":0,"offset":1}]
+     [{"key":null,"value":{"name":"testUser"},"partition":0,"offset":0}]
 
 
 Features
