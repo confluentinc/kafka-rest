@@ -55,12 +55,12 @@ public class KafkaRestConfig extends RestConfig {
       + "its data under some path in the global ZooKeeper namespace. If so the consumer should use the same "
       + "chroot path in its connection string. For example to give a chroot path of /chroot/path you would give "
       + "the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path.";
-  public static final String ZOOKEEPER_CONNECT_DEFAULT = "54.93.89.150:2181";
+  public static final String ZOOKEEPER_CONNECT_DEFAULT = "localhost:2181";
 
   public static final String SCHEMA_REGISTRY_URL_CONFIG = "schema.registry.url";
   private static final String SCHEMA_REGISTRY_URL_DOC =
       "The base URL for the schema registry that should be used by the Avro serializer.";
-  private static final String SCHEMA_REGISTRY_URL_DEFAULT = "http://54.93.89.150:8081";
+  private static final String SCHEMA_REGISTRY_URL_DEFAULT = "http://localhost:8081";
 
   public static final String PRODUCER_THREADS_CONFIG = "producer.threads";
   private static final String
