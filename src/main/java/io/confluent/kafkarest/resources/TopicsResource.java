@@ -20,28 +20,12 @@ import java.util.List;
 import java.util.Vector;
 
 import javax.validation.Valid;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 
-import io.confluent.kafkarest.Context;
-import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.RecordMetadataOrException;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
-import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.Topic;
-import io.confluent.kafkarest.entities.TopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.kafkarest.*;
+import io.confluent.kafkarest.entities.*;
 import io.confluent.rest.annotations.PerformanceMetric;
 
 @Path("/topics")
@@ -72,6 +56,36 @@ public class TopicsResource {
       throw Errors.topicNotFoundException();
     }
     return topic;
+  }
+
+  @GET
+  @Path("/{topic}/partition/{partition}/messages")
+  @PerformanceMetric("topic.consume-binary")
+  @Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED,
+             Versions.KAFKA_V1_JSON_WEIGHTED,
+             Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
+             Versions.JSON_WEIGHTED,
+             Versions.ANYTHING})
+  public void consumeBinary(final @Suspended AsyncResponse asyncResponse,
+                            final @PathParam("topic") String topicName,
+                            final @PathParam("partition") int partitionId,
+                            final @QueryParam("offset") long offset,
+                            final @QueryParam("count") @DefaultValue("1") long count) {
+
+    consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.BINARY);
+  }
+
+  @GET
+  @Path("/{topic}/partition/{partition}/messages")
+  @PerformanceMetric("topic.consume-avro")
+  @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED})
+  public void consumeAvro(final @Suspended AsyncResponse asyncResponse,
+                            final @PathParam("topic") String topicName,
+                            final @PathParam("partition") int partitionId,
+                            final @QueryParam("offset") long offset,
+                            final @QueryParam("count") @DefaultValue("1") long count) {
+
+    consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.AVRO);
   }
 
   @POST
@@ -141,5 +155,28 @@ public class TopicsResource {
           }
         }
     );
+  }
+
+  private <ClientK, ClientV> void consume(
+      final @Suspended AsyncResponse asyncResponse,
+      final String topicName,
+      final int partitionId,
+      final long offset,
+      final long count,
+      final EmbeddedFormat embeddedFormat) {
+
+    ctx.getSimpleConsumerObserver().consume(
+        topicName, partitionId, offset, count, embeddedFormat,
+        new ConsumerManager.ReadCallback<ClientK, ClientV>() {
+          @Override
+          public void onCompletion(List<? extends ConsumerRecord<ClientK, ClientV>> records,
+                                   Exception e) {
+            if (e != null) {
+              asyncResponse.resume(e);
+            } else {
+              asyncResponse.resume(records);
+            }
+          }
+        });
   }
 }

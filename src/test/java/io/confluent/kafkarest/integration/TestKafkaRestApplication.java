@@ -16,15 +16,10 @@
 
 package io.confluent.kafkarest.integration;
 
+import io.confluent.kafkarest.*;
 import org.I0Itec.zkclient.ZkClient;
 
 import javax.ws.rs.core.Configurable;
-
-import io.confluent.kafkarest.ConsumerManager;
-import io.confluent.kafkarest.KafkaRestApplication;
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
-import io.confluent.kafkarest.ProducerPool;
 
 /**
  * Test version of KakfaRestApplication that allows for dependency injection so components and be
@@ -36,21 +31,23 @@ public class TestKafkaRestApplication extends KafkaRestApplication {
   MetadataObserver mdObserverInjected;
   ProducerPool producerPoolInjected;
   ConsumerManager consumerManagerInjected;
+  SimpleConsumerFetcher simpleConsumerFetcherInjected;
 
   public TestKafkaRestApplication(KafkaRestConfig config, ZkClient zkClient,
                                   MetadataObserver mdObserver, ProducerPool producerPool,
-                                  ConsumerManager consumerManager) {
+                                  ConsumerManager consumerManager, SimpleConsumerFetcher simpleConsumerFetcher) {
     super(config);
     zkClientInjected = zkClient;
     mdObserverInjected = mdObserver;
     producerPoolInjected = producerPool;
     consumerManagerInjected = consumerManager;
+    simpleConsumerFetcherInjected = simpleConsumerFetcher;
   }
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
     setupInjectedResources(config, appConfig, zkClientInjected, mdObserverInjected,
-                           producerPoolInjected, consumerManagerInjected);
+                           producerPoolInjected, consumerManagerInjected, simpleConsumerFetcherInjected);
   }
 
 }

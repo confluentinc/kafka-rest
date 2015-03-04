@@ -53,7 +53,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-    setupInjectedResources(config, appConfig, null, null, null, null);
+    setupInjectedResources(config, appConfig, null, null, null, null, null);
   }
 
   /**
@@ -63,7 +63,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   protected void setupInjectedResources(Configurable<?> config, KafkaRestConfig appConfig,
                                         ZkClient zkClient, MetadataObserver mdObserver,
                                         ProducerPool producerPool,
-                                        ConsumerManager consumerManager) {
+                                        ConsumerManager consumerManager,
+                                        SimpleConsumerFetcher simpleConsumerObserver) {
     config.register(new ZkExceptionMapper(appConfig));
 
     if (zkClient == null) {
@@ -79,9 +80,12 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     if (consumerManager == null) {
       consumerManager = new ConsumerManager(appConfig, mdObserver);
     }
+    if (simpleConsumerObserver == null) {
+      simpleConsumerObserver = new SimpleConsumerFetcher(appConfig, mdObserver, zkClient);
+    }
 
     this.zkClient = zkClient;
-    context = new Context(appConfig, mdObserver, producerPool, consumerManager);
+    context = new Context(appConfig, mdObserver, producerPool, consumerManager, simpleConsumerObserver);
     config.register(RootResource.class);
     config.register(new BrokersResource(context));
     config.register(new TopicsResource(context));
