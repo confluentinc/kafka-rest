@@ -64,17 +64,6 @@ public class SimpleConsumerFetcher {
     consumerConfig = new ConsumerConfig(props);
   }
 
-  private int leaderForPartition(final String topicName, final int partitionId) {
-    final List<Partition> partitions = mdObserver.getTopicPartitions(topicName);
-    for (final Partition partition : partitions) {
-      if (partition.getPartition() == partitionId) {
-        return partition.getLeader();
-      }
-    }
-
-    throw Errors.partitionNotFoundException();
-  }
-
   private String nextClientId() {
 
     final StringBuilder id = new StringBuilder();
@@ -102,8 +91,7 @@ public class SimpleConsumerFetcher {
     Exception exception = null;
 
     try {
-      final int leader = leaderForPartition(topicName, partitionId);
-      final Broker broker = mdObserver.getBrokerById(leader);
+      final Broker broker = mdObserver.getLeader(topicName, partitionId);
 
       final String clientId = nextClientId();
 

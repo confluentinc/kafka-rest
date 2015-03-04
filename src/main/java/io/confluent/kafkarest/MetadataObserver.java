@@ -75,6 +75,10 @@ public class MetadataObserver {
     throw Errors.brokerDataNotFoundException();
   }
 
+  public Broker getLeader(final String topicName, final int partitionId) {
+    return getBrokerById(getLeaderId(topicName, partitionId));
+  }
+
   public Collection<String> getTopicNames() {
     Seq<String> topicNames = ZkUtils.getAllTopics(zkClient).sorted(Ordering.String$.MODULE$);
     return JavaConversions.asJavaCollection(topicNames);
@@ -149,6 +153,17 @@ public class MetadataObserver {
         zkClient, JavaConversions.asScalaIterable(Arrays.asList(topic)).toSeq());
     Map<Object, Seq<Object>> parts = topicPartitions.get(topic).get();
     return extractPartitionsFromZKData(parts, topic, partitions_filter);
+  }
+
+  public int getLeaderId(final String topicName, final int partitionId) {
+    final List<Partition> partitions = getTopicPartitions(topicName);
+    for (final Partition partition : partitions) {
+      if (partition.getPartition() == partitionId) {
+        return partition.getLeader();
+      }
+    }
+
+    throw Errors.partitionNotFoundException();
   }
 
   private List<Partition> extractPartitionsFromZKData(
