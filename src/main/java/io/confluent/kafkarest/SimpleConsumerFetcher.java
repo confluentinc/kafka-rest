@@ -75,18 +75,6 @@ public class SimpleConsumerFetcher {
     throw Errors.partitionNotFoundException();
   }
 
-  private Broker brokerInfo(final int brokerId) {
-    final Seq<Broker> brokers = ZkUtils.getAllBrokersInCluster(zkClient);
-
-    for (Broker broker : JavaConversions.asJavaCollection(brokers)) {
-      if (broker.id() == brokerId) {
-        return broker;
-      }
-    }
-
-    throw Errors.brokerDataNotFoundException();
-  }
-
   private String nextClientId() {
 
     final StringBuilder id = new StringBuilder();
@@ -115,7 +103,7 @@ public class SimpleConsumerFetcher {
 
     try {
       final int leader = leaderForPartition(topicName, partitionId);
-      final Broker broker = brokerInfo(leader);
+      final Broker broker = mdObserver.getBrokerById(leader);
 
       final String clientId = nextClientId();
 

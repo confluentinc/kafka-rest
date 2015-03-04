@@ -63,6 +63,18 @@ public class MetadataObserver {
     return brokerIds;
   }
 
+  public Broker getBrokerById(final int brokerId) {
+    final Seq<Broker> brokers = ZkUtils.getAllBrokersInCluster(zkClient);
+
+    for (Broker broker : JavaConversions.asJavaCollection(brokers)) {
+      if (broker.id() == brokerId) {
+        return broker;
+      }
+    }
+
+    throw Errors.brokerDataNotFoundException();
+  }
+
   public Collection<String> getTopicNames() {
     Seq<String> topicNames = ZkUtils.getAllTopics(zkClient).sorted(Ordering.String$.MODULE$);
     return JavaConversions.asJavaCollection(topicNames);
