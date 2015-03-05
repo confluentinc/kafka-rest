@@ -145,8 +145,8 @@ public class SimpleConsumerManager {
         new FetchRequest(
             corId,
             simpleFetcher.clientId(),
-            consumerConfig.socketTimeoutMs(),
-            consumerConfig.socketReceiveBufferBytes(),
+            consumerConfig.fetchWaitMaxMs(),
+            consumerConfig.fetchMinBytes(),
             requestInfo);
 
     final FetchResponse fetchResponse = simpleFetcher.fetch(req);
