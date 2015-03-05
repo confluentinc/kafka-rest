@@ -165,7 +165,7 @@ public class TopicsResource {
       final long count,
       final EmbeddedFormat embeddedFormat) {
 
-    ctx.getSimpleConsumerObserver().consume(
+    ctx.getSimpleConsumerManager().consume(
         topicName, partitionId, offset, count, embeddedFormat,
         new ConsumerManager.ReadCallback<ClientK, ClientV>() {
           @Override

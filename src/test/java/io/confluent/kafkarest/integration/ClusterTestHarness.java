@@ -180,7 +180,8 @@ public abstract class ClusterTestHarness {
                                            getMetadataObserver(restConfig),
                                            getProducerPool(restConfig),
                                            getConsumerManager(restConfig),
-                                           getSimpleConsumerFetcher(restConfig));
+                                           getSimpleConsumerFactory(restConfig),
+                                           getSimpleConsumerManager(restConfig));
     restServer = restApp.createServer();
     restServer.start();
   }
@@ -201,7 +202,11 @@ public abstract class ClusterTestHarness {
     return null;
   }
 
-  protected SimpleConsumerFetcher getSimpleConsumerFetcher(KafkaRestConfig appConfig) {
+  protected SimpleConsumerFactory getSimpleConsumerFactory(KafkaRestConfig appConfig) {
+    return null;
+  }
+
+  protected SimpleConsumerManager getSimpleConsumerManager(KafkaRestConfig appConfig) {
     return null;
   }
 

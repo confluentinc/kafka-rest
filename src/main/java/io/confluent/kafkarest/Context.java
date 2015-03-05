@@ -24,16 +24,18 @@ public class Context {
   private final MetadataObserver metadataObserver;
   private final ProducerPool producerPool;
   private final ConsumerManager consumerManager;
-  private final SimpleConsumerFetcher simpleConsumerObserver;
+  private final SimpleConsumerFactory simpleConsumerFactory;
+  private final SimpleConsumerManager simpleConsumerManager;
 
   public Context(KafkaRestConfig config, MetadataObserver metadataObserver,
                  ProducerPool producerPool, ConsumerManager consumerManager,
-                 SimpleConsumerFetcher simpleConsumerObserver) {
+                 SimpleConsumerFactory simpleConsumerFactory, SimpleConsumerManager simpleConsumerManager) {
     this.config = config;
     this.metadataObserver = metadataObserver;
     this.producerPool = producerPool;
     this.consumerManager = consumerManager;
-    this.simpleConsumerObserver = simpleConsumerObserver;
+    this.simpleConsumerFactory = simpleConsumerFactory;
+    this.simpleConsumerManager = simpleConsumerManager;
   }
 
   public KafkaRestConfig getConfig() {
@@ -52,7 +54,9 @@ public class Context {
     return consumerManager;
   }
 
-  public SimpleConsumerFetcher getSimpleConsumerObserver() {
-    return simpleConsumerObserver;
+  public SimpleConsumerFactory getSimpleConsumerFactory() { return simpleConsumerFactory; }
+
+  public SimpleConsumerManager getSimpleConsumerManager() {
+    return simpleConsumerManager;
   }
 }
