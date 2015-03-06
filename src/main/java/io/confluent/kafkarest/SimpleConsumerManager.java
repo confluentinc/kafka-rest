@@ -39,7 +39,7 @@ public class SimpleConsumerManager {
 
   private static final Logger log = LoggerFactory.getLogger(SimpleConsumerManager.class);
 
-  private final KafkaRestConfig config;
+  private final int maxPoolSize;
   private final MetadataObserver mdObserver;
   private final SimpleConsumerFactory simpleConsumerFactory;
 
@@ -51,15 +51,17 @@ public class SimpleConsumerManager {
                                final MetadataObserver mdObserver,
                                final SimpleConsumerFactory simpleConsumerFactory) {
 
-    this.config = config;
     this.mdObserver = mdObserver;
     this.simpleConsumerFactory = simpleConsumerFactory;
 
+    maxPoolSize = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_POOL_SIZE_CONFIG);
     simpleConsumersPools = new HashMap<Broker, SimpleConsumerPool>();
   }
 
   private SimpleConsumerPool createSimpleConsumerPool() {
-    // TODO Param type of pool
+    if (maxPoolSize > 0) {
+      return new SizeLimitedSimpleConsumerPool(maxPoolSize, simpleConsumerFactory);
+    }
     return new NaiveSimpleConsumerPool(simpleConsumerFactory);
   }
 
