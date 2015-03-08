@@ -157,6 +157,11 @@ public class MetadataObserver {
 
   public int getLeaderId(final String topicName, final int partitionId) {
     final List<Partition> partitions = getTopicPartitions(topicName);
+
+    if (partitions.size() == 0) {
+      throw Errors.topicNotFoundException();
+    }
+
     for (final Partition partition : partitions) {
       if (partition.getPartition() == partitionId) {
         return partition.getLeader();
