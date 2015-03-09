@@ -15,12 +15,17 @@
  **/
 package io.confluent.kafkarest;
 
-import io.confluent.kafkarest.entities.*;
-
+import io.confluent.kafka.serializers.KafkaAvroDecoder;
+import io.confluent.kafkarest.converters.AvroConverter;
+import io.confluent.kafkarest.entities.AvroConsumerRecord;
+import io.confluent.kafkarest.entities.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.simpleconsumerspool.NaiveSimpleConsumerPool;
 import io.confluent.kafkarest.simpleconsumerspool.SimpleConsumerPool;
 import io.confluent.kafkarest.simpleconsumerspool.SizeLimitedSimpleConsumerPool;
 import io.confluent.rest.exceptions.RestException;
+import io.confluent.rest.exceptions.RestServerErrorException;
 import kafka.api.PartitionFetchInfo;
 import kafka.cluster.Broker;
 import kafka.common.TopicAndPartition;
@@ -28,10 +33,15 @@ import kafka.consumer.ConsumerConfig;
 import kafka.javaapi.FetchRequest;
 import kafka.javaapi.FetchResponse;
 import kafka.javaapi.message.ByteBufferMessageSet;
+import kafka.message.MessageAndMetadata;
 import kafka.message.MessageAndOffset;
+import kafka.serializer.Decoder;
+import kafka.serializer.DefaultDecoder;
+import kafka.utils.VerifiableProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.Response;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -47,6 +57,9 @@ public class SimpleConsumerManager {
 
   private AtomicInteger correlationId = new AtomicInteger(0);
 
+  private final Decoder<Object> avroDecoder;
+  private final Decoder<byte[]> binaryDecoder;
+
   public SimpleConsumerManager(final KafkaRestConfig config,
                                final MetadataObserver mdObserver,
                                final SimpleConsumerFactory simpleConsumerFactory) {
@@ -56,6 +69,14 @@ public class SimpleConsumerManager {
 
     maxPoolSize = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_POOL_SIZE_CONFIG);
     simpleConsumersPools = new HashMap<Broker, SimpleConsumerPool>();
+
+    // Load decoders
+    Properties props = new Properties();
+    props.setProperty("schema.registry.url",
+        config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
+    avroDecoder = new KafkaAvroDecoder(new VerifiableProperties(props));
+
+    binaryDecoder = new DefaultDecoder(new VerifiableProperties());
   }
 
   private SimpleConsumerPool createSimpleConsumerPool() {
@@ -100,7 +121,7 @@ public class SimpleConsumerManager {
             fetchRecords(topicName, partitionId, offset, simpleFetcher);
 
         for (final MessageAndOffset messageAndOffset : messageAndOffsets) {
-          records.add(embeddedFormat.createConsumerRecord(messageAndOffset, partitionId));
+          records.add(createConsumerRecord(messageAndOffset, topicName, partitionId, embeddedFormat));
           count--;
           offset++;
 
@@ -126,6 +147,48 @@ public class SimpleConsumerManager {
     }
 
     callback.onCompletion(records, exception);
+  }
+
+  private BinaryConsumerRecord createBinaryConsumerRecord(final MessageAndOffset messageAndOffset,
+                                                          final String topicName,
+                                                          final int partitionId) {
+    final MessageAndMetadata<byte[], byte[]> messageAndMetadata =
+        new MessageAndMetadata<byte[], byte[]>(topicName, partitionId,
+            messageAndOffset.message(), messageAndOffset.offset(),
+            binaryDecoder, binaryDecoder);
+    return new BinaryConsumerRecord(messageAndMetadata.key(), messageAndMetadata.message(),
+        partitionId, messageAndOffset.offset());
+  }
+
+  private AvroConsumerRecord createAvroConsumerRecord(final MessageAndOffset messageAndOffset,
+                                                      final String topicName,
+                                                      final int partitionId) {
+    final MessageAndMetadata<Object, Object> messageAndMetadata =
+        new MessageAndMetadata<Object, Object>(topicName, partitionId,
+            messageAndOffset.message(), messageAndOffset.offset(),
+            avroDecoder, avroDecoder);
+    return new AvroConsumerRecord(
+        AvroConverter.toJson(messageAndMetadata.key()).json,
+        AvroConverter.toJson(messageAndMetadata.message()).json,
+        partitionId, messageAndOffset.offset());
+  }
+
+  private ConsumerRecord createConsumerRecord(final MessageAndOffset messageAndOffset,
+                                              final String topicName,
+                                              final int partitionId,
+                                              final EmbeddedFormat embeddedFormat) {
+
+    switch (embeddedFormat) {
+      case BINARY:
+        return createBinaryConsumerRecord(messageAndOffset, topicName, partitionId);
+
+      case AVRO:
+        return createAvroConsumerRecord(messageAndOffset, topicName, partitionId);
+
+      default:
+        throw new RestServerErrorException("Invalid embedded format for new consumer.",
+            Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
   }
 
   private ByteBufferMessageSet fetchRecords(final String topicName,
