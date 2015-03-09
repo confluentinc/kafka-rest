@@ -17,9 +17,12 @@ package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
+import io.confluent.kafkarest.converters.AvroConverter;
+import io.confluent.kafkarest.entities.AvroConsumerRecord;
 import jersey.repackaged.com.google.common.collect.ImmutableMap;
 import kafka.utils.TestUtils;
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,27 +36,51 @@ import java.util.Properties;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 
-public class SimpleConsumerBinaryTest extends AbstractConsumerTest {
+public class SimpleConsumerAvroTest extends AbstractConsumerTest {
 
   private static final String topicName = "topic1";
 
-  private final List<ProducerRecord<byte[], byte[]>> recordsOnlyValues = Arrays.asList(
-      new ProducerRecord<byte[], byte[]>(topicName, "value".getBytes()),
-      new ProducerRecord<byte[], byte[]>(topicName, "value2".getBytes()),
-      new ProducerRecord<byte[], byte[]>(topicName, "value3".getBytes()),
-      new ProducerRecord<byte[], byte[]>(topicName, "value4".getBytes())
+  // Primitive types
+  private final List<ProducerRecord<Object, Object>> recordsOnlyValues = Arrays.asList(
+      new ProducerRecord<Object, Object>(topicName, 1),
+      new ProducerRecord<Object, Object>(topicName, 2),
+      new ProducerRecord<Object, Object>(topicName, 3),
+      new ProducerRecord<Object, Object>(topicName, 4)
   );
 
-  private final List<ProducerRecord<byte[], byte[]>> recordsWithKeys = Arrays.asList(
-      new ProducerRecord<byte[], byte[]>(topicName, "key".getBytes(), "value".getBytes()),
-      new ProducerRecord<byte[], byte[]>(topicName, "key".getBytes(), "value2".getBytes()),
-      new ProducerRecord<byte[], byte[]>(topicName, "key".getBytes(), "value3".getBytes()),
-      new ProducerRecord<byte[], byte[]>(topicName, "key".getBytes(), "value4".getBytes())
+  // And primitive keys w/ record values
+  private static final String valueSchemaStr = "{\"type\": \"record\", "
+      + "\"name\":\"test\","
+      + "\"fields\":[{"
+      + "  \"name\":\"field\", "
+      + "  \"type\": \"int\""
+      + "}]}";
+  private static final Schema valueSchema = new Schema.Parser().parse(valueSchemaStr);
+  private final List<ProducerRecord<Object, Object>> recordsWithKeys = Arrays.asList(
+      new ProducerRecord<Object, Object>(
+          topicName, "key",
+          new GenericRecordBuilder(valueSchema).set("field", 72).build()),
+      new ProducerRecord<Object, Object>(
+          topicName, "key",
+          new GenericRecordBuilder(valueSchema).set("field", 73).build()),
+      new ProducerRecord<Object, Object>(
+          topicName, "key",
+          new GenericRecordBuilder(valueSchema).set("field", 74).build()),
+      new ProducerRecord<Object, Object>(
+          topicName, "key",
+          new GenericRecordBuilder(valueSchema).set("field", 75).build())
   );
 
-  private static final GenericType<List<BinaryConsumerRecord>> binaryConsumerRecordType
-      = new GenericType<List<BinaryConsumerRecord>>() {
+  private static final GenericType<List<AvroConsumerRecord>> avroConsumerRecordType
+      = new GenericType<List<AvroConsumerRecord>>() {
   };
+  private static final Converter converter = new Converter() {
+    @Override
+    public Object convert(Object obj) {
+      return AvroConverter.toJson(obj).json;
+    }
+  };
+
 
   @Before
   @Override
@@ -67,65 +94,65 @@ public class SimpleConsumerBinaryTest extends AbstractConsumerTest {
 
   @Test
   public void testConsumeOnlyValuesByOffset() {
-    produceBinaryMessages(recordsOnlyValues);
+    produceAvroMessages(recordsOnlyValues);
 
     simpleConsumeMessages(
         topicName,
         0,
         null, // No "count" parameter in the query
         recordsOnlyValues.subList(0, 1), // We expect only the first record in the response
-        Versions.KAFKA_V1_JSON_BINARY,
-        Versions.KAFKA_V1_JSON_BINARY,
-        binaryConsumerRecordType,
-        null
-        );
+        Versions.KAFKA_V1_JSON_AVRO,
+        Versions.KAFKA_V1_JSON_AVRO,
+        avroConsumerRecordType,
+        converter
+    );
   }
 
   @Test
   public void testConsumeWithKeysByOffset() {
-    produceBinaryMessages(recordsWithKeys);
+    produceAvroMessages(recordsWithKeys);
 
     simpleConsumeMessages(
         topicName,
         0,
         null, // No "count" parameter in the query
         recordsWithKeys.subList(0, 1),
-        Versions.KAFKA_V1_JSON_BINARY,
-        Versions.KAFKA_V1_JSON_BINARY,
-        binaryConsumerRecordType,
-        null
+        Versions.KAFKA_V1_JSON_AVRO,
+        Versions.KAFKA_V1_JSON_AVRO,
+        avroConsumerRecordType,
+        converter
     );
   }
 
   @Test
   public void testConsumeOnlyValuesByOffsetAndCount() {
-    produceBinaryMessages(recordsOnlyValues);
+    produceAvroMessages(recordsOnlyValues);
 
     simpleConsumeMessages(
         topicName,
         0,
         recordsOnlyValues.size(),
         recordsOnlyValues,
-        Versions.KAFKA_V1_JSON_BINARY,
-        Versions.KAFKA_V1_JSON_BINARY,
-        binaryConsumerRecordType,
-        null
+        Versions.KAFKA_V1_JSON_AVRO,
+        Versions.KAFKA_V1_JSON_AVRO,
+        avroConsumerRecordType,
+        converter
     );
   }
 
   @Test
   public void testConsumeWithKeysByOffsetAndCount() {
-    produceBinaryMessages(recordsWithKeys);
+    produceAvroMessages(recordsWithKeys);
 
     simpleConsumeMessages(
         topicName,
         0,
         recordsWithKeys.size(),
         recordsWithKeys,
-        Versions.KAFKA_V1_JSON_BINARY,
-        Versions.KAFKA_V1_JSON_BINARY,
-        binaryConsumerRecordType,
-        null
+        Versions.KAFKA_V1_JSON_AVRO,
+        Versions.KAFKA_V1_JSON_AVRO,
+        avroConsumerRecordType,
+        converter
     );
   }
 
@@ -133,24 +160,23 @@ public class SimpleConsumerBinaryTest extends AbstractConsumerTest {
   public void testConsumeInvalidTopic() {
 
     Response response = request("/topics/nonexistenttopic/partition/0/messages",
-        ImmutableMap.of("offset", "0")).accept(Versions.KAFKA_V1_JSON_BINARY).get();
+        ImmutableMap.of("offset", "0")).accept(Versions.KAFKA_V1_JSON_AVRO).get();
 
     assertErrorResponse(Response.Status.NOT_FOUND, response,
         Errors.TOPIC_NOT_FOUND_ERROR_CODE,
         Errors.TOPIC_NOT_FOUND_MESSAGE,
-        Versions.KAFKA_V1_JSON_BINARY);
+        Versions.KAFKA_V1_JSON_AVRO);
   }
 
   @Test
   public void testConsumeInvalidPartition() {
 
     Response response = request("/topics/topic1/partition/1/messages",
-        ImmutableMap.of("offset", "0")).accept(Versions.KAFKA_V1_JSON_BINARY).get();
+        ImmutableMap.of("offset", "0")).accept(Versions.KAFKA_V1_JSON_AVRO).get();
 
     assertErrorResponse(Response.Status.NOT_FOUND, response,
         Errors.PARTITION_NOT_FOUND_ERROR_CODE,
         Errors.PARTITION_NOT_FOUND_MESSAGE,
-        Versions.KAFKA_V1_JSON_BINARY);
+        Versions.KAFKA_V1_JSON_AVRO);
   }
-
 }

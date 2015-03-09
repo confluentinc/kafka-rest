@@ -192,6 +192,32 @@ public class AbstractConsumerTest extends ClusterTestHarness {
   }
 
   protected <KafkaK, KafkaV, ClientK, ClientV, RecordType extends ConsumerRecord<ClientK, ClientV>>
+  void simpleConsumeMessages(
+      String topicName,
+      int offset,
+      Integer count,
+      List<ProducerRecord<KafkaK, KafkaV>> records,
+      String accept,
+      String responseMediatype,
+      GenericType<List<RecordType>> responseEntityType,
+      Converter converter) {
+
+    Map<String, String> queryParams = new HashMap<String, String>();
+    queryParams.put("offset", Integer.toString(offset));
+    if (count != null) {
+      queryParams.put("count", count.toString());
+    }
+
+    Response response = request("/topics/" + topicName + "/partition/0/messages", queryParams)
+        .accept(accept).get();
+    assertOKResponse(response, responseMediatype);
+    List<RecordType> consumed = response.readEntity(responseEntityType);
+    assertEquals(records.size(), consumed.size());
+
+    assertEqualsMessages(records, consumed, converter);
+  }
+
+  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType extends ConsumerRecord<ClientK, ClientV>>
   void consumeMessages(
       String instanceUri, String topic, List<ProducerRecord<KafkaK, KafkaV>> records,
       String accept, String responseMediatype,
