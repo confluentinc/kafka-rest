@@ -61,7 +61,7 @@ following response:
 
    .. sourcecode:: http
 
-      HTTP/1.1 422 OK
+      HTTP/1.1 422 Unprocessable Entity
       Content-Type: application/vnd.kafka.v1+json
 
       {
