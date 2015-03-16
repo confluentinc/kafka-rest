@@ -55,7 +55,6 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
   @Test
   public void testConsumerTimeout() throws InterruptedException {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
-                                              Versions.KAFKA_V1_JSON_BINARY,
                                               Versions.KAFKA_V1_JSON_BINARY);
     // Even with identical timeouts, should be able to consume multiple times without the
     // instance timing out

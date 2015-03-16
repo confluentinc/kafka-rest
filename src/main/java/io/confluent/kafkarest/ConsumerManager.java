@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -58,7 +59,6 @@ public class ConsumerManager {
   private final MetadataObserver mdObserver;
   private final int iteratorTimeoutMs;
 
-  private final AtomicInteger nextId = new AtomicInteger(0);
   // ConsumerState is generic, but we store them untyped here. This allows many operations to
   // work without having to know the types for the consumer, only requiring type information
   // during read operations.
@@ -110,51 +110,76 @@ public class ConsumerManager {
    * @return Unique consumer instance ID
    */
   public String createConsumer(String group, ConsumerInstanceConfig instanceConfig) {
-    String id = instanceConfig.getId();
-    if (id == null) {
-      id = "rest-consumer-";
+    // The terminology here got mixed up for historical reasons, and remaining compatible moving
+    // forward is tricky. To maintain compatibility, if the 'id' field is specified we maintain
+    // the previous behavior of using it's value in both the URLs for the consumer (i.e. the
+    // local name) and the ID (consumer.id setting in the consumer). Otherwise, the 'name' field
+    // only applies to the local name. When we replace with the new consumer, we may want to
+    // provide an alternate app name, or just reuse the name.
+    String name = instanceConfig.getName();
+    if (instanceConfig.getId() != null) { // Explicit ID request always overrides name
+      name = instanceConfig.getId();
+    }
+    if (name == null) {
+      name = "rest-consumer-";
       String serverId = this.config.getString(KafkaRestConfig.ID_CONFIG);
       if (!serverId.isEmpty()) {
-        id += serverId + "-";
+        name += serverId + "-";
       }
-      id += ((Integer) nextId.incrementAndGet()).toString();
+      name += UUID.randomUUID().toString();
     }
 
-    log.debug("Creating consumer " + id + " in group " + group);
-
-    // Note the ordering here. We want to allow overrides, but almost all the
-    // consumer-specific settings don't make sense to override globally (e.g. group ID, consumer
-    // ID), and others we want to ensure get overridden (e.g. consumer.timeout.ms, which we
-    // intentionally name differently in our own configs).
-    Properties props = (Properties) config.getOriginalProperties().clone();
-    props.setProperty("zookeeper.connect", zookeeperConnect);
-    props.setProperty("group.id", group);
-    props.setProperty("consumer.id", id);
-    // To support the old consumer interface with broken peek()/missing poll(timeout)
-    // functionality, we always use a timeout. This can't perfectly guarantee a total request
-    // timeout, but can get as close as this timeout's value
-    props.setProperty("consumer.timeout.ms", ((Integer) iteratorTimeoutMs).toString());
-    if (instanceConfig.getAutoCommitEnable() != null) {
-      props.setProperty("auto.commit.enable", instanceConfig.getAutoCommitEnable());
-    } else {
-      props.setProperty("auto.commit.enable", "false");
-    }
-    if (instanceConfig.getAutoOffsetReset() != null) {
-      props.setProperty("auto.offset.reset", instanceConfig.getAutoOffsetReset());
-    }
-    ConsumerConnector consumer;
-    try {
-      if (consumerFactory == null) {
-        consumer = Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
-      } else {
-        consumer = consumerFactory.createConsumer(new ConsumerConfig(props));
-      }
-    } catch (InvalidConfigException e) {
-      throw Errors.invalidConsumerConfigException(e);
-    }
-
+    ConsumerInstanceId cid = new ConsumerInstanceId(group, name);
+    // Perform this check before
     synchronized (this) {
-      ConsumerInstanceId cid = new ConsumerInstanceId(group, id);
+      if (consumers.containsKey(cid)) {
+        throw Errors.consumerAlreadyExistsException();
+      } else {
+        // Placeholder to reserve this ID
+        consumers.put(cid, null);
+      }
+    }
+
+    // Ensure we clean up the placeholder if there are any issues creating the consumer instance
+    boolean succeeded = false;
+    try {
+      log.debug("Creating consumer " + name + " in group " + group);
+
+      // Note the ordering here. We want to allow overrides, but almost all the
+      // consumer-specific settings don't make sense to override globally (e.g. group ID, consumer
+      // ID), and others we want to ensure get overridden (e.g. consumer.timeout.ms, which we
+      // intentionally name differently in our own configs).
+      Properties props = (Properties) config.getOriginalProperties().clone();
+      props.setProperty("zookeeper.connect", zookeeperConnect);
+      props.setProperty("group.id", group);
+      // This ID we pass here has to be unique, only pass a value along if the deprecated ID field
+      // was passed in. This generally shouldn't be used, but is maintained for compatibility.
+      if (instanceConfig.getId() != null) {
+        props.setProperty("consumer.id", instanceConfig.getId());
+      }
+      // To support the old consumer interface with broken peek()/missing poll(timeout)
+      // functionality, we always use a timeout. This can't perfectly guarantee a total request
+      // timeout, but can get as close as this timeout's value
+      props.setProperty("consumer.timeout.ms", ((Integer) iteratorTimeoutMs).toString());
+      if (instanceConfig.getAutoCommitEnable() != null) {
+        props.setProperty("auto.commit.enable", instanceConfig.getAutoCommitEnable());
+      } else {
+        props.setProperty("auto.commit.enable", "false");
+      }
+      if (instanceConfig.getAutoOffsetReset() != null) {
+        props.setProperty("auto.offset.reset", instanceConfig.getAutoOffsetReset());
+      }
+      ConsumerConnector consumer;
+      try {
+        if (consumerFactory == null) {
+          consumer = Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
+        } else {
+          consumer = consumerFactory.createConsumer(new ConsumerConfig(props));
+        }
+      } catch (InvalidConfigException e) {
+        throw Errors.invalidConsumerConfigException(e);
+      }
+
       ConsumerState state;
       switch (instanceConfig.getFormat()) {
         case BINARY:
@@ -168,14 +193,21 @@ public class ConsumerManager {
                                              Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
       }
 
-      consumers.put(cid, state);
-      consumersByExpiration.add(state);
-      this.notifyAll();
+      synchronized (this) {
+        consumers.put(cid, state);
+        consumersByExpiration.add(state);
+        this.notifyAll();
+      }
+      succeeded = true;
+      return name;
+    } finally {
+      if (!succeeded) {
+        synchronized (this) {
+          consumers.remove(cid);
+        }
+      }
     }
-
-    return id;
   }
-
   public interface ReadCallback<K, V> {
 
     public void onCompletion(List<? extends ConsumerRecord<K, V>> records, Exception e);

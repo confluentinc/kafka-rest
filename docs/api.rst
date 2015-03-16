@@ -656,8 +656,12 @@ error.
    for this specific REST proxy instance.
 
    :param string group_name: The name of the consumer group to join
-   :<json string id: Unique ID for the consumer instance in this group. If omitted, one will be automatically generated
-                     using the REST proxy ID and an auto-incrementing number
+   :<json string id: **DEPRECATED** Unique ID for the consumer instance in this group. If omitted,
+                     one will be automatically generated
+   :<json string name: Name for the consumer instance, which will be used in URLs for the
+                       consumer. This must be unique, at least within the proxy process handling
+                       the request. If omitted, falls back on the automatically generated ID. Using
+                       automatically generated names is recommended for most use cases.
    :<json string format: The format of consumed messages, which is used to convert messages into
                          a JSON-compatible form. Valid values: "binary", "avro". If unspecified,
                          defaults to "binary".
@@ -669,6 +673,8 @@ error.
    :>json string base_uri: Base URI used to construct URIs for subsequent requests against this consumer instance. This
                            will be of the form ``http://hostname:port/consumers/consumer_group/instances/instance_id``.
 
+   :statuscode 409:
+          * Error code 40902 -- Consumer instance with the specified name already exists.
    :statuscode 422:
           * Error code 42204 -- Invalid consumer configuration. One of the settings specified in
             the request contained an invalid value.
@@ -682,7 +688,7 @@ error.
       Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
 
       {
-        "id": "my_consumer",
+        "name": "my_consumer",
         "format": "binary",
         "auto.offset.reset": "smallest",
         "auto.commit.enable": "false"

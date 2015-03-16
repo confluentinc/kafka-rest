@@ -107,7 +107,6 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
   @Test
   public void testConsumeOnlyValues() {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.AVRO,
-                                              Versions.KAFKA_V1_JSON_AVRO,
                                               Versions.KAFKA_V1_JSON_AVRO);
     produceAvroMessages(recordsOnlyValues);
     consumeMessages(instanceUri, topicName, recordsOnlyValues,
@@ -119,7 +118,6 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
   @Test
   public void testConsumeWithKeys() {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.AVRO,
-                                              Versions.KAFKA_V1_JSON_AVRO,
                                               Versions.KAFKA_V1_JSON_AVRO);
     produceAvroMessages(recordsWithKeys);
     consumeMessages(instanceUri, topicName, recordsWithKeys,
@@ -131,13 +129,12 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
   @Test
   public void testConsumeInvalidTopic() {
     startConsumeMessages(groupName, "nonexistenttopic", EmbeddedFormat.AVRO,
-                         Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V1_JSON_AVRO, true);
+                         Versions.KAFKA_V1_JSON_AVRO, true);
   }
 
   @Test
   public void testConsumeTimeout() {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.AVRO,
-                                              Versions.KAFKA_V1_JSON_AVRO,
                                               Versions.KAFKA_V1_JSON_AVRO);
     produceAvroMessages(recordsWithKeys);
     consumeMessages(instanceUri, topicName, recordsWithKeys,
@@ -151,7 +148,6 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
   @Test
   public void testDeleteConsumer() {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.AVRO,
-                                              Versions.KAFKA_V1_JSON_AVRO,
                                               Versions.KAFKA_V1_JSON_AVRO);
     produceAvroMessages(recordsWithKeys);
     consumeMessages(instanceUri, topicName, recordsWithKeys,

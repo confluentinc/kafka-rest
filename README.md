@@ -36,26 +36,34 @@ the REST Proxy running using the default settings and some topics already create
       {"value_schema_id":0,"offsets":[{"partition":0,"offset":0}]}
 
     # Create a consumer for binary data, starting at the beginning of the topic's
-    # log. Then consume some data from a topic.
+    # log. Then consume some data from a topic using the base URL in the first response.
+    # Finally, close the consumer with a DELETE to make it leave the group and clean up
+    # its resources.
     $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
-          --data '{"id": "my_instance", "format": "binary", "auto.offset.reset": "smallest"}' \
+          --data '{"format": "binary", "auto.offset.reset": "smallest"}' \
           http://localhost:8082/consumers/my_binary_consumer
-      {"instance_id":"my_instance","base_uri":"http://localhost:8082/consumers/my_binary_consumer/instances/my_instance"}
+      {"instance_id":"rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6","base_uri":"http://localhost:8082/consumers/my_binary_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6"}
     $ curl -X GET -H "Accept: application/vnd.kafka.binary.v1+json" \
-          http://localhost:8082/consumers/my_binary_consumer/instances/my_instance/topics/test
-      [{"value":"S2Fma2E=","partition":0,"offset":0},{"value":"S2Fma2E=","partition":0,"offset":1}]
+          http://localhost:8082/consumers/my_binary_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6/topics/test
+      [{"key":null,"value":"S2Fma2E=","partition":0,"offset":0}]
+    $ curl -X DELETE \
+          http://localhost:8082/consumers/my_binary_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6
+      # No content in response
 
     # Create a consumer for Avro data, starting at the beginning of the topic's
     # log. Then consume some data from a topic, which is decoded, translated to
     # JSON, and included in the response. The schema used for deserialization is
-    # fetched automatically from the schema registry.
+    # fetched automatically from the schema registry. Finally, clean up.
     $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
-          --data '{"id": "my_instance", "format": "avro", "auto.offset.reset": "smallest"}' \
+          --data '{"format": "avro", "auto.offset.reset": "smallest"}' \
           http://localhost:8082/consumers/my_avro_consumer
-      {"instance_id":"my_instance","base_uri":"http://localhost:8082/consumers/my_avro_consumer/instances/my_instance"}
+      {"instance_id":"rest-consumer-11392f3a-efbe-4fe2-b0bf-5c85d7b25e7b","base_uri":"http://localhost:8082/consumers/my_avro_consumer/instances/rest-consumer-11392f3a-efbe-4fe2-b0bf-5c85d7b25e7b"}
     $ curl -X GET -H "Accept: application/vnd.kafka.avro.v1+json" \
-          http://localhost:8082/consumers/my_avro_consumer/instances/my_instance/topics/avrotest
-      [{"value":{"name":"testUser"},"partition":0,"offset":0},{"value":{"name":"testUser2"},"partition":0,"offset":1}]
+          http://localhost:8082/consumers/my_avro_consumer/instances/rest-consumer-11392f3a-efbe-4fe2-b0bf-5c85d7b25e7b/topics/avrotest
+      [{"key":null,"value":{"name":"testUser"},"partition":0,"offset":0}]
+    $ curl -X DELETE \
+          http://localhost:8082/consumers/my_avro_consumer/instances/rest-consumer-11392f3a-efbe-4fe2-b0bf-5c85d7b25e7b
+      # No content in response
 
 Installation
 ------------

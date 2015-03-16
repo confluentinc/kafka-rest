@@ -53,6 +53,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Tests basic create/read/commit/delete functionality of ConsumerManager. This only exercises the
@@ -71,6 +72,8 @@ public class ConsumerManagerTest {
 
   private boolean sawCallback = false;
 
+  private Capture<ConsumerConfig> capturedConsumerConfig;
+
   @Before
   public void setUp() throws RestConfigException {
     Properties props = new Properties();
@@ -86,21 +89,38 @@ public class ConsumerManagerTest {
 
   private ConsumerConnector expectCreate(
       Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>> schedules) {
-    return expectCreate(schedules, false);
+    return expectCreate(schedules, false, null);
   }
 
   private ConsumerConnector expectCreate(
       Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>> schedules,
-      boolean allowMissingSchedule) {
+      boolean allowMissingSchedule, String requestedId) {
     ConsumerConnector
         consumer =
         new MockConsumerConnector(
             config.getTime(), "testclient", schedules,
             Integer.parseInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT),
             allowMissingSchedule);
-    EasyMock.expect(consumerFactory.createConsumer(EasyMock.<ConsumerConfig>anyObject()))
-        .andReturn(consumer);
+    capturedConsumerConfig = new Capture<ConsumerConfig>();
+    EasyMock.expect(consumerFactory.createConsumer(EasyMock.capture(capturedConsumerConfig)))
+                        .andReturn(consumer);
     return consumer;
+  }
+
+  // Expect a Kafka consumer to be created, but return it with no data in its queue. Used to test
+  // functionality that doesn't rely on actually consuming the data.
+  private ConsumerConnector expectCreateNoData(String requestedId) {
+    Map<Integer, List<ConsumerRecord<byte[], byte[]>>> referenceSchedule
+        = new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
+    Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>> schedules
+        = new HashMap<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>();
+    schedules.put(topicName, Arrays.asList(referenceSchedule));
+
+    return expectCreate(schedules, true, requestedId);
+  }
+
+  private ConsumerConnector expectCreateNoData() {
+    return expectCreateNoData(null);
   }
 
   @Test
@@ -254,14 +274,48 @@ public class ConsumerManagerTest {
   }
 
   @Test
-  public void testMultipleTopicSubscriptionsFail() throws InterruptedException, ExecutionException {
-    Map<Integer, List<ConsumerRecord<byte[], byte[]>>> referenceSchedule
-        = new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
-    Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>> schedules
-        = new HashMap<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>();
-    schedules.put(topicName, Arrays.asList(referenceSchedule));
+  public void testIDOverridesName() {
+    // We should remain compatible with the original use of consumer IDs, even if it shouldn't
+    // really be used. Specifying any ID should override any naming to ensure the same behavior
+    expectCreateNoData("id");
+    EasyMock.replay(mdObserver, consumerFactory);
 
-    expectCreate(schedules, true);
+    String cid = consumerManager.createConsumer(
+        groupName,
+        new ConsumerInstanceConfig("id", "name", EmbeddedFormat.BINARY.toString(), null, null)
+    );
+    assertEquals("id", cid);
+    assertEquals("id", capturedConsumerConfig.getValue().consumerId().getOrElse(null));
+    EasyMock.verify(mdObserver, consumerFactory);
+  }
+
+  @Test
+  public void testDuplicateConsumerName() {
+    expectCreateNoData();
+    EasyMock.replay(mdObserver, consumerFactory);
+
+    consumerManager.createConsumer(
+        groupName,
+        new ConsumerInstanceConfig(null, "name", EmbeddedFormat.BINARY.toString(), null, null)
+    );
+
+    try {
+      consumerManager.createConsumer(
+          groupName,
+          new ConsumerInstanceConfig(null, "name", EmbeddedFormat.BINARY.toString(), null, null)
+      );
+      fail("Expected to see exception because consumer already exists");
+    } catch (RestException e) {
+      // expected
+      assertEquals(Errors.CONSUMER_ALREADY_EXISTS_ERROR_CODE, e.getErrorCode());
+    }
+
+    EasyMock.verify(mdObserver, consumerFactory);
+  }
+
+  @Test
+  public void testMultipleTopicSubscriptionsFail() throws InterruptedException, ExecutionException {
+    expectCreateNoData();
     EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
     EasyMock.expect(mdObserver.topicExists(secondTopicName)).andReturn(true);
     EasyMock.replay(mdObserver, consumerFactory);

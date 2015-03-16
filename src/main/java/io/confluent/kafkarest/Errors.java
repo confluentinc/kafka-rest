@@ -75,6 +75,16 @@ public class Errors {
                              CONSUMER_ALREADY_SUBSCRIBED_ERROR_CODE);
   }
 
+  public final static String CONSUMER_ALREADY_EXISTS_MESSAGE =
+      "Consumer with specified consumer ID already exists in the specified consumer group.";
+  public final static int CONSUMER_ALREADY_EXISTS_ERROR_CODE = 40902;
+
+  public static RestException consumerAlreadyExistsException() {
+    return new RestException(CONSUMER_ALREADY_EXISTS_MESSAGE,
+                             Response.Status.CONFLICT.getStatusCode(),
+                             CONSUMER_ALREADY_EXISTS_ERROR_CODE);
+  }
+
 
   public final static String KEY_SCHEMA_MISSING_MESSAGE = "Request includes keys but does not "
                                                           + "include key schema";
