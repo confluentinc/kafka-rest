@@ -51,6 +51,12 @@ import static org.junit.Assert.fail;
 
 public class AbstractConsumerTest extends ClusterTestHarness {
 
+  public AbstractConsumerTest() {
+  }
+
+  public AbstractConsumerTest(int numBrokers, boolean withSchemaRegistry) {
+    super(numBrokers, withSchemaRegistry);
+  }
   protected void produceBinaryMessages(List<ProducerRecord<byte[], byte[]>> records) {
     Properties props = new Properties();
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
