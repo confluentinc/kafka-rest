@@ -15,7 +15,6 @@
  **/
 package io.confluent.kafkarest;
 
-import kafka.cluster.Broker;
 import kafka.consumer.ConsumerConfig;
 import kafka.javaapi.consumer.SimpleConsumer;
 import org.slf4j.Logger;

@@ -80,10 +80,10 @@ public class TopicsResource {
   @PerformanceMetric("topic.consume-avro")
   @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED})
   public void consumeAvro(final @Suspended AsyncResponse asyncResponse,
-                            final @PathParam("topic") String topicName,
-                            final @PathParam("partition") int partitionId,
-                            final @QueryParam("offset") long offset,
-                            final @QueryParam("count") @DefaultValue("1") long count) {
+                          final @PathParam("topic") String topicName,
+                          final @PathParam("partition") int partitionId,
+                          final @QueryParam("offset") long offset,
+                          final @QueryParam("count") @DefaultValue("1") long count) {
 
     consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.AVRO);
   }
