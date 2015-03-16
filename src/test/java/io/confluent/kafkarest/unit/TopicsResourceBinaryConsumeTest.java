@@ -48,7 +48,6 @@ public class TopicsResourceBinaryConsumeTest extends TopicsResourceAbstractConsu
 
       expectConsume(EmbeddedFormat.BINARY, records);
 
-      System.out.println(mediatype.header);
       final Response response = request(topicName, partitionId, offset, mediatype.header);
       assertOKResponse(response, mediatype.expected);
 
