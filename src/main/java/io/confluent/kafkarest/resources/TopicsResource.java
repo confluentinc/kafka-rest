@@ -65,6 +65,7 @@ public class TopicsResource {
              Versions.KAFKA_V1_JSON_WEIGHTED,
              Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
              Versions.JSON_WEIGHTED,
+             Versions.KAFKA_V1_JSON_BINARY_WEIGHTED_LOW,
              Versions.ANYTHING})
   public void consumeBinary(final @Suspended AsyncResponse asyncResponse,
                             final @PathParam("topic") String topicName,
@@ -78,7 +79,7 @@ public class TopicsResource {
   @GET
   @Path("/{topic}/partition/{partition}/messages")
   @PerformanceMetric("topic.consume-avro")
-  @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED})
+  @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED, Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW})
   public void consumeAvro(final @Suspended AsyncResponse asyncResponse,
                           final @PathParam("topic") String topicName,
                           final @PathParam("partition") int partitionId,
