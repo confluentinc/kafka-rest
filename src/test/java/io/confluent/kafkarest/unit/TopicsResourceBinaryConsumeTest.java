@@ -17,6 +17,7 @@
 package io.confluent.kafkarest.unit;
 
 import io.confluent.kafkarest.TestUtils;
+import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
@@ -49,7 +50,11 @@ public class TopicsResourceBinaryConsumeTest extends TopicsResourceAbstractConsu
       expectConsume(EmbeddedFormat.BINARY, records);
 
       final Response response = request(topicName, partitionId, offset, mediatype.header);
-      assertOKResponse(response, mediatype.expected);
+
+      // TODO : find a way to factor this exception with ConsumerResourceBinaryTest.java:89
+      final String expectedMediatype
+          = mediatype.header != null ? mediatype.expected : Versions.KAFKA_V1_JSON_BINARY;
+      assertOKResponse(response, expectedMediatype);
 
       final List<BinaryConsumerRecord> readResponseRecords =
           response.readEntity(new GenericType<List<BinaryConsumerRecord>>() {});
