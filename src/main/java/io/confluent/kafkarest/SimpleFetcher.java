@@ -20,7 +20,7 @@ import kafka.javaapi.FetchRequest;
 import kafka.javaapi.FetchResponse;
 import kafka.javaapi.consumer.SimpleConsumer;
 
-public class SimpleFetcher implements AutoCloseable {
+public class SimpleFetcher {
 
   private SimpleConsumer consumer;
   private SimpleConsumerPool ownerPool;
@@ -38,7 +38,6 @@ public class SimpleFetcher implements AutoCloseable {
     return consumer.fetch(request);
   }
 
-  @Override
   public void close() throws Exception {
     ownerPool.release(this);
   }
