@@ -29,7 +29,6 @@ import io.confluent.rest.exceptions.RestServerErrorException;
 import kafka.api.PartitionFetchInfo;
 import kafka.cluster.Broker;
 import kafka.common.TopicAndPartition;
-import kafka.consumer.ConsumerConfig;
 import kafka.javaapi.FetchRequest;
 import kafka.javaapi.FetchResponse;
 import kafka.javaapi.message.ByteBufferMessageSet;
@@ -196,13 +195,13 @@ public class SimpleConsumerManager {
                                             final long offset,
                                             final SimpleFetcher simpleFetcher) {
 
-    final ConsumerConfig consumerConfig = simpleConsumerFactory.getConsumerConfig();
+    final SimpleConsumerConfig simpleConsumerConfig = simpleConsumerFactory.getSimpleConsumerConfig();
 
     final Map<TopicAndPartition, PartitionFetchInfo> requestInfo =
         new HashMap<TopicAndPartition, PartitionFetchInfo>();
 
     requestInfo.put(new TopicAndPartition(topicName, partitionId),
-        new PartitionFetchInfo(offset, consumerConfig.fetchMessageMaxBytes()));
+        new PartitionFetchInfo(offset, simpleConsumerConfig.fetchMessageMaxBytes()));
 
     final int corId = correlationId.incrementAndGet();
 
@@ -210,8 +209,8 @@ public class SimpleConsumerManager {
         new FetchRequest(
             corId,
             simpleFetcher.clientId(),
-            consumerConfig.fetchWaitMaxMs(),
-            consumerConfig.fetchMinBytes(),
+            simpleConsumerConfig.fetchWaitMaxMs(),
+            simpleConsumerConfig.fetchMinBytes(),
             requestInfo);
 
     final FetchResponse fetchResponse = simpleFetcher.fetch(req);
