@@ -54,7 +54,9 @@ public class Context {
     return consumerManager;
   }
 
-  public SimpleConsumerFactory getSimpleConsumerFactory() { return simpleConsumerFactory; }
+  public SimpleConsumerFactory getSimpleConsumerFactory() {
+    return simpleConsumerFactory;
+  }
 
   public SimpleConsumerManager getSimpleConsumerManager() {
     return simpleConsumerManager;
