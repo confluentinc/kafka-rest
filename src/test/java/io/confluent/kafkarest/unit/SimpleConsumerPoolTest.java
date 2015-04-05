@@ -17,8 +17,7 @@ package io.confluent.kafkarest.unit;
 
 import io.confluent.kafkarest.SimpleConsumerFactory;
 import io.confluent.kafkarest.SimpleFetcher;
-import io.confluent.kafkarest.simpleconsumerspool.SimpleConsumerPool;
-import io.confluent.kafkarest.simpleconsumerspool.SizeLimitedSimpleConsumerPool;
+import io.confluent.kafkarest.SimpleConsumerPool;
 import io.confluent.rest.RestConfigException;
 import kafka.javaapi.consumer.SimpleConsumer;
 import org.easymock.EasyMock;
@@ -66,7 +65,7 @@ public class SimpleConsumerPoolTest {
   public void testPoolWhenOneSingleThreadedCaller() throws Exception {
 
     final int maxPoolSize = 3;
-    final SizeLimitedSimpleConsumerPool pool = new SizeLimitedSimpleConsumerPool(maxPoolSize, simpleConsumerFactory);
+    final SimpleConsumerPool pool = new SimpleConsumerPool(maxPoolSize, simpleConsumerFactory);
 
     for (int i = 0; i < 10; i++) {
       SimpleFetcher fetcher = pool.get("", 0);
@@ -101,8 +100,8 @@ public class SimpleConsumerPoolTest {
   public void testPoolWhenMultiThreadedCaller() throws Exception {
 
     final int maxPoolSize = 3;
-    final SizeLimitedSimpleConsumerPool consumersPool =
-        new SizeLimitedSimpleConsumerPool(maxPoolSize, simpleConsumerFactory);
+    final SimpleConsumerPool consumersPool =
+        new SimpleConsumerPool(maxPoolSize, simpleConsumerFactory);
 
     final ExecutorService executorService = Executors.newFixedThreadPool(10);
     for (int i = 0; i < 10; i++) {
@@ -113,6 +112,26 @@ public class SimpleConsumerPoolTest {
     final boolean allThreadTerminated = executorService.awaitTermination(1000, TimeUnit.MILLISECONDS);
     assertTrue(allThreadTerminated);
     assertEquals(maxPoolSize, consumersPool.size());
+  }
+
+  @Test
+  public void testUnlimitedPoolWhenMultiThreadedCaller() throws Exception {
+
+    final int maxPoolSize = 0; // 0 meaning unlimited
+    final SimpleConsumerPool consumersPool =
+        new SimpleConsumerPool(maxPoolSize, simpleConsumerFactory);
+
+    final ExecutorService executorService = Executors.newFixedThreadPool(10);
+    for (int i = 0; i < 10; i++) {
+      executorService.execute(new PoolCaller(consumersPool));
+    }
+    executorService.shutdown();
+
+    final boolean allThreadTerminated = executorService.awaitTermination(1000, TimeUnit.MILLISECONDS);
+    assertTrue(allThreadTerminated);
+    // Most of time, the size of the consumers pool will be 10 in the end, but we don't have any guarantee on that,
+    // so we limit the test to checking the pool is not empty
+    assertTrue(consumersPool.size() > 0);
   }
 
 

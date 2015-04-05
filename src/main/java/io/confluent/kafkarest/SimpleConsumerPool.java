@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package io.confluent.kafkarest.simpleconsumerspool;
+package io.confluent.kafkarest;
 
-import io.confluent.kafkarest.SimpleConsumerFactory;
-import io.confluent.kafkarest.SimpleFetcher;
 import kafka.javaapi.consumer.SimpleConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,16 +28,17 @@ import java.util.Queue;
  * The SizeLimitedSimpleConsumerPool keeps a pool of SimpleConsumers
  * and can increase the pool within a specified limit
  */
-public class SizeLimitedSimpleConsumerPool implements SimpleConsumerPool {
-  private static final Logger log = LoggerFactory.getLogger(SizeLimitedSimpleConsumerPool.class);
+public class SimpleConsumerPool {
+  private static final Logger log = LoggerFactory.getLogger(SimpleConsumerPool.class);
 
+  // maxPoolSize = 0 means unlimited
   private final int maxPoolSize;
-  private final SimpleConsumerFactory simpleConsumerFactory;
 
+  private final SimpleConsumerFactory simpleConsumerFactory;
   private final Map<String, SimpleConsumer> simpleConsumers;
   private final Queue<String> availableConsumers;
 
-  public SizeLimitedSimpleConsumerPool(int maxPoolSize, SimpleConsumerFactory simpleConsumerFactory) {
+  public SimpleConsumerPool(int maxPoolSize, SimpleConsumerFactory simpleConsumerFactory) {
     this.maxPoolSize = maxPoolSize;
     this.simpleConsumerFactory = simpleConsumerFactory;
 
@@ -57,7 +56,7 @@ public class SizeLimitedSimpleConsumerPool implements SimpleConsumerPool {
       }
 
       // If not consumer is available, but we can instantiate a new one
-      if (simpleConsumers.size() < maxPoolSize) {
+      if (simpleConsumers.size() < maxPoolSize || maxPoolSize == 0) {
         final SimpleConsumer simpleConsumer = simpleConsumerFactory.createConsumer(host, port);
         simpleConsumers.put(simpleConsumer.clientId(), simpleConsumer);
         return new SimpleFetcher(simpleConsumer, this);

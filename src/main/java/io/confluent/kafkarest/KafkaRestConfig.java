@@ -119,7 +119,7 @@ public class KafkaRestConfig extends RestConfig {
   private static final String
       SIMPLE_CONSUMER_POOL_SIZE_DOC =
       "maximum number of SimpleConsumers that can be instantiated per broker."
-      + " If empty, then no pool is used.";
+      + " If 0, then the pool size is not limited.";
   public static final String SIMPLE_CONSUMER_POOL_SIZE_DEFAULT = "3";
 
   private static final int KAFKAREST_PORT_DEFAULT = 8082;
@@ -162,7 +162,7 @@ public class KafkaRestConfig extends RestConfig {
         .define(CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT,
                 Importance.LOW, CONSUMER_INSTANCE_TIMEOUT_MS_DOC)
         .define(SIMPLE_CONSUMER_POOL_SIZE_CONFIG, Type.INT, SIMPLE_CONSUMER_POOL_SIZE_DEFAULT,
-                Importance.LOW, SIMPLE_CONSUMER_POOL_SIZE_DOC);
+                Importance.MEDIUM, SIMPLE_CONSUMER_POOL_SIZE_DOC);
   }
 
   private Time time;

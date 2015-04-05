@@ -21,9 +21,6 @@ import io.confluent.kafkarest.entities.AvroConsumerRecord;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.simpleconsumerspool.NaiveSimpleConsumerPool;
-import io.confluent.kafkarest.simpleconsumerspool.SimpleConsumerPool;
-import io.confluent.kafkarest.simpleconsumerspool.SizeLimitedSimpleConsumerPool;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 import kafka.api.PartitionFetchInfo;
@@ -79,10 +76,7 @@ public class SimpleConsumerManager {
   }
 
   private SimpleConsumerPool createSimpleConsumerPool() {
-    if (maxPoolSize > 0) {
-      return new SizeLimitedSimpleConsumerPool(maxPoolSize, simpleConsumerFactory);
-    }
-    return new NaiveSimpleConsumerPool(simpleConsumerFactory);
+    return new SimpleConsumerPool(maxPoolSize, simpleConsumerFactory);
   }
 
   private SimpleFetcher getSimpleFetcher(final Broker broker) {

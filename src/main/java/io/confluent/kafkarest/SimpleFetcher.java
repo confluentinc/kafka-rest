@@ -15,7 +15,6 @@
  **/
 package io.confluent.kafkarest;
 
-import io.confluent.kafkarest.simpleconsumerspool.SimpleConsumerPool;
 import kafka.javaapi.FetchRequest;
 import kafka.javaapi.FetchResponse;
 import kafka.javaapi.consumer.SimpleConsumer;
