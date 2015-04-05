@@ -58,37 +58,6 @@ public class TopicsResource {
     return topic;
   }
 
-  @GET
-  @Path("/{topic}/partition/{partition}/messages")
-  @PerformanceMetric("topic.consume-binary")
-  @Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED,
-             Versions.KAFKA_V1_JSON_WEIGHTED,
-             Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
-             Versions.JSON_WEIGHTED,
-             Versions.KAFKA_V1_JSON_BINARY_WEIGHTED_LOW,
-             Versions.ANYTHING})
-  public void consumeBinary(final @Suspended AsyncResponse asyncResponse,
-                            final @PathParam("topic") String topicName,
-                            final @PathParam("partition") int partitionId,
-                            final @QueryParam("offset") long offset,
-                            final @QueryParam("count") @DefaultValue("1") long count) {
-
-    consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.BINARY);
-  }
-
-  @GET
-  @Path("/{topic}/partition/{partition}/messages")
-  @PerformanceMetric("topic.consume-avro")
-  @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED, Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW})
-  public void consumeAvro(final @Suspended AsyncResponse asyncResponse,
-                          final @PathParam("topic") String topicName,
-                          final @PathParam("partition") int partitionId,
-                          final @QueryParam("offset") long offset,
-                          final @QueryParam("count") @DefaultValue("1") long count) {
-
-    consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.AVRO);
-  }
-
   @POST
   @Path("/{topic}")
   @PerformanceMetric("topic.produce-binary")
@@ -158,26 +127,4 @@ public class TopicsResource {
     );
   }
 
-  private <ClientK, ClientV> void consume(
-      final @Suspended AsyncResponse asyncResponse,
-      final String topicName,
-      final int partitionId,
-      final long offset,
-      final long count,
-      final EmbeddedFormat embeddedFormat) {
-
-    ctx.getSimpleConsumerManager().consume(
-        topicName, partitionId, offset, count, embeddedFormat,
-        new ConsumerManager.ReadCallback<ClientK, ClientV>() {
-          @Override
-          public void onCompletion(List<? extends ConsumerRecord<ClientK, ClientV>> records,
-                                   Exception e) {
-            if (e != null) {
-              asyncResponse.resume(e);
-            } else {
-              asyncResponse.resume(records);
-            }
-          }
-        });
-  }
 }

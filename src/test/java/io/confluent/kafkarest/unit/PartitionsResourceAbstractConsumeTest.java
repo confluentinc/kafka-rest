@@ -19,7 +19,7 @@ package io.confluent.kafkarest.unit;
 import io.confluent.kafkarest.*;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.resources.TopicsResource;
+import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import org.easymock.Capture;
@@ -30,7 +30,7 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-public class TopicsResourceAbstractConsumeTest extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
+public class PartitionsResourceAbstractConsumeTest extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
   protected final String topicName = "topic1";
   protected final int partitionId = 0;
@@ -39,12 +39,12 @@ public class TopicsResourceAbstractConsumeTest extends EmbeddedServerTestHarness
 
   protected final SimpleConsumerManager simpleConsumerManager;
 
-  public TopicsResourceAbstractConsumeTest() throws RestConfigException {
+  public PartitionsResourceAbstractConsumeTest() throws RestConfigException {
     super();
     simpleConsumerManager = EasyMock.createMock(SimpleConsumerManager.class);
 
     final Context ctx = new Context(config, null, null, null, null, simpleConsumerManager);
-    addResource(new TopicsResource(ctx));
+    addResource(new PartitionsResource(ctx));
   }
 
   protected void expectConsume(final EmbeddedFormat embeddedFormat,  final List<? extends ConsumerRecord> records) {
@@ -70,7 +70,7 @@ public class TopicsResourceAbstractConsumeTest extends EmbeddedServerTestHarness
 
   protected Response request(String topicName, int partitionId, long offset, String mediaType) {
     Invocation.Builder builder = getJerseyTest()
-        .target("/topics/" + topicName + "/partition/" + partitionId + "/messages")
+        .target("/topics/" + topicName + "/partitions/" + partitionId + "/messages")
         .queryParam("offset", offset)
         .request();
 

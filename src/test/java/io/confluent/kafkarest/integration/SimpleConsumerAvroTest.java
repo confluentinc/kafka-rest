@@ -159,7 +159,7 @@ public class SimpleConsumerAvroTest extends AbstractConsumerTest {
   @Test
   public void testConsumeInvalidTopic() {
 
-    Response response = request("/topics/nonexistenttopic/partition/0/messages",
+    Response response = request("/topics/nonexistenttopic/partitions/0/messages",
         ImmutableMap.of("offset", "0")).accept(Versions.KAFKA_V1_JSON_AVRO).get();
 
     assertErrorResponse(Response.Status.NOT_FOUND, response,
@@ -171,7 +171,7 @@ public class SimpleConsumerAvroTest extends AbstractConsumerTest {
   @Test
   public void testConsumeInvalidPartition() {
 
-    Response response = request("/topics/topic1/partition/1/messages",
+    Response response = request("/topics/topic1/partitions/1/messages",
         ImmutableMap.of("offset", "0")).accept(Versions.KAFKA_V1_JSON_AVRO).get();
 
     assertErrorResponse(Response.Status.NOT_FOUND, response,

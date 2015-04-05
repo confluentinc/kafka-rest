@@ -16,9 +16,9 @@
 
 package io.confluent.kafkarest.unit;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.kafkarest.TestUtils;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.AvroConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.rest.RestConfigException;
@@ -33,31 +33,28 @@ import java.util.List;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.assertEquals;
 
-public class TopicsResourceBinaryConsumeTest extends TopicsResourceAbstractConsumeTest {
+public class PartitionsResourceAvroConsumeTest extends PartitionsResourceAbstractConsumeTest {
 
-  public TopicsResourceBinaryConsumeTest() throws RestConfigException {
+  public PartitionsResourceAvroConsumeTest() throws RestConfigException {
     super();
   }
 
   @Test
   public void testConsumeOk() {
-    List<? extends ConsumerRecord<byte[], byte[]>> records = Arrays.asList(
-        new BinaryConsumerRecord("key1".getBytes(), "value1".getBytes(), 0, 10)
+    final List<? extends ConsumerRecord<JsonNode, JsonNode>> records = Arrays.asList(
+        new AvroConsumerRecord(
+            TestUtils.jsonTree("\"key1\""), TestUtils.jsonTree("\"value1\""), 0, 10)
     );
 
-    for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES_BINARY) {
+    for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES_AVRO) {
 
-      expectConsume(EmbeddedFormat.BINARY, records);
+      expectConsume(EmbeddedFormat.AVRO, records);
 
       final Response response = request(topicName, partitionId, offset, mediatype.header);
+      assertOKResponse(response, mediatype.expected);
 
-      // TODO : find a way to factor this exception with ConsumerResourceBinaryTest.java:89
-      final String expectedMediatype
-          = mediatype.header != null ? mediatype.expected : Versions.KAFKA_V1_JSON_BINARY;
-      assertOKResponse(response, expectedMediatype);
-
-      final List<BinaryConsumerRecord> readResponseRecords =
-          response.readEntity(new GenericType<List<BinaryConsumerRecord>>() {});
+      final List<AvroConsumerRecord> readResponseRecords =
+          response.readEntity(new GenericType<List<AvroConsumerRecord>>() {});
       assertEquals(records, readResponseRecords);
 
       EasyMock.verify(simpleConsumerManager);

@@ -208,7 +208,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
       queryParams.put("count", count.toString());
     }
 
-    Response response = request("/topics/" + topicName + "/partition/0/messages", queryParams)
+    Response response = request("/topics/" + topicName + "/partitions/0/messages", queryParams)
         .accept(accept).get();
     assertOKResponse(response, responseMediatype);
     List<RecordType> consumed = response.readEntity(responseEntityType);
