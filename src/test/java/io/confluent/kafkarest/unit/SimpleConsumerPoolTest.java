@@ -87,14 +87,12 @@ public class SimpleConsumerPoolTest {
     @Override
     public void run() {
       SimpleFetcher fetcher = pool.get("", 0);
-      synchronized(this) {
-        try {
-          // Waiting to simulate data fetching from kafka
-          wait(50);
-          fetcher.close();
-        } catch (Exception e) {
-          fail(e.getMessage());
-        }
+      try {
+        // Waiting to simulate data fetching from kafka
+        Thread.sleep(50);
+        fetcher.close();
+      } catch (Exception e) {
+        fail(e.getMessage());
       }
     }
   }
