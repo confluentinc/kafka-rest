@@ -63,7 +63,7 @@ public class SimpleConsumerFactory {
 
     final String clientId = nextClientId();
 
-    log.debug("Creating SimpleConsumer with id " + clientId);
+    log.debug("Creating SimpleConsumer with id " + clientId + " (host: " + host + ", port: " + port + ")");
     return new SimpleConsumer(
         host, port,
         simpleConsumerConfig.socketTimeoutMs(),
