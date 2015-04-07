@@ -91,6 +91,9 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
     }
   };
 
+  public ConsumerAvroTest() {
+    super(1, true);
+  }
   @Before
   @Override
   public void setUp() throws Exception {

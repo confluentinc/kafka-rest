@@ -116,6 +116,9 @@ public class AvroProducerTest extends ClusterTestHarness {
       new PartitionOffset(0, 3L, null, null)
   );
 
+  public AvroProducerTest() {
+    super(1, true);
+  }
 
   @Before
   @Override
