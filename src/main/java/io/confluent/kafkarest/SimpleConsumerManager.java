@@ -39,6 +39,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SimpleConsumerManager {
@@ -49,7 +51,7 @@ public class SimpleConsumerManager {
   private final MetadataObserver mdObserver;
   private final SimpleConsumerFactory simpleConsumerFactory;
 
-  private final Map<Broker, SimpleConsumerPool> simpleConsumersPools;
+  private final ConcurrentMap<Broker, SimpleConsumerPool> simpleConsumersPools;
 
   private AtomicInteger correlationId = new AtomicInteger(0);
 
@@ -64,7 +66,7 @@ public class SimpleConsumerManager {
     this.simpleConsumerFactory = simpleConsumerFactory;
 
     maxPoolSize = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_POOL_SIZE_CONFIG);
-    simpleConsumersPools = new HashMap<Broker, SimpleConsumerPool>();
+    simpleConsumersPools = new ConcurrentHashMap<Broker, SimpleConsumerPool>();
 
     // Load decoders
     Properties props = new Properties();
