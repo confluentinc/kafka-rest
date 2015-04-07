@@ -81,6 +81,9 @@ public class SimpleConsumerAvroTest extends AbstractConsumerTest {
     }
   };
 
+  public SimpleConsumerAvroTest() {
+    super(1, true);
+  }
 
   @Before
   @Override
