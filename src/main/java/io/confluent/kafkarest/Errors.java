@@ -51,12 +51,12 @@ public class Errors {
                                      CONSUMER_INSTANCE_NOT_FOUND_ERROR_CODE);
   }
 
-  public final static String BROKER_DATA_NOT_FOUND_MESSAGE = "Broker data not found.";
-  public final static int BROKER_DATA_NOT_FOUND_ERROR_CODE = 40404;
+  public final static String LEADER_NOT_AVAILABLE_MESSAGE = "Leader not available.";
+  public final static int LEADER_NOT_AVAILABLE_ERROR_CODE = 40404;
 
-  public static RestException brokerDataNotFoundException() {
-    return new RestNotFoundException(BROKER_DATA_NOT_FOUND_MESSAGE,
-        BROKER_DATA_NOT_FOUND_ERROR_CODE);
+  public static RestException LeaderNotAvailableException() {
+    return new RestNotFoundException(LEADER_NOT_AVAILABLE_MESSAGE,
+        LEADER_NOT_AVAILABLE_ERROR_CODE);
   }
 
   public final static String CONSUMER_FORMAT_MISMATCH_MESSAGE =

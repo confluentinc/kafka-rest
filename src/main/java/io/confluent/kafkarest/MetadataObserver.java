@@ -72,7 +72,7 @@ public class MetadataObserver {
       }
     }
 
-    throw Errors.brokerDataNotFoundException();
+    throw Errors.LeaderNotAvailableException();
   }
 
   public Broker getLeader(final String topicName, final int partitionId) {
