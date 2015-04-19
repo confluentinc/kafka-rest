@@ -43,7 +43,7 @@ public class RootResourceTest
   private Context ctx;
 
   public RootResourceTest() throws RestConfigException {
-    ctx = new Context(config, null, null, null, null, null);
+    ctx = new Context(config, null, null, null, null);
     addResource(RootResource.class);
   }
 

@@ -74,7 +74,7 @@ public class PartitionsResourceBinaryProduceTest
   public PartitionsResourceBinaryProduceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new Context(config, mdObserver, producerPool, null, null, null);
+    ctx = new Context(config, mdObserver, producerPool, null, null);
 
     addResource(new TopicsResource(ctx));
     addResource(new PartitionsResource(ctx));

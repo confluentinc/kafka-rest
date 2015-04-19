@@ -43,7 +43,7 @@ public class PartitionsResourceAbstractConsumeTest extends EmbeddedServerTestHar
     super();
     simpleConsumerManager = EasyMock.createMock(SimpleConsumerManager.class);
 
-    final Context ctx = new Context(config, null, null, null, null, simpleConsumerManager);
+    final Context ctx = new Context(config, null, null, null, simpleConsumerManager);
     addResource(new PartitionsResource(ctx));
   }
 

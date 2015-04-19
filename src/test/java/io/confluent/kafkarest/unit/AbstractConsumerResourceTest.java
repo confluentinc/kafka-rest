@@ -60,7 +60,7 @@ public class AbstractConsumerResourceTest
   public AbstractConsumerResourceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     consumerManager = EasyMock.createMock(ConsumerManager.class);
-    ctx = new Context(config, mdObserver, null, consumerManager, null, null);
+    ctx = new Context(config, mdObserver, null, consumerManager, null);
 
     addResource(new ConsumersResource(ctx));
   }
