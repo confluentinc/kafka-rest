@@ -82,10 +82,12 @@ public class SimpleConsumerManager {
   }
 
   private SimpleFetcher getSimpleFetcher(final Broker broker) {
-    if (!simpleConsumersPools.containsKey(broker)) {
-      simpleConsumersPools.put(broker, createSimpleConsumerPool());
+    // When upgrading to Java 1.8, use simpleConsumersPools.computeIfAbsent() instead
+    SimpleConsumerPool pool = simpleConsumersPools.get(broker);
+    if (pool == null) {
+      pool = simpleConsumersPools.putIfAbsent(broker, createSimpleConsumerPool());
     }
-    final SimpleConsumerPool pool = simpleConsumersPools.get(broker);
+
     return pool.get(broker.host(), broker.port());
   }
 
