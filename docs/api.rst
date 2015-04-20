@@ -259,19 +259,21 @@ you produce messages by making ``POST`` requests to specific topics.
       Content-Type: application/vnd.kafka.binary.v1+json
       Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
 
-      [
-        {
-          "key": "a2V5",
-          "value": "Y29uZmx1ZW50"
-        },
-        {
-          "value": "a2Fma2E=",
-          "partition": 1
-        },
-        {
-          "value": "bG9ncw=="
-        }
-      ]
+      {
+        "records": [
+          {
+            "key": "a2V5",
+            "value": "Y29uZmx1ZW50"
+          },
+          {
+            "value": "a2Fma2E=",
+            "partition": 1
+          },
+          {
+            "value": "bG9ncw=="
+          }
+        ]
+      }
 
    **Example binary response**:
 
