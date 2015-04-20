@@ -85,7 +85,8 @@ public class SimpleConsumerManager {
     // When upgrading to Java 1.8, use simpleConsumersPools.computeIfAbsent() instead
     SimpleConsumerPool pool = simpleConsumersPools.get(broker);
     if (pool == null) {
-      pool = simpleConsumersPools.putIfAbsent(broker, createSimpleConsumerPool());
+      simpleConsumersPools.putIfAbsent(broker, createSimpleConsumerPool());
+      pool = simpleConsumersPools.get(broker);
     }
 
     return pool.get(broker.host(), broker.port());
