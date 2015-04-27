@@ -63,16 +63,14 @@ public class MetadataObserver {
     return brokerIds;
   }
 
-  public Broker getBrokerById(final int brokerId) {
-    final Seq<Broker> brokers = ZkUtils.getAllBrokersInCluster(zkClient);
+  private Broker getBrokerById(final int brokerId) {
+    Option<Broker> broker = ZkUtils.getBrokerInfo(zkClient, brokerId);
 
-    for (Broker broker : JavaConversions.asJavaCollection(brokers)) {
-      if (broker.id() == brokerId) {
-        return broker;
-      }
+    if (broker.isDefined()) {
+      return broker.get();
+    } else {
+      throw Errors.LeaderNotAvailableException();
     }
-
-    throw Errors.LeaderNotAvailableException();
   }
 
   public Broker getLeader(final String topicName, final int partitionId) {
