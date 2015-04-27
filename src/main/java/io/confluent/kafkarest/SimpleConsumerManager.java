@@ -100,7 +100,7 @@ public class SimpleConsumerManager {
                       final ConsumerManager.ReadCallback callback) {
 
     List<ConsumerRecord> records = null;
-    Exception exception = null;
+    RestException exception = null;
     SimpleFetcher simpleFetcher = null;
 
     try {
@@ -130,8 +130,12 @@ public class SimpleConsumerManager {
         }
       }
 
-    } catch (RestException e) {
-      exception = e;
+    } catch (Throwable e) {
+      if (e instanceof RestException) {
+        exception = (RestException) e;
+      } else {
+        exception = Errors.kafkaErrorException(e);
+      }
     } finally {
 
       // When the project migrates to java 1.7, the finally can be replaced with a try-with-resource
