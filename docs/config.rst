@@ -62,6 +62,13 @@ Java Kafka clients.
   * Default: ""
   * Importance: medium
 
+``simpleconsumer.pool.size``
+  Maximum number of SimpleConsumers that can be instantiated per broker. If 0, then the pool size is not limited.
+
+  * Type: int
+  * Default: 3
+  * Importance: medium
+
 ``consumer.instance.timeout.ms``
   Amount of idle time before a consumer instance is automatically destroyed.
 

@@ -118,7 +118,7 @@ public class KafkaRestConfig extends RestConfig {
   public static final String SIMPLE_CONSUMER_POOL_SIZE_CONFIG = "simpleconsumer.pool.size";
   private static final String
       SIMPLE_CONSUMER_POOL_SIZE_DOC =
-      "maximum number of SimpleConsumers that can be instantiated per broker."
+      "Maximum number of SimpleConsumers that can be instantiated per broker."
       + " If 0, then the pool size is not limited.";
   public static final String SIMPLE_CONSUMER_POOL_SIZE_DEFAULT = "3";
 

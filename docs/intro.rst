@@ -101,6 +101,9 @@ what is currently supported:
   run behind various load balancing mechanisms (e.g. round robin DNS, discovery
   services, load balancers) as long as instances are
   :ref:`configured correctly<kafkarest_deployment>`.
+* **Simple Consumer** - The high-level consumer should generally be
+  preferred. However, it is occasionally useful to use low-level read
+  operations, for example to retrieve messages at specific offsets.
 
 Just as important, here's a list of features that *aren't* yet supported:
 
@@ -114,10 +117,6 @@ Just as important, here's a list of features that *aren't* yet supported:
   and use a single stream (and therefore a single thread). You can still
   achieve high throughput as you would with the Java clients: run multiple
   threads locally that each read from a separate consumer stream.
-* **Simple Consumer** - The high-level consumer should generally be
-  preferred. However, it is occasionally useful to use low-level read
-  operations, for example to retrieve messages at specific offsets. The new
-  consumer implementation will make implementing these operations simpler.
 * **Most Producer/Consumer Overrides** - Only a few key overrides are exposed in
   the API (but global overrides can be set by the administrator). The reason is
   two-fold. First, proxies are multi-tenant and therefore most user-requested
