@@ -48,8 +48,9 @@ import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
 
 @Path("/topics/{topic}/partitions")
-@Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
-           Versions.JSON_WEIGHTED})
+@Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW,
+    Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
+    Versions.JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
            Versions.GENERIC_REQUEST})
 public class PartitionsResource {
@@ -88,7 +89,6 @@ public class PartitionsResource {
       Versions.KAFKA_V1_JSON_WEIGHTED,
       Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
       Versions.JSON_WEIGHTED,
-      Versions.KAFKA_V1_JSON_BINARY_WEIGHTED_LOW,
       Versions.ANYTHING})
   public void consumeBinary(final @Suspended AsyncResponse asyncResponse,
                             final @PathParam("topic") String topicName,
@@ -102,7 +102,7 @@ public class PartitionsResource {
   @GET
   @Path("/{partition}/messages")
   @PerformanceMetric("partition.consume-avro")
-  @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED, Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW})
+  @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED})
   public void consumeAvro(final @Suspended AsyncResponse asyncResponse,
                           final @PathParam("topic") String topicName,
                           final @PathParam("partition") int partitionId,
