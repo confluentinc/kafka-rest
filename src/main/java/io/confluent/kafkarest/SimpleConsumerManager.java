@@ -65,7 +65,7 @@ public class SimpleConsumerManager {
     this.mdObserver = mdObserver;
     this.simpleConsumerFactory = simpleConsumerFactory;
 
-    maxPoolSize = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_POOL_SIZE_CONFIG);
+    maxPoolSize = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG);
     simpleConsumersPools = new ConcurrentHashMap<Broker, SimpleConsumerPool>();
 
     // Load decoders

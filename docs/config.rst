@@ -62,7 +62,7 @@ Java Kafka clients.
   * Default: ""
   * Importance: medium
 
-``simpleconsumer.pool.size``
+``simpleconsumer.pool.size.max``
   Maximum number of SimpleConsumers that can be instantiated per broker. If 0, then the pool size is not limited.
 
   * Type: int
