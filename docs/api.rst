@@ -488,7 +488,7 @@ It also allows you to consume and produce messages to single partition using ``G
    :param string topic_name: Topic to consume the messages from
    :param int partition_id: Partition to consume the messages from
    :query int offset: Offset to start from
-   :query int count: Number of messages to consume (optional)
+   :query int count: Number of messages to consume (optional). Default is 1.
 
    :>jsonarr string key: The message key, formatted according to the embedded format
    :>jsonarr string value: The message value, formatted according to the embedded format
