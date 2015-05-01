@@ -129,6 +129,22 @@ public class SimpleConsumerBinaryTest extends AbstractConsumerTest {
     );
   }
 
+  @Test(timeout = 1000)
+  public void testConsumeMoreMessagesThanAvailable() {
+    produceBinaryMessages(recordsOnlyValues);
+
+    simpleConsumeMessages(
+        topicName,
+        0,
+        recordsOnlyValues.size()+1, // Ask for more than there is
+        recordsOnlyValues,
+        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V1_JSON_BINARY,
+        binaryConsumerRecordType,
+        null
+    );
+  }
+
   @Test
   public void testConsumeInvalidTopic() {
 

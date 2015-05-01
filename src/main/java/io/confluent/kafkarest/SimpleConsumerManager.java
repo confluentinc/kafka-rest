@@ -124,6 +124,11 @@ public class SimpleConsumerManager {
         final ByteBufferMessageSet messageAndOffsets =
             fetchRecords(topicName, partitionId, offset, simpleFetcher);
 
+        // If there is no more messages available, we break early
+        if (!messageAndOffsets.iterator().hasNext()) {
+          break;
+        }
+
         for (final MessageAndOffset messageAndOffset : messageAndOffsets) {
           records.add(createConsumerRecord(messageAndOffset, topicName, partitionId, embeddedFormat));
           count--;
