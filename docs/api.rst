@@ -349,7 +349,7 @@ Partitions
 ----------
 
 The partitions resource provides per-partition metadata, including the current leaders and replicas for each partition.
-It also allows you to produce messages to single partition using ``POST`` requests.
+It also allows you to consume and produce messages to single partition using ``GET`` and ``POST`` requests.
 
 .. http:get:: /topics/(string:topic_name)/partitions
 
@@ -482,6 +482,91 @@ It also allows you to produce messages to single partition using ``POST`` reques
           }
         ]
       }
+
+.. http:get:: /topics/(string:topic_name)/partitions/(int:partition_id)/messages?offset=(int)[&count=(int)]
+
+   Consume messages from one partition of the topic.
+
+   :param string topic_name: Topic to consume the messages from
+   :param int partition_id: Partition to consume the messages from
+   :query int offset: Offset to start from
+   :query int count: Number of messages to consume (optional). Default is 1.
+
+   :>jsonarr string key: The message key, formatted according to the embedded format
+   :>jsonarr string value: The message value, formatted according to the embedded format
+   :>jsonarr int partition: Partition of the message
+   :>jsonarr long offset: Offset of the message
+
+   :statuscode 404:
+      * Error code 40401 -- Topic not found
+      * Error code 40402 -- Partition not found
+      * Error code 40404 -- Leader not available
+   :statuscode 500:
+      * Error code 500 -- General consumer error response, caused by an exception during the
+        operation. An error message is included in the standard format which explains the cause.
+   :statuscode 503:
+      * Error code 50301 -- No SimpleConsumer is available at the time in the pool. The request can be retried.
+        You can increase the pool size or the pool timeout to avoid this error in the future.
+
+
+   **Example binary request**:
+
+   .. sourcecode:: http
+
+      GET /topic/test/partitions/1/messages?offset=10&count=2 HTTP/1.1
+      Host: proxy-instance.kafkaproxy.example.com
+      Accept: application/vnd.kafka.binary.v1+json
+
+   **Example binary response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/vnd.kafka.binary.v1+json
+
+      [
+        {
+          "key": "a2V5",
+          "value": "Y29uZmx1ZW50",
+          "partition": 1,
+          "offset": 10,
+        },
+        {
+          "key": "a2V5",
+          "value": "a2Fma2E=",
+          "partition": 1,
+          "offset": 11,
+        }
+      ]
+
+   **Example Avro request**:
+
+   .. sourcecode:: http
+
+      GET /topic/test/partitions/1/messages?offset=1 HTTP/1.1
+      Host: proxy-instance.kafkaproxy.example.com
+      Accept: application/vnd.kafka.avro.v1+json
+
+   **Example Avro response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/vnd.kafka.avro.v1+json
+
+      [
+        {
+          "key": 1,
+          "value": {
+            "id": 1,
+            "name": "Bill"
+          },
+          "partition": 1,
+          "offset": 1,
+        }
+      ]
+
+
 
 .. http:post:: /topics/(string:topic_name)/partitions/(int:partition_id)
 

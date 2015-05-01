@@ -166,16 +166,10 @@ public class AbstractConsumerTest extends ClusterTestHarness {
   // the Kafka producer directly (e.g. Object for GenericRecord+primitive for Avro) and the
   // consumed data type on the receiver (JsonNode, since the data has been converted to Json).
   protected <KafkaK, KafkaV, ClientK, ClientV, RecordType extends ConsumerRecord<ClientK, ClientV>>
-  void consumeMessages(
-      String instanceUri, String topic, List<ProducerRecord<KafkaK, KafkaV>> records,
-      String accept, String responseMediatype,
-      GenericType<List<RecordType>> responseEntityType,
+  void assertEqualsMessages(
+      List<ProducerRecord<KafkaK, KafkaV>> records, // input messages
+      List<RecordType> consumed, // output messages
       Converter converter) {
-    Response response = request(instanceUri + "/topics/" + topic)
-        .accept(accept).get();
-    assertOKResponse(response, responseMediatype);
-    List<RecordType> consumed = response.readEntity(responseEntityType);
-    assertEquals(records.size(), consumed.size());
 
     // Since this is used for unkeyed messages, this can't rely on ordering of messages
     Map<Object, Integer> inputSetCounts = new HashMap<Object, Integer>();
@@ -201,6 +195,47 @@ public class AbstractConsumerTest extends ClusterTestHarness {
           (outputSetCounts.get(value) == null ? 0 : outputSetCounts.get(value)) + 1);
     }
     assertEquals(inputSetCounts, outputSetCounts);
+  }
+
+  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType extends ConsumerRecord<ClientK, ClientV>>
+  void simpleConsumeMessages(
+      String topicName,
+      int offset,
+      Integer count,
+      List<ProducerRecord<KafkaK, KafkaV>> records,
+      String accept,
+      String responseMediatype,
+      GenericType<List<RecordType>> responseEntityType,
+      Converter converter) {
+
+    Map<String, String> queryParams = new HashMap<String, String>();
+    queryParams.put("offset", Integer.toString(offset));
+    if (count != null) {
+      queryParams.put("count", count.toString());
+    }
+
+    Response response = request("/topics/" + topicName + "/partitions/0/messages", queryParams)
+        .accept(accept).get();
+    assertOKResponse(response, responseMediatype);
+    List<RecordType> consumed = response.readEntity(responseEntityType);
+    assertEquals(records.size(), consumed.size());
+
+    assertEqualsMessages(records, consumed, converter);
+  }
+
+  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType extends ConsumerRecord<ClientK, ClientV>>
+  void consumeMessages(
+      String instanceUri, String topic, List<ProducerRecord<KafkaK, KafkaV>> records,
+      String accept, String responseMediatype,
+      GenericType<List<RecordType>> responseEntityType,
+      Converter converter) {
+    Response response = request(instanceUri + "/topics/" + topic)
+        .accept(accept).get();
+    assertOKResponse(response, responseMediatype);
+    List<RecordType> consumed = response.readEntity(responseEntityType);
+    assertEquals(records.size(), consumed.size());
+
+    assertEqualsMessages(records, consumed, converter);
   }
 
   protected <K, V, RecordType extends ConsumerRecord<K, V>> void consumeForTimeout(

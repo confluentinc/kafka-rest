@@ -51,6 +51,13 @@ public class Errors {
                                      CONSUMER_INSTANCE_NOT_FOUND_ERROR_CODE);
   }
 
+  public final static String LEADER_NOT_AVAILABLE_MESSAGE = "Leader not available.";
+  public final static int LEADER_NOT_AVAILABLE_ERROR_CODE = 40404;
+
+  public static RestException LeaderNotAvailableException() {
+    return new RestNotFoundException(LEADER_NOT_AVAILABLE_MESSAGE,
+        LEADER_NOT_AVAILABLE_ERROR_CODE);
+  }
 
   public final static String CONSUMER_FORMAT_MISMATCH_MESSAGE =
       "The requested embedded data format does not match the deserializer for this consumer "
@@ -135,6 +142,16 @@ public class Errors {
   public static RestServerErrorException kafkaRetriableErrorException(Throwable e) {
     return new RestServerErrorException(KAFKA_RETRIABLE_ERROR_MESSAGE + e.getMessage(),
                                         KAFKA_RETRIABLE_ERROR_ERROR_CODE);
+  }
+
+  public final static String NO_SIMPLE_CONSUMER_AVAILABLE_ERROR_MESSAGE =
+      "No SimpleConsumer is available at the time in the pool. The request can be retried. " +
+      "You can increase the pool size or the pool timeout to avoid this error in the future.";
+  public final static int NO_SIMPLE_CONSUMER_AVAILABLE_ERROR_CODE = 50301;
+
+  public static RestServerErrorException simpleConsumerPoolTimeoutException() {
+    return new RestServerErrorException(NO_SIMPLE_CONSUMER_AVAILABLE_ERROR_MESSAGE,
+        NO_SIMPLE_CONSUMER_AVAILABLE_ERROR_CODE);
   }
 
   public final static String UNEXPECTED_PRODUCER_EXCEPTION

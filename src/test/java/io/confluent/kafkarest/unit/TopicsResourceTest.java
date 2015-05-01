@@ -54,7 +54,7 @@ public class TopicsResourceTest
   public TopicsResourceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new Context(config, mdObserver, producerPool, null);
+    ctx = new Context(config, mdObserver, producerPool, null, null);
 
     addResource(new TopicsResource(ctx));
   }

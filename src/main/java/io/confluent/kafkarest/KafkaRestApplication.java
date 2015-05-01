@@ -53,7 +53,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-    setupInjectedResources(config, appConfig, null, null, null, null);
+    setupInjectedResources(config, appConfig, null, null, null, null, null, null);
   }
 
   /**
@@ -63,7 +63,9 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   protected void setupInjectedResources(Configurable<?> config, KafkaRestConfig appConfig,
                                         ZkClient zkClient, MetadataObserver mdObserver,
                                         ProducerPool producerPool,
-                                        ConsumerManager consumerManager) {
+                                        ConsumerManager consumerManager,
+                                        SimpleConsumerFactory simpleConsumerFactory,
+                                        SimpleConsumerManager simpleConsumerManager) {
     config.register(new ZkExceptionMapper(appConfig));
 
     if (zkClient == null) {
@@ -79,9 +81,15 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     if (consumerManager == null) {
       consumerManager = new ConsumerManager(appConfig, mdObserver);
     }
+    if (simpleConsumerFactory == null) {
+      simpleConsumerFactory = new SimpleConsumerFactory(appConfig);
+    }
+    if (simpleConsumerManager == null) {
+      simpleConsumerManager = new SimpleConsumerManager(appConfig, mdObserver, simpleConsumerFactory);
+    }
 
     this.zkClient = zkClient;
-    context = new Context(appConfig, mdObserver, producerPool, consumerManager);
+    context = new Context(appConfig, mdObserver, producerPool, consumerManager, simpleConsumerManager);
     config.register(RootResource.class);
     config.register(new BrokersResource(context));
     config.register(new TopicsResource(context));
@@ -93,6 +101,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   public void onShutdown() {
     context.getConsumerManager().shutdown();
     context.getProducerPool().shutdown();
+    context.getSimpleConsumerManager().shutdown();
     context.getMetadataObserver().shutdown();
     zkClient.close();
   }

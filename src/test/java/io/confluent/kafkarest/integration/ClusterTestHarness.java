@@ -15,6 +15,7 @@
  **/
 package io.confluent.kafkarest.integration;
 
+import io.confluent.kafkarest.*;
 import org.I0Itec.zkclient.ZkClient;
 import org.eclipse.jetty.server.Server;
 import org.junit.After;
@@ -22,12 +23,7 @@ import org.junit.Before;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.Queue;
-import java.util.Vector;
+import java.util.*;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -37,10 +33,6 @@ import javax.ws.rs.client.WebTarget;
 import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
-import io.confluent.kafkarest.ConsumerManager;
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
-import io.confluent.kafkarest.ProducerPool;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.SystemTime$;
@@ -186,7 +178,9 @@ public abstract class ClusterTestHarness {
     restApp = new TestKafkaRestApplication(restConfig, getZkClient(restConfig),
                                            getMetadataObserver(restConfig),
                                            getProducerPool(restConfig),
-                                           getConsumerManager(restConfig));
+                                           getConsumerManager(restConfig),
+                                           getSimpleConsumerFactory(restConfig),
+                                           getSimpleConsumerManager(restConfig));
     restServer = restApp.createServer();
     restServer.start();
   }
@@ -204,6 +198,14 @@ public abstract class ClusterTestHarness {
   }
 
   protected ConsumerManager getConsumerManager(KafkaRestConfig appConfig) {
+    return null;
+  }
+
+  protected SimpleConsumerFactory getSimpleConsumerFactory(KafkaRestConfig appConfig) {
+    return null;
+  }
+
+  protected SimpleConsumerManager getSimpleConsumerManager(KafkaRestConfig appConfig) {
     return null;
   }
 
@@ -233,10 +235,20 @@ public abstract class ClusterTestHarness {
   }
 
   protected Invocation.Builder request(String path) {
-    return request(path, null, null);
+    return request(path, null, null, null);
+  }
+
+  protected Invocation.Builder request(String path, Map<String, String> queryParams) {
+    return request(path, null, null, queryParams);
   }
 
   protected Invocation.Builder request(String path, String templateName, Object templateValue) {
+    return request(path, templateName, templateValue, null);
+  }
+
+  protected Invocation.Builder request(String path, String templateName, Object templateValue,
+                                       Map<String, String> queryParams) {
+
     Client client = ClientBuilder.newClient();
     // Only configure base application here because as a client we shouldn't need the resources
     // registered
@@ -255,6 +267,11 @@ public abstract class ClusterTestHarness {
     }
     if (templateName != null && templateValue != null) {
       target = target.resolveTemplate(templateName, templateValue);
+    }
+    if (queryParams != null) {
+      for (Map.Entry<String, String> queryParam : queryParams.entrySet()) {
+        target = target.queryParam(queryParam.getKey(), queryParam.getValue());
+      }
     }
     return target.request();
   }
