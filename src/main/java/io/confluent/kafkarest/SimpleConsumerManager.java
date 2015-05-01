@@ -48,6 +48,9 @@ public class SimpleConsumerManager {
   private static final Logger log = LoggerFactory.getLogger(SimpleConsumerManager.class);
 
   private final int maxPoolSize;
+  private final int poolInstanceAvailabilityTimeoutMs;
+  private final Time time;
+
   private final MetadataObserver mdObserver;
   private final SimpleConsumerFactory simpleConsumerFactory;
 
@@ -66,6 +69,9 @@ public class SimpleConsumerManager {
     this.simpleConsumerFactory = simpleConsumerFactory;
 
     maxPoolSize = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG);
+    poolInstanceAvailabilityTimeoutMs = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG);
+    time = config.getTime();
+
     simpleConsumersPools = new ConcurrentHashMap<Broker, SimpleConsumerPool>();
 
     // Load decoders
@@ -78,7 +84,7 @@ public class SimpleConsumerManager {
   }
 
   private SimpleConsumerPool createSimpleConsumerPool() {
-    return new SimpleConsumerPool(maxPoolSize, simpleConsumerFactory);
+    return new SimpleConsumerPool(maxPoolSize, poolInstanceAvailabilityTimeoutMs, time, simpleConsumerFactory);
   }
 
   private SimpleFetcher getSimpleFetcher(final Broker broker) {

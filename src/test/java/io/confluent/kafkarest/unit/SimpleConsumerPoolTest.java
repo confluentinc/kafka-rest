@@ -15,24 +15,25 @@
  **/
 package io.confluent.kafkarest.unit;
 
-import io.confluent.kafkarest.SimpleConsumerFactory;
-import io.confluent.kafkarest.SimpleFetcher;
-import io.confluent.kafkarest.SimpleConsumerPool;
+import io.confluent.kafkarest.*;
 import io.confluent.rest.RestConfigException;
+import io.confluent.rest.exceptions.RestServerErrorException;
 import kafka.javaapi.consumer.SimpleConsumer;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 
 public class SimpleConsumerPoolTest {
+
+  private final int AWAIT_TERMINATION_TIMEOUT = 2000;
+  private final int POOL_CALLER_SLEEP_TIME = 50;
 
   private SimpleConsumerFactory simpleConsumerFactory;
 
@@ -65,7 +66,9 @@ public class SimpleConsumerPoolTest {
   public void testPoolWhenOneSingleThreadedCaller() throws Exception {
 
     final int maxPoolSize = 3;
-    final SimpleConsumerPool pool = new SimpleConsumerPool(maxPoolSize, simpleConsumerFactory);
+    final int poolTimeout = 1000;
+    final SimpleConsumerPool pool =
+        new SimpleConsumerPool(maxPoolSize, poolTimeout, new SystemTime(), simpleConsumerFactory);
 
     for (int i = 0; i < 10; i++) {
       SimpleFetcher fetcher = pool.get("", 0);
@@ -88,7 +91,7 @@ public class SimpleConsumerPoolTest {
       SimpleFetcher fetcher = pool.get("", 0);
       try {
         // Waiting to simulate data fetching from kafka
-        Thread.sleep(50);
+        Thread.sleep(POOL_CALLER_SLEEP_TIME);
         fetcher.close();
       } catch (Exception e) {
         fail(e.getMessage());
@@ -100,8 +103,9 @@ public class SimpleConsumerPoolTest {
   public void testPoolWhenMultiThreadedCaller() throws Exception {
 
     final int maxPoolSize = 3;
+    final int poolTimeout = 1000;
     final SimpleConsumerPool consumersPool =
-        new SimpleConsumerPool(maxPoolSize, simpleConsumerFactory);
+        new SimpleConsumerPool(maxPoolSize, poolTimeout, new SystemTime(), simpleConsumerFactory);
 
     final ExecutorService executorService = Executors.newFixedThreadPool(10);
     for (int i = 0; i < 10; i++) {
@@ -109,7 +113,8 @@ public class SimpleConsumerPoolTest {
     }
     executorService.shutdown();
 
-    final boolean allThreadTerminated = executorService.awaitTermination(1000, TimeUnit.MILLISECONDS);
+    final boolean allThreadTerminated =
+        executorService.awaitTermination(AWAIT_TERMINATION_TIMEOUT, TimeUnit.MILLISECONDS);
     assertTrue(allThreadTerminated);
     assertEquals(maxPoolSize, consumersPool.size());
   }
@@ -118,8 +123,9 @@ public class SimpleConsumerPoolTest {
   public void testUnlimitedPoolWhenMultiThreadedCaller() throws Exception {
 
     final int maxPoolSize = 0; // 0 meaning unlimited
+    final int poolTimeout = 1000;
     final SimpleConsumerPool consumersPool =
-        new SimpleConsumerPool(maxPoolSize, simpleConsumerFactory);
+        new SimpleConsumerPool(maxPoolSize, poolTimeout, new SystemTime(), simpleConsumerFactory);
 
     final ExecutorService executorService = Executors.newFixedThreadPool(10);
     for (int i = 0; i < 10; i++) {
@@ -127,12 +133,66 @@ public class SimpleConsumerPoolTest {
     }
     executorService.shutdown();
 
-    final boolean allThreadTerminated = executorService.awaitTermination(1000, TimeUnit.MILLISECONDS);
+    final boolean allThreadTerminated =
+        executorService.awaitTermination(AWAIT_TERMINATION_TIMEOUT, TimeUnit.MILLISECONDS);
     assertTrue(allThreadTerminated);
     // Most of time, the size of the consumers pool will be 10 in the end, but we don't have any guarantee on that,
     // so we limit the test to checking the pool is not empty
     assertTrue(consumersPool.size() > 0);
   }
 
+  @Test
+  public void testPoolTimeoutError() throws Exception {
+
+    final int maxPoolSize = 1; // Only one SimpleConsumer instance
+    final int poolTimeout = 1; // And we don't allow allow to wait a lot to get it
+    final SimpleConsumerPool consumersPool =
+        new SimpleConsumerPool(maxPoolSize, poolTimeout, new SystemTime(), simpleConsumerFactory);
+
+    final ExecutorService executorService = Executors.newFixedThreadPool(10);
+    final ArrayList<Future<?>> futures = new ArrayList<Future<?>>();
+    for (int i = 0; i < 10; i++) {
+      futures.add(executorService.submit(new PoolCaller(consumersPool)));
+    }
+    executorService.shutdown();
+
+    final boolean allThreadTerminated =
+        executorService.awaitTermination(AWAIT_TERMINATION_TIMEOUT, TimeUnit.MILLISECONDS);
+    assertTrue(allThreadTerminated);
+
+    boolean poolTimeoutErrorEncountered = false;
+    try {
+      for (Future<?> future : futures) {
+        future.get();
+      }
+    } catch (ExecutionException e) {
+      if (((RestServerErrorException)e.getCause()).getErrorCode() == Errors.NO_SIMPLE_CONSUMER_AVAILABLE_ERROR_CODE) {
+        poolTimeoutErrorEncountered = true;
+      }
+    }
+    assertTrue(poolTimeoutErrorEncountered);
+  }
+
+  @Test
+  public void testPoolNoTimeout() throws Exception {
+
+    final int maxPoolSize = 1; // Only one SimpleConsumer instance
+    final int poolTimeout = 0; // No timeout. A request will wait as long as needed to get a SimpleConsumer instance
+    final SimpleConsumerPool consumersPool =
+        new SimpleConsumerPool(maxPoolSize, poolTimeout, new SystemTime(), simpleConsumerFactory);
+
+    final ExecutorService executorService = Executors.newFixedThreadPool(10);
+    for (int i = 0; i < 10; i++) {
+      executorService.submit(new PoolCaller(consumersPool));
+    }
+    executorService.shutdown();
+
+    final boolean allThreadTerminated =
+        executorService.awaitTermination(POOL_CALLER_SLEEP_TIME*5, TimeUnit.MILLISECONDS);
+
+    // We simulate 10 concurrent requests taking each POOL_CALLER_SLEEP_TIME using the single SimpleConsumer instance
+    // We check that after POOL_CALLER_SLEEP_TIME * 5, there are still requests that are not finished
+    assertFalse(allThreadTerminated);
+  }
 
 }

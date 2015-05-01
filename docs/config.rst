@@ -166,3 +166,10 @@ Java Kafka clients.
   * Type: int
   * Default: 1000
   * Importance: low
+
+``simpleconsumer.pool.timeout.ms``
+  Amount of time to wait for an available SimpleConsumer from the pool before failing. Use 0 for no timeout
+
+  * Type: int
+  * Default: 1000
+  * Importance: low

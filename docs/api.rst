@@ -502,6 +502,9 @@ It also allows you to consume and produce messages to single partition using ``G
    :statuscode 500:
       * Error code 500 -- General consumer error response, caused by an exception during the
         operation. An error message is included in the standard format which explains the cause.
+   :statuscode 503:
+      * Error code 50301 -- No SimpleConsumer is available at the time in the pool. The request can be retried.
+        You can increase the pool size or the pool timeout to avoid this error in the future.
 
 
    **Example binary request**:

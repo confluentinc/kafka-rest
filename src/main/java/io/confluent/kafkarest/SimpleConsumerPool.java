@@ -19,10 +19,7 @@ import kafka.javaapi.consumer.SimpleConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.*;
 
 /**
  * The SizeLimitedSimpleConsumerPool keeps a pool of SimpleConsumers
@@ -33,20 +30,28 @@ public class SimpleConsumerPool {
 
   // maxPoolSize = 0 means unlimited
   private final int maxPoolSize;
+  // poolInstanceAvailabilityTimeoutMs = 0 means there is no timeout
+  private final int poolInstanceAvailabilityTimeoutMs;
+  private final Time time;
 
   private final SimpleConsumerFactory simpleConsumerFactory;
   private final Map<String, SimpleConsumer> simpleConsumers;
   private final Queue<String> availableConsumers;
 
-  public SimpleConsumerPool(int maxPoolSize, SimpleConsumerFactory simpleConsumerFactory) {
+  public SimpleConsumerPool(int maxPoolSize, int poolInstanceAvailabilityTimeoutMs,
+                            Time time, SimpleConsumerFactory simpleConsumerFactory) {
     this.maxPoolSize = maxPoolSize;
+    this.poolInstanceAvailabilityTimeoutMs = poolInstanceAvailabilityTimeoutMs;
+    this.time = time;
     this.simpleConsumerFactory = simpleConsumerFactory;
 
     simpleConsumers = new HashMap<String, SimpleConsumer>();
-    availableConsumers = new PriorityQueue<String>();
+    availableConsumers = new LinkedList<String>();
   }
 
   synchronized public SimpleFetcher get(final String host, final int port) {
+
+    final long expiration = time.milliseconds() + poolInstanceAvailabilityTimeoutMs;
 
     while (true) {
       // If there is a SimpleConsumer available
@@ -64,9 +69,16 @@ public class SimpleConsumerPool {
 
       // If no consumer is available and we reached the limit
       try {
-        wait();
+        // The behavior of wait when poolInstanceAvailabilityTimeoutMs=0 is consistent as it won't timeout
+        wait(poolInstanceAvailabilityTimeoutMs);
       } catch (InterruptedException e) {
-        log.warn("A thread requesting a SimpleConsumer has been interrupted while waiting");
+        log.warn("A thread requesting a SimpleConsumer has been interrupted while waiting", e);
+      }
+
+      // In some cases ("spurious wakeup", see wait() doc), the thread will resume before the timeout
+      // We have to guard against that and throw only if the timeout has expired for real
+      if (time.milliseconds() > expiration && poolInstanceAvailabilityTimeoutMs != 0) {
+        throw Errors.simpleConsumerPoolTimeoutException();
       }
     }
 

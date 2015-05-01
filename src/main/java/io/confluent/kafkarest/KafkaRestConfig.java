@@ -122,6 +122,13 @@ public class KafkaRestConfig extends RestConfig {
       + " If 0, then the pool size is not limited.";
   public static final String SIMPLE_CONSUMER_MAX_POOL_SIZE_DEFAULT = "25";
 
+  public static final String SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG = "simpleconsumer.pool.timeout.ms";
+  private static final String
+      SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC =
+      "Amount of time to wait for an available SimpleConsumer from the pool before failing."
+          + " Use 0 for no timeout";
+  public static final String SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT = "1000";
+
   private static final int KAFKAREST_PORT_DEFAULT = 8082;
 
   private static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka.rest";
@@ -162,7 +169,9 @@ public class KafkaRestConfig extends RestConfig {
         .define(CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT,
                 Importance.LOW, CONSUMER_INSTANCE_TIMEOUT_MS_DOC)
         .define(SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG, Type.INT, SIMPLE_CONSUMER_MAX_POOL_SIZE_DEFAULT,
-                Importance.MEDIUM, SIMPLE_CONSUMER_MAX_POOL_SIZE_DOC);
+                Importance.MEDIUM, SIMPLE_CONSUMER_MAX_POOL_SIZE_DOC)
+        .define(SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG, Type.INT, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT,
+                Importance.LOW, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC);
   }
 
   private Time time;
