@@ -21,4 +21,9 @@ public interface ProduceRecord<K, V> {
   public K getKey();
 
   public V getValue();
+
+  // Non-standard naming so we can unify the interfaces of ProduceRecord and TopicProduceRecord,
+  // but get Jackson to behave properly, not serializing the value & triggering errors if the
+  // field is present during deserialization for types where it should always be null.
+  public Integer partition();
 }

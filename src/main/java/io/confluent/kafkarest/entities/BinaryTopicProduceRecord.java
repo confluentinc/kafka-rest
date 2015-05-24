@@ -53,6 +53,12 @@ public class BinaryTopicProduceRecord extends BinaryProduceRecord
     this(null, value, null);
   }
 
+  @Override
+  public Integer partition() {
+    return partition;
+  }
+
+  @Override
   @JsonProperty
   public Integer getPartition() {
     return partition;

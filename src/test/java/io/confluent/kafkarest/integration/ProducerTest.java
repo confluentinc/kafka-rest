@@ -71,7 +71,7 @@ public class ProducerTest extends AbstractProducerTest {
   private final List<BinaryTopicProduceRecord> topicRecordsWithPartitions = Arrays.asList(
       new BinaryTopicProduceRecord("value".getBytes(), 0),
       new BinaryTopicProduceRecord("value2".getBytes(), 1),
-      new BinaryTopicProduceRecord("value3".getBytes(), 0),
+      new BinaryTopicProduceRecord("value3".getBytes(), 1),
       new BinaryTopicProduceRecord("value4".getBytes(), 2)
   );
 
@@ -116,6 +116,13 @@ public class ProducerTest extends AbstractProducerTest {
       new PartitionOffset(0, 1L, null, null),
       new PartitionOffset(0, 2L, null, null),
       new PartitionOffset(0, 3L, null, null)
+  );
+
+  private final List<PartitionOffset> producePartitionedOffsets = Arrays.asList(
+      new PartitionOffset(0, 0L, null, null),
+      new PartitionOffset(1, 0L, null, null),
+      new PartitionOffset(1, 1L, null, null),
+      new PartitionOffset(2, 0L, null, null)
   );
 
   private boolean sawCallback;
@@ -179,25 +186,25 @@ public class ProducerTest extends AbstractProducerTest {
   @Test
   public void testProduceToTopicWithKeys() {
     testProduceToTopic(topicName, topicRecordsWithKeys, binaryDecoder, binaryDecoder,
-                       produceOffsets);
+                       produceOffsets, false);
   }
 
   @Test
   public void testProduceToTopicWithPartitions() {
     testProduceToTopic(topicName, topicRecordsWithPartitions, binaryDecoder, binaryDecoder,
-                       produceOffsets);
+                       producePartitionedOffsets, true);
   }
 
   @Test
   public void testProduceToTopicWithPartitionsAndKeys() {
     testProduceToTopic(topicName, topicRecordsWithPartitionsAndKeys, binaryDecoder, binaryDecoder,
-                       produceOffsets);
+                       producePartitionedOffsets, true);
   }
 
   @Test
   public void testProduceToTopicWithNullValues() {
     testProduceToTopic(topicName, topicRecordsWithNullValues, binaryDecoder, binaryDecoder,
-                       produceOffsets);
+                       produceOffsets, false);
   }
 
   @Test

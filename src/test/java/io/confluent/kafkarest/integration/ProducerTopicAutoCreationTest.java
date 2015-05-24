@@ -55,6 +55,7 @@ public class ProducerTopicAutoCreationTest extends AbstractProducerTest {
   @Test
   public void testProduceToMissingTopic() {
     // Should create topic
-    testProduceToTopic(topicName, topicRecords, binaryDecoder, binaryDecoder, partitionOffsets);
+    testProduceToTopic(topicName, topicRecords, binaryDecoder, binaryDecoder, partitionOffsets,
+                       false);
   }
 }

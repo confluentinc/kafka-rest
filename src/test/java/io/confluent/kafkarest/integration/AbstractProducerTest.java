@@ -37,13 +37,17 @@ public class AbstractProducerTest extends ClusterTestHarness {
   protected <K, V> void testProduceToTopic(String topicName,
                                            List<? extends TopicProduceRecord> records,
                                            Decoder<K> keyDecoder, Decoder<K> valueDecoder,
-                                           List<PartitionOffset> offsetResponses) {
+                                           List<PartitionOffset> offsetResponses,
+                                           boolean matchPartitions) {
     TopicProduceRequest payload = new TopicProduceRequest();
     payload.setRecords(records);
     Response response = request("/topics/" + topicName)
         .post(Entity.entity(payload, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     final ProduceResponse produceResponse = response.readEntity(ProduceResponse.class);
+    if (matchPartitions) {
+      TestUtils.assertPartitionsEqual(offsetResponses, produceResponse.getOffsets());
+    }
     TestUtils.assertPartitionOffsetsEqual(offsetResponses, produceResponse.getOffsets());
     TestUtils.assertTopicContains(zkConnect, topicName,
                                   payload.getRecords(), null,

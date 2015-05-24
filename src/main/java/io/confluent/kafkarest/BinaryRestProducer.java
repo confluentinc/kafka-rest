@@ -44,7 +44,11 @@ public class BinaryRestProducer implements RestProducer<byte[], byte[]> {
   public void produce(ProduceTask task, String topic, Integer partition,
                       Collection<? extends ProduceRecord<byte[], byte[]>> records) {
     for (ProduceRecord<byte[], byte[]> record : records) {
-      producer.send(new ProducerRecord(topic, partition, record.getKey(), record.getValue()),
+      Integer recordPartition = partition;
+      if (recordPartition == null) {
+        recordPartition = record.partition();
+      }
+      producer.send(new ProducerRecord(topic, recordPartition, record.getKey(), record.getValue()),
                     task.createCallback());
     }
   }

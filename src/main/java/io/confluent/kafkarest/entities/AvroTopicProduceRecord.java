@@ -35,6 +35,12 @@ public class AvroTopicProduceRecord extends AvroProduceRecord
     this.partition = partition;
   }
 
+  @Override
+  public Integer partition() {
+    return partition;
+  }
+
+  @Override
   @JsonProperty
   public Integer getPartition() {
     return partition;

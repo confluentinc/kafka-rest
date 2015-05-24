@@ -175,6 +175,14 @@ public class TestUtils {
     }
   }
 
+  public static void assertPartitionsEqual(List<PartitionOffset> a, List<PartitionOffset> b) {
+    assertEquals(a.size(), b.size());
+    for (int i = 0; i < a.size(); i++) {
+      PartitionOffset aOffset = a.get(i), bOffset = b.get(i);
+      assertEquals(aOffset.getPartition(), bOffset.getPartition());
+    }
+  }
+
   public static void assertPartitionOffsetsEqual(List<PartitionOffset> a, List<PartitionOffset> b) {
     // We can't be sure these will be exactly equal since they may be random. Instead verify that
     // exception vs. non-exception responses match up
