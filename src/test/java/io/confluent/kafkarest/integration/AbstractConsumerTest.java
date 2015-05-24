@@ -21,6 +21,8 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,11 +102,31 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     producer.close();
   }
 
+  protected Response createConsumerInstance(String groupName, String id,
+                                            String name, EmbeddedFormat format) {
+    ConsumerInstanceConfig config = null;
+    if (id != null || name != null || format != null) {
+      config = new ConsumerInstanceConfig(
+          id, name, (format != null ? format.toString() : null), null, null);
+    }
+    return request("/consumers/" + groupName)
+        .post(Entity.entity(config, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
+  }
+
+  protected String consumerNameFromInstanceUrl(String url) {
+    try {
+      String[] pathComponents = new URL(url).getPath().split("/");
+      return pathComponents[pathComponents.length-1];
+    } catch (MalformedURLException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   // Need to start consuming before producing since consumer is instantiated internally and
   // starts at latest offset
   protected String startConsumeMessages(String groupName, String topic, EmbeddedFormat format,
-                                        String accept, String expectedMediatype) {
-    return startConsumeMessages(groupName, topic, format, accept, expectedMediatype, false);
+                                        String expectedMediatype) {
+    return startConsumeMessages(groupName, topic, format, expectedMediatype, false);
   }
 
   /**
@@ -115,21 +137,18 @@ public class AbstractConsumerTest extends ClusterTestHarness {
    * @param topic             topic to consume
    * @param format            embedded format to use. If null, an null ConsumerInstanceConfig is
    *                          sent, resulting in default settings
-   * @param accept            mediatype for Accept header, or null to omit the header
    * @param expectedMediatype expected Content-Type of response
    * @param expectFailure     if true, expect the initial read request to generate a 404
    * @return the new consumer instance's base URI
    */
   protected String startConsumeMessages(String groupName, String topic, EmbeddedFormat format,
-                                        String accept, String expectedMediatype,
+                                        String expectedMediatype,
                                         boolean expectFailure) {
-    ConsumerInstanceConfig config = null;
-    if (format != null) {
-      config = new ConsumerInstanceConfig(format);
-    }
-    CreateConsumerInstanceResponse instanceResponse = request("/consumers/" + groupName)
-        .post(Entity.entity(config, Versions.KAFKA_MOST_SPECIFIC_DEFAULT),
-              CreateConsumerInstanceResponse.class);
+    Response createResponse = createConsumerInstance(groupName, null, null, format);
+    assertOKResponse(createResponse, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+
+    CreateConsumerInstanceResponse instanceResponse =
+        createResponse.readEntity(CreateConsumerInstanceResponse.class);
     assertNotNull(instanceResponse.getInstanceId());
     assertTrue(instanceResponse.getInstanceId().length() > 0);
     assertTrue("Base URI should contain the consumer instance ID",

@@ -27,6 +27,7 @@ public class ConsumerInstanceConfig {
   private static final EmbeddedFormat DEFAULT_FORMAT = EmbeddedFormat.BINARY;
 
   private String id;
+  private String name;
   @NotNull
   private EmbeddedFormat format;
   private String autoOffsetReset;
@@ -38,14 +39,16 @@ public class ConsumerInstanceConfig {
 
   public ConsumerInstanceConfig(EmbeddedFormat format) {
     // This constructor is only for tests so reparsing the format name is ok
-    this(null, format.name(), null, null);
+    this(null, null, format.name(), null, null);
   }
 
   public ConsumerInstanceConfig(@JsonProperty("id") String id,
+                                @JsonProperty("name") String name,
                                 @JsonProperty("format") String format,
                                 @JsonProperty("auto.offset.reset") String autoOffsetReset,
                                 @JsonProperty("auto.commit.enable") String autoCommitEnable) {
     this.id = id;
+    this.name = name;
     if (format == null) {
       this.format = DEFAULT_FORMAT;
     } else {
@@ -74,6 +77,16 @@ public class ConsumerInstanceConfig {
   @JsonProperty
   public void setId(String id) {
     this.id = id;
+  }
+
+  @JsonProperty
+  public String getName() {
+    return name;
+  }
+
+  @JsonProperty
+  public void setName(String name) {
+    this.name = name;
   }
 
   @JsonIgnore
