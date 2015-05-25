@@ -249,6 +249,7 @@ you produce messages by making ``POST`` requests to specific topics.
         not include the ``key_schema`` or ``key_schema_id`` fields
       * Error code 42202 -- Request includes values and uses a format that requires schemas, but
         does not include the ``value_schema`` or ``value_schema_id`` fields
+      * Error code 42205 -- Request includes invalid schema.
 
    **Example binary request**:
 
@@ -621,6 +622,7 @@ It also allows you to consume and produce messages to single partition using ``G
         not include the ``key_schema`` or ``key_schema_id`` fields
       * Error code 42202 -- Request includes values and uses a format that requires schemas, but
         does not include the ``value_schema`` or ``value_schema_id`` fields
+      * Error code 42205 -- Request includes invalid schema.
 
    **Example binary request**:
 

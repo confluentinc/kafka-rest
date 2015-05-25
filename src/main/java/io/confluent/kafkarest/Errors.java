@@ -16,6 +16,7 @@
 
 package io.confluent.kafkarest;
 
+import org.apache.avro.SchemaParseException;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.errors.RetriableException;
 
@@ -130,6 +131,15 @@ public class Errors {
       InvalidConfigException e) {
     return new RestConstraintViolationException(INVALID_CONSUMER_CONFIG_MESSAGE + e.getMessage(),
                                                 INVALID_CONSUMER_CONFIG_ERROR_CODE);
+  }
+
+  public final static String INVALID_SCHEMA_MESSAGE = "Invalid schema: ";
+  public final static int INVALID_SCHEMA_ERROR_CODE = 42205;
+
+  public static RestConstraintViolationException invalidSchemaException(
+      SchemaParseException e) {
+    return new RestConstraintViolationException(INVALID_SCHEMA_MESSAGE + e.getMessage(),
+                                                INVALID_SCHEMA_ERROR_CODE);
   }
 
   public final static String ZOOKEEPER_ERROR_MESSAGE = "Zookeeper error: ";

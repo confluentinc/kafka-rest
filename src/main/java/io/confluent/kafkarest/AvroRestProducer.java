@@ -19,6 +19,7 @@ package io.confluent.kafkarest;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import org.apache.avro.Schema;
+import org.apache.avro.SchemaParseException;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
@@ -74,6 +75,8 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
       // FIXME We should return more specific error codes (unavailable vs registration failed in
       // a way that isn't retriable?).
       throw new RestException("Schema registration or lookup failed", 408, 40801, e);
+    } catch (SchemaParseException e) {
+      throw Errors.invalidSchemaException(e);
     } catch (IOException e) {
       throw new RestException("Schema registration or lookup failed", 408, 40801, e);
     }
