@@ -115,11 +115,11 @@ public class Errors {
 
   }
 
-  public final static String JSON_AVRO_CONVERSION_MESSAGE = "Conversion of JSON to Avro failed.";
+  public final static String JSON_AVRO_CONVERSION_MESSAGE = "Conversion of JSON to Avro failed: ";
   public final static int JSON_AVRO_CONVERSION_ERROR_CODE = 42203;
 
-  public static RestConstraintViolationException jsonAvroConversionException() {
-    return new RestConstraintViolationException(JSON_AVRO_CONVERSION_MESSAGE,
+  public static RestConstraintViolationException jsonAvroConversionException(Throwable t) {
+    return new RestConstraintViolationException(JSON_AVRO_CONVERSION_MESSAGE + t.getMessage(),
                                                 JSON_AVRO_CONVERSION_ERROR_CODE);
 
   }

@@ -27,16 +27,23 @@ import java.util.Arrays;
 
 import javax.validation.ConstraintViolationException;
 
+import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafkarest.AvroRestProducer;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProduceTask;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
 import io.confluent.kafkarest.entities.SchemaHolder;
+import io.confluent.rest.exceptions.RestConstraintViolationException;
+
+import static org.junit.Assert.fail;
 
 public class AvroRestProducerTest {
 
   private static final ObjectMapper mapper = new ObjectMapper();
 
+  private KafkaAvroSerializer keySerializer;
+  private KafkaAvroSerializer valueSerializer;
   private KafkaProducer<Object, Object> producer;
   private AvroRestProducer restProducer;
   private SchemaHolder schemaHolder;
@@ -44,8 +51,10 @@ public class AvroRestProducerTest {
 
   @Before
   public void setUp() {
+    keySerializer = EasyMock.createMock(KafkaAvroSerializer.class);
+    valueSerializer = EasyMock.createMock(KafkaAvroSerializer.class);
     producer = EasyMock.createMock(KafkaProducer.class);
-    restProducer = new AvroRestProducer(producer, null, null);
+    restProducer = new AvroRestProducer(producer, keySerializer, valueSerializer);
     produceCallback = EasyMock.createMock(ProducerPool.ProduceRequestCallback.class);
   }
 
@@ -62,5 +71,29 @@ public class AvroRestProducerTest {
                 null)
         )
     );
+  }
+
+  @Test
+  public void testInvalidData() throws Exception {
+    schemaHolder = new SchemaHolder(null, "\"int\"");
+    try {
+      restProducer.produce(
+          new ProduceTask(schemaHolder, 1, produceCallback),
+          "test", null,
+          Arrays.asList(
+              new AvroTopicProduceRecord(
+                  null,
+                  mapper.readTree("\"string\""),
+                  null
+              )
+          )
+      );
+    } catch (RestConstraintViolationException e) {
+      // expected, but should contain additional info
+      assert(e.getMessage().startsWith(Errors.JSON_AVRO_CONVERSION_MESSAGE));
+      assert(e.getMessage().length() > Errors.JSON_AVRO_CONVERSION_MESSAGE.length());
+    } catch (Throwable t) {
+      fail("Unexpected exception type");
+    }
   }
 }
