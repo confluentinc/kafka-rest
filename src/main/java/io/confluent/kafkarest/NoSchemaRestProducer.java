@@ -13,46 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-
 package io.confluent.kafkarest;
 
+import io.confluent.kafkarest.entities.ProduceRecord;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.Collection;
 
-import io.confluent.kafkarest.entities.ProduceRecord;
-
 /**
- * Wrapper for KafkaProducers that handles schemas.
+ * Wrapper producer for content types which have no associated schema (e.g. binary or JSON).
  */
-public class BinaryRestProducer implements RestProducer<byte[], byte[]> {
+public class NoSchemaRestProducer<K, V> implements RestProducer<K, V> {
+  private KafkaProducer<K, V> producer;
 
-  protected final KafkaProducer<byte[], byte[]> producer;
-  protected final Serializer<byte[]> keySerializer;
-  protected final Serializer<byte[]> valueSerializer;
-
-  public BinaryRestProducer(KafkaProducer<byte[], byte[]> producer,
-                            Serializer<byte[]> keySerializer,
-                            Serializer<byte[]> valueSerializer) {
+  public NoSchemaRestProducer(KafkaProducer<K, V> producer) {
     this.producer = producer;
-    this.keySerializer = keySerializer;
-    this.valueSerializer = valueSerializer;
   }
 
-  public void produce(ProduceTask task, String topic, Integer partition,
-                      Collection<? extends ProduceRecord<byte[], byte[]>> records) {
-    for (ProduceRecord<byte[], byte[]> record : records) {
+  @Override
+  public void produce(ProduceTask task, String topic, Integer partition, Collection<? extends ProduceRecord<K, V>> produceRecords) {
+    for (ProduceRecord<K, V> record : produceRecords) {
       Integer recordPartition = partition;
       if (recordPartition == null) {
         recordPartition = record.partition();
       }
       producer.send(new ProducerRecord(topic, recordPartition, record.getKey(), record.getValue()),
-                    task.createCallback());
+          task.createCallback());
     }
   }
 
+  @Override
   public void close() {
     producer.close();
   }

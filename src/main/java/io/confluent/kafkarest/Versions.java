@@ -32,6 +32,10 @@ public class Versions {
   public static final String KAFKA_V1_JSON_AVRO_WEIGHTED = KAFKA_V1_JSON_AVRO;
   public static final String KAFKA_V1_JSON_AVRO_WEIGHTED_LOW = KAFKA_V1_JSON_AVRO + "; qs=0.1";
 
+  public static final String KAFKA_V1_JSON_JSON = "application/vnd.kafka.json.v1+json";
+  public static final String KAFKA_V1_JSON_JSON_WEIGHTED = KAFKA_V1_JSON_JSON;
+  public static final String KAFKA_V1_JSON_JSON_WEIGHTED_LOW = KAFKA_V1_JSON_JSON + "; qs=0.1";
+
   // These are defaults that track the most recent API version. These should always be specified
   // anywhere the latest version is produced/consumed.
   public static final String KAFKA_MOST_SPECIFIC_DEFAULT = KAFKA_V1_JSON;

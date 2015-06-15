@@ -40,6 +40,7 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.AvroProduceRecord;
 import io.confluent.kafkarest.entities.BinaryProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.JsonProduceRecord;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
@@ -123,6 +124,17 @@ public class PartitionsResource {
                             final @PathParam("partition") int partition,
                             @Valid PartitionProduceRequest<BinaryProduceRecord> request) {
     produce(asyncResponse, topic, partition, EmbeddedFormat.BINARY, request);
+  }
+
+  @POST
+  @Path("/{partition}")
+  @PerformanceMetric("partition.produce-json")
+  @Consumes({Versions.KAFKA_V1_JSON_JSON})
+  public void produceJson(final @Suspended AsyncResponse asyncResponse,
+                          final @PathParam("topic") String topic,
+                          final @PathParam("partition") int partition,
+                          @Valid PartitionProduceRequest<JsonProduceRecord> request) {
+    produce(asyncResponse, topic, partition, EmbeddedFormat.JSON, request);
   }
 
   @POST

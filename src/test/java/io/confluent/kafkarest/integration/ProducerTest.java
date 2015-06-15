@@ -216,19 +216,9 @@ public class ProducerTest extends AbstractProducerTest {
   }
 
 
-  private <K, V> void testProduceToPartition(List<? extends ProduceRecord<K, V>> records,
-                                             List<PartitionOffset> offsetResponse) {
-    PartitionProduceRequest payload = new PartitionProduceRequest();
-    payload.setRecords(records);
-    Response response = request("/topics/" + topicName + "/partitions/0")
-        .post(Entity.entity(payload, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    final ProduceResponse poffsetResponse
-        = response.readEntity(ProduceResponse.class);
-    assertEquals(offsetResponse, poffsetResponse.getOffsets());
-    TestUtils.assertTopicContains(zkConnect, topicName,
-                                  payload.getRecords(), (Integer) 0,
-                                  binaryDecoder, binaryDecoder, true);
+  protected void testProduceToPartition(List<? extends ProduceRecord<byte[], byte[]>> records,
+                                        List<PartitionOffset> offsetResponse) {
+    testProduceToPartition(topicName, 0, records, binaryDecoder, binaryDecoder, offsetResponse);
   }
 
   @Test
