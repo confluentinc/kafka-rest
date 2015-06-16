@@ -15,6 +15,7 @@
  **/
 package io.confluent.kafkarest.integration;
 
+import io.confluent.kafkarest.serializers.KafkaJsonSerializer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -67,6 +68,23 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
     Producer<byte[], byte[]> producer = new KafkaProducer<byte[], byte[]>(props);
     for (ProducerRecord<byte[], byte[]> rec : records) {
+      try {
+        producer.send(rec).get();
+      } catch (Exception e) {
+        fail("Consumer test couldn't produce input messages to Kafka");
+      }
+    }
+    producer.close();
+  }
+
+  protected void produceJsonMessages(List<ProducerRecord<Object, Object>> records) {
+    Properties props = new Properties();
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaJsonSerializer.class);
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaJsonSerializer.class);
+    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
+    Producer<Object, Object> producer = new KafkaProducer<Object, Object>(props);
+    for (ProducerRecord<Object, Object> rec : records) {
       try {
         producer.send(rec).get();
       } catch (Exception e) {

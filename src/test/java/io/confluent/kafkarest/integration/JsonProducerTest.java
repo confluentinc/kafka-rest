@@ -21,6 +21,7 @@ import io.confluent.kafkarest.entities.JsonProduceRecord;
 import io.confluent.kafkarest.entities.JsonTopicProduceRecord;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import kafka.serializer.Decoder;
+import org.apache.kafka.common.errors.SerializationException;
 import org.junit.Before;
 import org.junit.Test;
 import scala.collection.JavaConversions;
@@ -32,19 +33,19 @@ import java.util.Properties;
 public class JsonProducerTest extends AbstractProducerTest {
 
   private String topicName = "topic1";
-  private ObjectMapper objectMapper = new ObjectMapper();
+  private KafkaJsonDecoder decoder = new KafkaJsonDecoder();
 
-  private Decoder<Object> newJsonDecoder() {
-    return new Decoder<Object>() {
-      @Override
-      public Object fromBytes(byte[] bytes) {
-        try {
-          return objectMapper.readValue(bytes, Object.class);
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+  public class KafkaJsonDecoder implements Decoder<Object> {
+    private ObjectMapper objectMapper = new ObjectMapper();
+
+    @Override
+    public Object fromBytes(byte[] bytes) {
+      try {
+        return objectMapper.readValue(bytes, Object.class);
+      } catch (Exception e) {
+        throw new SerializationException(e);
       }
-    };
+    }
   }
 
   @Before
@@ -99,25 +100,25 @@ public class JsonProducerTest extends AbstractProducerTest {
 
   @Test
   public void testProduceToTopicKeyAndValue() {
-    testProduceToTopic(topicName, topicRecordsWithKeys, newJsonDecoder(), newJsonDecoder(),
+    testProduceToTopic(topicName, topicRecordsWithKeys, decoder, decoder,
         produceOffsets, true);
   }
 
   @Test
   public void testProduceToTopicNoKey() {
-    testProduceToTopic(topicName, topicRecordsWithoutKeys, newJsonDecoder(), newJsonDecoder(),
+    testProduceToTopic(topicName, topicRecordsWithoutKeys, decoder, decoder,
         produceOffsets, true);
   }
 
   @Test
   public void testProduceToPartitionKeyAndValue() {
-    testProduceToPartition(topicName, 0, partitionRecordsWithKeys, newJsonDecoder(), newJsonDecoder(),
+    testProduceToPartition(topicName, 0, partitionRecordsWithKeys, decoder, decoder,
         produceOffsets);
   }
 
   @Test
   public void testProduceToPartitionNoKey() {
-    testProduceToPartition(topicName, 0, partitionRecordsWithoutKeys, newJsonDecoder(), newJsonDecoder(),
+    testProduceToPartition(topicName, 0, partitionRecordsWithoutKeys, decoder, decoder,
         produceOffsets);
   }
 
