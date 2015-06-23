@@ -107,6 +107,18 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   }
 
   @Test
+  public void testConsumeWithAcceptAllHeader() {
+    // This test ensures that Accept: */* defaults to binary
+    String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
+        Versions.KAFKA_V1_JSON_BINARY);
+    produceBinaryMessages(recordsWithKeys);
+    consumeMessages(instanceUri, topicName, recordsWithKeys,
+        Versions.ANYTHING, Versions.KAFKA_V1_JSON_BINARY,
+        binaryConsumerRecordType, null);
+    commitOffsets(instanceUri);
+  }
+
+  @Test
   public void testConsumeInvalidTopic() {
     startConsumeMessages(groupName, "nonexistenttopic", null,
                          Versions.KAFKA_V1_JSON_BINARY, true);

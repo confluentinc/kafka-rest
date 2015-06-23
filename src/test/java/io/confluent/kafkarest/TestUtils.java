@@ -22,6 +22,7 @@ import org.apache.avro.generic.IndexedRecord;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -211,6 +212,8 @@ public class TestUtils {
     } else if (k instanceof Number || k instanceof Boolean || k instanceof Character
                || k instanceof String) {
       // Primitive types + strings are all safe for comparison
+      return k;
+    } else if (k instanceof Collection || k instanceof Map) {
       return k;
     } else {
       throw new RuntimeException(k.getClass().getName() + " is not handled by encodeComparable.");

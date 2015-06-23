@@ -40,6 +40,7 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.AvroProduceRecord;
 import io.confluent.kafkarest.entities.BinaryProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.JsonProduceRecord;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
@@ -88,8 +89,7 @@ public class PartitionsResource {
   @Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED,
       Versions.KAFKA_V1_JSON_WEIGHTED,
       Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
-      Versions.JSON_WEIGHTED,
-      Versions.ANYTHING})
+      Versions.JSON_WEIGHTED})
   public void consumeBinary(final @Suspended AsyncResponse asyncResponse,
                             final @PathParam("topic") String topicName,
                             final @PathParam("partition") int partitionId,
@@ -102,7 +102,7 @@ public class PartitionsResource {
   @GET
   @Path("/{partition}/messages")
   @PerformanceMetric("partition.consume-avro")
-  @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED})
+  @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW})
   public void consumeAvro(final @Suspended AsyncResponse asyncResponse,
                           final @PathParam("topic") String topicName,
                           final @PathParam("partition") int partitionId,
@@ -112,6 +112,18 @@ public class PartitionsResource {
     consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.AVRO);
   }
 
+  @GET
+  @Path("/{partition}/messages")
+  @PerformanceMetric("partition.consume-json")
+  @Produces({Versions.KAFKA_V1_JSON_JSON_WEIGHTED_LOW})
+  public void consumeJson(final @Suspended AsyncResponse asyncResponse,
+                          final @PathParam("topic") String topicName,
+                          final @PathParam("partition") int partitionId,
+                          final @QueryParam("offset") long offset,
+                          final @QueryParam("count") @DefaultValue("1") long count) {
+
+    consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.JSON);
+  }
 
   @POST
   @Path("/{partition}")
@@ -123,6 +135,17 @@ public class PartitionsResource {
                             final @PathParam("partition") int partition,
                             @Valid PartitionProduceRequest<BinaryProduceRecord> request) {
     produce(asyncResponse, topic, partition, EmbeddedFormat.BINARY, request);
+  }
+
+  @POST
+  @Path("/{partition}")
+  @PerformanceMetric("partition.produce-json")
+  @Consumes({Versions.KAFKA_V1_JSON_JSON})
+  public void produceJson(final @Suspended AsyncResponse asyncResponse,
+                          final @PathParam("topic") String topic,
+                          final @PathParam("partition") int partition,
+                          @Valid PartitionProduceRequest<JsonProduceRecord> request) {
+    produce(asyncResponse, topic, partition, EmbeddedFormat.JSON, request);
   }
 
   @POST

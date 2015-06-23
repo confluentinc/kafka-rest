@@ -15,24 +15,8 @@
  **/
 package io.confluent.kafkarest.integration;
 
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
-
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
-
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.TestUtils;
@@ -43,6 +27,21 @@ import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
+
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
@@ -67,6 +66,23 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
     Producer<byte[], byte[]> producer = new KafkaProducer<byte[], byte[]>(props);
     for (ProducerRecord<byte[], byte[]> rec : records) {
+      try {
+        producer.send(rec).get();
+      } catch (Exception e) {
+        fail("Consumer test couldn't produce input messages to Kafka");
+      }
+    }
+    producer.close();
+  }
+
+  protected void produceJsonMessages(List<ProducerRecord<Object, Object>> records) {
+    Properties props = new Properties();
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaJsonSerializer.class);
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaJsonSerializer.class);
+    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
+    Producer<Object, Object> producer = new KafkaProducer<Object, Object>(props);
+    for (ProducerRecord<Object, Object> rec : records) {
       try {
         producer.send(rec).get();
       } catch (Exception e) {
