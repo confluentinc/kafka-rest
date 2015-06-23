@@ -346,6 +346,58 @@ you produce messages by making ``POST`` requests to specific topics.
         ]
       }
 
+
+   **Example JSON request**:
+
+   .. sourcecode:: http
+
+      POST /topics/test HTTP/1.1
+      Host: kafkaproxy.example.com
+      Content-Type: application/vnd.kafka.json.v1+json
+      Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
+
+      {
+        "records": [
+          {
+            "key": "somekey",
+            "value": {"foo": "bar"}
+          },
+          {
+            "value": [ "foo", "bar" ],
+            "partition": 1
+          },
+          {
+            "value": 53.5
+          }
+        ]
+      }
+
+   **Example JSON response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/vnd.kafka.v1+json
+
+      {
+        "key_schema_id": null,
+        "value_schema_id": null,
+        "offsets": [
+          {
+            "partition": 2,
+            "offset": 100
+          },
+          {
+            "partition": 1,
+            "offset": 101
+          },
+          {
+            "partition": 2,
+            "offset": 102
+          }
+        ]
+      }
+
 Partitions
 ----------
 
@@ -509,7 +561,6 @@ It also allows you to consume and produce messages to single partition using ``G
       * Error code 50301 -- No SimpleConsumer is available at the time in the pool. The request can be retried.
         You can increase the pool size or the pool timeout to avoid this error in the future.
 
-
    **Example binary request**:
 
    .. sourcecode:: http
@@ -567,7 +618,35 @@ It also allows you to consume and produce messages to single partition using ``G
         }
       ]
 
+   **Example JSON request**:
 
+   .. sourcecode:: http
+
+      GET /topic/test/partitions/1/messages?offset=10&count=2 HTTP/1.1
+      Host: proxy-instance.kafkaproxy.example.com
+      Accept: application/vnd.kafka.json.v1+json
+
+   **Example JSON response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/vnd.kafka.json.v1+json
+
+      [
+        {
+          "key": "somekey",
+          "value": {"foo":"bar"},
+          "partition": 1,
+          "offset": 10,
+        },
+        {
+          "key": "somekey",
+          "value": ["foo", "bar"],
+          "partition": 1,
+          "offset": 11,
+        }
+      ]
 
 .. http:post:: /topics/(string:topic_name)/partitions/(int:partition_id)
 
