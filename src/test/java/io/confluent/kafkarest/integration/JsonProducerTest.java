@@ -26,8 +26,11 @@ import org.junit.Before;
 import org.junit.Test;
 import scala.collection.JavaConversions;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 public class JsonProducerTest extends AbstractProducerTest {
@@ -64,38 +67,68 @@ public class JsonProducerTest extends AbstractProducerTest {
     return Versions.KAFKA_V1_JSON_JSON;
   }
 
+  private Map<String, Object> exampleMapValue() {
+    Map<String, Object> res = new HashMap<String, Object>();
+    res.put("foo", "bar");
+    res.put("bar", null);
+    res.put("baz", 53.4);
+    res.put("taz", 45);
+    return res;
+  }
+
+  private List<Object> exampleListValue() {
+    List<Object> res = new ArrayList<Object>();
+    res.add("foo");
+    res.add(null);
+    res.add(53.4);
+    res.add(45);
+    res.add(exampleMapValue());
+    return res;
+  }
+
   private final List<JsonTopicProduceRecord> topicRecordsWithKeys = Arrays.asList(
       new JsonTopicProduceRecord("key", "value", 0),
-      new JsonTopicProduceRecord("key", "value2", 0),
-      new JsonTopicProduceRecord("key", "value3", 0),
-      new JsonTopicProduceRecord("key", "value4", 0)
+      new JsonTopicProduceRecord("key", null, 0),
+      new JsonTopicProduceRecord("key", 53.4, 0),
+      new JsonTopicProduceRecord("key", 45, 0),
+      new JsonTopicProduceRecord("key", exampleMapValue(), 0),
+      new JsonTopicProduceRecord("key", exampleListValue(), 0)
   );
 
   private final List<JsonTopicProduceRecord> topicRecordsWithoutKeys = Arrays.asList(
       new JsonTopicProduceRecord("value", 0),
-      new JsonTopicProduceRecord("value2", 0),
-      new JsonTopicProduceRecord("value3", 0),
-      new JsonTopicProduceRecord("value4", 0)
+      new JsonTopicProduceRecord(null, 0),
+      new JsonTopicProduceRecord(53.4, 0),
+      new JsonTopicProduceRecord(45, 0),
+      new JsonTopicProduceRecord(exampleMapValue(), 0),
+      new JsonTopicProduceRecord(exampleListValue(), 0)
   );
 
   private final List<JsonProduceRecord> partitionRecordsWithKeys = Arrays.asList(
       new JsonProduceRecord("key", "value"),
-      new JsonProduceRecord("key", "value2"),
-      new JsonProduceRecord("key", "value3"),
-      new JsonProduceRecord("key", "value4")
+      new JsonProduceRecord("key", null),
+      new JsonProduceRecord("key", 53.4),
+      new JsonProduceRecord("key", 45),
+      new JsonProduceRecord("key", exampleMapValue()),
+      new JsonProduceRecord("key", exampleListValue())
   );
 
   private final List<JsonProduceRecord> partitionRecordsWithoutKeys = Arrays.asList(
       new JsonProduceRecord("value"),
-      new JsonProduceRecord("value2"),
-      new JsonProduceRecord("value3"),
-      new JsonProduceRecord("value4")
+      new JsonProduceRecord(null),
+      new JsonProduceRecord(53.4),
+      new JsonProduceRecord(45),
+      new JsonProduceRecord(exampleMapValue()),
+      new JsonProduceRecord(exampleListValue())
   );
+
   private final List<PartitionOffset> produceOffsets = Arrays.asList(
       new PartitionOffset(0, 0L, null, null),
       new PartitionOffset(0, 1L, null, null),
       new PartitionOffset(0, 2L, null, null),
-      new PartitionOffset(0, 3L, null, null)
+      new PartitionOffset(0, 3L, null, null),
+      new PartitionOffset(0, 4L, null, null),
+      new PartitionOffset(0, 5L, null, null)
   );
 
   @Test

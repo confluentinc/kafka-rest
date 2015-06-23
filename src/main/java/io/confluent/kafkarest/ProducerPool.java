@@ -16,10 +16,10 @@
 package io.confluent.kafkarest;
 
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.SchemaHolder;
-import io.confluent.kafkarest.serializers.KafkaJsonSerializer;
 import kafka.cluster.Broker;
 import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.ZkClient;

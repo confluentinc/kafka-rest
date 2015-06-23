@@ -1,12 +1,12 @@
 /**
  * Copyright 2015 Confluent Inc.
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,10 @@
  **/
 package io.confluent.kafkarest.integration;
 
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.JsonConsumerRecord;
+import jersey.repackaged.com.google.common.collect.ImmutableMap;
 import kafka.utils.TestUtils;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.Before;
@@ -25,6 +26,7 @@ import org.junit.Test;
 import scala.collection.JavaConversions;
 
 import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,10 +34,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-public class ConsumerJsonTest extends AbstractConsumerTest {
+import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
+
+public class SimpleConsumerJsonTest extends AbstractConsumerTest {
 
   private static final String topicName = "topic1";
-  private static final String groupName = "testconsumergroup";
 
   private Map<String, Object> exampleMapValue() {
     Map<String, Object> res = new HashMap<String, Object>();
@@ -81,32 +84,98 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    final int numPartitions = 3;
+    final int numPartitions = 1;
     final int replicationFactor = 1;
     TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
         JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
   }
 
   @Test
-  public void testConsumeWithKeys() {
-    String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.JSON,
-        Versions.KAFKA_V1_JSON_JSON);
-    produceJsonMessages(recordsWithKeys);
-    consumeMessages(instanceUri, topicName, recordsWithKeys,
-        Versions.KAFKA_V1_JSON_JSON, Versions.KAFKA_V1_JSON_JSON,
-        jsonConsumerRecordType, null);
-    commitOffsets(instanceUri);
+  public void testConsumeOnlyValuesByOffset() {
+    produceJsonMessages(recordsOnlyValues);
+
+    simpleConsumeMessages(
+        topicName,
+        0,
+        null, // No "count" parameter in the query
+        recordsOnlyValues.subList(0, 1), // We expect only the first record in the response
+        Versions.KAFKA_V1_JSON_JSON,
+        Versions.KAFKA_V1_JSON_JSON,
+        jsonConsumerRecordType,
+        null
+    );
   }
 
   @Test
-  public void testConsumeOnlyValues() {
-    String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.JSON,
-        Versions.KAFKA_V1_JSON_JSON);
+  public void testConsumeOnlyValuesByOffsetAndCount() {
     produceJsonMessages(recordsOnlyValues);
-    consumeMessages(instanceUri, topicName, recordsOnlyValues,
-        Versions.KAFKA_V1_JSON_JSON, Versions.KAFKA_V1_JSON_JSON,
-        jsonConsumerRecordType, null);
-    commitOffsets(instanceUri);
+
+    simpleConsumeMessages(
+        topicName,
+        0,
+        recordsOnlyValues.size(),
+        recordsOnlyValues,
+        Versions.KAFKA_V1_JSON_JSON,
+        Versions.KAFKA_V1_JSON_JSON,
+        jsonConsumerRecordType,
+        null
+    );
+  }
+
+  @Test
+  public void testConsumeWithKeysByOffsetAndCount() {
+    produceJsonMessages(recordsWithKeys);
+
+    simpleConsumeMessages(
+        topicName,
+        0,
+        recordsWithKeys.size(),
+        recordsWithKeys,
+        Versions.KAFKA_V1_JSON_JSON,
+        Versions.KAFKA_V1_JSON_JSON,
+        jsonConsumerRecordType,
+        null
+    );
+  }
+
+  @Test(timeout = 1000)
+  public void testConsumeMoreMessagesThanAvailable() {
+    produceJsonMessages(recordsOnlyValues);
+
+    simpleConsumeMessages(
+        topicName,
+        0,
+        recordsOnlyValues.size()+1, // Ask for more than there is
+        recordsOnlyValues,
+        Versions.KAFKA_V1_JSON_JSON,
+        Versions.KAFKA_V1_JSON_JSON,
+        jsonConsumerRecordType,
+        null
+    );
+  }
+
+  @Test
+  public void testConsumeInvalidTopic() {
+
+    Response response = request("/topics/nonexistenttopic/partitions/0/messages",
+        ImmutableMap.of("offset", "0")).accept(Versions.KAFKA_V1_JSON_JSON).get();
+
+    assertErrorResponse(Response.Status.NOT_FOUND, response,
+        Errors.TOPIC_NOT_FOUND_ERROR_CODE,
+        Errors.TOPIC_NOT_FOUND_MESSAGE,
+        Versions.KAFKA_V1_JSON_JSON);
+  }
+
+  @Test
+  public void testConsumeInvalidPartition() {
+
+    Response response = request("/topics/topic1/partitions/1/messages",
+        ImmutableMap.of("offset", "0")).accept(Versions.KAFKA_V1_JSON_JSON).get();
+
+    assertErrorResponse(Response.Status.NOT_FOUND, response,
+        Errors.PARTITION_NOT_FOUND_ERROR_CODE,
+        Errors.PARTITION_NOT_FOUND_MESSAGE,
+        Versions.KAFKA_V1_JSON_JSON);
   }
 
 }

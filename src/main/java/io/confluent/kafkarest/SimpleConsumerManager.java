@@ -16,11 +16,13 @@
 package io.confluent.kafkarest;
 
 import io.confluent.kafka.serializers.KafkaAvroDecoder;
+import io.confluent.kafka.serializers.KafkaJsonDecoder;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.entities.AvroConsumerRecord;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.JsonConsumerRecord;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 import kafka.api.PartitionFetchInfo;
@@ -38,7 +40,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -60,6 +66,7 @@ public class SimpleConsumerManager {
 
   private final Decoder<Object> avroDecoder;
   private final Decoder<byte[]> binaryDecoder;
+  private final Decoder<Object> jsonDecoder;
 
   public SimpleConsumerManager(final KafkaRestConfig config,
                                final MetadataObserver mdObserver,
@@ -81,6 +88,8 @@ public class SimpleConsumerManager {
     avroDecoder = new KafkaAvroDecoder(new VerifiableProperties(props));
 
     binaryDecoder = new DefaultDecoder(new VerifiableProperties());
+
+    jsonDecoder = new KafkaJsonDecoder<Object>(new VerifiableProperties());
   }
 
   private SimpleConsumerPool createSimpleConsumerPool() {
@@ -186,6 +195,18 @@ public class SimpleConsumerManager {
         partitionId, messageAndOffset.offset());
   }
 
+
+  private JsonConsumerRecord createJsonConsumerRecord(final MessageAndOffset messageAndOffset,
+                                                      final String topicName,
+                                                      final int partitionId) {
+    final MessageAndMetadata<Object, Object> messageAndMetadata =
+        new MessageAndMetadata<Object, Object>(topicName, partitionId,
+            messageAndOffset.message(), messageAndOffset.offset(),
+            jsonDecoder, jsonDecoder);
+    return new JsonConsumerRecord(messageAndMetadata.key(), messageAndMetadata.message(),
+        partitionId, messageAndOffset.offset());
+  }
+
   private ConsumerRecord createConsumerRecord(final MessageAndOffset messageAndOffset,
                                               final String topicName,
                                               final int partitionId,
@@ -197,6 +218,9 @@ public class SimpleConsumerManager {
 
       case AVRO:
         return createAvroConsumerRecord(messageAndOffset, topicName, partitionId);
+
+      case JSON:
+        return createJsonConsumerRecord(messageAndOffset, topicName, partitionId);
 
       default:
         throw new RestServerErrorException("Invalid embedded format for new consumer.",
