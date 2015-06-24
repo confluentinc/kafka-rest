@@ -16,7 +16,8 @@ Quickstart
 The following assumes you have Kafka, the schema registry, and an instance of
 the REST Proxy running using the default settings and some topics already created.
 
-### Inspect Topic Metadata
+Inspect Topic Metadata
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. sourcecode:: bash
 
@@ -32,7 +33,8 @@ the REST Proxy running using the default settings and some topics already create
    $ curl "http://localhost:8082/topics/test/partitions
      [{"partition":0,"leader":1002,"replicas":[{"broker":1002,"leader":true,"in_sync":true}]}]
 
-### Produce and Consume JSON Messages
+Produce and Consume JSON Messages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. sourcecode:: bash
 
@@ -56,7 +58,8 @@ the REST Proxy running using the default settings and some topics already create
          http://localhost:8082/consumers/my_json_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6
      # No content in response
 
-### Produce and Consume Binary Messages
+Produce and Consume Binary Messages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. sourcecode:: bash
 
@@ -80,7 +83,8 @@ the REST Proxy running using the default settings and some topics already create
          http://localhost:8082/consumers/my_binary_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6
      # No content in response
 
-### Produce and Consume Avro Messages
+Produce and Consume Avro Messages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. sourcecode:: bash
 
