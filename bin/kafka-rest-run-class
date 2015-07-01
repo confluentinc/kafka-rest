@@ -32,8 +32,8 @@ if [ "x$KAFKAREST_LOG4J_OPTS" = "x" ]; then
   # installed
   if [ -e "$base_dir/config/log4j.properties" ]; then # Dev environment
     KAFKAREST_LOG4J_OPTS="-Dlog4j.configuration=file:$base_dir/config/log4j.properties"
-  elif [ -e "$base_dir/../etc/kafka-rest/log4j.properties" ]; then # Simple zip file layout
-    KAFKAREST_LOG4J_OPTS="-Dlog4j.configuration=file:$base_dir/../etc/kafka-rest/log4j.properties"
+  elif [ -e "$base_dir/etc/kafka-rest/log4j.properties" ]; then # Simple zip file layout
+    KAFKAREST_LOG4J_OPTS="-Dlog4j.configuration=file:$base_dir/etc/kafka-rest/log4j.properties"
   elif [ -e "/etc/kafka-rest/log4j.properties" ]; then # Normal install layout
     KAFKAREST_LOG4J_OPTS="-Dlog4j.configuration=file:/etc/kafka-rest/log4j.properties"
   fi
@@ -71,6 +71,8 @@ if [ -z "$KAFKAREST_JVM_PERFORMANCE_OPTS" ]; then
   KAFKAREST_JVM_PERFORMANCE_OPTS="-server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:+CMSScavengeBeforeRemark -XX:+DisableExplicitGC -Djava.awt.headless=true"
 fi
 
+MAIN=$1
+shift
 
 while [ $# -gt 0 ]; do
   COMMAND=$1
@@ -96,7 +98,7 @@ fi
 
 # Launch mode
 if [ "x$DAEMON_MODE" = "xtrue" ]; then
-  nohup $JAVA $KAFKAREST_HEAP_OPTS $KAFKAREST_JVM_PERFORMANCE_OPTS $KAFKAREST_JMX_OPTS $KAFKAREST_LOG4J_OPTS -cp $CLASSPATH $KAFKAREST_OPTS "$@" 2>&1 < /dev/null &
+  nohup $JAVA $KAFKAREST_HEAP_OPTS $KAFKAREST_JVM_PERFORMANCE_OPTS $KAFKAREST_JMX_OPTS $KAFKAREST_LOG4J_OPTS -cp $CLASSPATH $KAFKAREST_OPTS "$MAIN" "$@" 2>&1 < /dev/null &
 else
-  exec $JAVA $KAFKAREST_HEAP_OPTS $KAFKAREST_JVM_PERFORMANCE_OPTS $KAFKAREST_JMX_OPTS $KAFKAREST_LOG4J_OPTS -cp $CLASSPATH $KAFKAREST_OPTS "$@"
+  exec $JAVA $KAFKAREST_HEAP_OPTS $KAFKAREST_JVM_PERFORMANCE_OPTS $KAFKAREST_JMX_OPTS $KAFKAREST_LOG4J_OPTS -cp $CLASSPATH $KAFKAREST_OPTS "$MAIN" "$@"
 fi
