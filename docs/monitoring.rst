@@ -24,8 +24,9 @@ Global Metrics
   ``connections-active``
     Total number of active TCP connections.
 
-  ``connections-accepted-rate``
-    The average rate per second of accepted TCP connections.
+  ``connections-accepted-rate`` (deprecated since 2.0)
+    * In 1.x: The average rate per second of accepted TCP connections.
+    * In 2.x: Same as ``connections-opened-rate``.
 
   ``connections-opened-rate``
     The average rate per second of opened TCP connections.
@@ -108,5 +109,3 @@ endpoint name ``brokers.list`` with the metric name ``request-rate`` to get
                                  ``Content-Type: application/vnd.kafka.binary.v1+json`` header
   ``topics.list``                ``GET /topics``
   ============================== ===================================================================
-
-
