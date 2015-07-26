@@ -1,0 +1,12 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/topics",
+    "parameters": {
+    },
+    "headers": {
+      "Accept": "application/json; qs=0.5"
+    },
+    "body": null
+  }
+}

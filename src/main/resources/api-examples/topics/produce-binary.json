@@ -1,0 +1,14 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/topics/{topic}",
+    "parameters": {
+      "topic": "test-topic"
+    },
+    "headers": {
+      "Content-Type": "application/vnd.kafka.binary.v1+json",
+      "Accept": "application/json; qs=0.5"
+    },
+    "body": {"records":[{"value":"S2Fma2E="}]}
+  }
+}

@@ -133,6 +133,8 @@ public class KafkaRestConfig extends RestConfig {
 
   private static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka.rest";
 
+  private static final String SWAGGER_UI_INDEX_HTML_PATH_DEFAULT_OVERRIDE = "/kafka-rest-swagger-ui-index.html";
+
   private static final ConfigDef config;
 
   static {
@@ -147,6 +149,8 @@ public class KafkaRestConfig extends RestConfig {
                         RESPONSE_MEDIATYPE_DEFAULT_CONFIG_DOC)
         .defineOverride(METRICS_JMX_PREFIX_CONFIG, Type.STRING,
                         METRICS_JMX_PREFIX_DEFAULT_OVERRIDE, Importance.LOW, METRICS_JMX_PREFIX_DOC)
+        .defineOverride(SWAGGER_UI_INDEX_HTML_PATH_CONFIG, Type.STRING,
+        		SWAGGER_UI_INDEX_HTML_PATH_DEFAULT_OVERRIDE, Importance.LOW, SWAGGER_UI_INDEX_HTML_PATH_DOC)
         .define(ID_CONFIG, Type.STRING, ID_DEFAULT, Importance.HIGH, ID_CONFIG_DOC)
         .define(HOST_NAME_CONFIG, Type.STRING, HOST_NAME_DEFAULT, Importance.MEDIUM, HOST_NAME_DOC)
         .define(ZOOKEEPER_CONNECT_CONFIG, Type.STRING, ZOOKEEPER_CONNECT_DEFAULT,
