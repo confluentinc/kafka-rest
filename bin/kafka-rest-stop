@@ -14,4 +14,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-exec $(dirname $0)/kafka-rest-stop-service 'kafkarest\.Main'
+# When stopping, search for both KafkaRestMain class and the now deprecated Main class.
+exec $(dirname $0)/kafka-rest-stop-service '(kafkarest\.Main)|(kafkarest\.KafkaRestMain)'

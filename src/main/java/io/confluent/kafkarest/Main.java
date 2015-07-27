@@ -15,34 +15,18 @@
  **/
 package io.confluent.kafkarest;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 
-import io.confluent.rest.RestConfigException;
-
+/**
+ * @deprecated
+ * This is replaced by {@link io.confluent.kafkarest.KafkaRestMain}
+ * Keep this class in place for compatibility.
+ *
+ * https://github.com/confluentinc/kafka-rest/issues/94
+ */
 public class Main {
-
-  private static final Logger log = LoggerFactory.getLogger(Main.class);
-
-  /**
-   * Starts an embedded Jetty server running the REST server.
-   */
   public static void main(String[] args) throws IOException {
-    try {
-      KafkaRestConfig config = new KafkaRestConfig((args.length > 0 ? args[0] : null));
-      KafkaRestApplication app = new KafkaRestApplication(config);
-      app.start();
-      log.info("Server started, listening for requests...");
-      app.join();
-    } catch (RestConfigException e) {
-      log.error("Server configuration failed: ", e);
-      System.exit(1);
-    } catch (Exception e) {
-      log.error("Server died unexpectedly: " + e);
-      System.exit(1);
-    }
+    KafkaRestMain.main(args);
   }
 }
 
