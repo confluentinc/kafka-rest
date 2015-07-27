@@ -94,7 +94,7 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
         // if there isn't a schema. Validation will have already checked that all the keys/values
         // were NullNodes.
         Object key = (keySchema != null ? AvroConverter.toAvro(record.getKey(), keySchema) : null);
-        Object value = (valueSchema != null
+        Object value = ((valueSchema != null && !record.getValue().isNull())
                         ? AvroConverter.toAvro(record.getValue(), valueSchema) : null);
         Integer recordPartition = partition;
         if (recordPartition == null) {
