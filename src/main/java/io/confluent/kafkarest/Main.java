@@ -24,6 +24,7 @@ import java.io.IOException;
  *
  * https://github.com/confluentinc/kafka-rest/issues/94
  */
+@Deprecated
 public class Main {
   public static void main(String[] args) throws IOException {
     KafkaRestMain.main(args);
