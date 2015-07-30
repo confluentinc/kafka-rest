@@ -139,7 +139,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>io.confluent.kafkarest.Main</mainClass>
+                    <mainClass>io.confluent.kafkarest.KafkaRestMain</mainClass>
                 </configuration>
             </plugin>
             <plugin>
@@ -152,7 +152,7 @@
                     </descriptors>
                     <archive>
                         <manifest>
-                            <mainClass>io.confluent.kafkarest.Main</mainClass>
+                            <mainClass>io.confluent.kafkarest.KafkaRestMain</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

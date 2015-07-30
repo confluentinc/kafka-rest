@@ -230,7 +230,7 @@ directly yourself:
 
 .. sourcecode:: bash
 
-   $ java io.confluent.kafkarest.Main [server.properties]
+   $ java io.confluent.kafkarest.KafkaRestMain [server.properties]
 
 where ``server.properties`` contains configuration settings as specified by the
 ``KafkaRestConfiguration`` class.
