@@ -24,19 +24,24 @@ import javax.ws.rs.core.UriInfo;
 public class UriUtils {
 
   public static UriBuilder absoluteUriBuilder(KafkaRestConfig config, UriInfo uriInfo) {
-    String hostname = config.getString(KafkaRestConfig.HOST_NAME_CONFIG);
-    UriBuilder builder = uriInfo.getAbsolutePathBuilder();
-    if (hostname.length() > 0) {
-      builder.host(hostname);
-      // Resetting the hostname removes the scheme and port for some reason, so they may need to
-      // be reset.
-      URI origAbsoluteUri = uriInfo.getAbsolutePath();
-      builder.scheme(origAbsoluteUri.getScheme());
-      // Only reset the port if it was set in the original URI
-      if (origAbsoluteUri.getPort() != -1) {
-        builder.port(config.getInt(KafkaRestConfig.PORT_CONFIG));
+    String baseURI = config.getString(KafkaRestConfig.BASE_URI_CONFIG);
+    if (baseURI.length() > 0) {
+      return UriBuilder.fromUri(baseURI);
+    } else {
+      String hostname = config.getString(KafkaRestConfig.HOST_NAME_CONFIG);
+      UriBuilder builder = uriInfo.getAbsolutePathBuilder();
+      if (hostname.length() > 0) {
+        builder.host(hostname);
+        // Resetting the hostname removes the scheme and port for some reason, so they may need to
+        // be reset.
+        URI origAbsoluteUri = uriInfo.getAbsolutePath();
+        builder.scheme(origAbsoluteUri.getScheme());
+        // Only reset the port if it was set in the original URI
+        if (origAbsoluteUri.getPort() != -1) {
+          builder.port(config.getInt(KafkaRestConfig.PORT_CONFIG));
+        }
       }
+      return builder;
     }
-    return builder;
   }
 }

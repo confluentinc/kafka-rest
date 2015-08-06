@@ -79,4 +79,12 @@ public class UriUtilsTest {
     EasyMock.verify(uriInfo);
   }
 
+  @Test
+  public void testAbsoluteURIBuilderWithBaseURI() throws RestConfigException {
+    Properties props = new Properties();
+    props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
+    props.put(KafkaRestConfig.BASE_URI_CONFIG, "http://foo.com");
+    KafkaRestConfig config = new KafkaRestConfig(props);
+    assertEquals("http://foo.com", UriUtils.absoluteUriBuilder(config, uriInfo).build().toString());
+  }
 }
