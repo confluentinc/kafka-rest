@@ -85,6 +85,10 @@ public class UriUtilsTest {
     props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
     props.put(KafkaRestConfig.BASE_URI_CONFIG, "http://foo.com");
     KafkaRestConfig config = new KafkaRestConfig(props);
-    assertEquals("http://foo.com", UriUtils.absoluteUriBuilder(config, uriInfo).build().toString());
+    EasyMock.expect(uriInfo.getPath()).andReturn("consumers/my_random_consumer");
+    EasyMock.replay(uriInfo);
+    // HOST_NAME_CONFIG should be ignored since BASE_URI_CONFIG is not empty
+    assertEquals("http://foo.com/consumers/my_random_consumer", UriUtils.absoluteUriBuilder(config, uriInfo).build().toString());
+    EasyMock.verify(uriInfo);
   }
 }

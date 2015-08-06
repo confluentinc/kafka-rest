@@ -26,7 +26,7 @@ public class UriUtils {
   public static UriBuilder absoluteUriBuilder(KafkaRestConfig config, UriInfo uriInfo) {
     String baseURI = config.getString(KafkaRestConfig.BASE_URI_CONFIG);
     if (baseURI.length() > 0) {
-      return UriBuilder.fromUri(baseURI);
+      return UriBuilder.fromUri(baseURI).path(uriInfo.getPath());
     } else {
       String hostname = config.getString(KafkaRestConfig.HOST_NAME_CONFIG);
       UriBuilder builder = uriInfo.getAbsolutePathBuilder();
