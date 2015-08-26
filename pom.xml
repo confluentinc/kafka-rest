@@ -7,7 +7,7 @@
     <groupId>io.confluent</groupId>
     <artifactId>kafka-rest</artifactId>
     <packaging>jar</packaging>
-    <version>1.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <name>kafka-rest</name>
     <organization>
         <name>Confluent, Inc.</name>
@@ -36,7 +36,7 @@
     </scm>
 
     <properties>
-        <confluent.version>1.0</confluent.version>
+        <confluent.version>1.0.1-SNAPSHOT</confluent.version>
         <jersey.version>2.6</jersey.version>
         <kafka.version>0.8.2.0-cp</kafka.version>
         <kafka.scala.version>2.10</kafka.scala.version>
