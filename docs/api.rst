@@ -201,7 +201,11 @@ you produce messages by making ``POST`` requests to specific topics.
 .. http:post:: /topics/(string:topic_name)
 
    Produce messages to a topic, optionally specifying keys or partitions for the
-   messages. For the ``avro`` embedded format, you must provide information
+   messages. If no partition is provided, one will be chosen based on the hash of
+   the key. If no key is provided, the partition will be chosen for each message
+   in a round-robin fashion.
+
+   For the ``avro`` embedded format, you must provide information
    about schemas and the REST proxy must be configured with the URL to access
    the schema registry (``schema.registry.connect``). Schemas may be provided as
    the full schema encoded as a string, or, after the initial request may be
