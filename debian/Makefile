@@ -61,6 +61,7 @@ export VERSION
 export DESTDIR
 export PREFIX
 export SYSCONFDIR
+export SKIP_TESTS
 
 all: install
 
