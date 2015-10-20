@@ -27,6 +27,8 @@ import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 import kafka.api.PartitionFetchInfo;
 import kafka.cluster.Broker;
+import kafka.cluster.BrokerEndPoint;
+import kafka.common.BrokerEndPointNotAvailableException;
 import kafka.common.TopicAndPartition;
 import kafka.javaapi.FetchRequest;
 import kafka.javaapi.FetchResponse;
@@ -36,6 +38,8 @@ import kafka.message.MessageAndOffset;
 import kafka.serializer.Decoder;
 import kafka.serializer.DefaultDecoder;
 import kafka.utils.VerifiableProperties;
+
+import org.apache.kafka.common.protocol.SecurityProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,7 +108,13 @@ public class SimpleConsumerManager {
       pool = simpleConsumersPools.get(broker);
     }
 
-    return pool.get(broker.host(), broker.port());
+    // TODO: Add support for SSL when simple consumer is changed to use new consumer
+    try {
+      BrokerEndPoint ep = broker.getBrokerEndPoint(SecurityProtocol.PLAINTEXT);
+      return pool.get(ep.host(), ep.port());
+    } catch (BrokerEndPointNotAvailableException e) {
+      throw Errors.noSslSupportException();
+    }
   }
 
   public void consume(final String topicName,

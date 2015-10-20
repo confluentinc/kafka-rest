@@ -164,6 +164,15 @@ public class Errors {
                                         KAFKA_RETRIABLE_ERROR_ERROR_CODE);
   }
 
+  public final static String NO_SSL_SUPPORT_MESSAGE =
+      "Only SSL endpoints were found for the broker, but SSL is not currently supported.";
+  public final static int NO_SSL_SUPPORT_ERROR_CODE = 50101;
+
+  public static RestServerErrorException noSslSupportException() {
+    return new RestServerErrorException(NO_SSL_SUPPORT_MESSAGE,
+                                        NO_SSL_SUPPORT_ERROR_CODE);
+  }
+
   public final static String NO_SIMPLE_CONSUMER_AVAILABLE_ERROR_MESSAGE =
       "No SimpleConsumer is available at the time in the pool. The request can be retried. " +
       "You can increase the pool size or the pool timeout to avoid this error in the future.";

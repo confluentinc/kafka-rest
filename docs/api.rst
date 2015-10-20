@@ -89,6 +89,8 @@ per-request basis.
           * Error code 50002 -- Kafka error.
           * Error code 50003 -- Retriable Kafka error. Although the operation failed, it's
             possible that retrying the request will be successful.
+          * Error code 50101 -- Only SSL endpoints were found for the specified broker, but
+            SSL is not supported for the invoked API yet.
 
 Topics
 ------

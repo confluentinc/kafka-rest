@@ -126,7 +126,7 @@ public class AvroProducerTest extends ClusterTestHarness {
     super.setUp();
     final int numPartitions = 3;
     final int replicationFactor = 1;
-    kafka.utils.TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
+    kafka.utils.TestUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor,
                                       JavaConversions.asScalaIterable(this.servers).toSeq(),
                                       new Properties());
 
