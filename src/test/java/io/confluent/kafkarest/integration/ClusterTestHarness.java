@@ -16,6 +16,8 @@
 package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.*;
+
+import org.apache.kafka.common.protocol.SecurityProtocol;
 import org.apache.kafka.common.security.JaasUtils;
 import org.eclipse.jetty.server.Server;
 import org.junit.After;
@@ -137,8 +139,12 @@ public abstract class ClusterTestHarness {
     configs = new Vector<>();
     servers = new Vector<>();
     for (int i = 0; i < numBrokers; i++) {
-      final Option<File> noFile = scala.Option.apply(null);
-      Properties props = TestUtils.createBrokerConfig(i, zkConnect, false, false, TestUtils.RandomPort(), false, TestUtils.RandomPort(), noFile);
+      final Option<java.io.File> noFile = scala.Option.apply(null);
+      final Option<SecurityProtocol> noInterBrokerSecurityProtocol = scala.Option.apply(null);
+      Properties props = TestUtils.createBrokerConfig(
+          i, zkConnect, false, false, TestUtils.RandomPort(), noInterBrokerSecurityProtocol,
+          noFile, true, false, TestUtils.RandomPort(), false, TestUtils.RandomPort(), false,
+          TestUtils.RandomPort());
       props.setProperty("auto.create.topics.enable", "false");
       // We *must* override this to use the port we allocated (Kafka currently allocates one port
       // that it always uses for ZK
@@ -154,7 +160,8 @@ public abstract class ClusterTestHarness {
     }
 
     brokerList =
-        TestUtils.getBrokerListStrFromServers(JavaConversions.asScalaIterable(servers).toSeq());
+        TestUtils.getBrokerListStrFromServers(JavaConversions.asScalaIterable(servers).toSeq(),
+                                              SecurityProtocol.PLAINTEXT);
 
     if (withSchemaRegistry) {
       int schemaRegPort = choosePort();
