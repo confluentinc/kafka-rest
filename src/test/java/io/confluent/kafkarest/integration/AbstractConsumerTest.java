@@ -62,7 +62,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     Properties props = new Properties();
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
-    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
     Producer<byte[], byte[]> producer = new KafkaProducer<byte[], byte[]>(props);
     for (ProducerRecord<byte[], byte[]> rec : records) {
@@ -79,7 +79,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     Properties props = new Properties();
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaJsonSerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaJsonSerializer.class);
-    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
     Producer<Object, Object> producer = new KafkaProducer<Object, Object>(props);
     for (ProducerRecord<Object, Object> rec : records) {
@@ -101,7 +101,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     avroValueSerializer.configure(serProps, false);
 
     Properties props = new Properties();
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     props.put(ProducerConfig.ACKS_CONFIG, "all");
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);

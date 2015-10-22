@@ -77,7 +77,7 @@ public class AbstractProducerTest extends ClusterTestHarness {
   }
 
 
-  protected <K, V> void testProduceToTopicFails(String topicName,
+  protected void testProduceToTopicFails(String topicName,
                                                 List<? extends TopicProduceRecord> records) {
     TopicProduceRequest payload = new TopicProduceRequest();
     payload.setRecords(records);

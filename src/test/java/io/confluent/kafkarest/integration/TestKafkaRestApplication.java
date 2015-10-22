@@ -17,7 +17,7 @@
 package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.*;
-import org.I0Itec.zkclient.ZkClient;
+import kafka.utils.ZkUtils;
 
 import javax.ws.rs.core.Configurable;
 
@@ -27,19 +27,19 @@ import javax.ws.rs.core.Configurable;
  */
 public class TestKafkaRestApplication extends KafkaRestApplication {
 
-  ZkClient zkClientInjected;
+  ZkUtils zkUtilsInjected;
   MetadataObserver mdObserverInjected;
   ProducerPool producerPoolInjected;
   ConsumerManager consumerManagerInjected;
   SimpleConsumerFactory simpleConsumerFactoryInjected;
   SimpleConsumerManager simpleConsumerManagerInjected;
 
-  public TestKafkaRestApplication(KafkaRestConfig config, ZkClient zkClient,
+  public TestKafkaRestApplication(KafkaRestConfig config, ZkUtils zkUtils,
                                   MetadataObserver mdObserver, ProducerPool producerPool,
                                   ConsumerManager consumerManager,
                                   SimpleConsumerFactory simpleConsumerFactory, SimpleConsumerManager simpleConsumerManager) {
     super(config);
-    zkClientInjected = zkClient;
+    zkUtilsInjected = zkUtils;
     mdObserverInjected = mdObserver;
     producerPoolInjected = producerPool;
     consumerManagerInjected = consumerManager;
@@ -49,7 +49,7 @@ public class TestKafkaRestApplication extends KafkaRestApplication {
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-    setupInjectedResources(config, appConfig, zkClientInjected, mdObserverInjected,
+    setupInjectedResources(config, appConfig, zkUtilsInjected, mdObserverInjected,
                            producerPoolInjected, consumerManagerInjected,
                            simpleConsumerFactoryInjected, simpleConsumerManagerInjected);
   }

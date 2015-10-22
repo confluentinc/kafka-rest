@@ -25,9 +25,12 @@ import java.util.Vector;
 import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import kafka.common.MessageStreamsExistException;
+import kafka.common.OffsetAndMetadata;
+import kafka.common.TopicAndPartition;
 import kafka.consumer.KafkaStream;
 import kafka.consumer.TopicFilter;
 import kafka.javaapi.consumer.ConsumerConnector;
+import kafka.javaapi.consumer.ConsumerRebalanceListener;
 import kafka.serializer.Decoder;
 import kafka.serializer.DefaultDecoder;
 import kafka.utils.VerifiableProperties;
@@ -142,6 +145,17 @@ public class MockConsumerConnector implements ConsumerConnector {
   @Override
   public void commitOffsets(boolean b) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void commitOffsets(Map<TopicAndPartition, OffsetAndMetadata> offsetsToCommit,
+                            boolean retryOnFailure) {
+
+  }
+
+  @Override
+  public void setConsumerRebalanceListener(ConsumerRebalanceListener listener) {
+
   }
 
   @Override

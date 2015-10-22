@@ -48,7 +48,7 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
     super.setUp();
     final int numPartitions = 3;
     final int replicationFactor = 1;
-    TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
+    TestUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor,
                           JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
   }
 

@@ -15,7 +15,6 @@
  **/
 package io.confluent.kafkarest;
 
-import org.I0Itec.zkclient.ZkClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,14 +47,14 @@ public class MetadataObserver {
 
   private static final Logger log = LoggerFactory.getLogger(ConsumerWorker.class);
 
-  private ZkClient zkClient;
+  private ZkUtils zkUtils;
 
-  public MetadataObserver(KafkaRestConfig config, ZkClient zkClient) {
-    this.zkClient = zkClient;
+  public MetadataObserver(KafkaRestConfig config, ZkUtils zkUtils) {
+    this.zkUtils = zkUtils;
   }
 
   public List<Integer> getBrokerIds() {
-    Seq<Broker> brokers = ZkUtils.getAllBrokersInCluster(zkClient);
+    Seq<Broker> brokers = zkUtils.getAllBrokersInCluster();
     List<Integer> brokerIds = new Vector<Integer>(brokers.size());
     for (Broker broker : JavaConversions.asJavaCollection(brokers)) {
       brokerIds.add(broker.id());
@@ -64,7 +63,7 @@ public class MetadataObserver {
   }
 
   private Broker getBrokerById(final int brokerId) {
-    Option<Broker> broker = ZkUtils.getBrokerInfo(zkClient, brokerId);
+    Option<Broker> broker = zkUtils.getBrokerInfo(brokerId);
 
     if (broker.isDefined()) {
       return broker.get();
@@ -78,13 +77,13 @@ public class MetadataObserver {
   }
 
   public Collection<String> getTopicNames() {
-    Seq<String> topicNames = ZkUtils.getAllTopics(zkClient).sorted(Ordering.String$.MODULE$);
+    Seq<String> topicNames = zkUtils.getAllTopics().sorted(Ordering.String$.MODULE$);
     return JavaConversions.asJavaCollection(topicNames);
   }
 
   public List<Topic> getTopics() {
     try {
-      Seq<String> topicNames = ZkUtils.getAllTopics(zkClient).sorted(Ordering.String$.MODULE$);
+      Seq<String> topicNames = zkUtils.getAllTopics().sorted(Ordering.String$.MODULE$);
       return getTopicsData(topicNames);
     } catch (RestNotFoundException e) {
       throw new InternalServerErrorException(e);
@@ -109,11 +108,11 @@ public class MetadataObserver {
 
   private List<Topic> getTopicsData(Seq<String> topicNames) {
     Map<String, Map<Object, Seq<Object>>> topicPartitions =
-        ZkUtils.getPartitionAssignmentForTopics(zkClient, topicNames);
+        zkUtils.getPartitionAssignmentForTopics(topicNames);
     List<Topic> topics = new Vector<Topic>(topicNames.size());
     // Admin utils only supports getting either 1 or all topic configs. These per-topic overrides
     // shouldn't be common, so we just grab all of them to keep this simple
-    Map<String, Properties> configs = AdminUtils.fetchAllTopicConfigs(zkClient);
+    Map<String, Properties> configs = AdminUtils.fetchAllTopicConfigs(zkUtils);
     for (String topicName : JavaConversions.asJavaCollection(topicNames)) {
       Map<Object, Seq<Object>> partitionMap = topicPartitions.get(topicName).get();
       List<Partition> partitions = extractPartitionsFromZKData(partitionMap, topicName, null);
@@ -147,8 +146,8 @@ public class MetadataObserver {
   }
 
   private List<Partition> getTopicPartitions(String topic, Integer partitions_filter) {
-    Map<String, Map<Object, Seq<Object>>> topicPartitions = ZkUtils.getPartitionAssignmentForTopics(
-        zkClient, JavaConversions.asScalaIterable(Arrays.asList(topic)).toSeq());
+    Map<String, Map<Object, Seq<Object>>> topicPartitions = zkUtils.getPartitionAssignmentForTopics(
+        JavaConversions.asScalaIterable(Arrays.asList(topic)).toSeq());
     Map<Object, Seq<Object>> parts = topicPartitions.get(topic).get();
     return extractPartitionsFromZKData(parts, topic, partitions_filter);
   }
@@ -182,7 +181,7 @@ public class MetadataObserver {
       Partition p = new Partition();
       p.setPartition(partId);
       LeaderAndIsr leaderAndIsr =
-          ZkUtils.getLeaderAndIsrForPartition(zkClient, topic, partId).get();
+          zkUtils.getLeaderAndIsrForPartition(topic, partId).get();
       p.setLeader(leaderAndIsr.leader());
       scala.collection.immutable.Set<Integer> isr = leaderAndIsr.isr().toSet();
       List<PartitionReplica> partReplicas = new Vector<PartitionReplica>();

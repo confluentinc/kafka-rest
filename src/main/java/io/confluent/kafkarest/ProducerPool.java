@@ -21,8 +21,8 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.SchemaHolder;
 import kafka.cluster.Broker;
+import kafka.cluster.EndPoint;
 import kafka.utils.ZkUtils;
-import org.I0Itec.zkclient.ZkClient;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -49,13 +49,13 @@ public class ProducerPool {
   private Map<EmbeddedFormat, RestProducer> producers =
       new HashMap<EmbeddedFormat, RestProducer>();
 
-  public ProducerPool(KafkaRestConfig appConfig, ZkClient zkClient) {
-    this(appConfig, zkClient, null);
+  public ProducerPool(KafkaRestConfig appConfig, ZkUtils zkUtils) {
+    this(appConfig, zkUtils, null);
   }
 
-  public ProducerPool(KafkaRestConfig appConfig, ZkClient zkClient,
+  public ProducerPool(KafkaRestConfig appConfig, ZkUtils zkUtils,
                       Properties producerConfigOverrides) {
-    this(appConfig, getBootstrapBrokers(zkClient), producerConfigOverrides);
+    this(appConfig, getBootstrapBrokers(zkUtils), producerConfigOverrides);
   }
 
   public ProducerPool(KafkaRestConfig appConfig, String bootstrapBrokers,
@@ -133,14 +133,17 @@ public class ProducerPool {
     return config;
   }
 
-  private static String getBootstrapBrokers(ZkClient zkClient) {
-    Seq<Broker> brokerSeq = ZkUtils.getAllBrokersInCluster(zkClient);
+  private static String getBootstrapBrokers(ZkUtils zkUtils) {
+    Seq<Broker> brokerSeq = zkUtils.getAllBrokersInCluster();
+
     List<Broker> brokers = JavaConversions.seqAsJavaList(brokerSeq);
     String bootstrapBrokers = "";
     for (int i = 0; i < brokers.size(); i++) {
-      bootstrapBrokers += brokers.get(i).connectionString();
-      if (i != (brokers.size() - 1)) {
-        bootstrapBrokers += ",";
+      for(EndPoint ep : JavaConversions.asJavaCollection(brokers.get(i).endPoints().values())) {
+        if (bootstrapBrokers.length() > 0) {
+          bootstrapBrokers += ",";
+        }
+        bootstrapBrokers += ep.connectionString();
       }
     }
     return bootstrapBrokers;
