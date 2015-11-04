@@ -121,7 +121,7 @@ public class ProducerTest extends AbstractProducerTest {
   protected ZkUtils getZkUtils(KafkaRestConfig appConfig) {
     testZkUtils = ZkUtils.apply(
         appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG), 30000, 30000,
-        JaasUtils.isZkSecurityEnabled(System.getProperty(JaasUtils.JAVA_LOGIN_CONFIG_PARAM)));
+        JaasUtils.isZkSecurityEnabled());
     return testZkUtils;
   }
 

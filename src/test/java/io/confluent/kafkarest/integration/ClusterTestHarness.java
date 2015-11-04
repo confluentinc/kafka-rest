@@ -134,7 +134,7 @@ public abstract class ClusterTestHarness {
     zkConnect = String.format("127.0.0.1:%d", zookeeper.port());
     zkUtils = ZkUtils.apply(
         zkConnect, zkSessionTimeout, zkConnectionTimeout,
-        JaasUtils.isZkSecurityEnabled(System.getProperty(JaasUtils.JAVA_LOGIN_CONFIG_PARAM)));
+        JaasUtils.isZkSecurityEnabled());
 
     configs = new Vector<>();
     servers = new Vector<>();

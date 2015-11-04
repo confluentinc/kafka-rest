@@ -71,7 +71,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     if (zkUtils == null) {
       zkUtils = ZkUtils.apply(
           appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG), 30000, 30000,
-          JaasUtils.isZkSecurityEnabled(System.getProperty(JaasUtils.JAVA_LOGIN_CONFIG_PARAM)));
+          JaasUtils.isZkSecurityEnabled());
     }
     if (mdObserver == null) {
       mdObserver = new MetadataObserver(appConfig, zkUtils);
