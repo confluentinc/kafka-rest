@@ -83,9 +83,9 @@ public class MetadataAPITest extends ClusterTestHarness {
   public void setUp() throws Exception {
     super.setUp();
     TestUtils.createTopic(zkUtils, topic1Name, topic1Partitions.size(), numReplicas,
-                          JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
+                          JavaConversions.asScalaBuffer(this.servers), new Properties());
     TestUtils.createTopic(zkUtils, topic2Name, topic2Partitions.size(), numReplicas,
-                          JavaConversions.asScalaIterable(this.servers).toSeq(), topic2Configs);
+                          JavaConversions.asScalaBuffer(this.servers), topic2Configs);
   }
 
   @Test
