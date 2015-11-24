@@ -71,6 +71,9 @@ public class ConsumerManagerTest {
   private static final String secondTopicName = "testtopic2";
 
   private boolean sawCallback = false;
+  private int recordsReturned = 0;
+  private static Exception exceptionSeen;
+
 
   private Capture<ConsumerConfig> capturedConsumerConfig;
 
@@ -238,19 +241,26 @@ public class ConsumerManagerTest {
     String cid = consumerManager.createConsumer(
         groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
     sawCallback = false;
+    recordsReturned = 0;
     consumerManager.readTopic(
         groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
         new ConsumerManager.ReadCallback<byte[], byte[]>() {
           @Override
           public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
                                    Exception e) {
-            sawCallback = true;
-            assertNull(e);
+            exceptionSeen = e;
+            recordsReturned = records.size();
+
+            //assertNull("Error Not Null", e);
             // Should only see the first two messages since the third pushes us over the limit.
-            assertEquals(2, records.size());
+            //assertEquals("Incorrect number of records returned ", 2, records.size());
+            sawCallback = true;
           }
         }).get();
-    assertTrue(sawCallback);
+    assertTrue("Callback not completed successfully", sawCallback);
+    assertNull("Error Not Null", exceptionSeen);
+    // Should only see the first two messages since the third pushes us over the limit.
+    assertEquals("Incorrect number of records returned ", 2, recordsReturned);
 
     // Also check the user-submitted limit
     sawCallback = false;
