@@ -75,7 +75,7 @@ public class ConsumerManagerTest {
   private static Exception actualException = null;
   private static List<? extends ConsumerRecord<byte[], byte[]>> actualRecords = null;
   private int actualLength = 0;
-
+  private static List<TopicPartitionOffset> actualOffsets = null;
 
   private Capture<ConsumerConfig> capturedConsumerConfig;
 
@@ -188,6 +188,9 @@ public class ConsumerManagerTest {
             actualException = e;
             actualRecords = records;
             sawCallback = true;
+
+            // Assert that should clearly fail...but doesn't report in test runs
+            assertTrue("This should fail", false);
           }
         }).get();
     assertTrue("Callback failed to fire", sawCallback);
@@ -201,19 +204,23 @@ public class ConsumerManagerTest {
                  config.getTime().milliseconds());
 
     sawCallback = false;
+    actualException = null;
+    actualOffsets = null;
     consumerManager.commitOffsets(groupName, cid, new ConsumerManager.CommitCallback() {
       @Override
       public void onCompletion(List<TopicPartitionOffset> offsets, Exception e) {
         sawCallback = true;
-        assertTrue("This should fail", false);
-        assertNull(e);
-        // Mock consumer doesn't handle offsets, so we just check we get some output for the
-        // right partitions
-        assertNotNull(offsets);
-        assertEquals(3, offsets.size());
+
+        actualException = e;
+        actualOffsets = offsets;
       }
     }).get();
-    assertTrue(sawCallback);
+    assertTrue("Callback not called", sawCallback);
+    assertNull("Callback exception", actualException);
+    // Mock consumer doesn't handle offsets, so we just check we get some output for the
+    // right partitions
+    assertNotNull("Callback Offsets", actualOffsets);
+    assertEquals("Callback Offsets Size", 3, actualOffsets.size());
 
     consumerManager.deleteConsumer(groupName, cid);
 
