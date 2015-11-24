@@ -160,7 +160,7 @@ public abstract class ClusterTestHarness {
     }
 
     brokerList =
-        TestUtils.getBrokerListStrFromServers(JavaConversions.asScalaIterable(servers).toSeq(),
+        TestUtils.getBrokerListStrFromServers(JavaConversions.asScalaBuffer(servers),
                                               SecurityProtocol.PLAINTEXT);
 
     if (withSchemaRegistry) {

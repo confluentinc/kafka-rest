@@ -92,7 +92,7 @@ public class SimpleConsumerAvroTest extends AbstractConsumerTest {
     final int numPartitions = 1;
     final int replicationFactor = 1;
     TestUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor,
-                          JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
+                          JavaConversions.asScalaBuffer(this.servers), new Properties());
   }
 
   @Test
