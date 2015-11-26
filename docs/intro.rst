@@ -289,7 +289,6 @@ generating
 ``target/kafka-rest-$VERSION-standalone.jar``, which includes all the
 dependencies as well.
 
-
 Contribute
 ----------
 
