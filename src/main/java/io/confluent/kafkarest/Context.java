@@ -24,13 +24,16 @@ public class Context {
   private final MetadataObserver metadataObserver;
   private final ProducerPool producerPool;
   private final ConsumerManager consumerManager;
+  private final SimpleConsumerManager simpleConsumerManager;
 
   public Context(KafkaRestConfig config, MetadataObserver metadataObserver,
-                 ProducerPool producerPool, ConsumerManager consumerManager) {
+                 ProducerPool producerPool, ConsumerManager consumerManager,
+                 SimpleConsumerManager simpleConsumerManager) {
     this.config = config;
     this.metadataObserver = metadataObserver;
     this.producerPool = producerPool;
     this.consumerManager = consumerManager;
+    this.simpleConsumerManager = simpleConsumerManager;
   }
 
   public KafkaRestConfig getConfig() {
@@ -47,5 +50,9 @@ public class Context {
 
   public ConsumerManager getConsumerManager() {
     return consumerManager;
+  }
+
+  public SimpleConsumerManager getSimpleConsumerManager() {
+    return simpleConsumerManager;
   }
 }

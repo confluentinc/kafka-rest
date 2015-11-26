@@ -15,8 +15,8 @@
  **/
 package io.confluent.kafkarest.integration;
 
-import org.I0Itec.zkclient.ZkClient;
 import org.apache.kafka.common.errors.RecordTooLargeException;
+import org.apache.kafka.common.security.JaasUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,44 +24,28 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
-
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
-import io.confluent.kafkarest.TestUtils;
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BinaryProduceRecord;
 import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.PartitionProduceRequest;
-import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.kafkarest.entities.ProduceResponse;
 import kafka.serializer.Decoder;
 import kafka.serializer.DefaultDecoder;
-import kafka.utils.ZKStringSerializer$;
+import kafka.utils.ZkUtils;
 import scala.collection.JavaConversions;
 
-import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class ProducerTest extends AbstractProducerTest {
 
-  private ZkClient testZkClient;
+  private ZkUtils testZkUtils;
 
   private static final String topicName = "topic1";
-  private static final List<Partition> partitions = Arrays.asList(
-      new Partition(0, 0, Arrays.asList(
-          new PartitionReplica(0, true, true),
-          new PartitionReplica(1, false, false)
-      ))
-  );
 
   private static final Decoder<byte[]> binaryDecoder = new DefaultDecoder(null);
 
@@ -77,7 +61,7 @@ public class ProducerTest extends AbstractProducerTest {
   private final List<BinaryTopicProduceRecord> topicRecordsWithPartitions = Arrays.asList(
       new BinaryTopicProduceRecord("value".getBytes(), 0),
       new BinaryTopicProduceRecord("value2".getBytes(), 1),
-      new BinaryTopicProduceRecord("value3".getBytes(), 0),
+      new BinaryTopicProduceRecord("value3".getBytes(), 1),
       new BinaryTopicProduceRecord("value4".getBytes(), 2)
   );
 
@@ -124,13 +108,21 @@ public class ProducerTest extends AbstractProducerTest {
       new PartitionOffset(0, 3L, null, null)
   );
 
+  private final List<PartitionOffset> producePartitionedOffsets = Arrays.asList(
+      new PartitionOffset(0, 0L, null, null),
+      new PartitionOffset(1, 0L, null, null),
+      new PartitionOffset(1, 1L, null, null),
+      new PartitionOffset(2, 0L, null, null)
+  );
+
   private boolean sawCallback;
 
   @Override
-  protected ZkClient getZkClient(KafkaRestConfig appConfig) {
-    testZkClient = new ZkClient(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG),
-                                30000, 30000, ZKStringSerializer$.MODULE$);
-    return testZkClient;
+  protected ZkUtils getZkUtils(KafkaRestConfig appConfig) {
+    testZkUtils = ZkUtils.apply(
+        appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG), 30000, 30000,
+        JaasUtils.isZkSecurityEnabled());
+    return testZkUtils;
   }
 
   @Override
@@ -139,7 +131,7 @@ public class ProducerTest extends AbstractProducerTest {
     // Reduce the metadata fetch timeout so requests for topics that don't exist timeout much
     // faster than the default
     overrides.setProperty("metadata.fetch.timeout.ms", "5000");
-    return new ProducerPool(appConfig, testZkClient, overrides);
+    return new ProducerPool(appConfig, testZkUtils, overrides);
   }
 
   @Before
@@ -148,8 +140,8 @@ public class ProducerTest extends AbstractProducerTest {
     super.setUp();
     final int numPartitions = 3;
     final int replicationFactor = 1;
-    kafka.utils.TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-                                      JavaConversions.asScalaIterable(this.servers).toSeq(),
+    kafka.utils.TestUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor,
+                                      JavaConversions.asScalaBuffer(this.servers),
                                       new Properties());
   }
 
@@ -162,7 +154,7 @@ public class ProducerTest extends AbstractProducerTest {
     overrides.setProperty("buffer.memory", "1");
     // Note separate ProducerPool since the override should only be for this test, so
     // getProducerPool doesn't work here
-    ProducerPool pool = new ProducerPool(this.restConfig, this.bootstrapServers, overrides);
+    ProducerPool pool = new ProducerPool(this.restConfig, this.brokerList, overrides);
 
     sawCallback = false;
     pool.produce(topicName, 0, EmbeddedFormat.BINARY, null,
@@ -185,25 +177,25 @@ public class ProducerTest extends AbstractProducerTest {
   @Test
   public void testProduceToTopicWithKeys() {
     testProduceToTopic(topicName, topicRecordsWithKeys, binaryDecoder, binaryDecoder,
-                       produceOffsets);
+                       produceOffsets, false);
   }
 
   @Test
   public void testProduceToTopicWithPartitions() {
     testProduceToTopic(topicName, topicRecordsWithPartitions, binaryDecoder, binaryDecoder,
-                       produceOffsets);
+                       producePartitionedOffsets, true);
   }
 
   @Test
   public void testProduceToTopicWithPartitionsAndKeys() {
     testProduceToTopic(topicName, topicRecordsWithPartitionsAndKeys, binaryDecoder, binaryDecoder,
-                       produceOffsets);
+                       producePartitionedOffsets, true);
   }
 
   @Test
   public void testProduceToTopicWithNullValues() {
     testProduceToTopic(topicName, topicRecordsWithNullValues, binaryDecoder, binaryDecoder,
-                       produceOffsets);
+                       produceOffsets, false);
   }
 
   @Test
@@ -215,19 +207,9 @@ public class ProducerTest extends AbstractProducerTest {
   }
 
 
-  private <K, V> void testProduceToPartition(List<? extends ProduceRecord<K, V>> records,
-                                             List<PartitionOffset> offsetResponse) {
-    PartitionProduceRequest payload = new PartitionProduceRequest();
-    payload.setRecords(records);
-    Response response = request("/topics/" + topicName + "/partitions/0")
-        .post(Entity.entity(payload, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    final ProduceResponse poffsetResponse
-        = response.readEntity(ProduceResponse.class);
-    assertEquals(offsetResponse, poffsetResponse.getOffsets());
-    TestUtils.assertTopicContains(zkConnect, topicName,
-                                  payload.getRecords(), (Integer) 0,
-                                  binaryDecoder, binaryDecoder, true);
+  protected void testProduceToPartition(List<? extends ProduceRecord<byte[], byte[]>> records,
+                                        List<PartitionOffset> offsetResponse) {
+    testProduceToPartition(topicName, 0, records, binaryDecoder, binaryDecoder, offsetResponse);
   }
 
   @Test

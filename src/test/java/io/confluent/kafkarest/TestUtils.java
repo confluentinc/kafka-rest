@@ -22,6 +22,7 @@ import org.apache.avro.generic.IndexedRecord;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -175,6 +176,14 @@ public class TestUtils {
     }
   }
 
+  public static void assertPartitionsEqual(List<PartitionOffset> a, List<PartitionOffset> b) {
+    assertEquals(a.size(), b.size());
+    for (int i = 0; i < a.size(); i++) {
+      PartitionOffset aOffset = a.get(i), bOffset = b.get(i);
+      assertEquals(aOffset.getPartition(), bOffset.getPartition());
+    }
+  }
+
   public static void assertPartitionOffsetsEqual(List<PartitionOffset> a, List<PartitionOffset> b) {
     // We can't be sure these will be exactly equal since they may be random. Instead verify that
     // exception vs. non-exception responses match up
@@ -203,6 +212,8 @@ public class TestUtils {
     } else if (k instanceof Number || k instanceof Boolean || k instanceof Character
                || k instanceof String) {
       // Primitive types + strings are all safe for comparison
+      return k;
+    } else if (k instanceof Collection || k instanceof Map) {
       return k;
     } else {
       throw new RuntimeException(k.getClass().getName() + " is not handled by encodeComparable.");

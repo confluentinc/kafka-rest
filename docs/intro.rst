@@ -16,20 +16,77 @@ Quickstart
 The following assumes you have Kafka, the schema registry, and an instance of
 the REST Proxy running using the default settings and some topics already created.
 
+Inspect Topic Metadata
+~~~~~~~~~~~~~~~~~~~~~~
+
 .. sourcecode:: bash
 
    # Get a list of topics
    $ curl "http://localhost:8082/topics"
      [{"name":"test","num_partitions":3},{"name":"test2","num_partitions":1}]
 
-   # Get info about one partition
+   # Get info about one topic
    $ curl "http://localhost:8082/topics/test"
      {"name":"test","num_partitions":3}
+
+   # Get info about a topic's partitions
+   $ curl "http://localhost:8082/topics/test/partitions
+     [{"partition":0,"leader":1002,"replicas":[{"broker":1002,"leader":true,"in_sync":true}]}]
+
+Produce and Consume JSON Messages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. sourcecode:: bash
+
+   # Produce a message using JSON with the value '{ "foo": "bar" }' to the topic test
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.json.v1+json" \
+         --data '{"records":[{"value":{"foo":"bar"}]}' "http://localhost:8082/topics/test"
+     {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
+
+   # Create a consumer for JSON data, starting at the beginning of the topic's
+   # log. Then consume some data from a topic using the base URL in the first response.
+   # Finally, close the consumer with a DELETE to make it leave the group and clean up
+   # its resources.
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
+         --data '{"format": "json", "auto.offset.reset": "smallest"}' \
+         http://localhost:8082/consumers/my_json_consumer
+     {"instance_id":"rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6","base_uri":"http://localhost:8082/consumers/my_json_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6"}
+   $ curl -X GET -H "Accept: application/vnd.kafka.json.v1+json" \
+         http://localhost:8082/consumers/my_json_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6/topics/test
+     [{"key":null,"value":{"foo":"bar"},"partition":0,"offset":0}]
+   $ curl -X DELETE \
+         http://localhost:8082/consumers/my_json_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6
+     # No content in response
+
+Produce and Consume Binary Messages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. sourcecode:: bash
 
    # Produce a message using binary embedded data with value "Kafka" to the topic test
    $ curl -X POST -H "Content-Type: application/vnd.kafka.binary.v1+json" \
          --data '{"records":[{"value":"S2Fma2E="}]}' "http://localhost:8082/topics/test"
      {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
+
+   # Create a consumer for binary data, starting at the beginning of the topic's
+   # log. Then consume some data from a topic using the base URL in the first response.
+   # Finally, close the consumer with a DELETE to make it leave the group and clean up
+   # its resources.
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
+         --data '{"format": "binary", "auto.offset.reset": "smallest"}' \
+         http://localhost:8082/consumers/my_binary_consumer
+     {"instance_id":"rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6","base_uri":"http://localhost:8082/consumers/my_binary_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6"}
+   $ curl -X GET -H "Accept: application/vnd.kafka.binary.v1+json" \
+         http://localhost:8082/consumers/my_binary_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6/topics/test
+     [{"key":null,"value":"S2Fma2E=","partition":0,"offset":0}]
+   $ curl -X DELETE \
+         http://localhost:8082/consumers/my_binary_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6
+     # No content in response
+
+Produce and Consume Avro Messages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. sourcecode:: bash
 
    # Produce a message using Avro embedded data, including the schema which will
    # be registered with the schema registry and used to validate and serialize
@@ -39,28 +96,20 @@ the REST Proxy running using the default settings and some topics already create
          "http://localhost:8082/topics/avrotest"
      {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":21}
 
-   # Create a consumer for binary data, starting at the beginning of the topic's
-   # log. Then consume some data from a topic.
-   $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
-         --data '{"id": "my_instance", "format": "binary", "auto.offset.reset": "smallest"}' \
-         http://localhost:8082/consumers/my_binary_consumer
-     {"instance_id":"my_instance","base_uri":"http://localhost:8082/consumers/my_binary_consumer/instances/my_instance"}
-   $ curl -X GET -H "Accept: application/vnd.kafka.binary.v1+json" \
-         http://localhost:8082/consumers/my_binary_consumer/instances/my_instance/topics/test
-     [{"key":null,"value":"S2Fma2E=","partition":0,"offset":0}]
-
    # Create a consumer for Avro data, starting at the beginning of the topic's
    # log. Then consume some data from a topic, which is decoded, translated to
    # JSON, and included in the response. The schema used for deserialization is
-   # fetched automatically from the schema registry.
+   # fetched automatically from the schema registry. Finally, clean up.
    $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
-         --data '{"id": "my_instance", "format": "avro", "auto.offset.reset": "smallest"}' \
+         --data '{"format": "avro", "auto.offset.reset": "smallest"}' \
          http://localhost:8082/consumers/my_avro_consumer
-     {"instance_id":"my_instance","base_uri":"http://localhost:8082/consumers/my_avro_consumer/instances/my_instance"}
+     {"instance_id":"rest-consumer-11392f3a-efbe-4fe2-b0bf-5c85d7b25e7b","base_uri":"http://localhost:8082/consumers/my_avro_consumer/instances/rest-consumer-11392f3a-efbe-4fe2-b0bf-5c85d7b25e7b"}
    $ curl -X GET -H "Accept: application/vnd.kafka.avro.v1+json" \
-         http://localhost:8082/consumers/my_avro_consumer/instances/my_instance/topics/avrotest
+         http://localhost:8082/consumers/my_avro_consumer/instances/rest-consumer-11392f3a-efbe-4fe2-b0bf-5c85d7b25e7b/topics/avrotest
      [{"key":null,"value":{"name":"testUser"},"partition":0,"offset":0}]
-
+   $ curl -X DELETE \
+         http://localhost:8082/consumers/my_avro_consumer/instances/rest-consumer-11392f3a-efbe-4fe2-b0bf-5c85d7b25e7b
+     # No content in response
 
 Features
 --------
@@ -93,7 +142,7 @@ what is currently supported:
     options are exposed via the API. However, you can adjust settings globally
     by passing consumer settings in the REST Proxy configuration.
 
-* **Data Formats** - The REST Proxy can read and write data using raw bytes
+* **Data Formats** - The REST Proxy can read and write data using JSON, raw bytes
   encoded with base64 or using JSON-encoded Avro. With Avro, schemas are
   registered and validated against the Schema Registry.
 * **REST Proxy Clusters and Load Balancing** - The REST Proxy is designed to
@@ -101,6 +150,9 @@ what is currently supported:
   run behind various load balancing mechanisms (e.g. round robin DNS, discovery
   services, load balancers) as long as instances are
   :ref:`configured correctly<kafkarest_deployment>`.
+* **Simple Consumer** - The high-level consumer should generally be
+  preferred. However, it is occasionally useful to use low-level read
+  operations, for example to retrieve messages at specific offsets.
 
 Just as important, here's a list of features that *aren't* yet supported:
 
@@ -114,10 +166,6 @@ Just as important, here's a list of features that *aren't* yet supported:
   and use a single stream (and therefore a single thread). You can still
   achieve high throughput as you would with the Java clients: run multiple
   threads locally that each read from a separate consumer stream.
-* **Simple Consumer** - The high-level consumer should generally be
-  preferred. However, it is occasionally useful to use low-level read
-  operations, for example to retrieve messages at specific offsets. The new
-  consumer implementation will make implementing these operations simpler.
 * **Most Producer/Consumer Overrides** - Only a few key overrides are exposed in
   the API (but global overrides can be set by the administrator). The reason is
   two-fold. First, proxies are multi-tenant and therefore most user-requested
@@ -182,7 +230,7 @@ directly yourself:
 
 .. sourcecode:: bash
 
-   $ java io.confluent.kafkarest.Main [server.properties]
+   $ java io.confluent.kafkarest.KafkaRestMain [server.properties]
 
 where ``server.properties`` contains configuration settings as specified by the
 ``KafkaRestConfiguration`` class.

@@ -16,15 +16,10 @@
 
 package io.confluent.kafkarest.integration;
 
-import org.I0Itec.zkclient.ZkClient;
+import io.confluent.kafkarest.*;
+import kafka.utils.ZkUtils;
 
 import javax.ws.rs.core.Configurable;
-
-import io.confluent.kafkarest.ConsumerManager;
-import io.confluent.kafkarest.KafkaRestApplication;
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
-import io.confluent.kafkarest.ProducerPool;
 
 /**
  * Test version of KakfaRestApplication that allows for dependency injection so components and be
@@ -32,25 +27,31 @@ import io.confluent.kafkarest.ProducerPool;
  */
 public class TestKafkaRestApplication extends KafkaRestApplication {
 
-  ZkClient zkClientInjected;
+  ZkUtils zkUtilsInjected;
   MetadataObserver mdObserverInjected;
   ProducerPool producerPoolInjected;
   ConsumerManager consumerManagerInjected;
+  SimpleConsumerFactory simpleConsumerFactoryInjected;
+  SimpleConsumerManager simpleConsumerManagerInjected;
 
-  public TestKafkaRestApplication(KafkaRestConfig config, ZkClient zkClient,
+  public TestKafkaRestApplication(KafkaRestConfig config, ZkUtils zkUtils,
                                   MetadataObserver mdObserver, ProducerPool producerPool,
-                                  ConsumerManager consumerManager) {
+                                  ConsumerManager consumerManager,
+                                  SimpleConsumerFactory simpleConsumerFactory, SimpleConsumerManager simpleConsumerManager) {
     super(config);
-    zkClientInjected = zkClient;
+    zkUtilsInjected = zkUtils;
     mdObserverInjected = mdObserver;
     producerPoolInjected = producerPool;
     consumerManagerInjected = consumerManager;
+    simpleConsumerFactoryInjected = simpleConsumerFactory;
+    simpleConsumerManagerInjected = simpleConsumerManager;
   }
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-    setupInjectedResources(config, appConfig, zkClientInjected, mdObserverInjected,
-                           producerPoolInjected, consumerManagerInjected);
+    setupInjectedResources(config, appConfig, zkUtilsInjected, mdObserverInjected,
+                           producerPoolInjected, consumerManagerInjected,
+                           simpleConsumerFactoryInjected, simpleConsumerManagerInjected);
   }
 
 }

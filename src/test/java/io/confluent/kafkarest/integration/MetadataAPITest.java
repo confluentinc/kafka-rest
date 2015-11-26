@@ -25,7 +25,6 @@ import java.util.Properties;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 
-import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BrokerList;
@@ -75,14 +74,18 @@ public class MetadataAPITest extends ClusterTestHarness {
 
   private static final int numReplicas = 2;
 
+  public MetadataAPITest() {
+    super(2, false);
+  }
+
   @Before
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    TestUtils.createTopic(zkClient, topic1Name, topic1Partitions.size(), numReplicas,
-                          JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
-    TestUtils.createTopic(zkClient, topic2Name, topic2Partitions.size(), numReplicas,
-                          JavaConversions.asScalaIterable(this.servers).toSeq(), topic2Configs);
+    TestUtils.createTopic(zkUtils, topic1Name, topic1Partitions.size(), numReplicas,
+                          JavaConversions.asScalaBuffer(this.servers), new Properties());
+    TestUtils.createTopic(zkUtils, topic2Name, topic2Partitions.size(), numReplicas,
+                          JavaConversions.asScalaBuffer(this.servers), topic2Configs);
   }
 
   @Test
@@ -91,7 +94,7 @@ public class MetadataAPITest extends ClusterTestHarness {
     Response response = request("/brokers").get();
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     final BrokerList brokers = response.readEntity(BrokerList.class);
-    assertEquals(new BrokerList(Arrays.asList(0, 1, 2)), brokers);
+    assertEquals(new BrokerList(Arrays.asList(0, 1)), brokers);
   }
 
   /* This should work, but due to the lack of timeouts in ZkClient, if ZK is down some calls
@@ -120,7 +123,7 @@ public class MetadataAPITest extends ClusterTestHarness {
     final List<String> topicsResponse = response.readEntity(new GenericType<List<String>>() {
     });
     assertEquals(
-        Arrays.asList(SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC, topic1Name, topic2Name),
+        Arrays.asList(topic1Name, topic2Name),
         topicsResponse);
 
     // Get topic

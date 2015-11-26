@@ -15,9 +15,21 @@
  **/
 package io.confluent.kafkarest.resources;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Vector;
+import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.RecordMetadataOrException;
+import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
+import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.JsonTopicProduceRecord;
+import io.confluent.kafkarest.entities.PartitionOffset;
+import io.confluent.kafkarest.entities.ProduceResponse;
+import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.entities.TopicProduceRecord;
+import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.rest.annotations.PerformanceMetric;
 
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -28,21 +40,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
-
-import io.confluent.kafkarest.Context;
-import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.RecordMetadataOrException;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
-import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.Topic;
-import io.confluent.kafkarest.entities.TopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
-import io.confluent.rest.annotations.PerformanceMetric;
+import java.util.Collection;
+import java.util.List;
+import java.util.Vector;
 
 @Path("/topics")
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
@@ -77,12 +77,22 @@ public class TopicsResource {
   @POST
   @Path("/{topic}")
   @PerformanceMetric("topic.produce-binary")
-  @Consumes({Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON,
+  @Consumes({Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON,
              Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST})
   public void produceBinary(final @Suspended AsyncResponse asyncResponse,
                             @PathParam("topic") String topicName,
                             @Valid TopicProduceRequest<BinaryTopicProduceRecord> request) {
     produce(asyncResponse, topicName, EmbeddedFormat.BINARY, request);
+  }
+
+  @POST
+  @Path("/{topic}")
+  @PerformanceMetric("topic.produce-json")
+  @Consumes({Versions.KAFKA_V1_JSON_JSON})
+  public void produceJson(final @Suspended AsyncResponse asyncResponse,
+                          @PathParam("topic") String topicName,
+                          @Valid TopicProduceRequest<JsonTopicProduceRecord> request) {
+    produce(asyncResponse, topicName, EmbeddedFormat.JSON, request);
   }
 
   @POST
@@ -142,4 +152,5 @@ public class TopicsResource {
         }
     );
   }
+
 }

@@ -36,6 +36,7 @@ import io.confluent.kafkarest.BinaryConsumerState;
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.ConsumerState;
 import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.JsonConsumerState;
 import io.confluent.kafkarest.UriUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
@@ -48,9 +49,9 @@ import io.confluent.rest.annotations.PerformanceMetric;
 // We include embedded formats here so you can always use these headers when interacting with
 // a consumers resource. The few cases where it isn't safe are overridden per-method
 @Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW,
-           Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
-           Versions.JSON_WEIGHTED})
-@Consumes({Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_AVRO,
+           Versions.KAFKA_V1_JSON_JSON_WEIGHTED_LOW, Versions.KAFKA_V1_JSON_WEIGHTED,
+           Versions.KAFKA_DEFAULT_JSON_WEIGHTED, Versions.JSON_WEIGHTED})
+@Consumes({Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V1_JSON_JSON,
            Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
            Versions.GENERIC_REQUEST})
 public class ConsumersResource {
@@ -109,8 +110,7 @@ public class ConsumersResource {
   @Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED,
              Versions.KAFKA_V1_JSON_WEIGHTED,
              Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
-             Versions.JSON_WEIGHTED,
-             Versions.ANYTHING})
+             Versions.JSON_WEIGHTED})
   public void readTopicBinary(final @Suspended AsyncResponse asyncResponse,
                               final @PathParam("group") String group,
                               final @PathParam("instance") String instance,
@@ -121,8 +121,20 @@ public class ConsumersResource {
 
   @GET
   @Path("/{group}/instances/{instance}/topics/{topic}")
+  @PerformanceMetric("consumer.topic.read-json")
+  @Produces({Versions.KAFKA_V1_JSON_JSON_WEIGHTED_LOW}) // Using low weight ensures binary is default
+  public void readTopicJson(final @Suspended AsyncResponse asyncResponse,
+                            final @PathParam("group") String group,
+                            final @PathParam("instance") String instance,
+                            final @PathParam("topic") String topic,
+                            @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
+    readTopic(asyncResponse, group, instance, topic, maxBytes, JsonConsumerState.class);
+  }
+
+  @GET
+  @Path("/{group}/instances/{instance}/topics/{topic}")
   @PerformanceMetric("consumer.topic.read-avro")
-  @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED})
+  @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW}) // Using low weight ensures binary is default
   public void readTopicAvro(final @Suspended AsyncResponse asyncResponse,
                             final @PathParam("group") String group,
                             final @PathParam("instance") String instance,

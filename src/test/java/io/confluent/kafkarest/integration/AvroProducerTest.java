@@ -116,6 +116,9 @@ public class AvroProducerTest extends ClusterTestHarness {
       new PartitionOffset(0, 3L, null, null)
   );
 
+  public AvroProducerTest() {
+    super(1, true);
+  }
 
   @Before
   @Override
@@ -123,8 +126,8 @@ public class AvroProducerTest extends ClusterTestHarness {
     super.setUp();
     final int numPartitions = 3;
     final int replicationFactor = 1;
-    kafka.utils.TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-                                      JavaConversions.asScalaIterable(this.servers).toSeq(),
+    kafka.utils.TestUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor,
+                                      JavaConversions.asScalaBuffer(this.servers),
                                       new Properties());
 
     Properties props = new Properties();

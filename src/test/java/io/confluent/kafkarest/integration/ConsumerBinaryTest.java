@@ -77,8 +77,8 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     super.setUp();
     final int numPartitions = 3;
     final int replicationFactor = 1;
-    TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-                          JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
+    TestUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor,
+                          JavaConversions.asScalaBuffer(this.servers), new Properties());
   }
 
   @Test
@@ -86,7 +86,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     // Between these tests we either leave the config null or request the binary embedded format
     // so we can test that both will result in binary consumers. We also us varying accept
     // parameters to test that we default to Binary for various values.
-    String instanceUri = startConsumeMessages(groupName, topicName, null, null,
+    String instanceUri = startConsumeMessages(groupName, topicName, null,
                                               Versions.KAFKA_V1_JSON_BINARY);
     produceBinaryMessages(recordsOnlyValues);
     consumeMessages(instanceUri, topicName, recordsOnlyValues,
@@ -98,7 +98,6 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   @Test
   public void testConsumeWithKeys() {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
-                                              Versions.KAFKA_V1_JSON_BINARY,
                                               Versions.KAFKA_V1_JSON_BINARY);
     produceBinaryMessages(recordsWithKeys);
     consumeMessages(instanceUri, topicName, recordsWithKeys,
@@ -108,15 +107,26 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   }
 
   @Test
+  public void testConsumeWithAcceptAllHeader() {
+    // This test ensures that Accept: */* defaults to binary
+    String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
+        Versions.KAFKA_V1_JSON_BINARY);
+    produceBinaryMessages(recordsWithKeys);
+    consumeMessages(instanceUri, topicName, recordsWithKeys,
+        Versions.ANYTHING, Versions.KAFKA_V1_JSON_BINARY,
+        binaryConsumerRecordType, null);
+    commitOffsets(instanceUri);
+  }
+
+  @Test
   public void testConsumeInvalidTopic() {
     startConsumeMessages(groupName, "nonexistenttopic", null,
-                         Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY, true);
+                         Versions.KAFKA_V1_JSON_BINARY, true);
   }
 
   @Test
   public void testConsumeTimeout() {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
-                                              Versions.KAFKA_V1_JSON,
                                               Versions.KAFKA_V1_JSON_BINARY);
     produceBinaryMessages(recordsWithKeys);
     consumeMessages(instanceUri, topicName, recordsWithKeys,
@@ -131,7 +141,6 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   @Test
   public void testDeleteConsumer() {
     String instanceUri = startConsumeMessages(groupName, topicName, null,
-                                              Versions.KAFKA_DEFAULT_JSON,
                                               Versions.KAFKA_V1_JSON_BINARY);
     produceBinaryMessages(recordsWithKeys);
     consumeMessages(instanceUri, topicName, recordsWithKeys,
@@ -145,12 +154,29 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   // that isn't specific to the type of embedded data, but since they need
   @Test
   public void testInvalidKafkaConsumerConfig() {
-    ConsumerInstanceConfig config = new ConsumerInstanceConfig("id", "binary", "bad-config", null);
+    ConsumerInstanceConfig config = new ConsumerInstanceConfig("id", "name", "binary",
+                                                               "bad-config", null);
     Response response = request("/consumers/" + groupName)
         .post(Entity.entity(config, Versions.KAFKA_V1_JSON));
     assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response,
                         Errors.INVALID_CONSUMER_CONFIG_ERROR_CODE,
                         Errors.INVALID_CONSUMER_CONFIG_MESSAGE,
                         Versions.KAFKA_V1_JSON);
+  }
+
+
+  @Test
+  public void testDuplicateConsumerID() {
+    String instanceUrl = startConsumeMessages(groupName, topicName, null,
+                                              Versions.KAFKA_V1_JSON_BINARY);
+    produceBinaryMessages(recordsWithKeys);
+
+    // Duplicate the same instance, which should cause a conflict
+    String name = consumerNameFromInstanceUrl(instanceUrl);
+    Response createResponse = createConsumerInstance(groupName, null, name, null);
+    assertErrorResponse(Response.Status.CONFLICT, createResponse,
+                        Errors.CONSUMER_ALREADY_EXISTS_ERROR_CODE,
+                        Errors.CONSUMER_ALREADY_EXISTS_MESSAGE,
+                        Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
   }
 }

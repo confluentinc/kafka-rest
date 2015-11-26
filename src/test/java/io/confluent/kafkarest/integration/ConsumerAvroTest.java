@@ -91,20 +91,22 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
     }
   };
 
+  public ConsumerAvroTest() {
+    super(1, true);
+  }
   @Before
   @Override
   public void setUp() throws Exception {
     super.setUp();
     final int numPartitions = 3;
     final int replicationFactor = 1;
-    TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-                          JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
+    TestUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor,
+                          JavaConversions.asScalaBuffer(this.servers), new Properties());
   }
 
   @Test
   public void testConsumeOnlyValues() {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.AVRO,
-                                              Versions.KAFKA_V1_JSON_AVRO,
                                               Versions.KAFKA_V1_JSON_AVRO);
     produceAvroMessages(recordsOnlyValues);
     consumeMessages(instanceUri, topicName, recordsOnlyValues,
@@ -116,7 +118,6 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
   @Test
   public void testConsumeWithKeys() {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.AVRO,
-                                              Versions.KAFKA_V1_JSON_AVRO,
                                               Versions.KAFKA_V1_JSON_AVRO);
     produceAvroMessages(recordsWithKeys);
     consumeMessages(instanceUri, topicName, recordsWithKeys,
@@ -128,13 +129,12 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
   @Test
   public void testConsumeInvalidTopic() {
     startConsumeMessages(groupName, "nonexistenttopic", EmbeddedFormat.AVRO,
-                         Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V1_JSON_AVRO, true);
+                         Versions.KAFKA_V1_JSON_AVRO, true);
   }
 
   @Test
   public void testConsumeTimeout() {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.AVRO,
-                                              Versions.KAFKA_V1_JSON_AVRO,
                                               Versions.KAFKA_V1_JSON_AVRO);
     produceAvroMessages(recordsWithKeys);
     consumeMessages(instanceUri, topicName, recordsWithKeys,
@@ -148,7 +148,6 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
   @Test
   public void testDeleteConsumer() {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.AVRO,
-                                              Versions.KAFKA_V1_JSON_AVRO,
                                               Versions.KAFKA_V1_JSON_AVRO);
     produceAvroMessages(recordsWithKeys);
     consumeMessages(instanceUri, topicName, recordsWithKeys,

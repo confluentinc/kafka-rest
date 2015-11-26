@@ -15,7 +15,7 @@
  **/
 package io.confluent.kafkarest;
 
-import org.I0Itec.zkclient.ZkClient;
+import org.apache.kafka.common.security.JaasUtils;
 
 import java.util.Properties;
 
@@ -29,14 +29,14 @@ import io.confluent.kafkarest.resources.RootResource;
 import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.rest.Application;
 import io.confluent.rest.RestConfigException;
-import kafka.utils.ZKStringSerializer$;
+import kafka.utils.ZkUtils;
 
 /**
  * Utilities for configuring and running an embedded Kafka server.
  */
 public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
-  ZkClient zkClient;
+  ZkUtils zkUtils;
   Context context;
 
   public KafkaRestApplication() throws RestConfigException {
@@ -53,7 +53,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-    setupInjectedResources(config, appConfig, null, null, null, null);
+    setupInjectedResources(config, appConfig, null, null, null, null, null, null);
   }
 
   /**
@@ -61,27 +61,36 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
    * can be customized for testing. This only exists to support TestKafkaRestApplication
    */
   protected void setupInjectedResources(Configurable<?> config, KafkaRestConfig appConfig,
-                                        ZkClient zkClient, MetadataObserver mdObserver,
+                                        ZkUtils zkUtils, MetadataObserver mdObserver,
                                         ProducerPool producerPool,
-                                        ConsumerManager consumerManager) {
+                                        ConsumerManager consumerManager,
+                                        SimpleConsumerFactory simpleConsumerFactory,
+                                        SimpleConsumerManager simpleConsumerManager) {
     config.register(new ZkExceptionMapper(appConfig));
 
-    if (zkClient == null) {
-      zkClient = new ZkClient(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG),
-                              30000, 30000, ZKStringSerializer$.MODULE$);
+    if (zkUtils == null) {
+      zkUtils = ZkUtils.apply(
+          appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG), 30000, 30000,
+          JaasUtils.isZkSecurityEnabled());
     }
     if (mdObserver == null) {
-      mdObserver = new MetadataObserver(appConfig, zkClient);
+      mdObserver = new MetadataObserver(appConfig, zkUtils);
     }
     if (producerPool == null) {
-      producerPool = new ProducerPool(appConfig, zkClient);
+      producerPool = new ProducerPool(appConfig, zkUtils);
     }
     if (consumerManager == null) {
       consumerManager = new ConsumerManager(appConfig, mdObserver);
     }
+    if (simpleConsumerFactory == null) {
+      simpleConsumerFactory = new SimpleConsumerFactory(appConfig);
+    }
+    if (simpleConsumerManager == null) {
+      simpleConsumerManager = new SimpleConsumerManager(appConfig, mdObserver, simpleConsumerFactory);
+    }
 
-    this.zkClient = zkClient;
-    context = new Context(appConfig, mdObserver, producerPool, consumerManager);
+    this.zkUtils = zkUtils;
+    context = new Context(appConfig, mdObserver, producerPool, consumerManager, simpleConsumerManager);
     config.register(RootResource.class);
     config.register(new BrokersResource(context));
     config.register(new TopicsResource(context));
@@ -93,7 +102,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   public void onShutdown() {
     context.getConsumerManager().shutdown();
     context.getProducerPool().shutdown();
+    context.getSimpleConsumerManager().shutdown();
     context.getMetadataObserver().shutdown();
-    zkClient.close();
+    zkUtils.close();
   }
 }

@@ -24,12 +24,15 @@ import javax.ws.rs.core.Response;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.PartitionOffset;
+import io.confluent.kafkarest.entities.PartitionProduceRequest;
+import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
 import kafka.serializer.Decoder;
 
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class AbstractProducerTest extends ClusterTestHarness {
@@ -37,20 +40,44 @@ public class AbstractProducerTest extends ClusterTestHarness {
   protected <K, V> void testProduceToTopic(String topicName,
                                            List<? extends TopicProduceRecord> records,
                                            Decoder<K> keyDecoder, Decoder<K> valueDecoder,
-                                           List<PartitionOffset> offsetResponses) {
+                                           List<PartitionOffset> offsetResponses,
+                                           boolean matchPartitions) {
     TopicProduceRequest payload = new TopicProduceRequest();
     payload.setRecords(records);
     Response response = request("/topics/" + topicName)
-        .post(Entity.entity(payload, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
+        .post(Entity.entity(payload, getEmbeddedContentType()));
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     final ProduceResponse produceResponse = response.readEntity(ProduceResponse.class);
+    if (matchPartitions) {
+      TestUtils.assertPartitionsEqual(offsetResponses, produceResponse.getOffsets());
+    }
     TestUtils.assertPartitionOffsetsEqual(offsetResponses, produceResponse.getOffsets());
     TestUtils.assertTopicContains(zkConnect, topicName,
                                   payload.getRecords(), null,
                                   keyDecoder, valueDecoder, true);
   }
 
-  protected <K, V> void testProduceToTopicFails(String topicName,
+
+  protected <K, V> void testProduceToPartition(String topicName,
+                                               int partition,
+                                               List<? extends ProduceRecord<K, V>> records,
+                                               Decoder<K> keyDecoder, Decoder<K> valueDecoder,
+                                               List<PartitionOffset> offsetResponse) {
+    PartitionProduceRequest payload = new PartitionProduceRequest();
+    payload.setRecords(records);
+    Response response = request("/topics/" + topicName + "/partitions/0")
+        .post(Entity.entity(payload, getEmbeddedContentType()));
+    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+    final ProduceResponse poffsetResponse
+        = response.readEntity(ProduceResponse.class);
+    assertEquals(offsetResponse, poffsetResponse.getOffsets());
+    TestUtils.assertTopicContains(zkConnect, topicName,
+        payload.getRecords(), partition,
+        keyDecoder, valueDecoder, true);
+  }
+
+
+  protected void testProduceToTopicFails(String topicName,
                                                 List<? extends TopicProduceRecord> records) {
     TopicProduceRequest payload = new TopicProduceRequest();
     payload.setRecords(records);
@@ -61,5 +88,9 @@ public class AbstractProducerTest extends ClusterTestHarness {
     for (PartitionOffset pOffset : produceResponse.getOffsets()) {
       assertNotNull(pOffset.getError());
     }
+  }
+
+  protected String getEmbeddedContentType() {
+    return Versions.KAFKA_MOST_SPECIFIC_DEFAULT;
   }
 }

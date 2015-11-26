@@ -15,17 +15,6 @@
  **/
 package io.confluent.kafkarest.unit;
 
-import org.easymock.EasyMock;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
-
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
@@ -39,6 +28,15 @@ import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
+import org.easymock.EasyMock;
+import org.junit.Before;
+import org.junit.Test;
+
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
@@ -54,7 +52,7 @@ public class TopicsResourceTest
   public TopicsResourceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new Context(config, mdObserver, producerPool, null);
+    ctx = new Context(config, mdObserver, producerPool, null, null);
 
     addResource(new TopicsResource(ctx));
   }

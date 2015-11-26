@@ -62,6 +62,13 @@ Java Kafka clients.
   * Default: ""
   * Importance: medium
 
+``simpleconsumer.pool.size.max``
+  Maximum number of SimpleConsumers that can be instantiated per broker. If 0, then the pool size is not limited.
+
+  * Type: int
+  * Default: 25
+  * Importance: medium
+
 ``consumer.instance.timeout.ms``
   Amount of idle time before a consumer instance is automatically destroyed.
 
@@ -155,6 +162,13 @@ Java Kafka clients.
 
 ``shutdown.graceful.ms``
   Amount of time to wait after a shutdown request for outstanding requests to complete.
+
+  * Type: int
+  * Default: 1000
+  * Importance: low
+
+``simpleconsumer.pool.timeout.ms``
+  Amount of time to wait for an available SimpleConsumer from the pool before failing. Use 0 for no timeout
 
   * Type: int
   * Default: 1000

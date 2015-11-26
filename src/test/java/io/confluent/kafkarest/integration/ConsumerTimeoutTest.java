@@ -48,14 +48,13 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
     super.setUp();
     final int numPartitions = 3;
     final int replicationFactor = 1;
-    TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-                          JavaConversions.asScalaIterable(this.servers).toSeq(), new Properties());
+    TestUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor,
+                          JavaConversions.asScalaBuffer(this.servers), new Properties());
   }
 
   @Test
   public void testConsumerTimeout() throws InterruptedException {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
-                                              Versions.KAFKA_V1_JSON_BINARY,
                                               Versions.KAFKA_V1_JSON_BINARY);
     // Even with identical timeouts, should be able to consume multiple times without the
     // instance timing out

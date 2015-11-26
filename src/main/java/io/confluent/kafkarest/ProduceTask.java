@@ -29,7 +29,7 @@ import io.confluent.kafkarest.entities.SchemaHolder;
 /**
  * Container for state associated with one REST-ful produce request, i.e. a batched send
  */
-class ProduceTask {
+public class ProduceTask {
 
   private static final Logger log = LoggerFactory.getLogger(ProduceTask.class);
 

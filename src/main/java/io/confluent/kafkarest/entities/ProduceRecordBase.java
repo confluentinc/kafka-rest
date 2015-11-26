@@ -47,6 +47,11 @@ public abstract class ProduceRecordBase<K, V> implements ProduceRecord<K, V> {
     this.value = value;
   }
 
+  @Override
+  public Integer partition() {
+    return null;
+  }
+
   /**
    * Return a JSON-serializable version of the key. This does not need to handle schemas.
    */

@@ -18,9 +18,10 @@ the only version of the API is ``v1``.
 The embedded format is the format of data you are producing or consuming, which
 are embedded into requests or responses in the serialization format. For
 example, you can provide ``binary`` data in a ``json``-serialized request; in
-this case the data should be provided as a base64-encoded string. The proxy also
-supports ``avro``, in which case a JSON form of the data can be embedded
-directly and a schema (or schema ID) should be included with the request.
+this case the data should be provided as a base64-encoded string. If your data is
+just JSON, you can use ``json`` as the embedded format and embed it directly.
+The proxy also supports ``avro``, in which case a JSON form of the data can be embedded
+directly and a schema (or schema ID) should be included with the request. 
 
 The format for the content type is::
 
@@ -61,7 +62,7 @@ following response:
 
    .. sourcecode:: http
 
-      HTTP/1.1 422 OK
+      HTTP/1.1 422 Unprocessable Entity
       Content-Type: application/vnd.kafka.v1+json
 
       {
@@ -88,6 +89,8 @@ per-request basis.
           * Error code 50002 -- Kafka error.
           * Error code 50003 -- Retriable Kafka error. Although the operation failed, it's
             possible that retrying the request will be successful.
+          * Error code 50101 -- Only SSL endpoints were found for the specified broker, but
+            SSL is not supported for the invoked API yet.
 
 Topics
 ------
@@ -200,7 +203,11 @@ you produce messages by making ``POST`` requests to specific topics.
 .. http:post:: /topics/(string:topic_name)
 
    Produce messages to a topic, optionally specifying keys or partitions for the
-   messages. For the ``avro`` embedded format, you must provide information
+   messages. If no partition is provided, one will be chosen based on the hash of
+   the key. If no key is provided, the partition will be chosen for each message
+   in a round-robin fashion.
+
+   For the ``avro`` embedded format, you must provide information
    about schemas and the REST proxy must be configured with the URL to access
    the schema registry (``schema.registry.connect``). Schemas may be provided as
    the full schema encoded as a string, or, after the initial request may be
@@ -249,6 +256,7 @@ you produce messages by making ``POST`` requests to specific topics.
         not include the ``key_schema`` or ``key_schema_id`` fields
       * Error code 42202 -- Request includes values and uses a format that requires schemas, but
         does not include the ``value_schema`` or ``value_schema_id`` fields
+      * Error code 42205 -- Request includes invalid schema.
 
    **Example binary request**:
 
@@ -259,19 +267,21 @@ you produce messages by making ``POST`` requests to specific topics.
       Content-Type: application/vnd.kafka.binary.v1+json
       Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
 
-      [
-        {
-          "key": "a2V5",
-          "value": "Y29uZmx1ZW50"
-        },
-        {
-          "value": "a2Fma2E=",
-          "partition": 1
-        },
-        {
-          "value": "bG9ncw=="
-        }
-      ]
+      {
+        "records": [
+          {
+            "key": "a2V5",
+            "value": "Y29uZmx1ZW50"
+          },
+          {
+            "value": "a2Fma2E=",
+            "partition": 1
+          },
+          {
+            "value": "bG9ncw=="
+          }
+        ]
+      }
 
    **Example binary response**:
 
@@ -343,11 +353,63 @@ you produce messages by making ``POST`` requests to specific topics.
         ]
       }
 
+
+   **Example JSON request**:
+
+   .. sourcecode:: http
+
+      POST /topics/test HTTP/1.1
+      Host: kafkaproxy.example.com
+      Content-Type: application/vnd.kafka.json.v1+json
+      Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
+
+      {
+        "records": [
+          {
+            "key": "somekey",
+            "value": {"foo": "bar"}
+          },
+          {
+            "value": [ "foo", "bar" ],
+            "partition": 1
+          },
+          {
+            "value": 53.5
+          }
+        ]
+      }
+
+   **Example JSON response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/vnd.kafka.v1+json
+
+      {
+        "key_schema_id": null,
+        "value_schema_id": null,
+        "offsets": [
+          {
+            "partition": 2,
+            "offset": 100
+          },
+          {
+            "partition": 1,
+            "offset": 101
+          },
+          {
+            "partition": 2,
+            "offset": 102
+          }
+        ]
+      }
+
 Partitions
 ----------
 
 The partitions resource provides per-partition metadata, including the current leaders and replicas for each partition.
-It also allows you to produce messages to single partition using ``POST`` requests.
+It also allows you to consume and produce messages to single partition using ``GET`` and ``POST`` requests.
 
 .. http:get:: /topics/(string:topic_name)/partitions
 
@@ -481,6 +543,118 @@ It also allows you to produce messages to single partition using ``POST`` reques
         ]
       }
 
+.. http:get:: /topics/(string:topic_name)/partitions/(int:partition_id)/messages?offset=(int)[&count=(int)]
+
+   Consume messages from one partition of the topic.
+
+   :param string topic_name: Topic to consume the messages from
+   :param int partition_id: Partition to consume the messages from
+   :query int offset: Offset to start from
+   :query int count: Number of messages to consume (optional). Default is 1.
+
+   :>jsonarr string key: The message key, formatted according to the embedded format
+   :>jsonarr string value: The message value, formatted according to the embedded format
+   :>jsonarr int partition: Partition of the message
+   :>jsonarr long offset: Offset of the message
+
+   :statuscode 404:
+      * Error code 40401 -- Topic not found
+      * Error code 40402 -- Partition not found
+      * Error code 40404 -- Leader not available
+   :statuscode 500:
+      * Error code 500 -- General consumer error response, caused by an exception during the
+        operation. An error message is included in the standard format which explains the cause.
+   :statuscode 503:
+      * Error code 50301 -- No SimpleConsumer is available at the time in the pool. The request can be retried.
+        You can increase the pool size or the pool timeout to avoid this error in the future.
+
+   **Example binary request**:
+
+   .. sourcecode:: http
+
+      GET /topic/test/partitions/1/messages?offset=10&count=2 HTTP/1.1
+      Host: proxy-instance.kafkaproxy.example.com
+      Accept: application/vnd.kafka.binary.v1+json
+
+   **Example binary response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/vnd.kafka.binary.v1+json
+
+      [
+        {
+          "key": "a2V5",
+          "value": "Y29uZmx1ZW50",
+          "partition": 1,
+          "offset": 10,
+        },
+        {
+          "key": "a2V5",
+          "value": "a2Fma2E=",
+          "partition": 1,
+          "offset": 11,
+        }
+      ]
+
+   **Example Avro request**:
+
+   .. sourcecode:: http
+
+      GET /topic/test/partitions/1/messages?offset=1 HTTP/1.1
+      Host: proxy-instance.kafkaproxy.example.com
+      Accept: application/vnd.kafka.avro.v1+json
+
+   **Example Avro response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/vnd.kafka.avro.v1+json
+
+      [
+        {
+          "key": 1,
+          "value": {
+            "id": 1,
+            "name": "Bill"
+          },
+          "partition": 1,
+          "offset": 1,
+        }
+      ]
+
+   **Example JSON request**:
+
+   .. sourcecode:: http
+
+      GET /topic/test/partitions/1/messages?offset=10&count=2 HTTP/1.1
+      Host: proxy-instance.kafkaproxy.example.com
+      Accept: application/vnd.kafka.json.v1+json
+
+   **Example JSON response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/vnd.kafka.json.v1+json
+
+      [
+        {
+          "key": "somekey",
+          "value": {"foo":"bar"},
+          "partition": 1,
+          "offset": 10,
+        },
+        {
+          "key": "somekey",
+          "value": ["foo", "bar"],
+          "partition": 1,
+          "offset": 11,
+        }
+      ]
+
 .. http:post:: /topics/(string:topic_name)/partitions/(int:partition_id)
 
    Produce messages to one partition of the topic. For the ``avro`` embedded
@@ -534,6 +708,7 @@ It also allows you to produce messages to single partition using ``POST`` reques
         not include the ``key_schema`` or ``key_schema_id`` fields
       * Error code 42202 -- Request includes values and uses a format that requires schemas, but
         does not include the ``value_schema`` or ``value_schema_id`` fields
+      * Error code 42205 -- Request includes invalid schema.
 
    **Example binary request**:
 
@@ -621,6 +796,48 @@ It also allows you to produce messages to single partition using ``POST`` reques
         ]
       }
 
+   **Example JSON request**:
+
+   .. sourcecode:: http
+
+      POST /topics/test/partitions/1 HTTP/1.1
+      Host: kafkaproxy.example.com
+      Content-Type: application/vnd.kafka.json.v1+json
+      Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
+
+      {
+        "records": [
+          {
+            "key": "somekey",
+            "value": {"foo": "bar"}
+          },
+          {
+            "value": 53.5
+          }
+        ]
+      }
+
+   **Example JSON response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/vnd.kafka.v1+json
+
+      {
+        "key_schema_id": null,
+        "value_schema_id": null,
+        "offsets": [
+          {
+            "partition": 1,
+            "offset": 100,
+          },
+          {
+            "partition": 1,
+            "offset": 101,
+          }
+        ]
+      }
 
 Consumers
 ---------
@@ -656,10 +873,14 @@ error.
    for this specific REST proxy instance.
 
    :param string group_name: The name of the consumer group to join
-   :<json string id: Unique ID for the consumer instance in this group. If omitted, one will be automatically generated
-                     using the REST proxy ID and an auto-incrementing number
+   :<json string id: **DEPRECATED** Unique ID for the consumer instance in this group. If omitted,
+                     one will be automatically generated
+   :<json string name: Name for the consumer instance, which will be used in URLs for the
+                       consumer. This must be unique, at least within the proxy process handling
+                       the request. If omitted, falls back on the automatically generated ID. Using
+                       automatically generated names is recommended for most use cases.
    :<json string format: The format of consumed messages, which is used to convert messages into
-                         a JSON-compatible form. Valid values: "binary", "avro". If unspecified,
+                         a JSON-compatible form. Valid values: "binary", "avro", "json". If unspecified,
                          defaults to "binary".
    :<json string auto.offset.reset: Sets the ``auto.offset.reset`` setting for the consumer
    :<json string auto.commit.enable: Sets the ``auto.commit.enable`` setting for the consumer
@@ -669,6 +890,8 @@ error.
    :>json string base_uri: Base URI used to construct URIs for subsequent requests against this consumer instance. This
                            will be of the form ``http://hostname:port/consumers/consumer_group/instances/instance_id``.
 
+   :statuscode 409:
+          * Error code 40902 -- Consumer instance with the specified name already exists.
    :statuscode 422:
           * Error code 42204 -- Invalid consumer configuration. One of the settings specified in
             the request contained an invalid value.
@@ -682,7 +905,7 @@ error.
       Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
 
       {
-        "id": "my_consumer",
+        "name": "my_consumer",
         "format": "binary",
         "auto.offset.reset": "smallest",
         "auto.commit.enable": "false"
@@ -892,6 +1115,36 @@ error.
           },
           "partition": 2,
           "offset": 101,
+        }
+      ]
+
+   **Example JSON request**:
+
+   .. sourcecode:: http
+
+      GET /consumers/jsongroup/instances/my_json_consumer/topics/test_json_topic HTTP/1.1
+      Host: proxy-instance.kafkaproxy.example.com
+      Accept: application/vnd.kafka.json.v1+json
+
+   **Example JSON response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/vnd.kafka.json.v1+json
+
+      [
+        {
+          "key": "somekey",
+          "value": {"foo":"bar"},
+          "partition": 1,
+          "offset": 10,
+        },
+        {
+          "key": "somekey",
+          "value": ["foo", "bar"],
+          "partition": 2,
+          "offset": 11,
         }
       ]
 

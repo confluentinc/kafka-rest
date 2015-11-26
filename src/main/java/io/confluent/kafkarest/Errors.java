@@ -16,6 +16,7 @@
 
 package io.confluent.kafkarest;
 
+import org.apache.avro.SchemaParseException;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.errors.RetriableException;
 
@@ -51,6 +52,13 @@ public class Errors {
                                      CONSUMER_INSTANCE_NOT_FOUND_ERROR_CODE);
   }
 
+  public final static String LEADER_NOT_AVAILABLE_MESSAGE = "Leader not available.";
+  public final static int LEADER_NOT_AVAILABLE_ERROR_CODE = 40404;
+
+  public static RestException LeaderNotAvailableException() {
+    return new RestNotFoundException(LEADER_NOT_AVAILABLE_MESSAGE,
+        LEADER_NOT_AVAILABLE_ERROR_CODE);
+  }
 
   public final static String CONSUMER_FORMAT_MISMATCH_MESSAGE =
       "The requested embedded data format does not match the deserializer for this consumer "
@@ -75,6 +83,16 @@ public class Errors {
                              CONSUMER_ALREADY_SUBSCRIBED_ERROR_CODE);
   }
 
+  public final static String CONSUMER_ALREADY_EXISTS_MESSAGE =
+      "Consumer with specified consumer ID already exists in the specified consumer group.";
+  public final static int CONSUMER_ALREADY_EXISTS_ERROR_CODE = 40902;
+
+  public static RestException consumerAlreadyExistsException() {
+    return new RestException(CONSUMER_ALREADY_EXISTS_MESSAGE,
+                             Response.Status.CONFLICT.getStatusCode(),
+                             CONSUMER_ALREADY_EXISTS_ERROR_CODE);
+  }
+
 
   public final static String KEY_SCHEMA_MISSING_MESSAGE = "Request includes keys but does not "
                                                           + "include key schema";
@@ -97,11 +115,11 @@ public class Errors {
 
   }
 
-  public final static String JSON_AVRO_CONVERSION_MESSAGE = "Conversion of JSON to Avro failed.";
+  public final static String JSON_AVRO_CONVERSION_MESSAGE = "Conversion of JSON to Avro failed: ";
   public final static int JSON_AVRO_CONVERSION_ERROR_CODE = 42203;
 
-  public static RestConstraintViolationException jsonAvroConversionException() {
-    return new RestConstraintViolationException(JSON_AVRO_CONVERSION_MESSAGE,
+  public static RestConstraintViolationException jsonAvroConversionException(Throwable t) {
+    return new RestConstraintViolationException(JSON_AVRO_CONVERSION_MESSAGE + t.getMessage(),
                                                 JSON_AVRO_CONVERSION_ERROR_CODE);
 
   }
@@ -113,6 +131,15 @@ public class Errors {
       InvalidConfigException e) {
     return new RestConstraintViolationException(INVALID_CONSUMER_CONFIG_MESSAGE + e.getMessage(),
                                                 INVALID_CONSUMER_CONFIG_ERROR_CODE);
+  }
+
+  public final static String INVALID_SCHEMA_MESSAGE = "Invalid schema: ";
+  public final static int INVALID_SCHEMA_ERROR_CODE = 42205;
+
+  public static RestConstraintViolationException invalidSchemaException(
+      SchemaParseException e) {
+    return new RestConstraintViolationException(INVALID_SCHEMA_MESSAGE + e.getMessage(),
+                                                INVALID_SCHEMA_ERROR_CODE);
   }
 
   public final static String ZOOKEEPER_ERROR_MESSAGE = "Zookeeper error: ";
@@ -135,6 +162,25 @@ public class Errors {
   public static RestServerErrorException kafkaRetriableErrorException(Throwable e) {
     return new RestServerErrorException(KAFKA_RETRIABLE_ERROR_MESSAGE + e.getMessage(),
                                         KAFKA_RETRIABLE_ERROR_ERROR_CODE);
+  }
+
+  public final static String NO_SSL_SUPPORT_MESSAGE =
+      "Only SSL endpoints were found for the broker, but SSL is not currently supported.";
+  public final static int NO_SSL_SUPPORT_ERROR_CODE = 50101;
+
+  public static RestServerErrorException noSslSupportException() {
+    return new RestServerErrorException(NO_SSL_SUPPORT_MESSAGE,
+                                        NO_SSL_SUPPORT_ERROR_CODE);
+  }
+
+  public final static String NO_SIMPLE_CONSUMER_AVAILABLE_ERROR_MESSAGE =
+      "No SimpleConsumer is available at the time in the pool. The request can be retried. " +
+      "You can increase the pool size or the pool timeout to avoid this error in the future.";
+  public final static int NO_SIMPLE_CONSUMER_AVAILABLE_ERROR_CODE = 50301;
+
+  public static RestServerErrorException simpleConsumerPoolTimeoutException() {
+    return new RestServerErrorException(NO_SIMPLE_CONSUMER_AVAILABLE_ERROR_MESSAGE,
+        NO_SIMPLE_CONSUMER_AVAILABLE_ERROR_CODE);
   }
 
   public final static String UNEXPECTED_PRODUCER_EXCEPTION
