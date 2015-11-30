@@ -40,7 +40,7 @@ Produce and Consume JSON Messages
 
    # Produce a message using JSON with the value '{ "foo": "bar" }' to the topic test
    $ curl -X POST -H "Content-Type: application/vnd.kafka.json.v1+json" \
-         --data '{"records":[{"value":{"foo":"bar"}]}' "http://localhost:8082/topics/test"
+         --data '{"records":[{"value":{"foo":"bar"}}]}' "http://localhost:8082/topics/test"
      {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
 
    # Create a consumer for JSON data, starting at the beginning of the topic's
