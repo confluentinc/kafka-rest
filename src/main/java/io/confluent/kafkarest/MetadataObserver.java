@@ -180,20 +180,24 @@ public class MetadataObserver {
 
       Partition p = new Partition();
       p.setPartition(partId);
-      LeaderAndIsr leaderAndIsr =
-          zkUtils.getLeaderAndIsrForPartition(topic, partId).get();
-      p.setLeader(leaderAndIsr.leader());
-      scala.collection.immutable.Set<Integer> isr = leaderAndIsr.isr().toSet();
-      List<PartitionReplica> partReplicas = new Vector<PartitionReplica>();
-      for (Object brokerObj : JavaConversions.asJavaCollection(part.getValue())) {
-        int broker = (Integer) brokerObj;
-        PartitionReplica
-            r =
-            new PartitionReplica(broker, (leaderAndIsr.leader() == broker), isr.contains(broker));
-        partReplicas.add(r);
+      try {
+        LeaderAndIsr leaderAndIsr =
+                zkUtils.getLeaderAndIsrForPartition(topic, partId).get();
+        p.setLeader(leaderAndIsr.leader());
+        scala.collection.immutable.Set<Integer> isr = leaderAndIsr.isr().toSet();
+        List<PartitionReplica> partReplicas = new Vector<PartitionReplica>();
+        for (Object brokerObj : JavaConversions.asJavaCollection(part.getValue())) {
+          int broker = (Integer) brokerObj;
+          PartitionReplica
+                  r =
+                  new PartitionReplica(broker, (leaderAndIsr.leader() == broker), isr.contains(broker));
+          partReplicas.add(r);
+        }
+        p.setReplicas(partReplicas);
+        partitions.add(p);
+      } catch (NoSuchElementException e) {
+        log.warn(e);
       }
-      p.setReplicas(partReplicas);
-      partitions.add(p);
     }
     return partitions;
   }
