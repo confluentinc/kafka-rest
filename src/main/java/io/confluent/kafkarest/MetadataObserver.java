@@ -197,7 +197,7 @@ public class MetadataObserver {
         p.setReplicas(partReplicas);
         partitions.add(p);
       } catch (NoSuchElementException e) {
-        log.warn(e);
+        log.warn("No leader and ISR information for partition {}", partId);
       }
     }
     return partitions;
