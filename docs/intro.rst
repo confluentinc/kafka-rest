@@ -13,8 +13,18 @@ framework that doesn't yet support Kafka, and scripting administrative actions.
 Quickstart
 ----------
 
-The following assumes you have Kafka, the schema registry, and an instance of
-the REST Proxy running using the default settings and some topics already created.
+Start by running the services the REST Proxy depends on: ZooKeeper, Kafka, and the Schema Registry:
+
+.. sourcecode:: bash
+
+   $ ./bin/zookeeper-server-start ./etc/kafka/zookeeper.properties &
+   $ ./bin/kafka-server-start ./etc/kafka/server.properties &
+   $ ./bin/schema-registry-start ./etc/schema-registry/schema-registry.properties &
+
+.. ifconfig:: platform_docs
+
+   See the :ref:`Confluent Platform quickstart<quickstart>` for a more detailed explanation of how
+   to get these services up and running.
 
 Inspect Topic Metadata
 ~~~~~~~~~~~~~~~~~~~~~~
