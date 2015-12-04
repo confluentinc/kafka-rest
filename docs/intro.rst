@@ -13,13 +13,15 @@ framework that doesn't yet support Kafka, and scripting administrative actions.
 Quickstart
 ----------
 
-Start by running the services the REST Proxy depends on: ZooKeeper, Kafka, and the Schema Registry:
+Start by running the REST Proxy and the services it depends on: ZooKeeper, Kafka, and the Schema
+Registry:
 
 .. sourcecode:: bash
 
    $ ./bin/zookeeper-server-start ./etc/kafka/zookeeper.properties &
    $ ./bin/kafka-server-start ./etc/kafka/server.properties &
    $ ./bin/schema-registry-start ./etc/schema-registry/schema-registry.properties &
+   $ ./bin/kafka-rest-start ./etc/kafka-rest/kafka-rest.properties &
 
 .. ifconfig:: platform_docs
 
