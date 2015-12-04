@@ -289,6 +289,12 @@ generating
 ``target/kafka-rest-$VERSION-standalone.jar``, which includes all the
 dependencies as well.
 
+Requirements
+------------
+
+- Kafka 0.9.0.0
+- Required for Avro support: Schema Registry 2.0.0 recommended, 1.0 minimum
+
 Contribute
 ----------
 

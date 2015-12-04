@@ -69,6 +69,13 @@ Java Kafka clients.
   * Default: 25
   * Importance: medium
 
+``access.control.allow.origin``
+  Set value for Jetty Access-Control-Allow-Origin header
+
+  * Type: string
+  * Default: ""
+  * Importance: low
+
 ``consumer.instance.timeout.ms``
   Amount of idle time before a consumer instance is automatically destroyed.
 
@@ -108,7 +115,7 @@ Java Kafka clients.
   Prefix to apply to metric names for the default JMX reporter.
 
   * Type: string
-  * Default: "kafka-rest"
+  * Default: "kafka.rest"
   * Importance: low
 
 ``metrics.num.samples``
