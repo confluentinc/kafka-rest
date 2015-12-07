@@ -80,7 +80,7 @@ Produce and Consume JSON Messages
 
    # Produce a message using JSON with the value '{ "foo": "bar" }' to the topic test
    $ curl -X POST -H "Content-Type: application/vnd.kafka.json.v1+json" \
-         --data '{"records":[{"value":{"foo":"bar"}}]}' "http://localhost:8082/topics/test"
+         --data '{"records":[{"value":{"foo":"bar"}}]}' "http://localhost:8082/topics/jsontest"
      {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
 
    # Create a consumer for JSON data, starting at the beginning of the topic's
@@ -93,7 +93,7 @@ Produce and Consume JSON Messages
      {"instance_id":"my_consumer_instance",
      "base_uri":"http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance"}
    $ curl -X GET -H "Accept: application/vnd.kafka.json.v1+json" \
-         http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance/topics/test
+         http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance/topics/jsontest
      [{"key":null,"value":{"foo":"bar"},"partition":0,"offset":0}]
    $ curl -X DELETE \
          http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance
@@ -106,7 +106,7 @@ Produce and Consume Binary Messages
 
    # Produce a message using binary embedded data with value "Kafka" to the topic test
    $ curl -X POST -H "Content-Type: application/vnd.kafka.binary.v1+json" \
-         --data '{"records":[{"value":"S2Fma2E="}]}' "http://localhost:8082/topics/test"
+         --data '{"records":[{"value":"S2Fma2E="}]}' "http://localhost:8082/topics/binarytest"
      {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
 
    # Create a consumer for binary data, starting at the beginning of the topic's
@@ -118,7 +118,7 @@ Produce and Consume Binary Messages
          http://localhost:8082/consumers/my_binary_consumer
      {"instance_id":"my_consumer_instance","base_uri":"http://localhost:8082/consumers/my_binary_consumer/instances/my_consumer_instance"}
    $ curl -X GET -H "Accept: application/vnd.kafka.binary.v1+json" \
-         http://localhost:8082/consumers/my_binary_consumer/instances/my_consumer_instance/topics/test
+         http://localhost:8082/consumers/my_binary_consumer/instances/my_consumer_instance/topics/binarytest
      [{"key":null,"value":"S2Fma2E=","partition":0,"offset":0}]
    $ curl -X DELETE \
          http://localhost:8082/consumers/my_binary_consumer/instances/my_consumer_instance
