@@ -117,18 +117,16 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
           MessageAndMetadata<KafkaK, KafkaV> msg = iter.peek();
           ConsumerRecordAndSize<ClientK, ClientV> recordAndSize = parent.createConsumerRecord(msg);
           long roughMsgSize = recordAndSize.getSize();
-          bytesConsumed += roughMsgSize;
-
-          iter.next();
-          messages.add(recordAndSize.getRecord());
-          // Updating the consumed offsets isn't done until we're actually going to return the
-          // data since we may encounter an error during a subsequent read, in which case we'll
-          // have to defer returning the data so we can return an HTTP error instead
-
-          if (bytesConsumed > maxResponseBytes) {
+          if (bytesConsumed + roughMsgSize > maxResponseBytes) {
             break;
           }
 
+          iter.next();
+          messages.add(recordAndSize.getRecord());
+          bytesConsumed += roughMsgSize;
+          // Updating the consumed offsets isn't done until we're actually going to return the
+          // data since we may encounter an error during a subsequent read, in which case we'll
+          // have to defer returning the data so we can return an HTTP error instead
         }
       } catch (ConsumerTimeoutException cte) {
         backoff = true;

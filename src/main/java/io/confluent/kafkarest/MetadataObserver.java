@@ -102,7 +102,7 @@ public class MetadataObserver {
 
   public Topic getTopic(String topicName) {
     List<Topic> topics =
-        getTopicsData(JavaConversions.asScalaIterable(Arrays.asList(topicName)).toSeq());
+        getTopicsData(JavaConversions.asScalaBuffer(Arrays.asList(topicName)));
     return (topics.isEmpty() ? null : topics.get(0));
   }
 
@@ -147,7 +147,7 @@ public class MetadataObserver {
 
   private List<Partition> getTopicPartitions(String topic, Integer partitions_filter) {
     Map<String, Map<Object, Seq<Object>>> topicPartitions = zkUtils.getPartitionAssignmentForTopics(
-        JavaConversions.asScalaIterable(Arrays.asList(topic)).toSeq());
+        JavaConversions.asScalaBuffer(Arrays.asList(topic)));
     Map<Object, Seq<Object>> parts = topicPartitions.get(topic).get();
     return extractPartitionsFromZKData(parts, topic, partitions_filter);
   }
@@ -171,7 +171,7 @@ public class MetadataObserver {
   private List<Partition> extractPartitionsFromZKData(
       Map<Object, Seq<Object>> parts, String topic, Integer partitions_filter) {
     List<Partition> partitions = new Vector<Partition>();
-    java.util.Map<Object, Seq<Object>> partsJava = JavaConversions.asJavaMap(parts);
+    java.util.Map<Object, Seq<Object>> partsJava = JavaConversions.mapAsJavaMap(parts);
     for (java.util.Map.Entry<Object, Seq<Object>> part : partsJava.entrySet()) {
       int partId = (Integer) part.getKey();
       if (partitions_filter != null && partitions_filter != partId) {

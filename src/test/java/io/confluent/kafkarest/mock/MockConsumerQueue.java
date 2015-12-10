@@ -120,8 +120,7 @@ public class MockConsumerQueue implements BlockingQueue<FetchedDataChunk> {
       }
 
       ByteBufferMessageSet msgSet = new ByteBufferMessageSet(
-          JavaConversions.asScalaIterable(Arrays.asList(new Message(c.getValue(), c.getKey())))
-              .toSeq()
+          JavaConversions.asScalaBuffer(Arrays.asList(new Message(c.getValue(), c.getKey())))
       );
       AtomicLong consumedOffset = new AtomicLong(0);
       AtomicLong fetchOffset = new AtomicLong(0);
