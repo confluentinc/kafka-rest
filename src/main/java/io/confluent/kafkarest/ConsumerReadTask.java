@@ -104,6 +104,7 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
       }
 
       boolean backoff = false;
+      long roughMsgSize = 0;
 
       long startedIteration = parent.getConfig().getTime().milliseconds();
       final int requestTimeoutMs = parent.getConfig().getInt(
@@ -116,8 +117,8 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
         while (iter.hasNext()) {
           MessageAndMetadata<KafkaK, KafkaV> msg = iter.peek();
           ConsumerRecordAndSize<ClientK, ClientV> recordAndSize = parent.createConsumerRecord(msg);
-          long roughMsgSize = recordAndSize.getSize();
-          if (bytesConsumed + roughMsgSize > maxResponseBytes) {
+          roughMsgSize = recordAndSize.getSize();
+          if (bytesConsumed + roughMsgSize >= maxResponseBytes) {
             break;
           }
 
@@ -143,7 +144,9 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
           started + parent.getConfig().getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
       waitExpiration = Math.min(backoffExpiration, requestExpiration);
 
-      if (elapsed >= requestTimeoutMs || bytesConsumed >= maxResponseBytes) {
+      // Including the rough message size here ensures processing finishes if the next
+      // message exceeds the maxResponseBytes
+      if (elapsed >= requestTimeoutMs || bytesConsumed + roughMsgSize >= maxResponseBytes) {
         finish();
       }
 

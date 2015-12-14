@@ -196,12 +196,14 @@ public class ConsumerManagerTest {
     assertTrue("Callback failed to fire", sawCallback);
     assertNull("No exception in callback", actualException);
     assertEquals("Records returned not as expected", referenceRecords, actualRecords);
+
     // With # of bytes in messages < max bytes per response, this should finish just after
-    // the per-request timeout (because the timeout perfectly coincides with a scheduled
-    // iteration when using the default settings).
-    assertEquals(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)
-                 + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG),
-                 config.getTime().milliseconds());
+    // the per-request timeout (attempts to tie this down to the ms not possible so assumes that greater than is "good enough")
+    String msg = "Time taken (" + Long.toString(config.getTime().milliseconds()) + ") to process message should be greater than the timeout " +
+        Integer.toString(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)
+                 + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG)) ;
+    assertFalse(msg, config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)
+                 + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG) >= config.getTime().milliseconds());
 
     sawCallback = false;
     actualException = null;
@@ -233,10 +235,10 @@ public class ConsumerManagerTest {
     // response, not all of it is returned.
     final List<ConsumerRecord<byte[], byte[]>> referenceRecords
         = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
-        new BinaryConsumerRecord(null, new byte[512], 0, 0),
-        new BinaryConsumerRecord(null, new byte[512], 1, 0),
-        new BinaryConsumerRecord(null, new byte[512], 2, 0),
-        new BinaryConsumerRecord(null, new byte[512], 3, 0)
+        new BinaryConsumerRecord(null, new byte[511], 0, 0), // Don't use 512 as this happens to fall on boundary
+        new BinaryConsumerRecord(null, new byte[511], 1, 0),
+        new BinaryConsumerRecord(null, new byte[511], 2, 0),
+        new BinaryConsumerRecord(null, new byte[511], 3, 0)
     );
     Map<Integer, List<ConsumerRecord<byte[], byte[]>>> referenceSchedule
         = new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
@@ -274,6 +276,15 @@ public class ConsumerManagerTest {
     assertNull("Callback received exception", actualException);
     // Should only see the first two messages since the third pushes us over the limit.
     assertEquals("List of records returned incorrect", 2, actualLength);
+
+    // Because we should have returned due to the message size limit we shouldn't have
+    // maxed out the timeout
+    //
+    String msg = "Time taken (" + Long.toString(config.getTime().milliseconds()) + ") to process message should be less than the timeout " +
+        Integer.toString(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)
+                 + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG)) ;
+    assertFalse(msg, config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)
+                 + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG) < config.getTime().milliseconds());
 
     // Also check the user-submitted limit
     sawCallback = false;
