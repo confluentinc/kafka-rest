@@ -114,16 +114,18 @@ public class MetadataObserver {
     // shouldn't be common, so we just grab all of them to keep this simple
     Map<String, Properties> configs = AdminUtils.fetchAllTopicConfigs(zkUtils);
     for (String topicName : JavaConversions.asJavaCollection(topicNames)) {
-      Map<Object, Seq<Object>> partitionMap = topicPartitions.get(topicName).get();
-      List<Partition> partitions = extractPartitionsFromZKData(partitionMap, topicName, null);
-      if (partitions.size() == 0) {
-        continue;
+      if(!topicPartitions.get(topicName).isEmpty()) {
+        Map<Object, Seq<Object>> partitionMap = topicPartitions.get(topicName).get();
+        List<Partition> partitions = extractPartitionsFromZKData(partitionMap, topicName, null);
+        if (partitions.size() == 0) {
+          continue;
+        }
+        Option<Properties> topicConfigOpt = configs.get(topicName);
+        Properties topicConfigs =
+                topicConfigOpt.isEmpty() ? new Properties() : topicConfigOpt.get();
+        Topic topic = new Topic(topicName, topicConfigs, partitions);
+        topics.add(topic);
       }
-      Option<Properties> topicConfigOpt = configs.get(topicName);
-      Properties topicConfigs =
-          topicConfigOpt.isEmpty() ? new Properties() : topicConfigOpt.get();
-      Topic topic = new Topic(topicName, topicConfigs, partitions);
-      topics.add(topic);
     }
     return topics;
   }
@@ -147,9 +149,12 @@ public class MetadataObserver {
 
   private List<Partition> getTopicPartitions(String topic, Integer partitions_filter) {
     Map<String, Map<Object, Seq<Object>>> topicPartitions = zkUtils.getPartitionAssignmentForTopics(
-        JavaConversions.asScalaBuffer(Arrays.asList(topic)));
-    Map<Object, Seq<Object>> parts = topicPartitions.get(topic).get();
-    return extractPartitionsFromZKData(parts, topic, partitions_filter);
+            JavaConversions.asScalaBuffer(Arrays.asList(topic)));
+    if (!topicPartitions.get(topic).isEmpty()) {
+      Map<Object, Seq<Object>> parts = topicPartitions.get(topic).get();
+      return extractPartitionsFromZKData(parts, topic, partitions_filter);
+    }
+    return null;
   }
 
   public int getLeaderId(final String topicName, final int partitionId) {
@@ -180,20 +185,21 @@ public class MetadataObserver {
 
       Partition p = new Partition();
       p.setPartition(partId);
-      LeaderAndIsr leaderAndIsr =
-          zkUtils.getLeaderAndIsrForPartition(topic, partId).get();
-      p.setLeader(leaderAndIsr.leader());
-      scala.collection.immutable.Set<Integer> isr = leaderAndIsr.isr().toSet();
-      List<PartitionReplica> partReplicas = new Vector<PartitionReplica>();
-      for (Object brokerObj : JavaConversions.asJavaCollection(part.getValue())) {
-        int broker = (Integer) brokerObj;
-        PartitionReplica
-            r =
-            new PartitionReplica(broker, (leaderAndIsr.leader() == broker), isr.contains(broker));
-        partReplicas.add(r);
+      if(!zkUtils.getLeaderAndIsrForPartition(topic, partId).isEmpty()) {
+        LeaderAndIsr leaderAndIsr =
+                zkUtils.getLeaderAndIsrForPartition(topic, partId).get();
+        p.setLeader(leaderAndIsr.leader());
+        scala.collection.immutable.Set<Integer> isr = leaderAndIsr.isr().toSet();
+        List<PartitionReplica> partReplicas = new Vector<PartitionReplica>();
+        for (Object brokerObj : JavaConversions.asJavaCollection(part.getValue())) {
+          int broker = (Integer) brokerObj;
+          PartitionReplica r =
+                  new PartitionReplica(broker, (leaderAndIsr.leader() == broker), isr.contains(broker));
+          partReplicas.add(r);
+        }
+        p.setReplicas(partReplicas);
+        partitions.add(p);
       }
-      p.setReplicas(partReplicas);
-      partitions.add(p);
     }
     return partitions;
   }
