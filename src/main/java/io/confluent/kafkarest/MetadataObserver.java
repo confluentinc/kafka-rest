@@ -185,9 +185,9 @@ public class MetadataObserver {
 
       Partition p = new Partition();
       p.setPartition(partId);
-      if(!zkUtils.getLeaderAndIsrForPartition(topic, partId).isEmpty()) {
-        LeaderAndIsr leaderAndIsr =
-                zkUtils.getLeaderAndIsrForPartition(topic, partId).get();
+      Option<LeaderAndIsr> leaderAndIsrOpt = zkUtils.getLeaderAndIsrForPartition(topic, partId);
+      if(!leaderAndIsrOpt.isEmpty()) {
+        LeaderAndIsr leaderAndIsr = leaderAndIsrOpt.get();
         p.setLeader(leaderAndIsr.leader());
         scala.collection.immutable.Set<Integer> isr = leaderAndIsr.isr().toSet();
         List<PartitionReplica> partReplicas = new Vector<PartitionReplica>();
