@@ -71,7 +71,6 @@ public class Errors {
                              CONSUMER_FORMAT_MISMATCH_ERROR_CODE);
   }
 
-
   public final static String CONSUMER_ALREADY_SUBSCRIBED_MESSAGE =
       "Consumer cannot subscribe the the specified target because it has already subscribed to "
       + "other topics.";
@@ -141,6 +140,15 @@ public class Errors {
     return new RestConstraintViolationException(INVALID_SCHEMA_MESSAGE + e.getMessage(),
                                                 INVALID_SCHEMA_ERROR_CODE);
   }
+  
+  public final static String INVALID_CONSUMER_NAME_MESSAGE =
+	      "Invalid characters have been found in the name : ";
+  public final static int INVALID_CONSUMER_NAME_ERROR_CODE = 42206;
+
+  public static RestConstraintViolationException invalidConsumerName(String consumerName) {
+	    return new RestConstraintViolationException(INVALID_CONSUMER_NAME_MESSAGE + consumerName,
+	    		INVALID_CONSUMER_NAME_ERROR_CODE);
+	  }
 
   public final static String ZOOKEEPER_ERROR_MESSAGE = "Zookeeper error: ";
   public final static int ZOOKEEPER_ERROR_ERROR_CODE = 50001;

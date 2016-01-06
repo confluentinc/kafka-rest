@@ -18,6 +18,8 @@ package io.confluent.kafkarest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.ws.rs.core.Response;
 
@@ -127,6 +131,19 @@ public class ConsumerManager {
         name += serverId + "-";
       }
       name += UUID.randomUUID().toString();
+    }
+
+    Pattern invalidURLRegex = Pattern.compile("[!#$&-;=?-\\[\\]_~]");
+    Matcher invalidURLMatcher = invalidURLRegex.matcher(name);
+    
+    boolean matchFound = false;
+    
+    while(invalidURLMatcher.find()){
+    	matchFound = true;
+    }
+    
+    if(matchFound){
+    	throw Errors.invalidConsumerName(name);
     }
 
     ConsumerInstanceId cid = new ConsumerInstanceId(group, name);
