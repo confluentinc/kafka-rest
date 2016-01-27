@@ -25,18 +25,11 @@ public class MockTime implements Time {
 
   @Override
   public long milliseconds() {
-    // Incrementing currentMs prevents tests from locking up
-    // "waiting" for the time checks in the code.  Without this
-    // the ConsumerManager never completed (it never calls sleep or waitOn)
-    currentMs++;
     return currentMs;
   }
 
   @Override
   public long nanoseconds() {
-    // No increment here.  If the code changes such that the above
-    // millisecond method is never called will have to add an increment
-    // here.
     return TimeUnit.NANOSECONDS.convert(currentMs, TimeUnit.MILLISECONDS);
   }
 
@@ -47,10 +40,6 @@ public class MockTime implements Time {
 
   @Override
   public void waitOn(Object on, long ms) throws InterruptedException {
-    // Introduced a thread.sleep to allow context switching in consumer worker.
-    // Without this the worker appears to get stuck in a busy loop and actually
-    // takes longer  to process the messages...
-    Thread.sleep(1);
     currentMs += ms;
   }
 }

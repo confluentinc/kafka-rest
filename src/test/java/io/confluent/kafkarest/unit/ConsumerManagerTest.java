@@ -196,14 +196,12 @@ public class ConsumerManagerTest {
     assertTrue("Callback failed to fire", sawCallback);
     assertNull("No exception in callback", actualException);
     assertEquals("Records returned not as expected", referenceRecords, actualRecords);
-
     // With # of bytes in messages < max bytes per response, this should finish just after
-    // the per-request timeout (attempts to tie this down to the ms not possible so assumes that greater than is "good enough")
-    String msg = "Time taken (" + Long.toString(config.getTime().milliseconds()) + ") to process message should be greater than the timeout " +
-        Integer.toString(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)
-                 + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG)) ;
-    assertFalse(msg, config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)
-                 + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG) >= config.getTime().milliseconds());
+    // the per-request timeout (because the timeout perfectly coincides with a scheduled
+    // iteration when using the default settings).
+    assertEquals(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)
+                  + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG),
+                  config.getTime().milliseconds());
 
     sawCallback = false;
     actualException = null;
