@@ -13,8 +13,20 @@ framework that doesn't yet support Kafka, and scripting administrative actions.
 Quickstart
 ----------
 
-The following assumes you have Kafka, the schema registry, and an instance of
-the REST Proxy running using the default settings and some topics already created.
+Start by running the REST Proxy and the services it depends on: ZooKeeper, Kafka, and the Schema
+Registry:
+
+.. sourcecode:: bash
+
+   $ ./bin/zookeeper-server-start ./etc/kafka/zookeeper.properties &
+   $ ./bin/kafka-server-start ./etc/kafka/server.properties &
+   $ ./bin/schema-registry-start ./etc/schema-registry/schema-registry.properties &
+   $ ./bin/kafka-rest-start ./etc/kafka-rest/kafka-rest.properties &
+
+.. ifconfig:: platform_docs
+
+   See the :ref:`Confluent Platform quickstart<quickstart>` for a more detailed explanation of how
+   to get these services up and running.
 
 Inspect Topic Metadata
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -23,65 +35,15 @@ Inspect Topic Metadata
 
    # Get a list of topics
    $ curl "http://localhost:8082/topics"
-     [{"name":"test","num_partitions":3},{"name":"test2","num_partitions":1}]
+     ["test","test2","test3"]
 
    # Get info about one topic
    $ curl "http://localhost:8082/topics/test"
-     {"name":"test","num_partitions":3}
+     {"test":"connect-test","configs":{},"partitions":[{"partition":0,"leader":0,"replicas":[{"broker":0,"leader":true,"in_sync":true}]},{"partition":1,"leader":0,"replicas":[{"broker":1,"leader":true,"in_sync":true}]}]}
 
    # Get info about a topic's partitions
    $ curl "http://localhost:8082/topics/test/partitions
-     [{"partition":0,"leader":1002,"replicas":[{"broker":1002,"leader":true,"in_sync":true}]}]
-
-Produce and Consume JSON Messages
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. sourcecode:: bash
-
-   # Produce a message using JSON with the value '{ "foo": "bar" }' to the topic test
-   $ curl -X POST -H "Content-Type: application/vnd.kafka.json.v1+json" \
-         --data '{"records":[{"value":{"foo":"bar"}]}' "http://localhost:8082/topics/test"
-     {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
-
-   # Create a consumer for JSON data, starting at the beginning of the topic's
-   # log. Then consume some data from a topic using the base URL in the first response.
-   # Finally, close the consumer with a DELETE to make it leave the group and clean up
-   # its resources.
-   $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
-         --data '{"format": "json", "auto.offset.reset": "smallest"}' \
-         http://localhost:8082/consumers/my_json_consumer
-     {"instance_id":"rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6","base_uri":"http://localhost:8082/consumers/my_json_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6"}
-   $ curl -X GET -H "Accept: application/vnd.kafka.json.v1+json" \
-         http://localhost:8082/consumers/my_json_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6/topics/test
-     [{"key":null,"value":{"foo":"bar"},"partition":0,"offset":0}]
-   $ curl -X DELETE \
-         http://localhost:8082/consumers/my_json_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6
-     # No content in response
-
-Produce and Consume Binary Messages
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. sourcecode:: bash
-
-   # Produce a message using binary embedded data with value "Kafka" to the topic test
-   $ curl -X POST -H "Content-Type: application/vnd.kafka.binary.v1+json" \
-         --data '{"records":[{"value":"S2Fma2E="}]}' "http://localhost:8082/topics/test"
-     {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
-
-   # Create a consumer for binary data, starting at the beginning of the topic's
-   # log. Then consume some data from a topic using the base URL in the first response.
-   # Finally, close the consumer with a DELETE to make it leave the group and clean up
-   # its resources.
-   $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
-         --data '{"format": "binary", "auto.offset.reset": "smallest"}' \
-         http://localhost:8082/consumers/my_binary_consumer
-     {"instance_id":"rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6","base_uri":"http://localhost:8082/consumers/my_binary_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6"}
-   $ curl -X GET -H "Accept: application/vnd.kafka.binary.v1+json" \
-         http://localhost:8082/consumers/my_binary_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6/topics/test
-     [{"key":null,"value":"S2Fma2E=","partition":0,"offset":0}]
-   $ curl -X DELETE \
-         http://localhost:8082/consumers/my_binary_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6
-     # No content in response
+     [{"partition":0,"leader":0,"replicas":[{"broker":0,"leader":true,"in_sync":true}]},{"partition":1,"leader":0,"replicas":[{"broker":1,"leader":true,"in_sync":true}]}]
 
 Produce and Consume Avro Messages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -101,14 +63,65 @@ Produce and Consume Avro Messages
    # JSON, and included in the response. The schema used for deserialization is
    # fetched automatically from the schema registry. Finally, clean up.
    $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
-         --data '{"format": "avro", "auto.offset.reset": "smallest"}' \
+         --data '{"name": "my_consumer_instance", "format": "avro", "auto.offset.reset": "smallest"}' \
          http://localhost:8082/consumers/my_avro_consumer
-     {"instance_id":"rest-consumer-11392f3a-efbe-4fe2-b0bf-5c85d7b25e7b","base_uri":"http://localhost:8082/consumers/my_avro_consumer/instances/rest-consumer-11392f3a-efbe-4fe2-b0bf-5c85d7b25e7b"}
+     {"instance_id":"my_consumer_instance","base_uri":"http://localhost:8082/consumers/my_avro_consumer/instances/my_consumer_instance"}
    $ curl -X GET -H "Accept: application/vnd.kafka.avro.v1+json" \
-         http://localhost:8082/consumers/my_avro_consumer/instances/rest-consumer-11392f3a-efbe-4fe2-b0bf-5c85d7b25e7b/topics/avrotest
+         http://localhost:8082/consumers/my_avro_consumer/instances/my_consumer_instance/topics/avrotest
      [{"key":null,"value":{"name":"testUser"},"partition":0,"offset":0}]
    $ curl -X DELETE \
-         http://localhost:8082/consumers/my_avro_consumer/instances/rest-consumer-11392f3a-efbe-4fe2-b0bf-5c85d7b25e7b
+         http://localhost:8082/consumers/my_avro_consumer/instances/my_consumer_instance
+     # No content in response
+
+Produce and Consume JSON Messages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. sourcecode:: bash
+
+   # Produce a message using JSON with the value '{ "foo": "bar" }' to the topic test
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.json.v1+json" \
+         --data '{"records":[{"value":{"foo":"bar"}}]}' "http://localhost:8082/topics/jsontest"
+     {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
+
+   # Create a consumer for JSON data, starting at the beginning of the topic's
+   # log. Then consume some data from a topic using the base URL in the first response.
+   # Finally, close the consumer with a DELETE to make it leave the group and clean up
+   # its resources.
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
+         --data '{"name": "my_consumer_instance", "format": "json", "auto.offset.reset": "smallest"}' \
+         http://localhost:8082/consumers/my_json_consumer
+     {"instance_id":"my_consumer_instance",
+     "base_uri":"http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance"}
+   $ curl -X GET -H "Accept: application/vnd.kafka.json.v1+json" \
+         http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance/topics/jsontest
+     [{"key":null,"value":{"foo":"bar"},"partition":0,"offset":0}]
+   $ curl -X DELETE \
+         http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance
+     # No content in response
+
+Produce and Consume Binary Messages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. sourcecode:: bash
+
+   # Produce a message using binary embedded data with value "Kafka" to the topic test
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.binary.v1+json" \
+         --data '{"records":[{"value":"S2Fma2E="}]}' "http://localhost:8082/topics/binarytest"
+     {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
+
+   # Create a consumer for binary data, starting at the beginning of the topic's
+   # log. Then consume some data from a topic using the base URL in the first response.
+   # Finally, close the consumer with a DELETE to make it leave the group and clean up
+   # its resources.
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
+         --data '{"name": "my_consumer_instance", "format": "binary", "auto.offset.reset": "smallest"}' \
+         http://localhost:8082/consumers/my_binary_consumer
+     {"instance_id":"my_consumer_instance","base_uri":"http://localhost:8082/consumers/my_binary_consumer/instances/my_consumer_instance"}
+   $ curl -X GET -H "Accept: application/vnd.kafka.binary.v1+json" \
+         http://localhost:8082/consumers/my_binary_consumer/instances/my_consumer_instance/topics/binarytest
+     [{"key":null,"value":"S2Fma2E=","partition":0,"offset":0}]
+   $ curl -X DELETE \
+         http://localhost:8082/consumers/my_binary_consumer/instances/my_consumer_instance
      # No content in response
 
 Features
@@ -288,6 +301,12 @@ to the packaged binary versions. You can also produce a standalone fat jar using
 generating
 ``target/kafka-rest-$VERSION-standalone.jar``, which includes all the
 dependencies as well.
+
+Requirements
+------------
+
+- Kafka 0.9.0.0-cp1
+- Required for Avro support: Schema Registry 2.0.0 recommended, 1.0 minimum
 
 Contribute
 ----------
