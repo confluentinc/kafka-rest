@@ -480,8 +480,6 @@ public class ConsumerManagerTest {
 
     // Second read should recover and return all the data.
     sawCallback = false;
-    actualException = null;
-    actualRecords = null;
     consumerManager.readTopic(
         groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
         new ConsumerManager.ReadCallback<byte[], byte[]>() {
@@ -489,14 +487,11 @@ public class ConsumerManagerTest {
           public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
                                    Exception e) {
             sawCallback = true;
-            actualException = e;
-            actualRecords = records;
+            assertNull(e);
+            assertEquals(referenceRecords, records);
           }
         }).get();
-    assertTrue("Callback not called", sawCallback);
-    assertEquals("Callback failed to return correct records", referenceRecords, actualRecords);
-    assertNull("Callback Exception ", actualException);
-
+    assertTrue(sawCallback);
 
     EasyMock.verify(mdObserver, consumerFactory);
   }
