@@ -117,7 +117,7 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
           MessageAndMetadata<KafkaK, KafkaV> msg = iter.peek();
           ConsumerRecordAndSize<ClientK, ClientV> recordAndSize = parent.createConsumerRecord(msg);
           long roughMsgSize = recordAndSize.getSize();
-          if (bytesConsumed + roughMsgSize > maxResponseBytes) {
+          if (bytesConsumed > 0 && bytesConsumed + roughMsgSize > maxResponseBytes) {
             break;
           }
 
