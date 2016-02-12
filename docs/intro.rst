@@ -306,7 +306,7 @@ Requirements
 ------------
 
 - Kafka 0.9.0.1 (0.9.0.1-cp1 recommended)
-- Required for Avro support: Schema Registry 2.0.0 recommended, 1.0 minimum
+- Required for Avro support: Schema Registry 2.0.1 recommended, 1.0 minimum
 
 Contribute
 ----------
