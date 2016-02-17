@@ -42,7 +42,7 @@ Inspect Topic Metadata
      {"test":"connect-test","configs":{},"partitions":[{"partition":0,"leader":0,"replicas":[{"broker":0,"leader":true,"in_sync":true}]},{"partition":1,"leader":0,"replicas":[{"broker":1,"leader":true,"in_sync":true}]}]}
 
    # Get info about a topic's partitions
-   $ curl "http://localhost:8082/topics/test/partitions
+   $ curl "http://localhost:8082/topics/test/partitions"
      [{"partition":0,"leader":0,"replicas":[{"broker":0,"leader":true,"in_sync":true}]},{"partition":1,"leader":0,"replicas":[{"broker":1,"leader":true,"in_sync":true}]}]
 
 Produce and Consume Avro Messages
