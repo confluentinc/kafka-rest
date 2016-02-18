@@ -251,8 +251,7 @@ Although the properties file is not required, almost all production deployments
 *should* provide one. By default the server starts bound to port
 8082, does not specify a unique instance ID (required to safely run multiple
 proxies concurrently), and expects Zookeeper to be available at
-``localhost:2181``, a Kafka broker at ``localhost:9092``, and the schema
-registry at ``http://localhost:8081``.
+``localhost:2181`` and the schema registry at ``http://localhost:8081``.
 
 Development
 -----------
