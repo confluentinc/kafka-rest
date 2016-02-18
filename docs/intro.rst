@@ -251,8 +251,7 @@ Although the properties file is not required, almost all production deployments
 *should* provide one. By default the server starts bound to port
 8082, does not specify a unique instance ID (required to safely run multiple
 proxies concurrently), and expects Zookeeper to be available at
-``localhost:2181``, a Kafka broker at ``localhost:9092``, and the schema
-registry at ``http://localhost:8081``.
+``localhost:2181`` and the schema registry at ``http://localhost:8081``.
 
 Development
 -----------
@@ -305,8 +304,8 @@ dependencies as well.
 Requirements
 ------------
 
-- Kafka 0.9.0.0-cp1
-- Required for Avro support: Schema Registry 2.0.0 recommended, 1.0 minimum
+- Kafka 0.9.0.1 (0.9.0.1-cp1 recommended)
+- Required for Avro support: Schema Registry 2.0.1 recommended, 1.0 minimum
 
 Contribute
 ----------
