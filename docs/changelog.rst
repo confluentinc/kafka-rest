@@ -3,6 +3,11 @@
 Changelog
 =========
 
+Version 2.1.0-alpha1 (Streams Tech Preview)
+-------------------------------------------
+
+* Update Kafka version to 0.9.1.0-cp1
+
 Version 2.0.1
 -------------
 
