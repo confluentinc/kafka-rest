@@ -172,7 +172,7 @@ public class ConsumerManagerTest {
     String cid = consumerManager.createConsumer(
         groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
     sawCallback = false;
-    Object result = consumerManager.readTopic(
+    consumerManager.readTopic(
         groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
         new ConsumerManager.ReadCallback<byte[], byte[]>() {
           @Override
