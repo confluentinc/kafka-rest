@@ -95,8 +95,8 @@ public class PartitionsResourceAvroProduceTest
     );
     TopicPartition tp0 = new TopicPartition(topicName, 0);
     produceResults = Arrays.asList(
-        new RecordMetadataOrException(new RecordMetadata(tp0, 0, 0), null),
-        new RecordMetadataOrException(new RecordMetadata(tp0, 0, 1), null)
+        new RecordMetadataOrException(new RecordMetadata(tp0, 0, 0, 0, 0, 1, 1), null),
+        new RecordMetadataOrException(new RecordMetadata(tp0, 0, 1, 0, 0, 1, 1), null)
     );
     offsetResults = Arrays.asList(
         new PartitionOffset(0, 0L, null, null),
