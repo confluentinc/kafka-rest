@@ -37,17 +37,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.Collections;
 
 /**
  * Shared pool of Kafka producers used to send messages. The pool manages batched sends, tracking
- * all required acks for a batch and managing timeouts. Currently this pool only contains one
- * producer per serialization format (e.g. byte[], Avro).
+ * all required acks for a batch and managing timeouts. Currently this pool contains three
+ * producers per serialization format (e.g. byte[], Avro).
  */
 public class ProducerPool {
 
+  private static int PRODUCER_COUNT_PER_FORMAT = 3;
+
   private static final Logger log = LoggerFactory.getLogger(ProducerPool.class);
-  private Map<EmbeddedFormat, RestProducer> producers =
-      new HashMap<EmbeddedFormat, RestProducer>();
+  private final Map<EmbeddedFormat, List<RestProducer>> unmodifiableProducerMap;
 
   public ProducerPool(KafkaRestConfig appConfig, ZkUtils zkUtils) {
     this(appConfig, zkUtils, null);
@@ -61,14 +65,30 @@ public class ProducerPool {
   public ProducerPool(KafkaRestConfig appConfig, String bootstrapBrokers,
                       Properties producerConfigOverrides) {
 
+    Map<EmbeddedFormat, List<RestProducer>> producerMap = new HashMap<EmbeddedFormat, List<RestProducer>>();
+
     Map<String, Object> binaryProps = buildStandardConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
-    producers.put(EmbeddedFormat.BINARY, buildBinaryProducer(binaryProps));
+    List<RestProducer> binaryProducers = new ArrayList<RestProducer>();
+    for (int i = 0; i < PRODUCER_COUNT_PER_FORMAT; i++) {
+      binaryProducers.add(buildBinaryProducer(binaryProps));
+    }
+    producerMap.put(EmbeddedFormat.BINARY, binaryProducers);
 
     Map<String, Object> jsonProps = buildStandardConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
-    producers.put(EmbeddedFormat.JSON, buildJsonProducer(jsonProps));
+    List<RestProducer> jsonProducers = new ArrayList<RestProducer>();
+    for (int i = 0; i < PRODUCER_COUNT_PER_FORMAT; i++) {
+      jsonProducers.add(buildJsonProducer(jsonProps));
+    }
+    producerMap.put(EmbeddedFormat.JSON, jsonProducers);
 
     Map<String, Object> avroProps = buildAvroConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
-    producers.put(EmbeddedFormat.AVRO, buildAvroProducer(avroProps));
+    List<RestProducer> avroProducers = new ArrayList<RestProducer>();
+    for (int i = 0; i < PRODUCER_COUNT_PER_FORMAT; i++) {
+      avroProducers.add(buildAvroProducer(avroProps));
+    }
+    producerMap.put(EmbeddedFormat.AVRO, avroProducers);
+
+    unmodifiableProducerMap = Collections.unmodifiableMap(producerMap);
   }
 
   private Map<String, Object> buildStandardConfig(KafkaRestConfig appConfig, String bootstrapBrokers,
@@ -155,14 +175,22 @@ public class ProducerPool {
                              Collection<? extends ProduceRecord<K, V>> records,
                              ProduceRequestCallback callback) {
     ProduceTask task = new ProduceTask(schemaHolder, records.size(), callback);
-    log.trace("Starting produce task " + task.toString());
-    RestProducer restProducer = producers.get(recordFormat);
+    log.trace("Starting produce task ", task.toString());
+    List<RestProducer> restProducers = unmodifiableProducerMap.get(recordFormat);
+    int slot = new Random().nextInt(PRODUCER_COUNT_PER_FORMAT);
+    RestProducer restProducer = restProducers.get(slot);
     restProducer.produce(task, topic, partition, records);
   }
 
   public void shutdown() {
-    for (RestProducer restProducer : producers.values()) {
-      restProducer.close();
+    for (List<RestProducer> producerList : unmodifiableProducerMap.values()) {
+      for (RestProducer producer : producerList) {
+        try {
+          producer.close();
+        } catch (RuntimeException ex) {
+          log.warn("Caught unexpected exception while closing all procuders", ex.getMessage());
+        }
+      }
     }
   }
 
