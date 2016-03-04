@@ -152,7 +152,7 @@ public abstract class ClusterTestHarness {
 
       props = overrideBrokerProperties(i, props);
 
-      KafkaConfig config = new KafkaConfig(props);
+      KafkaConfig config = KafkaConfig.fromProps(props);
       configs.add(config);
 
       KafkaServer server = TestUtils.createServer(config, SystemTime$.MODULE$);

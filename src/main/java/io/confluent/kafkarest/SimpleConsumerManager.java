@@ -40,6 +40,7 @@ import kafka.serializer.DefaultDecoder;
 import kafka.utils.VerifiableProperties;
 
 import org.apache.kafka.common.protocol.SecurityProtocol;
+import org.apache.kafka.common.record.TimestampType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -185,9 +186,10 @@ public class SimpleConsumerManager {
                                                           final String topicName,
                                                           final int partitionId) {
     final MessageAndMetadata<byte[], byte[]> messageAndMetadata =
-        new MessageAndMetadata<byte[], byte[]>(topicName, partitionId,
-            messageAndOffset.message(), messageAndOffset.offset(),
-            binaryDecoder, binaryDecoder);
+        new MessageAndMetadata<>(topicName, partitionId,
+                                 messageAndOffset.message(), messageAndOffset.offset(),
+                                 0, TimestampType.CREATE_TIME,
+                                 binaryDecoder, binaryDecoder);
     return new BinaryConsumerRecord(messageAndMetadata.key(), messageAndMetadata.message(),
         partitionId, messageAndOffset.offset());
   }
@@ -196,9 +198,10 @@ public class SimpleConsumerManager {
                                                       final String topicName,
                                                       final int partitionId) {
     final MessageAndMetadata<Object, Object> messageAndMetadata =
-        new MessageAndMetadata<Object, Object>(topicName, partitionId,
-            messageAndOffset.message(), messageAndOffset.offset(),
-            avroDecoder, avroDecoder);
+        new MessageAndMetadata<>(topicName, partitionId,
+                                 messageAndOffset.message(), messageAndOffset.offset(),
+                                 0, TimestampType.CREATE_TIME,
+                                 avroDecoder, avroDecoder);
     return new AvroConsumerRecord(
         AvroConverter.toJson(messageAndMetadata.key()).json,
         AvroConverter.toJson(messageAndMetadata.message()).json,
@@ -210,9 +213,10 @@ public class SimpleConsumerManager {
                                                       final String topicName,
                                                       final int partitionId) {
     final MessageAndMetadata<Object, Object> messageAndMetadata =
-        new MessageAndMetadata<Object, Object>(topicName, partitionId,
-            messageAndOffset.message(), messageAndOffset.offset(),
-            jsonDecoder, jsonDecoder);
+        new MessageAndMetadata<>(topicName, partitionId,
+                                 messageAndOffset.message(), messageAndOffset.offset(),
+                                 0, TimestampType.CREATE_TIME,
+                                 jsonDecoder, jsonDecoder);
     return new JsonConsumerRecord(messageAndMetadata.key(), messageAndMetadata.message(),
         partitionId, messageAndOffset.offset());
   }
