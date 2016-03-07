@@ -1,0 +1,317 @@
+namespace RestClient 
+{
+    public enum HttpVerb
+    {
+        GET,
+        POST,
+        PUT,
+        DELETE
+    }
+
+    public class RestClient
+    {
+        public string EndPoint { get; set; }
+        public HttpVerb Method { get; set; }
+        public string ContentType { get; set; }
+        public string PostData { get; set; }
+
+        public string accept { get; set; }
+
+        public RestClient()
+        {
+            EndPoint = "";
+            Method = HttpVerb.GET;
+            ContentType = "application/vnd.kafka.v1+json";
+            PostData = "";
+           
+        }
+        public RestClient(string endpoint)
+        {
+            EndPoint = endpoint;
+            Method = HttpVerb.GET;
+            ContentType = "text/xml";
+            PostData = "";
+        }
+        public RestClient(string endpoint, HttpVerb method)
+        {
+            EndPoint = endpoint;
+            Method = method;
+            ContentType = "text/xml";
+            PostData = "";
+        }
+
+        public RestClient(string endpoint, HttpVerb method, string postData)
+        {
+            EndPoint = endpoint;
+            Method = method;
+            ContentType = "text/xml";
+            PostData = postData;
+        }
+
+       
+
+
+        public string MakeRequest()
+        {
+            return MakeRequest("");
+        }
+
+        public string MakeRequest(string parameters)
+        {
+            var request = (HttpWebRequest)WebRequest.Create(EndPoint + parameters);
+
+            request.Method = Method.ToString();
+            request.ContentLength = 0;
+            request.ContentType = ContentType;
+            request.Accept = accept;
+
+            if (!string.IsNullOrEmpty(PostData) && Method == HttpVerb.POST)
+            {
+                var encoding = new UTF8Encoding();
+                var bytes = Encoding.GetEncoding("iso-8859-1").GetBytes(PostData);
+                request.ContentLength = bytes.Length;
+
+                using (var writeStream = request.GetRequestStream())
+                {
+                    writeStream.Write(bytes, 0, bytes.Length);
+                }
+            }
+
+            using (var response = (HttpWebResponse)request.GetResponse())
+            {
+                var responseValue = string.Empty;
+
+                if (response.StatusCode == HttpStatusCode.NoContent && Method == HttpVerb.DELETE)
+                {
+
+                }
+                else
+                {
+                    if (response.StatusCode != HttpStatusCode.OK)
+                    {
+                        var message = String.Format("Request failed. Received HTTP {0}", response.StatusCode);
+                        throw new ApplicationException(message);
+                    }
+
+                    // grab the response
+                    using (var responseStream = response.GetResponseStream())
+                    {
+                        if (responseStream != null)
+                            using (var reader = new StreamReader(responseStream))
+                            {
+                                responseValue = reader.ReadToEnd();
+                            }
+                    }
+                }
+
+                return responseValue;
+            }
+        }
+
+    } // class
+
+}
+class Program
+{
+        private static string serverIp = "http://10.49.18.211:8082";
+        private static string topicsURI = "topics";
+        
+        static void Main(string[] args)
+        {
+            //var client = new RestClient();
+            //client.EndPoint = @"http://10.49.18.211:8082/topics/test"; ;
+            //client.Method = HttpVerb.GET;
+            ////client.PostData = "{postData: value}";
+            //var json = client.MakeRequest();
+            ////GetTopics();
+
+            //var test = ProduceAvroMessage(serverIp, "test");
+            //for (int i = 0; i < 10; i++)
+            //{
+
+            //    var test = ProduceBinaryMessage(serverIp, "test");
+            //}
+            //var jsonResponse = CreateConsumer();
+            //string url = jsonResponse.Substring(jsonResponse.IndexOf("\"base_uri\":") + "\"base_uri\":".Length);
+            //url = url.Replace("\"", string.Empty).Replace("}", string.Empty);
+            ////var url = "http://10.49.18.211:8082/consumers/selva/instances/my_instance";
+            //var test1 = ReadConsumer(url, "test");
+            //var jsonDeleteResponse = DeleteJsonConsumer(url);
+
+
+
+
+            //var jsonResponse1 = ProduceSampleAvroMessage(serverIp, "avrotest1");
+            //var jsonResponse = CreateAvroConsumer();
+            //string url = jsonResponse.Substring(jsonResponse.IndexOf("\"base_uri\":") + "\"base_uri\":".Length);
+            //url = url.Replace("\"", string.Empty).Replace("}", string.Empty);
+            //string sample = ReadAvroConsumer(url, "avrotest1");
+            //var jsonDeleteResponse = DeleteJsonConsumer(url);
+
+           
+
+            var jsonProducerResponse = ProduceSampleJsonMessage(serverIp, "jsontest");
+
+            var jsonResponse = CreateJsonConsumer();
+
+            string url = jsonResponse.Substring(jsonResponse.IndexOf("\"base_uri\":") + "\"base_uri\":".Length);
+            url = url.Replace("\"", string.Empty).Replace("}", string.Empty);
+            var jsonResponse1 = ReadJsonConsumer(url, "jsontest");
+            var jsonDeleteResponse = DeleteJsonConsumer(url);
+
+        }
+
+        public static  void GetTopics()
+        {
+            var client = new RestClient();
+            client.EndPoint = string.Format("{0}/{1}", serverIp, topicsURI);
+            client.Method = HttpVerb.GET;
+            var json = client.MakeRequest();
+        }
+
+
+        public static void GetTopicInfo()
+        {
+            var client = new RestClient();
+            client.EndPoint = string.Format("{0}/{1}", serverIp, topicsURI);
+            client.Method = HttpVerb.GET;
+            var json = client.MakeRequest();
+        }
+
+        public static string CreateConsumer()
+        {
+            var client = new RestClient();
+            client.Method = HttpVerb.POST;
+            client.ContentType = "application/vnd.kafka.v1+json";
+            client.EndPoint = string.Format("{0}/{1}/{2}", serverIp, "consumers", "selva");
+            client.PostData = "{\"format\":\"binary\",\"auto.offset.reset\":\"largest\"}";
+            var json = client.MakeRequest();
+            return json;
+        }
+        public static string ReadConsumer(string url, string topic)
+        {
+            var client = new RestClient();
+            client.Method = HttpVerb.GET;
+            client.ContentType = "";
+            //client.accept = "application/vnd.kafka.avro.v1+json";
+            client.EndPoint = string.Format("{0}/{1}/{2}", url, "topics", topic);
+            //client.PostData = "{\"format\":\"json\",\"auto.offset.reset\":\"smallest\"}";
+            var json = client.MakeRequest();
+            return json;
+        }
+        public static string ProduceBinaryMessage(string url,string topic)
+        {
+            var client = new RestClient();
+            client.Method = HttpVerb.POST;
+            client.ContentType = "application/vnd.kafka.binary.v1+json";
+            //client.accept = "application/vnd.kafka.avro.v1+json";
+            client.EndPoint = string.Format("{0}/{1}/{2}", url, "topics", topic);
+            client.PostData = "{\"records\":[{\"value\":\"S2Fma2E=\"}]}";
+            //client.PostData = "{\"value_schema\":\"{\"type\":\"record\",\"name\":\"User\",\"fields\":[{\"name\":\"username\",\"type\":\"string\"}]}\",\"records\":[{\"value\":{\"username\":\"testuser\"}}]}";
+            client.PostData = client.PostData.Trim();
+            var json = client.MakeRequest();
+            return json;
+        }
+
+        public static string ProduceAvroMessage(string url, string topic)
+        {
+            var client = new RestClient();
+            client.Method = HttpVerb.POST;
+            client.ContentType = "application/vnd.kafka.avro.v1+json";
+            client.accept = "application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json";
+            client.EndPoint = string.Format("{0}/{1}/{2}", url, "topics", topic);
+            //client.PostData = "{\"records\":[{\"value\":\"S2Fma2E=\"}]}";
+            client.PostData = "{\"value_schema\": \"{\\\"name\\\":\\\"int\\\",\\\"type\\\": \\\"int\\\"}\", \"records\": [{\"value\": 12},{\"value\": 24,\"partition\": 1}]}";
+            client.PostData = client.PostData.Trim();
+            var json = client.MakeRequest();
+            return json;
+        }
+
+        public static string ReadAvroConsumer(string url, string topic)
+        {
+            var client = new RestClient();
+            client.Method = HttpVerb.GET;
+            client.ContentType = "";
+            client.accept = "application/vnd.kafka.avro.v1+json";
+            client.EndPoint = string.Format("{0}/{1}/{2}", url, "topics", topic);
+            //client.PostData = "{\"format\":\"json\",\"auto.offset.reset\":\"smallest\"}";
+            var json = client.MakeRequest();
+            return json;
+        }
+
+        public static string ProduceSampleAvroMessage(string url, string topic)
+        {
+            var client = new RestClient();
+            client.Method = HttpVerb.POST;
+            client.ContentType = "application/vnd.kafka.avro.v1+json";
+            client.EndPoint = string.Format("{0}/{1}/{2}", url, "topics", topic);
+            //client.PostData = "{\"records\":[{\"value\":\"S2Fma2E=\"}]}";
+            client.PostData = "{\"value_schema\": \"{\\\"type\\\": \\\"record\\\", \\\"name\\\": \\\"User\\\", \\\"fields\\\": [{\\\"name\\\": \\\"name\\\", \\\"type\\\": \\\"string\\\"}]}\", \"records\": [{\"value\": {\"name\": \"testUser\"}}]}";
+            client.PostData = client.PostData.Trim();
+            var json = client.MakeRequest();
+            return json;
+        }
+
+
+        public static string CreateAvroConsumer()
+        {
+            var client = new RestClient();
+            client.Method = HttpVerb.POST;
+            client.ContentType = "application/vnd.kafka.v1+json";
+            client.EndPoint = string.Format("{0}/{1}/{2}", serverIp, "consumers", "avroconsumer1");
+            client.PostData = "{\"format\":\"avro\",\"auto.offset.reset\":\"smallest\",\"auto.commit.enable\": \"false\"}";
+            var json = client.MakeRequest();
+            return json;
+        }
+
+
+        public static string ProduceSampleJsonMessage(string url, string topic)
+        {
+            var client = new RestClient();
+            client.Method = HttpVerb.POST;
+            client.ContentType = "application/vnd.kafka.json.v1+json";
+            client.EndPoint = string.Format("{0}/{1}/{2}", url, "topics", topic);
+            //client.PostData = "{\"records\":[{\"value\":\"S2Fma2E=\"}]}";
+            client.PostData = "{\"records\":[{\"value\":{\"selvendran\":\"ayyaswamy\"}},{\"value\":{\"Selva\":\"Ayya\"}}]}";
+            //client.PostData = client.PostData.Trim();
+            var json = client.MakeRequest();
+            return json;
+        }
+
+        public static string CreateJsonConsumer()
+        {
+            var client = new RestClient();
+            client.Method = HttpVerb.POST;
+            client.ContentType = "application/vnd.kafka.v1+json";
+            client.EndPoint = string.Format("{0}/{1}/{2}", serverIp, "consumers", "jsonconsumer");
+            client.PostData = "{\"format\":\"json\",\"auto.offset.reset\":\"smallest\"}";
+            var json = client.MakeRequest();
+            return json;
+        }
+
+        public static string ReadJsonConsumer(string url, string topic)
+        {
+            var client = new RestClient();
+            client.Method = HttpVerb.GET;
+            client.ContentType = "";
+            client.accept = "application/vnd.kafka.json.v1+json";
+            client.EndPoint = string.Format("{0}/{1}/{2}", url, "topics", topic);
+            //client.PostData = "{\"format\":\"json\",\"auto.offset.reset\":\"smallest\"}";
+            var json = client.MakeRequest();
+            return json;
+        }
+
+
+        public static string DeleteJsonConsumer(string url)
+        {
+            var client = new RestClient();
+            client.Method = HttpVerb.DELETE;
+            client.ContentType = "";
+            client.accept = "application/vnd.kafka.json.v1+json";
+            client.EndPoint = url;
+            //client.PostData = "{\"format\":\"json\",\"auto.offset.reset\":\"smallest\"}";
+            var json = client.MakeRequest();
+            return json;
+        }
+
+    }
