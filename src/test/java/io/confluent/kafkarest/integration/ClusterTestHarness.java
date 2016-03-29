@@ -240,9 +240,7 @@ public abstract class ClusterTestHarness {
       server.shutdown();
     }
     for (KafkaServer server : servers) {
-      for (String logDir : JavaConversions.asJavaCollection(server.config().logDirs())) {
-        CoreUtils.rm(logDir);
-      }
+      CoreUtils.delete(server.config().logDirs());
     }
 
     zkUtils.close();
