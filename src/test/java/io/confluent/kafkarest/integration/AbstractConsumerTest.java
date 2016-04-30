@@ -292,7 +292,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     final int TIMEOUT = restConfig.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
     final int TIMEOUT_SLACK =
         restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG)
-        + restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG) + 150;
+        + restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG) + 500;
     long elapsed = finished - started;
     assertTrue(
         "Consumer request should not return before the timeout when no data is available",
