@@ -188,8 +188,8 @@ public class SimpleConsumerManager {
     final MessageAndMetadata<byte[], byte[]> messageAndMetadata =
         new MessageAndMetadata<>(topicName, partitionId,
                                  messageAndOffset.message(), messageAndOffset.offset(),
-                                 0, TimestampType.CREATE_TIME,
-                                 binaryDecoder, binaryDecoder);
+                                 binaryDecoder, binaryDecoder,
+                                 0, TimestampType.CREATE_TIME);
     return new BinaryConsumerRecord(messageAndMetadata.key(), messageAndMetadata.message(),
         partitionId, messageAndOffset.offset());
   }
@@ -200,8 +200,8 @@ public class SimpleConsumerManager {
     final MessageAndMetadata<Object, Object> messageAndMetadata =
         new MessageAndMetadata<>(topicName, partitionId,
                                  messageAndOffset.message(), messageAndOffset.offset(),
-                                 0, TimestampType.CREATE_TIME,
-                                 avroDecoder, avroDecoder);
+                                 avroDecoder, avroDecoder,
+                                 0, TimestampType.CREATE_TIME);
     return new AvroConsumerRecord(
         AvroConverter.toJson(messageAndMetadata.key()).json,
         AvroConverter.toJson(messageAndMetadata.message()).json,
@@ -215,8 +215,8 @@ public class SimpleConsumerManager {
     final MessageAndMetadata<Object, Object> messageAndMetadata =
         new MessageAndMetadata<>(topicName, partitionId,
                                  messageAndOffset.message(), messageAndOffset.offset(),
-                                 0, TimestampType.CREATE_TIME,
-                                 jsonDecoder, jsonDecoder);
+                                 jsonDecoder, jsonDecoder,
+                                 0, TimestampType.CREATE_TIME);
     return new JsonConsumerRecord(messageAndMetadata.key(), messageAndMetadata.message(),
         partitionId, messageAndOffset.offset());
   }
