@@ -78,7 +78,7 @@ Produce and Consume JSON Messages
 
 .. sourcecode:: bash
 
-   # Produce a message using JSON with the value '{ "foo": "bar" }' to the topic test
+   # Produce a message using JSON with the value '{ "foo": "bar" }' to the topic jsontest
    $ curl -X POST -H "Content-Type: application/vnd.kafka.json.v1+json" \
          --data '{"records":[{"value":{"foo":"bar"}}]}' "http://localhost:8082/topics/jsontest"
      {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
@@ -104,7 +104,7 @@ Produce and Consume Binary Messages
 
 .. sourcecode:: bash
 
-   # Produce a message using binary embedded data with value "Kafka" to the topic test
+   # Produce a message using binary embedded data with value "Kafka" to the topic binarytest
    $ curl -X POST -H "Content-Type: application/vnd.kafka.binary.v1+json" \
          --data '{"records":[{"value":"S2Fma2E="}]}' "http://localhost:8082/topics/binarytest"
      {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
