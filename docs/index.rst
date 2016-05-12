@@ -16,3 +16,4 @@ Contents:
    api
    config
    operations
+   security
