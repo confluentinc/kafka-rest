@@ -304,7 +304,7 @@ dependencies as well.
 Requirements
 ------------
 
-- Kafka 0.10.0.0-SNAPSHOT (0.10.0.0-SNAPSHOT recommended)
+- Kafka 0.10.0.0-cp1
 - Required for Avro support: Schema Registry 2.0.1 recommended, 1.0 minimum
 
 Contribute
