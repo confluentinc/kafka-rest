@@ -179,7 +179,7 @@ Just as important, here's a list of features that *aren't* yet supported:
   and use a single stream (and therefore a single thread). You can still
   achieve high throughput as you would with the Java clients: run multiple
   threads locally that each read from a separate consumer stream.
-* **Most Producer/Consumer Overrides** - Only a few key overrides are exposed in
+* **Most Producer/Consumer Overrides in Requests** - Only a few key overrides are exposed in
   the API (but global overrides can be set by the administrator). The reason is
   two-fold. First, proxies are multi-tenant and therefore most user-requested
   overrides need additional restrictions to ensure they do not impact other
@@ -206,52 +206,36 @@ Installation
    find instructions for starting those services in the
    `Schema Registry repository <http://github.com/confluentinc/schema-registry>`_.
 
+Deployment
+----------
+
 Starting the Kafka REST proxy service is simple once its dependencies are
 running:
 
 .. sourcecode:: bash
 
-   $ cd confluent-2.1/
+   $ cd confluent-3.0.0/
 
    # Start the REST proxy. The default settings automatically work with the
    # default settings for local ZooKeeper and Kafka nodes.
-   $ bin/kafka-rest-start
-
-If you installed Debian or RPM packages, you can simply run ``kafka-rest-start``
-as it will be on your ``PATH``. If you need to override the default
-configuration, add settings to a config file and pass it as an argument when you
-start the service:
-
-.. sourcecode:: bash
-
    $ bin/kafka-rest-start etc/kafka-rest/kafka-rest.properties
 
-Finally, if you started the service in the background, you can use the following
+If you installed Debian or RPM packages, you can simply run ``kafka-rest-start``
+as it will be on your ``PATH``. The ``kafka-rest.properties`` file contains
+:ref:`configuration settings<schemaregistry_config>`. The default configuration
+included with the REST proxy includes convenient defaults for a local testing setup
+and should be modified for a production deployment. By default the server starts bound to port
+8082, does not specify a unique instance ID (required to safely run multiple
+proxies concurrently), and expects Zookeeper to be available at
+``localhost:2181`` and the Schema Registry at ``http://localhost:8081``.
+
+If you started the service in the background, you can use the following
 command to stop it:
 
 .. sourcecode:: bash
 
    $ bin/kafka-rest-stop
 
-Deployment
-----------
-
-The REST proxy includes a built-in Jetty server. The wrapper scripts
-``bin/kafka-rest-start`` and ``bin/kafka-rest-stop`` are the recommended method of
-starting and stopping the service. However, you can also start the server
-directly yourself:
-
-.. sourcecode:: bash
-
-   $ java io.confluent.kafkarest.KafkaRestMain [server.properties]
-
-where ``server.properties`` contains configuration settings as specified by the
-``KafkaRestConfiguration`` class.
-Although the properties file is not required, almost all production deployments
-*should* provide one. By default the server starts bound to port
-8082, does not specify a unique instance ID (required to safely run multiple
-proxies concurrently), and expects Zookeeper to be available at
-``localhost:2181`` and the schema registry at ``http://localhost:8081``.
 
 Development
 -----------
@@ -305,7 +289,7 @@ Requirements
 ------------
 
 - Kafka 0.10.0.0-cp1
-- Required for Avro support: Schema Registry 2.0.1 recommended, 1.0 minimum
+- Required for Avro support: Schema Registry 3.0.0 recommended, 1.0 minimum
 
 Contribute
 ----------

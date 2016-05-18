@@ -69,6 +69,13 @@ Java Kafka clients.
   * Default: 25
   * Importance: medium
 
+``access.control.allow.methods``
+  Set value to Jetty Access-Control-Allow-Origin header for specified methods
+
+  * Type: string
+  * Default: ""
+  * Importance: low
+
 ``access.control.allow.origin``
   Set value for Jetty Access-Control-Allow-Origin header
 

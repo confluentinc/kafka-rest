@@ -3,6 +3,16 @@
 Changelog
 =========
 
+Version 3.0.0
+-------------
+
+* `PR-164 <https://github.com/confluentinc/kafka-rest/pull/164>`_ - 2.x merge to master
+* `PR-166 <https://github.com/confluentinc/kafka-rest/pull/166>`_ - Bump version to 3.0.0-SNAPSHOT and Kafka dependency to 0.10.0.0-SNAPSHOT
+* `PR-171 <https://github.com/confluentinc/kafka-rest/pull/171>`_ - Fix build to handle rack aware changes in Kafka.
+* `PR-174 <https://github.com/confluentinc/kafka-rest/pull/174>`_ - Update CoreUtils usage to match kafka updates
+* `PR-189 <https://github.com/confluentinc/kafka-rest/pull/189>`_ - Minor fixes for compatibility with newest 0.10.0 branch.
+* `PR-192 <https://github.com/confluentinc/kafka-rest/pull/192>`_ - Minor fixes for compatibility with newest 0.10.0 branch.
+
 Version 2.0.1
 -------------
 
