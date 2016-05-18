@@ -73,11 +73,12 @@ latency access to both ZooKeeper and the Kafka brokers. Standard data center net
 JVM
 ~~~
 
-We recommend running the latest version of JDK 1.8 with the G1 collector (older freely available versions have disclosed security vulnerabilities).
+We recommend running the latest version of JDK 1.8 with the G1 collector (older freely available
+versions have disclosed security vulnerabilities).
 
-If you are still on JDK 1.7 (which is also supported) and you are planning to use G1 (the current default), make
-sure you're on u51. We tried out u21 in testing, but we had a number of problems with the GC implementation in
-that version.
+If you are still on JDK 1.7 (which is also supported) and you are planning to use G1 (the current
+default), make sure you're on u51. We tried out u21 in testing, but we had a number of problems with
+the GC implementation in that version.
 
 Our recommended GC tuning looks like this:
 
