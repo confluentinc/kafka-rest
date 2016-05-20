@@ -45,7 +45,7 @@ import scala.math.Ordering;
  */
 public class MetadataObserver {
 
-  private static final Logger log = LoggerFactory.getLogger(ConsumerWorker.class);
+  private static final Logger log = LoggerFactory.getLogger(MetadataObserver.class);
 
   private ZkUtils zkUtils;
 
