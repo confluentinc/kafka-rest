@@ -91,9 +91,9 @@ public class MetadataObserver {
   }
 
   public boolean topicExists(String topicName) {
-    List<Topic> topics = getTopics();
-    for (Topic topic : topics) {
-      if (topic.getName().equals(topicName)) {
+    Collection<String> topicNames = getTopicNames();
+    for (String topic : topicNames) {
+      if (topic.equals(topicName)) {
         return true;
       }
     }
