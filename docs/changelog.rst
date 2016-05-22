@@ -12,6 +12,7 @@ Version 3.0.0
 * `PR-174 <https://github.com/confluentinc/kafka-rest/pull/174>`_ - Update CoreUtils usage to match kafka updates
 * `PR-189 <https://github.com/confluentinc/kafka-rest/pull/189>`_ - Minor fixes for compatibility with newest 0.10.0 branch.
 * `PR-192 <https://github.com/confluentinc/kafka-rest/pull/192>`_ - Minor fixes for compatibility with newest 0.10.0 branch.
+* `PR-202 <https://github.com/confluentinc/kafka-rest/pull/202>`_ - fix the implementation of topicExists
 
 Version 2.0.1
 -------------
