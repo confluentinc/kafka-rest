@@ -13,6 +13,7 @@ Version 3.0.0
 * `PR-189 <https://github.com/confluentinc/kafka-rest/pull/189>`_ - Minor fixes for compatibility with newest 0.10.0 branch.
 * `PR-192 <https://github.com/confluentinc/kafka-rest/pull/192>`_ - Minor fixes for compatibility with newest 0.10.0 branch.
 * `PR-202 <https://github.com/confluentinc/kafka-rest/pull/202>`_ - fix the implementation of topicExists
+* `PR-205 <https://github.com/confluentinc/kafka-rest/pull/205>`_ - Rearrange quickstart and use topics from earlier steps in requests for metadata so the example output will exactly match real output when starting from an empty cluster.
 
 Version 2.0.1
 -------------
