@@ -28,23 +28,6 @@ Registry:
    See the :ref:`Confluent Platform quickstart<quickstart>` for a more detailed explanation of how
    to get these services up and running.
 
-Inspect Topic Metadata
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. sourcecode:: bash
-
-   # Get a list of topics
-   $ curl "http://localhost:8082/topics"
-     ["test","test2","test3"]
-
-   # Get info about one topic
-   $ curl "http://localhost:8082/topics/test"
-     {"test":"connect-test","configs":{},"partitions":[{"partition":0,"leader":0,"replicas":[{"broker":0,"leader":true,"in_sync":true}]},{"partition":1,"leader":0,"replicas":[{"broker":1,"leader":true,"in_sync":true}]}]}
-
-   # Get info about a topic's partitions
-   $ curl "http://localhost:8082/topics/test/partitions"
-     [{"partition":0,"leader":0,"replicas":[{"broker":0,"leader":true,"in_sync":true}]},{"partition":1,"leader":0,"replicas":[{"broker":1,"leader":true,"in_sync":true}]}]
-
 Produce and Consume Avro Messages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -123,6 +106,24 @@ Produce and Consume Binary Messages
    $ curl -X DELETE \
          http://localhost:8082/consumers/my_binary_consumer/instances/my_consumer_instance
      # No content in response
+
+Inspect Topic Metadata
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. sourcecode:: bash
+
+   # Get a list of topics
+   $ curl "http://localhost:8082/topics"
+     ["__consumer_offsets","_schemas","avrotest","binarytest","jsontest"]
+
+   # Get info about one topic
+   $ curl "http://localhost:8082/topics/avrotest"
+     {"name":"avrotest","configs":{},"partitions":[{"partition":0,"leader":0,"replicas":[{"broker":0,"leader":true,"in_sync":true}]}]}
+
+   # Get info about a topic's partitions
+   $ curl "http://localhost:8082/topics/avrotest/partitions"
+     [{"partition":0,"leader":0,"replicas":[{"broker":0,"leader":true,"in_sync":true}]}]
+
 
 Features
 --------
