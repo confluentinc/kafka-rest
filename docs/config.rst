@@ -18,6 +18,13 @@ Java Kafka clients.
   * Default: ""
   * Importance: high
 
+``listeners``
+  Comma-separated list of listeners that listen for API requests over either HTTP or HTTPS. If a listener uses HTTPS, the appropriate SSL configuration parameters need to be set as well.
+
+  * Type: list
+  * Default: "http://0.0.0.0:8082"
+  * Importance: high
+
 ``schema.registry.url``
   The base URL for the schema registry that should be used by the Avro serializer.
 
@@ -32,6 +39,41 @@ Java Kafka clients.
 
   * Type: string
   * Default: "localhost:2181"
+  * Importance: high
+
+``ssl.keystore.location``
+  Used for HTTPS. Location of the keystore file to use for SSL. IMPORTANT: Jetty requires that the key's CN, stored in the keystore, must match the FQDN.
+
+  * Type: string
+  * Default: ""
+  * Importance: high
+
+``ssl.keystore.password``
+  Used for HTTPS. The store password for the keystore file.
+
+  * Type: password
+  * Default: ""
+  * Importance: high
+
+``ssl.key.password``
+  Used for HTTPS. The password of the private key in the keystore file.
+
+  * Type: password
+  * Default: ""
+  * Importance: high
+
+``ssl.truststore.location``
+  Used for HTTPS. Location of the trust store. Required only to authenticate HTTPS clients.
+
+  * Type: string
+  * Default: ""
+  * Importance: high
+
+``ssl.truststore.password``
+  Used for HTTPS. The store password for the trust store file.
+
+  * Type: password
+  * Default: ""
   * Importance: high
 
 ``consumer.request.max.bytes``
@@ -68,6 +110,55 @@ Java Kafka clients.
   * Type: int
   * Default: 25
   * Importance: medium
+
+``ssl.keystore.type``
+  Used for HTTPS. The type of keystore file.
+
+  * Type: string
+  * Default: "JKS"
+  * Importance: medium
+
+``ssl.truststore.type``
+  Used for HTTPS. The type of trust store file.
+
+  * Type: string
+  * Default: "JKS"
+  * Importance: medium
+
+``ssl.protocol``
+  Used for HTTPS. The SSL protocol used to generate the SslContextFactory.
+
+  * Type: string
+  * Default: "TLS"
+  * Importance: medium
+
+``ssl.provider``
+  Used for HTTPS. The SSL security provider name. Leave blank to use Jetty's default.
+
+  * Type: string
+  * Default: "" (Jetty's default)
+  * Importance: medium
+
+``ssl.client.auth``
+  Used for HTTPS. Whether or not to require the HTTPS client to authenticate via the server's trust store.
+
+  * Type: boolean
+  * Default: false
+  * Importance: medium
+
+``ssl.enabled.protocols``
+  Used for HTTPS. The list of protocols enabled for SSL connections. Comma-separated list. Leave blank to use Jetty's defaults.
+
+  * Type: list
+  * Default: "" (Jetty's default)
+  * Importance: medium
+
+``access.control.allow.methods``
+  Set value to Jetty Access-Control-Allow-Origin header for specified methods
+
+  * Type: string
+  * Default: ""
+  * Importance: low
 
 ``access.control.allow.origin``
   Set value for Jetty Access-Control-Allow-Origin header
@@ -133,7 +224,7 @@ Java Kafka clients.
   * Importance: low
 
 ``port``
-  Port to listen on for new connections.
+  DEPRECATED: port to listen on for new connections. Use `listeners` instead.
 
   * Type: int
   * Default: 8082
@@ -179,4 +270,32 @@ Java Kafka clients.
 
   * Type: int
   * Default: 1000
+  * Importance: low
+
+``ssl.keymanager.algorithm``
+  Used for HTTPS. The algorithm used by the key manager factory for SSL connections. Leave blank to use Jetty's default.
+
+  * Type: string
+  * Default: "" (Jetty's default)
+  * Importance: low
+
+``ssl.trustmanager.algorithm``
+  Used for HTTPS. The algorithm used by the trust manager factory for SSL connections. Leave blank to use Jetty's default.
+
+  * Type: string
+  * Default: "" (Jetty's default)
+  * Importance: low
+
+``ssl.cipher.suites``
+  Used for HTTPS. A list of SSL cipher suites. Comma-separated list. Leave blank to use Jetty's defaults.
+
+  * Type: list
+  * Default: "" (Jetty's default)
+  * Importance: low
+
+``ssl.endpoint.identification.algorithm``
+  Used for HTTPS. The endpoint identification algorithm to validate the server hostname using the server certificate. Leave blank to use Jetty's default.
+
+  * Type: string
+  * Default: "" (Jetty's default)
   * Importance: low
