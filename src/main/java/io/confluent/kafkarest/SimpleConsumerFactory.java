@@ -15,10 +15,13 @@
  **/
 package io.confluent.kafkarest;
 
-import kafka.javaapi.consumer.SimpleConsumer;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SimpleConsumerFactory {
@@ -27,18 +30,14 @@ public class SimpleConsumerFactory {
 
   private final KafkaRestConfig config;
 
-  private final SimpleConsumerConfig simpleConsumerConfig;
+  private final Properties simpleConsumerProperties;
   private final AtomicInteger clientIdCounter;
 
   public SimpleConsumerFactory(final KafkaRestConfig config) {
     this.config = config;
 
     clientIdCounter = new AtomicInteger(0);
-    simpleConsumerConfig = new SimpleConsumerConfig(config.getOriginalProperties());
-  }
-
-  public SimpleConsumerConfig getSimpleConsumerConfig() {
-    return simpleConsumerConfig;
+    simpleConsumerProperties = config.getOriginalProperties();
   }
 
   // The factory *must* return a SimpleConsumer with a unique clientId, as the clientId is
@@ -59,16 +58,39 @@ public class SimpleConsumerFactory {
     return id.toString();
   }
 
-  public SimpleConsumer createConsumer(final String host, final int port) {
+  public ConsumerProvider createConsumer() {
 
     final String clientId = nextClientId();
 
-    log.debug("Creating SimpleConsumer with id " + clientId + " (host: " + host + ", port: " + port + ")");
-    return new SimpleConsumer(
-        host, port,
-        simpleConsumerConfig.socketTimeoutMs(),
-        simpleConsumerConfig.socketReceiveBufferBytes(),
-        clientId);
+    log.debug("Creating SimpleConsumer with id " + clientId);
+    Properties properties = (Properties) simpleConsumerProperties.clone();
+
+    properties.setProperty("client.id", clientId);
+    properties.setProperty("max.poll.records", config.getString(KafkaRestConfig.SIMPLE_CONSUMER_MAX_POLL_RECORDS_CONGIG));
+
+    Consumer<byte[], byte[]> consumer =  new KafkaConsumer<byte[], byte[]>(properties,
+      new ByteArrayDeserializer(),
+      new ByteArrayDeserializer());
+    return new ConsumerProvider(consumer, clientId);
+  }
+
+
+  public static class ConsumerProvider {
+    private Consumer<byte[], byte[]> consumer;
+    private String clientId;
+
+    public ConsumerProvider(Consumer<byte[], byte[]> consumer, String clientId) {
+      this.consumer = consumer;
+      this.clientId = clientId;
+    }
+
+    public Consumer<byte[], byte[]> consumer() {
+      return consumer;
+    }
+
+    public String clientId() {
+      return clientId;
+    }
   }
 
 }

@@ -15,6 +15,10 @@
  **/
 package io.confluent.kafkarest;
 
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.config.ConfigException;
+import org.apache.kafka.common.serialization.Deserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,13 +44,10 @@ import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestNotFoundException;
 import io.confluent.rest.exceptions.RestServerErrorException;
-import kafka.common.InvalidConfigException;
-import kafka.consumer.Consumer;
-import kafka.consumer.ConsumerConfig;
-import kafka.javaapi.consumer.ConsumerConnector;
 
 /**
- * Manages consumer instances by mapping instance IDs to consumer objects, processing read requests,
+ * Manages logical consumer group that consists of consumer instances with the same group
+ * by mapping instance IDs to consumer objects, processing read requests,
  * and cleaning up when consumers disappear.
  */
 public class ConsumerManager {
@@ -55,9 +56,9 @@ public class ConsumerManager {
 
   private final KafkaRestConfig config;
   private final Time time;
-  private final String zookeeperConnect;
+  private final String bootstrapServers;
   private final MetadataObserver mdObserver;
-  private final int iteratorTimeoutMs;
+//  private final int iteratorTimeoutMs;
 
   // ConsumerState is generic, but we store them untyped here. This allows many operations to
   // work without having to know the types for the consumer, only requiring type information
@@ -80,9 +81,9 @@ public class ConsumerManager {
   public ConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver) {
     this.config = config;
     this.time = config.getTime();
-    this.zookeeperConnect = config.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG);
+    this.bootstrapServers = config.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG);
     this.mdObserver = mdObserver;
-    this.iteratorTimeoutMs = config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG);
+//    this.iteratorTimeoutMs = config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG);
     this.workers = new Vector<ConsumerWorker>();
     for (int i = 0; i < config.getInt(KafkaRestConfig.CONSUMER_THREADS_CONFIG); i++) {
       ConsumerWorker worker = new ConsumerWorker(config);
@@ -145,13 +146,15 @@ public class ConsumerManager {
     try {
       log.debug("Creating consumer " + name + " in group " + group);
 
+      Properties props;
       // Note the ordering here. We want to allow overrides, but almost all the
       // consumer-specific settings don't make sense to override globally (e.g. group ID, consumer
       // ID), and others we want to ensure get overridden (e.g. consumer.timeout.ms, which we
       // intentionally name differently in our own configs).
-      Properties props = (Properties) config.getOriginalProperties().clone();
-      props.setProperty("zookeeper.connect", zookeeperConnect);
+      props = (Properties) config.getOriginalProperties().clone();
+      props.setProperty("bootstrap.servers", bootstrapServers);
       props.setProperty("group.id", group);
+
       // This ID we pass here has to be unique, only pass a value along if the deprecated ID field
       // was passed in. This generally shouldn't be used, but is maintained for compatibility.
       if (instanceConfig.getId() != null) {
@@ -160,49 +163,57 @@ public class ConsumerManager {
       // To support the old consumer interface with broken peek()/missing poll(timeout)
       // functionality, we always use a timeout. This can't perfectly guarantee a total request
       // timeout, but can get as close as this timeout's value
-      props.setProperty("consumer.timeout.ms", ((Integer) iteratorTimeoutMs).toString());
+//      props.setProperty("consumer.timeout.ms", ((Integer) iteratorTimeoutMs).toString());
       if (instanceConfig.getAutoCommitEnable() != null) {
-        props.setProperty("auto.commit.enable", instanceConfig.getAutoCommitEnable());
+        props.setProperty("enable.auto.commit", instanceConfig.getAutoCommitEnable());
       } else {
-        props.setProperty("auto.commit.enable", "false");
+        props.setProperty("enable.auto.commit", "false");
       }
       if (instanceConfig.getAutoOffsetReset() != null) {
         props.setProperty("auto.offset.reset", instanceConfig.getAutoOffsetReset());
       }
-      ConsumerConnector consumer;
+
       try {
-        if (consumerFactory == null) {
-          consumer = Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
+        ConsumerFactory factory;
+        if (consumerFactory != null) {
+          factory = consumerFactory;
         } else {
-          consumer = consumerFactory.createConsumer(new ConsumerConfig(props));
+          factory = new ConsumerFactory() {
+            @Override
+            public <K, V> KafkaConsumer<K, V> createConsumer(Properties props,
+                                                             Deserializer<K> keyDeserializer,
+                                                             Deserializer<V> valueDeserializer) {
+              return new KafkaConsumer<K, V>(props, keyDeserializer, valueDeserializer);
+            }
+          };
         }
-      } catch (InvalidConfigException e) {
+        ConsumerState state;
+        switch (instanceConfig.getFormat()) {
+          case BINARY:
+            state = new BinaryConsumerState(this.config, cid, props, factory);
+            break;
+          case AVRO:
+            state = new AvroConsumerState(this.config, cid, props, factory);
+            break;
+          case JSON:
+            state = new JsonConsumerState(this.config, cid, props, factory);
+            break;
+          default:
+            throw new RestServerErrorException("Invalid embedded format for new consumer.",
+                    Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        }
+
+        synchronized (this)  {
+          consumers.put(cid, state);
+          consumersByExpiration.add(state);
+          this.notifyAll();
+        }
+        succeeded = true;
+        return name;
+      } catch (ConfigException e) {
         throw Errors.invalidConsumerConfigException(e);
       }
 
-      ConsumerState state;
-      switch (instanceConfig.getFormat()) {
-        case BINARY:
-          state = new BinaryConsumerState(this.config, cid, consumer);
-          break;
-        case AVRO:
-          state = new AvroConsumerState(this.config, cid, consumer);
-          break;
-        case JSON:
-          state = new JsonConsumerState(this.config, cid, consumer);
-          break;
-        default:
-          throw new RestServerErrorException("Invalid embedded format for new consumer.",
-                                             Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-      }
-
-      synchronized (this) {
-        consumers.put(cid, state);
-        consumersByExpiration.add(state);
-        this.notifyAll();
-      }
-      succeeded = true;
-      return name;
     } finally {
       if (!succeeded) {
         synchronized (this) {
@@ -364,7 +375,7 @@ public class ConsumerManager {
 
   public interface ConsumerFactory {
 
-    ConsumerConnector createConsumer(ConsumerConfig config);
+    <K, V> Consumer<K, V> createConsumer(Properties props, Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer);
   }
 
   private class ExpirationThread extends Thread {

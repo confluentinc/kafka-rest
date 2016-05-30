@@ -16,6 +16,7 @@
 
 package io.confluent.kafkarest.unit;
 
+import io.confluent.kafkarest.*;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -27,11 +28,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import io.confluent.kafkarest.ConsumerManager;
-import io.confluent.kafkarest.ConsumerState;
-import io.confluent.kafkarest.Context;
-import io.confluent.kafkarest.KafkaRestApplication;
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;

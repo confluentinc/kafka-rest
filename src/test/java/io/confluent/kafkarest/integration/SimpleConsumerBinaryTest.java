@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import jersey.repackaged.com.google.common.collect.ImmutableMap;
@@ -129,7 +130,7 @@ public class SimpleConsumerBinaryTest extends AbstractConsumerTest {
     );
   }
 
-  @Test(timeout = 1000)
+  @Test(timeout = 4000)
   public void testConsumeMoreMessagesThanAvailable() {
     produceBinaryMessages(recordsOnlyValues);
 

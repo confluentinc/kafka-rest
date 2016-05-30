@@ -15,29 +15,36 @@
  **/
 package io.confluent.kafkarest;
 
-import kafka.javaapi.FetchRequest;
-import kafka.javaapi.FetchResponse;
-import kafka.javaapi.consumer.SimpleConsumer;
+import org.apache.kafka.clients.consumer.Consumer;
 
-public class SimpleFetcher {
+/**
+ * Wraps state of assigned Consumer to a single topic partition.
+ * The consumer may be automatically released if opened in a
+ * try-with-resources block.
+ */
+public class TPConsumerState implements AutoCloseable {
 
-  private SimpleConsumer consumer;
+  private Consumer<byte[], byte[]> consumer;
   private SimpleConsumerPool ownerPool;
+  private String clientId;
 
-  public SimpleFetcher(SimpleConsumer consumer, SimpleConsumerPool ownerPool) {
+  public TPConsumerState(Consumer<byte[], byte[]> consumer, SimpleConsumerPool ownerPool, String clientId) {
     this.consumer = consumer;
     this.ownerPool = ownerPool;
+    this.clientId = clientId;
   }
 
   public String clientId() {
-    return consumer.clientId();
+    return clientId;
   }
 
-  public FetchResponse fetch(final FetchRequest request) {
-    return consumer.fetch(request);
+  public Consumer<byte[], byte[]> consumer() {
+    return consumer;
   }
 
   public void close() throws Exception {
+    // release partition
+    consumer.unsubscribe();
     ownerPool.release(this);
   }
 

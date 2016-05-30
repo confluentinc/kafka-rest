@@ -42,7 +42,7 @@ public class PartitionsResourceBinaryConsumeTest extends PartitionsResourceAbstr
   @Test
   public void testConsumeOk() {
     List<? extends ConsumerRecord<byte[], byte[]>> records = Arrays.asList(
-        new BinaryConsumerRecord("key1".getBytes(), "value1".getBytes(), 0, 10)
+        new BinaryConsumerRecord("key1".getBytes(), "value1".getBytes(), "topic", 0, 10)
     );
 
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES_BINARY) {
