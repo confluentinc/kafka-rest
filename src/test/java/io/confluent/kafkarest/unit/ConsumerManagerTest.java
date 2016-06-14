@@ -70,7 +70,12 @@ public class ConsumerManagerTest {
   private static final String topicName = "testtopic";
   private static final String secondTopicName = "testtopic2";
 
+  // Setup holding vars for results from callback
   private boolean sawCallback = false;
+  private static Exception actualException = null;
+  private static List<? extends ConsumerRecord<byte[], byte[]>> actualRecords = null;
+  private int actualLength = 0;
+  private static List<TopicPartitionOffset> actualOffsets = null;
 
   private Capture<ConsumerConfig> capturedConsumerConfig;
 
@@ -172,38 +177,50 @@ public class ConsumerManagerTest {
     String cid = consumerManager.createConsumer(
         groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
     sawCallback = false;
+    actualException = null;
+    actualRecords = null;
     consumerManager.readTopic(
         groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
         new ConsumerManager.ReadCallback<byte[], byte[]>() {
           @Override
           public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
                                    Exception e) {
+            actualException = e;
+            actualRecords = records;
             sawCallback = true;
-            assertNull(e);
-            assertEquals(referenceRecords, records);
+
+            // Assert that should clearly fail...but doesn't report in test runs
+            assertTrue("This should fail", false);
           }
         }).get();
-    assertTrue(sawCallback);
+    assertTrue("Callback failed to fire", sawCallback);
+    assertNull("No exception in callback", actualException);
+    assertEquals("Records returned not as expected", referenceRecords, actualRecords);
     // With # of bytes in messages < max bytes per response, this should finish just after
     // the per-request timeout (because the timeout perfectly coincides with a scheduled
     // iteration when using the default settings).
     assertEquals(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)
-                 + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG),
-                 config.getTime().milliseconds());
+                  + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG),
+                  config.getTime().milliseconds());
 
     sawCallback = false;
+    actualException = null;
+    actualOffsets = null;
     consumerManager.commitOffsets(groupName, cid, new ConsumerManager.CommitCallback() {
       @Override
       public void onCompletion(List<TopicPartitionOffset> offsets, Exception e) {
         sawCallback = true;
-        assertNull(e);
-        // Mock consumer doesn't handle offsets, so we just check we get some output for the
-        // right partitions
-        assertNotNull(offsets);
-        assertEquals(3, offsets.size());
+
+        actualException = e;
+        actualOffsets = offsets;
       }
     }).get();
-    assertTrue(sawCallback);
+    assertTrue("Callback not called", sawCallback);
+    assertNull("Callback exception", actualException);
+    // Mock consumer doesn't handle offsets, so we just check we get some output for the
+    // right partitions
+    assertNotNull("Callback Offsets", actualOffsets);
+    assertEquals("Callback Offsets Size", 3, actualOffsets.size());
 
     consumerManager.deleteConsumer(groupName, cid);
 
@@ -216,10 +233,10 @@ public class ConsumerManagerTest {
     // response, not all of it is returned.
     final List<ConsumerRecord<byte[], byte[]>> referenceRecords
         = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
-        new BinaryConsumerRecord(null, new byte[512], 0, 0),
-        new BinaryConsumerRecord(null, new byte[512], 1, 0),
-        new BinaryConsumerRecord(null, new byte[512], 2, 0),
-        new BinaryConsumerRecord(null, new byte[512], 3, 0)
+        new BinaryConsumerRecord(null, new byte[511], 0, 0), // Don't use 512 as this happens to fall on boundary
+        new BinaryConsumerRecord(null, new byte[511], 1, 0),
+        new BinaryConsumerRecord(null, new byte[511], 2, 0),
+        new BinaryConsumerRecord(null, new byte[511], 3, 0)
     );
     Map<Integer, List<ConsumerRecord<byte[], byte[]>>> referenceSchedule
         = new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
@@ -237,7 +254,10 @@ public class ConsumerManagerTest {
 
     String cid = consumerManager.createConsumer(
         groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+    // Ensure vars used by callback are correctly initialised.
     sawCallback = false;
+    actualException = null;
+    actualLength = 0;
     consumerManager.readTopic(
         groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
         new ConsumerManager.ReadCallback<byte[], byte[]>() {
@@ -245,15 +265,29 @@ public class ConsumerManagerTest {
           public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
                                    Exception e) {
             sawCallback = true;
-            assertNull(e);
+            actualException = e;
             // Should only see the first two messages since the third pushes us over the limit.
-            assertEquals(2, records.size());
+            actualLength = records.size();
           }
         }).get();
-    assertTrue(sawCallback);
+    assertTrue("Callback failed to fire", sawCallback);
+    assertNull("Callback received exception", actualException);
+    // Should only see the first two messages since the third pushes us over the limit.
+    assertEquals("List of records returned incorrect", 2, actualLength);
+
+    // Because we should have returned due to the message size limit we shouldn't have
+    // maxed out the timeout
+    //
+    String msg = "Time taken (" + Long.toString(config.getTime().milliseconds()) + ") to process message should be less than the timeout " +
+        Integer.toString(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)
+                 + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG)) ;
+    assertFalse(msg, config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)
+                 + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG) < config.getTime().milliseconds());
 
     // Also check the user-submitted limit
     sawCallback = false;
+    actualException = null;
+    actualLength = 0;
     consumerManager.readTopic(
         groupName, cid, topicName, BinaryConsumerState.class, 512,
         new ConsumerManager.ReadCallback<byte[], byte[]>() {
@@ -261,12 +295,15 @@ public class ConsumerManagerTest {
           public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
                                    Exception e) {
             sawCallback = true;
-            assertNull(e);
-            // Should only see first message since the user specified an even smaller size limit
-            assertEquals(1, records.size());
+            actualException = e;
+            // Should only see the first two messages since the third pushes us over the limit.
+            actualLength = records.size();
           }
         }).get();
-    assertTrue(sawCallback);
+    assertTrue("Callback failed to fire", sawCallback);
+    assertNull("Callback received exception", actualException);
+    // Should only see the first two messages since the third pushes us over the limit.
+    assertEquals("List of records returned incorrect", 1, actualLength);
 
     consumerManager.deleteConsumer(groupName, cid);
 
@@ -323,6 +360,8 @@ public class ConsumerManagerTest {
     String cid = consumerManager.createConsumer(groupName,
                                                 new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
     sawCallback = false;
+    actualException = null;
+    actualRecords = null;
     consumerManager.readTopic(
         groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
         new ConsumerManager.ReadCallback<byte[], byte[]>() {
@@ -330,14 +369,19 @@ public class ConsumerManagerTest {
           public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
                                    Exception e) {
             sawCallback = true;
-            assertNull(e);
-            assertEquals(0, records.size());
+            actualException = e;
+            actualRecords = records;
           }
         }).get();
-    assertTrue(sawCallback);
+    assertTrue("Callback not called", sawCallback);
+    assertNull("Callback exception", actualException);
+    assertEquals("Callback records should be valid but of 0 size", 0, actualRecords.size());
+
 
     // Attempt to read from second topic should result in an exception
     sawCallback = false;
+    actualException = null;
+    actualRecords = null;
     consumerManager.readTopic(
         groupName, cid, secondTopicName, BinaryConsumerState.class, Long.MAX_VALUE,
         new ConsumerManager.ReadCallback<byte[], byte[]>() {
@@ -345,14 +389,16 @@ public class ConsumerManagerTest {
           public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
                                    Exception e) {
             sawCallback = true;
-            assertNotNull(e);
-            assertTrue(e instanceof RestException);
-            assertEquals(Errors.CONSUMER_ALREADY_SUBSCRIBED_ERROR_CODE,
-                         ((RestException) e).getErrorCode());
-            assertNull(records);
+            actualException = e;
+            actualRecords = records;
           }
         }).get();
-    assertTrue(sawCallback);
+    assertTrue("Callback failed to fire", sawCallback);
+    assertNotNull("Callback failed to receive an exception", actualException);
+    assertTrue("Callback Exception should be an instance of RestException", actualException instanceof RestException);
+    assertEquals("Callback Exception should be for already subscribed consumer", Errors.CONSUMER_ALREADY_SUBSCRIBED_ERROR_CODE,
+                 ((RestException) actualException).getErrorCode());
+    assertNull("Given an exception occurred in callback shouldn't be any records returned", actualRecords);
 
     consumerManager.deleteConsumer(groupName, cid);
 
@@ -415,6 +461,8 @@ public class ConsumerManagerTest {
 
     // First read should result in exception.
     sawCallback = false;
+    actualException = null;
+    actualRecords = null;
     consumerManager.readTopic(
         groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
         new ConsumerManager.ReadCallback<byte[], byte[]>() {
@@ -422,11 +470,13 @@ public class ConsumerManagerTest {
           public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
                                    Exception e) {
             sawCallback = true;
-            assertNull(records);
-            assertNotNull(e);
+            actualRecords = records;
+            actualException = e;
           }
         }).get();
-    assertTrue(sawCallback);
+    assertTrue("Callback not called", sawCallback);
+    assertNotNull("Callback exception should be populated", actualException);
+    assertNull("Callback with exception should not have any records", actualRecords);
 
     // Second read should recover and return all the data.
     sawCallback = false;
@@ -448,6 +498,8 @@ public class ConsumerManagerTest {
 
   private void readAndExpectImmediateNotFound(String cid, String topic) {
     sawCallback = false;
+    actualRecords = null;
+    actualException = null;
     Future
         future =
         consumerManager.readTopic(
@@ -457,11 +509,13 @@ public class ConsumerManagerTest {
               public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
                                        Exception e) {
                 sawCallback = true;
-                assertNull(records);
-                assertThat(e, instanceOf(RestNotFoundException.class));
+                actualRecords = records;
+                actualException = e;
               }
             });
-    assertTrue(sawCallback);
+    assertTrue("Callback not called", sawCallback);
+    assertNull("Callback records", actualRecords);
+    assertThat("Callback exception is RestNotFound", actualException, instanceOf(RestNotFoundException.class));
     assertNull(future);
   }
 }
