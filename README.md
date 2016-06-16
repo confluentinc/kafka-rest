@@ -18,7 +18,7 @@ the REST Proxy running using the default settings and some topics already create
     $ curl "http://localhost:8082/topics"
       [{"name":"test","num_partitions":3},{"name":"test2","num_partitions":1}]
 
-    # Get info about one partition
+    # Get info about one topic
     $ curl "http://localhost:8082/topics/test"
       {"name":"test","num_partitions":3}
 
