@@ -49,7 +49,7 @@ public class BinaryConsumerState extends ConsumerState<byte[], byte[], byte[], b
   }
 
   @Override
-  public ConsumerRecordAndSize<byte[], byte[]> createConsumerRecord(
+  public ConsumerRecordAndSize<byte[], byte[]> convertConsumerRecord(
       ConsumerRecord<byte[], byte[]> msg) {
     long approxSize = (msg.key() != null ? msg.key().length : 0)
                       + (msg.value() != null ? msg.value().length : 0);

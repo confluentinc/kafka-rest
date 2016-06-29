@@ -46,7 +46,7 @@ public class JsonConsumerState extends ConsumerState<byte[], byte[], Object, Obj
   }
 
   @Override
-  public ConsumerRecordAndSize<Object, Object> createConsumerRecord(ConsumerRecord<byte[], byte[]> msg) {
+  public ConsumerRecordAndSize<Object, Object> convertConsumerRecord(ConsumerRecord<byte[], byte[]> msg) {
     long approxSize = 0;
 
     Object key = null;

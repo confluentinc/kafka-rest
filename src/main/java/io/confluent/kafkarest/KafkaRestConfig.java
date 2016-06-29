@@ -67,7 +67,7 @@ public class KafkaRestConfig extends RestConfig {
       + "the initial connection to discover the full cluster membership (which may change dynamically), "
       + "this list need not contain the full set of servers "
       + "(you may want more than one, though, in case a server is down).";
-  public static final String BOOTSTRAP_SERVERS_DEFAULT = "localhost:9092";
+  public static final String BOOTSTRAP_SERVERS_DEFAULT = "PLAINTEXT://localhost:9092";
 
   public static final String SCHEMA_REGISTRY_URL_CONFIG = "schema.registry.url";
   private static final String SCHEMA_REGISTRY_URL_DOC =
@@ -158,15 +158,18 @@ public class KafkaRestConfig extends RestConfig {
   public static final String SIMPLE_CONSUMER_MAX_CACHES_NUM_CONFIG = "simpleconsumer.max.caches.num";
   private static final String
     SIMPLE_CONSUMER_MAX_CACHES_NUM_DOC =
-    "Maximum number of records that can be stored in cache per consumer."
-      + " If 0, then caching is disabled";
+    "Maximum number topic-partition combinations for which records are cached."
+     + " If 0, then caching is disabled and extra records are thrown away."
+     + " Cache improves performance if end user fetches records with sequentially"
+     + " increasing offsets.";
   public static final int SIMPLE_CONSUMER_MAX_CACHES_NUM_DEFAULT = 0;
 
   public static final String SIMPLE_CONSUMER_CACHE_MAX_RECORDS_CONFIG = "simpleconsumer.cache.max.records";
   private static final String
     SIMPLE_CONSUMER_CACHE_MAX_RECORDS_DOC =
-    "Maximum number of records that can be stored in cache per consumer."
-      + " If 0, then the cache is unlimited.";
+    "Maximum number of records that can be stored for a specific topic-partition combination."
+     + " Records with higher offsets replace records with lower ones"
+     + " Must be greater that 0.";
   public static final int SIMPLE_CONSUMER_CACHE_MAX_RECORDS_DEFAULT = 1000;
 
 
@@ -225,9 +228,9 @@ public class KafkaRestConfig extends RestConfig {
         .define(SIMPLE_CONSUMER_MAX_POLL_RECORDS_CONGIG, Type.STRING, SIMPLE_CONSUMER_MAX_POLL_RECORDS_DEFAULT,
                 Importance.LOW, SIMPLE_CONSUMER_MAX_POLL_RECORDS_DOC)
         .define(SIMPLE_CONSUMER_MAX_CACHES_NUM_CONFIG, Type.INT, SIMPLE_CONSUMER_MAX_CACHES_NUM_DEFAULT,
-                Importance.LOW, SIMPLE_CONSUMER_MAX_CACHES_NUM_DOC)
+                Importance.MEDIUM, SIMPLE_CONSUMER_MAX_CACHES_NUM_DOC)
         .define(SIMPLE_CONSUMER_CACHE_MAX_RECORDS_CONFIG, Type.INT, SIMPLE_CONSUMER_CACHE_MAX_RECORDS_DEFAULT,
-                Importance.LOW, SIMPLE_CONSUMER_CACHE_MAX_RECORDS_DOC);
+                Importance.MEDIUM, SIMPLE_CONSUMER_CACHE_MAX_RECORDS_DOC);
   }
 
   private Time time;

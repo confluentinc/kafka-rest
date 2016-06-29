@@ -31,7 +31,7 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 
 import io.confluent.kafkarest.ConsumerManager;
-import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.AbstractConsumerRecord;
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerPool;
@@ -185,7 +185,7 @@ public class PartitionsResource {
         topicName, partitionId, offset, count, embeddedFormat,
         new ConsumerManager.ReadCallback<ClientK, ClientV>() {
           @Override
-          public void onCompletion(List<? extends ConsumerRecord<ClientK, ClientV>> records,
+          public void onCompletion(List<? extends AbstractConsumerRecord<ClientK, ClientV>> records,
                                    Exception e) {
             if (e != null) {
               asyncResponse.resume(e);

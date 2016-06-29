@@ -17,7 +17,7 @@ package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class JsonConsumerRecord extends ConsumerRecord<Object, Object> {
+public class JsonConsumerRecord extends AbstractConsumerRecord<Object, Object> {
 
   public JsonConsumerRecord(@JsonProperty("key") Object key,
                             @JsonProperty("value") Object value,

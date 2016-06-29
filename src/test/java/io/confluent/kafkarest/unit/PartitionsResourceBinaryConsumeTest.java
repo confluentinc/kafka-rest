@@ -18,8 +18,8 @@ package io.confluent.kafkarest.unit;
 
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.AbstractConsumerRecord;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
-import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.rest.RestConfigException;
 import org.easymock.EasyMock;
@@ -41,7 +41,7 @@ public class PartitionsResourceBinaryConsumeTest extends PartitionsResourceAbstr
 
   @Test
   public void testConsumeOk() {
-    List<? extends ConsumerRecord<byte[], byte[]>> records = Arrays.asList(
+    List<? extends AbstractConsumerRecord<byte[], byte[]>> records = Arrays.asList(
         new BinaryConsumerRecord("key1".getBytes(), "value1".getBytes(), "topic", 0, 10)
     );
 

@@ -68,7 +68,7 @@ public class AvroConsumerState extends ConsumerState<Object, Object, JsonNode, J
   }
 
   @Override
-  public ConsumerRecordAndSize<JsonNode, JsonNode> createConsumerRecord(
+  public ConsumerRecordAndSize<JsonNode, JsonNode> convertConsumerRecord(
       ConsumerRecord<Object, Object> msg) {
     AvroConverter.JsonNodeAndSize keyNode = AvroConverter.toJson(msg.key());
     AvroConverter.JsonNodeAndSize valueNode = AvroConverter.toJson(msg.value());

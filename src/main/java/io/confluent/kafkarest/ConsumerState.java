@@ -33,7 +33,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Tracks all the state for a consumer. This class is abstract in order to support multiple
  * serialization formats. Implementations must provide deserializers and a method to convert Kafka
  * MessageAndMetadata<K,V> values to ConsumerRecords that can be returned to the client (including
- * translation if the decoded Kafka consumer type and ConsumerRecord types differ).
+ * translation if the decoded Kafka consumer type and AbstractConsumerRecord types differ).
  */
 public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     implements Comparable<ConsumerState>, AutoCloseable {
@@ -79,12 +79,12 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   protected abstract Deserializer<KafkaV> getValueDeserializer();
 
   /**
-   * Converts a MessageAndMetadata using the Kafka decoder types into a ConsumerRecord using the
+   * Converts a ConsumerRecord using the Kafka deserializer types into a AbstractConsumerRecord using the
    * client's requested types. While doing so, computes the approximate size of the message in
    * bytes, which is used to track the approximate total payload size for consumer read responses to
    * determine when to trigger the response.
    */
-  public abstract ConsumerRecordAndSize<ClientK, ClientV> createConsumerRecord(
+  public abstract ConsumerRecordAndSize<ClientK, ClientV> convertConsumerRecord(
       ConsumerRecord<KafkaK, KafkaV> msg);
 
   /**

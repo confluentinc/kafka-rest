@@ -11,6 +11,13 @@ provided as configuration options, and finally falls back to the default values 
 Java Kafka clients.
 
 
+``bootstrap.servers``
+  A list of host/port pairs to use for establishing the initial connection to the Kafka cluster. The client will make use of all servers irrespective of which servers are specified here for bootstrapping—this list only impacts the initial hosts used to discover the full set of servers. This list should be in the form host1:port1,host2:port2,.... Since these servers are just used for the initial connection to discover the full cluster membership (which may change dynamically), this list need not contain the full set of servers (you may want more than one, though, in case a server is down).
+
+  * Type: string
+  * Default: "PLAINTEXT://localhost:9092"
+  * Importance: high
+
 ``id``
   Unique ID for this REST server instance. This is used in generating unique IDs for consumers that do not specify their ID. The ID is empty by default, which makes a single server setup easier to get up and running, but is not safe for multi-server deployments where automatic consumer IDs are used.
 
@@ -19,10 +26,10 @@ Java Kafka clients.
   * Importance: high
 
 ``listeners``
-  Comma-separated list of listeners that listen for API requests over either HTTP or HTTPS. If a listener uses HTTPS, the appropriate SSL configuration parameters need to be set as well.
+  List of listeners. http and https are supported. Each listener must include the protocol, hostname, and port. For example: http://myhost:8080,https://0.0.0.0:8081
 
   * Type: list
-  * Default: "http://0.0.0.0:8082"
+  * Default: []
   * Importance: high
 
 ``schema.registry.url``
@@ -32,6 +39,41 @@ Java Kafka clients.
   * Default: "http://localhost:8081"
   * Importance: high
 
+``ssl.key.password``
+  The password of the private key in the keystore file.
+
+  * Type: string
+  * Default: ""
+  * Importance: high
+
+``ssl.keystore.location``
+  Location of the keystore file to use for SSL. This is required for HTTPS.
+
+  * Type: string
+  * Default: ""
+  * Importance: high
+
+``ssl.keystore.password``
+  The store password for the keystore file.
+
+  * Type: string
+  * Default: ""
+  * Importance: high
+
+``ssl.truststore.location``
+  Location of the trust store. Required only to authenticate HTTPS clients.
+
+  * Type: string
+  * Default: ""
+  * Importance: high
+
+``ssl.truststore.password``
+  The store password for the trust store file.
+
+  * Type: string
+  * Default: ""
+  * Importance: high
+
 ``zookeeper.connect``
   Specifies the ZooKeeper connection string in the form hostname:port where host and port are the host and port of a ZooKeeper server. To allow connecting through other ZooKeeper nodes when that ZooKeeper machine is down you can also specify multiple hosts in the form hostname1:port1,hostname2:port2,hostname3:port3.
 
@@ -39,41 +81,6 @@ Java Kafka clients.
 
   * Type: string
   * Default: "localhost:2181"
-  * Importance: high
-
-``ssl.keystore.location``
-  Used for HTTPS. Location of the keystore file to use for SSL. IMPORTANT: Jetty requires that the key's CN, stored in the keystore, must match the FQDN.
-
-  * Type: string
-  * Default: ""
-  * Importance: high
-
-``ssl.keystore.password``
-  Used for HTTPS. The store password for the keystore file.
-
-  * Type: password
-  * Default: ""
-  * Importance: high
-
-``ssl.key.password``
-  Used for HTTPS. The password of the private key in the keystore file.
-
-  * Type: password
-  * Default: ""
-  * Importance: high
-
-``ssl.truststore.location``
-  Used for HTTPS. Location of the trust store. Required only to authenticate HTTPS clients.
-
-  * Type: string
-  * Default: ""
-  * Importance: high
-
-``ssl.truststore.password``
-  Used for HTTPS. The store password for the trust store file.
-
-  * Type: password
-  * Default: ""
   * Importance: high
 
 ``consumer.request.max.bytes``
@@ -104,53 +111,67 @@ Java Kafka clients.
   * Default: ""
   * Importance: medium
 
+``simpleconsumer.cache.max.records``
+  Maximum number of records that can be stored for a specific topic-partition combination. Records with higher offsets replace records with lower ones Must be greater that 0.
+
+  * Type: int
+  * Default: 1000
+  * Importance: medium
+
+``simpleconsumer.max.caches.num``
+  Maximum number topic-partition combinations for which records are cached. If 0, then caching is disabled and extra records are thrown away. Cache improves performance if end user fetches records with sequentially increasing offsets.
+
+  * Type: int
+  * Default: 0
+  * Importance: medium
+
 ``simpleconsumer.pool.size.max``
-  Maximum number of SimpleConsumers that can be instantiated per broker. If 0, then the pool size is not limited.
+  Maximum number of SimpleConsumers that can be instantiated. If 0, then the pool size is not limited.
 
   * Type: int
   * Default: 25
   * Importance: medium
 
-``ssl.keystore.type``
-  Used for HTTPS. The type of keystore file.
-
-  * Type: string
-  * Default: "JKS"
-  * Importance: medium
-
-``ssl.truststore.type``
-  Used for HTTPS. The type of trust store file.
-
-  * Type: string
-  * Default: "JKS"
-  * Importance: medium
-
-``ssl.protocol``
-  Used for HTTPS. The SSL protocol used to generate the SslContextFactory.
-
-  * Type: string
-  * Default: "TLS"
-  * Importance: medium
-
-``ssl.provider``
-  Used for HTTPS. The SSL security provider name. Leave blank to use Jetty's default.
-
-  * Type: string
-  * Default: "" (Jetty's default)
-  * Importance: medium
-
 ``ssl.client.auth``
-  Used for HTTPS. Whether or not to require the HTTPS client to authenticate via the server's trust store.
+  Whether or not to require the https client to authenticate via the server's trust store.
 
   * Type: boolean
   * Default: false
   * Importance: medium
 
 ``ssl.enabled.protocols``
-  Used for HTTPS. The list of protocols enabled for SSL connections. Comma-separated list. Leave blank to use Jetty's defaults.
+  The list of protocols enabled for SSL connections. Comma-separated list. Leave blank to use Jetty's defaults.
 
   * Type: list
-  * Default: "" (Jetty's default)
+  * Default: []
+  * Importance: medium
+
+``ssl.keystore.type``
+  The type of keystore file.
+
+  * Type: string
+  * Default: "JKS"
+  * Importance: medium
+
+``ssl.protocol``
+  The SSL protocol used to generate the SslContextFactory.
+
+  * Type: string
+  * Default: "TLS"
+  * Importance: medium
+
+``ssl.provider``
+  The SSL security provider name. Leave blank to use Jetty's default.
+
+  * Type: string
+  * Default: ""
+  * Importance: medium
+
+``ssl.truststore.type``
+  The type of trust store file.
+
+  * Type: string
+  * Default: "JKS"
   * Importance: medium
 
 ``access.control.allow.methods``
@@ -179,13 +200,6 @@ Java Kafka clients.
 
   * Type: int
   * Default: 50
-  * Importance: low
-
-``consumer.iterator.timeout.ms``
-  Timeout for blocking consumer iterator operations. This should be set to a small enough value that it is possible to effectively peek() on the iterator.
-
-  * Type: int
-  * Default: 1
   * Importance: low
 
 ``debug``
@@ -224,7 +238,7 @@ Java Kafka clients.
   * Importance: low
 
 ``port``
-  DEPRECATED: port to listen on for new connections. Use `listeners` instead.
+  DEPRECATED: port to listen on for new HTTP connections. Use listeners instead.
 
   * Type: int
   * Default: 8082
@@ -265,6 +279,20 @@ Java Kafka clients.
   * Default: 1000
   * Importance: low
 
+``simpleconsumer.max.poll.records``
+  Maximum number of records that can be fetched by a single consumer poll request. Since desired number of fetched records can't be defined for every poll request the consumer can poll more records thannecessary (extra records are stored in cache.). The value of this property defines maximum number of excess records fetched by a single user request. The grater value means grater network overhead. It may be reasonable if user retrieves records from specified partition increasing offset sequentially. The smaller value suits better when the user consumes records in a random fashion.Use 0 for no max value allowed by kafka consumer 2147483647
+
+  * Type: string
+  * Default: "100"
+  * Importance: low
+
+``simpleconsumer.max.poll.time``
+  Maximum amount of time to poll for records by a consumer.
+
+  * Type: int
+  * Default: 500
+  * Importance: low
+
 ``simpleconsumer.pool.timeout.ms``
   Amount of time to wait for an available SimpleConsumer from the pool before failing. Use 0 for no timeout
 
@@ -272,30 +300,30 @@ Java Kafka clients.
   * Default: 1000
   * Importance: low
 
-``ssl.keymanager.algorithm``
-  Used for HTTPS. The algorithm used by the key manager factory for SSL connections. Leave blank to use Jetty's default.
-
-  * Type: string
-  * Default: "" (Jetty's default)
-  * Importance: low
-
-``ssl.trustmanager.algorithm``
-  Used for HTTPS. The algorithm used by the trust manager factory for SSL connections. Leave blank to use Jetty's default.
-
-  * Type: string
-  * Default: "" (Jetty's default)
-  * Importance: low
-
 ``ssl.cipher.suites``
-  Used for HTTPS. A list of SSL cipher suites. Comma-separated list. Leave blank to use Jetty's defaults.
+  A list of SSL cipher suites. Leave blank to use Jetty's defaults.
 
   * Type: list
-  * Default: "" (Jetty's default)
+  * Default: []
   * Importance: low
 
 ``ssl.endpoint.identification.algorithm``
-  Used for HTTPS. The endpoint identification algorithm to validate the server hostname using the server certificate. Leave blank to use Jetty's default.
+  The endpoint identification algorithm to validate the server hostname using the server certificate. Leave blank to use Jetty's default.
 
   * Type: string
-  * Default: "" (Jetty's default)
+  * Default: ""
+  * Importance: low
+
+``ssl.keymanager.algorithm``
+  The algorithm used by the key manager factory for SSL connections. Leave blank to use Jetty's default.
+
+  * Type: string
+  * Default: ""
+  * Importance: low
+
+``ssl.trustmanager.algorithm``
+  The algorithm used by the trust manager factory for SSL connections. Leave blank to use Jetty's default.
+
+  * Type: string
+  * Default: ""
   * Importance: low

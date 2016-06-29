@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2016 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public class SimpleConsumerRecordsCache {
   private static class CachePerTopicPartition {
 
     /**
-     * Maps record offset to corresponding ConsumerRecord
+     * Maps record offset to corresponding AbstractConsumerRecord
      */
     private final NavigableMap<Long, ConsumerRecord<byte[], byte[]>> cachedRecords;
     private final TopicPartition topicPartition;
@@ -151,8 +151,8 @@ public class SimpleConsumerRecordsCache {
 
 
     /**
-     * Adds new record to the cache if it has grater priority
-     * (grater offset) than all existing records or if the cache
+     * Adds new record to the cache if it has greater priority
+     * (greater offset) than all existing records or if the cache
      * is not empty.
      * Possible scenarios:
      * 1. If the cache is not full the record is cached

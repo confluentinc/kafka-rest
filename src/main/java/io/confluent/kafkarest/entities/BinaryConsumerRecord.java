@@ -23,7 +23,7 @@ import java.util.Arrays;
 
 import io.confluent.rest.validation.ConstraintViolations;
 
-public class BinaryConsumerRecord extends ConsumerRecord<byte[], byte[]> {
+public class BinaryConsumerRecord extends AbstractConsumerRecord<byte[], byte[]> {
 
   public BinaryConsumerRecord(
       @JsonProperty("key") String key, @JsonProperty("value") String value,

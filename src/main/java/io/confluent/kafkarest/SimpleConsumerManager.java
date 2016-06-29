@@ -17,17 +17,17 @@ package io.confluent.kafkarest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
-import io.confluent.kafka.serializers.KafkaJsonDeserializer;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.entities.AvroConsumerRecord;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
-import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.AbstractConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.JsonConsumerRecord;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 import jersey.repackaged.com.google.common.collect.Maps;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 
@@ -91,7 +91,7 @@ public class SimpleConsumerManager {
                       final EmbeddedFormat embeddedFormat,
                       final ConsumerManager.ReadCallback callback) {
 
-    List<ConsumerRecord> records = new ArrayList<>();
+    List<AbstractConsumerRecord> records = new ArrayList<>();
     RestException exception = null;
 
     if (!mdObserver.topicExists(topicName)) {
@@ -101,10 +101,10 @@ public class SimpleConsumerManager {
       exception = Errors.partitionNotFoundException();
     } else {
       try (TPConsumerState consumer = simpleConsumersPool.get(topicName, partitionId)) {
-        List<org.apache.kafka.clients.consumer.ConsumerRecord<byte[], byte[]>> fetched =
+        List<ConsumerRecord<byte[], byte[]>> fetched =
           cache.pollRecords(consumer.consumer(), topicName, partitionId, offset, count);
 
-        for (org.apache.kafka.clients.consumer.ConsumerRecord<byte[], byte[]> record: fetched) {
+        for (ConsumerRecord<byte[], byte[]> record: fetched) {
           records.add(createConsumerRecord(record, record.topic(), record.partition(), embeddedFormat));
         }
 
@@ -121,7 +121,7 @@ public class SimpleConsumerManager {
   }
 
   private BinaryConsumerRecord createBinaryConsumerRecord(
-    final org.apache.kafka.clients.consumer.ConsumerRecord<byte[], byte[]> consumerRecord,
+    final ConsumerRecord<byte[], byte[]> consumerRecord,
     final String topicName,
     final int partitionId) {
 
@@ -132,7 +132,7 @@ public class SimpleConsumerManager {
   }
 
   private AvroConsumerRecord createAvroConsumerRecord(
-    final org.apache.kafka.clients.consumer.ConsumerRecord<byte[], byte[]> consumerRecord,
+    final ConsumerRecord<byte[], byte[]> consumerRecord,
     final String topicName,
     final int partitionId) {
 
@@ -144,7 +144,7 @@ public class SimpleConsumerManager {
 
 
   private JsonConsumerRecord createJsonConsumerRecord(
-    final org.apache.kafka.clients.consumer.ConsumerRecord<byte[], byte[]> consumerRecord,
+    final ConsumerRecord<byte[], byte[]> consumerRecord,
     final String topicName,
     final int partitionId) {
 
@@ -162,8 +162,8 @@ public class SimpleConsumerManager {
     }
   }
 
-  private ConsumerRecord createConsumerRecord(
-    final org.apache.kafka.clients.consumer.ConsumerRecord<byte[], byte[]> consumerRecord,
+  private AbstractConsumerRecord createConsumerRecord(
+    final ConsumerRecord<byte[], byte[]> consumerRecord,
     final String topicName,
     final int partitionId,
     final EmbeddedFormat embeddedFormat) {

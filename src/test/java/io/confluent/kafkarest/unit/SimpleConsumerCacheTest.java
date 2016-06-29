@@ -18,8 +18,8 @@ package io.confluent.kafkarest.unit;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.SimpleConsumerRecordsCache;
 import io.confluent.kafkarest.Time;
+import io.confluent.kafkarest.entities.AbstractConsumerRecord;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
-import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.mock.MockKafkaConsumer;
 import io.confluent.kafkarest.mock.MockTime;
 import io.confluent.rest.RestConfigException;
@@ -68,14 +68,14 @@ public class SimpleConsumerCacheTest {
     final int partition = 0;
     final int count = 50;
     final int delay = 100;
-    List<List<ConsumerRecord<byte[], byte[]>>> scheduledRecords;
+    List<List<AbstractConsumerRecord<byte[], byte[]>>> scheduledRecords;
     List<Long> scheduledTimePoints;
     List<org.apache.kafka.clients.consumer.ConsumerRecord<byte[], byte[]>> result;
 
     // initialize records to be returned by mock consumer
     final int startOffset1 = 200;
     final int rec1Size = 100;
-    final List<ConsumerRecord<byte[], byte[]>> referenceRecords1 = new ArrayList<>();
+    final List<AbstractConsumerRecord<byte[], byte[]>> referenceRecords1 = new ArrayList<>();
     initializeRecords(referenceRecords1, topic, partition, startOffset1, rec1Size);
     scheduledRecords = new ArrayList<>();
     scheduledTimePoints = new ArrayList<>();
@@ -86,7 +86,7 @@ public class SimpleConsumerCacheTest {
 
     final int startOffset2 = startOffset1 + rec1Size;
     final int rec2Size = 50;
-    final List<ConsumerRecord<byte[], byte[]>> referenceRecords2 = new ArrayList<>();
+    final List<AbstractConsumerRecord<byte[], byte[]>> referenceRecords2 = new ArrayList<>();
     initializeRecords(referenceRecords2, topic, partition, startOffset2, rec2Size);
     scheduledRecords = new ArrayList<>();
     scheduledTimePoints = new ArrayList<>();
@@ -118,7 +118,7 @@ public class SimpleConsumerCacheTest {
     // poll should not be invoked.
     result = cache.pollRecords(consumer2, topic, partition, 280, 21);
 
-    List<ConsumerRecord<byte[], byte[]>> expected = referenceRecords1.subList(80, 100);
+    List<AbstractConsumerRecord<byte[], byte[]>> expected = referenceRecords1.subList(80, 100);
     expected.add(referenceRecords2.get(0));
     checkRecordsIdentity(expected, result);
 
@@ -135,7 +135,7 @@ public class SimpleConsumerCacheTest {
   }
 
 
-  private void initializeRecords(List<ConsumerRecord<byte[], byte[]>> records,
+  private void initializeRecords(List<AbstractConsumerRecord<byte[], byte[]>> records,
                                  String topic,
                                  int partition,
                                  long startOffset,
@@ -147,12 +147,12 @@ public class SimpleConsumerCacheTest {
     }
   }
 
-  private void checkRecordsIdentity(List<ConsumerRecord<byte[], byte[]>> expected,
+  private void checkRecordsIdentity(List<AbstractConsumerRecord<byte[], byte[]>> expected,
                                     List<org.apache.kafka.clients.consumer.ConsumerRecord<byte[], byte[]>> actual) {
     Assert.assertEquals(expected.size(), actual.size());
     for (int i = 0; i < expected.size(); i++) {
       org.apache.kafka.clients.consumer.ConsumerRecord<byte[], byte[]> actualRecord = actual.get(i);
-      ConsumerRecord<byte[], byte[]> expectedRecord = expected.get(i);
+      AbstractConsumerRecord<byte[], byte[]> expectedRecord = expected.get(i);
       Assert.assertEquals(actualRecord.offset(), expectedRecord.getOffset());
       Assert.assertEquals(actualRecord.topic(), expectedRecord.getTopic());
       Assert.assertEquals(actualRecord.partition(), expectedRecord.getPartition());

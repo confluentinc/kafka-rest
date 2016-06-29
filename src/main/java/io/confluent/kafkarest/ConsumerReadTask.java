@@ -16,9 +16,10 @@
 
 package io.confluent.kafkarest;
 
-import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.AbstractConsumerRecord;
 import io.confluent.rest.exceptions.RestException;
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -40,13 +41,13 @@ import java.util.concurrent.TimeUnit;
  * State for tracking the progress of a single consumer read request.
  *
  * To support embedded formats that require translation between the format deserialized by the Kafka
- * deserializer and the format returned in the ConsumerRecord entity sent back to the client, this class
+ * deserializer and the format returned in the AbstractConsumerRecord entity sent back to the client, this class
  * uses two pairs of key-value generic type parameters: KafkaK/KafkaV is the format returned by the
  * Kafka consumer's deserializer, ClientK/ClientV is the format returned to the client in
  * the HTTP response. In some cases these may be identical.
  */
 class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
-    implements Future<List<ConsumerRecord<ClientK, ClientV>>> {
+    implements Future<List<AbstractConsumerRecord<ClientK, ClientV>>> {
 
   private static final Logger log = LoggerFactory.getLogger(ConsumerReadTask.class);
 
@@ -56,9 +57,9 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
   private CountDownLatch finished;
 
   private ConsumerSubscriptionState subscriptionState;
-  private Iterator<org.apache.kafka.clients.consumer.ConsumerRecord<KafkaK, KafkaV>> iter;
+  private Iterator<ConsumerRecord<KafkaK, KafkaV>> iter;
   private Consumer<KafkaK, KafkaV> consumer;
-  private List<ConsumerRecord<ClientK, ClientV>> messages;
+  private List<AbstractConsumerRecord<ClientK, ClientV>> messages;
   private long bytesConsumed = 0;
   private final long started;
 
@@ -101,7 +102,7 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
       if (consumer == null) {
         parent.startRead(subscriptionState);
         consumer = subscriptionState.getConsumer();
-        messages = new Vector<ConsumerRecord<ClientK, ClientV>>();
+        messages = new Vector<AbstractConsumerRecord<ClientK, ClientV>>();
         waitExpiration = 0;
       }
 
@@ -130,8 +131,8 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
           }
 
           while (iter.hasNext()) {
-            org.apache.kafka.clients.consumer.ConsumerRecord<KafkaK, KafkaV> record = iter.next();
-            ConsumerRecordAndSize<ClientK, ClientV> recordAndSize = parent.createConsumerRecord(record);
+            ConsumerRecord<KafkaK, KafkaV> record = iter.next();
+            ConsumerRecordAndSize<ClientK, ClientV> recordAndSize = parent.convertConsumerRecord(record);
             long roughMsgSize = recordAndSize.getSize();
             if (bytesConsumed + roughMsgSize > maxResponseBytes) {
               break;
@@ -179,7 +180,7 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
       // Now it's safe to mark these messages as consumed by updating offsets since we're actually
       // going to return the data.
       Map<TopicPartition, OffsetAndMetadata> consumedOffsets = subscriptionState.getConsumedOffsets();
-      for (ConsumerRecord<ClientK, ClientV> msg : messages) {
+      for (AbstractConsumerRecord<ClientK, ClientV> msg : messages) {
         TopicPartition topicPartition = new TopicPartition(msg.getTopic(), msg.getPartition());
         OffsetAndMetadata offsetAndMetadata = new OffsetAndMetadata(msg.getOffset(), "");
         consumedOffsets.put(topicPartition, offsetAndMetadata);
@@ -221,14 +222,14 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
   }
 
   @Override
-  public List<ConsumerRecord<ClientK, ClientV>> get()
+  public List<AbstractConsumerRecord<ClientK, ClientV>> get()
       throws InterruptedException, ExecutionException {
     finished.await();
     return messages;
   }
 
   @Override
-  public List<ConsumerRecord<ClientK, ClientV>> get(long timeout, TimeUnit unit)
+  public List<AbstractConsumerRecord<ClientK, ClientV>> get(long timeout, TimeUnit unit)
       throws InterruptedException, ExecutionException, TimeoutException {
     finished.await(timeout, unit);
     if (finished.getCount() > 0) {

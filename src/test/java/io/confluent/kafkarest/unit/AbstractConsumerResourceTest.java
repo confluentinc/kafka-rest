@@ -29,7 +29,7 @@ import java.util.List;
 
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.AbstractConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.resources.ConsumersResource;
@@ -76,14 +76,14 @@ public class AbstractConsumerResourceTest
 
   protected <KafkaK, KafkaV, ClientK, ClientV> void expectReadTopic(
       String topicName, Class<? extends ConsumerState<KafkaK, KafkaV, ClientK, ClientV>> stateClass,
-      final List<? extends ConsumerRecord<ClientK, ClientV>> readResult,
+      final List<? extends AbstractConsumerRecord<ClientK, ClientV>> readResult,
       final Exception readException) {
     expectReadTopic(topicName, stateClass, Long.MAX_VALUE, readResult, readException);
   }
 
   protected <KafkaK, KafkaV, ClientK, ClientV> void expectReadTopic(
       String topicName, Class<? extends ConsumerState<KafkaK, KafkaV, ClientK, ClientV>> stateClass,
-      long maxBytes, final List<? extends ConsumerRecord<ClientK, ClientV>> readResult,
+      long maxBytes, final List<? extends AbstractConsumerRecord<ClientK, ClientV>> readResult,
       final Exception readException) {
     final Capture<ConsumerManager.ReadCallback>
         readCallback =

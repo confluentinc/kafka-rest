@@ -19,7 +19,7 @@ package io.confluent.kafkarest.entities;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class AvroConsumerRecord extends ConsumerRecord<JsonNode, JsonNode> {
+public class AvroConsumerRecord extends AbstractConsumerRecord<JsonNode, JsonNode> {
 
   public AvroConsumerRecord(
       @JsonProperty("key") JsonNode key, @JsonProperty("value") JsonNode value,

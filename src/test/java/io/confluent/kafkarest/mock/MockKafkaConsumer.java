@@ -2,7 +2,7 @@ package io.confluent.kafkarest.mock;
 
 
 import io.confluent.kafkarest.Time;
-import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.AbstractConsumerRecord;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,17 +26,17 @@ import java.util.regex.Pattern;
 
 public class MockKafkaConsumer implements Consumer<byte[], byte[]> {
 
-  private List<List<ConsumerRecord<byte[], byte[]>>> schedules;
+  private List<List<AbstractConsumerRecord<byte[], byte[]>>> schedules;
   private List<Long> relativeTimePoints;
   private Time time;
   private Collection<String> subscription;
   private Collection<TopicPartition> assignment;
 
-  public MockKafkaConsumer(List<List<ConsumerRecord<byte[], byte[]>>> schedules,
+  public MockKafkaConsumer(List<List<AbstractConsumerRecord<byte[], byte[]>>> schedules,
                            List<Long> relativeTimePoints,
                            Time time) {
     if (schedules == null || relativeTimePoints == null) {
-      this.schedules = new ArrayList<List<ConsumerRecord<byte[], byte[]>>>();
+      this.schedules = new ArrayList<List<AbstractConsumerRecord<byte[], byte[]>>>();
       this.relativeTimePoints = new ArrayList<Long>();
     } else {
       Assert.assertEquals("Size of time points and records does not match", schedules.size(), relativeTimePoints.size());
@@ -122,7 +121,7 @@ public class MockKafkaConsumer implements Consumer<byte[], byte[]> {
 
         Map<TopicPartition, List<org.apache.kafka.clients.consumer.ConsumerRecord<byte[], byte[]>>> records =
           new HashMap<>();
-        for (ConsumerRecord<byte[],byte[]> record: schedules.get(0)) {
+        for (AbstractConsumerRecord<byte[],byte[]> record: schedules.get(0)) {
           TopicPartition tp = new TopicPartition(record.getTopic(), record.getPartition());
           org.apache.kafka.clients.consumer.ConsumerRecord<byte[], byte[]> rec =
             new org.apache.kafka.clients.consumer.ConsumerRecord<byte[], byte[]>(

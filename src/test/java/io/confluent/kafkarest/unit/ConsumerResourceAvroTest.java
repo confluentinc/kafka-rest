@@ -34,7 +34,7 @@ import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.AvroConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.AbstractConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
@@ -51,11 +51,11 @@ public class ConsumerResourceAvroTest extends AbstractConsumerResourceTest {
 
   @Test
   public void testReadCommit() {
-    List<? extends ConsumerRecord<JsonNode, JsonNode>> expectedReadLimit = Arrays.asList(
+    List<? extends AbstractConsumerRecord<JsonNode, JsonNode>> expectedReadLimit = Arrays.asList(
         new AvroConsumerRecord(
             TestUtils.jsonTree("\"key1\""), TestUtils.jsonTree("\"value1\""), "topic", 0, 10)
     );
-    List<? extends ConsumerRecord<JsonNode, JsonNode>> expectedReadNoLimit = Arrays.asList(
+    List<? extends AbstractConsumerRecord<JsonNode, JsonNode>> expectedReadNoLimit = Arrays.asList(
         new AvroConsumerRecord(
             TestUtils.jsonTree("\"key2\""), TestUtils.jsonTree("\"value2\""), "topic", 1, 15),
         new AvroConsumerRecord(

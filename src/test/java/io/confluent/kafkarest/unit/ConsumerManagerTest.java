@@ -22,7 +22,7 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.AbstractConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.mock.MockKafkaConsumer;
@@ -89,7 +89,7 @@ public class ConsumerManagerTest {
     consumerManager = new ConsumerManager(config, mdObserver, consumerFactory);
   }
 
-  private Consumer<byte[], byte[]> expectCreate(List<List<ConsumerRecord<byte[], byte[]>>> schedules,
+  private Consumer<byte[], byte[]> expectCreate(List<List<AbstractConsumerRecord<byte[], byte[]>>> schedules,
                                                 List<Long> timePoints, boolean passTofactory) {
     Consumer<byte[], byte[]> mockConsumer = new MockKafkaConsumer(schedules, timePoints, config.getTime());
     if (passTofactory) {
@@ -133,13 +133,13 @@ public class ConsumerManagerTest {
   @Test
   public void testConsumerNormalOps() throws InterruptedException, ExecutionException {
     // Tests create instance, read, and delete
-    final List<ConsumerRecord<byte[], byte[]>> referenceRecords
-        = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
+    final List<AbstractConsumerRecord<byte[], byte[]>> referenceRecords
+        = Arrays.<AbstractConsumerRecord<byte[], byte[]>>asList(
         new BinaryConsumerRecord("k1".getBytes(), "v1".getBytes(), topicName, 0, 0),
         new BinaryConsumerRecord("k2".getBytes(), "v2".getBytes(), topicName, 1, 0),
         new BinaryConsumerRecord("k3".getBytes(), "v3".getBytes(), topicName, 2, 0));
 
-    final List<List<ConsumerRecord<byte[], byte[]>>> scheduledRecords = new ArrayList<>();
+    final List<List<AbstractConsumerRecord<byte[], byte[]>>> scheduledRecords = new ArrayList<>();
     final List<Long> scheduledTimePoints = new ArrayList<>();
     scheduledRecords.add(referenceRecords);
     scheduledTimePoints.add(50L);
@@ -157,7 +157,7 @@ public class ConsumerManagerTest {
         groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
         new ConsumerManager.ReadCallback<byte[], byte[]>() {
           @Override
-          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+          public void onCompletion(List<? extends AbstractConsumerRecord<byte[], byte[]>> records,
                                    Exception e) {
             sawCallback = true;
             assertNull(e);
@@ -194,19 +194,19 @@ public class ConsumerManagerTest {
   public void testConsumerMaxBytesResponse() throws InterruptedException, ExecutionException {
     // Tests that when there are more records available than the max bytes to be included in the
     // response, not all of it is returned.
-    final List<ConsumerRecord<byte[], byte[]>> referenceRecords
-        = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
+    final List<AbstractConsumerRecord<byte[], byte[]>> referenceRecords
+        = Arrays.<AbstractConsumerRecord<byte[], byte[]>>asList(
         new BinaryConsumerRecord(null, new byte[512], "topic", 0, 0),
         new BinaryConsumerRecord(null, new byte[512], "topic", 1, 0),
         new BinaryConsumerRecord(null, new byte[512], "topic", 2, 0),
         new BinaryConsumerRecord(null, new byte[512], "topic", 3, 0)
     );
-    Map<Integer, List<ConsumerRecord<byte[], byte[]>>> referenceSchedule
-        = new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
+    Map<Integer, List<AbstractConsumerRecord<byte[], byte[]>>> referenceSchedule
+        = new HashMap<Integer, List<AbstractConsumerRecord<byte[], byte[]>>>();
     referenceSchedule.put(50, referenceRecords);
 
-    Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>> schedules
-        = new HashMap<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>();
+    Map<String, List<Map<Integer, List<AbstractConsumerRecord<byte[], byte[]>>>>> schedules
+        = new HashMap<String, List<Map<Integer, List<AbstractConsumerRecord<byte[], byte[]>>>>>();
     schedules.put(topicName, Arrays.asList(referenceSchedule));
 
     EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
@@ -222,7 +222,7 @@ public class ConsumerManagerTest {
         groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
         new ConsumerManager.ReadCallback<byte[], byte[]>() {
           @Override
-          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+          public void onCompletion(List<? extends AbstractConsumerRecord<byte[], byte[]>> records,
                                    Exception e) {
             sawCallback = true;
             assertNull(e);
@@ -238,7 +238,7 @@ public class ConsumerManagerTest {
         groupName, cid, topicName, BinaryConsumerState.class, 512,
         new ConsumerManager.ReadCallback<byte[], byte[]>() {
           @Override
-          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+          public void onCompletion(List<? extends AbstractConsumerRecord<byte[], byte[]>> records,
                                    Exception e) {
             sawCallback = true;
             assertNull(e);
@@ -313,7 +313,7 @@ public class ConsumerManagerTest {
         groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
         new ConsumerManager.ReadCallback<byte[], byte[]>() {
           @Override
-          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+          public void onCompletion(List<? extends AbstractConsumerRecord<byte[], byte[]>> records,
                                    Exception e) {
             sawCallback = true;
             assertNull(e);
@@ -328,7 +328,7 @@ public class ConsumerManagerTest {
         groupName, cid, secondTopicName, BinaryConsumerState.class, Long.MAX_VALUE,
         new ConsumerManager.ReadCallback<byte[], byte[]>() {
           @Override
-          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+          public void onCompletion(List<? extends AbstractConsumerRecord<byte[], byte[]>> records,
                                    Exception e) {
             sawCallback = true;
             assertNotNull(e);
@@ -377,13 +377,13 @@ public class ConsumerManagerTest {
   public void testConsumerExceptions() throws InterruptedException, ExecutionException {
     // We should be able to handle an exception thrown by the consumer, then issue another
     // request that succeeds and still see all the data
-    final List<ConsumerRecord<byte[], byte[]>> referenceRecords
-        = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
+    final List<AbstractConsumerRecord<byte[], byte[]>> referenceRecords
+        = Arrays.<AbstractConsumerRecord<byte[], byte[]>>asList(
         new BinaryConsumerRecord("k1".getBytes(), "v1".getBytes(), "topic", 0, 0),
         null, // trigger consumer exception
         new BinaryConsumerRecord("k2".getBytes(), "v2".getBytes(), "topic", 1, 0),
         new BinaryConsumerRecord("k3".getBytes(), "v3".getBytes(), "topic", 2, 0));
-    final List<List<ConsumerRecord<byte[], byte[]>>> scheduledRecords = new ArrayList<>();
+    final List<List<AbstractConsumerRecord<byte[], byte[]>>> scheduledRecords = new ArrayList<>();
     final List<Long> scheduledTimePoints = new ArrayList<>();
     scheduledRecords.add(referenceRecords);
     scheduledTimePoints.add(50L);
@@ -403,7 +403,7 @@ public class ConsumerManagerTest {
         groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
         new ConsumerManager.ReadCallback<byte[], byte[]>() {
           @Override
-          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+          public void onCompletion(List<? extends AbstractConsumerRecord<byte[], byte[]>> records,
                                    Exception e) {
             sawCallback = true;
             assertNull(records);
@@ -418,7 +418,7 @@ public class ConsumerManagerTest {
         groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
         new ConsumerManager.ReadCallback<byte[], byte[]>() {
           @Override
-          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+          public void onCompletion(List<? extends AbstractConsumerRecord<byte[], byte[]>> records,
                                    Exception e) {
             sawCallback = true;
             assertNull(e);
@@ -438,7 +438,7 @@ public class ConsumerManagerTest {
             groupName, cid, topic, BinaryConsumerState.class, Long.MAX_VALUE,
             new ConsumerManager.ReadCallback<byte[], byte[]>() {
               @Override
-              public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+              public void onCompletion(List<? extends AbstractConsumerRecord<byte[], byte[]>> records,
                                        Exception e) {
                 sawCallback = true;
                 assertNull(records);
