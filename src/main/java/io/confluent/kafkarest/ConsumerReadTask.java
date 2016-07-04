@@ -28,10 +28,14 @@ import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -56,10 +60,10 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
   private final ConsumerWorkerReadCallback<ClientK, ClientV> callback;
   private CountDownLatch finished;
 
-  private ConsumerSubscriptionState subscriptionState;
   private Iterator<ConsumerRecord<KafkaK, KafkaV>> iter;
   private Consumer<KafkaK, KafkaV> consumer;
   private List<AbstractConsumerRecord<ClientK, ClientV>> messages;
+  private List<AbstractConsumerRecord<ClientK, ClientV>> extraMessages;
   private long bytesConsumed = 0;
   private final long started;
 
@@ -78,16 +82,38 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
 
     started = parent.getConfig().getTime().milliseconds();
     try {
-      subscriptionState = parent.tryToSubscribe(topic);
+
+      if (!parent.isSubscribed()) {
+        parent.tryToSubscribeByTopicList(Collections.singletonList(topic));
+      } else {
+        Set<String> actual = new HashSet<>();
+        actual.add(topic);
+        if (!parent.getSubscribedTopics().equals(actual)) {
+          // consumer subscription does not match requested topics
+          throw Errors.consumerAlreadySubscribedException();
+        }
+      }
 
       // If the previous call failed, restore any outstanding data into this task.
-      ConsumerReadTask previousTask = subscriptionState.clearFailedTask();
+      ConsumerReadTask previousTask = parent.clearFailedTask();
       if (previousTask != null) {
         this.messages = previousTask.messages;
         this.bytesConsumed = previousTask.bytesConsumed;
       }
     } catch (RestException e) {
       finish(e);
+    }
+  }
+
+  private boolean processConsumerRecord(ConsumerRecord<KafkaK, KafkaV> record) {
+    ConsumerRecordAndSize<ClientK, ClientV> recordAndSize = parent.convertConsumerRecord(record);
+    long roughMsgSize = recordAndSize.getSize();
+    if (bytesConsumed + roughMsgSize > maxResponseBytes) {
+      return false;
+    } else {
+      messages.add(recordAndSize.getRecord());
+      bytesConsumed += roughMsgSize;
+      return true;
     }
   }
 
@@ -98,22 +124,31 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
    */
   public boolean doPartialRead() {
     try {
+      boolean backoff = false;
+
+      final long startedIteration = parent.getConfig().getTime().milliseconds();
+      final int requestTimeoutMs = parent.getConfig().getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+      final long endTime = startedIteration + requestTimeoutMs;
+      final int itBackoff = parent.getConfig().getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
+
       // Initial setup requires locking, which must be done on this thread.
       if (consumer == null) {
-        parent.startRead(subscriptionState);
-        consumer = subscriptionState.getConsumer();
-        messages = new Vector<AbstractConsumerRecord<ClientK, ClientV>>();
+        parent.startRead();
+        consumer = parent.getConsumer();
+        messages = new ArrayList<AbstractConsumerRecord<ClientK, ClientV>>();
+        // get records from queue if such exists.
+        Queue<ConsumerRecord<KafkaK, KafkaV>> queuedRecords = parent.queue();
+        Iterator<ConsumerRecord<KafkaK, KafkaV>> it = queuedRecords.iterator();
+        while (it.hasNext()) {
+          if (processConsumerRecord(it.next())) {
+            it.remove();
+          } else {
+
+          }
+        }
         waitExpiration = 0;
       }
 
-      boolean backoff = false;
-
-      long startedIteration = parent.getConfig().getTime().milliseconds();
-      final int requestTimeoutMs = parent.getConfig().getInt(
-          KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
-      final long endTime = startedIteration + requestTimeoutMs;
-      final int itBackoff = parent.getConfig().getInt(
-        KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
       try {
         while (parent.getConfig().getTime().milliseconds() < endTime) {
 
@@ -132,18 +167,19 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
 
           while (iter.hasNext()) {
             ConsumerRecord<KafkaK, KafkaV> record = iter.next();
-            ConsumerRecordAndSize<ClientK, ClientV> recordAndSize = parent.convertConsumerRecord(record);
-            long roughMsgSize = recordAndSize.getSize();
-            if (bytesConsumed + roughMsgSize > maxResponseBytes) {
-              break;
+            if (!processConsumerRecord(record)) {
+              parent.queue().add(record);
+              // add all extra records into queue.
+              // They are fetched at first when the next read task happens.
+              while (iter.hasNext()) {
+                parent.queue().add(iter.next());
+              }
+              finish();
+              return false;
             }
-
-            messages.add(recordAndSize.getRecord());
-            bytesConsumed += roughMsgSize;
             // Updating the consumed offsets isn't done until we're actually going to return the
             // data since we may encounter an error during a subsequent read, in which case we'll
             // have to defer returning the data so we can return an HTTP error instead
-
           }
         }
       } catch (WakeupException cte) {
@@ -159,7 +195,7 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
           started + parent.getConfig().getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
       waitExpiration = Math.min(backoffExpiration, requestExpiration);
 
-      if (elapsed >= requestTimeoutMs || bytesConsumed >= maxResponseBytes) {
+      if (elapsed >= requestTimeoutMs) {
         finish();
       }
 
@@ -179,7 +215,7 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
     if (e == null) {
       // Now it's safe to mark these messages as consumed by updating offsets since we're actually
       // going to return the data.
-      Map<TopicPartition, OffsetAndMetadata> consumedOffsets = subscriptionState.getConsumedOffsets();
+      Map<TopicPartition, OffsetAndMetadata> consumedOffsets = parent.getConsumedOffsets();
       for (AbstractConsumerRecord<ClientK, ClientV> msg : messages) {
         TopicPartition topicPartition = new TopicPartition(msg.getTopic(), msg.getPartition());
         OffsetAndMetadata offsetAndMetadata = new OffsetAndMetadata(msg.getOffset(), "");
@@ -189,12 +225,12 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
       // If we read any messages before the exception occurred, keep this task so we don't lose
       // messages. Subsequent reads will add the outstanding messages before attempting to read
       // any more from the consumer stream iterator
-      if (subscriptionState != null && messages != null && messages.size() > 0) {
-        subscriptionState.setFailedTask(this);
+      if (messages != null && messages.size() > 0) {
+        parent.setFailedTask(this);
       }
     }
-    if (subscriptionState != null) { // May have failed trying to get subscriptionState
-      parent.finishRead(subscriptionState);
+    if (parent.readStarted()) { // If the read is locked we need to unlock it.
+      parent.finishRead();
     }
     try {
       callback.onCompletion((e == null) ? messages : null, e);
