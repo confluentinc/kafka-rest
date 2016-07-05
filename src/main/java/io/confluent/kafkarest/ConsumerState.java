@@ -38,6 +38,7 @@ import java.util.Properties;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
@@ -55,7 +56,6 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
 
   private Consumer<KafkaK, KafkaV> consumer;
   private AtomicBoolean isSubscribed;
-  private Set<String> subscribedTopics;
 
   private Map<TopicPartition, OffsetAndMetadata> consumedOffsets;
   private Map<TopicPartition, OffsetAndMetadata> committedOffsets;
@@ -76,6 +76,7 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   // to stay in a group.
   private long nextHeartbeatTime;
   private final long heartbeatDelay;
+  private ConsumerHeartbeatThread heartbeatThread;
 
   // The last read task on this topic that failed. Allows the next read to pick up where this one
   // left off, including accounting for response size limits
@@ -96,7 +97,6 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     this.recordsQueue = new LinkedList<>();
 
     this.isSubscribed = new AtomicBoolean(false);
-    this.subscribedTopics = new HashSet<>();
     this.consumedOffsets = new HashMap<TopicPartition, OffsetAndMetadata>();
     this.committedOffsets = new HashMap<TopicPartition, OffsetAndMetadata>();
 
@@ -105,14 +105,16 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     String consumerSessionTimeout = consumerProperties
       .getProperty(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG);
     if (consumerSessionTimeout == null) {
-      // heartbeat thread will perform poll each with frequency
-      // that is equal to 1/4 of session timeout.
+      // heartbeat thread will perform poll each
+      // with frequency of 1/4 session timeout.
       this.heartbeatDelay = defaultSessionTimeoutMs / 4;
     } else {
       this.heartbeatDelay = Integer.valueOf(consumerSessionTimeout);
     }
 
     this.nextHeartbeatTime = 0;
+    this.heartbeatThread = new ConsumerHeartbeatThread();
+    heartbeatThread.start();
   }
 
 
@@ -228,10 +230,6 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     return nextHeartbeatTime;
   }
 
-  public void updateHeartbeatTime() {
-    this.nextHeartbeatTime = config.getTime().milliseconds() + heartbeatDelay;
-  }
-
   public Queue<ConsumerRecord<KafkaK, KafkaV>> queue() {
     return recordsQueue;
   }
@@ -242,6 +240,7 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     lock.lock();
     heartbeatLock.lock();
     try {
+      heartbeatThread.shutdown();
       // interrupt consumer poll request
       consumer.wakeup();
       consumer.close();
@@ -335,7 +334,7 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     try {
       clearFailedTask();
       consumer.unsubscribe();
-      subscribedTopics.clear();
+      isSubscribed.set(false);
       committedOffsets = null;
       consumedOffsets = null;
     } finally {
@@ -402,4 +401,48 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     }
   }
 
+  private class ConsumerHeartbeatThread extends Thread {
+    AtomicBoolean isRunning = new AtomicBoolean(true);
+    CountDownLatch shutdownLatch = new CountDownLatch(1);
+
+    public ConsumerHeartbeatThread() {
+      super("Consumer " + instanceId.getInstance() + " Heartbeat Thread");
+      setDaemon(true);
+    }
+
+    @Override
+    public void run() {
+      while (isRunning.get()) {
+        try {
+          nextHeartbeatTime =
+            Math.min(nextHeartbeatTime, ConsumerState.this.getNextHeartbeatTime());
+
+          ConsumerState.this.sendHeartbeat();
+          final long wait = nextHeartbeatTime - config.getTime().milliseconds();
+
+          if (wait > 0) {
+            synchronized (this) {
+              wait(wait);
+            }
+          }
+        } catch (Exception e) {
+          log.warn("Heartbeat exception " + instanceId.getInstance(), e);
+        }
+      }
+      shutdownLatch.countDown();
+    }
+
+    public void shutdown() {
+      try {
+        isRunning.set(false);
+        this.interrupt();
+        synchronized (this) {
+          notify();
+        }
+        shutdownLatch.await();
+      } catch (InterruptedException e) {
+        throw new Error("Interrupted when shutting down consumer heartbeat thread.");
+      }
+    }
+  }
 }

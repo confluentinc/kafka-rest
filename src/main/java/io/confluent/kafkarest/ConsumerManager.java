@@ -15,7 +15,6 @@
  **/
 package io.confluent.kafkarest;
 
-import com.google.common.base.Optional;
 import io.confluent.kafkarest.entities.AbstractConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -25,13 +24,13 @@ import org.apache.kafka.common.serialization.Deserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.Vector;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -61,10 +60,8 @@ public class ConsumerManager {
   // ConsumerState is generic, but we store them untyped here. This allows many operations to
   // work without having to know the types for the consumer, only requiring type information
   // during read operations.
-  // ConcurrentHashMap is chosen as ConsumerHeartbeatThread uses snapshots of this map concurrently
-  // to send heartbeats for each consumer.
-  private final Map<ConsumerInstanceId, Optional<ConsumerState>> consumers =
-      new ConcurrentHashMap<ConsumerInstanceId, Optional<ConsumerState>>();
+  private final Map<ConsumerInstanceId, ConsumerState> consumers =
+      new HashMap<ConsumerInstanceId, ConsumerState>();
   // Read operations are common and there may be many concurrently, so they are farmed out to
   // worker threads that can efficiently interleave the operations. Currently we're just using a
   // simple round-robin scheduler.
@@ -77,7 +74,6 @@ public class ConsumerManager {
   private final PriorityQueue<ConsumerState> consumersByExpiration =
       new PriorityQueue<ConsumerState>();
   private final ExpirationThread expirationThread;
-  private final ConsumerHeartbeatThread heartbeatThread;
 
   public ConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver,
                          ConsumerFactory consumerFactory) {
@@ -108,9 +104,7 @@ public class ConsumerManager {
     nextWorker = new AtomicInteger(0);
     this.executor = Executors.newFixedThreadPool(1);
     this.expirationThread = new ExpirationThread();
-    this.heartbeatThread = new ConsumerHeartbeatThread();
     this.expirationThread.start();
-    this.heartbeatThread.start();
   }
 
   public ConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver) {
@@ -152,7 +146,7 @@ public class ConsumerManager {
         throw Errors.consumerAlreadyExistsException();
       } else {
         // Placeholder to reserve this ID
-        consumers.put(cid, Optional.<ConsumerState>absent());
+        consumers.put(cid, null);
       }
     }
 
@@ -188,7 +182,7 @@ public class ConsumerManager {
           this.config, cid, props, consumerFactory);
 
         synchronized (this)  {
-          consumers.put(cid, Optional.of(state));
+          consumers.put(cid, state);
           consumersByExpiration.add(state);
           this.notifyAll();
         }
@@ -319,10 +313,8 @@ public class ConsumerManager {
     log.trace("Shutting down consumer expiration thread");
     expirationThread.shutdown();
     synchronized (this) {
-      for (Map.Entry<ConsumerInstanceId, Optional<ConsumerState>> entry : consumers.entrySet()) {
-        if (entry.getValue().isPresent()) {
-          entry.getValue().get().close();
-        }
+      for (Map.Entry<ConsumerInstanceId, ConsumerState> entry : consumers.entrySet()) {
+        entry.getValue().close();
       }
       consumers.clear();
       consumersByExpiration.clear();
@@ -337,7 +329,7 @@ public class ConsumerManager {
   private synchronized ConsumerState getConsumerInstance(String group, String instance,
                                                          boolean remove) {
     ConsumerInstanceId id = new ConsumerInstanceId(group, instance);
-    final Optional<ConsumerState> state = remove ? consumers.remove(id) : consumers.get(id);
+    final ConsumerState state = remove ? consumers.remove(id) : consumers.get(id);
     if (state == null) {
       throw Errors.consumerInstanceNotFoundException();
     }
@@ -345,7 +337,7 @@ public class ConsumerManager {
     // but don't update the timeout until we finish the read since that can significantly affect
     // the timeout.
     consumersByExpiration.remove(state);
-    return state.get();
+    return state;
   }
 
   private ConsumerState getConsumerInstance(String group, String instance) {
@@ -414,61 +406,4 @@ public class ConsumerManager {
     }
   }
 
-  private class ConsumerHeartbeatThread extends Thread {
-
-    AtomicBoolean isRunning = new AtomicBoolean(true);
-    CountDownLatch shutdownLatch = new CountDownLatch(1);
-
-    public ConsumerHeartbeatThread() {
-      super("Consumer Heartbeat Thread");
-      setDaemon(true);
-    }
-
-    @Override
-    public void run() {
-      while (isRunning.get()) {
-        try {
-          long nextHeartbeatTime = Long.MAX_VALUE;
-          boolean consumersExists = false;
-          for (Optional<ConsumerState> stateOptional: consumers.values()) {
-            if (stateOptional.isPresent()) {
-              // calculate the closest time of heartbeat
-              nextHeartbeatTime =
-                Math.min(nextHeartbeatTime, stateOptional.get().getNextHeartbeatTime());
-              stateOptional.get().sendHeartbeat();
-              consumersExists = true;
-            }
-          }
-          final long wait = nextHeartbeatTime - config.getTime().milliseconds();
-          if (wait > 0 && consumersExists) {
-            synchronized (this) {
-              try {
-                wait(wait);
-              } catch (InterruptedException e) {
-                e.printStackTrace();
-              }
-            }
-          }
-        } catch (Exception e) {
-          log.warn("Exception in consumer heartbeat thread", e);
-        }
-
-      }
-
-      shutdownLatch.countDown();
-    }
-
-    public void shutdown() {
-      try {
-        isRunning.set(false);
-        this.interrupt();
-        synchronized (this) {
-          notify();
-        }
-        shutdownLatch.await();
-      } catch (InterruptedException e) {
-        throw new Error("Interrupted when shutting down consumer heartbeat thread.");
-      }
-    }
-  }
 }
