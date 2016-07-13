@@ -18,12 +18,17 @@ package io.confluent.kafkarest.unit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.apache.avro.Schema;
+import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.Future;
 
 import javax.validation.ConstraintViolationException;
 
@@ -95,5 +100,28 @@ public class AvroRestProducerTest {
     } catch (Throwable t) {
       fail("Unexpected exception type");
     }
+  }
+
+  @Test
+  public void testRepeatedProducer() throws Exception {
+    // This is the key part of the test, we should only call register once with the same schema
+    EasyMock.expect(valueSerializer.register(EasyMock.isA(String.class), EasyMock.isA(Schema.class))).andReturn(1);
+    EasyMock.replay(valueSerializer);
+    Future f = EasyMock.createMock(Future.class);
+    EasyMock.expect(producer.send(EasyMock.isA(ProducerRecord.class), EasyMock.isA(Callback.class))).andStubReturn(f);
+    EasyMock.replay(producer);
+    String valueSchema = "{\"type\": \"record\", \"name\": \"User\", \"fields\": [{\"name\": \"name\", \"type\": \"string\"}]}";
+    schemaHolder = new SchemaHolder(null, valueSchema);
+    for (int i = 0; i < 10000; ++i) {
+      restProducer.produce(
+              new ProduceTask(schemaHolder, 1, produceCallback),
+              "test",
+              null,
+              Arrays.asList(
+                      new AvroTopicProduceRecord(null, mapper.readTree("{\"name\": \"bob\"}"), null)
+              )
+      );
+    }
+
   }
 }
