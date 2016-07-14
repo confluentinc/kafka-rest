@@ -26,8 +26,8 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
@@ -50,7 +50,7 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
     this.producer = producer;
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
-    this.schemaIdCache = new HashMap<>();
+    this.schemaIdCache = new ConcurrentHashMap<>(100);
   }
 
   public void produce(ProduceTask task, String topic, Integer partition,
