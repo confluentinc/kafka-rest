@@ -68,6 +68,7 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
         keySchema = new Schema.Parser().parse(schemaHolder.getKeySchema());
         if (schemaIdCache.containsKey(keySchema)){
           keySchemaId = schemaIdCache.get(keySchema);
+          keySchema = keySerializer.getByID(keySchemaId);
         } else {
           keySchemaId = keySerializer.register(topic + "-key", keySchema);
           schemaIdCache.put(keySchema, keySchemaId);
@@ -80,6 +81,7 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
         valueSchema = new Schema.Parser().parse(schemaHolder.getValueSchema());
         if (schemaIdCache.containsKey(valueSchema)) {
           valueSchemaId = schemaIdCache.get(valueSchema);
+          valueSchema = valueSerializer.getByID(valueSchemaId);
         } else {
           valueSchemaId = valueSerializer.register(topic + "-value", valueSchema);
           schemaIdCache.put(valueSchema, valueSchemaId);
