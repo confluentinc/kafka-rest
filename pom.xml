@@ -37,7 +37,7 @@
 
     <properties>
         <confluent.version>3.0.1-SNAPSHOT</confluent.version>
-        <kafka.version>0.10.0.0-cp1</kafka.version>
+        <kafka.version>0.10.0.1-SNAPSHOT</kafka.version>
         <kafka.scala.version>2.11</kafka.scala.version>
         <!-- See note about workaround below. This should match the version used in the version of rest-utils you're using. -->
         <confluent.junit.version>4.12</confluent.junit.version>
