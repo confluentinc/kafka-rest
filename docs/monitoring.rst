@@ -16,6 +16,9 @@ the service. Per-endpoint metrics monitor each API endpoint request method and a
 prefixed by a name of the endpoint (e.g. ``brokers.list``). These help you
 understand how the proxy is being used and track down specific performance problems.
 
+In addition to the metrics defined below, the REST proxy also exposes the
+wealth of metrics that are provided by the underlying Jetty server.
+
 Global Metrics
 ~~~~~~~~~~~~~~
 
