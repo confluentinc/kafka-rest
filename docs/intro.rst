@@ -215,7 +215,7 @@ running:
 
 .. sourcecode:: bash
 
-   $ cd confluent-3.0.0/
+   $ cd confluent-3.0.1/
 
    # Start the REST proxy. The default settings automatically work with the
    # default settings for local ZooKeeper and Kafka nodes.
@@ -289,8 +289,8 @@ dependencies as well.
 Requirements
 ------------
 
-- Kafka 0.10.0.1-SNAPSHOT
-- Required for Avro support: Schema Registry 3.0.0 recommended, 1.0 minimum
+- Kafka 0.10.0.1
+- Required for Avro support: Schema Registry |release| recommended, 1.0 minimum
 
 Contribute
 ----------
