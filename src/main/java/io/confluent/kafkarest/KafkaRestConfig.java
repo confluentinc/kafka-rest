@@ -57,6 +57,18 @@ public class KafkaRestConfig extends RestConfig {
       + "the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path.";
   public static final String ZOOKEEPER_CONNECT_DEFAULT = "localhost:2181";
 
+  public static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
+  private static final String
+      BOOTSTRAP_SERVERS_DOC =
+      "A list of host/port pairs to use for establishing the initial connection to the Kafka cluster. "
+      + "The client will make use of all servers irrespective of which servers are specified here for bootstrapping—this "
+      + "list only impacts the initial hosts used to discover the full set of servers. This list "
+      + "should be in the form host1:port1,host2:port2,.... Since these servers are just used for "
+      + "the initial connection to discover the full cluster membership (which may change dynamically), "
+      + "this list need not contain the full set of servers "
+      + "(you may want more than one, though, in case a server is down).";
+  public static final String BOOTSTRAP_SERVERS_DEFAULT = "PLAINTEXT://localhost:9092";
+
   public static final String SCHEMA_REGISTRY_URL_CONFIG = "schema.registry.url";
   private static final String SCHEMA_REGISTRY_URL_DOC =
       "The base URL for the schema registry that should be used by the Avro serializer.";
@@ -118,7 +130,7 @@ public class KafkaRestConfig extends RestConfig {
   public static final String SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG = "simpleconsumer.pool.size.max";
   private static final String
       SIMPLE_CONSUMER_MAX_POOL_SIZE_DOC =
-      "Maximum number of SimpleConsumers that can be instantiated per broker."
+      "Maximum number of SimpleConsumers that can be instantiated."
       + " If 0, then the pool size is not limited.";
   public static final String SIMPLE_CONSUMER_MAX_POOL_SIZE_DEFAULT = "25";
 
@@ -128,6 +140,20 @@ public class KafkaRestConfig extends RestConfig {
       "Amount of time to wait for an available SimpleConsumer from the pool before failing."
           + " Use 0 for no timeout";
   public static final String SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT = "1000";
+
+  public static final String SIMPLE_CONSUMER_MAX_POLL_TIME_CONFIG = "simpleconsumer.max.poll.time";
+  private static final String
+    SIMPLE_CONSUMER_MAX_POLL_TIME_DOC =
+    "Maximum amount of time to poll for records by a consumer.";
+  public static final int SIMPLE_CONSUMER_MAX_POLL_TIME_DEFAULT = 500;
+
+  public static final String SIMPLE_CONSUMER_CACHE_MAX_RECORDS_CONFIG = "simpleconsumer.cache.max.records";
+  private static final String
+    SIMPLE_CONSUMER_CACHE_MAX_RECORDS_DOC =
+    "Maximum number of records that can be stored for a specific topic-partition combination."
+     + " Records with higher offsets replace records with lower ones"
+     + " Must be greater that 0.";
+  public static final int SIMPLE_CONSUMER_CACHE_MAX_RECORDS_DEFAULT = 1000;
 
   private static final int KAFKAREST_PORT_DEFAULT = 8082;
 
@@ -151,6 +177,8 @@ public class KafkaRestConfig extends RestConfig {
         .define(HOST_NAME_CONFIG, Type.STRING, HOST_NAME_DEFAULT, Importance.MEDIUM, HOST_NAME_DOC)
         .define(ZOOKEEPER_CONNECT_CONFIG, Type.STRING, ZOOKEEPER_CONNECT_DEFAULT,
                 Importance.HIGH, ZOOKEEPER_CONNECT_DOC)
+        .define(BOOTSTRAP_SERVERS_CONFIG, Type.STRING, BOOTSTRAP_SERVERS_DEFAULT,
+                Importance.HIGH, BOOTSTRAP_SERVERS_DOC)
         .define(SCHEMA_REGISTRY_URL_CONFIG, Type.STRING, SCHEMA_REGISTRY_URL_DEFAULT,
                 Importance.HIGH, SCHEMA_REGISTRY_URL_DOC)
         .define(PRODUCER_THREADS_CONFIG, Type.INT, PRODUCER_THREADS_DEFAULT,
@@ -168,10 +196,15 @@ public class KafkaRestConfig extends RestConfig {
                 Importance.MEDIUM, CONSUMER_THREADS_DOC)
         .define(CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT,
                 Importance.LOW, CONSUMER_INSTANCE_TIMEOUT_MS_DOC)
+
+        .define(SIMPLE_CONSUMER_MAX_POLL_TIME_CONFIG, Type.INT, SIMPLE_CONSUMER_MAX_POLL_TIME_DEFAULT,
+                Importance.LOW, SIMPLE_CONSUMER_MAX_POLL_TIME_DOC)
         .define(SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG, Type.INT, SIMPLE_CONSUMER_MAX_POOL_SIZE_DEFAULT,
                 Importance.MEDIUM, SIMPLE_CONSUMER_MAX_POOL_SIZE_DOC)
         .define(SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG, Type.INT, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT,
-                Importance.LOW, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC);
+                Importance.LOW, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC)
+        .define(SIMPLE_CONSUMER_CACHE_MAX_RECORDS_CONFIG, Type.INT, SIMPLE_CONSUMER_CACHE_MAX_RECORDS_DEFAULT,
+                Importance.MEDIUM, SIMPLE_CONSUMER_CACHE_MAX_RECORDS_DOC);
   }
 
   private Time time;

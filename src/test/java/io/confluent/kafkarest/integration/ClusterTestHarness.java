@@ -23,7 +23,6 @@ import org.eclipse.jetty.server.Server;
 import org.junit.After;
 import org.junit.Before;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URI;
@@ -184,10 +183,15 @@ public abstract class ClusterTestHarness {
     int restPort = choosePort();
     restProperties.put(KafkaRestConfig.PORT_CONFIG, ((Integer) restPort).toString());
     restProperties.put(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG, zkConnect);
+    String bootstrapServers = String.format("127.0.0.1%s", brokerList);
+    restProperties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     if (withSchemaRegistry) {
       restProperties.put(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegConnect);
     }
     restConnect = String.format("http://localhost:%d", restPort);
+
+    // add simpleconsumer properties
+    restProperties.put(KafkaRestConfig.SIMPLE_CONSUMER_MAX_POLL_TIME_CONFIG, 3000); //3 sec
 
     restConfig = new KafkaRestConfig(restProperties);
     restApp = new TestKafkaRestApplication(restConfig, getZkUtils(restConfig),

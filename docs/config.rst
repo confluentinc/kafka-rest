@@ -11,6 +11,13 @@ provided as configuration options, and finally falls back to the default values 
 Java Kafka clients.
 
 
+``bootstrap.servers``
+  A list of host/port pairs to use for establishing the initial connection to the Kafka cluster. The client will make use of all servers irrespective of which servers are specified here for bootstrapping—this list only impacts the initial hosts used to discover the full set of servers. This list should be in the form host1:port1,host2:port2,.... Since these servers are just used for the initial connection to discover the full cluster membership (which may change dynamically), this list need not contain the full set of servers (you may want more than one, though, in case a server is down).
+
+  * Type: string
+  * Default: "PLAINTEXT://localhost:9092"
+  * Importance: high
+
 ``id``
   Unique ID for this REST server instance. This is used in generating unique IDs for consumers that do not specify their ID. The ID is empty by default, which makes a single server setup easier to get up and running, but is not safe for multi-server deployments where automatic consumer IDs are used.
 
@@ -62,8 +69,15 @@ Java Kafka clients.
   * Default: ""
   * Importance: medium
 
+``simpleconsumer.cache.max.records``
+  Maximum number of records that can be stored for a specific topic-partition combination. Records with higher offsets replace records with lower ones Must be greater that 0.
+
+  * Type: int
+  * Default: 1000
+  * Importance: medium
+
 ``simpleconsumer.pool.size.max``
-  Maximum number of SimpleConsumers that can be instantiated per broker. If 0, then the pool size is not limited.
+  Maximum number of SimpleConsumers that can be instantiated. If 0, then the pool size is not limited.
 
   * Type: int
   * Default: 25
@@ -172,6 +186,13 @@ Java Kafka clients.
 
   * Type: int
   * Default: 1000
+  * Importance: low
+
+``simpleconsumer.max.poll.time``
+  Maximum amount of time to poll for records by a consumer.
+
+  * Type: int
+  * Default: 500
   * Importance: low
 
 ``simpleconsumer.pool.timeout.ms``

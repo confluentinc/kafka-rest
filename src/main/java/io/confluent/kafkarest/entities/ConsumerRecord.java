@@ -27,17 +27,32 @@ public abstract class ConsumerRecord<K, V> {
   @NotNull
   protected V value;
 
+  @NotNull
+  protected String topic;
+
   @Min(0)
   protected int partition;
 
   @Min(0)
   protected long offset;
 
+  public ConsumerRecord(K key, V value, String topic, int partition, long offset) {
+    this.key = key;
+    this.value = value;
+    this.topic = topic;
+    this.partition = partition;
+    this.offset = offset;
+  }
+
   public ConsumerRecord(K key, V value, int partition, long offset) {
     this.key = key;
     this.value = value;
     this.partition = partition;
     this.offset = offset;
+  }
+
+  public ConsumerRecord(String topic, int partition, long offset) {
+    this(null, null, topic, partition, offset);
   }
 
   public ConsumerRecord(int partition, long offset) {
@@ -75,6 +90,16 @@ public abstract class ConsumerRecord<K, V> {
   }
 
   @JsonProperty
+  public String getTopic() {
+    return topic;
+  }
+
+  @JsonProperty
+  public void setTopic(String topic) {
+    this.topic = topic;
+  }
+
+  @JsonProperty
   public int getPartition() {
     return partition;
   }
@@ -108,6 +133,9 @@ public abstract class ConsumerRecord<K, V> {
     if (offset != that.offset) {
       return false;
     }
+    if (topic != null ? !topic.equals(that.topic) : that.topic != null) {
+      return false;
+    }
     if (partition != that.partition) {
       return false;
     }
@@ -125,6 +153,7 @@ public abstract class ConsumerRecord<K, V> {
   public int hashCode() {
     int result = key != null ? key.hashCode() : 0;
     result = 31 * result + (value != null ? value.hashCode() : 0);
+    result = 31 * result + (topic != null ? topic.hashCode() : 0);
     result = 31 * result + partition;
     result = 31 * result + (int) (offset ^ (offset >>> 32));
     return result;

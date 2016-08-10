@@ -16,9 +16,11 @@
 package io.confluent.kafkarest.unit;
 
 import io.confluent.kafkarest.*;
+import io.confluent.kafkarest.mock.MockKafkaConsumer;
+import io.confluent.kafkarest.mock.MockTime;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.RestServerErrorException;
-import kafka.javaapi.consumer.SimpleConsumer;
+import org.apache.kafka.clients.consumer.Consumer;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.junit.Before;
@@ -36,6 +38,7 @@ public class SimpleConsumerPoolTest {
   private final int POOL_CALLER_SLEEP_TIME = 50;
 
   private SimpleConsumerFactory simpleConsumerFactory;
+  private Time mockTime;
 
   public SimpleConsumerPoolTest() throws RestConfigException {
     simpleConsumerFactory = EasyMock.createMock(SimpleConsumerFactory.class);
@@ -43,19 +46,26 @@ public class SimpleConsumerPoolTest {
 
   @Before
   public void setUp() throws Exception {
+    mockTime = new MockTime();
     EasyMock.reset(simpleConsumerFactory);
 
-    EasyMock.expect(simpleConsumerFactory.createConsumer("", 0)).andStubAnswer(new IAnswer<SimpleConsumer>() {
+    EasyMock.expect(simpleConsumerFactory.createConsumer()).andStubAnswer(new IAnswer<SimpleConsumerFactory.ConsumerProvider>() {
 
       private AtomicInteger clientIdCounter = new AtomicInteger(0);
 
       @Override
-      public SimpleConsumer answer() throws Throwable {
-        final SimpleConsumer simpleConsumer = EasyMock.createMockBuilder(SimpleConsumer.class)
-            .addMockedMethod("clientId").createMock();
-        EasyMock.expect(simpleConsumer.clientId()).andReturn("clientid-"+clientIdCounter.getAndIncrement()).anyTimes();
-        EasyMock.replay(simpleConsumer);
-        return simpleConsumer;
+      public SimpleConsumerFactory.ConsumerProvider answer() throws Throwable {
+        final SimpleConsumerFactory.ConsumerProvider consumerProvider = EasyMock
+          .createMockBuilder(SimpleConsumerFactory.ConsumerProvider.class)
+          .addMockedMethod("clientId")
+          .addMockedMethod("consumer")
+          .createMock();
+        Consumer<byte[], byte[]> mockConsumer = new MockKafkaConsumer(null, null, mockTime);
+        EasyMock.expect(consumerProvider.clientId()).andReturn("clientid-"+clientIdCounter.getAndIncrement()).anyTimes();
+        EasyMock.expect(consumerProvider.consumer()).andReturn(mockConsumer).anyTimes();
+
+        EasyMock.replay(consumerProvider);
+        return consumerProvider;
       }
     });
 
@@ -71,7 +81,7 @@ public class SimpleConsumerPoolTest {
         new SimpleConsumerPool(maxPoolSize, poolTimeout, new SystemTime(), simpleConsumerFactory);
 
     for (int i = 0; i < 10; i++) {
-      SimpleFetcher fetcher = pool.get("", 0);
+      TPConsumerState fetcher = pool.get("topic", 0);
       fetcher.close();
     }
 
@@ -88,7 +98,7 @@ public class SimpleConsumerPoolTest {
 
     @Override
     public void run() {
-      SimpleFetcher fetcher = pool.get("", 0);
+      TPConsumerState fetcher = pool.get("topic", 0);
       try {
         // Waiting to simulate data fetching from kafka
         Thread.sleep(POOL_CALLER_SLEEP_TIME);

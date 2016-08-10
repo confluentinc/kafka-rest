@@ -138,7 +138,7 @@ public class SimpleConsumerJsonTest extends AbstractConsumerTest {
     );
   }
 
-  @Test(timeout = 1000)
+  @Test(timeout = 4000)
   public void testConsumeMoreMessagesThanAvailable() {
     produceJsonMessages(recordsOnlyValues);
 

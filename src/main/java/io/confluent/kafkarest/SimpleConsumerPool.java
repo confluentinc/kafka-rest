@@ -15,7 +15,8 @@
  **/
 package io.confluent.kafkarest;
 
-import kafka.javaapi.consumer.SimpleConsumer;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,7 @@ public class SimpleConsumerPool {
   private final Time time;
 
   private final SimpleConsumerFactory simpleConsumerFactory;
-  private final Map<String, SimpleConsumer> simpleConsumers;
+  private final Map<String, Consumer<byte[], byte[]>> simpleConsumers;
   private final Queue<String> availableConsumers;
 
   public SimpleConsumerPool(int maxPoolSize, int poolInstanceAvailabilityTimeoutMs,
@@ -45,11 +46,14 @@ public class SimpleConsumerPool {
     this.time = time;
     this.simpleConsumerFactory = simpleConsumerFactory;
 
-    simpleConsumers = new HashMap<String, SimpleConsumer>();
+    simpleConsumers = new HashMap<String, Consumer<byte[], byte[]>>();
     availableConsumers = new LinkedList<String>();
   }
 
-  synchronized public SimpleFetcher get(final String host, final int port) {
+  /**
+   * @return assigned Consumer that is ready to be used for polling records
+   */
+  synchronized public TPConsumerState get(String topic, int partition) {
 
     final long expiration = time.milliseconds() + poolInstanceAvailabilityTimeoutMs;
 
@@ -57,14 +61,25 @@ public class SimpleConsumerPool {
       // If there is a SimpleConsumer available
       if (availableConsumers.size() > 0) {
         final String consumerId = availableConsumers.remove();
-        return new SimpleFetcher(simpleConsumers.get(consumerId), this);
+
+        // assign consumer to TopicPartition
+        Consumer<byte[], byte[]> consumer = simpleConsumers.get(consumerId);
+        consumer.assign(Collections
+          .singletonList(new TopicPartition(topic, partition)));
+
+        return new TPConsumerState(consumer, this, consumerId);
       }
 
       // If not consumer is available, but we can instantiate a new one
       if (simpleConsumers.size() < maxPoolSize || maxPoolSize == 0) {
-        final SimpleConsumer simpleConsumer = simpleConsumerFactory.createConsumer(host, port);
-        simpleConsumers.put(simpleConsumer.clientId(), simpleConsumer);
-        return new SimpleFetcher(simpleConsumer, this);
+        final SimpleConsumerFactory.ConsumerProvider simpleConsumer = simpleConsumerFactory.createConsumer();
+
+        // assign consumer to TopicPartition
+        simpleConsumer.consumer().assign(Collections
+          .singletonList(new TopicPartition(topic, partition)));
+
+        simpleConsumers.put(simpleConsumer.clientId(), simpleConsumer.consumer());
+        return new TPConsumerState(simpleConsumer.consumer(), this, simpleConsumer.clientId());
       }
 
       // If no consumer is available and we reached the limit
@@ -81,18 +96,18 @@ public class SimpleConsumerPool {
         throw Errors.simpleConsumerPoolTimeoutException();
       }
     }
-
   }
 
-  synchronized public void release(SimpleFetcher simpleFetcher) {
-    log.debug("Releasing into the pool SimpleConsumer with id " + simpleFetcher.clientId());
-    availableConsumers.add(simpleFetcher.clientId());
+  synchronized public void release(TPConsumerState tpConsumerState) {
+    log.debug("Releasing into the pool SimpleConsumer with id " + tpConsumerState.clientId());
+    availableConsumers.add(tpConsumerState.clientId());
     notify();
   }
 
   public void shutdown() {
-    for (SimpleConsumer simpleConsumer : simpleConsumers.values()) {
-      simpleConsumer.close();
+    for (Consumer<byte[], byte[]> consumer : simpleConsumers.values()) {
+      consumer.wakeup();
+      consumer.close();
     }
   }
 
