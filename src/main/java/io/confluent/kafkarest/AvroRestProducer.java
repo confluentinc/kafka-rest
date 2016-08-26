@@ -26,6 +26,8 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
@@ -40,6 +42,7 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
   protected final KafkaProducer<Object, Object> producer;
   protected final KafkaAvroSerializer keySerializer;
   protected final KafkaAvroSerializer valueSerializer;
+  protected final Map<Schema, Integer> schemaIdCache;
 
   public AvroRestProducer(KafkaProducer<Object, Object> producer,
                           KafkaAvroSerializer keySerializer,
@@ -47,6 +50,7 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
     this.producer = producer;
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
+    this.schemaIdCache = new ConcurrentHashMap<>(100);
   }
 
   public void produce(ProduceTask task, String topic, Integer partition,
@@ -62,14 +66,26 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
         keySchema = keySerializer.getByID(keySchemaId);
       } else if (schemaHolder.getKeySchema() != null) {
         keySchema = new Schema.Parser().parse(schemaHolder.getKeySchema());
-        keySchemaId = keySerializer.register(topic + "-key", keySchema);
+        if (schemaIdCache.containsKey(keySchema)){
+          keySchemaId = schemaIdCache.get(keySchema);
+          keySchema = keySerializer.getByID(keySchemaId);
+        } else {
+          keySchemaId = keySerializer.register(topic + "-key", keySchema);
+          schemaIdCache.put(keySchema, keySchemaId);
+        }
       }
 
       if (valueSchemaId != null) {
         valueSchema = valueSerializer.getByID(valueSchemaId);
       } else if (schemaHolder.getValueSchema() != null) {
         valueSchema = new Schema.Parser().parse(schemaHolder.getValueSchema());
-        valueSchemaId = valueSerializer.register(topic + "-value", valueSchema);
+        if (schemaIdCache.containsKey(valueSchema)) {
+          valueSchemaId = schemaIdCache.get(valueSchema);
+          valueSchema = valueSerializer.getByID(valueSchemaId);
+        } else {
+          valueSchemaId = valueSerializer.register(topic + "-value", valueSchema);
+          schemaIdCache.put(valueSchema, valueSchemaId);
+        }
       }
     } catch (RestClientException e) {
       // FIXME We should return more specific error codes (unavailable vs registration failed in
