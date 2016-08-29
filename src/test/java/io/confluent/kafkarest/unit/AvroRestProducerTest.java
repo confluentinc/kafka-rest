@@ -103,14 +103,18 @@ public class AvroRestProducerTest {
 
   @Test
   public void testRepeatedProducer() throws Exception {
-    // This is the key part of the test, we should only call register once with the same schema
-    EasyMock.expect(valueSerializer.register(EasyMock.isA(String.class), EasyMock.isA(Schema.class))).andReturn(1);
+    final int schemaId = 1;
+    final String valueSchemaStr = "{\"type\": \"record\", \"name\": \"User\", \"fields\": [{\"name\": \"name\", \"type\": \"string\"}]}";
+    final Schema valueSchema = new Schema.Parser().parse(valueSchemaStr);
+    // This is the key part of the test, we should only call register once with the same schema, and then see the lookup
+    // by ID the rest of the times
+    EasyMock.expect(valueSerializer.register(EasyMock.isA(String.class), EasyMock.isA(Schema.class))).andReturn(schemaId);
+    EasyMock.expect(valueSerializer.getByID(schemaId)).andReturn(valueSchema).times(9999);
     EasyMock.replay(valueSerializer);
     Future f = EasyMock.createMock(Future.class);
     EasyMock.expect(producer.send(EasyMock.isA(ProducerRecord.class), EasyMock.isA(Callback.class))).andStubReturn(f);
     EasyMock.replay(producer);
-    String valueSchema = "{\"type\": \"record\", \"name\": \"User\", \"fields\": [{\"name\": \"name\", \"type\": \"string\"}]}";
-    schemaHolder = new SchemaHolder(null, valueSchema);
+    schemaHolder = new SchemaHolder(null, valueSchemaStr);
     for (int i = 0; i < 10000; ++i) {
       restProducer.produce(
               new ProduceTask(schemaHolder, 1, produceCallback),
