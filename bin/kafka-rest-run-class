@@ -91,7 +91,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-if [ "x$$HELP" = "xtrue" ]; then
+if [ "x$HELP" = "xtrue" ]; then
   echo "USAGE: $0 [-daemon] [opts] [-help]"
   exit 0
 fi
