@@ -60,12 +60,11 @@ public class KafkaRestConfig extends RestConfig {
   public static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
   private static final String
       BOOTSTRAP_SERVERS_DOC =
-      "A list of host/port pairs to use for establishing the initial connection to the Kafka cluster. "
-      + "The client will make use of all servers irrespective of which servers are specified here for bootstrapping—this "
-      + "list only impacts the initial hosts used to discover the full set of servers. This list "
-      + "should be in the form host1:port1,host2:port2,.... Since these servers are just used for "
-      + "the initial connection to discover the full cluster membership (which may change dynamically), "
-      + "this list need not contain the full set of servers "
+      "A list of protocol://host:port entries to use for establishing the initial connection to the Kafka cluster. "
+      + "The protocol can be PLAINTEXT, SSL. The client will make use of all servers irrespective of which servers "
+      + "are specified here for bootstrapping—this list only impacts the initial hosts used to discover the full set "
+      + "of servers. Since these servers are just used for the initial connection to discover the full cluster "
+      + "membership (which may change dynamically), this list need not contain the full set of servers "
       + "(you may want more than one, though, in case a server is down).";
   public static final String BOOTSTRAP_SERVERS_DEFAULT = "PLAINTEXT://localhost:9092";
 
@@ -147,14 +146,6 @@ public class KafkaRestConfig extends RestConfig {
     "Maximum amount of time to poll for records by a consumer.";
   public static final int SIMPLE_CONSUMER_MAX_POLL_TIME_DEFAULT = 500;
 
-  public static final String SIMPLE_CONSUMER_CACHE_MAX_RECORDS_CONFIG = "simpleconsumer.cache.max.records";
-  private static final String
-    SIMPLE_CONSUMER_CACHE_MAX_RECORDS_DOC =
-    "Maximum number of records that can be stored for a specific topic-partition combination."
-     + " Records with higher offsets replace records with lower ones"
-     + " Must be greater that 0.";
-  public static final int SIMPLE_CONSUMER_CACHE_MAX_RECORDS_DEFAULT = 1000;
-
   private static final int KAFKAREST_PORT_DEFAULT = 8082;
 
   private static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka.rest";
@@ -196,15 +187,12 @@ public class KafkaRestConfig extends RestConfig {
                 Importance.MEDIUM, CONSUMER_THREADS_DOC)
         .define(CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT,
                 Importance.LOW, CONSUMER_INSTANCE_TIMEOUT_MS_DOC)
-
         .define(SIMPLE_CONSUMER_MAX_POLL_TIME_CONFIG, Type.INT, SIMPLE_CONSUMER_MAX_POLL_TIME_DEFAULT,
                 Importance.LOW, SIMPLE_CONSUMER_MAX_POLL_TIME_DOC)
         .define(SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG, Type.INT, SIMPLE_CONSUMER_MAX_POOL_SIZE_DEFAULT,
                 Importance.MEDIUM, SIMPLE_CONSUMER_MAX_POOL_SIZE_DOC)
         .define(SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG, Type.INT, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT,
-                Importance.LOW, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC)
-        .define(SIMPLE_CONSUMER_CACHE_MAX_RECORDS_CONFIG, Type.INT, SIMPLE_CONSUMER_CACHE_MAX_RECORDS_DEFAULT,
-                Importance.MEDIUM, SIMPLE_CONSUMER_CACHE_MAX_RECORDS_DOC);
+                Importance.LOW, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC);
   }
 
   private Time time;

@@ -64,7 +64,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
                                         ZkUtils zkUtils, MetadataObserver mdObserver,
                                         ProducerPool producerPool,
                                         ConsumerManager consumerManager,
-                                        SimpleConsumerFactory simpleConsumerFactory,
+                                        ConsumerFactory simpleConsumerFactory,
                                         SimpleConsumerManager simpleConsumerManager) {
     config.register(new ZkExceptionMapper(appConfig));
 
@@ -81,9 +81,6 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     }
     if (consumerManager == null) {
       consumerManager = new ConsumerManager(appConfig, mdObserver);
-    }
-    if (simpleConsumerFactory == null) {
-      simpleConsumerFactory = new SimpleConsumerFactory(appConfig);
     }
     if (simpleConsumerManager == null) {
       simpleConsumerManager = new SimpleConsumerManager(appConfig, mdObserver, simpleConsumerFactory);

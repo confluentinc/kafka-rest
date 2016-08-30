@@ -21,6 +21,7 @@ import io.confluent.kafkarest.mock.MockTime;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.common.TopicPartition;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.junit.Before;
@@ -28,7 +29,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 
@@ -37,11 +37,11 @@ public class SimpleConsumerPoolTest {
   private final int AWAIT_TERMINATION_TIMEOUT = 2000;
   private final int POOL_CALLER_SLEEP_TIME = 50;
 
-  private SimpleConsumerFactory simpleConsumerFactory;
+  private ConsumerFactory simpleConsumerFactory;
   private Time mockTime;
 
   public SimpleConsumerPoolTest() throws RestConfigException {
-    simpleConsumerFactory = EasyMock.createMock(SimpleConsumerFactory.class);
+    simpleConsumerFactory = EasyMock.createMock(ConsumerFactory.class);
   }
 
   @Before
@@ -49,23 +49,11 @@ public class SimpleConsumerPoolTest {
     mockTime = new MockTime();
     EasyMock.reset(simpleConsumerFactory);
 
-    EasyMock.expect(simpleConsumerFactory.createConsumer()).andStubAnswer(new IAnswer<SimpleConsumerFactory.ConsumerProvider>() {
-
-      private AtomicInteger clientIdCounter = new AtomicInteger(0);
-
+    EasyMock.expect(simpleConsumerFactory.createConsumer()).andStubAnswer(new IAnswer<Consumer<byte[], byte[]>>() {
       @Override
-      public SimpleConsumerFactory.ConsumerProvider answer() throws Throwable {
-        final SimpleConsumerFactory.ConsumerProvider consumerProvider = EasyMock
-          .createMockBuilder(SimpleConsumerFactory.ConsumerProvider.class)
-          .addMockedMethod("clientId")
-          .addMockedMethod("consumer")
-          .createMock();
+      public Consumer<byte[], byte[]> answer() throws Throwable {
         Consumer<byte[], byte[]> mockConsumer = new MockKafkaConsumer(null, null, mockTime);
-        EasyMock.expect(consumerProvider.clientId()).andReturn("clientid-"+clientIdCounter.getAndIncrement()).anyTimes();
-        EasyMock.expect(consumerProvider.consumer()).andReturn(mockConsumer).anyTimes();
-
-        EasyMock.replay(consumerProvider);
-        return consumerProvider;
+        return mockConsumer;
       }
     });
 
@@ -77,12 +65,24 @@ public class SimpleConsumerPoolTest {
 
     final int maxPoolSize = 3;
     final int poolTimeout = 1000;
+    final int maxPollRecords = 1000;
     final SimpleConsumerPool pool =
-        new SimpleConsumerPool(maxPoolSize, poolTimeout, new SystemTime(), simpleConsumerFactory);
+        new SimpleConsumerPool(
+            maxPoolSize,
+            poolTimeout,
+            maxPollRecords, new SystemTime(), simpleConsumerFactory);
 
+    // poll with 0 count should not create new consumer within the pool
+    SimpleConsumerPool.RecordsFetcher fetcher = pool.getRecordsFetcher(new TopicPartition("topic", 0));
+    fetcher.close();
+    fetcher.poll(10000, 0);
+    assertTrue(pool.size() == 0);
+
+    int currentOffset = 100;
+    TopicPartition topicPartition = new TopicPartition("topic", 0);
     for (int i = 0; i < 10; i++) {
-      TPConsumerState fetcher = pool.get("topic", 0);
-      fetcher.close();
+      Consumer<byte[], byte[]> consumer = pool.get(topicPartition, currentOffset);
+      pool.release(consumer, topicPartition, currentOffset += 100);
     }
 
     assertTrue(pool.size() == 1);
@@ -98,13 +98,15 @@ public class SimpleConsumerPoolTest {
 
     @Override
     public void run() {
-      TPConsumerState fetcher = pool.get("topic", 0);
+      TopicPartition topicPartition = new TopicPartition("topic", 0);
+      Consumer<byte[], byte[]> consumer = pool.get(topicPartition, 100);
       try {
         // Waiting to simulate data fetching from kafka
         Thread.sleep(POOL_CALLER_SLEEP_TIME);
-        fetcher.close();
+        pool.release(consumer, topicPartition, 100);
       } catch (Exception e) {
         fail(e.getMessage());
+        throw new RuntimeException(e);
       }
     }
   }
@@ -113,12 +115,13 @@ public class SimpleConsumerPoolTest {
   public void testPoolWhenMultiThreadedCaller() throws Exception {
 
     final int maxPoolSize = 3;
-    final int poolTimeout = 1000;
+    final int poolTimeout = 3000;
+    final int maxPollTime = 10;
     final SimpleConsumerPool consumersPool =
-        new SimpleConsumerPool(maxPoolSize, poolTimeout, new SystemTime(), simpleConsumerFactory);
+        new SimpleConsumerPool(maxPoolSize, poolTimeout, maxPollTime, new SystemTime(), simpleConsumerFactory);
 
-    final ExecutorService executorService = Executors.newFixedThreadPool(10);
-    for (int i = 0; i < 10; i++) {
+    final ExecutorService executorService = Executors.newFixedThreadPool(100);
+    for (int i = 0; i < 100; i++) {
       executorService.execute(new PoolCaller(consumersPool));
     }
     executorService.shutdown();
@@ -134,8 +137,9 @@ public class SimpleConsumerPoolTest {
 
     final int maxPoolSize = 0; // 0 meaning unlimited
     final int poolTimeout = 1000;
+    final int maxPollTime = 1000;
     final SimpleConsumerPool consumersPool =
-        new SimpleConsumerPool(maxPoolSize, poolTimeout, new SystemTime(), simpleConsumerFactory);
+        new SimpleConsumerPool(maxPoolSize, poolTimeout, maxPollTime, new SystemTime(), simpleConsumerFactory);
 
     final ExecutorService executorService = Executors.newFixedThreadPool(10);
     for (int i = 0; i < 10; i++) {
@@ -155,9 +159,10 @@ public class SimpleConsumerPoolTest {
   public void testPoolTimeoutError() throws Exception {
 
     final int maxPoolSize = 1; // Only one SimpleConsumer instance
-    final int poolTimeout = 1; // And we don't allow allow to wait a lot to get it
+    final int poolTimeout = 1; // And we don't allow to wait a lot to get it
+    final int maxPollTime = 1000;
     final SimpleConsumerPool consumersPool =
-        new SimpleConsumerPool(maxPoolSize, poolTimeout, new SystemTime(), simpleConsumerFactory);
+        new SimpleConsumerPool(maxPoolSize, poolTimeout, maxPollTime, new SystemTime(), simpleConsumerFactory);
 
     final ExecutorService executorService = Executors.newFixedThreadPool(10);
     final ArrayList<Future<?>> futures = new ArrayList<Future<?>>();
@@ -188,8 +193,9 @@ public class SimpleConsumerPoolTest {
 
     final int maxPoolSize = 1; // Only one SimpleConsumer instance
     final int poolTimeout = 0; // No timeout. A request will wait as long as needed to get a SimpleConsumer instance
+    final int maxPollTime = 100000;
     final SimpleConsumerPool consumersPool =
-        new SimpleConsumerPool(maxPoolSize, poolTimeout, new SystemTime(), simpleConsumerFactory);
+        new SimpleConsumerPool(maxPoolSize, poolTimeout, maxPollTime, new SystemTime(), simpleConsumerFactory);
 
     final ExecutorService executorService = Executors.newFixedThreadPool(10);
     for (int i = 0; i < 10; i++) {

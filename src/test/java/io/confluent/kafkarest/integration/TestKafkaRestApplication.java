@@ -31,13 +31,13 @@ public class TestKafkaRestApplication extends KafkaRestApplication {
   MetadataObserver mdObserverInjected;
   ProducerPool producerPoolInjected;
   ConsumerManager consumerManagerInjected;
-  SimpleConsumerFactory simpleConsumerFactoryInjected;
+  ConsumerFactory simpleConsumerFactoryInjected;
   SimpleConsumerManager simpleConsumerManagerInjected;
 
   public TestKafkaRestApplication(KafkaRestConfig config, ZkUtils zkUtils,
                                   MetadataObserver mdObserver, ProducerPool producerPool,
                                   ConsumerManager consumerManager,
-                                  SimpleConsumerFactory simpleConsumerFactory, SimpleConsumerManager simpleConsumerManager) {
+                                  ConsumerFactory simpleConsumerFactory, SimpleConsumerManager simpleConsumerManager) {
     super(config);
     zkUtilsInjected = zkUtils;
     mdObserverInjected = mdObserver;

@@ -15,9 +15,9 @@
  **/
 package io.confluent.kafkarest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafkarest.converters.AvroConverter;
+import io.confluent.kafkarest.converters.JsonConverter;
 import io.confluent.kafkarest.entities.AvroConsumerRecord;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerRecord;
@@ -25,61 +25,70 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.JsonConsumerRecord;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestServerErrorException;
-import jersey.repackaged.com.google.common.collect.Maps;
 
-import org.apache.kafka.common.errors.SerializationException;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.Deserializer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 public class SimpleConsumerManager {
 
   private static final Logger log = LoggerFactory.getLogger(SimpleConsumerManager.class);
 
-  private final int maxPoolSize;
-  private final int poolInstanceAvailabilityTimeoutMs;
-  private final Time time;
-
   private final MetadataObserver mdObserver;
-  private final SimpleConsumerFactory simpleConsumerFactory;
 
-  // stores pull of KafkaConsumer objects
   private final SimpleConsumerPool simpleConsumersPool;
 
-  private final SimpleConsumerRecordsCache cache;
-
   private final Deserializer<Object> avroDeserializer;
-  private final ObjectMapper objectMapper;
 
   public SimpleConsumerManager(final KafkaRestConfig config,
                                final MetadataObserver mdObserver,
-                               final SimpleConsumerFactory simpleConsumerFactory) {
+                               final ConsumerFactory<byte[], byte[]> simpleConsumerFactory) {
 
     this.mdObserver = mdObserver;
-    this.simpleConsumerFactory = simpleConsumerFactory;
 
-    maxPoolSize = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG);
-    poolInstanceAvailabilityTimeoutMs = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG);
-    time = config.getTime();
+    int maxPoolSize = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG);
+    int poolInstanceAvailabilityTimeoutMs = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG);
+    int maxPollTime = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_MAX_POLL_TIME_CONFIG);
+    Time time = config.getTime();
+
+    ConsumerFactory<byte[], byte[]> consumerFactory = simpleConsumerFactory;
+
+    if (consumerFactory == null) {
+        consumerFactory = new ConsumerFactory<byte[], byte[]>() {
+        private Properties consumerProperties = new Properties();
+
+        {
+          consumerProperties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+              config.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG));
+        }
+
+        @Override
+        public Consumer<byte[], byte[]> createConsumer() {
+          return new KafkaConsumer<byte[], byte[]>(consumerProperties,
+              new ByteArrayDeserializer(),
+              new ByteArrayDeserializer());
+        }
+      };
+    }
 
     simpleConsumersPool =
-      new SimpleConsumerPool(maxPoolSize, poolInstanceAvailabilityTimeoutMs, time, simpleConsumerFactory);
-    cache =
-      new SimpleConsumerRecordsCache(config);
+      new SimpleConsumerPool(maxPoolSize,
+          poolInstanceAvailabilityTimeoutMs, maxPollTime, time, consumerFactory);
 
     // Load deserializers
-    Properties props = new Properties();
-    props.setProperty("schema.registry.url", config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
+    Map<String, String> props = new HashMap<>();
+    props.put("schema.registry.url", config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
     avroDeserializer = new KafkaAvroDeserializer();
-    avroDeserializer.configure(Maps.fromProperties(props), true);
-    objectMapper = new ObjectMapper();
-
+    avroDeserializer.configure(props, true);
   }
 
 
@@ -90,7 +99,7 @@ public class SimpleConsumerManager {
                       final EmbeddedFormat embeddedFormat,
                       final ConsumerManager.ReadCallback callback) {
 
-    List<ConsumerRecord> records = new ArrayList<>();
+    List<ConsumerRecord> records = null;
     RestException exception = null;
 
     if (!mdObserver.topicExists(topicName)) {
@@ -99,9 +108,13 @@ public class SimpleConsumerManager {
     if (!mdObserver.partitionExists(topicName, partitionId)) {
       exception = Errors.partitionNotFoundException();
     } else {
-      try (TPConsumerState consumer = simpleConsumersPool.get(topicName, partitionId)) {
+      try (SimpleConsumerPool.RecordsFetcher fetcher =
+               simpleConsumersPool.getRecordsFetcher(new TopicPartition(topicName, partitionId))) {
+
         List<org.apache.kafka.clients.consumer.ConsumerRecord<byte[], byte[]>> fetched =
-          cache.pollRecords(consumer.consumer(), topicName, partitionId, offset, count);
+          fetcher.poll(offset, count);
+
+        records = new ArrayList<>(fetched.size());
 
         for (org.apache.kafka.clients.consumer.ConsumerRecord record: fetched) {
           records.add(createConsumerRecord(record, record.topic(), record.partition(), embeddedFormat));
@@ -124,8 +137,6 @@ public class SimpleConsumerManager {
     final String topicName,
     final int partitionId) {
 
-    // KafkaConsumer instances are created with ByteArrayDeserializer so
-    // there is no reason to deserialize record again.
     return new BinaryConsumerRecord(consumerRecord.key(), consumerRecord.value(),
         topicName, partitionId, consumerRecord.offset());
   }
@@ -148,17 +159,9 @@ public class SimpleConsumerManager {
     final int partitionId) {
 
     return new JsonConsumerRecord(
-      deserializeJson(consumerRecord.key()),
-      deserializeJson(consumerRecord.value()),
+      JsonConverter.deserializeJson(consumerRecord.key()),
+      JsonConverter.deserializeJson(consumerRecord.value()),
         topicName, partitionId, consumerRecord.offset());
-  }
-
-  private Object deserializeJson(byte[] data) {
-    try {
-      return data == null ? null : objectMapper.readValue(data, Object.class);
-    } catch (Exception e) {
-      throw new SerializationException(e);
-    }
   }
 
   private ConsumerRecord createConsumerRecord(

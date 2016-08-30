@@ -220,7 +220,7 @@ public abstract class ClusterTestHarness {
     return null;
   }
 
-  protected SimpleConsumerFactory getSimpleConsumerFactory(KafkaRestConfig appConfig) {
+  protected ConsumerFactory getSimpleConsumerFactory(KafkaRestConfig appConfig) {
     return null;
   }
 
