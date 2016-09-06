@@ -954,7 +954,7 @@ error.
 
    .. sourcecode:: http
 
-      POST /consumers/testgroup/instances/my_consumer HTTP/1.1
+      POST /consumers/testgroup/instances/my_consumer/offsets HTTP/1.1
       Host: proxy-instance.kafkaproxy.example.com
       Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
 
