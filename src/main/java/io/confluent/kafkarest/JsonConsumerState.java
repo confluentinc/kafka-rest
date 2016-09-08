@@ -18,35 +18,35 @@ package io.confluent.kafkarest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.entities.JsonConsumerRecord;
-import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.message.MessageAndMetadata;
-import kafka.serializer.Decoder;
-import kafka.serializer.DefaultDecoder;
-import kafka.utils.VerifiableProperties;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.errors.SerializationException;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.common.serialization.Deserializer;
+
+import java.util.Properties;
 
 public class JsonConsumerState extends ConsumerState<byte[], byte[], Object, Object> {
-  private static final Decoder<byte[]> decoder = new DefaultDecoder(new VerifiableProperties());
+  private static final Deserializer<byte[]> deserializer = new ByteArrayDeserializer();
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
-  public JsonConsumerState(KafkaRestConfig config,
-                           ConsumerInstanceId instanceId,
-                           ConsumerConnector consumer) {
-    super(config, instanceId, consumer);
+  public JsonConsumerState(KafkaRestConfig config, ConsumerInstanceId instanceId,
+                           Properties consumerProperties,
+                           ConsumerManager.ConsumerFactory consumerFactory) {
+    super(config, instanceId, consumerProperties, consumerFactory);
   }
 
   @Override
-  protected Decoder<byte[]> getKeyDecoder() {
-    return decoder;
+  protected Deserializer<byte[]> getKeyDeserializer() {
+    return deserializer;
   }
 
   @Override
-  protected Decoder<byte[]> getValueDecoder() {
-    return decoder;
+  protected Deserializer<byte[]> getValueDeserializer() {
+    return deserializer;
   }
 
   @Override
-  public ConsumerRecordAndSize<Object, Object> createConsumerRecord(MessageAndMetadata<byte[], byte[]> msg) {
+  public ConsumerRecordAndSize<Object, Object> convertConsumerRecord(ConsumerRecord<byte[], byte[]> msg) {
     long approxSize = 0;
 
     Object key = null;
@@ -61,13 +61,13 @@ public class JsonConsumerState extends ConsumerState<byte[], byte[], Object, Obj
       key = deserialize(msg.key());
     }
 
-    if (msg.message() != null) {
-      approxSize += msg.message().length;
-      value = deserialize(msg.message());
+    if (msg.value() != null) {
+      approxSize += msg.value().length;
+      value = deserialize(msg.value());
     }
 
     return new ConsumerRecordAndSize<Object, Object>(
-        new JsonConsumerRecord(key, value, msg.partition(), msg.offset()),
+        new JsonConsumerRecord(key, value, msg.topic(), msg.partition(), msg.offset()),
         approxSize);
   }
 

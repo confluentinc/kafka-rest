@@ -20,13 +20,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.Properties;
 
+import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.KafkaAvroDecoder;
+import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.entities.AvroConsumerRecord;
-import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.message.MessageAndMetadata;
-import kafka.serializer.Decoder;
+import jersey.repackaged.com.google.common.collect.Maps;
 import kafka.utils.VerifiableProperties;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.serialization.Deserializer;
 
 /**
  * Avro implementation of ConsumerState, which decodes into GenericRecords or primitive types.
@@ -35,35 +38,42 @@ public class AvroConsumerState extends ConsumerState<Object, Object, JsonNode, J
 
   // Note that this could be a static variable and shared, but that causes tests to break in
   // subtle ways because it causes state to be shared across tests, but only for the consumer.
-  private Decoder<Object> decoder = null;
+  private Deserializer<Object> deserializer = null;
 
-  public AvroConsumerState(KafkaRestConfig config,
-                           ConsumerInstanceId instanceId,
-                           ConsumerConnector consumer) {
-    super(config, instanceId, consumer);
-    Properties props = new Properties();
-    props.setProperty("schema.registry.url",
-                      config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
-    decoder = new KafkaAvroDecoder(new VerifiableProperties(props));
+  public AvroConsumerState(KafkaRestConfig config, ConsumerInstanceId instanceId,
+                           Properties consumerProperties,
+                           ConsumerManager.ConsumerFactory consumerFactory) {
+    super(config, instanceId, consumerProperties, consumerFactory);
+  }
+
+  private Deserializer<Object> initDeserializer() {
+    if (deserializer == null) {
+      Properties props = new Properties();
+      props.setProperty("schema.registry.url",
+        config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
+      deserializer = new KafkaAvroDeserializer();
+      deserializer.configure(Maps.fromProperties(props), true);
+    }
+    return deserializer;
   }
 
   @Override
-  protected Decoder<Object> getKeyDecoder() {
-    return decoder;
+  protected Deserializer<Object> getKeyDeserializer() {
+    return initDeserializer();
   }
 
   @Override
-  protected Decoder<Object> getValueDecoder() {
-    return decoder;
+  protected Deserializer<Object> getValueDeserializer() {
+    return initDeserializer();
   }
 
   @Override
-  public ConsumerRecordAndSize<JsonNode, JsonNode> createConsumerRecord(
-      MessageAndMetadata<Object, Object> msg) {
+  public ConsumerRecordAndSize<JsonNode, JsonNode> convertConsumerRecord(
+      ConsumerRecord<Object, Object> msg) {
     AvroConverter.JsonNodeAndSize keyNode = AvroConverter.toJson(msg.key());
-    AvroConverter.JsonNodeAndSize valueNode = AvroConverter.toJson(msg.message());
+    AvroConverter.JsonNodeAndSize valueNode = AvroConverter.toJson(msg.value());
     return new ConsumerRecordAndSize<JsonNode, JsonNode>(
-        new AvroConsumerRecord(keyNode.json, valueNode.json, msg.partition(), msg.offset()),
+        new AvroConsumerRecord(keyNode.json, valueNode.json, msg.topic(), msg.partition(), msg.offset()),
         keyNode.size + valueNode.size
     );
   }

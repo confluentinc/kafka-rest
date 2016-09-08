@@ -17,42 +17,44 @@
 package io.confluent.kafkarest;
 
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
-import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.message.MessageAndMetadata;
-import kafka.serializer.Decoder;
 import kafka.serializer.DefaultDecoder;
 import kafka.utils.VerifiableProperties;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.common.serialization.Deserializer;
+
+import java.util.Properties;
 
 /**
  * Binary implementation of ConsumerState that does no decoding, returning the raw bytes directly.
  */
 public class BinaryConsumerState extends ConsumerState<byte[], byte[], byte[], byte[]> {
 
-  private static final Decoder<byte[]> decoder = new DefaultDecoder(new VerifiableProperties());
+  private static final Deserializer<byte[]> deserializer = new ByteArrayDeserializer();
 
-  public BinaryConsumerState(KafkaRestConfig config,
-                             ConsumerInstanceId instanceId,
-                             ConsumerConnector consumer) {
-    super(config, instanceId, consumer);
+  public BinaryConsumerState(KafkaRestConfig config, ConsumerInstanceId instanceId,
+                             Properties consumerProperties,
+                             ConsumerManager.ConsumerFactory consumerFactory) {
+    super(config, instanceId, consumerProperties, consumerFactory);
   }
 
   @Override
-  protected Decoder<byte[]> getKeyDecoder() {
-    return decoder;
+  protected Deserializer<byte[]> getKeyDeserializer() {
+    return deserializer;
   }
 
   @Override
-  protected Decoder<byte[]> getValueDecoder() {
-    return decoder;
+  protected Deserializer<byte[]> getValueDeserializer() {
+    return deserializer;
   }
 
   @Override
-  public ConsumerRecordAndSize<byte[], byte[]> createConsumerRecord(
-      MessageAndMetadata<byte[], byte[]> msg) {
+  public ConsumerRecordAndSize<byte[], byte[]> convertConsumerRecord(
+      ConsumerRecord<byte[], byte[]> msg) {
     long approxSize = (msg.key() != null ? msg.key().length : 0)
-                      + (msg.message() != null ? msg.message().length : 0);
+                      + (msg.value() != null ? msg.value().length : 0);
     return new ConsumerRecordAndSize<byte[], byte[]>(
-        new BinaryConsumerRecord(msg.key(), msg.message(), msg.partition(), msg.offset()),
+        new BinaryConsumerRecord(msg.key(), msg.value(), msg.topic(), msg.partition(), msg.offset()),
         approxSize);
   }
 

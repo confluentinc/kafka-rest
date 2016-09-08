@@ -23,13 +23,14 @@ import java.util.Arrays;
 
 import io.confluent.rest.validation.ConstraintViolations;
 
-public class BinaryConsumerRecord extends ConsumerRecord<byte[], byte[]> {
+public class BinaryConsumerRecord extends AbstractConsumerRecord<byte[], byte[]> {
 
   public BinaryConsumerRecord(
       @JsonProperty("key") String key, @JsonProperty("value") String value,
-      @JsonProperty("partition") int partition, @JsonProperty("offset") long offset
+      @JsonProperty("topic") String topic, @JsonProperty("partition") int partition,
+      @JsonProperty("offset") long offset
   ) throws IOException {
-    super(partition, offset);
+    super(topic, partition, offset);
     try {
       if (key != null) {
         this.key = EntityUtils.parseBase64Binary(key);
@@ -44,8 +45,8 @@ public class BinaryConsumerRecord extends ConsumerRecord<byte[], byte[]> {
     }
   }
 
-  public BinaryConsumerRecord(byte[] key, byte[] value, int partition, long offset) {
-    super(key, value, partition, offset);
+  public BinaryConsumerRecord(byte[] key, byte[] value, String topic, int partition, long offset) {
+    super(key, value, topic, partition, offset);
   }
 
   @Override
@@ -80,6 +81,9 @@ public class BinaryConsumerRecord extends ConsumerRecord<byte[], byte[]> {
     if (offset != that.offset) {
       return false;
     }
+    if (topic != null ? !topic.equals(that.topic) : that.topic != null) {
+      return false;
+    }
     if (partition != that.partition) {
       return false;
     }
@@ -97,6 +101,7 @@ public class BinaryConsumerRecord extends ConsumerRecord<byte[], byte[]> {
   public int hashCode() {
     int result = key != null ? Arrays.hashCode(key) : 0;
     result = 31 * result + (value != null ? Arrays.hashCode(value) : 0);
+    result = 31 * result + (topic != null ? topic.hashCode() : 0);
     result = 31 * result + partition;
     result = 31 * result + (int) (offset ^ (offset >>> 32));
     return result;

@@ -21,11 +21,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
-public abstract class ConsumerRecord<K, V> {
+public abstract class AbstractConsumerRecord<K, V> {
 
   protected K key;
   @NotNull
   protected V value;
+
+  @NotNull
+  protected String topic;
 
   @Min(0)
   protected int partition;
@@ -33,14 +36,26 @@ public abstract class ConsumerRecord<K, V> {
   @Min(0)
   protected long offset;
 
-  public ConsumerRecord(K key, V value, int partition, long offset) {
+  public AbstractConsumerRecord(K key, V value, String topic, int partition, long offset) {
+    this.key = key;
+    this.value = value;
+    this.topic = topic;
+    this.partition = partition;
+    this.offset = offset;
+  }
+
+  public AbstractConsumerRecord(K key, V value, int partition, long offset) {
     this.key = key;
     this.value = value;
     this.partition = partition;
     this.offset = offset;
   }
 
-  public ConsumerRecord(int partition, long offset) {
+  public AbstractConsumerRecord(String topic, int partition, long offset) {
+    this(null, null, topic, partition, offset);
+  }
+
+  public AbstractConsumerRecord(int partition, long offset) {
     this(null, null, partition, offset);
   }
 
@@ -75,6 +90,16 @@ public abstract class ConsumerRecord<K, V> {
   }
 
   @JsonProperty
+  public String getTopic() {
+    return topic;
+  }
+
+  @JsonProperty
+  public void setTopic(String topic) {
+    this.topic = topic;
+  }
+
+  @JsonProperty
   public int getPartition() {
     return partition;
   }
@@ -103,9 +128,12 @@ public abstract class ConsumerRecord<K, V> {
       return false;
     }
 
-    ConsumerRecord that = (ConsumerRecord) o;
+    AbstractConsumerRecord that = (AbstractConsumerRecord) o;
 
     if (offset != that.offset) {
+      return false;
+    }
+    if (topic != null ? !topic.equals(that.topic) : that.topic != null) {
       return false;
     }
     if (partition != that.partition) {
@@ -125,6 +153,7 @@ public abstract class ConsumerRecord<K, V> {
   public int hashCode() {
     int result = key != null ? key.hashCode() : 0;
     result = 31 * result + (value != null ? value.hashCode() : 0);
+    result = 31 * result + (topic != null ? topic.hashCode() : 0);
     result = 31 * result + partition;
     result = 31 * result + (int) (offset ^ (offset >>> 32));
     return result;

@@ -17,13 +17,14 @@ package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class JsonConsumerRecord extends ConsumerRecord<Object, Object> {
+public class JsonConsumerRecord extends AbstractConsumerRecord<Object, Object> {
 
   public JsonConsumerRecord(@JsonProperty("key") Object key,
                             @JsonProperty("value") Object value,
+                            @JsonProperty("topic") String topic,
                             @JsonProperty("partition") int partition,
                             @JsonProperty("offset") long offset) {
-    super(key, value, partition, offset);
+    super(key, value, topic, partition, offset);
   }
 
   @Override
@@ -32,7 +33,7 @@ public class JsonConsumerRecord extends ConsumerRecord<Object, Object> {
     if (o == null || getClass() != o.getClass()) return false;
 
     JsonConsumerRecord that = (JsonConsumerRecord) o;
-
+    if (topic != null ? !topic.equals(that.topic) : that.topic != null) return false;
     if (partition != that.partition) return false;
     if (offset != that.offset) return false;
     if (key != null ? !key.equals(that.key) : that.key != null) return false;
@@ -44,6 +45,7 @@ public class JsonConsumerRecord extends ConsumerRecord<Object, Object> {
   public int hashCode() {
     int result = key != null ? key.hashCode() : 0;
     result = 31 * result + (value != null ? value.hashCode() : 0);
+    result = 31 * result + (topic != null ? topic.hashCode() : 0);
     result = 31 * result + partition;
     result = 31 * result + (int) (offset ^ (offset >>> 32));
     return result;

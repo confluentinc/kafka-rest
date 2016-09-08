@@ -17,7 +17,7 @@
 package io.confluent.kafkarest.unit;
 
 import io.confluent.kafkarest.*;
-import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.AbstractConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
@@ -47,7 +47,7 @@ public class PartitionsResourceAbstractConsumeTest extends EmbeddedServerTestHar
     addResource(new PartitionsResource(ctx));
   }
 
-  protected void expectConsume(final EmbeddedFormat embeddedFormat,  final List<? extends ConsumerRecord> records) {
+  protected void expectConsume(final EmbeddedFormat embeddedFormat,  final List<? extends AbstractConsumerRecord> records) {
     final Capture<ConsumerManager.ReadCallback> readCallback = new Capture<ConsumerManager.ReadCallback>();
     simpleConsumerManager.consume(
         EasyMock.eq(topicName),

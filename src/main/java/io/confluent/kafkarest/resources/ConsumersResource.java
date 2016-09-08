@@ -40,7 +40,7 @@ import io.confluent.kafkarest.JsonConsumerState;
 import io.confluent.kafkarest.UriUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.AbstractConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.rest.annotations.PerformanceMetric;
@@ -155,7 +155,7 @@ public class ConsumersResource {
         group, instance, topic, consumerStateType, maxBytes,
         new ConsumerManager.ReadCallback<ClientK, ClientV>() {
           @Override
-          public void onCompletion(List<? extends ConsumerRecord<ClientK, ClientV>> records,
+          public void onCompletion(List<? extends AbstractConsumerRecord<ClientK, ClientV>> records,
                                    Exception e) {
             if (e != null) {
               asyncResponse.resume(e);

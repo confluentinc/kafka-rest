@@ -21,9 +21,9 @@ import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.AbstractConsumerRecord;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
@@ -200,7 +200,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
   // This requires a lot of type info because we use the raw ProducerRecords used to work with
   // the Kafka producer directly (e.g. Object for GenericRecord+primitive for Avro) and the
   // consumed data type on the receiver (JsonNode, since the data has been converted to Json).
-  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType extends ConsumerRecord<ClientK, ClientV>>
+  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType extends AbstractConsumerRecord<ClientK, ClientV>>
   void assertEqualsMessages(
       List<ProducerRecord<KafkaK, KafkaV>> records, // input messages
       List<RecordType> consumed, // output messages
@@ -219,7 +219,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
                          (inputSetCounts.get(value) == null ? 0 : inputSetCounts.get(value)) + 1);
     }
     Map<Object, Integer> outputSetCounts = new HashMap<Object, Integer>();
-    for (ConsumerRecord<ClientK, ClientV> rec : consumed) {
+    for (AbstractConsumerRecord<ClientK, ClientV> rec : consumed) {
       Object key = TestUtils.encodeComparable(rec.getKey()),
           value = TestUtils.encodeComparable(rec.getValue());
       outputSetCounts.put(
@@ -232,7 +232,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     assertEquals(inputSetCounts, outputSetCounts);
   }
 
-  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType extends ConsumerRecord<ClientK, ClientV>>
+  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType extends AbstractConsumerRecord<ClientK, ClientV>>
   void simpleConsumeMessages(
       String topicName,
       int offset,
@@ -258,7 +258,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     assertEqualsMessages(records, consumed, converter);
   }
 
-  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType extends ConsumerRecord<ClientK, ClientV>>
+  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType extends AbstractConsumerRecord<ClientK, ClientV>>
   void consumeMessages(
       String instanceUri, String topic, List<ProducerRecord<KafkaK, KafkaV>> records,
       String accept, String responseMediatype,
@@ -273,7 +273,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     assertEqualsMessages(records, consumed, converter);
   }
 
-  protected <K, V, RecordType extends ConsumerRecord<K, V>> void consumeForTimeout(
+  protected <K, V, RecordType extends AbstractConsumerRecord<K, V>> void consumeForTimeout(
       String instanceUri, String topic, String accept, String responseMediatype,
       GenericType<List<RecordType>> responseEntityType) {
     long started = System.currentTimeMillis();
@@ -291,8 +291,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     // request and can be quite substantial).
     final int TIMEOUT = restConfig.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
     final int TIMEOUT_SLACK =
-        restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG)
-        + restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG) + 500;
+        restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG) + 500;
     long elapsed = finished - started;
     assertTrue(
         "Consumer request should not return before the timeout when no data is available",

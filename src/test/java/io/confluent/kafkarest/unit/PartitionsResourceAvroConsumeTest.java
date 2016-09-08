@@ -18,8 +18,8 @@ package io.confluent.kafkarest.unit;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.kafkarest.TestUtils;
+import io.confluent.kafkarest.entities.AbstractConsumerRecord;
 import io.confluent.kafkarest.entities.AvroConsumerRecord;
-import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.rest.RestConfigException;
 import org.easymock.EasyMock;
@@ -41,9 +41,9 @@ public class PartitionsResourceAvroConsumeTest extends PartitionsResourceAbstrac
 
   @Test
   public void testConsumeOk() {
-    final List<? extends ConsumerRecord<JsonNode, JsonNode>> records = Arrays.asList(
+    final List<? extends AbstractConsumerRecord<JsonNode, JsonNode>> records = Arrays.asList(
         new AvroConsumerRecord(
-            TestUtils.jsonTree("\"key1\""), TestUtils.jsonTree("\"value1\""), 0, 10)
+            TestUtils.jsonTree("\"key1\""), TestUtils.jsonTree("\"value1\""), "topic", 0, 10)
     );
 
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES_AVRO) {

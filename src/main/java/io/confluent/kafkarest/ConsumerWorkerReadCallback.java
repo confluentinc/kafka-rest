@@ -18,9 +18,9 @@ package io.confluent.kafkarest;
 
 import java.util.List;
 
-import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.AbstractConsumerRecord;
 
 public interface ConsumerWorkerReadCallback<K, V> {
 
-  public void onCompletion(List<? extends ConsumerRecord<K, V>> records, Exception e);
+  public void onCompletion(List<? extends AbstractConsumerRecord<K, V>> records, Exception e);
 }

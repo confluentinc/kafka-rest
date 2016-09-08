@@ -184,7 +184,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
     return recordsPerSec / recordsPerIteration;
   }
 
-  // This version of ConsumerRecord has the same basic format, but leaves the data encoded since
+  // This version of AbstractConsumerRecord has the same basic format, but leaves the data encoded since
   // we only need to get the size of each record.
   private static class UndecodedConsumerRecord {
 

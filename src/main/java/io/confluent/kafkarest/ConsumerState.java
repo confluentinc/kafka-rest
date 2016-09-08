@@ -15,114 +15,240 @@
  **/
 package io.confluent.kafkarest;
 
+import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.serialization.Deserializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.Properties;
+import java.util.Queue;
+import java.util.Set;
 import java.util.Vector;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import kafka.common.MessageStreamsExistException;
-import kafka.consumer.KafkaStream;
-import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.message.MessageAndMetadata;
-import kafka.serializer.Decoder;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Pattern;
 
 /**
  * Tracks all the state for a consumer. This class is abstract in order to support multiple
- * serialization formats. Implementations must provide decoders and a method to convert Kafka
+ * serialization formats. Implementations must provide deserializers and a method to convert Kafka
  * MessageAndMetadata<K,V> values to ConsumerRecords that can be returned to the client (including
- * translation if the decoded Kafka consumer type and ConsumerRecord types differ).
+ * translation if the decoded Kafka consumer type and AbstractConsumerRecord types differ).
  */
 public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
-    implements Comparable<ConsumerState> {
+    implements Comparable<ConsumerState>, AutoCloseable, ConsumerRebalanceListener {
 
-  private KafkaRestConfig config;
+  private static final Logger log = LoggerFactory.getLogger(ConsumerState.class);
+
+  private Consumer<KafkaK, KafkaV> consumer;
+  private AtomicBoolean isSubscribed;
+
+  private Map<TopicPartition, OffsetAndMetadata> consumedOffsets;
+  private Map<TopicPartition, OffsetAndMetadata> committedOffsets;
+
+  // Queue to store extra fetched records by KafkaConsumer.
+  // In order to improve performance we don't
+  private Queue<ConsumerRecord<KafkaK, KafkaV>> recordsQueue;
+
+  protected KafkaRestConfig config;
   private ConsumerInstanceId instanceId;
-  private ConsumerConnector consumer;
-  private Map<String, ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>> topics;
+
   private long expiration;
-  // A read/write lock on the ConsumerState allows concurrent readTopic calls, but allows
-  // commitOffsets to safely lock the entire state in order to get correct information about all
-  // the topic/stream's current offset state. All operations on individual TopicStates must be
-  // synchronized at that level as well (so, e.g., readTopic may modify a single TopicState, but
-  // only needs read access to the ConsumerState).
-  private ReadWriteLock lock;
+  // Since KafkaConsumer is single-threaded we need to guarantee that only
+  // one thread works with it at a time.
+  private ReentrantLock lock;
+  private ReentrantLock heartbeatLock;
+  // KafkaConsumer should perform regular heartbeat operations in order
+  // to stay in a group.
+  private long nextHeartbeatTime;
+  private final long heartbeatDelay;
+  private ConsumerHeartbeatThread heartbeatThread;
+
+  // The last read task on this topic that failed. Allows the next read to pick up where this one
+  // left off, including accounting for response size limits
+  private ConsumerReadTask failedTask;
+
 
   public ConsumerState(KafkaRestConfig config, ConsumerInstanceId instanceId,
-                       ConsumerConnector consumer) {
+                       Properties consumerProperties, ConsumerManager.ConsumerFactory consumerFactory) {
     this.config = config;
     this.instanceId = instanceId;
-    this.consumer = consumer;
-    this.topics = new HashMap<String, ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>>();
+    // create new consumer
+    this.consumer = consumerFactory.createConsumer(
+            consumerProperties, getKeyDeserializer(), getValueDeserializer());
     this.expiration = config.getTime().milliseconds() +
                       config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
-    this.lock = new ReentrantReadWriteLock();
+    this.lock = new ReentrantLock();
+    this.heartbeatLock = new ReentrantLock();
+    this.recordsQueue = new LinkedList<>();
+
+    this.isSubscribed = new AtomicBoolean(false);
+    this.consumedOffsets = new HashMap<TopicPartition, OffsetAndMetadata>();
+    this.committedOffsets = new HashMap<TopicPartition, OffsetAndMetadata>();
+
+    //TODO do not hardcode default session.timeout.ms
+    final int defaultSessionTimeoutMs = 30000;
+    String consumerSessionTimeout = consumerProperties
+      .getProperty(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG);
+    if (consumerSessionTimeout == null) {
+      // heartbeat thread will perform poll each
+      // with frequency of 1/4 session timeout.
+      this.heartbeatDelay = defaultSessionTimeoutMs / 4;
+    } else {
+      this.heartbeatDelay = Integer.valueOf(consumerSessionTimeout);
+    }
+
+    this.nextHeartbeatTime = 0;
+    this.heartbeatThread = new ConsumerHeartbeatThread();
+    heartbeatThread.start();
   }
+
 
   public ConsumerInstanceId getId() {
     return instanceId;
   }
 
-  /**
-   * Gets the key decoder for the Kafka consumer.
-   */
-  protected abstract Decoder<KafkaK> getKeyDecoder();
+  public Consumer<KafkaK, KafkaV> getConsumer() {
+    return consumer;
+  }
 
   /**
-   * Gets the value decoder for the Kafka consumer.
+   *
+   * Gets the key deserializer for the Kafka consumer.
    */
-  protected abstract Decoder<KafkaV> getValueDecoder();
+  protected abstract Deserializer<KafkaK> getKeyDeserializer();
 
   /**
-   * Converts a MessageAndMetadata using the Kafka decoder types into a ConsumerRecord using the
+   * Gets the value deserializer for the Kafka consumer.
+   */
+  protected abstract Deserializer<KafkaV> getValueDeserializer();
+
+  /**
+   * Converts a ConsumerRecord using the Kafka deserializer types into a AbstractConsumerRecord using the
    * client's requested types. While doing so, computes the approximate size of the message in
    * bytes, which is used to track the approximate total payload size for consumer read responses to
    * determine when to trigger the response.
    */
-  public abstract ConsumerRecordAndSize<ClientK, ClientV> createConsumerRecord(
-      MessageAndMetadata<KafkaK, KafkaV> msg);
+  public abstract ConsumerRecordAndSize<ClientK, ClientV> convertConsumerRecord(
+      ConsumerRecord<KafkaK, KafkaV> msg);
 
   /**
    * Start a read on the given topic, enabling a read lock on this ConsumerState and a full lock on
-   * the ConsumerTopicState.
+   * the ConsumerSubscriptionState.
    */
-  public void startRead(ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> topicState) {
-    lock.readLock().lock();
-    topicState.lock();
+  public void startRead() {
+    lock.lock();
+    heartbeatLock.lock();
   }
 
   /**
-   * Finish a read request, releasing the lock on the ConsumerTopicState and the read lock on this
+   * Finish a read request, releasing the lock on the ConsumerSubscriptionState and the read lock on this
    * ConsumerState.
    */
-  public void finishRead(ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> topicState) {
-    topicState.unlock();
-    lock.readLock().unlock();
+  public void finishRead() {
+    // after finishing read change heartbeat time
+    this.nextHeartbeatTime = config.getTime().milliseconds() + heartbeatDelay;
+    lock.unlock();
+    heartbeatLock.unlock();
+  }
+
+  public boolean readStarted() {
+    return lock.isLocked();
+  }
+
+  public ConsumerReadTask clearFailedTask() {
+    ConsumerReadTask t = failedTask;
+    failedTask = null;
+    return t;
+  }
+
+  public void setFailedTask(ConsumerReadTask failedTask) {
+    this.failedTask = failedTask;
+  }
+
+  public Map<TopicPartition, OffsetAndMetadata> getConsumedOffsets() {
+    return consumedOffsets;
+  }
+
+  public Map<TopicPartition, OffsetAndMetadata> getCommittedOffsets() {
+    return committedOffsets;
   }
 
   public List<TopicPartitionOffset> commitOffsets() {
-    lock.writeLock().lock();
+    lock.lock();
     try {
-      consumer.commitOffsets();
       List<TopicPartitionOffset> result = getOffsets(true);
       return result;
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
+  /**
+   * To keep a Consumer subscribed the poll must be invoked periodically
+   * to send heartbeats to the kafka back-end
+   * This method should not block for a long period.
+   */
+  public void sendHeartbeat() {
+    // if the lock cannot be acquired it means that the read operation
+    // is being occurred and there is no reason to perform poll.
+    if (consumer != null  // consumer is null after close()
+      && isSubscribed.get()
+      && config.getTime().milliseconds() >= nextHeartbeatTime
+      && heartbeatLock.tryLock()) {
+      try {
+        log.info("Consumer {} sends heartbeat.", instanceId.getInstance());
+        ConsumerRecords<KafkaK, KafkaV> records = consumer.poll(0);
+
+        // change next heartbeat time before processing records
+        this.nextHeartbeatTime = config.getTime().milliseconds() + heartbeatDelay;
+
+        for (ConsumerRecord<KafkaK, KafkaV> record: records) {
+          recordsQueue.add(record);
+        }
+      } finally {
+        heartbeatLock.unlock();
+      }
+    }
+  }
+
+  public long getNextHeartbeatTime() {
+    return nextHeartbeatTime;
+  }
+
+  public Queue<ConsumerRecord<KafkaK, KafkaV>> queue() {
+    return recordsQueue;
+  }
+
+
+  @Override
   public void close() {
-    lock.writeLock().lock();
+    lock.lock();
+    heartbeatLock.lock();
     try {
-      consumer.shutdown();
+      heartbeatThread.shutdown();
+      // interrupt consumer poll request
+      consumer.wakeup();
+      consumer.close();
       // Marks this state entry as no longer valid because the consumer group is being destroyed.
       consumer = null;
-      topics = null;
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
+      heartbeatLock.unlock();
     }
   }
 
@@ -158,79 +284,165 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     }
   }
 
-  public ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> getOrCreateTopicState(String topic) {
-    // Try getting the topic only using the read lock
-    lock.readLock().lock();
-    try {
-      if (topics == null) {
-        return null;
+  public boolean isSubscribed() {
+    return isSubscribed.get();
+  }
+
+  public Set<String> getSubscribedTopics() {
+    if (!isSubscribed.get()) {
+      return Collections.emptySet();
+    } else {
+      lock.lock();
+      try {
+        return consumer.subscription();
+      } finally {
+        lock.unlock();
       }
-      ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> state = topics.get(topic);
-      if (state != null) {
-        return state;
-      }
-    } finally {
-      lock.readLock().unlock();
     }
+  }
 
-    lock.writeLock().lock();
+  public void tryToSubscribeByTopicList(Collection<String> topics) {
+    lock.lock();
     try {
-      if (topics == null) {
-        return null;
+      if (!isSubscribed.get()) {
+        consumer.subscribe(topics, this);
+        isSubscribed.set(true);
+      } else {
+        throw Errors.consumerAlreadySubscribedException();
       }
-      ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> state = topics.get(topic);
-      if (state != null) {
-        return state;
-      }
-
-      Map<String, Integer> subscriptions = new TreeMap<String, Integer>();
-      subscriptions.put(topic, 1);
-      Map<String, List<KafkaStream<KafkaK, KafkaV>>> streamsByTopic =
-          consumer.createMessageStreams(subscriptions, getKeyDecoder(), getValueDecoder());
-      KafkaStream<KafkaK, KafkaV> stream = streamsByTopic.get(topic).get(0);
-      state = new ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>(stream);
-      topics.put(topic, state);
-      return state;
-    } catch (MessageStreamsExistException e) {
-      throw Errors.consumerAlreadySubscribedException();
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
+    }
+  }
+
+  public void tryToSubscribeByTopicRegex(String regex) {
+    lock.lock();
+    try {
+      if (!isSubscribed.get()) {
+        consumer.subscribe(Pattern.compile(regex), this);
+        isSubscribed.set(true);
+      } else {
+        throw Errors.consumerAlreadySubscribedException();
+      }
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  public void unsubscribe() {
+    lock.lock();
+    try {
+      clearFailedTask();
+      consumer.unsubscribe();
+      isSubscribed.set(false);
+      committedOffsets = null;
+      consumedOffsets = null;
+    } finally {
+      lock.unlock();
     }
   }
 
   /**
    * Gets a list of TopicPartitionOffsets describing the current state of consumer offsets, possibly
-   * updating the commmitted offset record. This method is not synchronized.
+   * updating the committed offset record. This method is not synchronized.
    *
-   * @param updateCommitOffsets if true, updates committed offsets to be the same as the consumed
+   * @param doCommit if true, updates committed offsets to be the same as the consumed
    *                            offsets.
    */
-  private List<TopicPartitionOffset> getOffsets(boolean updateCommitOffsets) {
+  private List<TopicPartitionOffset> getOffsets(boolean doCommit) {
     List<TopicPartitionOffset> result = new Vector<TopicPartitionOffset>();
-    for (Map.Entry<String, ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>> entry
-        : topics.entrySet()) {
-      ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> state = entry.getValue();
-      state.lock();
-      try {
-        for (Map.Entry<Integer, Long> partEntry : state.getConsumedOffsets().entrySet()) {
-          Integer partition = partEntry.getKey();
-          Long offset = partEntry.getValue();
-          Long committedOffset = 0L;
-          if (updateCommitOffsets) {
-            state.getCommittedOffsets().put(partition, offset);
-            committedOffset = offset;
-          } else {
-            committedOffset = state.getCommittedOffsets().get(partition);
-          }
-          result.add(new TopicPartitionOffset(entry.getKey(), partition,
-                                              offset,
-                                              (committedOffset == null ? -1 : committedOffset)));
+    lock.lock();
+    try {
+      for (Map.Entry<TopicPartition, OffsetAndMetadata> entry: consumedOffsets.entrySet()) {
+        Integer partition = entry.getKey().partition();
+        Long offset = entry.getValue().offset();
+        Long committedOffset = null;
+        if (doCommit) {
+
+          // committed offsets are next offsets to be fetched
+          // after the commit so we are increasing them by 1.
+          OffsetAndMetadata newMetadata = new OffsetAndMetadata(
+            entry.getValue().offset() + 1,
+            entry.getValue().metadata());
+
+          committedOffsets.put(entry.getKey(), newMetadata);
+          committedOffset = offset;
+        } else {
+          OffsetAndMetadata committed = committedOffsets.get(entry.getKey());
+          committedOffset = committed == null ? null : committed.offset();
         }
-      } finally {
-        state.unlock();
+        result.add(new TopicPartitionOffset(entry.getKey().topic(), partition, offset,
+                (committedOffset == null ? -1 : committedOffset)));
       }
+
+      if (doCommit) {
+        consumer.commitSync(committedOffsets);
+      }
+    } finally {
+      lock.unlock();
     }
     return result;
   }
 
+
+  @Override
+  public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+    for (TopicPartition tp: partitions) {
+      log.info("Consumer: {} Revoked: {}-{}", instanceId.toString(), tp.topic(), tp.partition());
+      consumedOffsets.remove(tp);
+      committedOffsets.remove(tp);
+    }
+  }
+
+  @Override
+  public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+    for (TopicPartition tp: partitions) {
+      log.info("Consumer: {} Assigned: {}-{}", instanceId.toString(), tp.topic(), tp.partition());
+    }
+  }
+
+  private class ConsumerHeartbeatThread extends Thread {
+    AtomicBoolean isRunning = new AtomicBoolean(true);
+    CountDownLatch shutdownLatch = new CountDownLatch(1);
+
+    public ConsumerHeartbeatThread() {
+      super("Consumer " + instanceId.getInstance() + " Heartbeat Thread");
+      setDaemon(true);
+    }
+
+    @Override
+    public void run() {
+      while (isRunning.get()) {
+        try {
+          nextHeartbeatTime =
+            Math.min(nextHeartbeatTime, ConsumerState.this.getNextHeartbeatTime());
+
+          ConsumerState.this.sendHeartbeat();
+          final long wait = nextHeartbeatTime - config.getTime().milliseconds();
+
+          if (wait > 0) {
+            synchronized (this) {
+              wait(wait);
+            }
+          }
+        } catch (Exception e) {
+          log.warn("Heartbeat exception " + instanceId.getInstance(), e);
+        }
+      }
+      shutdownLatch.countDown();
+    }
+
+    public void shutdown() {
+      try {
+        isRunning.set(false);
+        this.interrupt();
+        synchronized (this) {
+          notify();
+        }
+        shutdownLatch.await();
+      } catch (InterruptedException e) {
+        throw new Error("Interrupted when shutting down consumer heartbeat thread.");
+      }
+    }
+  }
 }
