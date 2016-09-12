@@ -141,6 +141,9 @@ public class MetadataObserver {
 
   public Partition getTopicPartition(String topic, int partition) {
     List<Partition> partitions = getTopicPartitions(topic, partition);
+    if (partitions == null){
+      throw Errors.topicNotFoundException();
+    }
     if (partitions.isEmpty()) {
       return null;
     }
