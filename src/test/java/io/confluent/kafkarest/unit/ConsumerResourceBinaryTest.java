@@ -50,11 +50,11 @@ public class ConsumerResourceBinaryTest extends AbstractConsumerResourceTest {
   @Test
   public void testReadCommit() {
     List<? extends ConsumerRecord<byte[], byte[]>> expectedReadLimit = Arrays.asList(
-        new BinaryConsumerRecord("key1".getBytes(), "value1".getBytes(), 0, 10)
+        new BinaryConsumerRecord("key1".getBytes(), "value1".getBytes(), "topic", 0, 10)
     );
     List<? extends ConsumerRecord<byte[], byte[]>> expectedReadNoLimit = Arrays.asList(
-        new BinaryConsumerRecord("key2".getBytes(), "value2".getBytes(), 1, 15),
-        new BinaryConsumerRecord("key3".getBytes(), "value3".getBytes(), 2, 20)
+        new BinaryConsumerRecord("key2".getBytes(), "value2".getBytes(), "topic", 1, 15),
+        new BinaryConsumerRecord("key3".getBytes(), "value3".getBytes(), "topic", 2, 20)
     );
     List<TopicPartitionOffset> expectedOffsets = Arrays.asList(
         new TopicPartitionOffset(topicName, 0, 10, 10),

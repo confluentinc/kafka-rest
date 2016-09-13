@@ -67,7 +67,7 @@ public class JsonConsumerState extends ConsumerState<byte[], byte[], Object, Obj
     }
 
     return new ConsumerRecordAndSize<Object, Object>(
-        new JsonConsumerRecord(key, value, msg.partition(), msg.offset()),
+        new JsonConsumerRecord(key, value, msg.topic(), msg.partition(), msg.offset()),
         approxSize);
   }
 

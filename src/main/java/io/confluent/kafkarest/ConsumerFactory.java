@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2016 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+package io.confluent.kafkarest;
 
-package io.confluent.kafkarest.entities;
+import org.apache.kafka.clients.consumer.Consumer;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.Properties;
 
-public class AvroConsumerRecord extends ConsumerRecord<JsonNode, JsonNode> {
+public interface ConsumerFactory<K, V> {
 
-  public AvroConsumerRecord(
-      @JsonProperty("key") JsonNode key, @JsonProperty("value") JsonNode value,
-      @JsonProperty("topic") String topic, @JsonProperty("partition") int partition,
-      @JsonProperty("offset") long offset
-  ) {
-    super(key, value, topic, partition, offset);
-  }
+  Consumer<K, V> createConsumer();
 }

@@ -67,7 +67,7 @@ public class ConsumerManagerTest {
   private ConsumerManager consumerManager;
 
   private static final String groupName = "testgroup";
-  private static final String topicName = "testtopic";
+  private static final String topicName = "topic";
   private static final String secondTopicName = "testtopic2";
 
   private boolean sawCallback = false;
@@ -151,9 +151,9 @@ public class ConsumerManagerTest {
     // Tests create instance, read, and delete
     final List<ConsumerRecord<byte[], byte[]>> referenceRecords
         = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
-        new BinaryConsumerRecord("k1".getBytes(), "v1".getBytes(), 0, 0),
-        new BinaryConsumerRecord("k2".getBytes(), "v2".getBytes(), 1, 0),
-        new BinaryConsumerRecord("k3".getBytes(), "v3".getBytes(), 2, 0));
+        new BinaryConsumerRecord("k1".getBytes(), "v1".getBytes(), topicName, 0, 0),
+        new BinaryConsumerRecord("k2".getBytes(), "v2".getBytes(), topicName, 1, 0),
+        new BinaryConsumerRecord("k3".getBytes(), "v3".getBytes(), topicName, 2, 0));
     Map<Integer, List<ConsumerRecord<byte[], byte[]>>>
         referenceSchedule =
         new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
@@ -216,10 +216,10 @@ public class ConsumerManagerTest {
     // response, not all of it is returned.
     final List<ConsumerRecord<byte[], byte[]>> referenceRecords
         = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
-        new BinaryConsumerRecord(null, new byte[512], 0, 0),
-        new BinaryConsumerRecord(null, new byte[512], 1, 0),
-        new BinaryConsumerRecord(null, new byte[512], 2, 0),
-        new BinaryConsumerRecord(null, new byte[512], 3, 0)
+        new BinaryConsumerRecord(null, new byte[512], "topic", 0, 0),
+        new BinaryConsumerRecord(null, new byte[512], "topic", 1, 0),
+        new BinaryConsumerRecord(null, new byte[512], "topic", 2, 0),
+        new BinaryConsumerRecord(null, new byte[512], "topic", 3, 0)
     );
     Map<Integer, List<ConsumerRecord<byte[], byte[]>>> referenceSchedule
         = new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
@@ -391,10 +391,10 @@ public class ConsumerManagerTest {
     // request that succeeds and still see all the data
     final List<ConsumerRecord<byte[], byte[]>> referenceRecords
         = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
-        new BinaryConsumerRecord("k1".getBytes(), "v1".getBytes(), 0, 0),
+        new BinaryConsumerRecord("k1".getBytes(), "v1".getBytes(), "topic", 0, 0),
         null, // trigger consumer exception
-        new BinaryConsumerRecord("k2".getBytes(), "v2".getBytes(), 1, 0),
-        new BinaryConsumerRecord("k3".getBytes(), "v3".getBytes(), 2, 0));
+        new BinaryConsumerRecord("k2".getBytes(), "v2".getBytes(), "topic", 1, 0),
+        new BinaryConsumerRecord("k3".getBytes(), "v3".getBytes(), "topic", 2, 0));
     Map<Integer, List<ConsumerRecord<byte[], byte[]>>>
         referenceSchedule =
         new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();

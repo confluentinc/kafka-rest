@@ -129,7 +129,7 @@ public class SimpleConsumerBinaryTest extends AbstractConsumerTest {
     );
   }
 
-  @Test(timeout = 1000)
+  @Test(timeout = 4000)
   public void testConsumeMoreMessagesThanAvailable() {
     produceBinaryMessages(recordsOnlyValues);
 

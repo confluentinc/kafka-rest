@@ -15,11 +15,11 @@
  **/
 package io.confluent.kafkarest.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public abstract class ConsumerRecord<K, V> {
 
@@ -27,21 +27,21 @@ public abstract class ConsumerRecord<K, V> {
   @NotNull
   protected V value;
 
+  @NotNull
+  protected String topic;
+
   @Min(0)
   protected int partition;
 
   @Min(0)
   protected long offset;
 
-  public ConsumerRecord(K key, V value, int partition, long offset) {
+  public ConsumerRecord(K key, V value, String topic, int partition, long offset) {
     this.key = key;
     this.value = value;
+    this.topic = topic;
     this.partition = partition;
     this.offset = offset;
-  }
-
-  public ConsumerRecord(int partition, long offset) {
-    this(null, null, partition, offset);
   }
 
   @JsonIgnore
@@ -72,6 +72,16 @@ public abstract class ConsumerRecord<K, V> {
   @JsonIgnore
   public void setValue(V value) {
     this.value = value;
+  }
+
+  @JsonProperty
+  public String getTopic() {
+    return topic;
+  }
+
+  @JsonProperty
+  public void setTopic(String topic) {
+    this.topic = topic;
   }
 
   @JsonProperty
@@ -108,6 +118,9 @@ public abstract class ConsumerRecord<K, V> {
     if (offset != that.offset) {
       return false;
     }
+    if (topic != null ? !topic.equals(that.topic) : that.topic != null) {
+      return false;
+    }
     if (partition != that.partition) {
       return false;
     }
@@ -125,6 +138,7 @@ public abstract class ConsumerRecord<K, V> {
   public int hashCode() {
     int result = key != null ? key.hashCode() : 0;
     result = 31 * result + (value != null ? value.hashCode() : 0);
+    result = 31 * result + (topic != null ? topic.hashCode() : 0);
     result = 31 * result + partition;
     result = 31 * result + (int) (offset ^ (offset >>> 32));
     return result;
