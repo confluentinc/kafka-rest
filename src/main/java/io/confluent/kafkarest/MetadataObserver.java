@@ -141,9 +141,6 @@ public class MetadataObserver {
 
   public Partition getTopicPartition(String topic, int partition) {
     List<Partition> partitions = getTopicPartitions(topic, partition);
-    if (partitions == null){
-      throw Errors.topicNotFoundException();
-    }
     if (partitions.isEmpty()) {
       return null;
     }
@@ -157,7 +154,7 @@ public class MetadataObserver {
       Map<Object, Seq<Object>> parts = topicPartitions.get(topic).get();
       return extractPartitionsFromZKData(parts, topic, partitions_filter);
     }
-    return null;
+    throw Errors.topicNotFoundException();
   }
 
   public int getLeaderId(final String topicName, final int partitionId) {
