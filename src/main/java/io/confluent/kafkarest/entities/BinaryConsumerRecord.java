@@ -16,11 +16,10 @@
 
 package io.confluent.kafkarest.entities;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.io.IOException;
 import java.util.Arrays;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.rest.validation.ConstraintViolations;
 
 public class BinaryConsumerRecord extends ConsumerRecord<byte[], byte[]> {
@@ -30,23 +29,31 @@ public class BinaryConsumerRecord extends ConsumerRecord<byte[], byte[]> {
       @JsonProperty("topic") String topic, @JsonProperty("partition") int partition,
       @JsonProperty("offset") long offset
   ) throws IOException {
-    super(topic, partition, offset);
+    super(convertKey(key), convertValue(value), topic, partition, offset);
+  }
+
+  public BinaryConsumerRecord(byte[] key, byte[] value, String topic, int partition, long offset) {
+    super(key, value, topic, partition, offset);
+  }
+
+  private static byte[] convertValue(String value) {
     try {
-      if (key != null) {
-        this.key = EntityUtils.parseBase64Binary(key);
-      }
-    } catch (IllegalArgumentException e) {
-      throw ConstraintViolations.simpleException("Record key contains invalid base64 encoding");
-    }
-    try {
-      this.value = EntityUtils.parseBase64Binary(value);
+      return EntityUtils.parseBase64Binary(value);
     } catch (IllegalArgumentException e) {
       throw ConstraintViolations.simpleException("Record value contains invalid base64 encoding");
     }
   }
 
-  public BinaryConsumerRecord(byte[] key, byte[] value, String topic, int partition, long offset) {
-    super(key, value, topic, partition, offset);
+  private static byte[] convertKey(String key) {
+    try {
+      if (key != null) {
+        return EntityUtils.parseBase64Binary(key);
+      } else {
+        return null;
+      }
+    } catch (IllegalArgumentException e) {
+      throw ConstraintViolations.simpleException("Record key contains invalid base64 encoding");
+    }
   }
 
   @Override

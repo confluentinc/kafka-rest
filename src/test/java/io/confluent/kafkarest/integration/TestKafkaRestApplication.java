@@ -32,26 +32,27 @@ public class TestKafkaRestApplication extends KafkaRestApplication {
   ProducerPool producerPoolInjected;
   ConsumerManager consumerManagerInjected;
   ConsumerFactory simpleConsumerFactoryInjected;
-  SimpleConsumerManager simpleConsumerManagerInjected;
+  AssignedConsumerManager assignedConsumerManagerInjected;
 
   public TestKafkaRestApplication(KafkaRestConfig config, ZkUtils zkUtils,
                                   MetadataObserver mdObserver, ProducerPool producerPool,
                                   ConsumerManager consumerManager,
-                                  ConsumerFactory simpleConsumerFactory, SimpleConsumerManager simpleConsumerManager) {
+                                  ConsumerFactory simpleConsumerFactory, AssignedConsumerManager assignedConsumerManager) {
     super(config);
     zkUtilsInjected = zkUtils;
     mdObserverInjected = mdObserver;
     producerPoolInjected = producerPool;
     consumerManagerInjected = consumerManager;
     simpleConsumerFactoryInjected = simpleConsumerFactory;
-    simpleConsumerManagerInjected = simpleConsumerManager;
+    assignedConsumerManagerInjected = assignedConsumerManager;
   }
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
     setupInjectedResources(config, appConfig, zkUtilsInjected, mdObserverInjected,
                            producerPoolInjected, consumerManagerInjected,
-                           simpleConsumerFactoryInjected, simpleConsumerManagerInjected);
+                           simpleConsumerFactoryInjected,
+        assignedConsumerManagerInjected);
   }
 
 }

@@ -15,6 +15,12 @@
  **/
 package io.confluent.kafkarest;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.ws.rs.core.Response;
+
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.converters.JsonConverter;
@@ -25,70 +31,46 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.JsonConsumerRecord;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestServerErrorException;
-
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.Deserializer;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.Response;
-import java.util.*;
+public class AssignedConsumerManager {
 
-public class SimpleConsumerManager {
-
-  private static final Logger log = LoggerFactory.getLogger(SimpleConsumerManager.class);
+  private static final Logger log = LoggerFactory.getLogger(AssignedConsumerManager.class);
 
   private final MetadataObserver mdObserver;
 
-  private final SimpleConsumerPool simpleConsumersPool;
+  private final AssignedConsumerPool assignedConsumersPool;
 
-  private final Deserializer<Object> avroDeserializer;
+  private final Deserializer<Object> avroKeyDeserializer;
+  private final Deserializer<Object> avroValueDeserializer;
 
-  public SimpleConsumerManager(final KafkaRestConfig config,
+  public AssignedConsumerManager(final KafkaRestConfig config,
                                final MetadataObserver mdObserver,
-                               final ConsumerFactory<byte[], byte[]> simpleConsumerFactory) {
+                               final ConsumerFactory<byte[], byte[]> consumerFactory) {
 
     this.mdObserver = mdObserver;
 
-    int maxPoolSize = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG);
-    int poolInstanceAvailabilityTimeoutMs = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG);
-    int maxPollTime = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_MAX_POLL_TIME_CONFIG);
+    int maxPoolSize = config.getInt(KafkaRestConfig.ASSIGNED_CONSUMER_MAX_POOL_SIZE_CONFIG);
+    int poolInstanceAvailabilityTimeoutMs = config.getInt(KafkaRestConfig.ASSIGNED_CONSUMER_POOL_TIMEOUT_MS_CONFIG);
+    int maxPollTime = config.getInt(KafkaRestConfig.ASSIGNED_CONSUMER_MAX_POLL_TIME_CONFIG);
     Time time = config.getTime();
 
-    ConsumerFactory<byte[], byte[]> consumerFactory = simpleConsumerFactory;
+    assignedConsumersPool =
+      new AssignedConsumerPool(maxPoolSize,
+          poolInstanceAvailabilityTimeoutMs, maxPollTime, time,
+          consumerFactory);
 
-    if (consumerFactory == null) {
-        consumerFactory = new ConsumerFactory<byte[], byte[]>() {
-        private Properties consumerProperties = new Properties();
+    // Setup avro deserializers
+    avroKeyDeserializer = new KafkaAvroDeserializer();
+    avroValueDeserializer = new KafkaAvroDeserializer();
 
-        {
-          consumerProperties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-              config.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG));
-        }
-
-        @Override
-        public Consumer<byte[], byte[]> createConsumer() {
-          return new KafkaConsumer<byte[], byte[]>(consumerProperties,
-              new ByteArrayDeserializer(),
-              new ByteArrayDeserializer());
-        }
-      };
-    }
-
-    simpleConsumersPool =
-      new SimpleConsumerPool(maxPoolSize,
-          poolInstanceAvailabilityTimeoutMs, maxPollTime, time, consumerFactory);
-
-    // Load deserializers
     Map<String, String> props = new HashMap<>();
     props.put("schema.registry.url", config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
-    avroDeserializer = new KafkaAvroDeserializer();
-    avroDeserializer.configure(props, true);
+    avroKeyDeserializer.configure(props, true);
+    avroValueDeserializer.configure(props, true);
   }
 
 
@@ -104,12 +86,12 @@ public class SimpleConsumerManager {
 
     if (!mdObserver.topicExists(topicName)) {
       exception = Errors.topicNotFoundException();
-    } else
-    if (!mdObserver.partitionExists(topicName, partitionId)) {
+    } else if (!mdObserver.partitionExists(topicName, partitionId)) {
       exception = Errors.partitionNotFoundException();
     } else {
-      try (SimpleConsumerPool.RecordsFetcher fetcher =
-               simpleConsumersPool.getRecordsFetcher(new TopicPartition(topicName, partitionId))) {
+      try (AssignedConsumerPool.RecordsFetcher fetcher =
+               assignedConsumersPool
+                   .getRecordsFetcher(new TopicPartition(topicName, partitionId))) {
 
         List<org.apache.kafka.clients.consumer.ConsumerRecord<byte[], byte[]>> fetched =
           fetcher.poll(offset, count);
@@ -147,8 +129,8 @@ public class SimpleConsumerManager {
     final int partitionId) {
 
     return new AvroConsumerRecord(
-        AvroConverter.toJson(avroDeserializer.deserialize(topicName, consumerRecord.key())).json,
-        AvroConverter.toJson(avroDeserializer.deserialize(topicName, consumerRecord.value())).json,
+        AvroConverter.toJson(avroKeyDeserializer.deserialize(topicName, consumerRecord.key())).json,
+        AvroConverter.toJson(avroValueDeserializer.deserialize(topicName, consumerRecord.value())).json,
             topicName,  partitionId, consumerRecord.offset());
   }
 
@@ -187,7 +169,7 @@ public class SimpleConsumerManager {
   }
 
   public void shutdown() {
-    simpleConsumersPool.shutdown();
+    assignedConsumersPool.shutdown();
   }
 
 }

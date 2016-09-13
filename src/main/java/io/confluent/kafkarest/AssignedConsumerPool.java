@@ -15,19 +15,27 @@
  **/
 package io.confluent.kafkarest;
 
-import org.apache.kafka.clients.consumer.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-
 /**
- * The SimpleConsumerPool keeps a pool of SimpleConsumers
+ * The AssignedConsumerPool keeps a pool of SimpleConsumers
  * and can increase the pool within a specified limit
  */
-public class SimpleConsumerPool {
-  private static final Logger log = LoggerFactory.getLogger(SimpleConsumerPool.class);
+public class AssignedConsumerPool {
+  private static final Logger log = LoggerFactory.getLogger(AssignedConsumerPool.class);
 
   // maxPoolSize = 0 means unlimited
   private final int maxPoolSize;
@@ -41,7 +49,7 @@ public class SimpleConsumerPool {
   private final Map<TopicPartition, Map<Long, List<Consumer<byte[], byte[]>>>> topicPartitionOffsetConsumers;
   private int consumerSize;
 
-  public SimpleConsumerPool(int maxPoolSize,
+  public AssignedConsumerPool(int maxPoolSize,
                             int poolInstanceAvailabilityTimeoutMs,
                             int maxPollTime,
                             Time time, ConsumerFactory<byte[], byte[]> simpleConsumerFactory) {
@@ -64,26 +72,17 @@ public class SimpleConsumerPool {
   public final class RecordsFetcher implements AutoCloseable {
 
     private Consumer<byte[], byte[]> consumer;
-    private final SimpleConsumerPool ownerPool;
-    private final long maxPollTime;
-    private boolean initialized;
-    private Time time;
     private final TopicPartition topicPartition;
 
     RecordsFetcher(TopicPartition topicPartition) {
-      this.ownerPool = SimpleConsumerPool.this;
-      this.time = SimpleConsumerPool.this.time;
-      this.maxPollTime = SimpleConsumerPool.this.maxPollTime;
       this.topicPartition = topicPartition;
-      initialized = false;
     }
 
     // support for lazy initialization gives opportunity
     // to add some kind of cache in future.
     private Consumer<byte[], byte[]> initializeConsumer(long offset) {
-      if (!initialized) {
-        consumer = ownerPool.get(topicPartition, offset);
-        initialized = true;
+      if (consumer == null) {
+        consumer = AssignedConsumerPool.this.get(topicPartition, offset);
       }
       return consumer;
     }
@@ -106,15 +105,12 @@ public class SimpleConsumerPool {
 
         if (it == null || !it.hasNext()) {
 
-          if (!initialized) {
+          if (consumer == null) {
             initializeConsumer(offset);
           }
 
           ConsumerRecords<byte[], byte[]> records = consumer
               .poll(Math.max(0, pollTime));
-          if (records.isEmpty()) {
-            continue;
-          }
           it = records.iterator();
         }
 
@@ -131,16 +127,32 @@ public class SimpleConsumerPool {
     }
 
     public void close() throws Exception {
-      if (initialized) {
-        ownerPool.release
+      if (consumer != null) {
+        AssignedConsumerPool.this.release
             (consumer, topicPartition, consumer.position(topicPartition));
       }
     }
   }
 
+  // Get consumer that stays the longest time in the topicPartitionConsumers for a given topicPartition
+  // The method should be invoked from synchronized context
+  private Consumer<byte[], byte[]> longestWaitingConsumer(TopicPartition topicPartition, Map<Long, List<Consumer<byte[], byte[]>>> topicPartitionConsumers) {
+    Iterator<Map.Entry<Long, List<Consumer<byte[], byte[]>>>> iterator =
+        topicPartitionConsumers.entrySet().iterator();
+    Map.Entry<Long, List<Consumer<byte[], byte[]>>> offsetsEntry = iterator.next();
+
+    Consumer<byte[], byte[]> consumer = offsetsEntry.getValue().remove(0);
+    if (offsetsEntry.getValue().isEmpty()) {
+      iterator.remove();
+      if (topicPartitionOffsetConsumers.get(topicPartition).isEmpty()) {
+        topicPartitionOffsetConsumers.remove(topicPartition);
+      }
+    }
+    return consumer;
+  }
 
   /**
-   * @return assigned Consumer that is ready to be used for polling records
+   * @return assigned Consumer that is ready to be used for polling records from startOffset
    */
   synchronized public Consumer<byte[], byte[]> get(TopicPartition topicPartition, long startOffset) {
 
@@ -168,18 +180,7 @@ public class SimpleConsumerPool {
           } else {
             // there is no consumer with needed offset present.
             // get the longest waiting consumer that is assigned for requested topic partition.
-            Iterator<Map.Entry<Long, List<Consumer<byte[], byte[]>>>> iterator =
-              consumersMap.entrySet().iterator();
-            Map.Entry<Long, List<Consumer<byte[], byte[]>>> offsetsEntry =
-              iterator.next();
-
-            consumer = offsetsEntry.getValue().remove(0);
-            if (offsetsEntry.getValue().isEmpty()) {
-              iterator.remove();
-              if (topicPartitionOffsetConsumers.get(topicPartition).isEmpty()) {
-                topicPartitionOffsetConsumers.remove(topicPartition);
-              }
-            }
+            consumer = longestWaitingConsumer(topicPartition, consumersMap);
 
             consumer.seek(topicPartition, startOffset);
           }
@@ -191,18 +192,7 @@ public class SimpleConsumerPool {
           Map.Entry<TopicPartition, Map<Long, List<Consumer<byte[], byte[]>>>> topicPartitionsEntry =
             iterator.next();
 
-          Iterator<Map.Entry<Long, List<Consumer<byte[], byte[]>>>> iterator1 =
-            topicPartitionsEntry.getValue().entrySet().iterator();
-          Map.Entry<Long, List<Consumer<byte[], byte[]>>> offsetsEntry =
-            iterator1.next();
-
-          consumer = offsetsEntry.getValue().remove(0);
-          if (offsetsEntry.getValue().isEmpty()) {
-            iterator1.remove();
-            if (topicPartitionsEntry.getValue().isEmpty()) {
-              iterator.remove();
-            }
-          }
+          consumer = longestWaitingConsumer(topicPartition, topicPartitionsEntry.getValue());
 
           consumer.unsubscribe();
           consumer.assign(Collections.singletonList(topicPartition));
@@ -240,24 +230,20 @@ public class SimpleConsumerPool {
   }
 
   synchronized public void release(Consumer<byte[], byte[]> consumer, TopicPartition topicPartition, long offset) {
-    Map<Long, List<Consumer<byte[], byte[]>>> offsetsMap =
-      topicPartitionOffsetConsumers.get(topicPartition);
-    if (offsetsMap != null) {
-      List<Consumer<byte[], byte[]>> consumers = offsetsMap.get(offset);
-      if (consumers != null) {
-        consumers.add(consumer);
-      } else {
-        consumers = new LinkedList<>();
-        consumers.add(consumer);
-        offsetsMap.put(offset, consumers);
-      }
-    } else {
-      List<Consumer<byte[], byte[]>> consumers = new LinkedList<>();
-      consumers.add(consumer);
-      offsetsMap = new HashMap<>();
-      offsetsMap.put(offset, consumers);
+    Map<Long, List<Consumer<byte[], byte[]>>> offsetsMap = topicPartitionOffsetConsumers.get(topicPartition);
+    if (offsetsMap == null) {
+      offsetsMap = new LinkedHashMap<>();
       topicPartitionOffsetConsumers.put(topicPartition, offsetsMap);
     }
+
+    List<Consumer<byte[], byte[]>> consumers = offsetsMap.get(offset);
+    if (consumers == null) {
+      consumers = new LinkedList<>();
+      offsetsMap.put(offset, consumers);
+    }
+
+    consumers.add(consumer);
+
     notify();
   }
 

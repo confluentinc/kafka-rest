@@ -15,10 +15,7 @@
  **/
 package io.confluent.kafkarest;
 
-import org.apache.kafka.common.security.JaasUtils;
-
 import java.util.Properties;
-
 import javax.ws.rs.core.Configurable;
 
 import io.confluent.kafkarest.exceptions.ZkExceptionMapper;
@@ -30,6 +27,11 @@ import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.rest.Application;
 import io.confluent.rest.RestConfigException;
 import kafka.utils.ZkUtils;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 
 /**
  * Utilities for configuring and running an embedded Kafka server.
@@ -60,12 +62,12 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
    * Helper that does normal setup, but uses injected components so their configs or implementations
    * can be customized for testing. This only exists to support TestKafkaRestApplication
    */
-  protected void setupInjectedResources(Configurable<?> config, KafkaRestConfig appConfig,
+  protected void setupInjectedResources(Configurable<?> config, final KafkaRestConfig appConfig,
                                         ZkUtils zkUtils, MetadataObserver mdObserver,
                                         ProducerPool producerPool,
                                         ConsumerManager consumerManager,
                                         ConsumerFactory simpleConsumerFactory,
-                                        SimpleConsumerManager simpleConsumerManager) {
+                                        AssignedConsumerManager assignedConsumerManager) {
     config.register(new ZkExceptionMapper(appConfig));
 
     if (zkUtils == null) {
@@ -82,12 +84,30 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     if (consumerManager == null) {
       consumerManager = new ConsumerManager(appConfig, mdObserver);
     }
-    if (simpleConsumerManager == null) {
-      simpleConsumerManager = new SimpleConsumerManager(appConfig, mdObserver, simpleConsumerFactory);
+    if (simpleConsumerFactory == null) {
+      simpleConsumerFactory = new ConsumerFactory<byte[], byte[]>() {
+        private Properties consumerProperties = new Properties();
+
+        {
+          consumerProperties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+              appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG));
+        }
+
+        @Override
+        public Consumer<byte[], byte[]> createConsumer() {
+          return new KafkaConsumer<>(consumerProperties,
+              new ByteArrayDeserializer(),
+              new ByteArrayDeserializer());
+        }
+      };
+    }
+    if (assignedConsumerManager == null) {
+      assignedConsumerManager = new AssignedConsumerManager(appConfig, mdObserver, simpleConsumerFactory);
     }
 
     this.zkUtils = zkUtils;
-    context = new Context(appConfig, mdObserver, producerPool, consumerManager, simpleConsumerManager);
+    context = new Context(appConfig, mdObserver, producerPool, consumerManager,
+        assignedConsumerManager);
     config.register(RootResource.class);
     config.register(new BrokersResource(context));
     config.register(new TopicsResource(context));
@@ -99,7 +119,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   public void onShutdown() {
     context.getConsumerManager().shutdown();
     context.getProducerPool().shutdown();
-    context.getSimpleConsumerManager().shutdown();
+    context.getAssignedConsumerManager().shutdown();
     context.getMetadataObserver().shutdown();
     zkUtils.close();
   }

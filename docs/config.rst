@@ -12,7 +12,7 @@ Java Kafka clients.
 
 
 ``bootstrap.servers``
-  A list of host/port pairs to use for establishing the initial connection to the Kafka cluster. The client will make use of all servers irrespective of which servers are specified here for bootstrapping—this list only impacts the initial hosts used to discover the full set of servers. This list should be in the form host1:port1,host2:port2,.... Since these servers are just used for the initial connection to discover the full cluster membership (which may change dynamically), this list need not contain the full set of servers (you may want more than one, though, in case a server is down).
+  A list of protocol://host:port entries to use for establishing the initial connection to the Kafka cluster. The protocol can be PLAINTEXT, SSL. The client will make use of all servers irrespective of which servers are specified here for bootstrapping—this list only impacts the initial hosts used to discover the full set of servers. Since these servers are just used for the initial connection to discover the full cluster membership (which may change dynamically), this list need not contain the full set of servers (you may want more than one, though, in case a server is down).
 
   * Type: string
   * Default: "PLAINTEXT://localhost:9092"
@@ -40,6 +40,13 @@ Java Kafka clients.
   * Type: string
   * Default: "localhost:2181"
   * Importance: high
+
+``consumer.assigned.pool.size.max``
+  Maximum number of 'assigned consumers' that can be instantiated. If 0, then the pool size is not limited.
+
+  * Type: int
+  * Default: 25
+  * Importance: medium
 
 ``consumer.request.max.bytes``
   Maximum number of bytes in unencoded message keys and values returned by a single request. This can be used by administrators to limit the memory used by a single consumer and to control the memory usage required to decode responses on clients that cannot perform a streaming decode. Note that the actual payload will be larger due to overhead from base64 encoding the response data and from JSON encoding the entire response.
@@ -69,25 +76,25 @@ Java Kafka clients.
   * Default: ""
   * Importance: medium
 
-``simpleconsumer.cache.max.records``
-  Maximum number of records that can be stored for a specific topic-partition combination. Records with higher offsets replace records with lower ones Must be greater that 0.
-
-  * Type: int
-  * Default: 1000
-  * Importance: medium
-
-``simpleconsumer.pool.size.max``
-  Maximum number of SimpleConsumers that can be instantiated. If 0, then the pool size is not limited.
-
-  * Type: int
-  * Default: 25
-  * Importance: medium
-
 ``access.control.allow.origin``
   Set value for Jetty Access-Control-Allow-Origin header
 
   * Type: string
   * Default: ""
+  * Importance: low
+
+``consumer.assigned.max.poll.time``
+  Maximum amount of time to poll for records by 'assigned consumer'.
+
+  * Type: int
+  * Default: 500
+  * Importance: low
+
+``consumer.assigned.pool.timeout.ms``
+  Amount of time to wait for an available 'assigned consumer' from the pool before failing. Use 0 for no timeout
+
+  * Type: int
+  * Default: 1000
   * Importance: low
 
 ``consumer.instance.timeout.ms``
@@ -183,20 +190,6 @@ Java Kafka clients.
 
 ``shutdown.graceful.ms``
   Amount of time to wait after a shutdown request for outstanding requests to complete.
-
-  * Type: int
-  * Default: 1000
-  * Importance: low
-
-``simpleconsumer.max.poll.time``
-  Maximum amount of time to poll for records by a consumer.
-
-  * Type: int
-  * Default: 500
-  * Importance: low
-
-``simpleconsumer.pool.timeout.ms``
-  Amount of time to wait for an available SimpleConsumer from the pool before failing. Use 0 for no timeout
 
   * Type: int
   * Default: 1000

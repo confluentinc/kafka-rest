@@ -126,25 +126,25 @@ public class KafkaRestConfig extends RestConfig {
       + "is automatically destroyed.";
   public static final String CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT = "300000";
 
-  public static final String SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG = "simpleconsumer.pool.size.max";
+  public static final String ASSIGNED_CONSUMER_MAX_POOL_SIZE_CONFIG = "consumer.assigned.pool.size.max";
   private static final String
-      SIMPLE_CONSUMER_MAX_POOL_SIZE_DOC =
-      "Maximum number of SimpleConsumers that can be instantiated."
+      ASSIGNED_CONSUMER_MAX_POOL_SIZE_DOC =
+      "Maximum number of 'assigned consumers' that can be instantiated."
       + " If 0, then the pool size is not limited.";
-  public static final String SIMPLE_CONSUMER_MAX_POOL_SIZE_DEFAULT = "25";
+  public static final String ASSIGNED_CONSUMER_MAX_POOL_SIZE_DEFAULT = "25";
 
-  public static final String SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG = "simpleconsumer.pool.timeout.ms";
+  public static final String ASSIGNED_CONSUMER_POOL_TIMEOUT_MS_CONFIG = "consumer.assigned.pool.timeout.ms";
   private static final String
-      SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC =
-      "Amount of time to wait for an available SimpleConsumer from the pool before failing."
-          + " Use 0 for no timeout";
-  public static final String SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT = "1000";
+      ASSIGNED_CONSUMER_POOL_TIMEOUT_MS_DOC =
+      "Amount of time to wait for an available 'assigned consumer' from the pool before failing."
+      + " Use 0 for no timeout";
+  public static final String ASSIGNED_CONSUMER_POOL_TIMEOUT_MS_DEFAULT = "1000";
 
-  public static final String SIMPLE_CONSUMER_MAX_POLL_TIME_CONFIG = "simpleconsumer.max.poll.time";
+  public static final String ASSIGNED_CONSUMER_MAX_POLL_TIME_CONFIG = "consumer.assigned.max.poll.time";
   private static final String
-    SIMPLE_CONSUMER_MAX_POLL_TIME_DOC =
-    "Maximum amount of time to poll for records by a consumer.";
-  public static final int SIMPLE_CONSUMER_MAX_POLL_TIME_DEFAULT = 500;
+      ASSIGNED_CONSUMER_MAX_POLL_TIME_DOC =
+      "Maximum amount of time to poll for records by 'assigned consumer'.";
+  public static final int ASSIGNED_CONSUMER_MAX_POLL_TIME_DEFAULT = 500;
 
   private static final int KAFKAREST_PORT_DEFAULT = 8082;
 
@@ -187,12 +187,15 @@ public class KafkaRestConfig extends RestConfig {
                 Importance.MEDIUM, CONSUMER_THREADS_DOC)
         .define(CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT,
                 Importance.LOW, CONSUMER_INSTANCE_TIMEOUT_MS_DOC)
-        .define(SIMPLE_CONSUMER_MAX_POLL_TIME_CONFIG, Type.INT, SIMPLE_CONSUMER_MAX_POLL_TIME_DEFAULT,
-                Importance.LOW, SIMPLE_CONSUMER_MAX_POLL_TIME_DOC)
-        .define(SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG, Type.INT, SIMPLE_CONSUMER_MAX_POOL_SIZE_DEFAULT,
-                Importance.MEDIUM, SIMPLE_CONSUMER_MAX_POOL_SIZE_DOC)
-        .define(SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG, Type.INT, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT,
-                Importance.LOW, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC);
+        .define(ASSIGNED_CONSUMER_MAX_POLL_TIME_CONFIG, Type.INT,
+            ASSIGNED_CONSUMER_MAX_POLL_TIME_DEFAULT,
+                Importance.LOW, ASSIGNED_CONSUMER_MAX_POLL_TIME_DOC)
+        .define(ASSIGNED_CONSUMER_MAX_POOL_SIZE_CONFIG, Type.INT,
+            ASSIGNED_CONSUMER_MAX_POOL_SIZE_DEFAULT,
+                Importance.MEDIUM, ASSIGNED_CONSUMER_MAX_POOL_SIZE_DOC)
+        .define(ASSIGNED_CONSUMER_POOL_TIMEOUT_MS_CONFIG, Type.INT,
+            ASSIGNED_CONSUMER_POOL_TIMEOUT_MS_DEFAULT,
+                Importance.LOW, ASSIGNED_CONSUMER_POOL_TIMEOUT_MS_DOC);
   }
 
   private Time time;

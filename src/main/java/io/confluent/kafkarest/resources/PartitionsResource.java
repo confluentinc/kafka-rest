@@ -181,7 +181,7 @@ public class PartitionsResource {
       final long count,
       final EmbeddedFormat embeddedFormat) {
 
-    ctx.getSimpleConsumerManager().consume(
+    ctx.getAssignedConsumerManager().consume(
         topicName, partitionId, offset, count, embeddedFormat,
         new ConsumerManager.ReadCallback<ClientK, ClientV>() {
           @Override

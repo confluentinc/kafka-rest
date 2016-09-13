@@ -15,24 +15,36 @@
  **/
 package io.confluent.kafkarest.unit;
 
-import io.confluent.kafkarest.*;
-import io.confluent.kafkarest.mock.MockKafkaConsumer;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import io.confluent.kafkarest.AssignedConsumerPool;
+import io.confluent.kafkarest.ConsumerFactory;
+import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.SystemTime;
+import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.mock.MockTime;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.MockConsumer;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.common.TopicPartition;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.concurrent.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import static org.junit.Assert.*;
-
-public class SimpleConsumerPoolTest {
+public class AssignedConsumerPoolTest {
 
   private final int AWAIT_TERMINATION_TIMEOUT = 2000;
   private final int POOL_CALLER_SLEEP_TIME = 50;
@@ -40,7 +52,7 @@ public class SimpleConsumerPoolTest {
   private ConsumerFactory simpleConsumerFactory;
   private Time mockTime;
 
-  public SimpleConsumerPoolTest() throws RestConfigException {
+  public AssignedConsumerPoolTest() throws RestConfigException {
     simpleConsumerFactory = EasyMock.createMock(ConsumerFactory.class);
   }
 
@@ -52,7 +64,8 @@ public class SimpleConsumerPoolTest {
     EasyMock.expect(simpleConsumerFactory.createConsumer()).andStubAnswer(new IAnswer<Consumer<byte[], byte[]>>() {
       @Override
       public Consumer<byte[], byte[]> answer() throws Throwable {
-        Consumer<byte[], byte[]> mockConsumer = new MockKafkaConsumer(null, null, mockTime);
+        Consumer<byte[], byte[]> mockConsumer = new MockConsumer<byte[], byte[]>(
+            OffsetResetStrategy.EARLIEST);
         return mockConsumer;
       }
     });
@@ -66,14 +79,14 @@ public class SimpleConsumerPoolTest {
     final int maxPoolSize = 3;
     final int poolTimeout = 1000;
     final int maxPollRecords = 1000;
-    final SimpleConsumerPool pool =
-        new SimpleConsumerPool(
+    final AssignedConsumerPool pool =
+        new AssignedConsumerPool(
             maxPoolSize,
             poolTimeout,
             maxPollRecords, new SystemTime(), simpleConsumerFactory);
 
     // poll with 0 count should not create new consumer within the pool
-    SimpleConsumerPool.RecordsFetcher fetcher = pool.getRecordsFetcher(new TopicPartition("topic", 0));
+    AssignedConsumerPool.RecordsFetcher fetcher = pool.getRecordsFetcher(new TopicPartition("topic", 0));
     fetcher.close();
     fetcher.poll(10000, 0);
     assertTrue(pool.size() == 0);
@@ -90,9 +103,9 @@ public class SimpleConsumerPoolTest {
 
   private class PoolCaller implements Runnable {
 
-    private SimpleConsumerPool pool;
+    private AssignedConsumerPool pool;
 
-    public PoolCaller(SimpleConsumerPool pool) {
+    public PoolCaller(AssignedConsumerPool pool) {
       this.pool = pool;
     }
 
@@ -117,8 +130,8 @@ public class SimpleConsumerPoolTest {
     final int maxPoolSize = 3;
     final int poolTimeout = 3000;
     final int maxPollTime = 10;
-    final SimpleConsumerPool consumersPool =
-        new SimpleConsumerPool(maxPoolSize, poolTimeout, maxPollTime, new SystemTime(), simpleConsumerFactory);
+    final AssignedConsumerPool consumersPool =
+        new AssignedConsumerPool(maxPoolSize, poolTimeout, maxPollTime, new SystemTime(), simpleConsumerFactory);
 
     final ExecutorService executorService = Executors.newFixedThreadPool(100);
     for (int i = 0; i < 100; i++) {
@@ -138,8 +151,8 @@ public class SimpleConsumerPoolTest {
     final int maxPoolSize = 0; // 0 meaning unlimited
     final int poolTimeout = 1000;
     final int maxPollTime = 1000;
-    final SimpleConsumerPool consumersPool =
-        new SimpleConsumerPool(maxPoolSize, poolTimeout, maxPollTime, new SystemTime(), simpleConsumerFactory);
+    final AssignedConsumerPool consumersPool =
+        new AssignedConsumerPool(maxPoolSize, poolTimeout, maxPollTime, new SystemTime(), simpleConsumerFactory);
 
     final ExecutorService executorService = Executors.newFixedThreadPool(10);
     for (int i = 0; i < 10; i++) {
@@ -161,8 +174,8 @@ public class SimpleConsumerPoolTest {
     final int maxPoolSize = 1; // Only one SimpleConsumer instance
     final int poolTimeout = 1; // And we don't allow to wait a lot to get it
     final int maxPollTime = 1000;
-    final SimpleConsumerPool consumersPool =
-        new SimpleConsumerPool(maxPoolSize, poolTimeout, maxPollTime, new SystemTime(), simpleConsumerFactory);
+    final AssignedConsumerPool consumersPool =
+        new AssignedConsumerPool(maxPoolSize, poolTimeout, maxPollTime, new SystemTime(), simpleConsumerFactory);
 
     final ExecutorService executorService = Executors.newFixedThreadPool(10);
     final ArrayList<Future<?>> futures = new ArrayList<Future<?>>();
@@ -194,8 +207,8 @@ public class SimpleConsumerPoolTest {
     final int maxPoolSize = 1; // Only one SimpleConsumer instance
     final int poolTimeout = 0; // No timeout. A request will wait as long as needed to get a SimpleConsumer instance
     final int maxPollTime = 100000;
-    final SimpleConsumerPool consumersPool =
-        new SimpleConsumerPool(maxPoolSize, poolTimeout, maxPollTime, new SystemTime(), simpleConsumerFactory);
+    final AssignedConsumerPool consumersPool =
+        new AssignedConsumerPool(maxPoolSize, poolTimeout, maxPollTime, new SystemTime(), simpleConsumerFactory);
 
     final ExecutorService executorService = Executors.newFixedThreadPool(10);
     for (int i = 0; i < 10; i++) {

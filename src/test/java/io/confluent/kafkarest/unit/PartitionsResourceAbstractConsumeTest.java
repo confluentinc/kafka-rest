@@ -37,19 +37,20 @@ public class PartitionsResourceAbstractConsumeTest extends EmbeddedServerTestHar
   protected final long offset = 0;
   protected final long count = 1;
 
-  protected final SimpleConsumerManager simpleConsumerManager;
+  protected final AssignedConsumerManager assignedConsumerManager;
 
   public PartitionsResourceAbstractConsumeTest() throws RestConfigException {
     super();
-    simpleConsumerManager = EasyMock.createMock(SimpleConsumerManager.class);
+    assignedConsumerManager = EasyMock.createMock(AssignedConsumerManager.class);
 
-    final Context ctx = new Context(config, null, null, null, simpleConsumerManager);
+    final Context ctx = new Context(config, null, null, null,
+        assignedConsumerManager);
     addResource(new PartitionsResource(ctx));
   }
 
   protected void expectConsume(final EmbeddedFormat embeddedFormat,  final List<? extends ConsumerRecord> records) {
     final Capture<ConsumerManager.ReadCallback> readCallback = new Capture<ConsumerManager.ReadCallback>();
-    simpleConsumerManager.consume(
+    assignedConsumerManager.consume(
         EasyMock.eq(topicName),
         EasyMock.eq(partitionId),
         EasyMock.eq(offset),
@@ -65,7 +66,7 @@ public class PartitionsResourceAbstractConsumeTest extends EmbeddedServerTestHar
       }
     });
 
-    EasyMock.replay(simpleConsumerManager);
+    EasyMock.replay(assignedConsumerManager);
   }
 
   protected Response request(String topicName, int partitionId, long offset, String mediaType) {

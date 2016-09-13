@@ -15,11 +15,11 @@
  **/
 package io.confluent.kafkarest.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public abstract class ConsumerRecord<K, V> {
 
@@ -42,21 +42,6 @@ public abstract class ConsumerRecord<K, V> {
     this.topic = topic;
     this.partition = partition;
     this.offset = offset;
-  }
-
-  public ConsumerRecord(K key, V value, int partition, long offset) {
-    this.key = key;
-    this.value = value;
-    this.partition = partition;
-    this.offset = offset;
-  }
-
-  public ConsumerRecord(String topic, int partition, long offset) {
-    this(null, null, topic, partition, offset);
-  }
-
-  public ConsumerRecord(int partition, long offset) {
-    this(null, null, partition, offset);
   }
 
   @JsonIgnore

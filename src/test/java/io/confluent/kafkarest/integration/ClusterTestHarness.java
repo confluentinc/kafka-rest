@@ -191,7 +191,7 @@ public abstract class ClusterTestHarness {
     restConnect = String.format("http://localhost:%d", restPort);
 
     // add simpleconsumer properties
-    restProperties.put(KafkaRestConfig.SIMPLE_CONSUMER_MAX_POLL_TIME_CONFIG, 3000); //3 sec
+    restProperties.put(KafkaRestConfig.ASSIGNED_CONSUMER_MAX_POLL_TIME_CONFIG, 3000); //3 sec
 
     restConfig = new KafkaRestConfig(restProperties);
     restApp = new TestKafkaRestApplication(restConfig, getZkUtils(restConfig),
@@ -224,7 +224,7 @@ public abstract class ClusterTestHarness {
     return null;
   }
 
-  protected SimpleConsumerManager getSimpleConsumerManager(KafkaRestConfig appConfig) {
+  protected AssignedConsumerManager getSimpleConsumerManager(KafkaRestConfig appConfig) {
     return null;
   }
 

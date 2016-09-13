@@ -60,8 +60,8 @@ public class PartitionsResourceBinaryConsumeTest extends PartitionsResourceAbstr
           response.readEntity(new GenericType<List<BinaryConsumerRecord>>() {});
       assertEquals(records, readResponseRecords);
 
-      EasyMock.verify(simpleConsumerManager);
-      EasyMock.reset(simpleConsumerManager);
+      EasyMock.verify(assignedConsumerManager);
+      EasyMock.reset(assignedConsumerManager);
     }
   }
 
