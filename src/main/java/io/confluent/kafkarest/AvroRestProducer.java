@@ -90,7 +90,7 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
     } catch (RestClientException e) {
       // FIXME We should return more specific error codes (unavailable vs registration failed in
       // a way that isn't retriable?).
-      if (e.getStatus() =409){
+      if (e.getStatus() == 409){
         throw Errors.IncompatibleAvroSchema();
       } else {
         throw new RestException("Schema registration or lookup failed", 408, 40801, e);
