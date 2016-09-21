@@ -71,6 +71,16 @@ public class Errors {
                              CONSUMER_FORMAT_MISMATCH_ERROR_CODE);
   }
 
+  public final static String INCOMPATIBLE_AVRO_SCHEMA =
+          "Incompatible Avro schema";
+  public final static int INCOMPATIBLE_AVRO_SCHEMA_ERROR_CODE = 40903;
+
+  public static RestException IncompatibleAvroSchema() {
+    return new RestException(INCOMPATIBLE_AVRO_SCHEMA,
+            Response.Status.CONFLICT.getStatusCode(),
+            INCOMPATIBLE_AVRO_SCHEMA_ERROR_CODE);
+  }
+
 
   public final static String CONSUMER_ALREADY_SUBSCRIBED_MESSAGE =
       "Consumer cannot subscribe the the specified target because it has already subscribed to "
