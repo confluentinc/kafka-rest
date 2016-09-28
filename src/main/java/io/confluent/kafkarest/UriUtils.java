@@ -36,6 +36,11 @@ public class UriUtils {
       if (origAbsoluteUri.getPort() != -1) {
         builder.port(config.getInt(KafkaRestConfig.PORT_CONFIG));
       }
+      
+      String hostpath = config.getString(KafkaRestConfig.HOST_PATH_CONFIG);
+      if(hostpath.length() > 0) {
+        builder.path(hostpath);
+      }
     }
     return builder;
   }
