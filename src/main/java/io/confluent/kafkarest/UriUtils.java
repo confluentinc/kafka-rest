@@ -39,7 +39,7 @@ public class UriUtils {
       
       String hostpath = config.getString(KafkaRestConfig.HOST_PATH_CONFIG);
       if(hostpath.length() > 0) {
-        builder.path(hostpath);
+        builder.replacePath(hostpath + builder.build().getPath());
       }
     }
     return builder;
