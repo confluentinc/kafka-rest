@@ -3,6 +3,18 @@
 Changelog
 =========
 
+Version 3.1.0
+-------------
+
+* `PR-239 <https://github.com/confluentinc/kafka-rest/pull/239>`_ - Require bash since we use some bashisms and fix a copyright.
+* `PR-235 <https://github.com/confluentinc/kafka-rest/pull/235>`_ - fix typo command line options ``-help`` check
+* `PR-222 <https://github.com/confluentinc/kafka-rest/pull/222>`_ - fixing issue #91
+* `PR-230 <https://github.com/confluentinc/kafka-rest/pull/230>`_ - Issue #229: Add blurb on Jetty jmx metrics
+* `PR-214 <https://github.com/confluentinc/kafka-rest/pull/214>`_ - Small readme.md fix
+* `PR-127 <https://github.com/confluentinc/kafka-rest/pull/127>`_ - Fix to ConsumerManager tests AND then handling of max bytes
+* `PR-203 <https://github.com/confluentinc/kafka-rest/pull/203>`_ - Fix a typo that cause non-corresponding logger name
+* `PR-202 <https://github.com/confluentinc/kafka-rest/pull/202>`_ - fix the implementation of topicExists
+
 Version 3.0.0
 -------------
 
