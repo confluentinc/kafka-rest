@@ -6,21 +6,21 @@ The Kafka REST Proxy provides a RESTful interface to a Kafka cluster. It makes i
 
 The following assumes you have Kafka, the schema registry, and an instance of the REST Proxy running using the default settings and some topics already created.
 
-#### Get a list of topics
+### Get a list of topics
 
 ```
 $ curl "http://localhost:8082/topics"
   [{"name":"test","num_partitions":3},{"name":"test2","num_partitions":1}]
 ```
 
-#### Get info about one topic
+### Get info about one topic
 
 ```
 $ curl "http://localhost:8082/topics/test"
   {"name":"test","num_partitions":3}
 ```
 
-#### Produce a message using binary embedded data with value "Kafka" to the topic test
+### Produce a message using binary embedded data with value "Kafka" to the topic test
 
 ```
 $ curl -X POST -H "Content-Type: application/vnd.kafka.binary.v1+json" \
@@ -28,7 +28,7 @@ $ curl -X POST -H "Content-Type: application/vnd.kafka.binary.v1+json" \
   {"offsets":[{"partition": 3, "offset": 1}]}
 ```
 
-#### Produce a message using Avro embedded data, including the schema which will be registered with the schema registry and used to validate and serialize before storing the data in Kafka
+### Produce a message using Avro embedded data, including the schema which will be registered with the schema registry and used to validate and serialize before storing the data in Kafka
 
 ```
 $ curl -X POST -H "Content-Type: application/vnd.kafka.avro.v1+json" \
@@ -37,7 +37,7 @@ $ curl -X POST -H "Content-Type: application/vnd.kafka.avro.v1+json" \
   {"value_schema_id":0,"offsets":[{"partition":0,"offset":0}]}
 ```
 
-#### Create a consumer for binary data, starting at the beginning of the topic's log. Then consume some data from a topic using the base URL in the first response. Finally, close the consumer with a DELETE to make it leave the group and clean up its resources.
+### Create a consumer for binary data, starting at the beginning of the topic's log.
 
 ```
 $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
@@ -46,11 +46,15 @@ $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
   {"instance_id":"rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6","base_uri":"http://localhost:8082/consumers/my_binary_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6"}
 ```
 
+Then consume some data from a topic using the base URL in the first response.
+
 ```
 $ curl -X GET -H "Accept: application/vnd.kafka.binary.v1+json" \
       http://localhost:8082/consumers/my_binary_consumer/instances/rest-consumer-11561681-8ba5-4b46-bed0-905ae1769bc6/topics/test
   [{"key":null,"value":"S2Fma2E=","partition":0,"offset":0}]
 ```
+
+Finally, close the consumer with a DELETE to make it leave the group and clean up its resources.
 
 ```
 $ curl -X DELETE \
@@ -58,7 +62,7 @@ $ curl -X DELETE \
   # No content in response
 ```
 
-#### Create a consumer for Avro data, starting at the beginning of the topic's log. Then consume some data from a topic, which is decoded, translated to JSON, and included in the response. The schema used for deserialization is fetched automatically from the schema registry. Finally, clean up.
+### Create a consumer for Avro data, starting at the beginning of the topic's log.
 
 ```
 $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
@@ -67,11 +71,15 @@ $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
   {"instance_id":"rest-consumer-11392f3a-efbe-4fe2-b0bf-5c85d7b25e7b","base_uri":"http://localhost:8082/consumers/my_avro_consumer/instances/rest-consumer-11392f3a-efbe-4fe2-b0bf-5c85d7b25e7b"}
 ```
 
+Then consume some data from a topic, which is decoded, translated to JSON, and included in the response. The schema used for deserialization is fetched automatically from the schema registry.
+
 ```
 $ curl -X GET -H "Accept: application/vnd.kafka.avro.v1+json" \
       http://localhost:8082/consumers/my_avro_consumer/instances/rest-consumer-11392f3a-efbe-4fe2-b0bf-5c85d7b25e7b/topics/avrotest
   [{"key":null,"value":{"name":"testUser"},"partition":0,"offset":0}]
 ```
+
+Finally, clean up.
 
 ```
 $ curl -X DELETE \
