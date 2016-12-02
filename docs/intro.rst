@@ -39,7 +39,19 @@ Produce and Consume Avro Messages
    $ curl -X POST -H "Content-Type: application/vnd.kafka.avro.v1+json" \
          --data '{"value_schema": "{\"type\": \"record\", \"name\": \"User\", \"fields\": [{\"name\": \"name\", \"type\": \"string\"}]}", "records": [{"value": {"name": "testUser"}}]}' \
          "http://localhost:8082/topics/avrotest"
+
+   # You should get the following response:
      {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":21}
+
+   # Produce a message with Avro key and value.
+   # Note that if you use Avro values you must also use Avro keys, but the schemas can differ
+
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.avro.v1+json" \
+         --data '{"key_schema": "{\"name\":\"user_id\"  ,\"type\": \"int\"   }", "value_schema": "{\"type\": \"record\", \"name\": \"User\", \"fields\": [{\"name\": \"name\", \"type\": \"string\"}]}", "records": [{"key" : 1 , "value": {"name": "testUser"}}]}' \
+         "http://localhost:8082/topics/avrokeytest2"
+
+   # You should get the following response:
+   {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":2,"value_schema_id":1}
 
    # Create a consumer for Avro data, starting at the beginning of the topic's
    # log. Then consume some data from a topic, which is decoded, translated to
@@ -64,7 +76,18 @@ Produce and Consume JSON Messages
    # Produce a message using JSON with the value '{ "foo": "bar" }' to the topic jsontest
    $ curl -X POST -H "Content-Type: application/vnd.kafka.json.v1+json" \
          --data '{"records":[{"value":{"foo":"bar"}}]}' "http://localhost:8082/topics/jsontest"
+
+   # You should expect the following response:
      {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
+
+   # Produce a message using JSON with key and value.
+   # If you use JSON the key and value can have any types, as long as the entire message is in JSON and contains a key and a value.
+   # Here we have an integer key and a map value
+curl -X POST -H "Content-Type: application/vnd.kafka.json.v1+json"          --data '{"records":[{"key": 1 , "value":{"user_name":"testUser"}}]}' "http://localhost:8082/topics/jsontest"
+
+   # You should expect the usual response:
+   {"offsets":[{"partition":0,"offset":3,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
+
 
    # Create a consumer for JSON data, starting at the beginning of the topic's
    # log. Then consume some data from a topic using the base URL in the first response.
