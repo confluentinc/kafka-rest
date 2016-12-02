@@ -19,6 +19,7 @@ import io.confluent.kafkarest.*;
 
 import org.apache.kafka.common.protocol.SecurityProtocol;
 import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.common.utils.Time;
 import org.eclipse.jetty.server.Server;
 import org.junit.After;
 import org.junit.Before;
@@ -41,7 +42,6 @@ import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.CoreUtils;
-import kafka.utils.SystemTime$;
 import kafka.utils.TestUtils;
 import kafka.utils.ZkUtils;
 import kafka.zk.EmbeddedZookeeper;
@@ -155,7 +155,7 @@ public abstract class ClusterTestHarness {
       KafkaConfig config = KafkaConfig.fromProps(props);
       configs.add(config);
 
-      KafkaServer server = TestUtils.createServer(config, SystemTime$.MODULE$);
+      KafkaServer server = TestUtils.createServer(config, Time.SYSTEM);
       servers.add(server);
     }
 
