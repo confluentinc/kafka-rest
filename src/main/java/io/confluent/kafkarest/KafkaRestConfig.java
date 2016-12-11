@@ -57,6 +57,19 @@ public class KafkaRestConfig extends RestConfig {
       + "the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path.";
   public static final String ZOOKEEPER_CONNECT_DEFAULT = "localhost:2181";
 
+  public static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
+  private static final String
+      BOOTSTRAP_SERVERS_DOC =
+      "A list of host/port pairs to use for establishing the initial connection to the Kafka cluster. "
+      + "The client will make use of all servers irrespective of which servers are specified here for "
+      + "bootstrapping—this list only impacts the initial hosts used to discover the full set of servers. "
+      + "This list should be in the form host1:port1,host2:port2,.... Since these servers are just used for the "
+      + "initial connection to discover the full cluster membership (which may change dynamically), "
+      + "this list need not contain the full set of servers (you may want more than one, though, "
+      + "in case a server is down).";
+
+  public static final String BOOTSTRAP_SERVERS_DEFAULT = "PLAINTEXT://localhost:9092";
+
   public static final String SCHEMA_REGISTRY_URL_CONFIG = "schema.registry.url";
   private static final String SCHEMA_REGISTRY_URL_DOC =
       "The base URL for the schema registry that should be used by the Avro serializer.";
@@ -155,6 +168,8 @@ public class KafkaRestConfig extends RestConfig {
         .define(HOST_NAME_CONFIG, Type.STRING, HOST_NAME_DEFAULT, Importance.MEDIUM, HOST_NAME_DOC)
         .define(ZOOKEEPER_CONNECT_CONFIG, Type.STRING, ZOOKEEPER_CONNECT_DEFAULT,
                 Importance.HIGH, ZOOKEEPER_CONNECT_DOC)
+        .define(BOOTSTRAP_SERVERS_CONFIG, Type.STRING, BOOTSTRAP_SERVERS_DEFAULT,
+                Importance.HIGH, BOOTSTRAP_SERVERS_DOC)
         .define(SCHEMA_REGISTRY_URL_CONFIG, Type.STRING, SCHEMA_REGISTRY_URL_DEFAULT,
                 Importance.HIGH, SCHEMA_REGISTRY_URL_DOC)
         .define(PRODUCER_THREADS_CONFIG, Type.INT, PRODUCER_THREADS_DEFAULT,
