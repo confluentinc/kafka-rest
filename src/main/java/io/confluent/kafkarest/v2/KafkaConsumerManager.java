@@ -176,14 +176,22 @@ public class KafkaConsumerManager {
       if (instanceConfig.getAutoOffsetReset() != null) {
         props.setProperty("auto.offset.reset", instanceConfig.getAutoOffsetReset());
       }
+
+      props.setProperty("schema.registry.url",
+			config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
       
-      //TBD should check the instanceConfig before setting the following default
-      //props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-      //props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-      props.put("key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
-      props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
-      
-      //ConsumerConnector consumer = null;
+      switch (instanceConfig.getFormat()) {
+      case AVRO:
+	  props.put("key.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
+	  props.put("value.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
+	  break;
+      case JSON:
+      case BINARY:
+      default:
+	  props.put("key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
+	  props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
+      }
+
       Consumer consumer = null;
       try {
         if (consumerFactory == null) {
@@ -195,7 +203,6 @@ public class KafkaConsumerManager {
       }
 
       KafkaConsumerState state = null;
-      System.out.println("==== v2 instanceConfig.getFormat(): " + instanceConfig.getFormat());
       switch (instanceConfig.getFormat()) {
         case BINARY:
           state = new BinaryKafkaConsumerState(this.config, cid, consumer);

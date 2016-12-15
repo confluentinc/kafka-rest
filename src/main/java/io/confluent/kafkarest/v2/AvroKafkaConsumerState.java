@@ -49,7 +49,6 @@ public class AvroKafkaConsumerState extends KafkaConsumerState<Object, Object, J
     Properties props = new Properties();
     props.setProperty("schema.registry.url",
                       config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
-    decoder = new KafkaAvroDecoder(new VerifiableProperties(props));
   }
 
   @Override

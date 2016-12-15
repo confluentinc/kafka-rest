@@ -66,7 +66,7 @@ public class ConsumersResource {
   @POST
   @Valid
   @Path("/{group}")
-  @PerformanceMetric("consumer_v2.create")
+  @PerformanceMetric("consumer.create+v2")
   public CreateConsumerInstanceResponse createGroup(
       @javax.ws.rs.core.Context UriInfo uriInfo, final @PathParam("group") String group,
       @Valid ConsumerInstanceConfig config) {
@@ -81,7 +81,7 @@ public class ConsumersResource {
 
   @DELETE
   @Path("/{group}/instances/{instance}")
-  @PerformanceMetric("consumer_v2.delete")
+  @PerformanceMetric("consumer.delete+v2")
   public void deleteGroup(final @PathParam("group") String group,
                           final @PathParam("instance") String instance) {
     ctx.getKafkaConsumerManager().deleteConsumer(group, instance);
@@ -89,7 +89,7 @@ public class ConsumersResource {
 
   @POST
   @Path("/{group}/instances/{instance}/subscription")
-  @PerformanceMetric("consumer_v2.subscribe")
+  @PerformanceMetric("consumer.subscribe+v2")
   public void Subscribe(
 			 final @PathParam("group") String group,
 			 final @PathParam("instance") String instance) {
@@ -98,7 +98,7 @@ public class ConsumersResource {
 
   @GET
   @Path("/{group}/instances/{instance}/records")
-  @PerformanceMetric("consumer_v2.records.read-binary")
+  @PerformanceMetric("consumer.records.read-binary+v2")
   @Produces({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED,
              Versions.KAFKA_V2_JSON_WEIGHTED
 	      })
@@ -113,7 +113,7 @@ public class ConsumersResource {
 
   @GET
   @Path("/{group}/instances/{instance}/records")
-  @PerformanceMetric("consumer_v2.records.read-json")
+  @PerformanceMetric("consumer.records.read-json+v2")
   @Produces({Versions.KAFKA_V2_JSON_JSON_WEIGHTED_LOW}) // Using low weight ensures binary is default
   public void readRecordJson(final @Suspended AsyncResponse asyncResponse,
                             final @PathParam("group") String group,
@@ -125,7 +125,7 @@ public class ConsumersResource {
 
   @GET
   @Path("/{group}/instances/{instance}/records")
-  @PerformanceMetric("consumer_v2.records.read-avro")
+  @PerformanceMetric("consumer.records.read-avro+v2")
   @Produces({Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW}) // Using low weight ensures binary is default
   public void readRecordAvro(final @Suspended AsyncResponse asyncResponse,
                             final @PathParam("group") String group,
@@ -137,7 +137,7 @@ public class ConsumersResource {
 
   @GET
   @Path("/{group}/instances/{instance}/topics/{topic}")
-  @PerformanceMetric("consumer_v2.topic.read-binary")
+  @PerformanceMetric("consumer.topic.read-binary+v2")
   @Produces({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED,
              Versions.KAFKA_V2_JSON_WEIGHTED
 	      })
@@ -151,7 +151,7 @@ public class ConsumersResource {
 
   @GET
   @Path("/{group}/instances/{instance}/topics/{topic}")
-  @PerformanceMetric("consumer_v2.topic.read-json")
+  @PerformanceMetric("consumer.topic.read-json+v2")
   @Produces({Versions.KAFKA_V2_JSON_JSON_WEIGHTED_LOW}) // Using low weight ensures binary is default
   public void readTopicJson(final @Suspended AsyncResponse asyncResponse,
                             final @PathParam("group") String group,
@@ -163,7 +163,7 @@ public class ConsumersResource {
 
   @GET
   @Path("/{group}/instances/{instance}/topics/{topic}")
-  @PerformanceMetric("consumer_v2.topic.read-avro")
+  @PerformanceMetric("consumer.topic.read-avro+v2")
   @Produces({Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW}) // Using low weight ensures binary is default
   public void readTopicAvro(final @Suspended AsyncResponse asyncResponse,
                             final @PathParam("group") String group,
