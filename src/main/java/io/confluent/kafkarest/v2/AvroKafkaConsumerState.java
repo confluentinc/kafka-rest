@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2017 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class AvroKafkaConsumerState extends KafkaConsumerState<Object, Object, J
     AvroConverter.JsonNodeAndSize keyNode = AvroConverter.toJson(record.key());
     AvroConverter.JsonNodeAndSize valueNode = AvroConverter.toJson(record.value());
     return new ConsumerRecordAndSize<JsonNode, JsonNode>(
-        new AvroConsumerRecord(keyNode.json, valueNode.json, record.partition(), record.offset()),
+							 new AvroConsumerRecord(record.topic(), keyNode.json, valueNode.json, record.partition(), record.offset()),
         keyNode.size + valueNode.size
     );
   }

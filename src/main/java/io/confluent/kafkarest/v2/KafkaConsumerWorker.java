@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2017 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class KafkaConsumerWorker extends Thread {
     log.trace("KafkaConsumer worker " + this.toString() + " reading topic " + topic
               + " for " + state.getId());
     KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV> task
-        = new KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>(state, topic, maxBytes, callback);
+        = new KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>(state, topic,  -1, maxBytes, callback);
     if (!task.isDone()) {
       tasks.add(task);
       this.notifyAll();
@@ -62,6 +62,19 @@ public class KafkaConsumerWorker extends Thread {
     return task;
   }
 
+  public synchronized <KafkaK, KafkaV, ClientK, ClientV>
+  Future readRecords(KafkaConsumerState state, long timeout, long maxBytes,
+		   ConsumerWorkerReadCallback<ClientK, ClientV> callback) {
+    log.trace("KafkaConsumer worker " + this.toString()  + " for " + state.getId());
+    KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV> task
+        = new KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>(state, null, timeout, maxBytes, callback);
+    if (!task.isDone()) {
+      tasks.add(task);
+      this.notifyAll();
+    }
+    return task;
+  }
+    
   @Override
   public void run() {
     while (isRunning.get()) {

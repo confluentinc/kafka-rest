@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2017 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public class JsonKafkaConsumerState extends KafkaConsumerState<byte[], byte[], O
     }
 
     return new ConsumerRecordAndSize<Object, Object>(
-        new JsonConsumerRecord(key, value, record.partition(), record.offset()),
+						     new JsonConsumerRecord(record.topic(), key, value, record.partition(), record.offset()),
         approxSize);
   }
 

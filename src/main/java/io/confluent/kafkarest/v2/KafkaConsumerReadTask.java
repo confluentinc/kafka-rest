@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2017 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,12 +52,12 @@ class KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
   private static final Logger log = LoggerFactory.getLogger(KafkaConsumerReadTask.class);
 
   private KafkaConsumerState parent;
+  private final long pollTimeout;
   private final long maxResponseBytes;
   private final ConsumerWorkerReadCallback<ClientK, ClientV> callback;
   private CountDownLatch finished;
 
   private KafkaConsumerTopicState topicState;
-  //private ConsumerIterator<KafkaK, KafkaV> iter;
   private Iterator<org.apache.kafka.clients.consumer.ConsumerRecord<ClientK, ClientV>> iter;
   private List<ConsumerRecord<ClientK, ClientV>> messages;
   private long bytesConsumed = 0;
@@ -67,18 +67,19 @@ class KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
   // a single backoff, if one is in progress
   long waitExpiration;
 
-  public KafkaConsumerReadTask(KafkaConsumerState parent, String topic, long maxBytes,
+  public KafkaConsumerReadTask(KafkaConsumerState parent, String topic, long timeout, long maxBytes,
                           ConsumerWorkerReadCallback<ClientK, ClientV> callback) {
     this.parent = parent;
     this.maxResponseBytes = Math.min(
         maxBytes,
         parent.getConfig().getLong(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG));
+    this.pollTimeout = timeout <= 0 ? 5000 : timeout;
     this.callback = callback;
     this.finished = new CountDownLatch(1);
 
     started = parent.getConfig().getTime().milliseconds();
     try {
-      topicState = parent.getOrCreateTopicState(topic);
+	topicState = parent.getOrCreateTopicState(topic, pollTimeout);
 
       // If the previous call failed, restore any outstanding data into this task.
       KafkaConsumerReadTask previousTask = topicState.clearFailedTask();

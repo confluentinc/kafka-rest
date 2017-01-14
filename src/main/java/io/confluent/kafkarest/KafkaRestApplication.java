@@ -103,6 +103,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new PartitionsResource(context));
     config.register(new ConsumersResource(context));
     config.register(new io.confluent.kafkarest.resources.v2.ConsumersResource(context));
+    config.register(new io.confluent.kafkarest.resources.v2.PartitionsResource(context));    
   }
 
   @Override

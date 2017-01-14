@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2017 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,31 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.HashMap;
 import java.util.Vector;
+import java.util.Collection;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.regex.Pattern;
 
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.entities.ConsumerOffsetCommitRequest;
+import io.confluent.kafkarest.entities.TopicPartitionOffsetMetadata;
+import io.confluent.kafkarest.entities.ConsumerSeekToRequest;
+import io.confluent.kafkarest.entities.ConsumerSeekToOffsetRequest;
+import io.confluent.kafkarest.entities.ConsumerAssignmentRequest;
+import io.confluent.kafkarest.entities.ConsumerCommittedRequest;
+import io.confluent.kafkarest.entities.ConsumerCommittedResponse;
+
 import kafka.serializer.Decoder;
 
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
 
 import io.confluent.kafkarest.*;
 
@@ -106,10 +121,28 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     lock.readLock().unlock();
   }
 
-  public List<TopicPartitionOffset> commitOffsets() {
+  public List<TopicPartitionOffset> commitOffsets(String async, ConsumerOffsetCommitRequest offsetCommitRequest) {
     lock.writeLock().lock();
     try {
-      consumer.commitSync();
+	if (offsetCommitRequest == null) {
+	    consumer.commitSync();
+	} else {
+	    Map<TopicPartition, OffsetAndMetadata> offsetMap = new HashMap<TopicPartition, OffsetAndMetadata>();
+
+	    
+	    //commit each given offset
+	    for(TopicPartitionOffsetMetadata t: offsetCommitRequest.offsets) {
+		if (t.getMetadata() == null) {
+		    offsetMap.put(new TopicPartition(t.getTopic(), t.getPartition()),
+				  new OffsetAndMetadata(t.getOffset()+1)   );
+		} else {
+		    offsetMap.put(new TopicPartition(t.getTopic(), t.getPartition()),
+				  new OffsetAndMetadata(t.getOffset()+1, t.getMetadata()) );				    
+		}
+
+	    }
+	    consumer.commitSync(offsetMap);			    
+	}
       List<TopicPartitionOffset> result = getOffsets(true);
       return result;
     } finally {
@@ -117,6 +150,72 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     }
   }
 
+  public void seekToBeginning(ConsumerSeekToRequest seekToRequest) {
+    lock.writeLock().lock();
+    try {
+	if (seekToRequest != null) {
+	    Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
+
+	    for(io.confluent.kafkarest.entities.TopicPartition t: seekToRequest.partitions) {
+		topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
+	    }
+	    consumer.seekToBeginning(topicPartitions);			    
+	}
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  public void seekToEnd(ConsumerSeekToRequest seekToRequest) {
+    lock.writeLock().lock();
+    try {
+	if (seekToRequest != null) {
+	    Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
+
+	    for(io.confluent.kafkarest.entities.TopicPartition t: seekToRequest.partitions) {
+		topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
+	    }
+	    consumer.seekToEnd(topicPartitions);			    
+	}
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  public void seekToOffset(ConsumerSeekToOffsetRequest seekToOffsetRequest) {
+    lock.writeLock().lock();
+    try {
+	if (seekToOffsetRequest != null) {
+	    Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
+
+	    for(TopicPartitionOffsetMetadata t: seekToOffsetRequest.offsets) {
+		TopicPartition topicPartition = new TopicPartition(t.getTopic(), t.getPartition());
+		consumer.seek(topicPartition, t.getOffset());
+	    }
+
+	}
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  public void assign(ConsumerAssignmentRequest assignmentRequest) {
+    lock.writeLock().lock();
+    try {
+	if (assignmentRequest != null) {
+	    Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
+
+	    for(io.confluent.kafkarest.entities.TopicPartition t: assignmentRequest.partitions) {
+		topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
+	    }
+	    consumer.assign(topicPartitions);			    
+	}
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+    
   public void close() {
     lock.writeLock().lock();
     try {
@@ -131,6 +230,89 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     }
   }
 
+
+  public void subscribe(ConsumerSubscriptionRecord subscription) {
+    if (subscription == null){
+	  return;
+    }
+    
+    lock.writeLock().lock();
+    try {
+	if (consumer != null) {
+	    if (subscription.topics != null) {
+		consumer.subscribe(subscription.topics);
+	    }
+	    else if (subscription.getTopicPattern() != null) {
+		Pattern topicPattern = Pattern.compile(subscription.getTopicPattern());
+		NoOpOnRebalance noOpOnRebalance = new NoOpOnRebalance();
+		    consumer.subscribe(topicPattern, noOpOnRebalance);		
+	    }
+	}
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  public void unsubscribe() {
+    lock.writeLock().lock();
+    try {
+	if (consumer != null) {
+	    consumer.unsubscribe();
+	}
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  public java.util.Set<String> subscription() {
+    java.util.Set<String> currSubscription = null;
+    lock.writeLock().lock();
+    try {
+	if (consumer != null) {
+	    currSubscription = consumer.subscription();
+	}
+    } finally {
+      lock.writeLock().unlock();
+    }
+    return currSubscription;
+  }
+    
+
+  public java.util.Set<TopicPartition> assignment() {
+    java.util.Set<TopicPartition> currAssignment = null;
+    lock.writeLock().lock();
+    try {
+	if (consumer != null) {
+	    currAssignment = consumer.assignment();
+	}
+    } finally {
+      lock.writeLock().unlock();
+    }
+    return currAssignment;
+  }
+    
+
+  public ConsumerCommittedResponse committed(ConsumerCommittedRequest request) {
+    ConsumerCommittedResponse response  = new ConsumerCommittedResponse();
+    response.offsets = new Vector<TopicPartitionOffsetMetadata>();
+    lock.writeLock().lock();
+    try {
+	if (consumer != null) {
+	    for (io.confluent.kafkarest.entities.TopicPartition t: request.partitions) {
+		TopicPartition partition = new TopicPartition(t.getTopic(), t.getPartition());
+		OffsetAndMetadata offsetMetadata = consumer.committed(partition);
+		if (offsetMetadata != null) {
+		    response.offsets.add(new TopicPartitionOffsetMetadata(partition.topic(), partition.partition(), offsetMetadata.offset(), offsetMetadata.metadata()));
+		}
+	    }
+	}
+    } finally {
+      lock.writeLock().unlock();
+    }
+    return response;
+  }
+    
+    
   public boolean expired(long nowMs) {
     return expiration <= nowMs;
   }
@@ -163,48 +345,21 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     }
   }
 
-  public KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> getOrCreateTopicState(String topic) {
-      //TBD
-      //return null; //FIX ME
-
-    // Try getting the topic only using the read lock
-    lock.readLock().lock();
-    try {
-      if (topics == null) {
-        return null;
-      }
-      KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> state = topics.get(topic);
-      if (state != null) {
-        return state;
-      }
-    } finally {
-      lock.readLock().unlock();
-    }
+    public KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> getOrCreateTopicState(String topic, long timeout) {
 
     lock.writeLock().lock();
     try {
       if (topics == null) {
         return null;
       }
-      KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> state = topics.get(topic);
-      if (state != null) {
-        return state;
+      if (topic != null) {
+	  Map<String, Integer> subscriptions = new TreeMap<String, Integer>();
+	  subscriptions.put(topic, 1);
+
+	  consumer.subscribe(Arrays.asList(topic));
       }
-
-      Map<String, Integer> subscriptions = new TreeMap<String, Integer>();
-      subscriptions.put(topic, 1);
-
-      consumer.subscribe(Arrays.asList(topic));
-      long timeout = 5000; //for testing
       ConsumerRecords<ClientK, ClientV> consumerRecords = consumer.poll(timeout);
-			 /*			 
-      Map<String, List<KafkaStream<KafkaK, KafkaV>>> streamsByTopic =
-          consumer.createMessageStreams(subscriptions, getKeyDecoder(), getValueDecoder());
-      KafkaStream<KafkaK, KafkaV> stream = streamsByTopic.get(topic).get(0);
-      state = new KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>(stream);
-      topics.put(topic, state);
-			 */
-      state = new KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>(consumerRecords);
+      KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>  state = new KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>(consumerRecords);
       return state;
 
     } finally {
@@ -214,7 +369,7 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
 
   /**
    * Gets a list of TopicPartitionOffsets describing the current state of consumer offsets, possibly
-   * updating the commmitted offset record. This method is not synchronized.
+   * updating the committed offset record. This method is not synchronized.
    *
    * @param updateCommitOffsets if true, updates committed offsets to be the same as the consumed
    *                            offsets.
@@ -247,4 +402,19 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     return result;
   }
 
+
+  private class NoOpOnRebalance implements ConsumerRebalanceListener {
+
+       public NoOpOnRebalance() {
+
+       }
+
+       public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+       }
+
+       public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+       }
+  }
+    
 }
+

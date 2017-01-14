@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2017 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,6 @@ public class BinaryKafkaConsumerState extends KafkaConsumerState<byte[], byte[],
                       + (record.value() != null ? record.value().length : 0);
       
       return new ConsumerRecordAndSize<byte[], byte[]>(
-              new BinaryConsumerRecord(record.key(), record.value(), record.partition(), record.offset()), approxSize);
+						       new BinaryConsumerRecord(record.topic(), record.key(), record.value(), record.partition(), record.offset()), approxSize);
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2017 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 public class KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> {
 
   private final Lock lock = new ReentrantLock();
-  //private final ConsumerRecords<KafkaK, KafkaV> stream;
   private final ConsumerRecords<ClientK, ClientV> stream;
   private final Map<Integer, Long> consumedOffsets;
   private final Map<Integer, Long> committedOffsets;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2017 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,15 @@ import io.confluent.kafkarest.UriUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
+import io.confluent.kafkarest.entities.ConsumerSubscriptionResponse;
+import io.confluent.kafkarest.entities.ConsumerOffsetCommitRequest;
+import io.confluent.kafkarest.entities.ConsumerSeekToRequest;
+import io.confluent.kafkarest.entities.ConsumerSeekToOffsetRequest;
+import io.confluent.kafkarest.entities.ConsumerAssignmentRequest;
+import io.confluent.kafkarest.entities.ConsumerAssignmentResponse;
+import io.confluent.kafkarest.entities.ConsumerCommittedRequest;
+import io.confluent.kafkarest.entities.ConsumerCommittedResponse;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.rest.annotations.PerformanceMetric;
@@ -90,12 +99,34 @@ public class ConsumersResource {
   @POST
   @Path("/{group}/instances/{instance}/subscription")
   @PerformanceMetric("consumer.subscribe+v2")
-  public void Subscribe(
+  public void subscribe( @javax.ws.rs.core.Context UriInfo uriInfo, 
 			 final @PathParam("group") String group,
-			 final @PathParam("instance") String instance) {
-      System.out.println("============ Calling v2 subscription ============");
+			 final @PathParam("instance") String instance,
+			 @Valid ConsumerSubscriptionRecord subscription
+			) {
+      ctx.getKafkaConsumerManager().subscribe(group, instance, subscription);      
   }
 
+  @GET
+  @Path("/{group}/instances/{instance}/subscription")
+  @PerformanceMetric("consumer.subscription+v2")
+  public ConsumerSubscriptionResponse subscription( @javax.ws.rs.core.Context UriInfo uriInfo, 
+			 final @PathParam("group") String group,
+			 final @PathParam("instance") String instance
+			) {
+      return ctx.getKafkaConsumerManager().subscription(group, instance);      
+  }
+
+  @DELETE
+  @Path("/{group}/instances/{instance}/subscription")
+  @PerformanceMetric("consumer.unsubscribe+v2")
+  public void unsubscribe( @javax.ws.rs.core.Context UriInfo uriInfo, 
+			 final @PathParam("group") String group,
+			 final @PathParam("instance") String instance
+			) {
+      ctx.getKafkaConsumerManager().unsubscribe(group, instance);      
+  }
+    
   @GET
   @Path("/{group}/instances/{instance}/records")
   @PerformanceMetric("consumer.records.read-binary+v2")
@@ -105,10 +136,9 @@ public class ConsumersResource {
   public void readRecordBinary(final @Suspended AsyncResponse asyncResponse,
                               final @PathParam("group") String group,
                               final @PathParam("instance") String instance,
+		              @QueryParam("timeout") @DefaultValue("-1") long timeout,
                               @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
-      System.out.println("============ Calling v2 readRecordBinary ===========");
-      String topic="test";
-      //readTopic(asyncResponse, group, instance, topic, maxBytes, BinaryKafkaConsumerState.class);
+      readRecords(asyncResponse, group, instance, timeout, maxBytes, BinaryKafkaConsumerState.class);
   }
 
   @GET
@@ -118,9 +148,9 @@ public class ConsumersResource {
   public void readRecordJson(final @Suspended AsyncResponse asyncResponse,
                             final @PathParam("group") String group,
                             final @PathParam("instance") String instance,
+		            @QueryParam("timeout") @DefaultValue("-1") long timeout,
                             @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
-      System.out.println("============ Calling v2 readRecordJson ===========");            
-      //readTopic(asyncResponse, group, instance, topic, maxBytes, JsonKafakaConsumerState.class);
+      readRecords(asyncResponse, group, instance, timeout, maxBytes, JsonKafkaConsumerState.class);      
   }
 
   @GET
@@ -130,11 +160,44 @@ public class ConsumersResource {
   public void readRecordAvro(final @Suspended AsyncResponse asyncResponse,
                             final @PathParam("group") String group,
                             final @PathParam("instance") String instance,
+                            @QueryParam("timeout") @DefaultValue("-1") long timeout,
                             @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
-      System.out.println("============ Calling v2 readRecordAvro ===========");            
-      //readTopic(asyncResponse, group, instance, topic, maxBytes, AvroKafkaConsumerState.class);
+      readRecords(asyncResponse, group, instance, timeout, maxBytes, AvroKafkaConsumerState.class);
   }
 
+  @POST
+  @Path("/{group}/instances/{instance}/offsets")
+  @PerformanceMetric("consumer.commit-offsets+v2")
+  public void commitOffsets(final @Suspended AsyncResponse asyncResponse,
+			 final @PathParam("group") String group,
+			 final @PathParam("instance") String instance,
+			 @QueryParam("async") @DefaultValue("false") String async, 
+			 @Valid ConsumerOffsetCommitRequest offsetCommitRequest
+			) {
+      ctx.getKafkaConsumerManager().commitOffsets(group, instance, async, offsetCommitRequest, new KafkaConsumerManager.CommitCallback() {
+      @Override
+      public void onCompletion(List<TopicPartitionOffset> offsets, Exception e) {
+        if (e != null) {
+          asyncResponse.resume(e);
+        } else {
+          asyncResponse.resume(offsets);
+        }
+      }
+    });
+					     
+  }
+
+  @GET
+  @Path("/{group}/instances/{instance}/offsets")
+  @PerformanceMetric("consumer.committed-offsets+v2")
+  public ConsumerCommittedResponse committedOffsets( 
+			 final @PathParam("group") String group,
+			 final @PathParam("instance") String instance,
+			 @Valid ConsumerCommittedRequest request
+			) {
+      return ctx.getKafkaConsumerManager().committed(group, instance, request);
+  }
+    
   @GET
   @Path("/{group}/instances/{instance}/topics/{topic}")
   @PerformanceMetric("consumer.topic.read-binary+v2")
@@ -173,6 +236,59 @@ public class ConsumersResource {
     readTopic(asyncResponse, group, instance, topic, maxBytes, AvroKafkaConsumerState.class);
   }
 
+  @POST
+  @Path("/{group}/instances/{instance}/positions/beginning")
+  @PerformanceMetric("consumer.seek-to-beginning+v2")
+  public void seekToBeginning( @javax.ws.rs.core.Context UriInfo uriInfo, 
+			 final @PathParam("group") String group,
+			 final @PathParam("instance") String instance,
+			 @Valid ConsumerSeekToRequest seekToRequest
+			) {
+      ctx.getKafkaConsumerManager().seekToBeginning(group, instance, seekToRequest);      
+  }
+
+  @POST
+  @Path("/{group}/instances/{instance}/positions/end")
+  @PerformanceMetric("consumer.seek-to-end+v2")
+  public void seekToEnd( @javax.ws.rs.core.Context UriInfo uriInfo, 
+			 final @PathParam("group") String group,
+			 final @PathParam("instance") String instance,
+			 @Valid ConsumerSeekToRequest seekToRequest
+			) {
+      ctx.getKafkaConsumerManager().seekToEnd(group, instance, seekToRequest);      
+  }
+
+  @POST
+  @Path("/{group}/instances/{instance}/positions")
+  @PerformanceMetric("consumer.seek-to-offset+v2")
+  public void seekToOffset( @javax.ws.rs.core.Context UriInfo uriInfo, 
+			 final @PathParam("group") String group,
+			 final @PathParam("instance") String instance,
+			 @Valid ConsumerSeekToOffsetRequest seekToOffsetRequest
+			) {
+      ctx.getKafkaConsumerManager().seekToOffset(group, instance, seekToOffsetRequest);      
+  }
+
+  @POST
+  @Path("/{group}/instances/{instance}/assignments")
+  @PerformanceMetric("consumer.assign+v2")
+  public void assign( @javax.ws.rs.core.Context UriInfo uriInfo, 
+			 final @PathParam("group") String group,
+			 final @PathParam("instance") String instance,
+			 @Valid ConsumerAssignmentRequest assignmentRequest
+			) {
+      ctx.getKafkaConsumerManager().assign(group, instance, assignmentRequest);      
+  }
+
+  @GET
+  @Path("/{group}/instances/{instance}/assignments")
+  @PerformanceMetric("consumer.assignment+v2")
+  public ConsumerAssignmentResponse assignment( @javax.ws.rs.core.Context UriInfo uriInfo, 
+			 final @PathParam("group") String group,
+			 final @PathParam("instance") String instance
+			) {
+      return ctx.getKafkaConsumerManager().assignment(group, instance);      
+  }
     
   private <KafkaK, KafkaV, ClientK, ClientV> void readTopic(
       final @Suspended AsyncResponse asyncResponse,
@@ -196,6 +312,31 @@ public class ConsumersResource {
           }
         });
   }
-
+ 
+ 
+  private <KafkaK, KafkaV, ClientK, ClientV> void readRecords(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      @QueryParam("timeout") @DefaultValue("-1") long timeout,      
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes,
+      Class<? extends KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>> consumerStateType) {
+    maxBytes = (maxBytes <= 0) ? Long.MAX_VALUE : maxBytes;
+    
+    ctx.getKafkaConsumerManager().readRecords(
+        group, instance, consumerStateType, timeout, maxBytes,
+        new KafkaConsumerManager.ReadCallback<ClientK, ClientV>() {
+          @Override
+          public void onCompletion(List<? extends ConsumerRecord<ClientK, ClientV>> records,
+                                   Exception e) {
+            if (e != null) {
+              asyncResponse.resume(e);
+            } else {
+              asyncResponse.resume(records);
+            }
+          }
+        });
+   
+  }
     
 }

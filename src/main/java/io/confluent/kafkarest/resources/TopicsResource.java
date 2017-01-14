@@ -46,9 +46,9 @@ import java.util.Vector;
 
 @Path("/topics")
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
-           Versions.JSON_WEIGHTED})
+	    Versions.JSON_WEIGHTED, Versions.KAFKA_V2_JSON_WEIGHTED })
 @Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
-           Versions.GENERIC_REQUEST})
+	    Versions.GENERIC_REQUEST, Versions.KAFKA_V2_JSON })
 public class TopicsResource {
 
   private final Context ctx;
@@ -78,7 +78,8 @@ public class TopicsResource {
   @Path("/{topic}")
   @PerformanceMetric("topic.produce-binary")
   @Consumes({Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON,
-             Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST})
+	      Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST,
+	      Versions.KAFKA_V2_JSON_BINARY, Versions.KAFKA_V2_JSON})
   public void produceBinary(final @Suspended AsyncResponse asyncResponse,
                             @PathParam("topic") String topicName,
                             @Valid TopicProduceRequest<BinaryTopicProduceRecord> request) {
@@ -88,7 +89,7 @@ public class TopicsResource {
   @POST
   @Path("/{topic}")
   @PerformanceMetric("topic.produce-json")
-  @Consumes({Versions.KAFKA_V1_JSON_JSON})
+  @Consumes({Versions.KAFKA_V1_JSON_JSON, Versions.KAFKA_V2_JSON_JSON})
   public void produceJson(final @Suspended AsyncResponse asyncResponse,
                           @PathParam("topic") String topicName,
                           @Valid TopicProduceRequest<JsonTopicProduceRecord> request) {
@@ -98,7 +99,7 @@ public class TopicsResource {
   @POST
   @Path("/{topic}")
   @PerformanceMetric("topic.produce-avro")
-  @Consumes({Versions.KAFKA_V1_JSON_AVRO})
+  @Consumes({Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V2_JSON_AVRO})
   public void produceAvro(final @Suspended AsyncResponse asyncResponse,
                           @PathParam("topic") String topicName,
                           @Valid TopicProduceRequest<AvroTopicProduceRecord> request) {
