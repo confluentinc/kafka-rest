@@ -139,7 +139,7 @@ public class ProducerPool {
     List<Broker> brokers = JavaConversions.seqAsJavaList(brokerSeq);
     String bootstrapBrokers = "";
     for (int i = 0; i < brokers.size(); i++) {
-      for(EndPoint ep : JavaConversions.asJavaCollection(brokers.get(i).endPoints().values())) {
+      for(EndPoint ep : JavaConversions.asJavaCollection(brokers.get(i).endPoints())) {
         if (bootstrapBrokers.length() > 0) {
           bootstrapBrokers += ",";
         }
