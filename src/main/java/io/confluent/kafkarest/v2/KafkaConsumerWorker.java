@@ -49,20 +49,6 @@ public class KafkaConsumerWorker extends Thread {
   }
 
   public synchronized <KafkaK, KafkaV, ClientK, ClientV>
-  Future readTopic(KafkaConsumerState state, String topic, long maxBytes,
-		   ConsumerWorkerReadCallback<ClientK, ClientV> callback) {
-    log.trace("KafkaConsumer worker " + this.toString() + " reading topic " + topic
-              + " for " + state.getId());
-    KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV> task
-        = new KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>(state, topic,  -1, maxBytes, callback);
-    if (!task.isDone()) {
-      tasks.add(task);
-      this.notifyAll();
-    }
-    return task;
-  }
-
-  public synchronized <KafkaK, KafkaV, ClientK, ClientV>
   Future readRecords(KafkaConsumerState state, long timeout, long maxBytes,
 		   ConsumerWorkerReadCallback<ClientK, ClientV> callback) {
     log.trace("KafkaConsumer worker " + this.toString()  + " for " + state.getId());

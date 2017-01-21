@@ -249,59 +249,6 @@ public class KafkaConsumerManager {
     public void onCompletion(List<? extends ConsumerRecord<K, V>> records, Exception e);
   }
 
-  // The parameter consumerStateType works around type erasure, allowing us to verify at runtime
-  // that the KafkaConsumerState we looked up is of the expected type and will therefore contain the
-  // correct decoders
-  public <KafkaK, KafkaV, ClientK, ClientV>
-  Future readTopic(final String group, final String instance, final String topic,
-                   Class<? extends KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>> consumerStateType,
-                   final long maxBytes, final ReadCallback callback) {
-    final KafkaConsumerState state;
-    try {
-      state = getConsumerInstance(group, instance);
-    } catch (RestNotFoundException e) {
-      callback.onCompletion(null, e);
-      return null;
-    }
-
-    if (!consumerStateType.isInstance(state)) {
-      callback.onCompletion(null, Errors.consumerFormatMismatch());
-      return null;
-    }
-
-    // Consumer will try reading even if it doesn't exist, so we need to check this explicitly.
-    if (!mdObserver.topicExists(topic)) {
-      callback.onCompletion(null, Errors.topicNotFoundException());
-      return null;
-    }
-
-    int workerId = nextWorker.getAndIncrement() % workers.size();
-    KafkaConsumerWorker worker = workers.get(workerId);
-    return worker.readTopic(
-        state, topic, maxBytes,
-        new ConsumerWorkerReadCallback<ClientK, ClientV>() {
-          @Override
-          public void onCompletion(
-              List<? extends ConsumerRecord<ClientK, ClientV>> records, Exception e) {
-            updateExpiration(state);
-            if (e != null) {
-              // Ensure caught exceptions are converted to RestExceptions so the user gets a
-              // nice error message. Currently we don't define any more specific errors because
-              // the old consumer interface doesn't classify the errors well like the new
-              // consumer does. When the new consumer is available we may be able to update this
-              // to provide better feedback to the user.
-              Exception responseException = e;
-              if (!(e instanceof RestException)) {
-                responseException = Errors.kafkaErrorException(e);
-              }
-              callback.onCompletion(null, responseException);
-            } else {
-              callback.onCompletion(records, null);
-            }
-          }
-        }
-    );
-  }
 
   // The parameter consumerStateType works around type erasure, allowing us to verify at runtime
   // that the KafkaConsumerState we looked up is of the expected type and will therefore contain the

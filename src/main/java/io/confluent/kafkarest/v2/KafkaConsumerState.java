@@ -62,10 +62,10 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   private Consumer consumer;
   private Map<String, KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>> topics;
   private long expiration;
-  // A read/write lock on the KafkaConsumerState allows concurrent readTopic calls, but allows
+  // A read/write lock on the KafkaConsumerState allows concurrent readRecord calls, but allows
   // commitOffsets to safely lock the entire state in order to get correct information about all
   // the topic/stream's current offset state. All operations on individual TopicStates must be
-  // synchronized at that level as well (so, e.g., readTopic may modify a single TopicState, but
+  // synchronized at that level as well (so, e.g., readRecord may modify a single TopicState, but
   // only needs read access to the KafkaConsumerState).
   private ReadWriteLock lock;
 
@@ -125,7 +125,12 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     lock.writeLock().lock();
     try {
 	if (offsetCommitRequest == null) {
-	    consumer.commitSync();
+	    if (async == null) {
+		consumer.commitSync();
+	    }
+	    else {
+		consumer.commitAsync();		
+	    }
 	} else {
 	    Map<TopicPartition, OffsetAndMetadata> offsetMap = new HashMap<TopicPartition, OffsetAndMetadata>();
 

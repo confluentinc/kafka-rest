@@ -38,6 +38,7 @@ import io.confluent.kafkarest.v2.JsonKafkaConsumerState;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 
 import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.UriUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
@@ -104,7 +105,12 @@ public class ConsumersResource {
 			 final @PathParam("instance") String instance,
 			 @Valid ConsumerSubscriptionRecord subscription
 			) {
-      ctx.getKafkaConsumerManager().subscribe(group, instance, subscription);      
+      try {
+	  ctx.getKafkaConsumerManager().subscribe(group, instance, subscription);
+      } catch(java.lang.IllegalStateException e) {
+	  throw Errors.illegalStateException(e);	  
+      } 
+   
   }
 
   @GET
@@ -195,47 +201,12 @@ public class ConsumersResource {
 			 final @PathParam("instance") String instance,
 			 @Valid ConsumerCommittedRequest request
 			) {
+      if (request == null) {
+	  throw Errors.partitionNotFoundException();
+      }
       return ctx.getKafkaConsumerManager().committed(group, instance, request);
   }
     
-  @GET
-  @Path("/{group}/instances/{instance}/topics/{topic}")
-  @PerformanceMetric("consumer.topic.read-binary+v2")
-  @Produces({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED,
-             Versions.KAFKA_V2_JSON_WEIGHTED
-	      })
-  public void readTopicBinary(final @Suspended AsyncResponse asyncResponse,
-                              final @PathParam("group") String group,
-                              final @PathParam("instance") String instance,
-                              final @PathParam("topic") String topic,
-                              @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
-    readTopic(asyncResponse, group, instance, topic, maxBytes, BinaryKafkaConsumerState.class);
-  }
-
-  @GET
-  @Path("/{group}/instances/{instance}/topics/{topic}")
-  @PerformanceMetric("consumer.topic.read-json+v2")
-  @Produces({Versions.KAFKA_V2_JSON_JSON_WEIGHTED_LOW}) // Using low weight ensures binary is default
-  public void readTopicJson(final @Suspended AsyncResponse asyncResponse,
-                            final @PathParam("group") String group,
-                            final @PathParam("instance") String instance,
-                            final @PathParam("topic") String topic,
-                            @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
-    readTopic(asyncResponse, group, instance, topic, maxBytes, JsonKafkaConsumerState.class);
-  }
-
-  @GET
-  @Path("/{group}/instances/{instance}/topics/{topic}")
-  @PerformanceMetric("consumer.topic.read-avro+v2")
-  @Produces({Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW}) // Using low weight ensures binary is default
-  public void readTopicAvro(final @Suspended AsyncResponse asyncResponse,
-                            final @PathParam("group") String group,
-                            final @PathParam("instance") String instance,
-                            final @PathParam("topic") String topic,
-                            @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
-    readTopic(asyncResponse, group, instance, topic, maxBytes, AvroKafkaConsumerState.class);
-  }
-
   @POST
   @Path("/{group}/instances/{instance}/positions/beginning")
   @PerformanceMetric("consumer.seek-to-beginning+v2")
@@ -244,7 +215,12 @@ public class ConsumersResource {
 			 final @PathParam("instance") String instance,
 			 @Valid ConsumerSeekToRequest seekToRequest
 			) {
-      ctx.getKafkaConsumerManager().seekToBeginning(group, instance, seekToRequest);      
+      try {
+	  ctx.getKafkaConsumerManager().seekToBeginning(group, instance, seekToRequest);
+      } catch(java.lang.IllegalStateException e) {
+	  throw Errors.illegalStateException(e);	  
+      } 
+
   }
 
   @POST
@@ -255,7 +231,12 @@ public class ConsumersResource {
 			 final @PathParam("instance") String instance,
 			 @Valid ConsumerSeekToRequest seekToRequest
 			) {
-      ctx.getKafkaConsumerManager().seekToEnd(group, instance, seekToRequest);      
+      try {
+	  ctx.getKafkaConsumerManager().seekToEnd(group, instance, seekToRequest);
+      } catch(java.lang.IllegalStateException e) {
+	  throw Errors.illegalStateException(e);	  
+      } 
+      
   }
 
   @POST
@@ -266,7 +247,12 @@ public class ConsumersResource {
 			 final @PathParam("instance") String instance,
 			 @Valid ConsumerSeekToOffsetRequest seekToOffsetRequest
 			) {
-      ctx.getKafkaConsumerManager().seekToOffset(group, instance, seekToOffsetRequest);      
+      try {
+	  ctx.getKafkaConsumerManager().seekToOffset(group, instance, seekToOffsetRequest);
+      } catch(java.lang.IllegalStateException e) {
+	  throw Errors.illegalStateException(e);	  
+      } 
+      
   }
 
   @POST
@@ -277,7 +263,12 @@ public class ConsumersResource {
 			 final @PathParam("instance") String instance,
 			 @Valid ConsumerAssignmentRequest assignmentRequest
 			) {
-      ctx.getKafkaConsumerManager().assign(group, instance, assignmentRequest);      
+      try {      
+	  ctx.getKafkaConsumerManager().assign(group, instance, assignmentRequest);
+      } catch(java.lang.IllegalStateException e) {
+	  throw Errors.illegalStateException(e);	  
+      } 
+	  
   }
 
   @GET
@@ -290,29 +281,6 @@ public class ConsumersResource {
       return ctx.getKafkaConsumerManager().assignment(group, instance);      
   }
     
-  private <KafkaK, KafkaV, ClientK, ClientV> void readTopic(
-      final @Suspended AsyncResponse asyncResponse,
-      final @PathParam("group") String group,
-      final @PathParam("instance") String instance,
-      final @PathParam("topic") String topic,
-      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes,
-      Class<? extends KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>> consumerStateType) {
-    maxBytes = (maxBytes <= 0) ? Long.MAX_VALUE : maxBytes;
-    ctx.getKafkaConsumerManager().readTopic(
-        group, instance, topic, consumerStateType, maxBytes,
-        new KafkaConsumerManager.ReadCallback<ClientK, ClientV>() {
-          @Override
-          public void onCompletion(List<? extends ConsumerRecord<ClientK, ClientV>> records,
-                                   Exception e) {
-            if (e != null) {
-              asyncResponse.resume(e);
-            } else {
-              asyncResponse.resume(records);
-            }
-          }
-        });
-  }
- 
  
   private <KafkaK, KafkaV, ClientK, ClientV> void readRecords(
       final @Suspended AsyncResponse asyncResponse,
