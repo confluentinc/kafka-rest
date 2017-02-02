@@ -43,6 +43,11 @@ public class KafkaRestConfig extends RestConfig {
       + " hostname is used";
   public static final String HOST_NAME_DEFAULT = "";
 
+  public static final String EXTERNAL_PORT_CONFIG = "external.port";
+  private static final String EXTERNAL_PORT_DOC =
+          "The external, or host-side, port corresponding to the internal, or container-side, port with value PORT";
+  public static final int EXTERNAL_PORT_DEFAULT = -1;
+
   public static final String ZOOKEEPER_CONNECT_CONFIG = "zookeeper.connect";
   private static final String
       ZOOKEEPER_CONNECT_DOC =
@@ -153,6 +158,7 @@ public class KafkaRestConfig extends RestConfig {
                         METRICS_JMX_PREFIX_DEFAULT_OVERRIDE, Importance.LOW, METRICS_JMX_PREFIX_DOC)
         .define(ID_CONFIG, Type.STRING, ID_DEFAULT, Importance.HIGH, ID_CONFIG_DOC)
         .define(HOST_NAME_CONFIG, Type.STRING, HOST_NAME_DEFAULT, Importance.MEDIUM, HOST_NAME_DOC)
+        .define(EXTERNAL_PORT_CONFIG, Type.INT, EXTERNAL_PORT_DEFAULT, Importance.LOW, EXTERNAL_PORT_DOC)
         .define(ZOOKEEPER_CONNECT_CONFIG, Type.STRING, ZOOKEEPER_CONNECT_DEFAULT,
                 Importance.HIGH, ZOOKEEPER_CONNECT_DOC)
         .define(SCHEMA_REGISTRY_URL_CONFIG, Type.STRING, SCHEMA_REGISTRY_URL_DEFAULT,
