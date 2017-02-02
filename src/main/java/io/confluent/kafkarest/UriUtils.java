@@ -36,6 +36,10 @@ public class UriUtils {
       if (origAbsoluteUri.getPort() != -1) {
         builder.port(config.getInt(KafkaRestConfig.PORT_CONFIG));
       }
+      int externalPort = config.getInt(KafkaRestConfig.EXTERNAL_PORT_CONFIG);
+      if (externalPort != -1) {
+        builder.port(externalPort);
+      }
     }
     return builder;
   }
