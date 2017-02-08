@@ -30,6 +30,8 @@ import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
 import io.confluent.rest.annotations.PerformanceMetric;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -49,6 +51,7 @@ import java.util.Vector;
            Versions.JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
            Versions.GENERIC_REQUEST})
+@Api("topic")
 public class TopicsResource {
 
   private final Context ctx;
@@ -59,6 +62,10 @@ public class TopicsResource {
 
   @GET
   @PerformanceMetric("topics.list")
+  @ApiOperation(value = "List topics",
+    notes = "Returns full list of all known topics.",
+    response = String.class,
+    responseContainer = "List")
   public Collection<String> list() {
     return ctx.getMetadataObserver().getTopicNames();
   }
@@ -66,6 +73,9 @@ public class TopicsResource {
   @GET
   @Path("/{topic}")
   @PerformanceMetric("topic.get")
+  @ApiOperation(value = "Get topic",
+    notes = "Returns topic name, config and partition count.",
+    response = Topic.class)
   public Topic getTopic(@PathParam("topic") String topicName) {
     Topic topic = ctx.getMetadataObserver().getTopic(topicName);
     if (topic == null) {
@@ -83,16 +93,6 @@ public class TopicsResource {
                             @PathParam("topic") String topicName,
                             @Valid TopicProduceRequest<BinaryTopicProduceRecord> request) {
     produce(asyncResponse, topicName, EmbeddedFormat.BINARY, request);
-  }
-
-  @POST
-  @Path("/{topic}")
-  @PerformanceMetric("topic.produce-json")
-  @Consumes({Versions.KAFKA_V1_JSON_JSON})
-  public void produceJson(final @Suspended AsyncResponse asyncResponse,
-                          @PathParam("topic") String topicName,
-                          @Valid TopicProduceRequest<JsonTopicProduceRecord> request) {
-    produce(asyncResponse, topicName, EmbeddedFormat.JSON, request);
   }
 
   @POST
@@ -117,6 +117,19 @@ public class TopicsResource {
     }
 
     produce(asyncResponse, topicName, EmbeddedFormat.AVRO, request);
+  }
+
+  @POST
+  @Path("/{topic}")
+  @PerformanceMetric("topic.produce-json")
+  @Consumes({Versions.KAFKA_V1_JSON_JSON})
+  @ApiOperation(value = "Produce to a topic",
+    notes = "Produce messages to given topic.",
+    response = ProduceResponse.class)
+  public void produceJson(final @Suspended AsyncResponse asyncResponse,
+                          @PathParam("topic") String topicName,
+                          @Valid TopicProduceRequest<JsonTopicProduceRecord> request) {
+    produce(asyncResponse, topicName, EmbeddedFormat.JSON, request);
   }
 
   public <K, V, R extends TopicProduceRecord<K, V>> void produce(
