@@ -22,6 +22,9 @@ import io.confluent.common.config.ConfigDef.Importance;
 import io.confluent.common.config.ConfigDef.Type;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
+import org.apache.kafka.common.protocol.SecurityProtocol;
+
+import static io.confluent.common.config.ConfigDef.Range.atLeast;
 
 /**
  * Settings for the REST proxy server.
@@ -69,7 +72,7 @@ public class KafkaRestConfig extends RestConfig {
       + "in case a server is down).";
 
   public static final String BOOTSTRAP_SERVERS_DEFAULT = "PLAINTEXT://localhost:9092";
-
+  public static final String KAFKASTORE_CONNECTION_URL_DEFAULT = "localhost:2181";
   public static final String SCHEMA_REGISTRY_URL_CONFIG = "schema.registry.url";
   private static final String SCHEMA_REGISTRY_URL_DOC =
       "The base URL for the schema registry that should be used by the Avro serializer.";
@@ -148,6 +151,130 @@ public class KafkaRestConfig extends RestConfig {
 
   private static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka.rest";
 
+  public static final String KAFKASTORE_CONNECTION_URL_CONFIG = "kafkastore.connection.url";
+  public static final String KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG = "kafkastore.bootstrap.servers";
+  /**
+   * <code>kafkastore.zk.session.timeout.ms</code>
+   */
+  public static final String KAFKASTORE_ZK_SESSION_TIMEOUT_MS_CONFIG
+      = "kafkastore.zk.session.timeout.ms";
+  public static final String KAFKASTORE_TIMEOUT_CONFIG = "kafkastore.timeout.ms";
+  /**
+   * <code>kafkastore.init.timeout.ms</code>
+   */
+  public static final String KAFKASTORE_INIT_TIMEOUT_CONFIG = "kafkastore.init.timeout.ms";
+
+  public static final String ZOOKEEPER_SET_ACL_CONFIG = "zookeeper.set.acl";
+  public static final String KAFKASTORE_SECURITY_PROTOCOL_CONFIG =
+      "kafkastore.security.protocol";
+  public static final String KAFKASTORE_SSL_TRUSTSTORE_LOCATION_CONFIG =
+      "kafkastore.ssl.truststore.location";
+  public static final String KAFKASTORE_SSL_TRUSTSTORE_PASSWORD_CONFIG =
+      "kafkastore.ssl.truststore.password";
+  public static final String KAFKASTORE_SSL_KEYSTORE_LOCATION_CONFIG =
+      "kafkastore.ssl.keystore.location";
+  public static final String KAFKASTORE_SSL_TRUSTSTORE_TYPE_CONFIG =
+          "kafkastore.ssl.truststore.type";
+  public static final String KAFKASTORE_SSL_TRUSTMANAGER_ALGORITHM_CONFIG =
+          "kafkastore.ssl.trustmanager.algorithm";
+  public static final String KAFKASTORE_SSL_KEYSTORE_PASSWORD_CONFIG =
+      "kafkastore.ssl.keystore.password";
+  public static final String KAFKASTORE_SSL_KEYSTORE_TYPE_CONFIG =
+          "kafkastore.ssl.keystore.type";
+  public static final String KAFKASTORE_SSL_KEYMANAGER_ALGORITHM_CONFIG =
+          "kafkastore.ssl.keymanager.algorithm";
+  public static final String KAFKASTORE_SSL_KEY_PASSWORD_CONFIG =
+      "kafkastore.ssl.key.password";
+  public static final String KAFKASTORE_SSL_ENABLED_PROTOCOLS_CONFIG =
+      "kafkastore.ssl.enabled.protocols";
+  public static final String KAFKASTORE_SSL_PROTOCOL_CONFIG =
+      "kafkastore.ssl.protocol";
+  public static final String KAFKASTORE_SSL_PROVIDER_CONFIG =
+      "kafkastore.ssl.provider";
+  public static final String KAFKASTORE_SSL_CIPHER_SUITES_CONFIG =
+      "kafkastore.ssl.cipher.suites";
+  public static final String KAFKASTORE_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG =
+      "kafkastore.ssl.endpoint.identification.algorithm";
+  public static final String KAFKASTORE_SASL_KERBEROS_SERVICE_NAME_CONFIG =
+      "kafkastore.sasl.kerberos.service.name";
+  public static final String KAFKASTORE_SASL_MECHANISM_CONFIG =
+      "kafkastore.sasl.mechanism";
+  public static final String KAFKASTORE_SASL_KERBEROS_KINIT_CMD_CONFIG =
+      "kafkastore.sasl.kerberos.kinit.cmd";
+  public static final String KAFKASTORE_SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN_CONFIG =
+      "kafkastore.sasl.kerberos.min.time.before.relogin";
+  public static final String KAFKASTORE_SASL_KERBEROS_TICKET_RENEW_JITTER_CONFIG =
+      "kafkastore.sasl.kerberos.ticket.renew.jitter";
+  public static final String KAFKASTORE_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_CONFIG =
+      "kafkastore.sasl.kerberos.ticket.renew.window.factor";
+
+  protected static final String KAFKASTORE_CONNECTION_URL_DOC =
+      "Zookeeper url for the Kafka cluster";
+  protected static final String KAFKASTORE_BOOTSTRAP_SERVERS_DOC =
+      "A list of Kafka brokers to connect to. For example, `PLAINTEXT://hostname:9092,SSL://hostname2:9092`\n"
+      + "\n"
+      + "If this configuration is not specified, the Schema Registry's internal Kafka clients will get their Kafka bootstrap server list\n"
+      + "from ZooKeeper (configured with `kafkastore.connection.url`). Note that if `kafkastore.bootstrap.servers` is configured,\n"
+      + "`kafkastore.connection.url` still needs to be configured, too.\n"
+      + "\n"
+      + "This configuration is particularly important when Kafka security is enabled, because Kafka may expose multiple endpoints that\n"
+      + "all will be stored in ZooKeeper, but the Schema Registry may need to be configured with just one of those endpoints.";
+  protected static final String KAFKASTORE_ZK_SESSION_TIMEOUT_MS_DOC =
+      "Zookeeper session timeout";
+  protected static final String KAFKASTORE_INIT_TIMEOUT_DOC =
+      "The timeout for initialization of the Kafka store, including creation of the Kafka topic "
+      + "that stores schema data.";
+  protected static final String KAFKASTORE_TIMEOUT_DOC =
+      "The timeout for an operation on the Kafka store";
+  protected static final String ZOOKEEPER_SET_ACL_DOC =
+      "Whether or not to set an ACL in ZooKeeper when znodes are created and ZooKeeper SASL authentication is "
+      + "configured. IMPORTANT: if set to `true`, the SASL principal must be the same as the Kafka brokers.";
+  protected static final String KAFKASTORE_SECURITY_PROTOCOL_DOC =
+      "The security protocol to use when connecting with Kafka, the underlying persistent storage. "
+      + "Values can be `PLAINTEXT`, `SSL`, `SASL_PLAINTEXT`, or `SASL_SSL`.";
+  protected static final String KAFKASTORE_SSL_TRUSTSTORE_LOCATION_DOC =
+      "The location of the SSL trust store file.";
+  protected static final String KAFKASTORE_SSL_TRUSTSTORE_PASSWORD_DOC =
+      "The password to access the trust store.";
+  protected static final String KAFAKSTORE_SSL_TRUSTSTORE_TYPE_DOC =
+      "The file format of the trust store.";
+  protected static final String KAFKASTORE_SSL_TRUSTMANAGER_ALGORITHM_DOC =
+      "The algorithm used by the trust manager factory for SSL connections.";
+  protected static final String KAFKASTORE_SSL_KEYSTORE_LOCATION_DOC =
+      "The location of the SSL keystore file.";
+  protected static final String KAFKASTORE_SSL_KEYSTORE_PASSWORD_DOC =
+      "The password to access the keystore.";
+  protected static final String KAFAKSTORE_SSL_KEYSTORE_TYPE_DOC =
+      "The file format of the keystore.";
+  protected static final String KAFKASTORE_SSL_KEYMANAGER_ALGORITHM_DOC =
+      "The algorithm used by key manager factory for SSL connections.";
+  protected static final String KAFKASTORE_SSL_KEY_PASSWORD_DOC =
+      "The password of the key contained in the keystore.";
+  protected static final String KAFAKSTORE_SSL_ENABLED_PROTOCOLS_DOC =
+      "Protocols enabled for SSL connections.";
+  protected static final String KAFAKSTORE_SSL_PROTOCOL_DOC =
+      "The SSL protocol used.";
+  protected static final String KAFAKSTORE_SSL_PROVIDER_DOC =
+      "The name of the security provider used for SSL.";
+  protected static final String KAFKASTORE_SSL_CIPHER_SUITES_DOC =
+      "A list of cipher suites used for SSL.";
+  protected static final String KAFKASTORE_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_DOC =
+      "The endpoint identification algorithm to validate the server hostname using the server certificate.";
+  public static final String KAFKASTORE_SASL_KERBEROS_SERVICE_NAME_DOC =
+      "The Kerberos principal name that the Kafka client runs as. This can be defined either in the JAAS "
+      + "config file or here.";
+  public static final String KAFKASTORE_SASL_MECHANISM_DOC =
+      "The SASL mechanism used for Kafka connections. GSSAPI is the default.";
+  public static final String KAFKASTORE_SASL_KERBEROS_KINIT_CMD_DOC =
+      "The Kerberos kinit command path.";
+  public static final String KAFKASTORE_SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN_DOC =
+      "The login time between refresh attempts.";
+  public static final String KAFKASTORE_SASL_KERBEROS_TICKET_RENEW_JITTER_DOC =
+      "The percentage of random jitter added to the renewal time.";
+  public static final String KAFKASTORE_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_DOC =
+      "Login thread will sleep until the specified window factor of time from last refresh to ticket's expiry has "
+      + "been reached, at which time it will try to renew the ticket.";
+  private static final boolean ZOOKEEPER_SET_ACL_DEFAULT = false;
   private static final ConfigDef config;
 
   static {
@@ -190,7 +317,81 @@ public class KafkaRestConfig extends RestConfig {
         .define(SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG, Type.INT, SIMPLE_CONSUMER_MAX_POOL_SIZE_DEFAULT,
                 Importance.MEDIUM, SIMPLE_CONSUMER_MAX_POOL_SIZE_DOC)
         .define(SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG, Type.INT, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT,
-                Importance.LOW, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC);
+                Importance.LOW, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC)
+        .define(KAFKASTORE_CONNECTION_URL_CONFIG, ConfigDef.Type.STRING, KAFKASTORE_CONNECTION_URL_DEFAULT,
+		ConfigDef.Importance.HIGH, KAFKASTORE_CONNECTION_URL_DOC)
+        .define(KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, ConfigDef.Type.LIST, "", ConfigDef.Importance.MEDIUM,
+                KAFKASTORE_CONNECTION_URL_DOC)
+        .define(KAFKASTORE_ZK_SESSION_TIMEOUT_MS_CONFIG, ConfigDef.Type.INT, 30000, atLeast(0),
+                ConfigDef.Importance.LOW, KAFKASTORE_ZK_SESSION_TIMEOUT_MS_DOC)
+        .define(KAFKASTORE_INIT_TIMEOUT_CONFIG, ConfigDef.Type.INT, 60000, atLeast(0),
+                ConfigDef.Importance.MEDIUM, KAFKASTORE_INIT_TIMEOUT_DOC)
+        .define(KAFKASTORE_TIMEOUT_CONFIG, ConfigDef.Type.INT, 500, atLeast(0),
+                ConfigDef.Importance.MEDIUM, KAFKASTORE_TIMEOUT_DOC)
+        .define(KAFKASTORE_SECURITY_PROTOCOL_CONFIG, ConfigDef.Type.STRING,
+                SecurityProtocol.PLAINTEXT.toString(), ConfigDef.Importance.MEDIUM,
+                KAFKASTORE_SECURITY_PROTOCOL_DOC)
+        .define(KAFKASTORE_SSL_TRUSTSTORE_LOCATION_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.HIGH,
+                KAFKASTORE_SSL_TRUSTSTORE_LOCATION_DOC)
+        .define(KAFKASTORE_SSL_TRUSTSTORE_PASSWORD_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.HIGH,
+                KAFKASTORE_SSL_TRUSTSTORE_PASSWORD_DOC)
+        .define(KAFKASTORE_SSL_TRUSTSTORE_TYPE_CONFIG, ConfigDef.Type.STRING,
+                "JKS", ConfigDef.Importance.MEDIUM,
+                KAFAKSTORE_SSL_TRUSTSTORE_TYPE_DOC)
+        .define(KAFKASTORE_SSL_TRUSTMANAGER_ALGORITHM_CONFIG, ConfigDef.Type.STRING,
+                "PKIX", ConfigDef.Importance.LOW,
+                KAFKASTORE_SSL_TRUSTMANAGER_ALGORITHM_DOC)
+        .define(KAFKASTORE_SSL_KEYSTORE_LOCATION_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.HIGH,
+                KAFKASTORE_SSL_KEYSTORE_LOCATION_DOC)
+        .define(KAFKASTORE_SSL_KEYSTORE_PASSWORD_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.HIGH,
+                KAFKASTORE_SSL_KEYSTORE_PASSWORD_DOC)
+        .define(KAFKASTORE_SSL_KEYSTORE_TYPE_CONFIG, ConfigDef.Type.STRING,
+                "JKS", ConfigDef.Importance.MEDIUM,
+                KAFAKSTORE_SSL_KEYSTORE_TYPE_DOC)
+        .define(KAFKASTORE_SSL_KEYMANAGER_ALGORITHM_CONFIG, ConfigDef.Type.STRING,
+                "SunX509", ConfigDef.Importance.LOW,
+                KAFKASTORE_SSL_KEYMANAGER_ALGORITHM_DOC)
+        .define(KAFKASTORE_SSL_KEY_PASSWORD_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.HIGH,
+                KAFKASTORE_SSL_KEY_PASSWORD_DOC)
+        .define(KAFKASTORE_SSL_ENABLED_PROTOCOLS_CONFIG, ConfigDef.Type.STRING,
+                "TLSv1.2,TLSv1.1,TLSv1", ConfigDef.Importance.MEDIUM,
+                KAFAKSTORE_SSL_ENABLED_PROTOCOLS_DOC)
+        .define(KAFKASTORE_SSL_PROTOCOL_CONFIG, ConfigDef.Type.STRING,
+                "TLS", ConfigDef.Importance.MEDIUM,
+                KAFAKSTORE_SSL_PROTOCOL_DOC)
+        .define(KAFKASTORE_SSL_PROVIDER_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.MEDIUM,
+                KAFAKSTORE_SSL_PROVIDER_DOC)
+        .define(KAFKASTORE_SSL_CIPHER_SUITES_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.LOW,
+                KAFKASTORE_SSL_CIPHER_SUITES_DOC)
+        .define(KAFKASTORE_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.LOW,
+                KAFKASTORE_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_DOC)
+        .define(KAFKASTORE_SASL_KERBEROS_SERVICE_NAME_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.MEDIUM,
+                KAFKASTORE_SASL_KERBEROS_SERVICE_NAME_DOC)
+        .define(KAFKASTORE_SASL_MECHANISM_CONFIG, ConfigDef.Type.STRING,
+                "GSSAPI", ConfigDef.Importance.MEDIUM,
+                KAFKASTORE_SASL_MECHANISM_DOC)
+        .define(KAFKASTORE_SASL_KERBEROS_KINIT_CMD_CONFIG, ConfigDef.Type.STRING,
+                "/usr/bin/kinit", ConfigDef.Importance.LOW,
+                KAFKASTORE_SASL_KERBEROS_KINIT_CMD_DOC)
+        .define(KAFKASTORE_SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN_CONFIG, ConfigDef.Type.LONG,
+                60000, ConfigDef.Importance.LOW,
+                KAFKASTORE_SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN_DOC)
+        .define(KAFKASTORE_SASL_KERBEROS_TICKET_RENEW_JITTER_CONFIG, ConfigDef.Type.DOUBLE,
+                0.05, ConfigDef.Importance.LOW,
+                KAFKASTORE_SASL_KERBEROS_TICKET_RENEW_JITTER_DOC)
+        .define(KAFKASTORE_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_CONFIG, ConfigDef.Type.DOUBLE,
+                0.8, ConfigDef.Importance.LOW,
+                KAFKASTORE_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_DOC);
+
   }
 
   private Time time;

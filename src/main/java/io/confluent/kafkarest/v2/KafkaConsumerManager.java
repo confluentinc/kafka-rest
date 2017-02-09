@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.ws.rs.core.Response;
 
+import org.apache.kafka.clients.CommonClientConfigs;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
@@ -99,7 +100,6 @@ public class KafkaConsumerManager {
   public KafkaConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver) {
     this.config = config;
     this.time = config.getTime();
-    //this.zookeeperConnect = config.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG);
     this.bootstrapServers = config.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG);
     this.mdObserver = mdObserver;
     this.iteratorTimeoutMs = config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG);
@@ -170,7 +170,7 @@ public class KafkaConsumerManager {
       // ID), and others we want to ensure get overridden (e.g. consumer.timeout.ms, which we
       // intentionally name differently in our own configs).
       Properties props = (Properties) config.getOriginalProperties().clone();
-      //props.setProperty("zookeeper.connect", zookeeperConnect);
+
       props.setProperty(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServers);      
       props.setProperty("group.id", group);
       // This ID we pass here has to be unique, only pass a value along if the deprecated ID field
@@ -203,6 +203,8 @@ public class KafkaConsumerManager {
 	  props.put("key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
 	  props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
       }
+
+      KafkaSecurityConfig.addSecurityConfigsToClientProperties(this.config, props);
 
       Consumer consumer = null;
       try {
