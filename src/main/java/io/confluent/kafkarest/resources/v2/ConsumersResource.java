@@ -140,10 +140,10 @@ public class ConsumersResource {
              Versions.KAFKA_V2_JSON_WEIGHTED
 	      })
   public void readRecordBinary(final @Suspended AsyncResponse asyncResponse,
-                              final @PathParam("group") String group,
-                              final @PathParam("instance") String instance,
-		              @QueryParam("timeout") @DefaultValue("-1") long timeout,
-                              @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
+			       final @PathParam("group") String group,
+			       final @PathParam("instance") String instance,
+			       @QueryParam("timeout") @DefaultValue("-1") long timeout,
+			       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
       readRecords(asyncResponse, group, instance, timeout, maxBytes, BinaryKafkaConsumerState.class);
   }
 

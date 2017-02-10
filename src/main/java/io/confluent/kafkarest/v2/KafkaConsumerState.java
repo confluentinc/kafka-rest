@@ -23,6 +23,7 @@ import java.util.TreeMap;
 import java.util.HashMap;
 import java.util.Vector;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
@@ -60,7 +61,8 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   private KafkaRestConfig config;
   private ConsumerInstanceId instanceId;
   private Consumer consumer;
-  private Map<String, KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>> topics;
+  private ConsumerRecords<ClientK, ClientV> consumerRecords = null;
+  private Iterator<ConsumerRecord<ClientK, ClientV>> iter = null;
   private long expiration;
   // A read/write lock on the KafkaConsumerState allows concurrent readRecord calls, but allows
   // commitOffsets to safely lock the entire state in order to get correct information about all
@@ -74,7 +76,6 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     this.config = config;
     this.instanceId = instanceId;
     this.consumer = consumer;
-    this.topics = new HashMap<String, KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>>();
     this.expiration = config.getTime().milliseconds() +
                       config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
     this.lock = new ReentrantReadWriteLock();
@@ -103,27 +104,22 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   public abstract ConsumerRecordAndSize<ClientK, ClientV> createConsumerRecord(
       ConsumerRecord<KafkaK, KafkaV> msg);
 
-  /**
-   * Start a read on the given topic, enabling a read lock on this KafkaConsumerState and a full lock on
-   * the KafkaConsumerTopicState.
-   */
-  public void startRead(KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> topicState) {
-    lock.readLock().lock();
-    topicState.lock();
-  }
 
-  /**
-   * Finish a read request, releasing the lock on the KafkaConsumerTopicState and the read lock on this
-   * KafkaConsumerState.
-   */
-  public void finishRead(KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> topicState) {
-    topicState.unlock();
+  public void startRead() {
+    lock.readLock().lock();
+  }
+  public void finishRead() {
     lock.readLock().unlock();
   }
 
+
+  /**
+   * Commit the given list of offsets 
+   */    
   public List<TopicPartitionOffset> commitOffsets(String async, ConsumerOffsetCommitRequest offsetCommitRequest) {
     lock.writeLock().lock();
     try {
+	// If no offsets are given, then commit all the records read so far
 	if (offsetCommitRequest == null) {
 	    if (async == null) {
 		consumer.commitSync();
@@ -133,7 +129,6 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
 	    }
 	} else {
 	    Map<TopicPartition, OffsetAndMetadata> offsetMap = new HashMap<TopicPartition, OffsetAndMetadata>();
-
 	    
 	    //commit each given offset
 	    for(TopicPartitionOffsetMetadata t: offsetCommitRequest.offsets) {
@@ -142,19 +137,22 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
 				  new OffsetAndMetadata(t.getOffset()+1)   );
 		} else {
 		    offsetMap.put(new TopicPartition(t.getTopic(), t.getPartition()),
-				  new OffsetAndMetadata(t.getOffset()+1, t.getMetadata()) );				    
+				  new OffsetAndMetadata(t.getOffset()+1, t.getMetadata()) );
 		}
 
 	    }
 	    consumer.commitSync(offsetMap);			    
 	}
-      List<TopicPartitionOffset> result = getOffsets(true);
-      return result;
+	List<TopicPartitionOffset> result = new Vector<TopicPartitionOffset>();
+	return result;
     } finally {
-      lock.writeLock().unlock();
+	lock.writeLock().unlock();
     }
   }
 
+  /**
+   *  Seek to the first offset for each of the given partitions.
+   */
   public void seekToBeginning(ConsumerSeekToRequest seekToRequest) {
     lock.writeLock().lock();
     try {
@@ -171,6 +169,9 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     }
   }
 
+  /**
+   *  Seek to the last offset for each of the given partitions.
+   */
   public void seekToEnd(ConsumerSeekToRequest seekToRequest) {
     lock.writeLock().lock();
     try {
@@ -187,6 +188,9 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     }
   }
 
+ /**  
+  *  Overrides the fetch offsets that the consumer will use on the next poll(timeout).
+  */
   public void seekToOffset(ConsumerSeekToOffsetRequest seekToOffsetRequest) {
     lock.writeLock().lock();
     try {
@@ -204,6 +208,9 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     }
   }
 
+  /**
+   *  Manually assign a list of partitions to this consumer.  
+   */
   public void assign(ConsumerAssignmentRequest assignmentRequest) {
     lock.writeLock().lock();
     try {
@@ -220,7 +227,10 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     }
   }
 
-    
+  /**
+   * Close the consumer,
+  */
+  
   public void close() {
     lock.writeLock().lock();
     try {
@@ -229,13 +239,15 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
 	}
       // Marks this state entry as no longer valid because the consumer group is being destroyed.
       consumer = null;
-      topics = null;
     } finally {
       lock.writeLock().unlock();
     }
   }
 
 
+  /**
+   *  Subscribe to the given list of topics to get dynamically assigned partitions.
+   */
   public void subscribe(ConsumerSubscriptionRecord subscription) {
     if (subscription == null){
 	  return;
@@ -258,6 +270,9 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     }
   }
 
+  /**
+   *  Unsubscribe from topics currently subscribed with subscribe(Collection).
+   */
   public void unsubscribe() {
     lock.writeLock().lock();
     try {
@@ -269,6 +284,9 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     }
   }
 
+  /**
+   *  Get the current list of topics subscribed.
+   */  
   public java.util.Set<String> subscription() {
     java.util.Set<String> currSubscription = null;
     lock.writeLock().lock();
@@ -282,7 +300,9 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     return currSubscription;
   }
     
-
+  /**
+   *  Get the set of partitions currently assigned to this consumer.
+   */
   public java.util.Set<TopicPartition> assignment() {
     java.util.Set<TopicPartition> currAssignment = null;
     lock.writeLock().lock();
@@ -297,6 +317,10 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   }
     
 
+  /**
+   *  Get the last committed offset for the given partition (whether the commit happened by 
+   *  this process or another).
+   */
   public ConsumerCommittedResponse committed(ConsumerCommittedRequest request) {
     ConsumerCommittedResponse response  = new ConsumerCommittedResponse();
     response.offsets = new Vector<TopicPartitionOffsetMetadata>();
@@ -350,63 +374,38 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     }
   }
 
-    public KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> getOrCreateTopicState(String topic, long timeout) {
-
-    lock.writeLock().lock();
-    try {
-      if (topics == null) {
-        return null;
+  /**
+   * An iterator / cursor to track the current position of the records sent to the client so far
+   */
+  public Iterator<ConsumerRecord<ClientK, ClientV>> getIterator(){
+      if (consumerRecords == null) 
+          return null;
+      if (iter == null) {
+          iter = consumerRecords.iterator();
       }
-      if (topic != null) {
-	  Map<String, Integer> subscriptions = new TreeMap<String, Integer>();
-	  subscriptions.put(topic, 1);
-
-	  consumer.subscribe(Arrays.asList(topic));
-      }
-      ConsumerRecords<ClientK, ClientV> consumerRecords = consumer.poll(timeout);
-      KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>  state = new KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>(consumerRecords);
-      return state;
-
-    } finally {
-      lock.writeLock().unlock();
-    }
+      return iter;
   }
 
   /**
-   * Gets a list of TopicPartitionOffsets describing the current state of consumer offsets, possibly
-   * updating the committed offset record. This method is not synchronized.
-   *
-   * @param updateCommitOffsets if true, updates committed offsets to be the same as the consumed
-   *                            offsets.
+   *  Initiate poll(timeout) request to retrieve consummer records, or return the existing
+   *  consumer records if the records have not been fully consumed by client yet
    */
-  private List<TopicPartitionOffset> getOffsets(boolean updateCommitOffsets) {
-    List<TopicPartitionOffset> result = new Vector<TopicPartitionOffset>();
-    for (Map.Entry<String, KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>> entry
-        : topics.entrySet()) {
-      KafkaConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> state = entry.getValue();
-      state.lock();
-      try {
-        for (Map.Entry<Integer, Long> partEntry : state.getConsumedOffsets().entrySet()) {
-          Integer partition = partEntry.getKey();
-          Long offset = partEntry.getValue();
-          Long committedOffset = 0L;
-          if (updateCommitOffsets) {
-            state.getCommittedOffsets().put(partition, offset);
-            committedOffset = offset;
+  public ConsumerRecords<ClientK, ClientV> getOrCreateConsumerRecords(long timeout) {
+      try{
+          lock.writeLock().lock();
+          if (consumerRecords == null) {
+              consumerRecords = consumer.poll(timeout);	  
           } else {
-            committedOffset = state.getCommittedOffsets().get(partition);
+              if (iter == null || !iter.hasNext()) {
+                  consumerRecords = consumer.poll(timeout);
+                  iter = null;
+              }
           }
-          result.add(new TopicPartitionOffset(entry.getKey(), partition,
-                                              offset,
-                                              (committedOffset == null ? -1 : committedOffset)));
-        }
+          return consumerRecords;
       } finally {
-        state.unlock();
-      }
+      lock.writeLock().unlock();
     }
-    return result;
   }
-
 
   private class NoOpOnRebalance implements ConsumerRebalanceListener {
 
