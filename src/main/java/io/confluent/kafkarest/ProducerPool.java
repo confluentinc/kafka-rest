@@ -27,6 +27,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Serializer;
+import org.apache.kafka.common.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.collection.JavaConversions;
@@ -147,11 +148,12 @@ public class ProducerPool {
     List<Broker> brokers = JavaConversions.seqAsJavaList(brokerSeq);
     String bootstrapBrokers = "";
     for (int i = 0; i < brokers.size(); i++) {
-      for(EndPoint ep : JavaConversions.asJavaCollection(brokers.get(i).endPoints().values())) {
+      for(EndPoint ep : JavaConversions.asJavaCollection(brokers.get(i).endPoints())) {
         if (bootstrapBrokers.length() > 0) {
           bootstrapBrokers += ",";
         }
-        bootstrapBrokers += ep.connectionString();
+        String hostport = ep.host() == null ? ":" + ep.port() : Utils.formatAddress(ep.host(), ep.port());
+        bootstrapBrokers += ep.securityProtocol() + "://" + hostport;
       }
     }
     return bootstrapBrokers;
