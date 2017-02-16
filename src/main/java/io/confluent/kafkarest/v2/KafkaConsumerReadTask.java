@@ -49,144 +49,141 @@ import kafka.consumer.ConsumerTimeoutException;
 class KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
     implements Future<List<ConsumerRecord<ClientK, ClientV>>> {
 
-  private static final Logger log = LoggerFactory.getLogger(KafkaConsumerReadTask.class);
+    private static final Logger log = LoggerFactory.getLogger(KafkaConsumerReadTask.class);
 
-  private KafkaConsumerState parent;
-  private final long pollTimeout;
-  private final long maxResponseBytes;
-  private final ConsumerWorkerReadCallback<ClientK, ClientV> callback;
-  private CountDownLatch finished;
+    private KafkaConsumerState parent;
+    private final long pollTimeout;
+    private final long maxResponseBytes;
+    private final ConsumerWorkerReadCallback<ClientK, ClientV> callback;
+    private CountDownLatch finished;
 
-  private Iterator<org.apache.kafka.clients.consumer.ConsumerRecord<ClientK, ClientV>> iter;
-  private List<ConsumerRecord<ClientK, ClientV>> messages;
-  private long bytesConsumed = 0;
-  private final long started;
+    private Iterator<org.apache.kafka.clients.consumer.ConsumerRecord<ClientK, ClientV>> iter;
+    private List<ConsumerRecord<ClientK, ClientV>> messages;
+    private long bytesConsumed = 0;
+    private final long started;
 
-  // Expiration if this task is waiting, considering both the expiration of the whole task and
-  // a single backoff, if one is in progress
-  long waitExpiration;
+    // Expiration if this task is waiting, considering both the expiration of the whole task and
+    // a single backoff, if one is in progress
+    long waitExpiration;
 
-  public KafkaConsumerReadTask(KafkaConsumerState parent, String topic, long timeout, long maxBytes,
-			       ConsumerWorkerReadCallback<ClientK, ClientV> callback) {
-    this.parent = parent;
-    this.maxResponseBytes =
-	Math.min(maxBytes,
-		 parent.getConfig().getLong(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG));
-    this.pollTimeout = timeout <= 0 ? 5000 : timeout;
-    this.callback = callback;
-    this.finished = new CountDownLatch(1);
+    public KafkaConsumerReadTask(KafkaConsumerState parent, String topic, long timeout, long maxBytes,
+            ConsumerWorkerReadCallback<ClientK, ClientV> callback) {
+        this.parent = parent;
+        this.maxResponseBytes =
+            Math.min(maxBytes,
+                    parent.getConfig().getLong(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG));
+        this.pollTimeout = timeout <= 0 ? 5000 : timeout;
+        this.callback = callback;
+        this.finished = new CountDownLatch(1);
 
-    started = parent.getConfig().getTime().milliseconds();
-    try {
-	parent.getOrCreateConsumerRecords(pollTimeout);
-    } catch (RestException e) {
-	finish(e);
+        started = parent.getConfig().getTime().milliseconds();
+        try {
+            parent.getOrCreateConsumerRecords(pollTimeout);
+        } catch (RestException e) {
+            finish(e);
+        }
     }
-  }
 
-  /**
-   * Performs one iteration of reading from a consumer iterator.
-   *
-   * @return true if this read timed out, indicating the scheduler should back off
-   */
-  public boolean doPartialRead() {
-    try {
-	// Initial setup requires locking, which must be done on this thread.
-	if (iter == null) {
-	    parent.startRead();
-	    iter = parent.getIterator();
+    /**
+     * Performs one iteration of reading from a consumer iterator.
+     *
+     * @return true if this read timed out, indicating the scheduler should back off
+     */
+    public boolean doPartialRead() {
+        try {
+            // Initial setup requires locking, which must be done on this thread.
+            parent.startRead();
+            messages = new Vector<ConsumerRecord<ClientK, ClientV>>();
 
-	    messages = new Vector<ConsumerRecord<ClientK, ClientV>>();
-	    waitExpiration = 0;
-	}
+            boolean backoff = false;
+            long roughMsgSize = 0;
 
-	boolean backoff = false;
-	long roughMsgSize = 0;
+            long startedIteration = parent.getConfig().getTime().milliseconds();
+            final int requestTimeoutMs =
+                parent.getConfig().getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+            try {
+                while (parent.hasNext()){
+                    ConsumerRecordAndSize<ClientK, ClientV> recordAndSize = parent.createConsumerRecord(parent.peek());
+                    roughMsgSize = recordAndSize.getSize();
+                    if (bytesConsumed + roughMsgSize >= maxResponseBytes) {
+                        break;
+                    }
 
-	long startedIteration = parent.getConfig().getTime().milliseconds();
-	final int requestTimeoutMs =
-	    parent.getConfig().getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
-	try {
-	    while (iter.hasNext()){
-		ConsumerRecordAndSize<ClientK, ClientV> recordAndSize = parent.createConsumerRecord(iter.next());
-		roughMsgSize = recordAndSize.getSize();
-		if (bytesConsumed + roughMsgSize >= maxResponseBytes) {
-		    break;
-		}
+                    messages.add(recordAndSize.getRecord());
+                    //inc iterator
+                    parent.next();
+                    bytesConsumed += roughMsgSize;
+                }
+            } catch (ConsumerTimeoutException cte) {
+                backoff = true;
+            }
 
-		messages.add(recordAndSize.getRecord());
-		bytesConsumed += roughMsgSize;
-	    }
-	} catch (ConsumerTimeoutException cte) {
-	    backoff = true;
-	}
+            long now = parent.getConfig().getTime().milliseconds();
+            long elapsed = now - started;
+            // Compute backoff based on starting time. This makes reasoning about when timeouts
+            // should occur simpler for tests.
+            int itbackoff
+                = parent.getConfig().getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
+            long backoffExpiration = startedIteration + itbackoff;
+            long requestExpiration =
+                started + parent.getConfig().getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+            waitExpiration = Math.min(backoffExpiration, requestExpiration);
 
-	long now = parent.getConfig().getTime().milliseconds();
-	long elapsed = now - started;
-	// Compute backoff based on starting time. This makes reasoning about when timeouts
-	// should occur simpler for tests.
-	int itbackoff
-	    = parent.getConfig().getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
-	long backoffExpiration = startedIteration + itbackoff;
-	long requestExpiration =
-	    started + parent.getConfig().getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
-	waitExpiration = Math.min(backoffExpiration, requestExpiration);
+            finish();
 
-	finish();
-
-	return backoff;
-    } catch (Exception e) {
-	finish(e);
-	log.error("Unexpected exception in consumer read thread: ", e);
-	return false;
+            return backoff;
+        } catch (Exception e) {
+            finish(e);
+            log.error("Unexpected exception in consumer read thread: ", e);
+            return false;
+        }
     }
-  }
 
-  public void finish() {
-    finish(null);
-  }
-
-  public void finish(Exception e) {
-    parent.finishRead();
-    try {
-	callback.onCompletion((e == null) ? messages : null, e);
-    } catch (Throwable t) {
-	// This protects the worker thread from any issues with the callback code. Nothing to be
-	// done here but log it since it indicates a bug in the calling code.
-	log.error("Consumer read callback threw an unhandled exception", e);
+    public void finish() {
+        finish(null);
     }
-    finished.countDown();
-  }
 
-  @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    return false;
-  }
+    public void finish(Exception e) {
+        parent.finishRead();
+        try {
+            callback.onCompletion((e == null) ? messages : null, e);
+        } catch (Throwable t) {
+            // This protects the worker thread from any issues with the callback code. Nothing to be
+            // done here but log it since it indicates a bug in the calling code.
+            log.error("Consumer read callback threw an unhandled exception", e);
+        }
+        finished.countDown();
+    }
 
-  @Override
-  public boolean isCancelled() {
-    return false;
-  }
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+        return false;
+    }
 
-  @Override
-  public boolean isDone() {
-    return (finished.getCount() == 0);
-  }
+    @Override
+    public boolean isCancelled() {
+        return false;
+    }
 
-  @Override
-  public List<ConsumerRecord<ClientK, ClientV>> get()
-      throws InterruptedException, ExecutionException {
+    @Override
+    public boolean isDone() {
+        return (finished.getCount() == 0);
+    }
+
+    @Override
+    public List<ConsumerRecord<ClientK, ClientV>> get()
+    throws InterruptedException, ExecutionException {
     finished.await();
     return messages;
-  }
+    }
 
-  @Override
-  public List<ConsumerRecord<ClientK, ClientV>> get(long timeout, TimeUnit unit)
-      throws InterruptedException, ExecutionException, TimeoutException {
+    @Override
+    public List<ConsumerRecord<ClientK, ClientV>> get(long timeout, TimeUnit unit)
+    throws InterruptedException, ExecutionException, TimeoutException {
     finished.await(timeout, unit);
     if (finished.getCount() > 0) {
-      throw new TimeoutException();
+        throw new TimeoutException();
     }
     return messages;
-  }
+    }
 }
