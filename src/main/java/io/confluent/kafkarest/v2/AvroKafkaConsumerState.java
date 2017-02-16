@@ -38,37 +38,37 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
  */
 public class AvroKafkaConsumerState extends KafkaConsumerState<Object, Object, JsonNode, JsonNode> {
 
-  // Note that this could be a static variable and shared, but that causes tests to break in
-  // subtle ways because it causes state to be shared across tests, but only for the consumer.
-  private Decoder<Object> decoder = null;
+    // Note that this could be a static variable and shared, but that causes tests to break in
+    // subtle ways because it causes state to be shared across tests, but only for the consumer.
+    private Decoder<Object> decoder = null;
 
-  public AvroKafkaConsumerState(KafkaRestConfig config,
-                           ConsumerInstanceId instanceId,
-                           Consumer consumer) {
-    super(config, instanceId, consumer);
-    Properties props = new Properties();
-    props.setProperty("schema.registry.url",
-                      config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
-  }
+    public AvroKafkaConsumerState(KafkaRestConfig config,
+            ConsumerInstanceId instanceId,
+            Consumer consumer) {
+        super(config, instanceId, consumer);
+        Properties props = new Properties();
+        props.setProperty("schema.registry.url",
+                config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
+    }
 
-  @Override
-  protected Decoder<Object> getKeyDecoder() {
-    return decoder;
-  }
+    @Override
+    protected Decoder<Object> getKeyDecoder() {
+        return decoder;
+    }
 
-  @Override
-  protected Decoder<Object> getValueDecoder() {
-    return decoder;
-  }
+    @Override
+    protected Decoder<Object> getValueDecoder() {
+        return decoder;
+    }
 
-  @Override
-  public ConsumerRecordAndSize<JsonNode, JsonNode> createConsumerRecord(
-      ConsumerRecord<Object, Object> record) {
-    AvroConverter.JsonNodeAndSize keyNode = AvroConverter.toJson(record.key());
-    AvroConverter.JsonNodeAndSize valueNode = AvroConverter.toJson(record.value());
-    return new ConsumerRecordAndSize<JsonNode, JsonNode>(
-							 new AvroConsumerRecord(record.topic(), keyNode.json, valueNode.json, record.partition(), record.offset()),
-        keyNode.size + valueNode.size
-    );
-  }
+    @Override
+    public ConsumerRecordAndSize<JsonNode, JsonNode> createConsumerRecord(
+            ConsumerRecord<Object, Object> record) {
+        AvroConverter.JsonNodeAndSize keyNode = AvroConverter.toJson(record.key());
+        AvroConverter.JsonNodeAndSize valueNode = AvroConverter.toJson(record.value());
+        return new ConsumerRecordAndSize<JsonNode, JsonNode>(
+                new AvroConsumerRecord(record.topic(), keyNode.json, valueNode.json, record.partition(), record.offset()),
+                keyNode.size + valueNode.size
+                );
+            }
 }

@@ -32,56 +32,56 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 
 public class JsonKafkaConsumerState extends KafkaConsumerState<byte[], byte[], Object, Object> {
-  private static final Decoder<byte[]> decoder = new DefaultDecoder(new VerifiableProperties());
-  private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Decoder<byte[]> decoder = new DefaultDecoder(new VerifiableProperties());
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
-  public JsonKafkaConsumerState(KafkaRestConfig config,
-                           ConsumerInstanceId instanceId,
-                           Consumer consumer) {
-    super(config, instanceId, consumer);
-  }
-
-  @Override
-  protected Decoder<byte[]> getKeyDecoder() {
-    return decoder;
-  }
-
-  @Override
-  protected Decoder<byte[]> getValueDecoder() {
-    return decoder;
-  }
-
-  @Override
-  public ConsumerRecordAndSize<Object, Object> createConsumerRecord(ConsumerRecord<byte[], byte[]> record) {
-    long approxSize = 0;
-
-    Object key = null;
-    Object value = null;
-
-    // The extra serialization here is unfortunate. We could use @JsonRawValue
-    // and just use the raw bytes, but that risks returning invalid data to the user
-    // if their data is not actually JSON encoded.
-
-    if (record.key() != null) {
-      approxSize += record.key().length;
-      key = deserialize(record.key());
+    public JsonKafkaConsumerState(KafkaRestConfig config,
+            ConsumerInstanceId instanceId,
+            Consumer consumer) {
+        super(config, instanceId, consumer);
     }
 
-    if (record.value() != null) {
-      approxSize += record.value().length;
-      value = deserialize(record.value());
+    @Override
+    protected Decoder<byte[]> getKeyDecoder() {
+        return decoder;
     }
 
-    return new ConsumerRecordAndSize<Object, Object>(
-						     new JsonConsumerRecord(record.topic(), key, value, record.partition(), record.offset()),
-        approxSize);
-  }
-
-  private Object deserialize(byte[] data) {
-    try {
-      return objectMapper.readValue(data, Object.class);
-    } catch (Exception e) {
-      throw new SerializationException(e);
+    @Override
+    protected Decoder<byte[]> getValueDecoder() {
+        return decoder;
     }
-  }
+
+    @Override
+    public ConsumerRecordAndSize<Object, Object> createConsumerRecord(ConsumerRecord<byte[], byte[]> record) {
+        long approxSize = 0;
+
+        Object key = null;
+        Object value = null;
+
+        // The extra serialization here is unfortunate. We could use @JsonRawValue
+        // and just use the raw bytes, but that risks returning invalid data to the user
+        // if their data is not actually JSON encoded.
+
+        if (record.key() != null) {
+            approxSize += record.key().length;
+            key = deserialize(record.key());
+        }
+
+        if (record.value() != null) {
+            approxSize += record.value().length;
+            value = deserialize(record.value());
+        }
+
+        return new ConsumerRecordAndSize<Object, Object>(
+                new JsonConsumerRecord(record.topic(), key, value, record.partition(), record.offset()),
+                approxSize);
+    }
+
+    private Object deserialize(byte[] data) {
+        try {
+            return objectMapper.readValue(data, Object.class);
+        } catch (Exception e) {
+            throw new SerializationException(e);
+        }
+    }
 }
