@@ -170,8 +170,8 @@ public class KafkaConsumerManager {
             // consumer-specific settings don't make sense to override globally (e.g. group ID, consumer
             // ID), and others we want to ensure get overridden (e.g. consumer.timeout.ms, which we
             // intentionally name differently in our own configs).
-            Properties props = (Properties) config.getOriginalProperties().clone();
-
+            //Properties props = (Properties) config.getOriginalProperties().clone();
+	    Properties props = config.getConsumerProperties();
             props.setProperty(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServers);      
             props.setProperty("group.id", group);
             // This ID we pass here has to be unique, only pass a value along if the deprecated ID field
@@ -204,8 +204,6 @@ public class KafkaConsumerManager {
                     props.put("key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
                     props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
             }
-
-            KafkaSecurityConfig.addSecurityConfigsToClientProperties(this.config, props);
 
             Consumer consumer = null;
             try {

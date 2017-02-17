@@ -77,10 +77,8 @@ public class ProducerPool {
     Map<String, Object> props = new HashMap<String, Object>();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
 
-    Properties securityProps = (Properties) appConfig.getOriginalProperties().clone();
-    KafkaSecurityConfig.addSecurityConfigsToClientProperties(appConfig, securityProps);
-
-    return buildConfig(props, securityProps, producerConfigOverrides);
+    Properties producerProps  = (Properties) appConfig.getProducerProperties();
+    return buildConfig(props, producerProps, producerConfigOverrides);
   }
 
   private NoSchemaRestProducer<byte[], byte[]> buildBinaryProducer(Map<String, Object> binaryProps) {
@@ -108,10 +106,8 @@ public class ProducerPool {
     avroDefaults.put("schema.registry.url",
         appConfig.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
 
-    Properties securityProps = (Properties) appConfig.getOriginalProperties().clone();
-    KafkaSecurityConfig.addSecurityConfigsToClientProperties(appConfig, securityProps);
-
-    return buildConfig(avroDefaults, securityProps, producerConfigOverrides);
+    Properties producerProps  = (Properties) appConfig.getProducerProperties();
+    return buildConfig(avroDefaults, producerProps, producerConfigOverrides);    
   }
 
   private AvroRestProducer buildAvroProducer(Map<String, Object> avroProps) {
