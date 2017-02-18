@@ -15,21 +15,6 @@
  **/
 package io.confluent.kafkarest.resources.v2;
 
-import java.util.List;
-import java.util.Vector;
-
-import javax.validation.Valid;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.Suspended;
-
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerPool;
@@ -45,9 +30,21 @@ import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
+import java.util.List;
+import java.util.Vector;
+import javax.validation.Valid;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
 
 @Path("/topics/{topic}/partitions")
-@Produces({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW, Versions.KAFKA_V2_JSON_WEIGHTED})
+@Produces({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW,
+    Versions.KAFKA_V2_JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V2_JSON})
 public class PartitionsResource {
 
@@ -68,7 +65,7 @@ public class PartitionsResource {
   @Path("/{partition}")
   @PerformanceMetric("partition.get+v2")
   public Partition getPartition(final @PathParam("topic") String topic,
-                                @PathParam("partition") int partition) {
+      @PathParam("partition") int partition) {
     checkTopicExists(topic);
     Partition part = ctx.getMetadataObserver().getTopicPartition(topic, partition);
     if (part == null) {
@@ -83,9 +80,9 @@ public class PartitionsResource {
   @PerformanceMetric("partition.produce-binary+v2")
   @Consumes({Versions.KAFKA_V2_JSON_BINARY})
   public void produceBinary(final @Suspended AsyncResponse asyncResponse,
-                            final @PathParam("topic") String topic,
-                            final @PathParam("partition") int partition,
-                            @Valid PartitionProduceRequest<BinaryProduceRecord> request) {
+      final @PathParam("topic") String topic,
+      final @PathParam("partition") int partition,
+      @Valid PartitionProduceRequest<BinaryProduceRecord> request) {
     produce(asyncResponse, topic, partition, EmbeddedFormat.BINARY, request);
   }
 
@@ -94,9 +91,9 @@ public class PartitionsResource {
   @PerformanceMetric("partition.produce-json+v2")
   @Consumes({Versions.KAFKA_V2_JSON_JSON})
   public void produceJson(final @Suspended AsyncResponse asyncResponse,
-                          final @PathParam("topic") String topic,
-                          final @PathParam("partition") int partition,
-                          @Valid PartitionProduceRequest<JsonProduceRecord> request) {
+      final @PathParam("topic") String topic,
+      final @PathParam("partition") int partition,
+      @Valid PartitionProduceRequest<JsonProduceRecord> request) {
     produce(asyncResponse, topic, partition, EmbeddedFormat.JSON, request);
   }
 
@@ -105,9 +102,9 @@ public class PartitionsResource {
   @PerformanceMetric("partition.produce-avro+v2")
   @Consumes({Versions.KAFKA_V2_JSON_AVRO})
   public void produceAvro(final @Suspended AsyncResponse asyncResponse,
-                          final @PathParam("topic") String topic,
-                          final @PathParam("partition") int partition,
-                          @Valid PartitionProduceRequest<AvroProduceRecord> request) {
+      final @PathParam("topic") String topic,
+      final @PathParam("partition") int partition,
+      @Valid PartitionProduceRequest<AvroProduceRecord> request) {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
     boolean hasKeys = false, hasValues = false;
@@ -144,7 +141,7 @@ public class PartitionsResource {
         request.getRecords(),
         new ProducerPool.ProduceRequestCallback() {
           public void onCompletion(Integer keySchemaId, Integer valueSchemaId,
-                                   List<RecordMetadataOrException> results) {
+              List<RecordMetadataOrException> results) {
             ProduceResponse response = new ProduceResponse();
             List<PartitionOffset> offsets = new Vector<PartitionOffset>();
             for (RecordMetadataOrException result : results) {
@@ -154,8 +151,8 @@ public class PartitionsResource {
                 offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
               } else {
                 offsets.add(new PartitionOffset(result.getRecordMetadata().partition(),
-                                                result.getRecordMetadata().offset(),
-                                                null, null));
+                    result.getRecordMetadata().offset(),
+                    null, null));
               }
             }
             response.setOffsets(offsets);
