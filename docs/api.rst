@@ -738,14 +738,14 @@ Consumers
 
 The consumers resource provides access to the current state of consumer groups, allows you to create a consumer in a
 consumer group and consume messages from topics and partitions. The proxy can convert data stored
-in Kafka in serialized form into a JSON-compatible embedded format. Currently two formats are
-supported: raw binary data is encoded as base64 strings and Avro data is converted into embedded
-JSON objects.
+in Kafka in serialized form into a JSON-compatible embedded format. Currently three formats are
+supported: raw binary data is encoded as base64 strings, Avro data is converted into embedded
+JSON objects, and JSON is embedded directly.
 
 Because consumers are stateful, any consumer instances created with the REST API are tied to a specific REST proxy
 instance. A full URL is provided when the instance is created and it should be used to construct any subsequent
-requests. Failing to use the returned URL for future consumer requests will end up adding new
-consumers to the group. If a REST proxy instance is shutdown, it will attempt to cleanly destroy
+requests. Failing to use the returned URL for future consumer requests will result in `404` errors because the consumer
+instance will not be found. If a REST proxy instance is shutdown, it will attempt to cleanly destroy
 any consumers before it is terminated.
 
 .. http:post:: /consumers/(string:group_name)
@@ -2243,14 +2243,14 @@ Consumers
 
 The consumers resource provides access to the current state of consumer groups, allows you to create a consumer in a
 consumer group and consume messages from topics and partitions. The proxy can convert data stored
-in Kafka in serialized form into a JSON-compatible embedded format. Currently two formats are
-supported: raw binary data is encoded as base64 strings and Avro data is converted into embedded
-JSON objects.
+in Kafka in serialized form into a JSON-compatible embedded format. Currently three formats are
+supported: raw binary data is encoded as base64 strings, Avro data is converted into embedded
+JSON objects, and JSON is embedded directly.
 
 Because consumers are stateful, any consumer instances created with the REST API are tied to a specific REST proxy
 instance. A full URL is provided when the instance is created and it should be used to construct any subsequent
-requests. Failing to use the returned URL for future consumer requests will end up adding new
-consumers to the group. If a REST proxy instance is shutdown, it will attempt to cleanly destroy
+requests. Failing to use the returned URL for future consumer requests will result in `404` errors because the consumer
+instance will not be found. If a REST proxy instance is shutdown, it will attempt to cleanly destroy
 any consumers before it is terminated.
 
 Consumers may not change the set of topics they are subscribed to once they have
