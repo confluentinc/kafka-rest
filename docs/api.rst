@@ -1604,21 +1604,23 @@ you produce messages by making ``POST`` requests to specific topics.
    the key. If no key is provided, the partition will be chosen for each message
    in a round-robin fashion.
 
+   We currently support Avro, JSON and binary message formats.
+
    For the ``avro`` embedded format, you must provide information
    about schemas and the REST proxy must be configured with the URL to access
    the schema registry (``schema.registry.connect``). Schemas may be provided as
    the full schema encoded as a string, or, after the initial request may be
-   provided as the schema ID returned with the first response.
+   provided as the schema ID returned with the first response. Note that if you use Avro for value you must also use Avro for the key, but the key and value may have different schemas.
 
    :param string topic_name: Name of the topic to produce the messages to
 
    :<json string key_schema: Full schema encoded as a string (e.g. JSON
-                             serialized for Avro data)
+                             serialized for Avro data). This is only needed for Avro format.
    :<json int key_schema_id: ID returned by a previous request using the same
                              schema. This ID corresponds to the ID of the schema
                              in the registry.
    :<json string value_schema: Full schema encoded as a string (e.g. JSON
-                               serialized for Avro data)
+                               serialized for Avro data).  This is only needed for Avro format.
    :<json int value_schema_id: ID returned by a previous request using the same
                                schema. This ID corresponds to the ID of the schema
                                in the registry.
