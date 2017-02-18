@@ -110,7 +110,7 @@ you produce messages by making ``POST`` requests to specific topics.
 
    :>json array topics: List of topic names
 
-         **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
@@ -133,24 +133,24 @@ you produce messages by making ``POST`` requests to specific topics.
 
    :param string topic_name: Name of the topic to get metadata about
 
-         :>json string name: Name of the topic
-         :>json map configs: Per-topic configuration overrides
-         :>json array partitions: List of partitions for this topic
-         :>json int partitions[i].partition: the ID of this partition
-         :>json int partitions[i].leader: the broker ID of the leader for this partition
-         :>json array partitions[i].replicas: list of replicas for this partition,
-                                              including the leader
-         :>json array partitions[i].replicas[j].broker: broker ID of the replica
-         :>json boolean partitions[i].replicas[j].leader: true if this replica is the
-                                                          leader for the partition
-         :>json boolean partitions[i].replicas[j].in_sync: true if this replica is
-                                                           currently in sync with the
-                                                           leader
+   :>json string name: Name of the topic
+   :>json map configs: Per-topic configuration overrides
+   :>json array partitions: List of partitions for this topic
+   :>json int partitions[i].partition: the ID of this partition
+   :>json int partitions[i].leader: the broker ID of the leader for this partition
+   :>json array partitions[i].replicas: list of replicas for this partition,
+                                        including the leader
+   :>json array partitions[i].replicas[j].broker: broker ID of the replica
+   :>json boolean partitions[i].replicas[j].leader: true if this replica is the
+                                                    leader for the partition
+   :>json boolean partitions[i].replicas[j].in_sync: true if this replica is
+                                                     currently in sync with the
+                                                     leader
 
-         :statuscode 404:
-            * Error code 40401 -- Topic not found
+   :statuscode 404:
+     * Error code 40401 -- Topic not found
 
-         **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
@@ -220,45 +220,45 @@ you produce messages by making ``POST`` requests to specific topics.
 
    :param string topic_name: Name of the topic to produce the messages to
 
-         :<json string key_schema: Full schema encoded as a string (e.g. JSON
-                                   serialized for Avro data)
-         :<json int key_schema_id: ID returned by a previous request using the same
-                                   schema. This ID corresponds to the ID of the schema
-                                   in the registry.
-         :<json string value_schema: Full schema encoded as a string (e.g. JSON
-                                     serialized for Avro data)
-         :<json int value_schema_id: ID returned by a previous request using the same
-                                     schema. This ID corresponds to the ID of the schema
-                                     in the registry.
-         :<jsonarr records: A list of records to produce to the topic.
-         :<jsonarr object records[i].key: The message key, formatted according to the
-                                          embedded format, or null to omit a key (optional)
-         :<jsonarr object records[i].value: The message value, formatted according to the
-                                            embedded format
-         :<jsonarr int records[i].partition: Partition to store the message in (optional)
+   :<json string key_schema: Full schema encoded as a string (e.g. JSON
+                             serialized for Avro data)
+   :<json int key_schema_id: ID returned by a previous request using the same
+                             schema. This ID corresponds to the ID of the schema
+                             in the registry.
+   :<json string value_schema: Full schema encoded as a string (e.g. JSON
+                               serialized for Avro data)
+   :<json int value_schema_id: ID returned by a previous request using the same
+                               schema. This ID corresponds to the ID of the schema
+                               in the registry.
+   :<jsonarr records: A list of records to produce to the topic.
+   :<jsonarr object records[i].key: The message key, formatted according to the
+                                    embedded format, or null to omit a key (optional)
+   :<jsonarr object records[i].value: The message value, formatted according to the
+                                      embedded format
+   :<jsonarr int records[i].partition: Partition to store the message in (optional)
 
-         :>json int key_schema_id: The ID for the schema used to produce keys, or null
-                                   if keys were not used
-         :>json int value_schema_id: The ID for the schema used to produce values.
-         :>jsonarr object offests: List of partitions and offsets the messages were
-                                   published to
-         :>jsonarr int offsets[i].partition: Partition the message was published to, or null if
-                                             publishing the message failed
-         :>jsonarr long offsets[i].offset: Offset of the message, or null if publishing the message failed
-         :>jsonarr long offsets[i].error_code: An error code classifying the reason this operation
-                                               failed, or null if it succeeded.
+   :>json int key_schema_id: The ID for the schema used to produce keys, or null
+                             if keys were not used
+   :>json int value_schema_id: The ID for the schema used to produce values.
+   :>jsonarr object offests: List of partitions and offsets the messages were
+                             published to
+   :>jsonarr int offsets[i].partition: Partition the message was published to, or null if
+                                       publishing the message failed
+   :>jsonarr long offsets[i].offset: Offset of the message, or null if publishing the message failed
+   :>jsonarr long offsets[i].error_code: An error code classifying the reason this operation
+                                         failed, or null if it succeeded.
 
-                                               * 1 - Non-retriable Kafka exception
-                                               * 2 - Retriable Kafka exception; the message might be sent
-                                                 successfully if retried
-         :>jsonarr string offsets[i].error: An error message describing why the operation failed, or
+                                         * 1 - Non-retriable Kafka exception
+                                         * 2 - Retriable Kafka exception; the message might be sent
+                                           successfully if retried
+   :>jsonarr string offsets[i].error: An error message describing why the operation failed, or
                                             null if it succeeded
 
-         :statuscode 404:
-            * Error code 40401 -- Topic not found
-         :statuscode 422:
-            * Error code 42201 -- Request includes keys and uses a format that requires schemas, but does
-              not include the ``key_schema`` or ``key_schema_id`` fields
+   :statuscode 404:
+      * Error code 40401 -- Topic not found
+   :statuscode 422:
+      * Error code 42201 -- Request includes keys and uses a format that requires schemas, but does
+        not include the ``key_schema`` or ``key_schema_id`` fields
       * Error code 42202 -- Request includes values and uses a format that requires schemas, but
         does not include the ``value_schema`` or ``value_schema_id`` fields
       * Error code 42205 -- Request includes invalid schema.
@@ -422,17 +422,17 @@ It also allows you to consume and produce messages to single partition using ``G
 
    :param string topic_name: the name of the topic
 
-         :>jsonarr int partition: ID of the partition
-         :>jsonarr int leader: Broker ID of the leader for this partition
-         :>jsonarr array replicas: List of brokers acting as replicas for this partition
-         :>jsonarr int replicas[i].broker: Broker ID of the replica
-         :>jsonarr boolean replicas[i].leader: true if this broker is the leader for the partition
-         :>jsonarr boolean replicas[i].in_sync: true if the replica is in sync with the leader
+   :>jsonarr int partition: ID of the partition
+   :>jsonarr int leader: Broker ID of the leader for this partition
+   :>jsonarr array replicas: List of brokers acting as replicas for this partition
+   :>jsonarr int replicas[i].broker: Broker ID of the replica
+   :>jsonarr boolean replicas[i].leader: true if this broker is the leader for the partition
+   :>jsonarr boolean replicas[i].in_sync: true if the replica is in sync with the leader
 
-         :statuscode 404:
-            * Error code 40401 -- Topic not found
+   :statuscode 404:
+      * Error code 40401 -- Topic not found
 
-          **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
@@ -498,20 +498,20 @@ It also allows you to consume and produce messages to single partition using ``G
    Get metadata about a single partition in the topic.
 
    :param string topic_name: Name of the topic
-         :param int partition_id: ID of the partition to inspect
+   :param int partition_id: ID of the partition to inspect
 
-         :>json int partition: ID of the partition
-         :>json int leader: Broker ID of the leader for this partition
-         :>json array replicas: List of brokers acting as replicas for this partition
-         :>json int replicas[i].broker: Broker ID of the replica
-         :>json boolean replicas[i].leader: true if this broker is the leader for the partition
-         :>json boolean replicas[i].in_sync: true if the replica is in sync with the leader
+   :>json int partition: ID of the partition
+   :>json int leader: Broker ID of the leader for this partition
+   :>json array replicas: List of brokers acting as replicas for this partition
+   :>json int replicas[i].broker: Broker ID of the replica
+   :>json boolean replicas[i].leader: true if this broker is the leader for the partition
+   :>json boolean replicas[i].in_sync: true if the replica is in sync with the leader
 
-         :statuscode 404:
-            * Error code 40401 -- Topic not found
-            * Error code 40402 -- Partition not found
+   :statuscode 404:
+      * Error code 40401 -- Topic not found
+      * Error code 40402 -- Partition not found
 
-         **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
@@ -557,49 +557,49 @@ It also allows you to consume and produce messages to single partition using ``G
    provided as the schema ID returned with the first response.
 
    :param string topic_name: Topic to produce the messages to
-         :param int partition_id: Partition to produce the messages to
-         :<json string key_schema: Full schema encoded as a string (e.g. JSON
-                                   serialized for Avro data)
-         :<json int key_schema_id: ID returned by a previous request using the same
-                                   schema. This ID corresponds to the ID of the schema
-                                   in the registry.
-         :<json string value_schema: Full schema encoded as a string (e.g. JSON
-                                     serialized for Avro data)
-         :<json int value_schema_id: ID returned by a previous request using the same
-                                     schema. This ID corresponds to the ID of the schema
-                                     in the registry.
-         :<json records: A list of records to produce to the partition.
-         :<jsonarr object records[i].key: The message key, formatted according to the
-                                          embedded format, or null to omit a key (optional)
-         :<jsonarr object records[i].value: The message value, formatted according to the
-                                            embedded format
+   :param int partition_id: Partition to produce the messages to
+   :<json string key_schema: Full schema encoded as a string (e.g. JSON
+                             serialized for Avro data)
+   :<json int key_schema_id: ID returned by a previous request using the same
+                             schema. This ID corresponds to the ID of the schema
+                             in the registry.
+   :<json string value_schema: Full schema encoded as a string (e.g. JSON
+                               serialized for Avro data)
+   :<json int value_schema_id: ID returned by a previous request using the same
+                               schema. This ID corresponds to the ID of the schema
+                               in the registry.
+   :<json records: A list of records to produce to the partition.
+   :<jsonarr object records[i].key: The message key, formatted according to the
+                                    embedded format, or null to omit a key (optional)
+   :<jsonarr object records[i].value: The message value, formatted according to the
+                                      embedded format
 
-         :>json int key_schema_id: The ID for the schema used to produce keys, or null
-                                   if keys were not used
-         :>json int value_schema_id: The ID for the schema used to produce values.
-         :>jsonarr object offests: List of partitions and offsets the messages were
-                                   published to
-         :>jsonarr int offsets[i].partition: Partition the message was published to. This
-                                             will be the same as the ``partition_id``
+   :>json int key_schema_id: The ID for the schema used to produce keys, or null
+                             if keys were not used
+   :>json int value_schema_id: The ID for the schema used to produce values.
+   :>jsonarr object offests: List of partitions and offsets the messages were
+                             published to
+   :>jsonarr int offsets[i].partition: Partition the message was published to. This
+                                       will be the same as the ``partition_id``
                                        parameter and is provided only to maintain
                                        consistency with responses from producing to
                                        a topic
    :>jsonarr long offsets[i].offset: Offset of the message
-         :>jsonarr long offsets[i].error_code: An error code classifying the reason this operation
-                                               failed, or null if it succeeded.
+   :>jsonarr long offsets[i].error_code: An error code classifying the reason this operation
+                                         failed, or null if it succeeded.
 
-                                               * 1 - Non-retriable Kafka exception
-                                               * 2 - Retriable Kafka exception; the message might be sent
-                                                 successfully if retried
-         :>jsonarr string offsets[i].error: An error message describing why the operation failed, or
-                                            null if it succeeded
+                                         * 1 - Non-retriable Kafka exception
+                                         * 2 - Retriable Kafka exception; the message might be sent
+                                           successfully if retried
+   :>jsonarr string offsets[i].error: An error message describing why the operation failed, or
+                                      null if it succeeded
 
-         :statuscode 404:
-            * Error code 40401 -- Topic not found
-            * Error code 40402 -- Partition not found
-         :statuscode 422:
-            * Error code 42201 -- Request includes keys and uses a format that requires schemas, but does
-              not include the ``key_schema`` or ``key_schema_id`` fields
+   :statuscode 404:
+      * Error code 40401 -- Topic not found
+      * Error code 40402 -- Partition not found
+   :statuscode 422:
+      * Error code 42201 -- Request includes keys and uses a format that requires schemas, but does
+        not include the ``key_schema`` or ``key_schema_id`` fields
       * Error code 42202 -- Request includes values and uses a format that requires schemas, but
         does not include the ``value_schema`` or ``value_schema_id`` fields
       * Error code 42205 -- Request includes invalid schema.
@@ -761,27 +761,27 @@ any consumers before it is terminated.
    for this specific REST proxy instance.
 
    :param string group_name: The name of the consumer group to join
-         :<json string name: Name for the consumer instance, which will be used in URLs for the
-                             consumer. This must be unique, at least within the proxy process handling
-                             the request. If omitted, falls back on the automatically generated ID. Using
-                             automatically generated names is recommended for most use cases.
-         :<json string format: The format of consumed messages, which is used to convert messages into
-                               a JSON-compatible form. Valid values: "binary", "avro", "json". If unspecified,
-                               defaults to "binary".
-         :<json string auto.offset.reset: Sets the ``auto.offset.reset`` setting for the consumer
+   :<json string name: Name for the consumer instance, which will be used in URLs for the
+                       consumer. This must be unique, at least within the proxy process handling
+                       the request. If omitted, falls back on the automatically generated ID. Using
+                       automatically generated names is recommended for most use cases.
+   :<json string format: The format of consumed messages, which is used to convert messages into
+                         a JSON-compatible form. Valid values: "binary", "avro", "json". If unspecified,
+                         defaults to "binary".
+   :<json string auto.offset.reset: Sets the ``auto.offset.reset`` setting for the consumer
    :<json string auto.commit.enable: Sets the ``auto.commit.enable`` setting for the consumer
 
    :>json string instance_id: Unique ID for the consumer instance in this group.
-         :>json string base_uri: Base URI used to construct URIs for subsequent requests against this consumer instance. This
-                                 will be of the form ``http://hostname:port/consumers/consumer_group/instances/instance_id``.
+   :>json string base_uri: Base URI used to construct URIs for subsequent requests against this consumer instance. This
+                           will be of the form ``http://hostname:port/consumers/consumer_group/instances/instance_id``.
 
    :statuscode 409:
-                * Error code 40902 -- Consumer instance with the specified name already exists.
-         :statuscode 422:
-                * Error code 42204 -- Invalid consumer configuration. One of the settings specified in
-                  the request contained an invalid value.
+         * Error code 40902 -- Consumer instance with the specified name already exists.
+   :statuscode 422:
+         * Error code 42204 -- Invalid consumer configuration. One of the settings specified in
+           the request contained an invalid value.
 
-         **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
@@ -816,12 +816,12 @@ any consumers before it is terminated.
    instance.
 
    :param string group_name: The name of the consumer group
-         :param string instance: The ID of the consumer instance
+   :param string instance: The ID of the consumer instance
 
-         :statuscode 404:
-            * Error code 40403 -- Consumer instance not found
+   :statuscode 404:
+     * Error code 40403 -- Consumer instance not found
 
-         **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
@@ -844,19 +844,19 @@ any consumers before it is terminated.
    instance.
 
    :param string group_name: The name of the consumer group
-         :param string instance: The ID of the consumer instance
-         :<jsonarr offsets: A list of offsets to commit for partitions
-         :<jsonarr string offsets[i].topic: Name of the topic
-         :<jsonarr int offsets[i].partition: Partition ID
-         :<jsonarr offset: the offset to commit
+   :param string instance: The ID of the consumer instance
+   :<jsonarr offsets: A list of offsets to commit for partitions
+   :<jsonarr string offsets[i].topic: Name of the topic
+   :<jsonarr int offsets[i].partition: Partition ID
+   :<jsonarr offset: the offset to commit
 
-         :statuscode 404:
-            * Error code 40403 -- Consumer instance not found
-         :statuscode 500:
-            * Error code 500 -- General consumer error response, caused by an exception during the
-              operation. An error message is included in the standard format which explains the cause.
+   :statuscode 404:
+     * Error code 40403 -- Consumer instance not found
+   :statuscode 500:
+     * Error code 500 -- General consumer error response, caused by an exception during the
+       operation. An error message is included in the standard format which explains the cause.
 
-         **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
@@ -888,24 +888,24 @@ any consumers before it is terminated.
    instance.
 
    :param string group_name: The name of the consumer group
-         :param string instance: The ID of the consumer instance
+   :param string instance: The ID of the consumer instance
 
-         :<jsonarr partitions: A list of partitions to find the last committed offsets for
-         :<jsonarr string partitions[i].topic: Name of the topic
-         :<jsonarr int partitions[i].partition: Partition ID
-         :>jsonarr offsets: A list of committed offsets
-         :>jsonarr string offsets[i].topic: Name of the topic for which an offset was committed
-         :>jsonarr int offsets[i].partition: Partition ID for which an offset was committed
-         :>jsonarr int offsets[i].offset: Committed offset
-         :>jsonarr string offsets[i].metadata: Metadata for the committed offset
+   :<jsonarr partitions: A list of partitions to find the last committed offsets for
+   :<jsonarr string partitions[i].topic: Name of the topic
+   :<jsonarr int partitions[i].partition: Partition ID
+   :>jsonarr offsets: A list of committed offsets
+   :>jsonarr string offsets[i].topic: Name of the topic for which an offset was committed
+   :>jsonarr int offsets[i].partition: Partition ID for which an offset was committed
+   :>jsonarr int offsets[i].offset: Committed offset
+   :>jsonarr string offsets[i].metadata: Metadata for the committed offset
 
-         :statuscode 404:
-            * Error code 40403 -- Consumer instance not found
-         :statuscode 500:
-            * Error code 500 -- General consumer error response, caused by an exception during the
-              operation. An error message is included in the standard format which explains the cause.
+   :statuscode 404:
+     * Error code 40403 -- Consumer instance not found
+   :statuscode 500:
+     * Error code 500 -- General consumer error response, caused by an exception during the
+       operation. An error message is included in the standard format which explains the cause.
 
-         **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
@@ -958,22 +958,22 @@ any consumers before it is terminated.
    Subscribe to the given list of topics or a topic pattern to get dynamically assigned partitions.
 
    :param string group_name: The name of the consumer group
-         :param string instance: The ID of the consumer instance
-         :<jsonarr topics: A list of topics to subscribe
-         :<jsonarr string topics[i].topic: Name of the topic
-         :<json string topic_pattern: A REGEX pattern. topics_pattern and topics fields are mutually exclusive.
-         :statuscode 404:
-            * Error code 40403 -- Consumer instance not found
+   :param string instance: The ID of the consumer instance
+   :<jsonarr topics: A list of topics to subscribe
+   :<jsonarr string topics[i].topic: Name of the topic
+   :<json string topic_pattern: A REGEX pattern. topics_pattern and topics fields are mutually exclusive.
+   :statuscode 404:
+     * Error code 40403 -- Consumer instance not found
 
-         :statuscode 409:
-                * Error code 40903 -- Subscription to topics, partitions and pattern are mutually exclusive.
+   :statuscode 409:
+     * Error code 40903 -- Subscription to topics, partitions and pattern are mutually exclusive.
 
-         :statuscode 500:
-            * Error code 500 -- General consumer error response, caused by an exception during the
-              operation. An error message is included in the standard format which explains the cause.
+   :statuscode 500:
+     * Error code 500 -- General consumer error response, caused by an exception during the
+       operation. An error message is included in the standard format which explains the cause.
 
 
-         **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
@@ -1019,17 +1019,17 @@ any consumers before it is terminated.
    Get the current subscribed list of topics
 
    :param string group_name: The name of the consumer group
-         :param string instance: The ID of the consumer instance
-         :>jsonarr topics: A list of subscribed topics
-         :>jsonarr string topics[i]: Name of the topic
+   :param string instance: The ID of the consumer instance
+   :>jsonarr topics: A list of subscribed topics
+   :>jsonarr string topics[i]: Name of the topic
 
-         :statuscode 404:
-            * Error code 40403 -- Consumer instance not found
-         :statuscode 500:
-            * Error code 500 -- General consumer error response, caused by an exception during the
-              operation. An error message is included in the standard format which explains the cause.
+   :statuscode 404:
+      * Error code 40403 -- Consumer instance not found
+   :statuscode 500:
+      * Error code 500 -- General consumer error response, caused by an exception during the
+        operation. An error message is included in the standard format which explains the cause.
 
-         **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
@@ -1058,12 +1058,12 @@ any consumers before it is terminated.
    instance.
 
    :param string group_name: The name of the consumer group
-         :param string instance: The ID of the consumer instance
+   :param string instance: The ID of the consumer instance
 
-         :statuscode 404:
-            * Error code 40403 -- Consumer instance not found
+   :statuscode 404:
+     * Error code 40403 -- Consumer instance not found
 
-         **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
@@ -1083,24 +1083,24 @@ any consumers before it is terminated.
    Manually assign a list of partitions to this consumer.
 
    :param string group_name: The name of the consumer group
-         :param string instance: The ID of the consumer instance
+   :param string instance: The ID of the consumer instance
 
-         :<jsonarr partitions: A list of partitions to assign to this consumer
-         :<jsonarr string partitions[i].topic: Name of the topic
-         :<jsonarr int partitions[i].partition: Partition ID
+   :<jsonarr partitions: A list of partitions to assign to this consumer
+   :<jsonarr string partitions[i].topic: Name of the topic
+   :<jsonarr int partitions[i].partition: Partition ID
 
-         :statuscode 404:
-            * Error code 40403 -- Consumer instance not found
+   :statuscode 404:
+     * Error code 40403 -- Consumer instance not found
 
-         :statuscode 409:
-            * Error code 40903 -- Subscription to topics, partitions and pattern are mutually exclusive.
+   :statuscode 409:
+     * Error code 40903 -- Subscription to topics, partitions and pattern are mutually exclusive.
 
-         :statuscode 500:
-            * Error code 500 -- General consumer error response, caused by an exception during the
-              operation. An error message is included in the standard format which explains the cause.
+   :statuscode 500:
+     * Error code 500 -- General consumer error response, caused by an exception during the
+       operation. An error message is included in the standard format which explains the cause.
 
 
-         **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
@@ -1135,19 +1135,19 @@ any consumers before it is terminated.
    Get the list of partitions currently manually assigned to this consumer.
 
    :param string group_name: The name of the consumer group
-         :param string instance: The ID of the consumer instance
+   :param string instance: The ID of the consumer instance
 
-         :>jsonarr partitions: A list of partitions manually to assign to this consumer
-         :>jsonarr string partitions[i].topic: Name of the topic
-         :>jsonarr int partitions[i].partition: Partition ID
+   :>jsonarr partitions: A list of partitions manually to assign to this consumer
+   :>jsonarr string partitions[i].topic: Name of the topic
+   :>jsonarr int partitions[i].partition: Partition ID
 
-         :statuscode 404:
-            * Error code 40403 -- Consumer instance not found
-         :statuscode 500:
-            * Error code 500 -- General consumer error response, caused by an exception during the
-              operation. An error message is included in the standard format which explains the cause.
+   :statuscode 404:
+     * Error code 40403 -- Consumer instance not found
+   :statuscode 500:
+     * Error code 500 -- General consumer error response, caused by an exception during the
+       operation. An error message is included in the standard format which explains the cause.
 
-         **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
@@ -1181,20 +1181,20 @@ any consumers before it is terminated.
    Overrides the fetch offsets that the consumer will use for the next set of records to fetch.
 
    :param string group_name: The name of the consumer group
-         :param string instance: The ID of the consumer instance
+   :param string instance: The ID of the consumer instance
 
-         :<jsonarr offsets: A list of offsets
-         :<jsonarr string offsets[i].topic: Name of the topic for
-         :<jsonarr int offsets[i].partition: Partition ID
-         :<jsonarr int offsets[i].offset: Seek to offset for the next set of records to fetch
+   :<jsonarr offsets: A list of offsets
+   :<jsonarr string offsets[i].topic: Name of the topic for
+   :<jsonarr int offsets[i].partition: Partition ID
+   :<jsonarr int offsets[i].offset: Seek to offset for the next set of records to fetch
 
-         :statuscode 404:
-            * Error code 40403 -- Consumer instance not found
-         :statuscode 500:
-            * Error code 500 -- General consumer error response, caused by an exception during the
-              operation. An error message is included in the standard format which explains the cause.
+   :statuscode 404:
+     * Error code 40403 -- Consumer instance not found
+   :statuscode 500:
+     * Error code 500 -- General consumer error response, caused by an exception during the
+       operation. An error message is included in the standard format which explains the cause.
 
-            **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
@@ -1229,19 +1229,19 @@ any consumers before it is terminated.
    Seek to the first offset for each of the given partitions.
 
    :param string group_name: The name of the consumer group
-         :param string instance: The ID of the consumer instance
+   :param string instance: The ID of the consumer instance
 
-         :<jsonarr partitions: A list of partitions
-         :<jsonarr string partitions[i].topic: Name of the topic
-         :<jsonarr int partitions[i].partition: Partition ID
+   :<jsonarr partitions: A list of partitions
+   :<jsonarr string partitions[i].topic: Name of the topic
+   :<jsonarr int partitions[i].partition: Partition ID
 
-         :statuscode 404:
-            * Error code 40403 -- Consumer instance not found
-         :statuscode 500:
-            * Error code 500 -- General consumer error response, caused by an exception during the
-              operation. An error message is included in the standard format which explains the cause.
+   :statuscode 404:
+     * Error code 40403 -- Consumer instance not found
+   :statuscode 500:
+     * Error code 500 -- General consumer error response, caused by an exception during the
+       operation. An error message is included in the standard format which explains the cause.
 
-            **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
@@ -1275,19 +1275,19 @@ any consumers before it is terminated.
    Seek to the last offset for each of the given partitions.
 
    :param string group_name: The name of the consumer group
-         :param string instance: The ID of the consumer instance
+   :param string instance: The ID of the consumer instance
 
-         :<jsonarr partitions: A list of partitions
-         :<jsonarr string partitions[i].topic: Name of the topic
-         :<jsonarr int partitions[i].partition: Partition ID
+   :<jsonarr partitions: A list of partitions
+   :<jsonarr string partitions[i].topic: Name of the topic
+   :<jsonarr int partitions[i].partition: Partition ID
 
-         :statuscode 404:
-            * Error code 40403 -- Consumer instance not found
-         :statuscode 500:
-            * Error code 500 -- General consumer error response, caused by an exception during the
-              operation. An error message is included in the standard format which explains the cause.
+   :statuscode 404:
+     * Error code 40403 -- Consumer instance not found
+   :statuscode 500:
+     * Error code 500 -- General consumer error response, caused by an exception during the
+       operation. An error message is included in the standard format which explains the cause.
 
-            **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
@@ -1328,32 +1328,32 @@ any consumers before it is terminated.
    instance.
 
    :param string group_name: The name of the consumer group
-         :param string instance: The ID of the consumer instance
+   :param string instance: The ID of the consumer instance
 
-         :query timeout: The number of milliseconds for the underlying client library poll(timeout) request to fetch the records. Default to 5000ms.
+   :query timeout: The number of milliseconds for the underlying client library poll(timeout) request to fetch the records. Default to 5000ms.
 
-         :query max_bytes: The maximum number of bytes of unencoded keys and values that should be
-                           included in the response. This provides approximate control over the size of
-                           responses and the amount of memory required to store the decoded response. The
-                           actual limit will be the minimum of this setting and the server-side
-                           configuration ``consumer.request.max.bytes``. Default is unlimited.
+   :query max_bytes: The maximum number of bytes of unencoded keys and values that should be
+                     included in the response. This provides approximate control over the size of
+                     responses and the amount of memory required to store the decoded response. The
+                     actual limit will be the minimum of this setting and the server-side
+                     configuration ``consumer.request.max.bytes``. Default is unlimited.
 
    :>jsonarr string topic: The topic
-         :>jsonarr string key: The message key, formatted according to the embedded format
-         :>jsonarr string value: The message value, formatted according to the embedded format
-         :>jsonarr int partition: Partition of the message
-         :>jsonarr long offset: Offset of the message
+   :>jsonarr string key: The message key, formatted according to the embedded format
+   :>jsonarr string value: The message value, formatted according to the embedded format
+   :>jsonarr int partition: Partition of the message
+   :>jsonarr long offset: Offset of the message
 
-         :statuscode 404:
-            * Error code 40403 -- Consumer instance not found
-         :statuscode 406:
-            * Error code 40601 -- Consumer format does not match the embedded format requested by the
-              ``Accept`` header.
+   :statuscode 404:
+      * Error code 40403 -- Consumer instance not found
+   :statuscode 406:
+      * Error code 40601 -- Consumer format does not match the embedded format requested by the
+        ``Accept`` header.
    :statuscode 500:
-            * Error code 500 -- General consumer error response, caused by an exception during the
-              operation. An error message is included in the standard format which explains the cause.
+      * Error code 500 -- General consumer error response, caused by an exception during the
+        operation. An error message is included in the standard format which explains the cause.
 
-         **Example binary request**:
+   **Example binary request**:
 
    .. sourcecode:: http
 
@@ -1467,7 +1467,7 @@ The brokers resource provides access to the current state of Kafka brokers in th
 
    :>json array brokers: List of broker IDs
 
-         **Example request**:
+   **Example request**:
 
    .. sourcecode:: http
 
