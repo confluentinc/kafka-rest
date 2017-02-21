@@ -124,13 +124,13 @@ endpoint name ``brokers.list`` with the metric name ``request-rate`` to get
                                       with ``Accept: application/vnd.kafka.v2+json`` header
   ``consumer.create+v2``              ``POST /consumers/{group}`` 
                                       with ``Content-Type: application/vnd.kafka.v2+json`` header
-  ``consumer.delete``                 ``DELETE /consumers/{group}/instances/{instance}``
+  ``consumer.delete+v2``              ``DELETE /consumers/{group}/instances/{instance}``
                                       with ``Accept: application/vnd.kafka.avro.v2+json`` header
-  ``consumer.records.read-avro``      ``GET /consumers/{group}/instances/{instance}/records``
+  ``consumer.records.read-avro+v2``   ``GET /consumers/{group}/instances/{instance}/records``
                                       with ``Accept: application/vnd.kafka.avro.v2+json`` header
-  ``consumer.records.read-json``      ``GET /consumers/{group}/instances/{instance}/records``
+  ``consumer.records.read-json+v2``   ``GET /consumers/{group}/instances/{instance}/records``
                                       with ``Accept: application/vnd.kafka.json.v2+json`` header
-  ``consumer.records.read-binary``    ``GET /consumers/{group}/instances/{instance}/records``
+  ``consumer.records.read-binary+v2`` ``GET /consumers/{group}/instances/{instance}/records``
                                       with ``Accept: application/vnd.kafka.binary.v2+json`` header
   ``consumer.subscribe+v2``           ``POST /consumers/{group}/instances/{instance}/subscription``
                                       with ``Content-Type: application/vnd.kafka.v2+json`` header

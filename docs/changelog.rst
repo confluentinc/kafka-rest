@@ -3,6 +3,14 @@
 Changelog
 =========
 
+Version 3.1.2
+-------------
+No changes
+
+Version 3.1.1
+-------------
+No changes
+
 Version 3.1.0
 -------------
 

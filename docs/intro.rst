@@ -74,7 +74,18 @@ Produce and Consume Avro Messages
          --data '{"value_schema": "{\"type\": \"record\", \"name\": \"User\", \"fields\": [{\"name\": \"name\", \"type\": \"string\"}]}", "records": [{"value": {"name": "testUser"}}]}' \
          "http://localhost:8082/topics/avrotest"
 
+   # You should get the following response:
      {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":21}
+
+   # Produce a message with Avro key and value.
+   # Note that if you use Avro values you must also use Avro keys, but the schemas can differ
+
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.avro.v1+json" \
+         --data '{"key_schema": "{\"name\":\"user_id\"  ,\"type\": \"int\"   }", "value_schema": "{\"type\": \"record\", \"name\": \"User\", \"fields\": [{\"name\": \"name\", \"type\": \"string\"}]}", "records": [{"key" : 1 , "value": {"name": "testUser"}}]}' \
+         "http://localhost:8082/topics/avrokeytest2"
+
+   # You should get the following response:
+   {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":2,"value_schema_id":1}
 
    # Create a consumer for Avro data, starting at the beginning of the topic's
    # log and subscribe to a topic. Then consume some data from a topic, which is decoded, translated to
@@ -94,8 +105,9 @@ Produce and Consume Avro Messages
          http://localhost:8082/consumers/my_avro_consumer/instances/my_consumer_instance/records
      [{"key":null,"value":{"name":"testUser"},"partition":0,"offset":1,"topic":"avrotest"}]
 
+
    $ curl -X DELETE http://localhost:8082/consumers/my_avro_consumer/instances/my_consumer_instance
-     # No content in response
+   # No content in response
 
 Produce and Consume Binary Messages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -313,7 +325,7 @@ dependencies as well.
 Requirements
 ------------
 
-- Kafka 0.10.0.1-SNAPSHOT
+- Kafka 0.10.2.0-SNAPSHOT
 - Required for Avro support: Schema Registry 3.0.0 recommended, 1.0 minimum
 
 Contribute

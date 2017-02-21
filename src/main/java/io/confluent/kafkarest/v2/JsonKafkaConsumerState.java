@@ -17,27 +17,26 @@ package io.confluent.kafkarest.v2;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.kafkarest.entities.JsonConsumerRecord;
 import io.confluent.kafkarest.ConsumerInstanceId;
-import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
-
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.entities.JsonConsumerRecord;
 import kafka.serializer.Decoder;
 import kafka.serializer.DefaultDecoder;
 import kafka.utils.VerifiableProperties;
-import org.apache.kafka.common.errors.SerializationException;
-
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.errors.SerializationException;
 
 
 public class JsonKafkaConsumerState extends KafkaConsumerState<byte[], byte[], Object, Object> {
+
   private static final Decoder<byte[]> decoder = new DefaultDecoder(new VerifiableProperties());
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
   public JsonKafkaConsumerState(KafkaRestConfig config,
-                           ConsumerInstanceId instanceId,
-                           Consumer consumer) {
+      ConsumerInstanceId instanceId,
+      Consumer consumer) {
     super(config, instanceId, consumer);
   }
 
@@ -52,7 +51,8 @@ public class JsonKafkaConsumerState extends KafkaConsumerState<byte[], byte[], O
   }
 
   @Override
-  public ConsumerRecordAndSize<Object, Object> createConsumerRecord(ConsumerRecord<byte[], byte[]> record) {
+  public ConsumerRecordAndSize<Object, Object> createConsumerRecord(
+      ConsumerRecord<byte[], byte[]> record) {
     long approxSize = 0;
 
     Object key = null;
@@ -73,7 +73,7 @@ public class JsonKafkaConsumerState extends KafkaConsumerState<byte[], byte[], O
     }
 
     return new ConsumerRecordAndSize<Object, Object>(
-						     new JsonConsumerRecord(record.topic(), key, value, record.partition(), record.offset()),
+        new JsonConsumerRecord(record.topic(), key, value, record.partition(), record.offset()),
         approxSize);
   }
 

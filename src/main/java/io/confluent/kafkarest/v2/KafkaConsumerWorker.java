@@ -15,6 +15,8 @@
  **/
 package io.confluent.kafkarest.v2;
 
+import io.confluent.kafkarest.ConsumerWorkerReadCallback;
+import io.confluent.kafkarest.KafkaRestConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,8 +27,6 @@ import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.ConsumerWorkerReadCallback;
 
 /**
  * Worker thread for consumers that multiplexes multiple consumer operations onto a single thread.
@@ -50,17 +50,18 @@ public class KafkaConsumerWorker extends Thread {
 
   public synchronized <KafkaK, KafkaV, ClientK, ClientV>
   Future readRecords(KafkaConsumerState state, long timeout, long maxBytes,
-		   ConsumerWorkerReadCallback<ClientK, ClientV> callback) {
-    log.trace("KafkaConsumer worker " + this.toString()  + " for " + state.getId());
+      ConsumerWorkerReadCallback<ClientK, ClientV> callback) {
+    log.trace("KafkaConsumer worker " + this.toString() + " for " + state.getId());
     KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV> task
-        = new KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>(state, null, timeout, maxBytes, callback);
+        = new KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>(state, null, timeout,
+        maxBytes, callback);
     if (!task.isDone()) {
       tasks.add(task);
       this.notifyAll();
     }
     return task;
   }
-    
+
   @Override
   public void run() {
     while (isRunning.get()) {
@@ -72,7 +73,7 @@ public class KafkaConsumerWorker extends Thread {
             long nextExpiration = nextWaitingExpiration();
             if (nextExpiration > now) {
               long timeout = (nextExpiration == Long.MAX_VALUE ?
-                              0 : nextExpiration - now);
+                  0 : nextExpiration - now);
               assert (timeout >= 0);
               config.getTime().waitOn(this, timeout);
             }
@@ -117,7 +118,7 @@ public class KafkaConsumerWorker extends Thread {
       shutdownLatch.await();
     } catch (InterruptedException e) {
       log.error("Interrupted while "
-                + "consumer worker thread.");
+          + "consumer worker thread.");
       throw new Error("Interrupted when shutting down consumer worker thread.");
     }
   }

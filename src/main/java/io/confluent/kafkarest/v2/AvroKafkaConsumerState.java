@@ -17,21 +17,16 @@
 package io.confluent.kafkarest.v2;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
-import java.util.Properties;
-
-import io.confluent.kafka.serializers.KafkaAvroDecoder;
+import io.confluent.kafkarest.ConsumerInstanceId;
+import io.confluent.kafkarest.ConsumerRecordAndSize;
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.entities.AvroConsumerRecord;
-import io.confluent.kafkarest.ConsumerInstanceId;
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.ConsumerRecordAndSize;
-
 import kafka.serializer.Decoder;
-import kafka.utils.VerifiableProperties;
-
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+
+import java.util.Properties;
 
 /**
  * Avro implementation of KafkaConsumerState, which decodes into GenericRecords or primitive types.
@@ -43,12 +38,12 @@ public class AvroKafkaConsumerState extends KafkaConsumerState<Object, Object, J
   private Decoder<Object> decoder = null;
 
   public AvroKafkaConsumerState(KafkaRestConfig config,
-                           ConsumerInstanceId instanceId,
-                           Consumer consumer) {
+      ConsumerInstanceId instanceId,
+      Consumer consumer) {
     super(config, instanceId, consumer);
     Properties props = new Properties();
     props.setProperty("schema.registry.url",
-                      config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
+        config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
   }
 
   @Override
@@ -67,7 +62,8 @@ public class AvroKafkaConsumerState extends KafkaConsumerState<Object, Object, J
     AvroConverter.JsonNodeAndSize keyNode = AvroConverter.toJson(record.key());
     AvroConverter.JsonNodeAndSize valueNode = AvroConverter.toJson(record.value());
     return new ConsumerRecordAndSize<JsonNode, JsonNode>(
-							 new AvroConsumerRecord(record.topic(), keyNode.json, valueNode.json, record.partition(), record.offset()),
+        new AvroConsumerRecord(record.topic(), keyNode.json, valueNode.json, record.partition(),
+            record.offset()),
         keyNode.size + valueNode.size
     );
   }

@@ -56,7 +56,7 @@ public class KafkaRestMain {
       log.error("Server configuration failed: ", e);
       System.exit(1);
     } catch (Exception e) {
-      log.error("Server died unexpectedly: " + e);
+      log.error("Server died unexpectedly: ", e);
       System.exit(1);
     }
   }

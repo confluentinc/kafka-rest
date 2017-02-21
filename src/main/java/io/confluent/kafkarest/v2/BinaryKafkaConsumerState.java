@@ -16,29 +16,28 @@
 
 package io.confluent.kafkarest.v2;
 
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.ConsumerInstanceId;
-import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
-
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import kafka.serializer.Decoder;
 import kafka.serializer.DefaultDecoder;
 import kafka.utils.VerifiableProperties;
-
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 
 /**
- * Binary implementation of KafkaConsumerState that does no decoding, returning the raw bytes directly.
+ * Binary implementation of KafkaConsumerState that does no decoding, returning the raw bytes
+ * directly.
  */
 public class BinaryKafkaConsumerState extends KafkaConsumerState<byte[], byte[], byte[], byte[]> {
 
   private static final Decoder<byte[]> decoder = new DefaultDecoder(new VerifiableProperties());
 
   public BinaryKafkaConsumerState(KafkaRestConfig config,
-                             ConsumerInstanceId instanceId,
-                             Consumer consumer) {
+      ConsumerInstanceId instanceId,
+      Consumer consumer) {
     super(config, instanceId, consumer);
   }
 
@@ -53,11 +52,13 @@ public class BinaryKafkaConsumerState extends KafkaConsumerState<byte[], byte[],
   }
 
   @Override
-  public ConsumerRecordAndSize<byte[], byte[]> createConsumerRecord(ConsumerRecord<byte[], byte[]> record) {
+  public ConsumerRecordAndSize<byte[], byte[]> createConsumerRecord(
+      ConsumerRecord<byte[], byte[]> record) {
     long approxSize = (record.key() != null ? record.key().length : 0)
-                      + (record.value() != null ? record.value().length : 0);
-      
-      return new ConsumerRecordAndSize<byte[], byte[]>(
-						       new BinaryConsumerRecord(record.topic(), record.key(), record.value(), record.partition(), record.offset()), approxSize);
+        + (record.value() != null ? record.value().length : 0);
+
+    return new ConsumerRecordAndSize<byte[], byte[]>(
+        new BinaryConsumerRecord(record.topic(), record.key(), record.value(), record.partition(),
+            record.offset()), approxSize);
   }
 }

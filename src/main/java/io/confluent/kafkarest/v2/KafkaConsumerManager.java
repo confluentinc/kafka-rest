@@ -16,12 +16,38 @@
  **/
 package io.confluent.kafkarest.v2;
 
+import io.confluent.kafkarest.ConsumerInstanceId;
+import io.confluent.kafkarest.ConsumerWorkerReadCallback;
+import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.MetadataObserver;
+import io.confluent.kafkarest.Time;
+import io.confluent.kafkarest.entities.ConsumerAssignmentRequest;
+import io.confluent.kafkarest.entities.ConsumerAssignmentResponse;
+import io.confluent.kafkarest.entities.ConsumerCommittedRequest;
+import io.confluent.kafkarest.entities.ConsumerCommittedResponse;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
+import io.confluent.kafkarest.entities.ConsumerOffsetCommitRequest;
+import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.ConsumerSeekToOffsetRequest;
+import io.confluent.kafkarest.entities.ConsumerSeekToRequest;
+import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
+import io.confluent.kafkarest.entities.ConsumerSubscriptionResponse;
+import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.entities.TopicPartitionOffsetMetadata;
+import io.confluent.rest.exceptions.RestException;
+import io.confluent.rest.exceptions.RestNotFoundException;
+import io.confluent.rest.exceptions.RestServerErrorException;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Properties;
@@ -34,36 +60,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.ws.rs.core.Response;
-
-import org.apache.kafka.clients.CommonClientConfigs;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
-import io.confluent.kafkarest.entities.ConsumerSubscriptionResponse;
-import io.confluent.kafkarest.entities.ConsumerOffsetCommitRequest;
-import io.confluent.kafkarest.entities.ConsumerSeekToRequest;
-import io.confluent.kafkarest.entities.ConsumerSeekToOffsetRequest;
-import io.confluent.kafkarest.entities.ConsumerAssignmentRequest;
-import io.confluent.kafkarest.entities.ConsumerAssignmentResponse;
-import io.confluent.kafkarest.entities.ConsumerCommittedRequest;
-import io.confluent.kafkarest.entities.ConsumerCommittedResponse;
-import io.confluent.kafkarest.entities.TopicPartitionOffsetMetadata;
-
-import io.confluent.rest.exceptions.RestException;
-import io.confluent.rest.exceptions.RestNotFoundException;
-import io.confluent.rest.exceptions.RestServerErrorException;
-
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
-
-import io.confluent.kafkarest.*; //compiling v1 versions
-
 /**
  * Manages consumer instances by mapping instance IDs to consumer objects, processing read requests,
  * and cleaning up when consumers disappear.
@@ -75,7 +71,7 @@ public class KafkaConsumerManager {
   private final KafkaRestConfig config;
   private final Time time;
   //private final String zookeeperConnect;
-  private final String bootstrapServers;    
+  private final String bootstrapServers;
   private final MetadataObserver mdObserver;
   private final int iteratorTimeoutMs;
 
@@ -117,7 +113,7 @@ public class KafkaConsumerManager {
   }
 
   public KafkaConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver,
-                         KafkaConsumerFactory consumerFactory) {
+      KafkaConsumerFactory consumerFactory) {
     this(config, mdObserver);
     this.consumerFactory = consumerFactory;
   }
@@ -125,7 +121,7 @@ public class KafkaConsumerManager {
   /**
    * Creates a new consumer instance and returns its unique ID.
    *
-   * @param group          Name of the consumer group to join
+   * @param group Name of the consumer group to join
    * @param instanceConfig configuration parameters for the consumer
    * @return Unique consumer instance ID
    */
@@ -169,9 +165,9 @@ public class KafkaConsumerManager {
       // consumer-specific settings don't make sense to override globally (e.g. group ID, consumer
       // ID), and others we want to ensure get overridden (e.g. consumer.timeout.ms, which we
       // intentionally name differently in our own configs).
-      Properties props = (Properties) config.getOriginalProperties().clone();
-
-      props.setProperty(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServers);      
+      //Properties props = (Properties) config.getOriginalProperties().clone();
+      Properties props = config.getConsumerProperties();
+      props.setProperty(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServers);
       props.setProperty("group.id", group);
       // This ID we pass here has to be unique, only pass a value along if the deprecated ID field
       // was passed in. This generally shouldn't be used, but is maintained for compatibility.
@@ -190,28 +186,28 @@ public class KafkaConsumerManager {
       }
 
       props.setProperty("schema.registry.url",
-			config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
-      
-      switch (instanceConfig.getFormat()) {
-      case AVRO:
-	  props.put("key.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
-	  props.put("value.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
-	  break;
-      case JSON:
-      case BINARY:
-      default:
-	  props.put("key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
-	  props.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
-      }
+          config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
 
-      KafkaSecurityConfig.addSecurityConfigsToClientProperties(this.config, props);
+      switch (instanceConfig.getFormat()) {
+        case AVRO:
+          props.put("key.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
+          props.put("value.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
+          break;
+        case JSON:
+        case BINARY:
+        default:
+          props.put("key.deserializer",
+              "org.apache.kafka.common.serialization.ByteArrayDeserializer");
+          props.put("value.deserializer",
+              "org.apache.kafka.common.serialization.ByteArrayDeserializer");
+      }
 
       Consumer consumer = null;
       try {
         if (consumerFactory == null) {
-	    consumer = new KafkaConsumer(props);
+          consumer = new KafkaConsumer(props);
         } else {
-	    consumer = consumerFactory.createConsumer(props);
+          consumer = consumerFactory.createConsumer(props);
         }
       } finally {
       }
@@ -229,7 +225,7 @@ public class KafkaConsumerManager {
           break;
         default:
           throw new RestServerErrorException("Invalid embedded format for new consumer.",
-                                             Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+              Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
       }
       synchronized (this) {
         consumers.put(cid, state);
@@ -246,6 +242,7 @@ public class KafkaConsumerManager {
       }
     }
   }
+
   public interface ReadCallback<K, V> {
 
     public void onCompletion(List<? extends ConsumerRecord<K, V>> records, Exception e);
@@ -256,9 +253,9 @@ public class KafkaConsumerManager {
   // that the KafkaConsumerState we looked up is of the expected type and will therefore contain the
   // correct decoders
   public <KafkaK, KafkaV, ClientK, ClientV>
-  Future readRecords(final String group, final String instance, 
-                   Class<? extends KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>> consumerStateType,
-                   final long timeout, final long maxBytes, final ReadCallback callback) {
+  Future readRecords(final String group, final String instance,
+      Class<? extends KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>> consumerStateType,
+      final long timeout, final long maxBytes, final ReadCallback callback) {
     final KafkaConsumerState state;
     try {
       state = getConsumerInstance(group, instance);
@@ -299,13 +296,14 @@ public class KafkaConsumerManager {
         }
     );
   }
-    
+
   public interface CommitCallback {
 
     public void onCompletion(List<TopicPartitionOffset> offsets, Exception e);
   }
 
-  public Future commitOffsets(String group, String instance, final String async, final ConsumerOffsetCommitRequest offsetCommitRequest, final CommitCallback callback) {
+  public Future commitOffsets(String group, String instance, final String async,
+      final ConsumerOffsetCommitRequest offsetCommitRequest, final CommitCallback callback) {
     final KafkaConsumerState state;
     try {
       state = getConsumerInstance(group, instance);
@@ -318,7 +316,7 @@ public class KafkaConsumerManager {
       @Override
       public void run() {
         try {
-	    List<TopicPartitionOffset> offsets = state.commitOffsets(async, offsetCommitRequest);
+          List<TopicPartitionOffset> offsets = state.commitOffsets(async, offsetCommitRequest);
           callback.onCompletion(offsets, null);
         } catch (Exception e) {
           log.error("Failed to commit offsets for consumer " + state.getId().toString(), e);
@@ -334,20 +332,21 @@ public class KafkaConsumerManager {
     });
   }
 
-  public ConsumerCommittedResponse committed(String group, String instance, ConsumerCommittedRequest request) {
+  public ConsumerCommittedResponse committed(String group, String instance,
+      ConsumerCommittedRequest request) {
     log.debug("Committed offsets for consumer " + instance + " in group " + group);
-    ConsumerCommittedResponse response = new ConsumerCommittedResponse();	
+    ConsumerCommittedResponse response = new ConsumerCommittedResponse();
     KafkaConsumerState state = getConsumerInstance(group, instance);
     if (state != null) {
-	response =  state.committed(request);
+      response = state.committed(request);
 
     } else {
 
-	response.offsets = new ArrayList<TopicPartitionOffsetMetadata>();	
+      response.offsets = new ArrayList<TopicPartitionOffsetMetadata>();
     }
     return response;
   }
-    
+
   public void deleteConsumer(String group, String instance) {
     log.debug("Destroying consumer " + instance + " in group " + group);
     final KafkaConsumerState state = getConsumerInstance(group, instance, true);
@@ -358,29 +357,28 @@ public class KafkaConsumerManager {
     log.debug("Subscribing consumer " + instance + " in group " + group);
     KafkaConsumerState state = getConsumerInstance(group, instance);
     if (state != null) {
-	state.subscribe(subscription);
+      state.subscribe(subscription);
     }
 
   }
 
   public void unsubscribe(String group, String instance) {
-    log.debug("Unscribing consumer " + instance + " in group " + group);
+    log.debug("Unsubcribing consumer " + instance + " in group " + group);
     KafkaConsumerState state = getConsumerInstance(group, instance);
     if (state != null) {
-	state.unsubscribe();
+      state.unsubscribe();
     }
 
   }
 
   public ConsumerSubscriptionResponse subscription(String group, String instance) {
-    log.debug("Unscribing consumer " + instance + " in group " + group);
     ConsumerSubscriptionResponse response = new ConsumerSubscriptionResponse();
     KafkaConsumerState state = getConsumerInstance(group, instance);
     if (state != null) {
-	java.util.Set<java.lang.String> topics =  state.subscription();
-	response.topics = new ArrayList<String>(topics);
+      java.util.Set<java.lang.String> topics = state.subscription();
+      response.topics = new ArrayList<String>(topics);
     } else {
-	response.topics = new ArrayList<String>();	
+      response.topics = new ArrayList<String>();
     }
     return response;
   }
@@ -389,7 +387,7 @@ public class KafkaConsumerManager {
     log.debug("seeking to beginning " + instance + " in group " + group);
     KafkaConsumerState state = getConsumerInstance(group, instance);
     if (state != null) {
-	state.seekToBeginning(seekToRequest);
+      state.seekToBeginning(seekToRequest);
     }
 
   }
@@ -398,16 +396,17 @@ public class KafkaConsumerManager {
     log.debug("seeking to end " + instance + " in group " + group);
     KafkaConsumerState state = getConsumerInstance(group, instance);
     if (state != null) {
-	state.seekToEnd(seekToRequest);
+      state.seekToEnd(seekToRequest);
     }
 
   }
 
-  public void seekToOffset(String group, String instance, ConsumerSeekToOffsetRequest seekToOffsetRequest) {
+  public void seekToOffset(String group, String instance,
+      ConsumerSeekToOffsetRequest seekToOffsetRequest) {
     log.debug("seeking to offset " + instance + " in group " + group);
     KafkaConsumerState state = getConsumerInstance(group, instance);
     if (state != null) {
-	state.seekToOffset(seekToOffsetRequest);
+      state.seekToOffset(seekToOffsetRequest);
     }
 
   }
@@ -416,7 +415,7 @@ public class KafkaConsumerManager {
     log.debug("seeking to end " + instance + " in group " + group);
     KafkaConsumerState state = getConsumerInstance(group, instance);
     if (state != null) {
-	state.assign(assignmentRequest);
+      state.assign(assignmentRequest);
     }
 
   }
@@ -428,17 +427,18 @@ public class KafkaConsumerManager {
     response.partitions = new Vector<io.confluent.kafkarest.entities.TopicPartition>();
     KafkaConsumerState state = getConsumerInstance(group, instance);
     if (state != null) {
-	java.util.Set<TopicPartition> topicPartitions = state.assignment();
-	for(TopicPartition t: topicPartitions) {
-	   
-	    response.partitions.add(new io.confluent.kafkarest.entities.TopicPartition(t.topic(), t.partition()));	    
-	}
+      java.util.Set<TopicPartition> topicPartitions = state.assignment();
+      for (TopicPartition t : topicPartitions) {
+
+        response.partitions
+            .add(new io.confluent.kafkarest.entities.TopicPartition(t.topic(), t.partition()));
+      }
 
     }
     return response;
   }
 
-    
+
   public void shutdown() {
     log.debug("Shutting down consumers");
     synchronized (this) {
@@ -467,7 +467,7 @@ public class KafkaConsumerManager {
    * consumer's expiration timeout so it is not cleaned up mid-operation.
    */
   private synchronized KafkaConsumerState getConsumerInstance(String group, String instance,
-                                                         boolean remove) {
+      boolean remove) {
     ConsumerInstanceId id = new ConsumerInstanceId(group, instance);
     final KafkaConsumerState state = remove ? consumers.remove(id) : consumers.get(id);
     if (state == null) {
