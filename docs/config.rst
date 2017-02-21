@@ -18,6 +18,10 @@ Java Kafka clients.
   * Default: ""
   * Importance: high
 
+``bootstrap.servers``
+A list of Kafka brokers to connect to. For example, ``PLAINTEXT://hostname:9092,SSL://hostname2:9092``. This configuration is particularly important when Kafka security is enabled, because Kafka may expose multiple endpoints that all will be stored in ZooKeeper, but Kafka REST  may need to be configured with just one of those endpoints. The client will make use of all servers irrespective of which servers are specified here for bootstrapping—this list only impacts the initial hosts used to discover the full set of servers. Since these servers are just used for the initial connection to discover the full cluster membership (which may change dynamically), this list need not contain the full set of servers (you may want more than one, though, in case a server is down).
+
+
 ``listeners``
   Comma-separated list of listeners that listen for API requests over either HTTP or HTTPS. If a listener uses HTTPS, the appropriate SSL configuration parameters need to be set as well.
 
@@ -39,41 +43,6 @@ Java Kafka clients.
 
   * Type: string
   * Default: "localhost:2181"
-  * Importance: high
-
-``ssl.keystore.location``
-  Used for HTTPS. Location of the keystore file to use for SSL. IMPORTANT: Jetty requires that the key's CN, stored in the keystore, must match the FQDN.
-
-  * Type: string
-  * Default: ""
-  * Importance: high
-
-``ssl.keystore.password``
-  Used for HTTPS. The store password for the keystore file.
-
-  * Type: password
-  * Default: ""
-  * Importance: high
-
-``ssl.key.password``
-  Used for HTTPS. The password of the private key in the keystore file.
-
-  * Type: password
-  * Default: ""
-  * Importance: high
-
-``ssl.truststore.location``
-  Used for HTTPS. Location of the trust store. Required only to authenticate HTTPS clients.
-
-  * Type: string
-  * Default: ""
-  * Importance: high
-
-``ssl.truststore.password``
-  Used for HTTPS. The store password for the trust store file.
-
-  * Type: password
-  * Default: ""
   * Importance: high
 
 ``consumer.request.max.bytes``
@@ -111,47 +80,7 @@ Java Kafka clients.
   * Default: 25
   * Importance: medium
 
-``ssl.keystore.type``
-  Used for HTTPS. The type of keystore file.
 
-  * Type: string
-  * Default: "JKS"
-  * Importance: medium
-
-``ssl.truststore.type``
-  Used for HTTPS. The type of trust store file.
-
-  * Type: string
-  * Default: "JKS"
-  * Importance: medium
-
-``ssl.protocol``
-  Used for HTTPS. The SSL protocol used to generate the SslContextFactory.
-
-  * Type: string
-  * Default: "TLS"
-  * Importance: medium
-
-``ssl.provider``
-  Used for HTTPS. The SSL security provider name. Leave blank to use Jetty's default.
-
-  * Type: string
-  * Default: "" (Jetty's default)
-  * Importance: medium
-
-``ssl.client.auth``
-  Used for HTTPS. Whether or not to require the HTTPS client to authenticate via the server's trust store.
-
-  * Type: boolean
-  * Default: false
-  * Importance: medium
-
-``ssl.enabled.protocols``
-  Used for HTTPS. The list of protocols enabled for SSL connections. Comma-separated list. Leave blank to use Jetty's defaults.
-
-  * Type: list
-  * Default: "" (Jetty's default)
-  * Importance: medium
 
 ``access.control.allow.methods``
   Set value to Jetty Access-Control-Allow-Origin header for specified methods
@@ -272,6 +201,93 @@ Java Kafka clients.
   * Default: 1000
   * Importance: low
 
+
+
+Security Configuration Options
+--------------------------------
+
+REST Proxy supports SSL for securing communication between REST clients and the REST Proxy (HTTPS), and both SSL and SASL to secure communication between RESt Proxy and Apache Kafka.
+
+Configuration Options for HTTPS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``ssl.keystore.location``
+  Used for HTTPS. Location of the keystore file to use for SSL. IMPORTANT: Jetty requires that the key's CN, stored in the keystore, must match the FQDN.
+
+  * Type: string
+  * Default: ""
+  * Importance: high
+
+``ssl.keystore.password``
+  Used for HTTPS. The store password for the keystore file.
+
+  * Type: password
+  * Default: ""
+  * Importance: high
+
+``ssl.key.password``
+  Used for HTTPS. The password of the private key in the keystore file.
+
+  * Type: password
+  * Default: ""
+  * Importance: high
+
+``ssl.truststore.location``
+  Used for HTTPS. Location of the trust store. Required only to authenticate HTTPS clients.
+
+  * Type: string
+  * Default: ""
+  * Importance: high
+
+``ssl.truststore.password``
+  Used for HTTPS. The store password for the trust store file.
+
+  * Type: password
+  * Default: ""
+  * Importance: high
+
+``ssl.keystore.type``
+  Used for HTTPS. The type of keystore file.
+
+  * Type: string
+  * Default: "JKS"
+  * Importance: medium
+
+``ssl.truststore.type``
+  Used for HTTPS. The type of trust store file.
+
+  * Type: string
+  * Default: "JKS"
+  * Importance: medium
+
+``ssl.protocol``
+  Used for HTTPS. The SSL protocol used to generate the SslContextFactory.
+
+  * Type: string
+  * Default: "TLS"
+  * Importance: medium
+
+``ssl.provider``
+  Used for HTTPS. The SSL security provider name. Leave blank to use Jetty's default.
+
+  * Type: string
+  * Default: "" (Jetty's default)
+  * Importance: medium
+
+``ssl.client.auth``
+  Used for HTTPS. Whether or not to require the HTTPS client to authenticate via the server's trust store.
+
+  * Type: boolean
+  * Default: false
+  * Importance: medium
+
+``ssl.enabled.protocols``
+  Used for HTTPS. The list of protocols enabled for SSL connections. Comma-separated list. Leave blank to use Jetty's defaults.
+
+  * Type: list
+  * Default: "" (Jetty's default)
+  * Importance: medium
+
 ``ssl.keymanager.algorithm``
   Used for HTTPS. The algorithm used by the key manager factory for SSL connections. Leave blank to use Jetty's default.
 
@@ -300,4 +316,186 @@ Java Kafka clients.
   * Default: "" (Jetty's default)
   * Importance: low
 
-``
+Configuration Options for SSL Encryption between REST Proxy and Apache Kafka Brokers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Note that all the SSL configurations (for REST Proxy to Broker communication) are prefixed with "client". If you want the configuration to apply just to consumers or just to producers, you can replace the prefix with "consumer" or "producer" respectively.
+
+In addition to these configurations, make sure ``bootstrap.servers`` configuration is set with SSL:\\host:port end-points, or you'll accidentally open an SSL connection to a non-SSL port.
+
+``client.security.protocol``
+Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL.
+
+  * Type: string
+  * Default: PLAINTEXT
+  * Importance: high
+
+``client.ssl.key.password``
+  The password of the private key in the key store file. This is optional for client.
+
+  * Type: password
+  * Default: null
+  * Importance: high
+
+``client.ssl.keystore.location``
+  The location of the key store file. This is optional for client and can be used for two-way authentication for client.
+
+  * Type: string
+  * Default: null
+  * Importance: high
+
+``client.ssl.keystore.password``
+  The store password for the key store file. This is optional for client and only needed if ssl.keystore.location is configured.
+
+  * Type: password
+  * Default: null
+  * Importance: high
+
+``client.ssl.truststore.location``
+  The location of the trust store file.
+
+  * Type: string
+  * Default: null
+  * Importance: high
+
+``client.ssl.truststore.password``
+The password for the trust store file.
+
+  * Type: string
+  * Default: null
+  * Importance: high
+
+``client.ssl.enabled.protocols``
+The list of protocols enabled for SSL connections.
+
+  * Type: list
+  * Default: TLSv1.2,TLSv1.1,TLSv1
+  * Importance: medium
+
+``client.ssl.keystore.type``
+The file format of the key store file. This is optional for client.
+
+  * Type: string
+  * Default: JKS
+  * Importance: medium
+
+``client.ssl.protocol``
+The SSL protocol used to generate the SSLContext. Default setting is TLS, which is fine for most cases. Allowed values in recent JVMs are TLS, TLSv1.1 and TLSv1.2. SSL, SSLv2 and SSLv3 may be supported in older JVMs, but their usage is discouraged due to known security vulnerabilities.
+
+  * Type: string
+  * Default: TLS
+  * Importance: medium
+
+``client.ssl.provider``
+The name of the security provider used for SSL connections. Default value is the default security provider of the JVM.
+
+  * Type: string
+  * Default: null
+  * Importance: medium
+
+``client.ssl.truststore.type``
+
+  * Type: string
+  * Default: JKS
+  * Importance: medium
+
+``client.ssl.cipher.suites``
+A list of cipher suites. This is a named combination of authentication, encryption, MAC and key exchange algorithm used to negotiate the security settings for a network connection using TLS or SSL network protocol. By default all the available cipher suites are supported.
+
+  * Type: list
+  * Default: null
+  * Importance: low
+
+``client.ssl.endpoint.identification.algorithm``
+The endpoint identification algorithm to validate server hostname using server certificate.
+
+  * Type: string
+  * Default: null
+  * Importance: low
+
+``client.ssl.keymanager.algorithm``
+The algorithm used by key manager factory for SSL connections. Default value is the key manager factory algorithm configured for the Java Virtual Machine.
+
+  * Type: string
+  * Default: SunX509
+  * Importance: low
+
+``client.ssl.secure.random.implementation``
+The SecureRandom PRNG implementation to use for SSL cryptography operations.
+
+  * Type: string
+  * Default: null
+  * Importance: low
+
+``client.ssl.trustmanager.algorithm``
+The algorithm used by trust manager factory for SSL connections. Default value is the trust manager factory algorithm configured for the Java Virtual Machine.
+
+  * Type: string
+  * Default: PKIX
+  * Importance: low
+
+Configuration Options for SASL Authentication between REST Proxy and Apache Kafka Brokers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Note that all the SASL configurations (for REST Proxy to Broker communication) are prefixed with "client". If you want the configuration to apply just to consumers or just to producers, you can replace the prefix with "consumer" or "producer" respectively.
+
+In addition to these configurations, make sure ``bootstrap.servers`` configuration is set with SASL_PLAINTEXT:\\host:port (or SASL_SSL) end-points, or you'll accidentally open an SASL connection to a non-SASL port.
+
+``client.security.protocol``
+Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL.
+
+  * Type: string
+  * Default: PLAINTEXT
+  * Importance: high
+
+``client.sasl.jaas.config``
+JAAS login context parameters for SASL connections in the format used by JAAS configuration files. JAAS configuration file format is described `here <http://docs.oracle.com/javase/8/docs/technotes/guides/security/jgss/tutorials/LoginConfigFile.html>`_. The format for the value is: ' (=)*;'
+
+  * Type: string
+  * Default: null
+  * Importance: medium
+
+
+``client.sasl.kerberos.service.name``
+The Kerberos principal name that Kafka runs as. This can be defined either in Kafka's JAAS config or in Kafka's config.
+
+  * Type: string
+  * Default: null
+  * Importance: medium
+
+``client.sasl.mechanism``
+SASL mechanism used for client connections. This may be any mechanism for which a security provider is available. GSSAPI is the default mechanism.
+
+  * Type: string
+  * Default: GSSAPI
+  * Importance: medium
+
+``client.sasl.kerberos.kinit.cmd``
+Kerberos kinit command path.
+
+  * Type: string
+  * Default: /usr/bin/kinit
+  * Importance: low
+
+``client.sasl.kerberos.min.time.before.relogin``
+Login thread sleep time between refresh attempts.
+
+  * Type: long
+  * Default: 60000
+  * Importance: low
+
+``client.sasl.kerberos.ticket.renew.jitter``
+Percentage of random jitter added to the renewal time.
+
+  * Type: double
+  * Default: 0.05
+  * Importance: low
+
+``client.sasl.kerberos.ticket.renew.window.factor``
+Login thread will sleep until the specified window factor of time from last refresh to ticket's expiry has been reached, at which time it will try to renew the ticket.
+
+  * Type: double
+  * Default: 0.8
+  * Importance: low
+
+
