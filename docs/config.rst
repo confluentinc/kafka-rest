@@ -206,7 +206,7 @@ A list of Kafka brokers to connect to. For example, ``PLAINTEXT://hostname:9092,
 Security Configuration Options
 --------------------------------
 
-REST Proxy supports SSL for securing communication between REST clients and the REST Proxy (HTTPS), and both SSL and SASL to secure communication between RESt Proxy and Apache Kafka.
+REST Proxy supports SSL for securing communication between REST clients and the REST Proxy (HTTPS), and both SSL and SASL to secure communication between REST Proxy and Apache Kafka.
 
 Configuration Options for HTTPS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -321,7 +321,7 @@ Configuration Options for SSL Encryption between REST Proxy and Apache Kafka Bro
 
 Note that all the SSL configurations (for REST Proxy to Broker communication) are prefixed with "client". If you want the configuration to apply just to consumers or just to producers, you can replace the prefix with "consumer" or "producer" respectively.
 
-In addition to these configurations, make sure ``bootstrap.servers`` configuration is set with SSL:\\host:port end-points, or you'll accidentally open an SSL connection to a non-SSL port.
+In addition to these configurations, make sure ``bootstrap.servers`` configuration is set with SSL://host:port end-points, or you'll accidentally open an SSL connection to a non-SSL port.
 
 ``client.security.protocol``
 Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL.
@@ -439,7 +439,7 @@ Configuration Options for SASL Authentication between REST Proxy and Apache Kafk
 
 Note that all the SASL configurations (for REST Proxy to Broker communication) are prefixed with "client". If you want the configuration to apply just to consumers or just to producers, you can replace the prefix with "consumer" or "producer" respectively.
 
-In addition to these configurations, make sure ``bootstrap.servers`` configuration is set with SASL_PLAINTEXT:\\host:port (or SASL_SSL) end-points, or you'll accidentally open an SASL connection to a non-SASL port.
+In addition to these configurations, make sure ``bootstrap.servers`` configuration is set with SASL_PLAINTEXT://host:port (or SASL_SSL) end-points, or you'll accidentally open an SASL connection to a non-SASL port.
 
 ``client.security.protocol``
 Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL.
