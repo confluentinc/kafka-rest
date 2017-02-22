@@ -217,10 +217,6 @@ Just as important, here's a list of features that *aren't* yet supported:
   address a single topic or topic-partition. Most use cases do not require
   multi-topic produce requests, they introduce additional complexity into the
   API, and clients can easily split data across multiple requests if necessary
-* **Multi-threaded Consumers** - Currently consumers subscribe to a single topic
-  and use a single stream (and therefore a single thread). You can still
-  achieve high throughput as you would with the Java clients: run multiple
-  threads locally that each read from a separate consumer stream.
 * **Most Producer/Consumer Overrides in Requests** - Only a few key overrides are exposed in
   the API (but global overrides can be set by the administrator). The reason is
   two-fold. First, proxies are multi-tenant and therefore most user-requested
@@ -256,7 +252,7 @@ running:
 
 .. sourcecode:: bash
 
-   $ cd confluent-3.0.0/
+   $ cd confluent-3.2.0/
 
    # Start the REST proxy. The default settings automatically work with the
    # default settings for local ZooKeeper and Kafka nodes.
