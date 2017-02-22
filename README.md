@@ -62,6 +62,7 @@ the REST Proxy running using the default settings and some topics already create
     
     $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" --data '{"topics":["jsontest"]}' \
     http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance/subscription
+    # No content in response
       
     # Then consume some data from a topic using the base URL in the first response.
 
