@@ -787,12 +787,13 @@ any consumers before it is terminated.
 
       POST /consumers/testgroup/ HTTP/1.1
       Host: kafkaproxy.example.com
-      Accept: application/vnd.kafka.v2+json, application/vnd.kafka+json, application/json
+      Content-Type: application/vnd.kafka.v2+json
+
 
       {
         "name": "my_consumer",
         "format": "binary",
-        "auto.offset.reset": "smallest",
+        "auto.offset.reset": "earliest",
         "auto.commit.enable": "false"
       }
 
@@ -828,7 +829,6 @@ any consumers before it is terminated.
       DELETE /consumers/testgroup/instances/my_consumer HTTP/1.1
       Host: proxy-instance.kafkaproxy.example.com
       Content-Type: application/vnd.kafka.v2+json
-      Accept: application/vnd.kafka.v2+json, application/vnd.kafka+json, application/json
 
    **Example response**:
 
@@ -838,7 +838,8 @@ any consumers before it is terminated.
 
 .. http:post:: /consumers/(string:group_name)/instances/(string:instance)/offsets
 
-   Commit a list of offsets for the consumer.
+   Commit a list of offsets for the consumer. When the post body is empty, it commits
+   all the records that have been fetched by the consumer instance.
 
    Note that this request *must* be made to the specific REST proxy instance holding the consumer
    instance.
@@ -852,9 +853,6 @@ any consumers before it is terminated.
 
    :statuscode 404:
      * Error code 40403 -- Consumer instance not found
-   :statuscode 500:
-     * Error code 500 -- General consumer error response, caused by an exception during the
-       operation. An error message is included in the standard format which explains the cause.
 
    **Example request**:
 
@@ -900,10 +898,8 @@ any consumers before it is terminated.
    :>jsonarr string offsets[i].metadata: Metadata for the committed offset
 
    :statuscode 404:
+     * Error code 40402 -- Partition not found
      * Error code 40403 -- Consumer instance not found
-   :statuscode 500:
-     * Error code 500 -- General consumer error response, caused by an exception during the
-       operation. An error message is included in the standard format which explains the cause.
 
    **Example request**:
 
@@ -955,7 +951,7 @@ any consumers before it is terminated.
 
 .. http:post:: /consumers/(string:group_name)/instances/(string:instance)/subscription
 
-   Subscribe to the given list of topics or a topic pattern to get dynamically assigned partitions.
+   Subscribe to the given list of topics or a topic pattern to get dynamically assigned partitions. If a prior subscription exists, it would be replaced by the latest subscription.
 
    :param string group_name: The name of the consumer group
    :param string instance: The ID of the consumer instance
@@ -967,10 +963,6 @@ any consumers before it is terminated.
 
    :statuscode 409:
      * Error code 40903 -- Subscription to topics, partitions and pattern are mutually exclusive.
-
-   :statuscode 500:
-     * Error code 500 -- General consumer error response, caused by an exception during the
-       operation. An error message is included in the standard format which explains the cause.
 
 
    **Example request**:
@@ -994,7 +986,6 @@ any consumers before it is terminated.
 
       HTTP/1.1 204 No Content
 
-
    **Example request**:
 
    .. sourcecode:: http
@@ -1016,7 +1007,7 @@ any consumers before it is terminated.
 
 .. http:get:: /consumers/(string:group_name)/instances/(string:instance)/subscription
 
-   Get the current subscribed list of topics
+   Get the current subscribed list of topics.
 
    :param string group_name: The name of the consumer group
    :param string instance: The ID of the consumer instance
@@ -1025,9 +1016,6 @@ any consumers before it is terminated.
 
    :statuscode 404:
       * Error code 40403 -- Consumer instance not found
-   :statuscode 500:
-      * Error code 500 -- General consumer error response, caused by an exception during the
-        operation. An error message is included in the standard format which explains the cause.
 
    **Example request**:
 
@@ -1095,10 +1083,6 @@ any consumers before it is terminated.
    :statuscode 409:
      * Error code 40903 -- Subscription to topics, partitions and pattern are mutually exclusive.
 
-   :statuscode 500:
-     * Error code 500 -- General consumer error response, caused by an exception during the
-       operation. An error message is included in the standard format which explains the cause.
-
 
    **Example request**:
 
@@ -1143,9 +1127,6 @@ any consumers before it is terminated.
 
    :statuscode 404:
      * Error code 40403 -- Consumer instance not found
-   :statuscode 500:
-     * Error code 500 -- General consumer error response, caused by an exception during the
-       operation. An error message is included in the standard format which explains the cause.
 
    **Example request**:
 
@@ -1190,9 +1171,7 @@ any consumers before it is terminated.
 
    :statuscode 404:
      * Error code 40403 -- Consumer instance not found
-   :statuscode 500:
-     * Error code 500 -- General consumer error response, caused by an exception during the
-       operation. An error message is included in the standard format which explains the cause.
+
 
    **Example request**:
 
@@ -1201,6 +1180,7 @@ any consumers before it is terminated.
       POST /consumers/testgroup/instances/my_consumer/positions HTTP/1.1
       Host: proxy-instance.kafkaproxy.example.com
       Content-Type: application/vnd.kafka.v2+json
+
 
       {
         "offsets": [
@@ -1237,9 +1217,6 @@ any consumers before it is terminated.
 
    :statuscode 404:
      * Error code 40403 -- Consumer instance not found
-   :statuscode 500:
-     * Error code 500 -- General consumer error response, caused by an exception during the
-       operation. An error message is included in the standard format which explains the cause.
 
    **Example request**:
 
@@ -1283,9 +1260,6 @@ any consumers before it is terminated.
 
    :statuscode 404:
      * Error code 40403 -- Consumer instance not found
-   :statuscode 500:
-     * Error code 500 -- General consumer error response, caused by an exception during the
-       operation. An error message is included in the standard format which explains the cause.
 
    **Example request**:
 
@@ -1349,9 +1323,6 @@ any consumers before it is terminated.
    :statuscode 406:
       * Error code 40601 -- Consumer format does not match the embedded format requested by the
         ``Accept`` header.
-   :statuscode 500:
-      * Error code 500 -- General consumer error response, caused by an exception during the
-        operation. An error message is included in the standard format which explains the cause.
 
    **Example binary request**:
 
@@ -1486,7 +1457,7 @@ The brokers resource provides access to the current state of Kafka brokers in th
         "brokers": [1, 2, 3]
       }
 
-API v1 
+API v1
 ------
 
 Topics
@@ -2345,9 +2316,6 @@ error.
 
    :statuscode 404:
       * Error code 40403 -- Consumer instance not found
-   :statuscode 500:
-      * Error code 500 -- General consumer error response, caused by an exception during the
-        operation. An error message is included in the standard format which explains the cause.
 
    **Example request**:
 
@@ -2578,4 +2546,4 @@ The brokers resource provides access to the current state of Kafka brokers in th
         "brokers": [1, 2, 3]
       }
 
-      
+
