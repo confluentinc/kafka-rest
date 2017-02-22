@@ -58,7 +58,7 @@ Produce and Consume JSON Messages
          http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance/records
      [{"key":null,"value":{"foo":"bar"},"partition":0,"offset":0}]
 
-   $ curl -X DELETE \
+   $ curl -X DELETE -H "Content-Type: application/vnd.kafka.v2+json" \
          http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance
      # No content in response
 
@@ -106,7 +106,8 @@ Produce and Consume Avro Messages
      [{"key":null,"value":{"name":"testUser"},"partition":0,"offset":1,"topic":"avrotest"}]
 
 
-   $ curl -X DELETE http://localhost:8082/consumers/my_avro_consumer/instances/my_consumer_instance
+   $ curl -X DELETE -H "Content-Type: application/vnd.kafka.v2+json" \
+         http://localhost:8082/consumers/my_avro_consumer/instances/my_consumer_instance
    # No content in response
 
 Produce and Consume Binary Messages
@@ -138,7 +139,7 @@ Produce and Consume Binary Messages
 
      [{"key":null,"value":"S2Fma2E=","partition":0,"offset":0}]
 
-   $ curl -X DELETE \
+   $ curl -X DELETE -H "Content-Type: application/vnd.kafka.v2+json" \
          http://localhost:8082/consumers/my_binary_consumer/instances/my_consumer_instance
      # No content in response
 
