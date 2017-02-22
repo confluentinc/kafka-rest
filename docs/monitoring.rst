@@ -117,7 +117,7 @@ endpoint name ``brokers.list`` with the metric name ``request-rate`` to get
 
   For API v2:
   
-  ==================================  ======================================================================
+  =================================== ======================================================================
   ``consumer.commit-offsets+v2``      ``POST /consumers/{group}/instances/{instance}/offsets``
                                       with ``Content-Type: application/vnd.kafka.v2+json`` header
   ``consumer.committed-offsets+v2``   ``GET /consumers/{group}/instances/{instance}/offsets``
@@ -158,6 +158,6 @@ endpoint name ``brokers.list`` with the metric name ``request-rate`` to get
                                       with ``Content-Type: application/vnd.kafka.binary.v2+json`` header
   ``partitions.list+v2``              ``GET /topics/{topic}/partitions``
                                       with ``Accept: application/vnd.kafka.v2+json`` header
-  ==================================  ======================================================================
+  =================================== ======================================================================
 
   
