@@ -37,6 +37,7 @@ Produce and Consume JSON Messages
 
    # Produce a message using JSON with the value '{ "foo": "bar" }' to the topic jsontest
    $ curl -X POST -H "Content-Type: application/vnd.kafka.json.v2+json" \
+         -H "Accept: application/vnd.kafka.v2+json" \
          --data '{"records":[{"value":{"foo":"bar"}}]}' "http://localhost:8082/topics/jsontest"
      {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
 
@@ -44,7 +45,7 @@ Produce and Consume JSON Messages
    # log and subscribe to a topic. Then consume some data using the base URL in the first response.
    # Finally, close the consumer with a DELETE to make it leave the group and clean up
    # its resources.
-   $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" -H "Accept: application/vnd.kafka.v2+json" \
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" \
          --data '{"name": "my_consumer_instance", "format": "json", "auto.offset.reset": "earliest"}' \
          http://localhost:8082/consumers/my_json_consumer
      {"instance_id":"my_consumer_instance",
@@ -71,6 +72,7 @@ Produce and Consume Avro Messages
    # be registered with the schema registry and used to validate and serialize
    # before storing the data in Kafka
    $ curl -X POST -H "Content-Type: application/vnd.kafka.avro.v2+json" \
+         -H "Accept: application/vnd.kafka.v2+json" \
          --data '{"value_schema": "{\"type\": \"record\", \"name\": \"User\", \"fields\": [{\"name\": \"name\", \"type\": \"string\"}]}", "records": [{"value": {"name": "testUser"}}]}' \
          "http://localhost:8082/topics/avrotest"
 
@@ -80,7 +82,8 @@ Produce and Consume Avro Messages
    # Produce a message with Avro key and value.
    # Note that if you use Avro values you must also use Avro keys, but the schemas can differ
 
-   $ curl -X POST -H "Content-Type: application/vnd.kafka.avro.v1+json" \
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.avro.v2+json" \
+         -H "Accept: application/vnd.kafka.v2+json" \
          --data '{"key_schema": "{\"name\":\"user_id\"  ,\"type\": \"int\"   }", "value_schema": "{\"type\": \"record\", \"name\": \"User\", \"fields\": [{\"name\": \"name\", \"type\": \"string\"}]}", "records": [{"key" : 1 , "value": {"name": "testUser"}}]}' \
          "http://localhost:8082/topics/avrokeytest2"
 
@@ -91,7 +94,7 @@ Produce and Consume Avro Messages
    # log and subscribe to a topic. Then consume some data from a topic, which is decoded, translated to
    # JSON, and included in the response. The schema used for deserialization is
    # fetched automatically from the schema registry. Finally, clean up.
-   $ curl -X POST  -H "Accept: application/vnd.kafka.avro.v2+json" \
+   $ curl -X POST  -H "Content-Type: application/vnd.kafka.v2+json" \
          --data '{"name": "my_consumer_instance", "format": "avro", "auto.offset.reset": "earliest"}' \
          http://localhost:8082/consumers/my_avro_consumer
 
@@ -117,6 +120,7 @@ Produce and Consume Binary Messages
 
    # Produce a message using binary embedded data with value "Kafka" to the topic binarytest
    $ curl -X POST -H "Content-Type: application/vnd.kafka.binary.v2+json" \
+         -H "Accept: application/vnd.kafka.v2+json" \
          --data '{"records":[{"value":"S2Fma2E="}]}' "http://localhost:8082/topics/binarytest"
      {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
 
@@ -124,7 +128,7 @@ Produce and Consume Binary Messages
    # log. Then consume some data from a topic using the base URL in the first response.
    # Finally, close the consumer with a DELETE to make it leave the group and clean up
    # its resources.
-   $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" -H "Accept: application/vnd.kafka.v2+json" \
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" \
          --data '{"name": "my_consumer_instance", "format": "binary", "auto.offset.reset": "earliest"}' \
          http://localhost:8082/consumers/my_binary_consumer
 
