@@ -14,6 +14,7 @@
  * limitations under the License.
  **/
 package io.confluent.kafkarest;
+import io.confluent.kafkarest.v2.*;
 
 /**
  * Shared, global state for the REST proxy server, including configuration and connection pools.
@@ -24,16 +25,26 @@ public class Context {
   private final MetadataObserver metadataObserver;
   private final ProducerPool producerPool;
   private final ConsumerManager consumerManager;
+  private final KafkaConsumerManager kafkaConsumerManager;
   private final SimpleConsumerManager simpleConsumerManager;
 
   public Context(KafkaRestConfig config, MetadataObserver metadataObserver,
                  ProducerPool producerPool, ConsumerManager consumerManager,
-                 SimpleConsumerManager simpleConsumerManager) {
-    this.config = config;
-    this.metadataObserver = metadataObserver;
-    this.producerPool = producerPool;
-    this.consumerManager = consumerManager;
-    this.simpleConsumerManager = simpleConsumerManager;
+		 SimpleConsumerManager simpleConsumerManager) {
+	this(config, metadataObserver, producerPool, consumerManager, simpleConsumerManager, null);
+  }
+
+  public Context(KafkaRestConfig config, MetadataObserver metadataObserver,
+		  ProducerPool producerPool, ConsumerManager consumerManager,
+		  SimpleConsumerManager simpleConsumerManager,
+		  KafkaConsumerManager kafkaConsumerManager) {
+
+	  this.config = config;
+	  this.metadataObserver = metadataObserver;
+	  this.producerPool = producerPool;
+	  this.consumerManager = consumerManager;
+	  this.simpleConsumerManager = simpleConsumerManager;
+	  this.kafkaConsumerManager = kafkaConsumerManager;
   }
 
   public KafkaRestConfig getConfig() {
@@ -54,5 +65,9 @@ public class Context {
 
   public SimpleConsumerManager getSimpleConsumerManager() {
     return simpleConsumerManager;
+  }
+
+  public KafkaConsumerManager getKafkaConsumerManager() {
+    return kafkaConsumerManager;
   }
 }

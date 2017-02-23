@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Confluent Inc.
+ * Copyright 2017 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package io.confluent.kafkarest.resources;
+package io.confluent.kafkarest.resources.v2;
 
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
-import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
+import io.confluent.kafkarest.entities.AvroProduceRecord;
+import io.confluent.kafkarest.entities.BinaryProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.JsonTopicProduceRecord;
+import io.confluent.kafkarest.entities.JsonProduceRecord;
+import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionOffset;
+import io.confluent.kafkarest.entities.PartitionProduceRequest;
+import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.Topic;
-import io.confluent.kafkarest.entities.TopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
 import io.confluent.rest.annotations.PerformanceMetric;
-
+import java.util.List;
+import java.util.Vector;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -40,73 +41,74 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
-import java.util.Collection;
-import java.util.List;
-import java.util.Vector;
 
-@Path("/topics")
-@Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
-	    Versions.JSON_WEIGHTED, Versions.KAFKA_V2_JSON_WEIGHTED })
-@Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
-	    Versions.GENERIC_REQUEST, Versions.KAFKA_V2_JSON })
-public class TopicsResource {
+@Path("/topics/{topic}/partitions")
+@Produces({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW,
+    Versions.KAFKA_V2_JSON_WEIGHTED})
+@Consumes({Versions.KAFKA_V2_JSON})
+public class PartitionsResource {
 
   private final Context ctx;
 
-  public TopicsResource(Context ctx) {
+  public PartitionsResource(Context ctx) {
     this.ctx = ctx;
   }
 
   @GET
-  @PerformanceMetric("topics.list")
-  public Collection<String> list() {
-    return ctx.getMetadataObserver().getTopicNames();
+  @PerformanceMetric("partitions.list+v2")
+  public List<Partition> list(final @PathParam("topic") String topic) {
+    checkTopicExists(topic);
+    return ctx.getMetadataObserver().getTopicPartitions(topic);
   }
 
   @GET
-  @Path("/{topic}")
-  @PerformanceMetric("topic.get")
-  public Topic getTopic(@PathParam("topic") String topicName) {
-    Topic topic = ctx.getMetadataObserver().getTopic(topicName);
-    if (topic == null) {
-      throw Errors.topicNotFoundException();
+  @Path("/{partition}")
+  @PerformanceMetric("partition.get+v2")
+  public Partition getPartition(final @PathParam("topic") String topic,
+      @PathParam("partition") int partition) {
+    checkTopicExists(topic);
+    Partition part = ctx.getMetadataObserver().getTopicPartition(topic, partition);
+    if (part == null) {
+      throw Errors.partitionNotFoundException();
     }
-    return topic;
+    return part;
   }
 
+
   @POST
-  @Path("/{topic}")
-  @PerformanceMetric("topic.produce-binary")
-  @Consumes({Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON,
-	      Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST,
-	      Versions.KAFKA_V2_JSON_BINARY, Versions.KAFKA_V2_JSON})
+  @Path("/{partition}")
+  @PerformanceMetric("partition.produce-binary+v2")
+  @Consumes({Versions.KAFKA_V2_JSON_BINARY})
   public void produceBinary(final @Suspended AsyncResponse asyncResponse,
-                            @PathParam("topic") String topicName,
-                            @Valid TopicProduceRequest<BinaryTopicProduceRecord> request) {
-    produce(asyncResponse, topicName, EmbeddedFormat.BINARY, request);
+      final @PathParam("topic") String topic,
+      final @PathParam("partition") int partition,
+      @Valid PartitionProduceRequest<BinaryProduceRecord> request) {
+    produce(asyncResponse, topic, partition, EmbeddedFormat.BINARY, request);
   }
 
   @POST
-  @Path("/{topic}")
-  @PerformanceMetric("topic.produce-json")
-  @Consumes({Versions.KAFKA_V1_JSON_JSON, Versions.KAFKA_V2_JSON_JSON})
+  @Path("/{partition}")
+  @PerformanceMetric("partition.produce-json+v2")
+  @Consumes({Versions.KAFKA_V2_JSON_JSON})
   public void produceJson(final @Suspended AsyncResponse asyncResponse,
-                          @PathParam("topic") String topicName,
-                          @Valid TopicProduceRequest<JsonTopicProduceRecord> request) {
-    produce(asyncResponse, topicName, EmbeddedFormat.JSON, request);
+      final @PathParam("topic") String topic,
+      final @PathParam("partition") int partition,
+      @Valid PartitionProduceRequest<JsonProduceRecord> request) {
+    produce(asyncResponse, topic, partition, EmbeddedFormat.JSON, request);
   }
 
   @POST
-  @Path("/{topic}")
-  @PerformanceMetric("topic.produce-avro")
-  @Consumes({Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V2_JSON_AVRO})
+  @Path("/{partition}")
+  @PerformanceMetric("partition.produce-avro+v2")
+  @Consumes({Versions.KAFKA_V2_JSON_AVRO})
   public void produceAvro(final @Suspended AsyncResponse asyncResponse,
-                          @PathParam("topic") String topicName,
-                          @Valid TopicProduceRequest<AvroTopicProduceRecord> request) {
+      final @PathParam("topic") String topic,
+      final @PathParam("partition") int partition,
+      @Valid PartitionProduceRequest<AvroProduceRecord> request) {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
     boolean hasKeys = false, hasValues = false;
-    for (AvroTopicProduceRecord rec : request.getRecords()) {
+    for (AvroProduceRecord rec : request.getRecords()) {
       hasKeys = hasKeys || !rec.getJsonKey().isNull();
       hasValues = hasValues || !rec.getJsonValue().isNull();
     }
@@ -117,21 +119,29 @@ public class TopicsResource {
       throw Errors.valueSchemaMissingException();
     }
 
-    produce(asyncResponse, topicName, EmbeddedFormat.AVRO, request);
+    produce(asyncResponse, topic, partition, EmbeddedFormat.AVRO, request);
   }
 
-  public <K, V, R extends TopicProduceRecord<K, V>> void produce(
+  protected <K, V, R extends ProduceRecord<K, V>> void produce(
       final AsyncResponse asyncResponse,
-      final String topicName,
+      final String topic,
+      final int partition,
       final EmbeddedFormat format,
-      final TopicProduceRequest<R> request) {
+      final PartitionProduceRequest<R> request) {
+    // If the topic already exists, we can proactively check for the partition
+    if (topicExists(topic)) {
+      if (!ctx.getMetadataObserver().partitionExists(topic, partition)) {
+        throw Errors.partitionNotFoundException();
+      }
+    }
+
     ctx.getProducerPool().produce(
-        topicName, null, format,
+        topic, partition, format,
         request,
         request.getRecords(),
         new ProducerPool.ProduceRequestCallback() {
           public void onCompletion(Integer keySchemaId, Integer valueSchemaId,
-                                   List<RecordMetadataOrException> results) {
+              List<RecordMetadataOrException> results) {
             ProduceResponse response = new ProduceResponse();
             List<PartitionOffset> offsets = new Vector<PartitionOffset>();
             for (RecordMetadataOrException result : results) {
@@ -141,8 +151,8 @@ public class TopicsResource {
                 offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
               } else {
                 offsets.add(new PartitionOffset(result.getRecordMetadata().partition(),
-                                                result.getRecordMetadata().offset(),
-                                                null, null));
+                    result.getRecordMetadata().offset(),
+                    null, null));
               }
             }
             response.setOffsets(offsets);
@@ -154,4 +164,13 @@ public class TopicsResource {
     );
   }
 
+  private boolean topicExists(final String topic) {
+    return ctx.getMetadataObserver().topicExists(topic);
+  }
+
+  private void checkTopicExists(final String topic) {
+    if (!topicExists(topic)) {
+      throw Errors.topicNotFoundException();
+    }
+  }
 }

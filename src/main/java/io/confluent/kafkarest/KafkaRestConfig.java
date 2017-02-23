@@ -15,6 +15,7 @@
  **/
 package io.confluent.kafkarest;
 
+import java.util.Map;
 import java.util.Properties;
 
 import io.confluent.common.config.ConfigDef;
@@ -22,6 +23,9 @@ import io.confluent.common.config.ConfigDef.Importance;
 import io.confluent.common.config.ConfigDef.Type;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
+import org.apache.kafka.common.protocol.SecurityProtocol;
+
+import static io.confluent.common.config.ConfigDef.Range.atLeast;
 
 /**
  * Settings for the REST proxy server.
@@ -57,6 +61,19 @@ public class KafkaRestConfig extends RestConfig {
       + "the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path.";
   public static final String ZOOKEEPER_CONNECT_DEFAULT = "localhost:2181";
 
+  public static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
+  private static final String
+      BOOTSTRAP_SERVERS_DOC =
+      "A list of host/port pairs to use for establishing the initial connection to the Kafka cluster. "
+      + "The client will make use of all servers irrespective of which servers are specified here for "
+      + "bootstrapping—this list only impacts the initial hosts used to discover the full set of servers. "
+      + "This list should be in the form host1:port1,host2:port2,.... Since these servers are just used for the "
+      + "initial connection to discover the full cluster membership (which may change dynamically), "
+      + "this list need not contain the full set of servers (you may want more than one, though, "
+      + "in case a server is down).";
+
+  public static final String BOOTSTRAP_SERVERS_DEFAULT = "PLAINTEXT://localhost:9092";
+  public static final String KAFKACLIENT_CONNECTION_URL_DEFAULT = "localhost:2181";
   public static final String SCHEMA_REGISTRY_URL_CONFIG = "schema.registry.url";
   private static final String SCHEMA_REGISTRY_URL_DOC =
       "The base URL for the schema registry that should be used by the Avro serializer.";
@@ -135,6 +152,130 @@ public class KafkaRestConfig extends RestConfig {
 
   private static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka.rest";
 
+  public static final String KAFKACLIENT_CONNECTION_URL_CONFIG = "client.connection.url";
+  public static final String KAFKACLIENT_BOOTSTRAP_SERVERS_CONFIG = "client.bootstrap.servers";
+  /**
+   * <code>client.zk.session.timeout.ms</code>
+   */
+  public static final String KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG
+      = "client.zk.session.timeout.ms";
+  public static final String KAFKACLIENT_TIMEOUT_CONFIG = "client.timeout.ms";
+  /**
+   * <code>client.init.timeout.ms</code>
+   */
+  public static final String KAFKACLIENT_INIT_TIMEOUT_CONFIG = "client.init.timeout.ms";
+
+  public static final String ZOOKEEPER_SET_ACL_CONFIG = "zookeeper.set.acl";
+  public static final String KAFKACLIENT_SECURITY_PROTOCOL_CONFIG =
+      "client.security.protocol";
+  public static final String KAFKACLIENT_SSL_TRUSTSTORE_LOCATION_CONFIG =
+      "client.ssl.truststore.location";
+  public static final String KAFKACLIENT_SSL_TRUSTSTORE_PASSWORD_CONFIG =
+      "client.ssl.truststore.password";
+  public static final String KAFKACLIENT_SSL_KEYSTORE_LOCATION_CONFIG =
+      "client.ssl.keystore.location";
+  public static final String KAFKACLIENT_SSL_TRUSTSTORE_TYPE_CONFIG =
+          "client.ssl.truststore.type";
+  public static final String KAFKACLIENT_SSL_TRUSTMANAGER_ALGORITHM_CONFIG =
+          "client.ssl.trustmanager.algorithm";
+  public static final String KAFKACLIENT_SSL_KEYSTORE_PASSWORD_CONFIG =
+      "client.ssl.keystore.password";
+  public static final String KAFKACLIENT_SSL_KEYSTORE_TYPE_CONFIG =
+          "client.ssl.keystore.type";
+  public static final String KAFKACLIENT_SSL_KEYMANAGER_ALGORITHM_CONFIG =
+          "client.ssl.keymanager.algorithm";
+  public static final String KAFKACLIENT_SSL_KEY_PASSWORD_CONFIG =
+      "client.ssl.key.password";
+  public static final String KAFKACLIENT_SSL_ENABLED_PROTOCOLS_CONFIG =
+      "client.ssl.enabled.protocols";
+  public static final String KAFKACLIENT_SSL_PROTOCOL_CONFIG =
+      "client.ssl.protocol";
+  public static final String KAFKACLIENT_SSL_PROVIDER_CONFIG =
+      "client.ssl.provider";
+  public static final String KAFKACLIENT_SSL_CIPHER_SUITES_CONFIG =
+      "client.ssl.cipher.suites";
+  public static final String KAFKACLIENT_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG =
+      "client.ssl.endpoint.identification.algorithm";
+  public static final String KAFKACLIENT_SASL_KERBEROS_SERVICE_NAME_CONFIG =
+      "client.sasl.kerberos.service.name";
+  public static final String KAFKACLIENT_SASL_MECHANISM_CONFIG =
+      "client.sasl.mechanism";
+  public static final String KAFKACLIENT_SASL_KERBEROS_KINIT_CMD_CONFIG =
+      "client.sasl.kerberos.kinit.cmd";
+  public static final String KAFKACLIENT_SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN_CONFIG =
+      "client.sasl.kerberos.min.time.before.relogin";
+  public static final String KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_JITTER_CONFIG =
+      "client.sasl.kerberos.ticket.renew.jitter";
+  public static final String KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_CONFIG =
+      "client.sasl.kerberos.ticket.renew.window.factor";
+
+  protected static final String KAFKACLIENT_CONNECTION_URL_DOC =
+      "Zookeeper url for the Kafka cluster";
+  protected static final String KAFKACLIENT_BOOTSTRAP_SERVERS_DOC =
+      "A list of Kafka brokers to connect to. For example, `PLAINTEXT://hostname:9092,SSL://hostname2:9092`\n"
+      + "\n"
+      + "If this configuration is not specified, the Schema Registry's internal Kafka clients will get their Kafka bootstrap server list\n"
+      + "from ZooKeeper (configured with `client.connection.url`). Note that if `client.bootstrap.servers` is configured,\n"
+      + "`client.connection.url` still needs to be configured, too.\n"
+      + "\n"
+      + "This configuration is particularly important when Kafka security is enabled, because Kafka may expose multiple endpoints that\n"
+      + "all will be stored in ZooKeeper, but Kafka REST  may need to be configured with just one of those endpoints.";
+  protected static final String KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_DOC =
+      "Zookeeper session timeout";
+  protected static final String KAFKACLIENT_INIT_TIMEOUT_DOC =
+      "The timeout for initialization of the Kafka store, including creation of the Kafka topic "
+      + "that stores schema data.";
+  protected static final String KAFKACLIENT_TIMEOUT_DOC =
+      "The timeout for an operation on the Kafka store";
+  protected static final String ZOOKEEPER_SET_ACL_DOC =
+      "Whether or not to set an ACL in ZooKeeper when znodes are created and ZooKeeper SASL authentication is "
+      + "configured. IMPORTANT: if set to `true`, the SASL principal must be the same as the Kafka brokers.";
+  protected static final String KAFKACLIENT_SECURITY_PROTOCOL_DOC =
+      "The security protocol to use when connecting with Kafka, the underlying persistent storage. "
+      + "Values can be `PLAINTEXT`, `SSL`, `SASL_PLAINTEXT`, or `SASL_SSL`.";
+  protected static final String KAFKACLIENT_SSL_TRUSTSTORE_LOCATION_DOC =
+      "The location of the SSL trust store file.";
+  protected static final String KAFKACLIENT_SSL_TRUSTSTORE_PASSWORD_DOC =
+      "The password to access the trust store.";
+  protected static final String KAFAKSTORE_SSL_TRUSTSTORE_TYPE_DOC =
+      "The file format of the trust store.";
+  protected static final String KAFKACLIENT_SSL_TRUSTMANAGER_ALGORITHM_DOC =
+      "The algorithm used by the trust manager factory for SSL connections.";
+  protected static final String KAFKACLIENT_SSL_KEYSTORE_LOCATION_DOC =
+      "The location of the SSL keystore file.";
+  protected static final String KAFKACLIENT_SSL_KEYSTORE_PASSWORD_DOC =
+      "The password to access the keystore.";
+  protected static final String KAFAKSTORE_SSL_KEYSTORE_TYPE_DOC =
+      "The file format of the keystore.";
+  protected static final String KAFKACLIENT_SSL_KEYMANAGER_ALGORITHM_DOC =
+      "The algorithm used by key manager factory for SSL connections.";
+  protected static final String KAFKACLIENT_SSL_KEY_PASSWORD_DOC =
+      "The password of the key contained in the keystore.";
+  protected static final String KAFAKSTORE_SSL_ENABLED_PROTOCOLS_DOC =
+      "Protocols enabled for SSL connections.";
+  protected static final String KAFAKSTORE_SSL_PROTOCOL_DOC =
+      "The SSL protocol used.";
+  protected static final String KAFAKSTORE_SSL_PROVIDER_DOC =
+      "The name of the security provider used for SSL.";
+  protected static final String KAFKACLIENT_SSL_CIPHER_SUITES_DOC =
+      "A list of cipher suites used for SSL.";
+  protected static final String KAFKACLIENT_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_DOC =
+      "The endpoint identification algorithm to validate the server hostname using the server certificate.";
+  public static final String KAFKACLIENT_SASL_KERBEROS_SERVICE_NAME_DOC =
+      "The Kerberos principal name that the Kafka client runs as. This can be defined either in the JAAS "
+      + "config file or here.";
+  public static final String KAFKACLIENT_SASL_MECHANISM_DOC =
+      "The SASL mechanism used for Kafka connections. GSSAPI is the default.";
+  public static final String KAFKACLIENT_SASL_KERBEROS_KINIT_CMD_DOC =
+      "The Kerberos kinit command path.";
+  public static final String KAFKACLIENT_SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN_DOC =
+      "The login time between refresh attempts.";
+  public static final String KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_JITTER_DOC =
+      "The percentage of random jitter added to the renewal time.";
+  public static final String KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_DOC =
+      "Login thread will sleep until the specified window factor of time from last refresh to ticket's expiry has "
+      + "been reached, at which time it will try to renew the ticket.";
+  private static final boolean ZOOKEEPER_SET_ACL_DEFAULT = false;
   private static final ConfigDef config;
 
   static {
@@ -155,6 +296,8 @@ public class KafkaRestConfig extends RestConfig {
         .define(HOST_NAME_CONFIG, Type.STRING, HOST_NAME_DEFAULT, Importance.MEDIUM, HOST_NAME_DOC)
         .define(ZOOKEEPER_CONNECT_CONFIG, Type.STRING, ZOOKEEPER_CONNECT_DEFAULT,
                 Importance.HIGH, ZOOKEEPER_CONNECT_DOC)
+        .define(BOOTSTRAP_SERVERS_CONFIG, Type.STRING, BOOTSTRAP_SERVERS_DEFAULT,
+                Importance.HIGH, BOOTSTRAP_SERVERS_DOC)
         .define(SCHEMA_REGISTRY_URL_CONFIG, Type.STRING, SCHEMA_REGISTRY_URL_DEFAULT,
                 Importance.HIGH, SCHEMA_REGISTRY_URL_DOC)
         .define(PRODUCER_THREADS_CONFIG, Type.INT, PRODUCER_THREADS_DEFAULT,
@@ -175,7 +318,81 @@ public class KafkaRestConfig extends RestConfig {
         .define(SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG, Type.INT, SIMPLE_CONSUMER_MAX_POOL_SIZE_DEFAULT,
                 Importance.MEDIUM, SIMPLE_CONSUMER_MAX_POOL_SIZE_DOC)
         .define(SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG, Type.INT, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT,
-                Importance.LOW, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC);
+                Importance.LOW, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC)
+        .define(KAFKACLIENT_CONNECTION_URL_CONFIG, ConfigDef.Type.STRING, KAFKACLIENT_CONNECTION_URL_DEFAULT,
+		ConfigDef.Importance.HIGH, KAFKACLIENT_CONNECTION_URL_DOC)
+        .define(KAFKACLIENT_BOOTSTRAP_SERVERS_CONFIG, ConfigDef.Type.LIST, "", ConfigDef.Importance.MEDIUM,
+                KAFKACLIENT_CONNECTION_URL_DOC)
+        .define(KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG, ConfigDef.Type.INT, 30000, atLeast(0),
+                ConfigDef.Importance.LOW, KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_DOC)
+        .define(KAFKACLIENT_INIT_TIMEOUT_CONFIG, ConfigDef.Type.INT, 60000, atLeast(0),
+                ConfigDef.Importance.MEDIUM, KAFKACLIENT_INIT_TIMEOUT_DOC)
+        .define(KAFKACLIENT_TIMEOUT_CONFIG, ConfigDef.Type.INT, 500, atLeast(0),
+                ConfigDef.Importance.MEDIUM, KAFKACLIENT_TIMEOUT_DOC)
+        .define(KAFKACLIENT_SECURITY_PROTOCOL_CONFIG, ConfigDef.Type.STRING,
+                SecurityProtocol.PLAINTEXT.toString(), ConfigDef.Importance.MEDIUM,
+                KAFKACLIENT_SECURITY_PROTOCOL_DOC)
+        .define(KAFKACLIENT_SSL_TRUSTSTORE_LOCATION_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.HIGH,
+                KAFKACLIENT_SSL_TRUSTSTORE_LOCATION_DOC)
+        .define(KAFKACLIENT_SSL_TRUSTSTORE_PASSWORD_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.HIGH,
+                KAFKACLIENT_SSL_TRUSTSTORE_PASSWORD_DOC)
+        .define(KAFKACLIENT_SSL_TRUSTSTORE_TYPE_CONFIG, ConfigDef.Type.STRING,
+                "JKS", ConfigDef.Importance.MEDIUM,
+                KAFAKSTORE_SSL_TRUSTSTORE_TYPE_DOC)
+        .define(KAFKACLIENT_SSL_TRUSTMANAGER_ALGORITHM_CONFIG, ConfigDef.Type.STRING,
+                "PKIX", ConfigDef.Importance.LOW,
+                KAFKACLIENT_SSL_TRUSTMANAGER_ALGORITHM_DOC)
+        .define(KAFKACLIENT_SSL_KEYSTORE_LOCATION_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.HIGH,
+                KAFKACLIENT_SSL_KEYSTORE_LOCATION_DOC)
+        .define(KAFKACLIENT_SSL_KEYSTORE_PASSWORD_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.HIGH,
+                KAFKACLIENT_SSL_KEYSTORE_PASSWORD_DOC)
+        .define(KAFKACLIENT_SSL_KEYSTORE_TYPE_CONFIG, ConfigDef.Type.STRING,
+                "JKS", ConfigDef.Importance.MEDIUM,
+                KAFAKSTORE_SSL_KEYSTORE_TYPE_DOC)
+        .define(KAFKACLIENT_SSL_KEYMANAGER_ALGORITHM_CONFIG, ConfigDef.Type.STRING,
+                "SunX509", ConfigDef.Importance.LOW,
+                KAFKACLIENT_SSL_KEYMANAGER_ALGORITHM_DOC)
+        .define(KAFKACLIENT_SSL_KEY_PASSWORD_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.HIGH,
+                KAFKACLIENT_SSL_KEY_PASSWORD_DOC)
+        .define(KAFKACLIENT_SSL_ENABLED_PROTOCOLS_CONFIG, ConfigDef.Type.STRING,
+                "TLSv1.2,TLSv1.1,TLSv1", ConfigDef.Importance.MEDIUM,
+                KAFAKSTORE_SSL_ENABLED_PROTOCOLS_DOC)
+        .define(KAFKACLIENT_SSL_PROTOCOL_CONFIG, ConfigDef.Type.STRING,
+                "TLS", ConfigDef.Importance.MEDIUM,
+                KAFAKSTORE_SSL_PROTOCOL_DOC)
+        .define(KAFKACLIENT_SSL_PROVIDER_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.MEDIUM,
+                KAFAKSTORE_SSL_PROVIDER_DOC)
+        .define(KAFKACLIENT_SSL_CIPHER_SUITES_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.LOW,
+                KAFKACLIENT_SSL_CIPHER_SUITES_DOC)
+        .define(KAFKACLIENT_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.LOW,
+                KAFKACLIENT_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_DOC)
+        .define(KAFKACLIENT_SASL_KERBEROS_SERVICE_NAME_CONFIG, ConfigDef.Type.STRING,
+                "", ConfigDef.Importance.MEDIUM,
+                KAFKACLIENT_SASL_KERBEROS_SERVICE_NAME_DOC)
+        .define(KAFKACLIENT_SASL_MECHANISM_CONFIG, ConfigDef.Type.STRING,
+                "GSSAPI", ConfigDef.Importance.MEDIUM,
+                KAFKACLIENT_SASL_MECHANISM_DOC)
+        .define(KAFKACLIENT_SASL_KERBEROS_KINIT_CMD_CONFIG, ConfigDef.Type.STRING,
+                "/usr/bin/kinit", ConfigDef.Importance.LOW,
+                KAFKACLIENT_SASL_KERBEROS_KINIT_CMD_DOC)
+        .define(KAFKACLIENT_SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN_CONFIG, ConfigDef.Type.LONG,
+                60000, ConfigDef.Importance.LOW,
+                KAFKACLIENT_SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN_DOC)
+        .define(KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_JITTER_CONFIG, ConfigDef.Type.DOUBLE,
+                0.05, ConfigDef.Importance.LOW,
+                KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_JITTER_DOC)
+        .define(KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_CONFIG, ConfigDef.Type.DOUBLE,
+                0.8, ConfigDef.Importance.LOW,
+                KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_DOC);
+
   }
 
   private Time time;
@@ -207,6 +424,55 @@ public class KafkaRestConfig extends RestConfig {
     return originalProperties;
   }
 
+  private Properties addExistingV1Properties(Properties props) {
+      //copy over the properties excluding those with prefix
+      //"ssl.", "sasl.", "client.", "producer.", "consumer."
+      for (Map.Entry<?, ?> e : originalProperties.entrySet()) {
+          String name = (String) e.getKey();
+          if ( name.startsWith("ssl.") || name.startsWith("sasl.") ||
+	       name.startsWith("client.") || name.startsWith("producer.") ||
+	       name.startsWith("consumer.")) {
+	      continue;
+	  }
+	  
+	  props.setProperty(name, originalProperties.getProperty(name));
+      }
+      return props;
+  }
+    
+  private Properties addPropertiesWithPrefix(String prefix, Properties props) {
+      //copy over the properties with prefix 
+      int prefixLen = prefix.length();
+      for (Map.Entry<?, ?> e : originalProperties.entrySet()) {
+          String name = (String) e.getKey();
+          if (name.startsWith(prefix)) {
+              String newName = name.substring(prefixLen);
+              props.setProperty(newName, originalProperties.getProperty(name));
+          }
+      }
+      return props;
+  }
+
+  public Properties getProducerProperties() {
+      Properties producerProps = new Properties();
+      //add properties for V1 version of configuration parameters for backward compability
+      //since producers need to support V1 with configuration change
+      addExistingV1Properties(producerProps);
+      //copy over the properties with prefixes "client." and "producer."
+      addPropertiesWithPrefix("client.", producerProps);
+      addPropertiesWithPrefix("producer.", producerProps);
+
+      return producerProps;
+  }
+
+  public Properties getConsumerProperties() {
+      Properties consumerProps = new Properties();
+      //copy cover the properties with prefixes "client." and  "consumer."
+      addPropertiesWithPrefix("client.", consumerProps);
+      addPropertiesWithPrefix("consumer.", consumerProps);
+      return consumerProps;
+  }
+    
   public static void main(String[] args) {
     System.out.print(config.toRst());
   }

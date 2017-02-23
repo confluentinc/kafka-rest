@@ -21,6 +21,7 @@ import java.util.Properties;
 
 import javax.ws.rs.core.Configurable;
 
+import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.kafkarest.exceptions.ZkExceptionMapper;
 import io.confluent.kafkarest.resources.BrokersResource;
 import io.confluent.kafkarest.resources.ConsumersResource;
@@ -30,6 +31,7 @@ import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.rest.Application;
 import io.confluent.rest.RestConfigException;
 import kafka.utils.ZkUtils;
+
 
 /**
  * Utilities for configuring and running an embedded Kafka server.
@@ -53,7 +55,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-    setupInjectedResources(config, appConfig, null, null, null, null, null, null);
+      setupInjectedResources(config, appConfig, null, null, null, null, null, null, null);
   }
 
   /**
@@ -65,7 +67,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
                                         ProducerPool producerPool,
                                         ConsumerManager consumerManager,
                                         SimpleConsumerFactory simpleConsumerFactory,
-                                        SimpleConsumerManager simpleConsumerManager) {
+                                        SimpleConsumerManager simpleConsumerManager,
+					KafkaConsumerManager kafkaConsumerManager) {
     config.register(new ZkExceptionMapper(appConfig));
 
     if (zkUtils == null) {
@@ -88,14 +91,19 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     if (simpleConsumerManager == null) {
       simpleConsumerManager = new SimpleConsumerManager(appConfig, mdObserver, simpleConsumerFactory);
     }
+    if (kafkaConsumerManager == null) {
+      kafkaConsumerManager = new KafkaConsumerManager(appConfig, mdObserver);
+    }
 
     this.zkUtils = zkUtils;
-    context = new Context(appConfig, mdObserver, producerPool, consumerManager, simpleConsumerManager);
+    context = new Context(appConfig, mdObserver, producerPool, consumerManager, simpleConsumerManager, kafkaConsumerManager);
     config.register(RootResource.class);
     config.register(new BrokersResource(context));
     config.register(new TopicsResource(context));
     config.register(new PartitionsResource(context));
     config.register(new ConsumersResource(context));
+    config.register(new io.confluent.kafkarest.resources.v2.ConsumersResource(context));
+    config.register(new io.confluent.kafkarest.resources.v2.PartitionsResource(context));    
   }
 
   @Override

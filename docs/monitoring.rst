@@ -102,6 +102,8 @@ endpoint name ``brokers.list`` with the metric name ``request-rate`` to get
   ``partition.get``              ``GET /topics/{topic}/partitions/{partition}``
   ``partition.produce-avro``     ``POST /topics/{topic}/partitions/{partition}`` with
                                  ``Content-Type: application/vnd.kafka.avro.v1+json`` header
+  ``partition.produce-json``     ``POST /topics/{topic}/partitions/{partition}`` with
+                                 ``Content-Type: application/vnd.kafka.json.v1+json`` header
   ``partition.produce-binary``   ``POST /topics/{topic}/partitions/{partition}`` with
                                  ``Content-Type: application/vnd.kafka.binary.v1+json`` header
   ``partitions.list``            ``GET /topics/{topic}/partitions``
@@ -112,3 +114,50 @@ endpoint name ``brokers.list`` with the metric name ``request-rate`` to get
                                  ``Content-Type: application/vnd.kafka.binary.v1+json`` header
   ``topics.list``                ``GET /topics``
   ============================== ===================================================================
+
+  For API v2:
+  
+  =================================== ======================================================================
+  ``consumer.commit-offsets+v2``      ``POST /consumers/{group}/instances/{instance}/offsets``
+                                      with ``Content-Type: application/vnd.kafka.v2+json`` header
+  ``consumer.committed-offsets+v2``   ``GET /consumers/{group}/instances/{instance}/offsets``
+                                      with ``Accept: application/vnd.kafka.v2+json`` header
+  ``consumer.create+v2``              ``POST /consumers/{group}`` 
+                                      with ``Content-Type: application/vnd.kafka.v2+json`` header
+  ``consumer.delete+v2``              ``DELETE /consumers/{group}/instances/{instance}``
+                                      with ``Accept: application/vnd.kafka.avro.v2+json`` header
+  ``consumer.records.read-avro+v2``   ``GET /consumers/{group}/instances/{instance}/records``
+                                      with ``Accept: application/vnd.kafka.avro.v2+json`` header
+  ``consumer.records.read-json+v2``   ``GET /consumers/{group}/instances/{instance}/records``
+                                      with ``Accept: application/vnd.kafka.json.v2+json`` header
+  ``consumer.records.read-binary+v2`` ``GET /consumers/{group}/instances/{instance}/records``
+                                      with ``Accept: application/vnd.kafka.binary.v2+json`` header
+  ``consumer.subscribe+v2``           ``POST /consumers/{group}/instances/{instance}/subscription``
+                                      with ``Content-Type: application/vnd.kafka.v2+json`` header
+  ``consumer.subscription+v2``        ``GET /consumers/{group}/instances/{instance}/subscription``
+                                      with ``Accept: application/vnd.kafka.v2+json`` header
+  ``consumer.unsubscribe+v2``         ``DELETE /consumers/{group}/instances/{instance}/subscription``
+                                      with ``Accept: application/vnd.kafka.avro.v2+json`` header
+  ``consumer.seek-to-beginning+v2``   ``POST /consumers/{group}/instances/{instance}/positions/beginning``
+                                      with ``Content-Type: application/vnd.kafka.v2+json`` header
+  ``consumer.seek-to-end+v2``         ``POST /consumers/{group}/instances/{instance}/positions/end``
+                                      with ``Content-Type: application/vnd.kafka.v2+json`` header
+  ``consumer.seek-to-offset+v2``      ``POST /consumers/{group}/instances/{instance}/positions``
+                                      with ``Content-Type: application/vnd.kafka.v2+json`` header
+  ``consumer.assign+v2``              ``POST /consumers/{group}/instances/{instance}/assignment``
+                                      with ``Content-Type: application/vnd.kafka.v2+json`` header
+  ``consumer.assignment+v2``          ``GET /consumers/{group}/instances/{instance}/assignment``
+                                      with ``Accept: application/vnd.kafka.v2+json`` header
+  ``partition.get+v2``                ``GET /topics/{topic}/partitions/{partition}``
+                                      with ``Accept: application/vnd.kafka.v2+json`` header  
+  ``partition.produce-avro+v2``       ``POST /topics/{topic}/partitions/{partition}`` 
+                                      with ``Content-Type: application/vnd.kafka.avro.v2+json`` header
+  ``partition.produce-json+v2``       ``POST /topics/{topic}/partitions/{partition}`` 
+                                      with ``Content-Type: application/vnd.kafka.json.v2+json`` header
+  ``partition.produce-binary+v2``     ``POST /topics/{topic}/partitions/{partition}``
+                                      with ``Content-Type: application/vnd.kafka.binary.v2+json`` header
+  ``partitions.list+v2``              ``GET /topics/{topic}/partitions``
+                                      with ``Accept: application/vnd.kafka.v2+json`` header
+  =================================== ======================================================================
+
+  
