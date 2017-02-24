@@ -1,7 +1,8 @@
 .. _kafkarest_config:
 
-Configuration Options
-=====================
+=======================
+ Configuration Options
+=======================
 
 In addition to the settings specified here, the Kafka REST Proxy accepts the settings for the
 Java producer and consumer (currently the new producer and old consumer). Use these to override
@@ -204,12 +205,12 @@ A list of Kafka brokers to connect to. For example, ``PLAINTEXT://hostname:9092,
 
 
 Security Configuration Options
---------------------------------
+==============================
 
 REST Proxy supports SSL for securing communication between REST clients and the REST Proxy (HTTPS), and both SSL and SASL to secure communication between REST Proxy and Apache Kafka.
 
 Configuration Options for HTTPS
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------
 
 ``ssl.keystore.location``
   Used for HTTPS. Location of the keystore file to use for SSL. IMPORTANT: Jetty requires that the key's CN, stored in the keystore, must match the FQDN.
@@ -317,7 +318,7 @@ Configuration Options for HTTPS
   * Importance: low
 
 Configuration Options for SSL Encryption between REST Proxy and Apache Kafka Brokers
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------------------------------------------------------
 
 Note that all the SSL configurations (for REST Proxy to Broker communication) are prefixed with "client". If you want the configuration to apply just to consumers or just to producers, you can replace the prefix with "consumer" or "producer" respectively.
 
@@ -435,11 +436,21 @@ The algorithm used by trust manager factory for SSL connections. Default value i
   * Importance: low
 
 Configuration Options for SASL Authentication between REST Proxy and Apache Kafka Brokers
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------------------------------------------------------------
+
+Kafka SASL configurations are described `here <http://docs.confluent.io/3.0.0/kafka/sasl.html>`_
 
 Note that all the SASL configurations (for REST Proxy to Broker communication) are prefixed with "client". If you want the configuration to apply just to consumers or just to producers, you can replace the prefix with "consumer" or "producer" respectively.
 
-In addition to these configurations, make sure ``bootstrap.servers`` configuration is set with SASL_PLAINTEXT://host:port (or SASL_SSL) end-points, or you'll accidentally open an SASL connection to a non-SASL port.
+In addition to these configurations, make sure ``bootstrap.servers`` configuration is set with SASL_PLAINTEXT://host:port (or SASL_SSL://host:port) end-points, or you'll accidentally open an SASL connection to a non-SASL port.
+
+Pass the name of the JAAS file as a JVM parameter to each Kafka broker, schema registry, and REST Proxy. For example:
+
+ -Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf
+
+You may also wish to specify the path to the krb5.conf file (see `JDK’s Kerberos Requirements <https://docs.oracle.com/javase/8/docs/technotes/guides/security/jgss/tutorials/KerberosReq.html>`_ for more details):
+
+  -Djava.security.krb5.conf=/etc/kafka/krb5.conf
 
 ``client.security.protocol``
 Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL.
