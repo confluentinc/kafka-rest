@@ -187,7 +187,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
   // This version of ConsumerRecord has the same basic format, but leaves the data encoded since
   // we only need to get the size of each record.
   private static class UndecodedConsumerRecord {
-
+    public String topic;
     public String key;
     public String value;
     public int partition;
