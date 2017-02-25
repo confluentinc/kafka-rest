@@ -444,13 +444,30 @@ Note that all the SASL configurations (for REST Proxy to Broker communication) a
 
 In addition to these configurations, make sure ``bootstrap.servers`` configuration is set with SASL_PLAINTEXT://host:port (or SASL_SSL://host:port) end-points, or you'll accidentally open an SASL connection to a non-SASL port.
 
-Pass the name of the JAAS file as a JVM parameter to each Kafka broker, schema registry, and REST Proxy. For example:
+Pass the name of the JAAS file, and the name of Kerberos config file via environment variables to each Kafka broker, Schema Registry, and REST Proxy. For example:
 
- -Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf
 
-You may also wish to specify the path to the krb5.conf file (see `JDK’s Kerberos Requirements <https://docs.oracle.com/javase/8/docs/technotes/guides/security/jgss/tutorials/KerberosReq.html>`_ for more details):
+export JMX_PORT=9192; export KAFKA_LOG4J_OPTS="-Dlog4j.configuration=file:/mnt/kafka-log4j.properties"; \
+export KAFKA_OPTS="-Djava.security.auth.login.config=/mnt/security/jaas.conf -Djava.security.krb5.conf=/mnt/security/krb5.conf";\
+/opt/kafka/bin/kafka-server-start.sh /mnt/kafka.properties 1>> /mnt/server-start-stdout-stderr.log 2>> /mnt/server-start-stdout-stderr.log &
 
-  -Djava.security.krb5.conf=/etc/kafka/krb5.conf
+export SCHEMA_REGISTRY_OPTS="-Djava.security.auth.login.config=/mnt/security/jaas.conf -Djava.security.krb5.conf=/mnt/security/krb5.conf"; \
+export SCHEMA_REGISTRY_LOG4J_OPTS="-Dlog4j.configuration=file:/mnt/schema-registry_log4j.properties"; \
+/opt/schema-registry/bin/schema-registry-start /mnt/schema-registry.properties \
+1>> /mnt/schema-registry.log 2>> /mnt/schema-registry.log &
+
+export KAFKAREST_OPTS="-Djava.security.auth.login.config=/mnt/security/jaas.conf -Djava.security.krb5.conf=/mnt/security/krb5.conf"; \
+/opt/kafka-rest/bin/kafka-rest-start /mnt/rest.properties 1>> /mnt/rest.log 2>> /mnt/rest.log &
+
+
+To access Schema Registry via https protocol, one would need additional javax.net.ssl.trustStore and javax.net.ssl.trustStorePassword parameters, as shown below:
+
+export KAFKAREST_OPTS='-Djava.security.auth.login.config=/mnt/security/jaas.conf -Djava.security.krb5.conf=/mnt/security/krb5.conf -Djavax.net.ssl.trustStore=/mnt/security/test.truststore.jks -Djavax.net.ssl.trustStorePassword=test-ts-passwd'; \
+/opt/kafka-rest/bin/kafka-rest-start /mnt/rest.properties 1>> /mnt/rest.log 2>> /mnt/rest.log &
+
+For krb5.conf file please see `JDK’s Kerberos Requirements <https://docs.oracle.com/javase/8/docs/technotes/guides/security/jgss/tutorials/KerberosReq.html>`_ for more details
+
+
 
 ``client.security.protocol``
 Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL.
