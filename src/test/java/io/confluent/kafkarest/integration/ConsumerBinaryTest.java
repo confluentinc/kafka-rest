@@ -163,12 +163,25 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
                         Errors.INVALID_CONSUMER_CONFIG_MESSAGE,
                         Versions.KAFKA_V1_JSON);
   }
+  
+  @Test
+  public void testInvalidKafkaConsumerName() {
+    ConsumerInstanceConfig config = new ConsumerInstanceConfig("my/Consumer£$%^&*#", "name", "binary",
+                                                               null, null);
+    Response response = request("/consumers/" + groupName)
+        .post(Entity.entity(config, Versions.KAFKA_V1_JSON));
+    assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response,
+                        Errors.INVALID_CONSUMER_NAME_ERROR_CODE,
+                        Errors.INVALID_CONSUMER_NAME_MESSAGE,
+                        Versions.KAFKA_V1_JSON);
+  }
 
 
   @Test
   public void testDuplicateConsumerID() {
     String instanceUrl = startConsumeMessages(groupName, topicName, null,
                                               Versions.KAFKA_V1_JSON_BINARY);
+    
     produceBinaryMessages(recordsWithKeys);
 
     // Duplicate the same instance, which should cause a conflict
