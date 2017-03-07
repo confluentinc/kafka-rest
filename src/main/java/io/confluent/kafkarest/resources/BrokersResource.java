@@ -31,7 +31,7 @@ import io.confluent.rest.annotations.PerformanceMetric;
  */
 @Path("/brokers")
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
-           Versions.JSON_WEIGHTED})
+	    Versions.JSON_WEIGHTED, Versions.KAFKA_V2_JSON_WEIGHTED})
 @Consumes()
 public class BrokersResource {
 

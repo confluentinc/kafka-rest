@@ -93,7 +93,16 @@ public class Errors {
                              CONSUMER_ALREADY_EXISTS_ERROR_CODE);
   }
 
+  public final static String ILLEGAL_STATE_MESSAGE = "Illegal state: ";
+  public final static int ILLEGAL_STATE_ERROR_CODE = 40903;
 
+  public static RestException illegalStateException(Throwable t) {
+      return new RestException(ILLEGAL_STATE_MESSAGE + t.getMessage(),
+                             Response.Status.CONFLICT.getStatusCode(),
+                             ILLEGAL_STATE_ERROR_CODE);
+  }
+
+    
   public final static String KEY_SCHEMA_MISSING_MESSAGE = "Request includes keys but does not "
                                                           + "include key schema";
   public final static int KEY_SCHEMA_MISSING_ERROR_CODE = 42201;

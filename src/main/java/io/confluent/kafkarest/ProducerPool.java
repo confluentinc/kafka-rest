@@ -76,7 +76,9 @@ public class ProducerPool {
                                                   Properties producerConfigOverrides) {
     Map<String, Object> props = new HashMap<String, Object>();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
-    return buildConfig(props, appConfig.getOriginalProperties(), producerConfigOverrides);
+
+    Properties producerProps  = (Properties) appConfig.getProducerProperties();
+    return buildConfig(props, producerProps, producerConfigOverrides);
   }
 
   private NoSchemaRestProducer<byte[], byte[]> buildBinaryProducer(Map<String, Object> binaryProps) {
@@ -103,7 +105,9 @@ public class ProducerPool {
     avroDefaults.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
     avroDefaults.put("schema.registry.url",
         appConfig.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
-    return buildConfig(avroDefaults, appConfig.getOriginalProperties(), producerConfigOverrides);
+
+    Properties producerProps  = (Properties) appConfig.getProducerProperties();
+    return buildConfig(avroDefaults, producerProps, producerConfigOverrides);    
   }
 
   private AvroRestProducer buildAvroProducer(Map<String, Object> avroProps) {

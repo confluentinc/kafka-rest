@@ -26,6 +26,14 @@ public class JsonConsumerRecord extends ConsumerRecord<Object, Object> {
     super(key, value, partition, offset);
   }
 
+  public JsonConsumerRecord(@JsonProperty("topic") String topic,
+			    @JsonProperty("key") Object key,
+                            @JsonProperty("value") Object value,
+                            @JsonProperty("partition") int partition,
+                            @JsonProperty("offset") long offset) {
+    super(topic, key, value, partition, offset);
+  }
+    
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
