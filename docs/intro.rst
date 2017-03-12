@@ -57,7 +57,7 @@ Produce and Consume JSON Messages
 
    $ curl -X GET -H "Accept: application/vnd.kafka.json.v2+json" \
          http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance/records
-     [{"key":null,"value":{"foo":"bar"},"partition":0,"offset":0}]
+     [{"key":null,"value":{"foo":"bar"},"partition":0,"offset":0,"topic":"jsontest"}]
 
    $ curl -X DELETE -H "Content-Type: application/vnd.kafka.v2+json" \
          http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance
@@ -141,7 +141,7 @@ Produce and Consume Binary Messages
    $ curl -X GET -H "Accept: application/vnd.kafka.binary.v2+json" \
          http://localhost:8082/consumers/my_binary_consumer/instances/my_consumer_instance/records
 
-     [{"key":null,"value":"S2Fma2E=","partition":0,"offset":0}]
+     [{"key":null,"value":"S2Fma2E=","partition":0,"offset":0,"topic":"binarytest"}]
 
    $ curl -X DELETE -H "Content-Type: application/vnd.kafka.v2+json" \
          http://localhost:8082/consumers/my_binary_consumer/instances/my_consumer_instance
