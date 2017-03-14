@@ -47,6 +47,13 @@ public class KafkaRestConfig extends RestConfig {
       + " hostname is used";
   public static final String HOST_NAME_DEFAULT = "";
 
+  public static final String BASE_URI_CONFIG = "kafka-rest.base_uri";
+  private static final String BASE_URI_DOC =
+      "The base uri used to generate absolute URLs in responses. Defaults to empty. If this value is "
+      + "set, host.name and port configuration will be ignored. This configuration is useful when kafka-rest "
+      + "is running behind another HTTP web server.";
+  public static final String BASE_URI_DEFAULT = "";
+
   public static final String ZOOKEEPER_CONNECT_CONFIG = "zookeeper.connect";
   private static final String
       ZOOKEEPER_CONNECT_DOC =
@@ -294,6 +301,7 @@ public class KafkaRestConfig extends RestConfig {
                         METRICS_JMX_PREFIX_DEFAULT_OVERRIDE, Importance.LOW, METRICS_JMX_PREFIX_DOC)
         .define(ID_CONFIG, Type.STRING, ID_DEFAULT, Importance.HIGH, ID_CONFIG_DOC)
         .define(HOST_NAME_CONFIG, Type.STRING, HOST_NAME_DEFAULT, Importance.MEDIUM, HOST_NAME_DOC)
+        .define(BASE_URI_CONFIG, Type.STRING, BASE_URI_DEFAULT, Importance.MEDIUM, BASE_URI_DOC)
         .define(ZOOKEEPER_CONNECT_CONFIG, Type.STRING, ZOOKEEPER_CONNECT_DEFAULT,
                 Importance.HIGH, ZOOKEEPER_CONNECT_DOC)
         .define(BOOTSTRAP_SERVERS_CONFIG, Type.STRING, BOOTSTRAP_SERVERS_DEFAULT,
