@@ -109,7 +109,7 @@ public class AvroRestProducerTest {
     // This is the key part of the test, we should only call register once with the same schema, and then see the lookup
     // by ID the rest of the times
     EasyMock.expect(valueSerializer.register(EasyMock.isA(String.class), EasyMock.isA(Schema.class))).andReturn(schemaId);
-    EasyMock.expect(valueSerializer.getByID(schemaId)).andReturn(valueSchema).times(9999);
+    EasyMock.expect(valueSerializer.getById(schemaId)).andReturn(valueSchema).times(9999);
     EasyMock.replay(valueSerializer);
     Future f = EasyMock.createMock(Future.class);
     EasyMock.expect(producer.send(EasyMock.isA(ProducerRecord.class), EasyMock.isA(Callback.class))).andStubReturn(f);

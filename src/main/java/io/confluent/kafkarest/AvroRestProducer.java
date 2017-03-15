@@ -63,12 +63,12 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
       // If both ID and schema are null, that may be ok. Validation of the ProduceTask by the
       // caller should have checked this already.
       if (keySchemaId != null) {
-        keySchema = keySerializer.getByID(keySchemaId);
+        keySchema = keySerializer.getById(keySchemaId);
       } else if (schemaHolder.getKeySchema() != null) {
         keySchema = new Schema.Parser().parse(schemaHolder.getKeySchema());
         if (schemaIdCache.containsKey(keySchema)){
           keySchemaId = schemaIdCache.get(keySchema);
-          keySchema = keySerializer.getByID(keySchemaId);
+          keySchema = keySerializer.getById(keySchemaId);
         } else {
           keySchemaId = keySerializer.register(topic + "-key", keySchema);
           schemaIdCache.put(keySchema, keySchemaId);
@@ -76,12 +76,12 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
       }
 
       if (valueSchemaId != null) {
-        valueSchema = valueSerializer.getByID(valueSchemaId);
+        valueSchema = valueSerializer.getById(valueSchemaId);
       } else if (schemaHolder.getValueSchema() != null) {
         valueSchema = new Schema.Parser().parse(schemaHolder.getValueSchema());
         if (schemaIdCache.containsKey(valueSchema)) {
           valueSchemaId = schemaIdCache.get(valueSchema);
-          valueSchema = valueSerializer.getByID(valueSchemaId);
+          valueSchema = valueSerializer.getById(valueSchemaId);
         } else {
           valueSchemaId = valueSerializer.register(topic + "-value", valueSchema);
           schemaIdCache.put(valueSchema, valueSchemaId);
