@@ -130,8 +130,11 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
           // have to defer returning the data so we can return an HTTP error instead
         }
       } catch (ConsumerTimeoutException cte) {
+        log.trace("ConsumerReadTask timed out, using backoff id={}", this);
         backoff = true;
       }
+
+      log.trace("ConsumerReadTask exiting read with id={} messages={} bytes={}", this, messages.size(), bytesConsumed);
 
       long now = parent.getConfig().getTime().milliseconds();
       long elapsed = now - started;
@@ -146,14 +149,18 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
 
       // Including the rough message size here ensures processing finishes if the next
       // message exceeds the maxResponseBytes
-      if (elapsed >= requestTimeoutMs || bytesConsumed + roughMsgSize >= maxResponseBytes) {
+      boolean requestTimedOut = elapsed >= requestTimeoutMs;
+      boolean exceededMaxResponseBytes = bytesConsumed + roughMsgSize >= maxResponseBytes;
+      if (requestTimedOut || exceededMaxResponseBytes) {
+        log.trace("Finishing ConsumerReadTask id={} requestTimedOut={} exceededMaxResponseBytes={}",
+                  this, requestTimedOut, exceededMaxResponseBytes);
         finish();
       }
 
       return backoff;
     } catch (Exception e) {
       finish(e);
-      log.error("Unexpected exception in consumer read thread: ", e);
+      log.error("Unexpected exception in consumer read task id={} ", this, e);
       return false;
     }
   }
@@ -163,6 +170,7 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
   }
 
   public void finish(Exception e) {
+    log.trace("Finishing ConsumerReadTask id={} exception={}", this, e);
     if (e == null) {
       // Now it's safe to mark these messages as consumed by updating offsets since we're actually
       // going to return the data.
@@ -175,6 +183,7 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
       // messages. Subsequent reads will add the outstanding messages before attempting to read
       // any more from the consumer stream iterator
       if (topicState != null && messages != null && messages.size() > 0) {
+        log.trace("Saving failed ConsumerReadTask for subsequent call id={}", this, e);
         topicState.setFailedTask(this);
       }
     }
@@ -186,7 +195,7 @@ class ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
     } catch (Throwable t) {
       // This protects the worker thread from any issues with the callback code. Nothing to be
       // done here but log it since it indicates a bug in the calling code.
-      log.error("Consumer read callback threw an unhandled exception", e);
+      log.error("Consumer read callback threw an unhandled exception id={}", this, e);
     }
     finished.countDown();
   }

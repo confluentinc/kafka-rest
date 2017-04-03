@@ -57,4 +57,13 @@ public class ProduceResponse {
   public void setValueSchemaId(Integer valueSchemaId) {
     this.valueSchemaId = valueSchemaId;
   }
+
+  @Override
+  public String toString() {
+    return "ProduceResponse{" +
+            "offsets=" + offsets +
+            ", keySchemaId=" + keySchemaId +
+            ", valueSchemaId=" + valueSchemaId +
+            '}';
+  }
 }

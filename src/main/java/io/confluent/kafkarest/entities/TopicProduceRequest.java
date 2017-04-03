@@ -35,4 +35,11 @@ public class TopicProduceRequest<RecordType extends TopicProduceRecord> extends 
   public void setRecords(List<RecordType> records) {
     this.records = records;
   }
+
+  @Override
+  public String toString() {
+    return "TopicProduceRequest{" +
+            "records=" + records +
+            '}';
+  }
 }

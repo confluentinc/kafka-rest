@@ -49,10 +49,9 @@ public class ConsumerWorker extends Thread {
   public synchronized <KafkaK, KafkaV, ClientK, ClientV>
   Future readTopic(ConsumerState state, String topic, long maxBytes,
                    ConsumerWorkerReadCallback<ClientK, ClientV> callback) {
-    log.trace("Consumer worker " + this.toString() + " reading topic " + topic
-              + " for " + state.getId());
     ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV> task
         = new ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>(state, topic, maxBytes, callback);
+    log.trace("Scheduling consumer worker read worker={} task={} topic={} consumer={}", this, task, topic, state.getId());
     if (!task.isDone()) {
       tasks.add(task);
       this.notifyAll();
@@ -63,7 +62,6 @@ public class ConsumerWorker extends Thread {
   @Override
   public void run() {
     while (isRunning.get()) {
-      ConsumerReadTask task = null;
       synchronized (this) {
         if (tasks.isEmpty()) {
           try {
@@ -73,6 +71,7 @@ public class ConsumerWorker extends Thread {
               long timeout = (nextExpiration == Long.MAX_VALUE ?
                               0 : nextExpiration - now);
               assert (timeout >= 0);
+              log.trace("Consumer worker waiting for next task worker={} timeout={}", this, timeout);
               config.getTime().waitOn(this, timeout);
             }
           } catch (InterruptedException e) {
@@ -82,16 +81,21 @@ public class ConsumerWorker extends Thread {
 
         long now = config.getTime().milliseconds();
         while (nextWaitingExpiration() <= now) {
-          tasks.add(waitingTasks.remove());
+          final ConsumerReadTask waitingTask = waitingTasks.remove();
+          log.trace("Promoting waiting task to scheduled worker={} task={}", this, waitingTask);
+          tasks.add(waitingTask);
         }
 
-        task = tasks.poll();
+        final ConsumerReadTask task = tasks.poll();
         if (task != null) {
+          log.trace("Executing consumer read task worker={} task={}", this, task);
           boolean backoff = task.doPartialRead();
           if (!task.isDone()) {
             if (backoff) {
+              log.trace("Rescheduling consumer read task with backoff worker={} task={}", this, task);
               waitingTasks.add(task);
             } else {
+              log.trace("Rescheduling consumer read task with immediately worker={} task={}", this, task);
               tasks.add(task);
             }
           }
