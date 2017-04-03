@@ -40,6 +40,9 @@ public class MockTime implements Time {
 
   @Override
   public void waitOn(Object on, long ms) throws InterruptedException {
+    synchronized (on) {
+      on.wait(ms);
+    }
     currentMs += ms;
   }
 }
