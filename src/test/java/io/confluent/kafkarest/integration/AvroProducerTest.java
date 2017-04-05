@@ -64,7 +64,8 @@ public class AvroProducerTest extends ClusterTestHarness {
 
   // This test assumes that AvroConverterTest is good enough and testing one primitive type for
   // keys and one complex type for records is sufficient.
-  private static final String keySchemaStr = "{\"name\":\"int\",\"type\": \"int\"}";
+  private static final String intKeySchemaStr = "{\"name\":\"int\",\"type\": \"int\"}";
+  private static final String stringKeySchemaStr = "{\"name\":\"string\",\"type\": \"string\"}";
   private static final String valueSchemaStr = "{\"type\": \"record\", "
                                                + "\"name\":\"test\","
                                                + "\"fields\":[{"
@@ -73,11 +74,18 @@ public class AvroProducerTest extends ClusterTestHarness {
                                                + "}]}";
   private static final Schema valueSchema = new Schema.Parser().parse(valueSchemaStr);
 
-  private final static JsonNode[] testKeys = {
+  private final static JsonNode[] testIntKeys = {
       TestUtils.jsonTree("1"),
       TestUtils.jsonTree("2"),
       TestUtils.jsonTree("3"),
       TestUtils.jsonTree("4")
+  };
+
+  private final static JsonNode[] testStringKeys = {
+      TestUtils.jsonTree("\"A\""),
+      TestUtils.jsonTree("\"B\""),
+      TestUtils.jsonTree("\"C\""),
+      TestUtils.jsonTree("\"D\"")
   };
 
   private final static JsonNode[] testValues = {
@@ -89,11 +97,17 @@ public class AvroProducerTest extends ClusterTestHarness {
 
   // Produce to topic inputs & results
 
-  private final List<AvroTopicProduceRecord> topicRecordsWithPartitionsAndKeys = Arrays.asList(
-      new AvroTopicProduceRecord(testKeys[0], testValues[0], 0),
-      new AvroTopicProduceRecord(testKeys[1], testValues[1], 1),
-      new AvroTopicProduceRecord(testKeys[2], testValues[2], 1),
-      new AvroTopicProduceRecord(testKeys[3], testValues[3], 2)
+  private final List<AvroTopicProduceRecord> topicRecordsWithPartitionsAndIntKeys = Arrays.asList(
+      new AvroTopicProduceRecord(testIntKeys[0], testValues[0], 0),
+      new AvroTopicProduceRecord(testIntKeys[1], testValues[1], 1),
+      new AvroTopicProduceRecord(testIntKeys[2], testValues[2], 1),
+      new AvroTopicProduceRecord(testIntKeys[3], testValues[3], 2)
+  );
+  private final List<AvroTopicProduceRecord> topicRecordsWithPartitionsAndStringKeys = Arrays.asList(
+      new AvroTopicProduceRecord(testStringKeys[0], testValues[0], 0),
+      new AvroTopicProduceRecord(testStringKeys[1], testValues[1], 1),
+      new AvroTopicProduceRecord(testStringKeys[2], testValues[2], 1),
+      new AvroTopicProduceRecord(testStringKeys[3], testValues[3], 2)
   );
   private final List<PartitionOffset> partitionOffsetsWithPartitionsAndKeys = Arrays.asList(
       new PartitionOffset(0, 0L, null, null),
@@ -136,7 +150,8 @@ public class AvroProducerTest extends ClusterTestHarness {
   }
 
   private <K, V> void testProduceToTopic(List<? extends TopicProduceRecord> records,
-                                         List<PartitionOffset> offsetResponses) {
+                                         List<PartitionOffset> offsetResponses,
+                                         String keySchemaStr) {
     TopicProduceRequest payload = new TopicProduceRequest();
     payload.setRecords(records);
     payload.setKeySchema(keySchemaStr);
@@ -155,8 +170,13 @@ public class AvroProducerTest extends ClusterTestHarness {
 
 
   @Test
-  public void testProduceToTopicWithPartitionsAndKeys() {
-    testProduceToTopic(topicRecordsWithPartitionsAndKeys, partitionOffsetsWithPartitionsAndKeys);
+  public void testProduceToTopicWithPartitionsAndIntKeys() {
+    testProduceToTopic(topicRecordsWithPartitionsAndIntKeys, partitionOffsetsWithPartitionsAndKeys, intKeySchemaStr);
+  }
+
+  @Test
+  public void testProduceToTopicWithPartitionsAndStringKeys() {
+    testProduceToTopic(topicRecordsWithPartitionsAndStringKeys, partitionOffsetsWithPartitionsAndKeys, stringKeySchemaStr);
   }
 
   private <K, V> void testProduceToPartition(List<? extends ProduceRecord<K, V>> records,
