@@ -36,4 +36,10 @@ public class PartitionProduceRequest<RecordType extends ProduceRecord> extends S
     this.records = records;
   }
 
+  @Override
+  public String toString() {
+    return "PartitionProduceRequest{" +
+            "records=" + records +
+            '}';
+  }
 }

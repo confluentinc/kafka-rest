@@ -17,6 +17,7 @@ package io.confluent.kafkarest.unit;
 
 import org.easymock.Capture;
 import org.easymock.EasyMock;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -90,6 +91,11 @@ public class ConsumerManagerTest {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     consumerFactory = EasyMock.createMock(ConsumerManager.ConsumerFactory.class);
     consumerManager = new ConsumerManager(config, mdObserver, consumerFactory);
+  }
+
+  @After
+  public void tearDown() {
+    consumerManager.shutdown();
   }
 
   private ConsumerConnector expectCreate(

@@ -113,8 +113,12 @@ class KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
           bytesConsumed += roughMsgSize;
         }
       } catch (ConsumerTimeoutException cte) {
+        log.trace("KafkaConsumerReadTask timed out, using backoff id={}", this);
         backoff = true;
       }
+
+      log.trace("KafkaConsumerReadTask exiting read with id={} messages={} bytes={}",
+                this, messages.size(), bytesConsumed);
 
       long now = parent.getConfig().getTime().milliseconds();
       long elapsed = now - started;
@@ -127,12 +131,20 @@ class KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
           started + parent.getConfig().getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
       waitExpiration = Math.min(backoffExpiration, requestExpiration);
 
-      finish();
+      // Including the rough message size here ensures processing finishes if the next
+      // message exceeds the maxResponseBytes
+      boolean requestTimedOut = elapsed >= requestTimeoutMs;
+      boolean exceededMaxResponseBytes = bytesConsumed + roughMsgSize >= maxResponseBytes;
+      if (requestTimedOut || exceededMaxResponseBytes) {
+        log.trace("Finishing KafkaConsumerReadTask id={} requestTimedOut={} exceededMaxResponseBytes={}",
+                this, requestTimedOut, exceededMaxResponseBytes);
+        finish();
+      }
 
       return backoff;
     } catch (Exception e) {
       finish(e);
-      log.error("Unexpected exception in consumer read thread: ", e);
+      log.error("Unexpected exception in consumer read task id={} ", this, e);
       return false;
     }
   }
@@ -142,13 +154,14 @@ class KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
   }
 
   public void finish(Exception e) {
+    log.trace("Finishing KafkaConsumerReadTask id={} exception={}", this, e);
     parent.finishRead();
     try {
       callback.onCompletion((e == null) ? messages : null, e);
     } catch (Throwable t) {
       // This protects the worker thread from any issues with the callback code. Nothing to be
       // done here but log it since it indicates a bug in the calling code.
-      log.error("Consumer read callback threw an unhandled exception", e);
+      log.error("Consumer read callback threw an unhandled exception id={}", this, e);
     }
     finished.countDown();
   }

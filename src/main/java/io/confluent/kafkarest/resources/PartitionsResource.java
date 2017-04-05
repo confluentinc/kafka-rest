@@ -47,6 +47,8 @@ import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("/topics/{topic}/partitions")
 @Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW,
@@ -55,6 +57,8 @@ import io.confluent.rest.annotations.PerformanceMetric;
 @Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
            Versions.GENERIC_REQUEST})
 public class PartitionsResource {
+
+  private static final Logger log = LoggerFactory.getLogger(PartitionsResource.class);
 
   private final Context ctx;
 
@@ -181,12 +185,16 @@ public class PartitionsResource {
       final long count,
       final EmbeddedFormat embeddedFormat) {
 
+    log.trace("Executing simple consume id={} topic={} partition={} offset={} count={}",
+              asyncResponse, topicName, partitionId, offset, count);
+
     ctx.getSimpleConsumerManager().consume(
         topicName, partitionId, offset, count, embeddedFormat,
         new ConsumerManager.ReadCallback<ClientK, ClientV>() {
           @Override
           public void onCompletion(List<? extends ConsumerRecord<ClientK, ClientV>> records,
                                    Exception e) {
+            log.trace("Completed simple consume id={} records={} exception={}", asyncResponse, records, e);
             if (e != null) {
               asyncResponse.resume(e);
             } else {
@@ -208,6 +216,9 @@ public class PartitionsResource {
         throw Errors.partitionNotFoundException();
       }
     }
+
+    log.trace("Executing topic produce request id={} topic={} partition={} format={} request={}",
+              asyncResponse, topic, partition, format, request);
 
     ctx.getProducerPool().produce(
         topic, partition, format,
@@ -232,6 +243,8 @@ public class PartitionsResource {
             response.setOffsets(offsets);
             response.setKeySchemaId(keySchemaId);
             response.setValueSchemaId(valueSchemaId);
+            log.trace("Completed topic produce request id={} response={}",
+                      asyncResponse, response);
             asyncResponse.resume(response);
           }
         }

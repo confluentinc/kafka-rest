@@ -30,6 +30,8 @@ import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
 import io.confluent.rest.annotations.PerformanceMetric;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -50,6 +52,8 @@ import java.util.Vector;
 @Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
 	    Versions.GENERIC_REQUEST, Versions.KAFKA_V2_JSON })
 public class TopicsResource {
+
+  private static final Logger log = LoggerFactory.getLogger(TopicsResource.class);
 
   private final Context ctx;
 
@@ -125,6 +129,8 @@ public class TopicsResource {
       final String topicName,
       final EmbeddedFormat format,
       final TopicProduceRequest<R> request) {
+    log.trace("Executing topic produce request id={} topic={} format={} request={}",
+              asyncResponse, topicName, format, request);
     ctx.getProducerPool().produce(
         topicName, null, format,
         request,
@@ -148,6 +154,8 @@ public class TopicsResource {
             response.setOffsets(offsets);
             response.setKeySchemaId(keySchemaId);
             response.setValueSchemaId(valueSchemaId);
+            log.trace("Completed topic produce request id={} response={}",
+                      asyncResponse, response);
             asyncResponse.resume(response);
           }
         }
