@@ -77,11 +77,19 @@ shift
 while [ $# -gt 0 ]; do
   COMMAND=$1
   case $COMMAND in
-    -help)
+    --help)
       HELP="true"
       shift
       ;;
-    -daemon)
+    --daemon)
+      DAEMON_MODE="true"
+      shift
+      ;;
+    -h)
+      HELP="true"
+      shift
+      ;;
+    -d)
       DAEMON_MODE="true"
       shift
       ;;
