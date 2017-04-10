@@ -53,7 +53,7 @@ public class KafkaConsumerWorker extends Thread {
       ConsumerWorkerReadCallback<ClientK, ClientV> callback) {
     log.trace("KafkaConsumer worker " + this.toString() + " for " + state.getId());
     KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV> task
-        = new KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>(state, null, timeout,
+        = new KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>(state, timeout,
         maxBytes, callback);
     if (!task.isDone()) {
       tasks.add(task);

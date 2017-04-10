@@ -38,7 +38,6 @@ import org.apache.kafka.common.TopicPartition;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -57,11 +56,10 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
 
   private KafkaRestConfig config;
   private ConsumerInstanceId instanceId;
-  private Consumer consumer;
-  private ConsumerRecords<ClientK, ClientV> consumerRecords = null;
-  private Iterator<ConsumerRecord<ClientK, ClientV>> iter = null;
+  private Consumer<KafkaK, KafkaV> consumer;
+  private ConsumerRecords<KafkaK, KafkaV> consumerRecords = null;
 
-  private List<ConsumerRecord<ClientK, ClientV>> consumerRecordList = null;
+  private List<ConsumerRecord<KafkaK, KafkaV>> consumerRecordList = null;
   private int index = 0;
 
 
@@ -73,8 +71,7 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   // only needs read access to the KafkaConsumerState).
   private ReadWriteLock lock;
 
-  public KafkaConsumerState(KafkaRestConfig config, ConsumerInstanceId instanceId,
-      Consumer consumer) {
+  public KafkaConsumerState(KafkaRestConfig config, ConsumerInstanceId instanceId, Consumer<KafkaK, KafkaV> consumer) {
     this.config = config;
     this.instanceId = instanceId;
     this.consumer = consumer;
@@ -379,55 +376,40 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   }
 
   /**
-   * An iterator / cursor to track the current position of the records sent to the client so far
+   * Initiate poll(0) request to retrieve consumer records that are available immediately, or return the existing
+   * consumer records if the records have not been fully consumed by client yet. Must be
+   * invoked with the lock held, i.e. after startRead().
    */
-  public Iterator<ConsumerRecord<ClientK, ClientV>> getIterator() {
-    if (consumerRecords == null) {
-      return null;
-    }
-    if (iter == null) {
-      iter = consumerRecords.iterator();
-    }
-    return iter;
-  }
-
-  /**
-   * Initiate poll(timeout) request to retrieve consummer records, or return the existing
-   * consumer records if the records have not been fully consumed by client yet
-   */
-  public void getOrCreateConsumerRecords(long timeout) {
-    try {
-      lock.writeLock().lock();
-      if (!hasNext()) {
-        //reset index
-        this.index = 0;
-        consumerRecordList = new ArrayList<ConsumerRecord<ClientK, ClientV>>();
-        consumerRecords = consumer.poll(timeout);
-        //drain the iterator and buffer to list
-        for (ConsumerRecord<ClientK, ClientV> consumerRecord : consumerRecords) {
-          consumerRecordList.add(consumerRecord);
-        }
-      }
-    } finally {
-      lock.writeLock().unlock();
+  void getOrCreateConsumerRecords() {
+    //reset index
+    this.index = 0;
+    consumerRecordList = new ArrayList<>();
+    consumerRecords = consumer.poll(0);
+    //drain the iterator and buffer to list
+    for (ConsumerRecord<KafkaK, KafkaV> consumerRecord : consumerRecords) {
+      consumerRecordList.add(consumerRecord);
     }
   }
 
-  public ConsumerRecord<ClientK, ClientV> peek() {
+  public ConsumerRecord<KafkaK, KafkaV> peek() {
     if (hasNext()) {
-      ConsumerRecord<ClientK, ClientV> record = consumerRecordList.get(this.index);
-      return record;
+      return consumerRecordList.get(this.index);
     }
     return null;
   }
 
   public boolean hasNext() {
+    if (consumerRecordList != null && this.index < consumerRecordList.size()) {
+      return true;
+    }
+    // If none are available, try checking for any records already fetched by the consumer.
+    getOrCreateConsumerRecords();
     return consumerRecordList != null && this.index < consumerRecordList.size();
   }
 
-  public ConsumerRecord<ClientK, ClientV> next() {
+  public ConsumerRecord<KafkaK, KafkaV> next() {
     if (hasNext()) {
-      ConsumerRecord<ClientK, ClientV> record = consumerRecordList.get(index);
+      ConsumerRecord<KafkaK, KafkaV> record = consumerRecordList.get(index);
       this.index = this.index + 1;
       return record;
     }

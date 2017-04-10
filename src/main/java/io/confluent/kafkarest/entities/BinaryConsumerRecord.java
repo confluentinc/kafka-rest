@@ -48,7 +48,7 @@ public class BinaryConsumerRecord extends ConsumerRecord<byte[], byte[]> {
     super(key, value, partition, offset);
   }
 
-    public BinaryConsumerRecord(String topic, byte[] key, byte[] value, int partition, long offset) {
+  public BinaryConsumerRecord(String topic, byte[] key, byte[] value, int partition, long offset) {
     super(topic, key, value, partition, offset);
   }
     

@@ -15,16 +15,19 @@
  **/
 package io.confluent.kafkarest.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.*;
-
 import java.util.List;
 
-import io.confluent.rest.exceptions.RestConstraintViolationException;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ConsumerOffsetCommitRequest {
-    
-    @JsonProperty    
+
+    @JsonCreator
+    public ConsumerOffsetCommitRequest(@JsonProperty("offsets") List<TopicPartitionOffsetMetadata> offsets) {
+        this.offsets = offsets;
+    }
+
+    @JsonProperty
     public List<TopicPartitionOffsetMetadata> offsets;
 
 }
