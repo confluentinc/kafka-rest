@@ -56,7 +56,7 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
 
   private KafkaRestConfig config;
   private ConsumerInstanceId instanceId;
-  private Consumer consumer;
+  private Consumer<KafkaK, KafkaV> consumer;
   private ConsumerRecords<KafkaK, KafkaV> consumerRecords = null;
 
   private List<ConsumerRecord<KafkaK, KafkaV>> consumerRecordList = null;
@@ -71,8 +71,7 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   // only needs read access to the KafkaConsumerState).
   private ReadWriteLock lock;
 
-  public KafkaConsumerState(KafkaRestConfig config, ConsumerInstanceId instanceId,
-      Consumer consumer) {
+  public KafkaConsumerState(KafkaRestConfig config, ConsumerInstanceId instanceId, Consumer<KafkaK, KafkaV> consumer) {
     this.config = config;
     this.instanceId = instanceId;
     this.consumer = consumer;

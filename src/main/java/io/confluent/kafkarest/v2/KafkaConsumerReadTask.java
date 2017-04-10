@@ -62,7 +62,7 @@ class KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>
   // a single backoff, if one is in progress
   long waitExpiration;
 
-  public KafkaConsumerReadTask(KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV> parent, String topic, long timeout,
+  public KafkaConsumerReadTask(KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV> parent, long timeout,
                                long maxBytes, ConsumerWorkerReadCallback<ClientK, ClientV> callback) {
     this.parent = parent;
     this.maxResponseBytes =

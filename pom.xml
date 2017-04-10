@@ -41,7 +41,7 @@
         <kafka.scala.version>2.11</kafka.scala.version>
         <!-- See note about workaround below. This should match the version used in the version of rest-utils you're using. -->
         <confluent.junit.version>4.12</confluent.junit.version>
-        <easymock.version>3.0</easymock.version>
+        <easymock.version>3.4</easymock.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <confluent.maven.repo>http://packages.confluent.io/maven/</confluent.maven.repo>
     </properties>

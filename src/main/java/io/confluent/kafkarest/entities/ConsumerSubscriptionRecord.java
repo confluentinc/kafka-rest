@@ -15,29 +15,35 @@
  **/
 package io.confluent.kafkarest.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 
 import java.util.List;
 
-import io.confluent.rest.exceptions.RestConstraintViolationException;
-
 public class ConsumerSubscriptionRecord {
-    private String topicPattern; 
+    private String topicPattern;
+
+    @JsonCreator
+    public ConsumerSubscriptionRecord(
+            @JsonProperty("topics") List<String> topics,
+            @JsonProperty("topic_pattern") String topicPattern
+    ) {
+        this.topics = topics;
+        this.topicPattern = topicPattern;
+    }
+
     @JsonGetter("topic_pattern")
     public String getTopicPattern() {
 	return this.topicPattern;
     }
+
     @JsonSetter("topic_pattern")
     public void setTopicPattern(String topicPattern) {
 	this.topicPattern = topicPattern;
     }
     
-    @JsonProperty    
+    @JsonProperty
     public List<String> topics;
-
-
-
-
-
 }
