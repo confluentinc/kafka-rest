@@ -70,10 +70,7 @@ public class KafkaConsumerManager {
 
   private final KafkaRestConfig config;
   private final Time time;
-  //private final String zookeeperConnect;
   private final String bootstrapServers;
-  private final MetadataObserver mdObserver;
-  private final int iteratorTimeoutMs;
 
   // KafkaConsumerState is generic, but we store them untyped here. This allows many operations to
   // work without having to know the types for the consumer, only requiring type information
@@ -93,12 +90,10 @@ public class KafkaConsumerManager {
       new PriorityQueue<KafkaConsumerState>();
   private final ExpirationThread expirationThread;
 
-  public KafkaConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver) {
+  public KafkaConsumerManager(KafkaRestConfig config) {
     this.config = config;
     this.time = config.getTime();
     this.bootstrapServers = config.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG);
-    this.mdObserver = mdObserver;
-    this.iteratorTimeoutMs = config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG);
     this.workers = new Vector<KafkaConsumerWorker>();
     for (int i = 0; i < config.getInt(KafkaRestConfig.CONSUMER_THREADS_CONFIG); i++) {
       KafkaConsumerWorker worker = new KafkaConsumerWorker(config);
@@ -112,9 +107,8 @@ public class KafkaConsumerManager {
     this.expirationThread.start();
   }
 
-  public KafkaConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver,
-      KafkaConsumerFactory consumerFactory) {
-    this(config, mdObserver);
+  KafkaConsumerManager(KafkaRestConfig config, KafkaConsumerFactory consumerFactory) {
+    this(config);
     this.consumerFactory = consumerFactory;
   }
 
@@ -174,10 +168,6 @@ public class KafkaConsumerManager {
       if (instanceConfig.getId() != null) {
         props.setProperty("consumer.id", instanceConfig.getId());
       }
-      // To support the old consumer interface with broken peek()/missing poll(timeout)
-      // functionality, we always use a timeout. This can't perfectly guarantee a total request
-      // timeout, but can get as close as this timeout's value
-      props.setProperty("consumer.timeout.ms", ((Integer) iteratorTimeoutMs).toString());
       if (instanceConfig.getAutoCommitEnable() != null) {
         props.setProperty("enable.auto.commit", instanceConfig.getAutoCommitEnable());
       }

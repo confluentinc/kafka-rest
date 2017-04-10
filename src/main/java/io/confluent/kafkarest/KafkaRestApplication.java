@@ -92,7 +92,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
       simpleConsumerManager = new SimpleConsumerManager(appConfig, mdObserver, simpleConsumerFactory);
     }
     if (kafkaConsumerManager == null) {
-      kafkaConsumerManager = new KafkaConsumerManager(appConfig, mdObserver);
+      kafkaConsumerManager = new KafkaConsumerManager(appConfig);
     }
 
     this.zkUtils = zkUtils;

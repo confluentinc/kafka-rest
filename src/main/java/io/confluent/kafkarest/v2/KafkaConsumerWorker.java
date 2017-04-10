@@ -52,7 +52,7 @@ public class KafkaConsumerWorker extends Thread {
   Future readRecords(KafkaConsumerState state, long timeout, long maxBytes,
       ConsumerWorkerReadCallback<ClientK, ClientV> callback) {
     KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV> task
-        = new KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>(state, null, timeout,
+        = new KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>(state, timeout,
         maxBytes, callback);
     log.trace("Scheduling consumer worker read worker={} task={} consumer={}", this, task, state.getId());
     if (!task.isDone()) {
