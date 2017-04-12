@@ -3,6 +3,12 @@
 Changelog
 =========
 
+Version 3.2.1
+-------------
+
+* `PR-285 <https://github.com/confluentinc/kafka-rest/pull/285>`_ - CLIENTS-281: Fix KafkaConsumerReadTask's locking, handling of multiple polls, invalid handling of old ConsumerTimeout exceptions, and incorrect generic type parameters.
+* `PR-277 <https://github.com/confluentinc/kafka-rest/pull/277>`_ - Documentation fixes
+
 Version 3.2.0
 -------------
 
