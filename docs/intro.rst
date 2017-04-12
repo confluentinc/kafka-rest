@@ -260,7 +260,7 @@ running:
 
 If you installed Debian or RPM packages, you can simply run ``kafka-rest-start``
 as it will be on your ``PATH``. The ``kafka-rest.properties`` file contains
-:ref:`configuration settings<schemaregistry_config>`. The default configuration
+:ref:`configuration settings<kafkarest_config>`. The default configuration
 included with the REST proxy includes convenient defaults for a local testing setup
 and should be modified for a production deployment. By default the server starts bound to port
 8082, does not specify a unique instance ID (required to safely run multiple
