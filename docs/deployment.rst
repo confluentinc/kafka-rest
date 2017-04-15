@@ -201,6 +201,13 @@ changing these based on your specific use case.
      * Default: ""
      * Importance: medium
 
+   ``host.path``
+     The host oath used to generate absolute URLs in responses. If empty, no path is added
+
+     * Type: string
+     * Default: ""
+     * Importance: medium
+
 
 Don't Touch These Settings!
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

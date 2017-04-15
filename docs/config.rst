@@ -74,6 +74,13 @@ Java Kafka clients.
   * Default: ""
   * Importance: medium
 
+``host.path``
+  The host oath used to generate absolute URLs in responses. If empty, no path is added
+
+  * Type: string
+  * Default: ""
+  * Importance: medium
+
 ``simpleconsumer.pool.size.max``
   Maximum number of SimpleConsumers that can be instantiated per broker. If 0, then the pool size is not limited.
 

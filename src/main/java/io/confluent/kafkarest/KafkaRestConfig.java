@@ -41,6 +41,11 @@ public class KafkaRestConfig extends RestConfig {
       + "are used.";
   public static final String ID_DEFAULT = "";
 
+  public static final String HOST_PATH_CONFIG = "host.path";
+  private static final String HOST_PATH_DOC =
+      "The host path used to generate absolute URLs in responses. If empty, no path is added";
+  public static final String HOST_PATH_DEFAULT = "";
+
   public static final String HOST_NAME_CONFIG = "host.name";
   private static final String HOST_NAME_DOC =
       "The host name used to generate absolute URLs in responses. If empty, the default canonical"
@@ -294,6 +299,7 @@ public class KafkaRestConfig extends RestConfig {
                         METRICS_JMX_PREFIX_DEFAULT_OVERRIDE, Importance.LOW, METRICS_JMX_PREFIX_DOC)
         .define(ID_CONFIG, Type.STRING, ID_DEFAULT, Importance.HIGH, ID_CONFIG_DOC)
         .define(HOST_NAME_CONFIG, Type.STRING, HOST_NAME_DEFAULT, Importance.MEDIUM, HOST_NAME_DOC)
+        .define(HOST_PATH_CONFIG, Type.STRING, HOST_PATH_DEFAULT, Importance.MEDIUM, HOST_PATH_DOC)
         .define(ZOOKEEPER_CONNECT_CONFIG, Type.STRING, ZOOKEEPER_CONNECT_DEFAULT,
                 Importance.HIGH, ZOOKEEPER_CONNECT_DOC)
         .define(BOOTSTRAP_SERVERS_CONFIG, Type.STRING, BOOTSTRAP_SERVERS_DEFAULT,
