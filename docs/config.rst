@@ -104,6 +104,13 @@ Java Kafka clients.
   * Default: ""
   * Importance: medium
 
+``external.port``
+  The external, or host-side, port corresponding to the internal, or container-side, port with value PORT
+
+  * Type: int
+  * Default: ""
+  * Importance: medium
+
 ``simpleconsumer.pool.size.max``
   Maximum number of SimpleConsumers that can be instantiated per broker. If 0, then the pool size is not limited.
 
