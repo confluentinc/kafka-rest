@@ -31,6 +31,7 @@ import org.apache.avro.util.Utf8;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -115,6 +116,35 @@ public class AvroConverterTest {
                   + "     {\"name\": \"decimal\", \"type\": {\"type\":\"bytes\", \"logicalType\": \"decimal\",  \"precision\" : 5,\"scale\" : 2 } }\n"
                   + "]}"
   );
+
+
+    private static final Schema decimalUnionNullSchema = new Schema.Parser().parse(
+            "{\"type\": \"record\",\n"
+                    + " \"name\": \"testDecimal\",\n"
+                    + " \"fields\": [\n"
+                    + "     {\"name\": \"decimal\", \"type\": [\"null\",{\"type\":\"bytes\", \"logicalType\": \"decimal\",  \"precision\" : 5,\"scale\" : 2 }] }\n"
+                    + "]}"
+    );
+
+
+    private static final Schema nestedDecimalSchema = new Schema.Parser().parse(
+            "{\"type\": \"record\",\n"
+                    + " \"name\": \"testDecimal\",\n"
+                    + " \"fields\": [\n"
+                    + "     {\"name\": \"nested\", \"type\":\n"
+                    + "         {\"type\": \"record\", \"name\":\"nestedRecord\", \"fields\":[\n"
+                    + "             {\"name\": \"decimal\", \"type\": {\"type\":\"bytes\", \"logicalType\": \"decimal\",  \"precision\" : 5,\"scale\" : 2 } }]}}\n"
+                    + "]}"
+    );
+
+
+    private static final Schema decimalArraySchema = new Schema.Parser().parse(
+            "{\"namespace\": \"namespace\",\n"
+                    + " \"type\": \"array\",\n"
+                    + " \"name\": \"test\",\n"
+                    + " \"items\": {\"type\":\"bytes\", \"logicalType\": \"decimal\",  \"precision\" : 5,\"scale\" : 2 } \n"
+                    + "}"
+    );
 
   @Test
   public void testPrimitiveTypesToAvro() {
@@ -275,18 +305,73 @@ public class AvroConverterTest {
 
   @Test
   public void testDecimalToAvro(){
-    String decimal = "123.45";
-    Object result = AvroConverter.toAvro(
-            TestUtils.jsonTree(String.format("{\"decimal\": %s}", decimal)),
-            decimalSchema);
+      for (int i = 0; i <=999; i++){
+          for (int j = 0; j<=99; j++){
+              BigDecimal numberBigDecimal = new BigDecimal(i + (float) j / 100);
+              numberBigDecimal  = numberBigDecimal .setScale(2, BigDecimal.ROUND_HALF_UP);
+              String decimal = numberBigDecimal.toString();
 
-    ByteBuffer byteBuffer = ((ByteBuffer) ((GenericData.Record) result).get("decimal"));
-    int scale = decimalSchema.getField("decimal").schema().getJsonProp("scale").asInt();
+              Object result = AvroConverter.toAvro(
+                      TestUtils.jsonTree(String.format("{\"decimal\": %s}", decimal)),
+                      decimalSchema);
 
-    BigDecimal expected = BigDecimalDecoder.fromBytes(byteBuffer, scale);
-    assertEquals(new BigDecimal(decimal), expected);
+              ByteBuffer byteBuffer = ((ByteBuffer) ((GenericData.Record) result).get("decimal"));
+              int scale = decimalSchema.getField("decimal").schema().getJsonProp("scale").asInt();
+
+              BigDecimal expected = BigDecimalDecoder.fromBytes(byteBuffer, scale);
+              System.out.println(decimal + "    " +  (new BigDecimal(decimal).equals(expected)));
+
+          }
+      }
 
   }
+
+
+    @Test
+    public void testDecimalUnionNullToAvro(){
+        String decimal = "123.45";
+        Object result = AvroConverter.toAvro(
+                TestUtils.jsonTree(String.format("{\"decimal\": {\"bytes\": %s }}", decimal)),
+                decimalUnionNullSchema);
+
+        ByteBuffer byteBuffer = ((ByteBuffer) ((GenericData.Record) result).get("decimal"));
+        int scale = decimalUnionNullSchema.getField("decimal").schema()
+                .getTypes().get(1).getJsonProp("scale").asInt();
+
+        BigDecimal expected = BigDecimalDecoder.fromBytes(byteBuffer, scale);
+        assertEquals(new BigDecimal(decimal), expected);
+
+    }
+
+    @Test
+    public void testNestedDecimalToAvro(){
+        String decimal = "123.45";
+
+        Object result = AvroConverter.toAvro(
+                TestUtils.jsonTree(String.format("{\"nested\": {\"decimal\": %s }}", decimal)),
+                nestedDecimalSchema);
+
+        ByteBuffer byteBuffer = (ByteBuffer) ((GenericData.Record) ((GenericData.Record) result).get("nested")).get("decimal");
+        int scale = 2;
+
+        BigDecimal expected = BigDecimalDecoder.fromBytes(byteBuffer, scale);
+        assertEquals(new BigDecimal(decimal), expected);
+
+    }
+
+
+    @Test
+    public void testDecimalArrayToAvro() {
+        String json = "[123.45,555.55]";
+        Object result = AvroConverter.toAvro(TestUtils.jsonTree(json), decimalArraySchema);
+        int scale = 2;
+
+        ByteBuffer byteBuffer0 = (ByteBuffer) ((GenericData.Array) result).get(0);
+        assertEquals(new BigDecimal("123.45"), BigDecimalDecoder.fromBytes(byteBuffer0,2));
+
+        ByteBuffer byteBuffer1 = (ByteBuffer) ((GenericData.Array) result).get(1);
+        assertEquals(new BigDecimal("555.55"), BigDecimalDecoder.fromBytes(byteBuffer1,2));
+    }
 
 
   @Test

@@ -19,8 +19,10 @@ package io.confluent.kafkarest.converters;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import io.confluent.kafkarest.utils.BigDecimalEncoder;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericContainer;
@@ -40,6 +42,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 
@@ -76,7 +79,7 @@ public class AvroConverter {
       jsonMapper.writeValue(out, value);
       DatumReader<Object> reader = new GenericDatumReader<Object>(schema);
       Object object = reader.read(
-          null, decoderFactory.jsonDecoder(schema, new ByteArrayInputStream(out.toByteArray())));
+              null, decoderFactory.jsonDecoder(schema, new ByteArrayInputStream(out.toByteArray())));
       out.close();
       return object;
     } catch (IOException e) {
@@ -89,29 +92,86 @@ public class AvroConverter {
     }
   }
 
-  private static void transformDecimalToBytesIfNeeded(JsonNode jsonNode, Schema schema) {
-    for (Schema.Field field : schema.getFields()) {
-      Schema fieldSchema = field.schema();
-      if (isDecimalField(fieldSchema)){
-        JsonNode value = jsonNode.get(field.name());
-        if (value instanceof DoubleNode){
-          int scale = fieldSchema.getJsonProps().get("scale").asInt();
-          int precision = fieldSchema.getJsonProps().get("precision").asInt();
-          BigDecimal bd = value.decimalValue();
-          String bdBytesAsUtf8 = BigDecimalEncoder.bytesAsUtf8(bd, scale, precision);
-          // modify the json node by casting it to an Object node.
-          ((ObjectNode)jsonNode).put(field.name(), bdBytesAsUtf8);
-
+  private static JsonNode transformDecimalToBytesIfNeeded(JsonNode jsonNode, Schema schema) {
+    if (schema.getType() == Schema.Type.BYTES && schema.getJsonProps().containsKey("logicalType") &&
+            Objects.equals(schema.getJsonProps().get("logicalType").asText(), "decimal"))  {
+      if (jsonNode instanceof DoubleNode){
+        BigDecimal bd = jsonNode.decimalValue();
+        int scale = schema.getJsonProps().get("scale").asInt();
+        int precision = schema.getJsonProps().get("precision").asInt();
+        String bdBytesAsUtf8 = BigDecimalEncoder.bytesAsUtf8(bd, scale, precision);
+        return new TextNode(bdBytesAsUtf8);
+      }
+    } else if (schema.getType() == Schema.Type.RECORD) {
+      for (Schema.Field s : schema.getFields()){
+        JsonNode transformed = transformDecimalToBytesIfNeeded(jsonNode.get(s.name()), s.schema());
+        ((ObjectNode) jsonNode).set(s.name(), transformed);
+      }
+    } else if (schema.getType() == Schema.Type.UNION) {
+      if (jsonNode.has("bytes") && jsonNode.get("bytes").isNumber()) {
+        for (Schema subSchema : schema.getTypes()) {
+          if (subSchema.getType() == Schema.Type.BYTES && subSchema.getJsonProps().containsKey("logicalType") &&
+                  Objects.equals(subSchema.getJsonProps().get("logicalType").asText(), "decimal")){
+            JsonNode transformed = transformDecimalToBytesIfNeeded(jsonNode.get("bytes"), subSchema);
+            ((ObjectNode) jsonNode).set("bytes", transformed);
+          }
         }
-        //TODO: More recursion
+      }
+
+    } else if (schema.getType() == Schema.Type.ARRAY) {
+      Schema subSchema = schema.getElementType();
+      int i = 0;
+      for (Iterator<JsonNode> it = jsonNode.elements(); it.hasNext(); ) {
+        JsonNode elem = it.next();
+        JsonNode transformed = transformDecimalToBytesIfNeeded(elem, subSchema);
+        ((ArrayNode) jsonNode).set(i, transformed);
+        i += 1;
       }
     }
+    return jsonNode;
+//
+//    else {
+//      for (Schema.Field field : schema.getFields()) {
+//        Schema fieldSchema = field.schema();
+//        if (fieldSchema.getType() == Schema.Type.ARRAY) {
+////        fieldSchema;
+//        }
+//
+//        Schema decimalSchema = decimalSchema(fieldSchema);
+//        if (decimalSchema != null) {
+//          JsonNode value = jsonNode.get(field.name());
+//          int scale = decimalSchema.getJsonProps().get("scale").asInt();
+//          int precision = decimalSchema.getJsonProps().get("precision").asInt();
+//          BigDecimal bd;
+//          if (value instanceof DoubleNode) {
+//            bd = value.decimalValue();
+//            String bdBytesAsUtf8 = BigDecimalEncoder.bytesAsUtf8(bd, scale, precision);
+//            // modify the json node by casting it to an Object node.
+//            ((ObjectNode) jsonNode).put(field.name(), bdBytesAsUtf8);
+//          }
+//          // union type
+//          if (value instanceof JsonNode && value.has("bytes")) {
+//            bd = value.get("bytes").decimalValue();
+//            String bdBytesAsUtf8 = BigDecimalEncoder.bytesAsUtf8(bd, scale, precision);
+//            ((ObjectNode) value).put("bytes", bdBytesAsUtf8);
+//          }
+//          //TODO: More recursion
+//        }
+//      }
+//    }
   }
 
-  private static Boolean isDecimalField(Schema fieldSchema){
-    return fieldSchema.getType() == Schema.Type.BYTES &&
-            fieldSchema.getJsonProps().containsKey("logicalType") &&
-            Objects.equals(fieldSchema.getJsonProps().get("logicalType").asText(), "decimal");
+  private static Schema decimalSchema(Schema fieldSchema) {
+    Schema schema = null;
+    if (fieldSchema.getType() == Schema.Type.BYTES && fieldSchema.getJsonProps().containsKey("logicalType") &&
+              Objects.equals(fieldSchema.getJsonProps().get("logicalType").asText(), "decimal")){
+      schema = fieldSchema;
+    } else if (fieldSchema.getType() == Schema.Type.UNION) {
+      for (Schema subSchema : fieldSchema.getTypes()) {
+        schema = schema == null ? decimalSchema(subSchema) : schema;
+      }
+    }
+    return schema;
   }
 
   public static class JsonNodeAndSize {
