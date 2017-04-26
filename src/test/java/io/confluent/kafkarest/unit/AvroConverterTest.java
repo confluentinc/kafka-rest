@@ -305,8 +305,8 @@ public class AvroConverterTest {
 
   @Test
   public void testDecimalToAvro(){
-      for (int i = 0; i <=999; i++){
-          for (int j = 0; j<=99; j++){
+      for (int i = 0; i <=46; i++){
+          for (int j = 0; j<= 100; j++){
               BigDecimal numberBigDecimal = new BigDecimal(i + (float) j / 100);
               numberBigDecimal  = numberBigDecimal .setScale(2, BigDecimal.ROUND_HALF_UP);
               String decimal = numberBigDecimal.toString();

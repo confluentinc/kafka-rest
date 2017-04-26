@@ -96,7 +96,7 @@ public class AvroConverter {
     if (schema.getType() == Schema.Type.BYTES && schema.getJsonProps().containsKey("logicalType") &&
             Objects.equals(schema.getJsonProps().get("logicalType").asText(), "decimal"))  {
       if (jsonNode instanceof DoubleNode){
-        BigDecimal bd = jsonNode.decimalValue();
+        BigDecimal bd = jsonNode.decimalValue().setScale(schema.getJsonProp("scale").asInt());
         int scale = schema.getJsonProps().get("scale").asInt();
         int precision = schema.getJsonProps().get("precision").asInt();
         String bdBytesAsUtf8 = BigDecimalEncoder.bytesAsUtf8(bd, scale, precision);
