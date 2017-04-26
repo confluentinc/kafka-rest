@@ -19,6 +19,9 @@ package io.confluent.kafkarest.converters;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.fasterxml.jackson.databind.node.DoubleNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.confluent.kafkarest.utils.BigDecimalEncoder;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericContainer;
 import org.apache.avro.generic.GenericDatumReader;
@@ -34,9 +37,11 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Provides conversion of JSON to/from Avro.
@@ -67,6 +72,7 @@ public class AvroConverter {
   public static Object toAvro(JsonNode value, Schema schema) {
     try {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
+      transformDecimalToBytesIfNeeded(value, schema);
       jsonMapper.writeValue(out, value);
       DatumReader<Object> reader = new GenericDatumReader<Object>(schema);
       Object object = reader.read(
@@ -81,6 +87,31 @@ public class AvroConverter {
       // Catch-all for variety of exceptions that can be thrown by Avro.
       throw new ConversionException("Failed to convert JSON to Avro: " + e.getMessage());
     }
+  }
+
+  private static void transformDecimalToBytesIfNeeded(JsonNode jsonNode, Schema schema) {
+    for (Schema.Field field : schema.getFields()) {
+      Schema fieldSchema = field.schema();
+      if (isDecimalField(fieldSchema)){
+        JsonNode value = jsonNode.get(field.name());
+        if (value instanceof DoubleNode){
+          int scale = fieldSchema.getJsonProps().get("scale").asInt();
+          int precision = fieldSchema.getJsonProps().get("precision").asInt();
+          BigDecimal bd = value.decimalValue();
+          String bdBytesAsUtf8 = BigDecimalEncoder.bytesAsUtf8(bd, scale, precision);
+          // modify the json node by casting it to an Object node.
+          ((ObjectNode)jsonNode).put(field.name(), bdBytesAsUtf8);
+
+        }
+        //TODO: More recursion
+      }
+    }
+  }
+
+  private static Boolean isDecimalField(Schema fieldSchema){
+    return fieldSchema.getType() == Schema.Type.BYTES &&
+            fieldSchema.getJsonProps().containsKey("logicalType") &&
+            Objects.equals(fieldSchema.getJsonProps().get("logicalType").asText(), "decimal");
   }
 
   public static class JsonNodeAndSize {

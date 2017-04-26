@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.TextNode;
 
+import io.confluent.kafkarest.utils.BigDecimalDecoder;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
@@ -29,6 +30,7 @@ import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.avro.util.Utf8;
 import org.junit.Test;
 
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -104,6 +106,14 @@ public class AvroConverterTest {
       + "  \"name\": \"Suit\",\n"
       + "  \"symbols\" : [\"SPADES\", \"HEARTS\", \"DIAMONDS\", \"CLUBS\"]\n"
       + "}"
+  );
+
+  private static final Schema decimalSchema = new Schema.Parser().parse(
+          "{\"type\": \"record\",\n"
+                  + " \"name\": \"testDecimal\",\n"
+                  + " \"fields\": [\n"
+                  + "     {\"name\": \"decimal\", \"type\": {\"type\":\"bytes\", \"logicalType\": \"decimal\",  \"precision\" : 5,\"scale\" : 2 } }\n"
+                  + "]}"
   );
 
   @Test
@@ -261,6 +271,21 @@ public class AvroConverterTest {
     // There's no failure case here because the only failure mode is passing in non-string data.
     // Even if they put in an invalid symbol name, the exception won't be thrown until
     // serialization.
+  }
+
+  @Test
+  public void testDecimalToAvro(){
+    String decimal = "123.45";
+    Object result = AvroConverter.toAvro(
+            TestUtils.jsonTree(String.format("{\"decimal\": %s}", decimal)),
+            decimalSchema);
+
+    ByteBuffer byteBuffer = ((ByteBuffer) ((GenericData.Record) result).get("decimal"));
+    int scale = decimalSchema.getField("decimal").schema().getJsonProp("scale").asInt();
+
+    BigDecimal expected = BigDecimalDecoder.fromBytes(byteBuffer, scale);
+    assertEquals(new BigDecimal(decimal), expected);
+
   }
 
 
