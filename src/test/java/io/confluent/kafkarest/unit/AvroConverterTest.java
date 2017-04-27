@@ -20,7 +20,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.TextNode;
 
-import io.confluent.kafkarest.utils.BigDecimalDecoder;
+import io.confluent.kafkarest.converters.BigDecimalDecoder;
+import io.confluent.kafkarest.converters.BigDecimalEncoder;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
@@ -31,7 +32,6 @@ import org.apache.avro.util.Utf8;
 import org.junit.Test;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -64,6 +64,7 @@ public class AvroConverterTest {
       + "     {\"name\": \"float\", \"type\": \"float\"},\n"
       + "     {\"name\": \"double\", \"type\": \"double\"},\n"
       + "     {\"name\": \"bytes\", \"type\": \"bytes\"},\n"
+      + "     {\"name\": \"decimal\", \"type\": { \"type\": \"bytes\", \"logicalType\": \"decimal\", \"precision\": 5, \"scale\": 2} },\n"
       + "     {\"name\": \"string\", \"type\": \"string\", \"aliases\": [\"string_alias\"]},\n"
       + "     {\"name\": \"null_default\", \"type\": \"null\", \"default\": null},\n"
       + "     {\"name\": \"boolean_default\", \"type\": \"boolean\", \"default\": false},\n"
@@ -228,6 +229,7 @@ public class AvroConverterTest {
                   + "    \"float\": 23.4,\n"
                   + "    \"double\": 800.25,\n"
                   + "    \"bytes\": \"hello\",\n"
+                  + "    \"decimal\": 123.45,\n"
                   + "    \"string\": \"string\",\n"
                   + "    \"null_default\": null,\n"
                   + "    \"boolean_default\": false,\n"
@@ -250,6 +252,7 @@ public class AvroConverterTest {
     assertEquals(800.25, resultRecord.get("double"));
     assertEquals(EntityUtils.encodeBase64Binary("hello".getBytes()),
                  EntityUtils.encodeBase64Binary(((ByteBuffer) resultRecord.get("bytes")).array()));
+    assertEquals(new BigDecimal("123.45"), BigDecimalDecoder.fromBytes((ByteBuffer) resultRecord.get("decimal"), 2));
     assertEquals("string", resultRecord.get("string").toString());
     // Nothing to check with default values, just want to make sure an exception wasn't thrown
     // when they values weren't specified for their fields.
@@ -305,8 +308,9 @@ public class AvroConverterTest {
 
   @Test
   public void testDecimalToAvro(){
-      for (int i = 0; i <=46; i++){
-          for (int j = 0; j<= 100; j++){
+      // this has been tested for numbers ranging from -10000.99 to 10000.99
+      for (int i = -100; i <= 100; i++){
+          for (int j = 0; j <= 99; j++){
               BigDecimal numberBigDecimal = new BigDecimal(i + (float) j / 100);
               numberBigDecimal  = numberBigDecimal .setScale(2, BigDecimal.ROUND_HALF_UP);
               String decimal = numberBigDecimal.toString();
@@ -319,8 +323,7 @@ public class AvroConverterTest {
               int scale = decimalSchema.getField("decimal").schema().getJsonProp("scale").asInt();
 
               BigDecimal expected = BigDecimalDecoder.fromBytes(byteBuffer, scale);
-              System.out.println(decimal + "    " +  (new BigDecimal(decimal).equals(expected)));
-
+              assertEquals(new BigDecimal(decimal), expected );
           }
       }
 
@@ -423,6 +426,7 @@ public class AvroConverterTest {
         .set("float", 23.4f)
         .set("double", 800.25)
         .set("bytes", ByteBuffer.wrap("bytes".getBytes()))
+        .set("decimal", ByteBuffer.wrap(BigDecimalEncoder.toByteArray(new BigDecimal("123.45"),2)))
         .set("string", "string")
         .build();
 
@@ -444,6 +448,8 @@ public class AvroConverterTest {
     // The bytes value was created from an ASCII string, so Avro's encoding should just give that
     // string back to us in the JSON-serialized version
     assertEquals("bytes", result.json.get("bytes").textValue());
+    assertTrue(result.json.get("decimal").isBigDecimal());
+    assertEquals(new BigDecimal("123.45"), result.json.get("decimal").decimalValue());
     assertTrue(result.json.get("string").isTextual());
     assertEquals("string", result.json.get("string").textValue());
   }
