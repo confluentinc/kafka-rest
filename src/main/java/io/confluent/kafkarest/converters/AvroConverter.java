@@ -90,20 +90,6 @@ public class AvroConverter {
     }
   }
 
-//
-//  private static Schema decimalSchema(Schema fieldSchema) {
-//    Schema schema = null;
-//    if (fieldSchema.getType() == Schema.Type.BYTES && fieldSchema.getJsonProps().containsKey("logicalType") &&
-//              Objects.equals(fieldSchema.getJsonProps().get("logicalType").asText(), "decimal")){
-//      schema = fieldSchema;
-//    } else if (fieldSchema.getType() == Schema.Type.UNION) {
-//      for (Schema subSchema : fieldSchema.getTypes()) {
-//        schema = schema == null ? decimalSchema(subSchema) : schema;
-//      }
-//    }
-//    return schema;
-//  }
-
   public static class JsonNodeAndSize {
 
     public JsonNode json;
