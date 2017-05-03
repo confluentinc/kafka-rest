@@ -5,7 +5,7 @@
 =======================
 
 In addition to the settings specified here, the Kafka REST Proxy accepts the settings for the
-Java producer and consumer (currently the new producer and old consumer). Use these to override
+Java producer and consumer (currently the new producer and old/new consumers). Use these to override
 the default settings of producers and consumers in the REST Proxy. When configuration options are
 exposed in the REST API, priority is given to settings in the user request, then to overrides
 provided as configuration options, and finally falls back to the default values provided by the
@@ -525,3 +525,27 @@ In addition to these configurations:
   * Importance: low
 
 
+Interceptor Configuration Options
+=================================
+REST Proxy supports interceptor configurations as part of Java new producer and consumer settings.
+
+``producer.interceptor.classes``
+  Producer interceptor classes.
+
+  * Type: string
+  * Default: ""
+  * Importance: low
+
+``consumer.interceptor.classes``
+  Consumer interceptor classes.
+
+  * Type: string
+  * Default: ""
+  * Importance: low
+    
+For example to enable Confluent Control Center monitoring interceptors:
+
+``consumer.interceptor.classes=io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor``
+``producer.interceptor.classes=io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor``
+
+For more details about the monitoring inteceptors, please see `Interceptor Configuration </control-center/docs/clients.html#interceptor-configuration>`_.
