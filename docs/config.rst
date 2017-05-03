@@ -526,7 +526,7 @@ In addition to these configurations:
 
 
 Interceptor Configuration Options
-==============================
+=================================
 REST Proxy supports interceptor configurations as part of Java new producer and consumer settings.
 
 ``producer.interceptor.classes``
