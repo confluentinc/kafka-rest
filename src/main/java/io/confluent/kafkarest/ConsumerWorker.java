@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest;
 
 import org.slf4j.Logger;
@@ -46,12 +47,26 @@ public class ConsumerWorker extends Thread {
     this.config = config;
   }
 
-  public synchronized <KafkaK, KafkaV, ClientK, ClientV>
-  Future readTopic(ConsumerState state, String topic, long maxBytes,
-                   ConsumerWorkerReadCallback<ClientK, ClientV> callback) {
-    ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV> task
-        = new ConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>(state, topic, maxBytes, callback);
-    log.trace("Scheduling consumer worker read worker={} task={} topic={} consumer={}", this, task, topic, state.getId());
+  public synchronized <KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> Future readTopic(
+      ConsumerState state,
+      String topic,
+      long maxBytes,
+      ConsumerWorkerReadCallback<ClientKeyT, ClientValueT> callback
+  ) {
+    ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> task =
+        new ConsumerReadTask<>(
+            state,
+            topic,
+            maxBytes,
+            callback
+        );
+    log.trace(
+        "Scheduling consumer worker read worker={} task={} topic={} consumer={}",
+        this,
+        task,
+        topic,
+        state.getId()
+    );
     if (!task.isDone()) {
       tasks.add(task);
       this.notifyAll();
@@ -68,10 +83,13 @@ public class ConsumerWorker extends Thread {
             long now = config.getTime().milliseconds();
             long nextExpiration = nextWaitingExpiration();
             if (nextExpiration > now) {
-              long timeout = (nextExpiration == Long.MAX_VALUE ?
-                              0 : nextExpiration - now);
+              long timeout = (nextExpiration == Long.MAX_VALUE ? 0 : nextExpiration - now);
               assert (timeout >= 0);
-              log.trace("Consumer worker waiting for next task worker={} timeout={}", this, timeout);
+              log.trace(
+                  "Consumer worker waiting for next task worker={} timeout={}",
+                  this,
+                  timeout
+              );
               config.getTime().waitOn(this, timeout);
             }
           } catch (InterruptedException e) {
@@ -92,10 +110,18 @@ public class ConsumerWorker extends Thread {
           boolean backoff = task.doPartialRead();
           if (!task.isDone()) {
             if (backoff) {
-              log.trace("Rescheduling consumer read task with backoff worker={} task={}", this, task);
+              log.trace(
+                  "Rescheduling consumer read task with backoff worker={} task={}",
+                  this,
+                  task
+              );
               waitingTasks.add(task);
             } else {
-              log.trace("Rescheduling consumer read task with immediately worker={} task={}", this, task);
+              log.trace(
+                  "Rescheduling consumer read task with immediately worker={} task={}",
+                  this,
+                  task
+              );
               tasks.add(task);
             }
           }
@@ -119,8 +145,7 @@ public class ConsumerWorker extends Thread {
       this.interrupt();
       shutdownLatch.await();
     } catch (InterruptedException e) {
-      log.error("Interrupted while "
-                + "consumer worker thread.");
+      log.error("Interrupted while consumer worker thread.");
       throw new Error("Interrupted when shutting down consumer worker thread.");
     }
   }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,8 +46,8 @@ public class BinaryProduceRecord extends ProduceRecordBase<byte[], byte[]> {
     super(key, value);
   }
 
-  public BinaryProduceRecord(byte[] unencoded_value) {
-    this(null, unencoded_value);
+  public BinaryProduceRecord(byte[] unencodedValue) {
+    this(null, unencodedValue);
   }
 
   @Override

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -24,7 +25,7 @@ import javax.validation.constraints.NotNull;
 public abstract class ConsumerRecord<K, V> {
 
   protected String topic;
-    
+
   protected K key;
   @NotNull
   protected V value;
@@ -35,7 +36,7 @@ public abstract class ConsumerRecord<K, V> {
   @Min(0)
   protected long offset;
 
-    public ConsumerRecord(String topic, K key, V value, int partition, long offset) {
+  public ConsumerRecord(String topic, K key, V value, int partition, long offset) {
     this.topic = topic;
     this.key = key;
     this.value = value;
@@ -43,7 +44,7 @@ public abstract class ConsumerRecord<K, V> {
     this.offset = offset;
   }
 
-    
+
   public ConsumerRecord(K key, V value, int partition, long offset) {
     this.key = key;
     this.value = value;
@@ -64,7 +65,7 @@ public abstract class ConsumerRecord<K, V> {
   public void setTopic(String topic) {
     this.topic = topic;
   }
-    
+
   @JsonIgnore
   public K getKey() {
     return key;

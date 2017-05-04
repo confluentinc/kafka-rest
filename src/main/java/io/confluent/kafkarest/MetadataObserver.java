@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest;
 
 import org.slf4j.Logger;
@@ -68,7 +69,7 @@ public class MetadataObserver {
     if (broker.isDefined()) {
       return broker.get();
     } else {
-      throw Errors.LeaderNotAvailableException();
+      throw Errors.leaderNotAvailableException();
     }
   }
 
@@ -114,15 +115,15 @@ public class MetadataObserver {
     // shouldn't be common, so we just grab all of them to keep this simple
     Map<String, Properties> configs = AdminUtils.fetchAllTopicConfigs(zkUtils);
     for (String topicName : JavaConversions.asJavaCollection(topicNames)) {
-      if(!topicPartitions.get(topicName).isEmpty()) {
+      if (!topicPartitions.get(topicName).isEmpty()) {
         Map<Object, Seq<Object>> partitionMap = topicPartitions.get(topicName).get();
-        List<Partition> partitions = extractPartitionsFromZKData(partitionMap, topicName, null);
+        List<Partition> partitions = extractPartitionsFromZkData(partitionMap, topicName, null);
         if (partitions.size() == 0) {
           continue;
         }
         Option<Properties> topicConfigOpt = configs.get(topicName);
         Properties topicConfigs =
-                topicConfigOpt.isEmpty() ? new Properties() : topicConfigOpt.get();
+            topicConfigOpt.isEmpty() ? new Properties() : topicConfigOpt.get();
         Topic topic = new Topic(topicName, topicConfigs, partitions);
         topics.add(topic);
       }
@@ -134,9 +135,14 @@ public class MetadataObserver {
     return getTopicPartitions(topic, null);
   }
 
-  public boolean partitionExists(String topicName, int partition) {
-    Topic topic = getTopic(topicName);
-    return (partition >= 0 && partition < topic.getPartitions().size());
+  private List<Partition> getTopicPartitions(String topic, Integer partitionsFilter) {
+    Map<String, Map<Object, Seq<Object>>> topicPartitions = zkUtils.getPartitionAssignmentForTopics(
+        JavaConversions.asScalaBuffer(Arrays.asList(topic)));
+    if (!topicPartitions.get(topic).isEmpty()) {
+      Map<Object, Seq<Object>> parts = topicPartitions.get(topic).get();
+      return extractPartitionsFromZkData(parts, topic, partitionsFilter);
+    }
+    return null;
   }
 
   public Partition getTopicPartition(String topic, int partition) {
@@ -147,14 +153,9 @@ public class MetadataObserver {
     return partitions.get(0);
   }
 
-  private List<Partition> getTopicPartitions(String topic, Integer partitions_filter) {
-    Map<String, Map<Object, Seq<Object>>> topicPartitions = zkUtils.getPartitionAssignmentForTopics(
-            JavaConversions.asScalaBuffer(Arrays.asList(topic)));
-    if (!topicPartitions.get(topic).isEmpty()) {
-      Map<Object, Seq<Object>> parts = topicPartitions.get(topic).get();
-      return extractPartitionsFromZKData(parts, topic, partitions_filter);
-    }
-    return null;
+  public boolean partitionExists(String topicName, int partition) {
+    Topic topic = getTopic(topicName);
+    return (partition >= 0 && partition < topic.getPartitions().size());
   }
 
   public int getLeaderId(final String topicName, final int partitionId) {
@@ -173,20 +174,23 @@ public class MetadataObserver {
     throw Errors.partitionNotFoundException();
   }
 
-  private List<Partition> extractPartitionsFromZKData(
-      Map<Object, Seq<Object>> parts, String topic, Integer partitions_filter) {
+  private List<Partition> extractPartitionsFromZkData(
+      Map<Object, Seq<Object>> parts,
+      String topic,
+      Integer partitionsFilter
+  ) {
     List<Partition> partitions = new Vector<Partition>();
     java.util.Map<Object, Seq<Object>> partsJava = JavaConversions.mapAsJavaMap(parts);
     for (java.util.Map.Entry<Object, Seq<Object>> part : partsJava.entrySet()) {
       int partId = (Integer) part.getKey();
-      if (partitions_filter != null && partitions_filter != partId) {
+      if (partitionsFilter != null && partitionsFilter != partId) {
         continue;
       }
 
       Partition p = new Partition();
       p.setPartition(partId);
       Option<LeaderAndIsr> leaderAndIsrOpt = zkUtils.getLeaderAndIsrForPartition(topic, partId);
-      if(!leaderAndIsrOpt.isEmpty()) {
+      if (!leaderAndIsrOpt.isEmpty()) {
         LeaderAndIsr leaderAndIsr = leaderAndIsrOpt.get();
         p.setLeader(leaderAndIsr.leader());
         scala.collection.immutable.Set<Integer> isr = leaderAndIsr.isr().toSet();
@@ -194,7 +198,7 @@ public class MetadataObserver {
         for (Object brokerObj : JavaConversions.asJavaCollection(part.getValue())) {
           int broker = (Integer) brokerObj;
           PartitionReplica r =
-                  new PartitionReplica(broker, (leaderAndIsr.leader() == broker), isr.contains(broker));
+              new PartitionReplica(broker, (leaderAndIsr.leader() == broker), isr.contains(broker));
           partReplicas.add(r);
         }
         p.setReplicas(partReplicas);

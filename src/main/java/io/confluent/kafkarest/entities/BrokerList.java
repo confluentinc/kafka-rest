@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -44,9 +45,7 @@ public class BrokerList {
 
   @Override
   public String toString() {
-    return "BrokerList{" +
-           "brokers=" + brokers +
-           '}';
+    return "BrokerList{" + "brokers=" + brokers + '}';
   }
 
   @Override
@@ -60,11 +59,7 @@ public class BrokerList {
 
     BrokerList that = (BrokerList) o;
 
-    if (!brokers.equals(that.brokers)) {
-      return false;
-    }
-
-    return true;
+    return brokers.equals(that.brokers);
   }
 
   @Override

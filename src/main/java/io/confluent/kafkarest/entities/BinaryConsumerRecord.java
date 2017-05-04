@@ -51,7 +51,7 @@ public class BinaryConsumerRecord extends ConsumerRecord<byte[], byte[]> {
   public BinaryConsumerRecord(String topic, byte[] key, byte[] value, int partition, long offset) {
     super(topic, key, value, partition, offset);
   }
-    
+
   @Override
   @JsonProperty("key")
   public String getJsonKey() {

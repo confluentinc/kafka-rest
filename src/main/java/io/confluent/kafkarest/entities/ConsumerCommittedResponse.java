@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-import io.confluent.rest.exceptions.RestConstraintViolationException;
-
 public class ConsumerCommittedResponse {
-    
-    @JsonProperty    
-    public List<TopicPartitionOffsetMetadata> offsets;
+
+  @JsonProperty
+  public List<TopicPartitionOffsetMetadata> offsets;
 
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest;
 
 public class ConsumerInstanceId {
@@ -63,10 +64,10 @@ public class ConsumerInstanceId {
 
   @Override
   public String toString() {
-    return "ConsumerInstanceId{" +
-           "group='" + group + '\'' +
-           ", instance='" + instance + '\'' +
-           '}';
+    return "ConsumerInstanceId{"
+           + "group='" + group + '\''
+           + ", instance='" + instance + '\''
+           + '}';
   }
 }
 

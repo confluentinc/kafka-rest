@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest;
 
 import kafka.javaapi.consumer.SimpleConsumer;
@@ -63,7 +64,7 @@ public class SimpleConsumerFactory {
 
     final String clientId = nextClientId();
 
-    log.debug("Creating SimpleConsumer with id " + clientId + " (host: " + host + ", port: " + port + ")");
+    log.debug("Creating SimpleConsumer with id {} (host:{}, port:{})", clientId, host, + port);
     return new SimpleConsumer(
         host, port,
         simpleConsumerConfig.socketTimeoutMs(),

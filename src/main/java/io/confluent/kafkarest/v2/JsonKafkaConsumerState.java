@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package io.confluent.kafkarest.v2;
 
+package io.confluent.kafkarest.v2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.ConsumerInstanceId;
@@ -27,7 +27,6 @@ import kafka.utils.VerifiableProperties;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.errors.SerializationException;
-
 
 public class JsonKafkaConsumerState extends KafkaConsumerState<byte[], byte[], Object, Object> {
 

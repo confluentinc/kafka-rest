@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest;
 
 import java.util.Arrays;
@@ -69,8 +70,7 @@ public class Versions {
   public static final String ANYTHING = "*/*";
 
 
-  public static final List<String>
-      PREFERRED_RESPONSE_TYPES =
+  public static final List<String> PREFERRED_RESPONSE_TYPES =
       Arrays.asList(Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON);
 
   // This type is completely generic and carries no actual information about the type of data,
@@ -78,5 +78,4 @@ public class Versions {
   // users of the API will always specify the content type, but ad hoc use may omit it. We treat
   // this as JSON since that's all we currently support.
   public static final String GENERIC_REQUEST = "application/octet-stream";
-
 }

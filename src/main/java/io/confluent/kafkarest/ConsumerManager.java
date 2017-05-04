@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest;
 
 import org.slf4j.Logger;
@@ -62,8 +63,7 @@ public class ConsumerManager {
   // ConsumerState is generic, but we store them untyped here. This allows many operations to
   // work without having to know the types for the consumer, only requiring type information
   // during read operations.
-  private final Map<ConsumerInstanceId, ConsumerState> consumers =
-      new HashMap<ConsumerInstanceId, ConsumerState>();
+  private final Map<ConsumerInstanceId, ConsumerState> consumers = new HashMap<>();
   // Read operations are common and there may be many concurrently, so they are farmed out to
   // worker threads that can efficiently interleave the operations. Currently we're just using a
   // simple round-robin scheduler.
@@ -73,8 +73,7 @@ public class ConsumerManager {
   // they're also comparatively rare. These are executed serially in a dedicated thread.
   private final ExecutorService executor;
   private ConsumerFactory consumerFactory;
-  private final PriorityQueue<ConsumerState> consumersByExpiration =
-      new PriorityQueue<ConsumerState>();
+  private final PriorityQueue<ConsumerState> consumersByExpiration = new PriorityQueue<>();
   private final ExpirationThread expirationThread;
 
   public ConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver) {
@@ -96,8 +95,11 @@ public class ConsumerManager {
     this.expirationThread.start();
   }
 
-  public ConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver,
-                         ConsumerFactory consumerFactory) {
+  public ConsumerManager(
+      KafkaRestConfig config,
+      MetadataObserver mdObserver,
+      ConsumerFactory consumerFactory
+  ) {
     this(config, mdObserver);
     this.consumerFactory = consumerFactory;
   }
@@ -105,7 +107,7 @@ public class ConsumerManager {
   /**
    * Creates a new consumer instance and returns its unique ID.
    *
-   * @param group          Name of the consumer group to join
+   * @param group Name of the consumer group to join
    * @param instanceConfig configuration parameters for the consumer
    * @return Unique consumer instance ID
    */
@@ -192,8 +194,10 @@ public class ConsumerManager {
           state = new JsonConsumerState(this.config, cid, consumer);
           break;
         default:
-          throw new RestServerErrorException("Invalid embedded format for new consumer.",
-                                             Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+          throw new RestServerErrorException(
+              "Invalid embedded format for new consumer.",
+              Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
+          );
       }
 
       synchronized (this) {
@@ -211,18 +215,24 @@ public class ConsumerManager {
       }
     }
   }
+
   public interface ReadCallback<K, V> {
 
-    public void onCompletion(List<? extends ConsumerRecord<K, V>> records, Exception e);
+    void onCompletion(List<? extends ConsumerRecord<K, V>> records, Exception e);
   }
 
   // The parameter consumerStateType works around type erasure, allowing us to verify at runtime
   // that the ConsumerState we looked up is of the expected type and will therefore contain the
   // correct decoders
-  public <KafkaK, KafkaV, ClientK, ClientV>
-  Future readTopic(final String group, final String instance, final String topic,
-                   Class<? extends ConsumerState<KafkaK, KafkaV, ClientK, ClientV>> consumerStateType,
-                   final long maxBytes, final ReadCallback callback) {
+  public <KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> Future readTopic(
+      final String group,
+      final String instance,
+      final String topic,
+      Class<? extends ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>>
+          consumerStateType,
+      final long maxBytes,
+      final ReadCallback callback
+  ) {
     final ConsumerState state;
     try {
       state = getConsumerInstance(group, instance);
@@ -246,10 +256,11 @@ public class ConsumerManager {
     ConsumerWorker worker = workers.get(workerId);
     return worker.readTopic(
         state, topic, maxBytes,
-        new ConsumerWorkerReadCallback<ClientK, ClientV>() {
+        new ConsumerWorkerReadCallback<ClientKeyT, ClientValueT>() {
           @Override
           public void onCompletion(
-              List<? extends ConsumerRecord<ClientK, ClientV>> records, Exception e) {
+              List<? extends ConsumerRecord<ClientKeyT, ClientValueT>> records, Exception e
+          ) {
             updateExpiration(state);
             if (e != null) {
               // Ensure caught exceptions are converted to RestExceptions so the user gets a
@@ -272,7 +283,7 @@ public class ConsumerManager {
 
   public interface CommitCallback {
 
-    public void onCompletion(List<TopicPartitionOffset> offsets, Exception e);
+    void onCompletion(List<TopicPartitionOffset> offsets, Exception e);
   }
 
   public Future commitOffsets(String group, String instance, final CommitCallback callback) {
@@ -337,8 +348,11 @@ public class ConsumerManager {
    * Gets the specified consumer instance or throws a not found exception. Also removes the
    * consumer's expiration timeout so it is not cleaned up mid-operation.
    */
-  private synchronized ConsumerState getConsumerInstance(String group, String instance,
-                                                         boolean remove) {
+  private synchronized ConsumerState getConsumerInstance(
+      String group,
+      String instance,
+      boolean remove
+  ) {
     ConsumerInstanceId id = new ConsumerInstanceId(group, instance);
     final ConsumerState state = remove ? consumers.remove(id) : consumers.get(id);
     if (state == null) {
@@ -360,7 +374,6 @@ public class ConsumerManager {
     consumersByExpiration.add(state);
     this.notifyAll();
   }
-
 
   public interface ConsumerFactory {
 
@@ -393,10 +406,10 @@ public class ConsumerManager {
                 }
               });
             }
-            long
-                timeout =
-                (consumersByExpiration.isEmpty() ? Long.MAX_VALUE : consumersByExpiration.peek()
-                    .untilExpiration(now));
+            long timeout =
+                consumersByExpiration.isEmpty()
+                ? Long.MAX_VALUE
+                : consumersByExpiration.peek().untilExpiration(now);
             ConsumerManager.this.wait(timeout);
           }
         } catch (InterruptedException e) {

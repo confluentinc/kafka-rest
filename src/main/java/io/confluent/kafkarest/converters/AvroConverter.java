@@ -99,7 +99,7 @@ public class AvroConverter {
    *
    * @param value the value to convert
    * @return an object containing the root JsonNode representing the converted object and the size
-   * in bytes of the data when serialized
+   *     in bytes of the data when serialized
    */
   public static JsonNodeAndSize toJson(Object value) {
     try {

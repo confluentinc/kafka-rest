@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2017 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.v2;
 
-import io.confluent.kafkarest.ConsumerWorkerReadCallback;
-import io.confluent.kafkarest.KafkaRestConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +26,9 @@ import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import io.confluent.kafkarest.ConsumerWorkerReadCallback;
+import io.confluent.kafkarest.KafkaRestConfig;
 
 /**
  * Worker thread for consumers that multiplexes multiple consumer operations onto a single thread.
@@ -48,13 +50,25 @@ public class KafkaConsumerWorker extends Thread {
     this.config = config;
   }
 
-  public synchronized <KafkaK, KafkaV, ClientK, ClientV>
-  Future readRecords(KafkaConsumerState state, long timeout, long maxBytes,
-      ConsumerWorkerReadCallback<ClientK, ClientV> callback) {
-    KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV> task
-        = new KafkaConsumerReadTask<KafkaK, KafkaV, ClientK, ClientV>(state, timeout,
-        maxBytes, callback);
-    log.trace("Scheduling consumer worker read worker={} task={} consumer={}", this, task, state.getId());
+  public synchronized <KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> Future readRecords(
+      KafkaConsumerState state,
+      long timeout,
+      long maxBytes,
+      ConsumerWorkerReadCallback<ClientKeyT, ClientValueT> callback
+  ) {
+    KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> task
+        = new KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>(
+            state,
+            timeout,
+            maxBytes,
+            callback
+    );
+    log.trace(
+        "Scheduling consumer worker read worker={} task={} consumer={}",
+        this,
+        task,
+        state.getId()
+    );
     if (!task.isDone()) {
       tasks.add(task);
       this.notifyAll();
@@ -71,10 +85,13 @@ public class KafkaConsumerWorker extends Thread {
             long now = config.getTime().milliseconds();
             long nextExpiration = nextWaitingExpiration();
             if (nextExpiration > now) {
-              long timeout = (nextExpiration == Long.MAX_VALUE ?
-                  0 : nextExpiration - now);
+              long timeout = (nextExpiration == Long.MAX_VALUE ? 0 : nextExpiration - now);
               assert (timeout >= 0);
-              log.trace("Consumer worker waiting for next task worker={} timeout={}", this, timeout);
+              log.trace(
+                  "Consumer worker waiting for next task worker={} timeout={}",
+                  this,
+                  timeout
+              );
               config.getTime().waitOn(this, timeout);
             }
           } catch (InterruptedException e) {
@@ -95,10 +112,18 @@ public class KafkaConsumerWorker extends Thread {
           boolean backoff = task.doPartialRead();
           if (!task.isDone()) {
             if (backoff) {
-              log.trace("Rescheduling consumer read task with backoff worker={} task={}", this, task);
+              log.trace(
+                  "Rescheduling consumer read task with backoff worker={} task={}",
+                  this,
+                  task
+              );
               waitingTasks.add(task);
             } else {
-              log.trace("Rescheduling consumer read task with immediately worker={} task={}", this, task);
+              log.trace(
+                  "Rescheduling consumer read task with immediately worker={} task={}",
+                  this,
+                  task
+              );
               tasks.add(task);
             }
           }
@@ -122,8 +147,7 @@ public class KafkaConsumerWorker extends Thread {
       this.interrupt();
       shutdownLatch.await();
     } catch (InterruptedException e) {
-      log.error("Interrupted while "
-          + "consumer worker thread.");
+      log.error("Interrupted while consumer worker thread.");
       throw new Error("Interrupted when shutting down consumer worker thread.");
     }
   }

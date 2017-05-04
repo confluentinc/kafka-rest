@@ -25,23 +25,26 @@ import io.confluent.rest.RestConfigException;
 
 
 public class KafkaRestMain {
+
   private static final Logger log = LoggerFactory.getLogger(KafkaRestMain.class);
 
   static {
-	    //for localhost testing only, with schema registry url https://localhost
-	    javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(
-	    new javax.net.ssl.HostnameVerifier(){
+    //for localhost testing only, with schema registry url https://localhost
+    javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(
+        new javax.net.ssl.HostnameVerifier() {
 
-	        public boolean verify(String hostname,
-	                javax.net.ssl.SSLSession sslSession) {
-	            if (hostname.equals("localhost")) {
-	                return true;
-	            }
-	            return false;
-	        }
-	    });
+          public boolean verify(
+              String hostname,
+              javax.net.ssl.SSLSession sslSession
+          ) {
+            if (hostname.equals("localhost")) {
+              return true;
+            }
+            return false;
+          }
+        });
   }
-    
+
   /**
    * Starts an embedded Jetty server running the REST server.
    */
