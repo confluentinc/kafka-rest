@@ -154,23 +154,15 @@ public class MetadataObserver {
       Map<Object, Seq<Object>> parts = topicPartitions.get(topic).get();
       return extractPartitionsFromZKData(parts, topic, partitions_filter);
     }
-    return null;
+    throw Errors.topicNotFoundException();
   }
 
   public int getLeaderId(final String topicName, final int partitionId) {
-    final List<Partition> partitions = getTopicPartitions(topicName);
-
-    if (partitions.size() == 0) {
-      throw Errors.topicNotFoundException();
+    final Partition partition = getTopicPartition(topicName, partitionId);
+    if (partition == null){
+      throw Errors.partitionNotFoundException();
     }
-
-    for (final Partition partition : partitions) {
-      if (partition.getPartition() == partitionId) {
-        return partition.getLeader();
-      }
-    }
-
-    throw Errors.partitionNotFoundException();
+    return partition.getLeader();
   }
 
   private List<Partition> extractPartitionsFromZKData(
