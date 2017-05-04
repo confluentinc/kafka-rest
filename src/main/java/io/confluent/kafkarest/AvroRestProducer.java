@@ -44,19 +44,26 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
   protected final KafkaAvroSerializer valueSerializer;
   protected final Map<Schema, Integer> schemaIdCache;
 
-  public AvroRestProducer(KafkaProducer<Object, Object> producer,
-                          KafkaAvroSerializer keySerializer,
-                          KafkaAvroSerializer valueSerializer) {
+  public AvroRestProducer(
+      KafkaProducer<Object, Object> producer,
+      KafkaAvroSerializer keySerializer,
+      KafkaAvroSerializer valueSerializer
+  ) {
     this.producer = producer;
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
     this.schemaIdCache = new ConcurrentHashMap<>(100);
   }
 
-  public void produce(ProduceTask task, String topic, Integer partition,
-                      Collection<? extends ProduceRecord<JsonNode, JsonNode>> records) {
+  public void produce(
+      ProduceTask task,
+      String topic,
+      Integer partition,
+      Collection<? extends ProduceRecord<JsonNode, JsonNode>> records
+  ) {
     SchemaHolder schemaHolder = task.getSchemaHolder();
-    Schema keySchema = null, valueSchema = null;
+    Schema keySchema = null;
+    Schema valueSchema = null;
     Integer keySchemaId = schemaHolder.getKeySchemaId();
     Integer valueSchemaId = schemaHolder.getValueSchemaId();
     try {
@@ -66,7 +73,7 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
         keySchema = keySerializer.getById(keySchemaId);
       } else if (schemaHolder.getKeySchema() != null) {
         keySchema = new Schema.Parser().parse(schemaHolder.getKeySchema());
-        if (schemaIdCache.containsKey(keySchema)){
+        if (schemaIdCache.containsKey(keySchema)) {
           keySchemaId = schemaIdCache.get(keySchema);
           keySchema = keySerializer.getById(keySchemaId);
         } else {
@@ -110,8 +117,8 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
         // if there isn't a schema. Validation will have already checked that all the keys/values
         // were NullNodes.
         Object key = (keySchema != null ? AvroConverter.toAvro(record.getKey(), keySchema) : null);
-        Object value = (valueSchema != null
-                        ? AvroConverter.toAvro(record.getValue(), valueSchema) : null);
+        Object value =
+            valueSchema != null ? AvroConverter.toAvro(record.getValue(), valueSchema) : null;
         Integer recordPartition = partition;
         if (recordPartition == null) {
           recordPartition = record.partition();

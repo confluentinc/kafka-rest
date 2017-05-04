@@ -29,9 +29,11 @@ public class BinaryTopicProduceRecord extends BinaryProduceRecord
   @Min(0)
   protected Integer partition;
 
-  public BinaryTopicProduceRecord(@JsonProperty("key") String key,
-                                  @JsonProperty("value") String value,
-                                  @JsonProperty("partition") Integer partition) throws IOException {
+  public BinaryTopicProduceRecord(
+      @JsonProperty("key") String key,
+      @JsonProperty("value") String value,
+      @JsonProperty("partition") Integer partition
+  ) throws IOException {
     super(key, value);
     this.partition = partition;
   }

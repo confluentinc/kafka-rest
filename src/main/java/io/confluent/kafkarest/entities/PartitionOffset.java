@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -31,10 +32,12 @@ public class PartitionOffset {
   private String error;
 
   @JsonCreator
-  public PartitionOffset(@JsonProperty("partition") Integer partition,
-                         @JsonProperty("offset") Long offset,
-                         @JsonProperty("error_code") Integer errorCode,
-                         @JsonProperty("error") String error) {
+  public PartitionOffset(
+      @JsonProperty("partition") Integer partition,
+      @JsonProperty("offset") Long offset,
+      @JsonProperty("error_code") Integer errorCode,
+      @JsonProperty("error") String error
+  ) {
     this.partition = partition;
     this.offset = offset;
     this.errorCode = errorCode;
@@ -79,12 +82,12 @@ public class PartitionOffset {
 
   @Override
   public String toString() {
-    return "PartitionOffset{" +
-           "partition=" + partition +
-           ", offset=" + offset +
-           ", errorCode=" + errorCode +
-           ", error='" + error + '\'' +
-           '}';
+    return "PartitionOffset{"
+           + "partition=" + partition
+           + ", offset=" + offset
+           + ", errorCode=" + errorCode
+           + ", error='" + error + '\''
+           + '}';
   }
 
   @Override

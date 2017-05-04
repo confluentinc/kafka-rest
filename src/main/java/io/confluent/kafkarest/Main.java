@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest;
 
 import java.io.IOException;
 
 /**
- * @deprecated
- * This is replaced by {@link io.confluent.kafkarest.KafkaRestMain}
- * Keep this class in place for compatibility.
+ * @deprecated This is replaced by {@link io.confluent.kafkarest.KafkaRestMain}
+ *     Keep this class in place for compatibility.
  *
- * https://github.com/confluentinc/kafka-rest/issues/94
+ *     https://github.com/confluentinc/kafka-rest/issues/94
  */
 @Deprecated
 public class Main {
+
   public static void main(String[] args) throws IOException {
     KafkaRestMain.main(args);
   }

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -32,8 +33,10 @@ public class Partition {
   public Partition() {
   }
 
-  public Partition(@JsonProperty int partition, @JsonProperty int leader,
-                   @JsonProperty List<PartitionReplica> replicas) {
+  public Partition(
+      @JsonProperty int partition, @JsonProperty int leader,
+      @JsonProperty List<PartitionReplica> replicas
+  ) {
     this.partition = partition;
     this.leader = leader;
     this.replicas = replicas;
@@ -103,10 +106,10 @@ public class Partition {
 
   @Override
   public String toString() {
-    return "Partition{" +
-           "partition=" + partition +
-           ", leader=" + leader +
-           ", replicas=" + replicas +
-           '}';
+    return "Partition{"
+           + "partition=" + partition
+           + ", leader=" + leader
+           + ", replicas=" + replicas
+           + '}';
   }
 }

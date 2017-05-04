@@ -13,21 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.v2;
 
-import io.confluent.kafkarest.ConsumerInstanceId;
-import io.confluent.kafkarest.ConsumerRecordAndSize;
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.entities.ConsumerAssignmentRequest;
-import io.confluent.kafkarest.entities.ConsumerCommittedRequest;
-import io.confluent.kafkarest.entities.ConsumerCommittedResponse;
-import io.confluent.kafkarest.entities.ConsumerOffsetCommitRequest;
-import io.confluent.kafkarest.entities.ConsumerSeekToOffsetRequest;
-import io.confluent.kafkarest.entities.ConsumerSeekToRequest;
-import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.kafkarest.entities.TopicPartitionOffsetMetadata;
-import kafka.serializer.Decoder;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -45,21 +33,35 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 
+import io.confluent.kafkarest.ConsumerInstanceId;
+import io.confluent.kafkarest.ConsumerRecordAndSize;
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.entities.ConsumerAssignmentRequest;
+import io.confluent.kafkarest.entities.ConsumerCommittedRequest;
+import io.confluent.kafkarest.entities.ConsumerCommittedResponse;
+import io.confluent.kafkarest.entities.ConsumerOffsetCommitRequest;
+import io.confluent.kafkarest.entities.ConsumerSeekToOffsetRequest;
+import io.confluent.kafkarest.entities.ConsumerSeekToRequest;
+import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
+import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.entities.TopicPartitionOffsetMetadata;
+import kafka.serializer.Decoder;
+
 /**
  * Tracks all the state for a consumer. This class is abstract in order to support multiple
- * serialization formats. Implementations must provide decoders and a method to convert Kafka
- * MessageAndMetadata<K,V> values to ConsumerRecords that can be returned to the client (including
- * translation if the decoded Kafka consumer type and ConsumerRecord types differ).
+ * serialization formats. Implementations must provide decoders and a method to convert
+ * {@code KafkaMessageAndMetadata<K,V>} values to ConsumerRecords that can be returned to the client
+ * (including translation if the decoded Kafka consumer type and ConsumerRecord types differ).
  */
-public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
+public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
     implements Comparable<KafkaConsumerState> {
 
   private KafkaRestConfig config;
   private ConsumerInstanceId instanceId;
-  private Consumer<KafkaK, KafkaV> consumer;
-  private ConsumerRecords<KafkaK, KafkaV> consumerRecords = null;
+  private Consumer<KafkaKeyT, KafkaValueT> consumer;
+  private ConsumerRecords<KafkaKeyT, KafkaValueT> consumerRecords = null;
 
-  private List<ConsumerRecord<KafkaK, KafkaV>> consumerRecordList = null;
+  private List<ConsumerRecord<KafkaKeyT, KafkaValueT>> consumerRecordList = null;
   private int index = 0;
 
 
@@ -71,12 +73,16 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   // only needs read access to the KafkaConsumerState).
   private ReadWriteLock lock;
 
-  public KafkaConsumerState(KafkaRestConfig config, ConsumerInstanceId instanceId, Consumer<KafkaK, KafkaV> consumer) {
+  public KafkaConsumerState(
+      KafkaRestConfig config,
+      ConsumerInstanceId instanceId,
+      Consumer<KafkaKeyT, KafkaValueT> consumer
+  ) {
     this.config = config;
     this.instanceId = instanceId;
     this.consumer = consumer;
-    this.expiration = config.getTime().milliseconds() +
-        config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
+    this.expiration = config.getTime().milliseconds()
+                      + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
     this.lock = new ReentrantReadWriteLock();
   }
 
@@ -87,12 +93,12 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   /**
    * Gets the key decoder for the Kafka consumer.
    */
-  protected abstract Decoder<KafkaK> getKeyDecoder();
+  protected abstract Decoder<KafkaKeyT> getKeyDecoder();
 
   /**
    * Gets the value decoder for the Kafka consumer.
    */
-  protected abstract Decoder<KafkaV> getValueDecoder();
+  protected abstract Decoder<KafkaValueT> getValueDecoder();
 
   /**
    * Converts a MessageAndMetadata using the Kafka decoder types into a ConsumerRecord using the
@@ -100,8 +106,9 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
    * bytes, which is used to track the approximate total payload size for consumer read responses to
    * determine when to trigger the response.
    */
-  public abstract ConsumerRecordAndSize<ClientK, ClientV> createConsumerRecord(
-      ConsumerRecord<KafkaK, KafkaV> msg);
+  public abstract ConsumerRecordAndSize<ClientKeyT, ClientValueT> createConsumerRecord(
+      ConsumerRecord<KafkaKeyT, KafkaValueT> msg
+  );
 
 
   public void startRead() {
@@ -116,8 +123,10 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   /**
    * Commit the given list of offsets
    */
-  public List<TopicPartitionOffset> commitOffsets(String async,
-      ConsumerOffsetCommitRequest offsetCommitRequest) {
+  public List<TopicPartitionOffset> commitOffsets(
+      String async,
+      ConsumerOffsetCommitRequest offsetCommitRequest
+  ) {
     lock.writeLock().lock();
     try {
       // If no offsets are given, then commit all the records read so far
@@ -128,16 +137,21 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
           consumer.commitAsync();
         }
       } else {
-        Map<TopicPartition, OffsetAndMetadata> offsetMap = new HashMap<TopicPartition, OffsetAndMetadata>();
+        Map<TopicPartition, OffsetAndMetadata> offsetMap =
+            new HashMap<TopicPartition, OffsetAndMetadata>();
 
         //commit each given offset
         for (TopicPartitionOffsetMetadata t : offsetCommitRequest.offsets) {
           if (t.getMetadata() == null) {
-            offsetMap.put(new TopicPartition(t.getTopic(), t.getPartition()),
-                new OffsetAndMetadata(t.getOffset() + 1));
+            offsetMap.put(
+                new TopicPartition(t.getTopic(), t.getPartition()),
+                new OffsetAndMetadata(t.getOffset() + 1)
+            );
           } else {
-            offsetMap.put(new TopicPartition(t.getTopic(), t.getPartition()),
-                new OffsetAndMetadata(t.getOffset() + 1, t.getMetadata()));
+            offsetMap.put(
+                new TopicPartition(t.getTopic(), t.getPartition()),
+                new OffsetAndMetadata(t.getOffset() + 1, t.getMetadata())
+            );
           }
 
         }
@@ -331,8 +345,13 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
           OffsetAndMetadata offsetMetadata = consumer.committed(partition);
           if (offsetMetadata != null) {
             response.offsets.add(
-                new TopicPartitionOffsetMetadata(partition.topic(), partition.partition(),
-                    offsetMetadata.offset(), offsetMetadata.metadata()));
+                new TopicPartitionOffsetMetadata(
+                    partition.topic(),
+                    partition.partition(),
+                    offsetMetadata.offset(),
+                    offsetMetadata.metadata()
+                )
+            );
           }
         }
       }
@@ -348,8 +367,8 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   }
 
   public void updateExpiration() {
-    this.expiration = config.getTime().milliseconds() +
-        config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
+    this.expiration = config.getTime().milliseconds()
+                      + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
   }
 
   public long untilExpiration(long nowMs) {
@@ -376,7 +395,8 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   }
 
   /**
-   * Initiate poll(0) request to retrieve consumer records that are available immediately, or return the existing
+   * Initiate poll(0) request to retrieve consumer records that are available immediately, or return
+   * the existing
    * consumer records if the records have not been fully consumed by client yet. Must be
    * invoked with the lock held, i.e. after startRead().
    */
@@ -386,12 +406,12 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     consumerRecordList = new ArrayList<>();
     consumerRecords = consumer.poll(0);
     //drain the iterator and buffer to list
-    for (ConsumerRecord<KafkaK, KafkaV> consumerRecord : consumerRecords) {
+    for (ConsumerRecord<KafkaKeyT, KafkaValueT> consumerRecord : consumerRecords) {
       consumerRecordList.add(consumerRecord);
     }
   }
 
-  public ConsumerRecord<KafkaK, KafkaV> peek() {
+  public ConsumerRecord<KafkaKeyT, KafkaValueT> peek() {
     if (hasNext()) {
       return consumerRecordList.get(this.index);
     }
@@ -407,9 +427,9 @@ public abstract class KafkaConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     return consumerRecordList != null && this.index < consumerRecordList.size();
   }
 
-  public ConsumerRecord<KafkaK, KafkaV> next() {
+  public ConsumerRecord<KafkaKeyT, KafkaValueT> next() {
     if (hasNext()) {
-      ConsumerRecord<KafkaK, KafkaV> record = consumerRecordList.get(index);
+      ConsumerRecord<KafkaKeyT, KafkaValueT> record = consumerRecordList.get(index);
       this.index = this.index + 1;
       return record;
     }

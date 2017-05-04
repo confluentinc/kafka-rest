@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest;
 
-import kafka.javaapi.consumer.SimpleConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
+
+import kafka.javaapi.consumer.SimpleConsumer;
 
 /**
  * The SizeLimitedSimpleConsumerPool keeps a pool of SimpleConsumers
  * and can increase the pool within a specified limit
  */
 public class SimpleConsumerPool {
+
   private static final Logger log = LoggerFactory.getLogger(SimpleConsumerPool.class);
 
   // maxPoolSize = 0 means unlimited
@@ -38,8 +44,12 @@ public class SimpleConsumerPool {
   private final Map<String, SimpleConsumer> simpleConsumers;
   private final Queue<String> availableConsumers;
 
-  public SimpleConsumerPool(int maxPoolSize, int poolInstanceAvailabilityTimeoutMs,
-                            Time time, SimpleConsumerFactory simpleConsumerFactory) {
+  public SimpleConsumerPool(
+      int maxPoolSize,
+      int poolInstanceAvailabilityTimeoutMs,
+      Time time,
+      SimpleConsumerFactory simpleConsumerFactory
+  ) {
     this.maxPoolSize = maxPoolSize;
     this.poolInstanceAvailabilityTimeoutMs = poolInstanceAvailabilityTimeoutMs;
     this.time = time;
@@ -49,7 +59,7 @@ public class SimpleConsumerPool {
     availableConsumers = new LinkedList<String>();
   }
 
-  synchronized public SimpleFetcher get(final String host, final int port) {
+  public synchronized SimpleFetcher get(final String host, final int port) {
 
     final long expiration = time.milliseconds() + poolInstanceAvailabilityTimeoutMs;
 
@@ -69,22 +79,23 @@ public class SimpleConsumerPool {
 
       // If no consumer is available and we reached the limit
       try {
-        // The behavior of wait when poolInstanceAvailabilityTimeoutMs=0 is consistent as it won't timeout
+        // The behavior of wait when poolInstanceAvailabilityTimeoutMs=0 is consistent as it
+        // won't timeout
         wait(poolInstanceAvailabilityTimeoutMs);
       } catch (InterruptedException e) {
         log.warn("A thread requesting a SimpleConsumer has been interrupted while waiting", e);
       }
 
-      // In some cases ("spurious wakeup", see wait() doc), the thread will resume before the timeout
+      // In some cases ("spurious wakeup", see wait() doc), the thread will resume before the
+      // timeout
       // We have to guard against that and throw only if the timeout has expired for real
       if (time.milliseconds() > expiration && poolInstanceAvailabilityTimeoutMs != 0) {
         throw Errors.simpleConsumerPoolTimeoutException();
       }
     }
-
   }
 
-  synchronized public void release(SimpleFetcher simpleFetcher) {
+  public synchronized void release(SimpleFetcher simpleFetcher) {
     log.debug("Releasing into the pool SimpleConsumer with id " + simpleFetcher.clientId());
     availableConsumers.add(simpleFetcher.clientId());
     notify();

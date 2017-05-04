@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -23,27 +24,28 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import java.util.List;
 
 public class ConsumerSubscriptionRecord {
-    private String topicPattern;
 
-    @JsonCreator
-    public ConsumerSubscriptionRecord(
-            @JsonProperty("topics") List<String> topics,
-            @JsonProperty("topic_pattern") String topicPattern
-    ) {
-        this.topics = topics;
-        this.topicPattern = topicPattern;
-    }
+  private String topicPattern;
 
-    @JsonGetter("topic_pattern")
-    public String getTopicPattern() {
-	return this.topicPattern;
-    }
+  @JsonCreator
+  public ConsumerSubscriptionRecord(
+      @JsonProperty("topics") List<String> topics,
+      @JsonProperty("topic_pattern") String topicPattern
+  ) {
+    this.topics = topics;
+    this.topicPattern = topicPattern;
+  }
 
-    @JsonSetter("topic_pattern")
-    public void setTopicPattern(String topicPattern) {
-	this.topicPattern = topicPattern;
-    }
-    
-    @JsonProperty
-    public List<String> topics;
+  @JsonGetter("topic_pattern")
+  public String getTopicPattern() {
+    return this.topicPattern;
+  }
+
+  @JsonSetter("topic_pattern")
+  public void setTopicPattern(String topicPattern) {
+    this.topicPattern = topicPattern;
+  }
+
+  @JsonProperty
+  public List<String> topics;
 }

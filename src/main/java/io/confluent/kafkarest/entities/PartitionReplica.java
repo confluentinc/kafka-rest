@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -99,10 +100,10 @@ public class PartitionReplica {
 
   @Override
   public String toString() {
-    return "PartitionReplica{" +
-           "broker=" + broker +
-           ", leader=" + leader +
-           ", inSync=" + inSync +
-           '}';
+    return "PartitionReplica{"
+           + "broker=" + broker
+           + ", leader=" + leader
+           + ", inSync=" + inSync
+           + '}';
   }
 }

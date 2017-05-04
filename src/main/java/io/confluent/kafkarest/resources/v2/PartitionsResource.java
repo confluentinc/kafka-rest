@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2017 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.resources.v2;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Vector;
+
+import javax.validation.Valid;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
 
 import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.Errors;
@@ -30,24 +47,10 @@ import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.Vector;
-import javax.validation.Valid;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.Suspended;
 
 @Path("/topics/{topic}/partitions")
 @Produces({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW,
-    Versions.KAFKA_V2_JSON_WEIGHTED})
+           Versions.KAFKA_V2_JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V2_JSON})
 public class PartitionsResource {
 
@@ -69,8 +72,10 @@ public class PartitionsResource {
   @GET
   @Path("/{partition}")
   @PerformanceMetric("partition.get+v2")
-  public Partition getPartition(final @PathParam("topic") String topic,
-      @PathParam("partition") int partition) {
+  public Partition getPartition(
+      final @PathParam("topic") String topic,
+      @PathParam("partition") int partition
+  ) {
     checkTopicExists(topic);
     Partition part = ctx.getMetadataObserver().getTopicPartition(topic, partition);
     if (part == null) {
@@ -84,10 +89,12 @@ public class PartitionsResource {
   @Path("/{partition}")
   @PerformanceMetric("partition.produce-binary+v2")
   @Consumes({Versions.KAFKA_V2_JSON_BINARY})
-  public void produceBinary(final @Suspended AsyncResponse asyncResponse,
+  public void produceBinary(
+      final @Suspended AsyncResponse asyncResponse,
       final @PathParam("topic") String topic,
       final @PathParam("partition") int partition,
-      @Valid PartitionProduceRequest<BinaryProduceRecord> request) {
+      @Valid PartitionProduceRequest<BinaryProduceRecord> request
+  ) {
     produce(asyncResponse, topic, partition, EmbeddedFormat.BINARY, request);
   }
 
@@ -95,10 +102,12 @@ public class PartitionsResource {
   @Path("/{partition}")
   @PerformanceMetric("partition.produce-json+v2")
   @Consumes({Versions.KAFKA_V2_JSON_JSON})
-  public void produceJson(final @Suspended AsyncResponse asyncResponse,
+  public void produceJson(
+      final @Suspended AsyncResponse asyncResponse,
       final @PathParam("topic") String topic,
       final @PathParam("partition") int partition,
-      @Valid PartitionProduceRequest<JsonProduceRecord> request) {
+      @Valid PartitionProduceRequest<JsonProduceRecord> request
+  ) {
     produce(asyncResponse, topic, partition, EmbeddedFormat.JSON, request);
   }
 
@@ -106,13 +115,16 @@ public class PartitionsResource {
   @Path("/{partition}")
   @PerformanceMetric("partition.produce-avro+v2")
   @Consumes({Versions.KAFKA_V2_JSON_AVRO})
-  public void produceAvro(final @Suspended AsyncResponse asyncResponse,
+  public void produceAvro(
+      final @Suspended AsyncResponse asyncResponse,
       final @PathParam("topic") String topic,
       final @PathParam("partition") int partition,
-      @Valid PartitionProduceRequest<AvroProduceRecord> request) {
+      @Valid PartitionProduceRequest<AvroProduceRecord> request
+  ) {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
-    boolean hasKeys = false, hasValues = false;
+    boolean hasKeys = false;
+    boolean hasValues = false;
     for (AvroProduceRecord rec : request.getRecords()) {
       hasKeys = hasKeys || !rec.getJsonKey().isNull();
       hasValues = hasValues || !rec.getJsonValue().isNull();
@@ -132,7 +144,8 @@ public class PartitionsResource {
       final String topic,
       final int partition,
       final EmbeddedFormat format,
-      final PartitionProduceRequest<R> request) {
+      final PartitionProduceRequest<R> request
+  ) {
     // If the topic already exists, we can proactively check for the partition
     if (topicExists(topic)) {
       if (!ctx.getMetadataObserver().partitionExists(topic, partition)) {
@@ -140,16 +153,20 @@ public class PartitionsResource {
       }
     }
 
-    log.trace("Executing topic produce request id={} topic={} partition={} format={} request={}",
-            asyncResponse, topic, partition, format, request);
+    log.trace(
+        "Executing topic produce request id={} topic={} partition={} format={} request={}",
+        asyncResponse, topic, partition, format, request
+    );
 
     ctx.getProducerPool().produce(
         topic, partition, format,
         request,
         request.getRecords(),
         new ProducerPool.ProduceRequestCallback() {
-          public void onCompletion(Integer keySchemaId, Integer valueSchemaId,
-              List<RecordMetadataOrException> results) {
+          public void onCompletion(
+              Integer keySchemaId, Integer valueSchemaId,
+              List<RecordMetadataOrException> results
+          ) {
             ProduceResponse response = new ProduceResponse();
             List<PartitionOffset> offsets = new Vector<PartitionOffset>();
             for (RecordMetadataOrException result : results) {
@@ -158,16 +175,21 @@ public class PartitionsResource {
                 String errorMessage = result.getException().getMessage();
                 offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
               } else {
-                offsets.add(new PartitionOffset(result.getRecordMetadata().partition(),
+                offsets.add(new PartitionOffset(
+                    result.getRecordMetadata().partition(),
                     result.getRecordMetadata().offset(),
-                    null, null));
+                    null,
+                    null
+                ));
               }
             }
             response.setOffsets(offsets);
             response.setKeySchemaId(keySchemaId);
             response.setValueSchemaId(valueSchemaId);
-            log.trace("Completed topic produce request id={} response={}",
-                    asyncResponse, response);
+            log.trace(
+                "Completed topic produce request id={} response={}",
+                asyncResponse, response
+            );
             asyncResponse.resume(response);
           }
         }

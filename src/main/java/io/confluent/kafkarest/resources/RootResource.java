@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.resources;
 
 import java.util.HashMap;
@@ -30,9 +31,9 @@ import io.confluent.rest.annotations.PerformanceMetric;
 
 @Path("/")
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
-	    Versions.JSON_WEIGHTED, Versions.KAFKA_V2_JSON_WEIGHTED})
+           Versions.JSON_WEIGHTED, Versions.KAFKA_V2_JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
-	    Versions.GENERIC_REQUEST, Versions.KAFKA_V2_JSON})
+           Versions.GENERIC_REQUEST, Versions.KAFKA_V2_JSON})
 public class RootResource {
 
   @GET

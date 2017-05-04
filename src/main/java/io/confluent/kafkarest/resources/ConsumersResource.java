@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.resources;
 
 import java.util.List;
@@ -67,8 +68,10 @@ public class ConsumersResource {
   @Path("/{group}")
   @PerformanceMetric("consumer.create")
   public CreateConsumerInstanceResponse createGroup(
-      @javax.ws.rs.core.Context UriInfo uriInfo, final @PathParam("group") String group,
-      @Valid ConsumerInstanceConfig config) {
+      @javax.ws.rs.core.Context UriInfo uriInfo,
+      final @PathParam("group") String group,
+      @Valid ConsumerInstanceConfig config
+  ) {
 
     if (config == null) {
       config = new ConsumerInstanceConfig();
@@ -82,9 +85,11 @@ public class ConsumersResource {
   @POST
   @Path("/{group}/instances/{instance}/offsets")
   @PerformanceMetric("consumer.commit")
-  public void commitOffsets(final @Suspended AsyncResponse asyncResponse,
-                            final @PathParam("group") String group,
-                            final @PathParam("instance") String instance) {
+  public void commitOffsets(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance
+  ) {
     ctx.getConsumerManager().commitOffsets(group, instance, new ConsumerManager.CommitCallback() {
       @Override
       public void onCompletion(List<TopicPartitionOffset> offsets, Exception e) {
@@ -100,8 +105,10 @@ public class ConsumersResource {
   @DELETE
   @Path("/{group}/instances/{instance}")
   @PerformanceMetric("consumer.delete")
-  public void deleteGroup(final @PathParam("group") String group,
-                          final @PathParam("instance") String instance) {
+  public void deleteGroup(
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance
+  ) {
     ctx.getConsumerManager().deleteConsumer(group, instance);
   }
 
@@ -112,58 +119,69 @@ public class ConsumersResource {
              Versions.KAFKA_V1_JSON_WEIGHTED,
              Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
              Versions.JSON_WEIGHTED})
-  public void readTopicBinary(final @Suspended AsyncResponse asyncResponse,
-                              final @PathParam("group") String group,
-                              final @PathParam("instance") String instance,
-                              final @PathParam("topic") String topic,
-                              @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
+  public void readTopicBinary(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      final @PathParam("topic") String topic,
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
+  ) {
     readTopic(asyncResponse, group, instance, topic, maxBytes, BinaryConsumerState.class);
   }
 
   @GET
   @Path("/{group}/instances/{instance}/topics/{topic}")
   @PerformanceMetric("consumer.topic.read-json")
-  @Produces({Versions.KAFKA_V1_JSON_JSON_WEIGHTED_LOW}) // Using low weight ensures binary is default
-  public void readTopicJson(final @Suspended AsyncResponse asyncResponse,
-                            final @PathParam("group") String group,
-                            final @PathParam("instance") String instance,
-                            final @PathParam("topic") String topic,
-                            @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
+  @Produces({Versions.KAFKA_V1_JSON_JSON_WEIGHTED_LOW})// Using low weight ensures binary is default
+  public void readTopicJson(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      final @PathParam("topic") String topic,
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
+  ) {
     readTopic(asyncResponse, group, instance, topic, maxBytes, JsonConsumerState.class);
   }
 
   @GET
   @Path("/{group}/instances/{instance}/topics/{topic}")
   @PerformanceMetric("consumer.topic.read-avro")
-  @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW}) // Using low weight ensures binary is default
-  public void readTopicAvro(final @Suspended AsyncResponse asyncResponse,
-                            final @PathParam("group") String group,
-                            final @PathParam("instance") String instance,
-                            final @PathParam("topic") String topic,
-                            @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
+  @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW})// Using low weight ensures binary is default
+  public void readTopicAvro(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      final @PathParam("topic") String topic,
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
+  ) {
     readTopic(asyncResponse, group, instance, topic, maxBytes, AvroConsumerState.class);
   }
 
-  private <KafkaK, KafkaV, ClientK, ClientV> void readTopic(
+  private <KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> void readTopic(
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
       final @PathParam("topic") String topic,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes,
-      Class<? extends ConsumerState<KafkaK, KafkaV, ClientK, ClientV>> consumerStateType) {
+      Class<? extends ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>>
+          consumerStateType
+  ) {
     maxBytes = (maxBytes <= 0) ? Long.MAX_VALUE : maxBytes;
     ctx.getConsumerManager().readTopic(
         group, instance, topic, consumerStateType, maxBytes,
-        new ConsumerManager.ReadCallback<ClientK, ClientV>() {
+        new ConsumerManager.ReadCallback<ClientKeyT, ClientValueT>() {
           @Override
-          public void onCompletion(List<? extends ConsumerRecord<ClientK, ClientV>> records,
-                                   Exception e) {
+          public void onCompletion(
+              List<? extends ConsumerRecord<ClientKeyT, ClientValueT>> records,
+              Exception e
+          ) {
             if (e != null) {
               asyncResponse.resume(e);
             } else {
               asyncResponse.resume(records);
             }
           }
-        });
+        }
+    );
   }
 }

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -42,11 +43,13 @@ public class ConsumerInstanceConfig {
     this(null, null, format.name(), null, null);
   }
 
-  public ConsumerInstanceConfig(@JsonProperty("id") String id,
-                                @JsonProperty("name") String name,
-                                @JsonProperty("format") String format,
-                                @JsonProperty("auto.offset.reset") String autoOffsetReset,
-                                @JsonProperty("auto.commit.enable") String autoCommitEnable) {
+  public ConsumerInstanceConfig(
+      @JsonProperty("id") String id,
+      @JsonProperty("name") String name,
+      @JsonProperty("format") String format,
+      @JsonProperty("auto.offset.reset") String autoOffsetReset,
+      @JsonProperty("auto.commit.enable") String autoCommitEnable
+  ) {
     this.id = id;
     this.name = name;
     if (format == null) {
@@ -62,7 +65,8 @@ public class ConsumerInstanceConfig {
       if (this.format == null) {
         throw new RestConstraintViolationException(
             "Invalid format type.",
-            RestConstraintViolationException.DEFAULT_ERROR_CODE);
+            RestConstraintViolationException.DEFAULT_ERROR_CODE
+        );
       }
     }
     this.autoOffsetReset = autoOffsetReset;

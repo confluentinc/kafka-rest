@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
  * ProduceRecord implementation, a Producer in the ProducerPool (with corresponding Kafka
  * serializer), ConsumerRecord implementation, and a serializer for any instantiated consumers.
  *
- * Note that for each type, it's assumed that the key and value can be handled by the same
+ * <p>Note that for each type, it's assumed that the key and value can be handled by the same
  * serializer. This means each serializer should handle both it's complex type (e.g.
  * Indexed/Generic/SpecificRecord for Avro) and boxed primitive types (Integer, Boolean, etc.).
  */
