@@ -32,6 +32,8 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
@@ -51,6 +53,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class AbstractConsumerTest extends ClusterTestHarness {
+
+  private static final Logger log = LoggerFactory.getLogger(AbstractConsumerTest.class);
 
   public AbstractConsumerTest() {
   }
@@ -264,9 +268,12 @@ public class AbstractConsumerTest extends ClusterTestHarness {
       String accept, String responseMediatype,
       GenericType<List<RecordType>> responseEntityType,
       Converter converter) {
+    log.info("consumeMessages instanceUri={} topic={} records={} accept={} responseMediaType={}", instanceUri, topic, records.size(), accept, responseEntityType);
     Response response = request(instanceUri + "/topics/" + topic)
         .accept(accept).get();
+    response.bufferEntity();
     assertOKResponse(response, responseMediatype);
+    log.info("responseEntity={}", response.readEntity(String.class));
     List<RecordType> consumed = response.readEntity(responseEntityType);
     assertEquals(records.size(), consumed.size());
 
