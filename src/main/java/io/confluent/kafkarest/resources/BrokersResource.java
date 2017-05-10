@@ -16,6 +16,7 @@
 
 package io.confluent.kafkarest.resources;
 
+import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -34,18 +35,17 @@ import io.confluent.rest.annotations.PerformanceMetric;
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
            Versions.JSON_WEIGHTED, Versions.KAFKA_V2_JSON_WEIGHTED})
 @Consumes()
+@Singleton
 public class BrokersResource {
 
-  private final Context ctx;
 
-  public BrokersResource(Context ctx) {
-    this.ctx = ctx;
+  public BrokersResource() {
   }
 
   @GET
   @Valid
   @PerformanceMetric("brokers.list")
-  public BrokerList list() {
+  public BrokerList list(@javax.ws.rs.core.Context Context ctx) {
     return new BrokerList(ctx.getMetadataObserver().getBrokerIds());
   }
 }

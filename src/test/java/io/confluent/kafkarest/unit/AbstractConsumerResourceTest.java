@@ -29,6 +29,7 @@ import java.util.List;
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.ConsumerState;
 import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.extension.ContextProviderFactoryBinder;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
@@ -36,6 +37,7 @@ import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.integration.TestContextProviderFilter;
 import io.confluent.kafkarest.resources.ConsumersResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
@@ -62,7 +64,9 @@ public class AbstractConsumerResourceTest
     consumerManager = EasyMock.createMock(ConsumerManager.class);
     ctx = new Context(config, mdObserver, null, consumerManager, null);
 
-    addResource(new ConsumersResource(ctx));
+    addResource(ConsumersResource.class);
+    addResource(new TestContextProviderFilter(ctx));
+    addResource(new ContextProviderFactoryBinder());
   }
 
   @Before

@@ -35,6 +35,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
 import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.extension.ContextProviderFactoryBinder;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -49,6 +50,7 @@ import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.SchemaHolder;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.kafkarest.integration.TestContextProviderFilter;
 import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
@@ -108,7 +110,9 @@ public class TopicsResourceAvroProduceTest
     producerPool = EasyMock.createMock(ProducerPool.class);
     ctx = new Context(config, mdObserver, producerPool, null, null);
 
-    addResource(new TopicsResource(ctx));
+    addResource(TopicsResource.class);
+    addResource(new TestContextProviderFilter(ctx));
+    addResource(new ContextProviderFactoryBinder());
 
     produceRecordsWithPartitionsAndKeys = Arrays.asList(
         new AvroTopicProduceRecord(testKeys[0], testValues[0], 0),

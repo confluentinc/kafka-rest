@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
+import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.rest.RestConfigException;
 
 
@@ -50,8 +51,14 @@ public class KafkaRestMain {
    */
   public static void main(String[] args) throws IOException {
     try {
+      /*TODO discuss with team and look at options to do something like Apache CLI here. Handle
+        exception for incorrect Class args with appropriate message*/
       KafkaRestConfig config = new KafkaRestConfig((args.length > 0 ? args[0] : null));
-      KafkaRestApplication app = new KafkaRestApplication(config);
+      RestResourceExtension restResourceExtension = null;
+      if (args.length > 1) {
+        restResourceExtension = (RestResourceExtension) Class.forName(args[1]).newInstance();
+      }
+      KafkaRestApplication app = new KafkaRestApplication(config, restResourceExtension);
       app.start();
       log.info("Server started, listening for requests...");
       app.join();
