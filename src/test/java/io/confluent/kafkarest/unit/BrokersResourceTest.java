@@ -68,7 +68,7 @@ public class BrokersResourceTest
 
       Response response = request("/brokers", mediatype.header).get();
       assertOKResponse(response, mediatype.expected);
-      final BrokerList returnedBrokerIds = response.readEntity(new GenericType<BrokerList>() {
+      final BrokerList returnedBrokerIds = TestUtils.tryReadEntityOrLog(response, new GenericType<BrokerList>() {
       });
       assertEquals(brokerIds, returnedBrokerIds.getBrokers());
       EasyMock.verify(mdObserver);

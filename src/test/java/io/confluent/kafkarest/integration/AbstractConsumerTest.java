@@ -164,7 +164,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     assertOKResponse(createResponse, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
 
     CreateConsumerInstanceResponse instanceResponse =
-        createResponse.readEntity(CreateConsumerInstanceResponse.class);
+            TestUtils.tryReadEntityOrLog(createResponse, CreateConsumerInstanceResponse.class);
     assertNotNull(instanceResponse.getInstanceId());
     assertTrue(instanceResponse.getInstanceId().length() > 0);
     assertTrue("Base URI should contain the consumer instance ID",
@@ -180,7 +180,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
                           expectedMediatype);
     } else {
       assertOKResponse(response, expectedMediatype);
-      List<BinaryConsumerRecord> consumed = response.readEntity(
+      List<BinaryConsumerRecord> consumed = TestUtils.tryReadEntityOrLog(response, 
           new GenericType<List<BinaryConsumerRecord>>() {
           });
       assertEquals(0, consumed.size());
@@ -252,7 +252,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     Response response = request("/topics/" + topicName + "/partitions/0/messages", queryParams)
         .accept(accept).get();
     assertOKResponse(response, responseMediatype);
-    List<RecordType> consumed = response.readEntity(responseEntityType);
+    List<RecordType> consumed = TestUtils.tryReadEntityOrLog(response, responseEntityType);
     assertEquals(records.size(), consumed.size());
 
     assertEqualsMessages(records, consumed, converter);
@@ -267,7 +267,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     Response response = request(instanceUri + "/topics/" + topic)
         .accept(accept).get();
     assertOKResponse(response, responseMediatype);
-    List<RecordType> consumed = response.readEntity(responseEntityType);
+    List<RecordType> consumed = TestUtils.tryReadEntityOrLog(response, responseEntityType);
     assertEquals(records.size(), consumed.size());
 
     assertEqualsMessages(records, consumed, converter);
@@ -281,7 +281,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
         .accept(accept).get();
     long finished = System.currentTimeMillis();
     assertOKResponse(response, responseMediatype);
-    List<RecordType> consumed = response.readEntity(responseEntityType);
+    List<RecordType> consumed = TestUtils.tryReadEntityOrLog(response, responseEntityType);
     assertEquals(0, consumed.size());
 
     // Note that this is only approximate and really only works if you assume the read call has
@@ -310,9 +310,8 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     // We don't verify offsets since they'll depend on how data gets distributed to partitions.
     // Just parse to check the output is formatted validly.
-    List<TopicPartitionOffset>
-        offsets =
-        response.readEntity(new GenericType<List<TopicPartitionOffset>>() {
+    List<TopicPartitionOffset> offsets =
+            TestUtils.tryReadEntityOrLog(response, new GenericType<List<TopicPartitionOffset>>() {
         });
   }
 

@@ -58,9 +58,8 @@ public class ConsumerResourceTest extends AbstractConsumerResourceTest {
         Response response = request("/consumers/" + groupName, mediatype.header)
             .post(Entity.entity(null, requestMediatype));
         assertOKResponse(response, mediatype.expected);
-        final CreateConsumerInstanceResponse
-            ciResponse =
-            response.readEntity(CreateConsumerInstanceResponse.class);
+        final CreateConsumerInstanceResponse ciResponse =
+                TestUtils.tryReadEntityOrLog(response, CreateConsumerInstanceResponse.class);
         assertEquals(instanceId, ciResponse.getInstanceId());
         assertThat(ciResponse.getBaseUri(),
                    allOf(startsWith("http://"), containsString(instancePath)));
@@ -84,9 +83,8 @@ public class ConsumerResourceTest extends AbstractConsumerResourceTest {
         Response response = request("/consumers/" + groupName, mediatype.header)
             .post(Entity.entity(config, requestMediatype));
         assertOKResponse(response, mediatype.expected);
-        final CreateConsumerInstanceResponse
-            ciResponse =
-            response.readEntity(CreateConsumerInstanceResponse.class);
+        final CreateConsumerInstanceResponse ciResponse =
+                TestUtils.tryReadEntityOrLog(response, CreateConsumerInstanceResponse.class);
         assertEquals(instanceId, ciResponse.getInstanceId());
         assertThat(ciResponse.getBaseUri(),
                    allOf(startsWith("http://"), containsString(instancePath)));
@@ -111,9 +109,8 @@ public class ConsumerResourceTest extends AbstractConsumerResourceTest {
         Response response = request("/consumers/" + groupName, mediatype.header)
             .post(Entity.entity(null, requestMediatype));
         assertOKResponse(response, mediatype.expected);
-        final CreateConsumerInstanceResponse
-            createResponse =
-            response.readEntity(CreateConsumerInstanceResponse.class);
+        final CreateConsumerInstanceResponse createResponse =
+                TestUtils.tryReadEntityOrLog(response, CreateConsumerInstanceResponse.class);
 
         final Response
             readResponse =
@@ -142,9 +139,8 @@ public class ConsumerResourceTest extends AbstractConsumerResourceTest {
         Response response = request("/consumers/" + groupName, mediatype.header)
             .post(Entity.entity(null, requestMediatype));
         assertOKResponse(response, mediatype.expected);
-        final CreateConsumerInstanceResponse
-            createResponse =
-            response.readEntity(CreateConsumerInstanceResponse.class);
+        final CreateConsumerInstanceResponse createResponse =
+                TestUtils.tryReadEntityOrLog(response, CreateConsumerInstanceResponse.class);
 
         final Response
             deleteResponse =

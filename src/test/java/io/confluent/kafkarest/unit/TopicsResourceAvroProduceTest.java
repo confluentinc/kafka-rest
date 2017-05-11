@@ -172,7 +172,7 @@ public class TopicsResourceAvroProduceTest
                            EmbeddedFormat.AVRO,
                            request, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+        ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse,ProduceResponse.class);
 
         assertEquals(offsetResults, response.getOffsets());
         assertEquals((Integer) 1, response.getKeySchemaId());

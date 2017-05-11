@@ -57,7 +57,7 @@ public class PartitionsResourceBinaryConsumeTest extends PartitionsResourceAbstr
       assertOKResponse(response, expectedMediatype);
 
       final List<BinaryConsumerRecord> readResponseRecords =
-          response.readEntity(new GenericType<List<BinaryConsumerRecord>>() {});
+              TestUtils.tryReadEntityOrLog(response, new GenericType<List<BinaryConsumerRecord>>() {});
       assertEquals(records, readResponseRecords);
 
       EasyMock.verify(simpleConsumerManager);

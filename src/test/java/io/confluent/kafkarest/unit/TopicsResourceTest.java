@@ -73,7 +73,7 @@ public class TopicsResourceTest
 
       Response response = request("/topics", mediatype.expected).get();
       assertOKResponse(response, mediatype.expected);
-      final List<String> topicsResponse = response.readEntity(new GenericType<List<String>>() {
+      final List<String> topicsResponse = TestUtils.tryReadEntityOrLog(response, new GenericType<List<String>>() {
       });
       assertEquals(topics, topicsResponse);
 
@@ -114,12 +114,12 @@ public class TopicsResourceTest
 
       Response response1 = request("/topics/topic1", mediatype.header).get();
       assertOKResponse(response1, mediatype.expected);
-      final Topic topicResponse1 = response1.readEntity(new GenericType<Topic>() {
+      final Topic topicResponse1 = TestUtils.tryReadEntityOrLog(response1, new GenericType<Topic>() {
       });
       assertEquals(topic1, topicResponse1);
 
       Response response2 = request("/topics/topic2", mediatype.header).get();
-      final Topic topicResponse2 = response2.readEntity(new GenericType<Topic>() {
+      final Topic topicResponse2 = TestUtils.tryReadEntityOrLog(response2, new GenericType<Topic>() {
       });
       assertEquals(topic2, topicResponse2);
 
