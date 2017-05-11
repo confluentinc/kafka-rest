@@ -156,9 +156,9 @@ public class ConsumerManagerTest {
     // Tests create instance, read, and delete
     final List<ConsumerRecord<byte[], byte[]>> referenceRecords
         = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
-        new BinaryConsumerRecord("k1".getBytes(), "v1".getBytes(), 0, 0),
-        new BinaryConsumerRecord("k2".getBytes(), "v2".getBytes(), 1, 0),
-        new BinaryConsumerRecord("k3".getBytes(), "v3".getBytes(), 2, 0));
+        new BinaryConsumerRecord(topicName, "k1".getBytes(), "v1".getBytes(), 0, 0),
+        new BinaryConsumerRecord(topicName, "k2".getBytes(), "v2".getBytes(), 1, 0),
+        new BinaryConsumerRecord(topicName, "k3".getBytes(), "v3".getBytes(), 2, 0));
     Map<Integer, List<ConsumerRecord<byte[], byte[]>>>
         referenceSchedule =
         new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
@@ -233,10 +233,11 @@ public class ConsumerManagerTest {
     // response, not all of it is returned.
     final List<ConsumerRecord<byte[], byte[]>> referenceRecords
         = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
-        new BinaryConsumerRecord(null, new byte[511], 0, 0), // Don't use 512 as this happens to fall on boundary
-        new BinaryConsumerRecord(null, new byte[511], 1, 0),
-        new BinaryConsumerRecord(null, new byte[511], 2, 0),
-        new BinaryConsumerRecord(null, new byte[511], 3, 0)
+        // Don't use 512 as this happens to fall on boundary
+        new BinaryConsumerRecord(topicName, null, new byte[511], 0, 0),
+        new BinaryConsumerRecord(topicName, null, new byte[511], 1, 0),
+        new BinaryConsumerRecord(topicName, null, new byte[511], 2, 0),
+        new BinaryConsumerRecord(topicName, null, new byte[511], 3, 0)
     );
     Map<Integer, List<ConsumerRecord<byte[], byte[]>>> referenceSchedule
         = new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
@@ -437,10 +438,10 @@ public class ConsumerManagerTest {
     // request that succeeds and still see all the data
     final List<ConsumerRecord<byte[], byte[]>> referenceRecords
         = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
-        new BinaryConsumerRecord("k1".getBytes(), "v1".getBytes(), 0, 0),
+        new BinaryConsumerRecord(topicName, "k1".getBytes(), "v1".getBytes(), 0, 0),
         null, // trigger consumer exception
-        new BinaryConsumerRecord("k2".getBytes(), "v2".getBytes(), 1, 0),
-        new BinaryConsumerRecord("k3".getBytes(), "v3".getBytes(), 2, 0));
+        new BinaryConsumerRecord(topicName, "k2".getBytes(), "v2".getBytes(), 1, 0),
+        new BinaryConsumerRecord(topicName, "k3".getBytes(), "v3".getBytes(), 2, 0));
     Map<Integer, List<ConsumerRecord<byte[], byte[]>>>
         referenceSchedule =
         new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
