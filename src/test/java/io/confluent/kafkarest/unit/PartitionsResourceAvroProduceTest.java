@@ -164,7 +164,7 @@ public class PartitionsResourceAvroProduceTest
             produceToPartition(topicName, 0, request, mediatype.header, requestMediatype,
                                EmbeddedFormat.AVRO, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+        ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
         assertEquals(offsetResults, response.getOffsets());
         assertEquals((Integer) 1, response.getKeySchemaId());
@@ -185,7 +185,7 @@ public class PartitionsResourceAvroProduceTest
             produceToPartition(topicName, 0, request, mediatype.header, requestMediatype,
                                EmbeddedFormat.AVRO, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+        ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
         assertEquals(offsetResults, response.getOffsets());
         assertEquals((Integer) 1, response.getKeySchemaId());

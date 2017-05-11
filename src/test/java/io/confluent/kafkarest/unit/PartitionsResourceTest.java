@@ -89,7 +89,7 @@ public class PartitionsResourceTest
 
       Response response = request("/topics/topic1/partitions", mediatype.header).get();
       assertOKResponse(response, mediatype.expected);
-      List<Partition> partitionsResponse = response.readEntity(new GenericType<List<Partition>>() {
+      List<Partition> partitionsResponse = TestUtils.tryReadEntityOrLog(response, new GenericType<List<Partition>>() {
       });
       assertEquals(partitions, partitionsResponse);
 
@@ -112,13 +112,13 @@ public class PartitionsResourceTest
 
       Response response = request("/topics/topic1/partitions/0", mediatype.header).get();
       assertOKResponse(response, mediatype.expected);
-      Partition partition = response.readEntity(new GenericType<Partition>() {
+      Partition partition = TestUtils.tryReadEntityOrLog(response, new GenericType<Partition>() {
       });
       assertEquals(partitions.get(0), partition);
 
       response = request("/topics/topic1/partitions/1", mediatype.header).get();
       assertOKResponse(response, mediatype.expected);
-      partition = response.readEntity(new GenericType<Partition>() {
+      partition = TestUtils.tryReadEntityOrLog(response, new GenericType<Partition>() {
       });
       assertEquals(partitions.get(1), partition);
 

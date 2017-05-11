@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 
 import io.confluent.kafkarest.entities.EntityUtils;
@@ -40,12 +41,15 @@ import kafka.consumer.KafkaStream;
 import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.MessageAndMetadata;
 import kafka.serializer.Decoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class TestUtils {
 
+  private static final Logger log = LoggerFactory.getLogger(TestUtils.class);
   private static final ObjectMapper jsonParser = new ObjectMapper();
 
   // Media type collections that should be tested together (i.e. expect the same raw output). The
@@ -108,6 +112,31 @@ public class TestUtils {
       "text/plain"
   };
 
+
+  /**
+   * Try to read the entity. If parsing fails, errors are rethrown, but the raw entity is also logged for debugging.
+   */
+  public static <T> T tryReadEntityOrLog(Response rawResponse, Class<T> entityType) {
+    rawResponse.bufferEntity();
+    try {
+      return rawResponse.readEntity(entityType);
+    } catch (Throwable t) {
+      log.error("Failed to parse entity {}: ", rawResponse.readEntity(String.class), t);
+      throw t;
+    }
+  }
+
+  public static <T> T tryReadEntityOrLog(Response rawResponse, GenericType<T> entityType) {
+    rawResponse.bufferEntity();
+    try {
+      return rawResponse.readEntity(entityType);
+    } catch (Throwable t) {
+      log.error("Failed to parse entity {}: ", rawResponse.readEntity(String.class), t);
+      throw t;
+    }
+  }
+
+
   /**
    * Asserts that the response received an HTTP 200 status code, as well as some optional
    * requirements such as the Content-Type.
@@ -133,7 +162,7 @@ public class TestUtils {
 
     assertEquals(mediatype, rawResponse.getMediaType().toString());
 
-    ErrorMessage response = rawResponse.readEntity(ErrorMessage.class);
+    ErrorMessage response = tryReadEntityOrLog(rawResponse, ErrorMessage.class);
     assertEquals(code, response.getErrorCode());
     // This only checks that the start of the message is identical because debug mode will
     // include extra information and is enabled by default.

@@ -52,7 +52,7 @@ public class RootResourceTest
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       Response response = request("/", mediatype.header).get();
       assertOKResponse(response, mediatype.expected);
-      Map<String, String> decoded = response.readEntity(new GenericType<Map<String, String>>() {
+      Map<String, String> decoded = TestUtils.tryReadEntityOrLog(response, new GenericType<Map<String, String>>() {
       });
     }
   }

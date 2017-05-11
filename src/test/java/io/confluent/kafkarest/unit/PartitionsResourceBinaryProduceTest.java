@@ -157,7 +157,7 @@ public class PartitionsResourceBinaryProduceTest
                                EmbeddedFormat.BINARY,
                                produceRecordsOnlyValues, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+        ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
         assertEquals(offsetResults, response.getOffsets());
         assertEquals(null, response.getKeySchemaId());
@@ -178,7 +178,7 @@ public class PartitionsResourceBinaryProduceTest
                                EmbeddedFormat.BINARY,
                                produceRecordsWithKeys, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+        ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
         assertEquals(offsetResults, response.getOffsets());
         assertEquals(null, response.getKeySchemaId());

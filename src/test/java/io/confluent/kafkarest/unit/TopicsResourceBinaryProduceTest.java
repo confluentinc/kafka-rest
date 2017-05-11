@@ -200,7 +200,7 @@ public class TopicsResourceBinaryProduceTest
             produceToTopic("topic1", mediatype.header, requestMediatype,
                            EmbeddedFormat.BINARY, records, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+        ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
         assertEquals(offsetResults, response.getOffsets());
         assertEquals(null, response.getKeySchemaId());
@@ -295,7 +295,7 @@ public class TopicsResourceBinaryProduceTest
           );
         } else {
           assertOKResponse(rawResponse, mediatype.expected);
-          ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+          ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
           assertEquals(produceExceptionResults, response.getOffsets());
           assertEquals(null, response.getKeySchemaId());
           assertEquals(null, response.getValueSchemaId());

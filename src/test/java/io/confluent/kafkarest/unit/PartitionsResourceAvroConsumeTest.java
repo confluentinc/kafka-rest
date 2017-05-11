@@ -54,7 +54,7 @@ public class PartitionsResourceAvroConsumeTest extends PartitionsResourceAbstrac
       assertOKResponse(response, mediatype.expected);
 
       final List<AvroConsumerRecord> readResponseRecords =
-          response.readEntity(new GenericType<List<AvroConsumerRecord>>() {});
+              TestUtils.tryReadEntityOrLog(response, new GenericType<List<AvroConsumerRecord>>() {});
       assertEquals(records, readResponseRecords);
 
       EasyMock.verify(simpleConsumerManager);

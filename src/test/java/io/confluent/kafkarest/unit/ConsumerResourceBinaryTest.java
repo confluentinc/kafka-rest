@@ -73,9 +73,8 @@ public class ConsumerResourceBinaryTest extends AbstractConsumerResourceTest {
         Response response = request("/consumers/" + groupName, mediatype.header)
             .post(Entity.entity(null, requestMediatype));
         assertOKResponse(response, mediatype.expected);
-        final CreateConsumerInstanceResponse
-            createResponse =
-            response.readEntity(CreateConsumerInstanceResponse.class);
+        final CreateConsumerInstanceResponse createResponse =
+                TestUtils.tryReadEntityOrLog(response,CreateConsumerInstanceResponse.class);
 
         // Read with size limit
         String readUrl = instanceBasePath(createResponse) + "/topics/" + topicName;
@@ -89,18 +88,16 @@ public class ConsumerResourceBinaryTest extends AbstractConsumerResourceTest {
         String expectedMediatype
             = mediatype.header != null ? mediatype.expected : Versions.KAFKA_V1_JSON_BINARY;
         assertOKResponse(readLimitResponse, expectedMediatype);
-        final List<BinaryConsumerRecord>
-            readLimitResponseRecords =
-            readLimitResponse.readEntity(new GenericType<List<BinaryConsumerRecord>>() {
+        final List<BinaryConsumerRecord> readLimitResponseRecords =
+                TestUtils.tryReadEntityOrLog(readLimitResponse,new GenericType<List<BinaryConsumerRecord>>() {
             });
         assertEquals(expectedReadLimit, readLimitResponseRecords);
 
         // Read without size limit
         Response readResponse = request(readUrl, mediatype.header).get();
         assertOKResponse(readResponse, expectedMediatype);
-        final List<BinaryConsumerRecord>
-            readResponseRecords =
-            readResponse.readEntity(new GenericType<List<BinaryConsumerRecord>>() {
+        final List<BinaryConsumerRecord> readResponseRecords =
+                TestUtils.tryReadEntityOrLog(readResponse,new GenericType<List<BinaryConsumerRecord>>() {
             });
         assertEquals(expectedReadNoLimit, readResponseRecords);
 
@@ -108,9 +105,8 @@ public class ConsumerResourceBinaryTest extends AbstractConsumerResourceTest {
         Response commitResponse = request(commitUrl, mediatype.header)
             .post(Entity.entity(null, requestMediatype));
         assertOKResponse(response, mediatype.expected);
-        final List<TopicPartitionOffset>
-            committedOffsets =
-            commitResponse.readEntity(new GenericType<List<TopicPartitionOffset>>() {
+        final List<TopicPartitionOffset> committedOffsets =
+                TestUtils.tryReadEntityOrLog(commitResponse,new GenericType<List<TopicPartitionOffset>>() {
             });
         assertEquals(expectedOffsets, committedOffsets);
 
