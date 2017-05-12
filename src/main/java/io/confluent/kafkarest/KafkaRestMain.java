@@ -16,6 +16,7 @@
 
 package io.confluent.kafkarest;
 
+import org.eclipse.jetty.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,9 +55,17 @@ public class KafkaRestMain {
       /*TODO discuss with team and look at options to do something like Apache CLI here. Handle
         exception for incorrect Class args with appropriate message*/
       KafkaRestConfig config = new KafkaRestConfig((args.length > 0 ? args[0] : null));
+
       RestResourceExtension restResourceExtension = null;
-      if (args.length > 1) {
-        restResourceExtension = (RestResourceExtension) Class.forName(args[1]).newInstance();
+      String extensionClassName = config.getString(KafkaRestConfig
+                                                       .KAFKA_REST_RESOURCE_EXTENSION_CONFIG);
+      if (StringUtil.isNotBlank(extensionClassName)) {
+        Class<RestResourceExtension>
+            restResourceExtensionClass =
+            (Class<RestResourceExtension>) Class.forName(extensionClassName);
+
+        restResourceExtension = restResourceExtensionClass.newInstance();
+
       }
       KafkaRestApplication app = new KafkaRestApplication(config, restResourceExtension);
       app.start();

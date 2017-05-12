@@ -54,7 +54,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     super(config);
   }
 
-  public KafkaRestApplication(KafkaRestConfig config, RestResourceExtension restResourceExtension) {
+  public KafkaRestApplication(KafkaRestConfig config, RestResourceExtension restResourceExtension)
+      throws IllegalAccessException, InstantiationException {
     super(config);
     this.restResourceExtension = restResourceExtension;
   }
@@ -75,6 +76,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
                                         SimpleConsumerFactory simpleConsumerFactory,
                                         SimpleConsumerManager simpleConsumerManager,
                                         KafkaConsumerManager kafkaConsumerManager) {
+
     config.register(new ZkExceptionMapper(appConfig));
 
     DefaultContextProvider.initializeDefaultContext(zkUtils, appConfig, mdObserver, producerPool,
@@ -90,7 +92,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new ContextProviderFactoryBinder());
 
     if (restResourceExtension != null) {
-      restResourceExtension.register(config);
+      restResourceExtension.register(config, appConfig);
     }
   }
 

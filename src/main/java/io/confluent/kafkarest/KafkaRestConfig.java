@@ -26,6 +26,7 @@ import io.confluent.common.config.ConfigDef.Importance;
 import io.confluent.common.config.ConfigDef.Type;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
+import kafka.server.ConfigType;
 
 import static io.confluent.common.config.ConfigDef.Range.atLeast;
 
@@ -215,6 +216,8 @@ public class KafkaRestConfig extends RestConfig {
       "client.sasl.kerberos.ticket.renew.jitter";
   public static final String KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_CONFIG =
       "client.sasl.kerberos.ticket.renew.window.factor";
+  public static final String KAFKA_REST_RESOURCE_EXTENSION_CONFIG =
+      "kafka.rest.resource.extension.class";
 
   protected static final String KAFKACLIENT_CONNECTION_URL_DOC =
       "Zookeeper url for the Kafka cluster";
@@ -297,318 +300,117 @@ public class KafkaRestConfig extends RestConfig {
       "Login thread will sleep until the specified window factor of time from last refresh to "
       + "ticket's expiry has "
       + "been reached, at which time it will try to renew the ticket.";
+  public static final String KAFKA_REST_RESOURCE_EXTENSION_DOC =
+      "Fully qualified class name of a  valid Implementation of the interface RestResourceExtension"
+      + "This can be used to inject user defined resources like filters. Typically used to add "
+      + "custom capability like logging, security, etc  ";
   private static final boolean ZOOKEEPER_SET_ACL_DEFAULT = false;
   private static final ConfigDef config;
 
   static {
-    config = baseConfigDef()
-        .defineOverride(
-            PORT_CONFIG,
-            ConfigDef.Type.INT,
-            KAFKAREST_PORT_DEFAULT,
-            ConfigDef.Importance.LOW,
-            PORT_CONFIG_DOC
-        )
-        .defineOverride(
-            LISTENERS_CONFIG,
-            ConfigDef.Type.LIST,
-            KAFKAREST_LISTENERS_DEFAULT,
-            ConfigDef.Importance.HIGH,
-            LISTENERS_DOC
-        )
-        .defineOverride(
-            RESPONSE_MEDIATYPE_PREFERRED_CONFIG,
-            Type.LIST,
-            Versions.PREFERRED_RESPONSE_TYPES,
-            Importance.LOW,
-            RESPONSE_MEDIATYPE_PREFERRED_CONFIG_DOC
-        )
-        .defineOverride(
-            RESPONSE_MEDIATYPE_DEFAULT_CONFIG,
-            Type.STRING,
-            Versions.KAFKA_MOST_SPECIFIC_DEFAULT,
-            Importance.LOW,
-            RESPONSE_MEDIATYPE_DEFAULT_CONFIG_DOC
-        )
-        .defineOverride(
-            METRICS_JMX_PREFIX_CONFIG,
-            Type.STRING,
-            METRICS_JMX_PREFIX_DEFAULT_OVERRIDE,
-            Importance.LOW,
-            METRICS_JMX_PREFIX_DOC
-        )
+    config = baseKafkaRestConfigDef();
+  }
+
+  protected static ConfigDef baseKafkaRestConfigDef() {
+    return baseConfigDef().defineOverride(PORT_CONFIG, ConfigDef.Type.INT, KAFKAREST_PORT_DEFAULT,
+                                          ConfigDef.Importance.LOW, PORT_CONFIG_DOC)
+        .defineOverride(LISTENERS_CONFIG, ConfigDef.Type.LIST, KAFKAREST_LISTENERS_DEFAULT,
+                        ConfigDef.Importance.HIGH, LISTENERS_DOC)
+        .defineOverride(RESPONSE_MEDIATYPE_PREFERRED_CONFIG, Type.LIST,
+                        Versions.PREFERRED_RESPONSE_TYPES, Importance.LOW,
+                        RESPONSE_MEDIATYPE_PREFERRED_CONFIG_DOC)
+        .defineOverride(RESPONSE_MEDIATYPE_DEFAULT_CONFIG, Type.STRING,
+                        Versions.KAFKA_MOST_SPECIFIC_DEFAULT, Importance.LOW,
+                        RESPONSE_MEDIATYPE_DEFAULT_CONFIG_DOC)
+        .defineOverride(METRICS_JMX_PREFIX_CONFIG, Type.STRING, METRICS_JMX_PREFIX_DEFAULT_OVERRIDE,
+                        Importance.LOW, METRICS_JMX_PREFIX_DOC)
         .define(ID_CONFIG, Type.STRING, ID_DEFAULT, Importance.HIGH, ID_CONFIG_DOC)
         .define(HOST_NAME_CONFIG, Type.STRING, HOST_NAME_DEFAULT, Importance.MEDIUM, HOST_NAME_DOC)
-        .define(
-            ZOOKEEPER_CONNECT_CONFIG,
-            Type.STRING,
-            ZOOKEEPER_CONNECT_DEFAULT,
-            Importance.HIGH,
-            ZOOKEEPER_CONNECT_DOC
-        )
-        .define(
-            BOOTSTRAP_SERVERS_CONFIG,
-            Type.STRING,
-            BOOTSTRAP_SERVERS_DEFAULT,
-            Importance.HIGH,
-            BOOTSTRAP_SERVERS_DOC
-        )
-        .define(
-            SCHEMA_REGISTRY_URL_CONFIG,
-            Type.STRING,
-            SCHEMA_REGISTRY_URL_DEFAULT,
-            Importance.HIGH,
-            SCHEMA_REGISTRY_URL_DOC
-        )
-        .define(
-            PRODUCER_THREADS_CONFIG,
-            Type.INT,
-            PRODUCER_THREADS_DEFAULT,
-            Importance.LOW,
-            PRODUCER_THREADS_DOC
-        )
-        .define(
-            CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG,
-            Type.INT,
-            CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT,
-            Importance.LOW,
-            CONSUMER_ITERATOR_TIMEOUT_MS_DOC
-        )
-        .define(
-            CONSUMER_ITERATOR_BACKOFF_MS_CONFIG,
-            Type.INT,
-            CONSUMER_ITERATOR_BACKOFF_MS_DEFAULT,
-            Importance.LOW,
-            CONSUMER_ITERATOR_BACKOFF_MS_DOC
-        )
-        .define(
-            CONSUMER_REQUEST_TIMEOUT_MS_CONFIG,
-            Type.INT,
-            CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT,
-            Importance.MEDIUM,
-            CONSUMER_REQUEST_TIMEOUT_MS_DOC
-        )
-        .define(
-            CONSUMER_REQUEST_MAX_BYTES_CONFIG,
-            Type.LONG,
-            CONSUMER_REQUEST_MAX_BYTES_DEFAULT,
-            Importance.MEDIUM,
-            CONSUMER_REQUEST_MAX_BYTES_DOC
-        )
-        .define(
-            CONSUMER_THREADS_CONFIG,
-            Type.INT,
-            CONSUMER_THREADS_DEFAULT,
-            Importance.MEDIUM,
-            CONSUMER_THREADS_DOC
-        )
-        .define(
-            CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG,
-            Type.INT,
-            CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT,
-            Importance.LOW,
-            CONSUMER_INSTANCE_TIMEOUT_MS_DOC
-        )
-        .define(
-            SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG,
-            Type.INT,
-            SIMPLE_CONSUMER_MAX_POOL_SIZE_DEFAULT,
-            Importance.MEDIUM,
-            SIMPLE_CONSUMER_MAX_POOL_SIZE_DOC
-        )
-        .define(
-            SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG,
-            Type.INT,
-            SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT,
-            Importance.LOW,
-            SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC
-        )
-        .define(
-            KAFKACLIENT_CONNECTION_URL_CONFIG,
-            ConfigDef.Type.STRING,
-            KAFKACLIENT_CONNECTION_URL_DEFAULT,
-            ConfigDef.Importance.HIGH,
-            KAFKACLIENT_CONNECTION_URL_DOC
-        )
-        .define(
-            KAFKACLIENT_BOOTSTRAP_SERVERS_CONFIG,
-            ConfigDef.Type.LIST,
-            "",
-            ConfigDef.Importance.MEDIUM,
-            KAFKACLIENT_CONNECTION_URL_DOC
-        )
-        .define(
-            KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG,
-            ConfigDef.Type.INT,
-            30000,
-            atLeast(0),
-            ConfigDef.Importance.LOW,
-            KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_DOC
-        )
-        .define(
-            KAFKACLIENT_INIT_TIMEOUT_CONFIG,
-            ConfigDef.Type.INT,
-            60000,
-            atLeast(0),
-            ConfigDef.Importance.MEDIUM,
-            KAFKACLIENT_INIT_TIMEOUT_DOC
-        )
-        .define(
-            KAFKACLIENT_TIMEOUT_CONFIG,
-            ConfigDef.Type.INT,
-            500,
-            atLeast(0),
-            ConfigDef.Importance.MEDIUM,
-            KAFKACLIENT_TIMEOUT_DOC
-        )
-        .define(
-            KAFKACLIENT_SECURITY_PROTOCOL_CONFIG,
-            ConfigDef.Type.STRING,
-            SecurityProtocol.PLAINTEXT.toString(),
-            ConfigDef.Importance.MEDIUM,
-            KAFKACLIENT_SECURITY_PROTOCOL_DOC
-        )
-        .define(
-            KAFKACLIENT_SSL_TRUSTSTORE_LOCATION_CONFIG,
-            ConfigDef.Type.STRING,
-            "",
-            ConfigDef.Importance.HIGH,
-            KAFKACLIENT_SSL_TRUSTSTORE_LOCATION_DOC
-        )
-        .define(
-            KAFKACLIENT_SSL_TRUSTSTORE_PASSWORD_CONFIG,
-            ConfigDef.Type.STRING,
-            "",
-            ConfigDef.Importance.HIGH,
-            KAFKACLIENT_SSL_TRUSTSTORE_PASSWORD_DOC
-        )
-        .define(
-            KAFKACLIENT_SSL_TRUSTSTORE_TYPE_CONFIG,
-            ConfigDef.Type.STRING,
-            "JKS",
-            ConfigDef.Importance.MEDIUM,
-            KAFAKSTORE_SSL_TRUSTSTORE_TYPE_DOC
-        )
-        .define(
-            KAFKACLIENT_SSL_TRUSTMANAGER_ALGORITHM_CONFIG,
-            ConfigDef.Type.STRING,
-            "PKIX",
-            ConfigDef.Importance.LOW,
-            KAFKACLIENT_SSL_TRUSTMANAGER_ALGORITHM_DOC
-        )
-        .define(
-            KAFKACLIENT_SSL_KEYSTORE_LOCATION_CONFIG,
-            ConfigDef.Type.STRING,
-            "",
-            ConfigDef.Importance.HIGH,
-            KAFKACLIENT_SSL_KEYSTORE_LOCATION_DOC
-        )
-        .define(
-            KAFKACLIENT_SSL_KEYSTORE_PASSWORD_CONFIG,
-            ConfigDef.Type.STRING,
-            "",
-            ConfigDef.Importance.HIGH,
-            KAFKACLIENT_SSL_KEYSTORE_PASSWORD_DOC
-        )
-        .define(
-            KAFKACLIENT_SSL_KEYSTORE_TYPE_CONFIG,
-            ConfigDef.Type.STRING,
-            "JKS",
-            ConfigDef.Importance.MEDIUM,
-            KAFAKSTORE_SSL_KEYSTORE_TYPE_DOC
-        )
-        .define(
-            KAFKACLIENT_SSL_KEYMANAGER_ALGORITHM_CONFIG,
-            ConfigDef.Type.STRING,
-            "SunX509",
-            ConfigDef.Importance.LOW,
-            KAFKACLIENT_SSL_KEYMANAGER_ALGORITHM_DOC
-        )
-        .define(
-            KAFKACLIENT_SSL_KEY_PASSWORD_CONFIG,
-            ConfigDef.Type.STRING,
-            "",
-            ConfigDef.Importance.HIGH,
-            KAFKACLIENT_SSL_KEY_PASSWORD_DOC
-        )
-        .define(
-            KAFKACLIENT_SSL_ENABLED_PROTOCOLS_CONFIG,
-            ConfigDef.Type.STRING,
-            "TLSv1.2,TLSv1.1,TLSv1",
-            ConfigDef.Importance.MEDIUM,
-            KAFAKSTORE_SSL_ENABLED_PROTOCOLS_DOC
-        )
-        .define(
-            KAFKACLIENT_SSL_PROTOCOL_CONFIG,
-            ConfigDef.Type.STRING,
-            "TLS",
-            ConfigDef.Importance.MEDIUM,
-            KAFAKSTORE_SSL_PROTOCOL_DOC
-        )
-        .define(
-            KAFKACLIENT_SSL_PROVIDER_CONFIG,
-            ConfigDef.Type.STRING,
-            "",
-            ConfigDef.Importance.MEDIUM,
-            KAFAKSTORE_SSL_PROVIDER_DOC
-        )
-        .define(
-            KAFKACLIENT_SSL_CIPHER_SUITES_CONFIG,
-            ConfigDef.Type.STRING,
-            "",
-            ConfigDef.Importance.LOW,
-            KAFKACLIENT_SSL_CIPHER_SUITES_DOC
-        )
-        .define(
-            KAFKACLIENT_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG,
-            ConfigDef.Type.STRING,
-            "",
-            ConfigDef.Importance.LOW,
-            KAFKACLIENT_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_DOC
-        )
-        .define(
-            KAFKACLIENT_SASL_KERBEROS_SERVICE_NAME_CONFIG,
-            ConfigDef.Type.STRING,
-            "",
-            ConfigDef.Importance.MEDIUM,
-            KAFKACLIENT_SASL_KERBEROS_SERVICE_NAME_DOC
-        )
-        .define(
-            KAFKACLIENT_SASL_MECHANISM_CONFIG,
-            ConfigDef.Type.STRING,
-            "GSSAPI",
-            ConfigDef.Importance.MEDIUM,
-            KAFKACLIENT_SASL_MECHANISM_DOC
-        )
-        .define(
-            KAFKACLIENT_SASL_KERBEROS_KINIT_CMD_CONFIG,
-            ConfigDef.Type.STRING,
-            "/usr/bin/kinit",
-            ConfigDef.Importance.LOW,
-            KAFKACLIENT_SASL_KERBEROS_KINIT_CMD_DOC
-        )
-        .define(
-            KAFKACLIENT_SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN_CONFIG,
-            ConfigDef.Type.LONG,
-            60000,
-            ConfigDef.Importance.LOW,
-            KAFKACLIENT_SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN_DOC
-        )
-        .define(
-            KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_JITTER_CONFIG,
-            ConfigDef.Type.DOUBLE,
-            0.05,
-            ConfigDef.Importance.LOW,
-            KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_JITTER_DOC
-        )
-        .define(
-            KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_CONFIG,
-            ConfigDef.Type.DOUBLE,
-            0.8,
-            ConfigDef.Importance.LOW,
-            KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_DOC
-        );
-
+        .define(ZOOKEEPER_CONNECT_CONFIG, Type.STRING, ZOOKEEPER_CONNECT_DEFAULT, Importance.HIGH,
+                ZOOKEEPER_CONNECT_DOC)
+        .define(BOOTSTRAP_SERVERS_CONFIG, Type.STRING, BOOTSTRAP_SERVERS_DEFAULT, Importance.HIGH,
+                BOOTSTRAP_SERVERS_DOC)
+        .define(SCHEMA_REGISTRY_URL_CONFIG, Type.STRING, SCHEMA_REGISTRY_URL_DEFAULT,
+                Importance.HIGH, SCHEMA_REGISTRY_URL_DOC)
+        .define(PRODUCER_THREADS_CONFIG, Type.INT, PRODUCER_THREADS_DEFAULT, Importance.LOW,
+                PRODUCER_THREADS_DOC)
+        .define(CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT,
+                Importance.LOW, CONSUMER_ITERATOR_TIMEOUT_MS_DOC)
+        .define(CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, Type.INT, CONSUMER_ITERATOR_BACKOFF_MS_DEFAULT,
+                Importance.LOW, CONSUMER_ITERATOR_BACKOFF_MS_DOC)
+        .define(CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT,
+                Importance.MEDIUM, CONSUMER_REQUEST_TIMEOUT_MS_DOC)
+        .define(CONSUMER_REQUEST_MAX_BYTES_CONFIG, Type.LONG, CONSUMER_REQUEST_MAX_BYTES_DEFAULT,
+                Importance.MEDIUM, CONSUMER_REQUEST_MAX_BYTES_DOC)
+        .define(CONSUMER_THREADS_CONFIG, Type.INT, CONSUMER_THREADS_DEFAULT, Importance.MEDIUM,
+                CONSUMER_THREADS_DOC)
+        .define(CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT,
+                Importance.LOW, CONSUMER_INSTANCE_TIMEOUT_MS_DOC)
+        .define(SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG, Type.INT,
+                SIMPLE_CONSUMER_MAX_POOL_SIZE_DEFAULT, Importance.MEDIUM,
+                SIMPLE_CONSUMER_MAX_POOL_SIZE_DOC)
+        .define(SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG, Type.INT,
+                SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT, Importance.LOW,
+                SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC)
+        .define(KAFKACLIENT_CONNECTION_URL_CONFIG, ConfigDef.Type.STRING,
+                KAFKACLIENT_CONNECTION_URL_DEFAULT, ConfigDef.Importance.HIGH,
+                KAFKACLIENT_CONNECTION_URL_DOC)
+        .define(KAFKACLIENT_BOOTSTRAP_SERVERS_CONFIG, ConfigDef.Type.LIST, "",
+                ConfigDef.Importance.MEDIUM, KAFKACLIENT_CONNECTION_URL_DOC)
+        .define(KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG, ConfigDef.Type.INT, 30000, atLeast(0),
+                ConfigDef.Importance.LOW, KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_DOC)
+        .define(KAFKACLIENT_INIT_TIMEOUT_CONFIG, ConfigDef.Type.INT, 60000, atLeast(0),
+                ConfigDef.Importance.MEDIUM, KAFKACLIENT_INIT_TIMEOUT_DOC)
+        .define(KAFKACLIENT_TIMEOUT_CONFIG, ConfigDef.Type.INT, 500, atLeast(0),
+                ConfigDef.Importance.MEDIUM, KAFKACLIENT_TIMEOUT_DOC)
+        .define(KAFKACLIENT_SECURITY_PROTOCOL_CONFIG, ConfigDef.Type.STRING,
+                SecurityProtocol.PLAINTEXT.toString(), ConfigDef.Importance.MEDIUM,
+                KAFKACLIENT_SECURITY_PROTOCOL_DOC)
+        .define(KAFKACLIENT_SSL_TRUSTSTORE_LOCATION_CONFIG, ConfigDef.Type.STRING, "",
+                ConfigDef.Importance.HIGH, KAFKACLIENT_SSL_TRUSTSTORE_LOCATION_DOC)
+        .define(KAFKACLIENT_SSL_TRUSTSTORE_PASSWORD_CONFIG, ConfigDef.Type.STRING, "",
+                ConfigDef.Importance.HIGH, KAFKACLIENT_SSL_TRUSTSTORE_PASSWORD_DOC)
+        .define(KAFKACLIENT_SSL_TRUSTSTORE_TYPE_CONFIG, ConfigDef.Type.STRING, "JKS",
+                ConfigDef.Importance.MEDIUM, KAFAKSTORE_SSL_TRUSTSTORE_TYPE_DOC)
+        .define(KAFKACLIENT_SSL_TRUSTMANAGER_ALGORITHM_CONFIG, ConfigDef.Type.STRING, "PKIX",
+                ConfigDef.Importance.LOW, KAFKACLIENT_SSL_TRUSTMANAGER_ALGORITHM_DOC)
+        .define(KAFKACLIENT_SSL_KEYSTORE_LOCATION_CONFIG, ConfigDef.Type.STRING, "",
+                ConfigDef.Importance.HIGH, KAFKACLIENT_SSL_KEYSTORE_LOCATION_DOC)
+        .define(KAFKACLIENT_SSL_KEYSTORE_PASSWORD_CONFIG, ConfigDef.Type.STRING, "",
+                ConfigDef.Importance.HIGH, KAFKACLIENT_SSL_KEYSTORE_PASSWORD_DOC)
+        .define(KAFKACLIENT_SSL_KEYSTORE_TYPE_CONFIG, ConfigDef.Type.STRING, "JKS",
+                ConfigDef.Importance.MEDIUM, KAFAKSTORE_SSL_KEYSTORE_TYPE_DOC)
+        .define(KAFKACLIENT_SSL_KEYMANAGER_ALGORITHM_CONFIG, ConfigDef.Type.STRING, "SunX509",
+                ConfigDef.Importance.LOW, KAFKACLIENT_SSL_KEYMANAGER_ALGORITHM_DOC)
+        .define(KAFKACLIENT_SSL_KEY_PASSWORD_CONFIG, ConfigDef.Type.STRING, "",
+                ConfigDef.Importance.HIGH, KAFKACLIENT_SSL_KEY_PASSWORD_DOC)
+        .define(KAFKACLIENT_SSL_ENABLED_PROTOCOLS_CONFIG, ConfigDef.Type.STRING,
+                "TLSv1.2,TLSv1.1,TLSv1", ConfigDef.Importance.MEDIUM,
+                KAFAKSTORE_SSL_ENABLED_PROTOCOLS_DOC)
+        .define(KAFKACLIENT_SSL_PROTOCOL_CONFIG, ConfigDef.Type.STRING, "TLS",
+                ConfigDef.Importance.MEDIUM, KAFAKSTORE_SSL_PROTOCOL_DOC)
+        .define(KAFKACLIENT_SSL_PROVIDER_CONFIG, ConfigDef.Type.STRING, "",
+                ConfigDef.Importance.MEDIUM, KAFAKSTORE_SSL_PROVIDER_DOC)
+        .define(KAFKACLIENT_SSL_CIPHER_SUITES_CONFIG, ConfigDef.Type.STRING, "",
+                ConfigDef.Importance.LOW, KAFKACLIENT_SSL_CIPHER_SUITES_DOC)
+        .define(KAFKACLIENT_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, ConfigDef.Type.STRING, "",
+                ConfigDef.Importance.LOW, KAFKACLIENT_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_DOC)
+        .define(KAFKACLIENT_SASL_KERBEROS_SERVICE_NAME_CONFIG, ConfigDef.Type.STRING, "",
+                ConfigDef.Importance.MEDIUM, KAFKACLIENT_SASL_KERBEROS_SERVICE_NAME_DOC)
+        .define(KAFKACLIENT_SASL_MECHANISM_CONFIG, ConfigDef.Type.STRING, "GSSAPI",
+                ConfigDef.Importance.MEDIUM, KAFKACLIENT_SASL_MECHANISM_DOC)
+        .define(KAFKACLIENT_SASL_KERBEROS_KINIT_CMD_CONFIG, ConfigDef.Type.STRING, "/usr/bin/kinit",
+                ConfigDef.Importance.LOW, KAFKACLIENT_SASL_KERBEROS_KINIT_CMD_DOC)
+        .define(KAFKACLIENT_SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN_CONFIG, ConfigDef.Type.LONG,
+                60000, ConfigDef.Importance.LOW,
+                KAFKACLIENT_SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN_DOC)
+        .define(KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_JITTER_CONFIG, ConfigDef.Type.DOUBLE, 0.05,
+                ConfigDef.Importance.LOW, KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_JITTER_DOC)
+        .define(KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_CONFIG, ConfigDef.Type.DOUBLE,
+                0.8, ConfigDef.Importance.LOW,
+                KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_DOC)
+        .define(KAFKA_REST_RESOURCE_EXTENSION_CONFIG, Type.STRING, "", Importance.LOW,
+                KAFKA_REST_RESOURCE_EXTENSION_DOC);
   }
 
   private Time time;
@@ -627,7 +429,12 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   public KafkaRestConfig(Properties props, Time time) throws RestConfigException {
-    super(config, props);
+    this(config, props, time);
+  }
+
+  public KafkaRestConfig(ConfigDef configDef, Properties props, Time time)
+      throws RestConfigException {
+    super(configDef, props);
     this.originalProperties = props;
     this.time = time;
   }
