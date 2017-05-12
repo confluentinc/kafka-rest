@@ -28,8 +28,8 @@ public interface RestProducer<K, V> {
    * that need to be performed before sending the messages. If schemas are looked up or registered,
    * the SchemaHolder is updated with the resulting IDs.
    */
-  public void produce(ProduceTask task, String topic, Integer partition,
-                      Collection<? extends ProduceRecord<K, V>> records);
+  void produce(ProduceTask task, String topic, Integer partition,
+               Collection<? extends ProduceRecord<K, V>> records);
 
-  public void close();
+  void close();
 }

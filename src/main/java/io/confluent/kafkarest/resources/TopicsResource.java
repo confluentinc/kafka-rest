@@ -20,8 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Vector;
 
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -32,18 +30,16 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.SecurityContext;
 
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
 import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.JsonTopicProduceRecord;
-import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
@@ -55,6 +51,9 @@ import io.confluent.rest.annotations.PerformanceMetric;
 @Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
            Versions.GENERIC_REQUEST, Versions.KAFKA_V2_JSON})
 public class TopicsResource {
+
+  @javax.ws.rs.core.Context
+  private SecurityContext securityContext;
 
   private static final Logger log = LoggerFactory.getLogger(TopicsResource.class);
 
@@ -90,8 +89,7 @@ public class TopicsResource {
   public void produceBinary(
       final @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid TopicProduceRequest<BinaryTopicProduceRecord> request
-  ) {
+      @Valid TopicProduceRequest<BinaryTopicProduceRecord> request) {
     produce(asyncResponse, topicName, EmbeddedFormat.BINARY, request);
   }
 
@@ -144,38 +142,11 @@ public class TopicsResource {
               asyncResponse, topicName, format, request
     );
     ctx.getProducerPool().produce(
-        topicName, null, format,
+        topicName, null, format, securityContext,
         request,
         request.getRecords(),
-        new ProducerPool.ProduceRequestCallback() {
-          public void onCompletion(
-              Integer keySchemaId, Integer valueSchemaId,
-              List<RecordMetadataOrException> results
-          ) {
-            ProduceResponse response = new ProduceResponse();
-            List<PartitionOffset> offsets = new Vector<PartitionOffset>();
-            for (RecordMetadataOrException result : results) {
-              if (result.getException() != null) {
-                int errorCode = Errors.codeFromProducerException(result.getException());
-                String errorMessage = result.getException().getMessage();
-                offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
-              } else {
-                offsets.add(new PartitionOffset(result.getRecordMetadata().partition(),
-                                                result.getRecordMetadata().offset(),
-                                                null, null
-                ));
-              }
-            }
-            response.setOffsets(offsets);
-            response.setKeySchemaId(keySchemaId);
-            response.setValueSchemaId(valueSchemaId);
-            log.trace("Completed topic produce request id={} response={}",
-                      asyncResponse, response
-            );
-            asyncResponse.resume(response);
-          }
-        }
+         ProducerPool.defaultProduceRequestCallback(
+                      asyncResponse, log)
     );
   }
-
 }

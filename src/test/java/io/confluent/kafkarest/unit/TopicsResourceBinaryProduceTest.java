@@ -32,9 +32,11 @@ import java.util.List;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 
 import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.JaasModule;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
@@ -57,6 +59,7 @@ import io.confluent.rest.exceptions.RestServerErrorException;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static org.easymock.EasyMock.newCapture;
 import static org.junit.Assert.assertEquals;
 
 public class TopicsResourceBinaryProduceTest
@@ -162,14 +165,13 @@ public class TopicsResourceBinaryProduceTest
                                          final List<RecordMetadataOrException> results) {
     final TopicProduceRequest request = new TopicProduceRequest();
     request.setRecords(records);
-    final Capture<ProducerPool.ProduceRequestCallback>
-        produceCallback =
-        new Capture<ProducerPool.ProduceRequestCallback>();
+    final Capture<ProducerPool.ProduceRequestCallback> produceCallback = newCapture();
     producerPool.produce(EasyMock.eq(topic),
                          EasyMock.eq((Integer) null),
                          EasyMock.eq(recordFormat),
-                         EasyMock.<SchemaHolder>anyObject(),
-                         EasyMock.<Collection<? extends ProduceRecord<K, V>>>anyObject(),
+                         EasyMock.<SecurityContext> anyObject(),
+                         EasyMock.<SchemaHolder> anyObject(),
+                         EasyMock.<Collection<? extends ProduceRecord<K, V>>> anyObject(),
                          EasyMock.capture(produceCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
@@ -177,7 +179,7 @@ public class TopicsResourceBinaryProduceTest
         if (results == null) {
           throw new Exception();
         } else {
-          produceCallback.getValue().onCompletion((Integer) null, (Integer) null, results);
+          produceCallback.getValue().onCompletion(null, null, results);
         }
         return null;
       }

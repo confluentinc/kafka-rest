@@ -97,6 +97,13 @@ public class KafkaRestConfig extends RestConfig {
       "Number of threads to run produce requests on.";
   public static final String PRODUCER_THREADS_DEFAULT = "5";
 
+  public static final String AUTHENTICATION_MAPPING_CONFIG = "authentication.mapping";
+  private static final String
+      AUTHENTICATION_MAPPING_DOC =
+      "Mapping class for client authentication that implements the "
+         + "<code>AuthenticationMapping</code> interface. "
+         + "Allow to map Kafka REST authentication to the Kafka client authentication.";
+
   public static final String CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG = "consumer.iterator.timeout.ms";
   private static final String CONSUMER_ITERATOR_TIMEOUT_MS_DOC =
       "Timeout for blocking consumer iterator operations. "
@@ -370,6 +377,13 @@ public class KafkaRestConfig extends RestConfig {
             SCHEMA_REGISTRY_URL_DEFAULT,
             Importance.HIGH,
             SCHEMA_REGISTRY_URL_DOC
+        )
+        .define(
+            AUTHENTICATION_MAPPING_CONFIG,
+            Type.STRING,
+            "",
+            Importance.MEDIUM,
+            AUTHENTICATION_MAPPING_DOC
         )
         .define(
             PRODUCER_THREADS_CONFIG,

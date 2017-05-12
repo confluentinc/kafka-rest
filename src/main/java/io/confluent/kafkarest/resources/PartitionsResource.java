@@ -33,12 +33,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.SecurityContext;
 
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.AvroProduceRecord;
 import io.confluent.kafkarest.entities.BinaryProduceRecord;
@@ -46,10 +46,8 @@ import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.JsonProduceRecord;
 import io.confluent.kafkarest.entities.Partition;
-import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
 
 @Path("/topics/{topic}/partitions")
@@ -61,6 +59,9 @@ import io.confluent.rest.annotations.PerformanceMetric;
 public class PartitionsResource {
 
   private static final Logger log = LoggerFactory.getLogger(PartitionsResource.class);
+
+  @javax.ws.rs.core.Context
+  private SecurityContext securityContext;
 
   private final KafkaRestContext ctx;
 
@@ -89,7 +90,6 @@ public class PartitionsResource {
     }
     return part;
   }
-
 
   @GET
   @Path("/{partition}/messages")
@@ -250,37 +250,11 @@ public class PartitionsResource {
     );
 
     ctx.getProducerPool().produce(
-        topic, partition, format,
+        topic, partition, format, securityContext,
         request,
         request.getRecords(),
-        new ProducerPool.ProduceRequestCallback() {
-          public void onCompletion(
-              Integer keySchemaId, Integer valueSchemaId,
-              List<RecordMetadataOrException> results
-          ) {
-            ProduceResponse response = new ProduceResponse();
-            List<PartitionOffset> offsets = new Vector<PartitionOffset>();
-            for (RecordMetadataOrException result : results) {
-              if (result.getException() != null) {
-                int errorCode = Errors.codeFromProducerException(result.getException());
-                String errorMessage = result.getException().getMessage();
-                offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
-              } else {
-                offsets.add(new PartitionOffset(result.getRecordMetadata().partition(),
-                                                result.getRecordMetadata().offset(),
-                                                null, null
-                ));
-              }
-            }
-            response.setOffsets(offsets);
-            response.setKeySchemaId(keySchemaId);
-            response.setValueSchemaId(valueSchemaId);
-            log.trace("Completed topic produce request id={} response={}",
-                      asyncResponse, response
-            );
-            asyncResponse.resume(response);
-          }
-        }
+         ProducerPool.defaultProduceRequestCallback(
+                      asyncResponse, log)
     );
   }
 

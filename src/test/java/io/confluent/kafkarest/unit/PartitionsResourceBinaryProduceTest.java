@@ -24,14 +24,19 @@ import org.easymock.IAnswer;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.nio.file.attribute.UserPrincipal;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 
 import io.confluent.kafkarest.DefaultKafkaRestContext;
+import io.confluent.kafkarest.JaasModule;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
@@ -55,6 +60,7 @@ import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static org.easymock.EasyMock.newCapture;
 import static org.junit.Assert.assertEquals;
 
 public class PartitionsResourceBinaryProduceTest
@@ -112,16 +118,15 @@ public class PartitionsResourceBinaryProduceTest
                                              final List<RecordMetadataOrException> results) {
     final PartitionProduceRequest request = new PartitionProduceRequest();
     request.setRecords(records);
-    final Capture<ProducerPool.ProduceRequestCallback>
-        produceCallback =
-        new Capture<ProducerPool.ProduceRequestCallback>();
+    final Capture<ProducerPool.ProduceRequestCallback> produceCallback = newCapture();
     EasyMock.expect(mdObserver.topicExists(topic)).andReturn(true);
     EasyMock.expect(mdObserver.partitionExists(topic, partition)).andReturn(true);
     producerPool.produce(EasyMock.eq(topic),
                          EasyMock.eq(partition),
                          EasyMock.eq(recordFormat),
-                         EasyMock.<SchemaHolder>anyObject(),
-                         EasyMock.<Collection<? extends ProduceRecord<K, V>>>anyObject(),
+                         EasyMock.<SecurityContext> anyObject(),
+                         EasyMock.<SchemaHolder> anyObject(),
+                         EasyMock.<Collection<? extends ProduceRecord<K, V>>> anyObject(),
                          EasyMock.capture(produceCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
@@ -129,18 +134,16 @@ public class PartitionsResourceBinaryProduceTest
         if (results == null) {
           throw new Exception();
         } else {
-          produceCallback.getValue().onCompletion((Integer) null, (Integer) null, results);
+          produceCallback.getValue().onCompletion(null, null, results);
         }
         return null;
       }
     });
     EasyMock.replay(mdObserver, producerPool);
 
-    Response
-        response =
-        request("/topics/" + topic + "/partitions/" + ((Integer) partition).toString(),
-                acceptHeader)
-            .post(Entity.entity(request, requestMediatype));
+    String target = "/topics/" + topic + "/partitions/" + ((Integer) partition).toString();
+    Response response =  request(target, acceptHeader)
+        .post(Entity.entity(request, requestMediatype));
 
     EasyMock.verify(mdObserver, producerPool);
 
@@ -151,11 +154,9 @@ public class PartitionsResourceBinaryProduceTest
   public void testProduceToPartitionOnlyValues() {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
-        Response
-            rawResponse =
-            produceToPartition(topicName, 0, mediatype.header, requestMediatype,
-                               EmbeddedFormat.BINARY,
-                               produceRecordsOnlyValues, produceResults);
+        Response rawResponse = produceToPartition(topicName, 0, mediatype.header, requestMediatype,
+                                                  EmbeddedFormat.BINARY,
+                                                  produceRecordsOnlyValues, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
         ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
@@ -194,9 +195,7 @@ public class PartitionsResourceBinaryProduceTest
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
         // null offsets triggers a generic exception
-        Response
-            rawResponse =
-            produceToPartition(topicName, 0, mediatype.header, requestMediatype,
+        Response rawResponse = produceToPartition(topicName, 0, mediatype.header, requestMediatype,
                                EmbeddedFormat.BINARY,
                                produceRecordsWithKeys, null);
         assertErrorResponse(

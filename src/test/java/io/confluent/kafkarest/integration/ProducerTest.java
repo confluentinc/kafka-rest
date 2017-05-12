@@ -158,7 +158,7 @@ public class ProducerTest extends AbstractProducerTest {
     ProducerPool pool = new ProducerPool(this.restConfig, this.brokerList, overrides);
 
     sawCallback = false;
-    pool.produce(topicName, 0, EmbeddedFormat.BINARY, null,
+    pool.produce(topicName, 0, EmbeddedFormat.BINARY, null, null,
                  Arrays.asList(new BinaryProduceRecord("data".getBytes())),
                  new ProducerPool.ProduceRequestCallback() {
                    @Override
