@@ -19,6 +19,8 @@ package io.confluent.kafkarest.entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
@@ -42,18 +44,6 @@ public abstract class ConsumerRecord<K, V> {
     this.value = value;
     this.partition = partition;
     this.offset = offset;
-  }
-
-
-  public ConsumerRecord(K key, V value, int partition, long offset) {
-    this.key = key;
-    this.value = value;
-    this.partition = partition;
-    this.offset = offset;
-  }
-
-  public ConsumerRecord(int partition, long offset) {
-    this(null, null, partition, offset);
   }
 
   @JsonProperty
@@ -124,31 +114,17 @@ public abstract class ConsumerRecord<K, V> {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
-    ConsumerRecord that = (ConsumerRecord) o;
-
-    if (offset != that.offset) {
-      return false;
-    }
-    if (partition != that.partition) {
-      return false;
-    }
-    if (key != null ? !key.equals(that.key) : that.key != null) {
-      return false;
-    }
-    if (value != null ? !value.equals(that.value) : that.value != null) {
-      return false;
-    }
-
-    return true;
+    ConsumerRecord<?, ?> that = (ConsumerRecord<?, ?>) o;
+    return partition == that.partition
+           && offset == that.offset
+           && Objects.equals(topic, that.topic)
+           && Objects.equals(key, that.key)
+           && Objects.equals(value, that.value);
   }
 
   @Override
   public int hashCode() {
-    int result = key != null ? key.hashCode() : 0;
-    result = 31 * result + (value != null ? value.hashCode() : 0);
-    result = 31 * result + partition;
-    result = 31 * result + (int) (offset ^ (offset >>> 32));
-    return result;
+    return Objects.hash(topic, key, value, partition, offset);
   }
+
 }

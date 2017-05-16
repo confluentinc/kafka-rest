@@ -51,8 +51,12 @@ public class BinaryConsumerState extends ConsumerState<byte[], byte[], byte[], b
       MessageAndMetadata<byte[], byte[]> msg) {
     long approxSize = (msg.key() != null ? msg.key().length : 0)
                       + (msg.message() != null ? msg.message().length : 0);
-    return new ConsumerRecordAndSize<byte[], byte[]>(
-        new BinaryConsumerRecord(msg.key(), msg.message(), msg.partition(), msg.offset()),
+    return new ConsumerRecordAndSize<>(
+        new BinaryConsumerRecord(msg.topic(),
+                                 msg.key(),
+                                 msg.message(),
+                                 msg.partition(),
+                                 msg.offset()),
         approxSize);
   }
 

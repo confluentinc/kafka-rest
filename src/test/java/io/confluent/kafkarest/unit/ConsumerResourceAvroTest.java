@@ -53,13 +53,13 @@ public class ConsumerResourceAvroTest extends AbstractConsumerResourceTest {
   public void testReadCommit() {
     List<? extends ConsumerRecord<JsonNode, JsonNode>> expectedReadLimit = Arrays.asList(
         new AvroConsumerRecord(
-            TestUtils.jsonTree("\"key1\""), TestUtils.jsonTree("\"value1\""), 0, 10)
+            topicName, TestUtils.jsonTree("\"key1\""), TestUtils.jsonTree("\"value1\""), 0, 10)
     );
     List<? extends ConsumerRecord<JsonNode, JsonNode>> expectedReadNoLimit = Arrays.asList(
         new AvroConsumerRecord(
-            TestUtils.jsonTree("\"key2\""), TestUtils.jsonTree("\"value2\""), 1, 15),
+            topicName, TestUtils.jsonTree("\"key2\""), TestUtils.jsonTree("\"value2\""), 1, 15),
         new AvroConsumerRecord(
-            TestUtils.jsonTree("\"key3\""), TestUtils.jsonTree("\"value3\""), 2, 20)
+            topicName, TestUtils.jsonTree("\"key3\""), TestUtils.jsonTree("\"value3\""), 2, 20)
     );
     List<TopicPartitionOffset> expectedOffsets = Arrays.asList(
         new TopicPartitionOffset(topicName, 0, 10, 10),

@@ -73,8 +73,8 @@ public class JsonConsumerState extends ConsumerState<byte[], byte[], Object, Obj
       value = deserialize(msg.message());
     }
 
-    return new ConsumerRecordAndSize<Object, Object>(
-        new JsonConsumerRecord(key, value, msg.partition(), msg.offset()),
+    return new ConsumerRecordAndSize<>(
+        new JsonConsumerRecord(msg.topic(), key, value, msg.partition(), msg.offset()),
         approxSize
     );
   }

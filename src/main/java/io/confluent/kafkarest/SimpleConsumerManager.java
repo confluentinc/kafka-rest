@@ -221,8 +221,12 @@ public class SimpleConsumerManager {
             0,
             TimestampType.CREATE_TIME
         );
-    return new BinaryConsumerRecord(messageAndMetadata.key(), messageAndMetadata.message(),
-                                    partitionId, messageAndOffset.offset()
+    return new BinaryConsumerRecord(
+        topicName,
+        messageAndMetadata.key(),
+        messageAndMetadata.message(),
+        partitionId,
+        messageAndOffset.offset()
     );
   }
 
@@ -243,9 +247,11 @@ public class SimpleConsumerManager {
             TimestampType.CREATE_TIME
         );
     return new AvroConsumerRecord(
+        topicName,
         AvroConverter.toJson(messageAndMetadata.key()).json,
         AvroConverter.toJson(messageAndMetadata.message()).json,
-        partitionId, messageAndOffset.offset()
+        partitionId,
+        messageAndOffset.offset()
     );
   }
 
@@ -267,6 +273,7 @@ public class SimpleConsumerManager {
             TimestampType.CREATE_TIME
         );
     return new JsonConsumerRecord(
+        topicName,
         messageAndMetadata.key(),
         messageAndMetadata.message(),
         partitionId,
