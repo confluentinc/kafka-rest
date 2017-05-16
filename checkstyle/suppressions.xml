@@ -35,4 +35,8 @@
             checks="(NPathComplexity)"
             files="(AvroRestProducer|ConsumerInstanceConfig|ConsumerManager|KafkaConsumerManager|PartitionOffset).java"
     />
+    <suppress
+            checks="(MethodLength)"
+            files="(KafkaRestConfig).java"
+    />
 </suppressions>

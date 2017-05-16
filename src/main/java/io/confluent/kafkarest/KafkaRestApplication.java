@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,14 +69,15 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
    * Helper that does normal setup, but uses injected components so their configs or implementations
    * can be customized for testing. This only exists to support TestKafkaRestApplication
    */
-  protected void setupInjectedResources(Configurable<?> config, KafkaRestConfig appConfig,
-                                        ZkUtils zkUtils, MetadataObserver mdObserver,
-                                        ProducerPool producerPool,
-                                        ConsumerManager consumerManager,
-                                        SimpleConsumerFactory simpleConsumerFactory,
-                                        SimpleConsumerManager simpleConsumerManager,
-                                        KafkaConsumerManager kafkaConsumerManager) {
-
+  protected void setupInjectedResources(
+      Configurable<?> config, KafkaRestConfig appConfig,
+      ZkUtils zkUtils, MetadataObserver mdObserver,
+      ProducerPool producerPool,
+      ConsumerManager consumerManager,
+      SimpleConsumerFactory simpleConsumerFactory,
+      SimpleConsumerManager simpleConsumerManager,
+      KafkaConsumerManager kafkaConsumerManager
+  ) {
     config.register(new ZkExceptionMapper(appConfig));
 
     DefaultContextProvider.initializeDefaultContext(zkUtils, appConfig, mdObserver, producerPool,
@@ -102,6 +103,5 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
       restResourceExtension.clean();
     }
     DefaultContextProvider.clean();
-
   }
 }
