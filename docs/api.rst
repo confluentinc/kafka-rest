@@ -2440,12 +2440,14 @@ error.
           "value": "Y29uZmx1ZW50",
           "partition": 1,
           "offset": 100,
+          "topic": "test_topic"
         },
         {
           "key": "a2V5",
           "value": "a2Fma2E=",
           "partition": 2,
           "offset": 101,
+          "topic": "test_topic"
         }
       ]
 
@@ -2473,6 +2475,7 @@ error.
           },
           "partition": 1,
           "offset": 100,
+          "topic": "test_avro_topic"
         },
         {
           "key": 2,
@@ -2482,6 +2485,7 @@ error.
           },
           "partition": 2,
           "offset": 101,
+          "topic": "test_avro_topic"
         }
       ]
 
@@ -2506,12 +2510,14 @@ error.
           "value": {"foo":"bar"},
           "partition": 1,
           "offset": 10,
+          "topic": "test_json_topic"
         },
         {
           "key": "somekey",
           "value": ["foo", "bar"],
           "partition": 2,
           "offset": 11,
+          "topic": "test_json_topic"
         }
       ]
 

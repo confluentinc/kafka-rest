@@ -62,9 +62,13 @@ public class AvroConsumerState extends ConsumerState<Object, Object, JsonNode, J
       MessageAndMetadata<Object, Object> msg) {
     AvroConverter.JsonNodeAndSize keyNode = AvroConverter.toJson(msg.key());
     AvroConverter.JsonNodeAndSize valueNode = AvroConverter.toJson(msg.message());
-    return new ConsumerRecordAndSize<JsonNode, JsonNode>(
-        new AvroConsumerRecord(keyNode.json, valueNode.json, msg.partition(), msg.offset()),
-        keyNode.size + valueNode.size
+    return new ConsumerRecordAndSize<>(
+            new AvroConsumerRecord(msg.topic(),
+                                   keyNode.json,
+                                   valueNode.json,
+                                   msg.partition(),
+                                   msg.offset()),
+            keyNode.size + valueNode.size
     );
   }
 }
