@@ -22,14 +22,15 @@ import org.easymock.IAnswer;
 import org.easymock.IExpectationSetters;
 import org.junit.Before;
 
+import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.ConsumerState;
-import io.confluent.kafkarest.Context;
-import io.confluent.kafkarest.extension.ContextProviderFactoryBinder;
+import io.confluent.kafkarest.KafkaRestContext;
+import io.confluent.kafkarest.KafkaRestContextImpl;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
@@ -37,6 +38,7 @@ import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.extension.ContextInvocationHandler;
 import io.confluent.kafkarest.integration.TestContextProviderFilter;
 import io.confluent.kafkarest.resources.ConsumersResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
@@ -48,7 +50,7 @@ public class AbstractConsumerResourceTest
 
   protected MetadataObserver mdObserver;
   protected ConsumerManager consumerManager;
-  protected Context ctx;
+  protected KafkaRestContextImpl ctx;
 
   protected static final String groupName = "testgroup";
   protected static final String topicName = "testtopic";
@@ -62,11 +64,15 @@ public class AbstractConsumerResourceTest
   public AbstractConsumerResourceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     consumerManager = EasyMock.createMock(ConsumerManager.class);
-    ctx = new Context(config, mdObserver, null, consumerManager, null);
+    ctx = new KafkaRestContextImpl(config, mdObserver, null, consumerManager, null);
+    ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
+    KafkaRestContext contextProxy =
+        (KafkaRestContext) Proxy.newProxyInstance(KafkaRestContext.class.getClassLoader(), new
+            Class[]{KafkaRestContext
+                        .class}, contextInvocationHandler);
 
-    addResource(ConsumersResource.class);
+    addResource(new ConsumersResource(contextProxy));
     addResource(new TestContextProviderFilter(ctx));
-    addResource(new ContextProviderFactoryBinder());
   }
 
   @Before

@@ -18,7 +18,6 @@ package io.confluent.kafkarest.resources;
 
 import java.util.List;
 
-import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -37,7 +36,7 @@ import io.confluent.kafkarest.AvroConsumerState;
 import io.confluent.kafkarest.BinaryConsumerState;
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.ConsumerState;
-import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.JsonConsumerState;
 import io.confluent.kafkarest.UriUtils;
 import io.confluent.kafkarest.Versions;
@@ -56,11 +55,12 @@ import io.confluent.rest.annotations.PerformanceMetric;
 @Consumes({Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V1_JSON_JSON,
            Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
            Versions.GENERIC_REQUEST})
-@Singleton
 public class ConsumersResource {
 
+  private final KafkaRestContext ctx;
 
-  public ConsumersResource() {
+  public ConsumersResource(KafkaRestContext ctx) {
+    this.ctx = ctx;
   }
 
   @POST
@@ -68,8 +68,10 @@ public class ConsumersResource {
   @Path("/{group}")
   @PerformanceMetric("consumer.create")
   public CreateConsumerInstanceResponse createGroup(
-      @javax.ws.rs.core.Context UriInfo uriInfo, final @PathParam("group") String group,
-      @Valid ConsumerInstanceConfig config, @javax.ws.rs.core.Context Context ctx) {
+      @javax.ws.rs.core.Context UriInfo uriInfo,
+      final @PathParam("group") String group,
+      @Valid ConsumerInstanceConfig config
+  ) {
 
     if (config == null) {
       config = new ConsumerInstanceConfig();
@@ -83,10 +85,11 @@ public class ConsumersResource {
   @POST
   @Path("/{group}/instances/{instance}/offsets")
   @PerformanceMetric("consumer.commit")
-  public void commitOffsets(final @Suspended AsyncResponse asyncResponse,
-                            final @PathParam("group") String group,
-                            final @PathParam("instance") String instance,
-                            @javax.ws.rs.core.Context Context ctx) {
+  public void commitOffsets(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance
+  ) {
     ctx.getConsumerManager().commitOffsets(group, instance, new ConsumerManager.CommitCallback() {
       @Override
       public void onCompletion(List<TopicPartitionOffset> offsets, Exception e) {
@@ -102,9 +105,10 @@ public class ConsumersResource {
   @DELETE
   @Path("/{group}/instances/{instance}")
   @PerformanceMetric("consumer.delete")
-  public void deleteGroup(final @PathParam("group") String group,
-                          final @PathParam("instance") String instance,
-                          @javax.ws.rs.core.Context Context ctx) {
+  public void deleteGroup(
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance
+  ) {
     ctx.getConsumerManager().deleteConsumer(group, instance);
   }
 
@@ -115,41 +119,42 @@ public class ConsumersResource {
              Versions.KAFKA_V1_JSON_WEIGHTED,
              Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
              Versions.JSON_WEIGHTED})
-  public void readTopicBinary(final @Suspended AsyncResponse asyncResponse,
-                              final @PathParam("group") String group,
-                              final @PathParam("instance") String instance,
-                              final @PathParam("topic") String topic,
-                              @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes,
-                              @javax.ws.rs.core.Context Context ctx) {
-    readTopic(asyncResponse, group, instance, topic, maxBytes, BinaryConsumerState.class, ctx);
+  public void readTopicBinary(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      final @PathParam("topic") String topic,
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
+  ) {
+    readTopic(asyncResponse, group, instance, topic, maxBytes, BinaryConsumerState.class);
   }
 
   @GET
   @Path("/{group}/instances/{instance}/topics/{topic}")
   @PerformanceMetric("consumer.topic.read-json")
-  @Produces({Versions.KAFKA_V1_JSON_JSON_WEIGHTED_LOW})
-  // Using low weight ensures binary is default
-  public void readTopicJson(final @Suspended AsyncResponse asyncResponse,
-                            final @PathParam("group") String group,
-                            final @PathParam("instance") String instance,
-                            final @PathParam("topic") String topic,
-                            @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes,
-                            @javax.ws.rs.core.Context Context ctx) {
-    readTopic(asyncResponse, group, instance, topic, maxBytes, JsonConsumerState.class, ctx);
+  @Produces({Versions.KAFKA_V1_JSON_JSON_WEIGHTED_LOW})// Using low weight ensures binary is default
+  public void readTopicJson(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      final @PathParam("topic") String topic,
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
+  ) {
+    readTopic(asyncResponse, group, instance, topic, maxBytes, JsonConsumerState.class);
   }
 
   @GET
   @Path("/{group}/instances/{instance}/topics/{topic}")
   @PerformanceMetric("consumer.topic.read-avro")
-  @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW})
-  // Using low weight ensures binary is default
-  public void readTopicAvro(final @Suspended AsyncResponse asyncResponse,
-                            final @PathParam("group") String group,
-                            final @PathParam("instance") String instance,
-                            final @PathParam("topic") String topic,
-                            @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes,
-                            @javax.ws.rs.core.Context Context ctx) {
-    readTopic(asyncResponse, group, instance, topic, maxBytes, AvroConsumerState.class, ctx);
+  @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW})// Using low weight ensures binary is default
+  public void readTopicAvro(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      final @PathParam("topic") String topic,
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
+  ) {
+    readTopic(asyncResponse, group, instance, topic, maxBytes, AvroConsumerState.class);
   }
 
   private <KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> void readTopic(
@@ -159,7 +164,7 @@ public class ConsumersResource {
       final @PathParam("topic") String topic,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes,
       Class<? extends ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>>
-          consumerStateType, Context ctx
+          consumerStateType
   ) {
     maxBytes = (maxBytes <= 0) ? Long.MAX_VALUE : maxBytes;
     ctx.getConsumerManager().readTopic(

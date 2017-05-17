@@ -21,8 +21,9 @@ import org.apache.kafka.common.security.JaasUtils;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.confluent.kafkarest.ConsumerManager;
-import io.confluent.kafkarest.Context;
 import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.KafkaRestContext;
+import io.confluent.kafkarest.KafkaRestContextImpl;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.SimpleConsumerFactory;
@@ -30,11 +31,13 @@ import io.confluent.kafkarest.SimpleConsumerManager;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import kafka.utils.ZkUtils;
 
-public class DefaultContextProvider {
+public class KafkaRestContextProvider {
 
-  private static Context context = null;
+  private static KafkaRestContext context = null;
   private static ZkUtils defaultZkUtils = null;
   private static KafkaRestConfig defaultAppConfig = null;
+  private static final InheritableThreadLocal<KafkaRestContext> restContextInheritableThreadLocal =
+      new InheritableThreadLocal<>();
 
   private static AtomicBoolean initialized = new AtomicBoolean();
 
@@ -74,13 +77,14 @@ public class DefaultContextProvider {
       }
 
       defaultZkUtils = zkUtils;
-      context = new Context(appConfig, mdObserver, producerPool, consumerManager,
-                            simpleConsumerManager, kafkaConsumerManager);
+      context =
+          new KafkaRestContextImpl(appConfig, mdObserver, producerPool, consumerManager,
+                                   simpleConsumerManager, kafkaConsumerManager);
       defaultAppConfig = appConfig;
     }
   }
 
-  public static Context getDefaultContext() {
+  public static KafkaRestContext getDefaultContext() {
     return context;
   }
 
@@ -90,6 +94,14 @@ public class DefaultContextProvider {
 
   public static KafkaRestConfig getDefaultAppConfig() {
     return defaultAppConfig;
+  }
+
+  public static KafkaRestContext getCurrentContext() {
+    return restContextInheritableThreadLocal.get();
+  }
+
+  public static void setCurrentContext(KafkaRestContext kafkaRestContext) {
+    restContextInheritableThreadLocal.set(kafkaRestContext);
   }
 
   public static synchronized void clean() {

@@ -19,8 +19,6 @@ package io.confluent.kafkarest.unit;
 import io.confluent.kafkarest.*;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.extension.ContextProviderFactoryBinder;
-import io.confluent.kafkarest.integration.TestContextProviderFilter;
 import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
@@ -45,10 +43,9 @@ public class PartitionsResourceAbstractConsumeTest extends EmbeddedServerTestHar
     super();
     simpleConsumerManager = EasyMock.createMock(SimpleConsumerManager.class);
 
-    final Context ctx = new Context(config, null, null, null, simpleConsumerManager);
-    addResource(PartitionsResource.class);
-    addResource(new TestContextProviderFilter(ctx));
-    addResource(new ContextProviderFactoryBinder());
+    final KafkaRestContextImpl
+        ctx = new KafkaRestContextImpl(config, null, null, null, simpleConsumerManager);
+    addResource(new PartitionsResource(ctx));
   }
 
   protected void expectConsume(final EmbeddedFormat embeddedFormat,  final List<? extends ConsumerRecord> records) {

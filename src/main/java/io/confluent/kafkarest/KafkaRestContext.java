@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-package io.confluent.kafkarest.extension;
+package io.confluent.kafkarest;
 
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import io.confluent.kafkarest.v2.KafkaConsumerManager;
 
-import io.confluent.kafkarest.Context;
+public interface KafkaRestContext {
+  public KafkaRestConfig getConfig();
 
-public class ContextProviderFactoryBinder extends AbstractBinder {
+  public MetadataObserver getMetadataObserver();
 
-  @Override
-  protected void configure() {
-    bindFactory(ContextProviderFactory.class)
-        .to(Context.class);
-  }
+  public ProducerPool getProducerPool();
+
+  public ConsumerManager getConsumerManager();
+
+  public SimpleConsumerManager getSimpleConsumerManager();
+
+  public KafkaConsumerManager getKafkaConsumerManager();
 }

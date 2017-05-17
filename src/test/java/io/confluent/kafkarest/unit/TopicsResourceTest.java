@@ -15,8 +15,7 @@
  **/
 package io.confluent.kafkarest.unit;
 
-import io.confluent.kafkarest.Context;
-import io.confluent.kafkarest.extension.ContextProviderFactoryBinder;
+import io.confluent.kafkarest.KafkaRestContextImpl;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -26,7 +25,6 @@ import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
-import io.confluent.kafkarest.integration.TestContextProviderFilter;
 import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
@@ -49,16 +47,14 @@ public class TopicsResourceTest
 
   private MetadataObserver mdObserver;
   private ProducerPool producerPool;
-  private Context ctx;
+  private KafkaRestContextImpl ctx;
 
   public TopicsResourceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new Context(config, mdObserver, producerPool, null, null);
+    ctx = new KafkaRestContextImpl(config, mdObserver, producerPool, null, null);
 
-    addResource(TopicsResource.class);
-    addResource(new TestContextProviderFilter(ctx));
-    addResource(new ContextProviderFactoryBinder());
+    addResource(new TopicsResource(ctx));
   }
 
   @Before

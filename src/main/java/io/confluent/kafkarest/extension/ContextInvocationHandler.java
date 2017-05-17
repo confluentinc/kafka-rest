@@ -16,32 +16,28 @@
 
 package io.confluent.kafkarest.extension;
 
-import javax.inject.Inject;
-import javax.ws.rs.container.ContainerRequestContext;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
 
-import org.glassfish.hk2.api.Factory;
+import io.confluent.kafkarest.KafkaRestContext;
 
-import io.confluent.kafkarest.Context;
 
-public class ContextProviderFactory implements Factory<Context> {
+public class ContextInvocationHandler implements InvocationHandler {
 
-  private final ContainerRequestContext requestContext;
-
-  @Inject
-  public ContextProviderFactory(ContainerRequestContext context) {
-    this.requestContext = context;
+  public ContextInvocationHandler() {
   }
 
-  @Override
-  public Context provide() {
-    if (requestContext.getProperty("rest-proxy-context") != null) {
-      return (Context) requestContext.getProperty("rest-proxy-context");
+  private KafkaRestContext getContext() {
+    if (KafkaRestContextProvider.getCurrentContext() != null) {
+      return KafkaRestContextProvider.getCurrentContext();
     } else {
-      return DefaultContextProvider.getDefaultContext();
+      return KafkaRestContextProvider.getDefaultContext();
     }
   }
 
   @Override
-  public void dispose(Context t) {
+  public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    KafkaRestContext context = getContext();
+    return method.invoke(context, args);
   }
 }

@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 
-import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -34,7 +33,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 
-import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
@@ -55,26 +54,26 @@ import io.confluent.rest.annotations.PerformanceMetric;
            Versions.JSON_WEIGHTED, Versions.KAFKA_V2_JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
            Versions.GENERIC_REQUEST, Versions.KAFKA_V2_JSON})
-@Singleton
 public class TopicsResource {
 
   private static final Logger log = LoggerFactory.getLogger(TopicsResource.class);
 
+  private final KafkaRestContext ctx;
 
-  public TopicsResource() {
+  public TopicsResource(KafkaRestContext ctx) {
+    this.ctx = ctx;
   }
 
   @GET
   @PerformanceMetric("topics.list")
-  public Collection<String> list(@javax.ws.rs.core.Context Context ctx) {
+  public Collection<String> list() {
     return ctx.getMetadataObserver().getTopicNames();
   }
 
   @GET
   @Path("/{topic}")
   @PerformanceMetric("topic.get")
-  public Topic getTopic(@PathParam("topic") String topicName,
-                        @javax.ws.rs.core.Context Context ctx) {
+  public Topic getTopic(@PathParam("topic") String topicName) {
     Topic topic = ctx.getMetadataObserver().getTopic(topicName);
     if (topic == null) {
       throw Errors.topicNotFoundException();
@@ -88,32 +87,35 @@ public class TopicsResource {
   @Consumes({Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON,
              Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST,
              Versions.KAFKA_V2_JSON_BINARY, Versions.KAFKA_V2_JSON})
-  public void produceBinary(final @Suspended AsyncResponse asyncResponse,
-                            @PathParam("topic") String topicName,
-                            @Valid TopicProduceRequest<BinaryTopicProduceRecord> request,
-                            @javax.ws.rs.core.Context Context ctx) {
-    produce(asyncResponse, topicName, EmbeddedFormat.BINARY, request, ctx);
+  public void produceBinary(
+      final @Suspended AsyncResponse asyncResponse,
+      @PathParam("topic") String topicName,
+      @Valid TopicProduceRequest<BinaryTopicProduceRecord> request
+  ) {
+    produce(asyncResponse, topicName, EmbeddedFormat.BINARY, request);
   }
 
   @POST
   @Path("/{topic}")
   @PerformanceMetric("topic.produce-json")
   @Consumes({Versions.KAFKA_V1_JSON_JSON, Versions.KAFKA_V2_JSON_JSON})
-  public void produceJson(final @Suspended AsyncResponse asyncResponse,
-                          @PathParam("topic") String topicName,
-                          @Valid TopicProduceRequest<JsonTopicProduceRecord> request,
-                          @javax.ws.rs.core.Context Context ctx) {
-    produce(asyncResponse, topicName, EmbeddedFormat.JSON, request, ctx);
+  public void produceJson(
+      final @Suspended AsyncResponse asyncResponse,
+      @PathParam("topic") String topicName,
+      @Valid TopicProduceRequest<JsonTopicProduceRecord> request
+  ) {
+    produce(asyncResponse, topicName, EmbeddedFormat.JSON, request);
   }
 
   @POST
   @Path("/{topic}")
   @PerformanceMetric("topic.produce-avro")
   @Consumes({Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V2_JSON_AVRO})
-  public void produceAvro(final @Suspended AsyncResponse asyncResponse,
-                          @PathParam("topic") String topicName,
-                          @Valid TopicProduceRequest<AvroTopicProduceRecord> request,
-                          @javax.ws.rs.core.Context Context ctx) {
+  public void produceAvro(
+      final @Suspended AsyncResponse asyncResponse,
+      @PathParam("topic") String topicName,
+      @Valid TopicProduceRequest<AvroTopicProduceRecord> request
+  ) {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
     boolean hasKeys = false;
@@ -129,16 +131,18 @@ public class TopicsResource {
       throw Errors.valueSchemaMissingException();
     }
 
-    produce(asyncResponse, topicName, EmbeddedFormat.AVRO, request, ctx);
+    produce(asyncResponse, topicName, EmbeddedFormat.AVRO, request);
   }
 
   public <K, V, R extends TopicProduceRecord<K, V>> void produce(
       final AsyncResponse asyncResponse,
       final String topicName,
       final EmbeddedFormat format,
-      final TopicProduceRequest<R> request, Context ctx) {
+      final TopicProduceRequest<R> request
+  ) {
     log.trace("Executing topic produce request id={} topic={} format={} request={}",
-              asyncResponse, topicName, format, request);
+              asyncResponse, topicName, format, request
+    );
     ctx.getProducerPool().produce(
         topicName, null, format,
         request,
@@ -166,7 +170,8 @@ public class TopicsResource {
             response.setKeySchemaId(keySchemaId);
             response.setValueSchemaId(valueSchemaId);
             log.trace("Completed topic produce request id={} response={}",
-                      asyncResponse, response);
+                      asyncResponse, response
+            );
             asyncResponse.resume(response);
           }
         }

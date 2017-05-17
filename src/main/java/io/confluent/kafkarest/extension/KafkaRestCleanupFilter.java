@@ -14,27 +14,23 @@
  * limitations under the License.
  */
 
-package io.confluent.kafkarest.integration;
+package io.confluent.kafkarest.extension;
 
 import java.io.IOException;
 
+import javax.inject.Singleton;
 import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.ContainerResponseContext;
+import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.ext.Provider;
 
-import io.confluent.kafkarest.KafkaRestContextImpl;
-import io.confluent.kafkarest.extension.KafkaRestContextProvider;
-
 @Provider
-public class TestContextProviderFilter implements ContainerRequestFilter {
-  KafkaRestContextImpl ctx;
-
-  public TestContextProviderFilter(KafkaRestContextImpl ctx){
-    this.ctx= ctx;
-  }
+@Singleton
+public class KafkaRestCleanupFilter implements ContainerResponseFilter {
 
   @Override
-  public void filter(ContainerRequestContext requestContext) throws IOException {
-    KafkaRestContextProvider.setCurrentContext(ctx);
+  public void filter(ContainerRequestContext requestContext,
+                     ContainerResponseContext responseContext) throws IOException {
+    KafkaRestContextProvider.setCurrentContext(null);
   }
 }

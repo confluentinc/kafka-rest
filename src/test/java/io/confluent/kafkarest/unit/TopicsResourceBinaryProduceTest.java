@@ -33,8 +33,7 @@ import java.util.List;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
-import io.confluent.kafkarest.Context;
-import io.confluent.kafkarest.extension.ContextProviderFactoryBinder;
+import io.confluent.kafkarest.KafkaRestContextImpl;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -50,7 +49,6 @@ import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.SchemaHolder;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
-import io.confluent.kafkarest.integration.TestContextProviderFilter;
 import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
@@ -66,7 +64,7 @@ public class TopicsResourceBinaryProduceTest
 
   private MetadataObserver mdObserver;
   private ProducerPool producerPool;
-  private Context ctx;
+  private KafkaRestContextImpl ctx;
 
   private static final String topicName = "topic1";
 
@@ -90,11 +88,9 @@ public class TopicsResourceBinaryProduceTest
   public TopicsResourceBinaryProduceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new Context(config, mdObserver, producerPool, null, null);
+    ctx = new KafkaRestContextImpl(config, mdObserver, producerPool, null, null);
 
-    addResource(TopicsResource.class);
-    addResource(new TestContextProviderFilter(ctx));
-    addResource(new ContextProviderFactoryBinder());
+    addResource(new TopicsResource(ctx));
 
     produceRecordsOnlyValues = Arrays.asList(
         new BinaryTopicProduceRecord("value".getBytes()),

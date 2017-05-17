@@ -25,15 +25,13 @@ import java.util.List;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 
-import io.confluent.kafkarest.Context;
-import io.confluent.kafkarest.extension.ContextProviderFactoryBinder;
+import io.confluent.kafkarest.KafkaRestContextImpl;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.BrokerList;
-import io.confluent.kafkarest.integration.TestContextProviderFilter;
 import io.confluent.kafkarest.resources.BrokersResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
@@ -46,15 +44,13 @@ public class BrokersResourceTest
 
   private MetadataObserver mdObserver;
   private ProducerPool producerPool;
-  private Context ctx;
+  private KafkaRestContextImpl ctx;
 
   public BrokersResourceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new Context(config, mdObserver, producerPool, null, null);
-    addResource(BrokersResource.class);
-    addResource(new TestContextProviderFilter(ctx));
-    addResource(new ContextProviderFactoryBinder());
+    ctx = new KafkaRestContextImpl(config, mdObserver, producerPool, null, null);
+    addResource(new BrokersResource(ctx));
   }
 
   @Before

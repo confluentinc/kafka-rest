@@ -16,12 +16,15 @@
 
 package io.confluent.kafkarest;
 
+import java.lang.reflect.Proxy;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.ws.rs.core.Configurable;
 
-import io.confluent.kafkarest.extension.ContextProviderFactoryBinder;
-import io.confluent.kafkarest.extension.DefaultContextProvider;
+import io.confluent.kafkarest.extension.ContextInvocationHandler;
+import io.confluent.kafkarest.extension.KafkaRestCleanupFilter;
+import io.confluent.kafkarest.extension.KafkaRestContextProvider;
 import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.kafkarest.exceptions.ZkExceptionMapper;
@@ -79,21 +82,30 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
     config.register(new ZkExceptionMapper(appConfig));
 
-    DefaultContextProvider.initializeDefaultContext(zkUtils, appConfig, mdObserver, producerPool,
-                                                    consumerManager, simpleConsumerFactory,
-                                                    simpleConsumerManager, kafkaConsumerManager);
+    KafkaRestContextProvider.initializeDefaultContext(zkUtils, appConfig, mdObserver, producerPool,
+                                                      consumerManager, simpleConsumerFactory,
+                                                      simpleConsumerManager, kafkaConsumerManager);
+    ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
+    KafkaRestContext context =
+        (KafkaRestContext) Proxy.newProxyInstance(KafkaRestContext.class.getClassLoader(), new
+            Class[]{KafkaRestContext
+            .class}, contextInvocationHandler);
     config.register(RootResource.class);
-    config.register(BrokersResource.class);
-    config.register(TopicsResource.class);
-    config.register(PartitionsResource.class);
-    config.register(ConsumersResource.class);
-    config.register(io.confluent.kafkarest.resources.v2.ConsumersResource.class);
-    config.register(io.confluent.kafkarest.resources.v2.PartitionsResource.class);
-    config.register(new ContextProviderFactoryBinder());
+    config.register(new BrokersResource(context));
+    config.register(new TopicsResource(context));
+    config.register(new PartitionsResource(context));
+    config.register(new ConsumersResource(context));
+    config.register(new io.confluent.kafkarest.resources.v2.ConsumersResource(context));
+    config.register(new io.confluent.kafkarest.resources.v2.PartitionsResource(context));
+    config.register(KafkaRestCleanupFilter.class);
+
+    Set<Object> objectSet = config.getConfiguration().getInstances();
 
     if (restResourceExtension != null) {
       restResourceExtension.register(config, appConfig);
     }
+
+
   }
 
   @Override
@@ -101,7 +113,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     if (restResourceExtension != null) {
       restResourceExtension.clean();
     }
-    DefaultContextProvider.clean();
+    KafkaRestContextProvider.clean();
 
   }
 }

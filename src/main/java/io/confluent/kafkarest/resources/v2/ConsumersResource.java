@@ -18,7 +18,6 @@ package io.confluent.kafkarest.resources.v2;
 
 import java.util.List;
 
-import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -33,7 +32,7 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.UriInfo;
 
-import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.UriUtils;
 import io.confluent.kafkarest.Versions;
@@ -74,10 +73,12 @@ import io.confluent.rest.annotations.PerformanceMetric;
         Versions.KAFKA_V2_JSON_JSON,
         Versions.KAFKA_V2_JSON
     })
-@Singleton
 public class ConsumersResource {
 
-  public ConsumersResource() {
+  private final KafkaRestContext ctx;
+
+  public ConsumersResource(KafkaRestContext ctx) {
+    this.ctx = ctx;
   }
 
   @POST
@@ -85,9 +86,10 @@ public class ConsumersResource {
   @Path("/{group}")
   @PerformanceMetric("consumer.create+v2")
   public CreateConsumerInstanceResponse createGroup(
-      @javax.ws.rs.core.Context UriInfo uriInfo, final @PathParam("group") String group,
-      @Valid ConsumerInstanceConfig config,
-      @javax.ws.rs.core.Context Context ctx) {
+      @javax.ws.rs.core.Context UriInfo uriInfo,
+      final @PathParam("group") String group,
+      @Valid ConsumerInstanceConfig config
+  ) {
     if (config == null) {
       config = new ConsumerInstanceConfig();
     }
@@ -100,20 +102,22 @@ public class ConsumersResource {
   @DELETE
   @Path("/{group}/instances/{instance}")
   @PerformanceMetric("consumer.delete+v2")
-  public void deleteGroup(final @PathParam("group") String group,
-                          final @PathParam("instance") String instance,
-                          @javax.ws.rs.core.Context Context ctx) {
+  public void deleteGroup(
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance
+  ) {
     ctx.getKafkaConsumerManager().deleteConsumer(group, instance);
   }
 
   @POST
   @Path("/{group}/instances/{instance}/subscription")
   @PerformanceMetric("consumer.subscribe+v2")
-  public void subscribe(@javax.ws.rs.core.Context UriInfo uriInfo,
-                        final @PathParam("group") String group,
-                        final @PathParam("instance") String instance,
-                        @Valid ConsumerSubscriptionRecord subscription,
-                        @javax.ws.rs.core.Context Context ctx) {
+  public void subscribe(
+      @javax.ws.rs.core.Context UriInfo uriInfo,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      @Valid ConsumerSubscriptionRecord subscription
+  ) {
     try {
       ctx.getKafkaConsumerManager().subscribe(group, instance, subscription);
     } catch (java.lang.IllegalStateException e) {
@@ -125,20 +129,22 @@ public class ConsumersResource {
   @GET
   @Path("/{group}/instances/{instance}/subscription")
   @PerformanceMetric("consumer.subscription+v2")
-  public ConsumerSubscriptionResponse subscription(@javax.ws.rs.core.Context UriInfo uriInfo,
-                                                   final @PathParam("group") String group,
-                                                   final @PathParam("instance") String instance,
-                                                   @javax.ws.rs.core.Context Context ctx) {
+  public ConsumerSubscriptionResponse subscription(
+      @javax.ws.rs.core.Context UriInfo uriInfo,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance
+  ) {
     return ctx.getKafkaConsumerManager().subscription(group, instance);
   }
 
   @DELETE
   @Path("/{group}/instances/{instance}/subscription")
   @PerformanceMetric("consumer.unsubscribe+v2")
-  public void unsubscribe(@javax.ws.rs.core.Context UriInfo uriInfo,
-                          final @PathParam("group") String group,
-                          final @PathParam("instance") String instance,
-                          @javax.ws.rs.core.Context Context ctx) {
+  public void unsubscribe(
+      @javax.ws.rs.core.Context UriInfo uriInfo,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance
+  ) {
     ctx.getKafkaConsumerManager().unsubscribe(group, instance);
   }
 
@@ -147,14 +153,14 @@ public class ConsumersResource {
   @PerformanceMetric("consumer.records.read-binary+v2")
   @Produces({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED,
              Versions.KAFKA_V2_JSON_WEIGHTED})
-  public void readRecordBinary(final @Suspended AsyncResponse asyncResponse,
-                               final @PathParam("group") String group,
-                               final @PathParam("instance") String instance,
-                               @QueryParam("timeout") @DefaultValue("-1") long timeout,
-                               @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes,
-                               @javax.ws.rs.core.Context Context ctx) {
-    readRecords(asyncResponse, group, instance, timeout, maxBytes, BinaryKafkaConsumerState
-        .class, ctx);
+  public void readRecordBinary(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      @QueryParam("timeout") @DefaultValue("-1") long timeout,
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
+  ) {
+    readRecords(asyncResponse, group, instance, timeout, maxBytes, BinaryKafkaConsumerState.class);
   }
 
   @GET
@@ -162,14 +168,14 @@ public class ConsumersResource {
   @PerformanceMetric("consumer.records.read-json+v2")
   @Produces({Versions.KAFKA_V2_JSON_JSON_WEIGHTED_LOW})
   // Using low weight ensures binary is default
-  public void readRecordJson(final @Suspended AsyncResponse asyncResponse,
-                             final @PathParam("group") String group,
-                             final @PathParam("instance") String instance,
-                             @QueryParam("timeout") @DefaultValue("-1") long timeout,
-                             @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes,
-                             @javax.ws.rs.core.Context Context ctx) {
-    readRecords(asyncResponse, group, instance, timeout, maxBytes, JsonKafkaConsumerState.class,
-                ctx);
+  public void readRecordJson(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      @QueryParam("timeout") @DefaultValue("-1") long timeout,
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
+  ) {
+    readRecords(asyncResponse, group, instance, timeout, maxBytes, JsonKafkaConsumerState.class);
   }
 
   @GET
@@ -177,14 +183,14 @@ public class ConsumersResource {
   @PerformanceMetric("consumer.records.read-avro+v2")
   @Produces({Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW})
   // Using low weight ensures binary is default
-  public void readRecordAvro(final @Suspended AsyncResponse asyncResponse,
-                             final @PathParam("group") String group,
-                             final @PathParam("instance") String instance,
-                             @QueryParam("timeout") @DefaultValue("-1") long timeout,
-                             @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes,
-                             @javax.ws.rs.core.Context Context ctx) {
-    readRecords(asyncResponse, group, instance, timeout, maxBytes, AvroKafkaConsumerState.class,
-                ctx);
+  public void readRecordAvro(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      @QueryParam("timeout") @DefaultValue("-1") long timeout,
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
+  ) {
+    readRecords(asyncResponse, group, instance, timeout, maxBytes, AvroKafkaConsumerState.class);
   }
 
   @POST
@@ -195,8 +201,7 @@ public class ConsumersResource {
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
       @QueryParam("async") @DefaultValue("false") String async,
-      @Valid ConsumerOffsetCommitRequest offsetCommitRequest,
-      @javax.ws.rs.core.Context Context ctx
+      @Valid ConsumerOffsetCommitRequest offsetCommitRequest
   ) {
     ctx.getKafkaConsumerManager().commitOffsets(
         group,
@@ -225,8 +230,8 @@ public class ConsumersResource {
   public ConsumerCommittedResponse committedOffsets(
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @Valid ConsumerCommittedRequest request,
-      @javax.ws.rs.core.Context Context ctx) {
+      @Valid ConsumerCommittedRequest request
+  ) {
     if (request == null) {
       throw Errors.partitionNotFoundException();
     }
@@ -236,11 +241,12 @@ public class ConsumersResource {
   @POST
   @Path("/{group}/instances/{instance}/positions/beginning")
   @PerformanceMetric("consumer.seek-to-beginning+v2")
-  public void seekToBeginning(@javax.ws.rs.core.Context UriInfo uriInfo,
-                              final @PathParam("group") String group,
-                              final @PathParam("instance") String instance,
-                              @Valid ConsumerSeekToRequest seekToRequest,
-                              @javax.ws.rs.core.Context Context ctx) {
+  public void seekToBeginning(
+      @javax.ws.rs.core.Context UriInfo uriInfo,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      @Valid ConsumerSeekToRequest seekToRequest
+  ) {
     try {
       ctx.getKafkaConsumerManager().seekToBeginning(group, instance, seekToRequest);
     } catch (java.lang.IllegalStateException e) {
@@ -251,11 +257,12 @@ public class ConsumersResource {
   @POST
   @Path("/{group}/instances/{instance}/positions/end")
   @PerformanceMetric("consumer.seek-to-end+v2")
-  public void seekToEnd(@javax.ws.rs.core.Context UriInfo uriInfo,
-                        final @PathParam("group") String group,
-                        final @PathParam("instance") String instance,
-                        @Valid ConsumerSeekToRequest seekToRequest,
-                        @javax.ws.rs.core.Context Context ctx) {
+  public void seekToEnd(
+      @javax.ws.rs.core.Context UriInfo uriInfo,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      @Valid ConsumerSeekToRequest seekToRequest
+  ) {
     try {
       ctx.getKafkaConsumerManager().seekToEnd(group, instance, seekToRequest);
     } catch (java.lang.IllegalStateException e) {
@@ -266,11 +273,12 @@ public class ConsumersResource {
   @POST
   @Path("/{group}/instances/{instance}/positions")
   @PerformanceMetric("consumer.seek-to-offset+v2")
-  public void seekToOffset(@javax.ws.rs.core.Context UriInfo uriInfo,
-                           final @PathParam("group") String group,
-                           final @PathParam("instance") String instance,
-                           @Valid ConsumerSeekToOffsetRequest seekToOffsetRequest,
-                           @javax.ws.rs.core.Context Context ctx) {
+  public void seekToOffset(
+      @javax.ws.rs.core.Context UriInfo uriInfo,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      @Valid ConsumerSeekToOffsetRequest seekToOffsetRequest
+  ) {
     try {
       ctx.getKafkaConsumerManager().seekToOffset(group, instance, seekToOffsetRequest);
     } catch (java.lang.IllegalStateException e) {
@@ -281,11 +289,12 @@ public class ConsumersResource {
   @POST
   @Path("/{group}/instances/{instance}/assignments")
   @PerformanceMetric("consumer.assign+v2")
-  public void assign(@javax.ws.rs.core.Context UriInfo uriInfo,
-                     final @PathParam("group") String group,
-                     final @PathParam("instance") String instance,
-                     @Valid ConsumerAssignmentRequest assignmentRequest,
-                     @javax.ws.rs.core.Context Context ctx) {
+  public void assign(
+      @javax.ws.rs.core.Context UriInfo uriInfo,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      @Valid ConsumerAssignmentRequest assignmentRequest
+  ) {
     try {
       ctx.getKafkaConsumerManager().assign(group, instance, assignmentRequest);
     } catch (java.lang.IllegalStateException e) {
@@ -296,10 +305,11 @@ public class ConsumersResource {
   @GET
   @Path("/{group}/instances/{instance}/assignments")
   @PerformanceMetric("consumer.assignment+v2")
-  public ConsumerAssignmentResponse assignment(@javax.ws.rs.core.Context UriInfo uriInfo,
-                                               final @PathParam("group") String group,
-                                               final @PathParam("instance") String instance,
-                                               @javax.ws.rs.core.Context Context ctx) {
+  public ConsumerAssignmentResponse assignment(
+      @javax.ws.rs.core.Context UriInfo uriInfo,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance
+  ) {
     return ctx.getKafkaConsumerManager().assignment(group, instance);
   }
 
@@ -310,8 +320,8 @@ public class ConsumersResource {
       @QueryParam("timeout") @DefaultValue("-1") long timeout,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes,
       Class<? extends KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>>
-          consumerStateType,
-      final Context ctx) {
+          consumerStateType
+  ) {
     maxBytes = (maxBytes <= 0) ? Long.MAX_VALUE : maxBytes;
 
     ctx.getKafkaConsumerManager().readRecords(
