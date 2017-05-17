@@ -18,7 +18,6 @@ package io.confluent.kafkarest;
 
 import java.lang.reflect.Proxy;
 import java.util.Properties;
-import java.util.Set;
 
 import javax.ws.rs.core.Configurable;
 
@@ -72,14 +71,15 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
    * Helper that does normal setup, but uses injected components so their configs or implementations
    * can be customized for testing. This only exists to support TestKafkaRestApplication
    */
-  protected void setupInjectedResources(Configurable<?> config, KafkaRestConfig appConfig,
-                                        ZkUtils zkUtils, MetadataObserver mdObserver,
-                                        ProducerPool producerPool,
-                                        ConsumerManager consumerManager,
-                                        SimpleConsumerFactory simpleConsumerFactory,
-                                        SimpleConsumerManager simpleConsumerManager,
-                                        KafkaConsumerManager kafkaConsumerManager) {
-
+  protected void setupInjectedResources(
+      Configurable<?> config, KafkaRestConfig appConfig,
+      ZkUtils zkUtils, MetadataObserver mdObserver,
+      ProducerPool producerPool,
+      ConsumerManager consumerManager,
+      SimpleConsumerFactory simpleConsumerFactory,
+      SimpleConsumerManager simpleConsumerManager,
+      KafkaConsumerManager kafkaConsumerManager
+  ) {
     config.register(new ZkExceptionMapper(appConfig));
 
     KafkaRestContextProvider.initializeDefaultContext(zkUtils, appConfig, mdObserver, producerPool,
@@ -99,13 +99,9 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new io.confluent.kafkarest.resources.v2.PartitionsResource(context));
     config.register(KafkaRestCleanupFilter.class);
 
-    Set<Object> objectSet = config.getConfiguration().getInstances();
-
     if (restResourceExtension != null) {
       restResourceExtension.register(config, appConfig);
     }
-
-
   }
 
   @Override
@@ -114,6 +110,5 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
       restResourceExtension.clean();
     }
     KafkaRestContextProvider.clean();
-
   }
 }
