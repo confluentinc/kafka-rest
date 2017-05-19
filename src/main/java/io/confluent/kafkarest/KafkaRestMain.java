@@ -56,18 +56,7 @@ public class KafkaRestMain {
         exception for incorrect Class args with appropriate message*/
       KafkaRestConfig config = new KafkaRestConfig((args.length > 0 ? args[0] : null));
 
-      RestResourceExtension restResourceExtension = null;
-      String extensionClassName = config.getString(KafkaRestConfig
-                                                       .KAFKA_REST_RESOURCE_EXTENSION_CONFIG);
-      if (StringUtil.isNotBlank(extensionClassName)) {
-        Class<RestResourceExtension>
-            restResourceExtensionClass =
-            (Class<RestResourceExtension>) Class.forName(extensionClassName);
-
-        restResourceExtension = restResourceExtensionClass.newInstance();
-
-      }
-      KafkaRestApplication app = new KafkaRestApplication(config, restResourceExtension);
+      KafkaRestApplication app = new KafkaRestApplication(config);
       app.start();
       log.info("Server started, listening for requests...");
       app.join();

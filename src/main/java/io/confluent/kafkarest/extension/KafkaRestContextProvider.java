@@ -104,6 +104,10 @@ public class KafkaRestContextProvider {
     restContextInheritableThreadLocal.set(kafkaRestContext);
   }
 
+  public static void clearCurrentContext() {
+    restContextInheritableThreadLocal.remove();
+  }
+
   public static synchronized void clean() {
     context.getConsumerManager().shutdown();
     context.getProducerPool().shutdown();

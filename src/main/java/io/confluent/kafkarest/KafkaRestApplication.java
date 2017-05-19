@@ -16,22 +16,24 @@
 
 package io.confluent.kafkarest;
 
+import org.eclipse.jetty.util.StringUtil;
+
 import java.lang.reflect.Proxy;
 import java.util.Properties;
 
 import javax.ws.rs.core.Configurable;
 
+import io.confluent.kafkarest.exceptions.ZkExceptionMapper;
 import io.confluent.kafkarest.extension.ContextInvocationHandler;
 import io.confluent.kafkarest.extension.KafkaRestCleanupFilter;
 import io.confluent.kafkarest.extension.KafkaRestContextProvider;
 import io.confluent.kafkarest.extension.RestResourceExtension;
-import io.confluent.kafkarest.v2.KafkaConsumerManager;
-import io.confluent.kafkarest.exceptions.ZkExceptionMapper;
 import io.confluent.kafkarest.resources.BrokersResource;
 import io.confluent.kafkarest.resources.ConsumersResource;
 import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.kafkarest.resources.RootResource;
 import io.confluent.kafkarest.resources.TopicsResource;
+import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.rest.Application;
 import io.confluent.rest.RestConfigException;
 import kafka.utils.ZkUtils;
@@ -52,15 +54,22 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     super(new KafkaRestConfig(props));
   }
 
-  public KafkaRestApplication(KafkaRestConfig config) {
+  public KafkaRestApplication(KafkaRestConfig config)
+      throws IllegalAccessException, InstantiationException, ClassNotFoundException {
     super(config);
+    String extensionClassName = config.getString(KafkaRestConfig
+                                                     .KAFKA_REST_RESOURCE_EXTENSION_CONFIG);
+    if (StringUtil.isNotBlank(extensionClassName)) {
+      Class<RestResourceExtension>
+          restResourceExtensionClass =
+          (Class<RestResourceExtension>) Class.forName(extensionClassName);
+
+      restResourceExtension = restResourceExtensionClass.newInstance();
+
+    }
   }
 
-  public KafkaRestApplication(KafkaRestConfig config, RestResourceExtension restResourceExtension)
-      throws IllegalAccessException, InstantiationException {
-    super(config);
-    this.restResourceExtension = restResourceExtension;
-  }
+
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
