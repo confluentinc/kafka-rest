@@ -39,7 +39,8 @@ public class TestKafkaRestApplication extends KafkaRestApplication {
   public TestKafkaRestApplication(KafkaRestConfig config, ZkUtils zkUtils,
                                   MetadataObserver mdObserver, ProducerPool producerPool,
                                   ConsumerManager consumerManager,
-                                  SimpleConsumerFactory simpleConsumerFactory, SimpleConsumerManager simpleConsumerManager) {
+                                  SimpleConsumerFactory simpleConsumerFactory, SimpleConsumerManager simpleConsumerManager)
+      throws IllegalAccessException, ClassNotFoundException, InstantiationException {
     super(config);
     zkUtilsInjected = zkUtils;
     mdObserverInjected = mdObserver;
@@ -52,7 +53,8 @@ public class TestKafkaRestApplication extends KafkaRestApplication {
   public TestKafkaRestApplication(KafkaRestConfig config, ZkUtils zkUtils,
                                   MetadataObserver mdObserver, ProducerPool producerPool,
                                   ConsumerManager consumerManager,
-                                  SimpleConsumerFactory simpleConsumerFactory, SimpleConsumerManager simpleConsumerManager, KafkaConsumerManager kafkaConsumerManager) {
+                                  SimpleConsumerFactory simpleConsumerFactory, SimpleConsumerManager simpleConsumerManager, KafkaConsumerManager kafkaConsumerManager)
+      throws IllegalAccessException, ClassNotFoundException, InstantiationException {
     super(config);
     zkUtilsInjected = zkUtils;
     mdObserverInjected = mdObserver;
