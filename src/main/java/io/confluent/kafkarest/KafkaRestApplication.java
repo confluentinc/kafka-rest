@@ -91,9 +91,9 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   ) {
     config.register(new ZkExceptionMapper(appConfig));
 
-    KafkaRestContextProvider.initializeDefaultContext(zkUtils, appConfig, mdObserver, producerPool,
-                                                      consumerManager, simpleConsumerFactory,
-                                                      simpleConsumerManager, kafkaConsumerManager);
+    KafkaRestContextProvider.initialize(zkUtils, appConfig, mdObserver, producerPool,
+                                        consumerManager, simpleConsumerFactory,
+                                        simpleConsumerManager, kafkaConsumerManager);
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
     KafkaRestContext context =
         (KafkaRestContext) Proxy.newProxyInstance(KafkaRestContext.class.getClassLoader(), new

@@ -41,14 +41,14 @@ public class KafkaRestContextProvider {
 
   private static AtomicBoolean initialized = new AtomicBoolean();
 
-  public static void initializeDefaultContext(ZkUtils zkUtils,
-                                              KafkaRestConfig appConfig,
-                                              MetadataObserver mdObserver,
-                                              ProducerPool producerPool,
-                                              ConsumerManager consumerManager,
-                                              SimpleConsumerFactory simpleConsumerFactory,
-                                              SimpleConsumerManager simpleConsumerManager,
-                                              KafkaConsumerManager kafkaConsumerManager) {
+  public static void initialize(ZkUtils zkUtils,
+                                KafkaRestConfig appConfig,
+                                MetadataObserver mdObserver,
+                                ProducerPool producerPool,
+                                ConsumerManager consumerManager,
+                                SimpleConsumerFactory simpleConsumerFactory,
+                                SimpleConsumerManager simpleConsumerManager,
+                                KafkaConsumerManager kafkaConsumerManager) {
     if (initialized.compareAndSet(false, true)) {
       if (zkUtils == null) {
         zkUtils = ZkUtils.apply(
@@ -97,7 +97,11 @@ public class KafkaRestContextProvider {
   }
 
   public static KafkaRestContext getCurrentContext() {
-    return restContextInheritableThreadLocal.get();
+    if (restContextInheritableThreadLocal.get() != null) {
+      return restContextInheritableThreadLocal.get();
+    } else {
+      return KafkaRestContextProvider.getDefaultContext();
+    }
   }
 
   public static void setCurrentContext(KafkaRestContext kafkaRestContext) {
