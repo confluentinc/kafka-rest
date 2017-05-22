@@ -18,6 +18,7 @@ package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.*;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
+import io.confluent.rest.RestConfigException;
 import kafka.utils.ZkUtils;
 
 import javax.ws.rs.core.Configurable;
@@ -40,7 +41,7 @@ public class TestKafkaRestApplication extends KafkaRestApplication {
                                   MetadataObserver mdObserver, ProducerPool producerPool,
                                   ConsumerManager consumerManager,
                                   SimpleConsumerFactory simpleConsumerFactory, SimpleConsumerManager simpleConsumerManager)
-      throws IllegalAccessException, ClassNotFoundException, InstantiationException {
+      throws IllegalAccessException, InstantiationException, RestConfigException {
     super(config);
     zkUtilsInjected = zkUtils;
     mdObserverInjected = mdObserver;
@@ -54,7 +55,7 @@ public class TestKafkaRestApplication extends KafkaRestApplication {
                                   MetadataObserver mdObserver, ProducerPool producerPool,
                                   ConsumerManager consumerManager,
                                   SimpleConsumerFactory simpleConsumerFactory, SimpleConsumerManager simpleConsumerManager, KafkaConsumerManager kafkaConsumerManager)
-      throws IllegalAccessException, ClassNotFoundException, InstantiationException {
+      throws IllegalAccessException, InstantiationException, RestConfigException {
     super(config);
     zkUtilsInjected = zkUtils;
     mdObserverInjected = mdObserver;
