@@ -23,7 +23,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 
-import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.TestUtils;
@@ -40,10 +40,10 @@ import static org.junit.Assert.assertNull;
 public class RootResourceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
-  private Context ctx;
+  private DefaultKafkaRestContext ctx;
 
   public RootResourceTest() throws RestConfigException {
-    ctx = new Context(config, null, null, null, null);
+    ctx = new DefaultKafkaRestContext(config, null, null, null, null);
     addResource(RootResource.class);
   }
 

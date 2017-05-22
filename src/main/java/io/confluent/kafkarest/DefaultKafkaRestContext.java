@@ -21,7 +21,7 @@ import io.confluent.kafkarest.v2.KafkaConsumerManager;
 /**
  * Shared, global state for the REST proxy server, including configuration and connection pools.
  */
-public class Context {
+public class DefaultKafkaRestContext implements KafkaRestContext {
 
   private final KafkaRestConfig config;
   private final MetadataObserver metadataObserver;
@@ -30,7 +30,7 @@ public class Context {
   private final KafkaConsumerManager kafkaConsumerManager;
   private final SimpleConsumerManager simpleConsumerManager;
 
-  public Context(
+  public DefaultKafkaRestContext(
       KafkaRestConfig config,
       MetadataObserver metadataObserver,
       ProducerPool producerPool,
@@ -40,7 +40,7 @@ public class Context {
     this(config, metadataObserver, producerPool, consumerManager, simpleConsumerManager, null);
   }
 
-  public Context(
+  public DefaultKafkaRestContext(
       KafkaRestConfig config,
       MetadataObserver metadataObserver,
       ProducerPool producerPool,

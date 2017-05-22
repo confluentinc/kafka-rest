@@ -26,6 +26,7 @@ import io.confluent.common.config.ConfigDef.Importance;
 import io.confluent.common.config.ConfigDef.Type;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
+import kafka.server.ConfigType;
 
 import static io.confluent.common.config.ConfigDef.Range.atLeast;
 
@@ -215,6 +216,8 @@ public class KafkaRestConfig extends RestConfig {
       "client.sasl.kerberos.ticket.renew.jitter";
   public static final String KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_CONFIG =
       "client.sasl.kerberos.ticket.renew.window.factor";
+  public static final String KAFKA_REST_RESOURCE_EXTENSION_CONFIG =
+      "kafka.rest.resource.extension.class";
 
   protected static final String KAFKACLIENT_CONNECTION_URL_DOC =
       "Zookeeper url for the Kafka cluster";
@@ -297,11 +300,19 @@ public class KafkaRestConfig extends RestConfig {
       "Login thread will sleep until the specified window factor of time from last refresh to "
       + "ticket's expiry has "
       + "been reached, at which time it will try to renew the ticket.";
+  public static final String KAFKA_REST_RESOURCE_EXTENSION_DOC =
+      "Fully qualified class name of a  valid Implementation of the interface RestResourceExtension"
+      + "This can be used to inject user defined resources like filters. Typically used to add "
+      + "custom capability like logging, security, etc  ";
   private static final boolean ZOOKEEPER_SET_ACL_DEFAULT = false;
   private static final ConfigDef config;
 
   static {
-    config = baseConfigDef()
+    config = baseKafkaRestConfigDef();
+  }
+
+  protected static ConfigDef baseKafkaRestConfigDef() {
+    return baseConfigDef()
         .defineOverride(
             PORT_CONFIG,
             ConfigDef.Type.INT,
@@ -607,8 +618,14 @@ public class KafkaRestConfig extends RestConfig {
             0.8,
             ConfigDef.Importance.LOW,
             KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_DOC
+        )
+        .define(
+            KAFKA_REST_RESOURCE_EXTENSION_CONFIG,
+            Type.STRING,
+            "",
+            Importance.LOW,
+            KAFKA_REST_RESOURCE_EXTENSION_DOC
         );
-
   }
 
   private Time time;
@@ -627,7 +644,12 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   public KafkaRestConfig(Properties props, Time time) throws RestConfigException {
-    super(config, props);
+    this(config, props, time);
+  }
+
+  public KafkaRestConfig(ConfigDef configDef, Properties props, Time time)
+      throws RestConfigException {
+    super(configDef, props);
     this.originalProperties = props;
     this.time = time;
   }

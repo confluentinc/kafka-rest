@@ -35,7 +35,7 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 
 import io.confluent.kafkarest.ConsumerManager;
-import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
@@ -62,9 +62,9 @@ public class PartitionsResource {
 
   private static final Logger log = LoggerFactory.getLogger(PartitionsResource.class);
 
-  private final Context ctx;
+  private final KafkaRestContext ctx;
 
-  public PartitionsResource(Context ctx) {
+  public PartitionsResource(KafkaRestContext ctx) {
     this.ctx = ctx;
   }
 

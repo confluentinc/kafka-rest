@@ -32,7 +32,7 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.UriInfo;
 
-import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.UriUtils;
 import io.confluent.kafkarest.Versions;
@@ -75,9 +75,9 @@ import io.confluent.rest.annotations.PerformanceMetric;
     })
 public class ConsumersResource {
 
-  private final Context ctx;
+  private final KafkaRestContext ctx;
 
-  public ConsumersResource(Context ctx) {
+  public ConsumersResource(KafkaRestContext ctx) {
     this.ctx = ctx;
   }
 

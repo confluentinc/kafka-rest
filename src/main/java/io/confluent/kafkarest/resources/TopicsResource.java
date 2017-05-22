@@ -33,7 +33,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 
-import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
@@ -58,9 +58,9 @@ public class TopicsResource {
 
   private static final Logger log = LoggerFactory.getLogger(TopicsResource.class);
 
-  private final Context ctx;
+  private final KafkaRestContext ctx;
 
-  public TopicsResource(Context ctx) {
+  public TopicsResource(KafkaRestContext ctx) {
     this.ctx = ctx;
   }
 

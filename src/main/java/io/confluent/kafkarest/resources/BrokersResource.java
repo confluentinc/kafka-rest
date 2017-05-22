@@ -22,7 +22,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
-import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BrokerList;
 import io.confluent.rest.annotations.PerformanceMetric;
@@ -36,9 +36,9 @@ import io.confluent.rest.annotations.PerformanceMetric;
 @Consumes()
 public class BrokersResource {
 
-  private final Context ctx;
+  private final KafkaRestContext ctx;
 
-  public BrokersResource(Context ctx) {
+  public BrokersResource(KafkaRestContext ctx) {
     this.ctx = ctx;
   }
 

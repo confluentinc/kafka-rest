@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,13 +16,18 @@
 
 package io.confluent.kafkarest;
 
-import org.apache.kafka.common.security.JaasUtils;
+import org.eclipse.jetty.util.StringUtil;
 
+import java.lang.reflect.Proxy;
 import java.util.Properties;
 
 import javax.ws.rs.core.Configurable;
 
 import io.confluent.kafkarest.exceptions.ZkExceptionMapper;
+import io.confluent.kafkarest.extension.ContextInvocationHandler;
+import io.confluent.kafkarest.extension.KafkaRestCleanupFilter;
+import io.confluent.kafkarest.extension.KafkaRestContextProvider;
+import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.kafkarest.resources.BrokersResource;
 import io.confluent.kafkarest.resources.ConsumersResource;
 import io.confluent.kafkarest.resources.PartitionsResource;
@@ -33,13 +38,13 @@ import io.confluent.rest.Application;
 import io.confluent.rest.RestConfigException;
 import kafka.utils.ZkUtils;
 
+
 /**
  * Utilities for configuring and running an embedded Kafka server.
  */
 public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
-  ZkUtils zkUtils;
-  Context context;
+  RestResourceExtension restResourceExtension;
 
   public KafkaRestApplication() throws RestConfigException {
     this(new Properties());
@@ -49,9 +54,28 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     super(new KafkaRestConfig(props));
   }
 
-  public KafkaRestApplication(KafkaRestConfig config) {
+  public KafkaRestApplication(KafkaRestConfig config)
+      throws IllegalAccessException, InstantiationException, RestConfigException {
     super(config);
+    String extensionClassName =
+        config.getString(KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG);
+
+    if (StringUtil.isNotBlank(extensionClassName)) {
+      try {
+        Class<RestResourceExtension>
+            restResourceExtensionClass =
+            (Class<RestResourceExtension>) Class.forName(extensionClassName);
+
+        restResourceExtension = restResourceExtensionClass.newInstance();
+      } catch (ClassNotFoundException e) {
+        throw new RestConfigException(
+            "Unable to load resource extension class " + extensionClassName
+            + ". Check your classpath and that the configured class implements "
+            + "the RestResourceExtension interface.");
+      }
+    }
   }
+
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
@@ -73,43 +97,16 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   ) {
     config.register(new ZkExceptionMapper(appConfig));
 
-    if (zkUtils == null) {
-      zkUtils = ZkUtils.apply(
-          appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG),
-          30000,
-          30000,
-          JaasUtils.isZkSecurityEnabled()
-      );
-    }
-    if (mdObserver == null) {
-      mdObserver = new MetadataObserver(appConfig, zkUtils);
-    }
-    if (producerPool == null) {
-      producerPool = new ProducerPool(appConfig, zkUtils);
-    }
-    if (consumerManager == null) {
-      consumerManager = new ConsumerManager(appConfig, mdObserver);
-    }
-    if (simpleConsumerFactory == null) {
-      simpleConsumerFactory = new SimpleConsumerFactory(appConfig);
-    }
-    if (simpleConsumerManager == null) {
-      simpleConsumerManager =
-          new SimpleConsumerManager(appConfig, mdObserver, simpleConsumerFactory);
-    }
-    if (kafkaConsumerManager == null) {
-      kafkaConsumerManager = new KafkaConsumerManager(appConfig);
-    }
-
-    this.zkUtils = zkUtils;
-    context =
-        new Context(
-            appConfig,
-            mdObserver,
-            producerPool,
-            consumerManager,
-            simpleConsumerManager,
-            kafkaConsumerManager
+    KafkaRestContextProvider.initialize(zkUtils, appConfig, mdObserver, producerPool,
+        consumerManager, simpleConsumerFactory,
+        simpleConsumerManager, kafkaConsumerManager
+    );
+    ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
+    KafkaRestContext context =
+        (KafkaRestContext) Proxy.newProxyInstance(
+            KafkaRestContext.class.getClassLoader(),
+            new Class[]{KafkaRestContext.class},
+            contextInvocationHandler
         );
     config.register(RootResource.class);
     config.register(new BrokersResource(context));
@@ -118,14 +115,18 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new ConsumersResource(context));
     config.register(new io.confluent.kafkarest.resources.v2.ConsumersResource(context));
     config.register(new io.confluent.kafkarest.resources.v2.PartitionsResource(context));
+    config.register(KafkaRestCleanupFilter.class);
+
+    if (restResourceExtension != null) {
+      restResourceExtension.register(config, appConfig);
+    }
   }
 
   @Override
   public void onShutdown() {
-    context.getConsumerManager().shutdown();
-    context.getProducerPool().shutdown();
-    context.getSimpleConsumerManager().shutdown();
-    context.getMetadataObserver().shutdown();
-    zkUtils.close();
+    if (restResourceExtension != null) {
+      restResourceExtension.clean();
+    }
+    KafkaRestContextProvider.clean();
   }
 }

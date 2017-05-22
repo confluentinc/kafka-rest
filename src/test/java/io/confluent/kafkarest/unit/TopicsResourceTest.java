@@ -15,7 +15,7 @@
  **/
 package io.confluent.kafkarest.unit;
 
-import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -47,12 +47,12 @@ public class TopicsResourceTest
 
   private MetadataObserver mdObserver;
   private ProducerPool producerPool;
-  private Context ctx;
+  private DefaultKafkaRestContext ctx;
 
   public TopicsResourceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new Context(config, mdObserver, producerPool, null, null);
+    ctx = new DefaultKafkaRestContext(config, mdObserver, producerPool, null, null);
 
     addResource(new TopicsResource(ctx));
   }

@@ -36,7 +36,7 @@ import io.confluent.kafkarest.AvroConsumerState;
 import io.confluent.kafkarest.BinaryConsumerState;
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.ConsumerState;
-import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.JsonConsumerState;
 import io.confluent.kafkarest.UriUtils;
 import io.confluent.kafkarest.Versions;
@@ -57,9 +57,9 @@ import io.confluent.rest.annotations.PerformanceMetric;
            Versions.GENERIC_REQUEST})
 public class ConsumersResource {
 
-  private final Context ctx;
+  private final KafkaRestContext ctx;
 
-  public ConsumersResource(Context ctx) {
+  public ConsumersResource(KafkaRestContext ctx) {
     this.ctx = ctx;
   }
 
