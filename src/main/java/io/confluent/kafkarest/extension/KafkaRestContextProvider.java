@@ -41,20 +41,23 @@ public class KafkaRestContextProvider {
 
   private static AtomicBoolean initialized = new AtomicBoolean();
 
-  public static void initialize(ZkUtils zkUtils,
-                                KafkaRestConfig appConfig,
-                                MetadataObserver mdObserver,
-                                ProducerPool producerPool,
-                                ConsumerManager consumerManager,
-                                SimpleConsumerFactory simpleConsumerFactory,
-                                SimpleConsumerManager simpleConsumerManager,
-                                KafkaConsumerManager kafkaConsumerManager) {
+  public static void initialize(
+      ZkUtils zkUtils,
+      KafkaRestConfig appConfig,
+      MetadataObserver mdObserver,
+      ProducerPool producerPool,
+      ConsumerManager consumerManager,
+      SimpleConsumerFactory simpleConsumerFactory,
+      SimpleConsumerManager simpleConsumerManager,
+      KafkaConsumerManager kafkaConsumerManager
+  ) {
     if (initialized.compareAndSet(false, true)) {
       if (zkUtils == null) {
         zkUtils = ZkUtils.apply(
             appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG), 30000,
             30000,
-            JaasUtils.isZkSecurityEnabled());
+            JaasUtils.isZkSecurityEnabled()
+        );
       }
       if (mdObserver == null) {
         mdObserver = new MetadataObserver(appConfig, zkUtils);
@@ -79,7 +82,8 @@ public class KafkaRestContextProvider {
       defaultZkUtils = zkUtils;
       context =
           new KafkaRestContextImpl(appConfig, mdObserver, producerPool, consumerManager,
-                                   simpleConsumerManager, kafkaConsumerManager);
+              simpleConsumerManager, kafkaConsumerManager
+          );
       defaultAppConfig = appConfig;
     }
   }

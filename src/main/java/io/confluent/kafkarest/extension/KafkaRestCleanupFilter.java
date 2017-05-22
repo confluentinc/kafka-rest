@@ -29,8 +29,10 @@ import javax.ws.rs.ext.Provider;
 public class KafkaRestCleanupFilter implements ContainerResponseFilter {
 
   @Override
-  public void filter(ContainerRequestContext requestContext,
-                     ContainerResponseContext responseContext) throws IOException {
+  public void filter(
+      ContainerRequestContext requestContext,
+      ContainerResponseContext responseContext
+  ) throws IOException {
     KafkaRestContextProvider.clearCurrentContext();
   }
 }
