@@ -43,8 +43,8 @@ public class PartitionsResourceAbstractConsumeTest extends EmbeddedServerTestHar
     super();
     simpleConsumerManager = EasyMock.createMock(SimpleConsumerManager.class);
 
-    final KafkaRestContextImpl
-        ctx = new KafkaRestContextImpl(config, null, null, null, simpleConsumerManager);
+    final DefaultKafkaRestContext
+        ctx = new DefaultKafkaRestContext(config, null, null, null, simpleConsumerManager);
     addResource(new PartitionsResource(ctx));
   }
 

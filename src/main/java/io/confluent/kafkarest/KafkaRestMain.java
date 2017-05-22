@@ -52,8 +52,6 @@ public class KafkaRestMain {
    */
   public static void main(String[] args) throws IOException {
     try {
-      /*TODO discuss with team and look at options to do something like Apache CLI here. Handle
-        exception for incorrect Class args with appropriate message*/
       KafkaRestConfig config = new KafkaRestConfig((args.length > 0 ? args[0] : null));
 
       KafkaRestApplication app = new KafkaRestApplication(config);

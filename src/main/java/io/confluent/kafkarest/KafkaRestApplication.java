@@ -55,20 +55,26 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   }
 
   public KafkaRestApplication(KafkaRestConfig config)
-      throws IllegalAccessException, InstantiationException, ClassNotFoundException {
+      throws IllegalAccessException, InstantiationException, RestConfigException {
     super(config);
     String extensionClassName = config.getString(KafkaRestConfig
-                                                     .KAFKA_REST_RESOURCE_EXTENSION_CONFIG);
+        .KAFKA_REST_RESOURCE_EXTENSION_CONFIG);
     if (StringUtil.isNotBlank(extensionClassName)) {
-      Class<RestResourceExtension>
-          restResourceExtensionClass =
-          (Class<RestResourceExtension>) Class.forName(extensionClassName);
+      try {
+        Class<RestResourceExtension>
+            restResourceExtensionClass =
+            (Class<RestResourceExtension>) Class.forName(extensionClassName);
 
-      restResourceExtension = restResourceExtensionClass.newInstance();
+        restResourceExtension = restResourceExtensionClass.newInstance();
+      } catch (ClassNotFoundException e) {
+        throw new RestConfigException(
+            "Unable to load resource extension class " + extensionClassName
+            + ". Check your classpath and that the configured class implements "
+            + "the RestResourceExtension interface.");
+      }
 
     }
   }
-
 
 
   @Override
@@ -92,13 +98,14 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new ZkExceptionMapper(appConfig));
 
     KafkaRestContextProvider.initialize(zkUtils, appConfig, mdObserver, producerPool,
-                                        consumerManager, simpleConsumerFactory,
-                                        simpleConsumerManager, kafkaConsumerManager);
+        consumerManager, simpleConsumerFactory,
+        simpleConsumerManager, kafkaConsumerManager
+    );
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
     KafkaRestContext context =
         (KafkaRestContext) Proxy.newProxyInstance(KafkaRestContext.class.getClassLoader(), new
             Class[]{KafkaRestContext
-            .class}, contextInvocationHandler);
+                        .class}, contextInvocationHandler);
     config.register(RootResource.class);
     config.register(new BrokersResource(context));
     config.register(new TopicsResource(context));

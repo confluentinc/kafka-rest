@@ -22,14 +22,14 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.ext.Provider;
 
-import io.confluent.kafkarest.KafkaRestContextImpl;
+import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.extension.KafkaRestContextProvider;
 
 @Provider
 public class TestContextProviderFilter implements ContainerRequestFilter {
-  KafkaRestContextImpl ctx;
+  DefaultKafkaRestContext ctx;
 
-  public TestContextProviderFilter(KafkaRestContextImpl ctx){
+  public TestContextProviderFilter(DefaultKafkaRestContext ctx){
     this.ctx= ctx;
   }
 

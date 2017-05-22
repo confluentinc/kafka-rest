@@ -30,7 +30,7 @@ import java.util.List;
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.ConsumerState;
 import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.KafkaRestContextImpl;
+import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
@@ -50,7 +50,7 @@ public class AbstractConsumerResourceTest
 
   protected MetadataObserver mdObserver;
   protected ConsumerManager consumerManager;
-  protected KafkaRestContextImpl ctx;
+  protected DefaultKafkaRestContext ctx;
 
   protected static final String groupName = "testgroup";
   protected static final String topicName = "testtopic";
@@ -64,7 +64,7 @@ public class AbstractConsumerResourceTest
   public AbstractConsumerResourceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     consumerManager = EasyMock.createMock(ConsumerManager.class);
-    ctx = new KafkaRestContextImpl(config, mdObserver, null, consumerManager, null);
+    ctx = new DefaultKafkaRestContext(config, mdObserver, null, consumerManager, null);
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
     KafkaRestContext contextProxy =
         (KafkaRestContext) Proxy.newProxyInstance(KafkaRestContext.class.getClassLoader(), new

@@ -33,7 +33,7 @@ import java.util.List;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
-import io.confluent.kafkarest.KafkaRestContextImpl;
+import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -64,7 +64,7 @@ public class TopicsResourceBinaryProduceTest
 
   private MetadataObserver mdObserver;
   private ProducerPool producerPool;
-  private KafkaRestContextImpl ctx;
+  private DefaultKafkaRestContext ctx;
 
   private static final String topicName = "topic1";
 
@@ -88,7 +88,7 @@ public class TopicsResourceBinaryProduceTest
   public TopicsResourceBinaryProduceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new KafkaRestContextImpl(config, mdObserver, producerPool, null, null);
+    ctx = new DefaultKafkaRestContext(config, mdObserver, producerPool, null, null);
 
     addResource(new TopicsResource(ctx));
 

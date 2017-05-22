@@ -25,7 +25,7 @@ import java.util.List;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 
-import io.confluent.kafkarest.KafkaRestContextImpl;
+import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
@@ -44,12 +44,12 @@ public class BrokersResourceTest
 
   private MetadataObserver mdObserver;
   private ProducerPool producerPool;
-  private KafkaRestContextImpl ctx;
+  private DefaultKafkaRestContext ctx;
 
   public BrokersResourceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new KafkaRestContextImpl(config, mdObserver, producerPool, null, null);
+    ctx = new DefaultKafkaRestContext(config, mdObserver, producerPool, null, null);
     addResource(new BrokersResource(ctx));
   }
 

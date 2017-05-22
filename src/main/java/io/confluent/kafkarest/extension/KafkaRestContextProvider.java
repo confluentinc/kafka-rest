@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.KafkaRestContextImpl;
+import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.SimpleConsumerFactory;
@@ -33,7 +33,7 @@ import kafka.utils.ZkUtils;
 
 public class KafkaRestContextProvider {
 
-  private static KafkaRestContext context = null;
+  private static KafkaRestContext defaultContext = null;
   private static ZkUtils defaultZkUtils = null;
   private static KafkaRestConfig defaultAppConfig = null;
   private static final InheritableThreadLocal<KafkaRestContext> restContextInheritableThreadLocal =
@@ -80,16 +80,12 @@ public class KafkaRestContextProvider {
       }
 
       defaultZkUtils = zkUtils;
-      context =
-          new KafkaRestContextImpl(appConfig, mdObserver, producerPool, consumerManager,
+      defaultContext =
+          new DefaultKafkaRestContext(appConfig, mdObserver, producerPool, consumerManager,
               simpleConsumerManager, kafkaConsumerManager
           );
       defaultAppConfig = appConfig;
     }
-  }
-
-  public static KafkaRestContext getDefaultContext() {
-    return context;
   }
 
   public static ZkUtils getDefaultZkUtils() {
@@ -100,11 +96,15 @@ public class KafkaRestContextProvider {
     return defaultAppConfig;
   }
 
+  public static KafkaRestContext getDefaultContext() {
+    return defaultContext;
+  }
+
   public static KafkaRestContext getCurrentContext() {
     if (restContextInheritableThreadLocal.get() != null) {
       return restContextInheritableThreadLocal.get();
     } else {
-      return KafkaRestContextProvider.getDefaultContext();
+      return defaultContext;
     }
   }
 
@@ -117,11 +117,11 @@ public class KafkaRestContextProvider {
   }
 
   public static synchronized void clean() {
-    context.getConsumerManager().shutdown();
-    context.getProducerPool().shutdown();
-    context.getSimpleConsumerManager().shutdown();
-    context.getMetadataObserver().shutdown();
-    context = null;
+    defaultContext.getConsumerManager().shutdown();
+    defaultContext.getProducerPool().shutdown();
+    defaultContext.getSimpleConsumerManager().shutdown();
+    defaultContext.getMetadataObserver().shutdown();
+    defaultContext = null;
     defaultZkUtils.close();
     initialized.set(false);
   }
