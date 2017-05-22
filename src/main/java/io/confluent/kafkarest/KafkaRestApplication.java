@@ -57,8 +57,9 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   public KafkaRestApplication(KafkaRestConfig config)
       throws IllegalAccessException, InstantiationException, RestConfigException {
     super(config);
-    String extensionClassName = config.getString(KafkaRestConfig
-        .KAFKA_REST_RESOURCE_EXTENSION_CONFIG);
+    String extensionClassName =
+        config.getString(KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG);
+
     if (StringUtil.isNotBlank(extensionClassName)) {
       try {
         Class<RestResourceExtension>
@@ -72,7 +73,6 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
             + ". Check your classpath and that the configured class implements "
             + "the RestResourceExtension interface.");
       }
-
     }
   }
 
@@ -103,9 +103,11 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     );
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
     KafkaRestContext context =
-        (KafkaRestContext) Proxy.newProxyInstance(KafkaRestContext.class.getClassLoader(), new
-            Class[]{KafkaRestContext
-                        .class}, contextInvocationHandler);
+        (KafkaRestContext) Proxy.newProxyInstance(
+            KafkaRestContext.class.getClassLoader(),
+            new Class[]{KafkaRestContext.class},
+            contextInvocationHandler
+        );
     config.register(RootResource.class);
     config.register(new BrokersResource(context));
     config.register(new TopicsResource(context));
