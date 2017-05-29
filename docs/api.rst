@@ -85,6 +85,8 @@ per-request basis.
    :statuscode 404:
           * Error code 40401 -- Topic not found.
           * Error code 40402 -- Partition not found.
+   :statuscode 406: 
+          * Error code 40601 -- The requested embedded data format does not match the deserializer for this consumer instance.
    :statuscode 422: The request payload is either improperly formatted or contains semantic errors
    :statuscode 500:
           * Error code 50001 -- Zookeeper error.
