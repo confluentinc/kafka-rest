@@ -66,6 +66,8 @@ public class AvroConverter {
 
   public static Object toAvro(JsonNode value, Schema schema) {
     try {
+      if (value.isNull())
+         return null;
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       jsonMapper.writeValue(out, value);
       DatumReader<Object> reader = new GenericDatumReader<Object>(schema);
