@@ -44,31 +44,38 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
   protected final KafkaAvroSerializer valueSerializer;
   protected final Map<Schema, Integer> schemaIdCache;
 
-  public AvroRestProducer(KafkaProducer<Object, Object> producer,
-                          KafkaAvroSerializer keySerializer,
-                          KafkaAvroSerializer valueSerializer) {
+  public AvroRestProducer(
+      KafkaProducer<Object, Object> producer,
+      KafkaAvroSerializer keySerializer,
+      KafkaAvroSerializer valueSerializer
+  ) {
     this.producer = producer;
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
     this.schemaIdCache = new ConcurrentHashMap<>(100);
   }
 
-  public void produce(ProduceTask task, String topic, Integer partition,
-                      Collection<? extends ProduceRecord<JsonNode, JsonNode>> records) {
+  public void produce(
+      ProduceTask task,
+      String topic,
+      Integer partition,
+      Collection<? extends ProduceRecord<JsonNode, JsonNode>> records
+  ) {
     SchemaHolder schemaHolder = task.getSchemaHolder();
-    Schema keySchema = null, valueSchema = null;
+    Schema keySchema = null;
+    Schema valueSchema = null;
     Integer keySchemaId = schemaHolder.getKeySchemaId();
     Integer valueSchemaId = schemaHolder.getValueSchemaId();
     try {
       // If both ID and schema are null, that may be ok. Validation of the ProduceTask by the
       // caller should have checked this already.
       if (keySchemaId != null) {
-        keySchema = keySerializer.getByID(keySchemaId);
+        keySchema = keySerializer.getById(keySchemaId);
       } else if (schemaHolder.getKeySchema() != null) {
         keySchema = new Schema.Parser().parse(schemaHolder.getKeySchema());
-        if (schemaIdCache.containsKey(keySchema)){
+        if (schemaIdCache.containsKey(keySchema)) {
           keySchemaId = schemaIdCache.get(keySchema);
-          keySchema = keySerializer.getByID(keySchemaId);
+          keySchema = keySerializer.getById(keySchemaId);
         } else {
           keySchemaId = keySerializer.register(topic + "-key", keySchema);
           schemaIdCache.put(keySchema, keySchemaId);
@@ -76,12 +83,12 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
       }
 
       if (valueSchemaId != null) {
-        valueSchema = valueSerializer.getByID(valueSchemaId);
+        valueSchema = valueSerializer.getById(valueSchemaId);
       } else if (schemaHolder.getValueSchema() != null) {
         valueSchema = new Schema.Parser().parse(schemaHolder.getValueSchema());
         if (schemaIdCache.containsKey(valueSchema)) {
           valueSchemaId = schemaIdCache.get(valueSchema);
-          valueSchema = valueSerializer.getByID(valueSchemaId);
+          valueSchema = valueSerializer.getById(valueSchemaId);
         } else {
           valueSchemaId = valueSerializer.register(topic + "-value", valueSchema);
           schemaIdCache.put(valueSchema, valueSchemaId);
@@ -110,8 +117,8 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
         // if there isn't a schema. Validation will have already checked that all the keys/values
         // were NullNodes.
         Object key = (keySchema != null ? AvroConverter.toAvro(record.getKey(), keySchema) : null);
-        Object value = (valueSchema != null
-                        ? AvroConverter.toAvro(record.getValue(), valueSchema) : null);
+        Object value =
+            valueSchema != null ? AvroConverter.toAvro(record.getValue(), valueSchema) : null;
         Integer recordPartition = partition;
         if (recordPartition == null) {
           recordPartition = record.partition();

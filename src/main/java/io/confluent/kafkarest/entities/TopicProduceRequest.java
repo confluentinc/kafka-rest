@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -21,18 +22,23 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 import java.util.List;
 
-public class TopicProduceRequest<RecordType extends TopicProduceRecord> extends SchemaHolder {
+public class TopicProduceRequest<RecordT extends TopicProduceRecord> extends SchemaHolder {
 
   @NotEmpty
-  private List<RecordType> records;
+  private List<RecordT> records;
 
   @JsonProperty
-  public List<RecordType> getRecords() {
+  public List<RecordT> getRecords() {
     return records;
   }
 
   @JsonProperty
-  public void setRecords(List<RecordType> records) {
+  public void setRecords(List<RecordT> records) {
     this.records = records;
+  }
+
+  @Override
+  public String toString() {
+    return "TopicProduceRequest{" + "records=" + records + '}';
   }
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest;
 
 import java.util.Arrays;
@@ -20,6 +21,24 @@ import java.util.List;
 
 public class Versions {
 
+  // Constants for version 2
+  public static final String KAFKA_V2_JSON = "application/vnd.kafka.v2+json";
+  // This is set < 1 because it is only the most-specific type if there isn't an embedded data type.
+  public static final String KAFKA_V2_JSON_WEIGHTED = KAFKA_V2_JSON + "; qs=0.9";
+  public static final String KAFKA_V2_JSON_BINARY = "application/vnd.kafka.binary.v2+json";
+  public static final String KAFKA_V2_JSON_BINARY_WEIGHTED = KAFKA_V2_JSON_BINARY;
+  // "LOW" weightings are used to permit using these for resources like consumer where it might
+  // be convenient to always use the same type, but where their use should really be discouraged
+  public static final String KAFKA_V2_JSON_BINARY_WEIGHTED_LOW = KAFKA_V2_JSON_BINARY + "; qs=0.1";
+  public static final String KAFKA_V2_JSON_AVRO = "application/vnd.kafka.avro.v2+json";
+  public static final String KAFKA_V2_JSON_AVRO_WEIGHTED = KAFKA_V2_JSON_AVRO;
+  public static final String KAFKA_V2_JSON_AVRO_WEIGHTED_LOW = KAFKA_V2_JSON_AVRO + "; qs=0.1";
+
+  public static final String KAFKA_V2_JSON_JSON = "application/vnd.kafka.json.v2+json";
+  public static final String KAFKA_V2_JSON_JSON_WEIGHTED = KAFKA_V2_JSON_JSON;
+  public static final String KAFKA_V2_JSON_JSON_WEIGHTED_LOW = KAFKA_V2_JSON_JSON + "; qs=0.1";
+
+  // Constants for version 1
   public static final String KAFKA_V1_JSON = "application/vnd.kafka.v1+json";
   // This is set < 1 because it is only the most-specific type if there isn't an embedded data type.
   public static final String KAFKA_V1_JSON_WEIGHTED = KAFKA_V1_JSON + "; qs=0.9";
@@ -51,8 +70,7 @@ public class Versions {
   public static final String ANYTHING = "*/*";
 
 
-  public static final List<String>
-      PREFERRED_RESPONSE_TYPES =
+  public static final List<String> PREFERRED_RESPONSE_TYPES =
       Arrays.asList(Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON);
 
   // This type is completely generic and carries no actual information about the type of data,
@@ -60,5 +78,4 @@ public class Versions {
   // users of the API will always specify the content type, but ad hoc use may omit it. We treat
   // this as JSON since that's all we currently support.
   public static final String GENERIC_REQUEST = "application/octet-stream";
-
 }

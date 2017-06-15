@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.tools;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -46,8 +47,8 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
   public static void main(String[] args) throws Exception {
     if (args.length < 4) {
       System.out.println(
-          "Usage: java " + ConsumerPerformance.class.getName() + " rest_url topic_name " +
-          "num_records target_records_sec"
+          "Usage: java " + ConsumerPerformance.class.getName() + " rest_url topic_name "
+          + "num_records target_records_sec"
       );
       System.exit(1);
     }
@@ -93,17 +94,28 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
     // Run a single read request and ignore the result to get started. This makes sure the
     // consumer on the REST proxy is fully setup and connected. Set max_bytes so this request
     // doesn't consume a bunch of data, which could possibly exhaust the data in the topic
-    request(targetUrl + "?max_bytes=100", "GET", null, null,
-            new TypeReference<List<UndecodedConsumerRecord>>() {
-            });
+    request(
+        targetUrl + "?max_bytes=100",
+        "GET",
+        null,
+        null,
+        new TypeReference<List<UndecodedConsumerRecord>>() {
+        }
+    );
   }
 
   @Override
   protected void doIteration(PerformanceStats.Callback cb) {
     List<UndecodedConsumerRecord>
         records =
-        request(targetUrl, "GET", null, null, new TypeReference<List<UndecodedConsumerRecord>>() {
-        });
+        request(
+            targetUrl,
+            "GET",
+            null,
+            null,
+            new TypeReference<List<UndecodedConsumerRecord>>() {
+            }
+        );
     long bytes = 0;
     for (UndecodedConsumerRecord record : records) {
       bytes += record.value.length() * 3 / 4;
@@ -116,8 +128,13 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
     request(deleteUrl, "DELETE", null, null, null);
   }
 
-  private <T> T request(String target, String method, byte[] entity, String entityLength,
-                        TypeReference<T> responseFormat) {
+  private <T> T request(
+      String target,
+      String method,
+      byte[] entity,
+      String entityLength,
+      TypeReference<T> responseFormat
+  ) {
     HttpURLConnection connection = null;
     try {
       URL url = new URL(target);
@@ -143,8 +160,13 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
         ErrorMessage errorMessage = jsonDeserializer.readValue(es, ErrorMessage.class);
         es.close();
         throw new RuntimeException(
-            String.format("Unexpected HTTP error status %d for %s request to %s: %s",
-                          responseStatus, method, target, errorMessage.getMessage()));
+            String.format(
+                "Unexpected HTTP error status %d for %s request to %s: %s",
+                responseStatus,
+                method,
+                target,
+                errorMessage.getMessage()
+            ));
       }
       if (responseStatus != HttpURLConnection.HTTP_NO_CONTENT) {
         InputStream is = connection.getInputStream();
@@ -188,6 +210,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
   // we only need to get the size of each record.
   private static class UndecodedConsumerRecord {
 
+    public String topic;
     public String key;
     public String value;
     public int partition;

@@ -3,6 +3,25 @@
 Changelog
 =========
 
+Version 3.2.1
+-------------
+
+* `PR-285 <https://github.com/confluentinc/kafka-rest/pull/285>`_ - CLIENTS-281: Fix KafkaConsumerReadTask's locking, handling of multiple polls, invalid handling of old ConsumerTimeout exceptions, and incorrect generic type parameters.
+* `PR-277 <https://github.com/confluentinc/kafka-rest/pull/277>`_ - Documentation fixes
+
+Version 3.2.0
+-------------
+
+* `PR-256 <https://github.com/confluentinc/kafka-rest/pull/256>`_ - Update ClusterTestHarness to use o.a.k.common.utils.Time.
+* `PR-255 <https://github.com/confluentinc/kafka-rest/pull/255>`_ - clarified the key/value format limitations based on user questions
+* `PR-264 <https://github.com/confluentinc/kafka-rest/pull/264>`_ - Fix build to work post KIP-103
+* `PR-265 <https://github.com/confluentinc/kafka-rest/pull/265>`_ - Follow up for KIP-103 changes that fixes ProducerPool's extraction of endpoints to use the security protocol in the URL instead of the listener name.
+* `PR-268 <https://github.com/confluentinc/kafka-rest/pull/268>`_ - modified readme to use v2. also bumped installation up for usability
+* `PR-271 <https://github.com/confluentinc/kafka-rest/pull/271>`_ - Updated quickstart and configuration docs for V2 and for security
+* `PR-258 <https://github.com/confluentinc/kafka-rest/pull/258>`_ - Rest proxy security
+* `PR-274 <https://github.com/confluentinc/kafka-rest/pull/274>`_ - added field 'topic' to tools/ConsumerPerformance.java for system test
+* `PR-272 <https://github.com/confluentinc/kafka-rest/pull/272>`_ - added description of JVM parameters for SASL configuration
+
 Version 3.1.2
 -------------
 No changes

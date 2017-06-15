@@ -25,7 +25,7 @@ import java.util.List;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 
-import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -48,7 +48,7 @@ public class PartitionsResourceTest
 
   private MetadataObserver mdObserver;
   private ProducerPool producerPool;
-  private Context ctx;
+  private DefaultKafkaRestContext ctx;
 
   private final String topicName = "topic1";
   private final List<Partition> partitions = Arrays.asList(
@@ -65,7 +65,7 @@ public class PartitionsResourceTest
   public PartitionsResourceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new Context(config, mdObserver, producerPool, null, null);
+    ctx = new DefaultKafkaRestContext(config, mdObserver, producerPool, null, null);
 
     addResource(new TopicsResource(ctx));
     addResource(new PartitionsResource(ctx));
@@ -89,7 +89,7 @@ public class PartitionsResourceTest
 
       Response response = request("/topics/topic1/partitions", mediatype.header).get();
       assertOKResponse(response, mediatype.expected);
-      List<Partition> partitionsResponse = response.readEntity(new GenericType<List<Partition>>() {
+      List<Partition> partitionsResponse = TestUtils.tryReadEntityOrLog(response, new GenericType<List<Partition>>() {
       });
       assertEquals(partitions, partitionsResponse);
 
@@ -112,13 +112,13 @@ public class PartitionsResourceTest
 
       Response response = request("/topics/topic1/partitions/0", mediatype.header).get();
       assertOKResponse(response, mediatype.expected);
-      Partition partition = response.readEntity(new GenericType<Partition>() {
+      Partition partition = TestUtils.tryReadEntityOrLog(response, new GenericType<Partition>() {
       });
       assertEquals(partitions.get(0), partition);
 
       response = request("/topics/topic1/partitions/1", mediatype.header).get();
       assertOKResponse(response, mediatype.expected);
-      partition = response.readEntity(new GenericType<Partition>() {
+      partition = TestUtils.tryReadEntityOrLog(response, new GenericType<Partition>() {
       });
       assertEquals(partitions.get(1), partition);
 

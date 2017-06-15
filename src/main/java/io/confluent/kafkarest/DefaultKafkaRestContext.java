@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,27 +13,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest;
+
+import io.confluent.kafkarest.v2.KafkaConsumerManager;
 
 /**
  * Shared, global state for the REST proxy server, including configuration and connection pools.
  */
-public class Context {
+public class DefaultKafkaRestContext implements KafkaRestContext {
 
   private final KafkaRestConfig config;
   private final MetadataObserver metadataObserver;
   private final ProducerPool producerPool;
   private final ConsumerManager consumerManager;
+  private final KafkaConsumerManager kafkaConsumerManager;
   private final SimpleConsumerManager simpleConsumerManager;
 
-  public Context(KafkaRestConfig config, MetadataObserver metadataObserver,
-                 ProducerPool producerPool, ConsumerManager consumerManager,
-                 SimpleConsumerManager simpleConsumerManager) {
+  public DefaultKafkaRestContext(
+      KafkaRestConfig config,
+      MetadataObserver metadataObserver,
+      ProducerPool producerPool,
+      ConsumerManager consumerManager,
+      SimpleConsumerManager simpleConsumerManager
+  ) {
+    this(config, metadataObserver, producerPool, consumerManager, simpleConsumerManager, null);
+  }
+
+  public DefaultKafkaRestContext(
+      KafkaRestConfig config,
+      MetadataObserver metadataObserver,
+      ProducerPool producerPool,
+      ConsumerManager consumerManager,
+      SimpleConsumerManager simpleConsumerManager,
+      KafkaConsumerManager kafkaConsumerManager
+  ) {
+
     this.config = config;
     this.metadataObserver = metadataObserver;
     this.producerPool = producerPool;
     this.consumerManager = consumerManager;
     this.simpleConsumerManager = simpleConsumerManager;
+    this.kafkaConsumerManager = kafkaConsumerManager;
   }
 
   public KafkaRestConfig getConfig() {
@@ -54,5 +75,9 @@ public class Context {
 
   public SimpleConsumerManager getSimpleConsumerManager() {
     return simpleConsumerManager;
+  }
+
+  public KafkaConsumerManager getKafkaConsumerManager() {
+    return kafkaConsumerManager;
   }
 }

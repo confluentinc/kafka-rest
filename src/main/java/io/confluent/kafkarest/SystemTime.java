@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest;
 
 public class SystemTime extends io.confluent.common.utils.SystemTime implements Time {

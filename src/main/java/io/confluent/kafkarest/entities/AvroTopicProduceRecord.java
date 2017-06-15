@@ -28,9 +28,11 @@ public class AvroTopicProduceRecord extends AvroProduceRecord
   @Min(0)
   protected Integer partition;
 
-  public AvroTopicProduceRecord(@JsonProperty("key") JsonNode key,
-                                @JsonProperty("value") JsonNode value,
-                                @JsonProperty("partition") Integer partition) {
+  public AvroTopicProduceRecord(
+      @JsonProperty("key") JsonNode key,
+      @JsonProperty("value") JsonNode value,
+      @JsonProperty("partition") Integer partition
+  ) {
     super(key, value);
     this.partition = partition;
   }

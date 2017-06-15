@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -35,9 +36,11 @@ public class Topic {
   @NotEmpty
   private List<Partition> partitions;
 
-  public Topic(@JsonProperty("name") String name,
-               @JsonProperty("configs") Properties configs,
-               @JsonProperty("partitions") List<Partition> partitions) {
+  public Topic(
+      @JsonProperty("name") String name,
+      @JsonProperty("configs") Properties configs,
+      @JsonProperty("partitions") List<Partition> partitions
+  ) {
     this.name = name;
     this.configs = configs;
     this.partitions = partitions;

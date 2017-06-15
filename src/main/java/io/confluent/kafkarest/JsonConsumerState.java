@@ -13,25 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.apache.kafka.common.errors.SerializationException;
+
 import io.confluent.kafkarest.entities.JsonConsumerRecord;
 import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.MessageAndMetadata;
 import kafka.serializer.Decoder;
 import kafka.serializer.DefaultDecoder;
 import kafka.utils.VerifiableProperties;
-import org.apache.kafka.common.errors.SerializationException;
 
 public class JsonConsumerState extends ConsumerState<byte[], byte[], Object, Object> {
+
   private static final Decoder<byte[]> decoder = new DefaultDecoder(new VerifiableProperties());
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
-  public JsonConsumerState(KafkaRestConfig config,
-                           ConsumerInstanceId instanceId,
-                           ConsumerConnector consumer) {
+  public JsonConsumerState(
+      KafkaRestConfig config,
+      ConsumerInstanceId instanceId,
+      ConsumerConnector consumer
+  ) {
     super(config, instanceId, consumer);
   }
 
@@ -46,7 +51,9 @@ public class JsonConsumerState extends ConsumerState<byte[], byte[], Object, Obj
   }
 
   @Override
-  public ConsumerRecordAndSize<Object, Object> createConsumerRecord(MessageAndMetadata<byte[], byte[]> msg) {
+  public ConsumerRecordAndSize<Object, Object> createConsumerRecord(
+      MessageAndMetadata<byte[], byte[]> msg
+  ) {
     long approxSize = 0;
 
     Object key = null;
@@ -66,9 +73,10 @@ public class JsonConsumerState extends ConsumerState<byte[], byte[], Object, Obj
       value = deserialize(msg.message());
     }
 
-    return new ConsumerRecordAndSize<Object, Object>(
-        new JsonConsumerRecord(key, value, msg.partition(), msg.offset()),
-        approxSize);
+    return new ConsumerRecordAndSize<>(
+        new JsonConsumerRecord(msg.topic(), key, value, msg.partition(), msg.offset()),
+        approxSize
+    );
   }
 
   private Object deserialize(byte[] data) {

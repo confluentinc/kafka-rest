@@ -20,13 +20,48 @@ Registry:
 
    $ ./bin/zookeeper-server-start ./etc/kafka/zookeeper.properties &
    $ ./bin/kafka-server-start ./etc/kafka/server.properties &
-   $ ./bin/schema-registry-start ./etc/schema-registry/schema-registry.properties &
    $ ./bin/kafka-rest-start ./etc/kafka-rest/kafka-rest.properties &
+
+   # optional, if you want to use Avro data format
+   $ ./bin/schema-registry-start ./etc/schema-registry/schema-registry.properties &
 
 .. ifconfig:: platform_docs
 
    See the :ref:`Confluent Platform quickstart<quickstart>` for a more detailed explanation of how
    to get these services up and running.
+
+Produce and Consume JSON Messages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. sourcecode:: bash
+
+   # Produce a message using JSON with the value '{ "foo": "bar" }' to the topic jsontest
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.json.v2+json" \
+         -H "Accept: application/vnd.kafka.v2+json" \
+         --data '{"records":[{"value":{"foo":"bar"}}]}' "http://localhost:8082/topics/jsontest"
+     {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
+
+   # Create a consumer for JSON data, starting at the beginning of the topic's
+   # log and subscribe to a topic. Then consume some data using the base URL in the first response.
+   # Finally, close the consumer with a DELETE to make it leave the group and clean up
+   # its resources.
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" \
+         --data '{"name": "my_consumer_instance", "format": "json", "auto.offset.reset": "earliest"}' \
+         http://localhost:8082/consumers/my_json_consumer
+     {"instance_id":"my_consumer_instance",
+     "base_uri":"http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance"}
+
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" --data '{"topics":["jsontest"]}' \
+    http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance/subscription
+    # No content in response
+
+   $ curl -X GET -H "Accept: application/vnd.kafka.json.v2+json" \
+         http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance/records
+     [{"key":null,"value":{"foo":"bar"},"partition":0,"offset":0,"topic":"jsontest"}]
+
+   $ curl -X DELETE -H "Content-Type: application/vnd.kafka.v2+json" \
+         http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance
+     # No content in response
 
 Produce and Consume Avro Messages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -36,7 +71,8 @@ Produce and Consume Avro Messages
    # Produce a message using Avro embedded data, including the schema which will
    # be registered with the schema registry and used to validate and serialize
    # before storing the data in Kafka
-   $ curl -X POST -H "Content-Type: application/vnd.kafka.avro.v1+json" \
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.avro.v2+json" \
+         -H "Accept: application/vnd.kafka.v2+json" \
          --data '{"value_schema": "{\"type\": \"record\", \"name\": \"User\", \"fields\": [{\"name\": \"name\", \"type\": \"string\"}]}", "records": [{"value": {"name": "testUser"}}]}' \
          "http://localhost:8082/topics/avrotest"
 
@@ -46,7 +82,8 @@ Produce and Consume Avro Messages
    # Produce a message with Avro key and value.
    # Note that if you use Avro values you must also use Avro keys, but the schemas can differ
 
-   $ curl -X POST -H "Content-Type: application/vnd.kafka.avro.v1+json" \
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.avro.v2+json" \
+         -H "Accept: application/vnd.kafka.v2+json" \
          --data '{"key_schema": "{\"name\":\"user_id\"  ,\"type\": \"int\"   }", "value_schema": "{\"type\": \"record\", \"name\": \"User\", \"fields\": [{\"name\": \"name\", \"type\": \"string\"}]}", "records": [{"key" : 1 , "value": {"name": "testUser"}}]}' \
          "http://localhost:8082/topics/avrokeytest2"
 
@@ -54,56 +91,27 @@ Produce and Consume Avro Messages
    {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":2,"value_schema_id":1}
 
    # Create a consumer for Avro data, starting at the beginning of the topic's
-   # log. Then consume some data from a topic, which is decoded, translated to
+   # log and subscribe to a topic. Then consume some data from a topic, which is decoded, translated to
    # JSON, and included in the response. The schema used for deserialization is
    # fetched automatically from the schema registry. Finally, clean up.
-   $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
-         --data '{"name": "my_consumer_instance", "format": "avro", "auto.offset.reset": "smallest"}' \
+   $ curl -X POST  -H "Content-Type: application/vnd.kafka.v2+json" \
+         --data '{"name": "my_consumer_instance", "format": "avro", "auto.offset.reset": "earliest"}' \
          http://localhost:8082/consumers/my_avro_consumer
+
      {"instance_id":"my_consumer_instance","base_uri":"http://localhost:8082/consumers/my_avro_consumer/instances/my_consumer_instance"}
-   $ curl -X GET -H "Accept: application/vnd.kafka.avro.v1+json" \
-         http://localhost:8082/consumers/my_avro_consumer/instances/my_consumer_instance/topics/avrotest
-     [{"key":null,"value":{"name":"testUser"},"partition":0,"offset":0}]
-   $ curl -X DELETE \
+
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" --data '{"topics":["avrotest"]}' \
+    http://localhost:8082/consumers/my_avro_consumer/instances/my_consumer_instance/subscription
+    # No content in response
+
+   $ curl -X GET -H "Accept: application/vnd.kafka.avro.v2+json" \
+         http://localhost:8082/consumers/my_avro_consumer/instances/my_consumer_instance/records
+     [{"key":null,"value":{"name":"testUser"},"partition":0,"offset":1,"topic":"avrotest"}]
+
+
+   $ curl -X DELETE -H "Content-Type: application/vnd.kafka.v2+json" \
          http://localhost:8082/consumers/my_avro_consumer/instances/my_consumer_instance
-     # No content in response
-
-Produce and Consume JSON Messages
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. sourcecode:: bash
-
-   # Produce a message using JSON with the value '{ "foo": "bar" }' to the topic jsontest
-   $ curl -X POST -H "Content-Type: application/vnd.kafka.json.v1+json" \
-         --data '{"records":[{"value":{"foo":"bar"}}]}' "http://localhost:8082/topics/jsontest"
-
-   # You should expect the following response:
-     {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
-
-   # Produce a message using JSON with key and value.
-   # If you use JSON the key and value can have any types, as long as the entire message is in JSON and contains a key and a value.
-   # Here we have an integer key and a map value
-curl -X POST -H "Content-Type: application/vnd.kafka.json.v1+json"          --data '{"records":[{"key": 1 , "value":{"user_name":"testUser"}}]}' "http://localhost:8082/topics/jsontest"
-
-   # You should expect the usual response:
-   {"offsets":[{"partition":0,"offset":3,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
-
-
-   # Create a consumer for JSON data, starting at the beginning of the topic's
-   # log. Then consume some data from a topic using the base URL in the first response.
-   # Finally, close the consumer with a DELETE to make it leave the group and clean up
-   # its resources.
-   $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
-         --data '{"name": "my_consumer_instance", "format": "json", "auto.offset.reset": "smallest"}' \
-         http://localhost:8082/consumers/my_json_consumer
-     {"instance_id":"my_consumer_instance",
-     "base_uri":"http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance"}
-   $ curl -X GET -H "Accept: application/vnd.kafka.json.v1+json" \
-         http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance/topics/jsontest
-     [{"key":null,"value":{"foo":"bar"},"partition":0,"offset":0}]
-   $ curl -X DELETE \
-         http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance
-     # No content in response
+   # No content in response
 
 Produce and Consume Binary Messages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -111,7 +119,8 @@ Produce and Consume Binary Messages
 .. sourcecode:: bash
 
    # Produce a message using binary embedded data with value "Kafka" to the topic binarytest
-   $ curl -X POST -H "Content-Type: application/vnd.kafka.binary.v1+json" \
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.binary.v2+json" \
+         -H "Accept: application/vnd.kafka.v2+json" \
          --data '{"records":[{"value":"S2Fma2E="}]}' "http://localhost:8082/topics/binarytest"
      {"offsets":[{"partition":0,"offset":0,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
 
@@ -119,14 +128,22 @@ Produce and Consume Binary Messages
    # log. Then consume some data from a topic using the base URL in the first response.
    # Finally, close the consumer with a DELETE to make it leave the group and clean up
    # its resources.
-   $ curl -X POST -H "Content-Type: application/vnd.kafka.v1+json" \
-         --data '{"name": "my_consumer_instance", "format": "binary", "auto.offset.reset": "smallest"}' \
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" \
+         --data '{"name": "my_consumer_instance", "format": "binary", "auto.offset.reset": "earliest"}' \
          http://localhost:8082/consumers/my_binary_consumer
+
      {"instance_id":"my_consumer_instance","base_uri":"http://localhost:8082/consumers/my_binary_consumer/instances/my_consumer_instance"}
-   $ curl -X GET -H "Accept: application/vnd.kafka.binary.v1+json" \
-         http://localhost:8082/consumers/my_binary_consumer/instances/my_consumer_instance/topics/binarytest
-     [{"key":null,"value":"S2Fma2E=","partition":0,"offset":0}]
-   $ curl -X DELETE \
+
+   $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" --data '{"topics":["binarytest"]}' \
+    http://localhost:8082/consumers/my_binary_consumer/instances/my_consumer_instance/subscription
+    # No content in response
+
+   $ curl -X GET -H "Accept: application/vnd.kafka.binary.v2+json" \
+         http://localhost:8082/consumers/my_binary_consumer/instances/my_consumer_instance/records
+
+     [{"key":null,"value":"S2Fma2E=","partition":0,"offset":0,"topic":"binarytest"}]
+
+   $ curl -X DELETE -H "Content-Type: application/vnd.kafka.v2+json" \
          http://localhost:8082/consumers/my_binary_consumer/instances/my_consumer_instance
      # No content in response
 
@@ -158,6 +175,7 @@ what is currently supported:
 * **Metadata** - Most metadata about the cluster -- brokers, topics,
   partitions, and configs -- can be read using ``GET`` requests for the
   corresponding URLs.
+
 * **Producers** - Instead of exposing producer objects, the API accepts produce
   requests targeted at specific topics or partitions and routes them all through
   a small pool of producers.
@@ -168,11 +186,11 @@ what is currently supported:
     you might pass in the ``compression.type`` option to enable site-wide
     compression to reduce storage and network overhead.
 
-* **Consumers** - The REST Proxy uses the high level consumer to implement
-  consumer-groups that can read from topics. Consumers are stateful and
-  therefore tied to specific REST Proxy instances. Offset commit can be either
-  automatic or explicitly requested by the user. Currently limited to one thread
-  per consumer; use multiple consumers for higher throughput.
+* **Consumers** - The REST Proxy uses either the high level consumer (v1 api) or the
+  new 0.9 consumer (v2 api) to implement consumer-groups that can read from topics.
+  Consumers are stateful and therefore tied to specific REST Proxy instances. Offset
+  commit can be either automatic or explicitly requested by the user. Currently limited to
+  one thread per consumer; use multiple consumers for higher throughput.
 
   * Consumer configuration - Although consumer instances are not shared, they do
     share the underlying server resources. Therefore, limited configuration
@@ -199,10 +217,6 @@ Just as important, here's a list of features that *aren't* yet supported:
   address a single topic or topic-partition. Most use cases do not require
   multi-topic produce requests, they introduce additional complexity into the
   API, and clients can easily split data across multiple requests if necessary
-* **Multi-threaded Consumers** - Currently consumers subscribe to a single topic
-  and use a single stream (and therefore a single thread). You can still
-  achieve high throughput as you would with the Java clients: run multiple
-  threads locally that each read from a separate consumer stream.
 * **Most Producer/Consumer Overrides in Requests** - Only a few key overrides are exposed in
   the API (but global overrides can be set by the administrator). The reason is
   two-fold. First, proxies are multi-tenant and therefore most user-requested
@@ -238,7 +252,7 @@ running:
 
 .. sourcecode:: bash
 
-   $ cd confluent-3.0.0/
+   $ cd confluent-3.2.0/
 
    # Start the REST proxy. The default settings automatically work with the
    # default settings for local ZooKeeper and Kafka nodes.
@@ -246,7 +260,7 @@ running:
 
 If you installed Debian or RPM packages, you can simply run ``kafka-rest-start``
 as it will be on your ``PATH``. The ``kafka-rest.properties`` file contains
-:ref:`configuration settings<schemaregistry_config>`. The default configuration
+:ref:`configuration settings<kafkarest_config>`. The default configuration
 included with the REST proxy includes convenient defaults for a local testing setup
 and should be modified for a production deployment. By default the server starts bound to port
 8082, does not specify a unique instance ID (required to safely run multiple
@@ -312,7 +326,7 @@ dependencies as well.
 Requirements
 ------------
 
-- Kafka 0.10.3.0-SNAPSHOT
+- Kafka 0.11.1.0-SNAPSHOT
 - Required for Avro support: Schema Registry 3.0.0 recommended, 1.0 minimum
 
 Contribute

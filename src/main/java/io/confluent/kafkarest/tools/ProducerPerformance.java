@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.tools;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,8 +49,8 @@ public class ProducerPerformance extends AbstractPerformanceTest {
   public static void main(String[] args) throws Exception {
     if (args.length < 6) {
       System.out.println(
-          "Usage: java " + ProducerPerformance.class.getName() + " rest_url topic_name " +
-          "num_records record_size batch_size target_records_sec"
+          "Usage: java " + ProducerPerformance.class.getName() + " rest_url topic_name "
+          + "num_records record_size batch_size target_records_sec"
       );
       System.exit(1);
     }
@@ -63,20 +64,28 @@ public class ProducerPerformance extends AbstractPerformanceTest {
 
     ProducerPerformance
         perf =
-        new ProducerPerformance(baseUrl, topic, numRecords / batchSize, batchSize, throughput,
-                                recordSize);
+        new ProducerPerformance(
+            baseUrl,
+            topic,
+            numRecords / batchSize,
+            batchSize,
+            throughput,
+            recordSize
+        );
     perf.run(throughput);
   }
 
-  public ProducerPerformance(String baseUrl, String topic, long iterations, int recordsPerIteration,
-                             long iterationsPerSec, int recordSize) throws Exception {
+  public ProducerPerformance(
+      String baseUrl, String topic, long iterations, int recordsPerIteration,
+      long iterationsPerSec, int recordSize
+  ) throws Exception {
     super(iterations * recordsPerIteration);
     this.iterations = iterations;
     this.iterationsPerSec = iterationsPerSec;
     this.recordsPerIteration = recordsPerIteration;
     this.bytesPerIteration = recordsPerIteration * recordSize;
 
-        /* setup perf test */
+    /* setup perf test */
     targetUrl = baseUrl + "/topics/" + topic;
     byte[] payload = new byte[recordSize];
     Arrays.fill(payload, (byte) 1);
@@ -116,7 +125,8 @@ public class ProducerPerformance extends AbstractPerformanceTest {
         es.close();
         throw new RuntimeException(
             String.format("Unexpected HTTP error status %d: %s",
-                          responseStatus, errorMessage.getMessage()));
+                          responseStatus, errorMessage.getMessage()
+            ));
       }
       InputStream is = connection.getInputStream();
       while (is.read(buffer) > 0) {

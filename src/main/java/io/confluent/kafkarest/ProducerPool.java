@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest;
+
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
+import org.apache.kafka.common.serialization.Serializer;
+import org.apache.kafka.common.utils.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafka.serializers.KafkaJsonSerializer;
@@ -23,21 +38,8 @@ import io.confluent.kafkarest.entities.SchemaHolder;
 import kafka.cluster.Broker;
 import kafka.cluster.EndPoint;
 import kafka.utils.ZkUtils;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
-import org.apache.kafka.common.serialization.Serializer;
-import org.apache.kafka.common.utils.Utils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 
 /**
  * Shared pool of Kafka producers used to send messages. The pool manages batched sends, tracking
@@ -54,32 +56,49 @@ public class ProducerPool {
     this(appConfig, zkUtils, null);
   }
 
-  public ProducerPool(KafkaRestConfig appConfig, ZkUtils zkUtils,
-                      Properties producerConfigOverrides) {
+  public ProducerPool(
+      KafkaRestConfig appConfig,
+      ZkUtils zkUtils,
+      Properties producerConfigOverrides
+  ) {
     this(appConfig, getBootstrapBrokers(zkUtils), producerConfigOverrides);
   }
 
-  public ProducerPool(KafkaRestConfig appConfig, String bootstrapBrokers,
-                      Properties producerConfigOverrides) {
+  public ProducerPool(
+      KafkaRestConfig appConfig,
+      String bootstrapBrokers,
+      Properties producerConfigOverrides
+  ) {
 
-    Map<String, Object> binaryProps = buildStandardConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
+    Map<String, Object> binaryProps =
+        buildStandardConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
     producers.put(EmbeddedFormat.BINARY, buildBinaryProducer(binaryProps));
 
-    Map<String, Object> jsonProps = buildStandardConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
+    Map<String, Object> jsonProps =
+        buildStandardConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
     producers.put(EmbeddedFormat.JSON, buildJsonProducer(jsonProps));
 
-    Map<String, Object> avroProps = buildAvroConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
+    Map<String, Object> avroProps =
+        buildAvroConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
     producers.put(EmbeddedFormat.AVRO, buildAvroProducer(avroProps));
   }
 
-  private Map<String, Object> buildStandardConfig(KafkaRestConfig appConfig, String bootstrapBrokers,
-                                                  Properties producerConfigOverrides) {
+  private Map<String, Object> buildStandardConfig(
+      KafkaRestConfig appConfig,
+      String bootstrapBrokers,
+      Properties producerConfigOverrides
+  ) {
     Map<String, Object> props = new HashMap<String, Object>();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
-    return buildConfig(props, appConfig.getOriginalProperties(), producerConfigOverrides);
+
+    Properties producerProps = (Properties) appConfig.getProducerProperties();
+    return buildConfig(props, producerProps, producerConfigOverrides);
   }
 
-  private NoSchemaRestProducer<byte[], byte[]> buildBinaryProducer(Map<String, Object> binaryProps) {
+  private NoSchemaRestProducer<byte[], byte[]> buildBinaryProducer(
+      Map<String, Object>
+          binaryProps
+  ) {
     return buildNoSchemaProducer(binaryProps, new ByteArraySerializer(), new ByteArraySerializer());
   }
 
@@ -87,23 +106,32 @@ public class ProducerPool {
     return buildNoSchemaProducer(jsonProps, new KafkaJsonSerializer(), new KafkaJsonSerializer());
   }
 
-  private <K, V> NoSchemaRestProducer<K, V> buildNoSchemaProducer(Map<String, Object> props,
-                                                                  Serializer<K> keySerializer,
-                                                                  Serializer<V> valueSerializer) {
+  private <K, V> NoSchemaRestProducer<K, V> buildNoSchemaProducer(
+      Map<String, Object> props,
+      Serializer<K> keySerializer,
+      Serializer<V> valueSerializer
+  ) {
     keySerializer.configure(props, true);
     valueSerializer.configure(props, false);
-    KafkaProducer<K, V> producer
-        = new KafkaProducer<K, V>(props, keySerializer, valueSerializer);
+    KafkaProducer<K, V> producer =
+        new KafkaProducer<K, V>(props, keySerializer, valueSerializer);
     return new NoSchemaRestProducer<K, V>(producer);
   }
 
-  private Map<String, Object> buildAvroConfig(KafkaRestConfig appConfig, String bootstrapBrokers,
-                                              Properties producerConfigOverrides) {
+  private Map<String, Object> buildAvroConfig(
+      KafkaRestConfig appConfig,
+      String bootstrapBrokers,
+      Properties producerConfigOverrides
+  ) {
     Map<String, Object> avroDefaults = new HashMap<String, Object>();
     avroDefaults.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
-    avroDefaults.put("schema.registry.url",
-        appConfig.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
-    return buildConfig(avroDefaults, appConfig.getOriginalProperties(), producerConfigOverrides);
+    avroDefaults.put(
+        "schema.registry.url",
+        appConfig.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG)
+    );
+
+    Properties producerProps = (Properties) appConfig.getProducerProperties();
+    return buildConfig(avroDefaults, producerProps, producerConfigOverrides);
   }
 
   private AvroRestProducer buildAvroProducer(Map<String, Object> avroProps) {
@@ -116,9 +144,11 @@ public class ProducerPool {
     return new AvroRestProducer(avroProducer, avroKeySerializer, avroValueSerializer);
   }
 
-  private Map<String, Object> buildConfig(Map<String, Object> defaults,
-                                          Properties userProps,
-                                          Properties overrides) {
+  private Map<String, Object> buildConfig(
+      Map<String, Object> defaults,
+      Properties userProps,
+      Properties overrides
+  ) {
     // Note careful ordering: built-in values we look up automatically first, then configs
     // specified by user with initial KafkaRestConfig, and finally explicit overrides passed to
     // this method (only used for tests)
@@ -140,22 +170,26 @@ public class ProducerPool {
     List<Broker> brokers = JavaConversions.seqAsJavaList(brokerSeq);
     String bootstrapBrokers = "";
     for (int i = 0; i < brokers.size(); i++) {
-      for(EndPoint ep : JavaConversions.asJavaCollection(brokers.get(i).endPoints())) {
+      for (EndPoint ep : JavaConversions.asJavaCollection(brokers.get(i).endPoints())) {
         if (bootstrapBrokers.length() > 0) {
           bootstrapBrokers += ",";
         }
-        String hostport = ep.host() == null ? ":" + ep.port() : Utils.formatAddress(ep.host(), ep.port());
+        String hostport =
+            ep.host() == null ? ":" + ep.port() : Utils.formatAddress(ep.host(), ep.port());
         bootstrapBrokers += ep.securityProtocol() + "://" + hostport;
       }
     }
     return bootstrapBrokers;
   }
 
-  public <K, V> void produce(String topic, Integer partition,
-                             EmbeddedFormat recordFormat,
-                             SchemaHolder schemaHolder,
-                             Collection<? extends ProduceRecord<K, V>> records,
-                             ProduceRequestCallback callback) {
+  public <K, V> void produce(
+      String topic,
+      Integer partition,
+      EmbeddedFormat recordFormat,
+      SchemaHolder schemaHolder,
+      Collection<? extends ProduceRecord<K, V>> records,
+      ProduceRequestCallback callback
+  ) {
     ProduceTask task = new ProduceTask(schemaHolder, records.size(), callback);
     log.trace("Starting produce task " + task.toString());
     RestProducer restProducer = producers.get(recordFormat);
@@ -174,9 +208,12 @@ public class ProducerPool {
      * Invoked when all messages have either been recorded or received an error
      *
      * @param results list of responses, in the same order as the request. Each entry can be either
-     *                a RecordAndMetadata for successful responses or an exception
+     *     a RecordAndMetadata for successful responses or an exception
      */
-    public void onCompletion(Integer keySchemaId, Integer valueSchemaId,
-                             List<RecordMetadataOrException> results);
+    public void onCompletion(
+        Integer keySchemaId,
+        Integer valueSchemaId,
+        List<RecordMetadataOrException> results
+    );
   }
 }

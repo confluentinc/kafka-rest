@@ -31,7 +31,7 @@ import java.util.List;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
-import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -63,7 +63,7 @@ public class PartitionsResourceAvroProduceTest
 
   private MetadataObserver mdObserver;
   private ProducerPool producerPool;
-  private Context ctx;
+  private DefaultKafkaRestContext ctx;
 
   private final String topicName = "topic1";
 
@@ -84,7 +84,7 @@ public class PartitionsResourceAvroProduceTest
   public PartitionsResourceAvroProduceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new Context(config, mdObserver, producerPool, null, null);
+    ctx = new DefaultKafkaRestContext(config, mdObserver, producerPool, null, null);
 
     addResource(new TopicsResource(ctx));
     addResource(new PartitionsResource(ctx));
@@ -164,7 +164,7 @@ public class PartitionsResourceAvroProduceTest
             produceToPartition(topicName, 0, request, mediatype.header, requestMediatype,
                                EmbeddedFormat.AVRO, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+        ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
         assertEquals(offsetResults, response.getOffsets());
         assertEquals((Integer) 1, response.getKeySchemaId());
@@ -185,7 +185,7 @@ public class PartitionsResourceAvroProduceTest
             produceToPartition(topicName, 0, request, mediatype.header, requestMediatype,
                                EmbeddedFormat.AVRO, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+        ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
         assertEquals(offsetResults, response.getOffsets());
         assertEquals((Integer) 1, response.getKeySchemaId());

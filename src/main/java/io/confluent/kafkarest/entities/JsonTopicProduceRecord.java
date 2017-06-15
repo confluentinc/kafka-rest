@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -28,9 +29,11 @@ public class JsonTopicProduceRecord extends JsonProduceRecord
   protected Integer partition;
 
   @JsonCreator
-  public JsonTopicProduceRecord(@JsonProperty("key") Object key,
-                                @JsonProperty("value") Object value,
-                                @JsonProperty("partition") Integer partition) {
+  public JsonTopicProduceRecord(
+      @JsonProperty("key") Object key,
+      @JsonProperty("value") Object value,
+      @JsonProperty("partition") Integer partition
+  ) {
     super(key, value);
     this.partition = partition;
   }
@@ -51,9 +54,15 @@ public class JsonTopicProduceRecord extends JsonProduceRecord
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
 
     JsonTopicProduceRecord that = (JsonTopicProduceRecord) o;
 
