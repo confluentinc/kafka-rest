@@ -202,6 +202,13 @@ Java Kafka clients.
   * Default: 1000
   * Importance: low
 
+``kafka.rest.resource.extension.class``
+  Fully qualified class name of a  valid Implementation of the interface RestResourceExtension. This can be used to inject user defined resources like filters. Typically used to add custom
+  capability like logging, security, etc
+
+  * Type: string
+  * Default: ""
+  * Importance: low
 
 
 Security Configuration Options
