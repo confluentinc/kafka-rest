@@ -54,7 +54,8 @@ public class KafkaRestConfig extends RestConfig {
 
   public static final String EXTERNAL_PORT_CONFIG = "external.port";
   private static final String EXTERNAL_PORT_DOC =
-          "The external, or host-side, port corresponding to the internal, or container-side, port with value PORT";
+          "The external, or host-side, port corresponding to the internal, "
+                  + "or container-side, port with value PORT";
   public static final int EXTERNAL_PORT_DEFAULT = -1;
 
   public static final String ZOOKEEPER_CONNECT_CONFIG = "zookeeper.connect";
