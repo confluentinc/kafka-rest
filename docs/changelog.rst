@@ -3,6 +3,14 @@
 Changelog
 =========
 
+Version 3.3.0
+-------------
+
+* `PR-305 <https://github.com/confluentinc/kafka-rest/pull/305>`_ - Use max.block.ms instead of metadata.fetch.timeout.ms since the latter was deprecated and now removed in KAFKA-3763
+* Ability to add resources like filter through a custom extension and provide a custom context
+* `PR-296 <https://github.com/confluentinc/kafka-rest/pull/296>`_ - Interceptor configuration options
+
+
 Version 3.2.1
 -------------
 
