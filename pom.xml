@@ -41,6 +41,7 @@
 
     <properties>
         <confluent.maven.repo>http://packages.confluent.io/maven/</confluent.maven.repo>
+        <log4j.version>1.7.25</log4j.version>
     </properties>
 
     <repositories>
@@ -60,7 +61,7 @@
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka_${kafka.scala.version}</artifactId>
         </dependency>
-	<dependency>
+        <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
         </dependency>
@@ -73,6 +74,11 @@
             <groupId>io.confluent</groupId>
             <artifactId>kafka-json-serializer</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${log4j.version}</version>
         </dependency>
 
         <dependency>
