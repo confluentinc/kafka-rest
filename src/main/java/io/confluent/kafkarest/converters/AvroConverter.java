@@ -159,9 +159,8 @@ public class AvroConverter {
       return primitiveSchemas.get("String");
     } else if (value instanceof byte[] || value instanceof ByteBuffer) {
       return primitiveSchemas.get("Bytes");
-    } else if (value instanceof GenericContainer) {
-      return ((GenericContainer) value).getSchema();
     }
+    
     throw new ConversionException("Couldn't determine Schema from object");
   }
 
