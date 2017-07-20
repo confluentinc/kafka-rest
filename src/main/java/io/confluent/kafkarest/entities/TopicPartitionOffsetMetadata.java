@@ -97,7 +97,7 @@ public class TopicPartitionOffsetMetadata {
     if (offset != that.offset) {
       return false;
     }
-    if (!metadata.equals(that.metadata)) {
+    if (!Objects.equals(metadata, that.metadata)) {
       return false;
     }
     if (partition != that.partition) {
