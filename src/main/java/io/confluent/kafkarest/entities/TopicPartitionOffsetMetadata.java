@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.hibernate.validator.constraints.NotEmpty;
 
+import java.util.Objects;
 import javax.validation.constraints.Min;
 
 public class TopicPartitionOffsetMetadata {
