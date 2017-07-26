@@ -222,7 +222,7 @@ public abstract class ClusterTestHarness {
     Properties props = TestUtils.createBrokerConfig(
         i, zkConnect, false, false, TestUtils.RandomPort(), noInterBrokerSecurityProtocol,
         noFile, Option.<Properties>empty(), true, false, TestUtils.RandomPort(), false,
-        TestUtils.RandomPort(), false, TestUtils.RandomPort(), Option.<String>empty());
+        TestUtils.RandomPort(), false, TestUtils.RandomPort(), Option.<String>empty(), 1);
     props.setProperty("auto.create.topics.enable", "false");
     // We *must* override this to use the port we allocated (Kafka currently allocates one port
     // that it always uses for ZK
