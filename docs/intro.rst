@@ -13,17 +13,27 @@ framework that doesn't yet support Kafka, and scripting administrative actions.
 Quickstart
 ----------
 
-Start by running the REST Proxy and the services it depends on: ZooKeeper, Kafka, and the Schema
-Registry:
+Start by running the REST Proxy and the services it depends on: ZooKeeper, Kafka, and the Schema Registry.
+You can do this in one command with Confluent CLI:
 
 .. sourcecode:: bash
 
-   $ ./bin/zookeeper-server-start ./etc/kafka/zookeeper.properties &
-   $ ./bin/kafka-server-start ./etc/kafka/server.properties &
-   $ ./bin/kafka-rest-start ./etc/kafka-rest/kafka-rest.properties &
+   $ confluent start kafka-rest
 
-   # optional, if you want to use Avro data format
-   $ ./bin/schema-registry-start ./etc/schema-registry/schema-registry.properties &
+Each service reads its configuration from its property files under ``etc``.
+
+.. note::
+
+   To manually start each service in its own terminal, run instead:
+
+   .. sourcecode:: bash
+
+      $ bin/zookeeper-server-start ./etc/kafka/zookeeper.properties
+      $ bin/kafka-server-start ./etc/kafka/server.properties
+      $ bin/kafka-rest-start ./etc/kafka-rest/kafka-rest.properties
+
+      # optional, if you want to use Avro data format
+      $ bin/schema-registry-start ./etc/schema-registry/schema-registry.properties
 
 .. ifconfig:: platform_docs
 
