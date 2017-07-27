@@ -50,7 +50,7 @@ the REST Proxy running using the default settings and some topics already create
       {"offsets":[{"partition":0,"offset":3,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
 
     # Create a consumer for JSON data, starting at the beginning of the topic's
-    # log. The consumer group is called "my_json_consumer" and the instance is "my consumer instance".
+    # log. The consumer group is called "my_json_consumer" and the instance is "my_consumer_instance".
     
     $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" -H "Accept: application/vnd.kafka.v2+json" \
     --data '{"name": "my_consumer_instance", "format": "json", "auto.offset.reset": "earliest"}' \
