@@ -32,6 +32,7 @@ Quickstart
 The following assumes you have Kafka  and an instance of
 the REST Proxy running using the default settings and some topics already created.
 
+```bash
     # Get a list of topics
     $ curl "http://localhost:8082/topics"
       
@@ -77,7 +78,7 @@ the REST Proxy running using the default settings and some topics already create
     $ curl -X DELETE -H "Accept: application/vnd.kafka.v2+json" \
           http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance
       # No content in response
-
+```
 
 Development
 -----------
