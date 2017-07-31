@@ -10,6 +10,11 @@ Version 3.3.0
 * Ability to add resources like filter through a custom extension and provide a custom context
 * `PR-296 <https://github.com/confluentinc/kafka-rest/pull/296>`_ - Interceptor configuration options
 
+Version 3.2.2
+-------------
+
+* `PR-303 <https://github.com/confluentinc/kafka-rest/pull/303>`_ - CLIENTS-304: Fix AvroConsumerRecord constructors and handling of topic for v1 consumer API.
+>>>>>>> origin/3.2.x
 
 Version 3.2.1
 -------------
