@@ -25,10 +25,10 @@ import java.util.List;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 
+import io.confluent.kafkarest.AdminClientWrapper;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.BrokerList;
@@ -42,37 +42,37 @@ import static org.junit.Assert.assertEquals;
 public class BrokersResourceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
-  private MetadataObserver mdObserver;
+  private AdminClientWrapper adminClientWrapper;
   private ProducerPool producerPool;
   private DefaultKafkaRestContext ctx;
 
   public BrokersResourceTest() throws RestConfigException {
-    mdObserver = EasyMock.createMock(MetadataObserver.class);
+    adminClientWrapper = EasyMock.createMock(AdminClientWrapper.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new DefaultKafkaRestContext(config, mdObserver, producerPool, null, null);
+    ctx = new DefaultKafkaRestContext(config, adminClientWrapper, producerPool, null, null, null);
     addResource(new BrokersResource(ctx));
   }
 
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    EasyMock.reset(mdObserver, producerPool);
+    EasyMock.reset(adminClientWrapper, producerPool);
   }
 
   @Test
   public void testList() {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       final List<Integer> brokerIds = Arrays.asList(1, 2, 3);
-      EasyMock.expect(mdObserver.getBrokerIds()).andReturn(brokerIds);
-      EasyMock.replay(mdObserver);
+      EasyMock.expect(adminClientWrapper.getBrokerIds()).andReturn(brokerIds);
+      EasyMock.replay(adminClientWrapper);
 
       Response response = request("/brokers", mediatype.header).get();
       assertOKResponse(response, mediatype.expected);
       final BrokerList returnedBrokerIds = TestUtils.tryReadEntityOrLog(response, new GenericType<BrokerList>() {
       });
       assertEquals(brokerIds, returnedBrokerIds.getBrokers());
-      EasyMock.verify(mdObserver);
-      EasyMock.reset(mdObserver, producerPool);
+      EasyMock.verify(adminClientWrapper);
+      EasyMock.reset(adminClientWrapper, producerPool);
     }
   }
 }

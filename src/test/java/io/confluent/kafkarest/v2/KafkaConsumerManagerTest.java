@@ -81,6 +81,7 @@ public class KafkaConsumerManagerTest {
     @Before
     public void setUp() throws RestConfigException {
         Properties props = new Properties();
+        props.setProperty(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, "PLAINTEXT://hostname:9092");
         props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG, "1024");
         // This setting supports the testConsumerOverrides test. It is otherwise benign and should
         // not affect other tests.

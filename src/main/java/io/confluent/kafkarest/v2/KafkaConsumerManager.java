@@ -94,7 +94,7 @@ public class KafkaConsumerManager {
   public KafkaConsumerManager(KafkaRestConfig config) {
     this.config = config;
     this.time = config.getTime();
-    this.bootstrapServers = config.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG);
+    this.bootstrapServers = config.bootstrapBrokers();
     this.workers = new Vector<KafkaConsumerWorker>();
     for (int i = 0; i < config.getInt(KafkaRestConfig.CONSUMER_THREADS_CONFIG); i++) {
       KafkaConsumerWorker worker = new KafkaConsumerWorker(config);

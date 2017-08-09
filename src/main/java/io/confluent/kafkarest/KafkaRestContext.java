@@ -21,13 +21,20 @@ import io.confluent.kafkarest.v2.KafkaConsumerManager;
 public interface KafkaRestContext {
   public KafkaRestConfig getConfig();
 
+  @Deprecated
   public MetadataObserver getMetadataObserver();
 
   public ProducerPool getProducerPool();
 
+  @Deprecated
   public ConsumerManager getConsumerManager();
 
+  @Deprecated
   public SimpleConsumerManager getSimpleConsumerManager();
 
   public KafkaConsumerManager getKafkaConsumerManager();
+
+  public AdminClientWrapper getAdminClientWrapper();
+
+  void shutdown();
 }

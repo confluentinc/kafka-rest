@@ -20,15 +20,17 @@ import io.confluent.kafkarest.v2.KafkaConsumerManager;
 
 /**
  * Shared, global state for the REST proxy server, including configuration and connection pools.
+ * The objects for producer, admin and new Consumer would be lazy initialized.
  */
 public class DefaultKafkaRestContext implements KafkaRestContext {
 
   private final KafkaRestConfig config;
   private final MetadataObserver metadataObserver;
-  private final ProducerPool producerPool;
+  private ProducerPool producerPool;
   private final ConsumerManager consumerManager;
-  private final KafkaConsumerManager kafkaConsumerManager;
+  private KafkaConsumerManager kafkaConsumerManager;
   private final SimpleConsumerManager simpleConsumerManager;
+  private AdminClientWrapper adminClientWrapper;
 
   public DefaultKafkaRestContext(
       KafkaRestConfig config,
@@ -37,7 +39,28 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
       ConsumerManager consumerManager,
       SimpleConsumerManager simpleConsumerManager
   ) {
-    this(config, metadataObserver, producerPool, consumerManager, simpleConsumerManager, null);
+    this(config, metadataObserver, producerPool, consumerManager, simpleConsumerManager, null,
+        null
+    );
+  }
+
+
+  public DefaultKafkaRestContext(
+      KafkaRestConfig config,
+      AdminClientWrapper adminClientWrapper,
+      ProducerPool producerPool,
+      ConsumerManager consumerManager,
+      SimpleConsumerManager simpleConsumerManager,
+      KafkaConsumerManager kafkaConsumerManager
+  ) {
+
+    this.config = config;
+    this.adminClientWrapper = adminClientWrapper;
+    this.producerPool = producerPool;
+    this.consumerManager = consumerManager;
+    this.simpleConsumerManager = simpleConsumerManager;
+    this.kafkaConsumerManager = kafkaConsumerManager;
+    this.metadataObserver = null;
   }
 
   public DefaultKafkaRestContext(
@@ -46,7 +69,8 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
       ProducerPool producerPool,
       ConsumerManager consumerManager,
       SimpleConsumerManager simpleConsumerManager,
-      KafkaConsumerManager kafkaConsumerManager
+      KafkaConsumerManager kafkaConsumerManager,
+      AdminClientWrapper adminClientWrapper
   ) {
 
     this.config = config;
@@ -55,29 +79,73 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
     this.consumerManager = consumerManager;
     this.simpleConsumerManager = simpleConsumerManager;
     this.kafkaConsumerManager = kafkaConsumerManager;
+    this.adminClientWrapper = adminClientWrapper;
   }
 
+
+  @Override
   public KafkaRestConfig getConfig() {
     return config;
   }
 
+  @Override
   public MetadataObserver getMetadataObserver() {
     return metadataObserver;
   }
 
+  @Override
   public ProducerPool getProducerPool() {
+    if (producerPool == null) {
+      producerPool = new ProducerPool(config);
+    }
     return producerPool;
   }
 
+  @Override
   public ConsumerManager getConsumerManager() {
     return consumerManager;
   }
 
+  @Override
   public SimpleConsumerManager getSimpleConsumerManager() {
     return simpleConsumerManager;
   }
 
+  @Override
   public KafkaConsumerManager getKafkaConsumerManager() {
+    if (kafkaConsumerManager == null) {
+      kafkaConsumerManager = new KafkaConsumerManager(config);
+    }
     return kafkaConsumerManager;
+  }
+
+  @Override
+  public AdminClientWrapper getAdminClientWrapper() {
+    if (adminClientWrapper == null) {
+      adminClientWrapper = new AdminClientWrapper(config);
+    }
+    return adminClientWrapper;
+  }
+
+  @Override
+  public void shutdown() {
+    if (kafkaConsumerManager != null) {
+      kafkaConsumerManager.shutdown();
+    }
+    if (producerPool != null) {
+      producerPool.shutdown();
+    }
+    if (simpleConsumerManager != null) {
+      simpleConsumerManager.shutdown();
+    }
+    if (consumerManager != null) {
+      consumerManager.shutdown();
+    }
+    if (adminClientWrapper != null) {
+      adminClientWrapper.shutdown();
+    }
+    if (metadataObserver != null) {
+      metadataObserver.shutdown();
+    }
   }
 }

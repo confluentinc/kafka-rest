@@ -17,17 +17,20 @@
 package io.confluent.kafkarest.extension;
 
 import org.apache.kafka.common.security.JaasUtils;
+import org.eclipse.jetty.util.StringUtil;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.confluent.kafkarest.AdminClientWrapper;
 import io.confluent.kafkarest.ConsumerManager;
+import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.SimpleConsumerFactory;
 import io.confluent.kafkarest.SimpleConsumerManager;
+import io.confluent.kafkarest.UnsupportedMetaDataObserver;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import kafka.utils.ZkUtils;
 
@@ -49,22 +52,26 @@ public class KafkaRestContextProvider {
       ConsumerManager consumerManager,
       SimpleConsumerFactory simpleConsumerFactory,
       SimpleConsumerManager simpleConsumerManager,
-      KafkaConsumerManager kafkaConsumerManager
+      KafkaConsumerManager kafkaConsumerManager,
+      AdminClientWrapper adminClientWrapper
   ) {
     if (initialized.compareAndSet(false, true)) {
-      if (zkUtils == null) {
+      if (zkUtils == null
+          && StringUtil.isNotBlank(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG))) {
+
         zkUtils = ZkUtils.apply(
             appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG), 30000,
             30000,
             JaasUtils.isZkSecurityEnabled()
         );
       }
-      if (mdObserver == null) {
-        mdObserver = new MetadataObserver(appConfig, zkUtils);
+
+      if (zkUtils == null) {
+        mdObserver = new UnsupportedMetaDataObserver(zkUtils);
+      } else if (mdObserver == null && zkUtils != null) {
+        mdObserver = new MetadataObserver(zkUtils);
       }
-      if (producerPool == null) {
-        producerPool = new ProducerPool(appConfig, zkUtils);
-      }
+
       if (consumerManager == null) {
         consumerManager = new ConsumerManager(appConfig, mdObserver);
       }
@@ -75,14 +82,10 @@ public class KafkaRestContextProvider {
         simpleConsumerManager =
             new SimpleConsumerManager(appConfig, mdObserver, simpleConsumerFactory);
       }
-      if (kafkaConsumerManager == null) {
-        kafkaConsumerManager = new KafkaConsumerManager(appConfig);
-      }
-
       defaultZkUtils = zkUtils;
       defaultContext =
           new DefaultKafkaRestContext(appConfig, mdObserver, producerPool, consumerManager,
-              simpleConsumerManager, kafkaConsumerManager
+              simpleConsumerManager, kafkaConsumerManager, adminClientWrapper
           );
       defaultAppConfig = appConfig;
     }
@@ -117,10 +120,7 @@ public class KafkaRestContextProvider {
   }
 
   public static synchronized void clean() {
-    defaultContext.getConsumerManager().shutdown();
-    defaultContext.getProducerPool().shutdown();
-    defaultContext.getSimpleConsumerManager().shutdown();
-    defaultContext.getMetadataObserver().shutdown();
+    defaultContext.shutdown();
     defaultContext = null;
     defaultZkUtils.close();
     initialized.set(false);

@@ -66,7 +66,7 @@ public class PartitionsResource {
   @PerformanceMetric("partitions.list+v2")
   public List<Partition> list(final @PathParam("topic") String topic) {
     checkTopicExists(topic);
-    return ctx.getMetadataObserver().getTopicPartitions(topic);
+    return ctx.getAdminClientWrapper().getTopicPartitions(topic);
   }
 
   @GET
@@ -77,7 +77,7 @@ public class PartitionsResource {
       @PathParam("partition") int partition
   ) {
     checkTopicExists(topic);
-    Partition part = ctx.getMetadataObserver().getTopicPartition(topic, partition);
+    Partition part = ctx.getAdminClientWrapper().getTopicPartition(topic, partition);
     if (part == null) {
       throw Errors.partitionNotFoundException();
     }
@@ -148,7 +148,7 @@ public class PartitionsResource {
   ) {
     // If the topic already exists, we can proactively check for the partition
     if (topicExists(topic)) {
-      if (!ctx.getMetadataObserver().partitionExists(topic, partition)) {
+      if (!ctx.getAdminClientWrapper().partitionExists(topic, partition)) {
         throw Errors.partitionNotFoundException();
       }
     }
@@ -197,7 +197,7 @@ public class PartitionsResource {
   }
 
   private boolean topicExists(final String topic) {
-    return ctx.getMetadataObserver().topicExists(topic);
+    return ctx.getAdminClientWrapper().topicExists(topic);
   }
 
   private void checkTopicExists(final String topic) {
