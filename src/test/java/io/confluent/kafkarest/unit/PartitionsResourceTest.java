@@ -30,7 +30,6 @@ import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.Partition;
@@ -66,7 +65,14 @@ public class PartitionsResourceTest
   public PartitionsResourceTest() throws RestConfigException {
     adminClientWrapper = EasyMock.createMock(AdminClientWrapper.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new DefaultKafkaRestContext(config, adminClientWrapper, producerPool, null, null, null);
+    ctx = new DefaultKafkaRestContext(config,
+            null,
+            producerPool,
+            null,
+            null,
+            null,
+            adminClientWrapper
+        );
 
     addResource(new TopicsResource(ctx));
     addResource(new PartitionsResource(ctx));
@@ -91,7 +97,7 @@ public class PartitionsResourceTest
       Response response = request("/topics/topic1/partitions", mediatype.header).get();
       assertOKResponse(response, mediatype.expected);
       List<Partition> partitionsResponse = TestUtils.tryReadEntityOrLog(response, new GenericType<List<Partition>>() {
-      });
+          });
       assertEquals(partitions, partitionsResponse);
 
       EasyMock.verify(adminClientWrapper);
@@ -155,9 +161,9 @@ public class PartitionsResourceTest
 
       Response response = request("/topics/topic1/partitions/1000", mediatype.header).get();
       assertErrorResponse(Response.Status.NOT_FOUND, response,
-                          Errors.PARTITION_NOT_FOUND_ERROR_CODE,
-                          Errors.PARTITION_NOT_FOUND_MESSAGE,
-                          mediatype.expected);
+          Errors.PARTITION_NOT_FOUND_ERROR_CODE,
+          Errors.PARTITION_NOT_FOUND_MESSAGE,
+          mediatype.expected);
 
       EasyMock.verify(adminClientWrapper);
       EasyMock.reset(adminClientWrapper);

@@ -68,7 +68,7 @@ public class KafkaRestContextProvider {
 
       if (zkUtils == null) {
         mdObserver = new UnsupportedMetaDataObserver(zkUtils);
-      } else if (mdObserver == null && zkUtils != null) {
+      } else if (mdObserver == null) {
         mdObserver = new MetadataObserver(zkUtils);
       }
 

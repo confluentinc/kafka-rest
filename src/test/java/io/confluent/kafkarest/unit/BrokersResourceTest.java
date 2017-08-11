@@ -49,7 +49,14 @@ public class BrokersResourceTest
   public BrokersResourceTest() throws RestConfigException {
     adminClientWrapper = EasyMock.createMock(AdminClientWrapper.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new DefaultKafkaRestContext(config, adminClientWrapper, producerPool, null, null, null);
+    ctx = new DefaultKafkaRestContext(config,
+        null,
+        producerPool,
+        null,
+        null,
+        null,
+        adminClientWrapper
+    );
     addResource(new BrokersResource(ctx));
   }
 

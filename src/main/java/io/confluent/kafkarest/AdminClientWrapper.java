@@ -57,15 +57,15 @@ public class AdminClientWrapper {
     List<Integer> brokerIds = new Vector<>();
     DescribeClusterResult clusterResults = adminClient.describeCluster();
     try {
-      Collection<Node>
-          nodeCollection =
+      Collection<Node> nodeCollection =
           clusterResults.nodes().get(initTimeOut, TimeUnit.MILLISECONDS);
       for (Node node : nodeCollection) {
         brokerIds.add(node.id());
       }
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE, Errors
-          .KAFKA_ERROR_ERROR_CODE, e);
+      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE,
+          Errors.KAFKA_ERROR_ERROR_CODE, e
+      );
     }
     return brokerIds;
   }
@@ -73,70 +73,40 @@ public class AdminClientWrapper {
   public Collection<String> getTopicNames() {
     Collection<String> allTopics = null;
     try {
-      allTopics =
-          new TreeSet<>(adminClient.listTopics().names().get(initTimeOut, TimeUnit.MILLISECONDS));
+      allTopics = new TreeSet<>(
+          adminClient.listTopics().names().get(initTimeOut, TimeUnit.MILLISECONDS));
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE, Errors
-          .KAFKA_ERROR_ERROR_CODE, e);
+      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE,
+          Errors.KAFKA_ERROR_ERROR_CODE, e
+      );
     }
     return allTopics;
   }
 
   public boolean topicExists(String topic) {
-    try {
-      Collection<String> allTopics =
-          adminClient.listTopics().names().get(initTimeOut, TimeUnit.MILLISECONDS);
-      return allTopics.contains(topic);
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE, Errors
-          .KAFKA_ERROR_ERROR_CODE, e);
-    }
+    Collection<String> allTopics = getTopicNames();
+    return allTopics.contains(topic);
   }
 
   public Topic getTopic(String topicName) {
     Topic topic = null;
-    try {
-      if (topicExists(topicName)) {
-        TopicDescription topicDescription = adminClient.describeTopics(
-            ImmutableList.<String>of(topicName)).values().get(topicName)
-            .get(initTimeOut, TimeUnit.MILLISECONDS);
+    if (topicExists(topicName)) {
+      TopicDescription topicDescription = getTopicDescription(topicName);
 
-        topic = buildTopic(topicName, topicDescription);
-      }
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE, Errors
-          .KAFKA_ERROR_ERROR_CODE, e);
+      topic = buildTopic(topicName, topicDescription);
     }
     return topic;
   }
 
   public List<Partition> getTopicPartitions(String topicName) {
-    List<Partition> partitions = null;
-    try {
-      TopicDescription topicDescription = adminClient.describeTopics(
-          ImmutableList.<String>of(topicName)).values().get(topicName)
-          .get(initTimeOut, TimeUnit.MILLISECONDS);
-
-      partitions = buildPartitonsData(topicDescription.partitions(), null);
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE, Errors
-          .KAFKA_ERROR_ERROR_CODE, e);
-    }
+    TopicDescription topicDescription = getTopicDescription(topicName);
+    List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), null);
     return partitions;
   }
 
   public Partition getTopicPartition(String topicName, int partition) {
-    List<Partition> partitions = null;
-    try {
-      TopicDescription topicDescription = adminClient.describeTopics(
-          ImmutableList.<String>of(topicName)).values().get(topicName)
-          .get(initTimeOut, TimeUnit.MILLISECONDS);
-
-      partitions = buildPartitonsData(topicDescription.partitions(), partition);
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE, Errors
-          .KAFKA_ERROR_ERROR_CODE, e);
-    }
+    TopicDescription topicDescription = getTopicDescription(topicName);
+    List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), partition);
     if (partitions.isEmpty()) {
       return null;
     }
@@ -148,20 +118,24 @@ public class AdminClientWrapper {
     return (partition >= 0 && partition < topic.getPartitions().size());
   }
 
-  private Topic buildTopic(String topicName, TopicDescription topicDescription)
-      throws InterruptedException, ExecutionException {
-    Topic topic;
-    List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), null);
+  private Topic buildTopic(String topicName, TopicDescription topicDescription) {
+    try {
+      List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), null);
 
-    ConfigResource topicResource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
-    Config config = adminClient.describeConfigs(ImmutableList.<ConfigResource>of(topicResource))
-        .values().get(topicResource).get();
-    Properties topicProps = new Properties();
-    for (ConfigEntry configEntry : config.entries()) {
-      topicProps.put(configEntry.name(), configEntry.value());
+      ConfigResource topicResource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
+      Config config = adminClient.describeConfigs(ImmutableList.<ConfigResource>of(topicResource))
+          .values().get(topicResource).get();
+      Properties topicProps = new Properties();
+      for (ConfigEntry configEntry : config.entries()) {
+        topicProps.put(configEntry.name(), configEntry.value());
+      }
+      Topic topic = new Topic(topicName, topicProps, partitions);
+      return topic;
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE,
+          Errors.KAFKA_ERROR_ERROR_CODE, e
+      );
     }
-    topic = new Topic(topicName, topicProps, partitions);
-    return topic;
   }
 
   private List<Partition> buildPartitonsData(
@@ -189,6 +163,17 @@ public class AdminClientWrapper {
       partitionList.add(p);
     }
     return partitionList;
+  }
+
+  private TopicDescription getTopicDescription(String topicName) throws RestServerErrorException {
+    try {
+      return adminClient.describeTopics(ImmutableList.<String>of(topicName))
+          .values().get(topicName).get(initTimeOut, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE,
+          Errors.KAFKA_ERROR_ERROR_CODE, e
+      );
+    }
   }
 
   public void shutdown() {

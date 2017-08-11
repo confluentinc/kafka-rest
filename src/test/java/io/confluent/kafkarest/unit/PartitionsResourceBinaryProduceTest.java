@@ -35,7 +35,6 @@ import io.confluent.kafkarest.AdminClientWrapper;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.TestUtils;
@@ -75,7 +74,14 @@ public class PartitionsResourceBinaryProduceTest
   public PartitionsResourceBinaryProduceTest() throws RestConfigException {
     adminClientWrapper = EasyMock.createMock(AdminClientWrapper.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new DefaultKafkaRestContext(config, adminClientWrapper, producerPool, null, null, null);
+    ctx = new DefaultKafkaRestContext(config,
+            null,
+            producerPool,
+            null,
+            null,
+            null,
+            adminClientWrapper
+        );
 
     addResource(new TopicsResource(ctx));
     addResource(new PartitionsResource(ctx));
@@ -107,9 +113,9 @@ public class PartitionsResourceBinaryProduceTest
   }
 
   private <K, V> Response produceToPartition(String topic, int partition, String acceptHeader,
-                                             String requestMediatype,
-                                             EmbeddedFormat recordFormat,
-                                             List<? extends ProduceRecord<K, V>> records,
+      String requestMediatype,
+      EmbeddedFormat recordFormat,
+      List<? extends ProduceRecord<K, V>> records,
                                              final List<RecordMetadataOrException> results) {
     final PartitionProduceRequest request = new PartitionProduceRequest();
     request.setRecords(records);
@@ -119,10 +125,10 @@ public class PartitionsResourceBinaryProduceTest
     EasyMock.expect(adminClientWrapper.topicExists(topic)).andReturn(true);
     EasyMock.expect(adminClientWrapper.partitionExists(topic, partition)).andReturn(true);
     producerPool.produce(EasyMock.eq(topic),
-                         EasyMock.eq(partition),
-                         EasyMock.eq(recordFormat),
-                         EasyMock.<SchemaHolder>anyObject(),
-                         EasyMock.<Collection<? extends ProduceRecord<K, V>>>anyObject(),
+        EasyMock.eq(partition),
+        EasyMock.eq(recordFormat),
+        EasyMock.<SchemaHolder>anyObject(),
+        EasyMock.<Collection<? extends ProduceRecord<K, V>>>anyObject(),
                          EasyMock.capture(produceCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
@@ -176,7 +182,7 @@ public class PartitionsResourceBinaryProduceTest
         Response
             rawResponse =
             produceToPartition(topicName, 0, mediatype.header, requestMediatype,
-                               EmbeddedFormat.BINARY,
+                EmbeddedFormat.BINARY,
                                produceRecordsWithKeys, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
         ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
@@ -219,20 +225,20 @@ public class PartitionsResourceBinaryProduceTest
         Response response = request("/topics/" + topicName + "/partitions/0", mediatype.header)
             .post(Entity.entity("{}", requestMediatype));
         assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
-                            response,
-                            ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
-                            null,
-                            mediatype.expected);
+            response,
+            ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
+            null,
+            mediatype.expected);
         EasyMock.verify();
 
         // Invalid base64 encoding
         response = request("/topics/" + topicName + "/partitions/0", mediatype.header)
             .post(Entity.entity("{\"records\":[{\"value\":\"aGVsbG8==\"}]}", requestMediatype));
         assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
-                            response,
-                            ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
-                            null,
-                            mediatype.expected);
+            response,
+            ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
+            null,
+            mediatype.expected);
         EasyMock.verify();
 
         // Invalid data -- include partition in request
@@ -242,10 +248,10 @@ public class PartitionsResourceBinaryProduceTest
         response = request("/topics/" + topicName + "/partitions/0", mediatype.header)
             .post(Entity.entity(topicRequest, requestMediatype));
         assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
-                            response,
-                            ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
-                            null,
-                            mediatype.expected);
+            response,
+            ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
+            null,
+            mediatype.expected);
         EasyMock.verify();
 
         EasyMock.reset(adminClientWrapper, producerPool);

@@ -163,24 +163,6 @@ public class ProducerPool {
     return config;
   }
 
-  private static String getBootstrapBrokers(ZkUtils zkUtils) {
-    Seq<Broker> brokerSeq = zkUtils.getAllBrokersInCluster();
-
-    List<Broker> brokers = JavaConversions.seqAsJavaList(brokerSeq);
-    String bootstrapBrokers = "";
-    for (int i = 0; i < brokers.size(); i++) {
-      for (EndPoint ep : JavaConversions.asJavaCollection(brokers.get(i).endPoints())) {
-        if (bootstrapBrokers.length() > 0) {
-          bootstrapBrokers += ",";
-        }
-        String hostport =
-            ep.host() == null ? ":" + ep.port() : Utils.formatAddress(ep.host(), ep.port());
-        bootstrapBrokers += ep.securityProtocol() + "://" + hostport;
-      }
-    }
-    return bootstrapBrokers;
-  }
-
   public <K, V> void produce(
       String topic,
       Integer partition,

@@ -20,7 +20,8 @@ import io.confluent.kafkarest.v2.KafkaConsumerManager;
 
 /**
  * Shared, global state for the REST proxy server, including configuration and connection pools.
- * The objects for producer, admin and new Consumer would be lazy initialized.
+ * ProducerPool, AdminClientWrapper and KafkaConsumerManager instances are initialized lazily
+ * if required.
  */
 public class DefaultKafkaRestContext implements KafkaRestContext {
 
@@ -32,36 +33,6 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   private final SimpleConsumerManager simpleConsumerManager;
   private AdminClientWrapper adminClientWrapper;
 
-  public DefaultKafkaRestContext(
-      KafkaRestConfig config,
-      MetadataObserver metadataObserver,
-      ProducerPool producerPool,
-      ConsumerManager consumerManager,
-      SimpleConsumerManager simpleConsumerManager
-  ) {
-    this(config, metadataObserver, producerPool, consumerManager, simpleConsumerManager, null,
-        null
-    );
-  }
-
-
-  public DefaultKafkaRestContext(
-      KafkaRestConfig config,
-      AdminClientWrapper adminClientWrapper,
-      ProducerPool producerPool,
-      ConsumerManager consumerManager,
-      SimpleConsumerManager simpleConsumerManager,
-      KafkaConsumerManager kafkaConsumerManager
-  ) {
-
-    this.config = config;
-    this.adminClientWrapper = adminClientWrapper;
-    this.producerPool = producerPool;
-    this.consumerManager = consumerManager;
-    this.simpleConsumerManager = simpleConsumerManager;
-    this.kafkaConsumerManager = kafkaConsumerManager;
-    this.metadataObserver = null;
-  }
 
   public DefaultKafkaRestContext(
       KafkaRestConfig config,

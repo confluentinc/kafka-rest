@@ -43,7 +43,7 @@ public class RootResourceTest
   private DefaultKafkaRestContext ctx;
 
   public RootResourceTest() throws RestConfigException {
-    ctx = new DefaultKafkaRestContext(config, null, null, null, null);
+    ctx = new DefaultKafkaRestContext(config, null, null, null, null, null, null);
     addResource(RootResource.class);
   }
 

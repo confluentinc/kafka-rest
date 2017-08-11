@@ -72,7 +72,8 @@ public class KafkaRestConfig extends RestConfig {
 
   public static final String ZOOKEEPER_CONNECT_CONFIG = "zookeeper.connect";
   private static final String ZOOKEEPER_CONNECT_DOC =
-      "Specifies the ZooKeeper connection string in the form "
+      "NOTE: Only required when using v1 Consumer API's. Specifies the ZooKeeper connection "
+      + "string in the form "
       + "hostname:port where host and port are the host and port of a ZooKeeper server. To allow "
       + "connecting "
       + "through other ZooKeeper nodes when that ZooKeeper machine is down you can also specify "
@@ -85,8 +86,7 @@ public class KafkaRestConfig extends RestConfig {
       + "use the same "
       + "chroot path in its connection string. For example to give a chroot path of /chroot/path "
       + "you would give "
-      + "the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path. "
-      + "This is required to be configured only to use v1 Consumer API's.";
+      + "the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path. ";
   public static final String ZOOKEEPER_CONNECT_DEFAULT = "";
 
   public static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
@@ -102,10 +102,9 @@ public class KafkaRestConfig extends RestConfig {
       + "initial connection to discover the full cluster membership (which may change "
       + "dynamically), "
       + "this list need not contain the full set of servers (you may want more than one, though, "
-      + "in case a server is down). While it is required to configure either of this or "
-      + "``zookeeper.connect``; it is recommended to always use ``bootstrap.servers``.";
-
+      + "in case a server is down).";
   public static final String BOOTSTRAP_SERVERS_DEFAULT = "";
+
   public static final String SCHEMA_REGISTRY_URL_CONFIG = "schema.registry.url";
   private static final String SCHEMA_REGISTRY_URL_DOC =
       "The base URL for the schema registry that should be used by the Avro serializer.";
