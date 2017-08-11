@@ -132,7 +132,7 @@ public class ProducerTest extends AbstractProducerTest {
     // Reduce the metadata fetch timeout so requests for topics that don't exist timeout much
     // faster than the default
     overrides.setProperty(ProducerConfig.MAX_BLOCK_MS_CONFIG, "5000");
-    return new ProducerPool(appConfig, testZkUtils, overrides);
+    return new ProducerPool(appConfig, overrides);
   }
 
   @Before

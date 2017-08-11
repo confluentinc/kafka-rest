@@ -17,16 +17,32 @@
 package io.confluent.kafkarest;
 
 import org.apache.kafka.common.protocol.SecurityProtocol;
+import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.common.utils.Utils;
+import org.eclipse.jetty.util.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import io.confluent.common.config.ConfigDef;
 import io.confluent.common.config.ConfigDef.Importance;
 import io.confluent.common.config.ConfigDef.Type;
+import io.confluent.common.config.ConfigException;
+import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
-import kafka.server.ConfigType;
+import kafka.cluster.Broker;
+import kafka.cluster.EndPoint;
+import kafka.utils.ZkUtils;
+import scala.collection.JavaConversions;
+import scala.collection.Seq;
 
 import static io.confluent.common.config.ConfigDef.Range.atLeast;
 
@@ -34,6 +50,8 @@ import static io.confluent.common.config.ConfigDef.Range.atLeast;
  * Settings for the REST proxy server.
  */
 public class KafkaRestConfig extends RestConfig {
+
+  private static final Logger log = LoggerFactory.getLogger(KafkaRestConfig.class);
 
   public static final String ID_CONFIG = "id";
   private static final String ID_CONFIG_DOC =
@@ -54,7 +72,8 @@ public class KafkaRestConfig extends RestConfig {
 
   public static final String ZOOKEEPER_CONNECT_CONFIG = "zookeeper.connect";
   private static final String ZOOKEEPER_CONNECT_DOC =
-      "Specifies the ZooKeeper connection string in the form "
+      "NOTE: Only required when using v1 Consumer API's. Specifies the ZooKeeper connection "
+      + "string in the form "
       + "hostname:port where host and port are the host and port of a ZooKeeper server. To allow "
       + "connecting "
       + "through other ZooKeeper nodes when that ZooKeeper machine is down you can also specify "
@@ -67,8 +86,8 @@ public class KafkaRestConfig extends RestConfig {
       + "use the same "
       + "chroot path in its connection string. For example to give a chroot path of /chroot/path "
       + "you would give "
-      + "the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path.";
-  public static final String ZOOKEEPER_CONNECT_DEFAULT = "localhost:2181";
+      + "the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path. ";
+  public static final String ZOOKEEPER_CONNECT_DEFAULT = "";
 
   public static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
   private static final String BOOTSTRAP_SERVERS_DOC =
@@ -84,9 +103,8 @@ public class KafkaRestConfig extends RestConfig {
       + "dynamically), "
       + "this list need not contain the full set of servers (you may want more than one, though, "
       + "in case a server is down).";
+  public static final String BOOTSTRAP_SERVERS_DEFAULT = "";
 
-  public static final String BOOTSTRAP_SERVERS_DEFAULT = "PLAINTEXT://localhost:9092";
-  public static final String KAFKACLIENT_CONNECTION_URL_DEFAULT = "localhost:2181";
   public static final String SCHEMA_REGISTRY_URL_CONFIG = "schema.registry.url";
   private static final String SCHEMA_REGISTRY_URL_DOC =
       "The base URL for the schema registry that should be used by the Avro serializer.";
@@ -160,8 +178,6 @@ public class KafkaRestConfig extends RestConfig {
 
   private static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka.rest";
 
-  public static final String KAFKACLIENT_CONNECTION_URL_CONFIG = "client.connection.url";
-  public static final String KAFKACLIENT_BOOTSTRAP_SERVERS_CONFIG = "client.bootstrap.servers";
   /**
    * <code>client.zk.session.timeout.ms</code>
    */
@@ -218,24 +234,6 @@ public class KafkaRestConfig extends RestConfig {
       "client.sasl.kerberos.ticket.renew.window.factor";
   public static final String KAFKA_REST_RESOURCE_EXTENSION_CONFIG =
       "kafka.rest.resource.extension.class";
-
-  protected static final String KAFKACLIENT_CONNECTION_URL_DOC =
-      "Zookeeper url for the Kafka cluster";
-  protected static final String
-      KAFKACLIENT_BOOTSTRAP_SERVERS_DOC =
-      "A list of Kafka brokers to connect to. For example, `PLAINTEXT://hostname:9092,"
-      + "SSL://hostname2:9092`\n"
-      + "\n"
-      + "If this configuration is not specified, the Schema Registry's internal Kafka clients "
-      + "will get their Kafka bootstrap server list\n"
-      + "from ZooKeeper (configured with `client.connection.url`). Note that if `client.bootstrap"
-      + ".servers` is configured,\n"
-      + "`client.connection.url` still needs to be configured, too.\n"
-      + "\n"
-      + "This configuration is particularly important when Kafka security is enabled, because "
-      + "Kafka may expose multiple endpoints that\n"
-      + "all will be stored in ZooKeeper, but Kafka REST  may need to be configured with just one"
-      + " of those endpoints.";
   protected static final String KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_DOC =
       "Zookeeper session timeout";
   protected static final String KAFKACLIENT_INIT_TIMEOUT_DOC =
@@ -433,20 +431,6 @@ public class KafkaRestConfig extends RestConfig {
             SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT,
             Importance.LOW,
             SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC
-        )
-        .define(
-            KAFKACLIENT_CONNECTION_URL_CONFIG,
-            ConfigDef.Type.STRING,
-            KAFKACLIENT_CONNECTION_URL_DEFAULT,
-            ConfigDef.Importance.HIGH,
-            KAFKACLIENT_CONNECTION_URL_DOC
-        )
-        .define(
-            KAFKACLIENT_BOOTSTRAP_SERVERS_CONFIG,
-            ConfigDef.Type.LIST,
-            "",
-            ConfigDef.Importance.MEDIUM,
-            KAFKACLIENT_CONNECTION_URL_DOC
         )
         .define(
             KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG,
@@ -710,6 +694,56 @@ public class KafkaRestConfig extends RestConfig {
     addPropertiesWithPrefix("client.", consumerProps);
     addPropertiesWithPrefix("consumer.", consumerProps);
     return consumerProps;
+  }
+
+  public Properties getAdminProperties() {
+    Properties consumerProps = new Properties();
+    //copy cover the properties with prefixes "client." and  "admin."
+    addPropertiesWithPrefix("client.", consumerProps);
+    addPropertiesWithPrefix("admin.", consumerProps);
+    return consumerProps;
+  }
+
+  public String bootstrapBrokers() {
+    int zkSessionTimeoutMs = getInt(KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG);
+
+    String bootstrapServersConfig = getString(BOOTSTRAP_SERVERS_CONFIG);
+    if (StringUtil.isNotBlank(bootstrapServersConfig)) {
+      return bootstrapServersConfig;
+    }
+    ZkUtils zkUtils = null;
+    try {
+      zkUtils =
+          ZkUtils.apply(
+              getString(ZOOKEEPER_CONNECT_CONFIG),
+              zkSessionTimeoutMs,
+              zkSessionTimeoutMs,
+              JaasUtils.isZkSecurityEnabled()
+          );
+      return getBootstrapBrokers(zkUtils);
+    } finally {
+      if (zkUtils != null) {
+        zkUtils.close();
+      }
+    }
+  }
+
+  private  String getBootstrapBrokers(ZkUtils zkUtils) {
+    Seq<Broker> brokerSeq = zkUtils.getAllBrokersInCluster();
+
+    List<Broker> brokers = JavaConversions.seqAsJavaList(brokerSeq);
+    String bootstrapBrokers = "";
+    for (int i = 0; i < brokers.size(); i++) {
+      for (EndPoint ep : JavaConversions.asJavaCollection(brokers.get(i).endPoints())) {
+        if (bootstrapBrokers.length() > 0) {
+          bootstrapBrokers += ",";
+        }
+        String hostport =
+            ep.host() == null ? ":" + ep.port() : Utils.formatAddress(ep.host(), ep.port());
+        bootstrapBrokers += ep.securityProtocol() + "://" + hostport;
+      }
+    }
+    return bootstrapBrokers;
   }
 
   public static void main(String[] args) {

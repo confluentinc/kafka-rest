@@ -44,42 +44,20 @@ import scala.math.Ordering;
 /**
  * Observes metadata about the Kafka cluster.
  */
+@Deprecated
 public class MetadataObserver {
 
   private static final Logger log = LoggerFactory.getLogger(MetadataObserver.class);
 
   private ZkUtils zkUtils;
 
-  public MetadataObserver(KafkaRestConfig config, ZkUtils zkUtils) {
+  public MetadataObserver(ZkUtils zkUtils) {
     this.zkUtils = zkUtils;
   }
 
-  public List<Integer> getBrokerIds() {
-    Seq<Broker> brokers = zkUtils.getAllBrokersInCluster();
-    List<Integer> brokerIds = new Vector<Integer>(brokers.size());
-    for (Broker broker : JavaConversions.asJavaCollection(brokers)) {
-      brokerIds.add(broker.id());
-    }
-    return brokerIds;
-  }
-
-  private Broker getBrokerById(final int brokerId) {
-    Option<Broker> broker = zkUtils.getBrokerInfo(brokerId);
-
-    if (broker.isDefined()) {
-      return broker.get();
-    } else {
-      throw Errors.leaderNotAvailableException();
-    }
-  }
 
   public Broker getLeader(final String topicName, final int partitionId) {
     return getBrokerById(getLeaderId(topicName, partitionId));
-  }
-
-  public Collection<String> getTopicNames() {
-    Seq<String> topicNames = zkUtils.getAllTopics().sorted(Ordering.String$.MODULE$);
-    return JavaConversions.asJavaCollection(topicNames);
   }
 
   public List<Topic> getTopics() {
@@ -101,10 +79,35 @@ public class MetadataObserver {
     return false;
   }
 
-  public Topic getTopic(String topicName) {
-    List<Topic> topics =
-        getTopicsData(JavaConversions.asScalaBuffer(Arrays.asList(topicName)));
-    return (topics.isEmpty() ? null : topics.get(0));
+  private Collection<String> getTopicNames() {
+    Seq<String> topicNames = zkUtils.getAllTopics().sorted(Ordering.String$.MODULE$);
+    return JavaConversions.asJavaCollection(topicNames);
+  }
+
+  private int getLeaderId(final String topicName, final int partitionId) {
+    final List<Partition> partitions = getTopicPartitions(topicName);
+
+    if (partitions.size() == 0) {
+      throw Errors.topicNotFoundException();
+    }
+
+    for (final Partition partition : partitions) {
+      if (partition.getPartition() == partitionId) {
+        return partition.getLeader();
+      }
+    }
+
+    throw Errors.partitionNotFoundException();
+  }
+
+  private Broker getBrokerById(final int brokerId) {
+    Option<Broker> broker = zkUtils.getBrokerInfo(brokerId);
+
+    if (broker.isDefined()) {
+      return broker.get();
+    } else {
+      throw Errors.leaderNotAvailableException();
+    }
   }
 
   private List<Topic> getTopicsData(Seq<String> topicNames) {
@@ -131,7 +134,7 @@ public class MetadataObserver {
     return topics;
   }
 
-  public List<Partition> getTopicPartitions(String topic) {
+  private List<Partition> getTopicPartitions(String topic) {
     return getTopicPartitions(topic, null);
   }
 
@@ -143,35 +146,6 @@ public class MetadataObserver {
       return extractPartitionsFromZkData(parts, topic, partitionsFilter);
     }
     return null;
-  }
-
-  public Partition getTopicPartition(String topic, int partition) {
-    List<Partition> partitions = getTopicPartitions(topic, partition);
-    if (partitions.isEmpty()) {
-      return null;
-    }
-    return partitions.get(0);
-  }
-
-  public boolean partitionExists(String topicName, int partition) {
-    Topic topic = getTopic(topicName);
-    return (partition >= 0 && partition < topic.getPartitions().size());
-  }
-
-  public int getLeaderId(final String topicName, final int partitionId) {
-    final List<Partition> partitions = getTopicPartitions(topicName);
-
-    if (partitions.size() == 0) {
-      throw Errors.topicNotFoundException();
-    }
-
-    for (final Partition partition : partitions) {
-      if (partition.getPartition() == partitionId) {
-        return partition.getLeader();
-      }
-    }
-
-    throw Errors.partitionNotFoundException();
   }
 
   private List<Partition> extractPartitionsFromZkData(

@@ -13,7 +13,7 @@
 
     <suppress
             checks="(CyclomaticComplexity)"
-            files="(AvroConverter|AvroRestProducer|ConsumerInstanceConfig|ConsumerManager|KafkaConsumerManager|PartitionOffset).java"
+            files="(AvroConverter|AvroRestProducer|ConsumerInstanceConfig|ConsumerManager|KafkaConsumerManager|PartitionOffset|KafkaRestContextProvider).java"
     />
 
     <suppress
@@ -33,7 +33,7 @@
 
     <suppress
             checks="(NPathComplexity)"
-            files="(AvroRestProducer|ConsumerInstanceConfig|ConsumerManager|KafkaConsumerManager|PartitionOffset).java"
+            files="(AvroRestProducer|ConsumerInstanceConfig|ConsumerManager|KafkaConsumerManager|PartitionOffset|KafkaRestContextProvider).java"
     />
     <suppress
             checks="(MethodLength)"
