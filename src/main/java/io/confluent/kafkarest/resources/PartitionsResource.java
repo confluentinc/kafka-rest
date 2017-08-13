@@ -16,6 +16,7 @@
 
 package io.confluent.kafkarest.resources;
 
+import org.eclipse.jetty.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,8 +36,8 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 
 import io.confluent.kafkarest.ConsumerManager;
-import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Versions;
@@ -51,6 +52,7 @@ import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
+import kafka.common.KafkaException;
 
 @Path("/topics/{topic}/partitions")
 @Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW,
@@ -72,7 +74,7 @@ public class PartitionsResource {
   @PerformanceMetric("partitions.list")
   public List<Partition> list(final @PathParam("topic") String topic) {
     checkTopicExists(topic);
-    return ctx.getMetadataObserver().getTopicPartitions(topic);
+    return ctx.getAdminClientWrapper().getTopicPartitions(topic);
   }
 
   @GET
@@ -83,7 +85,7 @@ public class PartitionsResource {
       @PathParam("partition") int partition
   ) {
     checkTopicExists(topic);
-    Partition part = ctx.getMetadataObserver().getTopicPartition(topic, partition);
+    Partition part = ctx.getAdminClientWrapper().getTopicPartition(topic, partition);
     if (part == null) {
       throw Errors.partitionNotFoundException();
     }
@@ -204,7 +206,7 @@ public class PartitionsResource {
   ) {
 
     log.trace("Executing simple consume id={} topic={} partition={} offset={} count={}",
-              asyncResponse, topicName, partitionId, offset, count
+        asyncResponse, topicName, partitionId, offset, count
     );
 
     ctx.getSimpleConsumerManager().consume(
@@ -238,54 +240,56 @@ public class PartitionsResource {
       final EmbeddedFormat format,
       final PartitionProduceRequest<R> request
   ) {
-    // If the topic already exists, we can proactively check for the partition
-    if (topicExists(topic)) {
-      if (!ctx.getMetadataObserver().partitionExists(topic, partition)) {
-        throw Errors.partitionNotFoundException();
-      }
-    }
 
     log.trace("Executing topic produce request id={} topic={} partition={} format={} request={}",
-              asyncResponse, topic, partition, format, request
+        asyncResponse, topic, partition, format, request
     );
 
-    ctx.getProducerPool().produce(
-        topic, partition, format,
-        request,
-        request.getRecords(),
-        new ProducerPool.ProduceRequestCallback() {
-          public void onCompletion(
-              Integer keySchemaId, Integer valueSchemaId,
-              List<RecordMetadataOrException> results
-          ) {
-            ProduceResponse response = new ProduceResponse();
-            List<PartitionOffset> offsets = new Vector<PartitionOffset>();
-            for (RecordMetadataOrException result : results) {
-              if (result.getException() != null) {
-                int errorCode = Errors.codeFromProducerException(result.getException());
-                String errorMessage = result.getException().getMessage();
-                offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
-              } else {
-                offsets.add(new PartitionOffset(result.getRecordMetadata().partition(),
-                                                result.getRecordMetadata().offset(),
-                                                null, null
-                ));
+    try {
+      ctx.getProducerPool().produce(
+          topic, partition, format,
+          request,
+          request.getRecords(),
+          new ProducerPool.ProduceRequestCallback() {
+            public void onCompletion(
+                Integer keySchemaId, Integer valueSchemaId,
+                List<RecordMetadataOrException> results
+            ) {
+              ProduceResponse response = new ProduceResponse();
+              List<PartitionOffset> offsets = new Vector<PartitionOffset>();
+              for (RecordMetadataOrException result : results) {
+                if (result.getException() != null) {
+                  int errorCode = Errors.codeFromProducerException(result.getException());
+                  String errorMessage = result.getException().getMessage();
+                  offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
+                } else {
+                  offsets.add(new PartitionOffset(result.getRecordMetadata().partition(),
+                      result.getRecordMetadata().offset(),
+                      null, null
+                  ));
+                }
               }
+              response.setOffsets(offsets);
+              response.setKeySchemaId(keySchemaId);
+              response.setValueSchemaId(valueSchemaId);
+              log.trace("Completed topic produce request id={} response={}",
+                  asyncResponse, response
+              );
+              asyncResponse.resume(response);
             }
-            response.setOffsets(offsets);
-            response.setKeySchemaId(keySchemaId);
-            response.setValueSchemaId(valueSchemaId);
-            log.trace("Completed topic produce request id={} response={}",
-                      asyncResponse, response
-            );
-            asyncResponse.resume(response);
           }
-        }
-    );
+      );
+    } catch (KafkaException e) {
+      if (StringUtil.startsWithIgnoreCase(e.getMessage(), "Invalid partition")) {
+        Errors.partitionNotFoundException();
+      } else {
+        Errors.kafkaErrorException(e);
+      }
+    }
   }
 
   private boolean topicExists(final String topic) {
-    return ctx.getMetadataObserver().topicExists(topic);
+    return ctx.getAdminClientWrapper().topicExists(topic);
   }
 
   private void checkTopicExists(final String topic) {

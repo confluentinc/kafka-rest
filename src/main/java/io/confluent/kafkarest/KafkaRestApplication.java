@@ -57,6 +57,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   public KafkaRestApplication(KafkaRestConfig config)
       throws IllegalAccessException, InstantiationException, RestConfigException {
     super(config);
+
     String extensionClassName =
         config.getString(KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG);
 
@@ -79,7 +80,9 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-    setupInjectedResources(config, appConfig, null, null, null, null, null, null, null);
+    setupInjectedResources(config, appConfig, null, null, null, null, null, null, null,
+        null
+    );
   }
 
   /**
@@ -93,13 +96,22 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
       ConsumerManager consumerManager,
       SimpleConsumerFactory simpleConsumerFactory,
       SimpleConsumerManager simpleConsumerManager,
-      KafkaConsumerManager kafkaConsumerManager
+      KafkaConsumerManager kafkaConsumerManager,
+      AdminClientWrapper adminClientWrapperInjected
   ) {
+    if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))
+        && StringUtil.isBlank(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG))) {
+      throw new RuntimeException("Atleast one of " + KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG + " "
+                                 + "or "
+                                    + KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG
+                                    + " needs to be configured");
+    }
+
     config.register(new ZkExceptionMapper(appConfig));
 
     KafkaRestContextProvider.initialize(zkUtils, appConfig, mdObserver, producerPool,
         consumerManager, simpleConsumerFactory,
-        simpleConsumerManager, kafkaConsumerManager
+        simpleConsumerManager, kafkaConsumerManager, adminClientWrapperInjected
     );
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
     KafkaRestContext context =

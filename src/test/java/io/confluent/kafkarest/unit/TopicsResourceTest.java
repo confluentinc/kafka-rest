@@ -15,6 +15,7 @@
  **/
 package io.confluent.kafkarest.unit;
 
+import io.confluent.kafkarest.AdminClientWrapper;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
@@ -45,14 +46,15 @@ import static org.junit.Assert.assertEquals;
 public class TopicsResourceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
-  private MetadataObserver mdObserver;
+  private AdminClientWrapper adminClientWrapper;
   private ProducerPool producerPool;
   private DefaultKafkaRestContext ctx;
 
   public TopicsResourceTest() throws RestConfigException {
-    mdObserver = EasyMock.createMock(MetadataObserver.class);
+    adminClientWrapper = EasyMock.createMock(AdminClientWrapper.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new DefaultKafkaRestContext(config, mdObserver, producerPool, null, null);
+    ctx = new DefaultKafkaRestContext(config, null, producerPool, null, null,
+        null,  adminClientWrapper);
 
     addResource(new TopicsResource(ctx));
   }
@@ -61,15 +63,15 @@ public class TopicsResourceTest
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    EasyMock.reset(mdObserver, producerPool);
+    EasyMock.reset(adminClientWrapper, producerPool);
   }
 
   @Test
   public void testList() {
     final List<String> topics = Arrays.asList("test1", "test2", "test3");
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-      EasyMock.expect(mdObserver.getTopicNames()).andReturn(topics);
-      EasyMock.replay(mdObserver);
+      EasyMock.expect(adminClientWrapper.getTopicNames()).andReturn(topics);
+      EasyMock.replay(adminClientWrapper);
 
       Response response = request("/topics", mediatype.expected).get();
       assertOKResponse(response, mediatype.expected);
@@ -77,8 +79,8 @@ public class TopicsResourceTest
       });
       assertEquals(topics, topicsResponse);
 
-      EasyMock.verify(mdObserver);
-      EasyMock.reset(mdObserver);
+      EasyMock.verify(adminClientWrapper);
+      EasyMock.reset(adminClientWrapper);
     }
   }
 
@@ -106,11 +108,11 @@ public class TopicsResourceTest
     Topic topic2 = new Topic("topic2", nonEmptyConfig, partitions2);
 
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-      EasyMock.expect(mdObserver.getTopic("topic1"))
+      EasyMock.expect(adminClientWrapper.getTopic("topic1"))
           .andReturn(topic1);
-      EasyMock.expect(mdObserver.getTopic("topic2"))
+      EasyMock.expect(adminClientWrapper.getTopic("topic2"))
           .andReturn(topic2);
-      EasyMock.replay(mdObserver);
+      EasyMock.replay(adminClientWrapper);
 
       Response response1 = request("/topics/topic1", mediatype.header).get();
       assertOKResponse(response1, mediatype.expected);
@@ -123,25 +125,25 @@ public class TopicsResourceTest
       });
       assertEquals(topic2, topicResponse2);
 
-      EasyMock.verify(mdObserver);
-      EasyMock.reset(mdObserver);
+      EasyMock.verify(adminClientWrapper);
+      EasyMock.reset(adminClientWrapper);
     }
   }
 
   @Test
   public void testGetInvalidTopic() {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-      EasyMock.expect(mdObserver.getTopic("nonexistanttopic"))
+      EasyMock.expect(adminClientWrapper.getTopic("nonexistanttopic"))
           .andReturn(null);
-      EasyMock.replay(mdObserver);
+      EasyMock.replay(adminClientWrapper);
 
       Response response = request("/topics/nonexistanttopic", mediatype.header).get();
       assertErrorResponse(Response.Status.NOT_FOUND, response,
                           Errors.TOPIC_NOT_FOUND_ERROR_CODE, Errors.TOPIC_NOT_FOUND_MESSAGE,
                           mediatype.expected);
 
-      EasyMock.verify(mdObserver);
-      EasyMock.reset(mdObserver);
+      EasyMock.verify(adminClientWrapper);
+      EasyMock.reset(adminClientWrapper);
     }
   }
 }

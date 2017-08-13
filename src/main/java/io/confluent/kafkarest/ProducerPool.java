@@ -52,16 +52,15 @@ public class ProducerPool {
   private Map<EmbeddedFormat, RestProducer> producers =
       new HashMap<EmbeddedFormat, RestProducer>();
 
-  public ProducerPool(KafkaRestConfig appConfig, ZkUtils zkUtils) {
-    this(appConfig, zkUtils, null);
+  public ProducerPool(KafkaRestConfig appConfig) {
+    this(appConfig, null);
   }
 
   public ProducerPool(
       KafkaRestConfig appConfig,
-      ZkUtils zkUtils,
       Properties producerConfigOverrides
   ) {
-    this(appConfig, getBootstrapBrokers(zkUtils), producerConfigOverrides);
+    this(appConfig, appConfig.bootstrapBrokers(), producerConfigOverrides);
   }
 
   public ProducerPool(
@@ -164,24 +163,6 @@ public class ProducerPool {
     return config;
   }
 
-  private static String getBootstrapBrokers(ZkUtils zkUtils) {
-    Seq<Broker> brokerSeq = zkUtils.getAllBrokersInCluster();
-
-    List<Broker> brokers = JavaConversions.seqAsJavaList(brokerSeq);
-    String bootstrapBrokers = "";
-    for (int i = 0; i < brokers.size(); i++) {
-      for (EndPoint ep : JavaConversions.asJavaCollection(brokers.get(i).endPoints())) {
-        if (bootstrapBrokers.length() > 0) {
-          bootstrapBrokers += ",";
-        }
-        String hostport =
-            ep.host() == null ? ":" + ep.port() : Utils.formatAddress(ep.host(), ep.port());
-        bootstrapBrokers += ep.securityProtocol() + "://" + hostport;
-      }
-    }
-    return bootstrapBrokers;
-  }
-
   public <K, V> void produce(
       String topic,
       Integer partition,
@@ -208,7 +189,7 @@ public class ProducerPool {
      * Invoked when all messages have either been recorded or received an error
      *
      * @param results list of responses, in the same order as the request. Each entry can be either
-     *     a RecordAndMetadata for successful responses or an exception
+     *                a RecordAndMetadata for successful responses or an exception
      */
     public void onCompletion(
         Integer keySchemaId,

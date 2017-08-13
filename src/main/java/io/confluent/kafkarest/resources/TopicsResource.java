@@ -67,14 +67,14 @@ public class TopicsResource {
   @GET
   @PerformanceMetric("topics.list")
   public Collection<String> list() {
-    return ctx.getMetadataObserver().getTopicNames();
+    return ctx.getAdminClientWrapper().getTopicNames();
   }
 
   @GET
   @Path("/{topic}")
   @PerformanceMetric("topic.get")
   public Topic getTopic(@PathParam("topic") String topicName) {
-    Topic topic = ctx.getMetadataObserver().getTopic(topicName);
+    Topic topic = ctx.getAdminClientWrapper().getTopic(topicName);
     if (topic == null) {
       throw Errors.topicNotFoundException();
     }

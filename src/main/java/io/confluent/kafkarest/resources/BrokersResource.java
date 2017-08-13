@@ -46,6 +46,6 @@ public class BrokersResource {
   @Valid
   @PerformanceMetric("brokers.list")
   public BrokerList list() {
-    return new BrokerList(ctx.getMetadataObserver().getBrokerIds());
+    return new BrokerList(ctx.getAdminClientWrapper().getBrokerIds());
   }
 }
