@@ -47,7 +47,8 @@ public class AdminClientWrapper {
   private int initTimeOut;
 
   public AdminClientWrapper(KafkaRestConfig kafkaRestConfig) {
-    Properties properties = new Properties(kafkaRestConfig.getAdminProperties());
+    Properties properties = new Properties();
+    properties.putAll(kafkaRestConfig.getAdminProperties());
     properties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaRestConfig.bootstrapBrokers());
     adminClient = AdminClient.create(properties);
     this.initTimeOut = kafkaRestConfig.getInt(KafkaRestConfig.KAFKACLIENT_INIT_TIMEOUT_CONFIG);
