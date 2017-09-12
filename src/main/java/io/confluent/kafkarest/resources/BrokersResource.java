@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.resources;
 
 import javax.validation.Valid;
@@ -21,7 +22,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
-import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BrokerList;
 import io.confluent.rest.annotations.PerformanceMetric;
@@ -31,13 +32,13 @@ import io.confluent.rest.annotations.PerformanceMetric;
  */
 @Path("/brokers")
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
-           Versions.JSON_WEIGHTED})
+           Versions.JSON_WEIGHTED, Versions.KAFKA_V2_JSON_WEIGHTED})
 @Consumes()
 public class BrokersResource {
 
-  private final Context ctx;
+  private final KafkaRestContext ctx;
 
-  public BrokersResource(Context ctx) {
+  public BrokersResource(KafkaRestContext ctx) {
     this.ctx = ctx;
   }
 
@@ -45,6 +46,6 @@ public class BrokersResource {
   @Valid
   @PerformanceMetric("brokers.list")
   public BrokerList list() {
-    return new BrokerList(ctx.getMetadataObserver().getBrokerIds());
+    return new BrokerList(ctx.getAdminClientWrapper().getBrokerIds());
   }
 }

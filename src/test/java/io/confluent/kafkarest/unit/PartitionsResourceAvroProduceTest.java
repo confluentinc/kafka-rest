@@ -31,7 +31,8 @@ import java.util.List;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
-import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.AdminClientWrapper;
+import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -61,9 +62,9 @@ import static org.junit.Assert.assertEquals;
 public class PartitionsResourceAvroProduceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
-  private MetadataObserver mdObserver;
+  private AdminClientWrapper adminClientWrapper;
   private ProducerPool producerPool;
-  private Context ctx;
+  private DefaultKafkaRestContext ctx;
 
   private final String topicName = "topic1";
 
@@ -82,10 +83,16 @@ public class PartitionsResourceAvroProduceTest
                                                + "}]}";
 
   public PartitionsResourceAvroProduceTest() throws RestConfigException {
-    mdObserver = EasyMock.createMock(MetadataObserver.class);
+    adminClientWrapper = EasyMock.createMock(AdminClientWrapper.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new Context(config, mdObserver, producerPool, null, null);
-
+    ctx = new DefaultKafkaRestContext(config,
+        null,
+        producerPool,
+        null,
+        null,
+        null,
+        adminClientWrapper
+    );
     addResource(new TopicsResource(ctx));
     addResource(new PartitionsResource(ctx));
 
@@ -108,7 +115,7 @@ public class PartitionsResourceAvroProduceTest
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    EasyMock.reset(mdObserver, producerPool);
+    EasyMock.reset(adminClientWrapper, producerPool);
   }
 
   private <K, V> Response produceToPartition(String topic, int partition,
@@ -120,8 +127,8 @@ public class PartitionsResourceAvroProduceTest
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
         new Capture<ProducerPool.ProduceRequestCallback>();
-    EasyMock.expect(mdObserver.topicExists(topic)).andReturn(true);
-    EasyMock.expect(mdObserver.partitionExists(topic, partition)).andReturn(true);
+    EasyMock.expect(adminClientWrapper.topicExists(topic)).andReturn(true);
+    EasyMock.expect(adminClientWrapper.partitionExists(topic, partition)).andReturn(true);
     producerPool.produce(EasyMock.eq(topic),
                          EasyMock.eq(partition),
                          EasyMock.eq(recordFormat),
@@ -139,7 +146,7 @@ public class PartitionsResourceAvroProduceTest
         return null;
       }
     });
-    EasyMock.replay(mdObserver, producerPool);
+    EasyMock.replay(adminClientWrapper, producerPool);
 
     Response
         response =
@@ -147,7 +154,7 @@ public class PartitionsResourceAvroProduceTest
                 acceptHeader)
             .post(Entity.entity(request, requestMediatype));
 
-    EasyMock.verify(mdObserver, producerPool);
+    EasyMock.verify(producerPool);
 
     return response;
   }
@@ -164,13 +171,13 @@ public class PartitionsResourceAvroProduceTest
             produceToPartition(topicName, 0, request, mediatype.header, requestMediatype,
                                EmbeddedFormat.AVRO, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+        ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
         assertEquals(offsetResults, response.getOffsets());
         assertEquals((Integer) 1, response.getKeySchemaId());
         assertEquals((Integer) 2, response.getValueSchemaId());
 
-        EasyMock.reset(mdObserver, producerPool);
+        EasyMock.reset(adminClientWrapper, producerPool);
       }
     }
 
@@ -185,13 +192,13 @@ public class PartitionsResourceAvroProduceTest
             produceToPartition(topicName, 0, request, mediatype.header, requestMediatype,
                                EmbeddedFormat.AVRO, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+        ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
         assertEquals(offsetResults, response.getOffsets());
         assertEquals((Integer) 1, response.getKeySchemaId());
         assertEquals((Integer) 2, response.getValueSchemaId());
 
-        EasyMock.reset(mdObserver, producerPool);
+        EasyMock.reset(adminClientWrapper, producerPool);
       }
     }
   }
@@ -212,7 +219,7 @@ public class PartitionsResourceAvroProduceTest
                             null,
                             mediatype.expected);
 
-        EasyMock.reset(mdObserver, producerPool);
+        EasyMock.reset(adminClientWrapper, producerPool);
       }
     }
   }

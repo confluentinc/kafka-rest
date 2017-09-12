@@ -53,13 +53,13 @@ public class ConsumerResourceAvroTest extends AbstractConsumerResourceTest {
   public void testReadCommit() {
     List<? extends ConsumerRecord<JsonNode, JsonNode>> expectedReadLimit = Arrays.asList(
         new AvroConsumerRecord(
-            TestUtils.jsonTree("\"key1\""), TestUtils.jsonTree("\"value1\""), 0, 10)
+            topicName, TestUtils.jsonTree("\"key1\""), TestUtils.jsonTree("\"value1\""), 0, 10)
     );
     List<? extends ConsumerRecord<JsonNode, JsonNode>> expectedReadNoLimit = Arrays.asList(
         new AvroConsumerRecord(
-            TestUtils.jsonTree("\"key2\""), TestUtils.jsonTree("\"value2\""), 1, 15),
+            topicName, TestUtils.jsonTree("\"key2\""), TestUtils.jsonTree("\"value2\""), 1, 15),
         new AvroConsumerRecord(
-            TestUtils.jsonTree("\"key3\""), TestUtils.jsonTree("\"value3\""), 2, 20)
+            topicName, TestUtils.jsonTree("\"key3\""), TestUtils.jsonTree("\"value3\""), 2, 20)
     );
     List<TopicPartitionOffset> expectedOffsets = Arrays.asList(
         new TopicPartitionOffset(topicName, 0, 10, 10),
@@ -78,9 +78,8 @@ public class ConsumerResourceAvroTest extends AbstractConsumerResourceTest {
         Response response = request("/consumers/" + groupName, mediatype.header)
             .post(Entity.entity(new ConsumerInstanceConfig(EmbeddedFormat.AVRO), requestMediatype));
         assertOKResponse(response, mediatype.expected);
-        final CreateConsumerInstanceResponse
-            createResponse =
-            response.readEntity(CreateConsumerInstanceResponse.class);
+        final CreateConsumerInstanceResponse createResponse =
+            TestUtils.tryReadEntityOrLog(response, CreateConsumerInstanceResponse.class);
 
         // Read with size limit
         String readUrl = instanceBasePath(createResponse) + "/topics/" + topicName;
@@ -94,18 +93,15 @@ public class ConsumerResourceAvroTest extends AbstractConsumerResourceTest {
         String expectedMediatype
             = mediatype.header != null ? mediatype.expected : Versions.KAFKA_V1_JSON_AVRO;
         assertOKResponse(readLimitResponse, expectedMediatype);
-        final List<AvroConsumerRecord>
-            readLimitResponseRecords =
-            readLimitResponse.readEntity(new GenericType<List<AvroConsumerRecord>>() {
-            });
+        final List<AvroConsumerRecord> readLimitResponseRecords =
+            TestUtils.tryReadEntityOrLog(readLimitResponse, new GenericType<List<AvroConsumerRecord>>() {});
         assertEquals(expectedReadLimit, readLimitResponseRecords);
 
         // Read without size limit
         Response readResponse = request(readUrl, mediatype.header).get();
         assertOKResponse(readResponse, expectedMediatype);
-        final List<AvroConsumerRecord>
-            readResponseRecords =
-            readResponse.readEntity(new GenericType<List<AvroConsumerRecord>>() {
+        final List<AvroConsumerRecord> readResponseRecords =
+                TestUtils.tryReadEntityOrLog(readResponse, new GenericType<List<AvroConsumerRecord>>() {
             });
         assertEquals(expectedReadNoLimit, readResponseRecords);
 
@@ -113,9 +109,8 @@ public class ConsumerResourceAvroTest extends AbstractConsumerResourceTest {
         Response commitResponse = request(commitUrl, mediatype.header)
             .post(Entity.entity(null, requestMediatype));
         assertOKResponse(response, mediatype.expected);
-        final List<TopicPartitionOffset>
-            committedOffsets =
-            commitResponse.readEntity(new GenericType<List<TopicPartitionOffset>>() {
+        final List<TopicPartitionOffset> committedOffsets =
+                TestUtils.tryReadEntityOrLog(commitResponse, new GenericType<List<TopicPartitionOffset>>() {
             });
         assertEquals(expectedOffsets, committedOffsets);
 

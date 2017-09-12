@@ -17,6 +17,8 @@
 package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.*;
+import io.confluent.kafkarest.v2.KafkaConsumerManager;
+import io.confluent.rest.RestConfigException;
 import kafka.utils.ZkUtils;
 
 import javax.ws.rs.core.Configurable;
@@ -33,11 +35,25 @@ public class TestKafkaRestApplication extends KafkaRestApplication {
   ConsumerManager consumerManagerInjected;
   SimpleConsumerFactory simpleConsumerFactoryInjected;
   SimpleConsumerManager simpleConsumerManagerInjected;
+  KafkaConsumerManager kafkaConsumerManagerInjected;
+  AdminClientWrapper adminClientWrapperInjected;
 
   public TestKafkaRestApplication(KafkaRestConfig config, ZkUtils zkUtils,
                                   MetadataObserver mdObserver, ProducerPool producerPool,
                                   ConsumerManager consumerManager,
-                                  SimpleConsumerFactory simpleConsumerFactory, SimpleConsumerManager simpleConsumerManager) {
+                                  SimpleConsumerFactory simpleConsumerFactory, SimpleConsumerManager simpleConsumerManager)
+      throws IllegalAccessException, InstantiationException, RestConfigException {
+    this(config, zkUtils, mdObserver, producerPool, consumerManager,
+        simpleConsumerFactory, simpleConsumerManager, null, null);
+  }
+
+  public TestKafkaRestApplication(KafkaRestConfig config, ZkUtils zkUtils,
+                                  MetadataObserver mdObserver, ProducerPool producerPool,
+                                  ConsumerManager consumerManager,
+                                  SimpleConsumerFactory simpleConsumerFactory,
+                                  SimpleConsumerManager simpleConsumerManager,
+                                  KafkaConsumerManager kafkaConsumerManager, AdminClientWrapper adminClientWrapper)
+      throws IllegalAccessException, InstantiationException, RestConfigException {
     super(config);
     zkUtilsInjected = zkUtils;
     mdObserverInjected = mdObserver;
@@ -45,13 +61,16 @@ public class TestKafkaRestApplication extends KafkaRestApplication {
     consumerManagerInjected = consumerManager;
     simpleConsumerFactoryInjected = simpleConsumerFactory;
     simpleConsumerManagerInjected = simpleConsumerManager;
+    kafkaConsumerManagerInjected = kafkaConsumerManager;
+    adminClientWrapperInjected = adminClientWrapper;
   }
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
     setupInjectedResources(config, appConfig, zkUtilsInjected, mdObserverInjected,
                            producerPoolInjected, consumerManagerInjected,
-                           simpleConsumerFactoryInjected, simpleConsumerManagerInjected);
+                           simpleConsumerFactoryInjected, simpleConsumerManagerInjected,
+        kafkaConsumerManagerInjected, adminClientWrapperInjected);
   }
 
 }

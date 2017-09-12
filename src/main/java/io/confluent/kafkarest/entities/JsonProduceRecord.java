@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.entities;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -21,8 +22,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class JsonProduceRecord extends ProduceRecordBase<Object, Object> {
 
   @JsonCreator
-  public JsonProduceRecord(@JsonProperty("key") Object key,
-                           @JsonProperty("value") Object value) {
+  public JsonProduceRecord(
+      @JsonProperty("key") Object key,
+      @JsonProperty("value") Object value
+  ) {
     super(key, value);
   }
 
@@ -32,13 +35,18 @@ public class JsonProduceRecord extends ProduceRecordBase<Object, Object> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     JsonProduceRecord that = (JsonProduceRecord) o;
 
-    if (key != null ? !key.equals(that.key) : that.key != null) return false;
-    return !(value != null ? !value.equals(that.value) : that.value != null);
+    return key != null
+           ? key.equals(that.key)
+           : that.key == null && !(value != null ? !value.equals(that.value) : that.value != null);
 
   }
 

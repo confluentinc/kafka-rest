@@ -126,7 +126,12 @@ public class MockConsumerQueue implements BlockingQueue<FetchedDataChunk> {
       AtomicLong fetchOffset = new AtomicLong(0);
       PartitionTopicInfo
           pti =
-          new PartitionTopicInfo("topic", c.getPartition(), null, consumedOffset, fetchOffset, null,
+          new PartitionTopicInfo(c.getTopic(),
+                                 c.getPartition(),
+                                 null,
+                                 consumedOffset,
+                                 fetchOffset,
+                                 null,
                                  "clientId");
       return new FetchedDataChunk(msgSet, pti, fetchOffset.get());
     }

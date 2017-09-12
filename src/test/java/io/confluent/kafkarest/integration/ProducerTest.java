@@ -15,6 +15,7 @@
  **/
 package io.confluent.kafkarest.integration;
 
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.errors.RecordTooLargeException;
 import org.apache.kafka.common.security.JaasUtils;
 import org.junit.Before;
@@ -130,8 +131,8 @@ public class ProducerTest extends AbstractProducerTest {
     Properties overrides = new Properties();
     // Reduce the metadata fetch timeout so requests for topics that don't exist timeout much
     // faster than the default
-    overrides.setProperty("metadata.fetch.timeout.ms", "5000");
-    return new ProducerPool(appConfig, testZkUtils, overrides);
+    overrides.setProperty(ProducerConfig.MAX_BLOCK_MS_CONFIG, "5000");
+    return new ProducerPool(appConfig, overrides);
   }
 
   @Before

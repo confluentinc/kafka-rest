@@ -43,7 +43,7 @@ public class PartitionsResourceAvroConsumeTest extends PartitionsResourceAbstrac
   public void testConsumeOk() {
     final List<? extends ConsumerRecord<JsonNode, JsonNode>> records = Arrays.asList(
         new AvroConsumerRecord(
-            TestUtils.jsonTree("\"key1\""), TestUtils.jsonTree("\"value1\""), 0, 10)
+            topicName, TestUtils.jsonTree("\"key1\""), TestUtils.jsonTree("\"value1\""), 0, 10)
     );
 
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES_AVRO) {
@@ -54,7 +54,7 @@ public class PartitionsResourceAvroConsumeTest extends PartitionsResourceAbstrac
       assertOKResponse(response, mediatype.expected);
 
       final List<AvroConsumerRecord> readResponseRecords =
-          response.readEntity(new GenericType<List<AvroConsumerRecord>>() {});
+              TestUtils.tryReadEntityOrLog(response, new GenericType<List<AvroConsumerRecord>>() {});
       assertEquals(records, readResponseRecords);
 
       EasyMock.verify(simpleConsumerManager);

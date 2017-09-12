@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest;
+
+import org.apache.kafka.common.protocol.SecurityProtocol;
+import org.apache.kafka.common.record.TimestampType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.ws.rs.core.Response;
 
 import io.confluent.kafka.serializers.KafkaAvroDecoder;
 import io.confluent.kafka.serializers.KafkaJsonDecoder;
@@ -27,8 +44,7 @@ import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 import kafka.api.PartitionFetchInfo;
 import kafka.cluster.Broker;
-import kafka.cluster.BrokerEndPoint;
-import kafka.common.BrokerEndPointNotAvailableException;
+import kafka.cluster.EndPoint;
 import kafka.common.TopicAndPartition;
 import kafka.javaapi.FetchRequest;
 import kafka.javaapi.FetchResponse;
@@ -38,21 +54,7 @@ import kafka.message.MessageAndOffset;
 import kafka.serializer.Decoder;
 import kafka.serializer.DefaultDecoder;
 import kafka.utils.VerifiableProperties;
-
-import org.apache.kafka.common.protocol.SecurityProtocol;
-import org.apache.kafka.common.record.TimestampType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import scala.collection.JavaConversions;
 
 public class SimpleConsumerManager {
 
@@ -73,23 +75,28 @@ public class SimpleConsumerManager {
   private final Decoder<byte[]> binaryDecoder;
   private final Decoder<Object> jsonDecoder;
 
-  public SimpleConsumerManager(final KafkaRestConfig config,
-                               final MetadataObserver mdObserver,
-                               final SimpleConsumerFactory simpleConsumerFactory) {
+  public SimpleConsumerManager(
+      final KafkaRestConfig config,
+      final MetadataObserver mdObserver,
+      final SimpleConsumerFactory simpleConsumerFactory
+  ) {
 
     this.mdObserver = mdObserver;
     this.simpleConsumerFactory = simpleConsumerFactory;
 
     maxPoolSize = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG);
-    poolInstanceAvailabilityTimeoutMs = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG);
+    poolInstanceAvailabilityTimeoutMs =
+        config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG);
     time = config.getTime();
 
     simpleConsumersPools = new ConcurrentHashMap<Broker, SimpleConsumerPool>();
 
     // Load decoders
     Properties props = new Properties();
-    props.setProperty("schema.registry.url",
-        config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
+    props.setProperty(
+        "schema.registry.url",
+        config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG)
+    );
     avroDecoder = new KafkaAvroDecoder(new VerifiableProperties(props));
 
     binaryDecoder = new DefaultDecoder(new VerifiableProperties());
@@ -98,7 +105,12 @@ public class SimpleConsumerManager {
   }
 
   private SimpleConsumerPool createSimpleConsumerPool() {
-    return new SimpleConsumerPool(maxPoolSize, poolInstanceAvailabilityTimeoutMs, time, simpleConsumerFactory);
+    return new SimpleConsumerPool(
+        maxPoolSize,
+        poolInstanceAvailabilityTimeoutMs,
+        time,
+        simpleConsumerFactory
+    );
   }
 
   private SimpleFetcher getSimpleFetcher(final Broker broker) {
@@ -110,20 +122,22 @@ public class SimpleConsumerManager {
     }
 
     // TODO: Add support for SSL when simple consumer is changed to use new consumer
-    try {
-      BrokerEndPoint ep = broker.getBrokerEndPoint(SecurityProtocol.PLAINTEXT);
-      return pool.get(ep.host(), ep.port());
-    } catch (BrokerEndPointNotAvailableException e) {
-      throw Errors.noSslSupportException();
+    for (EndPoint ep : JavaConversions.asJavaCollection(broker.endPoints())) {
+      if (ep.securityProtocol() == SecurityProtocol.PLAINTEXT) {
+        return pool.get(ep.host(), ep.port());
+      }
     }
+    throw Errors.noSslSupportException();
   }
 
-  public void consume(final String topicName,
-                      final int partitionId,
-                      long offset,
-                      long count,
-                      final EmbeddedFormat embeddedFormat,
-                      final ConsumerManager.ReadCallback callback) {
+  public void consume(
+      final String topicName,
+      final int partitionId,
+      long offset,
+      long count,
+      final EmbeddedFormat embeddedFormat,
+      final ConsumerManager.ReadCallback callback
+  ) {
 
     List<ConsumerRecord> records = null;
     RestException exception = null;
@@ -138,8 +152,8 @@ public class SimpleConsumerManager {
       int fetchIterations = 0;
       while (count > 0) {
         fetchIterations++;
-        log.debug("Simple consumer " + simpleFetcher.clientId() +
-            ": fetch " + fetchIterations + "; " + count + " messages remaining");
+        log.debug("Simple consumer " + simpleFetcher.clientId()
+                  + ": fetch " + fetchIterations + "; " + count + " messages remaining");
 
         final ByteBufferMessageSet messageAndOffsets =
             fetchRecords(topicName, partitionId, offset, simpleFetcher);
@@ -150,7 +164,12 @@ public class SimpleConsumerManager {
         }
 
         for (final MessageAndOffset messageAndOffset : messageAndOffsets) {
-          records.add(createConsumerRecord(messageAndOffset, topicName, partitionId, embeddedFormat));
+          records.add(createConsumerRecord(
+              messageAndOffset,
+              topicName,
+              partitionId,
+              embeddedFormat
+          ));
           count--;
           offset++;
 
@@ -174,7 +193,11 @@ public class SimpleConsumerManager {
         try {
           simpleFetcher.close();
         } catch (Exception e) {
-          log.error("Unable to release SimpleConsumer " + simpleFetcher.clientId() + " into the pool", e);
+          log.error(
+              "Unable to release SimpleConsumer {} into the pool",
+              simpleFetcher.clientId(),
+              e
+          );
         }
       }
     }
@@ -182,49 +205,88 @@ public class SimpleConsumerManager {
     callback.onCompletion(records, exception);
   }
 
-  private BinaryConsumerRecord createBinaryConsumerRecord(final MessageAndOffset messageAndOffset,
-                                                          final String topicName,
-                                                          final int partitionId) {
+  private BinaryConsumerRecord createBinaryConsumerRecord(
+      final MessageAndOffset messageAndOffset,
+      final String topicName,
+      final int partitionId
+  ) {
     final MessageAndMetadata<byte[], byte[]> messageAndMetadata =
-        new MessageAndMetadata<>(topicName, partitionId,
-                                 messageAndOffset.message(), messageAndOffset.offset(),
-                                 binaryDecoder, binaryDecoder,
-                                 0, TimestampType.CREATE_TIME);
-    return new BinaryConsumerRecord(messageAndMetadata.key(), messageAndMetadata.message(),
-        partitionId, messageAndOffset.offset());
+        new MessageAndMetadata<>(
+            topicName,
+            partitionId,
+            messageAndOffset.message(),
+            messageAndOffset.offset(),
+            binaryDecoder,
+            binaryDecoder,
+            0,
+            TimestampType.CREATE_TIME
+        );
+    return new BinaryConsumerRecord(
+        topicName,
+        messageAndMetadata.key(),
+        messageAndMetadata.message(),
+        partitionId,
+        messageAndOffset.offset()
+    );
   }
 
-  private AvroConsumerRecord createAvroConsumerRecord(final MessageAndOffset messageAndOffset,
-                                                      final String topicName,
-                                                      final int partitionId) {
+  private AvroConsumerRecord createAvroConsumerRecord(
+      final MessageAndOffset messageAndOffset,
+      final String topicName,
+      final int partitionId
+  ) {
     final MessageAndMetadata<Object, Object> messageAndMetadata =
-        new MessageAndMetadata<>(topicName, partitionId,
-                                 messageAndOffset.message(), messageAndOffset.offset(),
-                                 avroDecoder, avroDecoder,
-                                 0, TimestampType.CREATE_TIME);
+        new MessageAndMetadata<>(
+            topicName,
+            partitionId,
+            messageAndOffset.message(),
+            messageAndOffset.offset(),
+            avroDecoder,
+            avroDecoder,
+            0,
+            TimestampType.CREATE_TIME
+        );
     return new AvroConsumerRecord(
+        topicName,
         AvroConverter.toJson(messageAndMetadata.key()).json,
         AvroConverter.toJson(messageAndMetadata.message()).json,
-        partitionId, messageAndOffset.offset());
+        partitionId,
+        messageAndOffset.offset()
+    );
   }
 
 
-  private JsonConsumerRecord createJsonConsumerRecord(final MessageAndOffset messageAndOffset,
-                                                      final String topicName,
-                                                      final int partitionId) {
+  private JsonConsumerRecord createJsonConsumerRecord(
+      final MessageAndOffset messageAndOffset,
+      final String topicName,
+      final int partitionId
+  ) {
     final MessageAndMetadata<Object, Object> messageAndMetadata =
-        new MessageAndMetadata<>(topicName, partitionId,
-                                 messageAndOffset.message(), messageAndOffset.offset(),
-                                 jsonDecoder, jsonDecoder,
-                                 0, TimestampType.CREATE_TIME);
-    return new JsonConsumerRecord(messageAndMetadata.key(), messageAndMetadata.message(),
-        partitionId, messageAndOffset.offset());
+        new MessageAndMetadata<>(
+            topicName,
+            partitionId,
+            messageAndOffset.message(),
+            messageAndOffset.offset(),
+            jsonDecoder,
+            jsonDecoder,
+            0,
+            TimestampType.CREATE_TIME
+        );
+    return new JsonConsumerRecord(
+        topicName,
+        messageAndMetadata.key(),
+        messageAndMetadata.message(),
+        partitionId,
+        messageAndOffset.offset()
+    );
   }
 
-  private ConsumerRecord createConsumerRecord(final MessageAndOffset messageAndOffset,
-                                              final String topicName,
-                                              final int partitionId,
-                                              final EmbeddedFormat embeddedFormat) {
+  private ConsumerRecord createConsumerRecord(
+      final MessageAndOffset messageAndOffset,
+      final String topicName,
+      final int partitionId,
+      final EmbeddedFormat embeddedFormat
+  ) {
 
     switch (embeddedFormat) {
       case BINARY:
@@ -237,23 +299,31 @@ public class SimpleConsumerManager {
         return createJsonConsumerRecord(messageAndOffset, topicName, partitionId);
 
       default:
-        throw new RestServerErrorException("Invalid embedded format for new consumer.",
-            Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        throw new RestServerErrorException(
+            "Invalid embedded format for new consumer.",
+            Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
+        );
     }
   }
 
-  private ByteBufferMessageSet fetchRecords(final String topicName,
-                                            final int partitionId,
-                                            final long offset,
-                                            final SimpleFetcher simpleFetcher) {
+  private ByteBufferMessageSet fetchRecords(
+      final String topicName,
+      final int partitionId,
+      final long offset,
+      final SimpleFetcher simpleFetcher
+  ) {
 
-    final SimpleConsumerConfig simpleConsumerConfig = simpleConsumerFactory.getSimpleConsumerConfig();
+    final SimpleConsumerConfig
+        simpleConsumerConfig =
+        simpleConsumerFactory.getSimpleConsumerConfig();
 
     final Map<TopicAndPartition, PartitionFetchInfo> requestInfo =
         new HashMap<TopicAndPartition, PartitionFetchInfo>();
 
-    requestInfo.put(new TopicAndPartition(topicName, partitionId),
-        new PartitionFetchInfo(offset, simpleConsumerConfig.fetchMessageMaxBytes()));
+    requestInfo.put(
+        new TopicAndPartition(topicName, partitionId),
+        new PartitionFetchInfo(offset, simpleConsumerConfig.fetchMessageMaxBytes())
+    );
 
     final int corId = correlationId.incrementAndGet();
 
@@ -263,13 +333,15 @@ public class SimpleConsumerManager {
             simpleFetcher.clientId(),
             simpleConsumerConfig.fetchWaitMaxMs(),
             simpleConsumerConfig.fetchMinBytes(),
-            requestInfo);
+            requestInfo
+        );
 
     final FetchResponse fetchResponse = simpleFetcher.fetch(req);
 
     if (fetchResponse.hasError()) {
       final short kafkaErrorCode = fetchResponse.errorCode(topicName, partitionId);
-      throw Errors.kafkaErrorException(new Exception("Fetch response contains an error code: " + kafkaErrorCode));
+      throw Errors.kafkaErrorException(new Exception("Fetch response contains an error code: "
+                                                     + kafkaErrorCode));
     }
 
     return fetchResponse.messageSet(topicName, partitionId);

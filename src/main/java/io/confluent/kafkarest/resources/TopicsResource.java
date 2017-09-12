@@ -13,9 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest.resources;
 
-import io.confluent.kafkarest.Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Vector;
+
+import javax.validation.Valid;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
+
+import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
@@ -31,43 +49,32 @@ import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
 import io.confluent.rest.annotations.PerformanceMetric;
 
-import javax.validation.Valid;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.Suspended;
-import java.util.Collection;
-import java.util.List;
-import java.util.Vector;
-
 @Path("/topics")
 @Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
-           Versions.JSON_WEIGHTED})
+           Versions.JSON_WEIGHTED, Versions.KAFKA_V2_JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
-           Versions.GENERIC_REQUEST})
+           Versions.GENERIC_REQUEST, Versions.KAFKA_V2_JSON})
 public class TopicsResource {
 
-  private final Context ctx;
+  private static final Logger log = LoggerFactory.getLogger(TopicsResource.class);
 
-  public TopicsResource(Context ctx) {
+  private final KafkaRestContext ctx;
+
+  public TopicsResource(KafkaRestContext ctx) {
     this.ctx = ctx;
   }
 
   @GET
   @PerformanceMetric("topics.list")
   public Collection<String> list() {
-    return ctx.getMetadataObserver().getTopicNames();
+    return ctx.getAdminClientWrapper().getTopicNames();
   }
 
   @GET
   @Path("/{topic}")
   @PerformanceMetric("topic.get")
   public Topic getTopic(@PathParam("topic") String topicName) {
-    Topic topic = ctx.getMetadataObserver().getTopic(topicName);
+    Topic topic = ctx.getAdminClientWrapper().getTopic(topicName);
     if (topic == null) {
       throw Errors.topicNotFoundException();
     }
@@ -78,33 +85,41 @@ public class TopicsResource {
   @Path("/{topic}")
   @PerformanceMetric("topic.produce-binary")
   @Consumes({Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON,
-             Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST})
-  public void produceBinary(final @Suspended AsyncResponse asyncResponse,
-                            @PathParam("topic") String topicName,
-                            @Valid TopicProduceRequest<BinaryTopicProduceRecord> request) {
+             Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST,
+             Versions.KAFKA_V2_JSON_BINARY, Versions.KAFKA_V2_JSON})
+  public void produceBinary(
+      final @Suspended AsyncResponse asyncResponse,
+      @PathParam("topic") String topicName,
+      @Valid TopicProduceRequest<BinaryTopicProduceRecord> request
+  ) {
     produce(asyncResponse, topicName, EmbeddedFormat.BINARY, request);
   }
 
   @POST
   @Path("/{topic}")
   @PerformanceMetric("topic.produce-json")
-  @Consumes({Versions.KAFKA_V1_JSON_JSON})
-  public void produceJson(final @Suspended AsyncResponse asyncResponse,
-                          @PathParam("topic") String topicName,
-                          @Valid TopicProduceRequest<JsonTopicProduceRecord> request) {
+  @Consumes({Versions.KAFKA_V1_JSON_JSON, Versions.KAFKA_V2_JSON_JSON})
+  public void produceJson(
+      final @Suspended AsyncResponse asyncResponse,
+      @PathParam("topic") String topicName,
+      @Valid TopicProduceRequest<JsonTopicProduceRecord> request
+  ) {
     produce(asyncResponse, topicName, EmbeddedFormat.JSON, request);
   }
 
   @POST
   @Path("/{topic}")
   @PerformanceMetric("topic.produce-avro")
-  @Consumes({Versions.KAFKA_V1_JSON_AVRO})
-  public void produceAvro(final @Suspended AsyncResponse asyncResponse,
-                          @PathParam("topic") String topicName,
-                          @Valid TopicProduceRequest<AvroTopicProduceRecord> request) {
+  @Consumes({Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V2_JSON_AVRO})
+  public void produceAvro(
+      final @Suspended AsyncResponse asyncResponse,
+      @PathParam("topic") String topicName,
+      @Valid TopicProduceRequest<AvroTopicProduceRecord> request
+  ) {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
-    boolean hasKeys = false, hasValues = false;
+    boolean hasKeys = false;
+    boolean hasValues = false;
     for (AvroTopicProduceRecord rec : request.getRecords()) {
       hasKeys = hasKeys || !rec.getJsonKey().isNull();
       hasValues = hasValues || !rec.getJsonValue().isNull();
@@ -123,14 +138,20 @@ public class TopicsResource {
       final AsyncResponse asyncResponse,
       final String topicName,
       final EmbeddedFormat format,
-      final TopicProduceRequest<R> request) {
+      final TopicProduceRequest<R> request
+  ) {
+    log.trace("Executing topic produce request id={} topic={} format={} request={}",
+              asyncResponse, topicName, format, request
+    );
     ctx.getProducerPool().produce(
         topicName, null, format,
         request,
         request.getRecords(),
         new ProducerPool.ProduceRequestCallback() {
-          public void onCompletion(Integer keySchemaId, Integer valueSchemaId,
-                                   List<RecordMetadataOrException> results) {
+          public void onCompletion(
+              Integer keySchemaId, Integer valueSchemaId,
+              List<RecordMetadataOrException> results
+          ) {
             ProduceResponse response = new ProduceResponse();
             List<PartitionOffset> offsets = new Vector<PartitionOffset>();
             for (RecordMetadataOrException result : results) {
@@ -141,12 +162,16 @@ public class TopicsResource {
               } else {
                 offsets.add(new PartitionOffset(result.getRecordMetadata().partition(),
                                                 result.getRecordMetadata().offset(),
-                                                null, null));
+                                                null, null
+                ));
               }
             }
             response.setOffsets(offsets);
             response.setKeySchemaId(keySchemaId);
             response.setValueSchemaId(valueSchemaId);
+            log.trace("Completed topic produce request id={} response={}",
+                      asyncResponse, response
+            );
             asyncResponse.resume(response);
           }
         }

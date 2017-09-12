@@ -29,10 +29,10 @@ import kafka.consumer.KafkaStream;
  * committed offsets. It provides manual synchronization primitives to support ConsumerWorkers
  * protecting access to the state while they process a read request in their processing loop.
  */
-public class ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> {
+public class ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
 
   private final Lock lock = new ReentrantLock();
-  private final KafkaStream<KafkaK, KafkaV> stream;
+  private final KafkaStream<KafkaKeyT, KafkaValueT> stream;
   private final Map<Integer, Long> consumedOffsets;
   private final Map<Integer, Long> committedOffsets;
 
@@ -40,7 +40,7 @@ public class ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> {
   // left off, including accounting for response size limits
   private ConsumerReadTask failedTask;
 
-  public ConsumerTopicState(KafkaStream<KafkaK, KafkaV> stream) {
+  public ConsumerTopicState(KafkaStream<KafkaKeyT, KafkaValueT> stream) {
     this.stream = stream;
     this.consumedOffsets = new HashMap<Integer, Long>();
     this.committedOffsets = new HashMap<Integer, Long>();
@@ -54,11 +54,11 @@ public class ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> {
     lock.unlock();
   }
 
-  public KafkaStream<KafkaK, KafkaV> getStream() {
+  public KafkaStream<KafkaKeyT, KafkaValueT> getStream() {
     return stream;
   }
 
-  public ConsumerIterator<KafkaK, KafkaV> getIterator() {
+  public ConsumerIterator<KafkaKeyT, KafkaValueT> getIterator() {
     return stream.iterator();
   }
 

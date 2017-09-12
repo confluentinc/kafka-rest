@@ -3,6 +3,58 @@
 Changelog
 =========
 
+Version 3.3.0
+-------------
+
+* `PR-305 <https://github.com/confluentinc/kafka-rest/pull/305>`_ - Use max.block.ms instead of metadata.fetch.timeout.ms since the latter was deprecated and now removed in KAFKA-3763
+* Ability to add resources like filter through a custom extension and provide a custom context
+* `PR-296 <https://github.com/confluentinc/kafka-rest/pull/296>`_ - Interceptor configuration options
+
+Version 3.2.2
+-------------
+
+* `PR-303 <https://github.com/confluentinc/kafka-rest/pull/303>`_ - CLIENTS-304: Fix AvroConsumerRecord constructors and handling of topic for v1 consumer API.
+>>>>>>> origin/3.2.x
+
+Version 3.2.1
+-------------
+
+* `PR-285 <https://github.com/confluentinc/kafka-rest/pull/285>`_ - CLIENTS-281: Fix KafkaConsumerReadTask's locking, handling of multiple polls, invalid handling of old ConsumerTimeout exceptions, and incorrect generic type parameters.
+* `PR-277 <https://github.com/confluentinc/kafka-rest/pull/277>`_ - Documentation fixes
+
+Version 3.2.0
+-------------
+
+* `PR-256 <https://github.com/confluentinc/kafka-rest/pull/256>`_ - Update ClusterTestHarness to use o.a.k.common.utils.Time.
+* `PR-255 <https://github.com/confluentinc/kafka-rest/pull/255>`_ - clarified the key/value format limitations based on user questions
+* `PR-264 <https://github.com/confluentinc/kafka-rest/pull/264>`_ - Fix build to work post KIP-103
+* `PR-265 <https://github.com/confluentinc/kafka-rest/pull/265>`_ - Follow up for KIP-103 changes that fixes ProducerPool's extraction of endpoints to use the security protocol in the URL instead of the listener name.
+* `PR-268 <https://github.com/confluentinc/kafka-rest/pull/268>`_ - modified readme to use v2. also bumped installation up for usability
+* `PR-271 <https://github.com/confluentinc/kafka-rest/pull/271>`_ - Updated quickstart and configuration docs for V2 and for security
+* `PR-258 <https://github.com/confluentinc/kafka-rest/pull/258>`_ - Rest proxy security
+* `PR-274 <https://github.com/confluentinc/kafka-rest/pull/274>`_ - added field 'topic' to tools/ConsumerPerformance.java for system test
+* `PR-272 <https://github.com/confluentinc/kafka-rest/pull/272>`_ - added description of JVM parameters for SASL configuration
+
+Version 3.1.2
+-------------
+No changes
+
+Version 3.1.1
+-------------
+No changes
+
+Version 3.1.0
+-------------
+
+* `PR-239 <https://github.com/confluentinc/kafka-rest/pull/239>`_ - Require bash since we use some bashisms and fix a copyright.
+* `PR-235 <https://github.com/confluentinc/kafka-rest/pull/235>`_ - fix typo command line options ``-help`` check
+* `PR-222 <https://github.com/confluentinc/kafka-rest/pull/222>`_ - fixing issue #91
+* `PR-230 <https://github.com/confluentinc/kafka-rest/pull/230>`_ - Issue #229: Add blurb on Jetty jmx metrics
+* `PR-214 <https://github.com/confluentinc/kafka-rest/pull/214>`_ - Small readme.md fix
+* `PR-127 <https://github.com/confluentinc/kafka-rest/pull/127>`_ - Fix to ConsumerManager tests AND then handling of max bytes
+* `PR-203 <https://github.com/confluentinc/kafka-rest/pull/203>`_ - Fix a typo that cause non-corresponding logger name
+* `PR-202 <https://github.com/confluentinc/kafka-rest/pull/202>`_ - fix the implementation of topicExists
+
 Version 3.0.0
 -------------
 

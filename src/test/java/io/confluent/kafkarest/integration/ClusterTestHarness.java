@@ -15,13 +15,16 @@
  **/
 package io.confluent.kafkarest.integration;
 
+import io.confluent.common.utils.IntegrationTest;
 import io.confluent.kafkarest.*;
 
 import org.apache.kafka.common.protocol.SecurityProtocol;
 import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.common.utils.Time;
 import org.eclipse.jetty.server.Server;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.experimental.categories.Category;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,7 +44,6 @@ import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.CoreUtils;
-import kafka.utils.SystemTime$;
 import kafka.utils.TestUtils;
 import kafka.utils.ZkUtils;
 import kafka.zk.EmbeddedZookeeper;
@@ -53,6 +55,7 @@ import scala.collection.JavaConversions;
  * Kafka's ZookeeperTestHarness and KafkaServerTestHarness traits combined and ported to Java with
  * the addition of the REST proxy. Defaults to a 1-ZK, 3-broker, 1 REST proxy cluster.
  */
+@Category(IntegrationTest.class)
 public abstract class ClusterTestHarness {
 
   public static final int DEFAULT_NUM_BROKERS = 1;
@@ -139,30 +142,22 @@ public abstract class ClusterTestHarness {
     configs = new Vector<>();
     servers = new Vector<>();
     for (int i = 0; i < numBrokers; i++) {
-      final Option<java.io.File> noFile = scala.Option.apply(null);
-      final Option<SecurityProtocol> noInterBrokerSecurityProtocol = scala.Option.apply(null);
-      Properties props = TestUtils.createBrokerConfig(
-          i, zkConnect, false, false, TestUtils.RandomPort(), noInterBrokerSecurityProtocol,
-          noFile, Option.<Properties>empty(), true, false, TestUtils.RandomPort(), false,
-          TestUtils.RandomPort(), false, TestUtils.RandomPort(), Option.<String>empty());
-      props.setProperty("auto.create.topics.enable", "false");
-      // We *must* override this to use the port we allocated (Kafka currently allocates one port
-      // that it always uses for ZK
-      props.setProperty("zookeeper.connect", this.zkConnect);
+      Properties props = getBrokerProperties(i);
 
       props = overrideBrokerProperties(i, props);
 
       KafkaConfig config = KafkaConfig.fromProps(props);
       configs.add(config);
 
-      KafkaServer server = TestUtils.createServer(config, SystemTime$.MODULE$);
+      KafkaServer server = TestUtils.createServer(config, Time.SYSTEM);
       servers.add(server);
     }
 
     brokerList =
         TestUtils.getBrokerListStrFromServers(JavaConversions.asScalaBuffer(servers),
-                                              SecurityProtocol.PLAINTEXT);
+                                              getBrokerSecurityProtocol());
 
+    setupAcls();
     if (withSchemaRegistry) {
       int schemaRegPort = choosePort();
       schemaRegProperties.put(SchemaRegistryConfig.PORT_CONFIG,
@@ -173,6 +168,10 @@ public abstract class ClusterTestHarness {
                               SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC);
       schemaRegProperties.put(SchemaRegistryConfig.COMPATIBILITY_CONFIG,
                               schemaRegCompatibility);
+      String broker = SecurityProtocol.PLAINTEXT.name+"://"+TestUtils
+          .getBrokerListStrFromServers(JavaConversions.asScalaBuffer
+              (servers), SecurityProtocol.PLAINTEXT);
+      schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, broker);
       schemaRegConnect = String.format("http://localhost:%d", schemaRegPort);
 
       schemaRegApp =
@@ -184,10 +183,12 @@ public abstract class ClusterTestHarness {
     int restPort = choosePort();
     restProperties.put(KafkaRestConfig.PORT_CONFIG, ((Integer) restPort).toString());
     restProperties.put(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG, zkConnect);
+    overrideKafkaRestConfigs(restProperties);
     if (withSchemaRegistry) {
       restProperties.put(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegConnect);
     }
-    restConnect = String.format("http://localhost:%d", restPort);
+    restConnect = getRestConnectString(restPort);
+    restProperties.put("listeners",restConnect);
 
     restConfig = new KafkaRestConfig(restProperties);
     restApp = new TestKafkaRestApplication(restConfig, getZkUtils(restConfig),
@@ -198,6 +199,35 @@ public abstract class ClusterTestHarness {
                                            getSimpleConsumerManager(restConfig));
     restServer = restApp.createServer();
     restServer.start();
+  }
+
+  protected void setupAcls() {
+  }
+
+  protected SecurityProtocol getBrokerSecurityProtocol(){
+    return SecurityProtocol.PLAINTEXT;
+  }
+
+  protected String getRestConnectString(int restPort) {
+    return String.format("http://localhost:%d", restPort);
+  }
+
+  protected void overrideKafkaRestConfigs(Properties restProperties) {
+
+  }
+
+  protected Properties getBrokerProperties(int i) {
+    final Option<File> noFile = Option.apply(null);
+    final Option<SecurityProtocol> noInterBrokerSecurityProtocol = Option.apply(null);
+    Properties props = TestUtils.createBrokerConfig(
+        i, zkConnect, false, false, TestUtils.RandomPort(), noInterBrokerSecurityProtocol,
+        noFile, Option.<Properties>empty(), true, false, TestUtils.RandomPort(), false,
+        TestUtils.RandomPort(), false, TestUtils.RandomPort(), Option.<String>empty(), 1);
+    props.setProperty("auto.create.topics.enable", "false");
+    // We *must* override this to use the port we allocated (Kafka currently allocates one port
+    // that it always uses for ZK
+    props.setProperty("zookeeper.connect", this.zkConnect);
+    return props;
   }
 
   protected ZkUtils getZkUtils(KafkaRestConfig appConfig) {
@@ -262,7 +292,7 @@ public abstract class ClusterTestHarness {
   protected Invocation.Builder request(String path, String templateName, Object templateValue,
                                        Map<String, String> queryParams) {
 
-    Client client = ClientBuilder.newClient();
+    Client client = getClient();
     // Only configure base application here because as a client we shouldn't need the resources
     // registered
     restApp.configureBaseApplication(client);
@@ -287,5 +317,9 @@ public abstract class ClusterTestHarness {
       }
     }
     return target.request();
+  }
+
+  protected Client getClient() {
+    return ClientBuilder.newClient();
   }
 }

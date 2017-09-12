@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 package io.confluent.kafkarest;
 
 import java.util.HashMap;
@@ -32,17 +33,17 @@ import kafka.serializer.Decoder;
 
 /**
  * Tracks all the state for a consumer. This class is abstract in order to support multiple
- * serialization formats. Implementations must provide decoders and a method to convert Kafka
- * MessageAndMetadata<K,V> values to ConsumerRecords that can be returned to the client (including
- * translation if the decoded Kafka consumer type and ConsumerRecord types differ).
+ * serialization formats. Implementations must provide decoders and a method to convert
+ * {@code KafkaMessageAndMetadata<K,V>} values to ConsumerRecords that can be returned to the client
+ * (including translation if the decoded Kafka consumer type and ConsumerRecord types differ).
  */
-public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
+public abstract class ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
     implements Comparable<ConsumerState> {
 
   private KafkaRestConfig config;
   private ConsumerInstanceId instanceId;
   private ConsumerConnector consumer;
-  private Map<String, ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>> topics;
+  private Map<String, ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>> topics;
   private long expiration;
   // A read/write lock on the ConsumerState allows concurrent readTopic calls, but allows
   // commitOffsets to safely lock the entire state in order to get correct information about all
@@ -51,14 +52,16 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   // only needs read access to the ConsumerState).
   private ReadWriteLock lock;
 
-  public ConsumerState(KafkaRestConfig config, ConsumerInstanceId instanceId,
-                       ConsumerConnector consumer) {
+  public ConsumerState(
+      KafkaRestConfig config, ConsumerInstanceId instanceId,
+      ConsumerConnector consumer
+  ) {
     this.config = config;
     this.instanceId = instanceId;
     this.consumer = consumer;
-    this.topics = new HashMap<String, ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>>();
-    this.expiration = config.getTime().milliseconds() +
-                      config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
+    this.topics = new HashMap<>();
+    this.expiration = config.getTime().milliseconds()
+                      + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
     this.lock = new ReentrantReadWriteLock();
   }
 
@@ -69,12 +72,12 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   /**
    * Gets the key decoder for the Kafka consumer.
    */
-  protected abstract Decoder<KafkaK> getKeyDecoder();
+  protected abstract Decoder<KafkaKeyT> getKeyDecoder();
 
   /**
    * Gets the value decoder for the Kafka consumer.
    */
-  protected abstract Decoder<KafkaV> getValueDecoder();
+  protected abstract Decoder<KafkaValueT> getValueDecoder();
 
   /**
    * Converts a MessageAndMetadata using the Kafka decoder types into a ConsumerRecord using the
@@ -82,14 +85,18 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
    * bytes, which is used to track the approximate total payload size for consumer read responses to
    * determine when to trigger the response.
    */
-  public abstract ConsumerRecordAndSize<ClientK, ClientV> createConsumerRecord(
-      MessageAndMetadata<KafkaK, KafkaV> msg);
+  public abstract ConsumerRecordAndSize<ClientKeyT, ClientValueT> createConsumerRecord(
+      MessageAndMetadata<KafkaKeyT, KafkaValueT> msg
+  );
 
   /**
    * Start a read on the given topic, enabling a read lock on this ConsumerState and a full lock on
    * the ConsumerTopicState.
    */
-  public void startRead(ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> topicState) {
+  public void startRead(
+      ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
+          topicState
+  ) {
     lock.readLock().lock();
     topicState.lock();
   }
@@ -98,7 +105,10 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
    * Finish a read request, releasing the lock on the ConsumerTopicState and the read lock on this
    * ConsumerState.
    */
-  public void finishRead(ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> topicState) {
+  public void finishRead(
+      ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
+          topicState
+  ) {
     topicState.unlock();
     lock.readLock().unlock();
   }
@@ -131,8 +141,8 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
   }
 
   public void updateExpiration() {
-    this.expiration = config.getTime().milliseconds() +
-                      config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
+    this.expiration = config.getTime().milliseconds()
+                      + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
   }
 
   public long untilExpiration(long nowMs) {
@@ -158,14 +168,17 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
     }
   }
 
-  public ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> getOrCreateTopicState(String topic) {
+  public ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> getOrCreateTopicState(
+      String topic
+  ) {
     // Try getting the topic only using the read lock
     lock.readLock().lock();
     try {
       if (topics == null) {
         return null;
       }
-      ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> state = topics.get(topic);
+      ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> state =
+          topics.get(topic);
       if (state != null) {
         return state;
       }
@@ -178,17 +191,18 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
       if (topics == null) {
         return null;
       }
-      ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> state = topics.get(topic);
+      ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> state =
+          topics.get(topic);
       if (state != null) {
         return state;
       }
 
       Map<String, Integer> subscriptions = new TreeMap<String, Integer>();
       subscriptions.put(topic, 1);
-      Map<String, List<KafkaStream<KafkaK, KafkaV>>> streamsByTopic =
+      Map<String, List<KafkaStream<KafkaKeyT, KafkaValueT>>> streamsByTopic =
           consumer.createMessageStreams(subscriptions, getKeyDecoder(), getValueDecoder());
-      KafkaStream<KafkaK, KafkaV> stream = streamsByTopic.get(topic).get(0);
-      state = new ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>(stream);
+      KafkaStream<KafkaKeyT, KafkaValueT> stream = streamsByTopic.get(topic).get(0);
+      state = new ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>(stream);
       topics.put(topic, state);
       return state;
     } catch (MessageStreamsExistException e) {
@@ -203,13 +217,14 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
    * updating the commmitted offset record. This method is not synchronized.
    *
    * @param updateCommitOffsets if true, updates committed offsets to be the same as the consumed
-   *                            offsets.
+   *     offsets.
    */
   private List<TopicPartitionOffset> getOffsets(boolean updateCommitOffsets) {
     List<TopicPartitionOffset> result = new Vector<TopicPartitionOffset>();
-    for (Map.Entry<String, ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV>> entry
+    for (Map.Entry<String, ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>>
+        entry
         : topics.entrySet()) {
-      ConsumerTopicState<KafkaK, KafkaV, ClientK, ClientV> state = entry.getValue();
+      ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> state = entry.getValue();
       state.lock();
       try {
         for (Map.Entry<Integer, Long> partEntry : state.getConsumedOffsets().entrySet()) {
@@ -222,9 +237,14 @@ public abstract class ConsumerState<KafkaK, KafkaV, ClientK, ClientV>
           } else {
             committedOffset = state.getCommittedOffsets().get(partition);
           }
-          result.add(new TopicPartitionOffset(entry.getKey(), partition,
-                                              offset,
-                                              (committedOffset == null ? -1 : committedOffset)));
+          result.add(
+              new TopicPartitionOffset(
+                  entry.getKey(),
+                  partition,
+                  offset,
+                  (committedOffset == null ? -1 : committedOffset)
+              )
+          );
         }
       } finally {
         state.unlock();

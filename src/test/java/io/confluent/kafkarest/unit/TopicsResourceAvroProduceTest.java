@@ -34,7 +34,7 @@ import java.util.List;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
-import io.confluent.kafkarest.Context;
+import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -65,7 +65,7 @@ public class TopicsResourceAvroProduceTest
 
   private MetadataObserver mdObserver;
   private ProducerPool producerPool;
-  private Context ctx;
+  private DefaultKafkaRestContext ctx;
 
   private static final String topicName = "topic1";
   private static final String keySchemaStr = "{\"name\":\"int\",\"type\": \"int\"}";
@@ -81,12 +81,12 @@ public class TopicsResourceAvroProduceTest
   private final static JsonNode[] testKeys = {
       TestUtils.jsonTree("1"),
       TestUtils.jsonTree("2"),
-  };
+      };
 
   private final static JsonNode[] testValues = {
       TestUtils.jsonTree("{\"field\": 1}"),
       TestUtils.jsonTree("{\"field\": 2}"),
-  };
+      };
 
   private List<AvroTopicProduceRecord> produceRecordsWithPartitionsAndKeys;
 
@@ -106,7 +106,7 @@ public class TopicsResourceAvroProduceTest
   public TopicsResourceAvroProduceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new Context(config, mdObserver, producerPool, null, null);
+    ctx = new DefaultKafkaRestContext(config, mdObserver, producerPool, null, null, null, null);
 
     addResource(new TopicsResource(ctx));
 
@@ -131,11 +131,11 @@ public class TopicsResourceAvroProduceTest
         produceCallback =
         new Capture<ProducerPool.ProduceRequestCallback>();
     producerPool.produce(EasyMock.eq(topic),
-                         EasyMock.eq((Integer) null),
-                         EasyMock.eq(recordFormat),
-                         EasyMock.<SchemaHolder>anyObject(),
-                         EasyMock.<Collection<? extends ProduceRecord<K, V>>>anyObject(),
-                         EasyMock.capture(produceCallback));
+        EasyMock.eq((Integer) null),
+        EasyMock.eq(recordFormat),
+        EasyMock.<SchemaHolder>anyObject(),
+        EasyMock.<Collection<? extends ProduceRecord<K, V>>>anyObject(),
+        EasyMock.capture(produceCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -172,7 +172,7 @@ public class TopicsResourceAvroProduceTest
                            EmbeddedFormat.AVRO,
                            request, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
-        ProduceResponse response = rawResponse.readEntity(ProduceResponse.class);
+        ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
         assertEquals(offsetResults, response.getOffsets());
         assertEquals((Integer) 1, response.getKeySchemaId());
@@ -192,8 +192,8 @@ public class TopicsResourceAvroProduceTest
 
         Response rawResponse =
             produceToTopic(topicName, mediatype.header, requestMediatype,
-                           EmbeddedFormat.AVRO,
-                           request, produceResults);
+                EmbeddedFormat.AVRO,
+                request, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
 
         EasyMock.reset(mdObserver, producerPool);
@@ -202,13 +202,13 @@ public class TopicsResourceAvroProduceTest
   }
 
   private void produceToTopicExpectFailure(String topicName, String acceptHeader,
-                                           String requestMediatype, TopicProduceRequest request,
-                                           String responseMediaType, int errorCode) {
+      String requestMediatype, TopicProduceRequest request,
+      String responseMediaType, int errorCode) {
     Response rawResponse = request("/topics/" + topicName, acceptHeader)
         .post(Entity.entity(request, requestMediatype));
 
     assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
-                        rawResponse, errorCode, null, responseMediaType);
+        rawResponse, errorCode, null, responseMediaType);
   }
 
   @Test
@@ -220,8 +220,8 @@ public class TopicsResourceAvroProduceTest
         request.setValueSchema(valueSchemaStr);
 
         produceToTopicExpectFailure(topicName, mediatype.header, requestMediatype,
-                                    request, mediatype.expected,
-                                    Errors.KEY_SCHEMA_MISSING_ERROR_CODE);
+            request, mediatype.expected,
+            Errors.KEY_SCHEMA_MISSING_ERROR_CODE);
       }
     }
   }
@@ -235,8 +235,8 @@ public class TopicsResourceAvroProduceTest
         request.setKeySchema(keySchemaStr);
 
         produceToTopicExpectFailure(topicName, mediatype.header, requestMediatype,
-                                    request, mediatype.expected,
-                                    Errors.VALUE_SCHEMA_MISSING_ERROR_CODE);
+            request, mediatype.expected,
+            Errors.VALUE_SCHEMA_MISSING_ERROR_CODE);
       }
     }
   }
