@@ -690,6 +690,9 @@ public class KafkaRestConfig extends RestConfig {
 
   public Properties getConsumerProperties() {
     Properties consumerProps = new Properties();
+    // add consumer configuration parameters to pass through configs
+    // that may be used by interceptors, or other classes
+    addExistingV1Properties(consumerProps);
     //copy cover the properties with prefixes "client." and  "consumer."
     addPropertiesWithPrefix("client.", consumerProps);
     addPropertiesWithPrefix("consumer.", consumerProps);
