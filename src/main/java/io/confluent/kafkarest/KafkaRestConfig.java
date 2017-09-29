@@ -23,19 +23,13 @@ import org.eclipse.jetty.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import io.confluent.common.config.ConfigDef;
 import io.confluent.common.config.ConfigDef.Importance;
 import io.confluent.common.config.ConfigDef.Type;
-import io.confluent.common.config.ConfigException;
-import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
 import kafka.cluster.Broker;
