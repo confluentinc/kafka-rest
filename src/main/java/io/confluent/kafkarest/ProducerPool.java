@@ -20,7 +20,6 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Serializer;
-import org.apache.kafka.common.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,11 +34,6 @@ import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.SchemaHolder;
-import kafka.cluster.Broker;
-import kafka.cluster.EndPoint;
-import kafka.utils.ZkUtils;
-import scala.collection.JavaConversions;
-import scala.collection.Seq;
 
 /**
  * Shared pool of Kafka producers used to send messages. The pool manages batched sends, tracking
