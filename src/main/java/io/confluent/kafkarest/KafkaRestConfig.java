@@ -26,7 +26,6 @@ import io.confluent.common.config.ConfigDef.Importance;
 import io.confluent.common.config.ConfigDef.Type;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
-import kafka.server.ConfigType;
 
 import static io.confluent.common.config.ConfigDef.Range.atLeast;
 
