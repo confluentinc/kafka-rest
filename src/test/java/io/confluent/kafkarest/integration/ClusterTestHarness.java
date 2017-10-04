@@ -18,8 +18,8 @@ package io.confluent.kafkarest.integration;
 import io.confluent.common.utils.IntegrationTest;
 import io.confluent.kafkarest.*;
 
-import org.apache.kafka.common.protocol.SecurityProtocol;
 import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Time;
 import org.eclipse.jetty.server.Server;
 import org.junit.After;
