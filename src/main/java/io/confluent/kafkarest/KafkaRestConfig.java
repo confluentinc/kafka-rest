@@ -16,8 +16,8 @@
 
 package io.confluent.kafkarest;
 
-import org.apache.kafka.common.protocol.SecurityProtocol;
 import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Utils;
 import org.eclipse.jetty.util.StringUtil;
 import org.slf4j.Logger;

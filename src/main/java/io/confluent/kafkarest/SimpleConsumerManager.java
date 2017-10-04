@@ -16,8 +16,8 @@
 
 package io.confluent.kafkarest;
 
-import org.apache.kafka.common.protocol.SecurityProtocol;
 import org.apache.kafka.common.record.TimestampType;
+import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
