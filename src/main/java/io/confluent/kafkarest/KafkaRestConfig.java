@@ -466,7 +466,7 @@ public class KafkaRestConfig extends RestConfig {
         )
         .define(
             KAFKACLIENT_SSL_TRUSTSTORE_PASSWORD_CONFIG,
-            ConfigDef.Type.STRING,
+            ConfigDef.Type.PASSWORD,
             "",
             ConfigDef.Importance.HIGH,
             KAFKACLIENT_SSL_TRUSTSTORE_PASSWORD_DOC
@@ -494,7 +494,7 @@ public class KafkaRestConfig extends RestConfig {
         )
         .define(
             KAFKACLIENT_SSL_KEYSTORE_PASSWORD_CONFIG,
-            ConfigDef.Type.STRING,
+            ConfigDef.Type.PASSWORD,
             "",
             ConfigDef.Importance.HIGH,
             KAFKACLIENT_SSL_KEYSTORE_PASSWORD_DOC
@@ -515,7 +515,7 @@ public class KafkaRestConfig extends RestConfig {
         )
         .define(
             KAFKACLIENT_SSL_KEY_PASSWORD_CONFIG,
-            ConfigDef.Type.STRING,
+            ConfigDef.Type.PASSWORD,
             "",
             ConfigDef.Importance.HIGH,
             KAFKACLIENT_SSL_KEY_PASSWORD_DOC
