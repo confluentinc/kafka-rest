@@ -3,12 +3,13 @@
 Kafka REST Proxy
 ================
 
-The Kafka REST Proxy provides a RESTful interface to a Kafka cluster. It makes
-it easy to produce and consume messages, view the state of the cluster, and
-perform administrative actions without using the native Kafka protocol or
-clients. Examples of use cases include reporting data to Kafka from any
-frontend app built in any language, ingesting messages into a stream processing
-framework that doesn't yet support Kafka, and scripting administrative actions.
+The Kafka REST Proxy is part of `Confluent Open Source <https://www.confluent.io/product/confluent-open-source/>`_ and `Confluent Enterprise <https://www.confluent.io/product/confluent-enterprise/>`_ distributions. The proxy provides a RESTful interface to a Kafka cluster, making it easy to produce and consume messages, view the state of the cluster, and perform administrative actions without using the native Kafka protocol or clients.
+
+Some example use cases are:
+
+* Reporting data to Kafka from any frontend app built in any language not supported by official `Confluent clients <https://www.confluent.io/clients/>`_
+* Ingesting messages into a stream processing framework that doesn’t yet support Kafka
+* Scripting administrative actions
 
 Quickstart
 ----------
@@ -231,7 +232,7 @@ Installation
 .. ifconfig:: platform_docs
 
    See the :ref:`installation instructions<installation>` for the Confluent
-   Platform. Before starting the REST proxy you must start Kafka and the schema
+   Platform. Before starting the REST Proxy you must start Kafka and the schema
    registry. The :ref:`Confluent Platform quickstart<quickstart>` explains how
    to start these services locally for testing.
 
@@ -240,28 +241,28 @@ Installation
    You can download prebuilt versions of the Kafka REST Proxy as part of the
    `Confluent Platform <http://confluent.io/downloads/>`_. To install from
    source, follow the instructions in the `Development`_ section. Before
-   starting the REST proxy you must start Kafka and the Schema Registry. You can
+   starting the REST Proxy you must start Kafka and the Schema Registry. You can
    find instructions for starting those services in the
    `Schema Registry repository <http://github.com/confluentinc/schema-registry>`_.
 
 Deployment
 ----------
 
-Starting the Kafka REST proxy service is simple once its dependencies are
+Starting the Kafka REST Proxy service is simple once its dependencies are
 running:
 
 .. sourcecode:: bash
 
    $ cd confluent-3.2.0/
 
-   # Start the REST proxy. The default settings automatically work with the
+   # Start the REST Proxy. The default settings automatically work with the
    # default settings for local ZooKeeper and Kafka nodes.
    $ bin/kafka-rest-start etc/kafka-rest/kafka-rest.properties
 
 If you installed Debian or RPM packages, you can simply run ``kafka-rest-start``
 as it will be on your ``PATH``. The ``kafka-rest.properties`` file contains
 :ref:`configuration settings<schemaregistry_config>`. The default configuration
-included with the REST proxy includes convenient defaults for a local testing setup
+included with the REST Proxy includes convenient defaults for a local testing setup
 and should be modified for a production deployment. By default the server starts bound to port
 8082, does not specify a unique instance ID (required to safely run multiple
 proxies concurrently), and expects Zookeeper to be available at
