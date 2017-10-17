@@ -19,6 +19,7 @@ package io.confluent.kafkarest.resources.v2;
 import java.util.List;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -88,7 +89,7 @@ public class ConsumersResource {
   public CreateConsumerInstanceResponse createGroup(
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
-      @Valid ConsumerInstanceConfig config
+      @Valid @NotNull ConsumerInstanceConfig config
   ) {
     if (config == null) {
       config = new ConsumerInstanceConfig();
@@ -116,7 +117,7 @@ public class ConsumersResource {
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @Valid ConsumerSubscriptionRecord subscription
+      @Valid @NotNull ConsumerSubscriptionRecord subscription
   ) {
     try {
       ctx.getKafkaConsumerManager().subscribe(group, instance, subscription);
@@ -201,7 +202,7 @@ public class ConsumersResource {
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
       @QueryParam("async") @DefaultValue("false") String async,
-      @Valid ConsumerOffsetCommitRequest offsetCommitRequest
+      @Valid @NotNull ConsumerOffsetCommitRequest offsetCommitRequest
   ) {
     ctx.getKafkaConsumerManager().commitOffsets(
         group,
@@ -245,7 +246,7 @@ public class ConsumersResource {
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @Valid ConsumerSeekToRequest seekToRequest
+      @Valid @NotNull ConsumerSeekToRequest seekToRequest
   ) {
     try {
       ctx.getKafkaConsumerManager().seekToBeginning(group, instance, seekToRequest);
@@ -261,7 +262,7 @@ public class ConsumersResource {
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @Valid ConsumerSeekToRequest seekToRequest
+      @Valid @NotNull ConsumerSeekToRequest seekToRequest
   ) {
     try {
       ctx.getKafkaConsumerManager().seekToEnd(group, instance, seekToRequest);
@@ -277,7 +278,7 @@ public class ConsumersResource {
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @Valid ConsumerSeekToOffsetRequest seekToOffsetRequest
+      @Valid @NotNull ConsumerSeekToOffsetRequest seekToOffsetRequest
   ) {
     try {
       ctx.getKafkaConsumerManager().seekToOffset(group, instance, seekToOffsetRequest);
@@ -293,7 +294,7 @@ public class ConsumersResource {
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @Valid ConsumerAssignmentRequest assignmentRequest
+      @Valid @NotNull ConsumerAssignmentRequest assignmentRequest
   ) {
     try {
       ctx.getKafkaConsumerManager().assign(group, instance, assignmentRequest);
