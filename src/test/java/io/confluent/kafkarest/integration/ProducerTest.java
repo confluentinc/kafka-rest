@@ -25,14 +25,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
+import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BinaryProduceRecord;
 import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.ProduceRecord;
+import jersey.repackaged.com.google.common.collect.ImmutableList;
 import kafka.serializer.Decoder;
 import kafka.serializer.DefaultDecoder;
 import kafka.utils.ZkUtils;
@@ -226,5 +231,30 @@ public class ProducerTest extends AbstractProducerTest {
   @Test
   public void testProduceToPartitionWithNullValues() {
     testProduceToPartition(partitionRecordsWithNullValues, produceOffsets);
+  }
+
+  @Test
+  public void testNullPayload() {
+
+    List<String> versions = ImmutableList.of(Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON,
+        Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST,
+        Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V2_JSON_AVRO, Versions.KAFKA_V1_JSON_JSON,
+        Versions.KAFKA_V2_JSON_JSON, Versions.KAFKA_V2_JSON_BINARY, Versions.KAFKA_V2_JSON_JSON,
+        Versions.KAFKA_V2_JSON_AVRO
+    );
+
+    for (String version : versions) {
+      Response response = request("/topics/" + topicName)
+          .post(Entity.entity(null, version));
+      assertEquals("Produces to topic failed using "+ version, 422, response.getStatus());
+    }
+
+    for (String version : versions) {
+      Response response = request("/topics/" + topicName+" /partitions/0")
+          .post(Entity.entity(null, version));
+      assertEquals("Produces to topic partition failed using "+ version,422,
+          response.getStatus());
+    }
+
   }
 }
