@@ -89,7 +89,7 @@ public class ConsumersResource {
   public CreateConsumerInstanceResponse createGroup(
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
-      @Valid @NotNull ConsumerInstanceConfig config
+      @Valid ConsumerInstanceConfig config
   ) {
     if (config == null) {
       config = new ConsumerInstanceConfig();

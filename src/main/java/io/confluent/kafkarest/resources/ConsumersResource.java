@@ -19,7 +19,6 @@ package io.confluent.kafkarest.resources;
 import java.util.List;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -71,7 +70,7 @@ public class ConsumersResource {
   public CreateConsumerInstanceResponse createGroup(
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
-      @Valid @NotNull ConsumerInstanceConfig config
+      @Valid ConsumerInstanceConfig config
   ) {
 
     if (config == null) {
