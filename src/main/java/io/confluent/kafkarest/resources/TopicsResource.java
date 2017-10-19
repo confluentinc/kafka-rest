@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Vector;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -90,7 +91,7 @@ public class TopicsResource {
   public void produceBinary(
       final @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid TopicProduceRequest<BinaryTopicProduceRecord> request
+      @Valid @NotNull TopicProduceRequest<BinaryTopicProduceRecord> request
   ) {
     produce(asyncResponse, topicName, EmbeddedFormat.BINARY, request);
   }
@@ -102,7 +103,7 @@ public class TopicsResource {
   public void produceJson(
       final @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid TopicProduceRequest<JsonTopicProduceRecord> request
+      @Valid @NotNull TopicProduceRequest<JsonTopicProduceRecord> request
   ) {
     produce(asyncResponse, topicName, EmbeddedFormat.JSON, request);
   }
@@ -114,7 +115,7 @@ public class TopicsResource {
   public void produceAvro(
       final @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid TopicProduceRequest<AvroTopicProduceRecord> request
+      @Valid @NotNull TopicProduceRequest<AvroTopicProduceRecord> request
   ) {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
