@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Vector;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -93,7 +94,7 @@ public class PartitionsResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("topic") String topic,
       final @PathParam("partition") int partition,
-      @Valid PartitionProduceRequest<BinaryProduceRecord> request
+      @Valid @NotNull PartitionProduceRequest<BinaryProduceRecord> request
   ) {
     produce(asyncResponse, topic, partition, EmbeddedFormat.BINARY, request);
   }
@@ -106,7 +107,7 @@ public class PartitionsResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("topic") String topic,
       final @PathParam("partition") int partition,
-      @Valid PartitionProduceRequest<JsonProduceRecord> request
+      @Valid @NotNull PartitionProduceRequest<JsonProduceRecord> request
   ) {
     produce(asyncResponse, topic, partition, EmbeddedFormat.JSON, request);
   }
@@ -119,7 +120,7 @@ public class PartitionsResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("topic") String topic,
       final @PathParam("partition") int partition,
-      @Valid PartitionProduceRequest<AvroProduceRecord> request
+      @Valid @NotNull PartitionProduceRequest<AvroProduceRecord> request
   ) {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
