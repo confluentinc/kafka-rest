@@ -202,7 +202,7 @@ public class ConsumersResource {
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
       @QueryParam("async") @DefaultValue("false") String async,
-      @Valid @NotNull ConsumerOffsetCommitRequest offsetCommitRequest
+      @Valid ConsumerOffsetCommitRequest offsetCommitRequest
   ) {
     ctx.getKafkaConsumerManager().commitOffsets(
         group,
