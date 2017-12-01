@@ -79,4 +79,20 @@ public class UriUtilsTest {
     EasyMock.verify(uriInfo);
   }
 
+  @Test
+  public void testAbsoluteURIBuilderWithExternalPort() throws RestConfigException {
+    Properties props = new Properties();
+    props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
+    props.put(KafkaRestConfig.PORT_CONFIG, 5000);
+    props.put(KafkaRestConfig.EXTERNAL_PORT_CONFIG, 9999);
+    KafkaRestConfig config = new KafkaRestConfig(props);
+    EasyMock.expect(uriInfo.getAbsolutePathBuilder())
+            .andReturn(UriBuilder.fromUri("http://foo.com:5000"));
+    EasyMock.expect(uriInfo.getAbsolutePath()).andReturn(URI.create("http://foo.com:5000"));
+    EasyMock.replay(uriInfo);
+    assertEquals("http://bar.net:9999",
+            UriUtils.absoluteUriBuilder(config, uriInfo).build().toString());
+    EasyMock.verify(uriInfo);
+  }
+
 }
