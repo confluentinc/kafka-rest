@@ -39,6 +39,11 @@ if [ "x$KAFKAREST_LOG4J_OPTS" = "x" ]; then
   fi
 fi
 
+if [[ -n $LOG_DIR ]]; then
+    [[ -d $LOG_DIR ]] || mkdir -p "$LOG_DIR"
+    KAFKAREST_LOG4J_OPTS="-Dkafka-rest.log.dir=$LOG_DIR ${KAFKAREST_LOG4J_OPTS}"
+fi
+
 # JMX settings
 if [ -z "$KAFKAREST_JMX_OPTS" ]; then
   KAFKAREST_JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false "
