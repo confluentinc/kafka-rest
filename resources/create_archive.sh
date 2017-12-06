@@ -23,7 +23,9 @@ mkdir -p ${DESTDIR}${BINPATH}
 mkdir -p ${DESTDIR}${LIBPATH}
 mkdir -p ${DESTDIR}${SYSCONFDIR}
 
-${INSTALL} -o root -g root *.service ${DESTDIR}/lib/systemd/system/
+for svc in resources/*.service ; do
+    ${INSTALL} -o root -g root -D $svc ${DESTDIR}/lib/systemd/system/$(basename $svc)
+done
 
 PREPACKAGED="target/kafka-rest-${VERSION}-package"
 pushd ${PREPACKAGED}
