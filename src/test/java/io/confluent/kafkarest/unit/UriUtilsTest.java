@@ -109,4 +109,34 @@ public class UriUtilsTest {
     EasyMock.verify(uriInfo);
   }
 
+  @Test
+  public void testAbsoluteURIBuilderWithIPV6Listener() throws RestConfigException {
+    Properties props = new Properties();
+    props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
+    props.put(KafkaRestConfig.LISTENERS_CONFIG, "http://[fe80:0:1:2:3:4:5:6]:9092");
+    KafkaRestConfig config = new KafkaRestConfig(props);
+    EasyMock.expect(uriInfo.getAbsolutePathBuilder())
+        .andReturn(UriBuilder.fromUri("http://foo.com:9092"));
+    EasyMock.expect(uriInfo.getAbsolutePath()).andReturn(URI.create("http://foo.com:9092"));
+    EasyMock.replay(uriInfo);
+    assertEquals("http://bar.net:9092",
+        UriUtils.absoluteUriBuilder(config, uriInfo).build().toString());
+    EasyMock.verify(uriInfo);
+  }
+
+
+  @Test
+  public void testAbsoluteURIBuilderWithTruncatedIPV6Listener() throws RestConfigException {
+    Properties props = new Properties();
+    props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
+    props.put(KafkaRestConfig.LISTENERS_CONFIG, "http://[fe80::1]:9092");
+    KafkaRestConfig config = new KafkaRestConfig(props);
+    EasyMock.expect(uriInfo.getAbsolutePathBuilder())
+        .andReturn(UriBuilder.fromUri("http://foo.com:9092"));
+    EasyMock.expect(uriInfo.getAbsolutePath()).andReturn(URI.create("http://foo.com:9092"));
+    EasyMock.replay(uriInfo);
+    assertEquals("http://bar.net:9092",
+        UriUtils.absoluteUriBuilder(config, uriInfo).build().toString());
+    EasyMock.verify(uriInfo);
+  }
 }

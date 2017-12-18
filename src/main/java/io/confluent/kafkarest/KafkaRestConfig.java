@@ -757,8 +757,6 @@ public class KafkaRestConfig extends RestConfig {
     return bootstrapBrokers;
   }
 
-
-
   public static void main(String[] args) {
     System.out.print(config.toRst());
   }
