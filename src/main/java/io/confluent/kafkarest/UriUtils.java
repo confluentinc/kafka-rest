@@ -17,9 +17,12 @@
 package io.confluent.kafkarest;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+
+import io.confluent.common.config.ConfigException;
 
 public class UriUtils {
 
@@ -34,7 +37,11 @@ public class UriUtils {
       builder.scheme(origAbsoluteUri.getScheme());
       // Only reset the port if it was set in the original URI
       if (origAbsoluteUri.getPort() != -1) {
-        builder.port(config.getInt(KafkaRestConfig.PORT_CONFIG));
+        try {
+          builder.port(config.consumerPort(origAbsoluteUri.getScheme()));
+        } catch (URISyntaxException e) {
+          new ConfigException(e.getMessage());
+        }
       }
     }
     return builder;

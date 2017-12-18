@@ -23,6 +23,8 @@ import org.eclipse.jetty.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -298,6 +300,9 @@ public class KafkaRestConfig extends RestConfig {
       + "custom capability like logging, security, etc  ";
   private static final boolean ZOOKEEPER_SET_ACL_DEFAULT = false;
   private static final ConfigDef config;
+
+  public static final String HTTPS = "https";
+  public static final String HTTP = "http";
 
   static {
     config = baseKafkaRestConfigDef();
@@ -720,6 +725,18 @@ public class KafkaRestConfig extends RestConfig {
         zkUtils.close();
       }
     }
+  }
+
+  public int consumerPort(String scheme) throws URISyntaxException {
+    if (!getList(LISTENERS_CONFIG).isEmpty() && !getList(LISTENERS_CONFIG).get(0).isEmpty()) {
+      for (String listener : getList(LISTENERS_CONFIG)) {
+        URI uri = new URI(listener);
+        if (uri.getScheme().equals(scheme)) {
+          return uri.getPort();
+        }
+      }
+    }
+    return getInt(PORT_CONFIG);
   }
 
   private  String getBootstrapBrokers(ZkUtils zkUtils) {
