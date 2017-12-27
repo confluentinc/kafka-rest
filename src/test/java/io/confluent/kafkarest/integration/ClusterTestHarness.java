@@ -18,6 +18,8 @@ package io.confluent.kafkarest.integration;
 import io.confluent.common.utils.IntegrationTest;
 import io.confluent.kafkarest.*;
 
+import kafka.zk.KafkaZkClient;
+import kafka.zookeeper.ZooKeeperClient;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Time;
@@ -93,7 +95,7 @@ public abstract class ClusterTestHarness {
   // ZK Config
   protected String zkConnect;
   protected EmbeddedZookeeper zookeeper;
-  protected ZkUtils zkUtils;
+  protected KafkaZkClient zkClient;
   protected int zkConnectionTimeout = 6000;
   protected int zkSessionTimeout = 6000;
 
@@ -135,9 +137,12 @@ public abstract class ClusterTestHarness {
   public void setUp() throws Exception {
     zookeeper = new EmbeddedZookeeper();
     zkConnect = String.format("127.0.0.1:%d", zookeeper.port());
-    zkUtils = ZkUtils.apply(
-        zkConnect, zkSessionTimeout, zkConnectionTimeout,
-        JaasUtils.isZkSecurityEnabled());
+    Time time = Time.SYSTEM;
+    zkClient = new KafkaZkClient(
+        new ZooKeeperClient(zkConnect, zkSessionTimeout, zkConnectionTimeout, Integer.MAX_VALUE, time,
+                "testMetricGroup", "testMetricGroupType"),
+        JaasUtils.isZkSecurityEnabled(),
+        time);
 
     configs = new Vector<>();
     servers = new Vector<>();
@@ -149,7 +154,7 @@ public abstract class ClusterTestHarness {
       KafkaConfig config = KafkaConfig.fromProps(props);
       configs.add(config);
 
-      KafkaServer server = TestUtils.createServer(config, Time.SYSTEM);
+      KafkaServer server = TestUtils.createServer(config, time);
       servers.add(server);
     }
 
@@ -273,7 +278,7 @@ public abstract class ClusterTestHarness {
       CoreUtils.delete(server.config().logDirs());
     }
 
-    zkUtils.close();
+    zkClient.close();
     zookeeper.shutdown();
   }
 
