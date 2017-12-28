@@ -146,7 +146,7 @@ public class ProducerTest extends AbstractProducerTest {
     super.setUp();
     final int numPartitions = 3;
     final int replicationFactor = 1;
-    kafka.utils.TestUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor,
+    kafka.utils.TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
                                       JavaConversions.asScalaBuffer(this.servers),
                                       new Properties());
   }

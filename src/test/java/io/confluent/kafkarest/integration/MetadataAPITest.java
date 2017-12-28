@@ -82,9 +82,9 @@ public class MetadataAPITest extends ClusterTestHarness {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    kafka.utils.TestUtils.createTopic(zkUtils, topic1Name, topic1Partitions.size(), numReplicas,
+    kafka.utils.TestUtils.createTopic(zkClient, topic1Name, topic1Partitions.size(), numReplicas,
                           JavaConversions.asScalaBuffer(this.servers), new Properties());
-    kafka.utils.TestUtils.createTopic(zkUtils, topic2Name, topic2Partitions.size(), numReplicas,
+    kafka.utils.TestUtils.createTopic(zkClient, topic2Name, topic2Partitions.size(), numReplicas,
                           JavaConversions.asScalaBuffer(this.servers), topic2Configs);
   }
 
