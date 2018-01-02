@@ -19,6 +19,8 @@ understand how the proxy is being used and track down specific performance probl
 In addition to the metrics defined below, the REST proxy also exposes the
 wealth of metrics that are provided by the underlying Jetty server.
 
+.. contents::
+
 Global Metrics
 ~~~~~~~~~~~~~~
 
@@ -91,6 +93,8 @@ endpoint name ``brokers.list`` with the metric name ``request-rate`` to get
 ``brokers.list.request-rate``.
 
   ============================== ===================================================================
+  Endpoint Name                  API Endpoint Method
+  ============================== ===================================================================
   ``brokers.list``               ``GET /brokers``
   ``consumer.commit``            ``POST /consumers/{group}/instances/{instance}/offsets``
   ``consumer.create``            ``POST /consumers/{group}``
@@ -117,6 +121,8 @@ endpoint name ``brokers.list`` with the metric name ``request-rate`` to get
 
   For API v2:
   
+  =================================== ======================================================================
+  Endpoint Name                       API Endpoint Method
   =================================== ======================================================================
   ``consumer.commit-offsets+v2``      ``POST /consumers/{group}/instances/{instance}/offsets``
                                       with ``Content-Type: application/vnd.kafka.v2+json`` header
