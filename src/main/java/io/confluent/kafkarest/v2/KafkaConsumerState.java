@@ -209,8 +209,6 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     lock.writeLock().lock();
     try {
       if (seekToOffsetRequest != null) {
-        Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
-
         for (TopicPartitionOffsetMetadata t : seekToOffsetRequest.offsets) {
           TopicPartition topicPartition = new TopicPartition(t.getTopic(), t.getPartition());
           consumer.seek(topicPartition, t.getOffset());

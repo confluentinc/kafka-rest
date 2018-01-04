@@ -26,6 +26,7 @@ import java.util.Properties;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import io.confluent.common.config.ConfigException;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.UriUtils;
 import io.confluent.rest.RestConfigException;
@@ -77,6 +78,20 @@ public class UriUtilsTest {
     assertEquals("http://bar.net:5000",
                  UriUtils.absoluteUriBuilder(config, uriInfo).build().toString());
     EasyMock.verify(uriInfo);
+  }
+
+  @Test(expected=ConfigException.class)
+  public void testAbsoluteURIBuilderWithInvalidListener() throws RestConfigException {
+    Properties props = new Properties();
+    props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
+    props.put(KafkaRestConfig.LISTENERS_CONFIG, "http:||0.0.0.0:9091");
+    KafkaRestConfig config = new KafkaRestConfig(props);
+    EasyMock.expect(uriInfo.getAbsolutePathBuilder())
+        .andReturn(UriBuilder.fromUri("http://foo.com:9091"));
+    EasyMock.expect(uriInfo.getAbsolutePath()).andReturn(URI.create("http://foo.com:9091"));
+    EasyMock.replay(uriInfo);
+
+    UriUtils.absoluteUriBuilder(config, uriInfo);
   }
 
   @Test

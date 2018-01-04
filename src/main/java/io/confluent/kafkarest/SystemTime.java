@@ -16,6 +16,9 @@
 
 package io.confluent.kafkarest;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+@SuppressFBWarnings("NM_SAME_SIMPLE_NAME_AS_SUPERCLASS")
 public class SystemTime extends io.confluent.common.utils.SystemTime implements Time {
 
   @Override

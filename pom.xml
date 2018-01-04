@@ -80,6 +80,10 @@
             <artifactId>slf4j-log4j12</artifactId>
             <version>${log4j.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>annotations</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>io.confluent</groupId>
