@@ -40,7 +40,7 @@ public class UriUtils {
         try {
           builder.port(config.consumerPort(origAbsoluteUri.getScheme()));
         } catch (URISyntaxException e) {
-          new ConfigException(e.getMessage());
+          throw new ConfigException(e.getMessage());
         }
       }
     }
