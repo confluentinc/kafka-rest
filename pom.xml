@@ -34,7 +34,8 @@
 
     <scm>
         <connection>scm:git:git://github.com/confluentinc/kafka-rest.git</connection>
-        <developerConnection>scm:git:git@github.com:confluentinc/kafka-rest.git</developerConnection>
+        <developerConnection>scm:git:git@github.com:confluentinc/kafka-rest.git
+        </developerConnection>
         <url>https://github.com/confluentinc/kafka-rest</url>
         <tag>HEAD</tag>
     </scm>
@@ -47,7 +48,6 @@
     <properties>
         <confluent.maven.repo>http://packages.confluent.io/maven/</confluent.maven.repo>
         <log4j.version>1.7.25</log4j.version>
-        <exec-maven-plugin.version>1.2.1</exec-maven-plugin.version>
     </properties>
 
     <repositories>
@@ -57,6 +57,13 @@
             <url>${confluent.maven.repo}</url>
         </repository>
     </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>annotations</artifactId>
+        </dependency>
+    </dependencies>
 
     <build>
         <pluginManagement>
@@ -73,27 +80,5 @@
                 </plugin>
             </plugins>
         </pluginManagement>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <inherited>true</inherited>
-                <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
     </build>
 </project>
