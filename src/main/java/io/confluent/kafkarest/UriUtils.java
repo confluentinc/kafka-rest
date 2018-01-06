@@ -43,6 +43,11 @@ public class UriUtils {
           throw new ConfigException(e.getMessage());
         }
       }
+      
+      String hostpath = config.getString(KafkaRestConfig.HOST_PATH_CONFIG);
+      if(hostpath.length() > 0) {
+        builder.replacePath(hostpath + builder.build().getPath());
+      }
     }
     return builder;
   }

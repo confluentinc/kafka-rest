@@ -60,6 +60,11 @@ public class KafkaRestConfig extends RestConfig {
       + "are used.";
   public static final String ID_DEFAULT = "";
 
+  public static final String HOST_PATH_CONFIG = "host.path";
+  private static final String HOST_PATH_DOC =
+      "The host path used to generate absolute URLs in responses. If empty, no path is added";
+  public static final String HOST_PATH_DEFAULT = "";
+
   public static final String HOST_NAME_CONFIG = "host.name";
   private static final String HOST_NAME_DOC =
       "The host name used to generate absolute URLs in responses. If empty, the default canonical"
@@ -347,6 +352,30 @@ public class KafkaRestConfig extends RestConfig {
         )
         .define(ID_CONFIG, Type.STRING, ID_DEFAULT, Importance.HIGH, ID_CONFIG_DOC)
         .define(HOST_NAME_CONFIG, Type.STRING, HOST_NAME_DEFAULT, Importance.MEDIUM, HOST_NAME_DOC)
+        .define(HOST_PATH_CONFIG, Type.STRING, HOST_PATH_DEFAULT, Importance.MEDIUM, HOST_PATH_DOC)
+        .define(ZOOKEEPER_CONNECT_CONFIG, Type.STRING, ZOOKEEPER_CONNECT_DEFAULT,
+                Importance.HIGH, ZOOKEEPER_CONNECT_DOC)
+        .define(SCHEMA_REGISTRY_URL_CONFIG, Type.STRING, SCHEMA_REGISTRY_URL_DEFAULT,
+                Importance.HIGH, SCHEMA_REGISTRY_URL_DOC)
+        .define(PRODUCER_THREADS_CONFIG, Type.INT, PRODUCER_THREADS_DEFAULT,
+                Importance.LOW, PRODUCER_THREADS_DOC)
+        .define(CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT,
+                Importance.LOW, CONSUMER_ITERATOR_TIMEOUT_MS_DOC)
+        .define(CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, Type.INT, CONSUMER_ITERATOR_BACKOFF_MS_DEFAULT,
+                Importance.LOW, CONSUMER_ITERATOR_BACKOFF_MS_DOC)
+        .define(CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT,
+                Importance.MEDIUM, CONSUMER_REQUEST_TIMEOUT_MS_DOC)
+        .define(CONSUMER_REQUEST_MAX_BYTES_CONFIG, Type.LONG,
+                CONSUMER_REQUEST_MAX_BYTES_DEFAULT,
+                Importance.MEDIUM, CONSUMER_REQUEST_MAX_BYTES_DOC)
+        .define(CONSUMER_THREADS_CONFIG, Type.INT, CONSUMER_THREADS_DEFAULT,
+                Importance.MEDIUM, CONSUMER_THREADS_DOC)
+        .define(CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG, Type.INT, CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT,
+                Importance.LOW, CONSUMER_INSTANCE_TIMEOUT_MS_DOC)
+        .define(SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG, Type.INT, SIMPLE_CONSUMER_MAX_POOL_SIZE_DEFAULT,
+                Importance.MEDIUM, SIMPLE_CONSUMER_MAX_POOL_SIZE_DOC)
+        .define(SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG, Type.INT, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT,
+                Importance.LOW, SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC);
         .define(
             ZOOKEEPER_CONNECT_CONFIG,
             Type.STRING,
