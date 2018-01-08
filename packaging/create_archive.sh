@@ -23,7 +23,7 @@ mkdir -p ${DESTDIR}${BINPATH}
 mkdir -p ${DESTDIR}${LIBPATH}
 mkdir -p ${DESTDIR}${SYSCONFDIR}
 
-for svc in resources/*.service ; do
+for svc in packaging/*.service ; do
     ${INSTALL} -o root -g root -D $svc ${DESTDIR}/lib/systemd/system/$(basename $svc)
 done
 
