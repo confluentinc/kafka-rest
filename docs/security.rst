@@ -3,9 +3,14 @@
 Security Overview
 -----------------
 
-REST Proxy supports SSL for securing communication between REST clients and the REST Proxy (HTTPS), and both SSL and SASL to secure communication between REST Proxy and Apache Kafka.
+REST Proxy supports security features, including:
 
-For more details, check the :ref:`configuration options<kafkarest_config>`.
+* :ref:`SSL` for securing communication between REST clients and the REST Proxy (HTTPS)
+* :ref:`SSL encryption <encryption-ssl-rest-proxy>` between the REST Proxy and a secure Kafka cluster
+* :ref:`SSL authentication<authentication-ssl-rest-proxy>` between the REST Proxy and a secure Kafka Cluster
+* :ref:`SASL authentication<kafka_sasl_auth>` between the REST Proxy and a secure Kafka Cluster 
+
+For more configuration details, check the :ref:`configuration options<kafkarest_config>`.
 
 By default, all the requests to the broker use the same Kerberos Principal or the SSL certificate
 to communicate with the broker when the ``client.security.protocol`` is configured to be either
