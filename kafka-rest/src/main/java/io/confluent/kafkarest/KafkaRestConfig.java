@@ -294,10 +294,11 @@ public class KafkaRestConfig extends RestConfig {
       "Login thread will sleep until the specified window factor of time from last refresh to "
       + "ticket's expiry has "
       + "been reached, at which time it will try to renew the ticket.";
-  public static final String KAFKA_REST_RESOURCE_EXTENSION_DOC =
-      "Fully qualified class name of a  valid Implementation of the interface RestResourceExtension"
-      + "This can be used to inject user defined resources like filters. Typically used to add "
-      + "custom capability like logging, security, etc  ";
+  protected static final String KAFKA_REST_RESOURCE_EXTENSION_DOC =
+      "  A list of classes to use as RestResourceExtension. Implementing the interface "
+      + " <code>RestResourceExtension</code> allows you to inject user defined resources "
+      + " like filters to Rest Proxy. Typically used to add custom capability like logging, "
+      + " security, etc.";
   private static final boolean ZOOKEEPER_SET_ACL_DEFAULT = false;
   private static final ConfigDef config;
 
@@ -604,7 +605,7 @@ public class KafkaRestConfig extends RestConfig {
         )
         .define(
             KAFKA_REST_RESOURCE_EXTENSION_CONFIG,
-            Type.STRING,
+            Type.LIST,
             "",
             Importance.LOW,
             KAFKA_REST_RESOURCE_EXTENSION_DOC
