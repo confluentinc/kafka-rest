@@ -12,7 +12,7 @@
     <includeBaseDirectory>false</includeBaseDirectory>
     <fileSets>
         <fileSet>
-            <directory>${project.basedir}</directory>
+            <directory>${project.parent.basedir}</directory>
             <outputDirectory>share/doc/kafka-rest/</outputDirectory>
             <includes>
                 <include>version.txt</include>
@@ -23,14 +23,14 @@
             </includes>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}</directory>
+            <directory>${project.parent.basedir}</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
                 <include>bin/*</include>
             </includes>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}/config</directory>
+            <directory>${project.parent.basedir}/config</directory>
             <outputDirectory>etc/kafka-rest</outputDirectory>
             <includes>
                 <include>*</include>
