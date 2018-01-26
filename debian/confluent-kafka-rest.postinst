@@ -33,7 +33,7 @@ case "$1" in
 
 	if [ -n "$_permwarn" ]; then
 	    echo "Notice: If you are planning to use the provided systemd service units for"
-	    echo "Notice: confluent-schema-registry, make sure that read-write permissions"
+	    echo "Notice: confluent-kafka-rest, make sure that read-write permissions"
 	    echo "Notice: for user $_user and group $_group are set up according to the"
 	    echo "Notice: following commands:"
 	    /bin/echo -e "$_permwarn"
