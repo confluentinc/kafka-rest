@@ -19,6 +19,7 @@ package io.confluent.kafkarest;
 import org.eclipse.jetty.util.StringUtil;
 
 import java.lang.reflect.Proxy;
+import java.util.List;
 import java.util.Properties;
 
 import javax.ws.rs.core.Configurable;
@@ -44,7 +45,7 @@ import kafka.utils.ZkUtils;
  */
 public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
-  RestResourceExtension restResourceExtension;
+  List<RestResourceExtension> restResourceExtensions;
 
   public KafkaRestApplication() throws RestConfigException {
     this(new Properties());
@@ -58,23 +59,9 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
       throws IllegalAccessException, InstantiationException, RestConfigException {
     super(config);
 
-    String extensionClassName =
-        config.getString(KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG);
-
-    if (StringUtil.isNotBlank(extensionClassName)) {
-      try {
-        Class<RestResourceExtension>
-            restResourceExtensionClass =
-            (Class<RestResourceExtension>) Class.forName(extensionClassName);
-
-        restResourceExtension = restResourceExtensionClass.newInstance();
-      } catch (ClassNotFoundException e) {
-        throw new RestConfigException(
-            "Unable to load resource extension class " + extensionClassName
-            + ". Check your classpath and that the configured class implements "
-            + "the RestResourceExtension interface.");
-      }
-    }
+    restResourceExtensions = config.getConfiguredInstances(
+        KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG,
+        RestResourceExtension.class);
   }
 
 
@@ -129,16 +116,18 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new io.confluent.kafkarest.resources.v2.PartitionsResource(context));
     config.register(KafkaRestCleanupFilter.class);
 
-    if (restResourceExtension != null) {
+    for (RestResourceExtension restResourceExtension : restResourceExtensions) {
       restResourceExtension.register(config, appConfig);
     }
   }
 
   @Override
   public void onShutdown() {
-    if (restResourceExtension != null) {
+
+    for (RestResourceExtension restResourceExtension : restResourceExtensions) {
       restResourceExtension.clean();
     }
+
     KafkaRestContextProvider.clean();
   }
 }
