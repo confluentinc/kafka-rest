@@ -554,4 +554,4 @@ For example to enable Confluent Control Center monitoring interceptors:
 ``consumer.interceptor.classes=io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor``
 ``producer.interceptor.classes=io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor``
 
-For more details about the monitoring inteceptors, please see `Interceptor Configuration </control-center/docs/clients.html#interceptor-configuration>`_.
+For more details about the monitoring inteceptors, please see :ref:`Interceptor Configuration <controlcenter_clients>`.
