@@ -446,7 +446,7 @@ The SecureRandom PRNG implementation to use for SSL cryptography operations.
 Configuration Options for SASL Authentication between REST Proxy and Apache Kafka Brokers
 -----------------------------------------------------------------------------------------
 
-Kafka SASL configurations are described `here <http://docs.confluent.io/3.0.0/kafka/sasl.html>`_
+Kafka SASL configurations are described :ref:`here <kafka_sasl_auth>`.
 
 Note that all the SASL configurations (for REST Proxy to Broker communication) are prefixed with "client". If you want the configuration to apply just to consumers or just to producers, you can replace the prefix with "consumer" or "producer" respectively.
 
@@ -555,4 +555,4 @@ For example to enable Confluent Control Center monitoring interceptors:
 ``consumer.interceptor.classes=io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor``
 ``producer.interceptor.classes=io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor``
 
-For more details about the monitoring inteceptors, please see `Interceptor Configuration </control-center/docs/clients.html#interceptor-configuration>`_.
+For more details about the monitoring inteceptors, please see :ref:`Interceptor Configuration <controlcenter_clients>`.
