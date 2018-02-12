@@ -97,11 +97,11 @@ public class AvroRestProducer implements RestProducer<JsonNode, JsonNode> {
     } catch (RestClientException e) {
       // FIXME We should return more specific error codes (unavailable vs registration failed in
       // a way that isn't retriable?).
-      throw new RestException("Schema registration or lookup failed", 408, 40801, e);
+      throw new RestException("Schema registration or lookup failed", 400, 40001, e);
     } catch (SchemaParseException e) {
       throw Errors.invalidSchemaException(e);
     } catch (IOException e) {
-      throw new RestException("Schema registration or lookup failed", 408, 40801, e);
+      throw new RestException("Schema registration or lookup failed", 400, 40001, e);
     }
 
     // Store the schema IDs in the task. These will be used to include the IDs in the response
