@@ -240,7 +240,7 @@ you produce messages by making ``POST`` requests to specific topics.
    :>json int key_schema_id: The ID for the schema used to produce keys, or null
                              if keys were not used
    :>json int value_schema_id: The ID for the schema used to produce values.
-   :>jsonarr object offests: List of partitions and offsets the messages were
+   :>jsonarr object offsets: List of partitions and offsets the messages were
                              published to
    :>jsonarr int offsets[i].partition: Partition the message was published to, or null if
                                        publishing the message failed
@@ -577,7 +577,7 @@ It also allows you to consume and produce messages to single partition using ``G
    :>json int key_schema_id: The ID for the schema used to produce keys, or null
                              if keys were not used
    :>json int value_schema_id: The ID for the schema used to produce values.
-   :>jsonarr object offests: List of partitions and offsets the messages were
+   :>jsonarr object offsets: List of partitions and offsets the messages were
                              published to
    :>jsonarr int offsets[i].partition: Partition the message was published to. This
                                        will be the same as the ``partition_id``
@@ -1605,7 +1605,7 @@ you produce messages by making ``POST`` requests to specific topics.
    :>json int key_schema_id: The ID for the schema used to produce keys, or null
                              if keys were not used
    :>json int value_schema_id: The ID for the schema used to produce values.
-   :>jsonarr object offests: List of partitions and offsets the messages were
+   :>jsonarr object offsets: List of partitions and offsets the messages were
                              published to
    :>jsonarr int offsets[i].partition: Partition the message was published to, or null if
                                        publishing the message failed
@@ -2053,7 +2053,7 @@ It also allows you to consume and produce messages to single partition using ``G
    :>json int key_schema_id: The ID for the schema used to produce keys, or null
                              if keys were not used
    :>json int value_schema_id: The ID for the schema used to produce values.
-   :>jsonarr object offests: List of partitions and offsets the messages were
+   :>jsonarr object offsets: List of partitions and offsets the messages were
                              published to
    :>jsonarr int offsets[i].partition: Partition the message was published to. This
                                        will be the same as the ``partition_id``
