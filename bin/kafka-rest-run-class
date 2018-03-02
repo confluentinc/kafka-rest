@@ -14,16 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-base_dir=$(dirname $0)/..
+base_dir=$(dirname $(dirname "$0"))
 
 # Development jars. `mvn package` should collect all the required dependency jars here
 for dir in $base_dir/target/kafka-rest-*-development; do
-  CLASSPATH=$CLASSPATH:$dir/share/java/kafka-rest/*
+  CLASSPATH+="${CLASSPATH:+:}$dir/share/java/kafka-rest/*"
 done
 
 # Production jars
 for library in "confluent-common" "rest-utils" "kafka-rest"; do
-  CLASSPATH=$CLASSPATH:$base_dir/share/java/$library/*
+  CLASSPATH+="${CLASSPATH:+:}$base_dir/share/java/$library/*"
 done
 
 # logj4 settings
