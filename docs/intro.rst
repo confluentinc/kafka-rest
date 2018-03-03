@@ -263,7 +263,7 @@ running:
 
 .. sourcecode:: bash
 
-   $ cd confluent-3.2.0/
+   $ cd <path-to-confluent>
 
    # Start the REST Proxy. The default settings automatically work with the
    # default settings for local ZooKeeper and Kafka nodes.
