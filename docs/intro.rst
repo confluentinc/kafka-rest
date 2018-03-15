@@ -263,11 +263,9 @@ running:
 
 .. sourcecode:: bash
 
-   $ cd confluent-3.2.0/
-
    # Start the REST Proxy. The default settings automatically work with the
    # default settings for local ZooKeeper and Kafka nodes.
-   $ bin/kafka-rest-start etc/kafka-rest/kafka-rest.properties
+   $ <path-to-confluent>/bin/kafka-rest-start etc/kafka-rest/kafka-rest.properties
 
 If you installed Debian or RPM packages, you can simply run ``kafka-rest-start``
 as it will be on your ``PATH``. The ``kafka-rest.properties`` file contains
