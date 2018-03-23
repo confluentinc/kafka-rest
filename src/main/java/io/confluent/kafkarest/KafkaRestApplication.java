@@ -16,13 +16,6 @@
 
 package io.confluent.kafkarest;
 
-import org.eclipse.jetty.util.StringUtil;
-
-import java.lang.reflect.Proxy;
-import java.util.Properties;
-
-import javax.ws.rs.core.Configurable;
-
 import io.confluent.kafkarest.exceptions.ZkExceptionMapper;
 import io.confluent.kafkarest.extension.ContextInvocationHandler;
 import io.confluent.kafkarest.extension.KafkaRestCleanupFilter;
@@ -33,10 +26,16 @@ import io.confluent.kafkarest.resources.ConsumersResource;
 import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.kafkarest.resources.RootResource;
 import io.confluent.kafkarest.resources.TopicsResource;
+import io.confluent.kafkarest.resources.XHeaderReflectingResponseFilter;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.rest.Application;
 import io.confluent.rest.RestConfigException;
 import kafka.utils.ZkUtils;
+import org.eclipse.jetty.util.StringUtil;
+
+import javax.ws.rs.core.Configurable;
+import java.lang.reflect.Proxy;
+import java.util.Properties;
 
 
 /**
@@ -128,6 +127,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new io.confluent.kafkarest.resources.v2.ConsumersResource(context));
     config.register(new io.confluent.kafkarest.resources.v2.PartitionsResource(context));
     config.register(KafkaRestCleanupFilter.class);
+    config.register(XHeaderReflectingResponseFilter.class);
 
     if (restResourceExtension != null) {
       restResourceExtension.register(config, appConfig);
