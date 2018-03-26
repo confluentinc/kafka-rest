@@ -1,12 +1,12 @@
 /**
  * Copyright 2015 Confluent Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,8 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 
+import io.confluent.kafkarest.KafkaRestConfig;
+
 /**
  * Simply reflects any request headers starting with x- (or X-) into the response. This is initially
  * to allow clients that need to manually correlate requests with responses to inject a header,
@@ -29,12 +31,21 @@ import javax.ws.rs.container.ContainerResponseFilter;
  */
 public class XHeaderReflectingResponseFilter implements ContainerResponseFilter {
 
+  private boolean enabled;
+
+  public XHeaderReflectingResponseFilter(KafkaRestConfig appConfig) {
+    final String property = appConfig.getOriginalProperties().getProperty("enable.reflect.xheaders");
+    enabled = Boolean.valueOf(property);
+  }
+
   @Override
   public void filter(final ContainerRequestContext requestContext,
                      final ContainerResponseContext responseContext) {
-    for (Entry<String, List<String>> header : requestContext.getHeaders().entrySet()) {
-      if (header.getKey().toLowerCase().trim().startsWith("x-")) {
-        responseContext.getHeaders().add(header.getKey(), header.getValue());
+    if (enabled) {
+      for (Entry<String, List<String>> header : requestContext.getHeaders().entrySet()) {
+        if (header.getKey().toLowerCase().trim().startsWith("x-")) {
+          responseContext.getHeaders().add(header.getKey(), header.getValue());
+        }
       }
     }
   }

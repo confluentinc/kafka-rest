@@ -210,6 +210,13 @@ Java Kafka clients.
   * Default: ""
   * Importance: low
 
+``enable.reflect.xheaders``
+  Set ``true`` to have any headers starting with ``x-`` or ``X-`` reflected unchanged in the response. This can be used for explicitly correlating requests with responses for those clients that need it.
+
+  * Type: boolean (or string "true")
+  * Default: false
+  * Importance: low
+
 
 Security Configuration Options
 ==============================
@@ -549,7 +556,7 @@ REST Proxy supports interceptor configurations as part of Java new producer and 
   * Type: string
   * Default: ""
   * Importance: low
-    
+
 For example to enable Confluent Control Center monitoring interceptors:
 
 ``consumer.interceptor.classes=io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor``
