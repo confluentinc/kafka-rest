@@ -41,7 +41,7 @@ public class XHeadersAreReflectedEnabledTest extends ClusterTestHarness {
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
 
     // then
-    assertEquals(xHeaderValue, response.getHeaders().getFirst(xHeaderKey));
+    assertEquals(xHeaderValue, String.valueOf(response.getHeaders().getFirst(xHeaderKey)));
   }
 
   @Test
