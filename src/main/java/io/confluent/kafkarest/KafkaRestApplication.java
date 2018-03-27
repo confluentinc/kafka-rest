@@ -1,12 +1,12 @@
 /**
  * Copyright 2015 Confluent Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,19 +16,25 @@
 
 package io.confluent.kafkarest;
 
-import java.lang.reflect.Proxy;
-import java.util.Properties;
-import javax.ws.rs.core.Configurable;
-
 import io.confluent.kafkarest.exceptions.ZkExceptionMapper;
 import io.confluent.kafkarest.extension.ContextInvocationHandler;
 import io.confluent.kafkarest.extension.KafkaRestCleanupFilter;
 import io.confluent.kafkarest.extension.KafkaRestContextProvider;
 import io.confluent.kafkarest.extension.RestResourceExtension;
-import io.confluent.kafkarest.resources.*;
+import io.confluent.kafkarest.resources.BrokersResource;
+import io.confluent.kafkarest.resources.RootResource;
+import io.confluent.kafkarest.resources.TopicsResource;
+import io.confluent.kafkarest.resources.XHeaderReflectingResponseFilter;
+import io.confluent.kafkarest.resources.v2.ConsumersResource;
+import io.confluent.kafkarest.resources.v2.PartitionsResource;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.rest.Application;
 import io.confluent.rest.RestConfigException;
+
+import java.lang.reflect.Proxy;
+import java.util.Properties;
+import javax.ws.rs.core.Configurable;
+
 import kafka.utils.ZkUtils;
 import org.eclipse.jetty.util.StringUtil;
 
@@ -48,6 +54,9 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     super(new KafkaRestConfig(props));
   }
 
+  /**
+   * Configure the application.
+   */
   public KafkaRestApplication(KafkaRestConfig config)
       throws IllegalAccessException, InstantiationException, RestConfigException {
     super(config);

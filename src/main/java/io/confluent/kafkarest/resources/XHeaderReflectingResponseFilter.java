@@ -16,13 +16,13 @@
 
 package io.confluent.kafkarest.resources;
 
+import io.confluent.kafkarest.KafkaRestConfig;
+
 import java.util.List;
 import java.util.Map.Entry;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
-
-import io.confluent.kafkarest.KafkaRestConfig;
 
 /**
  * Simply reflects any request headers starting with x- (or X-) into the response. This is initially
@@ -33,9 +33,19 @@ public class XHeaderReflectingResponseFilter implements ContainerResponseFilter 
 
   private boolean enabled;
 
+  /**
+   * Reads the given appConfig to extract the 'enable.reflect.xheaders' property and assess it for
+   * true or false. Default is 'false' if it's not specified or appConfig is null.
+   */
   public XHeaderReflectingResponseFilter(KafkaRestConfig appConfig) {
-    final String property = appConfig.getOriginalProperties().getProperty("enable.reflect.xheaders");
-    enabled = Boolean.valueOf(property);
+    if (appConfig == null) {
+      enabled = false;
+    } else {
+      final String property =
+          appConfig.getOriginalProperties().getProperty("enable.reflect.xheaders");
+      enabled = Boolean.valueOf(property);
+    }
+
   }
 
   @Override
