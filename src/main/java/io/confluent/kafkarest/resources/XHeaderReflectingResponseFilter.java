@@ -54,7 +54,7 @@ public class XHeaderReflectingResponseFilter implements ContainerResponseFilter 
     if (enabled) {
       for (Entry<String, List<String>> header : requestContext.getHeaders().entrySet()) {
         if (header.getKey().toLowerCase().trim().startsWith("x-")) {
-          responseContext.getHeaders().add(header.getKey(), header.getValue());
+          responseContext.getHeaders().addAll(header.getKey(), header.getValue());
         }
       }
     }
