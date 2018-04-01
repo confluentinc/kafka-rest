@@ -2,9 +2,9 @@ package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.Versions;
 
+import java.util.Properties;
 import javax.ws.rs.core.Response;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import static io.confluent.kafkarest.KafkaRestConfig.REFLECT_XHEADERS;
@@ -24,11 +24,11 @@ public class XHeadersAreReflectedEnabledTest extends ClusterTestHarness {
     super(1, false);
   }
 
-  @Before
-  public void setup() throws Exception {
-    restProperties.put(REFLECT_XHEADERS, String.valueOf(true));
-    super.setUp();
+  @Override
+  protected void overrideKafkaRestConfigs(Properties restProperties) {
+    restProperties.put(REFLECT_XHEADERS, false);
   }
+
 
   @Test
   public void requestXHeaderIsReflectedInResponseWhenEnabled() {
