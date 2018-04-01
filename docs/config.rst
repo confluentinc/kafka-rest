@@ -213,7 +213,7 @@ Java Kafka clients.
 ``reflect.xheaders``
   Set ``true`` to have any headers starting with ``x-`` or ``X-`` reflected unchanged in the response. This can be used for explicitly correlating requests with responses for those clients that need it.
 
-  * Type: boolean (or string "true")
+  * Type: boolean
   * Default: false
   * Importance: low
 

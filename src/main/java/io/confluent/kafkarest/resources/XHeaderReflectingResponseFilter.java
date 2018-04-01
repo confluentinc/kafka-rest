@@ -45,9 +45,9 @@ public class XHeaderReflectingResponseFilter implements ContainerResponseFilter 
     if (context == null) {
       enabled = false;
     } else {
-      final String property =
-          context.getConfig().getOriginalProperties().getProperty(REFLECT_XHEADERS);
-      enabled = Boolean.valueOf(property);
+      final Object property =
+          context.getConfig().getOriginalProperties().get(REFLECT_XHEADERS);
+      enabled = property instanceof Boolean && (boolean) property;
     }
 
   }
@@ -57,7 +57,8 @@ public class XHeaderReflectingResponseFilter implements ContainerResponseFilter 
                      final ContainerResponseContext responseContext) {
     if (enabled) {
       for (Entry<String, List<String>> header : requestContext.getHeaders().entrySet()) {
-        if (header.getKey().toLowerCase().trim().startsWith("x-")) {
+        if (header.getKey() != null
+            && header.getKey().toLowerCase().trim().startsWith("x-")) {
           List<String> valueList = header.getValue();
           for (String value : valueList) {
             responseContext.getHeaders().add(header.getKey(), value);
