@@ -38,7 +38,6 @@ public class XHeaderReflectingResponseFilter implements ContainerResponseFilter 
   /**
    * Reads the given context to extract the 'enable.reflect.xheaders' property and assess it for
    * true or false. Default is 'false' if it's not specified or context is null.
-   * @param context
    */
   public XHeaderReflectingResponseFilter(KafkaRestContext context) {
     if (context == null) {
