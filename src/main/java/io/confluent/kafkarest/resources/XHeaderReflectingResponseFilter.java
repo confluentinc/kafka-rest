@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
+import javax.ws.rs.ext.Provider;
 
 import static io.confluent.kafkarest.KafkaRestConfig.REFLECT_XHEADERS;
 
@@ -31,12 +32,13 @@ import static io.confluent.kafkarest.KafkaRestConfig.REFLECT_XHEADERS;
  * to allow clients that need to manually correlate requests with responses to inject a header,
  * usually something like X-Correlation-Id, to facilitate matching.
  */
+@Provider
 public class XHeaderReflectingResponseFilter implements ContainerResponseFilter {
 
   private boolean enabled;
 
   /**
-   * Reads the given context to extract the 'enable.reflect.xheaders' property and assess it for
+   * Reads the given context to extract the 'reflect.xheaders' property and assess it for
    * true or false. Default is 'false' if it's not specified or context is null.
    */
   public XHeaderReflectingResponseFilter(KafkaRestContext context) {
