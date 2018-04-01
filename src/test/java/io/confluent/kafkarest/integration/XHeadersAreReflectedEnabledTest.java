@@ -26,7 +26,7 @@ public class XHeadersAreReflectedEnabledTest extends ClusterTestHarness {
 
   @Override
   protected void overrideKafkaRestConfigs(Properties restProperties) {
-    restProperties.put(REFLECT_XHEADERS, false);
+    restProperties.put(REFLECT_XHEADERS, true);
   }
 
 
