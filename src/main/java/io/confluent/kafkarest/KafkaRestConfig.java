@@ -16,25 +16,25 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.common.config.ConfigDef;
+import io.confluent.common.config.ConfigDef.Importance;
+import io.confluent.common.config.ConfigDef.Type;
+import io.confluent.rest.RestConfig;
+import io.confluent.rest.RestConfigException;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import kafka.cluster.Broker;
+import kafka.cluster.EndPoint;
+import kafka.utils.ZkUtils;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Utils;
 import org.eclipse.jetty.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import io.confluent.common.config.ConfigDef;
-import io.confluent.common.config.ConfigDef.Importance;
-import io.confluent.common.config.ConfigDef.Type;
-import io.confluent.rest.RestConfig;
-import io.confluent.rest.RestConfigException;
-import kafka.cluster.Broker;
-import kafka.cluster.EndPoint;
-import kafka.utils.ZkUtils;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
@@ -97,7 +97,15 @@ public class KafkaRestConfig extends RestConfig {
       + "dynamically), "
       + "this list need not contain the full set of servers (you may want more than one, though, "
       + "in case a server is down).";
+
   public static final String BOOTSTRAP_SERVERS_DEFAULT = "";
+
+  public static final String REFLECT_XHEADERS = "reflect.xheaders";
+  private static final String REFLECT_XHEADERS_DOC =
+      "Set ``true`` to have any headers starting with ``x-`` or ``X-``"
+          + "reflected unchanged in the response. This can be used for explicitly"
+          + "correlating requests with responses for those clients that need it.";
+  public static final Boolean REFLECT_XHEADERS_DEFAULT = false;
 
   public static final String SCHEMA_REGISTRY_URL_CONFIG = "schema.registry.url";
   private static final String SCHEMA_REGISTRY_URL_DOC =
@@ -603,6 +611,12 @@ public class KafkaRestConfig extends RestConfig {
             "",
             Importance.LOW,
             KAFKA_REST_RESOURCE_EXTENSION_DOC
+        ).define(
+            REFLECT_XHEADERS,
+            Type.BOOLEAN,
+            REFLECT_XHEADERS_DEFAULT,
+            Importance.LOW,
+            REFLECT_XHEADERS_DOC
         );
   }
 

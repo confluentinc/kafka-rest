@@ -131,7 +131,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new io.confluent.kafkarest.resources.v2.ConsumersResource(context));
     config.register(new io.confluent.kafkarest.resources.v2.PartitionsResource(context));
     config.register(KafkaRestCleanupFilter.class);
-    config.register(new XHeaderReflectingResponseFilter(appConfig));
+    config.register(new XHeaderReflectingResponseFilter(context));
 
     if (restResourceExtension != null) {
       restResourceExtension.register(config, appConfig);
