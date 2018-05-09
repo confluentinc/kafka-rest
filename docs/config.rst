@@ -1,8 +1,7 @@
 .. _kafkarest_config:
 
-=======================
- Configuration Options
-=======================
+REST Proxy Configuration Options
+--------------------------------
 
 In addition to the settings specified here, the Kafka REST Proxy accepts the settings for the
 Java producer and consumer (currently the new producer and old/new consumers). Use these to override
