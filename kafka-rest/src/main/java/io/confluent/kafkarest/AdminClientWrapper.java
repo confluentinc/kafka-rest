@@ -25,7 +25,9 @@ import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.config.ConfigResource;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.TreeSet;
@@ -38,7 +40,6 @@ import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.rest.exceptions.RestServerErrorException;
-import jersey.repackaged.com.google.common.collect.ImmutableList;
 
 
 public class AdminClientWrapper {
@@ -124,8 +125,9 @@ public class AdminClientWrapper {
       List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), null);
 
       ConfigResource topicResource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
-      Config config = adminClient.describeConfigs(ImmutableList.<ConfigResource>of(topicResource))
-          .values().get(topicResource).get();
+      Config config = adminClient.describeConfigs(
+          Collections.unmodifiableList(Arrays.asList(topicResource))
+      ).values().get(topicResource).get();
       Properties topicProps = new Properties();
       for (ConfigEntry configEntry : config.entries()) {
         topicProps.put(configEntry.name(), configEntry.value());
@@ -168,7 +170,7 @@ public class AdminClientWrapper {
 
   private TopicDescription getTopicDescription(String topicName) throws RestServerErrorException {
     try {
-      return adminClient.describeTopics(ImmutableList.<String>of(topicName))
+      return adminClient.describeTopics(Collections.unmodifiableList(Arrays.asList(topicName)))
           .values().get(topicName).get(initTimeOut, TimeUnit.MILLISECONDS);
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
       throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE,
