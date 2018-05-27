@@ -22,7 +22,6 @@ import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.entities.AvroConsumerRecord;
-import kafka.serializer.Decoder;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
@@ -33,10 +32,6 @@ import java.util.Properties;
  */
 public class AvroKafkaConsumerState extends KafkaConsumerState<Object, Object, JsonNode, JsonNode> {
 
-  // Note that this could be a static variable and shared, but that causes tests to break in
-  // subtle ways because it causes state to be shared across tests, but only for the consumer.
-  private Decoder<Object> decoder = null;
-
   public AvroKafkaConsumerState(KafkaRestConfig config,
       ConsumerInstanceId instanceId,
       Consumer consumer) {
@@ -44,16 +39,6 @@ public class AvroKafkaConsumerState extends KafkaConsumerState<Object, Object, J
     Properties props = new Properties();
     props.setProperty("schema.registry.url",
         config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
-  }
-
-  @Override
-  protected Decoder<Object> getKeyDecoder() {
-    return decoder;
-  }
-
-  @Override
-  protected Decoder<Object> getValueDecoder() {
-    return decoder;
   }
 
   @Override
