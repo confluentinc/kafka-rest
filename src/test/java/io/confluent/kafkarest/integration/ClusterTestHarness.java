@@ -16,8 +16,37 @@
 package io.confluent.kafkarest.integration;
 
 import io.confluent.common.utils.IntegrationTest;
-import io.confluent.kafkarest.*;
+import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
+import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
+import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
+import io.confluent.kafkarest.ConsumerManager;
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.MetadataObserver;
+import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.SimpleConsumerFactory;
+import io.confluent.kafkarest.SimpleConsumerManager;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.FileSystemException;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Vector;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+
+import kafka.server.KafkaConfig;
+import kafka.server.KafkaServer;
+import kafka.utils.CoreUtils;
+import kafka.utils.TestUtils;
+import kafka.utils.ZkUtils;
+import kafka.zk.EmbeddedZookeeper;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Time;
@@ -25,28 +54,8 @@ import org.eclipse.jetty.server.Server;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.experimental.categories.Category;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.*;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-
-import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
-import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
-import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
-import kafka.server.KafkaConfig;
-import kafka.server.KafkaServer;
-import kafka.utils.CoreUtils;
-import kafka.utils.TestUtils;
-import kafka.utils.ZkUtils;
-import kafka.zk.EmbeddedZookeeper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.Option;
 import scala.collection.JavaConversions;
 
@@ -197,6 +206,7 @@ public abstract class ClusterTestHarness {
                                            getConsumerManager(restConfig),
                                            getSimpleConsumerFactory(restConfig),
                                            getSimpleConsumerManager(restConfig));
+
     restServer = restApp.createServer();
     restServer.start();
   }
@@ -217,8 +227,8 @@ public abstract class ClusterTestHarness {
   }
 
   protected Properties getBrokerProperties(int i) {
-    final Option<File> noFile = Option.apply(null);
-    final Option<SecurityProtocol> noInterBrokerSecurityProtocol = Option.apply(null);
+    final Option<File> noFile = Option.<File>apply(null);
+    final Option<SecurityProtocol> noInterBrokerSecurityProtocol = Option.<SecurityProtocol>apply(null);
     Properties props = TestUtils.createBrokerConfig(
         i, zkConnect, false, false, TestUtils.RandomPort(), noInterBrokerSecurityProtocol,
         noFile, Option.<Properties>empty(), true, false, TestUtils.RandomPort(), false,
@@ -270,12 +280,34 @@ public abstract class ClusterTestHarness {
       server.shutdown();
     }
     for (KafkaServer server : servers) {
-      CoreUtils.delete(server.config().logDirs());
+      try {
+        CoreUtils.delete(server.config().logDirs());
+      } catch (Exception e) {
+        if (e instanceof FileSystemException) {
+          LOG.warn("Unable to clean log dirs on teardown, commonly this is a windows file lock " +
+              "problem. Ignoring.", e);
+        } else {
+          throw e;
+        }
+      }
     }
 
     zkUtils.close();
-    zookeeper.shutdown();
+    try {
+      zookeeper.shutdown();
+    } catch (Exception e) {
+      if (e instanceof FileSystemException) {
+        LOG.warn(
+            "Unable to clean zookeeper files on teardown, commonly this is a windows file lock " +
+                "problem. Ignoring.", e);
+      } else {
+        throw e;
+      }
+    }
   }
+
+  private static final Logger LOG = LoggerFactory.getLogger(ClusterTestHarness.class);
+
 
   protected Invocation.Builder request(String path) {
     return request(path, null, null, null);

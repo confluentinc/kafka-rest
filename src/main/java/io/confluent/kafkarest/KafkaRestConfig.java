@@ -100,7 +100,7 @@ public class KafkaRestConfig extends RestConfig {
 
   public static final String BOOTSTRAP_SERVERS_DEFAULT = "";
 
-  public static final String REFLECT_XHEADERS = "reflect.xheaders";
+  public static final String REFLECT_XHEADERS_CONFIG = "reflect.xheaders";
   private static final String REFLECT_XHEADERS_DOC =
       "Set true to have any headers starting with 'x-' or 'X-'"
           + "reflected unchanged in the response. This can be used for explicitly"
@@ -611,8 +611,7 @@ public class KafkaRestConfig extends RestConfig {
             "",
             Importance.LOW,
             KAFKA_REST_RESOURCE_EXTENSION_DOC
-        ).define(
-            REFLECT_XHEADERS,
+        ).define(REFLECT_XHEADERS_CONFIG,
             Type.BOOLEAN,
             REFLECT_XHEADERS_DEFAULT,
             Importance.LOW,

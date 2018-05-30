@@ -7,7 +7,7 @@ import javax.ws.rs.core.Response;
 
 import org.junit.Test;
 
-import static io.confluent.kafkarest.KafkaRestConfig.REFLECT_XHEADERS;
+import static io.confluent.kafkarest.KafkaRestConfig.REFLECT_XHEADERS_CONFIG;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.assertFalse;
 
@@ -25,7 +25,7 @@ public class XHeadersAreReflectedDisabledTest extends ClusterTestHarness {
 
   @Override
   protected void overrideKafkaRestConfigs(Properties restProperties) {
-    restProperties.put(REFLECT_XHEADERS, false);
+    restProperties.put(REFLECT_XHEADERS_CONFIG, false);
   }
 
   @Test

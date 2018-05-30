@@ -25,7 +25,7 @@ import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.ext.Provider;
 
-import static io.confluent.kafkarest.KafkaRestConfig.REFLECT_XHEADERS;
+import static io.confluent.kafkarest.KafkaRestConfig.REFLECT_XHEADERS_CONFIG;
 
 /**
  * Simply reflects any request headers starting with x- (or X-) into the response. This is initially
@@ -46,7 +46,7 @@ public class XHeaderReflectingResponseFilter implements ContainerResponseFilter 
       enabled = false;
     } else {
       final Object property =
-          context.getConfig().getOriginalProperties().get(REFLECT_XHEADERS);
+          context.getConfig().getOriginalProperties().get(REFLECT_XHEADERS_CONFIG);
       enabled = property instanceof Boolean && (boolean) property;
     }
 
