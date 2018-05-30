@@ -45,9 +45,9 @@ public class XHeaderReflectingResponseFilter implements ContainerResponseFilter 
     if (context == null) {
       enabled = false;
     } else {
-      final Object property =
-          context.getConfig().getOriginalProperties().get(REFLECT_XHEADERS_CONFIG);
-      enabled = property instanceof Boolean && (boolean) property;
+      final String property =
+          context.getConfig().getOriginalProperties().getProperty(REFLECT_XHEADERS_CONFIG);
+      enabled = Boolean.valueOf(property);
     }
 
   }
