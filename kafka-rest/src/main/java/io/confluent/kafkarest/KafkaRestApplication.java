@@ -15,6 +15,19 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.kafkarest.resources.ClusterInformationResource;
+import io.confluent.kafkarest.resources.ConsumerGroupsResource;
+import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
+import io.confluent.rest.exceptions.KafkaExceptionMapper;
+import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
+import org.eclipse.jetty.util.StringUtil;
+
+import java.lang.reflect.Proxy;
+import java.util.List;
+import java.util.Properties;
+
+import javax.ws.rs.core.Configurable;
+
 import io.confluent.kafkarest.extension.ContextInvocationHandler;
 import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.kafkarest.extension.KafkaRestCleanupFilter;
@@ -65,7 +78,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
     setupInjectedResources(config, appConfig, null,
-        null, null, null
+        null, null, null, null, null
     );
   }
 
@@ -78,6 +91,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
       ProducerPool producerPool,
       KafkaConsumerManager kafkaConsumerManager,
       AdminClientWrapper adminClientWrapperInjected,
+      ClusterInformationObserver clusterInformationObserver,
+      GroupMetadataObserver groupMetadataObserver,
       ScalaConsumersContext scalaConsumersContext
   ) {
     if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))
@@ -87,9 +102,13 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
                                     + KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG
                                     + " needs to be configured");
     }
-    KafkaRestContextProvider.initialize(config, appConfig, producerPool,
-        kafkaConsumerManager, adminClientWrapperInjected, scalaConsumersContext
-    );
+
+    config.register(new ZkExceptionMapper(appConfig));
+
+    KafkaRestContextProvider.initialize(zkUtils, appConfig, mdObserver, producerPool,
+        consumerManager, simpleConsumerFactory,
+        simpleConsumerManager, kafkaConsumerManager, adminClientWrapperInjected,
+        clusterInformationObserver, groupMetadataObserver, scalaConsumersContext);
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
     KafkaRestContext context =
         (KafkaRestContext) Proxy.newProxyInstance(
@@ -102,6 +121,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new TopicsResource(context));
     config.register(new PartitionsResource(context));
     config.register(new ConsumersResource(context));
+    config.register(new ConsumerGroupsResource(context));
+    config.register(new ClusterInformationResource(context));
     config.register(new io.confluent.kafkarest.resources.v2.ConsumersResource(context));
     config.register(new io.confluent.kafkarest.resources.v2.PartitionsResource(context));
     config.register(KafkaRestCleanupFilter.class);

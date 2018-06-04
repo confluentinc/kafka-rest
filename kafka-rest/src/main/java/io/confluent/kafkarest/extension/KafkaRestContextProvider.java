@@ -16,11 +16,18 @@
 package io.confluent.kafkarest.extension;
 
 import io.confluent.kafkarest.AdminClientWrapper;
+import io.confluent.kafkarest.ClusterInformationObserver;
+import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
+import io.confluent.kafkarest.GroupMetadataObserver;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.ScalaConsumersContext;
+import org.apache.kafka.common.security.JaasUtils;
+import org.eclipse.jetty.util.StringUtil;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -41,6 +48,8 @@ public class KafkaRestContextProvider {
       ProducerPool producerPool,
       KafkaConsumerManager kafkaConsumerManager,
       AdminClientWrapper adminClientWrapper,
+      ClusterInformationObserver clusterInformationObserver,
+      GroupMetadataObserver groupMetadataObserver,
       ScalaConsumersContext scalaConsumersContext
   ) {
     if (initialized.compareAndSet(false, true)) {
@@ -49,9 +58,24 @@ public class KafkaRestContextProvider {
         scalaConsumersContext = new ScalaConsumersContext(appConfig);
         ScalaConsumersContext.registerExceptionMappers(config, appConfig);
       }
+      if (simpleConsumerFactory == null) {
+        simpleConsumerFactory = new SimpleConsumerFactory(appConfig);
+      }
+      if (simpleConsumerManager == null) {
+        simpleConsumerManager =
+            new SimpleConsumerManager(appConfig, mdObserver, simpleConsumerFactory);
+      }
+      if (clusterInformationObserver == null) {
+        clusterInformationObserver = new ClusterInformationObserver(zkUtils);
+      }
+      if (groupMetadataObserver == null) {
+        groupMetadataObserver = new GroupMetadataObserver(appConfig);
+      }
+      defaultZkUtils = zkUtils;
       defaultContext =
-          new DefaultKafkaRestContext(appConfig, producerPool, kafkaConsumerManager,
-              adminClientWrapper, scalaConsumersContext);
+          new DefaultKafkaRestContext(appConfig, mdObserver, producerPool, consumerManager,
+              simpleConsumerManager, kafkaConsumerManager, adminClientWrapper,
+              clusterInformationObserver, groupMetadataObserver, scalaConsumersContext);
       defaultAppConfig = appConfig;
     }
   }

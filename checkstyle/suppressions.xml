@@ -11,6 +11,23 @@
             files="(KafkaRestConfig).java"
     />
 
+    <!-- TODO after add offset monitoring -->
+    <suppress
+            checks="(ClassDataAbstractionCoupling)"
+            files="(AdminClientWrapper|GroupMetadataObserver).java"
+    />
+
+    <suppress
+            checks="(CyclomaticComplexity)"
+            files="(Metric).java"
+    />
+
+    <suppress
+            checks="(ParameterNumber)"
+            files="(KafkaRestApplication|KafkaRestContextProvider).java"
+    />
+    <!-- End edits after add offset monitoring  -->
+
     <suppress
             checks="(CyclomaticComplexity)"
             files="(AvroConverter|AvroRestProducer|ConsumerInstanceConfig|ConsumerManager|ConsumerReadTask|KafkaConsumerManager|PartitionOffset|KafkaRestContextProvider).java"

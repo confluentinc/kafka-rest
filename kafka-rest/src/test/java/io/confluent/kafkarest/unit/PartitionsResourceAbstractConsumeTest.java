@@ -46,9 +46,10 @@ public class PartitionsResourceAbstractConsumeTest extends EmbeddedServerTestHar
   public PartitionsResourceAbstractConsumeTest() throws RestConfigException {
     super();
     simpleConsumerManager = EasyMock.createMock(SimpleConsumerManager.class);
-    ScalaConsumersContext scalaConsumersContext = new ScalaConsumersContext(null, null, simpleConsumerManager);
-    final DefaultKafkaRestContext ctx = new DefaultKafkaRestContext(config, null, null, null,
-        scalaConsumersContext);
+
+    final ScalaConsumersContext scalaConsumersContext = new ScalaConsumersContext(null, null, simpleConsumerManager);
+    final DefaultKafkaRestContext ctx = new DefaultKafkaRestContext(config, null, null, null, simpleConsumerManager,
+            null, null, null, null, scalaConsumersContext);
     addResource(new PartitionsResource(ctx));
     addResource(InstantConverterProvider.class);
   }

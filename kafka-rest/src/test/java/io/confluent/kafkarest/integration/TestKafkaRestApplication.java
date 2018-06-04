@@ -29,25 +29,45 @@ public class TestKafkaRestApplication extends KafkaRestApplication {
   ProducerPool producerPoolInjected;
   KafkaConsumerManager kafkaConsumerManagerInjected;
   AdminClientWrapper adminClientWrapperInjected;
+  ClusterInformationObserver clusterInformationObserverInjected;
+  GroupMetadataObserver groupMetadataObserverInjected;
   ScalaConsumersContext scalaConsumersContextInjected;
 
+  public TestKafkaRestApplication(KafkaRestConfig config, ZkUtils zkUtils,
+                                  MetadataObserver mdObserver, ProducerPool producerPool,
+                                  ConsumerManager consumerManager,
+                                  SimpleConsumerFactory simpleConsumerFactory, SimpleConsumerManager simpleConsumerManager)
+      throws IllegalAccessException, InstantiationException, RestConfigException {
+    this(config, zkUtils, mdObserver, producerPool, consumerManager,
+        simpleConsumerFactory, simpleConsumerManager, null, null, null, null);
+  }
 
-  public TestKafkaRestApplication(KafkaRestConfig config,
-                                  ProducerPool producerPool,
+  public TestKafkaRestApplication(KafkaRestConfig config, ZkUtils zkUtils,
+                                  MetadataObserver mdObserver, ProducerPool producerPool,
+                                  ConsumerManager consumerManager,
+                                  SimpleConsumerFactory simpleConsumerFactory,
+                                  SimpleConsumerManager simpleConsumerManager,
                                   KafkaConsumerManager kafkaConsumerManager,
                                   AdminClientWrapper adminClientWrapper,
+                                  ClusterInformationObserver clusterInformationObserver,
+                                  GroupMetadataObserver groupMetadataObserver,
                                   ScalaConsumersContext scalaConsumersContext) {
     super(config);
     producerPoolInjected = producerPool;
     kafkaConsumerManagerInjected = kafkaConsumerManager;
     adminClientWrapperInjected = adminClientWrapper;
+    clusterInformationObserverInjected = clusterInformationObserver;
+    groupMetadataObserverInjected = groupMetadataObserver;
     scalaConsumersContextInjected = scalaConsumersContext;
   }
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-    setupInjectedResources(config, appConfig, producerPoolInjected, kafkaConsumerManagerInjected,
-        adminClientWrapperInjected, scalaConsumersContextInjected);
+    setupInjectedResources(config, appConfig, zkUtilsInjected, mdObserverInjected,
+                           producerPoolInjected, consumerManagerInjected,
+                           simpleConsumerFactoryInjected, simpleConsumerManagerInjected,
+        kafkaConsumerManagerInjected, adminClientWrapperInjected, clusterInformationObserverInjected,
+        groupMetadataObserverInjected, scalaConsumersContextInjected);
   }
 
 }

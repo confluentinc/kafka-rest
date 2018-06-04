@@ -106,8 +106,9 @@ public class TopicsResourceAvroProduceTest
   public TopicsResourceAvroProduceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ScalaConsumersContext scalaConsumersContext = new ScalaConsumersContext(mdObserver, null, null);
-    ctx = new DefaultKafkaRestContext(config, producerPool, null, null, scalaConsumersContext);
+      ScalaConsumersContext scalaConsumersContext = new ScalaConsumersContext(mdObserver, null, null);
+    ctx = new DefaultKafkaRestContext(config, mdObserver, producerPool, null, null, null, null, null,
+  null, scalaConsumersContext);
 
     addResource(new TopicsResource(ctx));
 

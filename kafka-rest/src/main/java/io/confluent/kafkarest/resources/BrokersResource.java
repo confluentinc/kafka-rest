@@ -19,11 +19,14 @@ import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.BrokerEntity;
 import io.confluent.kafkarest.entities.BrokerList;
+import io.confluent.kafkarest.entities.NodeState;
 import io.confluent.rest.annotations.PerformanceMetric;
 
 /**
@@ -46,5 +49,31 @@ public class BrokersResource {
   @PerformanceMetric("brokers.list")
   public BrokerList list() throws Exception {
     return new BrokerList(ctx.getAdminClientWrapper().getBrokerIds());
+  }
+
+  /**
+   * <p>Get broker metadata</p>
+   *
+   * @param brokerId - broker ID
+   * @return metadata about broker or null if broker not found
+   */
+  @GET
+  @Path("/{brokerId}")
+  @PerformanceMetric("brokers.get")
+  public BrokerEntity get(@PathParam("brokerId")Integer brokerId) {
+    return ctx.getAdminClientWrapper().getBroker(brokerId);
+  }
+
+  /**
+   * <p>Get broker state</p>
+   * <p>Example: http://127.0.0.1:2081/0/state</p>
+   *
+   * @return state of broker
+   */
+  @GET
+  @Path("/{brokerId}/state")
+  @PerformanceMetric("brokers.get.state")
+  public NodeState state(@PathParam("brokerId")Integer brokerId) {
+    return ctx.getAdminClientWrapper().getBrokerState(brokerId);
   }
 }

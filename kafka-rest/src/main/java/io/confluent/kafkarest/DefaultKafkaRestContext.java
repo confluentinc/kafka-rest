@@ -30,6 +30,8 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   private ProducerPool producerPool;
   private KafkaConsumerManager kafkaConsumerManager;
   private AdminClientWrapper adminClientWrapper;
+  private final ClusterInformationObserver clusterInformationObserver;
+  private final GroupMetadataObserver groupMetadataObserver;
 
 
   public DefaultKafkaRestContext(
@@ -37,6 +39,8 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
       ProducerPool producerPool,
       KafkaConsumerManager kafkaConsumerManager,
       AdminClientWrapper adminClientWrapper,
+      ClusterInformationObserver clusterInformationObserver,
+      GroupMetadataObserver groupMetadataObserver,
       ScalaConsumersContext scalaConsumersContext
   ) {
 
@@ -44,6 +48,8 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
     this.producerPool = producerPool;
     this.kafkaConsumerManager = kafkaConsumerManager;
     this.adminClientWrapper = adminClientWrapper;
+    this.clusterInformationObserver = clusterInformationObserver;
+    this.groupMetadataObserver = groupMetadataObserver;
     this.scalaConsumersContext = scalaConsumersContext;
   }
 
@@ -94,6 +100,16 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   }
 
   @Override
+  public ClusterInformationObserver getClusterInformationObserver() {
+    return clusterInformationObserver;
+  }
+
+  @Override
+  public GroupMetadataObserver getGroupMetadataObserver() {
+    return groupMetadataObserver;
+  }
+
+  @Override
   public void shutdown() {
     if (kafkaConsumerManager != null) {
       kafkaConsumerManager.shutdown();
@@ -106,6 +122,9 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
     }
     if (scalaConsumersContext != null) {
       scalaConsumersContext.shutdown();
+    }
+    if (groupMetadataObserver != null) {
+      groupMetadataObserver.shutdown();
     }
   }
 }

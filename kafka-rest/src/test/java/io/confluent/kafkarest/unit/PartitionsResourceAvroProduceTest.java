@@ -84,7 +84,11 @@ public class PartitionsResourceAvroProduceTest
     ctx = new DefaultKafkaRestContext(config,
         producerPool,
         null,
+        null,
+        null,
         adminClientWrapper,
+        null,
+        null,
         null
     );
     addResource(new TopicsResource(ctx));
