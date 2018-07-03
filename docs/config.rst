@@ -1,8 +1,7 @@
 .. _kafkarest_config:
 
-=======================
- Configuration Options
-=======================
+REST Proxy Configuration Options
+--------------------------------
 
 In addition to the settings specified here, the Kafka REST Proxy accepts the settings for the
 Java producer and consumer (currently the new producer and old/new consumers). Use these to override
@@ -203,10 +202,9 @@ Java Kafka clients.
   * Importance: low
 
 ``kafka.rest.resource.extension.class``
-  Fully qualified class name of a  valid Implementation of the interface RestResourceExtension. This can be used to inject user defined resources like filters. Typically used to add custom
-  capability like logging, security, etc
+  A list of classes to use as RestResourceExtension. Implementing the interface <code>RestResourceExtension</code> allows you to inject user defined resources like filters to Rest Proxy. Typically used to add custom capability like logging, security, etc.
 
-  * Type: string
+  * Type: list
   * Default: ""
   * Importance: low
 
