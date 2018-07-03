@@ -39,6 +39,11 @@ if [ "x$KAFKAREST_LOG4J_OPTS" = "x" ]; then
   fi
 fi
 
+if [[ -n $LOG_DIR ]]; then
+    [[ -d $LOG_DIR ]] || mkdir -p "$LOG_DIR"
+    KAFKAREST_LOG4J_OPTS="-Dkafka-rest.log.dir=$LOG_DIR ${KAFKAREST_LOG4J_OPTS}"
+fi
+
 # JMX settings
 if [ -z "$KAFKAREST_JMX_OPTS" ]; then
   KAFKAREST_JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false "
@@ -68,7 +73,7 @@ fi
 
 # JVM performance options
 if [ -z "$KAFKAREST_JVM_PERFORMANCE_OPTS" ]; then
-  KAFKAREST_JVM_PERFORMANCE_OPTS="-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+DisableExplicitGC -Djava.awt.headless=true"
+  KAFKAREST_JVM_PERFORMANCE_OPTS="-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+ExplicitGCInvokesConcurrent -Djava.awt.headless=true"
 fi
 
 MAIN=$1
