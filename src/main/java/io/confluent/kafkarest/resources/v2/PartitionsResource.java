@@ -16,41 +16,24 @@
 
 package io.confluent.kafkarest.resources.v2;
 
+import io.confluent.kafkarest.*;
+import io.confluent.kafkarest.entities.*;
+import io.confluent.rest.annotations.PerformanceMetric;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.*;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
 import java.util.List;
 import java.util.Vector;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.Suspended;
-
-import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.RecordMetadataOrException;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.AvroProduceRecord;
-import io.confluent.kafkarest.entities.BinaryProduceRecord;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.JsonProduceRecord;
-import io.confluent.kafkarest.entities.Partition;
-import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.PartitionProduceRequest;
-import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.rest.annotations.PerformanceMetric;
-
 @Path("/topics/{topic}/partitions")
-@Produces({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW,
+@Produces({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED_LOW,
+        Versions.KAFKA_V2_JSON_RAW_WEIGHTED_LOW,
+        Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW,
            Versions.KAFKA_V2_JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V2_JSON})
 public class PartitionsResource {
@@ -98,6 +81,21 @@ public class PartitionsResource {
   ) {
     produce(asyncResponse, topic, partition, EmbeddedFormat.BINARY, request);
   }
+
+  @POST
+  @Path("/{partition}")
+  @PerformanceMetric("partition.produce-raw+v2")
+  @Consumes({Versions.KAFKA_V2_JSON_RAW})
+  public void produceRaw(
+          final @Suspended AsyncResponse asyncResponse,
+          final @PathParam("topic") String topic,
+          final @PathParam("partition") int partition,
+          @Valid @NotNull PartitionProduceRequest<RawProduceRecord> request
+  ) {
+    produce(asyncResponse, topic, partition, EmbeddedFormat.RAW, request);
+  }
+
+
 
   @POST
   @Path("/{partition}")

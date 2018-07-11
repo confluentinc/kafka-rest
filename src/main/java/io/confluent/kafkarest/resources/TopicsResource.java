@@ -16,6 +16,7 @@
 
 package io.confluent.kafkarest.resources;
 
+import io.confluent.kafkarest.entities.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,15 +40,6 @@ import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
-import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.JsonTopicProduceRecord;
-import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.Topic;
-import io.confluent.kafkarest.entities.TopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
 import io.confluent.rest.annotations.PerformanceMetric;
 
 @Path("/topics")
@@ -106,6 +98,18 @@ public class TopicsResource {
       @Valid @NotNull TopicProduceRequest<JsonTopicProduceRecord> request
   ) {
     produce(asyncResponse, topicName, EmbeddedFormat.JSON, request);
+  }
+
+  @POST
+  @Path("/{topic}")
+  @PerformanceMetric("topic.produce-raw")
+  @Consumes({Versions.KAFKA_V1_JSON_RAW, Versions.KAFKA_V2_JSON_RAW})
+  public void produceRaw(
+          final @Suspended AsyncResponse asyncResponse,
+          @PathParam("topic") String topicName,
+          @Valid @NotNull TopicProduceRequest<RawTopicProduceRecord> request
+  ) {
+    produce(asyncResponse, topicName, EmbeddedFormat.RAW, request);
   }
 
   @POST

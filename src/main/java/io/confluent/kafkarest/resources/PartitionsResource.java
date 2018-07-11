@@ -1,12 +1,12 @@
 /**
  * Copyright 2015 Confluent Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,51 +16,30 @@
 
 package io.confluent.kafkarest.resources;
 
+import io.confluent.kafkarest.*;
+import io.confluent.kafkarest.entities.*;
+import io.confluent.rest.annotations.PerformanceMetric;
+import kafka.common.KafkaException;
 import org.eclipse.jetty.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.*;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
 import java.util.List;
 import java.util.Vector;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.Suspended;
-
-import io.confluent.kafkarest.ConsumerManager;
-import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.RecordMetadataOrException;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.AvroProduceRecord;
-import io.confluent.kafkarest.entities.BinaryProduceRecord;
-import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.JsonProduceRecord;
-import io.confluent.kafkarest.entities.Partition;
-import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.PartitionProduceRequest;
-import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.rest.annotations.PerformanceMetric;
-import kafka.common.KafkaException;
-
 @Path("/topics/{topic}/partitions")
-@Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW,
-           Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
-           Versions.JSON_WEIGHTED})
+@Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED_LOW,
+        Versions.KAFKA_V1_JSON_RAW_WEIGHTED_LOW,
+        Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW,
+        Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
+        Versions.JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
-           Versions.GENERIC_REQUEST})
+        Versions.GENERIC_REQUEST})
 public class PartitionsResource {
 
   private static final Logger log = LoggerFactory.getLogger(PartitionsResource.class);
@@ -82,8 +61,8 @@ public class PartitionsResource {
   @Path("/{partition}")
   @PerformanceMetric("partition.get")
   public Partition getPartition(
-      final @PathParam("topic") String topic,
-      @PathParam("partition") int partition
+          final @PathParam("topic") String topic,
+          @PathParam("partition") int partition
   ) {
     checkTopicExists(topic);
     Partition part = ctx.getAdminClientWrapper().getTopicPartition(topic, partition);
@@ -98,15 +77,15 @@ public class PartitionsResource {
   @Path("/{partition}/messages")
   @PerformanceMetric("partition.consume-binary")
   @Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED,
-             Versions.KAFKA_V1_JSON_WEIGHTED,
-             Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
-             Versions.JSON_WEIGHTED})
+          Versions.KAFKA_V1_JSON_WEIGHTED,
+          Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
+          Versions.JSON_WEIGHTED})
   public void consumeBinary(
-      final @Suspended AsyncResponse asyncResponse,
-      final @PathParam("topic") String topicName,
-      final @PathParam("partition") int partitionId,
-      final @QueryParam("offset") long offset,
-      final @QueryParam("count") @DefaultValue("1") long count
+          final @Suspended AsyncResponse asyncResponse,
+          final @PathParam("topic") String topicName,
+          final @PathParam("partition") int partitionId,
+          final @QueryParam("offset") long offset,
+          final @QueryParam("count") @DefaultValue("1") long count
   ) {
 
     consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.BINARY);
@@ -114,14 +93,29 @@ public class PartitionsResource {
 
   @GET
   @Path("/{partition}/messages")
+  @PerformanceMetric("partition.consume-raw")
+  @Produces({Versions.KAFKA_V1_JSON_RAW_WEIGHTED})
+  public void consumeRaw(
+          final @Suspended AsyncResponse asyncResponse,
+          final @PathParam("topic") String topicName,
+          final @PathParam("partition") int partitionId,
+          final @QueryParam("offset") long offset,
+          final @QueryParam("count") @DefaultValue("1") long count
+  ) {
+
+    consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.RAW);
+  }
+
+  @GET
+  @Path("/{partition}/messages")
   @PerformanceMetric("partition.consume-avro")
   @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW})
   public void consumeAvro(
-      final @Suspended AsyncResponse asyncResponse,
-      final @PathParam("topic") String topicName,
-      final @PathParam("partition") int partitionId,
-      final @QueryParam("offset") long offset,
-      final @QueryParam("count") @DefaultValue("1") long count
+          final @Suspended AsyncResponse asyncResponse,
+          final @PathParam("topic") String topicName,
+          final @PathParam("partition") int partitionId,
+          final @QueryParam("offset") long offset,
+          final @QueryParam("count") @DefaultValue("1") long count
   ) {
 
     consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.AVRO);
@@ -132,11 +126,11 @@ public class PartitionsResource {
   @PerformanceMetric("partition.consume-json")
   @Produces({Versions.KAFKA_V1_JSON_JSON_WEIGHTED_LOW})
   public void consumeJson(
-      final @Suspended AsyncResponse asyncResponse,
-      final @PathParam("topic") String topicName,
-      final @PathParam("partition") int partitionId,
-      final @QueryParam("offset") long offset,
-      final @QueryParam("count") @DefaultValue("1") long count
+          final @Suspended AsyncResponse asyncResponse,
+          final @PathParam("topic") String topicName,
+          final @PathParam("partition") int partitionId,
+          final @QueryParam("offset") long offset,
+          final @QueryParam("count") @DefaultValue("1") long count
   ) {
 
     consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.JSON);
@@ -146,14 +140,27 @@ public class PartitionsResource {
   @Path("/{partition}")
   @PerformanceMetric("partition.produce-binary")
   @Consumes({Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON,
-             Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST})
+          Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST})
   public void produceBinary(
-      final @Suspended AsyncResponse asyncResponse,
-      final @PathParam("topic") String topic,
-      final @PathParam("partition") int partition,
-      @Valid @NotNull PartitionProduceRequest<BinaryProduceRecord> request
+          final @Suspended AsyncResponse asyncResponse,
+          final @PathParam("topic") String topic,
+          final @PathParam("partition") int partition,
+          @Valid @NotNull PartitionProduceRequest<BinaryProduceRecord> request
   ) {
     produce(asyncResponse, topic, partition, EmbeddedFormat.BINARY, request);
+  }
+
+  @POST
+  @Path("/{partition}")
+  @PerformanceMetric("partition.produce-raw")
+  @Consumes({Versions.KAFKA_V1_JSON_RAW})
+  public void produceRaw(
+          final @Suspended AsyncResponse asyncResponse,
+          final @PathParam("topic") String topic,
+          final @PathParam("partition") int partition,
+          @Valid @NotNull PartitionProduceRequest<RawProduceRecord> request
+  ) {
+    produce(asyncResponse, topic, partition, EmbeddedFormat.RAW, request);
   }
 
   @POST
@@ -161,10 +168,10 @@ public class PartitionsResource {
   @PerformanceMetric("partition.produce-json")
   @Consumes({Versions.KAFKA_V1_JSON_JSON})
   public void produceJson(
-      final @Suspended AsyncResponse asyncResponse,
-      final @PathParam("topic") String topic,
-      final @PathParam("partition") int partition,
-      @Valid @NotNull PartitionProduceRequest<JsonProduceRecord> request
+          final @Suspended AsyncResponse asyncResponse,
+          final @PathParam("topic") String topic,
+          final @PathParam("partition") int partition,
+          @Valid @NotNull PartitionProduceRequest<JsonProduceRecord> request
   ) {
     produce(asyncResponse, topic, partition, EmbeddedFormat.JSON, request);
   }
@@ -174,10 +181,10 @@ public class PartitionsResource {
   @PerformanceMetric("partition.produce-avro")
   @Consumes({Versions.KAFKA_V1_JSON_AVRO})
   public void produceAvro(
-      final @Suspended AsyncResponse asyncResponse,
-      final @PathParam("topic") String topic,
-      final @PathParam("partition") int partition,
-      @Valid @NotNull PartitionProduceRequest<AvroProduceRecord> request
+          final @Suspended AsyncResponse asyncResponse,
+          final @PathParam("topic") String topic,
+          final @PathParam("partition") int partition,
+          @Valid @NotNull PartitionProduceRequest<AvroProduceRecord> request
   ) {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
@@ -198,87 +205,87 @@ public class PartitionsResource {
   }
 
   private <K, V> void consume(
-      final @Suspended AsyncResponse asyncResponse,
-      final String topicName,
-      final int partitionId,
-      final long offset,
-      final long count,
-      final EmbeddedFormat embeddedFormat
+          final @Suspended AsyncResponse asyncResponse,
+          final String topicName,
+          final int partitionId,
+          final long offset,
+          final long count,
+          final EmbeddedFormat embeddedFormat
   ) {
 
     log.trace("Executing simple consume id={} topic={} partition={} offset={} count={}",
-        asyncResponse, topicName, partitionId, offset, count
+            asyncResponse, topicName, partitionId, offset, count
     );
 
     ctx.getSimpleConsumerManager().consume(
-        topicName, partitionId, offset, count, embeddedFormat,
-        new ConsumerManager.ReadCallback<K, V>() {
-          @Override
-          public void onCompletion(
-              List<? extends ConsumerRecord<K, V>> records,
-              Exception e
-          ) {
-            log.trace(
-                "Completed simple consume id={} records={} exception={}",
-                asyncResponse,
-                records,
-                e
-            );
-            if (e != null) {
-              asyncResponse.resume(e);
-            } else {
-              asyncResponse.resume(records);
+            topicName, partitionId, offset, count, embeddedFormat,
+            new ConsumerManager.ReadCallback<K, V>() {
+              @Override
+              public void onCompletion(
+                      List<? extends ConsumerRecord<K, V>> records,
+                      Exception e
+              ) {
+                log.trace(
+                        "Completed simple consume id={} records={} exception={}",
+                        asyncResponse,
+                        records,
+                        e
+                );
+                if (e != null) {
+                  asyncResponse.resume(e);
+                } else {
+                  asyncResponse.resume(records);
+                }
+              }
             }
-          }
-        }
     );
   }
 
   protected <K, V, R extends ProduceRecord<K, V>> void produce(
-      final AsyncResponse asyncResponse,
-      final String topic,
-      final int partition,
-      final EmbeddedFormat format,
-      final PartitionProduceRequest<R> request
+          final AsyncResponse asyncResponse,
+          final String topic,
+          final int partition,
+          final EmbeddedFormat format,
+          final PartitionProduceRequest<R> request
   ) {
 
     log.trace("Executing topic produce request id={} topic={} partition={} format={} request={}",
-        asyncResponse, topic, partition, format, request
+            asyncResponse, topic, partition, format, request
     );
 
     try {
       ctx.getProducerPool().produce(
-          topic, partition, format,
-          request,
-          request.getRecords(),
-          new ProducerPool.ProduceRequestCallback() {
-            public void onCompletion(
-                Integer keySchemaId, Integer valueSchemaId,
-                List<RecordMetadataOrException> results
-            ) {
-              ProduceResponse response = new ProduceResponse();
-              List<PartitionOffset> offsets = new Vector<PartitionOffset>();
-              for (RecordMetadataOrException result : results) {
-                if (result.getException() != null) {
-                  int errorCode = Errors.codeFromProducerException(result.getException());
-                  String errorMessage = result.getException().getMessage();
-                  offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
-                } else {
-                  offsets.add(new PartitionOffset(result.getRecordMetadata().partition(),
-                      result.getRecordMetadata().offset(),
-                      null, null
-                  ));
+              topic, partition, format,
+              request,
+              request.getRecords(),
+              new ProducerPool.ProduceRequestCallback() {
+                public void onCompletion(
+                        Integer keySchemaId, Integer valueSchemaId,
+                        List<RecordMetadataOrException> results
+                ) {
+                  ProduceResponse response = new ProduceResponse();
+                  List<PartitionOffset> offsets = new Vector<PartitionOffset>();
+                  for (RecordMetadataOrException result : results) {
+                    if (result.getException() != null) {
+                      int errorCode = Errors.codeFromProducerException(result.getException());
+                      String errorMessage = result.getException().getMessage();
+                      offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
+                    } else {
+                      offsets.add(new PartitionOffset(result.getRecordMetadata().partition(),
+                              result.getRecordMetadata().offset(),
+                              null, null
+                      ));
+                    }
+                  }
+                  response.setOffsets(offsets);
+                  response.setKeySchemaId(keySchemaId);
+                  response.setValueSchemaId(valueSchemaId);
+                  log.trace("Completed topic produce request id={} response={}",
+                          asyncResponse, response
+                  );
+                  asyncResponse.resume(response);
                 }
               }
-              response.setOffsets(offsets);
-              response.setKeySchemaId(keySchemaId);
-              response.setValueSchemaId(valueSchemaId);
-              log.trace("Completed topic produce request id={} response={}",
-                  asyncResponse, response
-              );
-              asyncResponse.resume(response);
-            }
-          }
       );
     } catch (KafkaException e) {
       if (StringUtil.startsWithIgnoreCase(e.getMessage(), "Invalid partition")) {
