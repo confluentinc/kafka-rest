@@ -20,6 +20,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Serializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +72,10 @@ public class ProducerPool {
         buildStandardConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
     producers.put(EmbeddedFormat.JSON, buildJsonProducer(jsonProps));
 
+    Map<String, Object> rawProps =
+            buildStandardConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
+    producers.put(EmbeddedFormat.RAW, buildRawProducer(rawProps));
+
     Map<String, Object> avroProps =
         buildAvroConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
     producers.put(EmbeddedFormat.AVRO, buildAvroProducer(avroProps));
@@ -97,6 +102,10 @@ public class ProducerPool {
 
   private NoSchemaRestProducer<Object, Object> buildJsonProducer(Map<String, Object> jsonProps) {
     return buildNoSchemaProducer(jsonProps, new KafkaJsonSerializer(), new KafkaJsonSerializer());
+  }
+
+  private NoSchemaRestProducer<String, String> buildRawProducer(Map<String, Object> rawProps) {
+    return buildNoSchemaProducer(rawProps, new StringSerializer(), new StringSerializer());
   }
 
   private <K, V> NoSchemaRestProducer<K, V> buildNoSchemaProducer(

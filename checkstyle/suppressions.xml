@@ -39,4 +39,24 @@
             checks="(MethodLength)"
             files="(KafkaRestConfig).java"
     />
+    <suppress
+            checks="(ClassDataAbstractionCoupling)"
+            files="(ProducerPool).java"
+    />
+    <suppress
+        checks="(RegexpHeader)"
+        files="(RawConsumerState).java"
+    />
+    <suppress
+            checks="(Indentation)"
+            files="(ConsumersResource).java"
+    />
+    <suppress
+            checks="(Indentation)"
+            files="(PartitionsResource).java"
+    />
+    <suppress
+            checks="(AvoidStarImport)"
+            files="(PartitionsResource|ConsumersResource|TopicsResource|SimpleConsumerManager).java"
+    />
 </suppressions>
