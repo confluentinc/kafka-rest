@@ -193,6 +193,9 @@ public class ConsumerManager {
         case JSON:
           state = new JsonConsumerState(this.config, cid, consumer);
           break;
+        case RAW:
+          state = new RawConsumerState(this.config, cid, consumer);
+          break;
         default:
           throw new RestServerErrorException(
               "Invalid embedded format for new consumer.",

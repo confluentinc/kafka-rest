@@ -38,12 +38,25 @@ public class Versions {
   public static final String KAFKA_V2_JSON_JSON_WEIGHTED = KAFKA_V2_JSON_JSON;
   public static final String KAFKA_V2_JSON_JSON_WEIGHTED_LOW = KAFKA_V2_JSON_JSON + "; qs=0.1";
 
+  public static final String KAFKA_V2_JSON_RAW =  "application/vnd.kafka.raw.v2+json";
+  public static final String KAFKA_V2_JSON_RAW_WEIGHTED = KAFKA_V2_JSON_RAW;
+  public static final String KAFKA_V2_JSON_RAW_WEIGHTED_LOW = KAFKA_V2_JSON_RAW + "; qs=0.1";
+
+
+  public static final String KAFKA_V2_RAW_RAW = "application/vnd.kafka.raw.v2+raw";
+  public static final String KAFKA_V2_RAW_RAW_WEIGHTED = KAFKA_V2_RAW_RAW;
+  public static final String KAFKA_V2_RAW_RAW_WEIGHTED_LOW = KAFKA_V2_RAW_RAW + "; qs=0.1";
   // Constants for version 1
   public static final String KAFKA_V1_JSON = "application/vnd.kafka.v1+json";
   // This is set < 1 because it is only the most-specific type if there isn't an embedded data type.
   public static final String KAFKA_V1_JSON_WEIGHTED = KAFKA_V1_JSON + "; qs=0.9";
   public static final String KAFKA_V1_JSON_BINARY = "application/vnd.kafka.binary.v1+json";
   public static final String KAFKA_V1_JSON_BINARY_WEIGHTED = KAFKA_V1_JSON_BINARY;
+
+  public static final String KAFKA_V1_JSON_RAW = "application/vnd.kafka.raw.v1+json";
+  public static final String KAFKA_V1_JSON_RAW_WEIGHTED = KAFKA_V1_JSON_RAW;
+  public static final String KAFKA_V1_JSON_RAW_WEIGHTED_LOW = KAFKA_V1_JSON_RAW + "; qs=0.1";
+
   // "LOW" weightings are used to permit using these for resources like consumer where it might
   // be convenient to always use the same type, but where their use should really be discouraged
   public static final String KAFKA_V1_JSON_BINARY_WEIGHTED_LOW = KAFKA_V1_JSON_BINARY + "; qs=0.1";

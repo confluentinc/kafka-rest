@@ -50,13 +50,10 @@ import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.ConsumerSubscriptionResponse;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.kafkarest.v2.AvroKafkaConsumerState;
-import io.confluent.kafkarest.v2.BinaryKafkaConsumerState;
-import io.confluent.kafkarest.v2.JsonKafkaConsumerState;
-import io.confluent.kafkarest.v2.KafkaConsumerManager;
-import io.confluent.kafkarest.v2.KafkaConsumerState;
+import io.confluent.kafkarest.v2.*;
 import io.confluent.rest.annotations.PerformanceMetric;
 
+@SuppressWarnings("RSReferenceInspection")
 @Path("/consumers")
 // We include embedded formats here so you can always use these headers when interacting with
 // a consumers resource. The few cases where it isn't safe are overridden per-method
@@ -163,6 +160,23 @@ public class ConsumersResource {
   ) {
     readRecords(asyncResponse, group, instance, timeout, maxBytes, BinaryKafkaConsumerState.class);
   }
+
+
+  @GET
+  @Path("/{group}/instances/{instance}/records")
+  @PerformanceMetric("consumer.records.read-raw+v2")
+  @Produces({Versions.KAFKA_V2_RAW_RAW_WEIGHTED,
+          Versions.KAFKA_V2_RAW_RAW_WEIGHTED})
+  public void readRecordRaw(
+          final @Suspended AsyncResponse asyncResponse,
+          final @PathParam("group") String group,
+          final @PathParam("instance") String instance,
+          @QueryParam("timeout") @DefaultValue("-1") long timeout,
+          @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
+  ) {
+    readRecords(asyncResponse, group, instance, timeout, maxBytes, RawKafkaConsumerState.class);
+  }
+
 
   @GET
   @Path("/{group}/instances/{instance}/records")

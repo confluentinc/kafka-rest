@@ -32,16 +32,14 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
@@ -49,6 +47,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
 
 public class AbstractConsumerTest extends ClusterTestHarness {
 
@@ -87,6 +86,25 @@ public class AbstractConsumerTest extends ClusterTestHarness {
         producer.send(rec).get();
       } catch (Exception e) {
         fail("Consumer test couldn't produce input messages to Kafka");
+      }
+    }
+    producer.close();
+  }
+
+  protected void produceRawMessages(List<ProducerRecord<Object, Object>> records) {
+    Properties props = new Properties();
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
+    Producer<String, String> producer = new KafkaProducer<>(props);
+    for (ProducerRecord<Object, Object> rec : records) {
+      ProducerRecord<String, String> stringRec = new ProducerRecord<>(rec.topic(), rec.key()==null?null:rec.key().toString(),  rec.value()==null?null:rec.value().toString());
+      try {
+        producer.send(stringRec).get();
+      } catch (Exception e) {
+
+        fail("Consumer test couldn't produce input messages to Kafka"+ e.getMessage());
       }
     }
     producer.close();
@@ -266,6 +284,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
       Converter converter) {
     Response response = request(instanceUri + "/topics/" + topic)
         .accept(accept).get();
+
     assertOKResponse(response, responseMediatype);
     List<RecordType> consumed = TestUtils.tryReadEntityOrLog(response, responseEntityType);
     assertEquals(records.size(), consumed.size());
