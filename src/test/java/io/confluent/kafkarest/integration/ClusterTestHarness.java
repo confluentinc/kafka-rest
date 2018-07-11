@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileSystemException;
 import java.util.*;
 
 import javax.ws.rs.client.Client;
@@ -148,9 +149,11 @@ public abstract class ClusterTestHarness {
 
       KafkaConfig config = KafkaConfig.fromProps(props);
       configs.add(config);
+      CoreUtils.delete(config.logDirs());
 
       KafkaServer server = TestUtils.createServer(config, Time.SYSTEM);
       servers.add(server);
+
     }
 
     brokerList =
@@ -269,12 +272,16 @@ public abstract class ClusterTestHarness {
     for (KafkaServer server : servers) {
       server.shutdown();
     }
-    for (KafkaServer server : servers) {
-      CoreUtils.delete(server.config().logDirs());
-    }
 
-    zkUtils.close();
-    zookeeper.shutdown();
+    try{
+      for (KafkaServer server : servers) {
+        CoreUtils.delete(server.config().logDirs());
+      }
+      zkUtils.close();
+      zookeeper.shutdown();
+    }catch(Exception e){
+
+    }
   }
 
   protected Invocation.Builder request(String path) {

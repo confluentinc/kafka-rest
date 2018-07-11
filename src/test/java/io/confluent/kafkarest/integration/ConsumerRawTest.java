@@ -94,7 +94,7 @@ public class ConsumerRawTest extends AbstractConsumerTest {
             rawConsumerRecordType, new Converter() {
               @Override
               public String convert(Object obj) {
-                return obj!=null?obj.toString():obj+"";
+                return obj!=null?obj.toString():null;
               }
             });
     commitOffsets(instanceUri);
@@ -110,7 +110,7 @@ public class ConsumerRawTest extends AbstractConsumerTest {
             rawConsumerRecordType, new Converter() {
               @Override
               public String convert(Object obj) {
-                return obj!=null?obj.toString():obj+"";
+                return obj!=null?obj.toString():null;
               }
             });
     commitOffsets(instanceUri);

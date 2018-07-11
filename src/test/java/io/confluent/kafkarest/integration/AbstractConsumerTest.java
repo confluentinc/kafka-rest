@@ -21,12 +21,7 @@ import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.entities.*;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -39,14 +34,14 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 
 public class AbstractConsumerTest extends ClusterTestHarness {
