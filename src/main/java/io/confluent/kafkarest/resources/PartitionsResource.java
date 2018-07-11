@@ -94,7 +94,7 @@ public class PartitionsResource {
   @GET
   @Path("/{partition}/messages")
   @PerformanceMetric("partition.consume-raw")
-  @Produces({Versions.KAFKA_V1_JSON_RAW_WEIGHTED})
+  @Produces({Versions.KAFKA_V1_JSON_RAW_WEIGHTED_LOW})
   public void consumeRaw(
           final @Suspended AsyncResponse asyncResponse,
           final @PathParam("topic") String topicName,
