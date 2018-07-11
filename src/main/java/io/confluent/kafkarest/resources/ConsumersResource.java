@@ -125,7 +125,7 @@ public class ConsumersResource {
   @GET
   @Path("/{group}/instances/{instance}/topics/{topic}")
   @PerformanceMetric("consumer.topic.read-raw")
-  @Produces({Versions.KAFKA_V1_JSON_RAW_WEIGHTED})
+  @Produces({Versions.KAFKA_V1_JSON_RAW_WEIGHTED_LOW})
   public void readTopicRaw(
           final @Suspended AsyncResponse asyncResponse,
           final @PathParam("group") String group,

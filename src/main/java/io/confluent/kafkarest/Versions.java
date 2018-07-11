@@ -55,7 +55,7 @@ public class Versions {
 
   public static final String KAFKA_V1_JSON_RAW = "application/vnd.kafka.raw.v1+json";
   public static final String KAFKA_V1_JSON_RAW_WEIGHTED = KAFKA_V1_JSON_RAW;
-  public static final String KAFKA_V1_JSON_RAW_WEIGHTED_LOW = KAFKA_V1_JSON_RAW + "; qs=0.1";
+  public static final String KAFKA_V1_JSON_RAW_WEIGHTED_LOW = KAFKA_V1_JSON_RAW + "; qs=0.2";
 
   // "LOW" weightings are used to permit using these for resources like consumer where it might
   // be convenient to always use the same type, but where their use should really be discouraged
