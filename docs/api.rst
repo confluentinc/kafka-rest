@@ -2272,7 +2272,7 @@ error.
 
       POST /consumers/testgroup/ HTTP/1.1
       Host: kafkaproxy.example.com
-      Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
+      Content-Type: application/vnd.kafka.v1+json
 
       {
         "name": "my_consumer",
@@ -2323,7 +2323,7 @@ error.
 
       POST /consumers/testgroup/instances/my_consumer/offsets HTTP/1.1
       Host: proxy-instance.kafkaproxy.example.com
-      Accept: application/vnd.kafka.v1+json, application/vnd.kafka+json, application/json
+      Content-Type: application/vnd.kafka.v1+json
 
    **Example response**:
 
