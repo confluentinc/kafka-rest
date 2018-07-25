@@ -3,6 +3,14 @@
 Changelog
 =========
 
+Version 5.0.0
+-------------
+
+* `PR-439 <https://github.com/confluentinc/kafka-rest/pull/439>`_ - Temporarily pin Kafka and Confluent versions
+* `PR-438 <https://github.com/confluentinc/kafka-rest/pull/438>`_ - Don't use deprecated RecordMetadata constructor
+* `PR-434 <https://github.com/confluentinc/kafka-rest/pull/434>`_ - Fix usage of internal Jersey utilities that no longer exist
+* `PR-428 <https://github.com/confluentinc/kafka-rest/pull/428>`_ - Use ExplicitGCInvokesConcurrent instead of disabling explicit GC
+
 Version 3.3.0
 -------------
 
