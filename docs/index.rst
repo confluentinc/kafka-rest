@@ -17,3 +17,8 @@ Contents:
    config
    operations
    security
+
+
+The Confluent Kafka REST Proxy is available as open source software under the
+`Apache License v2.0 license <http://www.apache.org/licenses/LICENSE-2.0>`_.
+Source code at `https://github.com/confluentinc/kafka-rest <https://github.com/confluentinc/kafka-rest>`_.
