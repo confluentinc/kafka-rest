@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 
 import javax.validation.constraints.NotNull;
@@ -84,20 +85,10 @@ public class Topic {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     Topic topic = (Topic) o;
-
-    if (configs != null ? !configs.equals(topic.configs) : topic.configs != null) {
-      return false;
-    }
-    if (name != null ? !name.equals(topic.name) : topic.name != null) {
-      return false;
-    }
-    if (partitions != null ? !partitions.equals(topic.partitions) : topic.partitions != null) {
-      return false;
-    }
-
-    return true;
+    return Objects.equals(name, topic.name)
+           && Objects.equals(configs, topic.configs)
+           && Objects.equals(partitions, topic.partitions);
   }
 
   @Override
