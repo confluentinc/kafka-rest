@@ -15,7 +15,7 @@ Requires: confluent-rest-utils
 
 %description
 
-The Kafka REST Proxy provides a RESTful interface to a Kafka cluster. It makes it easy to produce and consume messages, view the state of the cluster, and perform administrative actions without using the native Kafka protocol or clients. Examples of use cases include reporting data to Kafka from any frontend app built in any language, ingesting messages into a stream processing framework that doesn't yet support Kafka, and scripting administrative actions.
+The Confluent REST Proxy provides a RESTful interface to a Kafka cluster. It makes it easy to produce and consume messages, view the state of the cluster, and perform administrative actions without using the native Kafka protocol or clients. Examples of use cases include reporting data to Kafka from any frontend app built in any language, ingesting messages into a stream processing framework that doesn't yet support Kafka, and scripting administrative actions.
 
 %define __jar_repack %{nil}
 
@@ -26,7 +26,7 @@ _group=confluent
 
 getent group $_group 2>&1 >/dev/null || groupadd -r $_group
 getent passwd $_user 2>&1 >/dev/null || \
-    useradd -r -g $_group --home-dir /tmp --no-create-home -s /sbin/nologin -c "Confluent Kafka REST proxy" $_user
+    useradd -r -g $_group --home-dir /tmp --no-create-home -s /sbin/nologin -c "Confluent REST proxy" $_user
 
 _permwarn=
 for dir in /var/log/confluent ; do
