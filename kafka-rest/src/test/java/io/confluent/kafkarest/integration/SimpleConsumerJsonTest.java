@@ -18,7 +18,6 @@ package io.confluent.kafkarest.integration;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.JsonConsumerRecord;
-import jersey.repackaged.com.google.common.collect.ImmutableMap;
 import kafka.utils.TestUtils;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.Before;
@@ -29,6 +28,7 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -157,8 +157,10 @@ public class SimpleConsumerJsonTest extends AbstractConsumerTest {
   @Test
   public void testConsumeInvalidTopic() {
 
-    Response response = request("/topics/nonexistenttopic/partitions/0/messages",
-        ImmutableMap.of("offset", "0")).accept(Versions.KAFKA_V1_JSON_JSON).get();
+    Response response = request(
+        "/topics/nonexistenttopic/partitions/0/messages",
+        Collections.singletonMap("offset", "0")
+    ).accept(Versions.KAFKA_V1_JSON_JSON).get();
 
     assertErrorResponse(Response.Status.NOT_FOUND, response,
         Errors.TOPIC_NOT_FOUND_ERROR_CODE,
@@ -169,8 +171,10 @@ public class SimpleConsumerJsonTest extends AbstractConsumerTest {
   @Test
   public void testConsumeInvalidPartition() {
 
-    Response response = request("/topics/topic1/partitions/1/messages",
-        ImmutableMap.of("offset", "0")).accept(Versions.KAFKA_V1_JSON_JSON).get();
+    Response response = request(
+        "/topics/topic1/partitions/1/messages",
+        Collections.singletonMap("offset", "0")
+    ).accept(Versions.KAFKA_V1_JSON_JSON).get();
 
     assertErrorResponse(Response.Status.NOT_FOUND, response,
         Errors.PARTITION_NOT_FOUND_ERROR_CODE,
