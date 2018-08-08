@@ -37,7 +37,6 @@ import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.ProduceRecord;
-import jersey.repackaged.com.google.common.collect.ImmutableList;
 import kafka.serializer.Decoder;
 import kafka.serializer.DefaultDecoder;
 import kafka.utils.ZkUtils;
@@ -236,7 +235,7 @@ public class ProducerTest extends AbstractProducerTest {
   @Test
   public void testNullPayload() {
 
-    List<String> versions = ImmutableList.of(Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON,
+    List<String> versions = Arrays.asList(Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON,
         Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST,
         Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V2_JSON_AVRO, Versions.KAFKA_V1_JSON_JSON,
         Versions.KAFKA_V2_JSON_JSON, Versions.KAFKA_V2_JSON_BINARY, Versions.KAFKA_V2_JSON_JSON,

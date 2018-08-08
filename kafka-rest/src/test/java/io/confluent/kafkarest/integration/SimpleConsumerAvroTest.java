@@ -19,7 +19,6 @@ import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.entities.AvroConsumerRecord;
-import jersey.repackaged.com.google.common.collect.ImmutableMap;
 import kafka.utils.TestUtils;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecordBuilder;
@@ -31,6 +30,7 @@ import scala.collection.JavaConversions;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -162,8 +162,10 @@ public class SimpleConsumerAvroTest extends AbstractConsumerTest {
   @Test
   public void testConsumeInvalidTopic() {
 
-    Response response = request("/topics/nonexistenttopic/partitions/0/messages",
-        ImmutableMap.of("offset", "0")).accept(Versions.KAFKA_V1_JSON_AVRO).get();
+    Response response = request(
+        "/topics/nonexistenttopic/partitions/0/messages",
+        Collections.singletonMap("offset", "0")
+    ).accept(Versions.KAFKA_V1_JSON_AVRO).get();
 
     assertErrorResponse(Response.Status.NOT_FOUND, response,
         Errors.TOPIC_NOT_FOUND_ERROR_CODE,
@@ -174,8 +176,10 @@ public class SimpleConsumerAvroTest extends AbstractConsumerTest {
   @Test
   public void testConsumeInvalidPartition() {
 
-    Response response = request("/topics/topic1/partitions/1/messages",
-        ImmutableMap.of("offset", "0")).accept(Versions.KAFKA_V1_JSON_AVRO).get();
+    Response response = request(
+        "/topics/topic1/partitions/1/messages",
+        Collections.singletonMap("offset", "0")
+    ).accept(Versions.KAFKA_V1_JSON_AVRO).get();
 
     assertErrorResponse(Response.Status.NOT_FOUND, response,
         Errors.PARTITION_NOT_FOUND_ERROR_CODE,
