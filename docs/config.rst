@@ -202,11 +202,17 @@ Java Kafka clients.
   * Importance: low
 
 ``kafka.rest.resource.extension.class``
-  Fully qualified class name of a  valid Implementation of the interface RestResourceExtension. This can be used to inject user defined resources like filters. Typically used to add custom
-  capability like logging, security, etc
+  A list of classes to use as RestResourceExtension. Implementing the interface <code>RestResourceExtension</code> allows you to inject user defined resources like filters to Rest Proxy. Typically used to add custom capability like logging, security, etc.
 
-  * Type: string
+  * Type: list
   * Default: ""
+  * Importance: low
+
+``reflect.xheaders``
+  Set ``true`` to have any headers starting with ``x-`` or ``X-`` reflected unchanged in the response. This can be used for explicitly correlating requests with responses for those clients that need it.
+
+  * Type: boolean
+  * Default: false
   * Importance: low
 
 
@@ -548,7 +554,7 @@ REST Proxy supports interceptor configurations as part of Java new producer and 
   * Type: string
   * Default: ""
   * Importance: low
-    
+
 For example to enable Confluent Control Center monitoring interceptors:
 
 ``consumer.interceptor.classes=io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor``

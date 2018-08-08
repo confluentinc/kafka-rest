@@ -22,7 +22,7 @@ for dir in $base_dir/target/kafka-rest-*-development; do
 done
 
 # Production jars
-for library in "confluent-common" "rest-utils" "kafka-rest"; do
+for library in "confluent-common" "rest-utils" "kafka-rest" "monitoring-interceptors"; do
   CLASSPATH=$CLASSPATH:$base_dir/share/java/$library/*
 done
 
@@ -37,6 +37,11 @@ if [ "x$KAFKAREST_LOG4J_OPTS" = "x" ]; then
   elif [ -e "/etc/kafka-rest/log4j.properties" ]; then # Normal install layout
     KAFKAREST_LOG4J_OPTS="-Dlog4j.configuration=file:/etc/kafka-rest/log4j.properties"
   fi
+fi
+
+if [[ -n $LOG_DIR ]]; then
+    [[ -d $LOG_DIR ]] || mkdir -p "$LOG_DIR"
+    KAFKAREST_LOG4J_OPTS="-Dkafka-rest.log.dir=$LOG_DIR ${KAFKAREST_LOG4J_OPTS}"
 fi
 
 # JMX settings
@@ -68,7 +73,7 @@ fi
 
 # JVM performance options
 if [ -z "$KAFKAREST_JVM_PERFORMANCE_OPTS" ]; then
-  KAFKAREST_JVM_PERFORMANCE_OPTS="-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+DisableExplicitGC -Djava.awt.headless=true"
+  KAFKAREST_JVM_PERFORMANCE_OPTS="-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+ExplicitGCInvokesConcurrent -Djava.awt.headless=true"
 fi
 
 MAIN=$1
