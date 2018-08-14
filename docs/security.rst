@@ -1,7 +1,7 @@
 .. _kafkarest_security:
 
-Security Overview
------------------
+Rest Proxy Security Overview
+----------------------------
 
 REST Proxy supports security features, including:
 
