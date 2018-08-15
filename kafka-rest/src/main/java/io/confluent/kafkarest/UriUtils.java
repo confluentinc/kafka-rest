@@ -28,6 +28,7 @@ public class UriUtils {
 
   public static UriBuilder absoluteUriBuilder(KafkaRestConfig config, UriInfo uriInfo) {
     String hostname = config.getString(KafkaRestConfig.HOST_NAME_CONFIG);
+    Integer hostport = config.getInt(KafkaRestConfig.HOST_PORT_CONFIG);
     UriBuilder builder = uriInfo.getAbsolutePathBuilder();
     if (hostname.length() > 0) {
       builder.host(hostname);
@@ -36,12 +37,14 @@ public class UriUtils {
       URI origAbsoluteUri = uriInfo.getAbsolutePath();
       builder.scheme(origAbsoluteUri.getScheme());
       // Only reset the port if it was set in the original URI
-      if (origAbsoluteUri.getPort() != -1) {
+      if (origAbsoluteUri.getPort() != -1 && hostport <= 0) {
         try {
           builder.port(config.consumerPort(origAbsoluteUri.getScheme()));
         } catch (URISyntaxException e) {
           throw new ConfigException(e.getMessage());
         }
+      } else if (hostport > 0) {
+        builder.port(hostport);
       }
     }
     return builder;
