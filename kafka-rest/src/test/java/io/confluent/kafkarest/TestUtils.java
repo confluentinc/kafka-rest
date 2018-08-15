@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
@@ -259,10 +260,9 @@ public class TestUtils {
                                                 Decoder<K> keyDecoder, Decoder<V> valueDecoder,
                                                 boolean validateContents) {
     ConsumerConnector consumer = Consumer.createJavaConsumerConnector(
-        new ConsumerConfig(
-            kafka.utils.TestUtils.createConsumerProperties(zkConnect, "testgroup", "consumer0",
-                                                           20000)
-        ));
+        new ConsumerConfig(createConsumerProperties(zkConnect, "testgroup", "consumer0",
+                                                           20000L))
+    );
     Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
     topicCountMap.put(topicName, 1);
     Map<String, List<KafkaStream<K, V>>> streams =
@@ -305,5 +305,24 @@ public class TestUtils {
       }
       assertEquals(refCountCounts, msgCountCounts);
     }
+  }
+
+  /**
+   * Create a test config for a consumer
+   */
+  public static Properties createConsumerProperties(String zkConnect, String groupId, String consumerId,
+                                              Long consumerTimeout) {
+    Properties props = new Properties();
+    props.put("zookeeper.connect", zkConnect);
+    props.put("group.id", groupId);
+    props.put("consumer.id", consumerId);
+    props.put("consumer.timeout.ms", consumerTimeout.toString());
+    props.put("zookeeper.session.timeout.ms", "6000");
+    props.put("zookeeper.sync.time.ms", "200");
+    props.put("auto.commit.interval.ms", "1000");
+    props.put("rebalance.max.retries", "4");
+    props.put("auto.offset.reset", "smallest");
+    props.put("num.consumer.fetchers", "2");
+    return props;
   }
 }
