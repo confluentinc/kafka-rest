@@ -16,22 +16,19 @@
 
 package io.confluent.kafkarest.unit;
 
-import org.easymock.EasyMock;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.net.URI;
-import java.util.Properties;
-
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
+import static org.junit.Assert.assertEquals;
 
 import io.confluent.common.config.ConfigException;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.UriUtils;
 import io.confluent.rest.RestConfigException;
-
-import static org.junit.Assert.assertEquals;
+import java.net.URI;
+import java.util.Properties;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import org.easymock.EasyMock;
+import org.junit.Before;
+import org.junit.Test;
 
 public class UriUtilsTest {
 
@@ -73,6 +70,21 @@ public class UriUtilsTest {
     KafkaRestConfig config = new KafkaRestConfig(props);
     EasyMock.expect(uriInfo.getAbsolutePathBuilder())
         .andReturn(UriBuilder.fromUri("http://foo.com:5000"));
+    EasyMock.expect(uriInfo.getAbsolutePath()).andReturn(URI.create("http://foo.com:5000"));
+    EasyMock.replay(uriInfo);
+    assertEquals("http://bar.net:5000",
+                 UriUtils.absoluteUriBuilder(config, uriInfo).build().toString());
+    EasyMock.verify(uriInfo);
+  }
+
+  @Test
+  public void testAbsoluteURIBuilderWithOverridePort() throws RestConfigException {
+    Properties props = new Properties();
+    props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
+    props.put(KafkaRestConfig.HOST_PORT_CONFIG, 5000);
+    KafkaRestConfig config = new KafkaRestConfig(props);
+    EasyMock.expect(uriInfo.getAbsolutePathBuilder())
+        .andReturn(UriBuilder.fromUri("http://foo.com"));
     EasyMock.expect(uriInfo.getAbsolutePath()).andReturn(URI.create("http://foo.com:5000"));
     EasyMock.replay(uriInfo);
     assertEquals("http://bar.net:5000",

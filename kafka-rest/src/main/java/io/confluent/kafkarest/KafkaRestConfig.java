@@ -73,36 +73,30 @@ public class KafkaRestConfig extends RestConfig {
   public static final String ZOOKEEPER_CONNECT_CONFIG = "zookeeper.connect";
   private static final String ZOOKEEPER_CONNECT_DOC =
       "NOTE: Only required when using v1 Consumer API's. Specifies the ZooKeeper connection "
-          + "string in the form "
-          + "hostname:port where host and port are the host and port of a ZooKeeper server. To allow "
-          + "connecting "
-          + "through other ZooKeeper nodes when that ZooKeeper machine is down you can also specify "
-          + "multiple hosts "
-          + "in the form hostname1:port1,hostname2:port2,hostname3:port3.\n"
+          + "string in the form hostname:port where host and port are the host and port of a "
+          + "ZooKeeper server. To allow connecting through other ZooKeeper nodes when that "
+          + "ZooKeeper machine is down you can also specify multiple hosts in the form "
+          + "hostname1:port1,hostname2:port2,hostname3:port3."
           + "\n"
-          + "The server may also have a ZooKeeper chroot path as part of it's ZooKeeper connection "
-          + "string which puts "
-          + "its data under some path in the global ZooKeeper namespace. If so the consumer should "
-          + "use the same "
-          + "chroot path in its connection string. For example to give a chroot path of /chroot/path "
-          + "you would give "
-          + "the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path. ";
+          + "\n"
+          + "The server may also have a "
+          + "ZooKeeper chroot path as part of it's ZooKeeper connection string which puts its "
+          + "data under some path in the global ZooKeeper namespace. If so the consumer should "
+          + "use the same chroot path in its connection string. For example to give a chroot path "
+          + "of /chroot/path you would give the connection string as hostname1:port1,"
+          + "hostname2:port2,hostname3:port3/chroot/path. ";
   public static final String ZOOKEEPER_CONNECT_DEFAULT = "";
 
   public static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
   private static final String BOOTSTRAP_SERVERS_DOC =
       "A list of host/port pairs to use for establishing the initial connection to the Kafka "
-          + "cluster. "
-          + "The client will make use of all servers irrespective of which servers are specified here"
-          + " for "
-          + "bootstrapping—this list only impacts the initial hosts used to discover the full set of "
-          + "servers. "
-          + "This list should be in the form host1:port1,host2:port2,.... Since these servers are "
-          + "just used for the "
-          + "initial connection to discover the full cluster membership (which may change "
-          + "dynamically), "
-          + "this list need not contain the full set of servers (you may want more than one, though, "
-          + "in case a server is down).";
+          + "cluster. The client will make use of all servers irrespective of which servers are "
+          + "specified here for bootstrapping—this list only impacts the initial hosts used to "
+          + "discover the full set of servers. This list should be in the form host1:port1,"
+          + "host2:port2,.... Since these servers are just used for the initial connection to "
+          + "discover the full cluster membership (which may change dynamically), this list need "
+          + "not contain the full set of servers (you may want more than one, though, in case a "
+          + "server is down).";
 
   public static final String BOOTSTRAP_SERVERS_DEFAULT = "";
 
@@ -125,9 +119,8 @@ public class KafkaRestConfig extends RestConfig {
 
   public static final String CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG = "consumer.iterator.timeout.ms";
   private static final String CONSUMER_ITERATOR_TIMEOUT_MS_DOC =
-      "Timeout for blocking consumer iterator operations. "
-          + "This should be set to a small enough value that it is possible to effectively peek() on "
-          + "the iterator.";
+      "Timeout for blocking consumer iterator operations. This should be set to a small enough "
+          + "value that it is possible to effectively peek() on the iterator.";
   public static final String CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT = "1";
 
   public static final String CONSUMER_ITERATOR_BACKOFF_MS_CONFIG = "consumer.iterator.backoff.ms";
