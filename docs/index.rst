@@ -12,11 +12,11 @@ Contents:
    :maxdepth: 3
 
    intro
-   changelog
    api
    config
    operations
    security
+   changelog
 
 
 The Confluent REST Proxy is available as open source software under the
