@@ -1,7 +1,7 @@
 .. _kafkarest_config:
 
 REST Proxy Configuration Options
---------------------------------
+================================
 
 In addition to the settings specified here, the Kafka REST Proxy accepts the settings for the
 Java producer and consumer (currently the new producer and old/new consumers). Use these to override
@@ -10,6 +10,12 @@ exposed in the REST API, priority is given to settings in the user request, then
 provided as configuration options, and finally falls back to the default values provided by the
 Java Kafka clients.
 
+.. contents:: Contents
+    :local:
+    :depth: 2
+
+General
+-------
 
 ``id``
   Unique ID for this REST server instance. This is used in generating unique IDs for consumers that do not specify their ID. The ID is empty by default, which makes a single server setup easier to get up and running, but is not safe for multi-server deployments where automatic consumer IDs are used.
@@ -210,10 +216,13 @@ Java Kafka clients.
 
 
 Security Configuration Options
-==============================
+------------------------------
 
 REST Proxy supports SSL for securing communication between REST clients and the REST Proxy (HTTPS), and both SSL and SASL to secure communication between REST Proxy and Apache Kafka.
 
+.. _kafka-rest-https-config:
+
+-------------------------------
 Configuration Options for HTTPS
 -------------------------------
 
@@ -322,6 +331,7 @@ Configuration Options for HTTPS
   * Default: "" (Jetty's default)
   * Importance: low
 
+------------------------------------------------------------------------------------
 Configuration Options for SSL Encryption between REST Proxy and Apache Kafka Brokers
 ------------------------------------------------------------------------------------
 
@@ -441,6 +451,7 @@ The SecureRandom PRNG implementation to use for SSL cryptography operations.
   * Default: PKIX
   * Importance: low
 
+-----------------------------------------------------------------------------------------
 Configuration Options for SASL Authentication between REST Proxy and Apache Kafka Brokers
 -----------------------------------------------------------------------------------------
 
@@ -531,7 +542,7 @@ In addition to these configurations:
 
 
 Interceptor Configuration Options
-=================================
+---------------------------------
 REST Proxy supports interceptor configurations as part of Java new producer and consumer settings.
 
 ``producer.interceptor.classes``

@@ -1,6 +1,6 @@
 .. _kafkarest_operations:
 
-Kafka REST Operations
+REST Proxy Operations
 =====================
 
 In this document, you will learn how to manage a REST Proxy cluster.

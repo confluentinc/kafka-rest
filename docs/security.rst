@@ -1,11 +1,11 @@
 .. _kafkarest_security:
 
-Rest Proxy Security Overview
-----------------------------
+Rest Proxy Security
+===================
 
 REST Proxy supports security features, including:
 
-* :ref:`SSL` for securing communication between REST clients and the REST Proxy (HTTPS)
+* :ref:`SSL <kafka-rest-https-config>` for securing communication between REST clients and the REST Proxy (HTTPS)
 * :ref:`SSL encryption <encryption-ssl-rest-proxy>` between the REST Proxy and a secure Kafka cluster
 * :ref:`SSL authentication<authentication-ssl-rest-proxy>` between the REST Proxy and a secure Kafka Cluster
 * :ref:`SASL authentication<kafka_sasl_auth>` between the REST Proxy and a secure Kafka Cluster 
