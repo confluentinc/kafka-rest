@@ -1,9 +1,9 @@
 .. _kafkarest_intro:
 
-Kafka REST Proxy
-================
+|crest-long|
+============
 
-The Kafka REST Proxy is part of `Confluent Open Source <https://www.confluent.io/product/confluent-open-source/>`_ and `Confluent Enterprise <https://www.confluent.io/product/confluent-enterprise/>`_ distributions. The proxy provides a RESTful interface to a Kafka cluster, making it easy to produce and consume messages, view the state of the cluster, and perform administrative actions without using the native Kafka protocol or clients.
+The |crest-long| is part of `Confluent Open Source <https://www.confluent.io/product/confluent-open-source/>`_ and `Confluent Enterprise <https://www.confluent.io/product/confluent-enterprise/>`_ distributions. The proxy provides a RESTful interface to a Kafka cluster, making it easy to produce and consume messages, view the state of the cluster, and perform administrative actions without using the native Kafka protocol or clients.
 
 Some example use cases are:
 
@@ -19,7 +19,7 @@ Some example use cases are:
 Features
 --------
 
-Eventually, the REST Proxy should be able to expose all of the functionality
+Eventually, the |crest| should be able to expose all of the functionality
 of the Java producers, consumers, and command-line tools. Here is the list of
 what is currently supported:
 
@@ -33,25 +33,25 @@ what is currently supported:
 
   * Producer configuration - Producer instances are shared, so configs cannot
     be set on a per-request basis. However, you can adjust settings globally by
-    passing new producer settings in the REST Proxy configuration. For example,
+    passing new producer settings in the |crest| configuration. For example,
     you might pass in the ``compression.type`` option to enable site-wide
     compression to reduce storage and network overhead.
 
-* **Consumers** - The REST Proxy uses either the high level consumer (v1 api) or the
+* **Consumers** - The |crest| uses either the high level consumer (v1 api) or the
   new 0.9 consumer (v2 api) to implement consumer-groups that can read from topics.
-  Consumers are stateful and therefore tied to specific REST Proxy instances. Offset
+  Consumers are stateful and therefore tied to specific |crest| instances. Offset
   commit can be either automatic or explicitly requested by the user. Currently limited to
   one thread per consumer; use multiple consumers for higher throughput.
 
   * Consumer configuration - Although consumer instances are not shared, they do
     share the underlying server resources. Therefore, limited configuration
     options are exposed via the API. However, you can adjust settings globally
-    by passing consumer settings in the REST Proxy configuration.
+    by passing consumer settings in the |crest| configuration.
 
-* **Data Formats** - The REST Proxy can read and write data using JSON, raw bytes
+* **Data Formats** - The |crest| can read and write data using JSON, raw bytes
   encoded with base64 or using JSON-encoded Avro. With Avro, schemas are
   registered and validated against the |sr|.
-* **REST Proxy Clusters and Load Balancing** - The REST Proxy is designed to
+* **REST Proxy Clusters and Load Balancing** - The |crest| is designed to
   support multiple instances running together to spread load and can safely be
   run behind various load balancing mechanisms (e.g. round robin DNS, discovery
   services, load balancers) as long as instances are
@@ -82,23 +82,23 @@ Installation
 .. ifconfig:: platform_docs
 
    See the :ref:`installation instructions<installation>` for the Confluent
-   Platform. Before starting the REST Proxy you must start Kafka and the schema
+   Platform. Before starting the |crest| you must start Kafka and the schema
    registry. The :ref:`Confluent Platform quickstart<quickstart>` explains how
    to start these services locally for testing.
 
 .. ifconfig:: not platform_docs
 
-   You can download prebuilt versions of the Kafka REST Proxy as part of the
+   You can download prebuilt versions of the |crest-long| as part of the
    `Confluent Platform <http://confluent.io/downloads/>`_. To install from
    source, follow the instructions in the `Development`_ section. Before
-   starting the REST Proxy you must start Kafka and the |sr|. You can
+   starting the |crest| you must start Kafka and the |sr|. You can
    find instructions for starting those services in the
    `Schema Registry repository <http://github.com/confluentinc/schema-registry>`_.
 
 Deployment
 ----------
 
-Starting the Kafka REST Proxy service is simple once its dependencies are
+Starting the |crest-long| service is simple once its dependencies are
 running:
 
 .. sourcecode:: bash
@@ -110,7 +110,7 @@ running:
 If you installed Debian or RPM packages, you can simply run ``kafka-rest-start``
 as it will be on your ``PATH``. The ``kafka-rest.properties`` file contains
 :ref:`configuration settings<kafkarest_config>`. The default configuration
-included with the REST Proxy includes convenient defaults for a local testing setup
+included with the |crest| includes convenient defaults for a local testing setup
 and should be modified for a production deployment. By default the server starts bound to port
 8082, does not specify a unique instance ID (required to safely run multiple
 proxies concurrently), and expects Zookeeper to be available at
@@ -131,7 +131,7 @@ To build a development version, you may need a development versions of
 `common <https://github.com/confluentinc/common>`_,
 `rest-utils <https://github.com/confluentinc/rest-utils>`_, and
 `schema-registry <https://github.com/confluentinc/schema-registry>`_.  After
-installing these, you can build the Kafka REST Proxy
+installing these, you can build the |crest-long|
 with Maven. All the standard lifecycle phases work. During development, use
 
 .. sourcecode:: bash

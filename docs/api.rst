@@ -1,7 +1,7 @@
 .. _kafkarest_api:
 
-Kafka REST API Reference
-========================
+|crest-long| API Reference
+==========================
 
 .. contents:: Contents
       :local:

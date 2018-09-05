@@ -1,9 +1,9 @@
 .. _kafkarest_operations:
 
-REST Proxy Operations
-=====================
+|crest| Operations
+==================
 
-In this document, you will learn how to manage a REST Proxy cluster.
+In this document, you will learn how to manage a |crest| cluster.
 
 Here, we will cover two main topics:
 

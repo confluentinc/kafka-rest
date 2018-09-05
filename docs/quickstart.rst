@@ -1,9 +1,9 @@
 .. _kafkarest_quickstart:
 
-Kafka REST Quick Start
+|crest| Quick Start
 ======================
 
-Start by running the REST Proxy and the services it depends on: ZooKeeper, Kafka, and the |sr|.
+Start by running the |crest| and the services it depends on: ZooKeeper, Kafka, and the |sr|.
 You can do this in one command with Confluent CLI.
 
 .. include:: ../../includes/cli.rst
