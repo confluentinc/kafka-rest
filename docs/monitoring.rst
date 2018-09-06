@@ -1,22 +1,22 @@
 .. _kafkarest_monitoring:
 
-Monitoring REST Proxy
----------------------
+Monitoring |crest|
+------------------
 
-The REST proxy reports a variety of metrics through JMX. It can also be configured to report
+The |crest| reports a variety of metrics through JMX. It can also be configured to report
 stats using additional pluggable stats reporters using the ``metrics.reporters`` configuration
 option.
 
 The easiest way to view the available metrics is to use jconsole to browse JMX MBeans. In
-addition to the metrics specific to the REST proxy listed below, you can also view and monitor
+addition to the metrics specific to the |crest| listed below, you can also view and monitor
 the metrics for the underlying producers and consumers.
 
-The REST proxy has two types of metrics. Global metrics help you monitor the overall health of
+The |crest| has two types of metrics. Global metrics help you monitor the overall health of
 the service. Per-endpoint metrics monitor each API endpoint request method and are
 prefixed by a name of the endpoint (e.g. ``brokers.list``). These help you
 understand how the proxy is being used and track down specific performance problems.
 
-In addition to the metrics defined below, the REST proxy also exposes the
+In addition to the metrics defined below, the |crest| also exposes the
 wealth of metrics that are provided by the underlying Jetty server.
 
 .. contents::

@@ -1,25 +1,31 @@
 .. _kafkarest_config:
 
-REST Proxy Configuration Options
---------------------------------
+|crest| Configuration Options
+=============================
 
-In addition to the settings specified here, the Kafka REST Proxy accepts the settings for the
+In addition to the settings specified here, the |crest-long| accepts the settings for the
 Java producer and consumer (currently the new producer and old/new consumers). Use these to override
-the default settings of producers and consumers in the REST Proxy. When configuration options are
-exposed in the REST API, priority is given to settings in the user request, then to overrides
+the default settings of producers and consumers in the |crest|. When configuration options are
+exposed in the |crest-long| API, priority is given to settings in the user request, then to overrides
 provided as configuration options, and finally falls back to the default values provided by the
 Java Kafka clients.
 
+.. contents:: Contents
+    :local:
+    :depth: 2
+
+General
+-------
 
 ``id``
-  Unique ID for this REST server instance. This is used in generating unique IDs for consumers that do not specify their ID. The ID is empty by default, which makes a single server setup easier to get up and running, but is not safe for multi-server deployments where automatic consumer IDs are used.
+  Unique ID for the |crest-long| server instance. This is used in generating unique IDs for consumers that do not specify their ID. The ID is empty by default, which makes a single server setup easier to get up and running, but is not safe for multi-server deployments where automatic consumer IDs are used.
 
   * Type: string
   * Default: ""
   * Importance: high
 
 ``bootstrap.servers``
-  A list of Kafka brokers to connect to. For example, ``PLAINTEXT://hostname:9092,SSL://hostname2:9092``. This configuration is particularly important when Kafka security is enabled, because Kafka may expose multiple endpoints that all will be stored in ZooKeeper, but Kafka REST  may need to be configured with just one of those endpoints. The client will make use of all servers irrespective of which servers are specified here for bootstrapping—this list only impacts the initial hosts used to discover the full set of servers. Since these servers are just used for the initial connection to discover the full cluster membership (which may change dynamically), this list need not contain the full set of servers (you may want more than one, though, in case a server is down).
+  A list of Kafka brokers to connect to. For example, ``PLAINTEXT://hostname:9092,SSL://hostname2:9092``. This configuration is particularly important when Kafka security is enabled, because Kafka may expose multiple endpoints that all will be stored in ZooKeeper, but |crest|  may need to be configured with just one of those endpoints. The client will make use of all servers irrespective of which servers are specified here for bootstrapping—this list only impacts the initial hosts used to discover the full set of servers. Since these servers are just used for the initial connection to discover the full cluster membership (which may change dynamically), this list need not contain the full set of servers (you may want more than one, though, in case a server is down).
 
 
 ``listeners``
@@ -202,7 +208,7 @@ Java Kafka clients.
   * Importance: low
 
 ``kafka.rest.resource.extension.class``
-  A list of classes to use as RestResourceExtension. Implementing the interface <code>RestResourceExtension</code> allows you to inject user defined resources like filters to Rest Proxy. Typically used to add custom capability like logging, security, etc.
+  A list of classes to use as RestResourceExtension. Implementing the interface <code>RestResourceExtension</code> allows you to inject user defined resources like filters to |crest|. Typically used to add custom capability like logging, security, etc.
 
   * Type: list
   * Default: ""
@@ -210,10 +216,13 @@ Java Kafka clients.
 
 
 Security Configuration Options
-==============================
+------------------------------
 
-REST Proxy supports SSL for securing communication between REST clients and the REST Proxy (HTTPS), and both SSL and SASL to secure communication between REST Proxy and Apache Kafka.
+|crest| supports SSL for securing communication between REST clients and the |crest| (HTTPS), and both SSL and SASL to secure communication between |crest| and Apache Kafka.
 
+.. _kafka-rest-https-config:
+
+-------------------------------
 Configuration Options for HTTPS
 -------------------------------
 
@@ -322,10 +331,11 @@ Configuration Options for HTTPS
   * Default: "" (Jetty's default)
   * Importance: low
 
-Configuration Options for SSL Encryption between REST Proxy and Apache Kafka Brokers
+------------------------------------------------------------------------------------
+Configuration Options for SSL Encryption between |crest| and Apache Kafka Brokers
 ------------------------------------------------------------------------------------
 
-Note that all the SSL configurations (for REST Proxy to Broker communication) are prefixed with "client". If you want the configuration to apply just to consumers or just to producers, you can replace the prefix with "consumer" or "producer" respectively.
+Note that all the SSL configurations (for |crest| to Broker communication) are prefixed with "client". If you want the configuration to apply just to consumers or just to producers, you can replace the prefix with "consumer" or "producer" respectively.
 
 In addition to these configurations, make sure ``bootstrap.servers`` configuration is set with SSL://host:port end-points, or you'll accidentally open an SSL connection to a non-SSL port.
 
@@ -441,17 +451,18 @@ The SecureRandom PRNG implementation to use for SSL cryptography operations.
   * Default: PKIX
   * Importance: low
 
-Configuration Options for SASL Authentication between REST Proxy and Apache Kafka Brokers
+-----------------------------------------------------------------------------------------
+Configuration Options for SASL Authentication between |crest| and Apache Kafka Brokers
 -----------------------------------------------------------------------------------------
 
 Kafka SASL configurations are described :ref:`here <kafka_sasl_auth>`.
 
-Note that all the SASL configurations (for REST Proxy to Broker communication) are prefixed with "client". If you want the configuration to apply just to consumers or just to producers, you can replace the prefix with "consumer" or "producer" respectively.
+Note that all the SASL configurations (for |crest| to Broker communication) are prefixed with "client". If you want the configuration to apply just to consumers or just to producers, you can replace the prefix with "consumer" or "producer" respectively.
 
 In addition to these configurations:
 
 * Make sure ``bootstrap.servers`` configuration is set with SASL_PLAINTEXT://host:port (or SASL_SSL://host:port) end-points, or you'll accidentally open an SASL connection to a non-SASL port.
-* Pass the name of the JAAS file and the name of Kerberos config file via environment variables to the REST Proxy. For example:
+* Pass the name of the JAAS file and the name of Kerberos config file via environment variables to the |crest|. For example:
 
   .. sourcecode:: bash
 
@@ -531,8 +542,8 @@ In addition to these configurations:
 
 
 Interceptor Configuration Options
-=================================
-REST Proxy supports interceptor configurations as part of Java new producer and consumer settings.
+---------------------------------
+|crest| supports interceptor configurations as part of Java new producer and consumer settings.
 
 ``producer.interceptor.classes``
   Producer interceptor classes.
