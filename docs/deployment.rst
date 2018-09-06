@@ -3,7 +3,7 @@
 Production Deployment
 ---------------------
 
-This section is not meant to be an exhaustive guide to running the Kafka REST proxy, but it
+This section is not meant to be an exhaustive guide to running the |crest-long|, but it
 covers the key things to consider before you should consider the proxy production ready.
 
 Three main areas are covered:
@@ -18,14 +18,14 @@ Three main areas are covered:
 Hardware
 ~~~~~~~~
 
-If you’ve been following the normal development path, you’ve probably been playing with the REST
-proxy on your laptop. But when it comes time to deploying to production, there are a few
+If you’ve been following the normal development path, you’ve probably been playing with the |crest| on your laptop.
+But when it comes time to deploying to production, there are a few
 recommendations that you should consider.
 
 Memory
 ^^^^^^
 
-The REST proxy's memory usage is primarily tied to the number of consumers because these are the
+The |crest|'s memory usage is primarily tied to the number of consumers because these are the
 only stateful resources managed by the proxy. The consumer buffers messages in two ways that
 can affect total memory usage. First, the underlying Java consumer buffers up to
 ``fetch.max.message.bytes x queued.max.message.chunks`` bytes of data, with default values
@@ -42,7 +42,7 @@ settings and two data formats (binary and Avro), this requires only 64 MB. If yo
 the serializer in the producer and deserializers in consumers also maintain a cache of schemas.
 However, schemas are relatively small and so should not significantly affect memory usage.
 
-If you plan to use the REST proxy mainly for administrative actions or producing data to Kafka,
+If you plan to use the |crest| mainly for administrative actions or producing data to Kafka,
 the memory requirements are modest, and a heap size of 1GB would suffice. If you plan to use many
 consumers, you can do a back of the envelope calculation to determine a reasonable heap size
 based on the maximum number of consumers you expect and average memory usage of ~16 MB per
@@ -51,8 +51,8 @@ consumer when using the default configuration.
 CPUs
 ^^^^
 
-The CPU requirements for the REST proxy mirror those of normal clients: the major computational
-costs come from compression and serialization of messages. The REST proxy can process many
+The CPU requirements for the |crest| mirror those of normal clients: the major computational
+costs come from compression and serialization of messages. The |crest| can process many
 requests concurrently and can take advantage of more cores if available. We recommend at
 least 16 cores, which provides sufficient resources to handle HTTP requests in parallel and
 background threads for the producers and consumers. However, this should be adjusted for your
@@ -62,12 +62,12 @@ should use more because each consumer has a dedicated thread.
 Disks
 ^^^^^
 
-The REST proxy does not store any state on disk. The only disk usage comes from log4j logs.
+The |crest| does not store any state on disk. The only disk usage comes from log4j logs.
 
 Network
 ^^^^^^^
 
-A fast and reliable network will likely have the biggest impact on the REST proxy's performance.
+A fast and reliable network will likely have the biggest impact on the |crest|'s performance.
 It should only be used as a proxy for Kafka clusters in the same data center to ensure low
 latency access to both ZooKeeper and the Kafka brokers. Standard data center networking (1 GbE,
 10 GbE) is sufficient for most applications.
@@ -91,7 +91,7 @@ Our recommended GC tuning looks like this:
           -XX:MinMetaspaceFreeRatio=50 -XX:MaxMetaspaceFreeRatio=80
 
 The heap size setting of 1 GB should be increased for proxies that will use many consumers. However,
-instead of heap sizes larger than 8 GB we recommend running multiple instances of the REST proxy
+instead of heap sizes larger than 8 GB we recommend running multiple instances of the |crest|
 to avoid long GC pauses that can cause request timeout and consumer disconnections.
 
 .. _kafkarest_deployment:
@@ -99,7 +99,7 @@ to avoid long GC pauses that can cause request timeout and consumer disconnectio
 Deployment
 ~~~~~~~~~~
 
-The REST proxy does not require any coordination between instances, so you can easily scale your
+The |crest| does not require any coordination between instances, so you can easily scale your
 deployment up or down. The only requirement for multiple instances is that you set a unique
 ``id`` for each instance.
 

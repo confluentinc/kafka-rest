@@ -38,7 +38,7 @@ Version 3.2.0
 * `PR-265 <https://github.com/confluentinc/kafka-rest/pull/265>`_ - Follow up for KIP-103 changes that fixes ProducerPool's extraction of endpoints to use the security protocol in the URL instead of the listener name.
 * `PR-268 <https://github.com/confluentinc/kafka-rest/pull/268>`_ - modified readme to use v2. also bumped installation up for usability
 * `PR-271 <https://github.com/confluentinc/kafka-rest/pull/271>`_ - Updated quickstart and configuration docs for V2 and for security
-* `PR-258 <https://github.com/confluentinc/kafka-rest/pull/258>`_ - Rest proxy security
+* `PR-258 <https://github.com/confluentinc/kafka-rest/pull/258>`_ - |crest| security
 * `PR-274 <https://github.com/confluentinc/kafka-rest/pull/274>`_ - added field 'topic' to tools/ConsumerPerformance.java for system test
 * `PR-272 <https://github.com/confluentinc/kafka-rest/pull/272>`_ - added description of JVM parameters for SASL configuration
 
@@ -85,7 +85,7 @@ Version 2.0.0
 
 * `PR-64 <https://github.com/confluentinc/kafka-rest/pull/64>`_ - Reduce integration test time.
 * `PR-66 <https://github.com/confluentinc/kafka-rest/pull/66>`_ - Add support for SimpleConsumer-like access (Issue #26)
-* `PR-67 <https://github.com/confluentinc/kafka-rest/pull/67>`_ - Handle conflicting IDs and separate IDs used in the REST proxy and by Kafka's consumer implementation.
+* `PR-67 <https://github.com/confluentinc/kafka-rest/pull/67>`_ - Handle conflicting IDs and separate IDs used in the |crest| and by Kafka's consumer implementation.
 * `PR-78 <https://github.com/confluentinc/kafka-rest/pull/78>`_ - Remove kafka from list of production directories to include in CLASSPATH.
 * `PR-89 <https://github.com/confluentinc/kafka-rest/pull/89>`_ - JSON message support
 * `PR-96 <https://github.com/confluentinc/kafka-rest/pull/96>`_ - Fixed log4j and daemon flag bugs in kafka-rest-run-class based on fix from schema-registry.

@@ -1,10 +1,11 @@
 .. _kafkarest_api:
 
-Confluent REST API Reference
-============================
+|crest-long| API Reference
+==========================
 
-Overview
---------
+.. contents:: Contents
+      :local:
+      :depth: 1
 
 Content Types
 ^^^^^^^^^^^^^
