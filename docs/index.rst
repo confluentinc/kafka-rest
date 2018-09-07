@@ -179,6 +179,7 @@ dependencies as well.
    quickstart
    api
    config
+   ../../cloud/connect/connect-kafka-rest-config
    operations
    security
    changelog
