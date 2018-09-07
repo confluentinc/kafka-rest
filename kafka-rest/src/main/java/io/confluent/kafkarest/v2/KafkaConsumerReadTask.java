@@ -49,6 +49,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
 
   private KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> parent;
   private final long requestTimeoutMs;
+  private final long fetchMinBytes;
   private final long maxResponseBytes;
   private final ConsumerWorkerReadCallback<ClientKeyT, ClientValueT> callback;
   private CountDownLatch finished;
@@ -74,10 +75,15 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
             maxBytes,
             parent.getConfig().getLong(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG)
         );
+    this.fetchMinBytes = parent.getConfig().getInt(
+            KafkaRestConfig.CONSUMER_INSTANCE_FETCH_MIN_BYTES_CONFIG);
     long defaultRequestTimeout =
         parent.getConfig().getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
-    this.requestTimeoutMs =
-        timeout <= 0 ? defaultRequestTimeout : Math.min(timeout, defaultRequestTimeout);
+
+
+    this.requestTimeoutMs = Math.max(parent.fetchMaxWaitMs(),
+            timeout <= 0 ? defaultRequestTimeout : Math.min(timeout, defaultRequestTimeout)
+    );
     this.callback = callback;
     this.finished = new CountDownLatch(1);
 
@@ -138,7 +144,9 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
       // message exceeds the maxResponseBytes
       boolean requestTimedOut = elapsed >= requestTimeoutMs;
       boolean exceededMaxResponseBytes = bytesConsumed + roughMsgSize >= maxResponseBytes;
-      if (requestTimedOut || exceededMaxResponseBytes) {
+      boolean exceededMinFetchBytes = bytesConsumed >= fetchMinBytes;
+
+      if (requestTimedOut || exceededMaxResponseBytes || exceededMinFetchBytes) {
         log.trace(
             "Finishing KafkaConsumerReadTask id={} requestTimedOut={} exceededMaxResponseBytes={}",
             this,

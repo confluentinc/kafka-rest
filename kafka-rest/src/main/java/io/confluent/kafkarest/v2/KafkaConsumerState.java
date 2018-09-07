@@ -311,6 +311,10 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     return currSubscription;
   }
 
+  public int fetchMaxWaitMs() {
+    return config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_FETCH_MAX_WAIT_CONFIG);
+  }
+
   /**
    * Get the set of partitions currently assigned to this consumer.
    */

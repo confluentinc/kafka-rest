@@ -112,8 +112,7 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
       long roughMsgSize = 0;
 
       long startedIteration = parent.getConfig().getTime().milliseconds();
-      final int requestTimeoutMs = parent.getConfig().getInt(
-          KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+      final int requestTimeoutMs = parent.getConfig().consumerRequestTimeoutMs();
       try {
         // Read off as many messages as we can without triggering a timeout exception. The
         // consumer timeout should be set very small, so the expectation is that even in the
@@ -155,7 +154,7 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
           = parent.getConfig().getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
       long backoffExpiration = startedIteration + itbackoff;
       long requestExpiration =
-          started + parent.getConfig().getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+          started + parent.getConfig().consumerRequestTimeoutMs();
       waitExpiration = Math.min(backoffExpiration, requestExpiration);
 
       // Including the rough message size here ensures processing finishes if the next

@@ -128,6 +128,7 @@ public class KafkaRestConfig extends RestConfig {
       + "avoid busy waiting.";
   public static final String CONSUMER_ITERATOR_BACKOFF_MS_DEFAULT = "50";
 
+  // does not actually propagate to consumer properties
   public static final String CONSUMER_REQUEST_TIMEOUT_MS_CONFIG = "consumer.request.timeout.ms";
   private static final String CONSUMER_REQUEST_TIMEOUT_MS_DOC =
       "The maximum total time to wait for messages for a "
@@ -154,6 +155,20 @@ public class KafkaRestConfig extends RestConfig {
       "Amount of idle time before a consumer instance "
       + "is automatically destroyed.";
   public static final String CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT = "300000";
+
+  public static final String CONSUMER_INSTANCE_FETCH_MAX_WAIT_CONFIG =
+          "consumer.fetch.max.wait.ms";
+  private static final String CONSUMER_INSTANCE_FETCH_MAX_WAIT_DOC =
+          "The maximum amount of time the server will block before answering "
+              + "the fetch request if there isn't sufficient data to immediately "
+              + "satisfy the requirement given by fetch.min.bytes.";
+  public static final String CONSUMER_INSTANCE_FETCH_MAX_WAIT_DEFAULT = "500";
+
+  public static final String CONSUMER_INSTANCE_FETCH_MIN_BYTES_CONFIG =
+          "consumer.fetch.min.bytes";
+  private static final String CONSUMER_INSTANCE_FETCH_MIN_BYTES_DOC =
+          "The minimum amount of data the server should return for a fetch request.";
+  public static final int CONSUMER_INSTANCE_FETCH_MIN_BYTES_DEFAULT = 64 * 1024 * 1024;
 
   public static final String SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG = "simpleconsumer.pool.size.max";
   private static final String SIMPLE_CONSUMER_MAX_POOL_SIZE_DOC =
@@ -417,6 +432,20 @@ public class KafkaRestConfig extends RestConfig {
             CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT,
             Importance.LOW,
             CONSUMER_INSTANCE_TIMEOUT_MS_DOC
+        )
+        .define(
+            CONSUMER_INSTANCE_FETCH_MAX_WAIT_CONFIG,
+            Type.INT,
+            CONSUMER_INSTANCE_FETCH_MAX_WAIT_DEFAULT,
+            Importance.LOW,
+            CONSUMER_INSTANCE_FETCH_MAX_WAIT_DOC
+        )
+        .define(
+            CONSUMER_INSTANCE_FETCH_MIN_BYTES_CONFIG,
+            Type.INT,
+            CONSUMER_INSTANCE_FETCH_MIN_BYTES_DEFAULT,
+            Importance.LOW,
+            CONSUMER_INSTANCE_FETCH_MIN_BYTES_DOC
         )
         .define(
             SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG,
@@ -738,6 +767,11 @@ public class KafkaRestConfig extends RestConfig {
       }
     }
     return getInt(PORT_CONFIG);
+  }
+
+  public int consumerRequestTimeoutMs() {
+    return Math.max(getInt(CONSUMER_REQUEST_TIMEOUT_MS_CONFIG),
+            getInt(CONSUMER_INSTANCE_FETCH_MAX_WAIT_CONFIG));
   }
 
   private  String getBootstrapBrokers(ZkUtils zkUtils) {
