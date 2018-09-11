@@ -184,14 +184,14 @@ changing these based on your specific use case.
      * Default: 1000
      * Importance: medium
 
-   ``consumer.threads``
-     Number of threads to run consumer requests on. Consumers are efficiently multiplexed across
-     the pool of consumer threads, but each consumer must be processed sequentially. If the proxy
-     must support a large number of consumers you should consider increasing the number of worker
-     threads.
+   ``consumer.max.threads``
+     The maximum number of threads to run consumer requests on. Consumers requests are
+     ran one per thread in a synchronous manner. It is a must to have this value
+     be set higher than the maximum number of consumers in a single consumer group,
+     otherwise rebalances will deadlock.
 
      * Type: int
-     * Default: 1
+     * Default: 100
      * Importance: medium
 
    ``host.name``

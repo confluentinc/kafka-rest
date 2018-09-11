@@ -60,11 +60,22 @@ public class KafkaRestConfig extends RestConfig {
       + "are used.";
   public static final String ID_DEFAULT = "";
 
+  public static final String MAX_POLL_RECORDS_CONFIG = "max.poll.records";
+  private static final String MAX_POLL_RECORDS_DOC =
+          "The maximum number of records returned in a single call to poll().";
+  // ensures poll is frequently needed and called
+  public static final String MAX_POLL_RECORDS_VALUE = "10";
+
   public static final String HOST_NAME_CONFIG = "host.name";
   private static final String HOST_NAME_DOC =
       "The host name used to generate absolute URLs in responses. If empty, the default canonical"
       + " hostname is used";
   public static final String HOST_NAME_DEFAULT = "";
+
+  public static final String CONSUMER_MAX_THREADS_CONFIG = "consumer.max.threads";
+  private static final String CONSUMER_MAX_THREADS_DOC =
+      "The maximum number of threads to run consumer requests on.";
+  public static final String CONSUMER_MAX_THREADS_DEFAULT = "100";
 
   public static final String ZOOKEEPER_CONNECT_CONFIG = "zookeeper.connect";
   private static final String ZOOKEEPER_CONNECT_DOC =
@@ -143,11 +154,6 @@ public class KafkaRestConfig extends RestConfig {
       + "overhead from base64 encoding the response data and from JSON encoding the entire "
       + "response.";
   public static final long CONSUMER_REQUEST_MAX_BYTES_DEFAULT = 64 * 1024 * 1024;
-
-  public static final String CONSUMER_THREADS_CONFIG = "consumer.threads";
-  private static final String CONSUMER_THREADS_DOC =
-      "Number of threads to run consumer requests on.";
-  public static final String CONSUMER_THREADS_DEFAULT = "1";
 
   public static final String CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG = "consumer.instance.timeout.ms";
   private static final String CONSUMER_INSTANCE_TIMEOUT_MS_DOC =
@@ -348,6 +354,8 @@ public class KafkaRestConfig extends RestConfig {
         )
         .define(ID_CONFIG, Type.STRING, ID_DEFAULT, Importance.HIGH, ID_CONFIG_DOC)
         .define(HOST_NAME_CONFIG, Type.STRING, HOST_NAME_DEFAULT, Importance.MEDIUM, HOST_NAME_DOC)
+        .define(CONSUMER_MAX_THREADS_CONFIG, Type.INT, CONSUMER_MAX_THREADS_DEFAULT,
+                Importance.MEDIUM, CONSUMER_MAX_THREADS_DOC)
         .define(
             ZOOKEEPER_CONNECT_CONFIG,
             Type.STRING,
@@ -403,13 +411,6 @@ public class KafkaRestConfig extends RestConfig {
             CONSUMER_REQUEST_MAX_BYTES_DEFAULT,
             Importance.MEDIUM,
             CONSUMER_REQUEST_MAX_BYTES_DOC
-        )
-        .define(
-            CONSUMER_THREADS_CONFIG,
-            Type.INT,
-            CONSUMER_THREADS_DEFAULT,
-            Importance.MEDIUM,
-            CONSUMER_THREADS_DOC
         )
         .define(
             CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG,
