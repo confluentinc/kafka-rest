@@ -82,7 +82,9 @@ public class ConsumerManager {
     this.mdObserver = mdObserver;
     this.iteratorTimeoutMs = config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG);
     // Cached thread pool
-    this.executor = new ThreadPoolExecutor(0, config.getInt(CONSUMER_MAX_THREADS_CONFIG),
+    int maxThreadCount = config.getInt(CONSUMER_MAX_THREADS_CONFIG) < 0 ? Integer.MAX_VALUE
+            : config.getInt(CONSUMER_MAX_THREADS_CONFIG);
+    this.executor = new ThreadPoolExecutor(0, maxThreadCount,
             60L, TimeUnit.SECONDS,
             new SynchronousQueue<>());
     this.consumerFactory = null;

@@ -58,7 +58,7 @@ General
   * Default: 67108864
   * Importance: medium
 
-``consumer.max.threads``
+``consumer.threads``
   The maximum number of threads to run consumer requests on. Note that this must be greater than the maximum number of consumers in a single consumer group.
   * Type: int
   * Default: 100
