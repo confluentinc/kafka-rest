@@ -252,28 +252,31 @@ public class ConsumerManager {
 
     return executor.submit(() -> {
       try {
-        ConsumerWorker worker = new ConsumerWorker(config);
-        worker.readTopic(
-            state, topic, maxBytes,
-            (ConsumerWorkerReadCallback<ClientKeyT, ClientValueT>) (records, e) -> {
-              updateExpiration(state);
-              if (e != null) {
-                // Ensure caught exceptions are converted to RestExceptions so the user gets a
-                // nice error message. Currently we don't define any more specific errors because
-                // the old consumer interface doesn't classify the errors well like the new
-                // consumer does.
-                // When the new consumer is available we may be able to update this
-                // to provide better feedback to the user.
-                Exception responseException = e;
-                if (!(e instanceof RestException)) {
-                  responseException = Errors.kafkaErrorException(e);
+        ConsumerReadTask task = new ConsumerReadTask<>(
+                state,
+                topic,
+                maxBytes,
+                config,
+                (ConsumerWorkerReadCallback<ClientKeyT, ClientValueT>) (records, e) -> {
+                  updateExpiration(state);
+                  if (e != null) {
+                    // Ensure caught exceptions are converted to RestExceptions so the user gets a
+                    // nice error message. Currently we don't define any
+                    // more specific errors because the old consumer interface doesn't classify
+                    // the errors well like the new consumer does.
+                    // When the new consumer is available we may be able to update this
+                    // to provide better feedback to the user.
+                    Exception responseException = e;
+                    if (!(e instanceof RestException)) {
+                      responseException = Errors.kafkaErrorException(e);
+                    }
+                    callback.onCompletion(null, responseException);
+                  } else {
+                    callback.onCompletion(records, null);
+                  }
                 }
-                callback.onCompletion(null, responseException);
-              } else {
-                callback.onCompletion(records, null);
-              }
-            }
         );
+        task.doFullRead();
       } catch (Exception e) {
         log.error("Failed to read records consumer " + state.getId().toString(), e);
         Exception responseException = e;
