@@ -49,6 +49,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
   private List<ConsumerRecord<ClientKeyT, ClientValueT>> messages;
   private long bytesConsumed = 0;
   private final long started;
+  private KafkaRestConfig config;
 
   // Expiration if this task is waiting, considering both the expiration of the whole task and
   // a single backoff, if one is in progress
@@ -58,6 +59,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
       KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> parent,
       long timeout,
       long maxBytes,
+      KafkaRestConfig config,
       ConsumerWorkerReadCallback<ClientKeyT, ClientValueT> callback
   ) {
     this.parent = parent;
@@ -72,8 +74,25 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
         timeout <= 0 ? defaultRequestTimeout : Math.min(timeout, defaultRequestTimeout);
     this.callback = callback;
     this.finished = false;
+    this.config = config;
 
     started = parent.getConfig().getTime().milliseconds();
+  }
+
+  /**
+   * Performs multiple iterations of reading from a consumer iterator
+   */
+  public void doFullRead() {
+    log.trace("Executing consumer read task task ({})", this);
+    while (!isDone()) {
+      doPartialRead();
+      long now = config.getTime().milliseconds();
+      long waitTime = waitExpiration - now;
+      if (waitTime > 0) {
+        config.getTime().sleep(waitTime);
+      }
+    }
+    log.trace("Finished executing consumer read task ({})", this);
   }
 
   /**
@@ -148,7 +167,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
     }
   }
 
-  boolean isDone() {
+  private boolean isDone() {
     return finished;
   }
 

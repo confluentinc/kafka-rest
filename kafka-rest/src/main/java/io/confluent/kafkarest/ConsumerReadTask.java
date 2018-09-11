@@ -49,6 +49,7 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
   private ConsumerTopicState topicState;
   private ConsumerIterator<KafkaKeyT, KafkaValueT> iter;
   private List<ConsumerRecord<ClientKeyT, ClientValueT>> messages;
+  private KafkaRestConfig config;
   private long bytesConsumed = 0;
   private final long started;
 
@@ -60,6 +61,7 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
       ConsumerState parent,
       String topic,
       long maxBytes,
+      KafkaRestConfig config,
       ConsumerWorkerReadCallback<ClientKeyT, ClientValueT> callback
   ) {
     this.parent = parent;
@@ -69,6 +71,7 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
     );
     this.callback = callback;
     this.finished = false;
+    this.config = config;
 
     started = parent.getConfig().getTime().milliseconds();
     try {
@@ -83,6 +86,19 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
     } catch (RestException e) {
       finish(e);
     }
+  }
+
+  public void doFullRead() {
+    log.trace("Executing consumer read task ({})", this);
+    while (!isDone()) {
+      doPartialRead();
+      long now = config.getTime().milliseconds();
+      long waitTime = waitExpiration - now;
+      if (waitTime > 0) {
+        config.getTime().sleep(waitTime);
+      }
+    }
+    log.trace("Finished executing consumer read task ({})", this);
   }
 
   /**

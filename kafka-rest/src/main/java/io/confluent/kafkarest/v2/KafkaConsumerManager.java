@@ -41,7 +41,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.ws.rs.core.Response;
 
 import io.confluent.kafkarest.ConsumerInstanceId;
-import io.confluent.kafkarest.ConsumerWorkerReadCallback;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.Time;
@@ -276,10 +275,13 @@ public class KafkaConsumerManager {
 
     return executor.submit(() -> {
       try {
-        KafkaConsumerWorker worker = new KafkaConsumerWorker(config);
-        worker.readRecords(
-            state, timeout, maxBytes,
-            (ConsumerWorkerReadCallback<ClientKeyT, ClientValueT>) (records, e) -> {
+        KafkaConsumerReadTask task = new KafkaConsumerReadTask<KafkaKeyT, KafkaValueT,
+                ClientKeyT, ClientValueT>(
+            state,
+            timeout,
+            maxBytes,
+            config,
+            (records, e) -> {
               updateExpiration(state);
               if (e != null) {
                 // Ensure caught exceptions are converted to RestExceptions so the user gets a
@@ -297,6 +299,7 @@ public class KafkaConsumerManager {
               }
             }
         );
+        task.doFullRead();
       } catch (Exception e) {
         log.error("Failed to read records consumer " + state.getId().toString(), e);
         Exception responseException = e;
