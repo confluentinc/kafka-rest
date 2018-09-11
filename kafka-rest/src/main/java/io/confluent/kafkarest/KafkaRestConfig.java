@@ -64,7 +64,7 @@ public class KafkaRestConfig extends RestConfig {
   private static final String MAX_POLL_RECORDS_DOC =
           "The maximum number of records returned in a single call to poll().";
   // ensures poll is frequently needed and called
-  public static final String MAX_POLL_RECORDS_VALUE = "10";
+  public static final String MAX_POLL_RECORDS_VALUE = "30";
 
   public static final String HOST_NAME_CONFIG = "host.name";
   private static final String HOST_NAME_DOC =
@@ -76,7 +76,7 @@ public class KafkaRestConfig extends RestConfig {
   private static final String CONSUMER_MAX_THREADS_DOC =
       "The maximum number of threads to run consumer requests on."
       + " The value of -1 denotes unbounded thread creation";
-  public static final String CONSUMER_MAX_THREADS_DEFAULT = "16";
+  public static final String CONSUMER_MAX_THREADS_DEFAULT = "50";
 
   public static final String ZOOKEEPER_CONNECT_CONFIG = "zookeeper.connect";
   private static final String ZOOKEEPER_CONNECT_DOC =
