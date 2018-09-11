@@ -32,10 +32,11 @@ import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.ws.rs.core.Response;
 
@@ -61,6 +62,10 @@ import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestNotFoundException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 
+import static io.confluent.kafkarest.KafkaRestConfig.CONSUMER_MAX_THREADS_CONFIG;
+import static io.confluent.kafkarest.KafkaRestConfig.MAX_POLL_RECORDS_CONFIG;
+import static io.confluent.kafkarest.KafkaRestConfig.MAX_POLL_RECORDS_VALUE;
+
 /**
  * Manages consumer instances by mapping instance IDs to consumer objects, processing read requests,
  * and cleaning up when consumers disappear.
@@ -78,13 +83,8 @@ public class KafkaConsumerManager {
   // during read operations.
   private final Map<ConsumerInstanceId, KafkaConsumerState> consumers =
       new HashMap<ConsumerInstanceId, KafkaConsumerState>();
-  // Read operations are common and there may be many concurrently, so they are farmed out to
-  // worker threads that can efficiently interleave the operations. Currently we're just using a
-  // simple round-robin scheduler.
-  private final List<KafkaConsumerWorker> workers;
-  private final AtomicInteger nextWorker;
-  // A few other operations, like commit offsets and closing a consumer can't be interleaved, but
-  // they're also comparatively rare. These are executed serially in a dedicated thread.
+  // All kind of operations, like reading records, committing offsets and closing a consumer
+  // are executed separately in dedicated threads via a cached thread pool.
   private final ExecutorService executor;
   private KafkaConsumerFactory consumerFactory;
   private final PriorityQueue<KafkaConsumerState> consumersByExpiration =
@@ -95,14 +95,11 @@ public class KafkaConsumerManager {
     this.config = config;
     this.time = config.getTime();
     this.bootstrapServers = config.bootstrapBrokers();
-    this.workers = new Vector<KafkaConsumerWorker>();
-    for (int i = 0; i < config.getInt(KafkaRestConfig.CONSUMER_THREADS_CONFIG); i++) {
-      KafkaConsumerWorker worker = new KafkaConsumerWorker(config);
-      workers.add(worker);
-      worker.start();
-    }
-    nextWorker = new AtomicInteger(0);
-    this.executor = Executors.newFixedThreadPool(1);
+
+    // Cached thread pool
+    this.executor = new ThreadPoolExecutor(0, config.getInt(CONSUMER_MAX_THREADS_CONFIG),
+            60L, TimeUnit.SECONDS,
+            new SynchronousQueue<>());
     this.consumerFactory = null;
     this.expirationThread = new ExpirationThread();
     this.expirationThread.start();
@@ -163,6 +160,7 @@ public class KafkaConsumerManager {
       //Properties props = (Properties) config.getOriginalProperties().clone();
       Properties props = config.getConsumerProperties();
       props.setProperty(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServers);
+      props.setProperty(MAX_POLL_RECORDS_CONFIG, MAX_POLL_RECORDS_VALUE);
       props.setProperty("group.id", group);
       // This ID we pass here has to be unique, only pass a value along if the deprecated ID field
       // was passed in. This generally shouldn't be used, but is maintained for compatibility.
@@ -274,33 +272,38 @@ public class KafkaConsumerManager {
       return null;
     }
 
-    int workerId = nextWorker.getAndIncrement() % workers.size();
-    KafkaConsumerWorker worker = workers.get(workerId);
-    return worker.readRecords(
-        state, timeout, maxBytes,
-        new ConsumerWorkerReadCallback<ClientKeyT, ClientValueT>() {
-          @Override
-          public void onCompletion(
-              List<? extends ConsumerRecord<ClientKeyT, ClientValueT>> records, Exception e
-          ) {
-            updateExpiration(state);
-            if (e != null) {
-              // Ensure caught exceptions are converted to RestExceptions so the user gets a
-              // nice error message. Currently we don't define any more specific errors because
-              // the old consumer interface doesn't classify the errors well like the new
-              // consumer does. When the new consumer is available we may be able to update this
-              // to provide better feedback to the user.
-              Exception responseException = e;
-              if (!(e instanceof RestException)) {
-                responseException = Errors.kafkaErrorException(e);
+    return executor.submit(() -> {
+      try {
+        KafkaConsumerWorker worker = new KafkaConsumerWorker(config);
+        worker.readRecords(
+            state, timeout, maxBytes,
+            (ConsumerWorkerReadCallback<ClientKeyT, ClientValueT>) (records, e) -> {
+              updateExpiration(state);
+              if (e != null) {
+                // Ensure caught exceptions are converted to RestExceptions so the user gets a
+                // nice error message. Currently we don't define any more specific errors because
+                // the old consumer interface doesn't classify the errors well like the new
+                // consumer does. When the new consumer is available we may be able to update this
+                // to provide better feedback to the user.
+                Exception responseException = e;
+                if (!(e instanceof RestException)) {
+                  responseException = Errors.kafkaErrorException(e);
+                }
+                callback.onCompletion(null, responseException);
+              } else {
+                callback.onCompletion(records, null);
               }
-              callback.onCompletion(null, responseException);
-            } else {
-              callback.onCompletion(records, null);
             }
-          }
+        );
+      } catch (Exception e) {
+        log.error("Failed to read records consumer " + state.getId().toString(), e);
+        Exception responseException = e;
+        if (!(e instanceof RestException)) {
+          responseException = Errors.kafkaErrorException(e);
         }
-    );
+        callback.onCompletion(null, responseException);
+      }
+    });
   }
 
   public interface CommitCallback {
@@ -445,13 +448,7 @@ public class KafkaConsumerManager {
 
   public void shutdown() {
     log.debug("Shutting down consumers");
-    synchronized (this) {
-      for (KafkaConsumerWorker worker : workers) {
-        log.trace("Shutting down worker " + worker.toString());
-        worker.shutdown();
-      }
-      workers.clear();
-    }
+    executor.shutdown();
     // Expiration thread needs to be able to acquire a lock on the KafkaConsumerManager to make sure
     // the shutdown will be able to complete.
     log.trace("Shutting down consumer expiration thread");
@@ -462,7 +459,6 @@ public class KafkaConsumerManager {
       }
       consumers.clear();
       consumersByExpiration.clear();
-      executor.shutdown();
     }
   }
 
