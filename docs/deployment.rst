@@ -191,7 +191,7 @@ changing these based on your specific use case.
      otherwise rebalances will deadlock.
 
      * Type: int
-     * Default: 50
+     * Default: 200
      * Importance: medium
 
    ``host.name``
