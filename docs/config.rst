@@ -62,7 +62,7 @@ General
   The maximum number of threads to run consumer requests on. Note that this must be greater than the maximum number of consumers in a single consumer group.
   The sentinel value of -1 allows the number of threads to grow as needed to fulfill active consumer requests. Inactive threads will ultimately be stopped and cleaned up.
   * Type: int
-  * Default: 16
+  * Default: 200
   * Importance: medium
 
 ``consumer.request.timeout.ms``

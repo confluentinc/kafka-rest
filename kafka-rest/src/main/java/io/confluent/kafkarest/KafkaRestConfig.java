@@ -76,7 +76,7 @@ public class KafkaRestConfig extends RestConfig {
   private static final String CONSUMER_MAX_THREADS_DOC =
       "The maximum number of threads to run consumer requests on."
       + " The value of -1 denotes unbounded thread creation";
-  public static final String CONSUMER_MAX_THREADS_DEFAULT = "16";
+  public static final String CONSUMER_MAX_THREADS_DEFAULT = "200";
 
   public static final String ZOOKEEPER_CONNECT_CONFIG = "zookeeper.connect";
   private static final String ZOOKEEPER_CONNECT_DOC =
