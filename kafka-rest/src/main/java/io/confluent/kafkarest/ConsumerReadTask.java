@@ -22,11 +22,6 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.rest.exceptions.RestException;
@@ -43,19 +38,18 @@ import kafka.message.MessageAndMetadata;
  * returned by the Kafka consumer's decoder/deserializer, ClientK/ClientV is the format
  * returned to the client in the HTTP response. In some cases these may be identical.
  */
-class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
-    implements Future<List<ConsumerRecord<ClientKeyT, ClientValueT>>> {
-
+class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
   private static final Logger log = LoggerFactory.getLogger(ConsumerReadTask.class);
 
   private ConsumerState parent;
   private final long maxResponseBytes;
   private final ConsumerWorkerReadCallback<ClientKeyT, ClientValueT> callback;
-  private CountDownLatch finished;
+  private boolean finished;
 
   private ConsumerTopicState topicState;
   private ConsumerIterator<KafkaKeyT, KafkaValueT> iter;
   private List<ConsumerRecord<ClientKeyT, ClientValueT>> messages;
+  private KafkaRestConfig config;
   private long bytesConsumed = 0;
   private final long started;
 
@@ -67,6 +61,7 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
       ConsumerState parent,
       String topic,
       long maxBytes,
+      KafkaRestConfig config,
       ConsumerWorkerReadCallback<ClientKeyT, ClientValueT> callback
   ) {
     this.parent = parent;
@@ -75,7 +70,8 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
         parent.getConfig().getLong(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG)
     );
     this.callback = callback;
-    this.finished = new CountDownLatch(1);
+    this.finished = false;
+    this.config = config;
 
     started = parent.getConfig().getTime().milliseconds();
     try {
@@ -92,6 +88,19 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
     }
   }
 
+  public void doFullRead() {
+    log.trace("Executing consumer read task ({})", this);
+    while (!isDone()) {
+      doPartialRead();
+      long now = config.getTime().milliseconds();
+      long waitTime = waitExpiration - now;
+      if (waitTime > 0) {
+        config.getTime().sleep(waitTime);
+      }
+    }
+    log.trace("Finished executing consumer read task ({})", this);
+  }
+
   /**
    * Performs one iteration of reading from a consumer iterator.
    *
@@ -104,7 +113,7 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
         parent.startRead(topicState);
         iter = topicState.getIterator();
 
-        messages = new Vector<ConsumerRecord<ClientKeyT, ClientValueT>>();
+        messages = new Vector<>();
         waitExpiration = 0;
       }
 
@@ -177,11 +186,15 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
     }
   }
 
-  public void finish() {
+  boolean isDone() {
+    return finished;
+  }
+
+  private void finish() {
     finish(null);
   }
 
-  public void finish(Exception e) {
+  private void finish(Exception e) {
     log.trace("Finishing ConsumerReadTask id={} exception={}", this, e);
     if (e == null) {
       // Now it's safe to mark these messages as consumed by updating offsets since we're actually
@@ -209,38 +222,7 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
       // done here but log it since it indicates a bug in the calling code.
       log.error("Consumer read callback threw an unhandled exception id={}", this, e);
     }
-    finished.countDown();
+    finished = true;
   }
 
-  @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    return false;
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return false;
-  }
-
-  @Override
-  public boolean isDone() {
-    return (finished.getCount() == 0);
-  }
-
-  @Override
-  public List<ConsumerRecord<ClientKeyT, ClientValueT>> get()
-      throws InterruptedException, ExecutionException {
-    finished.await();
-    return messages;
-  }
-
-  @Override
-  public List<ConsumerRecord<ClientKeyT, ClientValueT>> get(long timeout, TimeUnit unit)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    finished.await(timeout, unit);
-    if (finished.getCount() > 0) {
-      throw new TimeoutException();
-    }
-    return messages;
-  }
 }

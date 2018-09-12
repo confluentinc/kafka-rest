@@ -58,18 +58,18 @@ General
   * Default: 67108864
   * Importance: medium
 
+``consumer.threads``
+  The maximum number of threads to run consumer requests on. Note that this must be greater than the maximum number of consumers in a single consumer group.
+  The sentinel value of -1 allows the number of threads to grow as needed to fulfill active consumer requests. Inactive threads will ultimately be stopped and cleaned up.
+  * Type: int
+  * Default: 16
+  * Importance: medium
+
 ``consumer.request.timeout.ms``
   The maximum total time to wait for messages for a request if the maximum number of messages has not yet been reached.
 
   * Type: int
   * Default: 1000
-  * Importance: medium
-
-``consumer.threads``
-  Number of threads to run consumer requests on.
-
-  * Type: int
-  * Default: 1
   * Importance: medium
 
 ``host.name``
