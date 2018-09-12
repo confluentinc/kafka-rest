@@ -44,12 +44,19 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
 
   private KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> parent;
   private final long requestTimeoutMs;
+  // the minimum bytes the task should accumulate
+  // before returning a response (or hitting the timeout)
+  // responseMinBytes might be bigger than maxResponseBytes
+  // in cases where the functionality is disabled
+  private final int responseMinBytes;
   private final long maxResponseBytes;
   private final ConsumerReadCallback<ClientKeyT, ClientValueT> callback;
   private boolean finished;
 
   private List<ConsumerRecord<ClientKeyT, ClientValueT>> messages;
   private long bytesConsumed = 0;
+  private boolean exceededMinResponseBytes = false;
+  private boolean exceededMaxResponseBytes = false;
   private final long started;
 
 
@@ -63,12 +70,18 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
     this.maxResponseBytes =
         Math.min(
             maxBytes,
-            parent.getConfig().getLong(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG)
+            parent.getConfig().consumerResponseMaxBytes()
         );
     long defaultRequestTimeout =
-        parent.getConfig().getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+        parent.getConfig().getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG);
     this.requestTimeoutMs =
-        timeout <= 0 ? defaultRequestTimeout : Math.min(timeout, defaultRequestTimeout);
+            timeout <= 0 ? defaultRequestTimeout : Math.min(timeout, defaultRequestTimeout);
+
+    int responseMinBytes = parent.getConfig().getInt(
+            KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG);
+    this.responseMinBytes = responseMinBytes < 0 ? Integer.MAX_VALUE : responseMinBytes;
+
+
     this.callback = callback;
     this.finished = false;
 
@@ -85,20 +98,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
         messages = new Vector<>();
       }
 
-      long roughMsgSize = 0;
-
-      while (parent.hasNext()) {
-        ConsumerRecordAndSize<ClientKeyT, ClientValueT> recordAndSize =
-            parent.createConsumerRecord(parent.peek());
-        roughMsgSize = recordAndSize.getSize();
-        if (bytesConsumed + roughMsgSize >= maxResponseBytes) {
-          break;
-        }
-
-        messages.add(recordAndSize.getRecord());
-        parent.next();
-        bytesConsumed += roughMsgSize;
-      }
+      addRecords();
 
       log.trace(
           "KafkaConsumerReadTask exiting read with id={} messages={} bytes={}, backing off if not"
@@ -114,13 +114,14 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
       // Including the rough message size here ensures processing finishes if the next
       // message exceeds the maxResponseBytes
       boolean requestTimedOut = elapsed >= requestTimeoutMs;
-      boolean exceededMaxResponseBytes = bytesConsumed + roughMsgSize >= maxResponseBytes;
-      if (requestTimedOut || exceededMaxResponseBytes) {
+      if (requestTimedOut || exceededMaxResponseBytes || exceededMinResponseBytes) {
         log.trace(
-            "Finishing KafkaConsumerReadTask id={} requestTimedOut={} exceededMaxResponseBytes={}",
+            "Finishing KafkaConsumerReadTask id={} requestTimedOut={} "
+            + "exceededMaxResponseBytes={} exceededMinResponseBytes={}",
             this,
             requestTimedOut,
-            exceededMaxResponseBytes
+            exceededMaxResponseBytes,
+            exceededMinResponseBytes
         );
         finish();
       }
@@ -132,6 +133,45 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
 
   public boolean isDone() {
     return finished;
+  }
+
+  /**
+   * Polls for and reads records until either the minimum response bytes are filled,
+   *  the maximum response bytes will be reached, or no more records can be read from polling.
+   */
+  private void addRecords() {
+    while (!exceededMinResponseBytes && !exceededMaxResponseBytes && parent.hasNext()) {
+      maybeAddRecord();
+    }
+    while (exceededMinResponseBytes && !exceededMaxResponseBytes && parent.hasNextCached()) {
+      // will not call poll() anymore. Continue draining loaded records
+      maybeAddRecord();
+    }
+  }
+
+  /**
+   * Tries to add the latest record from the iterator
+   * to the read records if it doesn't go over the maximum response bytes.
+   * Keeps track and marks when we are about to exceed the max response bytes, and
+   * have exceeded the min response bytes
+   * @return boolean indicating whether the record was added
+   */
+  private boolean maybeAddRecord() {
+    ConsumerRecordAndSize<ClientKeyT, ClientValueT> recordAndSize =
+            parent.createConsumerRecord(parent.peek());
+    long roughMsgSize = recordAndSize.getSize();
+    if (bytesConsumed + roughMsgSize >= maxResponseBytes) {
+      this.exceededMaxResponseBytes = true;
+      return false;
+    }
+
+    messages.add(recordAndSize.getRecord());
+    parent.next(); // increment iterator
+    bytesConsumed += roughMsgSize;
+    if (!exceededMinResponseBytes && bytesConsumed > responseMinBytes) {
+      this.exceededMinResponseBytes = true;
+    }
+    return true;
   }
 
   void finish() {

@@ -18,6 +18,7 @@ package io.confluent.kafkarest;
 
 import org.apache.avro.SchemaParseException;
 import org.apache.kafka.common.KafkaException;
+import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.common.errors.RetriableException;
 
 import javax.ws.rs.core.Response;
@@ -156,6 +157,15 @@ public class Errors {
 
   public static RestConstraintViolationException invalidConsumerConfigException(
       InvalidConfigException e
+  ) {
+    return new RestConstraintViolationException(
+        INVALID_CONSUMER_CONFIG_MESSAGE + e.getMessage(),
+        INVALID_CONSUMER_CONFIG_ERROR_CODE
+    );
+  }
+
+  public static RestConstraintViolationException invalidConsumerConfigException(
+          ConfigException e
   ) {
     return new RestConstraintViolationException(
         INVALID_CONSUMER_CONFIG_MESSAGE + e.getMessage(),

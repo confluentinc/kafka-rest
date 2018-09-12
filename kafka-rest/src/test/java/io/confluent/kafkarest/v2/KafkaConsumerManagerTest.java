@@ -38,7 +38,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
@@ -50,10 +49,7 @@ import io.confluent.kafkarest.mock.MockTime;
 import io.confluent.rest.RestConfigException;
 import org.junit.runner.RunWith;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Tests basic create/read/commit/delete functionality of ConsumerManager. This only exercises the
@@ -84,7 +80,11 @@ public class KafkaConsumerManagerTest {
 
     @Before
     public void setUp() throws RestConfigException {
-        config = new KafkaRestConfig(setUpProperties(), new MockTime());
+        setUpConsumer(setUpProperties());
+    }
+
+    private void setUpConsumer(Properties properties) throws RestConfigException {
+        config = new KafkaRestConfig(properties, new SystemTime());
         consumerManager = new KafkaConsumerManager(config, consumerFactory);
         consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
     }
@@ -133,28 +133,180 @@ public class KafkaConsumerManagerTest {
         EasyMock.verify(consumerFactory);
     }
 
+    /**
+     * consumer.request.timeout.ms should not modify how long the proxy waits until returning a response.
+     * fetch.max.wait.ms should dictate that
+     */
     @Test
-    public void testConsumerNormalOps() throws InterruptedException, ExecutionException, RestConfigException {
-        config = new KafkaRestConfig(setUpProperties(), new SystemTime());
-        consumerManager = new KafkaConsumerManager(config, consumerFactory);
-        consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
-        // Tests create instance, read, and delete
-        final List<ConsumerRecord<byte[], byte[]>> referenceRecords
-                = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
-                new BinaryConsumerRecord(topicName, "k1".getBytes(), "v1".getBytes(), 0, 0),
-                new BinaryConsumerRecord(topicName, "k2".getBytes(), "v2".getBytes(), 0, 1),
-                new BinaryConsumerRecord(topicName, "k3".getBytes(), "v3".getBytes(), 0, 2)
-        );
+    public void testConsumerRequestTimeoutDoesNotModifyProxyResponseTime() throws Exception {
+        Properties props = setUpProperties(new Properties());
+        props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, "2500");
+        setUpConsumer(props);
 
         expectCreate();
-        consumer.schedulePollTask(new Runnable() {
-            @Override
-            public void run() {
-                consumer.addRecord(new org.apache.kafka.clients.consumer.ConsumerRecord<>(topicName, 0, 0, "k1".getBytes(), "v1".getBytes()));
-                consumer.addRecord(new org.apache.kafka.clients.consumer.ConsumerRecord<>(topicName, 0, 1, "k2".getBytes(), "v2".getBytes()));
-                consumer.addRecord(new org.apache.kafka.clients.consumer.ConsumerRecord<>(topicName, 0, 2, "k3".getBytes(), "v3".getBytes()));
-            }
-        });
+        EasyMock.replay(mdObserver, consumerFactory);
+        String cid = consumerManager.createConsumer(
+            groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+        consumerManager.subscribe(groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
+
+        readFromDefault(cid);
+        assertEquals(config.getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG),
+            Integer.parseInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_DEFAULT));
+        Thread.sleep(config.getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG));
+        assertTrue("Callback failed to fire", sawCallback);
+        assertNull("No exception in callback", actualException);
+    }
+
+
+    /**
+     * Response should return no sooner than KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG
+     */
+    @Test
+    public void testConsumerWaitMs() throws Exception {
+        Properties props = setUpProperties(new Properties());
+        Integer expectedWaitMs = 400;
+        props.setProperty(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG, expectedWaitMs.toString());
+        setUpConsumer(props);
+
+        expectCreate();
+        EasyMock.replay(mdObserver, consumerFactory);
+        schedulePoll();
+
+        String cid = consumerManager.createConsumer(
+                groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+        consumerManager.subscribe(groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
+        consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
+        consumer.updateBeginningOffsets(Collections.singletonMap(new TopicPartition(topicName, 0), 0L));
+
+        readFromDefault(cid);
+        long startTime = System.currentTimeMillis();
+        while ((System.currentTimeMillis() - startTime) < expectedWaitMs) {
+            assertFalse(sawCallback);
+            Thread.sleep(40);
+        }
+        assertTrue("Callback failed to fire", sawCallback);
+        assertNull("No exception in callback", actualException);
+    }
+
+    /**
+     * When min.bytes is not fulfilled, we should return after wait.ms
+     * When min.bytes is fulfilled, we should return immediately
+     */
+    @Test
+    public void testConsumerWaitMsAndMinBytes() throws Exception {
+        Properties props = setUpProperties(new Properties());
+        props.setProperty(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG, "1303");
+        props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, "3000");
+        props.setProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG, "5");
+        setUpConsumer(props);
+
+        expectCreate();
+
+        EasyMock.replay(mdObserver, consumerFactory);
+
+        String cid = consumerManager.createConsumer(
+                groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+        consumerManager.subscribe(groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
+        consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
+        consumer.updateBeginningOffsets(Collections.singletonMap(new TopicPartition(topicName, 0), 0L));
+
+        long startTime = System.currentTimeMillis();
+        readFromDefault(cid);
+        int expectedWaitMs = config.getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG);
+        while ((System.currentTimeMillis() - startTime) < expectedWaitMs) {
+            assertFalse(sawCallback);
+            Thread.sleep(100);
+        }
+        assertTrue("Callback failed to fire", sawCallback);
+        assertNull("No exception in callback", actualException);
+        assertTrue("Records returned not empty", actualRecords.isEmpty());
+
+
+        sawCallback = false;
+        final List<ConsumerRecord<byte[], byte[]>> referenceRecords = schedulePoll();
+        readFromDefault(cid);
+        Thread.sleep(expectedWaitMs / 2); // should return in less time
+
+        assertEquals("Records returned not as expected", referenceRecords, actualRecords);
+        assertTrue("Callback not called", sawCallback);
+        assertNull("Callback exception", actualException);
+    }
+
+    /**
+     * Should return more than min bytes of records and less than max bytes.
+     * Should not poll() twice after min bytes have been reached
+     */
+    @Test
+    public void testConsumerMinAndMaxBytes() throws Exception {
+        BinaryConsumerRecord sampleRecord = binaryConsumerRecord(0);
+        int sampleRecordSize = sampleRecord.getKey().length + sampleRecord.getValue().length;
+        // we expect all the records from the first poll to be returned
+        Properties props = setUpProperties(new Properties());
+        props.setProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG, Integer.toString(sampleRecordSize));
+        props.setProperty(KafkaRestConfig.PROXY_FETCH_MAX_BYTES_CONFIG, Integer.toString(sampleRecordSize * 10));
+        setUpConsumer(props);
+
+        final List<ConsumerRecord<byte[], byte[]>> scheduledRecords = schedulePoll();
+        final List<ConsumerRecord<byte[], byte[]>> referenceRecords = Arrays.asList(scheduledRecords.get(0), scheduledRecords.get(1), scheduledRecords.get(2));
+        schedulePoll(3);
+
+        expectCreate();
+        EasyMock.replay(mdObserver, consumerFactory);
+        String cid = consumerManager.createConsumer(
+                groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+        consumerManager.subscribe(groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
+        consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
+        consumer.updateBeginningOffsets(Collections.singletonMap(new TopicPartition(topicName, 0), 0L));
+
+        readFromDefault(cid);
+        Thread.sleep((long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 0.5)); // should return sooner since min bytes hit
+
+        assertTrue("Callback failed to fire", sawCallback);
+        assertNull("No exception in callback", actualException);
+        assertEquals("Records returned not as expected", referenceRecords, actualRecords);
+    }
+
+    @Test
+    public void testConsumeMinBytesIsOverridablePerConsumer() throws Exception {
+        BinaryConsumerRecord sampleRecord = binaryConsumerRecord(0);
+        int sampleRecordSize = sampleRecord.getKey().length + sampleRecord.getValue().length;
+        Properties props = setUpProperties(new Properties());
+        props.setProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG, Integer.toString(sampleRecordSize * 5));
+        props.setProperty(KafkaRestConfig.PROXY_FETCH_MAX_BYTES_CONFIG, Integer.toString(sampleRecordSize * 6));
+        setUpConsumer(props);
+
+        final List<ConsumerRecord<byte[], byte[]>> scheduledRecords = schedulePoll();
+        // global settings would make the consumer call poll twice and get more than 3 records,
+        // overridden settings should make him poll once since the min bytes will be reached
+        final List<ConsumerRecord<byte[], byte[]>> referenceRecords = Arrays.asList(scheduledRecords.get(0),
+                scheduledRecords.get(1),
+                scheduledRecords.get(2));
+        schedulePoll(3);
+
+        expectCreate();
+        EasyMock.replay(mdObserver, consumerFactory);
+        ConsumerInstanceConfig config = new ConsumerInstanceConfig(EmbeddedFormat.BINARY);
+        // we expect three records to be returned since the setting is overridden and poll() wont be called a second time
+        config.setResponseMinBytes(Integer.toString(sampleRecordSize * 2));
+        String cid = consumerManager.createConsumer(
+                groupName, config);
+        consumerManager.subscribe(groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
+        consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
+        consumer.updateBeginningOffsets(Collections.singletonMap(new TopicPartition(topicName, 0), 0L));
+
+        readFromDefault(cid);
+        Thread.sleep((long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 0.5)); // should return sooner since min bytes hit
+
+        assertTrue("Callback failed to fire", sawCallback);
+        assertNull("No exception in callback", actualException);
+        assertEquals("Records returned not as expected", referenceRecords, actualRecords);
+    }
+
+    @Test
+    public void testConsumerNormalOps() throws InterruptedException, ExecutionException {
+        expectCreate();
+        final List<ConsumerRecord<byte[], byte[]>> referenceRecords = schedulePoll();
+
         EasyMock.replay(mdObserver, consumerFactory);
 
         String cid = consumerManager.createConsumer(
@@ -166,15 +318,8 @@ public class KafkaConsumerManagerTest {
         sawCallback = false;
         actualException = null;
         actualRecords = null;
-        consumerManager.readRecords(groupName, cid, BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
-            new ConsumerReadCallback<byte[], byte[]>() {
-            @Override
-            public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
-                actualException = e;
-                actualRecords = records;
-                sawCallback = true;
-            }
-        });
+
+        readFromDefault(cid);
         Thread.sleep((long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 1.10));
 
         assertTrue("Callback failed to fire", sawCallback);
@@ -204,5 +349,56 @@ public class KafkaConsumerManagerTest {
         consumerManager.deleteConsumer(groupName, cid);
 
         EasyMock.verify(mdObserver, consumerFactory);
+    }
+
+    private void readFromDefault(String cid) throws InterruptedException, ExecutionException {
+        consumerManager.readRecords(groupName, cid, BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
+            new ConsumerReadCallback<byte[], byte[]>() {
+              @Override
+              public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
+                actualException = e;
+                actualRecords = records;
+                sawCallback = true;
+              }
+            });
+    }
+
+    private List<ConsumerRecord<byte[], byte[]>> schedulePoll() {
+        return schedulePoll(0);
+    }
+
+    private List<ConsumerRecord<byte[], byte[]>> schedulePoll(final int fromOffset) {
+        consumer.schedulePollTask(new Runnable() {
+          @Override
+          public void run() {
+            consumer.addRecord(KafkaConsumerManagerTest.this.record(fromOffset));
+            consumer.addRecord(KafkaConsumerManagerTest.this.record(fromOffset + 1));
+            consumer.addRecord(KafkaConsumerManagerTest.this.record(fromOffset + 2));
+          }
+        });
+        return Arrays.asList(
+            (ConsumerRecord<byte[], byte[]>) binaryConsumerRecord(fromOffset),
+            binaryConsumerRecord(fromOffset + 1),
+            binaryConsumerRecord(fromOffset + 2)
+        );
+    }
+
+    private BinaryConsumerRecord binaryConsumerRecord(int offset) {
+        return new BinaryConsumerRecord(
+                topicName,
+                String.format("k%d", offset).getBytes(),
+                String.format("v%d", offset).getBytes(),
+                0,
+                offset
+        );
+    }
+
+    private org.apache.kafka.clients.consumer.ConsumerRecord<byte[], byte[]> record(int offset) {
+        return new org.apache.kafka.clients.consumer.ConsumerRecord<>(
+                topicName,
+                0,
+                offset,
+                String.format("k%d", offset).getBytes(),
+                String.format("v%d", offset).getBytes());
     }
 }

@@ -50,6 +50,12 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
 
   private ConsumerState parent;
   private final long maxResponseBytes;
+  private final int requestTimeoutMs;
+  // the minimum bytes the task should accumulate
+  // before returning a response (or hitting the timeout)
+  // responseMinBytes might be bigger than maxResponseBytes
+  // in cases where the functionality is disabled
+  private final int responseMinBytes;
   private final ConsumerReadCallback<ClientKeyT, ClientValueT> callback;
   private CountDownLatch finished;
 
@@ -57,6 +63,8 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
   private ConsumerIterator<KafkaKeyT, KafkaValueT> iter;
   private List<ConsumerRecord<ClientKeyT, ClientValueT>> messages;
   private long bytesConsumed = 0;
+  private boolean exceededMinResponseBytes = false;
+  private boolean willExceedMaxResponseBytes = false;
   private final long started;
 
   public ConsumerReadTask(
@@ -65,15 +73,20 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
           long maxBytes,
           ConsumerReadCallback<ClientKeyT, ClientValueT> callback
   ) {
+    KafkaRestConfig conf = parent.getConfig();
     this.parent = parent;
     this.maxResponseBytes = Math.min(
-            maxBytes,
-            parent.getConfig().getLong(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG)
+        maxBytes,
+        conf.consumerResponseMaxBytes()
     );
     this.callback = callback;
     this.finished = new CountDownLatch(1);
 
-    started = parent.getConfig().getTime().milliseconds();
+    this.requestTimeoutMs = conf.getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG);
+    int responseMinBytes = conf.getInt(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG);
+    this.responseMinBytes = responseMinBytes < 0 ? Integer.MAX_VALUE : responseMinBytes;
+
+    started = conf.getTime().milliseconds();
     try {
       topicState = parent.getOrCreateTopicState(topic);
 
@@ -81,6 +94,8 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
       ConsumerReadTask previousTask = topicState.clearFailedTask();
       if (previousTask != null) {
         this.messages = previousTask.messages;
+        this.exceededMinResponseBytes = previousTask.exceededMinResponseBytes;
+        this.willExceedMaxResponseBytes = previousTask.willExceedMaxResponseBytes;
         this.bytesConsumed = previousTask.bytesConsumed;
       }
     } catch (RestException e) {
@@ -103,8 +118,6 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
 
       long roughMsgSize = 0;
 
-      final int requestTimeoutMs = parent.getConfig().getInt(
-              KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
       try {
         // Read off as many messages as we can without triggering a timeout exception. The
         // consumer timeout should be set very small, so the expectation is that even in the
@@ -115,13 +128,18 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
           ConsumerRecordAndSize<ClientKeyT, ClientValueT> recordAndSize =
                   parent.createConsumerRecord(msg);
           roughMsgSize = recordAndSize.getSize();
-          if (bytesConsumed + roughMsgSize >= maxResponseBytes) {
+          this.willExceedMaxResponseBytes = bytesConsumed + roughMsgSize >= maxResponseBytes;
+          if (this.willExceedMaxResponseBytes) {
             break;
           }
 
           iter.next();
           messages.add(recordAndSize.getRecord());
           bytesConsumed += roughMsgSize;
+          this.exceededMinResponseBytes = bytesConsumed > responseMinBytes;
+          if (this.exceededMinResponseBytes) {
+            break;
+          }
           // Updating the consumed offsets isn't done until we're actually going to return the
           // data since we may encounter an error during a subsequent read, in which case we'll
           // have to defer returning the data so we can return an HTTP error instead
@@ -143,10 +161,10 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
       // Including the rough message size here ensures processing finishes if the next
       // message exceeds the maxResponseBytes
       boolean requestTimedOut = elapsed >= requestTimeoutMs;
-      boolean exceededMaxResponseBytes = bytesConsumed + roughMsgSize >= maxResponseBytes;
-      if (requestTimedOut || exceededMaxResponseBytes) {
-        log.trace("Finishing ConsumerReadTask id={} requestTimedOut={} exceededMaxResponseBytes={}",
-                this, requestTimedOut, exceededMaxResponseBytes
+      if (requestTimedOut || willExceedMaxResponseBytes || exceededMinResponseBytes) {
+        log.trace("Finishing ConsumerReadTask id={} requestTimedOut={} "
+                  + "willExceedMaxResponseBytes={} exceededMinResponseBytes={}",
+                  this, requestTimedOut, willExceedMaxResponseBytes, this.exceededMinResponseBytes
         );
         finish();
       }

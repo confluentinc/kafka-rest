@@ -20,8 +20,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.core.Response;
 
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
+
+import java.util.Properties;
 
 public class ConsumerInstanceConfig {
 
@@ -33,6 +37,8 @@ public class ConsumerInstanceConfig {
   private EmbeddedFormat format;
   private String autoOffsetReset;
   private String autoCommitEnable;
+  private Integer responseMinBytes;
+  private Integer requestWaitMs;
 
   public ConsumerInstanceConfig() {
     this(DEFAULT_FORMAT);
@@ -40,7 +46,7 @@ public class ConsumerInstanceConfig {
 
   public ConsumerInstanceConfig(EmbeddedFormat format) {
     // This constructor is only for tests so reparsing the format name is ok
-    this(null, null, format.name(), null, null);
+    this(null, null, format.name(), null, null, null,  null);
   }
 
   public ConsumerInstanceConfig(
@@ -48,7 +54,10 @@ public class ConsumerInstanceConfig {
       @JsonProperty("name") String name,
       @JsonProperty("format") String format,
       @JsonProperty("auto.offset.reset") String autoOffsetReset,
-      @JsonProperty("auto.commit.enable") String autoCommitEnable
+      @JsonProperty("auto.commit.enable") String autoCommitEnable,
+      @JsonProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG)
+              String responseMinBytes,
+      @JsonProperty(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG) String requestWaitMs
   ) {
     this.id = id;
     this.name = name;
@@ -69,8 +78,27 @@ public class ConsumerInstanceConfig {
         );
       }
     }
+    this.setResponseMinBytes(responseMinBytes);
+    this.setRequestWaitMs(requestWaitMs);
     this.autoOffsetReset = autoOffsetReset;
     this.autoCommitEnable = autoCommitEnable;
+  }
+
+  /**
+   * Attaches proxy-specific configurations to the given Properties object
+   */
+  public static Properties attachProxySpecificProperties(Properties props,
+                                                         ConsumerInstanceConfig config) {
+    if (config.getResponseMinBytes() != null) {
+      props.setProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG,
+              config.getResponseMinBytes().toString());
+    }
+    if (config.getRequestWaitMs() != null) {
+      props.setProperty(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG,
+              config.getRequestWaitMs().toString());
+    }
+
+    return props;
   }
 
   @JsonProperty
@@ -86,6 +114,68 @@ public class ConsumerInstanceConfig {
   @JsonProperty
   public String getName() {
     return name;
+  }
+
+  @JsonProperty
+  public Integer getResponseMinBytes() {
+    return this.responseMinBytes;
+  }
+
+  @JsonProperty
+  public void setResponseMinBytes(String responseMinBytes) throws RestConstraintViolationException {
+    if (responseMinBytes == null) {
+      this.responseMinBytes = null;
+      return;
+    }
+
+    try {
+      this.responseMinBytes = Integer.parseInt(responseMinBytes);
+      KafkaRestConfig.PROXY_CONSUMER_RESPONSE_MIN_BYTES_VALIDATOR.ensureValid(
+              KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG,
+              this.responseMinBytes
+      );
+    } catch (io.confluent.common.config.ConfigException e) {
+      throw new RestConstraintViolationException(
+              e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()
+      );
+    } catch (NumberFormatException e) {
+      throw new RestConstraintViolationException(
+              String.format("Invalid value for configuration %s: must be an integer",
+                      responseMinBytes,
+                      KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG),
+              Response.Status.BAD_REQUEST.getStatusCode());
+    }
+  }
+
+  @JsonProperty
+  public Integer getRequestWaitMs() {
+    return this.requestWaitMs;
+  }
+
+  @JsonProperty
+  public void setRequestWaitMs(String requestWaitMs) throws RestConstraintViolationException {
+    if (requestWaitMs == null) {
+      this.requestWaitMs = null;
+      return;
+    }
+
+    try {
+      this.requestWaitMs = Integer.parseInt(requestWaitMs);
+      KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_VALIDATOR.ensureValid(
+              KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG,
+              this.requestWaitMs
+      );
+    } catch (io.confluent.common.config.ConfigException e) {
+      throw new RestConstraintViolationException(
+              e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()
+      );
+    } catch (NumberFormatException e) {
+      throw new RestConstraintViolationException(
+              String.format("Invalid value for configuration %s: must be an integer",
+                      responseMinBytes,
+                      KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG),
+              Response.Status.BAD_REQUEST.getStatusCode());
+    }
   }
 
   @JsonProperty
