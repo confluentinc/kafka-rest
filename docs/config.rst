@@ -46,6 +46,9 @@ Java Kafka clients.
   * Importance: high
 
 ``consumer.request.max.bytes``
+  DEPRECATED: see ``fetch.max.bytes``
+
+``fetch.max.bytes``
   Maximum number of bytes in unencoded message keys and values returned by a single request. This can be used by administrators to limit the memory used by a single consumer and to control the memory usage required to decode responses on clients that cannot perform a streaming decode. Note that the actual payload will be larger due to overhead from base64 encoding the response data and from JSON encoding the entire response.
 
   * Type: long
@@ -60,6 +63,7 @@ Java Kafka clients.
   * Importance: medium
 
 ``consumer.request.timeout.ms``
+  DEPRECATED: see ``fetch.max.wait.ms``
   The maximum total time to wait for messages for a request if the maximum number of messages has not yet been reached.
 
   * Type: int
@@ -109,6 +113,21 @@ Java Kafka clients.
   * Type: int
   * Default: 50
   * Importance: low
+
+
+``fetch.max.wait.ms``
+  Maximum amount of time the proxy will wait before returning a consumer response. Note that a response will be returned earlier if ``fetch.min.bytes`` is fulfilled.
+
+  * Type: int
+  * Default: 1000
+  * Importance: medium
+
+``fetch.min.bytes``
+  Minimum number of bytes in message keys and values returned by a single request before the timeout of `fetch.max.wait.ms` passes.
+
+  * Type: int
+  * Default: 1000
+  * Importance: medium
 
 ``consumer.iterator.timeout.ms``
   Timeout for blocking consumer iterator operations. This should be set to a small enough value that it is possible to effectively peek() on the iterator.

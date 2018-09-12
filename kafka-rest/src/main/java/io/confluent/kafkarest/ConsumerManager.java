@@ -201,23 +201,7 @@ public class ConsumerManager {
         throw Errors.invalidConsumerConfigException(e);
       }
 
-      ConsumerState state;
-      switch (instanceConfig.getFormat()) {
-        case BINARY:
-          state = new BinaryConsumerState(this.config, cid, consumer);
-          break;
-        case AVRO:
-          state = new AvroConsumerState(this.config, cid, consumer);
-          break;
-        case JSON:
-          state = new JsonConsumerState(this.config, cid, consumer);
-          break;
-        default:
-          throw new RestServerErrorException(
-              "Invalid embedded format for new consumer.",
-              Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
-          );
-      }
+      ConsumerState state = createConsumerState(instanceConfig, cid, consumer);
 
       synchronized (this) {
         consumers.put(cid, state);
@@ -231,6 +215,45 @@ public class ConsumerManager {
         }
       }
     }
+  }
+
+  private ConsumerState createConsumerState(
+          ConsumerInstanceConfig instanceConfig,
+          ConsumerInstanceId cid, ConsumerConnector consumer
+  ) throws RestServerErrorException {
+    Properties newProps = ConsumerInstanceConfig.attachProxySpecificProperties(
+            (Properties) this.config.getOriginalProperties().clone(), instanceConfig);
+
+    KafkaRestConfig newConfig;
+    try {
+      newConfig = new KafkaRestConfig(newProps, this.config.getTime());
+    } catch (io.confluent.rest.RestConfigException e) {
+      throw new RestServerErrorException(
+              "Invalid configuration for new consumer.",
+              Response.Status.BAD_REQUEST.getStatusCode(),
+              e
+      );
+    }
+
+    ConsumerState state;
+    switch (instanceConfig.getFormat()) {
+      case BINARY:
+        state = new BinaryConsumerState(newConfig, cid, consumer);
+        break;
+      case AVRO:
+        state = new AvroConsumerState(newConfig, cid, consumer);
+        break;
+      case JSON:
+        state = new JsonConsumerState(newConfig, cid, consumer);
+        break;
+      default:
+        throw new RestServerErrorException(
+                String.format("Invalid embedded format %s for new consumer.",
+                    instanceConfig.getFormat()),
+                Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
+        );
+    }
+    return state;
   }
 
   // The parameter consumerStateType works around type erasure, allowing us to verify at runtime
@@ -368,7 +391,7 @@ public class ConsumerManager {
       this.started = config.getTime().milliseconds();
       this.consumerConfig = taskState.consumerState.getConfig();
       this.requestExpiration = this.started
-          + consumerConfig.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+          + consumerConfig.getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG);
       this.waitExpirationMs = 0;
     }
 

@@ -770,6 +770,10 @@ any consumers before it is terminated.
                          defaults to "binary".
    :<json string auto.offset.reset: Sets the ``auto.offset.reset`` setting for the consumer
    :<json string auto.commit.enable: Sets the ``auto.commit.enable`` setting for the consumer
+   :<json string fetch.min.bytes: Sets the ``fetch.min.bytes``
+                                                    setting for this consumer specifically
+   :<json string fetch.max.wait.ms: Sets the ``fetch.max.wait.ms``
+                                                 setting for this consumer specifically
 
    :>json string instance_id: Unique ID for the consumer instance in this group.
    :>json string base_uri: Base URI used to construct URIs for subsequent requests against this consumer instance. This
