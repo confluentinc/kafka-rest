@@ -410,23 +410,27 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   }
 
   public ConsumerRecord<KafkaKeyT, KafkaValueT> peek() {
-    if (hasNext()) {
+    if (hasNextWithPoll()) {
       return consumerRecordList.get(this.index);
     }
     return null;
   }
 
-  public boolean hasNext() {
-    if (consumerRecordList != null && this.index < consumerRecordList.size()) {
+  public boolean hasNextWithPoll() {
+    if (hasNext()) {
       return true;
     }
     // If none are available, try checking for any records already fetched by the consumer.
     getOrCreateConsumerRecords();
+    return hasNext();
+  }
+
+  public boolean hasNext() {
     return consumerRecordList != null && this.index < consumerRecordList.size();
   }
 
   public ConsumerRecord<KafkaKeyT, KafkaValueT> next() {
-    if (hasNext()) {
+    if (hasNextWithPoll()) {
       ConsumerRecord<KafkaKeyT, KafkaValueT> record = consumerRecordList.get(index);
       this.index = this.index + 1;
       return record;

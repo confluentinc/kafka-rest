@@ -155,7 +155,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   @Test
   public void testInvalidKafkaConsumerConfig() {
     ConsumerInstanceConfig config = new ConsumerInstanceConfig("id", "name", "binary",
-                                                               "bad-config", null);
+                                                               "bad-config", null, null, null);
     Response response = request("/consumers/" + groupName)
         .post(Entity.entity(config, Versions.KAFKA_V1_JSON));
     assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response,

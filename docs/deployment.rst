@@ -156,6 +156,9 @@ Other settings are important to the health and performance of the proxy. You sho
 changing these based on your specific use case.
 
    ``consumer.request.max.bytes``
+     DEPRECATED: See ``proxy.fetch.max.bytes``
+
+   ``proxy.fetch.max.bytes``
      Maximum number of bytes in message keys and values returned by a single request.
      Smaller values reduce the maximum memory used by a single consumer and may be helpful to
      clients that cannot perform a streaming decode of responses, limiting the maximum memory
@@ -171,6 +174,22 @@ changing these based on your specific use case.
 
      * Type: long
      * Default: 67108864
+     * Importance: medium
+
+   ``proxy.fetch.max.wait.ms``
+     The maximum amount of time the proxy will wait before returning a consumer response if
+     there isn't sufficient daa to satisfy the requirement given by ``proxy.fetch.min.bytes``.
+
+     * Type: int
+     * Default: 1000
+     * Importance: medium
+
+   ``proxy.fetch.min.bytes``
+     The minimum number of bytes in message keys and values returned by a single request
+     before the timeout of `proxy.fetch.max.wait.ms` passes.
+
+     * Type: int
+     * Default: 1000
      * Importance: medium
 
    ``consumer.request.timeout.ms``
