@@ -16,6 +16,7 @@
 
 package io.confluent.kafkarest.v2;
 
+import io.confluent.kafkarest.ConsumerWorkerReadCallback;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
@@ -100,7 +101,7 @@ public class KafkaConsumerManager {
             : config.getInt(CONSUMER_MAX_THREADS_CONFIG);
     this.executor = new ThreadPoolExecutor(0, maxThreadCount,
             60L, TimeUnit.SECONDS,
-            new SynchronousQueue<>());
+            new SynchronousQueue<Runnable>());
     this.consumerFactory = null;
     this.expirationThread = new ExpirationThread();
     this.expirationThread.start();
@@ -273,40 +274,48 @@ public class KafkaConsumerManager {
       return null;
     }
 
-    return executor.submit(() -> {
-      try {
-        KafkaConsumerReadTask task = new KafkaConsumerReadTask<KafkaKeyT, KafkaValueT,
+    return executor.submit(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          KafkaConsumerReadTask task = new KafkaConsumerReadTask<KafkaKeyT, KafkaValueT,
                 ClientKeyT, ClientValueT>(
-            state,
-            timeout,
-            maxBytes,
-            config,
-            (records, e) -> {
-              updateExpiration(state);
-              if (e != null) {
-                // Ensure caught exceptions are converted to RestExceptions so the user gets a
-                // nice error message. Currently we don't define any more specific errors because
-                // the old consumer interface doesn't classify the errors well like the new
-                // consumer does. When the new consumer is available we may be able to update this
-                // to provide better feedback to the user.
-                Exception responseException = e;
-                if (!(e instanceof RestException)) {
-                  responseException = Errors.kafkaErrorException(e);
+                state,
+                timeout,
+                maxBytes,
+                config,
+                new ConsumerWorkerReadCallback<ClientKeyT, ClientValueT>() {
+                  @Override
+                  public void onCompletion(
+                          List<? extends ConsumerRecord<ClientKeyT, ClientValueT>> records,
+                          Exception e) {
+                    KafkaConsumerManager.this.updateExpiration(state);
+                    if (e != null) {
+                      // Ensure caught exceptions are converted to RestExceptions so the user gets
+                      // a nice error message. Currently we don't define any more specific
+                      // errors because the old consumer interface doesn't classify the errors well
+                      // like the new consumer does. When the new consumer is available we may be
+                      // able to update this to provide better feedback to the user.
+                      Exception responseException = e;
+                      if (!(e instanceof RestException)) {
+                        responseException = Errors.kafkaErrorException(e);
+                      }
+                      callback.onCompletion(null, responseException);
+                    } else {
+                      callback.onCompletion(records, null);
+                    }
+                  }
                 }
-                callback.onCompletion(null, responseException);
-              } else {
-                callback.onCompletion(records, null);
-              }
-            }
-        );
-        task.doFullRead();
-      } catch (Exception e) {
-        log.error("Failed to read records consumer " + state.getId().toString(), e);
-        Exception responseException = e;
-        if (!(e instanceof RestException)) {
-          responseException = Errors.kafkaErrorException(e);
+          );
+          task.doFullRead();
+        } catch (Exception e) {
+          log.error("Failed to read records consumer " + state.getId().toString(), e);
+          Exception responseException = e;
+          if (!(e instanceof RestException)) {
+            responseException = Errors.kafkaErrorException(e);
+          }
+          callback.onCompletion(null, responseException);
         }
-        callback.onCompletion(null, responseException);
       }
     });
   }
