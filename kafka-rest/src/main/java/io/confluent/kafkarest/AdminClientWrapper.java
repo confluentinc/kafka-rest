@@ -65,9 +65,7 @@ public class AdminClientWrapper {
         brokerIds.add(node.id());
       }
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE,
-          Errors.KAFKA_ERROR_ERROR_CODE, e
-      );
+      throw Errors.kafkaErrorException(e);
     }
     return brokerIds;
   }
@@ -78,9 +76,7 @@ public class AdminClientWrapper {
       allTopics = new TreeSet<>(
           adminClient.listTopics().names().get(initTimeOut, TimeUnit.MILLISECONDS));
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE,
-          Errors.KAFKA_ERROR_ERROR_CODE, e
-      );
+      throw Errors.kafkaErrorException(e);
     }
     return allTopics;
   }
@@ -135,9 +131,7 @@ public class AdminClientWrapper {
       Topic topic = new Topic(topicName, topicProps, partitions);
       return topic;
     } catch (InterruptedException | ExecutionException e) {
-      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE,
-          Errors.KAFKA_ERROR_ERROR_CODE, e
-      );
+      throw Errors.kafkaErrorException(e);
     }
   }
 
@@ -173,9 +167,7 @@ public class AdminClientWrapper {
       return adminClient.describeTopics(Collections.unmodifiableList(Arrays.asList(topicName)))
           .values().get(topicName).get(initTimeOut, TimeUnit.MILLISECONDS);
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE,
-          Errors.KAFKA_ERROR_ERROR_CODE, e
-      );
+      throw Errors.kafkaErrorException(e);
     }
   }
 
