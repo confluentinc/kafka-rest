@@ -32,7 +32,7 @@ import java.util.List;
  */
 public class ClusterInformationObserver {
 
-  private ZkUtils zkUtils;
+  private final ZkUtils zkUtils;
 
   public ClusterInformationObserver(ZkUtils zkUtils) {
     this.zkUtils = zkUtils;
@@ -52,7 +52,7 @@ public class ClusterInformationObserver {
       }
       return new BrokerEntity(brokerInfo.id(), result);
     } else {
-      return null;
+      return BrokerEntity.empty();
     }
   }
 
