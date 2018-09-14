@@ -14,7 +14,7 @@
     <!-- TODO after add offset monitoring -->
     <suppress
             checks="(ClassDataAbstractionCoupling)"
-            files="(AdminClientWrapper|GroupMetadataObserver).java"
+            files="(AdminClientWrapper|MetadataObserver|GroupMetadataObserver).java"
     />
 
     <suppress

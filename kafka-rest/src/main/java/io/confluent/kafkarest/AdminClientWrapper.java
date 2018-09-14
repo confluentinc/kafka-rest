@@ -15,9 +15,6 @@
 
 package io.confluent.kafkarest;
 
-import kafka.cluster.Broker;
-import kafka.cluster.EndPoint;
-import kafka.utils.ZkUtils;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.Config;
 import org.apache.kafka.clients.admin.ConfigEntry;
@@ -26,11 +23,8 @@ import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.config.ConfigResource;
-import org.apache.kafka.common.security.JaasUtils;
-import scala.collection.JavaConverters;
 
 import java.util.Arrays;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -39,8 +33,6 @@ import java.util.TreeSet;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
-import io.confluent.kafkarest.entities.BrokerEntity;
-import io.confluent.kafkarest.entities.EndPointEntity;
 import io.confluent.kafkarest.entities.NodeState;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
@@ -88,30 +80,6 @@ public class AdminClientWrapper {
               Errors.KAFKA_ERROR_ERROR_CODE, e
       );
     }
-  }
-
-  /**
-   * <p>Get broker metadata</p>
-   *
-   * @param brokerId - broker ID
-   * @return metadata about broker by ID or null if broker not found
-   */
-  public BrokerEntity getBroker(int brokerId) {
-    final ZkUtils zkUtils = getZkUtils();
-    for (Broker broker :
-            JavaConverters.seqAsJavaListConverter(zkUtils.getAllBrokersInCluster()).asJava()) {
-      if (broker.id() == brokerId) {
-        List<EndPointEntity> endpoints = new ArrayList<>();
-        for (EndPoint endPoint :
-                JavaConverters.seqAsJavaListConverter(broker.endPoints()).asJava()) {
-          endpoints.add(new EndPointEntity(endPoint.securityProtocol().name,
-                  endPoint.host(),
-                  endPoint.port()));
-        }
-        return new BrokerEntity(broker.id(), endpoints);
-      }
-    }
-    return BrokerEntity.empty();
   }
 
   public List<Integer> getBrokerIds() throws Exception {
@@ -214,18 +182,6 @@ public class AdminClientWrapper {
   private TopicDescription getTopicDescription(String topicName) throws Exception {
     return adminClient.describeTopics(Collections.unmodifiableList(Arrays.asList(topicName)))
         .values().get(topicName).get(initTimeOut, TimeUnit.MILLISECONDS);
-  }
-
-  private ZkUtils getZkUtils() {
-    final String zookeeperConnect =
-            kafkaRestConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG);
-    final int sessionTimeout =
-            kafkaRestConfig.getInt(KafkaRestConfig.KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG);
-    final int defaultZkTimeout = 3000;
-    return ZkUtils.apply(zookeeperConnect,
-            (sessionTimeout != 0) ? sessionTimeout : defaultZkTimeout,
-            (sessionTimeout != 0) ? sessionTimeout : defaultZkTimeout,
-            JaasUtils.isZkSecurityEnabled());
   }
 
   public void shutdown() {

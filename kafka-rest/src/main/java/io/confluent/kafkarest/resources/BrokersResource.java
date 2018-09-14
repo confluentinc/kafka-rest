@@ -61,7 +61,7 @@ public class BrokersResource {
   @Path("/{brokerId}")
   @PerformanceMetric("brokers.get")
   public BrokerEntity get(@PathParam("brokerId")Integer brokerId) {
-    return ctx.getAdminClientWrapper().getBroker(brokerId);
+    return ctx.getMetadataObserver().getBroker(brokerId);
   }
 
   /**
