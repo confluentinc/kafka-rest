@@ -78,7 +78,7 @@ public class AdminClientWrapper {
       Collection<Node> nodeCollection =
           clusterResults.nodes().get(initTimeOut, TimeUnit.MILLISECONDS);
       for (Node eachNode: nodeCollection) {
-        if (brokerId.equals(eachNode.id())) {
+        if (brokerId != null && brokerId.equals(eachNode.id())) {
           return new NodeState(true);
         }
       }
@@ -149,13 +149,13 @@ public class AdminClientWrapper {
 
   public List<Partition> getTopicPartitions(String topicName) throws Exception {
     TopicDescription topicDescription = getTopicDescription(topicName);
-    List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), null);
+    List<Partition> partitions = buildPartitionsData(topicDescription.partitions(), null);
     return partitions;
   }
 
   public Partition getTopicPartition(String topicName, int partition) throws Exception {
     TopicDescription topicDescription = getTopicDescription(topicName);
-    List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), partition);
+    List<Partition> partitions = buildPartitionsData(topicDescription.partitions(), partition);
     if (partitions.isEmpty()) {
       return null;
     }
@@ -168,7 +168,7 @@ public class AdminClientWrapper {
   }
 
   private Topic buildTopic(String topicName, TopicDescription topicDescription) throws Exception {
-    List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), null);
+    List<Partition> partitions = buildPartitionsData(topicDescription.partitions(), null);
 
     ConfigResource topicResource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
     Config config = adminClient.describeConfigs(
@@ -182,7 +182,7 @@ public class AdminClientWrapper {
     return topic;
   }
 
-  private List<Partition> buildPartitonsData(
+  private List<Partition> buildPartitionsData(
       List<TopicPartitionInfo> partitions,
       Integer partitionsFilter
   ) {
