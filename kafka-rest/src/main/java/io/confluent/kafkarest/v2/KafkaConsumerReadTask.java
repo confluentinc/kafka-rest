@@ -80,22 +80,6 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
   }
 
   /**
-   * Performs multiple iterations of reading from a consumer iterator
-   */
-  public void doFullRead() {
-    log.trace("Executing consumer read task task ({})", this);
-    while (!isDone()) {
-      doPartialRead();
-      long now = config.getTime().milliseconds();
-      long waitTime = waitExpiration - now;
-      if (waitTime > 0) {
-        config.getTime().sleep(waitTime);
-      }
-    }
-    log.trace("Finished executing consumer read task ({})", this);
-  }
-
-  /**
    * Performs one iteration of reading from a consumer iterator.
    *
    * @return true if this read timed out, indicating the scheduler should back off
@@ -167,7 +151,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
     }
   }
 
-  private boolean isDone() {
+  public boolean isDone() {
     return finished;
   }
 

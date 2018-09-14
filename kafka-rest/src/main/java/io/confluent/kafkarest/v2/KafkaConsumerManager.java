@@ -274,40 +274,48 @@ public class KafkaConsumerManager {
       return null;
     }
 
+    final KafkaConsumerReadTask task = new KafkaConsumerReadTask<KafkaKeyT, KafkaValueT,
+          ClientKeyT, ClientValueT>(
+          state,
+          timeout,
+          maxBytes,
+          config,
+          new ConsumerWorkerReadCallback<ClientKeyT, ClientValueT>() {
+            @Override
+            public void onCompletion(
+                    List<? extends ConsumerRecord<ClientKeyT, ClientValueT>> records,
+                    Exception e) {
+              KafkaConsumerManager.this.updateExpiration(state);
+              if (e != null) {
+                // Ensure caught exceptions are converted to RestExceptions so the user gets
+                // a nice error message. Currently we don't define any more specific
+                // errors because the old consumer interface doesn't classify the errors well
+                // like the new consumer does. When the new consumer is available we may be
+                // able to update this to provide better feedback to the user.
+                Exception responseException = e;
+                if (!(e instanceof RestException)) {
+                  responseException = Errors.kafkaErrorException(e);
+                }
+                callback.onCompletion(null, responseException);
+              } else {
+                callback.onCompletion(records, null);
+              }
+            }
+          }
+    );
     return executor.submit(new Runnable() {
       @Override
       public void run() {
         try {
-          KafkaConsumerReadTask task = new KafkaConsumerReadTask<KafkaKeyT, KafkaValueT,
-                ClientKeyT, ClientValueT>(
-                state,
-                timeout,
-                maxBytes,
-                config,
-                new ConsumerWorkerReadCallback<ClientKeyT, ClientValueT>() {
-                  @Override
-                  public void onCompletion(
-                          List<? extends ConsumerRecord<ClientKeyT, ClientValueT>> records,
-                          Exception e) {
-                    KafkaConsumerManager.this.updateExpiration(state);
-                    if (e != null) {
-                      // Ensure caught exceptions are converted to RestExceptions so the user gets
-                      // a nice error message. Currently we don't define any more specific
-                      // errors because the old consumer interface doesn't classify the errors well
-                      // like the new consumer does. When the new consumer is available we may be
-                      // able to update this to provide better feedback to the user.
-                      Exception responseException = e;
-                      if (!(e instanceof RestException)) {
-                        responseException = Errors.kafkaErrorException(e);
-                      }
-                      callback.onCompletion(null, responseException);
-                    } else {
-                      callback.onCompletion(records, null);
-                    }
-                  }
-                }
-          );
-          task.doFullRead();
+          log.trace("Executing consumer read task ({})", task);
+          task.doPartialRead();
+          if (!task.isDone()) {
+          // TODO: Look into adding a SchedueldThreadPoolExecutor instead of sleeping
+          //  backoff(this, task);
+            executor.submit(this);
+          } else {
+            log.trace("Finished executing consumer read task ({})", task);
+          }
         } catch (Exception e) {
           log.error("Failed to read records consumer " + state.getId().toString(), e);
           Exception responseException = e;
@@ -318,6 +326,36 @@ public class KafkaConsumerManager {
         }
       }
     });
+  }
+
+  private void backoff(Runnable runnable, KafkaConsumerReadTask task) throws InterruptedException {
+    long now = config.getTime().milliseconds();
+    long nextExpiration = task.waitExpiration;
+    if (nextExpiration <= now) {
+      return;
+    }
+
+    long timeout = nextExpiration - now;
+    assert (timeout >= 0);
+    log.trace(
+            "Consumer worker waiting for next task worker={} timeout={}",
+            this,
+            timeout
+    );
+    /*
+    java.lang.IllegalMonitorStateException
+    at java.base/java.lang.Object.wait(Native Method)
+    at io.confluent.kafkarest.SystemTime.waitOn(SystemTime.java:26)
+    at io.confluent.kafkarest.v2.KafkaConsumerManager.backoff(KafkaConsumerManager.java:344)
+    at io.confluent.kafkarest.v2.KafkaConsumerManager.access$200(KafkaConsumerManager.java:73)
+    at io.confluent.kafkarest.v2.KafkaConsumerManager$2.run(KafkaConsumerManager.java:313)
+    at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:514)
+    at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+    at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1135)
+    at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+    at java.base/java.lang.Thread.run(Thread.java:844)
+    */
+    config.getTime().waitOn(runnable, timeout);
   }
 
   public interface CommitCallback {

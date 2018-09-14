@@ -21,8 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Vector;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import kafka.common.MessageStreamsExistException;
@@ -45,12 +44,7 @@ public abstract class ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientVa
   private ConsumerConnector consumer;
   private Map<String, ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>> topics;
   private long expiration;
-  // A read/write lock on the ConsumerState allows concurrent readTopic calls, but allows
-  // commitOffsets to safely lock the entire state in order to get correct information about all
-  // the topic/stream's current offset state. All operations on individual TopicStates must be
-  // synchronized at that level as well (so, e.g., readTopic may modify a single TopicState, but
-  // only needs read access to the ConsumerState).
-  private ReadWriteLock lock;
+  private ReentrantLock lock;
 
   public ConsumerState(
       KafkaRestConfig config, ConsumerInstanceId instanceId,
@@ -62,7 +56,7 @@ public abstract class ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientVa
     this.topics = new HashMap<>();
     this.expiration = config.getTime().milliseconds()
                       + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
-    this.lock = new ReentrantReadWriteLock();
+    this.lock = new ReentrantLock();
   }
 
   public ConsumerInstanceId getId() {
@@ -89,50 +83,42 @@ public abstract class ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientVa
       MessageAndMetadata<KafkaKeyT, KafkaValueT> msg
   );
 
-  /**
-   * Start a read on the given topic, enabling a read lock on this ConsumerState and a full lock on
-   * the ConsumerTopicState.
-   */
   public void startRead(
       ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
           topicState
   ) {
-    lock.readLock().lock();
+    lock.lock();
     topicState.lock();
   }
 
-  /**
-   * Finish a read request, releasing the lock on the ConsumerTopicState and the read lock on this
-   * ConsumerState.
-   */
   public void finishRead(
       ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
           topicState
   ) {
     topicState.unlock();
-    lock.readLock().unlock();
+    lock.unlock();
   }
 
   public List<TopicPartitionOffset> commitOffsets() {
-    lock.writeLock().lock();
+    lock.lock();
     try {
       consumer.commitOffsets();
       List<TopicPartitionOffset> result = getOffsets(true);
       return result;
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
   public void close() {
-    lock.writeLock().lock();
+    lock.lock();
     try {
       consumer.shutdown();
       // Marks this state entry as no longer valid because the consumer group is being destroyed.
       consumer = null;
       topics = null;
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
@@ -171,8 +157,7 @@ public abstract class ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientVa
   public ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> getOrCreateTopicState(
       String topic
   ) {
-    // Try getting the topic only using the read lock
-    lock.readLock().lock();
+    lock.lock();
     try {
       if (topics == null) {
         return null;
@@ -183,10 +168,10 @@ public abstract class ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientVa
         return state;
       }
     } finally {
-      lock.readLock().unlock();
+      lock.unlock();
     }
 
-    lock.writeLock().lock();
+    lock.lock();
     try {
       if (topics == null) {
         return null;
@@ -208,7 +193,7 @@ public abstract class ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientVa
     } catch (MessageStreamsExistException e) {
       throw Errors.consumerAlreadySubscribedException();
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 

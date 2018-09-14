@@ -88,17 +88,8 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
     }
   }
 
-  public void doFullRead() {
-    log.trace("Executing consumer read task ({})", this);
-    while (!isDone()) {
-      doPartialRead();
-      long now = config.getTime().milliseconds();
-      long waitTime = waitExpiration - now;
-      if (waitTime > 0) {
-        config.getTime().sleep(waitTime);
-      }
-    }
-    log.trace("Finished executing consumer read task ({})", this);
+  boolean isDone() {
+    return finished;
   }
 
   /**
@@ -184,10 +175,6 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
       log.error("Unexpected exception in consumer read task id={} ", this, e);
       return false;
     }
-  }
-
-  boolean isDone() {
-    return finished;
   }
 
   private void finish() {
