@@ -175,6 +175,8 @@ public class KafkaConsumerManager {
       if (instanceConfig.getAutoOffsetReset() != null) {
         props.setProperty("auto.offset.reset", instanceConfig.getAutoOffsetReset());
       }
+      // override request.timeout.ms to the default
+      props.setProperty("request.timeout.ms", "30000");
 
       props.setProperty(
           "schema.registry.url",
