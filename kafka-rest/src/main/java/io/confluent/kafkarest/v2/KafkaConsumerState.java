@@ -29,7 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.Semaphore;
 import java.util.regex.Pattern;
 
 import io.confluent.kafkarest.ConsumerInstanceId;
@@ -65,7 +65,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
 
 
   private long expiration;
-  private ReentrantLock lock;
+  private Semaphore lock;
 
   public KafkaConsumerState(
       KafkaRestConfig config,
@@ -77,7 +77,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     this.consumer = consumer;
     this.expiration = config.getTime().milliseconds()
                       + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
-    this.lock = new ReentrantLock();
+    this.lock = new Semaphore(1);
   }
 
   public ConsumerInstanceId getId() {
@@ -105,12 +105,12 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   );
 
 
-  public void startRead() {
-    lock.lock();
+  public boolean tryStartRead() {
+    return lock.tryAcquire();
   }
 
   public void finishRead() {
-    lock.unlock();
+    lock.release();
   }
 
 
@@ -121,7 +121,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       String async,
       ConsumerOffsetCommitRequest offsetCommitRequest
   ) {
-    lock.lock();
+    lock.acquireUninterruptibly();
     try {
       // If no offsets are given, then commit all the records read so far
       if (offsetCommitRequest == null) {
@@ -154,7 +154,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       List<TopicPartitionOffset> result = new Vector<TopicPartitionOffset>();
       return result;
     } finally {
-      lock.unlock();
+      lock.release();
     }
   }
 
@@ -162,7 +162,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * Seek to the first offset for each of the given partitions.
    */
   public void seekToBeginning(ConsumerSeekToRequest seekToRequest) {
-    lock.lock();
+    lock.acquireUninterruptibly();
     try {
       if (seekToRequest != null) {
         Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
@@ -173,7 +173,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
         consumer.seekToBeginning(topicPartitions);
       }
     } finally {
-      lock.unlock();
+      lock.release();
     }
   }
 
@@ -181,7 +181,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * Seek to the last offset for each of the given partitions.
    */
   public void seekToEnd(ConsumerSeekToRequest seekToRequest) {
-    lock.lock();
+    lock.acquireUninterruptibly();
     try {
       if (seekToRequest != null) {
         Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
@@ -192,7 +192,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
         consumer.seekToEnd(topicPartitions);
       }
     } finally {
-      lock.unlock();
+      lock.release();
     }
   }
 
@@ -200,7 +200,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * Overrides the fetch offsets that the consumer will use on the next poll(timeout).
    */
   public void seekToOffset(ConsumerSeekToOffsetRequest seekToOffsetRequest) {
-    lock.lock();
+    lock.acquireUninterruptibly();
     try {
       if (seekToOffsetRequest != null) {
         for (TopicPartitionOffsetMetadata t : seekToOffsetRequest.offsets) {
@@ -210,7 +210,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
 
       }
     } finally {
-      lock.unlock();
+      lock.release();
     }
   }
 
@@ -218,7 +218,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * Manually assign a list of partitions to this consumer.
    */
   public void assign(ConsumerAssignmentRequest assignmentRequest) {
-    lock.lock();
+    lock.acquireUninterruptibly();
     try {
       if (assignmentRequest != null) {
         Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
@@ -229,7 +229,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
         consumer.assign(topicPartitions);
       }
     } finally {
-      lock.unlock();
+      lock.release();
     }
   }
 
@@ -238,7 +238,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    */
 
   public void close() {
-    lock.lock();
+    lock.acquireUninterruptibly();
     try {
       if (consumer != null) {
         consumer.close();
@@ -246,7 +246,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       // Marks this state entry as no longer valid because the consumer group is being destroyed.
       consumer = null;
     } finally {
-      lock.unlock();
+      lock.release();
     }
   }
 
@@ -259,7 +259,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       return;
     }
 
-    lock.lock();
+    lock.acquireUninterruptibly();
     try {
       if (consumer != null) {
         if (subscription.topics != null) {
@@ -271,7 +271,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
         }
       }
     } finally {
-      lock.unlock();
+      lock.release();
     }
   }
 
@@ -279,13 +279,13 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * Unsubscribe from topics currently subscribed with subscribe(Collection).
    */
   public void unsubscribe() {
-    lock.lock();
+    lock.acquireUninterruptibly();
     try {
       if (consumer != null) {
         consumer.unsubscribe();
       }
     } finally {
-      lock.unlock();
+      lock.release();
     }
   }
 
@@ -294,13 +294,13 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    */
   public java.util.Set<String> subscription() {
     java.util.Set<String> currSubscription = null;
-    lock.lock();
+    lock.acquireUninterruptibly();
     try {
       if (consumer != null) {
         currSubscription = consumer.subscription();
       }
     } finally {
-      lock.unlock();
+      lock.release();
     }
     return currSubscription;
   }
@@ -310,13 +310,13 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    */
   public java.util.Set<TopicPartition> assignment() {
     java.util.Set<TopicPartition> currAssignment = null;
-    lock.lock();
+    lock.acquireUninterruptibly();
     try {
       if (consumer != null) {
         currAssignment = consumer.assignment();
       }
     } finally {
-      lock.unlock();
+      lock.release();
     }
     return currAssignment;
   }
@@ -329,7 +329,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   public ConsumerCommittedResponse committed(ConsumerCommittedRequest request) {
     ConsumerCommittedResponse response = new ConsumerCommittedResponse();
     response.offsets = new Vector<TopicPartitionOffsetMetadata>();
-    lock.lock();
+    lock.acquireUninterruptibly();
     try {
       if (consumer != null) {
         for (io.confluent.kafkarest.entities.TopicPartition t : request.partitions) {
@@ -348,7 +348,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
         }
       }
     } finally {
-      lock.unlock();
+      lock.release();
     }
     return response;
   }
@@ -390,7 +390,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * Initiate poll(0) request to retrieve consumer records that are available immediately, or return
    * the existing
    * consumer records if the records have not been fully consumed by client yet. Must be
-   * invoked with the lock held, i.e. after startRead().
+   * invoked with the lock held, i.e. after tryStartRead().
    */
   void getOrCreateConsumerRecords() {
     //reset index

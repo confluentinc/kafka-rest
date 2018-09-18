@@ -49,6 +49,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
   private List<ConsumerRecord<ClientKeyT, ClientValueT>> messages;
   private long bytesConsumed = 0;
   private final long started;
+  private final int backoffMs;
   private KafkaRestConfig config;
 
   // Expiration if this task is waiting, considering both the expiration of the whole task and
@@ -74,6 +75,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
         timeout <= 0 ? defaultRequestTimeout : Math.min(timeout, defaultRequestTimeout);
     this.callback = callback;
     this.finished = false;
+    this.backoffMs = parent.getConfig().getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
     this.config = config;
 
     started = parent.getConfig().getTime().milliseconds();
@@ -88,14 +90,19 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
     try {
       // Initial setup requires locking, which must be done on this thread.
       if (messages == null) {
-        parent.startRead();
+        boolean startedRead = parent.tryStartRead();
+        if (!startedRead) {
+          log.trace(String.format("Lock for consumer %s is taken. Backing off of read...",
+                  parent.getId()));
+          waitExpiration = parent.getConfig().getTime().milliseconds() + backoffMs;
+          return true;
+        }
         messages = new Vector<>();
       }
 
       long roughMsgSize = 0;
 
       long startedIteration = parent.getConfig().getTime().milliseconds();
-
       while (parent.hasNext()) {
         ConsumerRecordAndSize<ClientKeyT, ClientValueT> recordAndSize =
             parent.createConsumerRecord(parent.peek());
@@ -122,9 +129,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
       long elapsed = now - started;
       // Compute backoff based on starting time. This makes reasoning about when timeouts
       // should occur simpler for tests.
-      int itbackoff =
-          parent.getConfig().getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
-      long backoffExpiration = startedIteration + itbackoff;
+      long backoffExpiration = startedIteration + backoffMs;
 
       long requestExpiration = started + requestTimeoutMs;
       waitExpiration = Math.min(backoffExpiration, requestExpiration);
