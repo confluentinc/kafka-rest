@@ -49,18 +49,12 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
   private List<ConsumerRecord<ClientKeyT, ClientValueT>> messages;
   private long bytesConsumed = 0;
   private final long started;
-  private final int backoffMs;
-  private KafkaRestConfig config;
 
-  // Expiration if this task is waiting, considering both the expiration of the whole task and
-  // a single backoff, if one is in progress
-  long waitExpiration;
 
   public KafkaConsumerReadTask(
       KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> parent,
       long timeout,
       long maxBytes,
-      KafkaRestConfig config,
       ConsumerWorkerReadCallback<ClientKeyT, ClientValueT> callback
   ) {
     this.parent = parent;
@@ -75,8 +69,6 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
         timeout <= 0 ? defaultRequestTimeout : Math.min(timeout, defaultRequestTimeout);
     this.callback = callback;
     this.finished = false;
-    this.backoffMs = parent.getConfig().getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
-    this.config = config;
 
     started = parent.getConfig().getTime().milliseconds();
   }
@@ -88,15 +80,14 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
    */
   public boolean doPartialRead() {
     try {
+      parent.startRead();
       // Initial setup requires locking, which must be done on this thread.
       if (messages == null) {
-        parent.startRead();
         messages = new Vector<>();
       }
 
       long roughMsgSize = 0;
 
-      long startedIteration = parent.getConfig().getTime().milliseconds();
       while (parent.hasNext()) {
         ConsumerRecordAndSize<ClientKeyT, ClientValueT> recordAndSize =
             parent.createConsumerRecord(parent.peek());
@@ -121,12 +112,6 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
 
       long now = parent.getConfig().getTime().milliseconds();
       long elapsed = now - started;
-      // Compute backoff based on starting time. This makes reasoning about when timeouts
-      // should occur simpler for tests.
-      long backoffExpiration = startedIteration + backoffMs;
-
-      long requestExpiration = started + requestTimeoutMs;
-      waitExpiration = Math.min(backoffExpiration, requestExpiration);
 
       // Including the rough message size here ensures processing finishes if the next
       // message exceeds the maxResponseBytes
