@@ -90,13 +90,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
     try {
       // Initial setup requires locking, which must be done on this thread.
       if (messages == null) {
-        boolean startedRead = parent.tryStartRead();
-        if (!startedRead) {
-          log.trace(String.format("Lock for consumer %s is taken. Backing off of read...",
-                  parent.getId()));
-          waitExpiration = parent.getConfig().getTime().milliseconds() + backoffMs;
-          return true;
-        }
+        parent.startRead();
         messages = new Vector<>();
       }
 
@@ -146,6 +140,8 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
             exceededMaxResponseBytes
         );
         finish();
+      } else {
+        parent.finishRead();
       }
 
       return true;
