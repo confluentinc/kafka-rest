@@ -173,7 +173,7 @@ public class KafkaConsumerManagerTest {
                 sawCallback = true;
             }
         });
-        Thread.sleep(Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT));
+        Thread.sleep((long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 1.10));
         f.get();
 
         assertTrue("Callback failed to fire", sawCallback);

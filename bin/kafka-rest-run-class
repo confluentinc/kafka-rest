@@ -20,13 +20,7 @@ base_dir=$(dirname $0)/..
 for dir in $base_dir/target/kafka-rest-*-development; do
   CLASSPATH=$CLASSPATH:$dir/share/java/kafka-rest/*
 done
-CLASSPATH=$CLASSPATH:/Users/stanislav/Documents/code/kafka-rest/kafka-rest/target/*
-CLASSPATH=$CLASSPATH:/Users/stanislav/Documents/code/rest-utils/target/*
-CLASSPATH=$CLASSPATH:/Users/stanislav/Documents/code/rest-utils/core/target/*
-CLASSPATH=$CLASSPATH:/Users/stanislav/Documents/code/rest-utils/package/target/rest-utils-package-4.1.3-SNAPSHOT-package/share/java/rest-utils/*
-CLASSPATH=$CLASSPATH:/Users/stanislav/Documents/code/common/package/target/common-package-4.1.3-SNAPSHOT-package/share/java/confluent-common/*
-CLASSPATH=$CLASSPATH:/Users/stanislav/Documents/code/common/utils/target/*
-CLASSPATH=$CLASSPATH:/Users/stanislav/Documents/code/kafka-rest/kafka-rest/target/kafka-rest-4.1.3-SNAPSHOT-package/share/java/kafka-rest/*
+
 # Production jars
 for library in "confluent-common" "rest-utils" "kafka-rest" "monitoring-interceptors"; do
   CLASSPATH=$CLASSPATH:$base_dir/share/java/$library/*
