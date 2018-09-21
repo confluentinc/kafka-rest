@@ -15,6 +15,7 @@
  **/
 package io.confluent.kafkarest.unit;
 
+import io.confluent.kafkarest.*;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -29,11 +30,6 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import io.confluent.kafkarest.BinaryConsumerState;
-import io.confluent.kafkarest.ConsumerManager;
-import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
@@ -87,7 +83,7 @@ public class ConsumerManagerTest {
     // This setting supports the testConsumerOverrides test. It is otherwise benign and should
     // not affect other tests.
     props.setProperty("exclude.internal.topics", "false");
-    config = new KafkaRestConfig(props, new MockTime());
+    config = new KafkaRestConfig(props, new SystemTime());
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     consumerFactory = EasyMock.createMock(ConsumerManager.ConsumerFactory.class);
     consumerManager = new ConsumerManager(config, mdObserver, consumerFactory);
@@ -158,7 +154,7 @@ public class ConsumerManagerTest {
 
   @SuppressWarnings("unchecked")
   @Test
-  public void testConsumerNormalOps() throws InterruptedException, ExecutionException {
+  public void testConsumerNormalOps() throws InterruptedException, ExecutionException, RestConfigException {
     // Tests create instance, read, and delete
     final List<ConsumerRecord<byte[], byte[]>> referenceRecords
         = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
@@ -185,29 +181,11 @@ public class ConsumerManagerTest {
     sawCallback = false;
     actualException = null;
     actualRecords = null;
-    consumerManager.readTopic(
-        groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
-        new ConsumerManager.ReadCallback<byte[], byte[]>() {
-          @Override
-          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                                   Exception e) {
-            actualException = e;
-            actualRecords = records;
-            sawCallback = true;
+    readTopic(cid);
 
-            // Assert that should clearly fail...but doesn't report in test runs
-            assertTrue("This should fail", false);
-          }
-        }).get();
     assertTrue("Callback failed to fire", sawCallback);
     assertNull("No exception in callback", actualException);
     assertEquals("Records returned not as expected", referenceRecords, actualRecords);
-    // With # of bytes in messages < max bytes per response, this should finish just after
-    // the per-request timeout (because the timeout perfectly coincides with a scheduled
-    // iteration when using the default settings).
-    assertEquals(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)
-                  + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG),
-                  config.getTime().milliseconds());
 
     sawCallback = false;
     actualException = null;
@@ -265,48 +243,35 @@ public class ConsumerManagerTest {
     sawCallback = false;
     actualException = null;
     actualLength = 0;
-    consumerManager.readTopic(
-        groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
-        new ConsumerManager.ReadCallback<byte[], byte[]>() {
-          @Override
-          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                                   Exception e) {
-            sawCallback = true;
-            actualException = e;
-            // Should only see the first two messages since the third pushes us over the limit.
-            actualLength = records.size();
-          }
-        }).get();
+    readTopic(cid, new ConsumerManager.ReadCallback<byte[], byte[]>() {
+      @Override
+      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+                               Exception e) {
+        sawCallback = true;
+        actualException = e;
+        // Should only see the first two messages since the third pushes us over the limit.
+        actualLength = records.size();
+      }
+    });
     assertTrue("Callback failed to fire", sawCallback);
     assertNull("Callback received exception", actualException);
     // Should only see the first two messages since the third pushes us over the limit.
     assertEquals("List of records returned incorrect", 2, actualLength);
 
-    // Because we should have returned due to the message size limit we shouldn't have
-    // maxed out the timeout
-    //
-    String msg = "Time taken (" + Long.toString(config.getTime().milliseconds()) + ") to process message should be less than the timeout " +
-        Integer.toString(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)
-                 + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG)) ;
-    assertFalse(msg, config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG)
-                 + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG) < config.getTime().milliseconds());
-
     // Also check the user-submitted limit
     sawCallback = false;
     actualException = null;
     actualLength = 0;
-    consumerManager.readTopic(
-        groupName, cid, topicName, BinaryConsumerState.class, 512,
-        new ConsumerManager.ReadCallback<byte[], byte[]>() {
-          @Override
-          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                                   Exception e) {
-            sawCallback = true;
-            actualException = e;
-            // Should only see the first two messages since the third pushes us over the limit.
-            actualLength = records.size();
-          }
-        }).get();
+    readTopic(cid, 512, new ConsumerManager.ReadCallback<byte[], byte[]>() {
+      @Override
+      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+                               Exception e) {
+        sawCallback = true;
+        actualException = e;
+        // Should only see the first two messages since the third pushes us over the limit.
+        actualLength = records.size();
+      }
+    });
     assertTrue("Callback failed to fire", sawCallback);
     assertNull("Callback received exception", actualException);
     // Should only see the first two messages since the third pushes us over the limit.
@@ -369,17 +334,7 @@ public class ConsumerManagerTest {
     sawCallback = false;
     actualException = null;
     actualRecords = null;
-    consumerManager.readTopic(
-        groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
-        new ConsumerManager.ReadCallback<byte[], byte[]>() {
-          @Override
-          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                                   Exception e) {
-            sawCallback = true;
-            actualException = e;
-            actualRecords = records;
-          }
-        }).get();
+    readTopic(cid);
     assertTrue("Callback not called", sawCallback);
     assertNull("Callback exception", actualException);
     assertEquals("Callback records should be valid but of 0 size", 0, actualRecords.size());
@@ -389,17 +344,7 @@ public class ConsumerManagerTest {
     sawCallback = false;
     actualException = null;
     actualRecords = null;
-    consumerManager.readTopic(
-        groupName, cid, secondTopicName, BinaryConsumerState.class, Long.MAX_VALUE,
-        new ConsumerManager.ReadCallback<byte[], byte[]>() {
-          @Override
-          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                                   Exception e) {
-            sawCallback = true;
-            actualException = e;
-            actualRecords = records;
-          }
-        }).get();
+    readTopic(cid, secondTopicName);
     assertTrue("Callback failed to fire", sawCallback);
     assertNotNull("Callback failed to receive an exception", actualException);
     assertTrue("Callback Exception should be an instance of RestException", actualException instanceof RestException);
@@ -470,37 +415,60 @@ public class ConsumerManagerTest {
     sawCallback = false;
     actualException = null;
     actualRecords = null;
-    consumerManager.readTopic(
-        groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
-        new ConsumerManager.ReadCallback<byte[], byte[]>() {
-          @Override
-          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                                   Exception e) {
-            sawCallback = true;
-            actualRecords = records;
-            actualException = e;
-          }
-        }).get();
+    readTopic(cid);
     assertTrue("Callback not called", sawCallback);
     assertNotNull("Callback exception should be populated", actualException);
     assertNull("Callback with exception should not have any records", actualRecords);
 
     // Second read should recover and return all the data.
     sawCallback = false;
-    consumerManager.readTopic(
-        groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
-        new ConsumerManager.ReadCallback<byte[], byte[]>() {
-          @Override
-          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                                   Exception e) {
-            sawCallback = true;
-            assertNull(e);
-            assertEquals(referenceRecords, records);
-          }
-        }).get();
+    readTopic(cid, new ConsumerManager.ReadCallback<byte[], byte[]>() {
+      @Override
+      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+                               Exception e) {
+        sawCallback = true;
+        assertNull(e);
+        assertEquals(referenceRecords, records);
+      }
+    });
     assertTrue(sawCallback);
 
     EasyMock.verify(mdObserver, consumerFactory);
+  }
+
+  /**
+   * We need to wait for topic reads to finish. We can't rely on the returned Future
+   * because one whole read task is spanned throughout multiple Runnables.
+   * They are created and scheduled on the executor until the whole task is finished
+   */
+  private void readTopic(final String cid) throws InterruptedException {
+    readTopic(cid, topicName);
+  }
+
+  private void readTopic(final String cid, String topic) throws InterruptedException {
+    readTopic(cid, topic, Long.MAX_VALUE, new ConsumerManager.ReadCallback<byte[], byte[]>() {
+      @Override
+      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+                               Exception e) {
+        sawCallback = true;
+        actualRecords = records;
+        actualException = e;
+      }
+    });
+  }
+
+  private void readTopic(final String cid, final ConsumerManager.ReadCallback callback) throws InterruptedException {
+    readTopic(cid, topicName, Long.MAX_VALUE, callback);
+  }
+
+  private void readTopic(final String cid, long maxBytes, final ConsumerManager.ReadCallback callback) throws InterruptedException {
+    readTopic(cid, topicName, maxBytes, callback);
+  }
+
+  private void readTopic(final String cid, String topic, long maxBytes, final ConsumerManager.ReadCallback callback) throws InterruptedException {
+    consumerManager.readTopic(groupName, cid, topic, BinaryConsumerState.class, maxBytes, callback);
+    Thread.sleep(Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT)
+        + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG));
   }
 
   private void readAndExpectImmediateNotFound(String cid, String topic) {

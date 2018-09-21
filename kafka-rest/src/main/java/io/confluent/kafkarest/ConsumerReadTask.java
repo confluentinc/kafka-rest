@@ -59,10 +59,6 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
   private long bytesConsumed = 0;
   private final long started;
 
-  // Expiration if this task is waiting, considering both the expiration of the whole task and
-  // a single backoff, if one is in progress
-  long waitExpiration;
-
   public ConsumerReadTask(
           ConsumerState parent,
           String topic,
@@ -105,7 +101,6 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
         iter = topicState.getIterator();
 
         messages = new Vector<ConsumerRecord<ClientKeyT, ClientValueT>>();
-        waitExpiration = 0;
       }
 
       boolean backoff = false;
@@ -149,14 +144,6 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
 
       long now = parent.getConfig().getTime().milliseconds();
       long elapsed = now - started;
-      // Compute backoff based on starting time. This makes reasoning about when timeouts
-      // should occur simpler for tests.
-      int itbackoff
-              = parent.getConfig().getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
-      long backoffExpiration = startedIteration + itbackoff;
-      long requestExpiration = started
-          + parent.getConfig().getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
-      waitExpiration = Math.min(backoffExpiration, requestExpiration);
 
       // Including the rough message size here ensures processing finishes if the next
       // message exceeds the maxResponseBytes
