@@ -15,7 +15,12 @@
  **/
 package io.confluent.kafkarest.unit;
 
-import io.confluent.kafkarest.*;
+import io.confluent.kafkarest.ConsumerManager;
+import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.MetadataObserver;
+import io.confluent.kafkarest.BinaryConsumerState;
+import io.confluent.kafkarest.SystemTime;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -36,7 +41,6 @@ import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.mock.MockConsumerConnector;
-import io.confluent.kafkarest.mock.MockTime;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestNotFoundException;

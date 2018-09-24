@@ -104,16 +104,6 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       ConsumerRecord<KafkaKeyT, KafkaValueT> msg
   );
 
-
-  public void startRead() {
-    lock.lock();
-  }
-
-  public void finishRead() {
-    lock.unlock();
-  }
-
-
   /**
    * Commit the given list of offsets
    */
@@ -411,12 +401,20 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   }
 
   public boolean hasNext() {
-    if (consumerRecordList != null && this.index < consumerRecordList.size()) {
-      return true;
+    lock.lock();
+    try {
+      boolean hasRecords = consumerRecordList != null && this.index < consumerRecordList.size();
+      if (hasRecords) {
+        return true;
+      }
+      // If none are available, try checking for any records already fetched by the consumer.
+      getOrCreateConsumerRecords();
+
+      hasRecords = consumerRecordList != null && this.index < consumerRecordList.size();
+      return hasRecords;
+    } finally {
+      lock.unlock();
     }
-    // If none are available, try checking for any records already fetched by the consumer.
-    getOrCreateConsumerRecords();
-    return consumerRecordList != null && this.index < consumerRecordList.size();
   }
 
   public ConsumerRecord<KafkaKeyT, KafkaValueT> next() {

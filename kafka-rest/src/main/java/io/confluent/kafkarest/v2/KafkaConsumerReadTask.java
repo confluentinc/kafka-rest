@@ -80,7 +80,6 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
    */
   public boolean doPartialRead() {
     try {
-      parent.startRead();
       // Initial setup requires locking, which must be done on this thread.
       if (messages == null) {
         messages = new Vector<>();
@@ -125,8 +124,6 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
             exceededMaxResponseBytes
         );
         finish();
-      } else {
-        parent.finishRead();
       }
 
       return true;
@@ -147,7 +144,6 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
 
   private void finish(Exception e) {
     log.trace("Finishing KafkaConsumerReadTask id={} exception={}", this, e);
-    parent.finishRead();
     try {
       callback.onCompletion((e == null) ? messages : null, e);
     } catch (Throwable t) {

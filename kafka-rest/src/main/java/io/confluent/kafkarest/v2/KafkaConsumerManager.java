@@ -124,8 +124,7 @@ public class KafkaConsumerManager {
               if (r instanceof RunnableReadTask) {
                 RunnableReadTask readTask = (RunnableReadTask) r;
                 int delayMs = ThreadLocalRandom.current().nextInt(25, 75 + 1);
-                readTask.waitExpirationMs = config.getTime().milliseconds() + delayMs;
-                delayedReadTasks.add(readTask);
+                readTask.delayUntil(config.getTime().milliseconds() + delayMs);
               } else {
                 // run commitOffset tasks from the caller thread
                 if (!executor.isShutdown()) {
@@ -363,6 +362,12 @@ public class KafkaConsumerManager {
       this.waitExpirationMs = 0;
     }
 
+    public void delayUntil(long delayMs) {
+      waitExpirationMs = delayMs;
+      // add to delayedReadTasks so the scheduler thread can re-schedule another partial read later
+      delayedReadTasks.add(this);
+    }
+
     @Override
     public void run() {
       try {
@@ -373,10 +378,7 @@ public class KafkaConsumerManager {
         if (!taskState.task.isDone()) {
           long backoffTime = config.getTime().milliseconds()
               + consumerConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
-          waitExpirationMs = Math.min(backoffTime, requestExpiration);
-
-          // add to delayedReadTasks so the scheduler thread can re-schedule another partial read
-          delayedReadTasks.add(this);
+          delayUntil(Math.min(backoffTime, requestExpiration));
         } else {
           log.trace("Finished executing consumer read task ({})", taskState.task);
         }
