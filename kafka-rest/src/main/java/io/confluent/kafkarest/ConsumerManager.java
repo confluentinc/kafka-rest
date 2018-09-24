@@ -191,12 +191,6 @@ public class ConsumerManager {
       if (instanceConfig.getAutoOffsetReset() != null) {
         props.setProperty("auto.offset.reset", instanceConfig.getAutoOffsetReset());
       }
-      // override request.timeout.ms to the default
-      // the consumer.request.timeout.ms setting given by the user denotes
-      // how much time the proxy should wait before returning a response
-      // and should not be propagated to the consumer
-      props.setProperty("request.timeout.ms", "30000");
-
       ConsumerConnector consumer;
       try {
         if (consumerFactory == null) {

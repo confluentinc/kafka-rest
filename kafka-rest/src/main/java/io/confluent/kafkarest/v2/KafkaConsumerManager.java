@@ -119,6 +119,8 @@ public class KafkaConsumerManager {
             new RejectedExecutionHandler() {
             @Override
             public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+              log.debug("The runnable {} was rejected execution."
+                  + "The thread pool must be satured or shutiing down", r);
               if (r instanceof RunnableReadTask) {
                 RunnableReadTask readTask = (RunnableReadTask) r;
                 int delayMs = ThreadLocalRandom.current().nextInt(25, 75 + 1);
@@ -379,7 +381,7 @@ public class KafkaConsumerManager {
           log.trace("Finished executing consumer read task ({})", taskState.task);
         }
       } catch (Exception e) {
-        log.error("Failed to read records consumer "
+        log.error("Failed to read records from consumer "
                         + taskState.consumerState.getId().toString(),
                 e);
         Exception responseException = e;
@@ -392,7 +394,8 @@ public class KafkaConsumerManager {
 
     @Override
     public long getDelay(TimeUnit unit) {
-      return waitExpirationMs - config.getTime().milliseconds();
+      long delayMs = waitExpirationMs - config.getTime().milliseconds();
+      return TimeUnit.MILLISECONDS.convert(delayMs, unit);
     }
 
     @Override
@@ -617,8 +620,8 @@ public class KafkaConsumerManager {
   }
 
   private class ReadTaskSchedulerThread extends Thread {
-    AtomicBoolean isRunning = new AtomicBoolean(true);
-    CountDownLatch shutdownLatch = new CountDownLatch(1);
+    final AtomicBoolean isRunning = new AtomicBoolean(true);
+    final CountDownLatch shutdownLatch = new CountDownLatch(1);
 
     ReadTaskSchedulerThread() {
       super("Read Task Scheduler Thread");
@@ -697,7 +700,7 @@ public class KafkaConsumerManager {
         this.interrupt();
         shutdownLatch.await();
       } catch (InterruptedException e) {
-        throw new Error("Interrupted when shutting down expiration thread.");
+        throw new RuntimeException("Interrupted when shutting down expiration thread.");
       }
     }
   }
