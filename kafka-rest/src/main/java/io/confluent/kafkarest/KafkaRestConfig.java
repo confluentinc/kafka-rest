@@ -235,6 +235,10 @@ public class KafkaRestConfig extends RestConfig {
       "client.sasl.kerberos.ticket.renew.jitter";
   public static final String KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_CONFIG =
       "client.sasl.kerberos.ticket.renew.window.factor";
+  /**
+   * @deprecated Use {@link io.confluent.rest.RestConfig#RESOURCE_EXTENSION_CLASSES_CONFIG}
+   */
+  @Deprecated
   public static final String KAFKA_REST_RESOURCE_EXTENSION_CONFIG =
       "kafka.rest.resource.extension.class";
   protected static final String KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_DOC =
@@ -316,6 +320,7 @@ public class KafkaRestConfig extends RestConfig {
     config = baseKafkaRestConfigDef();
   }
 
+  @SuppressWarnings("deprecation")
   protected static ConfigDef baseKafkaRestConfigDef() {
     return baseConfigDef()
         .defineOverride(

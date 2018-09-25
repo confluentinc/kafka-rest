@@ -45,6 +45,7 @@ import kafka.utils.ZkUtils;
  */
 public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
+  @SuppressWarnings("deprecation")
   List<RestResourceExtension> restResourceExtensions;
 
   public KafkaRestApplication() throws RestConfigException {
@@ -55,6 +56,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     super(new KafkaRestConfig(props));
   }
 
+  @SuppressWarnings("deprecation")
   public KafkaRestApplication(KafkaRestConfig config)
       throws IllegalAccessException, InstantiationException, RestConfigException {
     super(config);
@@ -76,6 +78,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
    * Helper that does normal setup, but uses injected components so their configs or implementations
    * can be customized for testing. This only exists to support TestKafkaRestApplication
    */
+  @SuppressWarnings("deprecation")
   protected void setupInjectedResources(
       Configurable<?> config, KafkaRestConfig appConfig,
       ZkUtils zkUtils, MetadataObserver mdObserver,
@@ -121,6 +124,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     }
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void onShutdown() {
 

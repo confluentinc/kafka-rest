@@ -23,8 +23,10 @@ import io.confluent.kafkarest.KafkaRestConfig;
 
 /**
  * Any custom resources like filters, providers, etc can be added by extending this interface.
+ *
+ * @deprecated Use {@link io.confluent.rest.extension.ResourceExtension}.
  */
-
+@Deprecated
 public interface RestResourceExtension {
 
   void register(Configurable<?> config, KafkaRestConfig appConfig);
