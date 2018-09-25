@@ -459,7 +459,7 @@ In addition to these configurations:
     /opt/kafka-rest/bin/kafka-rest-start /mnt/rest.properties 1>> /mnt/rest.log 2>> /mnt/rest.log &
 
 
-* If you need to access Schema Registry via https protocol, one would need additional javax.net.ssl.trustStore and javax.net.ssl.trustStorePassword parameters, as shown below:
+* If you need to access |sr| via https protocol, one would need additional javax.net.ssl.trustStore and javax.net.ssl.trustStorePassword parameters, as shown below:
 
   .. sourcecode:: bash
 
@@ -467,7 +467,7 @@ In addition to these configurations:
    /opt/kafka-rest/bin/kafka-rest-start /mnt/rest.properties 1>> /mnt/rest.log 2>> /mnt/rest.log &
 
 * For more details about krb5.conf file please see `JDK’s Kerberos Requirements <https://docs.oracle.com/javase/8/docs/technotes/guides/security/jgss/tutorials/KerberosReq.html>`_.
-* Keep in mind that authenticated and encrypted connection to Apache Kafka will only work when Kafka brokers (and Schema Registry, if used) are running with appropriate security configuration. Check out the documentation on `Kafka Security </kafka/security.html>`_ and `Schema Registry </schema-registry/docs/security.html>`_.
+* Keep in mind that authenticated and encrypted connection to Apache Kafka will only work when Kafka brokers (and |sr|, if used) are running with appropriate security configuration. Check out the documentation on `Kafka Security </kafka/security.html>`_ and `Schema Registry </schema-registry/docs/security.html>`_.
 
 
 
