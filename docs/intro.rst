@@ -14,7 +14,7 @@ Some example use cases are:
 Quickstart
 ----------
 
-Start by running the REST Proxy and the services it depends on: ZooKeeper, Kafka, and the Schema Registry.
+Start by running the REST Proxy and the services it depends on: ZooKeeper, Kafka, and |sr|.
 You can do this in one command with Confluent CLI:
 
 .. sourcecode:: bash
@@ -80,7 +80,7 @@ Produce and Consume Avro Messages
 .. sourcecode:: bash
 
    # Produce a message using Avro embedded data, including the schema which will
-   # be registered with the schema registry and used to validate and serialize
+   # be registered with schema registry and used to validate and serialize
    # before storing the data in Kafka
    $ curl -X POST -H "Content-Type: application/vnd.kafka.avro.v2+json" \
          -H "Accept: application/vnd.kafka.v2+json" \
@@ -104,7 +104,7 @@ Produce and Consume Avro Messages
    # Create a consumer for Avro data, starting at the beginning of the topic's
    # log and subscribe to a topic. Then consume some data from a topic, which is decoded, translated to
    # JSON, and included in the response. The schema used for deserialization is
-   # fetched automatically from the schema registry. Finally, clean up.
+   # fetched automatically from schema registry. Finally, clean up.
    $ curl -X POST  -H "Content-Type: application/vnd.kafka.v2+json" \
          --data '{"name": "my_consumer_instance", "format": "avro", "auto.offset.reset": "earliest"}' \
          http://localhost:8082/consumers/my_avro_consumer
@@ -210,7 +210,7 @@ what is currently supported:
 
 * **Data Formats** - The REST Proxy can read and write data using JSON, raw bytes
   encoded with base64 or using JSON-encoded Avro. With Avro, schemas are
-  registered and validated against the Schema Registry.
+  registered and validated against |sr|.
 * **REST Proxy Clusters and Load Balancing** - The REST Proxy is designed to
   support multiple instances running together to spread load and can safely be
   run behind various load balancing mechanisms (e.g. round robin DNS, discovery
@@ -251,7 +251,7 @@ Installation
    You can download prebuilt versions of the Kafka REST Proxy as part of the
    `Confluent Platform <http://confluent.io/downloads/>`_. To install from
    source, follow the instructions in the `Development`_ section. Before
-   starting the REST Proxy you must start Kafka and the Schema Registry. You can
+   starting the REST Proxy you must start Kafka and |sr|. You can
    find instructions for starting those services in the
    `Schema Registry repository <http://github.com/confluentinc/schema-registry>`_.
 
@@ -274,7 +274,7 @@ included with the REST Proxy includes convenient defaults for a local testing se
 and should be modified for a production deployment. By default the server starts bound to port
 8082, does not specify a unique instance ID (required to safely run multiple
 proxies concurrently), and expects Zookeeper to be available at
-``localhost:2181`` and the Schema Registry at ``http://localhost:8081``.
+``localhost:2181`` and |sr| at ``http://localhost:8081``.
 
 If you started the service in the background, you can use the following
 command to stop it:

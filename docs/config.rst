@@ -30,7 +30,7 @@ Java Kafka clients.
   * Importance: high
 
 ``schema.registry.url``
-  The base URL for the schema registry that should be used by the Avro serializer.
+  The base URL for |sr| that should be used by the Avro serializer.
 
   * Type: string
   * Default: "http://localhost:8081"
