@@ -73,7 +73,7 @@ Produce and Consume Avro Messages
 .. sourcecode:: bash
 
    # Produce a message using Avro embedded data, including the schema which will
-   # be registered with the schema registry and used to validate and serialize
+   # be registered with schema registry and used to validate and serialize
    # before storing the data in Kafka
    $ curl -X POST -H "Content-Type: application/vnd.kafka.avro.v2+json" \
          -H "Accept: application/vnd.kafka.v2+json" \
@@ -97,7 +97,7 @@ Produce and Consume Avro Messages
    # Create a consumer for Avro data, starting at the beginning of the topic's
    # log and subscribe to a topic. Then consume some data from a topic, which is decoded, translated to
    # JSON, and included in the response. The schema used for deserialization is
-   # fetched automatically from the schema registry. Finally, clean up.
+   # fetched automatically from schema registry. Finally, clean up.
    $ curl -X POST  -H "Content-Type: application/vnd.kafka.v2+json" \
          --data '{"name": "my_consumer_instance", "format": "avro", "auto.offset.reset": "earliest"}' \
          http://localhost:8082/consumers/my_avro_consumer
@@ -167,5 +167,3 @@ Inspect Topic Metadata
    # Get info about a topic's partitions
    $ curl "http://localhost:8082/topics/avrotest/partitions"
      [{"partition":0,"leader":0,"replicas":[{"broker":0,"leader":true,"in_sync":true}]}]
-
-

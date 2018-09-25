@@ -215,7 +215,7 @@ you produce messages by making ``POST`` requests to specific topics.
 
    For the ``avro`` embedded format, you must provide information
    about schemas and the REST proxy must be configured with the URL to access
-   the schema registry (``schema.registry.url``). Schemas may be provided as
+   |sr| (``schema.registry.url``). Schemas may be provided as
    the full schema encoded as a string, or, after the initial request may be
    provided as the schema ID returned with the first response.
 
@@ -1580,7 +1580,7 @@ you produce messages by making ``POST`` requests to specific topics.
 
    For the ``avro`` embedded format, you must provide information
    about schemas and the REST proxy must be configured with the URL to access
-   the schema registry (``schema.registry.url``). Schemas may be provided as
+   |sr| (``schema.registry.url``). Schemas may be provided as
    the full schema encoded as a string, or, after the initial request may be
    provided as the schema ID returned with the first response. Note that if you use Avro for value you must also use Avro for the key, but the key and value may have different schemas.
 
