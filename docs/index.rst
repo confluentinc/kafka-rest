@@ -82,8 +82,8 @@ Installation
 .. ifconfig:: platform_docs
 
    See the :ref:`installation instructions<installation>` for the Confluent
-   Platform. Before starting the |crest| you must start Kafka and the schema
-   registry. The :ref:`Confluent Platform quickstart<quickstart>` explains how
+   Platform. Before starting the |crest| you must start Kafka and |sr|. The
+   :ref:`Confluent Platform quickstart<quickstart>` explains how
    to start these services locally for testing.
 
 .. ifconfig:: not platform_docs
