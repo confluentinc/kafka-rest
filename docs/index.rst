@@ -92,7 +92,7 @@ Installation
    `Confluent Platform <http://confluent.io/downloads/>`_. To install from
    source, follow the instructions in the `Development`_ section. Before
    starting the |crest| you must start Kafka and the |sr|. You can
-   find instructions for starting those services in the
+   find instructions for starting those services in
    `Schema Registry repository <http://github.com/confluentinc/schema-registry>`_.
 
 Deployment
