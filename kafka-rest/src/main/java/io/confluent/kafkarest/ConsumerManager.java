@@ -83,7 +83,7 @@ public class ConsumerManager {
     this.mdObserver = mdObserver;
     this.iteratorTimeoutMs = config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG);
     this.workers = new Vector<ConsumerWorker>();
-    for (int i = 0; i < config.getInt(KafkaRestConfig.CONSUMER_THREADS_CONFIG); i++) {
+    for (int i = 0; i < config.getInt(KafkaRestConfig.CONSUMER_MAX_THREADS_CONFIG); i++) {
       ConsumerWorker worker = new ConsumerWorker(config);
       workers.add(worker);
       worker.start();
@@ -430,3 +430,4 @@ public class ConsumerManager {
     }
   }
 }
+

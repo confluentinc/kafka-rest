@@ -19,14 +19,8 @@ package io.confluent.kafkarest.v2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.ConsumerWorkerReadCallback;
@@ -42,8 +36,7 @@ import io.confluent.kafkarest.entities.ConsumerRecord;
  * is the format returned by the Kafka consumer's decoder/deserializer, ClientK/ClientV is
  * the format returned to the client in the HTTP response. In some cases these may be identical.
  */
-class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
-    implements Future<List<ConsumerRecord<ClientKeyT, ClientValueT>>> {
+class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
 
   private static final Logger log = LoggerFactory.getLogger(KafkaConsumerReadTask.class);
 
@@ -51,16 +44,12 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
   private final long requestTimeoutMs;
   private final long maxResponseBytes;
   private final ConsumerWorkerReadCallback<ClientKeyT, ClientValueT> callback;
-  private CountDownLatch finished;
+  private boolean finished;
 
-  private Iterator<org.apache.kafka.clients.consumer.ConsumerRecord<ClientKeyT, ClientValueT>> iter;
   private List<ConsumerRecord<ClientKeyT, ClientValueT>> messages;
   private long bytesConsumed = 0;
   private final long started;
 
-  // Expiration if this task is waiting, considering both the expiration of the whole task and
-  // a single backoff, if one is in progress
-  long waitExpiration;
 
   public KafkaConsumerReadTask(
       KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> parent,
@@ -79,7 +68,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
     this.requestTimeoutMs =
         timeout <= 0 ? defaultRequestTimeout : Math.min(timeout, defaultRequestTimeout);
     this.callback = callback;
-    this.finished = new CountDownLatch(1);
+    this.finished = false;
 
     started = parent.getConfig().getTime().milliseconds();
   }
@@ -91,15 +80,13 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
    */
   public boolean doPartialRead() {
     try {
+      parent.startRead();
       // Initial setup requires locking, which must be done on this thread.
       if (messages == null) {
-        parent.startRead();
         messages = new Vector<>();
       }
 
       long roughMsgSize = 0;
-
-      long startedIteration = parent.getConfig().getTime().milliseconds();
 
       while (parent.hasNext()) {
         ConsumerRecordAndSize<ClientKeyT, ClientValueT> recordAndSize =
@@ -125,14 +112,6 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
 
       long now = parent.getConfig().getTime().milliseconds();
       long elapsed = now - started;
-      // Compute backoff based on starting time. This makes reasoning about when timeouts
-      // should occur simpler for tests.
-      int itbackoff =
-          parent.getConfig().getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
-      long backoffExpiration = startedIteration + itbackoff;
-
-      long requestExpiration = started + requestTimeoutMs;
-      waitExpiration = Math.min(backoffExpiration, requestExpiration);
 
       // Including the rough message size here ensures processing finishes if the next
       // message exceeds the maxResponseBytes
@@ -146,6 +125,8 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
             exceededMaxResponseBytes
         );
         finish();
+      } else {
+        parent.finishRead();
       }
 
       return true;
@@ -156,11 +137,15 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
     }
   }
 
-  void finish() {
+  public boolean isDone() {
+    return finished;
+  }
+
+  private void finish() {
     finish(null);
   }
 
-  void finish(Exception e) {
+  private void finish(Exception e) {
     log.trace("Finishing KafkaConsumerReadTask id={} exception={}", this, e);
     parent.finishRead();
     try {
@@ -170,38 +155,6 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
       // done here but log it since it indicates a bug in the calling code.
       log.error("Consumer read callback threw an unhandled exception id={}", this, e);
     }
-    finished.countDown();
-  }
-
-  @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    return false;
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return false;
-  }
-
-  @Override
-  public boolean isDone() {
-    return (finished.getCount() == 0);
-  }
-
-  @Override
-  public List<ConsumerRecord<ClientKeyT, ClientValueT>> get()
-      throws InterruptedException, ExecutionException {
-    finished.await();
-    return messages;
-  }
-
-  @Override
-  public List<ConsumerRecord<ClientKeyT, ClientValueT>> get(long timeout, TimeUnit unit)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    finished.await(timeout, unit);
-    if (finished.getCount() > 0) {
-      throw new TimeoutException();
-    }
-    return messages;
+    finished = true;
   }
 }
