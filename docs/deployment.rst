@@ -184,16 +184,6 @@ changing these based on your specific use case.
      * Default: 1000
      * Importance: medium
 
-   ``consumer.threads``
-     The maximum number of threads to run consumer requests on. Consumers requests are
-     ran one per thread in a synchronous manner. It is a must to have this value
-     be set higher than the maximum number of consumers in a single consumer group,
-     otherwise rebalances will deadlock.
-
-     * Type: int
-     * Default: 200
-     * Importance: medium
-
    ``host.name``
      The host name used to generate absolute URLs for consumers. If empty, the default canonical
      hostname is used. You may need to set this value if the FQDN of your host cannot be

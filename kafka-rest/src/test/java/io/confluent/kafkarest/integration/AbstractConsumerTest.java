@@ -285,7 +285,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     assertEquals(0, consumed.size());
 
     // Note that this is only approximate and really only works if you assume the read call has
-    // a dedicated thread. Also note that we have to include the consumer
+    // a dedicated ConsumerWorker thread. Also note that we have to include the consumer
     // request timeout, the iterator timeout used for "peeking", and the backoff period, as well
     // as some extra slack for general overhead (which apparently mostly comes from running the
     // request and can be quite substantial).
