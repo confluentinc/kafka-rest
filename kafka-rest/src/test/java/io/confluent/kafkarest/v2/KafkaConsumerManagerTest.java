@@ -15,9 +15,12 @@
  **/
 package io.confluent.kafkarest.v2;
 
+import io.confluent.kafkarest.SystemTime;
+import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.entities.ConsumerOffsetCommitRequest;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
+import io.confluent.rest.exceptions.RestException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.MockConsumer;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
@@ -35,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
@@ -80,15 +84,26 @@ public class KafkaConsumerManagerTest {
 
     @Before
     public void setUp() throws RestConfigException {
-        Properties props = new Properties();
+        config = new KafkaRestConfig(setUpProperties(), new MockTime());
+        consumerManager = new KafkaConsumerManager(config, consumerFactory);
+        consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
+    }
+
+    private Properties setUpProperties() {
+        return setUpProperties(null);
+    }
+
+    private Properties setUpProperties(Properties props) {
+        if (props == null) {
+            props = new Properties();
+        }
         props.setProperty(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, "PLAINTEXT://hostname:9092");
         props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG, "1024");
         // This setting supports the testConsumerOverrides test. It is otherwise benign and should
         // not affect other tests.
         props.setProperty("consumer." + ConsumerConfig.EXCLUDE_INTERNAL_TOPICS_CONFIG, "false");
-        config = new KafkaRestConfig(props, new MockTime());
-        consumerManager = new KafkaConsumerManager(config, consumerFactory);
-        consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
+
+        return props;
     }
 
     @After
@@ -119,7 +134,10 @@ public class KafkaConsumerManagerTest {
     }
 
     @Test
-    public void testConsumerNormalOps() throws InterruptedException, ExecutionException {
+    public void testConsumerNormalOps() throws InterruptedException, ExecutionException, RestConfigException {
+        config = new KafkaRestConfig(setUpProperties(), new SystemTime());
+        consumerManager = new KafkaConsumerManager(config, consumerFactory);
+        consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
         // Tests create instance, read, and delete
         final List<ConsumerRecord<byte[], byte[]>> referenceRecords
                 = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
@@ -137,7 +155,6 @@ public class KafkaConsumerManagerTest {
                 consumer.addRecord(new org.apache.kafka.clients.consumer.ConsumerRecord<>(topicName, 0, 2, "k3".getBytes(), "v3".getBytes()));
             }
         });
-
         EasyMock.replay(mdObserver, consumerFactory);
 
         String cid = consumerManager.createConsumer(
@@ -150,23 +167,19 @@ public class KafkaConsumerManagerTest {
         actualException = null;
         actualRecords = null;
         consumerManager.readRecords(groupName, cid, BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
-                new KafkaConsumerManager.ReadCallback<byte[], byte[]>() {
-                    @Override
-                    public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, Exception e) {
-                        actualException = e;
-                        actualRecords = records;
-                        sawCallback = true;
-                    }
-                }).get();
+            new ConsumerReadCallback<byte[], byte[]>() {
+            @Override
+            public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
+                actualException = e;
+                actualRecords = records;
+                sawCallback = true;
+            }
+        });
+        Thread.sleep((long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 1.10));
+
         assertTrue("Callback failed to fire", sawCallback);
         assertNull("No exception in callback", actualException);
         assertEquals("Records returned not as expected", referenceRecords, actualRecords);
-        // With # of bytes in messages < max bytes per response and with a backoff that divides the timeout evenly,
-        // this should finish just at the per-request timeout (because the timeout perfectly coincides with a scheduled
-        // iteration when using the default settings).
-        assertEquals(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG),
-                config.getTime().milliseconds());
-
         sawCallback = false;
         actualException = null;
         actualOffsets = null;

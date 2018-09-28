@@ -28,11 +28,13 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import io.confluent.kafkarest.ConsumerManager;
+import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.ConsumerState;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
@@ -44,6 +46,7 @@ import io.confluent.kafkarest.resources.ConsumersResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.RestNotFoundException;
+import io.confluent.rest.exceptions.RestException;
 
 public class AbstractConsumerResourceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
@@ -100,16 +103,24 @@ public class AbstractConsumerResourceTest
       String topicName, Class<? extends ConsumerState<KafkaK, KafkaV, ClientK, ClientV>> stateClass,
       long maxBytes, final List<? extends ConsumerRecord<ClientK, ClientV>> readResult,
       final Exception readException) {
-    final Capture<ConsumerManager.ReadCallback>
+    final Capture<ConsumerReadCallback>
         readCallback =
-        new Capture<ConsumerManager.ReadCallback>();
+        new Capture<ConsumerReadCallback>();
     consumerManager
         .readTopic(EasyMock.eq(groupName), EasyMock.eq(instanceId), EasyMock.eq(topicName),
                    EasyMock.eq(stateClass), EasyMock.eq(maxBytes), EasyMock.capture(readCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
-      public Object answer() throws Throwable {
-        readCallback.getValue().onCompletion(readResult, readException);
+      public Object answer() {
+        RestException e = null;
+        if (readException != null) {
+          if (!(readException instanceof RestException)) {
+            e = Errors.kafkaErrorException(readException);
+          } else {
+            e = (RestException) readException;
+          }
+        }
+        readCallback.getValue().onCompletion(readResult, e);
         return null;
       }
     });
