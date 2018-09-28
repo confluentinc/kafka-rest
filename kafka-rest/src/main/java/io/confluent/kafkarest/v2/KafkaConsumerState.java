@@ -23,7 +23,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 
-import java.util.ArrayList;
+import java.util.Queue;
+import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -58,11 +59,8 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   private KafkaRestConfig config;
   private ConsumerInstanceId instanceId;
   private Consumer<KafkaKeyT, KafkaValueT> consumer;
-  private ConsumerRecords<KafkaKeyT, KafkaValueT> consumerRecords = null;
 
-  private List<ConsumerRecord<KafkaKeyT, KafkaValueT>> consumerRecordList = null;
-  private int index = 0;
-
+  private Queue<ConsumerRecord<KafkaKeyT, KafkaValueT>> consumerRecords = new ArrayDeque<>();
 
   private long expiration;
   private ReentrantLock lock;
@@ -376,56 +374,47 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     }
   }
 
+  ConsumerRecord<KafkaKeyT, KafkaValueT> peek() {
+    return consumerRecords.peek();
+  }
+
+  boolean hasNext() {
+    lock.lock();
+    try {
+      if (hasNextCached()) {
+        return true;
+      }
+      // If none are available, try checking for any records already fetched by the consumer.
+      getOrCreateConsumerRecords();
+
+      return hasNextCached();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  ConsumerRecord<KafkaKeyT, KafkaValueT> next() {
+    return consumerRecords.poll();
+  }
+
   /**
    * Initiate poll(0) request to retrieve consumer records that are available immediately, or return
    * the existing
    * consumer records if the records have not been fully consumed by client yet. Must be
    * invoked with the lock held, i.e. after startRead().
    */
-  void getOrCreateConsumerRecords() {
-    //reset index
-    this.index = 0;
-    consumerRecordList = new ArrayList<>();
-    consumerRecords = consumer.poll(0);
+  private void getOrCreateConsumerRecords() {
+    consumerRecords = new ArrayDeque<>();
+    ConsumerRecords<KafkaKeyT, KafkaValueT> polledRecords = consumer.poll(0);
     //drain the iterator and buffer to list
-    for (ConsumerRecord<KafkaKeyT, KafkaValueT> consumerRecord : consumerRecords) {
-      consumerRecordList.add(consumerRecord);
+    for (ConsumerRecord<KafkaKeyT, KafkaValueT> consumerRecord : polledRecords) {
+      consumerRecords.add(consumerRecord);
     }
   }
 
-  public ConsumerRecord<KafkaKeyT, KafkaValueT> peek() {
-    if (hasNext()) {
-      return consumerRecordList.get(this.index);
-    }
-    return null;
+  private boolean hasNextCached() {
+    return !consumerRecords.isEmpty();
   }
-
-  public boolean hasNext() {
-    lock.lock();
-    try {
-      boolean hasRecords = consumerRecordList != null && this.index < consumerRecordList.size();
-      if (hasRecords) {
-        return true;
-      }
-      // If none are available, try checking for any records already fetched by the consumer.
-      getOrCreateConsumerRecords();
-
-      hasRecords = consumerRecordList != null && this.index < consumerRecordList.size();
-      return hasRecords;
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  public ConsumerRecord<KafkaKeyT, KafkaValueT> next() {
-    if (hasNext()) {
-      ConsumerRecord<KafkaKeyT, KafkaValueT> record = consumerRecordList.get(index);
-      this.index = this.index + 1;
-      return record;
-    }
-    return null;
-  }
-
 
   private class NoOpOnRebalance implements ConsumerRebalanceListener {
 

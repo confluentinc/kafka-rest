@@ -50,7 +50,7 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
 
   private ConsumerState parent;
   private final long maxResponseBytes;
-  private final ConsumerWorkerReadCallback<ClientKeyT, ClientValueT> callback;
+  private final ConsumerReadCallback<ClientKeyT, ClientValueT> callback;
   private CountDownLatch finished;
 
   private ConsumerTopicState topicState;
@@ -63,7 +63,7 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
           ConsumerState parent,
           String topic,
           long maxBytes,
-          ConsumerWorkerReadCallback<ClientKeyT, ClientValueT> callback
+          ConsumerReadCallback<ClientKeyT, ClientValueT> callback
   ) {
     this.parent = parent;
     this.maxResponseBytes = Math.min(
@@ -90,10 +90,8 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
 
   /**
    * Performs one iteration of reading from a consumer iterator.
-   *
-   * @return true if this read timed out, indicating the scheduler should back off
    */
-  public boolean doPartialRead() {
+  public void doPartialRead() {
     try {
       // Initial setup requires locking, which must be done on this thread.
       if (iter == null) {
@@ -103,10 +101,8 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
         messages = new Vector<ConsumerRecord<ClientKeyT, ClientValueT>>();
       }
 
-      boolean backoff = false;
       long roughMsgSize = 0;
 
-      long startedIteration = parent.getConfig().getTime().milliseconds();
       final int requestTimeoutMs = parent.getConfig().getInt(
               KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
       try {
@@ -132,7 +128,6 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
         }
       } catch (ConsumerTimeoutException cte) {
         log.trace("ConsumerReadTask timed out, using backoff id={}", this);
-        backoff = true;
       }
 
       log.trace(
@@ -155,12 +150,12 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
         );
         finish();
       }
-
-      return backoff;
     } catch (Exception e) {
-      finish(e);
+      if (!(e instanceof RestException)) {
+        e = Errors.kafkaErrorException(e);
+      }
+      finish((RestException) e);
       log.error("Unexpected exception in consumer read task id={} ", this, e);
-      return false;
     }
   }
 
@@ -168,7 +163,7 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
     finish(null);
   }
 
-  public void finish(Exception e) {
+  public void finish(RestException e) {
     log.trace("Finishing ConsumerReadTask id={} exception={}", this, e);
     if (e == null) {
       // Now it's safe to mark these messages as consumed by updating offsets since we're actually

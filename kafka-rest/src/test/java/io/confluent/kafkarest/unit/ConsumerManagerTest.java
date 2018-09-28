@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.unit;
 
 import io.confluent.kafkarest.ConsumerManager;
+import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
@@ -247,10 +248,10 @@ public class ConsumerManagerTest {
     sawCallback = false;
     actualException = null;
     actualLength = 0;
-    readTopic(cid, new ConsumerManager.ReadCallback<byte[], byte[]>() {
+    readTopic(cid, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
       public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               Exception e) {
+                               RestException e) {
         sawCallback = true;
         actualException = e;
         // Should only see the first two messages since the third pushes us over the limit.
@@ -266,10 +267,10 @@ public class ConsumerManagerTest {
     sawCallback = false;
     actualException = null;
     actualLength = 0;
-    readTopic(cid, 512, new ConsumerManager.ReadCallback<byte[], byte[]>() {
+    readTopic(cid, 512, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
       public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               Exception e) {
+                               RestException e) {
         sawCallback = true;
         actualException = e;
         // Should only see the first two messages since the third pushes us over the limit.
@@ -426,10 +427,10 @@ public class ConsumerManagerTest {
 
     // Second read should recover and return all the data.
     sawCallback = false;
-    readTopic(cid, new ConsumerManager.ReadCallback<byte[], byte[]>() {
+    readTopic(cid, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
       public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               Exception e) {
+                               RestException e) {
         sawCallback = true;
         assertNull(e);
         assertEquals(referenceRecords, records);
@@ -450,10 +451,10 @@ public class ConsumerManagerTest {
   }
 
   private void readTopic(final String cid, String topic) throws InterruptedException {
-    readTopic(cid, topic, Long.MAX_VALUE, new ConsumerManager.ReadCallback<byte[], byte[]>() {
+    readTopic(cid, topic, Long.MAX_VALUE, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
       public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               Exception e) {
+                               RestException e) {
         sawCallback = true;
         actualRecords = records;
         actualException = e;
@@ -461,15 +462,15 @@ public class ConsumerManagerTest {
     });
   }
 
-  private void readTopic(final String cid, final ConsumerManager.ReadCallback callback) throws InterruptedException {
+  private void readTopic(final String cid, final ConsumerReadCallback callback) throws InterruptedException {
     readTopic(cid, topicName, Long.MAX_VALUE, callback);
   }
 
-  private void readTopic(final String cid, long maxBytes, final ConsumerManager.ReadCallback callback) throws InterruptedException {
+  private void readTopic(final String cid, long maxBytes, final ConsumerReadCallback callback) throws InterruptedException {
     readTopic(cid, topicName, maxBytes, callback);
   }
 
-  private void readTopic(final String cid, String topic, long maxBytes, final ConsumerManager.ReadCallback callback) throws InterruptedException {
+  private void readTopic(final String cid, String topic, long maxBytes, final ConsumerReadCallback callback) throws InterruptedException {
     consumerManager.readTopic(groupName, cid, topic, BinaryConsumerState.class, maxBytes, callback);
     Thread.sleep(Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT)
         + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG));
@@ -483,10 +484,10 @@ public class ConsumerManagerTest {
         future =
         consumerManager.readTopic(
             groupName, cid, topic, BinaryConsumerState.class, Long.MAX_VALUE,
-            new ConsumerManager.ReadCallback<byte[], byte[]>() {
+            new ConsumerReadCallback<byte[], byte[]>() {
               @Override
               public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                                       Exception e) {
+                                       RestException e) {
                 sawCallback = true;
                 actualRecords = records;
                 actualException = e;

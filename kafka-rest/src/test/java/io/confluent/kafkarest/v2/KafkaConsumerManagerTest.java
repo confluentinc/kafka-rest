@@ -16,9 +16,11 @@
 package io.confluent.kafkarest.v2;
 
 import io.confluent.kafkarest.SystemTime;
+import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.entities.ConsumerOffsetCommitRequest;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
+import io.confluent.rest.exceptions.RestException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.MockConsumer;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
@@ -165,9 +167,9 @@ public class KafkaConsumerManagerTest {
         actualException = null;
         actualRecords = null;
         Future f = consumerManager.readRecords(groupName, cid, BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
-            new KafkaConsumerManager.ReadCallback<byte[], byte[]>() {
+            new ConsumerReadCallback<byte[], byte[]>() {
             @Override
-            public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, Exception e) {
+            public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
                 actualException = e;
                 actualRecords = records;
                 sawCallback = true;

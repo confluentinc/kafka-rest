@@ -40,7 +40,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.ws.rs.core.Response;
 
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestNotFoundException;
@@ -236,11 +235,6 @@ public class ConsumerManager {
     }
   }
 
-  public interface ReadCallback<K, V> {
-
-    void onCompletion(List<? extends ConsumerRecord<K, V>> records, Exception e);
-  }
-
   // The parameter consumerStateType works around type erasure, allowing us to verify at runtime
   // that the ConsumerState we looked up is of the expected type and will therefore contain the
   // correct decoders
@@ -251,7 +245,7 @@ public class ConsumerManager {
       Class<? extends ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>>
           consumerStateType,
       final long maxBytes,
-      final ReadCallback callback
+      final ConsumerReadCallback<ClientKeyT, ClientValueT> callback
   ) {
     final ConsumerState state;
     try {
@@ -277,28 +271,7 @@ public class ConsumerManager {
             state,
             topic,
             maxBytes,
-            new ConsumerWorkerReadCallback<ClientKeyT, ClientValueT>() {
-            @Override
-            public void onCompletion(
-                List<? extends ConsumerRecord<ClientKeyT, ClientValueT>> records, Exception e
-            ) {
-              updateExpiration(state);
-              if (e != null) {
-                // Ensure caught exceptions are converted to RestExceptions so the user gets a
-                // nice error message. Currently we don't define any more specific errors because
-                // the old consumer interface doesn't classify the errors well like the new
-                // consumer does. When the new consumer is available we may be able to update this
-                // to provide better feedback to the user.
-                Exception responseException = e;
-                if (!(e instanceof RestException)) {
-                  responseException = Errors.kafkaErrorException(e);
-                }
-                callback.onCompletion(null, responseException);
-              } else {
-                callback.onCompletion(records, null);
-              }
-            }
-          }
+            callback
     );
 
     return executor.submit(new RunnableReadTask(new ReadTaskState(task, state, callback)));
@@ -444,7 +417,7 @@ public class ConsumerManager {
         if (!(e instanceof RestException)) {
           responseException = Errors.kafkaErrorException(e);
         }
-        taskState.callback.onCompletion(null, responseException);
+        taskState.callback.onCompletion(null, (RestException) responseException);
       }
     }
 
@@ -468,11 +441,11 @@ public class ConsumerManager {
   private static class ReadTaskState {
     final ConsumerReadTask task;
     final ConsumerState consumerState;
-    final ReadCallback callback;
+    final ConsumerReadCallback callback;
 
     public ReadTaskState(ConsumerReadTask task,
                          ConsumerState state,
-                         ReadCallback callback) {
+                         ConsumerReadCallback callback) {
 
       this.task = task;
       this.consumerState = state;
