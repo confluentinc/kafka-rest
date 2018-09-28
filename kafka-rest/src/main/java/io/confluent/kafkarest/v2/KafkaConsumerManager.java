@@ -16,6 +16,11 @@
 
 package io.confluent.kafkarest.v2;
 
+import io.confluent.kafkarest.ConsumerInstanceId;
+import io.confluent.kafkarest.ConsumerReadCallback;
+import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.Time;
+import io.confluent.kafkarest.KafkaRestConfig;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
@@ -36,21 +41,20 @@ import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.DelayQueue;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.ws.rs.core.Response;
 
-import io.confluent.kafkarest.ConsumerInstanceId;
-import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.entities.ConsumerAssignmentRequest;
 import io.confluent.kafkarest.entities.ConsumerAssignmentResponse;
 import io.confluent.kafkarest.entities.ConsumerCommittedRequest;
 import io.confluent.kafkarest.entities.ConsumerCommittedResponse;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerOffsetCommitRequest;
-import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerSeekToOffsetRequest;
 import io.confluent.kafkarest.entities.ConsumerSeekToRequest;
 import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
@@ -68,6 +72,13 @@ import static io.confluent.kafkarest.KafkaRestConfig.MAX_POLL_RECORDS_VALUE;
 /**
  * Manages consumer instances by mapping instance IDs to consumer objects, processing read requests,
  * and cleaning up when consumers disappear.
+ *
+ * <p>For read and commitOffsets tasks, it uses a {@link ThreadPoolExecutor}
+ *  which spins up threads for handling read tasks.
+ * Since read tasks do not complete on the first run but rather call the AK consumer's poll() method
+ * continuously, we re-schedule them via a {@link DelayQueue}.
+ * A {@link ReadTaskSchedulerThread} runs in a separate thread
+ *  and re-submits the tasks to the executor.
  */
 public class KafkaConsumerManager {
 
@@ -88,9 +99,11 @@ public class KafkaConsumerManager {
   private KafkaConsumerFactory consumerFactory;
   private final PriorityQueue<KafkaConsumerState> consumersByExpiration =
       new PriorityQueue<KafkaConsumerState>();
+  private final DelayQueue<RunnableReadTask> delayedReadTasks = new DelayQueue<>();
   private final ExpirationThread expirationThread;
+  private ReadTaskSchedulerThread readTaskSchedulerThread;
 
-  public KafkaConsumerManager(KafkaRestConfig config) {
+  public KafkaConsumerManager(final KafkaRestConfig config) {
     this.config = config;
     this.time = config.getTime();
     this.bootstrapServers = config.bootstrapBrokers();
@@ -100,10 +113,29 @@ public class KafkaConsumerManager {
             : config.getInt(CONSUMER_MAX_THREADS_CONFIG);
     this.executor = new ThreadPoolExecutor(0, maxThreadCount,
             60L, TimeUnit.SECONDS,
-            new SynchronousQueue<>());
+            new SynchronousQueue<Runnable>(),
+            new RejectedExecutionHandler() {
+            @Override
+            public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+              log.debug("The runnable {} was rejected execution. "
+                  + "The thread pool must be satured or shutiing down", r);
+              if (r instanceof RunnableReadTask) {
+                RunnableReadTask readTask = (RunnableReadTask) r;
+                readTask.delayFor(ThreadLocalRandom.current().nextInt(25, 76));
+              } else {
+                // run commitOffset and consumer close tasks from the caller thread
+                if (!executor.isShutdown()) {
+                  r.run();
+                }
+              }
+            }
+          }
+    );
     this.consumerFactory = null;
     this.expirationThread = new ExpirationThread();
+    this.readTaskSchedulerThread = new ReadTaskSchedulerThread();
     this.expirationThread.start();
+    this.readTaskSchedulerThread.start();
   }
 
   KafkaConsumerManager(KafkaRestConfig config, KafkaConsumerFactory consumerFactory) {
@@ -174,6 +206,11 @@ public class KafkaConsumerManager {
       if (instanceConfig.getAutoOffsetReset() != null) {
         props.setProperty("auto.offset.reset", instanceConfig.getAutoOffsetReset());
       }
+      // override request.timeout.ms to the default
+      // the consumer.request.timeout.ms setting given by the user denotes
+      // how much time the proxy should wait before returning a response
+      // and should not be propagated to the consumer
+      props.setProperty("request.timeout.ms", "30000");
 
       props.setProperty(
           "schema.registry.url",
@@ -242,73 +279,125 @@ public class KafkaConsumerManager {
     }
   }
 
-  public interface ReadCallback<K, V> {
-
-    public void onCompletion(List<? extends ConsumerRecord<K, V>> records, Exception e);
-  }
-
-
   // The parameter consumerStateType works around type erasure, allowing us to verify at runtime
   // that the KafkaConsumerState we looked up is of the expected type and will therefore contain the
   // correct decoders
-  public <KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> Future readRecords(
+  public <KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> void readRecords(
       final String group,
       final String instance,
       Class<? extends KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>>
           consumerStateType,
       final long timeout,
       final long maxBytes,
-      final ReadCallback callback
+      final ConsumerReadCallback<ClientKeyT, ClientValueT> callback
   ) {
     final KafkaConsumerState state;
     try {
       state = getConsumerInstance(group, instance);
     } catch (RestNotFoundException e) {
       callback.onCompletion(null, e);
-      return null;
+      return;
     }
 
     if (!consumerStateType.isInstance(state)) {
       callback.onCompletion(null, Errors.consumerFormatMismatch());
-      return null;
+      return;
     }
 
-    return executor.submit(() -> {
+    final KafkaConsumerReadTask task = new KafkaConsumerReadTask<KafkaKeyT, KafkaValueT,
+          ClientKeyT, ClientValueT>(
+          state,
+          timeout,
+          maxBytes,
+          callback
+    );
+    executor.submit(new RunnableReadTask(new ReadTaskState(task, state, callback)));
+  }
+
+  class RunnableReadTask implements Runnable, Delayed {
+    private final ReadTaskState taskState;
+    private final KafkaRestConfig consumerConfig;
+    private final long started;
+    private final long requestExpiration;
+    private final int backoffMs;
+    // Expiration if this task is waiting, considering both the expiration of the whole task and
+    // a single backoff, if one is in progress
+    private long waitExpirationMs;
+
+    public RunnableReadTask(ReadTaskState taskState) {
+      this.taskState = taskState;
+      this.started = config.getTime().milliseconds();
+      this.consumerConfig = taskState.consumerState.getConfig();
+      this.requestExpiration = this.started
+              + consumerConfig.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+      this.backoffMs = consumerConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
+      this.waitExpirationMs = 0;
+    }
+
+    /**
+     * Delays for a minimum of {@code delayMs} or until the read request expires
+     */
+    public void delayFor(long delayMs) {
+      if (requestExpiration >= config.getTime().milliseconds()) {
+        // no need to delay if the request has expired
+        taskState.task.finish();
+        log.trace("Finished executing  consumer read task ({}) due to request expiry",
+            taskState.task);
+        return;
+      }
+
+      long delay = delayMs + config.getTime().milliseconds();
+      waitExpirationMs = Math.min(delay, requestExpiration);
+      // add to delayedReadTasks so the scheduler thread can re-schedule another partial read later
+      delayedReadTasks.add(this);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("RunnableReadTask consumer id: %s; Read task: %s; "
+              + "Request expiration time: %d; Wait expiration: %d",
+          taskState.consumerState.getId(), taskState.task, requestExpiration, waitExpirationMs);
+    }
+
+    @Override
+    public void run() {
       try {
-        KafkaConsumerReadTask task = new KafkaConsumerReadTask<KafkaKeyT, KafkaValueT,
-                ClientKeyT, ClientValueT>(
-            state,
-            timeout,
-            maxBytes,
-            config,
-            (records, e) -> {
-              updateExpiration(state);
-              if (e != null) {
-                // Ensure caught exceptions are converted to RestExceptions so the user gets a
-                // nice error message. Currently we don't define any more specific errors because
-                // the old consumer interface doesn't classify the errors well like the new
-                // consumer does. When the new consumer is available we may be able to update this
-                // to provide better feedback to the user.
-                Exception responseException = e;
-                if (!(e instanceof RestException)) {
-                  responseException = Errors.kafkaErrorException(e);
-                }
-                callback.onCompletion(null, responseException);
-              } else {
-                callback.onCompletion(records, null);
-              }
-            }
-        );
-        task.doFullRead();
+        log.trace("Executing consumer read task ({})", taskState.task);
+
+        taskState.task.doPartialRead();
+        KafkaConsumerManager.this.updateExpiration(taskState.consumerState);
+        if (!taskState.task.isDone()) {
+          delayFor(this.backoffMs);
+        } else {
+          log.trace("Finished executing consumer read task ({})", taskState.task);
+        }
       } catch (Exception e) {
-        log.error("Failed to read records consumer " + state.getId().toString(), e);
+        log.error("Failed to read records from consumer {} while executing read task ({}). {}",
+                  taskState.consumerState.getId().toString(), taskState.task, e);
         Exception responseException = e;
         if (!(e instanceof RestException)) {
           responseException = Errors.kafkaErrorException(e);
         }
-        callback.onCompletion(null, responseException);
+        taskState.callback.onCompletion(null, (RestException) responseException);
       }
-    });
+    }
+
+    @Override
+    public long getDelay(TimeUnit unit) {
+      long delayMs = waitExpirationMs - config.getTime().milliseconds();
+      return TimeUnit.MILLISECONDS.convert(delayMs, unit);
+    }
+
+    @Override
+    public int compareTo(Delayed o) {
+      if (o == null) {
+        throw new NullPointerException("Delayed comparator cannot compare with null");
+      }
+      long otherObjDelay = o.getDelay(TimeUnit.MILLISECONDS);
+      long delay = this.getDelay(TimeUnit.MILLISECONDS);
+
+      return Long.compare(delay, otherObjDelay);
+    }
   }
 
   public interface CommitCallback {
@@ -344,6 +433,12 @@ public class KafkaConsumerManager {
         } finally {
           updateExpiration(state);
         }
+      }
+
+      @Override
+      public String toString() {
+        return String.format("OffsetCommit consumer id: %s; Async: %s;",
+            state.getId(), async);
       }
     });
   }
@@ -458,6 +553,7 @@ public class KafkaConsumerManager {
     // the shutdown will be able to complete.
     log.trace("Shutting down consumer expiration thread");
     expirationThread.shutdown();
+    readTaskSchedulerThread.shutdown();
     synchronized (this) {
       for (Map.Entry<ConsumerInstanceId, KafkaConsumerState> entry : consumers.entrySet()) {
         entry.getValue().close();
@@ -504,6 +600,57 @@ public class KafkaConsumerManager {
     Consumer createConsumer(Properties props);
   }
 
+  private static class ReadTaskState {
+    final KafkaConsumerReadTask task;
+    final KafkaConsumerState consumerState;
+    final ConsumerReadCallback callback;
+
+    public ReadTaskState(KafkaConsumerReadTask task,
+                         KafkaConsumerState state,
+                         ConsumerReadCallback callback) {
+
+      this.task = task;
+      this.consumerState = state;
+      this.callback = callback;
+    }
+  }
+
+  private class ReadTaskSchedulerThread extends Thread {
+    final AtomicBoolean isRunning = new AtomicBoolean(true);
+    final CountDownLatch shutdownLatch = new CountDownLatch(1);
+
+    ReadTaskSchedulerThread() {
+      super("Read Task Scheduler Thread");
+      setDaemon(true);
+    }
+
+    @Override
+    public void run() {
+      try {
+        while (isRunning.get()) {
+          RunnableReadTask readTask = delayedReadTasks.poll(500, TimeUnit.MILLISECONDS);
+          if (readTask != null) {
+            executor.submit(readTask);
+          }
+        }
+      } catch (InterruptedException e) {
+        // Interrupted by other thread, do nothing to allow this thread to exit
+      } finally {
+        shutdownLatch.countDown();
+      }
+    }
+
+    public void shutdown() {
+      try {
+        isRunning.set(false);
+        this.interrupt();
+        shutdownLatch.await();
+      } catch (InterruptedException e) {
+        throw new RuntimeException("Interrupted when shutting down read task scheduler thread.");
+      }
+    }
+  }
+
   private class ExpirationThread extends Thread {
 
     AtomicBoolean isRunning = new AtomicBoolean(true);
@@ -528,6 +675,11 @@ public class KafkaConsumerManager {
                 public void run() {
                   state.close();
                 }
+
+                @Override
+                public String toString() {
+                  return String.format("Consumer Close Runnable consumer id: %s", state.getId());
+                }
               });
             }
             long timeout =
@@ -549,7 +701,7 @@ public class KafkaConsumerManager {
         this.interrupt();
         shutdownLatch.await();
       } catch (InterruptedException e) {
-        throw new Error("Interrupted when shutting down consumer worker thread.");
+        throw new RuntimeException("Interrupted when shutting down expiration thread.");
       }
     }
   }
