@@ -16,6 +16,7 @@
 
 package io.confluent.kafkarest.resources;
 
+import io.confluent.rest.exceptions.RestException;
 import org.eclipse.jetty.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,12 +37,12 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 
-import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.entities.AvroProduceRecord;
 import io.confluent.kafkarest.entities.BinaryProduceRecord;
 import io.confluent.kafkarest.entities.ConsumerRecord;
@@ -212,11 +213,11 @@ public class PartitionsResource {
 
     ctx.getSimpleConsumerManager().consume(
         topicName, partitionId, offset, count, embeddedFormat,
-        new ConsumerManager.ReadCallback<K, V>() {
+        new ConsumerReadCallback<K, V>() {
           @Override
           public void onCompletion(
               List<? extends ConsumerRecord<K, V>> records,
-              Exception e
+              RestException e
           ) {
             log.trace(
                 "Completed simple consume id={} records={} exception={}",

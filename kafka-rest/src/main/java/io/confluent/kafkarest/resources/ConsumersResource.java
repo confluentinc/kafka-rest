@@ -40,11 +40,13 @@ import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.JsonConsumerState;
 import io.confluent.kafkarest.UriUtils;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.rest.annotations.PerformanceMetric;
+import io.confluent.rest.exceptions.RestException;
 
 @Path("/consumers")
 // We include embedded formats here so you can always use these headers when interacting with
@@ -169,11 +171,11 @@ public class ConsumersResource {
     maxBytes = (maxBytes <= 0) ? Long.MAX_VALUE : maxBytes;
     ctx.getConsumerManager().readTopic(
         group, instance, topic, consumerStateType, maxBytes,
-        new ConsumerManager.ReadCallback<ClientKeyT, ClientValueT>() {
+        new ConsumerReadCallback<ClientKeyT, ClientValueT>() {
           @Override
           public void onCompletion(
               List<? extends ConsumerRecord<ClientKeyT, ClientValueT>> records,
-              Exception e
+              RestException e
           ) {
             if (e != null) {
               asyncResponse.resume(e);
