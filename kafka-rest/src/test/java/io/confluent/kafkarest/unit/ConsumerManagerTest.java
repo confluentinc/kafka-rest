@@ -21,6 +21,7 @@ import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.BinaryConsumerState;
+
 import io.confluent.kafkarest.SystemTime;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -35,6 +36,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
@@ -159,7 +161,7 @@ public class ConsumerManagerTest {
 
   @SuppressWarnings("unchecked")
   @Test
-  public void testConsumerNormalOps() throws InterruptedException, ExecutionException, RestConfigException {
+  public void testConsumerNormalOps() throws Exception {
     // Tests create instance, read, and delete
     final List<ConsumerRecord<byte[], byte[]>> referenceRecords
         = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
@@ -217,7 +219,7 @@ public class ConsumerManagerTest {
   }
 
   @Test
-  public void testConsumerMaxBytesResponse() throws InterruptedException, ExecutionException {
+  public void testConsumerMaxBytesResponse() throws Exception {
     // Tests that when there are more records available than the max bytes to be included in the
     // response, not all of it is returned.
     final List<ConsumerRecord<byte[], byte[]>> referenceRecords
@@ -328,7 +330,7 @@ public class ConsumerManagerTest {
   }
 
   @Test
-  public void testMultipleTopicSubscriptionsFail() throws InterruptedException, ExecutionException {
+  public void testMultipleTopicSubscriptionsFail() throws Exception {
     expectCreateNoData();
     EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
     EasyMock.expect(mdObserver.topicExists(secondTopicName)).andReturn(true);
@@ -368,7 +370,7 @@ public class ConsumerManagerTest {
   }
 
   @Test
-  public void testReadInvalidTopicFails() throws InterruptedException, ExecutionException {
+  public void testReadInvalidTopicFails() throws Exception, ExecutionException {
     final String invalidTopicName = "invalidtopic";
     expectCreate(null);
     EasyMock.expect(mdObserver.topicExists(invalidTopicName)).andReturn(false);
@@ -389,7 +391,7 @@ public class ConsumerManagerTest {
 
 
   @Test
-  public void testConsumerExceptions() throws InterruptedException, ExecutionException {
+  public void testConsumerExceptions() throws Exception {
     // We should be able to handle an exception thrown by the consumer, then issue another
     // request that succeeds and still see all the data
     final List<ConsumerRecord<byte[], byte[]>> referenceRecords
@@ -446,11 +448,11 @@ public class ConsumerManagerTest {
    * because one whole read task is spanned throughout multiple Runnables.
    * They are created and scheduled on the executor until the whole task is finished
    */
-  private void readTopic(final String cid) throws InterruptedException {
+  private void readTopic(final String cid) throws Exception {
     readTopic(cid, topicName);
   }
 
-  private void readTopic(final String cid, String topic) throws InterruptedException {
+  private void readTopic(final String cid, String topic) throws Exception {
     readTopic(cid, topic, Long.MAX_VALUE, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
       public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
@@ -462,18 +464,19 @@ public class ConsumerManagerTest {
     });
   }
 
-  private void readTopic(final String cid, final ConsumerReadCallback callback) throws InterruptedException {
+  private void readTopic(final String cid, final ConsumerReadCallback callback) throws Exception {
     readTopic(cid, topicName, Long.MAX_VALUE, callback);
   }
 
-  private void readTopic(final String cid, long maxBytes, final ConsumerReadCallback callback) throws InterruptedException {
+  private void readTopic(final String cid, long maxBytes, final ConsumerReadCallback callback) throws Exception {
     readTopic(cid, topicName, maxBytes, callback);
   }
 
-  private void readTopic(final String cid, String topic, long maxBytes, final ConsumerReadCallback callback) throws InterruptedException {
-    consumerManager.readTopic(groupName, cid, topic, BinaryConsumerState.class, maxBytes, callback);
-    Thread.sleep(Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT)
-        + config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG));
+  private void readTopic(final String cid, String topic, long maxBytes, final ConsumerReadCallback callback) throws Exception {
+    // Add a bit of fuzz to the wait time
+    long maxTimeout = (long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 1.10);
+    Future future = consumerManager.readTopic(groupName, cid, topic, BinaryConsumerState.class, maxBytes, callback);
+    future.get(maxTimeout, TimeUnit.MILLISECONDS);
   }
 
   private void readAndExpectImmediateNotFound(String cid, String topic) {

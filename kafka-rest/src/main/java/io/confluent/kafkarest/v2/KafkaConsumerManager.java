@@ -283,7 +283,7 @@ public class KafkaConsumerManager {
   // The parameter consumerStateType works around type erasure, allowing us to verify at runtime
   // that the KafkaConsumerState we looked up is of the expected type and will therefore contain the
   // correct decoders
-  public <KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> Future readRecords(
+  public <KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> void readRecords(
       final String group,
       final String instance,
       Class<? extends KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>>
@@ -297,12 +297,12 @@ public class KafkaConsumerManager {
       state = getConsumerInstance(group, instance);
     } catch (RestNotFoundException e) {
       callback.onCompletion(null, e);
-      return null;
+      return;
     }
 
     if (!consumerStateType.isInstance(state)) {
       callback.onCompletion(null, Errors.consumerFormatMismatch());
-      return null;
+      return;
     }
 
     final KafkaConsumerReadTask task = new KafkaConsumerReadTask<KafkaKeyT, KafkaValueT,
@@ -312,7 +312,7 @@ public class KafkaConsumerManager {
           maxBytes,
           callback
     );
-    return executor.submit(new RunnableReadTask(new ReadTaskState(task, state, callback)));
+    executor.submit(new RunnableReadTask(new ReadTaskState(task, state, callback)));
   }
 
   class RunnableReadTask implements Runnable, Delayed {

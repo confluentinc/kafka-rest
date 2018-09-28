@@ -16,6 +16,7 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.kafkarest.entities.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -238,7 +239,8 @@ public class ConsumerManager {
   // The parameter consumerStateType works around type erasure, allowing us to verify at runtime
   // that the ConsumerState we looked up is of the expected type and will therefore contain the
   // correct decoders
-  public <KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> Future readTopic(
+  public <KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
+        Future<List<ConsumerRecord<ClientKeyT, ClientValueT>>> readTopic(
       final String group,
       final String instance,
       final String topic,
@@ -267,14 +269,9 @@ public class ConsumerManager {
     }
 
     ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> task =
-        new ConsumerReadTask<>(
-            state,
-            topic,
-            maxBytes,
-            callback
-    );
-
-    return executor.submit(new RunnableReadTask(new ReadTaskState(task, state, callback)));
+        new ConsumerReadTask<>(state,topic, maxBytes, callback);
+    executor.submit(new RunnableReadTask(new ReadTaskState(task, state, callback)));
+    return task;
   }
 
   public interface CommitCallback {

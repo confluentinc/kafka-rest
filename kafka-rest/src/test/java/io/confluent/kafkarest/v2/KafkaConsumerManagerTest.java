@@ -166,7 +166,7 @@ public class KafkaConsumerManagerTest {
         sawCallback = false;
         actualException = null;
         actualRecords = null;
-        Future f = consumerManager.readRecords(groupName, cid, BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
+        consumerManager.readRecords(groupName, cid, BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
             new ConsumerReadCallback<byte[], byte[]>() {
             @Override
             public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
@@ -176,7 +176,6 @@ public class KafkaConsumerManagerTest {
             }
         });
         Thread.sleep((long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 1.10));
-        f.get();
 
         assertTrue("Callback failed to fire", sawCallback);
         assertNull("No exception in callback", actualException);
