@@ -339,7 +339,7 @@ public class KafkaConsumerManager {
      * Delays for a minimum of {@code delayMs} or until the read request expires
      */
     public void delayFor(long delayMs) {
-      if (requestExpiration >= config.getTime().milliseconds()) {
+      if (requestExpiration <= config.getTime().milliseconds()) {
         // no need to delay if the request has expired
         taskState.task.finish();
         log.trace("Finished executing  consumer read task ({}) due to request expiry",
