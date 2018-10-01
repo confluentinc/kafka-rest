@@ -32,6 +32,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.HttpHeaders;
 
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Errors;
@@ -88,6 +89,7 @@ public class ConsumersResource {
   @PerformanceMetric("consumer.create+v2")
   public CreateConsumerInstanceResponse createGroup(
       @javax.ws.rs.core.Context UriInfo uriInfo,
+      @javax.ws.rs.core.Context HttpHeaders httpHeaders,
       final @PathParam("group") String group,
       @Valid ConsumerInstanceConfig config
   ) {
@@ -95,7 +97,7 @@ public class ConsumersResource {
       config = new ConsumerInstanceConfig();
     }
     String instanceId = ctx.getKafkaConsumerManager().createConsumer(group, config);
-    String instanceBaseUri = UriUtils.absoluteUriBuilder(ctx.getConfig(), uriInfo)
+    String instanceBaseUri = UriUtils.absoluteUriBuilder(ctx.getConfig(), uriInfo, httpHeaders)
         .path("instances").path(instanceId).build().toString();
     return new CreateConsumerInstanceResponse(instanceId, instanceBaseUri);
   }
