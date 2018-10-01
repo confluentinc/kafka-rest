@@ -135,7 +135,7 @@ because they depend on your cluster layout:
      * Importance: high
 
    ``schema.registry.url``
-     The base URL for the schema registry that should be used by the Avro serializer.
+     The base URL for |sr| that should be used by the Avro serializer.
 
      * Type: string
      * Default: "http://localhost:8081"
@@ -182,16 +182,6 @@ changing these based on your specific use case.
 
      * Type: int
      * Default: 1000
-     * Importance: medium
-
-   ``consumer.threads``
-     The maximum number of threads to run consumer requests on. Consumers requests are
-     ran one per thread in a synchronous manner. It is a must to have this value
-     be set higher than the maximum number of consumers in a single consumer group,
-     otherwise rebalances will deadlock.
-
-     * Type: int
-     * Default: 200
      * Importance: medium
 
    ``host.name``

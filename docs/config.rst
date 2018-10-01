@@ -36,7 +36,7 @@ General
   * Importance: high
 
 ``schema.registry.url``
-  The base URL for the schema registry that should be used by the Avro serializer.
+  The base URL for |sr| that should be used by the Avro serializer.
 
   * Type: string
   * Default: "http://localhost:8081"
@@ -58,18 +58,18 @@ General
   * Default: 67108864
   * Importance: medium
 
-``consumer.threads``
-  The maximum number of threads to run consumer requests on. Note that this must be greater than the maximum number of consumers in a single consumer group.
-  The sentinel value of -1 allows the number of threads to grow as needed to fulfill active consumer requests. Inactive threads will ultimately be stopped and cleaned up.
-  * Type: int
-  * Default: 200
-  * Importance: medium
-
 ``consumer.request.timeout.ms``
   The maximum total time to wait for messages for a request if the maximum number of messages has not yet been reached.
 
   * Type: int
   * Default: 1000
+  * Importance: medium
+
+``consumer.threads``
+  Number of threads to run consumer requests on.
+
+  * Type: int
+  * Default: 1
   * Importance: medium
 
 ``host.name``
@@ -470,7 +470,7 @@ In addition to these configurations:
     /opt/kafka-rest/bin/kafka-rest-start /mnt/rest.properties 1>> /mnt/rest.log 2>> /mnt/rest.log &
 
 
-* If you need to access Schema Registry via https protocol, one would need additional javax.net.ssl.trustStore and javax.net.ssl.trustStorePassword parameters, as shown below:
+* If you need to access |sr| via https protocol, one would need additional javax.net.ssl.trustStore and javax.net.ssl.trustStorePassword parameters, as shown below:
 
   .. sourcecode:: bash
 
@@ -478,7 +478,7 @@ In addition to these configurations:
    /opt/kafka-rest/bin/kafka-rest-start /mnt/rest.properties 1>> /mnt/rest.log 2>> /mnt/rest.log &
 
 * For more details about krb5.conf file please see `JDK’s Kerberos Requirements <https://docs.oracle.com/javase/8/docs/technotes/guides/security/jgss/tutorials/KerberosReq.html>`_.
-* Keep in mind that authenticated and encrypted connection to Apache Kafka will only work when Kafka brokers (and Schema Registry, if used) are running with appropriate security configuration. Check out the documentation on `Kafka Security </kafka/security.html>`_ and `Schema Registry </schema-registry/docs/security.html>`_.
+* Keep in mind that authenticated and encrypted connection to Apache Kafka will only work when Kafka brokers (and |sr|, if used) are running with appropriate security configuration. Check out the documentation on `Kafka Security </kafka/security.html>`_ and `Schema Registry </schema-registry/docs/security.html>`_.
 
 
 
