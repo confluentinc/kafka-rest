@@ -30,9 +30,12 @@ public class UriUtils {
   public static UriBuilder absoluteUriBuilder(KafkaRestConfig config, UriInfo uriInfo, HttpHeaders httpHeaders) {
     String headerPort = httpHeaders.getRequestHeader("X-Forwarded-Port");
     String headerScheme = httpHeaders.getRequestHeader("X-Forwarded-Protocol");
-
-
-
+    if (headerScheme == null) {
+      headerScheme = origAbsoluteUri.getScheme();
+    }
+    if (headerPort == null) {
+      headerPort = config.consumerPort(origAbsoluteUri.getScheme());
+    }
     String hostname = config.getString(KafkaRestConfig.HOST_NAME_CONFIG);
     UriBuilder builder = uriInfo.getAbsolutePathBuilder();
     if (hostname.length() > 0) {
@@ -40,11 +43,11 @@ public class UriUtils {
       // Resetting the hostname removes the scheme and port for some reason, so they may need to
       // be reset.
       URI origAbsoluteUri = uriInfo.getAbsolutePath();
-      builder.scheme( headerScheme == null ? origAbsoluteUri.getScheme(): headerScheme);
+      builder.scheme(headerScheme);
       // Only reset the port if it was set in the original URI
       if (origAbsoluteUri.getPort() != -1) {
         try {
-          builder.port(headerPort ==null ? config.consumerPort(origAbsoluteUri.getScheme()): headerPort);
+          builder.port(headerPort);
         } catch (URISyntaxException e) {
           throw new ConfigException(e.getMessage());
         }
