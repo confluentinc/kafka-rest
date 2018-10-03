@@ -25,7 +25,7 @@ General
   * Importance: high
 
 ``bootstrap.servers``
-  A list of Kafka brokers to connect to. For example, ``PLAINTEXT://hostname:9092,SSL://hostname2:9092``. This configuration is particularly important when Kafka security is enabled, because Kafka may expose multiple endpoints that all will be stored in ZooKeeper, but |crest|  may need to be configured with just one of those endpoints. The client will make use of all servers irrespective of which servers are specified here for bootstrapping—this list only impacts the initial hosts used to discover the full set of servers. Since these servers are just used for the initial connection to discover the full cluster membership (which may change dynamically), this list need not contain the full set of servers (you may want more than one, though, in case a server is down).
+  A list of Kafka brokers to connect to. For example, ``PLAINTEXT://hostname:9092,SSL://hostname2:9092``. This configuration is particularly important when Kafka security is enabled, because Kafka may expose multiple endpoints that all will be stored in |zk|, but |crest|  may need to be configured with just one of those endpoints. The client will make use of all servers irrespective of which servers are specified here for bootstrapping—this list only impacts the initial hosts used to discover the full set of servers. Since these servers are just used for the initial connection to discover the full cluster membership (which may change dynamically), this list need not contain the full set of servers (you may want more than one, though, in case a server is down).
 
 
 ``listeners``
@@ -43,9 +43,9 @@ General
   * Importance: high
 
 ``zookeeper.connect``
-  Specifies the ZooKeeper connection string in the form hostname:port where host and port are the host and port of a ZooKeeper server. To allow connecting through other ZooKeeper nodes when that ZooKeeper machine is down you can also specify multiple hosts in the form hostname1:port1,hostname2:port2,hostname3:port3.
+  Specifies the |zk| connection string in the form hostname:port where host and port are the host and port of a |zk| server. To allow connecting through other |zk| nodes when that |zk| machine is down you can also specify multiple hosts in the form hostname1:port1,hostname2:port2,hostname3:port3.
 
-  The server may also have a ZooKeeper chroot path as part of it's ZooKeeper connection string which puts its data under some path in the global ZooKeeper namespace. If so the consumer should use the same chroot path in its connection string. For example to give a chroot path of /chroot/path you would give the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path.
+  The server may also have a |zk| chroot path as part of it's |zk| connection string which puts its data under some path in the global |zk| namespace. If so the consumer should use the same chroot path in its connection string. For example to give a chroot path of /chroot/path you would give the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path.
 
   * Type: string
   * Default: "localhost:2181"

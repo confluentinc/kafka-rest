@@ -91,7 +91,7 @@ Installation
    You can download prebuilt versions of the |crest-long| as part of the
    `Confluent Platform <http://confluent.io/downloads/>`_. To install from
    source, follow the instructions in the `Development`_ section. Before
-   starting the |crest| you must start Kafka and the |sr|. You can
+   starting the |crest| you must start Kafka and |sr|. You can
    find instructions for starting those services in
    `Schema Registry repository <http://github.com/confluentinc/schema-registry>`_.
 
@@ -113,8 +113,8 @@ as it will be on your ``PATH``. The ``kafka-rest.properties`` file contains
 included with the |crest| includes convenient defaults for a local testing setup
 and should be modified for a production deployment. By default the server starts bound to port
 8082, does not specify a unique instance ID (required to safely run multiple
-proxies concurrently), and expects Zookeeper to be available at
-``localhost:2181`` and the |sr| at ``http://localhost:8081``.
+proxies concurrently), and expects |zk| to be available at
+``localhost:2181`` and |sr| at ``http://localhost:8081``.
 
 If you started the service in the background, you can use the following
 command to stop it:
