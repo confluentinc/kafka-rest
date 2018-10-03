@@ -50,7 +50,8 @@ what is currently supported:
 * **Data Formats** - The REST Proxy can read and write data using JSON, raw bytes
   encoded with base64 or using JSON-encoded Avro. With Avro, schemas are
   registered and validated against |sr|.
-* **REST Proxy Clusters and Load Balancing** - The REST Proxy is designed to
+
+* **REST Proxy Clusters and Load Balancing** - The |crest| is designed to
   support multiple instances running together to spread load and can safely be
   run behind various load balancing mechanisms (e.g. round robin DNS, discovery
   services, load balancers) as long as instances are
@@ -90,8 +91,8 @@ Installation
    You can download prebuilt versions of the Kafka REST Proxy as part of the
    `Confluent Platform <http://confluent.io/downloads/>`_. To install from
    source, follow the instructions in the `Development`_ section. Before
-   starting the REST Proxy you must start Kafka and |sr|. You can
-   find instructions for starting those services in the
+   starting the |crest| you must start Kafka and |sr|. You can
+   find instructions for starting those services in
    `Schema Registry repository <http://github.com/confluentinc/schema-registry>`_.
 
 Deployment
@@ -112,7 +113,7 @@ as it will be on your ``PATH``. The ``kafka-rest.properties`` file contains
 included with the REST Proxy includes convenient defaults for a local testing setup
 and should be modified for a production deployment. By default the server starts bound to port
 8082, does not specify a unique instance ID (required to safely run multiple
-proxies concurrently), and expects Zookeeper to be available at
+proxies concurrently), and expects |zk| to be available at
 ``localhost:2181`` and |sr| at ``http://localhost:8081``.
 
 If you started the service in the background, you can use the following

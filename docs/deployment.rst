@@ -69,7 +69,7 @@ Network
 
 A fast and reliable network will likely have the biggest impact on the |crest|'s performance.
 It should only be used as a proxy for Kafka clusters in the same data center to ensure low
-latency access to both ZooKeeper and the Kafka brokers. Standard data center networking (1 GbE,
+latency access to both |zk| and the Kafka brokers. Standard data center networking (1 GbE,
 10 GbE) is sufficient for most applications.
 
 JVM
@@ -119,13 +119,13 @@ However, some configurations should be changed for production. Some **must** be 
 because they depend on your cluster layout:
 
    ``zookeeper.connect``
-     Specifies the ZooKeeper connection string in the form hostname:port where host and port are
-     the host and port of a ZooKeeper server. To allow connecting through other ZooKeeper nodes
-     when that ZooKeeper machine is down you can also specify multiple hosts in the form
+     Specifies the |zk| connection string in the form hostname:port where host and port are
+     the host and port of a |zk| server. To allow connecting through other |zk| nodes
+     when that |zk| machine is down you can also specify multiple hosts in the form
      hostname1:port1,hostname2:port2,hostname3:port3.
 
-     The server may also have a ZooKeeper chroot path as part of its ZooKeeper connection string
-     which puts its data under some path in the global ZooKeeper namespace. If so the consumer
+     The server may also have a |zk| chroot path as part of its |zk| connection string
+     which puts its data under some path in the global |zk| namespace. If so the consumer
      should use the same chroot path in its connection string. For example to give a chroot path
      of /chroot/path you would give the connection string as hostname1:port1,hostname2:port2,
      hostname3:port3/chroot/path.
