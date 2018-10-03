@@ -51,7 +51,8 @@ what is currently supported:
 * **Data Formats** - The REST Proxy can read and write data using JSON, raw bytes
   encoded with base64 or using JSON-encoded Avro. With Avro, schemas are
   registered and validated against |sr|.
-* **REST Proxy Clusters and Load Balancing** - The REST Proxy is designed to
+
+* **REST Proxy Clusters and Load Balancing** - The |crest| is designed to
   support multiple instances running together to spread load and can safely be
   run behind various load balancing mechanisms (e.g. round robin DNS, discovery
   services, load balancers) as long as instances are
