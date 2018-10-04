@@ -168,3 +168,7 @@ Inspect Topic Metadata
    $ curl "http://localhost:8082/topics/avrotest/partitions"
      [{"partition":0,"leader":0,"replicas":[{"broker":0,"leader":true,"in_sync":true}]}]
 
+More Examples
+~~~~~~~~~~~~~
+
+For an example that uses |crest| configured with security, see the :ref:`Confluent Platform demo <cp-demo>`.
