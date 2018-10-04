@@ -12,7 +12,7 @@
 
 For more configuration details, check the :ref:`configuration options<kafkarest_config>`.
 
-If you want to see full configurations for a secured |crest|, please refer to the :ref:`Confluent Platform demo<cp-demo>`
+.. tip: For an example that includes the full |crest| security configuration see the :ref:`Confluent Platform demo <cp-demo>`.
 
 By default, all the requests to the broker use the same Kerberos Principal or the SSL certificate
 to communicate with the broker when the ``client.security.protocol`` is configured to be either

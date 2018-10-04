@@ -171,4 +171,4 @@ Inspect Topic Metadata
 More Examples
 ~~~~~~~~~~~~~
 
-If you want to see a playbook of interacting with |crest| configured with security, please refer to the :ref:`Confluent Platform demo<cp-demo>`
+For an example that uses |crest| configured with security, see the :ref:`Confluent Platform demo <cp-demo>`.
