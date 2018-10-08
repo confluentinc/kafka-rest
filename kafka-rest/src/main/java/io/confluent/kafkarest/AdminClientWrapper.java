@@ -148,7 +148,9 @@ public class AdminClientWrapper {
 
       Partition p = new Partition();
       p.setPartition(topicPartitionInfo.partition());
-      p.setLeader(topicPartitionInfo.leader().id());
+      Node partitionLeader = topicPartitionInfo.leader();
+      int leaderId = partitionLeader != null ? partitionLeader.id() : -1;
+      p.setLeader(leaderId);
       List<PartitionReplica> partitionReplicas = new Vector<>();
 
       for (Node replicaNode : topicPartitionInfo.replicas()) {
