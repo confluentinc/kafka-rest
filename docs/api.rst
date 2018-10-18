@@ -3,10 +3,6 @@
 |crest-long| API Reference
 ==========================
 
-.. contents:: Contents
-      :local:
-      :depth: 1
-
 Content Types
 ^^^^^^^^^^^^^
 
