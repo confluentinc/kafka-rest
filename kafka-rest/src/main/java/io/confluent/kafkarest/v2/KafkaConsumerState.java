@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
@@ -229,7 +230,8 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     lock.lock();
     try {
       if (consumer != null) {
-        consumer.close();
+        int closeTimeout = config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_CLOSE_TIMEOUT_MS);
+        consumer.close(closeTimeout, TimeUnit.MILLISECONDS);
       }
       // Marks this state entry as no longer valid because the consumer group is being destroyed.
       consumer = null;

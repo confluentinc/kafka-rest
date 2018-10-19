@@ -162,6 +162,11 @@ public class KafkaRestConfig extends RestConfig {
       + "is automatically destroyed.";
   public static final String CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT = "300000";
 
+  public static final String CONSUMER_INSTANCE_CLOSE_TIMEOUT_MS = "consumer.instance.close.timeout.ms";
+  public static final String CONSUMER_INSTANCE_CLOSE_TIMEOUT_MS_DOC =
+          "Amount of time to wait for a consumer to gracefully close.";
+  public static final String CONSUMER_INSTANCE_CLOSE_TIMEOUT_MS_DEFAULT = "10000";
+
   public static final String SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG = "simpleconsumer.pool.size.max";
   private static final String SIMPLE_CONSUMER_MAX_POOL_SIZE_DOC =
       "Maximum number of SimpleConsumers that can be instantiated per broker."
@@ -420,6 +425,12 @@ public class KafkaRestConfig extends RestConfig {
             Importance.LOW,
             CONSUMER_INSTANCE_TIMEOUT_MS_DOC
         )
+        .define(
+            CONSUMER_INSTANCE_CLOSE_TIMEOUT_MS,
+            Type.INT,
+            CONSUMER_INSTANCE_CLOSE_TIMEOUT_MS_DEFAULT,
+            Importance.LOW,
+            CONSUMER_INSTANCE_CLOSE_TIMEOUT_MS_DOC)
         .define(
             SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG,
             Type.INT,
