@@ -11,10 +11,6 @@ Some example use cases are:
 * Ingesting messages into a stream processing framework that doesn’t yet support Kafka
 * Scripting administrative actions
 
-.. contents:: Contents
-    :local:
-    :depth: 1
-
 Features
 --------
 

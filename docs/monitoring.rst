@@ -19,8 +19,6 @@ understand how the proxy is being used and track down specific performance probl
 In addition to the metrics defined below, the |crest| also exposes the
 wealth of metrics that are provided by the underlying Jetty server.
 
-.. contents::
-
 Global Metrics
 ~~~~~~~~~~~~~~
 
