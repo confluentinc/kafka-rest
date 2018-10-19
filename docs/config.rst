@@ -10,10 +10,6 @@ exposed in the |crest-long| API, priority is given to settings in the user reque
 provided as configuration options, and finally falls back to the default values provided by the
 Java Kafka clients.
 
-.. contents:: Contents
-    :local:
-    :depth: 2
-
 General
 -------
 
