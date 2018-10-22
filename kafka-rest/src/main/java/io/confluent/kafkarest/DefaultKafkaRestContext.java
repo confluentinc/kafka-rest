@@ -17,6 +17,7 @@
 package io.confluent.kafkarest;
 
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
+import org.apache.kafka.clients.admin.AdminClient;
 
 /**
  * Shared, global state for the REST proxy server, including configuration and connection pools.
@@ -93,7 +94,8 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   @Override
   public AdminClientWrapper getAdminClientWrapper() {
     if (adminClientWrapper == null) {
-      adminClientWrapper = new AdminClientWrapper(config);
+      adminClientWrapper = new AdminClientWrapper(config,
+          AdminClient.create(AdminClientWrapper.adminProperties(config)));
     }
     return adminClientWrapper;
   }
