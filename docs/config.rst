@@ -207,8 +207,8 @@ General
   * Default: 1000
   * Importance: low
 
-``kafka.rest.resource.extension.class``
-  A list of classes to use as RestResourceExtension. Implementing the interface <code>RestResourceExtension</code> allows you to inject user defined resources like filters to |crest|. Typically used to add custom capability like logging, security, etc.
+``resource.extension.classes``
+  A list of classes to use as ResourceExtension. Implementing the interface <code>ResourceExtension</code> allows you to inject user defined resources like filters to |crest|. Typically used to add custom capability like logging, security, etc.
 
   * Type: list
   * Default: ""
