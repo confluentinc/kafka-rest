@@ -334,6 +334,7 @@ public class KafkaConsumerManager {
       return myTask;
     }
   }
+
   class KafkaConsumerThreadPoolExecutor extends ThreadPoolExecutor {
     public KafkaConsumerThreadPoolExecutor(int corePoolSize,
                                                int maximumPoolSize,
@@ -345,9 +346,9 @@ public class KafkaConsumerManager {
 
     }
 
-       @Override
+    @Override
     protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
-        return new ReadFutureTask(runnable, value);
+      return new ReadFutureTask(runnable, value);
     }
   }
 
