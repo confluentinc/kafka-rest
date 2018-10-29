@@ -35,7 +35,25 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.Vector;
-import java.util.concurrent.*;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.FutureTask;
+
+
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.DelayQueue;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+
+
+
+
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.ws.rs.core.Response;
@@ -316,24 +334,22 @@ public class KafkaConsumerManager {
       return myTask;
     }
   }
-
-    class KafkaConsumerThreadPoolExecutor extends ThreadPoolExecutor {
-
-     public KafkaConsumerThreadPoolExecutor(int corePoolSize,
+  class KafkaConsumerThreadPoolExecutor extends ThreadPoolExecutor {
+    public KafkaConsumerThreadPoolExecutor(int corePoolSize,
                                                int maximumPoolSize,
                                                long keepAliveTime,
                                                TimeUnit unit,
                                                BlockingQueue<Runnable> workQueue,
                                                RejectedExecutionHandler handler) {
-       super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, handler);
+    super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, handler);
 
-     }
+    }
 
        @Override
-       protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
+    protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
         return new ReadFutureTask(runnable, value);
-       }
     }
+  }
 
   class RunnableReadTask implements Runnable, Delayed {
     private final ReadTaskState taskState;
