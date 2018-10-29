@@ -35,16 +35,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.Vector;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.DelayQueue;
-import java.util.concurrent.Delayed;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.ws.rs.core.Response;
@@ -110,7 +101,7 @@ public class KafkaConsumerManager {
     int maxThreadCount = config.getInt(CONSUMER_MAX_THREADS_CONFIG) < 0 ? Integer.MAX_VALUE
             : config.getInt(CONSUMER_MAX_THREADS_CONFIG);
 
-    this.executor = new ThreadPoolExecutor(0, maxThreadCount,
+    this.executor = new KafkaConsumerThreadPoolExecutor(0, maxThreadCount,
             60L, TimeUnit.SECONDS,
             new SynchronousQueue<Runnable>(),
             new RejectedExecutionHandler() {
@@ -118,8 +109,9 @@ public class KafkaConsumerManager {
             public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
               log.debug("The runnable {} was rejected execution. "
                   + "The thread pool must be satured or shutiing down", r);
-              if (r instanceof RunnableReadTask) {
-                RunnableReadTask readTask = (RunnableReadTask) r;
+              if (r instanceof ReadFutureTask) {
+                ReadFutureTask readFutureTask = (ReadFutureTask) r;
+                RunnableReadTask readTask = (RunnableReadTask)readFutureTask.getReadTask();
                 readTask.delayFor(ThreadLocalRandom.current().nextInt(25, 76));
               } else {
                 // run commitOffset and consumer close tasks from the caller thread
@@ -310,6 +302,38 @@ public class KafkaConsumerManager {
     );
     executor.submit(new RunnableReadTask(new ReadTaskState(task, state, callback)));
   }
+
+  class ReadFutureTask<V> extends FutureTask<V> {
+
+    private Runnable myTask;
+
+    public ReadFutureTask(Runnable runnable, V result) {
+      super(runnable, result);
+      this.myTask = runnable;
+    }
+
+    public Runnable getReadTask() {
+      return myTask;
+    }
+  }
+
+    class KafkaConsumerThreadPoolExecutor extends ThreadPoolExecutor {
+
+     public KafkaConsumerThreadPoolExecutor(int corePoolSize,
+                                               int maximumPoolSize,
+                                               long keepAliveTime,
+                                               TimeUnit unit,
+                                               BlockingQueue<Runnable> workQueue,
+                                               RejectedExecutionHandler handler) {
+       super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, handler);
+
+     }
+
+       @Override
+       protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
+        return new ReadFutureTask(runnable, value);
+       }
+    }
 
   class RunnableReadTask implements Runnable, Delayed {
     private final ReadTaskState taskState;
