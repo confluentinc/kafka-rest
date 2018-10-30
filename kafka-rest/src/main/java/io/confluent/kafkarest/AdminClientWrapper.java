@@ -47,12 +47,16 @@ public class AdminClientWrapper {
   private AdminClient adminClient;
   private int initTimeOut;
 
-  public AdminClientWrapper(KafkaRestConfig kafkaRestConfig) {
+  public AdminClientWrapper(KafkaRestConfig kafkaRestConfig, AdminClient adminClient) {
+    this.adminClient = adminClient;
+    this.initTimeOut = kafkaRestConfig.getInt(KafkaRestConfig.KAFKACLIENT_INIT_TIMEOUT_CONFIG);
+  }
+
+  public static Properties adminProperties(KafkaRestConfig kafkaRestConfig) {
     Properties properties = new Properties();
     properties.putAll(kafkaRestConfig.getAdminProperties());
     properties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaRestConfig.bootstrapBrokers());
-    adminClient = AdminClient.create(properties);
-    this.initTimeOut = kafkaRestConfig.getInt(KafkaRestConfig.KAFKACLIENT_INIT_TIMEOUT_CONFIG);
+    return properties;
   }
 
   public List<Integer> getBrokerIds() {
@@ -148,7 +152,9 @@ public class AdminClientWrapper {
 
       Partition p = new Partition();
       p.setPartition(topicPartitionInfo.partition());
-      p.setLeader(topicPartitionInfo.leader().id());
+      Node partitionLeader = topicPartitionInfo.leader();
+      int leaderId = partitionLeader != null ? partitionLeader.id() : -1;
+      p.setLeader(leaderId);
       List<PartitionReplica> partitionReplicas = new Vector<>();
 
       for (Node replicaNode : topicPartitionInfo.replicas()) {
