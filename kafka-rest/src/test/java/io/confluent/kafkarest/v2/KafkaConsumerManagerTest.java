@@ -160,7 +160,7 @@ public class KafkaConsumerManagerTest {
         readFromDefault(cid);
         assertEquals(config.getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG),
             Integer.parseInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_DEFAULT));
-        Thread.sleep(config.getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG));
+        Thread.sleep((long) (config.getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG) * 1.10));
         assertTrue("Callback failed to fire", sawCallback);
         assertNull("No exception in callback", actualException);
     }
@@ -191,6 +191,7 @@ public class KafkaConsumerManagerTest {
             assertFalse(sawCallback);
             Thread.sleep(40);
         }
+        Thread.sleep(200);
         assertTrue("Callback failed to fire", sawCallback);
         assertNull("No exception in callback", actualException);
     }
@@ -222,6 +223,7 @@ public class KafkaConsumerManagerTest {
             assertFalse(sawCallback);
             Thread.sleep(100);
         }
+        Thread.sleep(200);
         assertTrue("Callback failed to fire", sawCallback);
         assertNull("No exception in callback", actualException);
         assertTrue("Records returned not empty", actualRecords.isEmpty());
