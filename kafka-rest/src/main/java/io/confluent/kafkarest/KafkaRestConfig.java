@@ -125,7 +125,7 @@ public class KafkaRestConfig extends RestConfig {
           + " there isn't sufficient data to satisfy the requirement given by"
           + "fetch.min.bytes";
   public static final String PROXY_FETCH_MAX_WAIT_MS_DEFAULT = "1000";
-  private static final int PROXY_FETCH_MAX_WAIT_MS_MAX = 10000;
+  private static final int PROXY_FETCH_MAX_WAIT_MS_MAX = 60000;
   public static final ConfigDef.Range PROXY_FETCH_MAX_WAIT_MS_VALIDATOR =
           ConfigDef.Range.between(1, PROXY_FETCH_MAX_WAIT_MS_MAX);
 

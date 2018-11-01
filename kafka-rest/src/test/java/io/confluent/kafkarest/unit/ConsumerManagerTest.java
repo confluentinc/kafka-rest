@@ -325,7 +325,7 @@ public class ConsumerManagerTest {
 
     ConsumerInstanceConfig config = new ConsumerInstanceConfig(EmbeddedFormat.BINARY);
     // we expect one record to be returned since the setting is overridden
-    config.setResponseMinBytes(Integer.toString(1));
+    config.setResponseMinBytes(1);
     readFromDefault(consumerManager.createConsumer(groupName, config));
 
     assertTrue("Callback failed to fire", sawCallback);
@@ -355,7 +355,7 @@ public class ConsumerManagerTest {
     EasyMock.replay(mdObserver, consumerFactory);
 
     ConsumerInstanceConfig consumerConfig = new ConsumerInstanceConfig(EmbeddedFormat.BINARY);
-    consumerConfig.setRequestWaitMs(overriddenWaitTimeMs.toString());
+    consumerConfig.setRequestWaitMs(overriddenWaitTimeMs);
     String cid = consumerManager.createConsumer(groupName, consumerConfig);
     long startTime = System.currentTimeMillis();
     readFromDefault(cid);

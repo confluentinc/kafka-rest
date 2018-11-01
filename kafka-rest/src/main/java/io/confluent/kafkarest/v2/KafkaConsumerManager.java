@@ -16,6 +16,7 @@
 
 package io.confluent.kafkarest.v2;
 
+import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.Errors;
@@ -265,38 +266,22 @@ public class KafkaConsumerManager {
           ConsumerInstanceConfig instanceConfig,
           ConsumerInstanceId cid, Consumer consumer
   ) throws RestServerErrorException {
-    Properties newProps = ConsumerInstanceConfig.attachProxySpecificProperties(
-            (Properties) this.config.getOriginalProperties().clone(), instanceConfig);
+    KafkaRestConfig newConfig = ConsumerManager.newConsumerConfig(this.config, instanceConfig);
 
-    KafkaRestConfig newConfig;
-    try {
-      newConfig = new KafkaRestConfig(newProps, this.config.getTime());
-    } catch (io.confluent.rest.RestConfigException e) {
-      throw new RestServerErrorException(
-              "Invalid configuration for new consumer.",
-              Response.Status.BAD_REQUEST.getStatusCode()
-      );
-    }
-
-    KafkaConsumerState state;
     switch (instanceConfig.getFormat()) {
       case BINARY:
-        state = new BinaryKafkaConsumerState(newConfig, cid, consumer);
-        break;
+        return new BinaryKafkaConsumerState(newConfig, cid, consumer);
       case AVRO:
-        state = new AvroKafkaConsumerState(newConfig, cid, consumer);
-        break;
+        return new AvroKafkaConsumerState(newConfig, cid, consumer);
       case JSON:
-        state = new JsonKafkaConsumerState(newConfig, cid, consumer);
-        break;
+        return new JsonKafkaConsumerState(newConfig, cid, consumer);
       default:
         throw new RestServerErrorException(
-                "Invalid embedded format for new consumer.",
+                String.format("Invalid embedded format %s for new consumer.",
+                    instanceConfig.getFormat()),
                 Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
         );
     }
-
-    return state;
   }
 
   // The parameter consumerStateType works around type erasure, allowing us to verify at runtime

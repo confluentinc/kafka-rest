@@ -143,7 +143,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
     while (!exceededMinResponseBytes && !exceededMaxResponseBytes && parent.hasNext()) {
       maybeAddRecord();
     }
-    while (exceededMinResponseBytes && !exceededMaxResponseBytes && parent.hasNextCached()) {
+    while (!exceededMaxResponseBytes && parent.hasNextCached()) {
       // will not call poll() anymore. Continue draining loaded records
       maybeAddRecord();
     }
@@ -156,13 +156,13 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
    * have exceeded the min response bytes
    * @return boolean indicating whether the record was added
    */
-  private boolean maybeAddRecord() {
+  private void maybeAddRecord() {
     ConsumerRecordAndSize<ClientKeyT, ClientValueT> recordAndSize =
             parent.createConsumerRecord(parent.peek());
     long roughMsgSize = recordAndSize.getSize();
     if (bytesConsumed + roughMsgSize >= maxResponseBytes) {
       this.exceededMaxResponseBytes = true;
-      return false;
+      return;
     }
 
     messages.add(recordAndSize.getRecord());
@@ -171,7 +171,6 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
     if (!exceededMinResponseBytes && bytesConsumed > responseMinBytes) {
       this.exceededMinResponseBytes = true;
     }
-    return true;
   }
 
   void finish() {

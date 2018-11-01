@@ -173,6 +173,19 @@ public class Errors {
     );
   }
 
+  public static final String INVALID_CONSUMER_CONFIG_CONSTRAINT_MESSAGE =
+      "Invalid consumer configuration. It does not abide by the constraints: ";
+  public static final int INVALID_CONSUMER_CONFIG_CONSTAINT_ERROR_CODE = 40001;
+
+  public static RestConstraintViolationException invalidConsumerConfigConstraintException(
+      io.confluent.common.config.ConfigException e
+  ) {
+    return new RestConstraintViolationException(
+        INVALID_CONSUMER_CONFIG_CONSTRAINT_MESSAGE + e.getMessage(),
+        INVALID_CONSUMER_CONFIG_CONSTAINT_ERROR_CODE
+    );
+  }
+
   public static final String INVALID_SCHEMA_MESSAGE = "Invalid schema: ";
   public static final int INVALID_SCHEMA_ERROR_CODE = 42205;
 

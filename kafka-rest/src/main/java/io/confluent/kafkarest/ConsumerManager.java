@@ -221,31 +221,15 @@ public class ConsumerManager {
           ConsumerInstanceConfig instanceConfig,
           ConsumerInstanceId cid, ConsumerConnector consumer
   ) throws RestServerErrorException {
-    Properties newProps = ConsumerInstanceConfig.attachProxySpecificProperties(
-            (Properties) this.config.getOriginalProperties().clone(), instanceConfig);
+    KafkaRestConfig newConfig = ConsumerManager.newConsumerConfig(this.config, instanceConfig);
 
-    KafkaRestConfig newConfig;
-    try {
-      newConfig = new KafkaRestConfig(newProps, this.config.getTime());
-    } catch (io.confluent.rest.RestConfigException e) {
-      throw new RestServerErrorException(
-              "Invalid configuration for new consumer.",
-              Response.Status.BAD_REQUEST.getStatusCode(),
-              e
-      );
-    }
-
-    ConsumerState state;
     switch (instanceConfig.getFormat()) {
       case BINARY:
-        state = new BinaryConsumerState(newConfig, cid, consumer);
-        break;
+        return new BinaryConsumerState(newConfig, cid, consumer);
       case AVRO:
-        state = new AvroConsumerState(newConfig, cid, consumer);
-        break;
+        return new AvroConsumerState(newConfig, cid, consumer);
       case JSON:
-        state = new JsonConsumerState(newConfig, cid, consumer);
-        break;
+        return new JsonConsumerState(newConfig, cid, consumer);
       default:
         throw new RestServerErrorException(
                 String.format("Invalid embedded format %s for new consumer.",
@@ -253,7 +237,23 @@ public class ConsumerManager {
                 Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
         );
     }
-    return state;
+  }
+
+  public static KafkaRestConfig newConsumerConfig(KafkaRestConfig config,
+                                                  ConsumerInstanceConfig instanceConfig
+  ) throws RestServerErrorException {
+    Properties newProps = ConsumerInstanceConfig.attachProxySpecificProperties(
+        (Properties) config.getOriginalProperties().clone(), instanceConfig);
+
+    try {
+      return new KafkaRestConfig(newProps, config.getTime());
+    } catch (io.confluent.rest.RestConfigException e) {
+      throw new RestServerErrorException(
+          String.format("Invalid configuration for new consumer: %s", newProps),
+          Response.Status.BAD_REQUEST.getStatusCode(),
+          e
+      );
+    }
   }
 
   // The parameter consumerStateType works around type erasure, allowing us to verify at runtime
