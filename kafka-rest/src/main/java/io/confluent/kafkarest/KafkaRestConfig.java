@@ -162,7 +162,8 @@ public class KafkaRestConfig extends RestConfig {
       + "is automatically destroyed.";
   public static final String CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT = "300000";
 
-  public static final String CONSUMER_INSTANCE_CLOSE_TIMEOUT_MS = "consumer.instance.close.timeout.ms";
+  public static final String CONSUMER_INSTANCE_CLOSE_TIMEOUT_MS =
+          "consumer.instance.close.timeout.ms";
   public static final String CONSUMER_INSTANCE_CLOSE_TIMEOUT_MS_DOC =
           "Amount of time to wait for a consumer to gracefully close.";
   public static final String CONSUMER_INSTANCE_CLOSE_TIMEOUT_MS_DEFAULT = "10000";
