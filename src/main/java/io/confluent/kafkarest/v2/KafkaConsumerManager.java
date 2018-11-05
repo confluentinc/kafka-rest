@@ -278,7 +278,7 @@ public class KafkaConsumerManager {
           public void onCompletion(
               List<? extends ConsumerRecord<ClientKeyT, ClientValueT>> records, Exception e
           ) {
-            updateExpiration(state);
+            state.updateExpiration();
             if (e != null) {
               // Ensure caught exceptions are converted to RestExceptions so the user gets a
               // nice error message. Currently we don't define any more specific errors because
@@ -329,7 +329,7 @@ public class KafkaConsumerManager {
           }
           callback.onCompletion(null, responseException);
         } finally {
-          updateExpiration(state);
+          state.updateExpiration();
         }
       }
     });
@@ -480,15 +480,6 @@ public class KafkaConsumerManager {
   private KafkaConsumerState getConsumerInstance(String group, String instance) {
     return getConsumerInstance(group, instance, false);
   }
-
-  /*
-    Update the expiration of a KafkaConsumerState.
-    Synchronized to avoid race conditions with the ExpirationThread
-   */
-  private synchronized void updateExpiration(KafkaConsumerState state) {
-    state.updateExpiration();
-  }
-
 
   public interface KafkaConsumerFactory {
 

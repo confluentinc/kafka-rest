@@ -38,7 +38,7 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
   // This is pretty large since there is sometimes significant overhead to doing a read (e.g.
   // checking topic existence in ZK)
   private static final Integer instanceTimeout = 1000;
-  private static final Integer slackTime = 5;
+  private static final Integer slackTime = 1100;
 
   @Before
   @Override

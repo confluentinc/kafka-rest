@@ -53,8 +53,7 @@ import kafka.serializer.Decoder;
  * {@code KafkaMessageAndMetadata<K,V>} values to ConsumerRecords that can be returned to the client
  * (including translation if the decoded Kafka consumer type and ConsumerRecord types differ).
  */
-public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
-    implements Comparable<KafkaConsumerState> {
+public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
 
   private KafkaRestConfig config;
   private ConsumerInstanceId instanceId;
@@ -377,17 +376,6 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
 
   public void setConfig(KafkaRestConfig config) {
     this.config = config;
-  }
-
-  @Override
-  public int compareTo(KafkaConsumerState o) {
-    if (this.expiration < o.expiration) {
-      return -1;
-    } else if (this.expiration == o.expiration) {
-      return 0;
-    } else {
-      return 1;
-    }
   }
 
   /**

@@ -259,7 +259,7 @@ public class ConsumerManager {
           public void onCompletion(
               List<? extends ConsumerRecord<ClientKeyT, ClientValueT>> records, Exception e
           ) {
-            updateExpiration(state);
+            state.updateExpiration();
             if (e != null) {
               // Ensure caught exceptions are converted to RestExceptions so the user gets a
               // nice error message. Currently we don't define any more specific errors because
@@ -307,7 +307,7 @@ public class ConsumerManager {
           }
           callback.onCompletion(null, responseException);
         } finally {
-          updateExpiration(state);
+          state.updateExpiration();
         }
       }
     });
@@ -360,10 +360,6 @@ public class ConsumerManager {
 
   private ConsumerState getConsumerInstance(String group, String instance) {
     return getConsumerInstance(group, instance, false);
-  }
-
-  private synchronized void updateExpiration(ConsumerState state) {
-    state.updateExpiration();
   }
 
   public interface ConsumerFactory {
