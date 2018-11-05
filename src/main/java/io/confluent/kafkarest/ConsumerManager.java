@@ -351,17 +351,19 @@ public class ConsumerManager {
   private synchronized ConsumerState getConsumerInstance(
       String group,
       String instance,
-      boolean remove
+      boolean toRemove
   ) {
     ConsumerInstanceId id = new ConsumerInstanceId(group, instance);
-    final ConsumerState state = remove ? consumers.remove(id) : consumers.get(id);
+    final ConsumerState state;
+    if (toRemove) {
+      state = consumers.remove(id);
+      consumersByExpiration.remove(state);
+    } else {
+      state = consumers.get(id);
+    }
     if (state == null) {
       throw Errors.consumerInstanceNotFoundException();
     }
-    // Clear from the timeout queue immediately so it isn't removed during the read operation,
-    // but don't update the timeout until we finish the read since that can significantly affect
-    // the timeout.
-    consumersByExpiration.remove(state);
     return state;
   }
 
@@ -371,6 +373,7 @@ public class ConsumerManager {
 
   private synchronized void updateExpiration(ConsumerState state) {
     state.updateExpiration();
+    consumersByExpiration.remove(state);
     consumersByExpiration.add(state);
     this.notifyAll();
   }
