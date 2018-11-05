@@ -64,7 +64,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   private int index = 0;
 
 
-  private long expiration;
+  private volatile long expiration;
   // A read/write lock on the KafkaConsumerState allows concurrent readRecord calls, but allows
   // commitOffsets to safely lock the entire state in order to get correct information about all
   // the topic/stream's current offset state. All operations on individual TopicStates must be
