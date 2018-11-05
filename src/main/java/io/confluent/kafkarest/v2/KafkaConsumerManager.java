@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.Vector;
@@ -87,8 +86,6 @@ public class KafkaConsumerManager {
   // they're also comparatively rare. These are executed serially in a dedicated thread.
   private final ExecutorService executor;
   private KafkaConsumerFactory consumerFactory;
-  private final PriorityQueue<KafkaConsumerState> consumersByExpiration =
-      new PriorityQueue<KafkaConsumerState>();
   private final ExpirationThread expirationThread;
 
   public KafkaConsumerManager(KafkaRestConfig config) {
@@ -229,8 +226,6 @@ public class KafkaConsumerManager {
       }
       synchronized (this) {
         consumers.put(cid, state);
-        consumersByExpiration.add(state);
-        this.notifyAll();
       }
       succeeded = true;
       return name;
@@ -461,7 +456,6 @@ public class KafkaConsumerManager {
         entry.getValue().close();
       }
       consumers.clear();
-      consumersByExpiration.clear();
       executor.shutdown();
     }
   }
@@ -476,13 +470,7 @@ public class KafkaConsumerManager {
       boolean toRemove
   ) {
     ConsumerInstanceId id = new ConsumerInstanceId(group, instance);
-    final KafkaConsumerState state;
-    if (toRemove) {
-      state = consumers.remove(id);
-      consumersByExpiration.remove(state);
-    } else {
-      state = consumers.get(id);
-    }
+    final KafkaConsumerState state = toRemove ? consumers.remove(id) : consumers.get(id);
     if (state == null) {
       throw Errors.consumerInstanceNotFoundException();
     }
@@ -493,15 +481,12 @@ public class KafkaConsumerManager {
     return getConsumerInstance(group, instance, false);
   }
 
+  /*
+    Update the expiration of a KafkaConsumerState.
+    Synchronized to avoid race conditions with the ExpirationThread
+   */
   private synchronized void updateExpiration(KafkaConsumerState state) {
-    if (!consumers.containsKey(state.getId())) {
-      return;
-    }
-
     state.updateExpiration();
-    consumersByExpiration.remove(state);
-    consumersByExpiration.add(state);
-    this.notifyAll();
   }
 
 
@@ -526,9 +511,15 @@ public class KafkaConsumerManager {
         try {
           while (isRunning.get()) {
             long now = time.milliseconds();
-            while (!consumersByExpiration.isEmpty() && consumersByExpiration.peek().expired(now)) {
-              final KafkaConsumerState state = consumersByExpiration.remove();
-              consumers.remove(state.getId());
+            List<KafkaConsumerState> statesToRemove = new ArrayList<>();
+            for (KafkaConsumerState state: consumers.values()) {
+              if (state.expired(now)) {
+                statesToRemove.add(state);
+              }
+            }
+            for (KafkaConsumerState staleState: statesToRemove) {
+              log.debug("Removing the expired consumer {}", staleState.getId());
+              final KafkaConsumerState state = consumers.remove(staleState.getId());
               executor.submit(new Runnable() {
                 @Override
                 public void run() {
@@ -536,11 +527,8 @@ public class KafkaConsumerManager {
                 }
               });
             }
-            long timeout =
-                consumersByExpiration.isEmpty()
-                ? Long.MAX_VALUE
-                : consumersByExpiration.peek().untilExpiration(now);
-            KafkaConsumerManager.this.wait(timeout);
+
+            KafkaConsumerManager.this.wait(1000);
           }
         } catch (InterruptedException e) {
           // Interrupted by other thread, do nothing to allow this thread to exit

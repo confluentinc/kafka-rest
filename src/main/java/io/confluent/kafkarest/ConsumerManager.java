@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.Vector;
@@ -73,7 +73,6 @@ public class ConsumerManager {
   // they're also comparatively rare. These are executed serially in a dedicated thread.
   private final ExecutorService executor;
   private ConsumerFactory consumerFactory;
-  private final PriorityQueue<ConsumerState> consumersByExpiration = new PriorityQueue<>();
   private final ExpirationThread expirationThread;
 
   public ConsumerManager(KafkaRestConfig config, MetadataObserver mdObserver) {
@@ -202,7 +201,6 @@ public class ConsumerManager {
 
       synchronized (this) {
         consumers.put(cid, state);
-        consumersByExpiration.add(state);
         this.notifyAll();
       }
       succeeded = true;
@@ -339,7 +337,6 @@ public class ConsumerManager {
         entry.getValue().close();
       }
       consumers.clear();
-      consumersByExpiration.clear();
       executor.shutdown();
     }
   }
@@ -354,13 +351,7 @@ public class ConsumerManager {
       boolean toRemove
   ) {
     ConsumerInstanceId id = new ConsumerInstanceId(group, instance);
-    final ConsumerState state;
-    if (toRemove) {
-      state = consumers.remove(id);
-      consumersByExpiration.remove(state);
-    } else {
-      state = consumers.get(id);
-    }
+    final ConsumerState state = toRemove ? consumers.remove(id) : consumers.get(id);
     if (state == null) {
       throw Errors.consumerInstanceNotFoundException();
     }
@@ -372,14 +363,7 @@ public class ConsumerManager {
   }
 
   private synchronized void updateExpiration(ConsumerState state) {
-    if (!consumers.containsKey(state.getId())) {
-      return;
-    }
-
     state.updateExpiration();
-    consumersByExpiration.remove(state);
-    consumersByExpiration.add(state);
-    this.notifyAll();
   }
 
   public interface ConsumerFactory {
@@ -403,9 +387,15 @@ public class ConsumerManager {
         try {
           while (isRunning.get()) {
             long now = time.milliseconds();
-            while (!consumersByExpiration.isEmpty() && consumersByExpiration.peek().expired(now)) {
-              final ConsumerState state = consumersByExpiration.remove();
-              consumers.remove(state.getId());
+            List<ConsumerState> statesToRemove = new ArrayList<>();
+            for (ConsumerState state: consumers.values()) {
+              if (state.expired(now)) {
+                statesToRemove.add(state);
+              }
+            }
+            for (ConsumerState staleState: statesToRemove) {
+              log.debug("Removing the expired consumer {}", staleState.getId());
+              final ConsumerState state = consumers.remove(staleState.getId());
               executor.submit(new Runnable() {
                 @Override
                 public void run() {
@@ -413,11 +403,7 @@ public class ConsumerManager {
                 }
               });
             }
-            long timeout =
-                consumersByExpiration.isEmpty()
-                ? Long.MAX_VALUE
-                : consumersByExpiration.peek().untilExpiration(now);
-            ConsumerManager.this.wait(timeout);
+            ConsumerManager.this.wait(1000);
           }
         } catch (InterruptedException e) {
           // Interrupted by other thread, do nothing to allow this thread to exit

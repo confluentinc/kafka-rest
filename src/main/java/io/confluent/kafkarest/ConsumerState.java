@@ -145,10 +145,6 @@ public abstract class ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientVa
                       + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
   }
 
-  public long untilExpiration(long nowMs) {
-    return this.expiration - nowMs;
-  }
-
   public KafkaRestConfig getConfig() {
     return config;
   }
