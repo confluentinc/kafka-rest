@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -502,21 +503,19 @@ public class KafkaConsumerManager {
         try {
           while (isRunning.get()) {
             long now = time.milliseconds();
-            List<KafkaConsumerState> statesToRemove = new ArrayList<>();
-            for (KafkaConsumerState state: consumers.values()) {
+            Iterator itr = consumers.values().iterator();
+            while (itr.hasNext()) {
+              final KafkaConsumerState state = (KafkaConsumerState) itr.next();
               if (state.expired(now)) {
-                statesToRemove.add(state);
+                log.debug("Removing the expired consumer {}", state.getId());
+                itr.remove();
+                executor.submit(new Runnable() {
+                  @Override
+                  public void run() {
+                    state.close();
+                  }
+                });
               }
-            }
-            for (KafkaConsumerState staleState: statesToRemove) {
-              log.debug("Removing the expired consumer {}", staleState.getId());
-              final KafkaConsumerState state = consumers.remove(staleState.getId());
-              executor.submit(new Runnable() {
-                @Override
-                public void run() {
-                  state.close();
-                }
-              });
             }
 
             KafkaConsumerManager.this.wait(1000);

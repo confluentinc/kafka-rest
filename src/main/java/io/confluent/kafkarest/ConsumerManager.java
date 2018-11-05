@@ -20,9 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.Vector;
@@ -383,22 +383,21 @@ public class ConsumerManager {
         try {
           while (isRunning.get()) {
             long now = time.milliseconds();
-            List<ConsumerState> statesToRemove = new ArrayList<>();
-            for (ConsumerState state: consumers.values()) {
+            Iterator itr = consumers.values().iterator();
+            while (itr.hasNext()) {
+              final ConsumerState state = (ConsumerState) itr.next();
               if (state.expired(now)) {
-                statesToRemove.add(state);
+                log.debug("Removing the expired consumer {}", state.getId());
+                itr.remove();
+                executor.submit(new Runnable() {
+                  @Override
+                  public void run() {
+                    state.close();
+                  }
+                });
               }
             }
-            for (ConsumerState staleState: statesToRemove) {
-              log.debug("Removing the expired consumer {}", staleState.getId());
-              final ConsumerState state = consumers.remove(staleState.getId());
-              executor.submit(new Runnable() {
-                @Override
-                public void run() {
-                  state.close();
-                }
-              });
-            }
+
             ConsumerManager.this.wait(1000);
           }
         } catch (InterruptedException e) {
