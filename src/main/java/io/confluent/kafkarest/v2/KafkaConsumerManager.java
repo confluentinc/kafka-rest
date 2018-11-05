@@ -494,6 +494,10 @@ public class KafkaConsumerManager {
   }
 
   private synchronized void updateExpiration(KafkaConsumerState state) {
+    if (!consumers.containsKey(state.getId())) {
+      return;
+    }
+
     state.updateExpiration();
     consumersByExpiration.remove(state);
     consumersByExpiration.add(state);

@@ -372,6 +372,10 @@ public class ConsumerManager {
   }
 
   private synchronized void updateExpiration(ConsumerState state) {
+    if (!consumers.containsKey(state.getId())) {
+      return;
+    }
+
     state.updateExpiration();
     consumersByExpiration.remove(state);
     consumersByExpiration.add(state);
