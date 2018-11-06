@@ -475,6 +475,7 @@ public class KafkaConsumerManager {
     if (state == null) {
       throw Errors.consumerInstanceNotFoundException();
     }
+    state.updateExpiration();
     return state;
   }
 
@@ -499,9 +500,9 @@ public class KafkaConsumerManager {
 
     @Override
     public void run() {
-      synchronized (KafkaConsumerManager.this) {
-        try {
-          while (isRunning.get()) {
+      try {
+        while (isRunning.get()) {
+          synchronized (KafkaConsumerManager.this) {
             long now = time.milliseconds();
             Iterator itr = consumers.values().iterator();
             while (itr.hasNext()) {
@@ -517,12 +518,12 @@ public class KafkaConsumerManager {
                 });
               }
             }
-
-            KafkaConsumerManager.this.wait(1000);
           }
-        } catch (InterruptedException e) {
-          // Interrupted by other thread, do nothing to allow this thread to exit
+
+          Thread.sleep(1000);
         }
+      } catch (InterruptedException e) {
+        // Interrupted by other thread, do nothing to allow this thread to exit
       }
       shutdownLatch.countDown();
     }

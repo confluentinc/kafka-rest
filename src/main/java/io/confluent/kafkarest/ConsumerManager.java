@@ -201,7 +201,6 @@ public class ConsumerManager {
 
       synchronized (this) {
         consumers.put(cid, state);
-        this.notifyAll();
       }
       succeeded = true;
       return name;
@@ -355,6 +354,7 @@ public class ConsumerManager {
     if (state == null) {
       throw Errors.consumerInstanceNotFoundException();
     }
+    state.updateExpiration();
     return state;
   }
 
@@ -379,9 +379,9 @@ public class ConsumerManager {
 
     @Override
     public void run() {
-      synchronized (ConsumerManager.this) {
-        try {
-          while (isRunning.get()) {
+      try {
+        while (isRunning.get()) {
+          synchronized (ConsumerManager.this) {
             long now = time.milliseconds();
             Iterator itr = consumers.values().iterator();
             while (itr.hasNext()) {
@@ -397,12 +397,12 @@ public class ConsumerManager {
                 });
               }
             }
-
-            ConsumerManager.this.wait(1000);
           }
-        } catch (InterruptedException e) {
-          // Interrupted by other thread, do nothing to allow this thread to exit
+
+          Thread.sleep(1000);
         }
+      } catch (InterruptedException e) {
+        // Interrupted by other thread, do nothing to allow this thread to exit
       }
       shutdownLatch.countDown();
     }
