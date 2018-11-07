@@ -37,14 +37,13 @@ import kafka.serializer.Decoder;
  * {@code KafkaMessageAndMetadata<K,V>} values to ConsumerRecords that can be returned to the client
  * (including translation if the decoded Kafka consumer type and ConsumerRecord types differ).
  */
-public abstract class ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
-    implements Comparable<ConsumerState> {
+public abstract class ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
 
   private KafkaRestConfig config;
   private ConsumerInstanceId instanceId;
   private ConsumerConnector consumer;
   private Map<String, ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>> topics;
-  private long expiration;
+  private volatile long expiration;
   // A read/write lock on the ConsumerState allows concurrent readTopic calls, but allows
   // commitOffsets to safely lock the entire state in order to get correct information about all
   // the topic/stream's current offset state. All operations on individual TopicStates must be
@@ -145,27 +144,12 @@ public abstract class ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientVa
                       + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
   }
 
-  public long untilExpiration(long nowMs) {
-    return this.expiration - nowMs;
-  }
-
   public KafkaRestConfig getConfig() {
     return config;
   }
 
   public void setConfig(KafkaRestConfig config) {
     this.config = config;
-  }
-
-  @Override
-  public int compareTo(ConsumerState o) {
-    if (this.expiration < o.expiration) {
-      return -1;
-    } else if (this.expiration == o.expiration) {
-      return 0;
-    } else {
-      return 1;
-    }
   }
 
   public ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> getOrCreateTopicState(
