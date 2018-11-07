@@ -420,7 +420,8 @@ public class ConsumerManager {
 
     @Override
     public long getDelay(TimeUnit unit) {
-      return waitExpirationMs - config.getTime().milliseconds();
+      return unit.convert(waitExpirationMs - config.getTime().milliseconds(),
+              TimeUnit.MILLISECONDS);
     }
 
     @Override
