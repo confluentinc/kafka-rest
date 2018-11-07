@@ -21,9 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -72,7 +72,6 @@ public class ConsumerManager {
   // they're also comparatively rare. These are executed serially in a dedicated thread.
   private final ExecutorService executor;
   private ConsumerFactory consumerFactory;
-  private final PriorityQueue<ConsumerState> consumersByExpiration = new PriorityQueue<>();
   private final DelayQueue<RunnableReadTask> delayedReadTasks = new DelayQueue<>();
   private final ReadTaskSchedulerThread readTaskSchedulerThread;
   private final ExpirationThread expirationThread;
@@ -222,8 +221,6 @@ public class ConsumerManager {
 
       synchronized (this) {
         consumers.put(cid, state);
-        consumersByExpiration.add(state);
-        this.notifyAll();
       }
       succeeded = true;
       return name;
@@ -302,7 +299,7 @@ public class ConsumerManager {
           }
           callback.onCompletion(null, responseException);
         } finally {
-          updateExpiration(state);
+          state.updateExpiration();
         }
       }
     });
@@ -326,7 +323,6 @@ public class ConsumerManager {
         entry.getValue().close();
       }
       consumers.clear();
-      consumersByExpiration.clear();
       executor.shutdown();
     }
   }
@@ -338,28 +334,19 @@ public class ConsumerManager {
   private synchronized ConsumerState getConsumerInstance(
       String group,
       String instance,
-      boolean remove
+      boolean toRemove
   ) {
     ConsumerInstanceId id = new ConsumerInstanceId(group, instance);
-    final ConsumerState state = remove ? consumers.remove(id) : consumers.get(id);
+    final ConsumerState state = toRemove ? consumers.remove(id) : consumers.get(id);
     if (state == null) {
       throw Errors.consumerInstanceNotFoundException();
     }
-    // Clear from the timeout queue immediately so it isn't removed during the read operation,
-    // but don't update the timeout until we finish the read since that can significantly affect
-    // the timeout.
-    consumersByExpiration.remove(state);
+    state.updateExpiration();
     return state;
   }
 
   private ConsumerState getConsumerInstance(String group, String instance) {
     return getConsumerInstance(group, instance, false);
-  }
-
-  private synchronized void updateExpiration(ConsumerState state) {
-    state.updateExpiration();
-    consumersByExpiration.add(state);
-    this.notifyAll();
   }
 
   public interface ConsumerFactory {
@@ -395,7 +382,7 @@ public class ConsumerManager {
         }
 
         taskState.task.doPartialRead();
-        ConsumerManager.this.updateExpiration(taskState.consumerState);
+        taskState.consumerState.updateExpiration();
         if (!taskState.task.isDone()) {
           long backoffTime = config.getTime().milliseconds()
               + consumerConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
@@ -499,29 +486,30 @@ public class ConsumerManager {
 
     @Override
     public void run() {
-      synchronized (ConsumerManager.this) {
-        try {
-          while (isRunning.get()) {
+      try {
+        while (isRunning.get()) {
+          synchronized (ConsumerManager.this) {
             long now = time.milliseconds();
-            while (!consumersByExpiration.isEmpty() && consumersByExpiration.peek().expired(now)) {
-              final ConsumerState state = consumersByExpiration.remove();
-              consumers.remove(state.getId());
-              executor.submit(new Runnable() {
-                @Override
-                public void run() {
-                  state.close();
-                }
-              });
+            Iterator itr = consumers.values().iterator();
+            while (itr.hasNext()) {
+              final ConsumerState state = (ConsumerState) itr.next();
+              if (state.expired(now)) {
+                log.debug("Removing the expired consumer {}", state.getId());
+                itr.remove();
+                executor.submit(new Runnable() {
+                  @Override
+                  public void run() {
+                    state.close();
+                  }
+                });
+              }
             }
-            long timeout =
-                consumersByExpiration.isEmpty()
-                ? Long.MAX_VALUE
-                : consumersByExpiration.peek().untilExpiration(now);
-            ConsumerManager.this.wait(timeout);
           }
-        } catch (InterruptedException e) {
-          // Interrupted by other thread, do nothing to allow this thread to exit
+
+          Thread.sleep(1000);
         }
+      } catch (InterruptedException e) {
+        // Interrupted by other thread, do nothing to allow this thread to exit
       }
       shutdownLatch.countDown();
     }
