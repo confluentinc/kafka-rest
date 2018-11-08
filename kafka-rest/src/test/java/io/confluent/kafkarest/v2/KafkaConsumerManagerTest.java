@@ -83,27 +83,12 @@ public class KafkaConsumerManagerTest {
 
     private MockConsumer<byte[], byte[]> consumer;
 
-    class MockConsumer<K, V> extends org.apache.kafka.clients.consumer.MockConsumer<K, V> {
-        private String cid;
-
-        MockConsumer(OffsetResetStrategy offsetResetStrategy) {
-            super(offsetResetStrategy);
-        }
-
-        public String cid() {
-            return cid;
-        }
-
-        public void cid(String cid) {
-            this.cid = cid;
-        }
-    }
 
     @Before
     public void setUp() throws RestConfigException {
         config = new KafkaRestConfig(setUpProperties(), new SystemTime());
         consumerManager = new KafkaConsumerManager(config, consumerFactory);
-        consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
+        consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST, groupName);
     }
 
     private Properties setUpProperties() {
@@ -158,7 +143,7 @@ public class KafkaConsumerManagerTest {
      */
     @Test
     public void testConsumerNormalOps() throws InterruptedException, ExecutionException, RestConfigException {
-        final List<ConsumerRecord<byte[], byte[]>> referenceRecords = bootstrapConsumer(consumer, groupName);
+        final List<ConsumerRecord<byte[], byte[]>> referenceRecords = bootstrapConsumer(consumer);
 
         sawCallback = false;
         actualException = null;
@@ -203,7 +188,7 @@ public class KafkaConsumerManagerTest {
 
     @Test
     public void testBackoffMsControlsPollCalls() throws Exception {
-        bootstrapConsumer(consumer, groupName);
+        bootstrapConsumer(consumer);
         consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
                 new ConsumerReadCallback<byte[], byte[]>() {
                     @Override
@@ -228,8 +213,8 @@ public class KafkaConsumerManagerTest {
         props.put(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, "1000");
         config = new KafkaRestConfig(props, new SystemTime());
         consumerManager = new KafkaConsumerManager(config, consumerFactory);
-        consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
-        bootstrapConsumer(consumer, groupName);
+        consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST, groupName);
+        bootstrapConsumer(consumer);
         consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
                 new ConsumerReadCallback<byte[], byte[]>() {
                     @Override
@@ -252,7 +237,7 @@ public class KafkaConsumerManagerTest {
 
     @Test
     public void testConsumerExpirationIsUpdated() throws Exception {
-        bootstrapConsumer(consumer, groupName);
+        bootstrapConsumer(consumer);
         KafkaConsumerState state = consumerManager.getConsumerInstance(groupName, consumer.cid());
         long initialExpiration = state.expiration;
         consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
@@ -288,23 +273,23 @@ public class KafkaConsumerManagerTest {
         Thread.sleep((long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 1.10));
     }
 
-    @Ignore // depends on https://github.com/confluentinc/kafka-rest/pull/500
+    @Ignore
     @Test
     public void testReadRecordsPopulatesDelayedReadTaskWhenExecutorFull() throws Exception {
         Properties props = setUpProperties();
         props.setProperty(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, "1");
         config = new KafkaRestConfig(props, new SystemTime());
         consumerManager = new KafkaConsumerManager(config, consumerFactory);
-        MockConsumer consumer1 = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
-        MockConsumer consumer2 = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
-        MockConsumer consumer3 = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
+        MockConsumer consumer1 = new MockConsumer<>(OffsetResetStrategy.EARLIEST, "a");
+        MockConsumer consumer2 = new MockConsumer<>(OffsetResetStrategy.EARLIEST, "b");
+        MockConsumer consumer3 = new MockConsumer<>(OffsetResetStrategy.EARLIEST, "c");
         capturedConsumerConfig = Capture.newInstance();
         EasyMock.expect(consumerFactory.createConsumer(EasyMock.capture(capturedConsumerConfig)))
                 .andReturn(consumer1).andReturn(consumer2).andReturn(consumer3);
         EasyMock.replay(consumerFactory);
-        bootstrapConsumer(consumer1, "a", false);
-        bootstrapConsumer(consumer2, "b", false);
-        bootstrapConsumer(consumer3, "c", false);
+        bootstrapConsumer(consumer1, false);
+        bootstrapConsumer(consumer2, false);
+        bootstrapConsumer(consumer3, false);
 
         ConsumerReadCallback callback = new ConsumerReadCallback<byte[], byte[]>() {
             @Override
@@ -316,7 +301,8 @@ public class KafkaConsumerManagerTest {
         };
         consumerManager.readRecords("a", consumer1.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE, callback);
         // should go over the consumer.threads threshold and be rejected. Rejected tasks are delayed between 25-75ms
-        consumerManager.readRecords("b", consumer2.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE, callback);
+        consumerManager.readRecords("a", consumer2.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE, callback);
+        Thread.sleep(10000);
         for (Object a : consumerManager.delayedReadTasks) {
             long delayMs = ((KafkaConsumerManager.RunnableReadTask) a).getDelay(TimeUnit.MILLISECONDS);
             assertTrue(delayMs > 20);
@@ -332,16 +318,14 @@ public class KafkaConsumerManagerTest {
         }
     }
 
-    private List<ConsumerRecord<byte[], byte[]>> bootstrapConsumer(final MockConsumer<byte[], byte[]> consumer,
-                                                                   String consumerGroup) {
-        return bootstrapConsumer(consumer, consumerGroup, true);
+    private List<ConsumerRecord<byte[], byte[]>> bootstrapConsumer(final MockConsumer<byte[], byte[]> consumer) {
+        return bootstrapConsumer(consumer, true);
     }
 
     /**
      * Subscribes a consumer to a topic and schedules a poll task
      */
-    private List<ConsumerRecord<byte[], byte[]>> bootstrapConsumer(final MockConsumer<byte[], byte[]> consumer,
-                                                                   String consumerGroup, boolean toExpectCreate) {
+    private List<ConsumerRecord<byte[], byte[]>> bootstrapConsumer(final MockConsumer<byte[], byte[]> consumer, boolean toExpectCreate) {
         final List<ConsumerRecord<byte[], byte[]>> referenceRecords
                 = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
                 new BinaryConsumerRecord(topicName, "k1".getBytes(), "v1".getBytes(), 0, 0),
@@ -361,10 +345,10 @@ public class KafkaConsumerManagerTest {
         });
 
         String cid = consumerManager.createConsumer(
-                consumerGroup, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+                consumer.groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
 
         consumer.cid(cid);
-        consumerManager.subscribe(consumerGroup, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
+        consumerManager.subscribe(consumer.groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
         consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
         consumer.updateBeginningOffsets(Collections.singletonMap(new TopicPartition(topicName, 0), 0L));
 
