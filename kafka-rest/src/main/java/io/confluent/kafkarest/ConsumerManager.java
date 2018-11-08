@@ -345,7 +345,7 @@ public class ConsumerManager {
     return state;
   }
 
-  private ConsumerState getConsumerInstance(String group, String instance) {
+  ConsumerState getConsumerInstance(String group, String instance) {
     return getConsumerInstance(group, instance, false);
   }
 

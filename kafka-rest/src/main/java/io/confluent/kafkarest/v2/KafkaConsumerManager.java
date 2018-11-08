@@ -578,7 +578,7 @@ public class KafkaConsumerManager {
     return state;
   }
 
-  private KafkaConsumerState getConsumerInstance(String group, String instance) {
+  KafkaConsumerState getConsumerInstance(String group, String instance) {
     return getConsumerInstance(group, instance, false);
   }
 

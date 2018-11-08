@@ -437,6 +437,44 @@ public class ConsumerManagerTest {
     f.get();
   }
 
+  @Test
+  public void testConsumerExpirationIsUpdated() throws Exception {
+    expectCreateNoData();
+    EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
+    EasyMock.replay(mdObserver, consumerFactory);
+    String cid = consumerManager.createConsumer(
+            groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+    ConsumerState state = consumerManager.getConsumerInstance(groupName, cid);
+    long initialExpiration = state.expiration;
+
+    Future f = readTopicFuture(cid, topicName, Long.MAX_VALUE, new ConsumerReadCallback<byte[], byte[]>() {
+      @Override
+      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+                               RestException e) {
+        sawCallback = true;
+        actualRecords = records;
+        actualException = e;
+      }
+    });
+    Thread.sleep(100);
+    assertTrue(state.expiration > initialExpiration);
+    initialExpiration = state.expiration;
+
+    f.get();
+    assertTrue(state.expiration > initialExpiration);
+
+    initialExpiration = state.expiration;
+    consumerManager.commitOffsets(groupName, cid, new ConsumerManager.CommitCallback() {
+      @Override
+      public void onCompletion(List<TopicPartitionOffset> offsets, Exception e) {
+        sawCallback = true;
+
+        actualException = e;
+        actualOffsets = offsets;
+      }
+    }).get();
+    assertTrue(state.expiration > initialExpiration);
+  }
 
 
   @Test

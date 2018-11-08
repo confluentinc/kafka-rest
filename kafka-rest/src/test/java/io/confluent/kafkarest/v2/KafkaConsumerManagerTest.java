@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -171,7 +172,7 @@ public class KafkaConsumerManagerTest {
                 sawCallback = true;
             }
         });
-        Thread.sleep((long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 1.10));
+        awaitRead();
 
         assertTrue("Callback failed to fire", sawCallback);
         assertNull("No exception in callback", actualException);
@@ -249,6 +250,43 @@ public class KafkaConsumerManagerTest {
         assertTrue(delay > 700);
     }
 
+    @Test
+    public void testConsumerExpirationIsUpdated() throws Exception {
+        bootstrapConsumer(consumer, groupName);
+        KafkaConsumerState state = consumerManager.getConsumerInstance(groupName, consumer.cid());
+        long initialExpiration = state.expiration;
+        consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
+                new ConsumerReadCallback<byte[], byte[]>() {
+                    @Override
+                    public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
+                        actualException = e;
+                        actualRecords = records;
+                        sawCallback = true;
+                    }
+                });
+        Thread.sleep(100);
+        assertTrue(state.expiration > initialExpiration);
+        initialExpiration = state.expiration;
+        awaitRead();
+        assertTrue("Callback failed to fire", sawCallback);
+        assertTrue(state.expiration > initialExpiration);
+        initialExpiration = state.expiration;
+
+        consumerManager.commitOffsets(groupName, consumer.cid(), null, null, new KafkaConsumerManager.CommitCallback() {
+            @Override
+            public void onCompletion(List<TopicPartitionOffset> offsets, Exception e) {
+                sawCallback = true;
+
+                actualException = e;
+                actualOffsets = offsets;
+            }
+        }).get();
+        assertTrue(state.expiration > initialExpiration);
+    }
+
+    private void awaitRead() throws InterruptedException {
+        Thread.sleep((long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 1.10));
+    }
 
     @Ignore // depends on https://github.com/confluentinc/kafka-rest/pull/500
     @Test
