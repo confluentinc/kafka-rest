@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package io.confluent.kafkarest.unit;
+package io.confluent.kafkarest;
 
 import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.ConsumerReadCallback;
@@ -364,6 +364,81 @@ public class ConsumerManagerTest {
     EasyMock.verify(mdObserver, consumerFactory);
   }
 
+
+  @Test
+  public void testBackoffMsControlsPollCalls() throws Exception {
+    Properties props = new Properties();
+    props.setProperty(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, "250");
+    // This setting supports the testConsumerOverrides test. It is otherwise benign and should
+    // not affect other tests.
+    props.setProperty("exclude.internal.topics", "false");
+    config = new KafkaRestConfig(props, new SystemTime());
+    mdObserver = EasyMock.createMock(MetadataObserver.class);
+    consumerFactory = EasyMock.createMock(ConsumerManager.ConsumerFactory.class);
+    consumerManager = new ConsumerManager(config, mdObserver, consumerFactory);
+    expectCreateNoData();
+    EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
+    EasyMock.replay(mdObserver, consumerFactory);
+    String cid = consumerManager.createConsumer(groupName,
+            new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+    Future f = readTopicFuture(cid, topicName, Long.MAX_VALUE, new ConsumerReadCallback<byte[], byte[]>() {
+      @Override
+      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+                               RestException e) {
+        sawCallback = true;
+        actualRecords = records;
+        actualException = e;
+      }
+    });
+
+    // backoff is 250
+    Thread.sleep(100);
+    // backoff should be in place right now. the read task should be delayed and re-ran until the max.bytes or timeout is hit
+    System.out.println(consumerManager.delayedReadTasks.size());
+    Thread.sleep(100);
+    assertEquals(1, consumerManager.delayedReadTasks.size());
+    f.get();
+  }
+
+  @Test
+  public void testBackoffMsUpdatesReadTaskExpiry() throws Exception {
+    Properties props = new Properties();
+    props.setProperty(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, "1000");
+    // This setting supports the testConsumerOverrides test. It is otherwise benign and should
+    // not affect other tests.
+    props.setProperty("exclude.internal.topics", "false");
+    config = new KafkaRestConfig(props, new SystemTime());
+    mdObserver = EasyMock.createMock(MetadataObserver.class);
+    consumerFactory = EasyMock.createMock(ConsumerManager.ConsumerFactory.class);
+    consumerManager = new ConsumerManager(config, mdObserver, consumerFactory);
+    expectCreateNoData();
+    EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
+    EasyMock.replay(mdObserver, consumerFactory);
+    String cid = consumerManager.createConsumer(groupName,
+            new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+    Future f = readTopicFuture(cid, topicName, Long.MAX_VALUE, new ConsumerReadCallback<byte[], byte[]>() {
+      @Override
+      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+                               RestException e) {
+        sawCallback = true;
+        actualRecords = records;
+        actualException = e;
+      }
+    });
+
+    Thread.sleep(100);
+    ConsumerManager.RunnableReadTask readTask = consumerManager.delayedReadTasks.peek();
+    if (readTask == null) {
+      fail("Could not get read task in time. It should not be null");
+    }
+    long delay = readTask.getDelay(TimeUnit.MILLISECONDS);
+    assertTrue(delay < 1000);
+    assertTrue(delay > 700);
+    f.get();
+  }
+
+
+
   @Test
   public void testReadInvalidInstanceFails() {
     readAndExpectImmediateNotFound("invalid", topicName);
@@ -475,8 +550,12 @@ public class ConsumerManagerTest {
   private void readTopic(final String cid, String topic, long maxBytes, final ConsumerReadCallback callback) throws Exception {
     // Add a bit of fuzz to the wait time
     long maxTimeout = (long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 1.10);
-    Future future = consumerManager.readTopic(groupName, cid, topic, BinaryConsumerState.class, maxBytes, callback);
+    Future future = readTopicFuture(cid, topic, maxBytes, callback);
     future.get(maxTimeout, TimeUnit.MILLISECONDS);
+  }
+
+  private Future readTopicFuture(String cid, String topic, long maxBytes, final ConsumerReadCallback callback) {
+    return consumerManager.readTopic(groupName, cid, topic, BinaryConsumerState.class, maxBytes, callback);
   }
 
   private void readAndExpectImmediateNotFound(String cid, String topic) {

@@ -22,7 +22,6 @@ import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
 import io.confluent.rest.exceptions.RestException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.MockConsumer;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.common.TopicPartition;
 import org.easymock.Capture;
@@ -31,6 +30,7 @@ import org.easymock.EasyMockRunner;
 import org.easymock.Mock;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.MetadataObserver;
@@ -46,7 +46,6 @@ import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.kafkarest.mock.MockTime;
 import io.confluent.rest.RestConfigException;
 import org.junit.runner.RunWith;
 
@@ -54,6 +53,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Tests basic create/read/commit/delete functionality of ConsumerManager. This only exercises the
@@ -82,9 +82,25 @@ public class KafkaConsumerManagerTest {
 
     private MockConsumer<byte[], byte[]> consumer;
 
+    class MockConsumer<K, V> extends org.apache.kafka.clients.consumer.MockConsumer<K, V> {
+        private String cid;
+
+        MockConsumer(OffsetResetStrategy offsetResetStrategy) {
+            super(offsetResetStrategy);
+        }
+
+        public String cid() {
+            return cid;
+        }
+
+        public void cid(String cid) {
+            this.cid = cid;
+        }
+    }
+
     @Before
     public void setUp() throws RestConfigException {
-        config = new KafkaRestConfig(setUpProperties(), new MockTime());
+        config = new KafkaRestConfig(setUpProperties(), new SystemTime());
         consumerManager = new KafkaConsumerManager(config, consumerFactory);
         consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
     }
@@ -99,6 +115,7 @@ public class KafkaConsumerManagerTest {
         }
         props.setProperty(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, "PLAINTEXT://hostname:9092");
         props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG, "1024");
+        props.setProperty(KafkaRestConfig.CONSUMER_MAX_THREADS_CONFIG, "1");
         // This setting supports the testConsumerOverrides test. It is otherwise benign and should
         // not affect other tests.
         props.setProperty("consumer." + ConsumerConfig.EXCLUDE_INTERNAL_TOPICS_CONFIG, "false");
@@ -111,10 +128,12 @@ public class KafkaConsumerManagerTest {
         consumerManager.shutdown();
     }
 
-    private void expectCreate() {
+    private void expectCreate(MockConsumer consumer) {
         capturedConsumerConfig = Capture.newInstance();
-        EasyMock.expect(consumerFactory.createConsumer(EasyMock.capture(capturedConsumerConfig)))
-                .andReturn(consumer);
+        Properties props = EasyMock.capture(capturedConsumerConfig);
+        EasyMock.expect(consumerFactory.createConsumer(props))
+                .andStubReturn(consumer);
+        EasyMock.replay(consumerFactory);
     }
 
     @Test
@@ -133,40 +152,17 @@ public class KafkaConsumerManagerTest {
         EasyMock.verify(consumerFactory);
     }
 
+    /**
+     * Tests create instance, read, and delete
+     */
     @Test
     public void testConsumerNormalOps() throws InterruptedException, ExecutionException, RestConfigException {
-        config = new KafkaRestConfig(setUpProperties(), new SystemTime());
-        consumerManager = new KafkaConsumerManager(config, consumerFactory);
-        consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
-        // Tests create instance, read, and delete
-        final List<ConsumerRecord<byte[], byte[]>> referenceRecords
-                = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
-                new BinaryConsumerRecord(topicName, "k1".getBytes(), "v1".getBytes(), 0, 0),
-                new BinaryConsumerRecord(topicName, "k2".getBytes(), "v2".getBytes(), 0, 1),
-                new BinaryConsumerRecord(topicName, "k3".getBytes(), "v3".getBytes(), 0, 2)
-        );
-
-        expectCreate();
-        consumer.schedulePollTask(new Runnable() {
-            @Override
-            public void run() {
-                consumer.addRecord(new org.apache.kafka.clients.consumer.ConsumerRecord<>(topicName, 0, 0, "k1".getBytes(), "v1".getBytes()));
-                consumer.addRecord(new org.apache.kafka.clients.consumer.ConsumerRecord<>(topicName, 0, 1, "k2".getBytes(), "v2".getBytes()));
-                consumer.addRecord(new org.apache.kafka.clients.consumer.ConsumerRecord<>(topicName, 0, 2, "k3".getBytes(), "v3".getBytes()));
-            }
-        });
-        EasyMock.replay(mdObserver, consumerFactory);
-
-        String cid = consumerManager.createConsumer(
-                groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
-        consumerManager.subscribe(groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
-        consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
-        consumer.updateBeginningOffsets(Collections.singletonMap(new TopicPartition(topicName, 0), 0L));
+        final List<ConsumerRecord<byte[], byte[]>> referenceRecords = bootstrapConsumer(consumer, groupName);
 
         sawCallback = false;
         actualException = null;
         actualRecords = null;
-        consumerManager.readRecords(groupName, cid, BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
+        consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
             new ConsumerReadCallback<byte[], byte[]>() {
             @Override
             public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
@@ -184,7 +180,7 @@ public class KafkaConsumerManagerTest {
         actualException = null;
         actualOffsets = null;
         ConsumerOffsetCommitRequest commitRequest = null; // Commit all offsets
-        consumerManager.commitOffsets(groupName, cid, null, commitRequest, new KafkaConsumerManager.CommitCallback() {
+        consumerManager.commitOffsets(groupName, consumer.cid(), null, commitRequest, new KafkaConsumerManager.CommitCallback() {
             @Override
             public void onCompletion(List<TopicPartitionOffset> offsets, Exception e) {
                 sawCallback = true;
@@ -201,8 +197,140 @@ public class KafkaConsumerManagerTest {
         // TODO: Currently the values are not actually returned in the callback nor in the response.
         //assertEquals("Callback Offsets Size", 3, actualOffsets.size());
 
-        consumerManager.deleteConsumer(groupName, cid);
-
-        EasyMock.verify(mdObserver, consumerFactory);
+        consumerManager.deleteConsumer(groupName, consumer.cid());
     }
+
+    @Test
+    public void testBackoffMsControlsPollCalls() throws Exception {
+        bootstrapConsumer(consumer, groupName);
+        consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
+                new ConsumerReadCallback<byte[], byte[]>() {
+                    @Override
+                    public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
+                        actualException = e;
+                        actualRecords = records;
+                        sawCallback = true;
+                    }
+                });
+
+        // backoff is 250
+        Thread.sleep(100);
+        // backoff should be in place right now. the read task should be delayed and re-ran until the max.bytes or timeout is hit
+        assertEquals(1, consumerManager.delayedReadTasks.size());
+        Thread.sleep(100);
+        assertEquals(1, consumerManager.delayedReadTasks.size());
+    }
+
+    @Test
+    public void testBackoffMsUpdatesReadTaskExpiry() throws Exception {
+        Properties props = setUpProperties();
+        props.put(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, "1000");
+        config = new KafkaRestConfig(props, new SystemTime());
+        consumerManager = new KafkaConsumerManager(config, consumerFactory);
+        consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
+        bootstrapConsumer(consumer, groupName);
+        consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
+                new ConsumerReadCallback<byte[], byte[]>() {
+                    @Override
+                    public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
+                        actualException = e;
+                        actualRecords = records;
+                        sawCallback = true;
+                    }
+                });
+
+        Thread.sleep(100);
+        KafkaConsumerManager.RunnableReadTask readTask = consumerManager.delayedReadTasks.peek();
+        if (readTask == null) {
+            fail("Could not get read task in time. It should not be null");
+        }
+        long delay = readTask.getDelay(TimeUnit.MILLISECONDS);
+        assertTrue(delay < 1000);
+        assertTrue(delay > 700);
+    }
+
+
+    @Ignore // depends on https://github.com/confluentinc/kafka-rest/pull/500
+    @Test
+    public void testReadRecordsPopulatesDelayedReadTaskWhenExecutorFull() throws Exception {
+        Properties props = setUpProperties();
+        props.setProperty(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, "1");
+        config = new KafkaRestConfig(props, new SystemTime());
+        consumerManager = new KafkaConsumerManager(config, consumerFactory);
+        MockConsumer consumer1 = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
+        MockConsumer consumer2 = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
+        MockConsumer consumer3 = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
+        capturedConsumerConfig = Capture.newInstance();
+        EasyMock.expect(consumerFactory.createConsumer(EasyMock.capture(capturedConsumerConfig)))
+                .andReturn(consumer1).andReturn(consumer2).andReturn(consumer3);
+        EasyMock.replay(consumerFactory);
+        bootstrapConsumer(consumer1, "a", false);
+        bootstrapConsumer(consumer2, "b", false);
+        bootstrapConsumer(consumer3, "c", false);
+
+        ConsumerReadCallback callback = new ConsumerReadCallback<byte[], byte[]>() {
+            @Override
+            public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
+                actualException = e;
+                actualRecords = records;
+                sawCallback = true;
+            }
+        };
+        consumerManager.readRecords("a", consumer1.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE, callback);
+        // should go over the consumer.threads threshold and be rejected. Rejected tasks are delayed between 25-75ms
+        consumerManager.readRecords("b", consumer2.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE, callback);
+        for (Object a : consumerManager.delayedReadTasks) {
+            long delayMs = ((KafkaConsumerManager.RunnableReadTask) a).getDelay(TimeUnit.MILLISECONDS);
+            assertTrue(delayMs > 20);
+            assertTrue(delayMs < 75);
+        }
+        assertEquals(1, consumerManager.delayedReadTasks.size());
+        consumerManager.readRecords("c", consumer3.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE, callback);
+        assertEquals(2, consumerManager.delayedReadTasks.size());
+        for (Object a : consumerManager.delayedReadTasks) {
+            long delayMs = ((KafkaConsumerManager.RunnableReadTask) a).getDelay(TimeUnit.MILLISECONDS);
+            assertTrue(delayMs > 20);
+            assertTrue(delayMs < 75);
+        }
+    }
+
+    private List<ConsumerRecord<byte[], byte[]>> bootstrapConsumer(final MockConsumer<byte[], byte[]> consumer,
+                                                                   String consumerGroup) {
+        return bootstrapConsumer(consumer, consumerGroup, true);
+    }
+
+    /**
+     * Subscribes a consumer to a topic and schedules a poll task
+     */
+    private List<ConsumerRecord<byte[], byte[]>> bootstrapConsumer(final MockConsumer<byte[], byte[]> consumer,
+                                                                   String consumerGroup, boolean toExpectCreate) {
+        final List<ConsumerRecord<byte[], byte[]>> referenceRecords
+                = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
+                new BinaryConsumerRecord(topicName, "k1".getBytes(), "v1".getBytes(), 0, 0),
+                new BinaryConsumerRecord(topicName, "k2".getBytes(), "v2".getBytes(), 0, 1),
+                new BinaryConsumerRecord(topicName, "k3".getBytes(), "v3".getBytes(), 0, 2)
+        );
+
+        if (toExpectCreate)
+            expectCreate(consumer);
+        consumer.schedulePollTask(new Runnable() {
+            @Override
+            public void run() {
+                consumer.addRecord(new org.apache.kafka.clients.consumer.ConsumerRecord<>(topicName, 0, 0, "k1".getBytes(), "v1".getBytes()));
+                consumer.addRecord(new org.apache.kafka.clients.consumer.ConsumerRecord<>(topicName, 0, 1, "k2".getBytes(), "v2".getBytes()));
+                consumer.addRecord(new org.apache.kafka.clients.consumer.ConsumerRecord<>(topicName, 0, 2, "k3".getBytes(), "v3".getBytes()));
+            }
+        });
+
+        String cid = consumerManager.createConsumer(
+                consumerGroup, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+
+        consumer.cid(cid);
+        consumerManager.subscribe(consumerGroup, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
+        consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
+        consumer.updateBeginningOffsets(Collections.singletonMap(new TopicPartition(topicName, 0), 0L));
+
+        return referenceRecords;
+    }
+
 }
