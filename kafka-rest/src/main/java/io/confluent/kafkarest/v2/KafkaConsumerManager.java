@@ -35,29 +35,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.Vector;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.FutureTask;
-
-
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.DelayQueue;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.RunnableFuture;
-import java.util.concurrent.Delayed;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-
-
-
-
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import javax.ws.rs.core.Response;
-
 import io.confluent.kafkarest.entities.ConsumerAssignmentRequest;
 import io.confluent.kafkarest.entities.ConsumerAssignmentResponse;
 import io.confluent.kafkarest.entities.ConsumerCommittedRequest;
@@ -113,7 +93,7 @@ public class KafkaConsumerManager {
   public KafkaConsumerManager(final KafkaRestConfig config) {
     this.config = config;
     this.time = config.getTime();
-    this.bootstrapServers = config.bootstrapBrokers();
+    this.bootstrapServers = config.bootstrapBrokers();RejectedExecutionHandler
 
     // Cached thread pool
     int maxThreadCount = config.getInt(CONSUMER_MAX_THREADS_CONFIG) < 0 ? Integer.MAX_VALUE
@@ -128,8 +108,7 @@ public class KafkaConsumerManager {
               log.debug("The runnable {} was rejected execution. "
                   + "The thread pool must be satured or shutiing down", r);
               if (r instanceof ReadFutureTask) {
-                ReadFutureTask readFutureTask = (ReadFutureTask) r;
-                RunnableReadTask readTask = (RunnableReadTask)readFutureTask.getReadTask();
+                RunnableReadTask readTask = ((ReadFutureTask)r).getReadTask();
                 readTask.delayFor(ThreadLocalRandom.current().nextInt(25, 76));
               } else {
                 // run commitOffset and consumer close tasks from the caller thread
@@ -325,13 +304,24 @@ public class KafkaConsumerManager {
 
     private Runnable myTask;
 
+    private Callable callable;
+
     public ReadFutureTask(Runnable runnable, V result) {
       super(runnable, result);
       this.myTask = runnable;
     }
 
-    public Runnable getReadTask() {
-      return myTask;
+    public ReadFutureTask(Callable callable) {
+      super(callable);
+      this.callable = callable;
+    }
+
+    public RunnableReadTask getReadTask() {
+      if(myTask !=null){
+        return (RunnableReadTask)myTask;
+      }else{
+        return (RunnableReadTask)callable;
+      }
     }
   }
 
@@ -343,13 +333,17 @@ public class KafkaConsumerManager {
                                                BlockingQueue<Runnable> workQueue,
                                                RejectedExecutionHandler handler) {
     super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, handler);
-
     }
 
     @Override
     protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
       return new ReadFutureTask(runnable, value);
     }
+
+    protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
+      return new ReadFutureTask<T>(callable);
+    }
+
   }
 
   class RunnableReadTask implements Runnable, Delayed {
