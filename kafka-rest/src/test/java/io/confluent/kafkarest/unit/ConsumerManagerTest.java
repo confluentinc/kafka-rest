@@ -23,6 +23,7 @@ import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.BinaryConsumerState;
 
 import io.confluent.kafkarest.SystemTime;
+import io.confluent.rest.exceptions.RestServerErrorException;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -30,6 +31,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -190,9 +192,7 @@ public class ConsumerManagerTest {
     actualRecords = null;
     readTopic(cid);
 
-    assertTrue("Callback failed to fire", sawCallback);
-    assertNull("No exception in callback", actualException);
-    assertEquals("Records returned not as expected", referenceRecords, actualRecords);
+    verifyRead(referenceRecords, null);
 
     sawCallback = false;
     actualException = null;
@@ -279,6 +279,7 @@ public class ConsumerManagerTest {
         actualLength = records.size();
       }
     });
+
     assertTrue("Callback failed to fire", sawCallback);
     assertNull("Callback received exception", actualException);
     // Should only see the first two messages since the third pushes us over the limit.
@@ -342,6 +343,7 @@ public class ConsumerManagerTest {
     actualException = null;
     actualRecords = null;
     readTopic(cid);
+    verifyRead(Collections.<ConsumerRecord<byte[],byte[]>>emptyList(), null);
     assertTrue("Callback not called", sawCallback);
     assertNull("Callback exception", actualException);
     assertEquals("Callback records should be valid but of 0 size", 0, actualRecords.size());
@@ -352,12 +354,9 @@ public class ConsumerManagerTest {
     actualException = null;
     actualRecords = null;
     readTopic(cid, secondTopicName);
-    assertTrue("Callback failed to fire", sawCallback);
-    assertNotNull("Callback failed to receive an exception", actualException);
-    assertTrue("Callback Exception should be an instance of RestException", actualException instanceof RestException);
+    verifyRead(null, RestException.class);
     assertEquals("Callback Exception should be for already subscribed consumer", Errors.CONSUMER_ALREADY_SUBSCRIBED_ERROR_CODE,
                  ((RestException) actualException).getErrorCode());
-    assertNull("Given an exception occurred in callback shouldn't be any records returned", actualRecords);
 
     consumerManager.deleteConsumer(groupName, cid);
 
@@ -437,8 +436,7 @@ public class ConsumerManagerTest {
     assertTrue(delay < backoffMs);
     assertTrue(delay > (backoffMs * 0.5));
     f.get();
-    assertTrue("Callback not called", sawCallback);
-    assertNull("Callback raised an exception", actualException);
+    verifyRead(Collections.<ConsumerRecord<byte[],byte[]>>emptyList(), null);
   }
 
   @Test
@@ -466,8 +464,8 @@ public class ConsumerManagerTest {
 
     f.get();
     assertTrue(state.expiration > initialExpiration);
-    assertTrue("Callback not called", sawCallback);
-    assertNull("Callback raised an exception", actualException);
+
+    verifyRead(Collections.<ConsumerRecord<byte[],byte[]>>emptyList(), null);
     initialExpiration = state.expiration;
     consumerManager.commitOffsets(groupName, cid, new ConsumerManager.CommitCallback() {
       @Override
@@ -541,16 +539,12 @@ public class ConsumerManagerTest {
     actualException = null;
     actualRecords = null;
     readTopic(cid);
-    assertTrue("Callback not called", sawCallback);
-    assertNotNull("Callback exception should be populated", actualException);
-    assertNull("Callback with exception should not have any records", actualRecords);
+    verifyRead(null, RestServerErrorException.class);
 
     // Second read should recover and return all the data.
     sawCallback = false;
     readTopic(cid);
-    assertTrue("Callback not called", sawCallback);
-    assertEquals("Callback records not as expected", referenceRecords, actualRecords);
-    assertNull("Callback raised an exception", actualException);
+    verifyRead(referenceRecords, null);
 
     EasyMock.verify(mdObserver, consumerFactory);
   }
@@ -613,5 +607,21 @@ public class ConsumerManagerTest {
     assertNull("Callback records", actualRecords);
     assertThat("Callback exception is RestNotFound", actualException, instanceOf(RestNotFoundException.class));
     assertNull(future);
+  }
+
+  private void verifyRead(List<? extends ConsumerRecord<byte[], byte[]>> records, Class exception) {
+    assertTrue("Callback was not called", sawCallback);
+    if (records == null) {
+      assertNull("Callback records should be null", actualRecords);
+    } else {
+      assertEquals("Callback records not as expected", records, actualRecords);
+    }
+
+    if (exception == null) {
+      assertNull("Exception is not null", actualException);
+    } else {
+      assertNotNull(actualException);
+      assertThat("Callback exception is not as expected", actualException, instanceOf(exception));
+    }
   }
 }
