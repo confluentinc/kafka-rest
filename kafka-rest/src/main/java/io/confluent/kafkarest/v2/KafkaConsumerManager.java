@@ -49,7 +49,6 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.Callable;
-
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.ws.rs.core.Response;
@@ -69,6 +68,7 @@ import io.confluent.kafkarest.entities.TopicPartitionOffsetMetadata;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestNotFoundException;
 import io.confluent.rest.exceptions.RestServerErrorException;
+
 import static io.confluent.kafkarest.KafkaRestConfig.CONSUMER_MAX_THREADS_CONFIG;
 import static io.confluent.kafkarest.KafkaRestConfig.MAX_POLL_RECORDS_CONFIG;
 import static io.confluent.kafkarest.KafkaRestConfig.MAX_POLL_RECORDS_VALUE;
@@ -332,9 +332,9 @@ public class KafkaConsumerManager {
     }
 
     public RunnableReadTask getReadTask() {
-      if(myTask !=null){
+      if (myTask != null) {
         return (RunnableReadTask)myTask;
-      }else{
+      } else {
         return (RunnableReadTask)callable;
       }
     }
