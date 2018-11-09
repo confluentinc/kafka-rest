@@ -437,6 +437,8 @@ public class ConsumerManagerTest {
     assertTrue(delay < backoffMs);
     assertTrue(delay > (backoffMs * 0.5));
     f.get();
+    assertTrue("Callback not called", sawCallback);
+    assertNull("Callback raised an exception", actualException);
   }
 
   @Test
@@ -464,7 +466,8 @@ public class ConsumerManagerTest {
 
     f.get();
     assertTrue(state.expiration > initialExpiration);
-
+    assertTrue("Callback not called", sawCallback);
+    assertNull("Callback raised an exception", actualException);
     initialExpiration = state.expiration;
     consumerManager.commitOffsets(groupName, cid, new ConsumerManager.CommitCallback() {
       @Override
@@ -544,16 +547,10 @@ public class ConsumerManagerTest {
 
     // Second read should recover and return all the data.
     sawCallback = false;
-    readTopic(cid, new ConsumerReadCallback<byte[], byte[]>() {
-      @Override
-      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               RestException e) {
-        sawCallback = true;
-        assertNull(e);
-        assertEquals(referenceRecords, records);
-      }
-    });
-    assertTrue(sawCallback);
+    readTopic(cid);
+    assertTrue("Callback not called", sawCallback);
+    assertEquals("Callback records not as expected", referenceRecords, actualRecords);
+    assertNull("Callback raised an exception", actualException);
 
     EasyMock.verify(mdObserver, consumerFactory);
   }
@@ -602,19 +599,16 @@ public class ConsumerManagerTest {
     sawCallback = false;
     actualRecords = null;
     actualException = null;
-    Future
-        future =
-        consumerManager.readTopic(
-            groupName, cid, topic, BinaryConsumerState.class, Long.MAX_VALUE,
-            new ConsumerReadCallback<byte[], byte[]>() {
-              @Override
-              public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                                       RestException e) {
-                sawCallback = true;
-                actualRecords = records;
-                actualException = e;
-              }
-            });
+    Future future = readTopicFuture(cid, topic, Long.MAX_VALUE, new ConsumerReadCallback<byte[], byte[]>() {
+      @Override
+      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+                               RestException e) {
+        sawCallback = true;
+        actualRecords = records;
+        actualException = e;
+      }
+    });
+
     assertTrue("Callback not called", sawCallback);
     assertNull("Callback records", actualRecords);
     assertThat("Callback exception is RestNotFound", actualException, instanceOf(RestNotFoundException.class));
