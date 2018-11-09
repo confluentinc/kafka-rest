@@ -48,6 +48,8 @@ import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.concurrent.Callable;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.ws.rs.core.Response;
