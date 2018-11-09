@@ -386,7 +386,6 @@ public class ConsumerManagerTest {
       public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
                                RestException e) {
         sawCallback = true;
-        actualRecords = records;
         actualException = e;
       }
     });
@@ -394,16 +393,19 @@ public class ConsumerManagerTest {
     // backoff is 250
     Thread.sleep(100);
     // backoff should be in place right now. the read task should be delayed and re-ran until the max.bytes or timeout is hit
-    System.out.println(consumerManager.delayedReadTasks.size());
+    assertEquals(1, consumerManager.delayedReadTasks.size());
     Thread.sleep(100);
     assertEquals(1, consumerManager.delayedReadTasks.size());
     f.get();
+    assertTrue("Callback not called", sawCallback);
+    assertNull("Callback exception should not be populated", actualException);
   }
 
   @Test
   public void testBackoffMsUpdatesReadTaskExpiry() throws Exception {
     Properties props = new Properties();
-    props.setProperty(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, "1000");
+    int backoffMs = 1000;
+    props.setProperty(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, Integer.toString(backoffMs));
     // This setting supports the testConsumerOverrides test. It is otherwise benign and should
     // not affect other tests.
     props.setProperty("exclude.internal.topics", "false");
@@ -432,8 +434,8 @@ public class ConsumerManagerTest {
       fail("Could not get read task in time. It should not be null");
     }
     long delay = readTask.getDelay(TimeUnit.MILLISECONDS);
-    assertTrue(delay < 1000);
-    assertTrue(delay > 700);
+    assertTrue(delay < backoffMs);
+    assertTrue(delay > (backoffMs * 0.5));
     f.get();
   }
 

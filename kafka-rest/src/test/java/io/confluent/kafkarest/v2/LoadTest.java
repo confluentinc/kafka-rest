@@ -1,5 +1,6 @@
 package io.confluent.kafkarest.v2;
 
+import io.confluent.common.utils.Time;
 import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.SystemTime;
@@ -17,7 +18,6 @@ import org.easymock.EasyMock;
 import org.easymock.EasyMockRunner;
 import org.easymock.IExpectationSetters;
 import org.easymock.Mock;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -27,9 +27,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
 
 @RunWith(EasyMockRunner.class)
@@ -47,16 +49,26 @@ public class LoadTest {
 
     private long requestTimeoutMs = 1000;
 
+    private Random random = new Random();
+
     class ConsumerTestRun {
         private final MockConsumer consumer;
+        private final Time time;
         private volatile boolean sawCallback;
+        private volatile List<? extends ConsumerRecord<byte[], byte[]>> actualRecords = null;
+        private volatile RestException actualException;
         private ConsumerReadCallback callback;
-        private RestException actualException;
-        private List<? extends ConsumerRecord<byte[], byte[]>> actualRecords = null;
         private int latestOffset = 0;
+        private long readStartMs;
 
         ConsumerTestRun(MockConsumer consumer) {
+            this(consumer, new SystemTime());
+        }
+
+        ConsumerTestRun(MockConsumer consumer, Time time) {
             this.consumer = consumer;
+            this.time = time;
+            this.readStartMs = Integer.MAX_VALUE;
             sawCallback = false;
             callback = new ConsumerReadCallback<byte[], byte[]>() {
                 @Override
@@ -79,10 +91,17 @@ public class LoadTest {
             schedulePoll();
             consumerManager.readRecords(consumer.groupName, consumer.cid(), BinaryKafkaConsumerState.class,
                     -1, Long.MAX_VALUE, callback);
+            this.readStartMs = time.milliseconds();
+        }
+
+        void awaitRead() throws InterruptedException {
+            long sleepMs = (long) (this.readStartMs + (requestTimeoutMs * 1.5)) - time.milliseconds();
+            if (sleepMs > 0)
+                Thread.sleep(sleepMs);
         }
 
         void verifyRead() {
-            Assert.assertTrue("Callback failed to fire", sawCallback);
+            assertTrue("Callback failed to fire", sawCallback);
             assertNull("There shouldn't be an exception in callback", actualException);
             List<ConsumerRecord<byte[], byte[]>> expectedRecords = referenceRecords();
             assertEquals("Records returned not as expected", expectedRecords, actualRecords);
@@ -147,17 +166,14 @@ public class LoadTest {
         for (ConsumerTestRun run: consumers) {
             run.read();
         }
-        for (int i = 0; i < 60; i++) {
-            awaitRead();
+        for (int i = 0; i < 30; i++) {
             for (ConsumerTestRun run: consumers) {
+                run.awaitRead();
                 run.verifyRead();
+                Thread.sleep(this.random.nextInt(5));
                 run.read();
             }
         }
-    }
-
-    private void awaitRead() throws InterruptedException {
-        Thread.sleep((long) (requestTimeoutMs * 1.5));
     }
 
     private void bootstrapConsumer(final MockConsumer<byte[], byte[]> consumer) {
