@@ -164,7 +164,7 @@ public class TopicsResourceBinaryProduceTest
     request.setRecords(records);
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
-        new Capture<ProducerPool.ProduceRequestCallback>();
+        Capture.newInstance();
     producerPool.produce(EasyMock.eq(topic),
                          EasyMock.eq((Integer) null),
                          EasyMock.eq(recordFormat),

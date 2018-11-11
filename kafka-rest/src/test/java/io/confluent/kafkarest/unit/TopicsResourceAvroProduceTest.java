@@ -129,7 +129,7 @@ public class TopicsResourceAvroProduceTest
                                          final List<RecordMetadataOrException> results) {
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
-        new Capture<ProducerPool.ProduceRequestCallback>();
+        Capture.newInstance();
     producerPool.produce(EasyMock.eq(topic),
         EasyMock.eq((Integer) null),
         EasyMock.eq(recordFormat),

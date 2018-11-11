@@ -115,7 +115,7 @@ public class ConsumerManagerTest {
             config.getTime(), "testclient", schedules,
             Integer.parseInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT),
             allowMissingSchedule);
-    capturedConsumerConfig = new Capture<ConsumerConfig>();
+    capturedConsumerConfig = Capture.newInstance();
     EasyMock.expect(consumerFactory.createConsumer(EasyMock.capture(capturedConsumerConfig)))
                         .andReturn(consumer);
     return consumer;
@@ -144,7 +144,7 @@ public class ConsumerManagerTest {
             config.getTime(), "testclient", null,
             Integer.parseInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT),
             true);
-    final Capture<ConsumerConfig> consumerConfig = new Capture<ConsumerConfig>();
+    final Capture<ConsumerConfig> consumerConfig = Capture.newInstance();
     EasyMock.expect(consumerFactory.createConsumer(EasyMock.capture(consumerConfig)))
         .andReturn(consumer);
 

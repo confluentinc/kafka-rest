@@ -105,7 +105,7 @@ public class AbstractConsumerResourceTest
       final Exception readException) {
     final Capture<ConsumerReadCallback>
         readCallback =
-        new Capture<ConsumerReadCallback>();
+        Capture.newInstance();
     consumerManager
         .readTopic(EasyMock.eq(groupName), EasyMock.eq(instanceId), EasyMock.eq(topicName),
                    EasyMock.eq(stateClass), EasyMock.eq(maxBytes), EasyMock.capture(readCallback));
@@ -130,7 +130,7 @@ public class AbstractConsumerResourceTest
                               final Exception commitException) {
     final Capture<ConsumerManager.CommitCallback>
         commitCallback =
-        new Capture<ConsumerManager.CommitCallback>();
+        Capture.newInstance();
     consumerManager.commitOffsets(EasyMock.eq(groupName), EasyMock.eq(instanceId),
                                   EasyMock.capture(commitCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
