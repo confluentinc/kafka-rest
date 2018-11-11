@@ -49,7 +49,7 @@ public class PartitionsResourceAbstractConsumeTest extends EmbeddedServerTestHar
   }
 
   protected void expectConsume(final EmbeddedFormat embeddedFormat,  final List<? extends ConsumerRecord> records) {
-    final Capture<ConsumerReadCallback> readCallback = new Capture<ConsumerReadCallback>();
+    final Capture<ConsumerReadCallback> readCallback = Capture.newInstance();
     simpleConsumerManager.consume(
         EasyMock.eq(topicName),
         EasyMock.eq(partitionId),

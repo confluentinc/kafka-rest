@@ -126,7 +126,7 @@ public class PartitionsResourceAvroProduceTest
                                              final List<RecordMetadataOrException> results) {
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
-        new Capture<ProducerPool.ProduceRequestCallback>();
+        Capture.newInstance();
     EasyMock.expect(adminClientWrapper.topicExists(topic)).andReturn(true);
     EasyMock.expect(adminClientWrapper.partitionExists(topic, partition)).andReturn(true);
     producerPool.produce(EasyMock.eq(topic),
