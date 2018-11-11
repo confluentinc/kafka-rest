@@ -334,7 +334,7 @@ public class KafkaConsumerManager {
       this.started = config.getTime().milliseconds();
       this.consumerConfig = taskState.consumerState.getConfig();
       this.requestExpiration = this.started
-              + consumerConfig.getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG);
+              + consumerConfig.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
       this.backoffMs = consumerConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
       this.waitExpirationMs = 0;
     }

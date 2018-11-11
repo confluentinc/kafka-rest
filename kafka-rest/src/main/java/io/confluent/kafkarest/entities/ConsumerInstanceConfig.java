@@ -57,7 +57,7 @@ public class ConsumerInstanceConfig {
       @JsonProperty("auto.commit.enable") String autoCommitEnable,
       @JsonProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG)
               Integer responseMinBytes,
-      @JsonProperty(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG) Integer requestWaitMs
+      @JsonProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) Integer requestWaitMs
   ) {
     this.id = id;
     this.name = name;
@@ -79,7 +79,7 @@ public class ConsumerInstanceConfig {
       }
     }
     this.setResponseMinBytes(responseMinBytes);
-    this.setRequestWaitMs(requestWaitMs);
+    this.requestWaitMs = requestWaitMs;
     this.autoOffsetReset = autoOffsetReset;
     this.autoCommitEnable = autoCommitEnable;
   }
@@ -94,7 +94,7 @@ public class ConsumerInstanceConfig {
               config.getResponseMinBytes().toString());
     }
     if (config.getRequestWaitMs() != null) {
-      props.setProperty(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG,
+      props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG,
               config.getRequestWaitMs().toString());
     }
 
@@ -130,7 +130,7 @@ public class ConsumerInstanceConfig {
     }
 
     try {
-      KafkaRestConfig.PROXY_CONSUMER_RESPONSE_MIN_BYTES_VALIDATOR.ensureValid(
+      KafkaRestConfig.PROXY_FETCH_MIN_BYTES_VALIDATOR.ensureValid(
               KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG,
               responseMinBytes
       );
@@ -143,24 +143,6 @@ public class ConsumerInstanceConfig {
   @JsonProperty
   public Integer getRequestWaitMs() {
     return this.requestWaitMs;
-  }
-
-  @JsonProperty
-  public void setRequestWaitMs(Integer requestWaitMs) throws RestConstraintViolationException {
-    if (requestWaitMs == null) {
-      this.requestWaitMs = null;
-      return;
-    }
-
-    try {
-      KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_VALIDATOR.ensureValid(
-              KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG,
-              requestWaitMs
-      );
-      this.requestWaitMs = requestWaitMs;
-    } catch (io.confluent.common.config.ConfigException e) {
-      throw Errors.invalidConsumerConfigConstraintException(e);
-    }
   }
 
   @JsonProperty

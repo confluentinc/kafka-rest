@@ -118,17 +118,6 @@ public class KafkaRestConfig extends RestConfig {
       "The base URL for the schema registry that should be used by the Avro serializer.";
   private static final String SCHEMA_REGISTRY_URL_DEFAULT = "http://localhost:8081";
 
-  public static final String PROXY_FETCH_MAX_WAIT_MS_CONFIG =
-          "fetch.max.wait.ms";
-  private static final String PROXY_FETCH_MAX_WAIT_MS_DOC =
-          "The maximum amount of time the proxy will wait before returning a consumer response if"
-          + " there isn't sufficient data to satisfy the requirement given by"
-          + "fetch.min.bytes";
-  public static final String PROXY_FETCH_MAX_WAIT_MS_DEFAULT = "1000";
-  private static final int PROXY_FETCH_MAX_WAIT_MS_MAX = 60000;
-  public static final ConfigDef.Range PROXY_FETCH_MAX_WAIT_MS_VALIDATOR =
-          ConfigDef.Range.between(1, PROXY_FETCH_MAX_WAIT_MS_MAX);
-
   public static final String PROXY_FETCH_MIN_BYTES_CONFIG =
           "fetch.min.bytes";
   private static final String PROXY_FETCH_MIN_BYTES_DOC =
@@ -137,7 +126,7 @@ public class KafkaRestConfig extends RestConfig {
           + "The special sentinel value of -1 disables this functionality.";
   private static final String PROXY_FETCH_MIN_BYTES_DEFAULT = "-1";
   private static final int PROXY_FETCH_MIN_BYTES_MAX = 10000000; // 10mb
-  public static final ConfigDef.Range PROXY_CONSUMER_RESPONSE_MIN_BYTES_VALIDATOR =
+  public static final ConfigDef.Range PROXY_FETCH_MIN_BYTES_VALIDATOR =
           ConfigDef.Range.between(-1, PROXY_FETCH_MIN_BYTES_MAX);
 
   public static final String PRODUCER_THREADS_CONFIG = "producer.threads";
@@ -168,31 +157,15 @@ public class KafkaRestConfig extends RestConfig {
       + "request if the maximum number of messages has not yet been reached.";
   public static final String CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT = "1000";
 
-  @Deprecated
   public static final String CONSUMER_REQUEST_MAX_BYTES_CONFIG = "consumer.request.max.bytes";
-  @Deprecated
   private static final String CONSUMER_REQUEST_MAX_BYTES_DOC =
-      "DEPRECATED: Maximum number of bytes in unencoded message keys and values returned "
-      + "by a single request. This can be used by administrators to limit the memory used "
-      + "by a single consumer and to control the memory usage required to decode responses"
-      + "on clients that cannot perform a streaming decode. "
-      + "Note that the actual payload will be larger due to overhead from base64 encoding the "
-      + "response data and from JSON encoding the entire response.";
-  @Deprecated
-  public static final long CONSUMER_REQUEST_MAX_BYTES_DEFAULT = 64 * 1024 * 1024;
-
-  public static final String PROXY_FETCH_MAX_BYTES_CONFIG =
-          "fetch.max.bytes";
-  private static final String PROXY_FETCH_MAX_BYTES_CONFIG_DOC =
       "Maximum number of bytes in unencoded message keys and values returned "
       + "by a single request. This can be used by administrators to limit the memory used "
       + "by a single consumer and to control the memory usage required to decode responses"
       + "on clients that cannot perform a streaming decode. "
       + "Note that the actual payload will be larger due to overhead from base64 encoding the "
       + "response data and from JSON encoding the entire response.";
-  public static final long PROXY_FETCH_MAX_BYTES_CONFIG_DEFAULT = 64 * 1024 * 1024;
-  // keep placeholder for default value until consumer.request.max.bytes support is removed
-  public static final long PROXY_FETCH_MAX_BYTES_CONFIG_DEFAULT_PLACEHOLDER = -1;
+  public static final long CONSUMER_REQUEST_MAX_BYTES_DEFAULT = 64 * 1024 * 1024;
 
   public static final String CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG = "consumer.instance.timeout.ms";
   private static final String CONSUMER_INSTANCE_TIMEOUT_MS_DOC =
@@ -417,18 +390,10 @@ public class KafkaRestConfig extends RestConfig {
             SCHEMA_REGISTRY_URL_DOC
         )
         .define(
-            PROXY_FETCH_MAX_WAIT_MS_CONFIG,
-            Type.INT,
-            PROXY_FETCH_MAX_WAIT_MS_DEFAULT,
-            PROXY_FETCH_MAX_WAIT_MS_VALIDATOR,
-            Importance.MEDIUM,
-            PROXY_FETCH_MAX_WAIT_MS_DOC
-        )
-        .define(
             PROXY_FETCH_MIN_BYTES_CONFIG,
             Type.INT,
             PROXY_FETCH_MIN_BYTES_DEFAULT,
-            PROXY_CONSUMER_RESPONSE_MIN_BYTES_VALIDATOR,
+                PROXY_FETCH_MIN_BYTES_VALIDATOR,
             Importance.LOW,
             PROXY_FETCH_MIN_BYTES_DOC
         )
@@ -466,13 +431,6 @@ public class KafkaRestConfig extends RestConfig {
             CONSUMER_REQUEST_MAX_BYTES_DEFAULT,
             Importance.MEDIUM,
             CONSUMER_REQUEST_MAX_BYTES_DOC
-        )
-        .define(
-            PROXY_FETCH_MAX_BYTES_CONFIG,
-            Type.LONG,
-            PROXY_FETCH_MAX_BYTES_CONFIG_DEFAULT_PLACEHOLDER,
-            Importance.MEDIUM,
-            PROXY_FETCH_MAX_BYTES_CONFIG_DOC
         )
         .define(
             CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG,
@@ -819,19 +777,6 @@ public class KafkaRestConfig extends RestConfig {
       }
     }
     return bootstrapBrokers;
-  }
-
-  /**
-   * fetch.max.bytes takes precedence over the deprecated consumer.request.max.bytes
-   */
-  public Long consumerResponseMaxBytes() {
-    long maxBytes = getLong(PROXY_FETCH_MAX_BYTES_CONFIG);
-    if (maxBytes == PROXY_FETCH_MAX_BYTES_CONFIG_DEFAULT_PLACEHOLDER) {
-      // new config is undefined, use old config
-      maxBytes = getLong(CONSUMER_REQUEST_MAX_BYTES_CONFIG);
-    }
-
-    return maxBytes;
   }
 
   public static void main(String[] args) {

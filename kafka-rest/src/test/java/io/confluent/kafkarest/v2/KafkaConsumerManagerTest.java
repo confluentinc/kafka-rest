@@ -143,11 +143,10 @@ public class KafkaConsumerManagerTest {
     }
 
     /**
-     * consumer.request.timeout.ms should not modify how long the proxy waits until returning a response.
-     * fetch.max.wait.ms should dictate that
+     * Response should return no sooner than KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG
      */
     @Test
-    public void testConsumerRequestTimeoutDoesNotModifyProxyResponseTime() throws Exception {
+    public void testConsumerRequestTimeoutms() throws Exception {
         Properties props = setUpProperties(new Properties());
         props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, "2500");
         setUpConsumer(props);
@@ -158,9 +157,9 @@ public class KafkaConsumerManagerTest {
         consumerManager.subscribe(groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
 
         readFromDefault(cid);
-        assertEquals(config.getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG),
-            Integer.parseInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_DEFAULT));
-        Thread.sleep((long) (config.getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG) * 1.10));
+        assertEquals(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG),
+            Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT));
+        Thread.sleep((long) (config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) * 1.10));
         assertTrue("Callback failed to fire", sawCallback);
         assertNull("No exception in callback", actualException);
     }
@@ -172,8 +171,8 @@ public class KafkaConsumerManagerTest {
     @Test
     public void testConsumerWaitMs() throws Exception {
         Properties props = setUpProperties(new Properties());
-        Integer expectedWaitMs = 400;
-        props.setProperty(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG, expectedWaitMs.toString());
+        Integer expectedRequestTimeoutms = 400;
+        props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, expectedRequestTimeoutms.toString());
         setUpConsumer(props);
 
         expectCreate(consumer);
@@ -187,24 +186,23 @@ public class KafkaConsumerManagerTest {
 
         readFromDefault(cid);
         long startTime = System.currentTimeMillis();
-        while ((System.currentTimeMillis() - startTime) < expectedWaitMs) {
+        while ((System.currentTimeMillis() - startTime) < expectedRequestTimeoutms) {
             assertFalse(sawCallback);
             Thread.sleep(40);
         }
-        Thread.sleep(200);
+        Thread.sleep((long) (expectedRequestTimeoutms * 0.5));
         assertTrue("Callback failed to fire", sawCallback);
         assertNull("No exception in callback", actualException);
     }
 
     /**
-     * When min.bytes is not fulfilled, we should return after wait.ms
+     * When min.bytes is not fulfilled, we should return after consumer.request.timeout.ms
      * When min.bytes is fulfilled, we should return immediately
      */
     @Test
-    public void testConsumerWaitMsAndMinBytes() throws Exception {
+    public void testConsumerRequestTimeoutmsAndMinBytes() throws Exception {
         Properties props = setUpProperties(new Properties());
-        props.setProperty(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG, "1303");
-        props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, "3000");
+        props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, "1303");
         props.setProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG, "5");
         setUpConsumer(props);
 
@@ -218,8 +216,8 @@ public class KafkaConsumerManagerTest {
 
         long startTime = System.currentTimeMillis();
         readFromDefault(cid);
-        int expectedWaitMs = config.getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG);
-        while ((System.currentTimeMillis() - startTime) < expectedWaitMs) {
+        int expectedRequestTimeoutms = config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+        while ((System.currentTimeMillis() - startTime) < expectedRequestTimeoutms) {
             assertFalse(sawCallback);
             Thread.sleep(100);
         }
@@ -232,7 +230,7 @@ public class KafkaConsumerManagerTest {
         sawCallback = false;
         final List<ConsumerRecord<byte[], byte[]>> referenceRecords = schedulePoll();
         readFromDefault(cid);
-        Thread.sleep(expectedWaitMs / 2); // should return in less time
+        Thread.sleep(expectedRequestTimeoutms / 2); // should return in less time
 
         assertEquals("Records returned not as expected", referenceRecords, actualRecords);
         assertTrue("Callback not called", sawCallback);
@@ -250,7 +248,7 @@ public class KafkaConsumerManagerTest {
         // we expect all the records from the first poll to be returned
         Properties props = setUpProperties(new Properties());
         props.setProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG, Integer.toString(sampleRecordSize));
-        props.setProperty(KafkaRestConfig.PROXY_FETCH_MAX_BYTES_CONFIG, Integer.toString(sampleRecordSize * 10));
+        props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG, Integer.toString(sampleRecordSize * 10));
         setUpConsumer(props);
 
         final List<ConsumerRecord<byte[], byte[]>> scheduledRecords = schedulePoll();
@@ -278,7 +276,7 @@ public class KafkaConsumerManagerTest {
         int sampleRecordSize = sampleRecord.getKey().length + sampleRecord.getValue().length;
         Properties props = setUpProperties(new Properties());
         props.setProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG, Integer.toString(sampleRecordSize * 5));
-        props.setProperty(KafkaRestConfig.PROXY_FETCH_MAX_BYTES_CONFIG, Integer.toString(sampleRecordSize * 6));
+        props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG, Integer.toString(sampleRecordSize * 6));
         setUpConsumer(props);
 
         final List<ConsumerRecord<byte[], byte[]>> scheduledRecords = schedulePoll();

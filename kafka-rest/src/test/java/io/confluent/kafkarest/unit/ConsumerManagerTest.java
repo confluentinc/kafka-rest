@@ -216,40 +216,12 @@ public class ConsumerManagerTest {
   }
 
   /**
-   * consumer.request.timeout.ms should not modify how long the proxy waits until returning a response
-   * fetch.max.wait.ms should dictate that
+   * Response should return no sooner than KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG
    */
   @Test
-  public void testConsumerRequestTimeoutDoesNotModifyProxyResponseTime() throws Exception {
-    properties.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, "2500");
-    Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>
-            schedules =
-            new HashMap<>();
-    Map<Integer, List<ConsumerRecord<byte[], byte[]>>> referenceSchedule = new HashMap<>();
-    schedules.put(topicName, Arrays.asList(referenceSchedule));
-    expectCreate(schedules);
-
-    EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
-    EasyMock.replay(mdObserver, consumerFactory);
-
-    long startTime = System.currentTimeMillis();
-    readFromDefault(consumerManager.createConsumer(groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY)));
-
-    assertTrue(System.currentTimeMillis() - startTime < 2500);
-    assertTrue("Callback failed to fire", sawCallback);
-    assertNull("No exception in callback", actualException);
-    // should wait default wait.ms time
-    assertEquals(Integer.parseInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_DEFAULT),
-            config.getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG));
-  }
-
-  /**
-   * Response should return no sooner than KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG
-   */
-  @Test
-  public void testConsumerWaitMs() throws Exception {
-    Integer expectedWaitMs = 400;
-    properties.setProperty(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG, expectedWaitMs.toString());
+  public void testConsumerRequestTimeoutMs() throws Exception {
+    Integer expectedRequestTimeoutMs = 400;
+    properties.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, expectedRequestTimeoutMs.toString());
     setUp(properties);
     Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>
             schedules =
@@ -263,7 +235,7 @@ public class ConsumerManagerTest {
 
     long startTime = System.currentTimeMillis();
     readFromDefault(consumerManager.createConsumer(groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY)));
-    assertTrue(System.currentTimeMillis() - startTime > expectedWaitMs);
+    assertTrue(System.currentTimeMillis() - startTime > expectedRequestTimeoutMs);
     assertTrue("Callback failed to fire", sawCallback);
     assertNull("No exception in callback", actualException);
   }
@@ -272,8 +244,8 @@ public class ConsumerManagerTest {
    * When min.bytes is fulfilled, we should return immediately
    */
   @Test
-  public void testConsumerWaitMsAndMinBytes() throws Exception {
-    properties.setProperty(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG, "1303");
+  public void testConsumerTimeoutMsMsAndMinBytes() throws Exception {
+    properties.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, "1303");
     properties.setProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG, "1");
     setUp(properties);
 
@@ -300,8 +272,8 @@ public class ConsumerManagerTest {
     assertEquals("Records returned not as expected",
             Arrays.asList(referenceRecords.get(0)), actualRecords);
     long estimatedTime = System.currentTimeMillis() - startTime;
-    int waitMs = config.getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG);
-    assertTrue(estimatedTime < waitMs); // should have returned earlier than min.wait.ms
+    int timeoutMs = config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+    assertTrue(estimatedTime < timeoutMs); // should have returned earlier than consumer.request.timeout.ms
   }
 
   @Test
@@ -336,13 +308,13 @@ public class ConsumerManagerTest {
   }
 
   /**
-   * Response should return no sooner than the overridden PROXY_FETCH_MAX_WAIT_MS_CONFIG
+   * Response should return no sooner than the overridden CONSUMER_REQUEST_TIMEOUT_MS_CONFIG
    */
   @Test
-  public void testConsumerWaitMsIsOverriddablePerConsumer() throws Exception {
-    Integer overriddenWaitTimeMs = 111;
-    Integer globalWaitTimeMs = 1201;
-    properties.setProperty(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG, globalWaitTimeMs.toString());
+  public void testConsumerRequestTimeoutMsIsOverriddablePerConsumer() throws Exception {
+    Integer overriddenRequestTimeMs = 111;
+    Integer globalRequestTimeMs = 1201;
+    properties.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, globalRequestTimeMs.toString());
     setUp(properties);
     Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>
             schedules =
@@ -354,14 +326,14 @@ public class ConsumerManagerTest {
     EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
     EasyMock.replay(mdObserver, consumerFactory);
 
-    ConsumerInstanceConfig consumerConfig = new ConsumerInstanceConfig(EmbeddedFormat.BINARY);
-    consumerConfig.setRequestWaitMs(overriddenWaitTimeMs);
+    ConsumerInstanceConfig consumerConfig = new ConsumerInstanceConfig(null, null, EmbeddedFormat.BINARY.name(),
+            null, null, null,  overriddenRequestTimeMs);
     String cid = consumerManager.createConsumer(groupName, consumerConfig);
     long startTime = System.currentTimeMillis();
     readFromDefault(cid);
     long elapsedTime = System.currentTimeMillis() - startTime;
-    assertTrue(elapsedTime < globalWaitTimeMs);
-    assertTrue(elapsedTime > overriddenWaitTimeMs);
+    assertTrue(elapsedTime < globalRequestTimeMs);
+    assertTrue(elapsedTime > overriddenRequestTimeMs);
 
     assertTrue("Callback failed to fire", sawCallback);
     assertNull("No exception in callback", actualException);

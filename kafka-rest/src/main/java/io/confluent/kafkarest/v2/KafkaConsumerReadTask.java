@@ -70,10 +70,10 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
     this.maxResponseBytes =
         Math.min(
             maxBytes,
-            parent.getConfig().consumerResponseMaxBytes()
+            parent.getConfig().getLong(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG)
         );
     long defaultRequestTimeout =
-        parent.getConfig().getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG);
+        parent.getConfig().getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
     this.requestTimeoutMs =
             timeout <= 0 ? defaultRequestTimeout : Math.min(timeout, defaultRequestTimeout);
 
@@ -154,7 +154,6 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
    * to the read records if it doesn't go over the maximum response bytes.
    * Keeps track and marks when we are about to exceed the max response bytes, and
    * have exceeded the min response bytes
-   * @return boolean indicating whether the record was added
    */
   private void maybeAddRecord() {
     ConsumerRecordAndSize<ClientKeyT, ClientValueT> recordAndSize =

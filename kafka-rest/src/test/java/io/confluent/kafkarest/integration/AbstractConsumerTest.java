@@ -289,7 +289,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     // request timeout, the iterator timeout used for "peeking", and the backoff period, as well
     // as some extra slack for general overhead (which apparently mostly comes from running the
     // request and can be quite substantial).
-    final int TIMEOUT = restConfig.getInt(KafkaRestConfig.PROXY_FETCH_MAX_WAIT_MS_CONFIG);
+    final int TIMEOUT = restConfig.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
     final int TIMEOUT_SLACK =
         restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG)
         + restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG) + 500;

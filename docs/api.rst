@@ -772,8 +772,10 @@ any consumers before it is terminated.
    :<json string auto.commit.enable: Sets the ``auto.commit.enable`` setting for the consumer
    :<json string fetch.min.bytes: Sets the ``fetch.min.bytes``
                                                     setting for this consumer specifically
-   :<json string fetch.max.wait.ms: Sets the ``fetch.max.wait.ms``
-                                                 setting for this consumer specifically
+   :<json string consumer.request.timeout.ms: Sets the ``consumer.request.timeout.ms`` setting for this consumer specifically.
+                                              This setting controls the maximum total time to wait for messages for a request
+                                              if the maximum request size has not yet been reached.
+                                              It does not affect the underlying consumer->broker connection  
 
    :>json string instance_id: Unique ID for the consumer instance in this group.
    :>json string base_uri: Base URI used to construct URIs for subsequent requests against this consumer instance. This
