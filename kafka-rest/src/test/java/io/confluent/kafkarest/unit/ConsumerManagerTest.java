@@ -505,50 +505,6 @@ public class ConsumerManagerTest {
     consumerManager.deleteConsumer(groupName, "invalidinstance");
   }
 
-
-  @Test
-  public void testConsumerExceptions() throws Exception {
-    // We should be able to handle an exception thrown by the consumer, then issue another
-    // request that succeeds and still see all the data
-    final List<ConsumerRecord<byte[], byte[]>> referenceRecords
-        = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
-        new BinaryConsumerRecord(topicName, "k1".getBytes(), "v1".getBytes(), 0, 0),
-        null, // trigger consumer exception
-        new BinaryConsumerRecord(topicName, "k2".getBytes(), "v2".getBytes(), 1, 0),
-        new BinaryConsumerRecord(topicName, "k3".getBytes(), "v3".getBytes(), 2, 0));
-    Map<Integer, List<ConsumerRecord<byte[], byte[]>>>
-        referenceSchedule =
-        new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
-    referenceSchedule.put(50, referenceRecords);
-
-    Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>
-        schedules =
-        new HashMap<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>();
-    schedules.put(topicName, Arrays.asList(referenceSchedule));
-
-    expectCreate(schedules);
-    EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true).times(2);
-
-    EasyMock.replay(mdObserver, consumerFactory);
-
-    String cid = consumerManager.createConsumer(
-        groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
-
-    // First read should result in exception.
-    sawCallback = false;
-    actualException = null;
-    actualRecords = null;
-    readTopic(cid);
-    verifyRead(null, RestServerErrorException.class);
-
-    // Second read should recover and return all the data.
-    sawCallback = false;
-    readTopic(cid);
-    verifyRead(referenceRecords, null);
-
-    EasyMock.verify(mdObserver, consumerFactory);
-  }
-
   /**
    * We need to wait for topic reads to finish. We can't rely on the returned Future
    * because one whole read task is spanned throughout multiple Runnables.
