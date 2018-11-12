@@ -352,11 +352,17 @@ public class KafkaConsumerManager {
 
     @Override
     protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
-      return new ReadFutureTask(runnable, value);
+      if (runnable instanceof RunnableReadTask) {
+        return new ReadFutureTask(runnable, value);
+      }
+      return super.newTaskFor(runnable, value);
     }
 
     protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-      return new ReadFutureTask<T>(callable);
+      if (callable instanceof RunnableReadTask) {
+        return new ReadFutureTask(callable);
+      }
+      return super.newTaskFor((callable);
     }
 
   }
