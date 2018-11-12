@@ -407,7 +407,7 @@ public class ConsumerManager {
       if (callable instanceof RunnableReadTask) {
         return new ReadFutureTask(callable);
       }
-      return super.newTaskFor((callable);
+      return super.newTaskFor((callable));
     }
 
   }
