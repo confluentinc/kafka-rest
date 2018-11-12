@@ -37,11 +37,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.Future;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.BlockingQueue;
 
 import javax.ws.rs.core.Response;
@@ -100,7 +98,7 @@ public class ConsumerManager {
           @Override
           public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
             if (r instanceof ReadFutureTask) {
-             RunnableReadTask readTask = ((ReadFutureTask)r).getReadTask();
+              RunnableReadTask readTask = ((ReadFutureTask)r).getReadTask();
               int delayMs = ThreadLocalRandom.current().nextInt(25, 75 + 1);
               readTask.waitExpirationMs = config.getTime().milliseconds() + delayMs;
               delayedReadTasks.add(readTask);
