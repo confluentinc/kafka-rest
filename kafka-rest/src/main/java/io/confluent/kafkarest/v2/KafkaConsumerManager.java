@@ -345,7 +345,6 @@ public class KafkaConsumerManager {
 
       long delay = delayMs + config.getTime().milliseconds();
       waitExpirationMs = Math.min(delay, requestExpiration);
-      log.trace("{} {}", waitExpirationMs, config.getTime().milliseconds());
       // add to delayedReadTasks so the scheduler thread can re-schedule another partial read later
       delayedReadTasks.add(this);
     }
