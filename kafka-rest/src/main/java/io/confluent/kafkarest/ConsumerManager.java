@@ -37,6 +37,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.BlockingQueue;
 
 import javax.ws.rs.core.Response;
 
@@ -87,14 +90,14 @@ public class ConsumerManager {
     int maxThreadCount = config.getInt(KafkaRestConfig.CONSUMER_MAX_THREADS_CONFIG) < 0
         ? Integer.MAX_VALUE : config.getInt(KafkaRestConfig.CONSUMER_MAX_THREADS_CONFIG);
 
-    this.executor = new ThreadPoolExecutor(0, maxThreadCount,
+    this.executor = new KafkaConsumerThreadPoolExecutor(0, maxThreadCount,
         60L, TimeUnit.SECONDS,
         new SynchronousQueue<Runnable>(),
         new RejectedExecutionHandler() {
           @Override
           public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-            if (r instanceof RunnableReadTask) {
-              RunnableReadTask readTask = (RunnableReadTask) r;
+            if (r instanceof ReadFutureTask) {
+              RunnableReadTask readTask = ((ReadFutureTask)r).readTask;
               int delayMs = ThreadLocalRandom.current().nextInt(25, 75 + 1);
               readTask.waitExpirationMs = config.getTime().milliseconds() + delayMs;
               delayedReadTasks.add(readTask);
@@ -352,6 +355,36 @@ public class ConsumerManager {
   public interface ConsumerFactory {
 
     ConsumerConnector createConsumer(ConsumerConfig config);
+  }
+
+  private class ReadFutureTask<V> extends FutureTask<V> {
+
+    private final RunnableReadTask readTask;
+
+    private ReadFutureTask(RunnableReadTask runnable, V result) {
+      super(runnable, result);
+      this.readTask = runnable;
+    }
+
+  }
+
+  class KafkaConsumerThreadPoolExecutor extends ThreadPoolExecutor {
+    private KafkaConsumerThreadPoolExecutor(int corePoolSize,
+                                            int maximumPoolSize,
+                                            long keepAliveTime,
+                                            TimeUnit unit,
+                                            BlockingQueue<Runnable> workQueue,
+                                            RejectedExecutionHandler handler) {
+      super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, handler);
+    }
+
+    @Override
+    protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
+      if (runnable instanceof RunnableReadTask) {
+        return new ReadFutureTask<>((RunnableReadTask) runnable, value);
+      }
+      return super.newTaskFor(runnable, value);
+    }
   }
 
   class RunnableReadTask implements Runnable, Delayed {
