@@ -97,7 +97,7 @@ public class ConsumerManager {
           @Override
           public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
             if (r instanceof ReadFutureTask) {
-              RunnableReadTask readTask = ((ReadFutureTask)r).getReadTask();
+              RunnableReadTask readTask = ((ReadFutureTask)r).readTask;
               int delayMs = ThreadLocalRandom.current().nextInt(25, 75 + 1);
               readTask.waitExpirationMs = config.getTime().milliseconds() + delayMs;
               delayedReadTasks.add(readTask);
@@ -357,34 +357,31 @@ public class ConsumerManager {
     ConsumerConnector createConsumer(ConsumerConfig config);
   }
 
-  class ReadFutureTask<V> extends FutureTask<V> {
+  private class ReadFutureTask<V> extends FutureTask<V> {
 
-    private final Runnable readTask;
+    private final RunnableReadTask readTask;
 
-    public ReadFutureTask(Runnable runnable, V result) {
+    private ReadFutureTask(RunnableReadTask runnable, V result) {
       super(runnable, result);
       this.readTask = runnable;
     }
 
-    public RunnableReadTask getReadTask() {
-      return (RunnableReadTask)readTask;
-    }
   }
 
   class KafkaConsumerThreadPoolExecutor extends ThreadPoolExecutor {
-    public KafkaConsumerThreadPoolExecutor(int corePoolSize,
-                                           int maximumPoolSize,
-                                           long keepAliveTime,
-                                           TimeUnit unit,
-                                           BlockingQueue<Runnable> workQueue,
-                                           RejectedExecutionHandler handler) {
+    private KafkaConsumerThreadPoolExecutor(int corePoolSize,
+                                            int maximumPoolSize,
+                                            long keepAliveTime,
+                                            TimeUnit unit,
+                                            BlockingQueue<Runnable> workQueue,
+                                            RejectedExecutionHandler handler) {
       super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, handler);
     }
 
     @Override
     protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
       if (runnable instanceof RunnableReadTask) {
-        return new ReadFutureTask(runnable, value);
+        return new ReadFutureTask<>((RunnableReadTask) runnable, value);
       }
       return super.newTaskFor(runnable, value);
     }
