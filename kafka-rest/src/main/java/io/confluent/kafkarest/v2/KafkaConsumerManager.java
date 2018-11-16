@@ -317,26 +317,15 @@ public class KafkaConsumerManager {
 
   class ReadFutureTask<V> extends FutureTask<V> {
 
-    private Runnable myTask;
-
-    private Callable callable;
+    private final Runnable readTask;
 
     public ReadFutureTask(Runnable runnable, V result) {
       super(runnable, result);
-      this.myTask = runnable;
-    }
-
-    public ReadFutureTask(Callable callable) {
-      super(callable);
-      this.callable = callable;
+      this.readTask = runnable;
     }
 
     public RunnableReadTask getReadTask() {
-      if (myTask != null) {
-        return (RunnableReadTask)myTask;
-      } else {
-        return (RunnableReadTask)callable;
-      }
+        return (RunnableReadTask)readTask;
     }
   }
 
@@ -357,14 +346,6 @@ public class KafkaConsumerManager {
       }
       return super.newTaskFor(runnable, value);
     }
-
-    protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-      if (callable instanceof RunnableReadTask) {
-        return new ReadFutureTask(callable);
-      }
-      return super.newTaskFor((callable));
-    }
-
   }
 
   class RunnableReadTask implements Runnable, Delayed {
