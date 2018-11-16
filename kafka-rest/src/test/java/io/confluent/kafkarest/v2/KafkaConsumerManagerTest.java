@@ -157,9 +157,9 @@ public class KafkaConsumerManagerTest {
         consumerManager.subscribe(groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
 
         readFromDefault(cid);
-        assertEquals(config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG),
-            Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT));
-        Thread.sleep((long) (config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) * 1.10));
+        Thread.sleep((long) (config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) * 0.5));
+        assertFalse("Callback failed early", sawCallback);
+        Thread.sleep((long) (config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) * 0.7));
         assertTrue("Callback failed to fire", sawCallback);
         assertNull("No exception in callback", actualException);
     }
@@ -307,30 +307,12 @@ public class KafkaConsumerManagerTest {
 
     @Test
     public void testConsumerNormalOps() throws InterruptedException, ExecutionException {
-        expectCreate(consumer);
-        final List<ConsumerRecord<byte[], byte[]>> referenceRecords = schedulePoll();
-
-        String cid = consumerManager.createConsumer(
-                groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
-        consumerManager.subscribe(groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
-        consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
-        consumer.updateBeginningOffsets(Collections.singletonMap(new TopicPartition(topicName, 0), 0L));
+        final List<ConsumerRecord<byte[], byte[]>> referenceRecords = bootstrapConsumer(consumer);
 
         sawCallback = false;
         actualException = null;
         actualRecords = null;
-        consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
-            new ConsumerReadCallback<byte[], byte[]>() {
-            @Override
-            public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
-                actualException = e;
-                actualRecords = records;
-                sawCallback = true;
-            }
-        });
-        awaitRead();
-
-        readFromDefault(cid);
+        readFromDefault(consumer.cid());
         Thread.sleep((long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 1.10));
 
         assertTrue("Callback failed to fire", sawCallback);
