@@ -75,7 +75,7 @@ public class ConsumerManager {
   // they're also comparatively rare. These are executed serially in a dedicated thread.
   private final ExecutorService executor;
   private ConsumerFactory consumerFactory;
-  private final DelayQueue<RunnableReadTask> delayedReadTasks = new DelayQueue<>();
+  final DelayQueue<RunnableReadTask> delayedReadTasks = new DelayQueue<>();
   private final ReadTaskSchedulerThread readTaskSchedulerThread;
   private final ExpirationThread expirationThread;
 
@@ -348,7 +348,7 @@ public class ConsumerManager {
     return state;
   }
 
-  private ConsumerState getConsumerInstance(String group, String instance) {
+  ConsumerState getConsumerInstance(String group, String instance) {
     return getConsumerInstance(group, instance, false);
   }
 
