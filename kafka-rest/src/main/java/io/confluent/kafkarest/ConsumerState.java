@@ -42,7 +42,7 @@ public abstract class ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientVa
   private ConsumerInstanceId instanceId;
   private ConsumerConnector consumer;
   private Map<String, ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>> topics;
-  private volatile long expiration;
+  volatile long expiration;
   // A read/write lock on the ConsumerState allows concurrent readTopic calls, but allows
   // commitOffsets to safely lock the entire state in order to get correct information about all
   // the topic/stream's current offset state. All operations on individual TopicStates must be
