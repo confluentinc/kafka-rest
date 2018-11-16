@@ -37,7 +37,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.BlockingQueue;
@@ -368,7 +367,7 @@ public class ConsumerManager {
     }
 
     public RunnableReadTask getReadTask() {
-        return (RunnableReadTask)readTask;
+      return (RunnableReadTask)readTask;
     }
   }
 
