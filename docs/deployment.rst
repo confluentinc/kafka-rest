@@ -178,7 +178,7 @@ changing these based on your specific use case.
      before the timeout of `consumer.request.timeout.ms` passes.
 
      * Type: int
-     * Default: the value of `consumer.request.max.bytes`
+     * Default: -1
      * Importance: medium
 
    ``consumer.request.timeout.ms``

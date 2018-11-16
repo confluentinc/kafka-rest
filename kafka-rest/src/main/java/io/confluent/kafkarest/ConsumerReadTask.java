@@ -123,7 +123,7 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
         // consumer timeout should be set very small, so the expectation is that even in the
         // worst case, num_messages * consumer_timeout << request_timeout, so it's safe to only
         // check the elapsed time once this loop finishes.
-        while (iter.hasNext()) {
+        while (!this.willExceedMaxResponseBytes && !this.exceededMinResponseBytes && iter.hasNext()) {
           MessageAndMetadata<KafkaKeyT, KafkaValueT> msg = iter.peek();
           ConsumerRecordAndSize<ClientKeyT, ClientValueT> recordAndSize =
                   parent.createConsumerRecord(msg);
@@ -137,9 +137,6 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
           messages.add(recordAndSize.getRecord());
           bytesConsumed += roughMsgSize;
           this.exceededMinResponseBytes = bytesConsumed > responseMinBytes;
-          if (this.exceededMinResponseBytes) {
-            break;
-          }
           // Updating the consumed offsets isn't done until we're actually going to return the
           // data since we may encounter an error during a subsequent read, in which case we'll
           // have to defer returning the data so we can return an HTTP error instead
