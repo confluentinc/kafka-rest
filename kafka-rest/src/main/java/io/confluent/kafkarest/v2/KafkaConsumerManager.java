@@ -97,7 +97,7 @@ public class KafkaConsumerManager {
   // are executed separately in dedicated threads via a cached thread pool.
   private final ExecutorService executor;
   private KafkaConsumerFactory consumerFactory;
-  private final DelayQueue<RunnableReadTask> delayedReadTasks = new DelayQueue<>();
+  final DelayQueue<RunnableReadTask> delayedReadTasks = new DelayQueue<>();
   private final ExpirationThread expirationThread;
   private ReadTaskSchedulerThread readTaskSchedulerThread;
 
@@ -578,7 +578,7 @@ public class KafkaConsumerManager {
     return state;
   }
 
-  private KafkaConsumerState getConsumerInstance(String group, String instance) {
+  KafkaConsumerState getConsumerInstance(String group, String instance) {
     return getConsumerInstance(group, instance, false);
   }
 

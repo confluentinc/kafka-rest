@@ -61,7 +61,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
 
   private Queue<ConsumerRecord<KafkaKeyT, KafkaValueT>> consumerRecords = new ArrayDeque<>();
 
-  private volatile long expiration;
+  volatile long expiration;
   private ReentrantLock lock;
 
   public KafkaConsumerState(
