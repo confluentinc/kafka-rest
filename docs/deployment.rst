@@ -173,6 +173,14 @@ changing these based on your specific use case.
      * Default: 67108864
      * Importance: medium
 
+   ``fetch.min.bytes``
+     The minimum number of bytes in message keys and values returned by a single request
+     before the timeout of `consumer.request.timeout.ms` passes.
+
+     * Type: int
+     * Default: -1
+     * Importance: medium
+
    ``consumer.request.timeout.ms``
      The maximum total time to wait for messages for a request if the maximum request size has
      not yet been reached. The consumer uses a timeout to enable batching. A larger value will

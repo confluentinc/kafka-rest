@@ -118,6 +118,17 @@ public class KafkaRestConfig extends RestConfig {
       "The base URL for the schema registry that should be used by the Avro serializer.";
   private static final String SCHEMA_REGISTRY_URL_DEFAULT = "http://localhost:8081";
 
+  public static final String PROXY_FETCH_MIN_BYTES_CONFIG =
+          "fetch.min.bytes";
+  private static final String PROXY_FETCH_MIN_BYTES_DOC =
+          "Minimum bytes of records for the proxy to accumulate before"
+          + "returning a response to a consumer request. "
+          + "The special sentinel value of -1 disables this functionality.";
+  private static final String PROXY_FETCH_MIN_BYTES_DEFAULT = "-1";
+  private static final int PROXY_FETCH_MIN_BYTES_MAX = 10000000; // 10mb
+  public static final ConfigDef.Range PROXY_FETCH_MIN_BYTES_VALIDATOR =
+          ConfigDef.Range.between(-1, PROXY_FETCH_MIN_BYTES_MAX);
+
   public static final String PRODUCER_THREADS_CONFIG = "producer.threads";
   private static final String PRODUCER_THREADS_DOC =
       "Number of threads to run produce requests on.";
@@ -148,12 +159,12 @@ public class KafkaRestConfig extends RestConfig {
 
   public static final String CONSUMER_REQUEST_MAX_BYTES_CONFIG = "consumer.request.max.bytes";
   private static final String CONSUMER_REQUEST_MAX_BYTES_DOC =
-      "Maximum number of bytes in unencoded message keys and values returned by a single "
-      + "request. This can be used by administrators to limit the memory used by a single "
-      + "consumer and to control the memory usage required to decode responses on clients that "
-      + "cannot perform a streaming decode. Note that the actual payload will be larger due to "
-      + "overhead from base64 encoding the response data and from JSON encoding the entire "
-      + "response.";
+      "Maximum number of bytes in unencoded message keys and values returned "
+      + "by a single request. This can be used by administrators to limit the memory used "
+      + "by a single consumer and to control the memory usage required to decode responses"
+      + "on clients that cannot perform a streaming decode. "
+      + "Note that the actual payload will be larger due to overhead from base64 encoding the "
+      + "response data and from JSON encoding the entire response.";
   public static final long CONSUMER_REQUEST_MAX_BYTES_DEFAULT = 64 * 1024 * 1024;
 
   public static final String CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG = "consumer.instance.timeout.ms";
@@ -377,6 +388,14 @@ public class KafkaRestConfig extends RestConfig {
             SCHEMA_REGISTRY_URL_DEFAULT,
             Importance.HIGH,
             SCHEMA_REGISTRY_URL_DOC
+        )
+        .define(
+            PROXY_FETCH_MIN_BYTES_CONFIG,
+            Type.INT,
+            PROXY_FETCH_MIN_BYTES_DEFAULT,
+                PROXY_FETCH_MIN_BYTES_VALIDATOR,
+            Importance.LOW,
+            PROXY_FETCH_MIN_BYTES_DOC
         )
         .define(
             PRODUCER_THREADS_CONFIG,
