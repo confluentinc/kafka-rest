@@ -16,6 +16,7 @@
 
 package io.confluent.kafkarest.v2;
 
+import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.Errors;
@@ -24,6 +25,7 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -234,34 +236,18 @@ public class KafkaConsumerManager {
           );
       }
 
-      Consumer consumer = null;
+      Consumer consumer;
       try {
         if (consumerFactory == null) {
           consumer = new KafkaConsumer(props);
         } else {
           consumer = consumerFactory.createConsumer(props);
         }
-      } catch (Exception e) {
-        log.debug("ignoring this", e);
+      } catch (ConfigException e) {
+        throw Errors.invalidConsumerConfigException(e);
       }
 
-      KafkaConsumerState state = null;
-      switch (instanceConfig.getFormat()) {
-        case BINARY:
-          state = new BinaryKafkaConsumerState(this.config, cid, consumer);
-          break;
-        case AVRO:
-          state = new AvroKafkaConsumerState(this.config, cid, consumer);
-          break;
-        case JSON:
-          state = new JsonKafkaConsumerState(this.config, cid, consumer);
-          break;
-        default:
-          throw new RestServerErrorException(
-              "Invalid embedded format for new consumer.",
-              Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
-          );
-      }
+      KafkaConsumerState state = createConsumerState(instanceConfig, cid, consumer);
       synchronized (this) {
         consumers.put(cid, state);
       }
@@ -273,6 +259,28 @@ public class KafkaConsumerManager {
           consumers.remove(cid);
         }
       }
+    }
+  }
+
+  private KafkaConsumerState createConsumerState(
+          ConsumerInstanceConfig instanceConfig,
+          ConsumerInstanceId cid, Consumer consumer
+  ) throws RestServerErrorException {
+    KafkaRestConfig newConfig = ConsumerManager.newConsumerConfig(this.config, instanceConfig);
+
+    switch (instanceConfig.getFormat()) {
+      case BINARY:
+        return new BinaryKafkaConsumerState(newConfig, cid, consumer);
+      case AVRO:
+        return new AvroKafkaConsumerState(newConfig, cid, consumer);
+      case JSON:
+        return new JsonKafkaConsumerState(newConfig, cid, consumer);
+      default:
+        throw new RestServerErrorException(
+                String.format("Invalid embedded format %s for new consumer.",
+                    instanceConfig.getFormat()),
+                Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
+        );
     }
   }
 

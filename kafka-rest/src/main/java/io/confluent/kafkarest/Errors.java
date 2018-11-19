@@ -18,6 +18,7 @@ package io.confluent.kafkarest;
 
 import org.apache.avro.SchemaParseException;
 import org.apache.kafka.common.KafkaException;
+import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.common.errors.RetriableException;
 
 import javax.ws.rs.core.Response;
@@ -160,6 +161,28 @@ public class Errors {
     return new RestConstraintViolationException(
         INVALID_CONSUMER_CONFIG_MESSAGE + e.getMessage(),
         INVALID_CONSUMER_CONFIG_ERROR_CODE
+    );
+  }
+
+  public static RestConstraintViolationException invalidConsumerConfigException(
+          ConfigException e
+  ) {
+    return new RestConstraintViolationException(
+        INVALID_CONSUMER_CONFIG_MESSAGE + e.getMessage(),
+        INVALID_CONSUMER_CONFIG_ERROR_CODE
+    );
+  }
+
+  public static final String INVALID_CONSUMER_CONFIG_CONSTRAINT_MESSAGE =
+      "Invalid consumer configuration. It does not abide by the constraints: ";
+  public static final int INVALID_CONSUMER_CONFIG_CONSTAINT_ERROR_CODE = 40001;
+
+  public static RestConstraintViolationException invalidConsumerConfigConstraintException(
+      io.confluent.common.config.ConfigException e
+  ) {
+    return new RestConstraintViolationException(
+        INVALID_CONSUMER_CONFIG_CONSTRAINT_MESSAGE + e.getMessage(),
+        INVALID_CONSUMER_CONFIG_CONSTAINT_ERROR_CODE
     );
   }
 
