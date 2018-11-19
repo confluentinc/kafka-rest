@@ -13,7 +13,7 @@
 
     <suppress
             checks="(CyclomaticComplexity)"
-            files="(AvroConverter|AvroRestProducer|ConsumerInstanceConfig|ConsumerManager|KafkaConsumerManager|PartitionOffset|KafkaRestContextProvider).java"
+            files="(AvroConverter|AvroRestProducer|ConsumerInstanceConfig|ConsumerManager|ConsumerReadTask|KafkaConsumerManager|PartitionOffset|KafkaRestContextProvider).java"
     />
 
     <suppress

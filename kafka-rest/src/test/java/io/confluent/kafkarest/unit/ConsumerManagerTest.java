@@ -32,6 +32,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +68,7 @@ import static org.junit.Assert.fail;
  */
 public class ConsumerManagerTest {
 
+  private Properties properties;
   private KafkaRestConfig config;
   private MetadataObserver mdObserver;
   private ConsumerManager.ConsumerFactory consumerFactory;
@@ -87,12 +89,16 @@ public class ConsumerManagerTest {
 
   @Before
   public void setUp() throws RestConfigException {
-    Properties props = new Properties();
-    props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG, "1024");
+    this.properties = new Properties();
+    properties.setProperty(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG, "1024");
     // This setting supports the testConsumerOverrides test. It is otherwise benign and should
     // not affect other tests.
-    props.setProperty("exclude.internal.topics", "false");
-    config = new KafkaRestConfig(props, new SystemTime());
+    properties.setProperty("exclude.internal.topics", "false");
+    setUp(properties);
+  }
+
+  public void setUp(Properties properties) throws RestConfigException {
+    config = new KafkaRestConfig(properties, new SystemTime());
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     consumerFactory = EasyMock.createMock(ConsumerManager.ConsumerFactory.class);
     consumerManager = new ConsumerManager(config, mdObserver, consumerFactory);
@@ -165,14 +171,10 @@ public class ConsumerManagerTest {
   @Test
   public void testConsumerNormalOps() throws Exception {
     // Tests create instance, read, and delete
-    final List<ConsumerRecord<byte[], byte[]>> referenceRecords
-        = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
-        new BinaryConsumerRecord(topicName, "k1".getBytes(), "v1".getBytes(), 0, 0),
-        new BinaryConsumerRecord(topicName, "k2".getBytes(), "v2".getBytes(), 1, 0),
-        new BinaryConsumerRecord(topicName, "k3".getBytes(), "v3".getBytes(), 2, 0));
+    final List<ConsumerRecord<byte[], byte[]>> referenceRecords = referenceRecords(3);
     Map<Integer, List<ConsumerRecord<byte[], byte[]>>>
         referenceSchedule =
-        new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
+            new HashMap<>();
     referenceSchedule.put(50, referenceRecords);
 
     Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>
@@ -184,13 +186,8 @@ public class ConsumerManagerTest {
     EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
 
     EasyMock.replay(mdObserver, consumerFactory);
-
-    String cid = consumerManager.createConsumer(
-        groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
-    sawCallback = false;
-    actualException = null;
-    actualRecords = null;
-    readTopic(cid);
+    String cid = consumerManager.createConsumer(groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+    readFromDefault(cid);
 
     verifyRead(referenceRecords, null);
 
@@ -216,6 +213,130 @@ public class ConsumerManagerTest {
     consumerManager.deleteConsumer(groupName, cid);
 
     EasyMock.verify(mdObserver, consumerFactory);
+  }
+
+  /**
+   * Response should return no sooner than KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG
+   */
+  @Test
+  public void testConsumerRequestTimeoutMs() throws Exception {
+    Integer expectedRequestTimeoutMs = 400;
+    properties.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, expectedRequestTimeoutMs.toString());
+    setUp(properties);
+    Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>
+            schedules =
+            new HashMap<>();
+    Map<Integer, List<ConsumerRecord<byte[], byte[]>>> referenceSchedule = new HashMap<>();
+    schedules.put(topicName, Arrays.asList(referenceSchedule));
+    expectCreate(schedules);
+
+    EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
+    EasyMock.replay(mdObserver, consumerFactory);
+
+    long startTime = System.currentTimeMillis();
+    readFromDefault(consumerManager.createConsumer(groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY)));
+    assertTrue(System.currentTimeMillis() - startTime > expectedRequestTimeoutMs);
+    assertTrue("Callback failed to fire", sawCallback);
+    assertNull("No exception in callback", actualException);
+  }
+
+  /**
+   * When min.bytes is fulfilled, we should return immediately
+   */
+  @Test
+  public void testConsumerTimeoutMsMsAndMinBytes() throws Exception {
+    properties.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, "1303");
+    properties.setProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG, "1");
+    setUp(properties);
+
+    final List<ConsumerRecord<byte[], byte[]>> referenceRecords = referenceRecords(3);
+    Map<Integer, List<ConsumerRecord<byte[], byte[]>>>
+            referenceSchedule = new HashMap<>();
+    referenceSchedule.put(50, referenceRecords);
+
+    Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>
+            schedules = new HashMap<>();
+    schedules.put(topicName, Arrays.asList(referenceSchedule));
+
+    expectCreate(schedules);
+    EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
+    EasyMock.replay(mdObserver, consumerFactory);
+
+    String cid = consumerManager.createConsumer(groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+    long startTime = System.currentTimeMillis();
+    readFromDefault(cid);
+
+    assertTrue("Callback failed to fire", sawCallback);
+    assertNull("No exception in callback", actualException);
+    // should return first record immediately since min.bytes is fulfilled
+    assertEquals("Records returned not as expected",
+            Arrays.asList(referenceRecords.get(0)), actualRecords);
+    long estimatedTime = System.currentTimeMillis() - startTime;
+    int timeoutMs = config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+    assertTrue(estimatedTime < timeoutMs); // should have returned earlier than consumer.request.timeout.ms
+  }
+
+  @Test
+  public void testConsumeMinBytesIsOverridablePerConsumer() throws Exception {
+    properties.setProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG, "10");
+    // global settings should return more than one record immediately
+    setUp(properties);
+
+    final List<ConsumerRecord<byte[], byte[]>> referenceRecords = referenceRecords(3);
+    Map<Integer, List<ConsumerRecord<byte[], byte[]>>>
+            referenceSchedule = new HashMap<>();
+    referenceSchedule.put(50, referenceRecords);
+
+    Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>
+            schedules = new HashMap<>();
+    schedules.put(topicName, Arrays.asList(referenceSchedule));
+
+    expectCreate(schedules);
+    EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
+    EasyMock.replay(mdObserver, consumerFactory);
+
+    ConsumerInstanceConfig config = new ConsumerInstanceConfig(EmbeddedFormat.BINARY);
+    // we expect one record to be returned since the setting is overridden
+    config.setResponseMinBytes(1);
+    readFromDefault(consumerManager.createConsumer(groupName, config));
+
+    assertTrue("Callback failed to fire", sawCallback);
+    assertNull("No exception in callback", actualException);
+    // should return first record immediately since min.bytes is fulfilled
+    assertEquals("Records returned not as expected",
+            Arrays.asList(referenceRecords.get(0)), actualRecords);
+  }
+
+  /**
+   * Response should return no sooner than the overridden CONSUMER_REQUEST_TIMEOUT_MS_CONFIG
+   */
+  @Test
+  public void testConsumerRequestTimeoutMsIsOverriddablePerConsumer() throws Exception {
+    Integer overriddenRequestTimeMs = 111;
+    Integer globalRequestTimeMs = 1201;
+    properties.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, globalRequestTimeMs.toString());
+    setUp(properties);
+    Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>
+            schedules =
+            new HashMap<>();
+    Map<Integer, List<ConsumerRecord<byte[], byte[]>>> referenceSchedule = new HashMap<>();
+    schedules.put(topicName, Arrays.asList(referenceSchedule));
+    expectCreate(schedules);
+
+    EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
+    EasyMock.replay(mdObserver, consumerFactory);
+
+    ConsumerInstanceConfig consumerConfig = new ConsumerInstanceConfig(null, null, EmbeddedFormat.BINARY.name(),
+            null, null, null,  overriddenRequestTimeMs);
+    String cid = consumerManager.createConsumer(groupName, consumerConfig);
+    long startTime = System.currentTimeMillis();
+    readFromDefault(cid);
+    long elapsedTime = System.currentTimeMillis() - startTime;
+    assertTrue(elapsedTime < globalRequestTimeMs);
+    assertTrue(elapsedTime > overriddenRequestTimeMs);
+
+    assertTrue("Callback failed to fire", sawCallback);
+    assertNull("No exception in callback", actualException);
   }
 
   @Test
@@ -299,7 +420,7 @@ public class ConsumerManagerTest {
 
     String cid = consumerManager.createConsumer(
         groupName,
-        new ConsumerInstanceConfig("id", "name", EmbeddedFormat.BINARY.toString(), null, null)
+        new ConsumerInstanceConfig("id", "name", EmbeddedFormat.BINARY.toString(), null, null, null, null)
     );
     assertEquals("id", cid);
     assertEquals("id", capturedConsumerConfig.getValue().consumerId().getOrElse(null));
@@ -313,13 +434,13 @@ public class ConsumerManagerTest {
 
     consumerManager.createConsumer(
         groupName,
-        new ConsumerInstanceConfig(null, "name", EmbeddedFormat.BINARY.toString(), null, null)
+        new ConsumerInstanceConfig(null, "name", EmbeddedFormat.BINARY.toString(), null, null, null, null)
     );
 
     try {
       consumerManager.createConsumer(
           groupName,
-          new ConsumerInstanceConfig(null, "name", EmbeddedFormat.BINARY.toString(), null, null)
+          new ConsumerInstanceConfig(null, "name", EmbeddedFormat.BINARY.toString(), null, null, null, null)
       );
       fail("Expected to see exception because consumer already exists");
     } catch (RestException e) {
@@ -505,6 +626,55 @@ public class ConsumerManagerTest {
     consumerManager.deleteConsumer(groupName, "invalidinstance");
   }
 
+  @Test
+  public void testConsumerExceptions() throws Exception {
+    // We should be able to handle an exception thrown by the consumer, then issue another
+    // request that succeeds and still see all the data
+    final List<ConsumerRecord<byte[], byte[]>> referenceRecords = referenceRecords(3);
+    referenceRecords.add(null); // trigger exception
+    Map<Integer, List<ConsumerRecord<byte[], byte[]>>>
+        referenceSchedule =
+        new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
+    referenceSchedule.put(50, referenceRecords);
+
+    Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>
+        schedules =
+        new HashMap<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>();
+    schedules.put(topicName, Arrays.asList(referenceSchedule));
+
+    expectCreate(schedules);
+    EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true).times(2);
+
+    EasyMock.replay(mdObserver, consumerFactory);
+
+    String cid = consumerManager.createConsumer(
+        groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+
+    // First read should result in exception.
+    sawCallback = false;
+    actualException = null;
+    actualRecords = null;
+    readTopic(cid);
+    assertTrue("Callback not called", sawCallback);
+    assertNotNull("Callback exception should be populated", actualException);
+    assertNull("Callback with exception should not have any records", actualRecords);
+
+    // Second read should recover and return all the data.
+    sawCallback = false;
+    readTopic(cid, new ConsumerReadCallback<byte[], byte[]>() {
+      @Override
+      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+                               RestException e) {
+        sawCallback = true;
+        assertNull(e);
+        assertEquals(referenceRecords, records);
+      }
+    });
+    assertTrue(sawCallback);
+
+    EasyMock.verify(mdObserver, consumerFactory);
+  }
+
   /**
    * We need to wait for topic reads to finish. We can't rely on the returned Future
    * because one whole read task is spanned throughout multiple Runnables.
@@ -543,6 +713,39 @@ public class ConsumerManagerTest {
 
   private Future readTopicFuture(String cid, String topic, long maxBytes, final ConsumerReadCallback callback) {
     return consumerManager.readTopic(groupName, cid, topic, BinaryConsumerState.class, maxBytes, callback);
+  }
+
+  /**
+   * Returns a list of one record per partition, up to {@code count} partitions
+   */
+  private List<ConsumerRecord<byte[], byte[]>> referenceRecords(int count) {
+    List<ConsumerRecord<byte[], byte[]>> records = new ArrayList<>();
+    for (int i = 0; i < count; i++) {
+      records.add(
+          new BinaryConsumerRecord(
+              topicName,
+              ("k" + (i + 1)).getBytes(),
+              ("v" + (i + 1)).getBytes(), i, 0)
+      );
+    }
+    return records;
+  }
+
+  private void readFromDefault(String cid) throws InterruptedException, ExecutionException {
+    sawCallback = false;
+    actualException = null;
+    actualRecords = null;
+    consumerManager.readTopic(
+            groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
+        new ConsumerReadCallback<byte[], byte[]>() {
+          @Override
+          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
+                                   RestException e) {
+            actualException = e;
+            actualRecords = records;
+            sawCallback = true;
+          }
+        }).get();
   }
 
   private void readAndExpectImmediateNotFound(String cid, String topic) {
