@@ -110,6 +110,14 @@ Java Kafka clients.
   * Default: 50
   * Importance: low
 
+``fetch.min.bytes``
+  Minimum number of bytes in message keys and values returned by a single request before the timeout of `consumer.request.timeout.ms` passes.
+  The special sentinel value of -1 disables this functionality.
+
+  * Type: int
+  * Default: -1
+  * Importance: medium
+
 ``consumer.iterator.timeout.ms``
   Timeout for blocking consumer iterator operations. This should be set to a small enough value that it is possible to effectively peek() on the iterator.
 

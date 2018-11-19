@@ -21,7 +21,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotNull;
 
+import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
+
+import java.util.Properties;
 
 public class ConsumerInstanceConfig {
 
@@ -33,6 +37,8 @@ public class ConsumerInstanceConfig {
   private EmbeddedFormat format;
   private String autoOffsetReset;
   private String autoCommitEnable;
+  private Integer responseMinBytes;
+  private Integer requestWaitMs;
 
   public ConsumerInstanceConfig() {
     this(DEFAULT_FORMAT);
@@ -40,7 +46,7 @@ public class ConsumerInstanceConfig {
 
   public ConsumerInstanceConfig(EmbeddedFormat format) {
     // This constructor is only for tests so reparsing the format name is ok
-    this(null, null, format.name(), null, null);
+    this(null, null, format.name(), null, null, null,  null);
   }
 
   public ConsumerInstanceConfig(
@@ -48,7 +54,10 @@ public class ConsumerInstanceConfig {
       @JsonProperty("name") String name,
       @JsonProperty("format") String format,
       @JsonProperty("auto.offset.reset") String autoOffsetReset,
-      @JsonProperty("auto.commit.enable") String autoCommitEnable
+      @JsonProperty("auto.commit.enable") String autoCommitEnable,
+      @JsonProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG)
+              Integer responseMinBytes,
+      @JsonProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) Integer requestWaitMs
   ) {
     this.id = id;
     this.name = name;
@@ -69,8 +78,27 @@ public class ConsumerInstanceConfig {
         );
       }
     }
+    this.setResponseMinBytes(responseMinBytes);
+    this.requestWaitMs = requestWaitMs;
     this.autoOffsetReset = autoOffsetReset;
     this.autoCommitEnable = autoCommitEnable;
+  }
+
+  /**
+   * Attaches proxy-specific configurations to the given Properties object
+   */
+  public static Properties attachProxySpecificProperties(Properties props,
+                                                         ConsumerInstanceConfig config) {
+    if (config.getResponseMinBytes() != null) {
+      props.setProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG,
+              config.getResponseMinBytes().toString());
+    }
+    if (config.getRequestWaitMs() != null) {
+      props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG,
+              config.getRequestWaitMs().toString());
+    }
+
+    return props;
   }
 
   @JsonProperty
@@ -86,6 +114,35 @@ public class ConsumerInstanceConfig {
   @JsonProperty
   public String getName() {
     return name;
+  }
+
+  @JsonProperty
+  public Integer getResponseMinBytes() {
+    return this.responseMinBytes;
+  }
+
+  @JsonProperty
+  public void setResponseMinBytes(Integer responseMinBytes)
+      throws RestConstraintViolationException {
+    if (responseMinBytes == null) {
+      this.responseMinBytes = null;
+      return;
+    }
+
+    try {
+      KafkaRestConfig.PROXY_FETCH_MIN_BYTES_VALIDATOR.ensureValid(
+              KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG,
+              responseMinBytes
+      );
+      this.responseMinBytes = responseMinBytes;
+    } catch (io.confluent.common.config.ConfigException e) {
+      throw Errors.invalidConsumerConfigConstraintException(e);
+    }
+  }
+
+  @JsonProperty
+  public Integer getRequestWaitMs() {
+    return this.requestWaitMs;
   }
 
   @JsonProperty
