@@ -185,6 +185,12 @@ public class ConsumerManager {
       // functionality, we always use a timeout. This can't perfectly guarantee a total request
       // timeout, but can get as close as this timeout's value
       props.setProperty("consumer.timeout.ms", Integer.toString(iteratorTimeoutMs));
+      // If the consumer.timeout.ms value is set higher than the default value
+      // for max.poll.interval.ms then it is possible the consumer will be
+      // considered failed by the brokers while it has yet to hit the timeout
+      // for the rest proxy.
+      props.setProperty("max.poll.interval.ms", ((Integer) iteratorTimeoutMs).toString());
+
       if (instanceConfig.getAutoCommitEnable() != null) {
         props.setProperty("auto.commit.enable", instanceConfig.getAutoCommitEnable());
       } else {

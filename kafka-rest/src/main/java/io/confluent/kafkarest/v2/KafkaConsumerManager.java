@@ -216,6 +216,12 @@ public class KafkaConsumerManager {
       // and should not be propagated to the consumer
       props.setProperty("request.timeout.ms", "30000");
 
+      // If the consumer.timeout.ms value is set higher than the default value
+      // for max.poll.interval.ms then it is possible the consumer will be
+      // considered failed by the brokers while it has yet to hit the timeout
+      // for the rest proxy.
+      props.setProperty("max.poll.interval.ms", props.getProperty("consumer.timeout.ms", ""));
+
       props.setProperty(
           "schema.registry.url",
           config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG)
