@@ -386,7 +386,7 @@ public class ConsumerManager {
             Iterator itr = consumers.values().iterator();
             while (itr.hasNext()) {
               final ConsumerState state = (ConsumerState) itr.next();
-              if (state.expired(now)) {
+              if (state != null && state.expired(now)) {
                 log.debug("Removing the expired consumer {}", state.getId());
                 itr.remove();
                 executor.submit(new Runnable() {
