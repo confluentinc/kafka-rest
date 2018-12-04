@@ -189,7 +189,7 @@ public class ConsumerManager {
       // for max.poll.interval.ms then it is possible the consumer will be
       // considered failed by the brokers while it has yet to hit the timeout
       // for the rest proxy.
-      props.setProperty("max.poll.interval.ms", ((Integer) iteratorTimeoutMs).toString());
+      props.setProperty("max.poll.interval.ms", Integer.toString(iteratorTimeoutMs));
 
       if (instanceConfig.getAutoCommitEnable() != null) {
         props.setProperty("auto.commit.enable", instanceConfig.getAutoCommitEnable());
