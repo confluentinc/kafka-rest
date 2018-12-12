@@ -3,6 +3,24 @@
 Changelog
 =========
 
+Version 5.1.0
+-------------
+
+* `PR-511 <https://github.com/confluentinc/kafka-rest/pull/511>`_ - CPKAFKA-1876: Log cause of failure to produce messages in tests
+* `PR-512 <https://github.com/confluentinc/kafka-rest/pull/512>`_ - Fix race condition when expiration thread iterates over partially-initialized consumer
+* `PR-503 <https://github.com/confluentinc/kafka-rest/pull/503>`_ - Fix location of jars for dev testing
+* `PR-481 <https://github.com/confluentinc/kafka-rest/pull/481>`_ - CPKAFKA-1681:  Add long polling functionality
+* `PR-508 <https://github.com/confluentinc/kafka-rest/pull/508>`_ - CPKAFKA-1868: Improve consumer tests
+* `PR-507 <https://github.com/confluentinc/kafka-rest/pull/507>`_ - CPKAFKA-1871: Fix problem where ReadTaskSchedulerThread would loop too often
+* `PR-504 <https://github.com/confluentinc/kafka-rest/pull/504>`_ - CPKAFKA-1865:  Performance degrades drastically after running for extended periods
+* `PR-477 <https://github.com/confluentinc/kafka-rest/pull/477>`_ - Fix SimpleConsumerManager properly return requested offsets for compressed topic
+* `PR-474 <https://github.com/confluentinc/kafka-rest/pull/474>`_ - MINOR: Fix checkstyle path
+* `PR-466 <https://github.com/confluentinc/kafka-rest/pull/466>`_ - Change Consumer threading model
+* `PR-459 <https://github.com/confluentinc/kafka-rest/pull/459>`_ - MINOR: Add utility createConsumerProperties() test method since it was removed from AK
+* `PR-452 <https://github.com/confluentinc/kafka-rest/pull/452>`_ - Fix checkstyle to pass on 8.5 after upgrade from 6.19
+* `PR-439 <https://github.com/confluentinc/kafka-rest/pull/439>`_ - Temporarily pin Kafka and Confluent versions
+* `PR-438 <https://github.com/confluentinc/kafka-rest/pull/438>`_ - Don't use deprecated RecordMetadata constructor
+
 Version 5.0.0
 -------------
 
