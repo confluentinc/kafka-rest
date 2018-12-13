@@ -10,7 +10,7 @@ Version 5.1.0
 * `PR-512 <https://github.com/confluentinc/kafka-rest/pull/512>`_ - Fix race condition when expiration thread iterates over partially-initialized consumer
 * `PR-503 <https://github.com/confluentinc/kafka-rest/pull/503>`_ - Fix location of jars for dev testing
 * `PR-481 <https://github.com/confluentinc/kafka-rest/pull/481>`_ - CPKAFKA-1681: Add long polling functionality
-* `PR-508 <https://github.com/confluentinc/kafka-rest/pull/508>`_ - CPKAFKA-1868: Improve consumer tests
+* `PR-508 <https://github.com/confluentinc/kafka-rest/pull/508>`_ - CPKAFKA-1868: Add more consumer tests
 * `PR-507 <https://github.com/confluentinc/kafka-rest/pull/507>`_ - CPKAFKA-1871: Fix problem where ReadTaskSchedulerThread would loop too often
 * `PR-504 <https://github.com/confluentinc/kafka-rest/pull/504>`_ - CPKAFKA-1865:  Performance degrades drastically after running for extended periods
 * `PR-477 <https://github.com/confluentinc/kafka-rest/pull/477>`_ - Fix SimpleConsumerManager properly return requested offsets for compressed topic
