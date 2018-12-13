@@ -13,6 +13,7 @@ Version 5.1.0
 * `PR-508 <https://github.com/confluentinc/kafka-rest/pull/508>`_ - CPKAFKA-1868: Add more consumer tests
 * `PR-507 <https://github.com/confluentinc/kafka-rest/pull/507>`_ - CPKAFKA-1871: Fix problem where ReadTaskSchedulerThread would loop too often
 * `PR-504 <https://github.com/confluentinc/kafka-rest/pull/504>`_ - CPKAFKA-1865:  Performance degrades drastically after running for extended periods
+* `PR-495 <https://github.com/confluentinc/kafka-rest/pull/495>`_ - CPKAFKA-1794: Assign leader ID -1 on offline partitions in the topic describe API
 * `PR-477 <https://github.com/confluentinc/kafka-rest/pull/477>`_ - Fix SimpleConsumerManager properly return requested offsets for compressed topic
 * `PR-474 <https://github.com/confluentinc/kafka-rest/pull/474>`_ - MINOR: Fix checkstyle path
 * `PR-466 <https://github.com/confluentinc/kafka-rest/pull/466>`_ - Change Consumer threading model to better handle rebalances
