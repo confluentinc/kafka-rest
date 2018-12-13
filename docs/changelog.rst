@@ -15,7 +15,7 @@ Version 5.1.0
 * `PR-504 <https://github.com/confluentinc/kafka-rest/pull/504>`_ - CPKAFKA-1865:  Performance degrades drastically after running for extended periods
 * `PR-477 <https://github.com/confluentinc/kafka-rest/pull/477>`_ - Fix SimpleConsumerManager properly return requested offsets for compressed topic
 * `PR-474 <https://github.com/confluentinc/kafka-rest/pull/474>`_ - MINOR: Fix checkstyle path
-* `PR-466 <https://github.com/confluentinc/kafka-rest/pull/466>`_ - Change Consumer threading model
+* `PR-466 <https://github.com/confluentinc/kafka-rest/pull/466>`_ - Change Consumer threading model to better handle rebalances
 * `PR-459 <https://github.com/confluentinc/kafka-rest/pull/459>`_ - MINOR: Add utility createConsumerProperties() test method since it was removed from AK
 * `PR-452 <https://github.com/confluentinc/kafka-rest/pull/452>`_ - Fix checkstyle to pass on 8.5 after upgrade from 6.19
 * `PR-439 <https://github.com/confluentinc/kafka-rest/pull/439>`_ - Temporarily pin Kafka and Confluent versions
