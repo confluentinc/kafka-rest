@@ -104,7 +104,7 @@ public class ProducerPerformance extends AbstractPerformanceTest {
       URL url = new URL(targetUrl);
       connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod("POST");
-      connection.setRequestProperty("Content-Type", Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+      connection.setRequestProperty("Content-Type", Versions.KAFKA_V2_JSON);
       connection.setRequestProperty("Content-Length", requestEntityLength);
 
       connection.setUseCaches(false);
