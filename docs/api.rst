@@ -772,7 +772,7 @@ any consumers before it is terminated.
    :<json string consumer.request.timeout.ms: Sets the ``consumer.request.timeout.ms`` setting for this consumer specifically.
                                               This setting controls the maximum total time to wait for messages for a request
                                               if the maximum request size has not yet been reached.
-                                              It does not affect the underlying consumer->broker connection  
+                                              It does not affect the underlying consumer->broker connection. Default value is taken from rest proxy config file  
 
    :>json string instance_id: Unique ID for the consumer instance in this group.
    :>json string base_uri: Base URI used to construct URIs for subsequent requests against this consumer instance. This
@@ -1307,7 +1307,7 @@ any consumers before it is terminated.
    :param string group_name: The name of the consumer group
    :param string instance: The ID of the consumer instance
 
-   :query timeout: The number of milliseconds for the underlying client library poll(timeout) request to fetch the records. Default is undefined. This parameter is used only if it's smaller than `consumer.timeout.ms` defined during consumer instance creation.
+   :query timeout: The number of milliseconds for the underlying client library poll(timeout) request to fetch the records. Default is undefined. This parameter is used only if it's smaller than `consumer.request.timeout.ms` defined during consumer instance creation. If you didn't define any during consumer instance creation - it is ignored.
 
    :query max_bytes: The maximum number of bytes of unencoded keys and values that should be
                      included in the response. This provides approximate control over the size of
