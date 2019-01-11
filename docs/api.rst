@@ -1307,7 +1307,7 @@ any consumers before it is terminated.
    :param string group_name: The name of the consumer group
    :param string instance: The ID of the consumer instance
 
-   :query timeout: The number of milliseconds for the underlying client library poll(timeout) request to fetch the records. Default to 5000ms.
+   :query timeout: The number of milliseconds for the underlying client library poll(timeout) request to fetch the records. Default is undefined. This parameter is used only if it's smaller than `consumer.timeout.ms` defined during consumer instance creation.
 
    :query max_bytes: The maximum number of bytes of unencoded keys and values that should be
                      included in the response. This provides approximate control over the size of
