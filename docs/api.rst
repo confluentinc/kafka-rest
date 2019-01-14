@@ -1307,7 +1307,7 @@ any consumers before it is terminated.
    :param string group_name: The name of the consumer group
    :param string instance: The ID of the consumer instance
 
-   :query timeout: Maximum amount of milliseconds the REST proxy will spend fetching records. Other parameters controlling actual time spent fetching records: `max_bytes` and `fetch.min_bytes`. Default value is undefined. This parameter is used only if it's smaller than the `consumer.timeout.ms` that is defined either during consumer instance creation or in the proxy's config file.
+   :query timeout: Maximum amount of milliseconds the REST proxy will spend fetching records. Other parameters controlling actual time spent fetching records: `max_bytes` and `fetch.min.bytes`. Default value is undefined. This parameter is used only if it's smaller than the `consumer.timeout.ms` that is defined either during consumer instance creation or in the proxy's config file.
 
    :query max_bytes: The maximum number of bytes of unencoded keys and values that should be
                      included in the response. This provides approximate control over the size of
