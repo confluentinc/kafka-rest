@@ -767,7 +767,7 @@ any consumers before it is terminated.
                          defaults to "binary".
    :<json string auto.offset.reset: Sets the ``auto.offset.reset`` setting for the consumer
    :<json string auto.commit.enable: Sets the ``auto.commit.enable`` setting for the consumer
-   :<json string fetch.min.bytes: Minimal amount of bytes to return before timeout has been reached. This setting allows consumer to return before timeout is reached. Default is `-1`
+   :<json string fetch.min.bytes: Minimal amount of bytes to return before timeout has been reached. This setting allows consumer to return before timeout is reached. Default is taken from rest proxy config, otherwise `-1`
    :<json string consumer.request.timeout.ms: Sets the ``consumer.request.timeout.ms`` setting for this consumer specifically.
                                               This setting controls the maximum total time to wait for messages for a request
                                               if the maximum request size has not yet been reached. If you want to return earlier than that if a given byte threshold is reached, configure `fetch.min.bytes`.
