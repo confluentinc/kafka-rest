@@ -7,8 +7,8 @@ Start by running the |crest| and the services it depends on: |zk|, Kafka, and |s
 You can do this in one command with Confluent CLI.
 
 .. include:: ../../includes/cli.rst
-    :start-line: 2
-    :end-line: 5
+    :start-after: cli_limitations_start
+    :end-before: cli_limitations_end
 
 .. sourcecode:: bash
 
