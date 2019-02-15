@@ -103,12 +103,27 @@ The |crest| does not require any coordination between instances, so you can easi
 deployment up or down. The only requirement for multiple instances is that you set a unique
 ``id`` for each instance.
 
-If you run more than one instance of the proxy you should provide some load balancing mechanism.
+If you run more than one instance of |crest| you should provide some load balancing mechanism.
 The simplest approaches use round-robin DNS or a discovery service to select one instance per
 application process at startup, sending all traffic to that instance. You can also use an HTTP load
 balancer, but individual instances must still be addressable to support the absolute URLs
-returned for use in consumer read and offset commit operations.
+returned for use in consumer read and offset commit operations. 
 
+High Availability
+~~~~~~~~~~~~~~~~~
+
+When deploying multiple |crest| instances it is important that your consumer client handle exceptions returned
+from a failed consumer instance. Following an exception your client should attempt to create a new 
+consumer instance using the load balancer address in order to swtich to an active |crest| instance. 
+As noted above the client should use the absolute URL returned after creating a consuer instance for 
+further communication. Producing messages through multiple |crest| instances doesn't require this level 
+of exception handling. 
+
+In most cases your client should attempt to delete a consumer instance before exiting. 
+This helps avoid zombie consumer instances that will cause consumption delay based on the value of 
+``consumer.instance.timeout.ms`` in the |crest| configuration properties. The default is equivalent 
+to 5 minutes (300,000ms) and depending on the stability of your client it may be worth lower this 
+value.
 
 Important Configuration Options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -240,5 +255,5 @@ that this rebalance is not instantaneous and needs to be accounted for in site-w
 as rolling restarts of all REST proxies for updates.
 
 Upgrades to newer versions are simple because there is no persistent state. A rolling restart of
-all servers, leaving sufficient time for rebalance operations as describe above, is a safe way to
+all servers, leaving sufficient time for rebalance operations as described above, is a safe way to
 perform a zero-downtime upgrade.
