@@ -1,7 +1,7 @@
 .. _kafkarest_api:
 
-API Reference
-=============
+Confluent REST API Reference
+============================
 
 Overview
 --------
