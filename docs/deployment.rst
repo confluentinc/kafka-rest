@@ -115,7 +115,7 @@ High Availability
 When deploying multiple |crest| instances it is important that your consumer client handle exceptions returned
 from a failed consumer instance. Following an exception your client should attempt to create a new 
 consumer instance using the load balancer address in order to swtich to an active |crest| instance. 
-As noted above the client should use the absolute URL returned after creating a consuer instance for 
+As noted above the client should use the absolute URL returned after creating a consumer instance for 
 further communication. Producing messages through multiple |crest| instances doesn't require this level 
 of exception handling. 
 
