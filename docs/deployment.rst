@@ -119,11 +119,10 @@ As noted above the client should use the absolute URL returned after creating a 
 further communication. Producing messages through multiple |crest| instances doesn't require this level 
 of exception handling. 
 
-In most cases your client should attempt to delete a consumer instance before exiting. 
-This helps avoid zombie consumer instances that will cause consumption delay based on the value of 
-``consumer.instance.timeout.ms`` in the |crest| configuration properties. The default is equivalent 
-to 5 minutes (300,000ms) and depending on the stability of your client it may be worth lower this 
-value.
+Your client should attempt to delete all consumer instance before exiting. This helps avoid zombie consumer 
+instances that will cause consumption delay based on the value of ``consumer.instance.timeout.ms`` in 
+the |crest| configuration properties. The default is equivalent to 5 minutes (300,000ms) and depending 
+on the stability of your client it may be worth lower this value.
 
 Important Configuration Options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
