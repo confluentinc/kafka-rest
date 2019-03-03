@@ -86,12 +86,10 @@ public class PartitionsResourceAvroProduceTest
     adminClientWrapper = EasyMock.createMock(AdminClientWrapper.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
     ctx = new DefaultKafkaRestContext(config,
-        null,
         producerPool,
         null,
-        null,
-        null,
-        adminClientWrapper
+        adminClientWrapper,
+        null
     );
     addResource(new TopicsResource(ctx));
     addResource(new PartitionsResource(ctx));

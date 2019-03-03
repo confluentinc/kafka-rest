@@ -71,7 +71,7 @@ public class AbstractProducerTest extends ClusterTestHarness {
     final ProduceResponse poffsetResponse
         = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
     assertEquals(offsetResponse, poffsetResponse.getOffsets());
-    TestUtils.assertTopicContains(zkConnect, topicName,
+    TestUtils.assertTopicContains(brokerList, topicName,
         payload.getRecords(), partition,
         keyDecoder, valueDecoder, true);
   }

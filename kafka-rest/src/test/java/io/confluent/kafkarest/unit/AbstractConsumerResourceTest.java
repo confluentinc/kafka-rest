@@ -16,6 +16,7 @@
 
 package io.confluent.kafkarest.unit;
 
+import io.confluent.kafkarest.ScalaConsumersContext;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -64,8 +65,10 @@ public class AbstractConsumerResourceTest
   public AbstractConsumerResourceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     consumerManager = EasyMock.createMock(ConsumerManager.class);
-    ctx = new DefaultKafkaRestContext(config, mdObserver, null, consumerManager, null, null,
+    ScalaConsumersContext scalaConsumersContext = new ScalaConsumersContext(mdObserver, consumerManager,
         null);
+    ctx = new DefaultKafkaRestContext(config, null, null, null,
+        scalaConsumersContext);
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
     KafkaRestContext contextProxy =
         (KafkaRestContext) Proxy.newProxyInstance(KafkaRestContext.class.getClassLoader(), new

@@ -25,9 +25,49 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
 
     <dependencies>
         <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-rest-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka_${kafka.scala.version}</artifactId>
+            <version>1.1.0</version>
         </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-avro-serializer</artifactId>
+            <version>4.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-json-serializer</artifactId>
+            <version>4.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-rest-common</artifactId>
+            <scope>test</scope>
+            <classifier>tests</classifier>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.easymock</groupId>
+            <artifactId>easymock</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!--
+            This is a workaround for IntelliJ which seems to have a problem including junit + hamcrest
+            as transitive dependencies of rest-utils-test. mvn properly resolves these, so it may have
+            something to do with special junit handling and test scopes since rest-utils-test is not in
+            <scope>test</scope>.
+        -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- End workaround -->
     </dependencies>
 
     <!--<build>-->

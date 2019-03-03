@@ -54,7 +54,7 @@ public class ProducerPool {
       KafkaRestConfig appConfig,
       Properties producerConfigOverrides
   ) {
-    this(appConfig, appConfig.bootstrapBrokers(), producerConfigOverrides);
+    this(appConfig, RestConfigUtils.bootstrapBrokers(appConfig), producerConfigOverrides);
   }
 
   public ProducerPool(

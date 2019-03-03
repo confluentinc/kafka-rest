@@ -22,12 +22,28 @@
     <dependencies>
         <dependency>
             <groupId>io.confluent</groupId>
-            <artifactId>rest-utils</artifactId>
+            <artifactId>kafka-rest-common</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka_${kafka.scala.version}</artifactId>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-rest-scala-consumer</artifactId>
+            <version>${project.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka_${kafka.scala.version}</artifactId>
+              </exclusion>
+            </exclusions>
+    </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>rest-utils</artifactId>
         </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.apache.kafka</groupId>-->
+            <!--<artifactId>kafka_${kafka.scala.version}</artifactId>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
@@ -48,6 +64,13 @@
             <version>${log4j.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-rest-common</artifactId>
+            <scope>test</scope>
+            <classifier>tests</classifier>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>rest-utils-test</artifactId>

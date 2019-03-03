@@ -26,31 +26,41 @@ import io.confluent.kafkarest.v2.KafkaConsumerManager;
 public class DefaultKafkaRestContext implements KafkaRestContext {
 
   private final KafkaRestConfig config;
-  private final MetadataObserver metadataObserver;
+  private final ScalaConsumersContext scalaConsumersContext;
   private ProducerPool producerPool;
-  private final ConsumerManager consumerManager;
   private KafkaConsumerManager kafkaConsumerManager;
-  private final SimpleConsumerManager simpleConsumerManager;
   private AdminClientWrapper adminClientWrapper;
-
 
   public DefaultKafkaRestContext(
       KafkaRestConfig config,
-      MetadataObserver metadataObserver,
       ProducerPool producerPool,
-      ConsumerManager consumerManager,
-      SimpleConsumerManager simpleConsumerManager,
       KafkaConsumerManager kafkaConsumerManager,
-      AdminClientWrapper adminClientWrapper
+      AdminClientWrapper adminClientWrapper,
+      ScalaConsumersContext scalaConsumersContext
   ) {
 
     this.config = config;
-    this.metadataObserver = metadataObserver;
     this.producerPool = producerPool;
-    this.consumerManager = consumerManager;
-    this.simpleConsumerManager = simpleConsumerManager;
     this.kafkaConsumerManager = kafkaConsumerManager;
     this.adminClientWrapper = adminClientWrapper;
+    this.scalaConsumersContext = scalaConsumersContext;
+
+    /*&
+    if (mdObserver == null) {
+        mdObserver = new MetadataObserver(zkUtils);
+      }
+
+      if (consumerManager == null) {
+        consumerManager = new ConsumerManager(appConfig, mdObserver);
+      }
+      if (simpleConsumerFactory == null) {
+        simpleConsumerFactory = new SimpleConsumerFactory(appConfig);
+      }
+      if (simpleConsumerManager == null) {
+        simpleConsumerManager =
+            new SimpleConsumerManager(appConfig, mdObserver, simpleConsumerFactory);
+      }
+     */
   }
 
 
@@ -60,26 +70,11 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   }
 
   @Override
-  public MetadataObserver getMetadataObserver() {
-    return metadataObserver;
-  }
-
-  @Override
   public ProducerPool getProducerPool() {
     if (producerPool == null) {
       producerPool = new ProducerPool(config);
     }
     return producerPool;
-  }
-
-  @Override
-  public ConsumerManager getConsumerManager() {
-    return consumerManager;
-  }
-
-  @Override
-  public SimpleConsumerManager getSimpleConsumerManager() {
-    return simpleConsumerManager;
   }
 
   @Override
@@ -99,6 +94,16 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   }
 
   @Override
+  public SimpleConsumerManager getSimpleConsumerManager() {
+    return scalaConsumersContext.getSimpleConsumerManager();
+  }
+
+  @Override
+  public ConsumerManager getConsumerManager() {
+    return scalaConsumersContext.getConsumerManager();
+  }
+
+  @Override
   public void shutdown() {
     if (kafkaConsumerManager != null) {
       kafkaConsumerManager.shutdown();
@@ -106,17 +111,8 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
     if (producerPool != null) {
       producerPool.shutdown();
     }
-    if (simpleConsumerManager != null) {
-      simpleConsumerManager.shutdown();
-    }
-    if (consumerManager != null) {
-      consumerManager.shutdown();
-    }
-    if (adminClientWrapper != null) {
-      adminClientWrapper.shutdown();
-    }
-    if (metadataObserver != null) {
-      metadataObserver.shutdown();
+    if (scalaConsumersContext != null) {
+      scalaConsumersContext.shutdown();
     }
   }
 }

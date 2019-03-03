@@ -40,7 +40,9 @@
     </scm>
 
     <modules>
+        <module>kafka-rest-common</module>
         <module>kafka-rest</module>
+        <module>kafka-rest-scala-consumer</module>
         <module>kafka-rest-console-scripts</module>
     </modules>
 

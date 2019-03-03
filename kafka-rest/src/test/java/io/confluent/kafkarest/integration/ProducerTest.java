@@ -39,7 +39,6 @@ import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import kafka.serializer.Decoder;
 import kafka.serializer.DefaultDecoder;
-import kafka.utils.ZkUtils;
 import scala.collection.JavaConversions;
 
 import static org.junit.Assert.assertEquals;
@@ -47,8 +46,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class ProducerTest extends AbstractProducerTest {
-
-  private ZkUtils testZkUtils;
 
   private static final String topicName = "topic1";
 
@@ -122,13 +119,14 @@ public class ProducerTest extends AbstractProducerTest {
 
   private boolean sawCallback;
 
-  @Override
-  protected ZkUtils getZkUtils(KafkaRestConfig appConfig) {
-    testZkUtils = ZkUtils.apply(
-        appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG), 30000, 30000,
-        JaasUtils.isZkSecurityEnabled());
-    return testZkUtils;
-  }
+  //FIXME
+//  @Override
+//  protected ZkUtils getZkUtils(KafkaRestConfig appConfig) {
+//    testZkUtils = ZkUtils.apply(
+//        appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG), 30000, 30000,
+//        JaasUtils.isZkSecurityEnabled());
+//    return testZkUtils;
+//  }
 
   @Override
   protected ProducerPool getProducerPool(KafkaRestConfig appConfig) {

@@ -16,6 +16,8 @@
 
 package io.confluent.kafkarest.resources;
 
+import io.confluent.kafkarest.Utils;
+import org.apache.kafka.common.KafkaException;
 import org.eclipse.jetty.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +55,6 @@ import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
-import kafka.common.KafkaException;
 
 @Path("/topics/{topic}/partitions")
 @Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW,
@@ -260,7 +261,7 @@ public class PartitionsResource {
               List<PartitionOffset> offsets = new Vector<PartitionOffset>();
               for (RecordMetadataOrException result : results) {
                 if (result.getException() != null) {
-                  int errorCode = Errors.codeFromProducerException(result.getException());
+                  int errorCode = Utils.codeFromProducerException(result.getException());
                   String errorMessage = result.getException().getMessage();
                   offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
                 } else {

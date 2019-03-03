@@ -16,6 +16,7 @@
 
 package io.confluent.kafkarest.v2;
 
+import io.confluent.kafkarest.RestConfigUtils;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
@@ -94,7 +95,7 @@ public class KafkaConsumerManager {
   public KafkaConsumerManager(KafkaRestConfig config) {
     this.config = config;
     this.time = config.getTime();
-    this.bootstrapServers = config.bootstrapBrokers();
+    this.bootstrapServers = RestConfigUtils.bootstrapBrokers(config);
     this.workers = new Vector<KafkaConsumerWorker>();
     for (int i = 0; i < config.getInt(KafkaRestConfig.CONSUMER_THREADS_CONFIG); i++) {
       KafkaConsumerWorker worker = new KafkaConsumerWorker(config);

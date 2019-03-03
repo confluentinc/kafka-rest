@@ -19,7 +19,6 @@ import io.confluent.common.utils.IntegrationTest;
 import io.confluent.kafkarest.*;
 
 import kafka.zk.KafkaZkClient;
-import kafka.zookeeper.ZooKeeperClient;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Time;
@@ -47,7 +46,6 @@ import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.CoreUtils;
 import kafka.utils.TestUtils;
-import kafka.utils.ZkUtils;
 import kafka.zk.EmbeddedZookeeper;
 import scala.Option;
 import scala.collection.JavaConversions;
@@ -138,11 +136,9 @@ public abstract class ClusterTestHarness {
     zookeeper = new EmbeddedZookeeper();
     zkConnect = String.format("127.0.0.1:%d", zookeeper.port());
     Time time = Time.SYSTEM;
-    zkClient = new KafkaZkClient(
-        new ZooKeeperClient(zkConnect, zkSessionTimeout, zkConnectionTimeout, Integer.MAX_VALUE, time,
-                "testMetricGroup", "testMetricGroupType"),
-        JaasUtils.isZkSecurityEnabled(),
-        time);
+    zkClient = KafkaZkClient.apply(
+        zkConnect, JaasUtils.isZkSecurityEnabled(), zkSessionTimeout, zkConnectionTimeout,
+        Integer.MAX_VALUE, time, "testMetricGroup", "testMetricGroupType");
 
     configs = new Vector<>();
     servers = new Vector<>();
@@ -196,12 +192,11 @@ public abstract class ClusterTestHarness {
     restProperties.put("listeners",restConnect);
 
     restConfig = new KafkaRestConfig(restProperties);
-    restApp = new TestKafkaRestApplication(restConfig, getZkUtils(restConfig),
-                                           getMetadataObserver(restConfig),
+    restApp = new TestKafkaRestApplication(restConfig,
                                            getProducerPool(restConfig),
-                                           getConsumerManager(restConfig),
-                                           getSimpleConsumerFactory(restConfig),
-                                           getSimpleConsumerManager(restConfig));
+                                           null,
+                                           null,
+                                           getScalaConsumersManager(restConfig));
     restServer = restApp.createServer();
     restServer.start();
   }
@@ -235,27 +230,11 @@ public abstract class ClusterTestHarness {
     return props;
   }
 
-  protected ZkUtils getZkUtils(KafkaRestConfig appConfig) {
-    return null;
-  }
-
-  protected MetadataObserver getMetadataObserver(KafkaRestConfig appConfig) {
-    return null;
-  }
-
   protected ProducerPool getProducerPool(KafkaRestConfig appConfig) {
     return null;
   }
 
-  protected ConsumerManager getConsumerManager(KafkaRestConfig appConfig) {
-    return null;
-  }
-
-  protected SimpleConsumerFactory getSimpleConsumerFactory(KafkaRestConfig appConfig) {
-    return null;
-  }
-
-  protected SimpleConsumerManager getSimpleConsumerManager(KafkaRestConfig appConfig) {
+  protected ScalaConsumersContext getScalaConsumersManager(KafkaRestConfig appConfigs) {
     return null;
   }
 

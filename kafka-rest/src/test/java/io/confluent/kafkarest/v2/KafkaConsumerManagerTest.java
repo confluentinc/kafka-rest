@@ -37,7 +37,6 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
@@ -59,8 +58,7 @@ import static org.junit.Assert.assertTrue;
 public class KafkaConsumerManagerTest {
 
     private KafkaRestConfig config;
-    @Mock
-    private MetadataObserver mdObserver;
+
     @Mock
     private KafkaConsumerManager.KafkaConsumerFactory consumerFactory;
     private KafkaConsumerManager consumerManager;
@@ -138,7 +136,7 @@ public class KafkaConsumerManagerTest {
             }
         });
 
-        EasyMock.replay(mdObserver, consumerFactory);
+        EasyMock.replay(consumerFactory);
 
         String cid = consumerManager.createConsumer(
                 groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
@@ -190,6 +188,6 @@ public class KafkaConsumerManagerTest {
 
         consumerManager.deleteConsumer(groupName, cid);
 
-        EasyMock.verify(mdObserver, consumerFactory);
+        EasyMock.verify(consumerFactory);
     }
 }

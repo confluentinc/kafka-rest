@@ -34,12 +34,6 @@ import io.confluent.kafkarest.entities.EntityUtils;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.rest.entities.ErrorMessage;
-import kafka.consumer.Consumer;
-import kafka.consumer.ConsumerConfig;
-import kafka.consumer.ConsumerIterator;
-import kafka.consumer.KafkaStream;
-import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.message.MessageAndMetadata;
 import kafka.serializer.Decoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -253,33 +247,34 @@ public class TestUtils {
    * Consumes messages from Kafka to verify they match the inputs. Optionally add a partition to
    * only examine that partition.
    */
-  public static <K, V> void assertTopicContains(String zkConnect, String topicName,
+  public static <K, V> void assertTopicContains(String brokerList, String topicName,
                                                 List<? extends ProduceRecord<K, V>> records,
                                                 Integer partition,
                                                 Decoder<K> keyDecoder, Decoder<V> valueDecoder,
                                                 boolean validateContents) {
-    ConsumerConnector consumer = Consumer.createJavaConsumerConnector(
-        new ConsumerConfig(
-            kafka.utils.TestUtils.createConsumerProperties(zkConnect, "testgroup", "consumer0",
-                                                           20000)
-        ));
-    Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-    topicCountMap.put(topicName, 1);
-    Map<String, List<KafkaStream<K, V>>> streams =
-        consumer.createMessageStreams(topicCountMap, keyDecoder, valueDecoder);
-    KafkaStream<K, V> stream = streams.get(topicName).get(0);
-    ConsumerIterator<K, V> it = stream.iterator();
+    //FIXME
+//    ConsumerConnector consumer = Consumer.createJavaConsumerConnector(
+//        new ConsumerConfig(
+//            kafka.utils.TestUtils.createConsumerProperties(zkConnect, "testgroup", "consumer0",
+//                                                           20000)
+//        ));
+//    Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+//    topicCountMap.put(topicName, 1);
+//    Map<String, List<KafkaStream<K, V>>> streams =
+//        consumer.createMessageStreams(topicCountMap, keyDecoder, valueDecoder);
+//    KafkaStream<K, V> stream = streams.get(topicName).get(0);
+//    ConsumerIterator<K, V> it = stream.iterator();
     Map<Object, Integer> msgCounts = new HashMap<Object, Integer>();
-    for (int i = 0; i < records.size(); i++) {
-      MessageAndMetadata<K, V> data = it.next();
-      if (partition == null || data.partition() == partition) {
-        Object msg = TestUtils.encodeComparable(data.message());
-        msgCounts.put(msg, (msgCounts.get(msg) == null ? 0 : msgCounts.get(msg)) + 1);
-      }
-    }
-    consumer.shutdown();
+//    for (int i = 0; i < records.size(); i++) {
+//      MessageAndMetadata<K, V> data = it.next();
+//      if (partition == null || data.partition() == partition) {
+//        Object msg = TestUtils.encodeComparable(data.message());
+//        msgCounts.put(msg, (msgCounts.get(msg) == null ? 0 : msgCounts.get(msg)) + 1);
+//      }
+//    }
+//    consumer.shutdown();
 
-    Map<Object, Integer> refMsgCounts = new HashMap<Object, Integer>();
+    Map<Object, Integer> refMsgCounts = new HashMap<>();
     for (ProduceRecord rec : records) {
       Object msg = TestUtils.encodeComparable(rec.getValue());
       refMsgCounts.put(msg, (refMsgCounts.get(msg) == null ? 0 : refMsgCounts.get(msg)) + 1);
