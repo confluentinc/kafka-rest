@@ -15,13 +15,13 @@
 
 package io.confluent.kafkarest;
 
+import org.apache.kafka.common.config.ConfigException;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-
-import io.confluent.common.config.ConfigException;
 
 public class UriUtils {
 

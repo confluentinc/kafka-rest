@@ -18,6 +18,8 @@ package io.confluent.kafkarest.entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import org.apache.kafka.common.config.ConfigException;
+
 import javax.validation.constraints.NotNull;
 
 import io.confluent.kafkarest.Errors;
@@ -134,7 +136,7 @@ public class ConsumerInstanceConfig {
               responseMinBytes
       );
       this.responseMinBytes = responseMinBytes;
-    } catch (io.confluent.common.config.ConfigException e) {
+    } catch (ConfigException e) {
       throw Errors.invalidConsumerConfigConstraintException(e);
     }
   }

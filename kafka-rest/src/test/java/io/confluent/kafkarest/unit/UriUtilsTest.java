@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.unit;
 
+import org.apache.kafka.common.config.ConfigException;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,7 +26,6 @@ import java.util.Properties;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import io.confluent.common.config.ConfigException;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.UriUtils;
 import io.confluent.rest.RestConfigException;
