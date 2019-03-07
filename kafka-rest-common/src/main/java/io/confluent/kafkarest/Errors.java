@@ -16,6 +16,7 @@
 package io.confluent.kafkarest;
 
 import org.apache.avro.SchemaParseException;
+import org.apache.kafka.common.config.ConfigException;
 
 import javax.ws.rs.core.Response;
 
@@ -161,7 +162,7 @@ public class Errors {
   public static final int INVALID_CONSUMER_CONFIG_CONSTAINT_ERROR_CODE = 40001;
 
   public static RestConstraintViolationException invalidConsumerConfigConstraintException(
-      io.confluent.common.config.ConfigException e
+      ConfigException e
   ) {
     return new RestConstraintViolationException(
         INVALID_CONSUMER_CONFIG_CONSTRAINT_MESSAGE + e.getMessage(),
