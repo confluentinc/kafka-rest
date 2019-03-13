@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.unit;
 
+import io.confluent.kafkarest.Utils;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.TopicPartition;
@@ -87,7 +88,7 @@ public class TopicsResourceBinaryProduceTest
   public TopicsResourceBinaryProduceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new DefaultKafkaRestContext(config, mdObserver, producerPool, null, null, null, null);
+    ctx = new DefaultKafkaRestContext(config, producerPool, null, null, null);
 
     addResource(new TopicsResource(ctx));
 
@@ -289,7 +290,7 @@ public class TopicsResourceBinaryProduceTest
         if (produceExceptionResults == null) {
           assertErrorResponse(
               Response.Status.INTERNAL_SERVER_ERROR, rawResponse,
-              RestServerErrorException.DEFAULT_ERROR_CODE, Errors.UNEXPECTED_PRODUCER_EXCEPTION,
+              RestServerErrorException.DEFAULT_ERROR_CODE, Utils.UNEXPECTED_PRODUCER_EXCEPTION,
               mediatype.expected
           );
         } else {

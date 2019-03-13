@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration;
 
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -23,14 +24,10 @@ import java.util.Properties;
 
 import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.PartitionOffset;
-import kafka.serializer.Decoder;
-import kafka.serializer.DefaultDecoder;
 
 public class ProducerTopicAutoCreationTest extends AbstractProducerTest {
 
   private static final String topicName = "nonexistant";
-
-  private static final Decoder<byte[]> binaryDecoder = new DefaultDecoder(null);
 
   private final List<BinaryTopicProduceRecord> topicRecords = Arrays.asList(
       new BinaryTopicProduceRecord("key".getBytes(), "value".getBytes()),
@@ -54,7 +51,7 @@ public class ProducerTopicAutoCreationTest extends AbstractProducerTest {
   @Test
   public void testProduceToMissingTopic() {
     // Should create topic
-    testProduceToTopic(topicName, topicRecords, binaryDecoder, binaryDecoder, partitionOffsets,
-                       false);
+    testProduceToTopic(topicName, topicRecords, ByteArrayDeserializer.class.getName(),
+        ByteArrayDeserializer.class.getName(), partitionOffsets, false);
   }
 }

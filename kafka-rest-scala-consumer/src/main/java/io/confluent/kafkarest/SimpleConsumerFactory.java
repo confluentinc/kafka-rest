@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class SimpleConsumerFactory {
 
-  private static final Logger log = LoggerFactory.getLogger(SimpleConsumerManager.class);
+  private static final Logger log = LoggerFactory.getLogger(SimpleConsumerFactory.class);
 
   private final KafkaRestConfig config;
 

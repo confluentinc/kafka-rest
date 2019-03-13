@@ -16,9 +16,6 @@
 package io.confluent.kafkarest;
 
 import org.apache.avro.SchemaParseException;
-import org.apache.kafka.common.KafkaException;
-import org.apache.kafka.common.config.ConfigException;
-import org.apache.kafka.common.errors.RetriableException;
 
 import javax.ws.rs.core.Response;
 
@@ -26,7 +23,6 @@ import io.confluent.rest.exceptions.RestConstraintViolationException;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestNotFoundException;
 import io.confluent.rest.exceptions.RestServerErrorException;
-import kafka.common.InvalidConfigException;
 
 public class Errors {
 
@@ -77,7 +73,6 @@ public class Errors {
     );
   }
 
-
   public static final String CONSUMER_ALREADY_SUBSCRIBED_MESSAGE =
       "Consumer cannot subscribe the the specified target because it has already subscribed to "
       + "other topics.";
@@ -114,7 +109,6 @@ public class Errors {
     );
   }
 
-
   public static final String KEY_SCHEMA_MISSING_MESSAGE = "Request includes keys but does not "
                                                           + "include key schema";
   public static final int KEY_SCHEMA_MISSING_ERROR_CODE = 42201;
@@ -126,7 +120,6 @@ public class Errors {
     );
 
   }
-
 
   public static final String VALUE_SCHEMA_MISSING_MESSAGE = "Request includes values but does not "
                                                             + "include value schema";
@@ -155,19 +148,10 @@ public class Errors {
   public static final int INVALID_CONSUMER_CONFIG_ERROR_CODE = 42204;
 
   public static RestConstraintViolationException invalidConsumerConfigException(
-      InvalidConfigException e
+      String exceptionMessage
   ) {
     return new RestConstraintViolationException(
-        INVALID_CONSUMER_CONFIG_MESSAGE + e.getMessage(),
-        INVALID_CONSUMER_CONFIG_ERROR_CODE
-    );
-  }
-
-  public static RestConstraintViolationException invalidConsumerConfigException(
-          ConfigException e
-  ) {
-    return new RestConstraintViolationException(
-        INVALID_CONSUMER_CONFIG_MESSAGE + e.getMessage(),
+        INVALID_CONSUMER_CONFIG_MESSAGE + exceptionMessage,
         INVALID_CONSUMER_CONFIG_ERROR_CODE
     );
   }
@@ -244,26 +228,6 @@ public class Errors {
         NO_SIMPLE_CONSUMER_AVAILABLE_ERROR_MESSAGE,
         NO_SIMPLE_CONSUMER_AVAILABLE_ERROR_CODE
     );
-  }
-
-  public static final String UNEXPECTED_PRODUCER_EXCEPTION
-      = "Unexpected non-Kafka exception returned by Kafka";
-
-  public static int codeFromProducerException(Throwable e) {
-    if (e instanceof RetriableException) {
-      return KAFKA_RETRIABLE_ERROR_ERROR_CODE;
-    } else if (e instanceof KafkaException) {
-      return KAFKA_ERROR_ERROR_CODE;
-    } else {
-      // We shouldn't see any non-Kafka exceptions, but this covers us in case we do see an
-      // unexpected error. In that case we fail the entire request -- this loses information
-      // since some messages may have been produced correctly, but is the right thing to do from
-      // a REST perspective since there was an internal error with the service while processing
-      // the request.
-      throw new RestServerErrorException(UNEXPECTED_PRODUCER_EXCEPTION,
-                                         RestServerErrorException.DEFAULT_ERROR_CODE, e
-      );
-    }
   }
 
 }

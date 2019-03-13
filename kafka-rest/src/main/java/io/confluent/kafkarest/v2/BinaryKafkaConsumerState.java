@@ -19,9 +19,6 @@ import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
-import kafka.serializer.Decoder;
-import kafka.serializer.DefaultDecoder;
-import kafka.utils.VerifiableProperties;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
@@ -32,22 +29,10 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
  */
 public class BinaryKafkaConsumerState extends KafkaConsumerState<byte[], byte[], byte[], byte[]> {
 
-  private static final Decoder<byte[]> decoder = new DefaultDecoder(new VerifiableProperties());
-
   public BinaryKafkaConsumerState(KafkaRestConfig config,
       ConsumerInstanceId instanceId,
       Consumer consumer) {
     super(config, instanceId, consumer);
-  }
-
-  @Override
-  protected Decoder<byte[]> getKeyDecoder() {
-    return decoder;
-  }
-
-  @Override
-  protected Decoder<byte[]> getValueDecoder() {
-    return decoder;
   }
 
   @Override

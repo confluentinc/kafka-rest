@@ -40,7 +40,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
@@ -63,8 +62,6 @@ import static org.junit.Assert.fail;
 public class KafkaConsumerManagerTest {
 
     private KafkaRestConfig config;
-    @Mock
-    private MetadataObserver mdObserver;
     @Mock
     private KafkaConsumerManager.KafkaConsumerFactory consumerFactory;
     private KafkaConsumerManager consumerManager;

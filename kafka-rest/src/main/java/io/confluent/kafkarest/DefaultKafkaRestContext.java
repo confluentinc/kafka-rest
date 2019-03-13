@@ -26,42 +26,31 @@ import org.apache.kafka.clients.admin.AdminClient;
 public class DefaultKafkaRestContext implements KafkaRestContext {
 
   private final KafkaRestConfig config;
-  private final MetadataObserver metadataObserver;
+  private final ScalaConsumersContext scalaConsumersContext;
   private ProducerPool producerPool;
-  private final ConsumerManager consumerManager;
   private KafkaConsumerManager kafkaConsumerManager;
-  private final SimpleConsumerManager simpleConsumerManager;
   private AdminClientWrapper adminClientWrapper;
 
 
   public DefaultKafkaRestContext(
       KafkaRestConfig config,
-      MetadataObserver metadataObserver,
       ProducerPool producerPool,
-      ConsumerManager consumerManager,
-      SimpleConsumerManager simpleConsumerManager,
       KafkaConsumerManager kafkaConsumerManager,
-      AdminClientWrapper adminClientWrapper
+      AdminClientWrapper adminClientWrapper,
+      ScalaConsumersContext scalaConsumersContext
   ) {
 
     this.config = config;
-    this.metadataObserver = metadataObserver;
     this.producerPool = producerPool;
-    this.consumerManager = consumerManager;
-    this.simpleConsumerManager = simpleConsumerManager;
     this.kafkaConsumerManager = kafkaConsumerManager;
     this.adminClientWrapper = adminClientWrapper;
+    this.scalaConsumersContext = scalaConsumersContext;
   }
 
 
   @Override
   public KafkaRestConfig getConfig() {
     return config;
-  }
-
-  @Override
-  public MetadataObserver getMetadataObserver() {
-    return metadataObserver;
   }
 
   @Override
@@ -73,13 +62,18 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   }
 
   @Override
+  public ScalaConsumersContext getScalaConsumersContext() {
+    return scalaConsumersContext;
+  }
+
+  @Override
   public ConsumerManager getConsumerManager() {
-    return consumerManager;
+    return scalaConsumersContext.getConsumerManager();
   }
 
   @Override
   public SimpleConsumerManager getSimpleConsumerManager() {
-    return simpleConsumerManager;
+    return scalaConsumersContext.getSimpleConsumerManager();
   }
 
   @Override
@@ -107,17 +101,11 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
     if (producerPool != null) {
       producerPool.shutdown();
     }
-    if (simpleConsumerManager != null) {
-      simpleConsumerManager.shutdown();
-    }
-    if (consumerManager != null) {
-      consumerManager.shutdown();
-    }
     if (adminClientWrapper != null) {
       adminClientWrapper.shutdown();
     }
-    if (metadataObserver != null) {
-      metadataObserver.shutdown();
+    if (scalaConsumersContext != null) {
+      scalaConsumersContext.shutdown();
     }
   }
 }

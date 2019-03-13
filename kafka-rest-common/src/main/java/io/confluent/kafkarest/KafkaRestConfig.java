@@ -15,29 +15,21 @@
 
 package io.confluent.kafkarest;
 
-import org.apache.kafka.common.security.JaasUtils;
-import org.apache.kafka.common.security.auth.SecurityProtocol;
-import org.apache.kafka.common.utils.Utils;
-import org.eclipse.jetty.util.StringUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
 import io.confluent.common.config.ConfigDef;
 import io.confluent.common.config.ConfigDef.Importance;
 import io.confluent.common.config.ConfigDef.Type;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
-import kafka.cluster.Broker;
-import kafka.cluster.EndPoint;
-import kafka.utils.ZkUtils;
-import scala.collection.JavaConversions;
-import scala.collection.Seq;
+import io.confluent.rest.exceptions.RestServerErrorException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.core.Response;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Map;
+import java.util.Properties;
 
 import static io.confluent.common.config.ConfigDef.Range.atLeast;
 
@@ -479,7 +471,7 @@ public class KafkaRestConfig extends RestConfig {
         .define(
             KAFKACLIENT_SECURITY_PROTOCOL_CONFIG,
             ConfigDef.Type.STRING,
-            SecurityProtocol.PLAINTEXT.toString(),
+            "PLAINTEXT",
             ConfigDef.Importance.MEDIUM,
             KAFKACLIENT_SECURITY_PROTOCOL_DOC
         )
@@ -724,30 +716,6 @@ public class KafkaRestConfig extends RestConfig {
     return consumerProps;
   }
 
-  public String bootstrapBrokers() {
-    int zkSessionTimeoutMs = getInt(KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG);
-
-    String bootstrapServersConfig = getString(BOOTSTRAP_SERVERS_CONFIG);
-    if (StringUtil.isNotBlank(bootstrapServersConfig)) {
-      return bootstrapServersConfig;
-    }
-    ZkUtils zkUtils = null;
-    try {
-      zkUtils =
-          ZkUtils.apply(
-              getString(ZOOKEEPER_CONNECT_CONFIG),
-              zkSessionTimeoutMs,
-              zkSessionTimeoutMs,
-              JaasUtils.isZkSecurityEnabled()
-          );
-      return getBootstrapBrokers(zkUtils);
-    } finally {
-      if (zkUtils != null) {
-        zkUtils.close();
-      }
-    }
-  }
-
   public int consumerPort(String scheme) throws URISyntaxException {
     if (!getList(LISTENERS_CONFIG).isEmpty() && !getList(LISTENERS_CONFIG).get(0).isEmpty()) {
       for (String listener : getList(LISTENERS_CONFIG)) {
@@ -760,22 +728,21 @@ public class KafkaRestConfig extends RestConfig {
     return getInt(PORT_CONFIG);
   }
 
-  private  String getBootstrapBrokers(ZkUtils zkUtils) {
-    Seq<Broker> brokerSeq = zkUtils.getAllBrokersInCluster();
+  public static KafkaRestConfig newConsumerConfig(KafkaRestConfig config,
+                                               ConsumerInstanceConfig instanceConfig
+  ) throws RestServerErrorException {
+    Properties newProps = ConsumerInstanceConfig.attachProxySpecificProperties(
+            (Properties) config.getOriginalProperties().clone(), instanceConfig);
 
-    List<Broker> brokers = JavaConversions.seqAsJavaList(brokerSeq);
-    String bootstrapBrokers = "";
-    for (int i = 0; i < brokers.size(); i++) {
-      for (EndPoint ep : JavaConversions.asJavaCollection(brokers.get(i).endPoints())) {
-        if (bootstrapBrokers.length() > 0) {
-          bootstrapBrokers += ",";
-        }
-        String hostport =
-            ep.host() == null ? ":" + ep.port() : Utils.formatAddress(ep.host(), ep.port());
-        bootstrapBrokers += ep.securityProtocol() + "://" + hostport;
-      }
+    try {
+      return new KafkaRestConfig(newProps, config.getTime());
+    } catch (io.confluent.rest.RestConfigException e) {
+      throw new RestServerErrorException(
+              String.format("Invalid configuration for new consumer: %s", newProps),
+              Response.Status.BAD_REQUEST.getStatusCode(),
+              e
+      );
     }
-    return bootstrapBrokers;
   }
 
   public static void main(String[] args) {

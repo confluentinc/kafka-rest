@@ -36,7 +36,6 @@ import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.rest.Application;
 import io.confluent.rest.RestConfigException;
-import kafka.utils.ZkUtils;
 
 
 /**
@@ -54,8 +53,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     super(new KafkaRestConfig(props));
   }
 
-  public KafkaRestApplication(KafkaRestConfig config)
-      throws IllegalAccessException, InstantiationException, RestConfigException {
+  public KafkaRestApplication(KafkaRestConfig config) {
     super(config);
 
     restResourceExtensions = config.getConfiguredInstances(
@@ -66,8 +64,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-    setupInjectedResources(config, appConfig, null, null, null, null, null, null, null,
-        null
+    setupInjectedResources(config, appConfig, null,
+        null, null, null
     );
   }
 
@@ -77,13 +75,10 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
    */
   protected void setupInjectedResources(
       Configurable<?> config, KafkaRestConfig appConfig,
-      ZkUtils zkUtils, MetadataObserver mdObserver,
       ProducerPool producerPool,
-      ConsumerManager consumerManager,
-      SimpleConsumerFactory simpleConsumerFactory,
-      SimpleConsumerManager simpleConsumerManager,
       KafkaConsumerManager kafkaConsumerManager,
-      AdminClientWrapper adminClientWrapperInjected
+      AdminClientWrapper adminClientWrapperInjected,
+      ScalaConsumersContext scalaConsumersContext
   ) {
     if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))
         && StringUtil.isBlank(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG))) {
@@ -95,9 +90,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
     config.register(new ZkExceptionMapper(appConfig));
 
-    KafkaRestContextProvider.initialize(zkUtils, appConfig, mdObserver, producerPool,
-        consumerManager, simpleConsumerFactory,
-        simpleConsumerManager, kafkaConsumerManager, adminClientWrapperInjected
+    KafkaRestContextProvider.initialize(appConfig, producerPool,
+        kafkaConsumerManager, adminClientWrapperInjected, scalaConsumersContext
     );
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
     KafkaRestContext context =

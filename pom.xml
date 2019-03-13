@@ -42,6 +42,8 @@
     <modules>
         <module>kafka-rest</module>
         <module>kafka-rest-console-scripts</module>
+        <module>kafka-rest-common</module>
+        <module>kafka-rest-scala-consumer</module>
     </modules>
 
     <properties>

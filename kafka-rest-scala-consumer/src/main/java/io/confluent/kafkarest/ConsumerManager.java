@@ -200,7 +200,7 @@ public class ConsumerManager {
           consumer = consumerFactory.createConsumer(new ConsumerConfig(props));
         }
       } catch (InvalidConfigException e) {
-        throw Errors.invalidConsumerConfigException(e);
+        throw Errors.invalidConsumerConfigException(e.getMessage());
       }
 
       ConsumerState state = createConsumerState(instanceConfig, cid, consumer);
@@ -223,7 +223,7 @@ public class ConsumerManager {
           ConsumerInstanceConfig instanceConfig,
           ConsumerInstanceId cid, ConsumerConnector consumer
   ) throws RestServerErrorException {
-    KafkaRestConfig newConfig = ConsumerManager.newConsumerConfig(this.config, instanceConfig);
+    KafkaRestConfig newConfig = KafkaRestConfig.newConsumerConfig(this.config, instanceConfig);
 
     switch (instanceConfig.getFormat()) {
       case BINARY:
@@ -238,23 +238,6 @@ public class ConsumerManager {
                     instanceConfig.getFormat()),
                 Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
         );
-    }
-  }
-
-  public static KafkaRestConfig newConsumerConfig(KafkaRestConfig config,
-                                                  ConsumerInstanceConfig instanceConfig
-  ) throws RestServerErrorException {
-    Properties newProps = ConsumerInstanceConfig.attachProxySpecificProperties(
-        (Properties) config.getOriginalProperties().clone(), instanceConfig);
-
-    try {
-      return new KafkaRestConfig(newProps, config.getTime());
-    } catch (io.confluent.rest.RestConfigException e) {
-      throw new RestServerErrorException(
-          String.format("Invalid configuration for new consumer: %s", newProps),
-          Response.Status.BAD_REQUEST.getStatusCode(),
-          e
-      );
     }
   }
 

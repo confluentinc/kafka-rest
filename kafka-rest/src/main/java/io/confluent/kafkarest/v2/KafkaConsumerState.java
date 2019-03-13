@@ -44,7 +44,6 @@ import io.confluent.kafkarest.entities.ConsumerSeekToRequest;
 import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.TopicPartitionOffsetMetadata;
-import kafka.serializer.Decoder;
 
 /**
  * Tracks all the state for a consumer. This class is abstract in order to support multiple
@@ -79,16 +78,6 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   public ConsumerInstanceId getId() {
     return instanceId;
   }
-
-  /**
-   * Gets the key decoder for the Kafka consumer.
-   */
-  protected abstract Decoder<KafkaKeyT> getKeyDecoder();
-
-  /**
-   * Gets the value decoder for the Kafka consumer.
-   */
-  protected abstract Decoder<KafkaValueT> getValueDecoder();
 
   /**
    * Converts a MessageAndMetadata using the Kafka decoder types into a ConsumerRecord using the

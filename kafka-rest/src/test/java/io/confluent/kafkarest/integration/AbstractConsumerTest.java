@@ -18,6 +18,7 @@ import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.ScalaConsumersContext;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
@@ -72,6 +73,11 @@ public class AbstractConsumerTest extends ClusterTestHarness {
       }
     }
     producer.close();
+  }
+
+  @Override
+  protected ScalaConsumersContext getScalaConsumersContext(KafkaRestConfig appConfig) {
+    return new ScalaConsumersContext(appConfig);
   }
 
   protected void produceJsonMessages(List<ProducerRecord<Object, Object>> records) {
