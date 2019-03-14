@@ -21,11 +21,10 @@ import io.confluent.common.config.ConfigDef.Type;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
-import io.confluent.rest.exceptions.RestServerErrorException;
+import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -110,15 +109,14 @@ public class KafkaRestConfig extends RestConfig {
   private static final String SCHEMA_REGISTRY_URL_DEFAULT = "http://localhost:8081";
 
   public static final String PROXY_FETCH_MIN_BYTES_CONFIG =
-          "fetch.min.bytes";
+      ConsumerInstanceConfig.PROXY_FETCH_MIN_BYTES_CONFIG;
   private static final String PROXY_FETCH_MIN_BYTES_DOC =
           "Minimum bytes of records for the proxy to accumulate before"
           + "returning a response to a consumer request. "
           + "The special sentinel value of -1 disables this functionality.";
   private static final String PROXY_FETCH_MIN_BYTES_DEFAULT = "-1";
-  private static final int PROXY_FETCH_MIN_BYTES_MAX = 10000000; // 10mb
   public static final ConfigDef.Range PROXY_FETCH_MIN_BYTES_VALIDATOR =
-          ConfigDef.Range.between(-1, PROXY_FETCH_MIN_BYTES_MAX);
+      ConsumerInstanceConfig.PROXY_FETCH_MIN_BYTES_VALIDATOR;
 
   public static final String PRODUCER_THREADS_CONFIG = "producer.threads";
   private static final String PRODUCER_THREADS_DOC =
@@ -471,7 +469,7 @@ public class KafkaRestConfig extends RestConfig {
         .define(
             KAFKACLIENT_SECURITY_PROTOCOL_CONFIG,
             ConfigDef.Type.STRING,
-            "PLAINTEXT",
+            SecurityProtocol.PLAINTEXT.toString(),
             ConfigDef.Importance.MEDIUM,
             KAFKACLIENT_SECURITY_PROTOCOL_DOC
         )
@@ -726,23 +724,6 @@ public class KafkaRestConfig extends RestConfig {
       }
     }
     return getInt(PORT_CONFIG);
-  }
-
-  public static KafkaRestConfig newConsumerConfig(KafkaRestConfig config,
-                                               ConsumerInstanceConfig instanceConfig
-  ) throws RestServerErrorException {
-    Properties newProps = ConsumerInstanceConfig.attachProxySpecificProperties(
-            (Properties) config.getOriginalProperties().clone(), instanceConfig);
-
-    try {
-      return new KafkaRestConfig(newProps, config.getTime());
-    } catch (io.confluent.rest.RestConfigException e) {
-      throw new RestServerErrorException(
-              String.format("Invalid configuration for new consumer: %s", newProps),
-              Response.Status.BAD_REQUEST.getStatusCode(),
-              e
-      );
-    }
   }
 
   public static void main(String[] args) {

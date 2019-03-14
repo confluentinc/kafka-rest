@@ -70,17 +70,18 @@ class ConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
           long maxBytes,
           ConsumerReadCallback<ClientKeyT, ClientValueT> callback
   ) {
-    KafkaRestConfig conf = parent.getConfig();
+    SimpleConsumerConfig conf = parent.getConfig();
     this.parent = parent;
     this.maxResponseBytes = Math.min(
         maxBytes,
-        conf.getLong(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG)
+        conf.getLong(SimpleConsumerConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG)
     );
     this.callback = callback;
     this.finished = new CountDownLatch(1);
 
-    this.requestTimeoutMs = conf.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
-    int responseMinBytes = conf.getInt(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG);
+    this.requestTimeoutMs =
+        conf.getInt(SimpleConsumerConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+    int responseMinBytes = conf.getInt(SimpleConsumerConfig.PROXY_FETCH_MIN_BYTES_CONFIG);
     this.responseMinBytes = responseMinBytes < 0 ? Integer.MAX_VALUE : responseMinBytes;
 
     started = conf.getTime().milliseconds();

@@ -36,13 +36,13 @@ public class AvroConsumerState extends ConsumerState<Object, Object, JsonNode, J
   // subtle ways because it causes state to be shared across tests, but only for the consumer.
   private Decoder<Object> decoder = null;
 
-  public AvroConsumerState(KafkaRestConfig config,
+  public AvroConsumerState(SimpleConsumerConfig config,
                            ConsumerInstanceId instanceId,
                            ConsumerConnector consumer) {
     super(config, instanceId, consumer);
     Properties props = new Properties();
     props.setProperty("schema.registry.url",
-                      config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
+                      config.getString(SimpleConsumerConfig.SCHEMA_REGISTRY_URL_CONFIG));
     decoder = new KafkaAvroDecoder(new VerifiableProperties(props));
   }
 

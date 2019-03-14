@@ -21,7 +21,9 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.ScalaConsumersContext;
+import io.confluent.kafkarest.SimpleConsumerConfig;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
+import io.confluent.rest.RestConfigException;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -44,7 +46,14 @@ public class KafkaRestContextProvider {
     if (initialized.compareAndSet(false, true)) {
 
       if (scalaConsumersContext == null) {
-        scalaConsumersContext = new ScalaConsumersContext(appConfig);
+        SimpleConsumerConfig scalaConfog = null;
+        try {
+          scalaConfog = new SimpleConsumerConfig(appConfig.getOriginalProperties(),
+              appConfig.getTime());
+        } catch (RestConfigException e) {
+          throw new RuntimeException("Error while parsing configs.", e);
+        }
+        scalaConsumersContext = new ScalaConsumersContext(scalaConfog);
       }
       defaultContext =
           new DefaultKafkaRestContext(appConfig, producerPool, kafkaConsumerManager,

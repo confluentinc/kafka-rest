@@ -19,6 +19,9 @@ import kafka.utils.ZkUtils;
 import org.apache.kafka.common.security.JaasUtils;
 import org.eclipse.jetty.util.StringUtil;
 
+import static io.confluent.kafkarest.SimpleConsumerConfig.KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG;
+import static io.confluent.kafkarest.SimpleConsumerConfig.ZOOKEEPER_CONNECT_CONFIG;
+
 public class ScalaConsumersContext {
 
   private final MetadataObserver metadataObserver;
@@ -26,7 +29,7 @@ public class ScalaConsumersContext {
   private final SimpleConsumerManager simpleConsumerManager;
   private ZkUtils zkUtils;
 
-  public ScalaConsumersContext(final KafkaRestConfig config) {
+  public ScalaConsumersContext(final SimpleConsumerConfig config) {
     SimpleConsumerFactory simpleConsumerFactory = new SimpleConsumerFactory(config);
     metadataObserver = metadataObserver(config);
     consumerManager = new ConsumerManager(config, metadataObserver);
@@ -34,10 +37,12 @@ public class ScalaConsumersContext {
         simpleConsumerFactory);
   }
 
-  private MetadataObserver metadataObserver(final KafkaRestConfig config) {
-    if (StringUtil.isNotBlank(config.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG))) {
-      zkUtils = ZkUtils.apply(config.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG),
-          30000, 30000, JaasUtils.isZkSecurityEnabled());
+  private MetadataObserver metadataObserver(final SimpleConsumerConfig config) {
+    if (StringUtil.isNotBlank(config.getString(ZOOKEEPER_CONNECT_CONFIG))) {
+      zkUtils = ZkUtils.apply(config.getString(ZOOKEEPER_CONNECT_CONFIG),
+          config.getInt(KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG),
+          config.getInt(KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG),
+          JaasUtils.isZkSecurityEnabled());
       return new MetadataObserver(zkUtils);
     } else {
       return new UnsupportedMetaDataObserver(null);
