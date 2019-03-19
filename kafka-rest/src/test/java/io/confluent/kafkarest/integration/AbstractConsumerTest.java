@@ -19,7 +19,6 @@ import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ScalaConsumersContext;
-import io.confluent.kafkarest.SimpleConsumerConfig;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
@@ -28,7 +27,6 @@ import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.rest.RestConfigException;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -79,11 +77,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
 
   @Override
   protected ScalaConsumersContext getScalaConsumersContext(KafkaRestConfig appConfig) {
-    try {
-      return new ScalaConsumersContext(new SimpleConsumerConfig(appConfig.getOriginalProperties(), appConfig.getTime()));
-    } catch (RestConfigException e) {
-      throw new IllegalArgumentException("", e);
-    }
+    return new ScalaConsumersContext(appConfig);
   }
 
   protected void produceJsonMessages(List<ProducerRecord<Object, Object>> records) {

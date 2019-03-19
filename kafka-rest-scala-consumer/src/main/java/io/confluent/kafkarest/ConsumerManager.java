@@ -16,7 +16,6 @@
 package io.confluent.kafkarest;
 
 import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.rest.RestConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +60,7 @@ public class ConsumerManager {
 
   private static final Logger log = LoggerFactory.getLogger(ConsumerManager.class);
 
-  private final SimpleConsumerConfig config;
+  private final KafkaRestConfig config;
   private final Time time;
   private final String zookeeperConnect;
   private final MetadataObserver mdObserver;
@@ -79,17 +78,16 @@ public class ConsumerManager {
   private final ReadTaskSchedulerThread readTaskSchedulerThread;
   private final ExpirationThread expirationThread;
 
-  public ConsumerManager(final SimpleConsumerConfig config, MetadataObserver mdObserver) {
+  public ConsumerManager(final KafkaRestConfig config, MetadataObserver mdObserver) {
     this.config = config;
     this.time = config.getTime();
-    this.zookeeperConnect = config.getString(SimpleConsumerConfig.ZOOKEEPER_CONNECT_CONFIG);
+    this.zookeeperConnect = config.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG);
     this.mdObserver = mdObserver;
-    this.iteratorTimeoutMs =
-        config.getInt(SimpleConsumerConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG);
+    this.iteratorTimeoutMs = config.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG);
 
     // Cached thread pool
-    int maxThreadCount = config.getInt(SimpleConsumerConfig.CONSUMER_MAX_THREADS_CONFIG) < 0
-        ? Integer.MAX_VALUE : config.getInt(SimpleConsumerConfig.CONSUMER_MAX_THREADS_CONFIG);
+    int maxThreadCount = config.getInt(KafkaRestConfig.CONSUMER_MAX_THREADS_CONFIG) < 0
+        ? Integer.MAX_VALUE : config.getInt(KafkaRestConfig.CONSUMER_MAX_THREADS_CONFIG);
 
     this.executor = new KafkaConsumerThreadPoolExecutor(0, maxThreadCount,
         60L, TimeUnit.SECONDS,
@@ -119,7 +117,7 @@ public class ConsumerManager {
   }
 
   public ConsumerManager(
-      SimpleConsumerConfig config,
+      KafkaRestConfig config,
       MetadataObserver mdObserver,
       ConsumerFactory consumerFactory
   ) {
@@ -147,7 +145,7 @@ public class ConsumerManager {
     }
     if (name == null) {
       name = "rest-consumer-";
-      String serverId = this.config.getString(SimpleConsumerConfig.ID_CONFIG);
+      String serverId = this.config.getString(KafkaRestConfig.ID_CONFIG);
       if (!serverId.isEmpty()) {
         name += serverId + "-";
       }
@@ -225,7 +223,7 @@ public class ConsumerManager {
           ConsumerInstanceConfig instanceConfig,
           ConsumerInstanceId cid, ConsumerConnector consumer
   ) throws RestServerErrorException {
-    SimpleConsumerConfig newConfig = newConsumerConfig(this.config, instanceConfig);
+    KafkaRestConfig newConfig = KafkaRestConfig.newConsumerConfig(this.config, instanceConfig);
 
     switch (instanceConfig.getFormat()) {
       case BINARY:
@@ -240,23 +238,6 @@ public class ConsumerManager {
                     instanceConfig.getFormat()),
                 Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
         );
-    }
-  }
-
-  public static SimpleConsumerConfig newConsumerConfig(SimpleConsumerConfig config,
-                                                       ConsumerInstanceConfig instanceConfig
-  ) throws RestServerErrorException {
-    Properties newProps = ConsumerInstanceConfig.attachProxySpecificProperties(
-        (Properties) config.getOriginalProperties().clone(), instanceConfig);
-
-    try {
-      return new SimpleConsumerConfig(newProps, config.getTime());
-    } catch (RestConfigException e) {
-      throw new RestServerErrorException(
-          String.format("Invalid configuration for new consumer: %s", newProps),
-          Response.Status.BAD_REQUEST.getStatusCode(),
-          e
-      );
     }
   }
 
@@ -413,7 +394,7 @@ public class ConsumerManager {
 
   class RunnableReadTask implements Runnable, Delayed {
     private final ReadTaskState taskState;
-    private final SimpleConsumerConfig consumerConfig;
+    private final KafkaRestConfig consumerConfig;
     private final long started;
     private final long requestExpiration;
     // Expiration if this task is waiting, considering both the expiration of the whole task and
@@ -425,7 +406,7 @@ public class ConsumerManager {
       this.started = config.getTime().milliseconds();
       this.consumerConfig = taskState.consumerState.getConfig();
       this.requestExpiration = this.started
-          + consumerConfig.getInt(SimpleConsumerConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+          + consumerConfig.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
       this.waitExpirationMs = 0;
     }
 
@@ -442,7 +423,7 @@ public class ConsumerManager {
         taskState.consumerState.updateExpiration();
         if (!taskState.task.isDone()) {
           long backoffTime = config.getTime().milliseconds()
-              + consumerConfig.getInt(SimpleConsumerConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
+              + consumerConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG);
           waitExpirationMs = Math.min(backoffTime, requestExpiration);
 
           // add to delayedReadTasks so the scheduler thread can re-schedule another partial read

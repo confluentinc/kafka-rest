@@ -29,7 +29,7 @@ public class BinaryConsumerState extends ConsumerState<byte[], byte[], byte[], b
 
   private static final Decoder<byte[]> decoder = new DefaultDecoder(new VerifiableProperties());
 
-  public BinaryConsumerState(SimpleConsumerConfig config,
+  public BinaryConsumerState(KafkaRestConfig config,
                              ConsumerInstanceId instanceId,
                              ConsumerConnector consumer) {
     super(config, instanceId, consumer);

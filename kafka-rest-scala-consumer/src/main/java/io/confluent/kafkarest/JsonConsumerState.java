@@ -32,7 +32,7 @@ public class JsonConsumerState extends ConsumerState<byte[], byte[], Object, Obj
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
   public JsonConsumerState(
-      SimpleConsumerConfig config,
+      KafkaRestConfig config,
       ConsumerInstanceId instanceId,
       ConsumerConnector consumer
   ) {

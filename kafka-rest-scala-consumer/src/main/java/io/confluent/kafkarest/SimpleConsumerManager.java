@@ -75,7 +75,7 @@ public class SimpleConsumerManager {
   private final Decoder<Object> jsonDecoder;
 
   public SimpleConsumerManager(
-      final SimpleConsumerConfig config,
+      final KafkaRestConfig config,
       final MetadataObserver mdObserver,
       final SimpleConsumerFactory simpleConsumerFactory
   ) {
@@ -83,9 +83,9 @@ public class SimpleConsumerManager {
     this.mdObserver = mdObserver;
     this.simpleConsumerFactory = simpleConsumerFactory;
 
-    maxPoolSize = config.getInt(SimpleConsumerConfig.SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG);
+    maxPoolSize = config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG);
     poolInstanceAvailabilityTimeoutMs =
-        config.getInt(SimpleConsumerConfig.SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG);
+        config.getInt(KafkaRestConfig.SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG);
     time = config.getTime();
 
     simpleConsumersPools = new ConcurrentHashMap<Broker, SimpleConsumerPool>();
@@ -94,7 +94,7 @@ public class SimpleConsumerManager {
     Properties props = new Properties();
     props.setProperty(
         "schema.registry.url",
-        config.getString(SimpleConsumerConfig.SCHEMA_REGISTRY_URL_CONFIG)
+        config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG)
     );
     avroDecoder = new KafkaAvroDecoder(new VerifiableProperties(props));
 

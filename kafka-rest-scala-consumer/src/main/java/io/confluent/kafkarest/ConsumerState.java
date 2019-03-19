@@ -37,7 +37,7 @@ import kafka.serializer.Decoder;
  * (including translation if the decoded Kafka consumer type and ConsumerRecord types differ).
  */
 public abstract class ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
-  private SimpleConsumerConfig config;
+  private KafkaRestConfig config;
   private ConsumerInstanceId instanceId;
   private ConsumerConnector consumer;
   private Map<String, ConsumerTopicState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>> topics;
@@ -50,15 +50,15 @@ public abstract class ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientVa
   private ReadWriteLock lock;
 
   public ConsumerState(
-      SimpleConsumerConfig config, ConsumerInstanceId instanceId,
-      ConsumerConnector consumer
+          KafkaRestConfig config, ConsumerInstanceId instanceId,
+          ConsumerConnector consumer
   ) {
     this.config = config;
     this.instanceId = instanceId;
     this.consumer = consumer;
     this.topics = new HashMap<>();
     this.expiration = config.getTime().milliseconds()
-            + config.getInt(SimpleConsumerConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
+            + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
     this.lock = new ReentrantReadWriteLock();
   }
 
@@ -139,14 +139,14 @@ public abstract class ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientVa
 
   public void updateExpiration() {
     this.expiration = config.getTime().milliseconds()
-            + config.getInt(SimpleConsumerConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
+            + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
   }
 
-  public SimpleConsumerConfig getConfig() {
+  public KafkaRestConfig getConfig() {
     return config;
   }
 
-  public void setConfig(SimpleConsumerConfig config) {
+  public void setConfig(KafkaRestConfig config) {
     this.config = config;
   }
 

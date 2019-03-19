@@ -25,17 +25,20 @@ public class SimpleConsumerFactory {
 
   private static final Logger log = LoggerFactory.getLogger(SimpleConsumerFactory.class);
 
-  private final SimpleConsumerConfig config;
+  private final KafkaRestConfig config;
+
+  private final SimpleConsumerConfig simpleConsumerConfig;
   private final AtomicInteger clientIdCounter;
 
-  public SimpleConsumerFactory(final SimpleConsumerConfig config) {
+  public SimpleConsumerFactory(final KafkaRestConfig config) {
     this.config = config;
 
     clientIdCounter = new AtomicInteger(0);
+    simpleConsumerConfig = new SimpleConsumerConfig(config.getOriginalProperties());
   }
 
   public SimpleConsumerConfig getSimpleConsumerConfig() {
-    return config;
+    return simpleConsumerConfig;
   }
 
   // The factory *must* return a SimpleConsumer with a unique clientId, as the clientId is
@@ -45,7 +48,7 @@ public class SimpleConsumerFactory {
     final StringBuilder id = new StringBuilder();
     id.append("rest-simpleconsumer-");
 
-    final String serverId = this.config.getString(SimpleConsumerConfig.ID_CONFIG);
+    final String serverId = this.config.getString(KafkaRestConfig.ID_CONFIG);
     if (!serverId.isEmpty()) {
       id.append(serverId);
       id.append("-");
@@ -63,8 +66,8 @@ public class SimpleConsumerFactory {
     log.debug("Creating SimpleConsumer with id {} (host:{}, port:{})", clientId, host, + port);
     return new SimpleConsumer(
         host, port,
-        config.socketTimeoutMs(),
-        config.socketReceiveBufferBytes(),
+        simpleConsumerConfig.socketTimeoutMs(),
+        simpleConsumerConfig.socketReceiveBufferBytes(),
         clientId);
   }
 

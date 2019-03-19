@@ -20,8 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotNull;
 
-import io.confluent.common.config.ConfigDef;
 import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
 
 import java.util.Properties;
@@ -29,14 +29,6 @@ import java.util.Properties;
 public class ConsumerInstanceConfig {
 
   private static final EmbeddedFormat DEFAULT_FORMAT = EmbeddedFormat.BINARY;
-
-  public static final int PROXY_FETCH_MIN_BYTES_MAX = 10000000; // 10mb
-  public static final String PROXY_FETCH_MIN_BYTES_CONFIG =
-      "fetch.min.bytes";
-  public static final ConfigDef.Range PROXY_FETCH_MIN_BYTES_VALIDATOR =
-      ConfigDef.Range.between(-1, PROXY_FETCH_MIN_BYTES_MAX);
-  public static final String CONSUMER_REQUEST_TIMEOUT_MS_CONFIG =
-      "consumer.request.timeout.ms";
 
   private String id;
   private String name;
@@ -62,9 +54,9 @@ public class ConsumerInstanceConfig {
       @JsonProperty("format") String format,
       @JsonProperty("auto.offset.reset") String autoOffsetReset,
       @JsonProperty("auto.commit.enable") String autoCommitEnable,
-      @JsonProperty(PROXY_FETCH_MIN_BYTES_CONFIG)
+      @JsonProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG)
               Integer responseMinBytes,
-      @JsonProperty(CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) Integer requestWaitMs
+      @JsonProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) Integer requestWaitMs
   ) {
     this.id = id;
     this.name = name;
@@ -97,11 +89,11 @@ public class ConsumerInstanceConfig {
   public static Properties attachProxySpecificProperties(Properties props,
                                                          ConsumerInstanceConfig config) {
     if (config.getResponseMinBytes() != null) {
-      props.setProperty(PROXY_FETCH_MIN_BYTES_CONFIG,
+      props.setProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG,
               config.getResponseMinBytes().toString());
     }
     if (config.getRequestWaitMs() != null) {
-      props.setProperty(CONSUMER_REQUEST_TIMEOUT_MS_CONFIG,
+      props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG,
               config.getRequestWaitMs().toString());
     }
 
@@ -137,8 +129,8 @@ public class ConsumerInstanceConfig {
     }
 
     try {
-      PROXY_FETCH_MIN_BYTES_VALIDATOR.ensureValid(
-              PROXY_FETCH_MIN_BYTES_CONFIG,
+      KafkaRestConfig.PROXY_FETCH_MIN_BYTES_VALIDATOR.ensureValid(
+              KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG,
               responseMinBytes
       );
       this.responseMinBytes = responseMinBytes;

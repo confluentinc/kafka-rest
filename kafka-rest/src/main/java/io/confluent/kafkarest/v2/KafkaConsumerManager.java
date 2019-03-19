@@ -268,7 +268,7 @@ public class KafkaConsumerManager {
           ConsumerInstanceConfig instanceConfig,
           ConsumerInstanceId cid, Consumer consumer
   ) throws RestServerErrorException {
-    KafkaRestConfig newConfig = newConsumerConfig(this.config, instanceConfig);
+    KafkaRestConfig newConfig = KafkaRestConfig.newConsumerConfig(this.config, instanceConfig);
 
     switch (instanceConfig.getFormat()) {
       case BINARY:
@@ -283,23 +283,6 @@ public class KafkaConsumerManager {
                     instanceConfig.getFormat()),
                 Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
         );
-    }
-  }
-
-  public static KafkaRestConfig newConsumerConfig(KafkaRestConfig config,
-                                                  ConsumerInstanceConfig instanceConfig
-  ) throws RestServerErrorException {
-    Properties newProps = ConsumerInstanceConfig.attachProxySpecificProperties(
-        (Properties) config.getOriginalProperties().clone(), instanceConfig);
-
-    try {
-      return new KafkaRestConfig(newProps, config.getTime());
-    } catch (io.confluent.rest.RestConfigException e) {
-      throw new RestServerErrorException(
-          String.format("Invalid configuration for new consumer: %s", newProps),
-          Response.Status.BAD_REQUEST.getStatusCode(),
-          e
-      );
     }
   }
 

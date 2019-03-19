@@ -59,7 +59,7 @@ import static org.junit.Assert.fail;
 public class ConsumerManagerTest {
 
   private Properties properties;
-  private SimpleConsumerConfig config;
+  private KafkaRestConfig config;
   private MetadataObserver mdObserver;
   private ConsumerManager.ConsumerFactory consumerFactory;
   private ConsumerManager consumerManager;
@@ -80,7 +80,7 @@ public class ConsumerManagerTest {
   @Before
   public void setUp() throws RestConfigException {
     this.properties = new Properties();
-    properties.setProperty(SimpleConsumerConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG, "1024");
+    properties.setProperty(KafkaRestConfig.CONSUMER_REQUEST_MAX_BYTES_CONFIG, "1024");
     // This setting supports the testConsumerOverrides test. It is otherwise benign and should
     // not affect other tests.
     properties.setProperty("exclude.internal.topics", "false");
@@ -88,7 +88,7 @@ public class ConsumerManagerTest {
   }
 
   public void setUp(Properties properties) throws RestConfigException {
-    config = new SimpleConsumerConfig(properties, new SystemTime());
+    config = new KafkaRestConfig(properties, new SystemTime());
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     consumerFactory = EasyMock.createMock(ConsumerManager.ConsumerFactory.class);
     consumerManager = new ConsumerManager(config, mdObserver, consumerFactory);
@@ -111,7 +111,7 @@ public class ConsumerManagerTest {
         consumer =
         new MockConsumerConnector(
             config.getTime(), "testclient", schedules,
-            Integer.parseInt(SimpleConsumerConfig.CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT),
+            Integer.parseInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT),
             allowMissingSchedule);
     capturedConsumerConfig = Capture.newInstance();
     EasyMock.expect(consumerFactory.createConsumer(EasyMock.capture(capturedConsumerConfig)))
@@ -140,7 +140,7 @@ public class ConsumerManagerTest {
     ConsumerConnector consumer =
         new MockConsumerConnector(
             config.getTime(), "testclient", null,
-            Integer.parseInt(SimpleConsumerConfig.CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT),
+            Integer.parseInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT),
             true);
     final Capture<ConsumerConfig> consumerConfig = Capture.newInstance();
     EasyMock.expect(consumerFactory.createConsumer(EasyMock.capture(consumerConfig)))
@@ -211,7 +211,7 @@ public class ConsumerManagerTest {
   @Test
   public void testConsumerRequestTimeoutMs() throws Exception {
     Integer expectedRequestTimeoutMs = 400;
-    properties.setProperty(SimpleConsumerConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, expectedRequestTimeoutMs.toString());
+    properties.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, expectedRequestTimeoutMs.toString());
     setUp(properties);
     Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>
             schedules =
@@ -235,8 +235,8 @@ public class ConsumerManagerTest {
    */
   @Test
   public void testConsumerTimeoutMsMsAndMinBytes() throws Exception {
-    properties.setProperty(SimpleConsumerConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, "1303");
-    properties.setProperty(SimpleConsumerConfig.PROXY_FETCH_MIN_BYTES_CONFIG, "1");
+    properties.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, "1303");
+    properties.setProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG, "1");
     setUp(properties);
 
     final List<ConsumerRecord<byte[], byte[]>> referenceRecords = referenceRecords(3);
@@ -262,13 +262,13 @@ public class ConsumerManagerTest {
     assertEquals("Records returned not as expected",
             Arrays.asList(referenceRecords.get(0)), actualRecords);
     long estimatedTime = System.currentTimeMillis() - startTime;
-    int timeoutMs = config.getInt(SimpleConsumerConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+    int timeoutMs = config.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
     assertTrue(estimatedTime < timeoutMs); // should have returned earlier than consumer.request.timeout.ms
   }
 
   @Test
   public void testConsumeMinBytesIsOverridablePerConsumer() throws Exception {
-    properties.setProperty(SimpleConsumerConfig.PROXY_FETCH_MIN_BYTES_CONFIG, "10");
+    properties.setProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG, "10");
     // global settings should return more than one record immediately
     setUp(properties);
 
@@ -304,7 +304,7 @@ public class ConsumerManagerTest {
   public void testConsumerRequestTimeoutMsIsOverriddablePerConsumer() throws Exception {
     Integer overriddenRequestTimeMs = 111;
     Integer globalRequestTimeMs = 1201;
-    properties.setProperty(SimpleConsumerConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, globalRequestTimeMs.toString());
+    properties.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, globalRequestTimeMs.toString());
     setUp(properties);
     Map<String, List<Map<Integer, List<ConsumerRecord<byte[], byte[]>>>>>
             schedules =
@@ -478,11 +478,11 @@ public class ConsumerManagerTest {
   @Test
   public void testBackoffMsControlsPollCalls() throws Exception {
     Properties props = new Properties();
-    props.setProperty(SimpleConsumerConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, "250");
+    props.setProperty(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, "250");
     // This setting supports the testConsumerOverrides test. It is otherwise benign and should
     // not affect other tests.
     props.setProperty("exclude.internal.topics", "false");
-    config = new SimpleConsumerConfig(props, new SystemTime());
+    config = new KafkaRestConfig(props, new SystemTime());
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     consumerFactory = EasyMock.createMock(ConsumerManager.ConsumerFactory.class);
     consumerManager = new ConsumerManager(config, mdObserver, consumerFactory);
@@ -515,11 +515,11 @@ public class ConsumerManagerTest {
   public void testBackoffMsUpdatesReadTaskExpiry() throws Exception {
     Properties props = new Properties();
     int backoffMs = 1000;
-    props.setProperty(SimpleConsumerConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, Integer.toString(backoffMs));
+    props.setProperty(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, Integer.toString(backoffMs));
     // This setting supports the testConsumerOverrides test. It is otherwise benign and should
     // not affect other tests.
     props.setProperty("exclude.internal.topics", "false");
-    config = new SimpleConsumerConfig(props, new SystemTime());
+    config = new KafkaRestConfig(props, new SystemTime());
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     consumerFactory = EasyMock.createMock(ConsumerManager.ConsumerFactory.class);
     consumerManager = new ConsumerManager(config, mdObserver, consumerFactory);
@@ -696,7 +696,7 @@ public class ConsumerManagerTest {
 
   private void readTopic(final String cid, String topic, long maxBytes, final ConsumerReadCallback callback) throws Exception {
     // Add a bit of fuzz to the wait time
-    long maxTimeout = (long) (Integer.parseInt(SimpleConsumerConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 1.10);
+    long maxTimeout = (long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 1.10);
     Future future = readTopicFuture(cid, topic, maxBytes, callback);
     future.get(maxTimeout, TimeUnit.MILLISECONDS);
   }
