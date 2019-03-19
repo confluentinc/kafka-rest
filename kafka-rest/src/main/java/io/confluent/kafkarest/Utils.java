@@ -26,7 +26,7 @@ public class Utils {
   public static final String UNEXPECTED_PRODUCER_EXCEPTION
       = "Unexpected non-Kafka exception returned by Kafka";
 
-  public static int codeFromProducerException(Throwable e) {
+  public static int errorCodeFromProducerException(Throwable e) {
     if (e instanceof RetriableException) {
       return Errors.KAFKA_RETRIABLE_ERROR_ERROR_CODE;
     } else if (e instanceof KafkaException) {

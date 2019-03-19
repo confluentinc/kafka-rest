@@ -115,7 +115,7 @@
                         </relocation>
                         <relocation>
                             <pattern>io.confluent.kafka.serializers</pattern>
-                            <shadedPattern>iio.confluent.kafka.shaded.serializers</shadedPattern>
+                            <shadedPattern>io.confluent.kafka.shaded.serializers</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>io.confluent.kafka.formatter</pattern>

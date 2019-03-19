@@ -158,7 +158,7 @@ public class TopicsResource {
             for (RecordMetadataOrException result : results) {
               if (result.getException() != null) {
                 int errorCode =
-                    Utils.codeFromProducerException(result.getException());
+                    Utils.errorCodeFromProducerException(result.getException());
                 String errorMessage = result.getException().getMessage();
                 offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
               } else {

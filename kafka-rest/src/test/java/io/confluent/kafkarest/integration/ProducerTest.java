@@ -36,7 +36,6 @@ import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.ProduceRecord;
-import kafka.utils.ZkUtils;
 import scala.collection.JavaConversions;
 
 import static org.junit.Assert.assertEquals;
