@@ -68,7 +68,7 @@ public class PartitionsResourceTest
             producerPool,
             null,
             adminClientWrapper,
-        null
+            null
         );
 
     addResource(new TopicsResource(ctx));

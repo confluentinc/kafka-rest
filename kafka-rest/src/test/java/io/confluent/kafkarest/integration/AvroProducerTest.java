@@ -58,7 +58,7 @@ public class AvroProducerTest extends ClusterTestHarness {
       ))
   );
 
-  private Properties deSerializerProps;
+  private Properties deserializerProps;
 
   // This test assumes that AvroConverterTest is good enough and testing one primitive type for
   // keys and one complex type for records is sufficient.
@@ -128,8 +128,8 @@ public class AvroProducerTest extends ClusterTestHarness {
                                       JavaConversions.asScalaBuffer(this.servers),
                                       new Properties());
 
-    deSerializerProps = new Properties();
-    deSerializerProps.setProperty("schema.registry.url", schemaRegConnect);
+    deserializerProps = new Properties();
+    deserializerProps.setProperty("schema.registry.url", schemaRegConnect);
   }
 
   private <K, V> void testProduceToTopic(List<? extends TopicProduceRecord> records,
@@ -145,7 +145,7 @@ public class AvroProducerTest extends ClusterTestHarness {
     TestUtils.assertPartitionOffsetsEqual(offsetResponses, produceResponse.getOffsets());
     TestUtils.assertTopicContains(plaintextBrokerList, topicName,
         payload.getRecords(), null,
-        KafkaAvroDeserializer.class.getName(), KafkaAvroDeserializer.class.getName(), deSerializerProps,
+        KafkaAvroDeserializer.class.getName(), KafkaAvroDeserializer.class.getName(), deserializerProps,
         false);
     assertEquals(produceResponse.getKeySchemaId(), (Integer) 1);
     assertEquals(produceResponse.getValueSchemaId(), (Integer) 2);
@@ -170,7 +170,7 @@ public class AvroProducerTest extends ClusterTestHarness {
     assertEquals(offsetResponse, poffsetResponse.getOffsets());
     TestUtils.assertTopicContains(plaintextBrokerList, topicName, payload.getRecords(), (Integer) 0,
         KafkaAvroDeserializer.class.getName(), KafkaAvroDeserializer.class.getName(),
-        deSerializerProps,false);
+        deserializerProps,false);
     assertEquals((Integer) 1, poffsetResponse.getValueSchemaId());
   }
 

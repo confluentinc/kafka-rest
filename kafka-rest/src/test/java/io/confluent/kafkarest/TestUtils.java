@@ -257,12 +257,13 @@ public class TestUtils {
   public static <K, V> void assertTopicContains(String bootstrapServers, String topicName,
                                                 List<? extends ProduceRecord<K, V>> records,
                                                 Integer partition,
-                                                String keyDeserializer, String valueDeserializer,
+                                                String keyDeserializerClassName,
+                                                String valueDeserializerClassName,
                                                 Properties deserializerProps,
                                                 boolean validateContents) {
 
     KafkaConsumer<K, V> consumer = createConsumer(bootstrapServers, "testgroup", "consumer0",
-        20000L, keyDeserializer, valueDeserializer, deserializerProps);
+        20000L, keyDeserializerClassName, valueDeserializerClassName, deserializerProps);
 
     Map<Object, Integer> msgCounts = TestUtils.topicCounts(consumer, topicName, records, partition);
 
@@ -297,13 +298,14 @@ public class TestUtils {
   public static <K, V> void assertTopicContains(String bootstrapServers, String topicName,
                                                 List<? extends ProduceRecord<K, V>> records,
                                                 Integer partition,
-                                                String keyDeserializer, String valueDeserializer,
+                                                String keyDeserializerClassName,
+                                                String valueDeserializerClassName,
                                                 boolean validateContents) {
-    assertTopicContains(bootstrapServers, topicName, records, partition, keyDeserializer,
-        valueDeserializer, new Properties(), validateContents);
+    assertTopicContains(bootstrapServers, topicName, records, partition, keyDeserializerClassName,
+        valueDeserializerClassName, new Properties(), validateContents);
   }
 
-  private static <V, K> Map<Object, Integer> topicCounts(final KafkaConsumer<K, V> consumer ,
+  private static <V, K> Map<Object, Integer> topicCounts(final KafkaConsumer<K, V> consumer,
                                                          final String topicName,
                                                          final List<? extends ProduceRecord<K,V>> records,
                                                          final Integer partition) {
@@ -313,7 +315,7 @@ public class TestUtils {
     try {
       AtomicInteger counter = new AtomicInteger(0);
       org.apache.kafka.test.TestUtils.waitForCondition(() -> {
-        ConsumerRecords<K, V> consumerRecords =  consumer.poll(Duration.ofMillis(100));
+        ConsumerRecords<K, V> consumerRecords = consumer.poll(Duration.ofMillis(100));
 
         for (ConsumerRecord<K, V> record: consumerRecords) {
           if (partition == null || record.partition() == partition) {
@@ -331,14 +333,14 @@ public class TestUtils {
     }
 
     consumer.close();
-    return  msgCounts;
+    return msgCounts;
   }
 
 
-  public static <K, V> KafkaConsumer<K, V> createConsumer(String bootstrapServers, String groupId,
+  private static <K, V> KafkaConsumer<K, V> createConsumer(String bootstrapServers, String groupId,
                                                           String consumerId, Long consumerTimeout,
-                                                          String keyDeserializer,
-                                                          String valueDeserializer,
+                                                          String keyDeserializerClassName,
+                                                          String valueDeserializerClassName,
                                                           Properties deserializerProps) {
     Properties consumerConfig = new Properties();
     consumerConfig.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -347,8 +349,8 @@ public class TestUtils {
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     consumerConfig.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "100");
     consumerConfig.put(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, consumerTimeout.toString());
-    consumerConfig.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, keyDeserializer);
-    consumerConfig.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializer);
+    consumerConfig.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, keyDeserializerClassName);
+    consumerConfig.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializerClassName);
     consumerConfig.putAll(deserializerProps);
     return new KafkaConsumer<>(consumerConfig);
   }

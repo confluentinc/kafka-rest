@@ -37,8 +37,8 @@ public class AbstractProducerTest extends ClusterTestHarness {
 
   protected <K, V> void testProduceToTopic(String topicName,
                                            List<? extends TopicProduceRecord> records,
-                                           String keyDeserializer,
-                                           String valueDeserializer,
+                                           String keyDeserializerClassName,
+                                           String valueDeserializerClassName,
                                            List<PartitionOffset> offsetResponses,
                                            boolean matchPartitions) {
     TopicProduceRequest payload = new TopicProduceRequest();
@@ -53,14 +53,15 @@ public class AbstractProducerTest extends ClusterTestHarness {
     TestUtils.assertPartitionOffsetsEqual(offsetResponses, produceResponse.getOffsets());
     TestUtils.assertTopicContains(plaintextBrokerList, topicName,
         payload.getRecords(), null,
-        keyDeserializer, valueDeserializer, true);
+        keyDeserializerClassName, valueDeserializerClassName, true);
   }
 
 
   protected <K, V> void testProduceToPartition(String topicName,
                                                int partition,
                                                List<? extends ProduceRecord<K, V>> records,
-                                               String keySerializer, String valueSerializer,
+                                               String keySerializerClassName,
+                                               String valueSerializerClassName,
                                                List<PartitionOffset> offsetResponse) {
     PartitionProduceRequest payload = new PartitionProduceRequest();
     payload.setRecords(records);
@@ -72,7 +73,7 @@ public class AbstractProducerTest extends ClusterTestHarness {
     assertEquals(offsetResponse, poffsetResponse.getOffsets());
     TestUtils.assertTopicContains(plaintextBrokerList, topicName,
         payload.getRecords(), partition,
-        keySerializer, valueSerializer, true);
+        keySerializerClassName, valueSerializerClassName, true);
   }
 
 

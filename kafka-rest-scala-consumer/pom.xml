@@ -45,12 +45,6 @@
             <artifactId>slf4j-log4j12</artifactId>
             <version>${log4j.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>io.confluent</groupId>
-            <artifactId>rest-utils-test</artifactId>
-            <scope>test</scope>
-        </dependency>
         <!--
             This is a workaround for IntelliJ which seems to have a problem including junit + hamcrest
             as transitive dependencies of rest-utils-test. mvn properly resolves these, so it may have
