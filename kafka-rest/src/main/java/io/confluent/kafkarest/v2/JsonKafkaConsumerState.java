@@ -20,32 +20,18 @@ import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.entities.JsonConsumerRecord;
-import kafka.serializer.Decoder;
-import kafka.serializer.DefaultDecoder;
-import kafka.utils.VerifiableProperties;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.errors.SerializationException;
 
 public class JsonKafkaConsumerState extends KafkaConsumerState<byte[], byte[], Object, Object> {
 
-  private static final Decoder<byte[]> decoder = new DefaultDecoder(new VerifiableProperties());
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
   public JsonKafkaConsumerState(KafkaRestConfig config,
       ConsumerInstanceId instanceId,
       Consumer consumer) {
     super(config, instanceId, consumer);
-  }
-
-  @Override
-  protected Decoder<byte[]> getKeyDecoder() {
-    return decoder;
-  }
-
-  @Override
-  protected Decoder<byte[]> getValueDecoder() {
-    return decoder;
   }
 
   @Override

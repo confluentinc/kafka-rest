@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.resources.v2;
 
+import io.confluent.kafkarest.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -171,7 +172,8 @@ public class PartitionsResource {
             List<PartitionOffset> offsets = new Vector<PartitionOffset>();
             for (RecordMetadataOrException result : results) {
               if (result.getException() != null) {
-                int errorCode = Errors.codeFromProducerException(result.getException());
+                int errorCode =
+                    Utils.errorCodeFromProducerException(result.getException());
                 String errorMessage = result.getException().getMessage();
                 offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
               } else {

@@ -17,6 +17,7 @@ package io.confluent.kafkarest.integration;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import org.apache.avro.Schema;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,7 +29,6 @@ import java.util.Properties;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
-import io.confluent.kafka.serializers.KafkaAvroDecoder;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.AvroProduceRecord;
@@ -41,7 +41,6 @@ import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.TopicProduceRecord;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
-import kafka.utils.VerifiableProperties;
 import scala.collection.JavaConversions;
 
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
@@ -59,7 +58,7 @@ public class AvroProducerTest extends ClusterTestHarness {
       ))
   );
 
-  private KafkaAvroDecoder avroDecoder;
+  private Properties deserializerProps;
 
   // This test assumes that AvroConverterTest is good enough and testing one primitive type for
   // keys and one complex type for records is sufficient.
@@ -129,9 +128,8 @@ public class AvroProducerTest extends ClusterTestHarness {
                                       JavaConversions.asScalaBuffer(this.servers),
                                       new Properties());
 
-    Properties props = new Properties();
-    props.setProperty("schema.registry.url", schemaRegConnect);
-    avroDecoder = new KafkaAvroDecoder(new VerifiableProperties(props));
+    deserializerProps = new Properties();
+    deserializerProps.setProperty("schema.registry.url", schemaRegConnect);
   }
 
   private <K, V> void testProduceToTopic(List<? extends TopicProduceRecord> records,
@@ -145,9 +143,10 @@ public class AvroProducerTest extends ClusterTestHarness {
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     final ProduceResponse produceResponse = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
     TestUtils.assertPartitionOffsetsEqual(offsetResponses, produceResponse.getOffsets());
-    TestUtils.assertTopicContains(zkConnect, topicName,
-                                  payload.getRecords(), null,
-                                  avroDecoder, avroDecoder, false);
+    TestUtils.assertTopicContains(plaintextBrokerList, topicName,
+        payload.getRecords(), null,
+        KafkaAvroDeserializer.class.getName(), KafkaAvroDeserializer.class.getName(), deserializerProps,
+        false);
     assertEquals(produceResponse.getKeySchemaId(), (Integer) 1);
     assertEquals(produceResponse.getValueSchemaId(), (Integer) 2);
   }
@@ -169,9 +168,9 @@ public class AvroProducerTest extends ClusterTestHarness {
     final ProduceResponse poffsetResponse
         = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
     assertEquals(offsetResponse, poffsetResponse.getOffsets());
-    TestUtils.assertTopicContains(zkConnect, topicName,
-                                  payload.getRecords(), (Integer) 0,
-                                  avroDecoder, avroDecoder, false);
+    TestUtils.assertTopicContains(plaintextBrokerList, topicName, payload.getRecords(), (Integer) 0,
+        KafkaAvroDeserializer.class.getName(), KafkaAvroDeserializer.class.getName(),
+        deserializerProps,false);
     assertEquals((Integer) 1, poffsetResponse.getValueSchemaId());
   }
 

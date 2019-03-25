@@ -15,10 +15,10 @@
 
 package io.confluent.kafkarest.v2;
 
-import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.RestConfigUtils;
 import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.KafkaRestConfig;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -108,7 +108,7 @@ public class KafkaConsumerManager {
   public KafkaConsumerManager(final KafkaRestConfig config) {
     this.config = config;
     this.time = config.getTime();
-    this.bootstrapServers = config.bootstrapBrokers();
+    this.bootstrapServers = RestConfigUtils.bootstrapBrokers(config);
 
     // Cached thread pool
     int maxThreadCount = config.getInt(CONSUMER_MAX_THREADS_CONFIG) < 0 ? Integer.MAX_VALUE
@@ -246,7 +246,7 @@ public class KafkaConsumerManager {
           consumer = consumerFactory.createConsumer(props);
         }
       } catch (ConfigException e) {
-        throw Errors.invalidConsumerConfigException(e);
+        throw Errors.invalidConsumerConfigException(e.getMessage());
       }
 
       KafkaConsumerState state = createConsumerState(instanceConfig, cid, consumer);
@@ -268,7 +268,7 @@ public class KafkaConsumerManager {
           ConsumerInstanceConfig instanceConfig,
           ConsumerInstanceId cid, Consumer consumer
   ) throws RestServerErrorException {
-    KafkaRestConfig newConfig = ConsumerManager.newConsumerConfig(this.config, instanceConfig);
+    KafkaRestConfig newConfig = KafkaRestConfig.newConsumerConfig(this.config, instanceConfig);
 
     switch (instanceConfig.getFormat()) {
       case BINARY:

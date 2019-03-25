@@ -14,15 +14,6 @@
  */
 package io.confluent.kafkarest;
 
-import io.confluent.kafkarest.ConsumerManager;
-import io.confluent.kafkarest.ConsumerReadCallback;
-import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
-import io.confluent.kafkarest.BinaryConsumerState;
-
-import io.confluent.kafkarest.SystemTime;
-import io.confluent.rest.exceptions.RestServerErrorException;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;

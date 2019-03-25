@@ -46,7 +46,6 @@ import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.CoreUtils;
 import kafka.utils.TestUtils;
-import kafka.utils.ZkUtils;
 import kafka.zk.EmbeddedZookeeper;
 import scala.Option;
 import scala.collection.JavaConversions;
@@ -102,6 +101,8 @@ public abstract class ClusterTestHarness {
   protected List<KafkaConfig> configs = null;
   protected List<KafkaServer> servers = null;
   protected String brokerList = null;
+  //used for test consumer
+  protected String plaintextBrokerList = null;
 
   // Schema registry config
   protected String schemaRegCompatibility = AvroCompatibilityLevel.NONE.name;
@@ -160,6 +161,9 @@ public abstract class ClusterTestHarness {
     brokerList =
         TestUtils.getBrokerListStrFromServers(JavaConversions.asScalaBuffer(servers),
                                               getBrokerSecurityProtocol());
+    plaintextBrokerList =
+        TestUtils.getBrokerListStrFromServers(JavaConversions.asScalaBuffer(servers),
+            SecurityProtocol.PLAINTEXT);
 
     setupAcls();
     if (withSchemaRegistry) {
@@ -195,12 +199,11 @@ public abstract class ClusterTestHarness {
     restProperties.put("listeners",restConnect);
 
     restConfig = new KafkaRestConfig(restProperties);
-    restApp = new TestKafkaRestApplication(restConfig, getZkUtils(restConfig),
-                                           getMetadataObserver(restConfig),
-                                           getProducerPool(restConfig),
-                                           getConsumerManager(restConfig),
-                                           getSimpleConsumerFactory(restConfig),
-                                           getSimpleConsumerManager(restConfig));
+    restApp = new TestKafkaRestApplication(restConfig,
+        getProducerPool(restConfig),
+        null,
+        null,
+        getScalaConsumersContext(restConfig));
     restServer = restApp.createServer();
     restServer.start();
   }
@@ -234,27 +237,11 @@ public abstract class ClusterTestHarness {
     return props;
   }
 
-  protected ZkUtils getZkUtils(KafkaRestConfig appConfig) {
-    return null;
-  }
-
-  protected MetadataObserver getMetadataObserver(KafkaRestConfig appConfig) {
-    return null;
-  }
-
   protected ProducerPool getProducerPool(KafkaRestConfig appConfig) {
     return null;
   }
 
-  protected ConsumerManager getConsumerManager(KafkaRestConfig appConfig) {
-    return null;
-  }
-
-  protected SimpleConsumerFactory getSimpleConsumerFactory(KafkaRestConfig appConfig) {
-    return null;
-  }
-
-  protected SimpleConsumerManager getSimpleConsumerManager(KafkaRestConfig appConfig) {
+  protected ScalaConsumersContext getScalaConsumersContext(KafkaRestConfig appConfig) {
     return null;
   }
 

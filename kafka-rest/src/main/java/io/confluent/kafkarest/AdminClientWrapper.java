@@ -54,7 +54,8 @@ public class AdminClientWrapper {
   public static Properties adminProperties(KafkaRestConfig kafkaRestConfig) {
     Properties properties = new Properties();
     properties.putAll(kafkaRestConfig.getAdminProperties());
-    properties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaRestConfig.bootstrapBrokers());
+    properties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG,
+        RestConfigUtils.bootstrapBrokers(kafkaRestConfig));
     return properties;
   }
 

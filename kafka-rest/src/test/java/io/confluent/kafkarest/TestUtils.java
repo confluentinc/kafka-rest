@@ -19,13 +19,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.avro.generic.IndexedRecord;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
@@ -34,13 +37,11 @@ import io.confluent.kafkarest.entities.EntityUtils;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.rest.entities.ErrorMessage;
-import kafka.consumer.Consumer;
-import kafka.consumer.ConsumerConfig;
-import kafka.consumer.ConsumerIterator;
-import kafka.consumer.KafkaStream;
-import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.message.MessageAndMetadata;
-import kafka.serializer.Decoder;
+import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -253,32 +254,20 @@ public class TestUtils {
    * Consumes messages from Kafka to verify they match the inputs. Optionally add a partition to
    * only examine that partition.
    */
-  public static <K, V> void assertTopicContains(String zkConnect, String topicName,
+  public static <K, V> void assertTopicContains(String bootstrapServers, String topicName,
                                                 List<? extends ProduceRecord<K, V>> records,
                                                 Integer partition,
-                                                Decoder<K> keyDecoder, Decoder<V> valueDecoder,
+                                                String keyDeserializerClassName,
+                                                String valueDeserializerClassName,
+                                                Properties deserializerProps,
                                                 boolean validateContents) {
-    ConsumerConnector consumer = Consumer.createJavaConsumerConnector(
-        new ConsumerConfig(createConsumerProperties(zkConnect, "testgroup", "consumer0",
-                                                           20000L))
-    );
-    Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-    topicCountMap.put(topicName, 1);
-    Map<String, List<KafkaStream<K, V>>> streams =
-        consumer.createMessageStreams(topicCountMap, keyDecoder, valueDecoder);
-    KafkaStream<K, V> stream = streams.get(topicName).get(0);
-    ConsumerIterator<K, V> it = stream.iterator();
-    Map<Object, Integer> msgCounts = new HashMap<Object, Integer>();
-    for (int i = 0; i < records.size(); i++) {
-      MessageAndMetadata<K, V> data = it.next();
-      if (partition == null || data.partition() == partition) {
-        Object msg = TestUtils.encodeComparable(data.message());
-        msgCounts.put(msg, (msgCounts.get(msg) == null ? 0 : msgCounts.get(msg)) + 1);
-      }
-    }
-    consumer.shutdown();
 
-    Map<Object, Integer> refMsgCounts = new HashMap<Object, Integer>();
+    KafkaConsumer<K, V> consumer = createConsumer(bootstrapServers, "testgroup", "consumer0",
+        20000L, keyDeserializerClassName, valueDeserializerClassName, deserializerProps);
+
+    Map<Object, Integer> msgCounts = TestUtils.topicCounts(consumer, topicName, records, partition);
+
+    Map<Object, Integer> refMsgCounts = new HashMap<>();
     for (ProduceRecord rec : records) {
       Object msg = TestUtils.encodeComparable(rec.getValue());
       refMsgCounts.put(msg, (refMsgCounts.get(msg) == null ? 0 : refMsgCounts.get(msg)) + 1);
@@ -306,22 +295,63 @@ public class TestUtils {
     }
   }
 
-  /**
-   * Create a test config for a consumer
-   */
-  public static Properties createConsumerProperties(String zkConnect, String groupId, String consumerId,
-                                              Long consumerTimeout) {
-    Properties props = new Properties();
-    props.put("zookeeper.connect", zkConnect);
-    props.put("group.id", groupId);
-    props.put("consumer.id", consumerId);
-    props.put("consumer.timeout.ms", consumerTimeout.toString());
-    props.put("zookeeper.session.timeout.ms", "6000");
-    props.put("zookeeper.sync.time.ms", "200");
-    props.put("auto.commit.interval.ms", "1000");
-    props.put("rebalance.max.retries", "4");
-    props.put("auto.offset.reset", "smallest");
-    props.put("num.consumer.fetchers", "2");
-    return props;
+  public static <K, V> void assertTopicContains(String bootstrapServers, String topicName,
+                                                List<? extends ProduceRecord<K, V>> records,
+                                                Integer partition,
+                                                String keyDeserializerClassName,
+                                                String valueDeserializerClassName,
+                                                boolean validateContents) {
+    assertTopicContains(bootstrapServers, topicName, records, partition, keyDeserializerClassName,
+        valueDeserializerClassName, new Properties(), validateContents);
+  }
+
+  private static <V, K> Map<Object, Integer> topicCounts(final KafkaConsumer<K, V> consumer,
+                                                         final String topicName,
+                                                         final List<? extends ProduceRecord<K,V>> records,
+                                                         final Integer partition) {
+    Map<Object, Integer> msgCounts = new HashMap<Object, Integer>();
+    consumer.subscribe(Collections.singleton(topicName));
+
+    try {
+      AtomicInteger counter = new AtomicInteger(0);
+      org.apache.kafka.test.TestUtils.waitForCondition(() -> {
+        ConsumerRecords<K, V> consumerRecords = consumer.poll(Duration.ofMillis(100));
+
+        for (ConsumerRecord<K, V> record: consumerRecords) {
+          if (partition == null || record.partition() == partition) {
+            Object msg = encodeComparable(record.value());
+            msgCounts.put(msg, (msgCounts.get(msg) == null ? 0 : msgCounts.get(msg)) + 1);
+            if (counter.incrementAndGet() == records.size())
+              return true;
+          }
+        }
+
+        return false;
+      }, "Failed to consume messages");
+    } catch (InterruptedException e) {
+      throw new RuntimeException("InterruptedException occurred", e);
+    }
+
+    consumer.close();
+    return msgCounts;
+  }
+
+
+  private static <K, V> KafkaConsumer<K, V> createConsumer(String bootstrapServers, String groupId,
+                                                          String consumerId, Long consumerTimeout,
+                                                          String keyDeserializerClassName,
+                                                          String valueDeserializerClassName,
+                                                          Properties deserializerProps) {
+    Properties consumerConfig = new Properties();
+    consumerConfig.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+    consumerConfig.put(ConsumerConfig.CLIENT_ID_CONFIG, consumerId);
+    consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    consumerConfig.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "100");
+    consumerConfig.put(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, consumerTimeout.toString());
+    consumerConfig.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, keyDeserializerClassName);
+    consumerConfig.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializerClassName);
+    consumerConfig.putAll(deserializerProps);
+    return new KafkaConsumer<>(consumerConfig);
   }
 }

@@ -17,6 +17,7 @@ package io.confluent.kafkarest.unit;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.confluent.kafkarest.ScalaConsumersContext;
 import org.apache.avro.Schema;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -105,7 +106,8 @@ public class TopicsResourceAvroProduceTest
   public TopicsResourceAvroProduceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new DefaultKafkaRestContext(config, mdObserver, producerPool, null, null, null, null);
+    ScalaConsumersContext scalaConsumersContext = new ScalaConsumersContext(mdObserver, null, null);
+    ctx = new DefaultKafkaRestContext(config, producerPool, null, null, scalaConsumersContext);
 
     addResource(new TopicsResource(ctx));
 
