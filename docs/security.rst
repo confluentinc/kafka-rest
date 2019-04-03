@@ -18,5 +18,5 @@ By default, all the requests to the broker use the same Kerberos Principal or th
 to communicate with the broker when the ``client.security.protocol`` is configured to be either
 of SSL, SASL_PLAIN, or SASL_SSL. With this behavior, it's not possible to set fine-grained ACL's for
 individual topics. This behavior can be modified by using the Confluent Security Plugins. Refer to
-:ref:`|crest| Security Plugins<confluentsecurityplugins_kafaka_rest_security_plugin>` for more
+:ref:`REST Proxy Security Plugins<confluentsecurityplugins_kafaka_rest_security_plugin>` for more
 details.
