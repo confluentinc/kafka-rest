@@ -85,7 +85,7 @@ General
 
 
 ``access.control.allow.methods``
-  Set value to Jetty Access-Control-Allow-Origin header for specified methods
+  Set value to Jetty Access-Control-Allow-Methods header for specified methods
 
   * Type: string
   * Default: ""
