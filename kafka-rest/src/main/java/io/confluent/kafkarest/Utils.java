@@ -15,9 +15,15 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 import org.apache.kafka.common.KafkaException;
+import org.apache.kafka.common.errors.AuthenticationException;
+import org.apache.kafka.common.errors.AuthorizationException;
 import org.apache.kafka.common.errors.RetriableException;
+import org.eclipse.jetty.util.StringUtil;
+
+import java.util.concurrent.ExecutionException;
 
 import static io.confluent.kafkarest.Errors.KAFKA_ERROR_ERROR_CODE;
 
@@ -27,7 +33,11 @@ public class Utils {
       = "Unexpected non-Kafka exception returned by Kafka";
 
   public static int errorCodeFromProducerException(Throwable e) {
-    if (e instanceof RetriableException) {
+    if (e instanceof AuthenticationException) {
+      return Errors.KAFKA_AUTHENTICATION_ERROR_CODE;
+    } else if (e instanceof AuthorizationException) {
+      return Errors.KAFKA_AUTHORIZATION_ERROR_CODE;
+    } else if (e instanceof RetriableException) {
       return Errors.KAFKA_RETRIABLE_ERROR_ERROR_CODE;
     } else if (e instanceof KafkaException) {
       return KAFKA_ERROR_ERROR_CODE;
@@ -43,4 +53,44 @@ public class Utils {
     }
   }
 
+  public static RestException convertProducerException(KafkaException exception) {
+    if (StringUtil.startsWithIgnoreCase(exception.getMessage(), "Invalid partition")) {
+      throw Errors.partitionNotFoundException();
+    } else if (exception instanceof AuthenticationException) {
+      return Errors.authenticationException(exception.getMessage());
+    } else if (exception instanceof AuthorizationException) {
+      return Errors.authorizationException(exception.getMessage());
+    } else {
+      throw Errors.kafkaErrorException(exception);
+    }
+  }
+
+  public static RestException convertConsumerException(Exception exception) {
+    if (exception != null && !(exception instanceof RestException)) {
+      if (exception instanceof AuthenticationException) {
+        return Errors.authenticationException(exception.getMessage());
+      } else if (exception instanceof AuthorizationException) {
+        return Errors.authorizationException(exception.getMessage());
+      } else {
+        return Errors.kafkaErrorException(exception);
+      }
+    }
+
+    return (RestException) exception;
+  }
+
+  public static RestException convertAdminException(Exception exception) {
+    if (exception instanceof ExecutionException) {
+      final Throwable cause = exception.getCause();
+      if (cause != null) {
+        if (cause instanceof AuthenticationException) {
+          return Errors.authenticationException(cause.getMessage());
+        } else if (cause instanceof AuthorizationException) {
+          return Errors.authorizationException(cause.getMessage());
+        }
+      }
+    }
+
+    return Errors.kafkaErrorException(exception);
+  }
 }

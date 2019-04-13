@@ -7,4 +7,5 @@ docs/_build/
 # IntelliJ data
 *.iml
 .idea/
-.ipr
+*.ipr
+*.iws

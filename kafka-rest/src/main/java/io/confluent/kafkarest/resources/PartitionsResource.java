@@ -17,7 +17,7 @@ package io.confluent.kafkarest.resources;
 
 import io.confluent.kafkarest.Utils;
 import io.confluent.rest.exceptions.RestException;
-import org.eclipse.jetty.util.StringUtil;
+import org.apache.kafka.common.KafkaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +54,6 @@ import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
-import kafka.common.KafkaException;
 
 @Path("/topics/{topic}/partitions")
 @Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW,
@@ -283,11 +282,7 @@ public class PartitionsResource {
           }
       );
     } catch (KafkaException e) {
-      if (StringUtil.startsWithIgnoreCase(e.getMessage(), "Invalid partition")) {
-        Errors.partitionNotFoundException();
-      } else {
-        Errors.kafkaErrorException(e);
-      }
+      throw Utils.convertProducerException(e);
     }
   }
 

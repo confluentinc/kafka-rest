@@ -27,6 +27,20 @@ import io.confluent.rest.exceptions.RestServerErrorException;
 
 public class Errors {
 
+  public static final int KAFKA_AUTHENTICATION_ERROR_CODE = 40101;
+
+  public static RestException authenticationException(String errorMessage) {
+    return new RestException(errorMessage,
+        Response.Status.UNAUTHORIZED.getStatusCode(), KAFKA_AUTHENTICATION_ERROR_CODE);
+  }
+
+  public static final int KAFKA_AUTHORIZATION_ERROR_CODE = 40301;
+
+  public static RestException authorizationException(String errorMessage) {
+    return new RestException(errorMessage,
+        Response.Status.FORBIDDEN.getStatusCode(), KAFKA_AUTHORIZATION_ERROR_CODE);
+  }
+
   public static final String TOPIC_NOT_FOUND_MESSAGE = "Topic not found.";
   public static final int TOPIC_NOT_FOUND_ERROR_CODE = 40401;
 

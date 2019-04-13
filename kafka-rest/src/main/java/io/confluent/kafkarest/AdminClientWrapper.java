@@ -69,7 +69,7 @@ public class AdminClientWrapper {
         brokerIds.add(node.id());
       }
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw Errors.kafkaErrorException(e);
+      throw Utils.convertAdminException(e);
     }
     return brokerIds;
   }
@@ -80,7 +80,7 @@ public class AdminClientWrapper {
       allTopics = new TreeSet<>(
           adminClient.listTopics().names().get(initTimeOut, TimeUnit.MILLISECONDS));
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw Errors.kafkaErrorException(e);
+      throw Utils.convertAdminException(e);
     }
     return allTopics;
   }
@@ -135,7 +135,7 @@ public class AdminClientWrapper {
       Topic topic = new Topic(topicName, topicProps, partitions);
       return topic;
     } catch (InterruptedException | ExecutionException e) {
-      throw Errors.kafkaErrorException(e);
+      throw Utils.convertAdminException(e);
     }
   }
 
@@ -173,7 +173,7 @@ public class AdminClientWrapper {
       return adminClient.describeTopics(Collections.unmodifiableList(Arrays.asList(topicName)))
           .values().get(topicName).get(initTimeOut, TimeUnit.MILLISECONDS);
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw Errors.kafkaErrorException(e);
+      throw Utils.convertAdminException(e);
     }
   }
 

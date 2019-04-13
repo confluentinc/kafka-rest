@@ -20,6 +20,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.RetriableException;
+import org.apache.kafka.common.errors.TopicAuthorizationException;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -28,6 +29,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import javax.ws.rs.client.Entity;
@@ -82,7 +84,8 @@ public class TopicsResourceBinaryProduceTest
   private List<PartitionOffset> kafkaExceptionResults;
   private List<RecordMetadataOrException> produceKafkaRetriableExceptionResults;
   private List<PartitionOffset> kafkaRetriableExceptionResults;
-
+  private List<RecordMetadataOrException> produceKafkaAuthorizationExceptionResults;
+  private List<PartitionOffset> kafkaAuthorizationExceptionResults;
   private static final String exceptionMessage = "Error message";
 
   public TopicsResourceBinaryProduceTest() throws RestConfigException {
@@ -146,6 +149,15 @@ public class TopicsResourceBinaryProduceTest
     kafkaRetriableExceptionResults = Arrays.asList(
         new PartitionOffset(null, null, Errors.KAFKA_RETRIABLE_ERROR_ERROR_CODE,
                             exceptionMessage)
+    );
+
+    produceKafkaAuthorizationExceptionResults = Collections.singletonList(
+        new RecordMetadataOrException(null, new TopicAuthorizationException(topicName) {
+        })
+    );
+    kafkaAuthorizationExceptionResults = Collections.singletonList(
+        new PartitionOffset(null, null, Errors.KAFKA_AUTHORIZATION_ERROR_CODE,
+            new TopicAuthorizationException(topicName).getMessage())
     );
   }
 
@@ -321,5 +333,11 @@ public class TopicsResourceBinaryProduceTest
   public void testProduceToTopicKafkaRetriableException() {
     testProduceToTopicException(produceKafkaRetriableExceptionResults,
                                 kafkaRetriableExceptionResults);
+  }
+
+  @Test
+  public void testProduceToTopicKafkaAuthorizationException() {
+    testProduceToTopicException(produceKafkaAuthorizationExceptionResults,
+        kafkaAuthorizationExceptionResults);
   }
 }

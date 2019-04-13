@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.unit;
 
 import io.confluent.kafkarest.ScalaConsumersContext;
+import io.confluent.kafkarest.Utils;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -34,7 +35,6 @@ import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
@@ -114,11 +114,7 @@ public class AbstractConsumerResourceTest
       public Object answer() {
         RestException e = null;
         if (readException != null) {
-          if (!(readException instanceof RestException)) {
-            e = Errors.kafkaErrorException(readException);
-          } else {
-            e = (RestException) readException;
-          }
+          e = Utils.convertConsumerException(readException);
         }
         readCallback.getValue().onCompletion(readResult, e);
         return null;
