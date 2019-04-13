@@ -44,7 +44,7 @@ public class BrokersResource {
   @GET
   @Valid
   @PerformanceMetric("brokers.list")
-  public BrokerList list() {
+  public BrokerList list() throws Exception {
     return new BrokerList(ctx.getAdminClientWrapper().getBrokerIds());
   }
 }

@@ -31,15 +31,11 @@ import java.util.List;
 import java.util.Properties;
 import java.util.TreeSet;
 import java.util.Vector;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
-import io.confluent.rest.exceptions.RestServerErrorException;
-
 
 public class AdminClientWrapper {
 
@@ -59,38 +55,30 @@ public class AdminClientWrapper {
     return properties;
   }
 
-  public List<Integer> getBrokerIds() {
+  public List<Integer> getBrokerIds() throws Exception {
     List<Integer> brokerIds = new Vector<>();
     DescribeClusterResult clusterResults = adminClient.describeCluster();
-    try {
-      Collection<Node> nodeCollection =
-          clusterResults.nodes().get(initTimeOut, TimeUnit.MILLISECONDS);
-      for (Node node : nodeCollection) {
-        brokerIds.add(node.id());
-      }
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw Utils.convertAdminException(e);
+    Collection<Node> nodeCollection =
+        clusterResults.nodes().get(initTimeOut, TimeUnit.MILLISECONDS);
+    for (Node node : nodeCollection) {
+      brokerIds.add(node.id());
     }
     return brokerIds;
   }
 
-  public Collection<String> getTopicNames() {
+  public Collection<String> getTopicNames() throws Exception {
     Collection<String> allTopics = null;
-    try {
-      allTopics = new TreeSet<>(
-          adminClient.listTopics().names().get(initTimeOut, TimeUnit.MILLISECONDS));
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw Utils.convertAdminException(e);
-    }
+    allTopics = new TreeSet<>(
+        adminClient.listTopics().names().get(initTimeOut, TimeUnit.MILLISECONDS));
     return allTopics;
   }
 
-  public boolean topicExists(String topic) {
+  public boolean topicExists(String topic) throws Exception {
     Collection<String> allTopics = getTopicNames();
     return allTopics.contains(topic);
   }
 
-  public Topic getTopic(String topicName) {
+  public Topic getTopic(String topicName) throws Exception {
     Topic topic = null;
     if (topicExists(topicName)) {
       TopicDescription topicDescription = getTopicDescription(topicName);
@@ -100,13 +88,13 @@ public class AdminClientWrapper {
     return topic;
   }
 
-  public List<Partition> getTopicPartitions(String topicName) {
+  public List<Partition> getTopicPartitions(String topicName) throws Exception {
     TopicDescription topicDescription = getTopicDescription(topicName);
     List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), null);
     return partitions;
   }
 
-  public Partition getTopicPartition(String topicName, int partition) {
+  public Partition getTopicPartition(String topicName, int partition) throws Exception {
     TopicDescription topicDescription = getTopicDescription(topicName);
     List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), partition);
     if (partitions.isEmpty()) {
@@ -115,28 +103,24 @@ public class AdminClientWrapper {
     return partitions.get(0);
   }
 
-  public boolean partitionExists(String topicName, int partition) {
+  public boolean partitionExists(String topicName, int partition) throws Exception {
     Topic topic = getTopic(topicName);
     return (partition >= 0 && partition < topic.getPartitions().size());
   }
 
-  private Topic buildTopic(String topicName, TopicDescription topicDescription) {
-    try {
-      List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), null);
+  private Topic buildTopic(String topicName, TopicDescription topicDescription) throws Exception {
+    List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), null);
 
-      ConfigResource topicResource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
-      Config config = adminClient.describeConfigs(
-          Collections.unmodifiableList(Arrays.asList(topicResource))
-      ).values().get(topicResource).get();
-      Properties topicProps = new Properties();
-      for (ConfigEntry configEntry : config.entries()) {
-        topicProps.put(configEntry.name(), configEntry.value());
-      }
-      Topic topic = new Topic(topicName, topicProps, partitions);
-      return topic;
-    } catch (InterruptedException | ExecutionException e) {
-      throw Utils.convertAdminException(e);
+    ConfigResource topicResource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
+    Config config = adminClient.describeConfigs(
+        Collections.unmodifiableList(Arrays.asList(topicResource))
+    ).values().get(topicResource).get();
+    Properties topicProps = new Properties();
+    for (ConfigEntry configEntry : config.entries()) {
+      topicProps.put(configEntry.name(), configEntry.value());
     }
+    Topic topic = new Topic(topicName, topicProps, partitions);
+    return topic;
   }
 
   private List<Partition> buildPartitonsData(
@@ -168,13 +152,9 @@ public class AdminClientWrapper {
     return partitionList;
   }
 
-  private TopicDescription getTopicDescription(String topicName) throws RestServerErrorException {
-    try {
-      return adminClient.describeTopics(Collections.unmodifiableList(Arrays.asList(topicName)))
-          .values().get(topicName).get(initTimeOut, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw Utils.convertAdminException(e);
-    }
+  private TopicDescription getTopicDescription(String topicName) throws Exception {
+    return adminClient.describeTopics(Collections.unmodifiableList(Arrays.asList(topicName)))
+        .values().get(topicName).get(initTimeOut, TimeUnit.MILLISECONDS);
   }
 
   public void shutdown() {

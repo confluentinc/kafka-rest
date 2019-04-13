@@ -17,16 +17,13 @@ package io.confluent.kafkarest;
 
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.errors.AuthenticationException;
 import org.apache.kafka.common.errors.AuthorizationException;
 import org.apache.kafka.common.errors.RetriableException;
-import org.eclipse.jetty.util.StringUtil;
 
 import javax.ws.rs.core.Response;
-import java.util.concurrent.ExecutionException;
 
 import static io.confluent.kafkarest.Errors.KAFKA_ERROR_ERROR_CODE;
 
@@ -53,45 +50,6 @@ public class Utils {
       throw new RestServerErrorException(UNEXPECTED_PRODUCER_EXCEPTION,
                                          RestServerErrorException.DEFAULT_ERROR_CODE, e
       );
-    }
-  }
-
-  public static RestException convertProducerException(KafkaException exception) {
-    if (StringUtil.startsWithIgnoreCase(exception.getMessage(), "Invalid partition")) {
-      throw Errors.partitionNotFoundException();
-    } else {
-      return handleKafkaException(exception);
-    }
-  }
-
-  public static RestException convertConsumerException(Exception exception) {
-    if (exception == null) {
-      return null;
-    } else if (!(exception instanceof RestException)) {
-      return handleKafkaException(exception);
-    } else {
-      return (RestException) exception;
-    }
-  }
-
-  public static RestException convertAdminException(Exception exception) {
-    if (exception instanceof ExecutionException) {
-      final Throwable cause = exception.getCause();
-      if (cause != null) {
-        return handleKafkaException(cause);
-      }
-    }
-
-    return handleKafkaException(exception);
-  }
-
-  private static RestException handleKafkaException(final Throwable exception) {
-    if (exception instanceof AuthenticationException) {
-      return Errors.authenticationException(exception.getMessage());
-    } else if (exception instanceof AuthorizationException) {
-      return Errors.authorizationException(exception.getMessage());
-    } else {
-      return Errors.kafkaErrorException(exception);
     }
   }
 

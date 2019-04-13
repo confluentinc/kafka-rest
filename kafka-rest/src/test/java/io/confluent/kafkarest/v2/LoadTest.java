@@ -70,7 +70,7 @@ public class LoadTest {
         private final Time time;
         private volatile boolean sawCallback;
         private volatile List<? extends ConsumerRecord<byte[], byte[]>> actualRecords = null;
-        private volatile RestException actualException;
+        private volatile Exception actualException;
         private ConsumerReadCallback callback;
         private int latestOffset = 0;
         private long readStartMs;
@@ -86,7 +86,7 @@ public class LoadTest {
             sawCallback = false;
             callback = new ConsumerReadCallback<byte[], byte[]>() {
                 @Override
-                public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
+                public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, Exception e) {
                     sawCallback = true;
                     actualRecords = records;
                     actualException = e;

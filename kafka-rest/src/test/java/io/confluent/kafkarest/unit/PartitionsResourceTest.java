@@ -83,7 +83,7 @@ public class PartitionsResourceTest
   }
 
   @Test
-  public void testGetPartitions() {
+  public void testGetPartitions() throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       EasyMock.expect(adminClientWrapper.topicExists(topicName)).andReturn(true);
       EasyMock.expect(adminClientWrapper.getTopicPartitions(topicName))
@@ -103,7 +103,7 @@ public class PartitionsResourceTest
   }
 
   @Test
-  public void testGetPartition() {
+  public void testGetPartition() throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       EasyMock.expect(adminClientWrapper.topicExists(topicName)).andReturn(true);
       EasyMock.expect(adminClientWrapper.getTopicPartition(topicName, 0))
@@ -132,7 +132,7 @@ public class PartitionsResourceTest
   }
 
   @Test
-  public void testListPartitionsInvalidTopic() {
+  public void testListPartitionsInvalidTopic() throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       EasyMock.expect(adminClientWrapper.topicExists("nonexistanttopic")).andReturn(false);
       EasyMock.replay(adminClientWrapper);
@@ -149,7 +149,7 @@ public class PartitionsResourceTest
   }
 
   @Test
-  public void testGetInvalidPartition() {
+  public void testGetInvalidPartition() throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       EasyMock.expect(adminClientWrapper.topicExists(topicName)).andReturn(true);
       EasyMock.expect(adminClientWrapper.getTopicPartition(topicName, 1000))

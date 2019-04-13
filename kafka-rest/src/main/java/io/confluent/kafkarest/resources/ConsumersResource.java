@@ -45,7 +45,6 @@ import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.rest.annotations.PerformanceMetric;
-import io.confluent.rest.exceptions.RestException;
 
 @Path("/consumers")
 // We include embedded formats here so you can always use these headers when interacting with
@@ -174,7 +173,7 @@ public class ConsumersResource {
           @Override
           public void onCompletion(
               List<? extends ConsumerRecord<ClientKeyT, ClientValueT>> records,
-              RestException e
+              Exception e
           ) {
             if (e != null) {
               asyncResponse.resume(e);

@@ -16,8 +16,6 @@
 package io.confluent.kafkarest.resources;
 
 import io.confluent.kafkarest.Utils;
-import io.confluent.rest.exceptions.RestException;
-import org.apache.kafka.common.KafkaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +72,7 @@ public class PartitionsResource {
 
   @GET
   @PerformanceMetric("partitions.list")
-  public List<Partition> list(final @PathParam("topic") String topic) {
+  public List<Partition> list(final @PathParam("topic") String topic) throws Exception {
     checkTopicExists(topic);
     return ctx.getAdminClientWrapper().getTopicPartitions(topic);
   }
@@ -85,7 +83,7 @@ public class PartitionsResource {
   public Partition getPartition(
       final @PathParam("topic") String topic,
       @PathParam("partition") int partition
-  ) {
+  )  throws Exception {
     checkTopicExists(topic);
     Partition part = ctx.getAdminClientWrapper().getTopicPartition(topic, partition);
     if (part == null) {
@@ -217,7 +215,7 @@ public class PartitionsResource {
           @Override
           public void onCompletion(
               List<? extends ConsumerRecord<K, V>> records,
-              RestException e
+              Exception e
           ) {
             log.trace(
                 "Completed simple consume id={} records={} exception={}",
@@ -247,52 +245,48 @@ public class PartitionsResource {
         asyncResponse, topic, partition, format, request
     );
 
-    try {
-      ctx.getProducerPool().produce(
-          topic, partition, format,
-          request,
-          request.getRecords(),
-          new ProducerPool.ProduceRequestCallback() {
-            public void onCompletion(
-                Integer keySchemaId, Integer valueSchemaId,
-                List<RecordMetadataOrException> results
-            ) {
-              ProduceResponse response = new ProduceResponse();
-              List<PartitionOffset> offsets = new Vector<PartitionOffset>();
-              for (RecordMetadataOrException result : results) {
-                if (result.getException() != null) {
-                  int errorCode =
-                      Utils.errorCodeFromProducerException(result.getException());
-                  String errorMessage = result.getException().getMessage();
-                  offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
-                } else {
-                  offsets.add(new PartitionOffset(result.getRecordMetadata().partition(),
-                      result.getRecordMetadata().offset(),
-                      null, null
-                  ));
-                }
+    ctx.getProducerPool().produce(
+        topic, partition, format,
+        request,
+        request.getRecords(),
+        new ProducerPool.ProduceRequestCallback() {
+          public void onCompletion(
+              Integer keySchemaId, Integer valueSchemaId,
+              List<RecordMetadataOrException> results
+          ) {
+            ProduceResponse response = new ProduceResponse();
+            List<PartitionOffset> offsets = new Vector<PartitionOffset>();
+            for (RecordMetadataOrException result : results) {
+              if (result.getException() != null) {
+                int errorCode =
+                    Utils.errorCodeFromProducerException(result.getException());
+                String errorMessage = result.getException().getMessage();
+                offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
+              } else {
+                offsets.add(new PartitionOffset(result.getRecordMetadata().partition(),
+                    result.getRecordMetadata().offset(),
+                    null, null
+                ));
               }
-              response.setOffsets(offsets);
-              response.setKeySchemaId(keySchemaId);
-              response.setValueSchemaId(valueSchemaId);
-              log.trace("Completed topic produce request id={} response={}",
-                  asyncResponse, response
-              );
-              Response.Status requestStatus = Utils.produceRequestStatus(response);
-              asyncResponse.resume(Response.status(requestStatus).entity(response).build());
             }
+            response.setOffsets(offsets);
+            response.setKeySchemaId(keySchemaId);
+            response.setValueSchemaId(valueSchemaId);
+            log.trace("Completed topic produce request id={} response={}",
+                asyncResponse, response
+            );
+            Response.Status requestStatus = Utils.produceRequestStatus(response);
+            asyncResponse.resume(Response.status(requestStatus).entity(response).build());
           }
-      );
-    } catch (KafkaException e) {
-      throw Utils.convertProducerException(e);
-    }
+        }
+    );
   }
 
-  private boolean topicExists(final String topic) {
+  private boolean topicExists(final String topic) throws Exception {
     return ctx.getAdminClientWrapper().topicExists(topic);
   }
 
-  private void checkTopicExists(final String topic) {
+  private void checkTopicExists(final String topic) throws Exception {
     if (!topicExists(topic)) {
       throw Errors.topicNotFoundException();
     }

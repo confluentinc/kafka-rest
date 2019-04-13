@@ -124,7 +124,7 @@ public class PartitionsResourceBinaryProduceTest
       String requestMediatype,
       EmbeddedFormat recordFormat,
       List<? extends ProduceRecord<K, V>> records,
-                                             final List<RecordMetadataOrException> results) {
+                                             final List<RecordMetadataOrException> results)  throws Exception {
     final PartitionProduceRequest request = new PartitionProduceRequest();
     request.setRecords(records);
     final Capture<ProducerPool.ProduceRequestCallback>
@@ -163,7 +163,7 @@ public class PartitionsResourceBinaryProduceTest
   }
 
   @Test
-  public void testProduceToPartitionOnlyValues() {
+  public void testProduceToPartitionOnlyValues() throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
         Response
@@ -184,7 +184,7 @@ public class PartitionsResourceBinaryProduceTest
   }
 
   @Test
-  public void testProduceToPartitionByKey() {
+  public void testProduceToPartitionByKey() throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
         Response
@@ -205,7 +205,7 @@ public class PartitionsResourceBinaryProduceTest
   }
 
   @Test
-  public void testProduceToPartitionFailure() {
+  public void testProduceToPartitionFailure() throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
         // null offsets triggers a generic exception
@@ -225,7 +225,7 @@ public class PartitionsResourceBinaryProduceTest
   }
 
   @Test
-  public void testProduceInvalidRequest() {
+  public void testProduceInvalidRequest() throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
         EasyMock.expect(adminClientWrapper.topicExists(topicName)).andReturn(true);
@@ -268,7 +268,7 @@ public class PartitionsResourceBinaryProduceTest
   }
 
   @Test
-  public void testProduceToPartitionAuthorizationErrors() {
+  public void testProduceToPartitionAuthorizationErrors() throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
         Response

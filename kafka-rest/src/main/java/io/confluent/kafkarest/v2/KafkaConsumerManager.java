@@ -21,7 +21,6 @@ import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.RestConfigUtils;
 import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.Utils;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
@@ -66,7 +65,6 @@ import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.ConsumerSubscriptionResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.TopicPartitionOffsetMetadata;
-import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestNotFoundException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 
@@ -411,8 +409,7 @@ public class KafkaConsumerManager {
       } catch (Exception e) {
         log.error("Failed to read records from consumer {} while executing read task ({}). {}",
                   taskState.consumerState.getId().toString(), taskState.task, e);
-        RestException responseException = Utils.convertConsumerException(e);
-        taskState.callback.onCompletion(null, responseException);
+        taskState.callback.onCompletion(null, e);
       }
     }
 
@@ -459,8 +456,7 @@ public class KafkaConsumerManager {
           callback.onCompletion(offsets, null);
         } catch (Exception e) {
           log.error("Failed to commit offsets for consumer " + state.getId().toString(), e);
-          Exception responseException = Utils.convertConsumerException(e);
-          callback.onCompletion(null, responseException);
+          callback.onCompletion(null, e);
         } finally {
           state.updateExpiration();
         }

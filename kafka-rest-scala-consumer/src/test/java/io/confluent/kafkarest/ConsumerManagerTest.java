@@ -364,7 +364,7 @@ public class ConsumerManagerTest {
     readTopic(cid, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
       public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               RestException e) {
+                               Exception e) {
         sawCallback = true;
         actualException = e;
         // Should only see the first two messages since the third pushes us over the limit.
@@ -383,7 +383,7 @@ public class ConsumerManagerTest {
     readTopic(cid, 512, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
       public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               RestException e) {
+                               Exception e) {
         sawCallback = true;
         actualException = e;
         // Should only see the first two messages since the third pushes us over the limit.
@@ -494,7 +494,7 @@ public class ConsumerManagerTest {
     Future f = readTopicFuture(cid, topicName, Long.MAX_VALUE, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
       public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               RestException e) {
+                               Exception e) {
         sawCallback = true;
         actualException = e;
       }
@@ -531,7 +531,7 @@ public class ConsumerManagerTest {
     Future f = readTopicFuture(cid, topicName, Long.MAX_VALUE, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
       public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               RestException e) {
+                               Exception e) {
         sawCallback = true;
         actualRecords = records;
         actualException = e;
@@ -563,7 +563,7 @@ public class ConsumerManagerTest {
     Future f = readTopicFuture(cid, topicName, Long.MAX_VALUE, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
       public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               RestException e) {
+                               Exception e) {
         sawCallback = true;
         actualRecords = records;
         actualException = e;
@@ -654,7 +654,7 @@ public class ConsumerManagerTest {
     readTopic(cid, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
       public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               RestException e) {
+                               Exception e) {
         sawCallback = true;
         assertNull(e);
         assertEquals(referenceRecords, records);
@@ -678,7 +678,7 @@ public class ConsumerManagerTest {
     readTopic(cid, topic, Long.MAX_VALUE, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
       public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               RestException e) {
+                               Exception e) {
         sawCallback = true;
         actualRecords = records;
         actualException = e;
@@ -730,7 +730,7 @@ public class ConsumerManagerTest {
         new ConsumerReadCallback<byte[], byte[]>() {
           @Override
           public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                                   RestException e) {
+                                   Exception e) {
             actualException = e;
             actualRecords = records;
             sawCallback = true;
@@ -745,7 +745,7 @@ public class ConsumerManagerTest {
     Future future = readTopicFuture(cid, topic, Long.MAX_VALUE, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
       public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               RestException e) {
+                               Exception e) {
         sawCallback = true;
         actualRecords = records;
         actualException = e;

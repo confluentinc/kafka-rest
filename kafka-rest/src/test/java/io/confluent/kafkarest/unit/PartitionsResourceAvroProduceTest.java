@@ -119,7 +119,7 @@ public class PartitionsResourceAvroProduceTest
                                              String acceptHeader,
                                              String requestMediatype,
                                              EmbeddedFormat recordFormat,
-                                             final List<RecordMetadataOrException> results) {
+                                             final List<RecordMetadataOrException> results) throws Exception {
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
         Capture.newInstance();
@@ -156,7 +156,7 @@ public class PartitionsResourceAvroProduceTest
   }
 
   @Test
-  public void testProduceToPartitionByKey() {
+  public void testProduceToPartitionByKey() throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_AVRO) {
         final PartitionProduceRequest request = new PartitionProduceRequest();

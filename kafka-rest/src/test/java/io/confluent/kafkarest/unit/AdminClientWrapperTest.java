@@ -19,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 
 public class AdminClientWrapperTest {
   @Test
-  public void testGetTopicOnNullLeaderDoesntThrowNPE() throws RestConfigException {
+  public void testGetTopicOnNullLeaderDoesntThrowNPE() throws Exception {
     Properties props = new Properties();
     props.put(KafkaRestConfig.KAFKACLIENT_INIT_TIMEOUT_CONFIG, "100");
     KafkaRestConfig config = new KafkaRestConfig(props);

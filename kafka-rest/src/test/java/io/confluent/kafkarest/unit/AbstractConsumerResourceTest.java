@@ -16,7 +16,6 @@
 package io.confluent.kafkarest.unit;
 
 import io.confluent.kafkarest.ScalaConsumersContext;
-import io.confluent.kafkarest.Utils;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -46,7 +45,6 @@ import io.confluent.kafkarest.resources.ConsumersResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.RestNotFoundException;
-import io.confluent.rest.exceptions.RestException;
 
 public class AbstractConsumerResourceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
@@ -112,11 +110,7 @@ public class AbstractConsumerResourceTest
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() {
-        RestException e = null;
-        if (readException != null) {
-          e = Utils.convertConsumerException(readException);
-        }
-        readCallback.getValue().onCompletion(readResult, e);
+        readCallback.getValue().onCompletion(readResult, readException);
         return null;
       }
     });

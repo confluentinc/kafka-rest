@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
+import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
 import org.eclipse.jetty.util.StringUtil;
 
 import java.lang.reflect.Proxy;
@@ -112,6 +114,13 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     for (RestResourceExtension restResourceExtension : restResourceExtensions) {
       restResourceExtension.register(config, appConfig);
     }
+  }
+
+  @Override
+  protected void registerExceptionMappers(Configurable<?> config, KafkaRestConfig restConfig) {
+    config.register(ConstraintViolationExceptionMapper.class);
+    config.register(new WebApplicationExceptionMapper(restConfig));
+    config.register(new KafkaExceptionMapper(restConfig));
   }
 
   @Override

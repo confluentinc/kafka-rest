@@ -344,7 +344,7 @@ public class KafkaConsumerManagerTest {
         consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
                 new ConsumerReadCallback<byte[], byte[]>() {
                     @Override
-                    public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
+                    public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, Exception e) {
                         actualException = e;
                         actualRecords = records;
                         sawCallback = true;
@@ -370,7 +370,7 @@ public class KafkaConsumerManagerTest {
         consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
                 new ConsumerReadCallback<byte[], byte[]>() {
                     @Override
-                    public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
+                    public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, Exception e) {
                         actualException = e;
                         actualRecords = records;
                         sawCallback = true;
@@ -395,7 +395,7 @@ public class KafkaConsumerManagerTest {
         consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
                 new ConsumerReadCallback<byte[], byte[]>() {
                     @Override
-                    public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
+                    public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, Exception e) {
                         actualException = e;
                         actualRecords = records;
                         sawCallback = true;
@@ -445,7 +445,7 @@ public class KafkaConsumerManagerTest {
 
         ConsumerReadCallback callback = new ConsumerReadCallback<byte[], byte[]>() {
             @Override
-            public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
+            public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, Exception e) {
                 actualException = e;
                 actualRecords = records;
                 sawCallback = true;
@@ -511,7 +511,7 @@ public class KafkaConsumerManagerTest {
         consumerManager.readRecords(groupName, cid, BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
             new ConsumerReadCallback<byte[], byte[]>() {
               @Override
-              public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
+              public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, Exception e) {
                 actualException = e;
                 actualRecords = records;
                 sawCallback = true;
