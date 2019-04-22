@@ -15,7 +15,9 @@
 
 package io.confluent.kafkarest.integration;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -41,9 +43,25 @@ public class AbstractProducerTest extends ClusterTestHarness {
                                            String valueDeserializerClassName,
                                            List<PartitionOffset> offsetResponses,
                                            boolean matchPartitions) {
+    testProduceToTopic(topicName,
+        records,
+        keyDeserializerClassName,
+        valueDeserializerClassName,
+        offsetResponses,
+        matchPartitions,
+        Collections.emptyMap());
+  }
+
+  protected <K, V> void testProduceToTopic(String topicName,
+                                           List<? extends TopicProduceRecord> records,
+                                           String keyDeserializerClassName,
+                                           String valueDeserializerClassName,
+                                           List<PartitionOffset> offsetResponses,
+                                           boolean matchPartitions,
+                                           Map<String, String> queryParams) {
     TopicProduceRequest payload = new TopicProduceRequest();
     payload.setRecords(records);
-    Response response = request("/topics/" + topicName)
+    Response response = request("/topics/" + topicName, queryParams)
         .post(Entity.entity(payload, getEmbeddedContentType()));
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     final ProduceResponse produceResponse = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
@@ -56,16 +74,26 @@ public class AbstractProducerTest extends ClusterTestHarness {
         keyDeserializerClassName, valueDeserializerClassName, true);
   }
 
-
   protected <K, V> void testProduceToPartition(String topicName,
                                                int partition,
                                                List<? extends ProduceRecord<K, V>> records,
                                                String keySerializerClassName,
                                                String valueSerializerClassName,
                                                List<PartitionOffset> offsetResponse) {
+    testProduceToPartition(topicName, partition, records, keySerializerClassName,
+        valueSerializerClassName, offsetResponse, Collections.emptyMap());
+  }
+
+  protected <K, V> void testProduceToPartition(String topicName,
+                                               int partition,
+                                               List<? extends ProduceRecord<K, V>> records,
+                                               String keySerializerClassName,
+                                               String valueSerializerClassName,
+                                               List<PartitionOffset> offsetResponse,
+                                               Map<String, String> queryParams) {
     PartitionProduceRequest payload = new PartitionProduceRequest();
     payload.setRecords(records);
-    Response response = request("/topics/" + topicName + "/partitions/0")
+    Response response = request("/topics/" + topicName + "/partitions/0", queryParams)
         .post(Entity.entity(payload, getEmbeddedContentType()));
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     final ProduceResponse poffsetResponse
@@ -78,10 +106,16 @@ public class AbstractProducerTest extends ClusterTestHarness {
 
 
   protected void testProduceToTopicFails(String topicName,
-                                                List<? extends TopicProduceRecord> records) {
+                                         List<? extends TopicProduceRecord> records) {
+    testProduceToTopicFails(topicName, records, Collections.emptyMap());
+  }
+
+  protected void testProduceToTopicFails(String topicName,
+                                         List<? extends TopicProduceRecord> records,
+                                         Map<String, String> queryParams) {
     TopicProduceRequest payload = new TopicProduceRequest();
     payload.setRecords(records);
-    Response response = request("/topics/" + topicName)
+    Response response = request("/topics/" + topicName, queryParams)
         .post(Entity.entity(payload, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     final ProduceResponse produceResponse = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
