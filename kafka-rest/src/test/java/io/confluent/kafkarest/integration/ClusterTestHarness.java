@@ -133,6 +133,10 @@ public abstract class ClusterTestHarness {
     return props;
   }
 
+  public Properties overrideSchemaRegistryProps(Properties props) {
+    return props;
+  }
+
   @Before
   public void setUp() throws Exception {
     zookeeper = new EmbeddedZookeeper();
@@ -181,6 +185,8 @@ public abstract class ClusterTestHarness {
               (servers), SecurityProtocol.PLAINTEXT);
       schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, broker);
       schemaRegConnect = String.format("http://localhost:%d", schemaRegPort);
+
+      schemaRegProperties = overrideSchemaRegistryProps(schemaRegProperties);
 
       schemaRegApp =
           new SchemaRegistryRestApplication(new SchemaRegistryConfig(schemaRegProperties));

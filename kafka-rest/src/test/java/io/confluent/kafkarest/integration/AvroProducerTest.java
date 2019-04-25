@@ -23,7 +23,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.ws.rs.client.Entity;
@@ -87,13 +89,13 @@ public class AvroProducerTest extends ClusterTestHarness {
 
   // Produce to topic inputs & results
 
-  private final List<AvroTopicProduceRecord> topicRecordsWithPartitionsAndKeys = Arrays.asList(
+  protected final List<AvroTopicProduceRecord> topicRecordsWithPartitionsAndKeys = Arrays.asList(
       new AvroTopicProduceRecord(testKeys[0], testValues[0], 0),
       new AvroTopicProduceRecord(testKeys[1], testValues[1], 1),
       new AvroTopicProduceRecord(testKeys[2], testValues[2], 1),
       new AvroTopicProduceRecord(testKeys[3], testValues[3], 2)
   );
-  private final List<PartitionOffset> partitionOffsetsWithPartitionsAndKeys = Arrays.asList(
+  protected final List<PartitionOffset> partitionOffsetsWithPartitionsAndKeys = Arrays.asList(
       new PartitionOffset(0, 0L, null, null),
       new PartitionOffset(0, 1L, null, null),
       new PartitionOffset(1, 0L, null, null),
@@ -101,13 +103,13 @@ public class AvroProducerTest extends ClusterTestHarness {
   );
 
   // Produce to partition inputs & results
-  private final List<AvroProduceRecord> partitionRecordsOnlyValues = Arrays.asList(
+  protected final List<AvroProduceRecord> partitionRecordsOnlyValues = Arrays.asList(
       new AvroProduceRecord(testValues[0]),
       new AvroProduceRecord(testValues[1]),
       new AvroProduceRecord(testValues[2]),
       new AvroProduceRecord(testValues[3])
   );
-  private final List<PartitionOffset> producePartitionOffsetOnlyValues = Arrays.asList(
+  protected final List<PartitionOffset> producePartitionOffsetOnlyValues = Arrays.asList(
       new PartitionOffset(0, 0L, null, null),
       new PartitionOffset(0, 1L, null, null),
       new PartitionOffset(0, 2L, null, null),
@@ -132,13 +134,19 @@ public class AvroProducerTest extends ClusterTestHarness {
     deserializerProps.setProperty("schema.registry.url", schemaRegConnect);
   }
 
-  private <K, V> void testProduceToTopic(List<? extends TopicProduceRecord> records,
+  protected  <K, V> void testProduceToTopic(List<? extends TopicProduceRecord> records,
                                          List<PartitionOffset> offsetResponses) {
+    testProduceToTopic(records, offsetResponses, Collections.emptyMap());
+  }
+
+  protected  <K, V> void testProduceToTopic(List<? extends TopicProduceRecord> records,
+                                         List<PartitionOffset> offsetResponses,
+                                         Map<String, String> queryParams) {
     TopicProduceRequest payload = new TopicProduceRequest();
     payload.setRecords(records);
     payload.setKeySchema(keySchemaStr);
     payload.setValueSchema(valueSchemaStr);
-    Response response = request("/topics/" + topicName)
+    Response response = request("/topics/" + topicName, queryParams)
         .post(Entity.entity(payload, Versions.KAFKA_V1_JSON_AVRO));
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     final ProduceResponse produceResponse = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
@@ -151,18 +159,23 @@ public class AvroProducerTest extends ClusterTestHarness {
     assertEquals(produceResponse.getValueSchemaId(), (Integer) 2);
   }
 
-
   @Test
   public void testProduceToTopicWithPartitionsAndKeys() {
     testProduceToTopic(topicRecordsWithPartitionsAndKeys, partitionOffsetsWithPartitionsAndKeys);
   }
 
-  private <K, V> void testProduceToPartition(List<? extends ProduceRecord<K, V>> records,
+  protected  <K, V> void testProduceToPartition(List<? extends ProduceRecord<K, V>> records,
                                              List<PartitionOffset> offsetResponse) {
+    testProduceToPartition(records, offsetResponse, Collections.emptyMap());
+  }
+
+  protected <K, V> void testProduceToPartition(List<? extends ProduceRecord<K, V>> records,
+                                             List<PartitionOffset> offsetResponse,
+                                             Map<String, String> queryParams) {
     PartitionProduceRequest payload = new PartitionProduceRequest();
     payload.setRecords(records);
     payload.setValueSchema(valueSchemaStr);
-    Response response = request("/topics/" + topicName + "/partitions/0")
+    Response response = request("/topics/" + topicName + "/partitions/0", queryParams)
         .post(Entity.entity(payload, Versions.KAFKA_V1_JSON_AVRO));
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     final ProduceResponse poffsetResponse
