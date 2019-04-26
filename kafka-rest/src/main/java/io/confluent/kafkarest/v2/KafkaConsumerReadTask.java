@@ -179,7 +179,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
     log.trace("Finishing KafkaConsumerReadTask id={}", this, e);
     try {
       RestException restException = Utils.convertConsumerException(e);
-      callback.onCompletion((e == null) ? messages : null, restException);
+      callback.onCompletion((restException == null) ? messages : null, restException);
     } catch (Throwable t) {
       // This protects the worker thread from any issues with the callback code. Nothing to be
       // done here but log it since it indicates a bug in the calling code.

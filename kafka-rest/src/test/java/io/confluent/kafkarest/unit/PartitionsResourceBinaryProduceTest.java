@@ -276,7 +276,7 @@ public class PartitionsResourceBinaryProduceTest
             produceToPartition(topicName, 0, mediatype.header, requestMediatype,
                 EmbeddedFormat.BINARY,
                 produceRecordsOnlyValues, produceKafkaAuthorizationExceptionResults);
-        assertOKResponse(rawResponse, mediatype.expected);
+        assertEquals(Response.Status.FORBIDDEN.getStatusCode(), rawResponse.getStatus());
         ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
         assertEquals(kafkaAuthorizationExceptionResults, response.getOffsets());

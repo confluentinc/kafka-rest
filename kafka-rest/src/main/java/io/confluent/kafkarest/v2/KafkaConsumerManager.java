@@ -411,8 +411,8 @@ public class KafkaConsumerManager {
       } catch (Exception e) {
         log.error("Failed to read records from consumer {} while executing read task ({}). {}",
                   taskState.consumerState.getId().toString(), taskState.task, e);
-        Exception responseException = Utils.convertConsumerException(e);
-        taskState.callback.onCompletion(null, (RestException) responseException);
+        RestException responseException = Utils.convertConsumerException(e);
+        taskState.callback.onCompletion(null, responseException);
       }
     }
 

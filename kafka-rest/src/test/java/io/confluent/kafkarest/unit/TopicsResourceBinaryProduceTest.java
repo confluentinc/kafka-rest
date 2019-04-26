@@ -20,6 +20,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.RetriableException;
+import org.apache.kafka.common.errors.SaslAuthenticationException;
 import org.apache.kafka.common.errors.TopicAuthorizationException;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -84,6 +85,8 @@ public class TopicsResourceBinaryProduceTest
   private List<PartitionOffset> kafkaExceptionResults;
   private List<RecordMetadataOrException> produceKafkaRetriableExceptionResults;
   private List<PartitionOffset> kafkaRetriableExceptionResults;
+  private List<RecordMetadataOrException> produceKafkaAuthenticationExceptionResults;
+  private List<PartitionOffset> kafkaAuthenticationExceptionResults;
   private List<RecordMetadataOrException> produceKafkaAuthorizationExceptionResults;
   private List<PartitionOffset> kafkaAuthorizationExceptionResults;
   private static final String exceptionMessage = "Error message";
@@ -158,6 +161,15 @@ public class TopicsResourceBinaryProduceTest
     kafkaAuthorizationExceptionResults = Collections.singletonList(
         new PartitionOffset(null, null, Errors.KAFKA_AUTHORIZATION_ERROR_CODE,
             new TopicAuthorizationException(topicName).getMessage())
+    );
+
+    produceKafkaAuthenticationExceptionResults = Collections.singletonList(
+        new RecordMetadataOrException(null, new SaslAuthenticationException(topicName) {
+        })
+    );
+    kafkaAuthenticationExceptionResults = Collections.singletonList(
+        new PartitionOffset(null, null, Errors.KAFKA_AUTHENTICATION_ERROR_CODE,
+            new SaslAuthenticationException(topicName).getMessage())
     );
   }
 
@@ -337,7 +349,34 @@ public class TopicsResourceBinaryProduceTest
 
   @Test
   public void testProduceToTopicKafkaAuthorizationException() {
-    testProduceToTopicException(produceKafkaAuthorizationExceptionResults,
-        kafkaAuthorizationExceptionResults);
+    testProduceSecurityException(produceKafkaAuthorizationExceptionResults,
+        kafkaAuthorizationExceptionResults, Response.Status.FORBIDDEN);
+  }
+
+  @Test
+  public void testProduceToTopicKafkaAuthenticationException() {
+    testProduceSecurityException(produceKafkaAuthenticationExceptionResults,
+        kafkaAuthenticationExceptionResults, Response.Status.UNAUTHORIZED);
+  }
+
+  private void testProduceSecurityException(List<RecordMetadataOrException> produceResults,
+                                            List<PartitionOffset> produceExceptionResults,
+                                            Response.Status expectedStatus) {
+    for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
+      for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
+        Response
+            rawResponse =
+            produceToTopic("topic1", mediatype.header, requestMediatype,
+                EmbeddedFormat.BINARY, produceExceptionData, produceResults);
+
+        assertEquals(expectedStatus.getStatusCode(), rawResponse.getStatus());
+        ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
+        assertEquals(produceExceptionResults, response.getOffsets());
+        assertEquals(null, response.getKeySchemaId());
+        assertEquals(null, response.getValueSchemaId());
+
+        EasyMock.reset(mdObserver, producerPool);
+      }
+    }
   }
 }
