@@ -24,11 +24,9 @@ import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.TopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
 import kafka.security.auth.SimpleAclAuthorizer;
 import kafka.server.KafkaConfig;
+import org.apache.kafka.common.security.auth.KafkaPrincipal;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.After;
@@ -45,11 +43,10 @@ import java.util.Properties;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class AuthorizationErrorTest extends AbstractProducerTest {
+  public class AuthorizationErrorTest extends AbstractProducerTest {
 
   private static final String TOPIC_NAME = "topic1";
   private static final String CONSUMER_GROUP = "app1-consumer-group";
@@ -127,37 +124,12 @@ public class AuthorizationErrorTest extends AbstractProducerTest {
 
   @Test
   public void testProducerAuthorization() {
-    //test wihout acls
-    verifySubscribeToTopic(true);
-    //add acls
-    SecureTestUtils.setConsumerACls(zkConnect, TOPIC_NAME, USERNAME, CONSUMER_GROUP);
-    verifySubscribeToTopic(false);
-  }
-
-  private void produceToTopic(String role) {
     // test without any acls
-    testProduceToTopicFails(TOPIC_NAME, topicRecords);
+    testProduceToAuthorizationError(TOPIC_NAME, topicRecords);
     //add acls
     SecureTestUtils.setProduceACls(zkConnect, TOPIC_NAME, USERNAME);
     testProduceToTopic(TOPIC_NAME, topicRecords, ByteArrayDeserializer.class.getName(),
-       ByteArrayDeserializer.class.getName(), produceOffsets, false);
-  }
-
-  protected void testProduceToTopicFails(String topicName,
-                                         List<? extends TopicProduceRecord> records) {
-    TopicProduceRequest payload = new TopicProduceRequest();
-    payload.setRecords(records);
-    Response response = request("/topics/" + topicName)
-        .post(Entity.entity(payload, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
-
-    assertErrorResponse(Response.Status.FORBIDDEN, response,
-        Errors.KAFKA_AUTHORIZATION_ERROR_CODE,
-        "Not authorized to access topics",
-        Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    final ProduceResponse produceResponse = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
-    for (PartitionOffset pOffset : produceResponse.getOffsets()) {
-      assertEquals(Errors.KAFKA_AUTHORIZATION_ERROR_CODE, (int) pOffset.getErrorCode());
-    }
+        ByteArrayDeserializer.class.getName(), produceOffsets, false);
   }
 
   private void verifySubscribeToTopic(boolean expectFailure) {
@@ -202,6 +174,12 @@ public class AuthorizationErrorTest extends AbstractProducerTest {
   @Override
   protected SecurityProtocol getBrokerSecurityProtocol() {
     return SecurityProtocol.SASL_PLAINTEXT;
+  }
+
+  @Override
+  protected void setupAcls() {
+    //to allow plaintext consumer
+    SecureTestUtils.setConsumerACls(zkConnect, TOPIC_NAME, KafkaPrincipal.ANONYMOUS.getName(), "*");
   }
 
   @After

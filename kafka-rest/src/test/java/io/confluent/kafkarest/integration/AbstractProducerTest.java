@@ -22,6 +22,7 @@ import java.util.Map;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.PartitionOffset;
@@ -104,7 +105,6 @@ public class AbstractProducerTest extends ClusterTestHarness {
         keySerializerClassName, valueSerializerClassName, true);
   }
 
-
   protected void testProduceToTopicFails(String topicName,
                                          List<? extends TopicProduceRecord> records) {
     testProduceToTopicFails(topicName, records, Collections.emptyMap());
@@ -121,6 +121,26 @@ public class AbstractProducerTest extends ClusterTestHarness {
     final ProduceResponse produceResponse = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
     for (PartitionOffset pOffset : produceResponse.getOffsets()) {
       assertNotNull(pOffset.getError());
+    }
+  }
+
+  protected void testProduceToAuthorizationError(String topicName,
+                                                 List<? extends TopicProduceRecord> records) {
+    testProduceToAuthorizationError(topicName, records, Collections.emptyMap());
+  }
+
+  protected void testProduceToAuthorizationError(String topicName,
+                                         List<? extends TopicProduceRecord> records,
+                                         Map<String, String> queryParams) {
+    TopicProduceRequest payload = new TopicProduceRequest();
+    payload.setRecords(records);
+    Response response = request("/topics/" + topicName, queryParams)
+        .post(Entity.entity(payload, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
+
+    assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response.getStatus());
+    final ProduceResponse produceResponse = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
+    for (PartitionOffset pOffset : produceResponse.getOffsets()) {
+      assertEquals(Errors.KAFKA_AUTHORIZATION_ERROR_CODE, (int) pOffset.getErrorCode());
     }
   }
 
