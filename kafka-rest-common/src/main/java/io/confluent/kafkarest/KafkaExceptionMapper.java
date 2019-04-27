@@ -118,12 +118,10 @@ public class KafkaExceptionMapper extends GenericExceptionMapper {
 
   private Response getResponse(final Throwable cause) {
     ResponsePair responsePair = HANDLED.get(cause.getClass());
-
     ErrorMessage errorMessage = new ErrorMessage(responsePair.errorCode, cause.getMessage());
     return Response.status(responsePair.status)
         .entity(errorMessage).build();
   }
-
 
   private static class ResponsePair {
     private final Status status;
