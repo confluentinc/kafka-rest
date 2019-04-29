@@ -39,9 +39,4 @@
             checks="(MethodLength)"
             files="(KafkaRestConfig).java"
     />
-
-    <suppress
-            checks="(AvoidStarImport)"
-            files="(KafkaExceptionMapper).java"
-    />
 </suppressions>

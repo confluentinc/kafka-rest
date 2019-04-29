@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import org.apache.avro.SchemaParseException;
 import org.apache.kafka.common.config.ConfigException;
 

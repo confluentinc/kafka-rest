@@ -80,10 +80,10 @@ import static org.junit.Assert.assertTrue;
 
     final Option<SecurityProtocol>
         securityProtocolOption = Option.apply(SecurityProtocol.SASL_PLAINTEXT);
-    Properties saslprops = new Properties();
-    saslprops.setProperty("sasl.enabled.mechanisms","PLAIN");
-    saslprops.setProperty("sasl.mechanism.inter.broker.protocol","PLAIN");
-    Option<Properties> saslProperties = Option.apply(saslprops);
+    Properties saslProps = new Properties();
+    saslProps.setProperty("sasl.enabled.mechanisms","PLAIN");
+    saslProps.setProperty("sasl.mechanism.inter.broker.protocol","PLAIN");
+    Option<Properties> saslProperties = Option.apply(saslProps);
     Properties brokerProps = kafka.utils.TestUtils.createBrokerConfig(
         0, "", false, false, kafka.utils.TestUtils.RandomPort(), securityProtocolOption,
         Option.empty(), saslProperties, true, true, kafka.utils.TestUtils.RandomPort(),
@@ -118,7 +118,7 @@ import static org.junit.Assert.assertTrue;
     //test wihout acls
     verifySubscribeToTopic(true);
     //add acls
-    SecureTestUtils.setConsumerACls(zkConnect, TOPIC_NAME, USERNAME, CONSUMER_GROUP);
+    SecureTestUtils.setConsumerAcls(zkConnect, TOPIC_NAME, USERNAME, CONSUMER_GROUP);
     verifySubscribeToTopic(false);
   }
 
@@ -127,7 +127,7 @@ import static org.junit.Assert.assertTrue;
     // test without any acls
     testProduceToAuthorizationError(TOPIC_NAME, topicRecords);
     //add acls
-    SecureTestUtils.setProduceACls(zkConnect, TOPIC_NAME, USERNAME);
+    SecureTestUtils.setProduceAcls(zkConnect, TOPIC_NAME, USERNAME);
     testProduceToTopic(TOPIC_NAME, topicRecords, ByteArrayDeserializer.class.getName(),
         ByteArrayDeserializer.class.getName(), produceOffsets, false);
   }
@@ -179,7 +179,7 @@ import static org.junit.Assert.assertTrue;
   @Override
   protected void setupAcls() {
     //to allow plaintext consumer
-    SecureTestUtils.setConsumerACls(zkConnect, TOPIC_NAME, KafkaPrincipal.ANONYMOUS.getName(), "*");
+    SecureTestUtils.setConsumerAcls(zkConnect, TOPIC_NAME, KafkaPrincipal.ANONYMOUS.getName(), "*");
   }
 
   @After

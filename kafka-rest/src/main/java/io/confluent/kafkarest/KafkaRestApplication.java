@@ -16,6 +16,7 @@
 package io.confluent.kafkarest;
 
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
+import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
 import org.eclipse.jetty.util.StringUtil;
 

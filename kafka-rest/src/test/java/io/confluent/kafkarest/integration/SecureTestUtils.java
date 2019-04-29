@@ -18,16 +18,13 @@ package io.confluent.kafkarest.integration;
 
 import kafka.admin.AclCommand;
 
-import javax.net.ssl.TrustManagerFactory;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 
 public class SecureTestUtils {
 
-  public static void setProduceACls(String zkConnect, String topic, String user) {
+  public static void setProduceAcls(String zkConnect, String topic, String user) {
     List<String> aclArgs = new ArrayList<>();
 
     Collections.addAll(aclArgs, ("--authorizer kafka.security.auth.SimpleAclAuthorizer "
@@ -38,7 +35,7 @@ public class SecureTestUtils {
     AclCommand.main(aclArgs.toArray(new String[0]));
   }
 
-  public static void removeProduceACls(String zkConnect, String topic, String user) {
+  public static void removeProduceAcls(String zkConnect, String topic, String user) {
     List<String> aclArgs = new ArrayList<>();
 
     Collections.addAll(aclArgs, ("--authorizer kafka.security.auth.SimpleAclAuthorizer "
@@ -49,7 +46,7 @@ public class SecureTestUtils {
     AclCommand.main(aclArgs.toArray(new String[0]));
   }
 
-  public static void setConsumerACls(
+  public static void setConsumerAcls(
       String zkConnect, String topic, String user,
       String group
   ) {
