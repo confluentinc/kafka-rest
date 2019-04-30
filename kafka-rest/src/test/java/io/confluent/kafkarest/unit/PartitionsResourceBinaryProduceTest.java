@@ -15,8 +15,10 @@
 
 package io.confluent.kafkarest.unit;
 
+import io.confluent.kafkarest.Errors;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.TopicAuthorizationException;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -25,6 +27,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import javax.ws.rs.client.Entity;
@@ -69,6 +72,8 @@ public class PartitionsResourceBinaryProduceTest
   private List<BinaryProduceRecord> produceRecordsWithKeys;
   private List<RecordMetadataOrException> produceResults;
   private final List<PartitionOffset> offsetResults;
+  private List<RecordMetadataOrException> produceKafkaAuthorizationExceptionResults;
+  private List<PartitionOffset> kafkaAuthorizationExceptionResults;
 
   public PartitionsResourceBinaryProduceTest() throws RestConfigException {
     adminClientWrapper = EasyMock.createMock(AdminClientWrapper.class);
@@ -100,6 +105,12 @@ public class PartitionsResourceBinaryProduceTest
         new PartitionOffset(0, 0L, null, null),
         new PartitionOffset(0, 1L, null, null)
     );
+
+    produceKafkaAuthorizationExceptionResults = Collections.singletonList(
+        new RecordMetadataOrException(null, new TopicAuthorizationException(topicName)));
+    kafkaAuthorizationExceptionResults = Collections.singletonList(
+        new PartitionOffset(null, null, Errors.KAFKA_AUTHORIZATION_ERROR_CODE,
+            new TopicAuthorizationException(topicName).getMessage()));
   }
 
   @Before
@@ -113,7 +124,7 @@ public class PartitionsResourceBinaryProduceTest
       String requestMediatype,
       EmbeddedFormat recordFormat,
       List<? extends ProduceRecord<K, V>> records,
-                                             final List<RecordMetadataOrException> results) {
+                                             final List<RecordMetadataOrException> results)  throws Exception {
     final PartitionProduceRequest request = new PartitionProduceRequest();
     request.setRecords(records);
     final Capture<ProducerPool.ProduceRequestCallback>
@@ -152,7 +163,7 @@ public class PartitionsResourceBinaryProduceTest
   }
 
   @Test
-  public void testProduceToPartitionOnlyValues() {
+  public void testProduceToPartitionOnlyValues() throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
         Response
@@ -173,7 +184,7 @@ public class PartitionsResourceBinaryProduceTest
   }
 
   @Test
-  public void testProduceToPartitionByKey() {
+  public void testProduceToPartitionByKey() throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
         Response
@@ -194,7 +205,7 @@ public class PartitionsResourceBinaryProduceTest
   }
 
   @Test
-  public void testProduceToPartitionFailure() {
+  public void testProduceToPartitionFailure() throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
         // null offsets triggers a generic exception
@@ -214,7 +225,7 @@ public class PartitionsResourceBinaryProduceTest
   }
 
   @Test
-  public void testProduceInvalidRequest() {
+  public void testProduceInvalidRequest() throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
         EasyMock.expect(adminClientWrapper.topicExists(topicName)).andReturn(true);
@@ -250,6 +261,27 @@ public class PartitionsResourceBinaryProduceTest
             null,
             mediatype.expected);
         EasyMock.verify();
+
+        EasyMock.reset(adminClientWrapper, producerPool);
+      }
+    }
+  }
+
+  @Test
+  public void testProduceToPartitionAuthorizationErrors() throws Exception {
+    for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
+      for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
+        Response
+            rawResponse =
+            produceToPartition(topicName, 0, mediatype.header, requestMediatype,
+                EmbeddedFormat.BINARY,
+                produceRecordsOnlyValues, produceKafkaAuthorizationExceptionResults);
+        assertEquals(Response.Status.FORBIDDEN.getStatusCode(), rawResponse.getStatus());
+        ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
+
+        assertEquals(kafkaAuthorizationExceptionResults, response.getOffsets());
+        assertEquals(null, response.getKeySchemaId());
+        assertEquals(null, response.getValueSchemaId());
 
         EasyMock.reset(adminClientWrapper, producerPool);
       }

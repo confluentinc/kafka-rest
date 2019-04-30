@@ -65,7 +65,7 @@ public class TopicsResourceTest
   }
 
   @Test
-  public void testList() {
+  public void testList() throws Exception {
     final List<String> topics = Arrays.asList("test1", "test2", "test3");
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       EasyMock.expect(adminClientWrapper.getTopicNames()).andReturn(topics);
@@ -83,7 +83,7 @@ public class TopicsResourceTest
   }
 
   @Test
-  public void testGetTopic() {
+  public void testGetTopic() throws Exception {
     Properties nonEmptyConfig = new Properties();
     nonEmptyConfig.setProperty("cleanup.policy", "delete");
     final List<Partition> partitions1 = Arrays.asList(
@@ -129,7 +129,7 @@ public class TopicsResourceTest
   }
 
   @Test
-  public void testGetInvalidTopic() {
+  public void testGetInvalidTopic()  throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       EasyMock.expect(adminClientWrapper.getTopic("nonexistanttopic"))
           .andReturn(null);

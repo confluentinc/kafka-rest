@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import org.apache.avro.SchemaParseException;
 import org.apache.kafka.common.config.ConfigException;
 
@@ -27,15 +28,24 @@ import io.confluent.rest.exceptions.RestServerErrorException;
 
 public class Errors {
 
+  public static final int KAFKA_AUTHENTICATION_ERROR_CODE =
+      KafkaExceptionMapper.KAFKA_AUTHENTICATION_ERROR_CODE;
+  public static final int KAFKA_AUTHORIZATION_ERROR_CODE =
+      KafkaExceptionMapper.KAFKA_AUTHORIZATION_ERROR_CODE;
+  public static final int KAFKA_RETRIABLE_ERROR_ERROR_CODE =
+      KafkaExceptionMapper.KAFKA_RETRIABLE_ERROR_ERROR_CODE;
+
   public static final String TOPIC_NOT_FOUND_MESSAGE = "Topic not found.";
-  public static final int TOPIC_NOT_FOUND_ERROR_CODE = 40401;
+  public static final int TOPIC_NOT_FOUND_ERROR_CODE =
+      KafkaExceptionMapper.TOPIC_NOT_FOUND_ERROR_CODE;
 
   public static RestException topicNotFoundException() {
     return new RestNotFoundException(TOPIC_NOT_FOUND_MESSAGE, TOPIC_NOT_FOUND_ERROR_CODE);
   }
 
   public static final String PARTITION_NOT_FOUND_MESSAGE = "Partition not found.";
-  public static final int PARTITION_NOT_FOUND_ERROR_CODE = 40402;
+  public static final int PARTITION_NOT_FOUND_ERROR_CODE =
+      KafkaExceptionMapper.PARTITION_NOT_FOUND_ERROR_CODE;
 
   public static RestException partitionNotFoundException() {
     return new RestNotFoundException(PARTITION_NOT_FOUND_MESSAGE, PARTITION_NOT_FOUND_ERROR_CODE);
@@ -189,7 +199,7 @@ public class Errors {
   // producer operations this will be embedded in the per-message response. For consumer errors,
   // these are returned in the standard error format
   public static final String KAFKA_ERROR_MESSAGE = "Kafka error: ";
-  public static final int KAFKA_ERROR_ERROR_CODE = 50002;
+  public static final int KAFKA_ERROR_ERROR_CODE = KafkaExceptionMapper.KAFKA_ERROR_ERROR_CODE;
 
   public static RestServerErrorException kafkaErrorException(Throwable e) {
     return new RestServerErrorException(
@@ -198,15 +208,6 @@ public class Errors {
     );
   }
 
-  public static final String KAFKA_RETRIABLE_ERROR_MESSAGE = "Retriable Kafka error: ";
-  public static final int KAFKA_RETRIABLE_ERROR_ERROR_CODE = 50003;
-
-  public static RestServerErrorException kafkaRetriableErrorException(Throwable e) {
-    return new RestServerErrorException(
-        KAFKA_RETRIABLE_ERROR_MESSAGE + e.getMessage(),
-        KAFKA_RETRIABLE_ERROR_ERROR_CODE
-    );
-  }
 
   public static final String NO_SSL_SUPPORT_MESSAGE =
       "Only SSL endpoints were found for the broker, but SSL is not currently supported.";

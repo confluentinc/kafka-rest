@@ -33,6 +33,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Response;
 
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Errors;
@@ -67,14 +68,14 @@ public class TopicsResource {
 
   @GET
   @PerformanceMetric("topics.list")
-  public Collection<String> list() {
+  public Collection<String> list() throws Exception {
     return ctx.getAdminClientWrapper().getTopicNames();
   }
 
   @GET
   @Path("/{topic}")
   @PerformanceMetric("topic.get")
-  public Topic getTopic(@PathParam("topic") String topicName) {
+  public Topic getTopic(@PathParam("topic") String topicName) throws Exception {
     Topic topic = ctx.getAdminClientWrapper().getTopic(topicName);
     if (topic == null) {
       throw Errors.topicNotFoundException();
@@ -174,7 +175,8 @@ public class TopicsResource {
             log.trace("Completed topic produce request id={} response={}",
                       asyncResponse, response
             );
-            asyncResponse.resume(response);
+            Response.Status requestStatus = Utils.produceRequestStatus(response);
+            asyncResponse.resume(Response.status(requestStatus).entity(response).build());
           }
         }
     );

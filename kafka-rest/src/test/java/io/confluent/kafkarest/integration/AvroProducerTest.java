@@ -60,7 +60,7 @@ public class AvroProducerTest extends ClusterTestHarness {
       ))
   );
 
-  private Properties deserializerProps;
+  protected Properties deserializerProps;
 
   // This test assumes that AvroConverterTest is good enough and testing one primitive type for
   // keys and one complex type for records is sufficient.

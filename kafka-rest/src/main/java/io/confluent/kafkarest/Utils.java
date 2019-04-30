@@ -15,9 +15,15 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.kafkarest.entities.PartitionOffset;
+import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.rest.exceptions.RestServerErrorException;
 import org.apache.kafka.common.KafkaException;
+import org.apache.kafka.common.errors.AuthenticationException;
+import org.apache.kafka.common.errors.AuthorizationException;
 import org.apache.kafka.common.errors.RetriableException;
+
+import javax.ws.rs.core.Response;
 
 import static io.confluent.kafkarest.Errors.KAFKA_ERROR_ERROR_CODE;
 
@@ -27,7 +33,11 @@ public class Utils {
       = "Unexpected non-Kafka exception returned by Kafka";
 
   public static int errorCodeFromProducerException(Throwable e) {
-    if (e instanceof RetriableException) {
+    if (e instanceof AuthenticationException) {
+      return Errors.KAFKA_AUTHENTICATION_ERROR_CODE;
+    } else if (e instanceof AuthorizationException) {
+      return Errors.KAFKA_AUTHORIZATION_ERROR_CODE;
+    } else if (e instanceof RetriableException) {
       return Errors.KAFKA_RETRIABLE_ERROR_ERROR_CODE;
     } else if (e instanceof KafkaException) {
       return KAFKA_ERROR_ERROR_CODE;
@@ -43,4 +53,18 @@ public class Utils {
     }
   }
 
+  public static Response.Status produceRequestStatus(final ProduceResponse response) {
+    for (PartitionOffset partitionOffset: response.getOffsets()) {
+      if (partitionOffset.getErrorCode() == null) {
+        continue;
+      }
+
+      if (partitionOffset.getErrorCode() == Errors.KAFKA_AUTHENTICATION_ERROR_CODE) {
+        return Response.Status.UNAUTHORIZED;
+      } else if (partitionOffset.getErrorCode() == Errors.KAFKA_AUTHORIZATION_ERROR_CODE) {
+        return Response.Status.FORBIDDEN;
+      }
+    }
+    return Response.Status.OK;
+  }
 }

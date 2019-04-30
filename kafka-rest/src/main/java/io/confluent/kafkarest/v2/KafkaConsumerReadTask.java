@@ -16,8 +16,6 @@
 package io.confluent.kafkarest.v2;
 
 import io.confluent.kafkarest.ConsumerReadCallback;
-import io.confluent.kafkarest.Errors;
-import io.confluent.rest.exceptions.RestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -178,10 +176,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
   private void finish(Exception e) {
     log.trace("Finishing KafkaConsumerReadTask id={}", this, e);
     try {
-      if (e != null && !(e instanceof RestException)) {
-        e = Errors.kafkaErrorException(e);
-      }
-      callback.onCompletion((e == null) ? messages : null, (RestException) e);
+      callback.onCompletion((e == null) ? messages : null, e);
     } catch (Throwable t) {
       // This protects the worker thread from any issues with the callback code. Nothing to be
       // done here but log it since it indicates a bug in the calling code.

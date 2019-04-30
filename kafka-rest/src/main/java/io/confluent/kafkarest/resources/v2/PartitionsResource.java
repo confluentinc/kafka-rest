@@ -32,6 +32,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Response;
 
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Errors;
@@ -65,7 +66,7 @@ public class PartitionsResource {
 
   @GET
   @PerformanceMetric("partitions.list+v2")
-  public List<Partition> list(final @PathParam("topic") String topic) {
+  public List<Partition> list(final @PathParam("topic") String topic) throws Exception {
     checkTopicExists(topic);
     return ctx.getAdminClientWrapper().getTopicPartitions(topic);
   }
@@ -76,7 +77,7 @@ public class PartitionsResource {
   public Partition getPartition(
       final @PathParam("topic") String topic,
       @PathParam("partition") int partition
-  ) {
+  )  throws Exception {
     checkTopicExists(topic);
     Partition part = ctx.getAdminClientWrapper().getTopicPartition(topic, partition);
     if (part == null) {
@@ -95,7 +96,7 @@ public class PartitionsResource {
       final @PathParam("topic") String topic,
       final @PathParam("partition") int partition,
       @Valid @NotNull PartitionProduceRequest<BinaryProduceRecord> request
-  ) {
+  )  throws Exception {
     produce(asyncResponse, topic, partition, EmbeddedFormat.BINARY, request);
   }
 
@@ -108,7 +109,7 @@ public class PartitionsResource {
       final @PathParam("topic") String topic,
       final @PathParam("partition") int partition,
       @Valid @NotNull PartitionProduceRequest<JsonProduceRecord> request
-  ) {
+  )  throws Exception {
     produce(asyncResponse, topic, partition, EmbeddedFormat.JSON, request);
   }
 
@@ -121,7 +122,7 @@ public class PartitionsResource {
       final @PathParam("topic") String topic,
       final @PathParam("partition") int partition,
       @Valid @NotNull PartitionProduceRequest<AvroProduceRecord> request
-  ) {
+  )  throws Exception {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
     boolean hasKeys = false;
@@ -146,7 +147,7 @@ public class PartitionsResource {
       final int partition,
       final EmbeddedFormat format,
       final PartitionProduceRequest<R> request
-  ) {
+  )  throws Exception {
     // If the topic already exists, we can proactively check for the partition
     if (topicExists(topic)) {
       if (!ctx.getAdminClientWrapper().partitionExists(topic, partition)) {
@@ -192,17 +193,18 @@ public class PartitionsResource {
                 "Completed topic produce request id={} response={}",
                 asyncResponse, response
             );
-            asyncResponse.resume(response);
+            Response.Status requestStatus = Utils.produceRequestStatus(response);
+            asyncResponse.resume(Response.status(requestStatus).entity(response).build());
           }
         }
     );
   }
 
-  private boolean topicExists(final String topic) {
+  private boolean topicExists(final String topic)  throws Exception {
     return ctx.getAdminClientWrapper().topicExists(topic);
   }
 
-  private void checkTopicExists(final String topic) {
+  private void checkTopicExists(final String topic) throws Exception {
     if (!topicExists(topic)) {
       throw Errors.topicNotFoundException();
     }
