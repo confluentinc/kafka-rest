@@ -9,7 +9,7 @@ User=cp-kafka-rest
 Group=confluent
 Environment="LOG_DIR=/var/log/confluent/kafka-rest"
 ExecStart=/usr/bin/kafka-rest-start /etc/kafka-rest/kafka-rest.properties
-LimitNOFILE=1000000
+LimitNOFILE=100000
 TimeoutStopSec=180
 Restart=no
 
