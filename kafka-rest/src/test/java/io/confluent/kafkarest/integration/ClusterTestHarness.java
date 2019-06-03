@@ -94,7 +94,7 @@ public abstract class ClusterTestHarness {
   protected String zkConnect;
   protected EmbeddedZookeeper zookeeper;
   protected KafkaZkClient zkClient;
-  protected int zkConnectionTimeout = 6000;
+  protected int zkConnectionTimeout = 10000;
   protected int zkSessionTimeout = 6000;
 
   // Kafka Config
