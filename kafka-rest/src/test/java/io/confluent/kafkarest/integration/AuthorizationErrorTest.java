@@ -88,7 +88,7 @@ import static org.junit.Assert.assertTrue;
         0, "", false, false, kafka.utils.TestUtils.RandomPort(), securityProtocolOption,
         Option.empty(), saslProperties, true, true, kafka.utils.TestUtils.RandomPort(),
         false, kafka.utils.TestUtils.RandomPort(), false, kafka.utils.TestUtils.RandomPort(), Option.empty(), 1,
-        false);
+        false, 1, (short) 1);
     brokerProps.put(KafkaConfig.BrokerIdProp(), Integer.toString(i));
     brokerProps.put(KafkaConfig.ZkConnectProp(), zkConnect);
     brokerProps.setProperty("authorizer.class.name", SimpleAclAuthorizer.class.getName());
