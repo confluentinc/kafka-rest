@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # create_spec.sh spec.in out.spec
-CONFLUENT_PATCH = "cp"
+CONFLUENT_PATCH="cp"
 set -e
 
 echo "Creating the spec file"
