@@ -19,7 +19,6 @@ import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.Partition;

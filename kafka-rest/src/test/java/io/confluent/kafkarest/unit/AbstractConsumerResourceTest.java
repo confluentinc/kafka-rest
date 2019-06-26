@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.unit;
 
 import io.confluent.kafkarest.ScalaConsumersContext;
+import io.confluent.kafkarest.UnsupportedMetaDataObserver;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -34,7 +35,6 @@ import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
@@ -49,7 +49,6 @@ import io.confluent.rest.exceptions.RestNotFoundException;
 public class AbstractConsumerResourceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
-  protected MetadataObserver mdObserver;
   protected ConsumerManager consumerManager;
   protected DefaultKafkaRestContext ctx;
 
@@ -63,9 +62,8 @@ public class AbstractConsumerResourceTest
   protected static final String not_found_message = "not found";
 
   public AbstractConsumerResourceTest() throws RestConfigException {
-    mdObserver = EasyMock.createMock(MetadataObserver.class);
     consumerManager = EasyMock.createMock(ConsumerManager.class);
-    ScalaConsumersContext scalaConsumersContext = new ScalaConsumersContext(mdObserver, consumerManager, null);
+    ScalaConsumersContext scalaConsumersContext = new ScalaConsumersContext(new UnsupportedMetaDataObserver(null), consumerManager, null);
     ctx = new DefaultKafkaRestContext(config, null, null, null, scalaConsumersContext);
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
     KafkaRestContext contextProxy =
@@ -81,7 +79,7 @@ public class AbstractConsumerResourceTest
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    EasyMock.reset(mdObserver, consumerManager);
+    EasyMock.reset(consumerManager);
   }
 
   protected void expectCreateGroup(ConsumerInstanceConfig config) {

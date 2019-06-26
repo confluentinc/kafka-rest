@@ -18,6 +18,7 @@ package io.confluent.kafkarest.unit;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.confluent.kafkarest.ScalaConsumersContext;
+import io.confluent.kafkarest.UnsupportedMetaDataObserver;
 import org.apache.avro.Schema;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -38,7 +39,6 @@ import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.TestUtils;
@@ -63,7 +63,6 @@ import static org.junit.Assert.assertEquals;
 public class TopicsResourceAvroProduceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
-  private MetadataObserver mdObserver;
   private ProducerPool producerPool;
   private DefaultKafkaRestContext ctx;
 
@@ -104,9 +103,8 @@ public class TopicsResourceAvroProduceTest
   );
 
   public TopicsResourceAvroProduceTest() throws RestConfigException {
-    mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ScalaConsumersContext scalaConsumersContext = new ScalaConsumersContext(mdObserver, null, null);
+    ScalaConsumersContext scalaConsumersContext = new ScalaConsumersContext(new UnsupportedMetaDataObserver(null), null, null);
     ctx = new DefaultKafkaRestContext(config, producerPool, null, null, scalaConsumersContext);
 
     addResource(new TopicsResource(ctx));
@@ -121,7 +119,7 @@ public class TopicsResourceAvroProduceTest
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    EasyMock.reset(mdObserver, producerPool);
+    EasyMock.reset(producerPool);
   }
 
   private <K, V> Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
@@ -148,12 +146,12 @@ public class TopicsResourceAvroProduceTest
         return null;
       }
     });
-    EasyMock.replay(mdObserver, producerPool);
+    EasyMock.replay(producerPool);
 
     Response response = request("/topics/" + topic, acceptHeader)
         .post(Entity.entity(request, requestMediatype));
 
-    EasyMock.verify(mdObserver, producerPool);
+    EasyMock.verify(producerPool);
 
     return response;
   }
@@ -179,7 +177,7 @@ public class TopicsResourceAvroProduceTest
         assertEquals((Integer) 1, response.getKeySchemaId());
         assertEquals((Integer) 2, response.getValueSchemaId());
 
-        EasyMock.reset(mdObserver, producerPool);
+        EasyMock.reset(producerPool);
       }
     }
 
@@ -197,7 +195,7 @@ public class TopicsResourceAvroProduceTest
                 request, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
 
-        EasyMock.reset(mdObserver, producerPool);
+        EasyMock.reset(producerPool);
       }
     }
   }
