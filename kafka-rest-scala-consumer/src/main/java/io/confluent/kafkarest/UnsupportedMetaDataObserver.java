@@ -19,12 +19,11 @@ import java.util.List;
 
 import io.confluent.kafkarest.entities.Topic;
 import kafka.cluster.Broker;
-import kafka.utils.ZkUtils;
 
 public class UnsupportedMetaDataObserver extends MetadataObserver {
 
-  public UnsupportedMetaDataObserver(ZkUtils zkUtils) {
-    super(zkUtils);
+  public UnsupportedMetaDataObserver() {
+    super(null);
   }
 
   @Override

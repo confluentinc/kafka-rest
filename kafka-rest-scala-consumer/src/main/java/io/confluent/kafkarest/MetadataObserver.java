@@ -15,10 +15,13 @@
 
 package io.confluent.kafkarest;
 
+import kafka.controller.LeaderIsrAndControllerEpoch;
+import kafka.zk.AdminZkClient;
+import kafka.zk.KafkaZkClient;
+import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
@@ -30,14 +33,13 @@ import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.rest.exceptions.RestNotFoundException;
-import kafka.admin.AdminUtils;
 import kafka.api.LeaderAndIsr;
 import kafka.cluster.Broker;
-import kafka.utils.ZkUtils;
 import scala.Option;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 import scala.collection.Map;
 import scala.collection.Seq;
+import scala.collection.immutable.Set;
 import scala.math.Ordering;
 
 /**
@@ -48,10 +50,10 @@ public class MetadataObserver {
 
   private static final Logger log = LoggerFactory.getLogger(MetadataObserver.class);
 
-  private ZkUtils zkUtils;
+  private KafkaZkClient kafkaZkClient;
 
-  public MetadataObserver(ZkUtils zkUtils) {
-    this.zkUtils = zkUtils;
+  public MetadataObserver(KafkaZkClient kafkaZkClient) {
+    this.kafkaZkClient = kafkaZkClient;
   }
 
 
@@ -61,7 +63,8 @@ public class MetadataObserver {
 
   public List<Topic> getTopics() {
     try {
-      Seq<String> topicNames = zkUtils.getAllTopics().sorted(Ordering.String$.MODULE$);
+      Seq<String> topicNames =
+              kafkaZkClient.getAllTopicsInCluster().sorted(Ordering.String$.MODULE$);
       return getTopicsData(topicNames);
     } catch (RestNotFoundException e) {
       throw new InternalServerErrorException(e);
@@ -79,8 +82,8 @@ public class MetadataObserver {
   }
 
   private Collection<String> getTopicNames() {
-    Seq<String> topicNames = zkUtils.getAllTopics().sorted(Ordering.String$.MODULE$);
-    return JavaConversions.asJavaCollection(topicNames);
+    Seq<String> topicNames = kafkaZkClient.getAllTopicsInCluster().sorted(Ordering.String$.MODULE$);
+    return JavaConverters.asJavaCollection(topicNames);
   }
 
   private int getLeaderId(final String topicName, final int partitionId) {
@@ -100,7 +103,7 @@ public class MetadataObserver {
   }
 
   private Broker getBrokerById(final int brokerId) {
-    Option<Broker> broker = zkUtils.getBrokerInfo(brokerId);
+    Option<Broker> broker = kafkaZkClient.getBroker(brokerId);
 
     if (broker.isDefined()) {
       return broker.get();
@@ -110,13 +113,13 @@ public class MetadataObserver {
   }
 
   private List<Topic> getTopicsData(Seq<String> topicNames) {
-    Map<String, Map<Object, Seq<Object>>> topicPartitions =
-        zkUtils.getPartitionAssignmentForTopics(topicNames);
+    Map<String, scala.collection.immutable.Map<Object, Seq<Object>>> topicPartitions =
+            kafkaZkClient.getPartitionAssignmentForTopics(topicNames.toSet());
     List<Topic> topics = new Vector<Topic>(topicNames.size());
     // Admin utils only supports getting either 1 or all topic configs. These per-topic overrides
     // shouldn't be common, so we just grab all of them to keep this simple
-    Map<String, Properties> configs = AdminUtils.fetchAllTopicConfigs(zkUtils);
-    for (String topicName : JavaConversions.asJavaCollection(topicNames)) {
+    Map<String, Properties> configs = new AdminZkClient(kafkaZkClient).getAllTopicConfigs();
+    for (String topicName : JavaConverters.asJavaCollection(topicNames)) {
       if (!topicPartitions.get(topicName).isEmpty()) {
         Map<Object, Seq<Object>> partitionMap = topicPartitions.get(topicName).get();
         List<Partition> partitions = extractPartitionsFromZkData(partitionMap, topicName, null);
@@ -138,8 +141,9 @@ public class MetadataObserver {
   }
 
   private List<Partition> getTopicPartitions(String topic, Integer partitionsFilter) {
-    Map<String, Map<Object, Seq<Object>>> topicPartitions = zkUtils.getPartitionAssignmentForTopics(
-        JavaConversions.asScalaBuffer(Arrays.asList(topic)));
+    Set topicSet = new Set.Set1<>(topic);
+    Map<String, Map<Object, Seq<Object>>> topicPartitions =
+            kafkaZkClient.getPartitionAssignmentForTopics(topicSet);
     if (!topicPartitions.get(topic).isEmpty()) {
       Map<Object, Seq<Object>> parts = topicPartitions.get(topic).get();
       return extractPartitionsFromZkData(parts, topic, partitionsFilter);
@@ -153,7 +157,7 @@ public class MetadataObserver {
       Integer partitionsFilter
   ) {
     List<Partition> partitions = new Vector<Partition>();
-    java.util.Map<Object, Seq<Object>> partsJava = JavaConversions.mapAsJavaMap(parts);
+    java.util.Map<Object, Seq<Object>> partsJava = JavaConverters.mapAsJavaMap(parts);
     for (java.util.Map.Entry<Object, Seq<Object>> part : partsJava.entrySet()) {
       int partId = (Integer) part.getKey();
       if (partitionsFilter != null && partitionsFilter != partId) {
@@ -162,13 +166,15 @@ public class MetadataObserver {
 
       Partition p = new Partition();
       p.setPartition(partId);
-      Option<LeaderAndIsr> leaderAndIsrOpt = zkUtils.getLeaderAndIsrForPartition(topic, partId);
+      Option<LeaderAndIsr> leaderAndIsrOpt = kafkaZkClient
+              .getTopicPartitionState(new TopicPartition(topic, partId))
+              .map(LeaderIsrAndControllerEpoch::leaderAndIsr);
       if (!leaderAndIsrOpt.isEmpty()) {
         LeaderAndIsr leaderAndIsr = leaderAndIsrOpt.get();
         p.setLeader(leaderAndIsr.leader());
         scala.collection.immutable.Set<Integer> isr = leaderAndIsr.isr().toSet();
         List<PartitionReplica> partReplicas = new Vector<PartitionReplica>();
-        for (Object brokerObj : JavaConversions.asJavaCollection(part.getValue())) {
+        for (Object brokerObj : JavaConverters.asJavaCollection(part.getValue())) {
           int broker = (Integer) brokerObj;
           PartitionReplica r =
               new PartitionReplica(broker, (leaderAndIsr.leader() == broker), isr.contains(broker));

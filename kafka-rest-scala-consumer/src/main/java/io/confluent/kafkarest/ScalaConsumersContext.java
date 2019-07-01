@@ -15,8 +15,9 @@
 
 package io.confluent.kafkarest;
 
-import kafka.utils.ZkUtils;
+import kafka.zk.KafkaZkClient;
 import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.common.utils.SystemTime;
 import org.eclipse.jetty.util.StringUtil;
 
 public class ScalaConsumersContext {
@@ -24,7 +25,6 @@ public class ScalaConsumersContext {
   private final MetadataObserver metadataObserver;
   private final ConsumerManager consumerManager;
   private final SimpleConsumerManager simpleConsumerManager;
-  private ZkUtils zkUtils;
 
   public ScalaConsumersContext(final KafkaRestConfig config) {
     SimpleConsumerFactory simpleConsumerFactory = new SimpleConsumerFactory(config);
@@ -36,11 +36,12 @@ public class ScalaConsumersContext {
 
   private MetadataObserver metadataObserver(final KafkaRestConfig config) {
     if (StringUtil.isNotBlank(config.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG))) {
-      zkUtils = ZkUtils.apply(config.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG),
-          30000, 30000, JaasUtils.isZkSecurityEnabled());
-      return new MetadataObserver(zkUtils);
+      return new MetadataObserver(KafkaZkClient.apply(
+              config.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG),
+              JaasUtils.isZkSecurityEnabled(),30000, 30000, Integer.MAX_VALUE,
+              new SystemTime(), "kafka.server", "SessionExpireListener"));
     } else {
-      return new UnsupportedMetaDataObserver(null);
+      return new UnsupportedMetaDataObserver();
     }
   }
 
@@ -49,16 +50,12 @@ public class ScalaConsumersContext {
     this.metadataObserver = metadataObserver;
     this.consumerManager = consumerManager;
     this.simpleConsumerManager = simpleConsumerManager;
-    this.zkUtils = null;
   }
 
   public void shutdown() {
     metadataObserver.shutdown();
     consumerManager.shutdown();
     simpleConsumerManager.shutdown();
-    if (zkUtils != null) {
-      zkUtils.close();
-    }
   }
 
   public SimpleConsumerManager getSimpleConsumerManager() {
