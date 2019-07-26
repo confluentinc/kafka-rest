@@ -221,8 +221,10 @@ public class KafkaConsumerManager {
 
       switch (instanceConfig.getFormat()) {
         case AVRO:
-          props.put("key.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
-          props.put("value.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
+          props.put("key.deserializer",
+                    "io.confluent.kafkarest.serializers.CompatAvroDeserializer");
+          props.put("value.deserializer",
+                    "io.confluent.kafkarest.serializers.CompatAvroDeserializer");
           break;
         case JSON:
         case BINARY:
