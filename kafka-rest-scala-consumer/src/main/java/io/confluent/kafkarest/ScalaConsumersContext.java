@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.kafkarest.exceptions.ZkExceptionMapper;
+import javax.ws.rs.core.Configurable;
 import kafka.utils.ZkUtils;
 import org.apache.kafka.common.security.JaasUtils;
 import org.eclipse.jetty.util.StringUtil;
@@ -26,12 +28,17 @@ public class ScalaConsumersContext {
   private final SimpleConsumerManager simpleConsumerManager;
   private ZkUtils zkUtils;
 
-  public ScalaConsumersContext(final KafkaRestConfig config) {
-    SimpleConsumerFactory simpleConsumerFactory = new SimpleConsumerFactory(config);
-    metadataObserver = metadataObserver(config);
-    consumerManager = new ConsumerManager(config, metadataObserver);
-    simpleConsumerManager = new SimpleConsumerManager(config, metadataObserver,
+  public ScalaConsumersContext(final KafkaRestConfig appConfig) {
+    SimpleConsumerFactory simpleConsumerFactory = new SimpleConsumerFactory(appConfig);
+    metadataObserver = metadataObserver(appConfig);
+    consumerManager = new ConsumerManager(appConfig, metadataObserver);
+    simpleConsumerManager = new SimpleConsumerManager(appConfig, metadataObserver,
         simpleConsumerFactory);
+  }
+
+  public static void registerExceptionMappers(final Configurable<?> config,
+                                              final KafkaRestConfig appConfig) {
+    config.register(new ZkExceptionMapper(appConfig));
   }
 
   private MetadataObserver metadataObserver(final KafkaRestConfig config) {

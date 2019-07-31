@@ -24,6 +24,7 @@ import io.confluent.kafkarest.ScalaConsumersContext;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.ws.rs.core.Configurable;
 
 public class KafkaRestContextProvider {
 
@@ -35,6 +36,7 @@ public class KafkaRestContextProvider {
   private static AtomicBoolean initialized = new AtomicBoolean();
 
   public static void initialize(
+      Configurable<?> config,
       KafkaRestConfig appConfig,
       ProducerPool producerPool,
       KafkaConsumerManager kafkaConsumerManager,
@@ -45,6 +47,7 @@ public class KafkaRestContextProvider {
 
       if (scalaConsumersContext == null) {
         scalaConsumersContext = new ScalaConsumersContext(appConfig);
+        ScalaConsumersContext.registerExceptionMappers(config, appConfig);
       }
       defaultContext =
           new DefaultKafkaRestContext(appConfig, producerPool, kafkaConsumerManager,
