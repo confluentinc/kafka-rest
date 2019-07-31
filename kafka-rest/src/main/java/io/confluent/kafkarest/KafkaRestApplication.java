@@ -26,7 +26,6 @@ import java.util.Properties;
 
 import javax.ws.rs.core.Configurable;
 
-import io.confluent.kafkarest.exceptions.ZkExceptionMapper;
 import io.confluent.kafkarest.extension.ContextInvocationHandler;
 import io.confluent.kafkarest.extension.KafkaRestCleanupFilter;
 import io.confluent.kafkarest.extension.KafkaRestContextProvider;
@@ -90,10 +89,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
                                     + KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG
                                     + " needs to be configured");
     }
-
-    config.register(new ZkExceptionMapper(appConfig));
-
-    KafkaRestContextProvider.initialize(appConfig, producerPool,
+    KafkaRestContextProvider.initialize(config, appConfig, producerPool,
         kafkaConsumerManager, adminClientWrapperInjected, scalaConsumersContext
     );
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
