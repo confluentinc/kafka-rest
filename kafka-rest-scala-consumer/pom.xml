@@ -94,6 +94,7 @@
                         <includes>
                             <include>org.apache.kafka:kafka_${kafka.scala.version}</include>
                             <include>org.apache.kafka:kafka-clients</include>
+                            <include>com.101tec:zkclient</include>
                             <include>io.confluent:kafka-avro-serializer</include>
                             <include>io.confluent:kafka-json-serializer</include>
                         </includes>
