@@ -1,5 +1,5 @@
 #!/usr/bin/env groovy
 common {
-  slackChannel = '#kafka-core-eng '
+  slackChannel = ''
   upstreamProjects = 'confluentinc/schema-registry'
 }
