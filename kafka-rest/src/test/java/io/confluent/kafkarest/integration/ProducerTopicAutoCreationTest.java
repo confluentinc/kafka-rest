@@ -1,21 +1,21 @@
-/**
- * Copyright 2015 Confluent Inc.
+/*
+ * Copyright 2018 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.confluent.io/confluent-community-license
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- **/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 
 package io.confluent.kafkarest.integration;
 
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -24,14 +24,10 @@ import java.util.Properties;
 
 import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.PartitionOffset;
-import kafka.serializer.Decoder;
-import kafka.serializer.DefaultDecoder;
 
 public class ProducerTopicAutoCreationTest extends AbstractProducerTest {
 
   private static final String topicName = "nonexistant";
-
-  private static final Decoder<byte[]> binaryDecoder = new DefaultDecoder(null);
 
   private final List<BinaryTopicProduceRecord> topicRecords = Arrays.asList(
       new BinaryTopicProduceRecord("key".getBytes(), "value".getBytes()),
@@ -55,7 +51,7 @@ public class ProducerTopicAutoCreationTest extends AbstractProducerTest {
   @Test
   public void testProduceToMissingTopic() {
     // Should create topic
-    testProduceToTopic(topicName, topicRecords, binaryDecoder, binaryDecoder, partitionOffsets,
-                       false);
+    testProduceToTopic(topicName, topicRecords, ByteArrayDeserializer.class.getName(),
+        ByteArrayDeserializer.class.getName(), partitionOffsets, false);
   }
 }

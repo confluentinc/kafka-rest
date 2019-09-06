@@ -1,22 +1,22 @@
 /*
- * Copyright 2015 Confluent Inc.
+ * Copyright 2018 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.confluent.io/confluent-community-license
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- **/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 
 package io.confluent.kafkarest;
 
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
+import org.apache.kafka.clients.admin.AdminClient;
 
 /**
  * Shared, global state for the REST proxy server, including configuration and connection pools.
@@ -26,42 +26,31 @@ import io.confluent.kafkarest.v2.KafkaConsumerManager;
 public class DefaultKafkaRestContext implements KafkaRestContext {
 
   private final KafkaRestConfig config;
-  private final MetadataObserver metadataObserver;
+  private final ScalaConsumersContext scalaConsumersContext;
   private ProducerPool producerPool;
-  private final ConsumerManager consumerManager;
   private KafkaConsumerManager kafkaConsumerManager;
-  private final SimpleConsumerManager simpleConsumerManager;
   private AdminClientWrapper adminClientWrapper;
 
 
   public DefaultKafkaRestContext(
       KafkaRestConfig config,
-      MetadataObserver metadataObserver,
       ProducerPool producerPool,
-      ConsumerManager consumerManager,
-      SimpleConsumerManager simpleConsumerManager,
       KafkaConsumerManager kafkaConsumerManager,
-      AdminClientWrapper adminClientWrapper
+      AdminClientWrapper adminClientWrapper,
+      ScalaConsumersContext scalaConsumersContext
   ) {
 
     this.config = config;
-    this.metadataObserver = metadataObserver;
     this.producerPool = producerPool;
-    this.consumerManager = consumerManager;
-    this.simpleConsumerManager = simpleConsumerManager;
     this.kafkaConsumerManager = kafkaConsumerManager;
     this.adminClientWrapper = adminClientWrapper;
+    this.scalaConsumersContext = scalaConsumersContext;
   }
 
 
   @Override
   public KafkaRestConfig getConfig() {
     return config;
-  }
-
-  @Override
-  public MetadataObserver getMetadataObserver() {
-    return metadataObserver;
   }
 
   @Override
@@ -73,13 +62,18 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   }
 
   @Override
+  public ScalaConsumersContext getScalaConsumersContext() {
+    return scalaConsumersContext;
+  }
+
+  @Override
   public ConsumerManager getConsumerManager() {
-    return consumerManager;
+    return scalaConsumersContext.getConsumerManager();
   }
 
   @Override
   public SimpleConsumerManager getSimpleConsumerManager() {
-    return simpleConsumerManager;
+    return scalaConsumersContext.getSimpleConsumerManager();
   }
 
   @Override
@@ -93,7 +87,8 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   @Override
   public AdminClientWrapper getAdminClientWrapper() {
     if (adminClientWrapper == null) {
-      adminClientWrapper = new AdminClientWrapper(config);
+      adminClientWrapper = new AdminClientWrapper(config,
+          AdminClient.create(AdminClientWrapper.adminProperties(config)));
     }
     return adminClientWrapper;
   }
@@ -106,17 +101,11 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
     if (producerPool != null) {
       producerPool.shutdown();
     }
-    if (simpleConsumerManager != null) {
-      simpleConsumerManager.shutdown();
-    }
-    if (consumerManager != null) {
-      consumerManager.shutdown();
-    }
     if (adminClientWrapper != null) {
       adminClientWrapper.shutdown();
     }
-    if (metadataObserver != null) {
-      metadataObserver.shutdown();
+    if (scalaConsumersContext != null) {
+      scalaConsumersContext.shutdown();
     }
   }
 }

@@ -1,27 +1,24 @@
-/**
- * Copyright 2015 Confluent Inc.
+/*
+ * Copyright 2018 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.confluent.io/confluent-community-license
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- **/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package io.confluent.kafkarest.integration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.confluent.kafka.serializers.KafkaJsonDeserializer;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.JsonProduceRecord;
 import io.confluent.kafkarest.entities.JsonTopicProduceRecord;
 import io.confluent.kafkarest.entities.PartitionOffset;
-import kafka.serializer.Decoder;
-import org.apache.kafka.common.errors.SerializationException;
 import org.junit.Before;
 import org.junit.Test;
 import scala.collection.JavaConversions;
@@ -36,20 +33,6 @@ import java.util.Properties;
 public class JsonProducerTest extends AbstractProducerTest {
 
   private String topicName = "topic1";
-  private KafkaJsonDecoder decoder = new KafkaJsonDecoder();
-
-  public class KafkaJsonDecoder implements Decoder<Object> {
-    private ObjectMapper objectMapper = new ObjectMapper();
-
-    @Override
-    public Object fromBytes(byte[] bytes) {
-      try {
-        return objectMapper.readValue(bytes, Object.class);
-      } catch (Exception e) {
-        throw new SerializationException(e);
-      }
-    }
-  }
 
   @Before
   @Override
@@ -133,25 +116,27 @@ public class JsonProducerTest extends AbstractProducerTest {
 
   @Test
   public void testProduceToTopicKeyAndValue() {
-    testProduceToTopic(topicName, topicRecordsWithKeys, decoder, decoder,
-        produceOffsets, true);
+    testProduceToTopic(topicName, topicRecordsWithKeys, KafkaJsonDeserializer.class.getName(),
+        KafkaJsonDeserializer.class.getName(), produceOffsets, true);
   }
 
   @Test
   public void testProduceToTopicNoKey() {
-    testProduceToTopic(topicName, topicRecordsWithoutKeys, decoder, decoder,
-        produceOffsets, true);
+    testProduceToTopic(topicName, topicRecordsWithoutKeys, KafkaJsonDeserializer.class.getName(),
+        KafkaJsonDeserializer.class.getName(), produceOffsets, true);
   }
 
   @Test
   public void testProduceToPartitionKeyAndValue() {
-    testProduceToPartition(topicName, 0, partitionRecordsWithKeys, decoder, decoder,
+    testProduceToPartition(topicName, 0, partitionRecordsWithKeys,
+        KafkaJsonDeserializer.class.getName(), KafkaJsonDeserializer.class.getName(),
         produceOffsets);
   }
 
   @Test
   public void testProduceToPartitionNoKey() {
-    testProduceToPartition(topicName, 0, partitionRecordsWithoutKeys, decoder, decoder,
+    testProduceToPartition(topicName, 0, partitionRecordsWithoutKeys,
+        KafkaJsonDeserializer.class.getName(), KafkaJsonDeserializer.class.getName(),
         produceOffsets);
   }
 

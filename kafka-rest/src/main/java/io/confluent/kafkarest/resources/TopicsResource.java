@@ -1,21 +1,21 @@
-/**
- * Copyright 2015 Confluent Inc.
+/*
+ * Copyright 2018 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.confluent.io/confluent-community-license
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- **/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 
 package io.confluent.kafkarest.resources;
 
+import io.confluent.kafkarest.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +33,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Response;
 
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Errors;
@@ -67,14 +68,14 @@ public class TopicsResource {
 
   @GET
   @PerformanceMetric("topics.list")
-  public Collection<String> list() {
+  public Collection<String> list() throws Exception {
     return ctx.getAdminClientWrapper().getTopicNames();
   }
 
   @GET
   @Path("/{topic}")
   @PerformanceMetric("topic.get")
-  public Topic getTopic(@PathParam("topic") String topicName) {
+  public Topic getTopic(@PathParam("topic") String topicName) throws Exception {
     Topic topic = ctx.getAdminClientWrapper().getTopic(topicName);
     if (topic == null) {
       throw Errors.topicNotFoundException();
@@ -157,7 +158,8 @@ public class TopicsResource {
             List<PartitionOffset> offsets = new Vector<PartitionOffset>();
             for (RecordMetadataOrException result : results) {
               if (result.getException() != null) {
-                int errorCode = Errors.codeFromProducerException(result.getException());
+                int errorCode =
+                    Utils.errorCodeFromProducerException(result.getException());
                 String errorMessage = result.getException().getMessage();
                 offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
               } else {
@@ -173,7 +175,8 @@ public class TopicsResource {
             log.trace("Completed topic produce request id={} response={}",
                       asyncResponse, response
             );
-            asyncResponse.resume(response);
+            Response.Status requestStatus = Utils.produceRequestStatus(response);
+            asyncResponse.resume(Response.status(requestStatus).entity(response).build());
           }
         }
     );

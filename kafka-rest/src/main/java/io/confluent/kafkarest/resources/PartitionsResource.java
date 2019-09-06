@@ -1,22 +1,21 @@
-/**
- * Copyright 2015 Confluent Inc.
+/*
+ * Copyright 2018 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.confluent.io/confluent-community-license
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- **/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 
 package io.confluent.kafkarest.resources;
 
-import org.eclipse.jetty.util.StringUtil;
+import io.confluent.kafkarest.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,13 +34,14 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Response;
 
-import io.confluent.kafkarest.ConsumerManager;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.entities.AvroProduceRecord;
 import io.confluent.kafkarest.entities.BinaryProduceRecord;
 import io.confluent.kafkarest.entities.ConsumerRecord;
@@ -53,7 +53,6 @@ import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
-import kafka.common.KafkaException;
 
 @Path("/topics/{topic}/partitions")
 @Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW,
@@ -73,7 +72,7 @@ public class PartitionsResource {
 
   @GET
   @PerformanceMetric("partitions.list")
-  public List<Partition> list(final @PathParam("topic") String topic) {
+  public List<Partition> list(final @PathParam("topic") String topic) throws Exception {
     checkTopicExists(topic);
     return ctx.getAdminClientWrapper().getTopicPartitions(topic);
   }
@@ -84,7 +83,7 @@ public class PartitionsResource {
   public Partition getPartition(
       final @PathParam("topic") String topic,
       @PathParam("partition") int partition
-  ) {
+  )  throws Exception {
     checkTopicExists(topic);
     Partition part = ctx.getAdminClientWrapper().getTopicPartition(topic, partition);
     if (part == null) {
@@ -212,7 +211,7 @@ public class PartitionsResource {
 
     ctx.getSimpleConsumerManager().consume(
         topicName, partitionId, offset, count, embeddedFormat,
-        new ConsumerManager.ReadCallback<K, V>() {
+        new ConsumerReadCallback<K, V>() {
           @Override
           public void onCompletion(
               List<? extends ConsumerRecord<K, V>> records,
@@ -246,54 +245,48 @@ public class PartitionsResource {
         asyncResponse, topic, partition, format, request
     );
 
-    try {
-      ctx.getProducerPool().produce(
-          topic, partition, format,
-          request,
-          request.getRecords(),
-          new ProducerPool.ProduceRequestCallback() {
-            public void onCompletion(
-                Integer keySchemaId, Integer valueSchemaId,
-                List<RecordMetadataOrException> results
-            ) {
-              ProduceResponse response = new ProduceResponse();
-              List<PartitionOffset> offsets = new Vector<PartitionOffset>();
-              for (RecordMetadataOrException result : results) {
-                if (result.getException() != null) {
-                  int errorCode = Errors.codeFromProducerException(result.getException());
-                  String errorMessage = result.getException().getMessage();
-                  offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
-                } else {
-                  offsets.add(new PartitionOffset(result.getRecordMetadata().partition(),
-                      result.getRecordMetadata().offset(),
-                      null, null
-                  ));
-                }
+    ctx.getProducerPool().produce(
+        topic, partition, format,
+        request,
+        request.getRecords(),
+        new ProducerPool.ProduceRequestCallback() {
+          public void onCompletion(
+              Integer keySchemaId, Integer valueSchemaId,
+              List<RecordMetadataOrException> results
+          ) {
+            ProduceResponse response = new ProduceResponse();
+            List<PartitionOffset> offsets = new Vector<PartitionOffset>();
+            for (RecordMetadataOrException result : results) {
+              if (result.getException() != null) {
+                int errorCode =
+                    Utils.errorCodeFromProducerException(result.getException());
+                String errorMessage = result.getException().getMessage();
+                offsets.add(new PartitionOffset(null, null, errorCode, errorMessage));
+              } else {
+                offsets.add(new PartitionOffset(result.getRecordMetadata().partition(),
+                    result.getRecordMetadata().offset(),
+                    null, null
+                ));
               }
-              response.setOffsets(offsets);
-              response.setKeySchemaId(keySchemaId);
-              response.setValueSchemaId(valueSchemaId);
-              log.trace("Completed topic produce request id={} response={}",
-                  asyncResponse, response
-              );
-              asyncResponse.resume(response);
             }
+            response.setOffsets(offsets);
+            response.setKeySchemaId(keySchemaId);
+            response.setValueSchemaId(valueSchemaId);
+            log.trace("Completed topic produce request id={} response={}",
+                asyncResponse, response
+            );
+            Response.Status requestStatus = Utils.produceRequestStatus(response);
+            asyncResponse.resume(Response.status(requestStatus).entity(response).build());
           }
-      );
-    } catch (KafkaException e) {
-      if (StringUtil.startsWithIgnoreCase(e.getMessage(), "Invalid partition")) {
-        Errors.partitionNotFoundException();
-      } else {
-        Errors.kafkaErrorException(e);
-      }
-    }
+        }
+    );
   }
 
-  private boolean topicExists(final String topic) {
+  private boolean topicExists(final String topic) throws Exception {
     return ctx.getAdminClientWrapper().topicExists(topic);
   }
 
-  private void checkTopicExists(final String topic) {
+  private void checkTopicExists(final String topic) throws Exception {
     if (!topicExists(topic)) {
       throw Errors.topicNotFoundException();
     }

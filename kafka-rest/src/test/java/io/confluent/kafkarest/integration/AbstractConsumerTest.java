@@ -1,24 +1,24 @@
-/**
- * Copyright 2015 Confluent Inc.
+/*
+ * Copyright 2018 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.confluent.io/confluent-community-license
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- **/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package io.confluent.kafkarest.integration;
 
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.ScalaConsumersContext;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
@@ -69,10 +69,15 @@ public class AbstractConsumerTest extends ClusterTestHarness {
       try {
         producer.send(rec).get();
       } catch (Exception e) {
-        fail("Consumer test couldn't produce input messages to Kafka");
+        fail("Consumer test couldn't produce input messages to Kafka: " + e);
       }
     }
     producer.close();
+  }
+
+  @Override
+  protected ScalaConsumersContext getScalaConsumersContext(KafkaRestConfig appConfig) {
+    return new ScalaConsumersContext(appConfig);
   }
 
   protected void produceJsonMessages(List<ProducerRecord<Object, Object>> records) {
@@ -86,7 +91,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
       try {
         producer.send(rec).get();
       } catch (Exception e) {
-        fail("Consumer test couldn't produce input messages to Kafka");
+        fail("Consumer test couldn't produce input messages to Kafka: " + e);
       }
     }
     producer.close();
@@ -112,7 +117,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
       try {
         producer.send(rec).get();
       } catch (Exception e) {
-        fail("Consumer test couldn't produce input messages to Kafka");
+        fail("Consumer test couldn't produce input messages to Kafka: " + e);
       }
     }
     producer.close();
@@ -123,7 +128,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     ConsumerInstanceConfig config = null;
     if (id != null || name != null || format != null) {
       config = new ConsumerInstanceConfig(
-          id, name, (format != null ? format.toString() : null), null, null);
+          id, name, (format != null ? format.toString() : null), null, null, null, null);
     }
     return request("/consumers/" + groupName)
         .post(Entity.entity(config, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
@@ -285,7 +290,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     assertEquals(0, consumed.size());
 
     // Note that this is only approximate and really only works if you assume the read call has
-    // a dedicated ConsumerWorker thread. Also note that we have to include the consumer
+    // a dedicated thread. Also note that we have to include the consumer
     // request timeout, the iterator timeout used for "peeking", and the backoff period, as well
     // as some extra slack for general overhead (which apparently mostly comes from running the
     // request and can be quite substantial).

@@ -1,18 +1,17 @@
-/**
- * Copyright 2015 Confluent Inc.
+/*
+ * Copyright 2018 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.confluent.io/confluent-community-license
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- **/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package io.confluent.kafkarest.integration;
 
 import io.confluent.common.utils.IntegrationTest;
@@ -33,7 +32,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.FileSystemException;
 import java.util.*;
 
 import javax.ws.rs.client.Client;
@@ -48,17 +46,7 @@ import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.CoreUtils;
 import kafka.utils.TestUtils;
-import kafka.utils.ZkUtils;
 import kafka.zk.EmbeddedZookeeper;
-import org.apache.kafka.common.security.JaasUtils;
-import org.apache.kafka.common.security.auth.SecurityProtocol;
-import org.apache.kafka.common.utils.Time;
-import org.eclipse.jetty.server.Server;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.experimental.categories.Category;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import scala.Option;
 import scala.collection.JavaConversions;
 
@@ -113,6 +101,8 @@ public abstract class ClusterTestHarness {
   protected List<KafkaConfig> configs = null;
   protected List<KafkaServer> servers = null;
   protected String brokerList = null;
+  //used for test consumer
+  protected String plaintextBrokerList = null;
 
   // Schema registry config
   protected String schemaRegCompatibility = AvroCompatibilityLevel.NONE.name;
@@ -140,6 +130,10 @@ public abstract class ClusterTestHarness {
   }
 
   public Properties overrideBrokerProperties(int i, Properties props) {
+    return props;
+  }
+
+  public Properties overrideSchemaRegistryProps(Properties props) {
     return props;
   }
 
@@ -171,6 +165,9 @@ public abstract class ClusterTestHarness {
     brokerList =
         TestUtils.getBrokerListStrFromServers(JavaConversions.asScalaBuffer(servers),
                                               getBrokerSecurityProtocol());
+    plaintextBrokerList =
+        TestUtils.getBrokerListStrFromServers(JavaConversions.asScalaBuffer(servers),
+            SecurityProtocol.PLAINTEXT);
 
     setupAcls();
     if (withSchemaRegistry) {
@@ -189,6 +186,8 @@ public abstract class ClusterTestHarness {
       schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, broker);
       schemaRegConnect = String.format("http://localhost:%d", schemaRegPort);
 
+      schemaRegProperties = overrideSchemaRegistryProps(schemaRegProperties);
+
       schemaRegApp =
           new SchemaRegistryRestApplication(new SchemaRegistryConfig(schemaRegProperties));
       schemaRegServer = schemaRegApp.createServer();
@@ -206,13 +205,11 @@ public abstract class ClusterTestHarness {
     restProperties.put("listeners",restConnect);
 
     restConfig = new KafkaRestConfig(restProperties);
-    restApp = new TestKafkaRestApplication(restConfig, getZkUtils(restConfig),
-                                           getMetadataObserver(restConfig),
-                                           getProducerPool(restConfig),
-                                           getConsumerManager(restConfig),
-                                           getSimpleConsumerFactory(restConfig),
-                                           getSimpleConsumerManager(restConfig));
-
+    restApp = new TestKafkaRestApplication(restConfig,
+        getProducerPool(restConfig),
+        null,
+        null,
+        getScalaConsumersContext(restConfig));
     restServer = restApp.createServer();
     restServer.start();
   }
@@ -233,8 +230,8 @@ public abstract class ClusterTestHarness {
   }
 
   protected Properties getBrokerProperties(int i) {
-    final Option<File> noFile = Option.<File>apply(null);
-    final Option<SecurityProtocol> noInterBrokerSecurityProtocol = Option.<SecurityProtocol>apply(null);
+    final Option<File> noFile = Option.apply(null);
+    final Option<SecurityProtocol> noInterBrokerSecurityProtocol = Option.apply(null);
     Properties props = TestUtils.createBrokerConfig(
         i, zkConnect, false, false, TestUtils.RandomPort(), noInterBrokerSecurityProtocol,
         noFile, Option.<Properties>empty(), true, false, TestUtils.RandomPort(), false,
@@ -246,27 +243,11 @@ public abstract class ClusterTestHarness {
     return props;
   }
 
-  protected ZkUtils getZkUtils(KafkaRestConfig appConfig) {
-    return null;
-  }
-
-  protected MetadataObserver getMetadataObserver(KafkaRestConfig appConfig) {
-    return null;
-  }
-
   protected ProducerPool getProducerPool(KafkaRestConfig appConfig) {
     return null;
   }
 
-  protected ConsumerManager getConsumerManager(KafkaRestConfig appConfig) {
-    return null;
-  }
-
-  protected SimpleConsumerFactory getSimpleConsumerFactory(KafkaRestConfig appConfig) {
-    return null;
-  }
-
-  protected SimpleConsumerManager getSimpleConsumerManager(KafkaRestConfig appConfig) {
+  protected ScalaConsumersContext getScalaConsumersContext(KafkaRestConfig appConfig) {
     return null;
   }
 
@@ -286,34 +267,12 @@ public abstract class ClusterTestHarness {
       server.shutdown();
     }
     for (KafkaServer server : servers) {
-      try {
-        CoreUtils.delete(server.config().logDirs());
-      } catch (Exception e) {
-        if (e instanceof FileSystemException) {
-          LOG.warn("Unable to clean log dirs on teardown, commonly this is a windows file lock " +
-              "problem. Ignoring.", e);
-        } else {
-          throw e;
-        }
-      }
+      CoreUtils.delete(server.config().logDirs());
     }
 
     zkClient.close();
-    try {
-      zookeeper.shutdown();
-    } catch (Exception e) {
-      if (e instanceof FileSystemException) {
-        LOG.warn(
-            "Unable to clean zookeeper files on teardown, commonly this is a windows file lock " +
-                "problem. Ignoring.", e);
-      } else {
-        throw e;
-      }
-    }
+    zookeeper.shutdown();
   }
-
-  private static final Logger LOG = LoggerFactory.getLogger(ClusterTestHarness.class);
-
 
   protected Invocation.Builder request(String path) {
     return request(path, null, null, null);

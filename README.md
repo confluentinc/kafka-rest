@@ -99,4 +99,4 @@ Contribute
 License
 -------
 
-The project is licensed under the Apache 2 license.
+This project is licensed under the [Confluent Community License](LICENSE).

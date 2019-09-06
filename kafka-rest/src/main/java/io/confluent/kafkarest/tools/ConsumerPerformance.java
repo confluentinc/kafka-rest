@@ -1,18 +1,17 @@
 /*
- * Copyright 2015 Confluent Inc.
+ * Copyright 2018 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.confluent.io/confluent-community-license
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- **/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 
 package io.confluent.kafkarest.tools;
 
@@ -23,6 +22,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -31,6 +31,8 @@ import io.confluent.common.utils.PerformanceStats;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
+import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
+import io.confluent.kafkarest.entities.ConsumerSubscriptionResponse;
 import io.confluent.rest.entities.ErrorMessage;
 
 public class ConsumerPerformance extends AbstractPerformanceTest {
@@ -39,7 +41,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
   long recordsPerSec;
   ObjectMapper serializer = new ObjectMapper();
   String targetUrl;
-  String deleteUrl;
+  String instanceUrl;
   long consumedRecords = 0;
 
   private final ObjectMapper jsonDeserializer = new ObjectMapper();
@@ -77,7 +79,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
 
     // Create consumer instance
     ConsumerInstanceConfig consumerConfig = new ConsumerInstanceConfig();
-    consumerConfig.setAutoOffsetReset("smallest");
+    consumerConfig.setAutoOffsetReset("earliest");
     byte[] createPayload = serializer.writeValueAsBytes(consumerConfig);
     CreateConsumerInstanceResponse createResponse = (CreateConsumerInstanceResponse) request(
         baseUrl + "/consumers/" + groupId, "POST", createPayload,
@@ -86,10 +88,21 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
         }
     );
 
-    targetUrl =
-        baseUrl + "/consumers/" + groupId + "/instances/" + createResponse.getInstanceId()
-        + "/topics/" + topic;
-    deleteUrl = baseUrl + "/consumers/" + groupId + "/instances/" + createResponse.getInstanceId();
+    instanceUrl =
+        baseUrl + "/consumers/" + groupId + "/instances/" + createResponse.getInstanceId();
+
+    // Subscribe to topic
+    ConsumerSubscriptionRecord consumerSubscriptionRecord =
+        new ConsumerSubscriptionRecord(Arrays.asList(topic), null);
+    byte[] subscribePayload = serializer.writeValueAsBytes(consumerSubscriptionRecord);
+    request(
+        instanceUrl + "/subscription", "POST", subscribePayload,
+        Integer.toString(subscribePayload.length),
+        new TypeReference<ConsumerSubscriptionResponse>() {
+        }
+    );
+
+    targetUrl = instanceUrl + "/records";
 
     // Run a single read request and ignore the result to get started. This makes sure the
     // consumer on the REST proxy is fully setup and connected. Set max_bytes so this request
@@ -125,7 +138,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
   }
 
   protected void close() {
-    request(deleteUrl, "DELETE", null, null, null);
+    request(instanceUrl, "DELETE", null, null, null);
   }
 
   private <T> T request(
@@ -140,8 +153,10 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
       URL url = new URL(target);
       connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod(method);
-      if (entity != null) {
-        connection.setRequestProperty("Content-Type", Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+      if (!method.equals("GET")) {
+        connection.setRequestProperty("Content-Type", Versions.KAFKA_V2_JSON);
+      }
+      if (entityLength != null) {
         connection.setRequestProperty("Content-Length", entityLength);
       }
       connection.setDoInput(true);
@@ -217,4 +232,3 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
     public long offset;
   }
 }
-

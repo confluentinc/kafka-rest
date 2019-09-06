@@ -1,18 +1,17 @@
-/**
- * Copyright 2017 Confluent Inc.
+/*
+ * Copyright 2018 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.confluent.io/confluent-community-license
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- **/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 
 package io.confluent.kafkarest.v2;
 
@@ -23,14 +22,14 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 
-import java.util.ArrayList;
+import java.util.Queue;
+import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 import io.confluent.kafkarest.ConsumerInstanceId;
@@ -45,7 +44,6 @@ import io.confluent.kafkarest.entities.ConsumerSeekToRequest;
 import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.TopicPartitionOffsetMetadata;
-import kafka.serializer.Decoder;
 
 /**
  * Tracks all the state for a consumer. This class is abstract in order to support multiple
@@ -53,25 +51,16 @@ import kafka.serializer.Decoder;
  * {@code KafkaMessageAndMetadata<K,V>} values to ConsumerRecords that can be returned to the client
  * (including translation if the decoded Kafka consumer type and ConsumerRecord types differ).
  */
-public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
-    implements Comparable<KafkaConsumerState> {
+public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
 
   private KafkaRestConfig config;
   private ConsumerInstanceId instanceId;
   private Consumer<KafkaKeyT, KafkaValueT> consumer;
-  private ConsumerRecords<KafkaKeyT, KafkaValueT> consumerRecords = null;
 
-  private List<ConsumerRecord<KafkaKeyT, KafkaValueT>> consumerRecordList = null;
-  private int index = 0;
+  private Queue<ConsumerRecord<KafkaKeyT, KafkaValueT>> consumerRecords = new ArrayDeque<>();
 
-
-  private long expiration;
-  // A read/write lock on the KafkaConsumerState allows concurrent readRecord calls, but allows
-  // commitOffsets to safely lock the entire state in order to get correct information about all
-  // the topic/stream's current offset state. All operations on individual TopicStates must be
-  // synchronized at that level as well (so, e.g., readRecord may modify a single TopicState, but
-  // only needs read access to the KafkaConsumerState).
-  private ReadWriteLock lock;
+  volatile long expiration;
+  private ReentrantLock lock;
 
   public KafkaConsumerState(
       KafkaRestConfig config,
@@ -83,22 +72,12 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     this.consumer = consumer;
     this.expiration = config.getTime().milliseconds()
                       + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
-    this.lock = new ReentrantReadWriteLock();
+    this.lock = new ReentrantLock();
   }
 
   public ConsumerInstanceId getId() {
     return instanceId;
   }
-
-  /**
-   * Gets the key decoder for the Kafka consumer.
-   */
-  protected abstract Decoder<KafkaKeyT> getKeyDecoder();
-
-  /**
-   * Gets the value decoder for the Kafka consumer.
-   */
-  protected abstract Decoder<KafkaValueT> getValueDecoder();
 
   /**
    * Converts a MessageAndMetadata using the Kafka decoder types into a ConsumerRecord using the
@@ -110,16 +89,6 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       ConsumerRecord<KafkaKeyT, KafkaValueT> msg
   );
 
-
-  public void startRead() {
-    lock.readLock().lock();
-  }
-
-  public void finishRead() {
-    lock.readLock().unlock();
-  }
-
-
   /**
    * Commit the given list of offsets
    */
@@ -127,7 +96,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       String async,
       ConsumerOffsetCommitRequest offsetCommitRequest
   ) {
-    lock.writeLock().lock();
+    lock.lock();
     try {
       // If no offsets are given, then commit all the records read so far
       if (offsetCommitRequest == null) {
@@ -160,7 +129,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       List<TopicPartitionOffset> result = new Vector<TopicPartitionOffset>();
       return result;
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
@@ -168,7 +137,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * Seek to the first offset for each of the given partitions.
    */
   public void seekToBeginning(ConsumerSeekToRequest seekToRequest) {
-    lock.writeLock().lock();
+    lock.lock();
     try {
       if (seekToRequest != null) {
         Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
@@ -179,7 +148,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
         consumer.seekToBeginning(topicPartitions);
       }
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
@@ -187,7 +156,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * Seek to the last offset for each of the given partitions.
    */
   public void seekToEnd(ConsumerSeekToRequest seekToRequest) {
-    lock.writeLock().lock();
+    lock.lock();
     try {
       if (seekToRequest != null) {
         Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
@@ -198,7 +167,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
         consumer.seekToEnd(topicPartitions);
       }
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
@@ -206,7 +175,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * Overrides the fetch offsets that the consumer will use on the next poll(timeout).
    */
   public void seekToOffset(ConsumerSeekToOffsetRequest seekToOffsetRequest) {
-    lock.writeLock().lock();
+    lock.lock();
     try {
       if (seekToOffsetRequest != null) {
         for (TopicPartitionOffsetMetadata t : seekToOffsetRequest.offsets) {
@@ -216,7 +185,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
 
       }
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
@@ -224,7 +193,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * Manually assign a list of partitions to this consumer.
    */
   public void assign(ConsumerAssignmentRequest assignmentRequest) {
-    lock.writeLock().lock();
+    lock.lock();
     try {
       if (assignmentRequest != null) {
         Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
@@ -235,7 +204,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
         consumer.assign(topicPartitions);
       }
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
@@ -244,7 +213,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    */
 
   public void close() {
-    lock.writeLock().lock();
+    lock.lock();
     try {
       if (consumer != null) {
         consumer.close();
@@ -252,7 +221,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       // Marks this state entry as no longer valid because the consumer group is being destroyed.
       consumer = null;
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
@@ -265,7 +234,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       return;
     }
 
-    lock.writeLock().lock();
+    lock.lock();
     try {
       if (consumer != null) {
         if (subscription.topics != null) {
@@ -277,7 +246,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
         }
       }
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
@@ -285,13 +254,13 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * Unsubscribe from topics currently subscribed with subscribe(Collection).
    */
   public void unsubscribe() {
-    lock.writeLock().lock();
+    lock.lock();
     try {
       if (consumer != null) {
         consumer.unsubscribe();
       }
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
@@ -300,13 +269,13 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    */
   public java.util.Set<String> subscription() {
     java.util.Set<String> currSubscription = null;
-    lock.writeLock().lock();
+    lock.lock();
     try {
       if (consumer != null) {
         currSubscription = consumer.subscription();
       }
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
     return currSubscription;
   }
@@ -316,13 +285,13 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    */
   public java.util.Set<TopicPartition> assignment() {
     java.util.Set<TopicPartition> currAssignment = null;
-    lock.writeLock().lock();
+    lock.lock();
     try {
       if (consumer != null) {
         currAssignment = consumer.assignment();
       }
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
     return currAssignment;
   }
@@ -335,7 +304,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   public ConsumerCommittedResponse committed(ConsumerCommittedRequest request) {
     ConsumerCommittedResponse response = new ConsumerCommittedResponse();
     response.offsets = new Vector<TopicPartitionOffsetMetadata>();
-    lock.writeLock().lock();
+    lock.lock();
     try {
       if (consumer != null) {
         for (io.confluent.kafkarest.entities.TopicPartition t : request.partitions) {
@@ -354,7 +323,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
         }
       }
     } finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
     return response;
   }
@@ -369,10 +338,6 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
                       + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
   }
 
-  public long untilExpiration(long nowMs) {
-    return this.expiration - nowMs;
-  }
-
   public KafkaRestConfig getConfig() {
     return config;
   }
@@ -381,15 +346,32 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     this.config = config;
   }
 
-  @Override
-  public int compareTo(KafkaConsumerState o) {
-    if (this.expiration < o.expiration) {
-      return -1;
-    } else if (this.expiration == o.expiration) {
-      return 0;
-    } else {
-      return 1;
+
+  ConsumerRecord<KafkaKeyT, KafkaValueT> peek() {
+    return consumerRecords.peek();
+  }
+
+  boolean hasNext() {
+    lock.lock();
+    try {
+      if (hasNextCached()) {
+        return true;
+      }
+      // If none are available, try checking for any records already fetched by the consumer.
+      getOrCreateConsumerRecords();
+
+      return hasNextCached();
+    } finally {
+      lock.unlock();
     }
+  }
+
+  boolean hasNextCached() {
+    return !consumerRecords.isEmpty();
+  }
+
+  ConsumerRecord<KafkaKeyT, KafkaValueT> next() {
+    return consumerRecords.poll();
   }
 
   /**
@@ -398,42 +380,14 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * consumer records if the records have not been fully consumed by client yet. Must be
    * invoked with the lock held, i.e. after startRead().
    */
-  void getOrCreateConsumerRecords() {
-    //reset index
-    this.index = 0;
-    consumerRecordList = new ArrayList<>();
-    consumerRecords = consumer.poll(0);
+  private void getOrCreateConsumerRecords() {
+    consumerRecords = new ArrayDeque<>();
+    ConsumerRecords<KafkaKeyT, KafkaValueT> polledRecords = consumer.poll(0);
     //drain the iterator and buffer to list
-    for (ConsumerRecord<KafkaKeyT, KafkaValueT> consumerRecord : consumerRecords) {
-      consumerRecordList.add(consumerRecord);
+    for (ConsumerRecord<KafkaKeyT, KafkaValueT> consumerRecord : polledRecords) {
+      consumerRecords.add(consumerRecord);
     }
   }
-
-  public ConsumerRecord<KafkaKeyT, KafkaValueT> peek() {
-    if (hasNext()) {
-      return consumerRecordList.get(this.index);
-    }
-    return null;
-  }
-
-  public boolean hasNext() {
-    if (consumerRecordList != null && this.index < consumerRecordList.size()) {
-      return true;
-    }
-    // If none are available, try checking for any records already fetched by the consumer.
-    getOrCreateConsumerRecords();
-    return consumerRecordList != null && this.index < consumerRecordList.size();
-  }
-
-  public ConsumerRecord<KafkaKeyT, KafkaValueT> next() {
-    if (hasNext()) {
-      ConsumerRecord<KafkaKeyT, KafkaValueT> record = consumerRecordList.get(index);
-      this.index = this.index + 1;
-      return record;
-    }
-    return null;
-  }
-
 
   private class NoOpOnRebalance implements ConsumerRebalanceListener {
 

@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>rest-utils-parent</artifactId>
-        <version>5.0.0</version>
+        <version>5.3.0</version>
     </parent>
 
     <artifactId>kafka-rest-parent</artifactId>
@@ -26,8 +26,8 @@
 
     <licenses>
         <license>
-            <name>Apache License 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+            <name>Confluent Community License</name>
+            <url>http://www.confluent.io/confluent-community-license</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -42,11 +42,14 @@
     <modules>
         <module>kafka-rest</module>
         <module>kafka-rest-console-scripts</module>
+        <module>kafka-rest-common</module>
+        <module>kafka-rest-scala-consumer</module>
     </modules>
 
     <properties>
         <confluent.maven.repo>http://packages.confluent.io/maven/</confluent.maven.repo>
         <log4j.version>1.7.25</log4j.version>
+        <checkstyle.suppressions.location>checkstyle/suppressions.xml</checkstyle.suppressions.location>
     </properties>
 
     <repositories>
@@ -59,8 +62,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>annotations</artifactId>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
         </dependency>
     </dependencies>
 

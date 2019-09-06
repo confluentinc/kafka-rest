@@ -1,18 +1,17 @@
-/**
- * Copyright 2015 Confluent Inc.
+/*
+ * Copyright 2018 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.confluent.io/confluent-community-license
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- **/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 
 package io.confluent.kafkarest.unit;
 
@@ -36,7 +35,6 @@ import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.TestUtils;
@@ -86,12 +84,10 @@ public class PartitionsResourceAvroProduceTest
     adminClientWrapper = EasyMock.createMock(AdminClientWrapper.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
     ctx = new DefaultKafkaRestContext(config,
-        null,
         producerPool,
         null,
-        null,
-        null,
-        adminClientWrapper
+        adminClientWrapper,
+        null
     );
     addResource(new TopicsResource(ctx));
     addResource(new PartitionsResource(ctx));
@@ -123,10 +119,10 @@ public class PartitionsResourceAvroProduceTest
                                              String acceptHeader,
                                              String requestMediatype,
                                              EmbeddedFormat recordFormat,
-                                             final List<RecordMetadataOrException> results) {
+                                             final List<RecordMetadataOrException> results) throws Exception {
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
-        new Capture<ProducerPool.ProduceRequestCallback>();
+        Capture.newInstance();
     EasyMock.expect(adminClientWrapper.topicExists(topic)).andReturn(true);
     EasyMock.expect(adminClientWrapper.partitionExists(topic, partition)).andReturn(true);
     producerPool.produce(EasyMock.eq(topic),
@@ -160,7 +156,7 @@ public class PartitionsResourceAvroProduceTest
   }
 
   @Test
-  public void testProduceToPartitionByKey() {
+  public void testProduceToPartitionByKey() throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_AVRO) {
         final PartitionProduceRequest request = new PartitionProduceRequest();

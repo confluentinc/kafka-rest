@@ -1,17 +1,16 @@
 /*
- * Copyright 2017 Confluent Inc.
+ * Copyright 2018 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.confluent.io/confluent-community-license
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 
 package io.confluent.kafkarest;
@@ -32,65 +31,54 @@ import java.util.List;
 import java.util.Properties;
 import java.util.TreeSet;
 import java.util.Vector;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
-import io.confluent.rest.exceptions.RestServerErrorException;
-
 
 public class AdminClientWrapper {
 
   private AdminClient adminClient;
   private int initTimeOut;
 
-  public AdminClientWrapper(KafkaRestConfig kafkaRestConfig) {
-    Properties properties = new Properties();
-    properties.putAll(kafkaRestConfig.getAdminProperties());
-    properties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaRestConfig.bootstrapBrokers());
-    adminClient = AdminClient.create(properties);
+  public AdminClientWrapper(KafkaRestConfig kafkaRestConfig, AdminClient adminClient) {
+    this.adminClient = adminClient;
     this.initTimeOut = kafkaRestConfig.getInt(KafkaRestConfig.KAFKACLIENT_INIT_TIMEOUT_CONFIG);
   }
 
-  public List<Integer> getBrokerIds() {
+  public static Properties adminProperties(KafkaRestConfig kafkaRestConfig) {
+    Properties properties = new Properties();
+    properties.putAll(kafkaRestConfig.getAdminProperties());
+    properties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG,
+        RestConfigUtils.bootstrapBrokers(kafkaRestConfig));
+    return properties;
+  }
+
+  public List<Integer> getBrokerIds() throws Exception {
     List<Integer> brokerIds = new Vector<>();
     DescribeClusterResult clusterResults = adminClient.describeCluster();
-    try {
-      Collection<Node> nodeCollection =
-          clusterResults.nodes().get(initTimeOut, TimeUnit.MILLISECONDS);
-      for (Node node : nodeCollection) {
-        brokerIds.add(node.id());
-      }
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE,
-          Errors.KAFKA_ERROR_ERROR_CODE, e
-      );
+    Collection<Node> nodeCollection =
+        clusterResults.nodes().get(initTimeOut, TimeUnit.MILLISECONDS);
+    for (Node node : nodeCollection) {
+      brokerIds.add(node.id());
     }
     return brokerIds;
   }
 
-  public Collection<String> getTopicNames() {
+  public Collection<String> getTopicNames() throws Exception {
     Collection<String> allTopics = null;
-    try {
-      allTopics = new TreeSet<>(
-          adminClient.listTopics().names().get(initTimeOut, TimeUnit.MILLISECONDS));
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE,
-          Errors.KAFKA_ERROR_ERROR_CODE, e
-      );
-    }
+    allTopics = new TreeSet<>(
+        adminClient.listTopics().names().get(initTimeOut, TimeUnit.MILLISECONDS));
     return allTopics;
   }
 
-  public boolean topicExists(String topic) {
+  public boolean topicExists(String topic) throws Exception {
     Collection<String> allTopics = getTopicNames();
     return allTopics.contains(topic);
   }
 
-  public Topic getTopic(String topicName) {
+  public Topic getTopic(String topicName) throws Exception {
     Topic topic = null;
     if (topicExists(topicName)) {
       TopicDescription topicDescription = getTopicDescription(topicName);
@@ -100,13 +88,13 @@ public class AdminClientWrapper {
     return topic;
   }
 
-  public List<Partition> getTopicPartitions(String topicName) {
+  public List<Partition> getTopicPartitions(String topicName) throws Exception {
     TopicDescription topicDescription = getTopicDescription(topicName);
     List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), null);
     return partitions;
   }
 
-  public Partition getTopicPartition(String topicName, int partition) {
+  public Partition getTopicPartition(String topicName, int partition) throws Exception {
     TopicDescription topicDescription = getTopicDescription(topicName);
     List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), partition);
     if (partitions.isEmpty()) {
@@ -115,30 +103,24 @@ public class AdminClientWrapper {
     return partitions.get(0);
   }
 
-  public boolean partitionExists(String topicName, int partition) {
+  public boolean partitionExists(String topicName, int partition) throws Exception {
     Topic topic = getTopic(topicName);
     return (partition >= 0 && partition < topic.getPartitions().size());
   }
 
-  private Topic buildTopic(String topicName, TopicDescription topicDescription) {
-    try {
-      List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), null);
+  private Topic buildTopic(String topicName, TopicDescription topicDescription) throws Exception {
+    List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), null);
 
-      ConfigResource topicResource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
-      Config config = adminClient.describeConfigs(
-          Collections.unmodifiableList(Arrays.asList(topicResource))
-      ).values().get(topicResource).get();
-      Properties topicProps = new Properties();
-      for (ConfigEntry configEntry : config.entries()) {
-        topicProps.put(configEntry.name(), configEntry.value());
-      }
-      Topic topic = new Topic(topicName, topicProps, partitions);
-      return topic;
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE,
-          Errors.KAFKA_ERROR_ERROR_CODE, e
-      );
+    ConfigResource topicResource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
+    Config config = adminClient.describeConfigs(
+        Collections.unmodifiableList(Arrays.asList(topicResource))
+    ).values().get(topicResource).get();
+    Properties topicProps = new Properties();
+    for (ConfigEntry configEntry : config.entries()) {
+      topicProps.put(configEntry.name(), configEntry.value());
     }
+    Topic topic = new Topic(topicName, topicProps, partitions);
+    return topic;
   }
 
   private List<Partition> buildPartitonsData(
@@ -154,7 +136,9 @@ public class AdminClientWrapper {
 
       Partition p = new Partition();
       p.setPartition(topicPartitionInfo.partition());
-      p.setLeader(topicPartitionInfo.leader().id());
+      Node partitionLeader = topicPartitionInfo.leader();
+      int leaderId = partitionLeader != null ? partitionLeader.id() : -1;
+      p.setLeader(leaderId);
       List<PartitionReplica> partitionReplicas = new Vector<>();
 
       for (Node replicaNode : topicPartitionInfo.replicas()) {
@@ -168,15 +152,9 @@ public class AdminClientWrapper {
     return partitionList;
   }
 
-  private TopicDescription getTopicDescription(String topicName) throws RestServerErrorException {
-    try {
-      return adminClient.describeTopics(Collections.unmodifiableList(Arrays.asList(topicName)))
-          .values().get(topicName).get(initTimeOut, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE,
-          Errors.KAFKA_ERROR_ERROR_CODE, e
-      );
-    }
+  private TopicDescription getTopicDescription(String topicName) throws Exception {
+    return adminClient.describeTopics(Collections.unmodifiableList(Arrays.asList(topicName)))
+        .values().get(topicName).get(initTimeOut, TimeUnit.MILLISECONDS);
   }
 
   public void shutdown() {

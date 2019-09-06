@@ -1,21 +1,23 @@
-/**
- * Copyright 2015 Confluent Inc.
+/*
+ * Copyright 2018 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.confluent.io/confluent-community-license
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- **/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 
 package io.confluent.kafkarest;
 
+import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
+import io.confluent.rest.exceptions.KafkaExceptionMapper;
+import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
 import org.eclipse.jetty.util.StringUtil;
 
 import java.lang.reflect.Proxy;
@@ -39,13 +41,6 @@ import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.rest.Application;
 import io.confluent.rest.RestConfigException;
 
-import java.lang.reflect.Proxy;
-import java.util.Properties;
-import javax.ws.rs.core.Configurable;
-
-import kafka.utils.ZkUtils;
-import org.eclipse.jetty.util.StringUtil;
-
 
 /**
  * Utilities for configuring and running an embedded Kafka server.
@@ -62,8 +57,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     super(new KafkaRestConfig(props));
   }
 
-  public KafkaRestApplication(KafkaRestConfig config)
-      throws IllegalAccessException, InstantiationException, RestConfigException {
+  public KafkaRestApplication(KafkaRestConfig config) {
     super(config);
 
     restResourceExtensions = config.getConfiguredInstances(
@@ -74,8 +68,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-    setupInjectedResources(config, appConfig, null, null, null, null, null, null, null,
-        null
+    setupInjectedResources(config, appConfig, null,
+        null, null, null
     );
   }
 
@@ -85,13 +79,10 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
    */
   protected void setupInjectedResources(
       Configurable<?> config, KafkaRestConfig appConfig,
-      ZkUtils zkUtils, MetadataObserver mdObserver,
       ProducerPool producerPool,
-      ConsumerManager consumerManager,
-      SimpleConsumerFactory simpleConsumerFactory,
-      SimpleConsumerManager simpleConsumerManager,
       KafkaConsumerManager kafkaConsumerManager,
-      AdminClientWrapper adminClientWrapperInjected
+      AdminClientWrapper adminClientWrapperInjected,
+      ScalaConsumersContext scalaConsumersContext
   ) {
     if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))
         && StringUtil.isBlank(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG))) {
@@ -103,9 +94,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
     config.register(new ZkExceptionMapper(appConfig));
 
-    KafkaRestContextProvider.initialize(zkUtils, appConfig, mdObserver, producerPool,
-        consumerManager, simpleConsumerFactory,
-        simpleConsumerManager, kafkaConsumerManager, adminClientWrapperInjected
+    KafkaRestContextProvider.initialize(appConfig, producerPool,
+        kafkaConsumerManager, adminClientWrapperInjected, scalaConsumersContext
     );
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
     KafkaRestContext context =
@@ -127,6 +117,13 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     for (RestResourceExtension restResourceExtension : restResourceExtensions) {
       restResourceExtension.register(config, appConfig);
     }
+  }
+
+  @Override
+  protected void registerExceptionMappers(Configurable<?> config, KafkaRestConfig restConfig) {
+    config.register(ConstraintViolationExceptionMapper.class);
+    config.register(new WebApplicationExceptionMapper(restConfig));
+    config.register(new KafkaExceptionMapper(restConfig));
   }
 
   @Override

@@ -1,21 +1,21 @@
-/**
- * Copyright 2015 Confluent Inc.
+/*
+ * Copyright 2018 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.confluent.io/confluent-community-license
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- **/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 
 package io.confluent.kafkarest.unit;
 
+import io.confluent.kafkarest.ScalaConsumersContext;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -28,6 +28,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import io.confluent.kafkarest.ConsumerManager;
+import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.ConsumerState;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestApplication;
@@ -64,8 +65,8 @@ public class AbstractConsumerResourceTest
   public AbstractConsumerResourceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     consumerManager = EasyMock.createMock(ConsumerManager.class);
-    ctx = new DefaultKafkaRestContext(config, mdObserver, null, consumerManager, null, null,
-        null);
+    ScalaConsumersContext scalaConsumersContext = new ScalaConsumersContext(mdObserver, consumerManager, null);
+    ctx = new DefaultKafkaRestContext(config, null, null, null, scalaConsumersContext);
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
     KafkaRestContext contextProxy =
         (KafkaRestContext) Proxy.newProxyInstance(KafkaRestContext.class.getClassLoader(), new
@@ -100,15 +101,15 @@ public class AbstractConsumerResourceTest
       String topicName, Class<? extends ConsumerState<KafkaK, KafkaV, ClientK, ClientV>> stateClass,
       long maxBytes, final List<? extends ConsumerRecord<ClientK, ClientV>> readResult,
       final Exception readException) {
-    final Capture<ConsumerManager.ReadCallback>
+    final Capture<ConsumerReadCallback>
         readCallback =
-        new Capture<ConsumerManager.ReadCallback>();
+        Capture.newInstance();
     consumerManager
         .readTopic(EasyMock.eq(groupName), EasyMock.eq(instanceId), EasyMock.eq(topicName),
                    EasyMock.eq(stateClass), EasyMock.eq(maxBytes), EasyMock.capture(readCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
-      public Object answer() throws Throwable {
+      public Object answer() {
         readCallback.getValue().onCompletion(readResult, readException);
         return null;
       }
@@ -119,7 +120,7 @@ public class AbstractConsumerResourceTest
                               final Exception commitException) {
     final Capture<ConsumerManager.CommitCallback>
         commitCallback =
-        new Capture<ConsumerManager.CommitCallback>();
+        Capture.newInstance();
     consumerManager.commitOffsets(EasyMock.eq(groupName), EasyMock.eq(instanceId),
                                   EasyMock.capture(commitCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {

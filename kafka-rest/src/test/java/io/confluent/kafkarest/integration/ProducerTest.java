@@ -1,23 +1,22 @@
-/**
- * Copyright 2015 Confluent Inc.
+/*
+ * Copyright 2018 Confluent Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.confluent.io/confluent-community-license
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- **/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package io.confluent.kafkarest.integration;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.errors.RecordTooLargeException;
-import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,9 +36,6 @@ import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.ProduceRecord;
-import kafka.serializer.Decoder;
-import kafka.serializer.DefaultDecoder;
-import kafka.utils.ZkUtils;
 import scala.collection.JavaConversions;
 
 import static org.junit.Assert.assertEquals;
@@ -48,11 +44,7 @@ import static org.junit.Assert.assertTrue;
 
 public class ProducerTest extends AbstractProducerTest {
 
-  private ZkUtils testZkUtils;
-
   private static final String topicName = "topic1";
-
-  private static final Decoder<byte[]> binaryDecoder = new DefaultDecoder(null);
 
   // Produce to topic inputs & results
 
@@ -123,14 +115,6 @@ public class ProducerTest extends AbstractProducerTest {
   private boolean sawCallback;
 
   @Override
-  protected ZkUtils getZkUtils(KafkaRestConfig appConfig) {
-    testZkUtils = ZkUtils.apply(
-        appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG), 30000, 30000,
-        JaasUtils.isZkSecurityEnabled());
-    return testZkUtils;
-  }
-
-  @Override
   protected ProducerPool getProducerPool(KafkaRestConfig appConfig) {
     Properties overrides = new Properties();
     // Reduce the metadata fetch timeout so requests for topics that don't exist timeout much
@@ -181,26 +165,26 @@ public class ProducerTest extends AbstractProducerTest {
 
   @Test
   public void testProduceToTopicWithKeys() {
-    testProduceToTopic(topicName, topicRecordsWithKeys, binaryDecoder, binaryDecoder,
-                       produceOffsets, false);
+    testProduceToTopic(topicName, topicRecordsWithKeys, ByteArrayDeserializer.class.getName(),
+        ByteArrayDeserializer.class.getName(), produceOffsets, false);
   }
 
   @Test
   public void testProduceToTopicWithPartitions() {
-    testProduceToTopic(topicName, topicRecordsWithPartitions, binaryDecoder, binaryDecoder,
-                       producePartitionedOffsets, true);
+    testProduceToTopic(topicName, topicRecordsWithPartitions, ByteArrayDeserializer.class.getName(),
+        ByteArrayDeserializer.class.getName(), producePartitionedOffsets, true);
   }
 
   @Test
   public void testProduceToTopicWithPartitionsAndKeys() {
-    testProduceToTopic(topicName, topicRecordsWithPartitionsAndKeys, binaryDecoder, binaryDecoder,
-                       producePartitionedOffsets, true);
+    testProduceToTopic(topicName, topicRecordsWithPartitionsAndKeys, ByteArrayDeserializer.class.getName(),
+        ByteArrayDeserializer.class.getName(), producePartitionedOffsets, true);
   }
 
   @Test
   public void testProduceToTopicWithNullValues() {
-    testProduceToTopic(topicName, topicRecordsWithNullValues, binaryDecoder, binaryDecoder,
-                       produceOffsets, false);
+    testProduceToTopic(topicName, topicRecordsWithNullValues, ByteArrayDeserializer.class.getName(),
+        ByteArrayDeserializer.class.getName(), produceOffsets, false);
   }
 
   @Test
@@ -214,7 +198,8 @@ public class ProducerTest extends AbstractProducerTest {
 
   protected void testProduceToPartition(List<? extends ProduceRecord<byte[], byte[]>> records,
                                         List<PartitionOffset> offsetResponse) {
-    testProduceToPartition(topicName, 0, records, binaryDecoder, binaryDecoder, offsetResponse);
+    testProduceToPartition(topicName, 0, records, ByteArrayDeserializer.class.getName(),
+        ByteArrayDeserializer.class.getName(), offsetResponse);
   }
 
   @Test
