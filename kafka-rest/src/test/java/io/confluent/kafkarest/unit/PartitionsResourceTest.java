@@ -14,15 +14,9 @@
  */
 package io.confluent.kafkarest.unit;
 
-import org.easymock.EasyMock;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
-
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
+import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
+import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.AdminClientWrapper;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
@@ -33,14 +27,18 @@ import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
+import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
-
-import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
-import static io.confluent.kafkarest.TestUtils.assertOKResponse;
-import static org.junit.Assert.assertEquals;
+import java.util.Arrays;
+import java.util.List;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+import org.easymock.EasyMock;
+import org.junit.Before;
+import org.junit.Test;
 
 public class PartitionsResourceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
@@ -73,6 +71,7 @@ public class PartitionsResourceTest
 
     addResource(new TopicsResource(ctx));
     addResource(new PartitionsResource(ctx));
+    addResource(InstantConverterProvider.class);
   }
 
   @Before

@@ -14,12 +14,32 @@
  */
 package io.confluent.kafkarest.v2;
 
-import io.confluent.kafkarest.SystemTime;
+import static java.util.Collections.singletonMap;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import io.confluent.kafkarest.ConsumerReadCallback;
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.SystemTime;
+import io.confluent.kafkarest.entities.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerOffsetCommitRequest;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
-import io.confluent.rest.exceptions.RestException;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.rest.RestConfigException;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.common.TopicPartition;
@@ -31,28 +51,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.rest.RestConfigException;
 import org.junit.runner.RunWith;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
 
 /**
  * Tests basic create/read/commit/delete functionality of ConsumerManager. This only exercises the
@@ -60,6 +59,13 @@ import static org.junit.Assert.fail;
  */
 @RunWith(EasyMockRunner.class)
 public class KafkaConsumerManagerTest {
+
+    private static final String TOPIC = "topic";
+    private static final int PARTITION = 1;
+    private static final long BEGINNING_OFFSET = 10L;
+    private static final long END_OFFSET = 20L;
+    private static final long OFFSET_AT_TIME = 30L;
+    private static final Instant OFFSET_TIMESTAMP = Instant.ofEpochMilli(1000L);
 
     private KafkaRestConfig config;
     @Mock
@@ -123,6 +129,37 @@ public class KafkaConsumerManagerTest {
     }
 
     @Test
+    public void getBeginningOffset_returnsBeginningOffset() {
+        expectCreate(consumer);
+
+        consumer.updateBeginningOffsets(
+            singletonMap(new TopicPartition(TOPIC, PARTITION), BEGINNING_OFFSET));
+
+        assertEquals(BEGINNING_OFFSET, consumerManager.getBeginningOffset(TOPIC, PARTITION));
+    }
+
+    @Test
+    public void getEndOffset_returnsEndOffset() {
+        expectCreate(consumer);
+
+        consumer.updateEndOffsets(
+            singletonMap(new TopicPartition(TOPIC, PARTITION), END_OFFSET));
+
+        assertEquals(END_OFFSET, consumerManager.getEndOffset(TOPIC, PARTITION));
+    }
+
+    @Test
+    public void getOffsetForTime_returnsOffset() {
+        expectCreate(consumer);
+
+        consumer.updateOffsetForTime(TOPIC, PARTITION, OFFSET_AT_TIME, OFFSET_TIMESTAMP);
+
+        assertEquals(
+            (Long) OFFSET_AT_TIME,
+            consumerManager.getOffsetForTime(TOPIC, PARTITION, OFFSET_TIMESTAMP).get());
+    }
+
+    @Test
     public void testConsumerOverrides() {
         final Capture<Properties> consumerConfig = Capture.newInstance();
         EasyMock.expect(consumerFactory.createConsumer(EasyMock.capture(consumerConfig)))
@@ -178,7 +215,7 @@ public class KafkaConsumerManagerTest {
                 groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
         consumerManager.subscribe(groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
         consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
-        consumer.updateBeginningOffsets(Collections.singletonMap(new TopicPartition(topicName, 0), 0L));
+        consumer.updateBeginningOffsets(singletonMap(new TopicPartition(topicName, 0), 0L));
 
         readFromDefault(cid);
         long startTime = System.currentTimeMillis();
@@ -208,7 +245,7 @@ public class KafkaConsumerManagerTest {
                 groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
         consumerManager.subscribe(groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
         consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
-        consumer.updateBeginningOffsets(Collections.singletonMap(new TopicPartition(topicName, 0), 0L));
+        consumer.updateBeginningOffsets(singletonMap(new TopicPartition(topicName, 0), 0L));
 
         long startTime = System.currentTimeMillis();
         readFromDefault(cid);
@@ -256,7 +293,7 @@ public class KafkaConsumerManagerTest {
                 groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
         consumerManager.subscribe(groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
         consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
-        consumer.updateBeginningOffsets(Collections.singletonMap(new TopicPartition(topicName, 0), 0L));
+        consumer.updateBeginningOffsets(singletonMap(new TopicPartition(topicName, 0), 0L));
 
         readFromDefault(cid);
         Thread.sleep((long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 0.5)); // should return sooner since min bytes hit
@@ -291,7 +328,7 @@ public class KafkaConsumerManagerTest {
                 groupName, config);
         consumerManager.subscribe(groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
         consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
-        consumer.updateBeginningOffsets(Collections.singletonMap(new TopicPartition(topicName, 0), 0L));
+        consumer.updateBeginningOffsets(singletonMap(new TopicPartition(topicName, 0), 0L));
 
         readFromDefault(cid);
         Thread.sleep((long) (Integer.parseInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT) * 0.5)); // should return sooner since min bytes hit
@@ -502,7 +539,7 @@ public class KafkaConsumerManagerTest {
         consumer.cid(cid);
         consumerManager.subscribe(consumer.groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
         consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
-        consumer.updateBeginningOffsets(Collections.singletonMap(new TopicPartition(topicName, 0), 0L));
+        consumer.updateBeginningOffsets(singletonMap(new TopicPartition(topicName, 0), 0L));
 
         return referenceRecords;
     }

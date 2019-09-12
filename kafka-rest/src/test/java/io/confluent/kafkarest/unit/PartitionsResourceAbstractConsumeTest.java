@@ -15,19 +15,24 @@
 
 package io.confluent.kafkarest.unit;
 
-import io.confluent.kafkarest.*;
+import io.confluent.kafkarest.ConsumerReadCallback;
+import io.confluent.kafkarest.DefaultKafkaRestContext;
+import io.confluent.kafkarest.KafkaRestApplication;
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.ScalaConsumersContext;
+import io.confluent.kafkarest.SimpleConsumerManager;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
+import java.util.List;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.core.Response;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
-
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.core.Response;
-import java.util.List;
 
 public class PartitionsResourceAbstractConsumeTest extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
@@ -45,6 +50,7 @@ public class PartitionsResourceAbstractConsumeTest extends EmbeddedServerTestHar
     final DefaultKafkaRestContext ctx = new DefaultKafkaRestContext(config, null, null, null,
         scalaConsumersContext);
     addResource(new PartitionsResource(ctx));
+    addResource(InstantConverterProvider.class);
   }
 
   protected void expectConsume(final EmbeddedFormat embeddedFormat,  final List<? extends ConsumerRecord> records) {

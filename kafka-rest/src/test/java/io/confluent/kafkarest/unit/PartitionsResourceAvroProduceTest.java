@@ -15,20 +15,9 @@
 
 package io.confluent.kafkarest.unit;
 
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.TopicPartition;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
-import org.easymock.IAnswer;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
+import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
+import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.AdminClientWrapper;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
@@ -45,15 +34,24 @@ import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.SchemaHolder;
+import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
-
-import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
-import static io.confluent.kafkarest.TestUtils.assertOKResponse;
-import static org.junit.Assert.assertEquals;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
+import org.easymock.IAnswer;
+import org.junit.Before;
+import org.junit.Test;
 
 // This test is much lighter than the Binary one since they would otherwise be mostly duplicated
 // -- this just sanity checks the Jersey processing of these requests.
@@ -91,6 +89,7 @@ public class PartitionsResourceAvroProduceTest
     );
     addResource(new TopicsResource(ctx));
     addResource(new PartitionsResource(ctx));
+    addResource(InstantConverterProvider.class);
 
     produceRecordsWithKeys = Arrays.asList(
         new AvroProduceRecord(TestUtils.jsonTree("1"), TestUtils.jsonTree("{\"field\":42}")),
