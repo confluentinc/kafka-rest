@@ -41,7 +41,6 @@ import io.confluent.kafkarest.entities.Topic;
 public class AdminClientWrapper {
 
   private AdminClient adminClient;
-  private KafkaRestConfig kafkaRestConfig;
   private int initTimeOut;
 
   public AdminClientWrapper(KafkaRestConfig kafkaRestConfig, AdminClient adminClient) {

@@ -132,7 +132,7 @@ public class PartitionsResourceBinaryProduceTest
     request.setRecords(records);
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
-        Capture.newInstance();
+            Capture.newInstance();
     EasyMock.expect(adminClientWrapper.topicExists(topic)).andReturn(true);
     EasyMock.expect(adminClientWrapper.partitionExists(topic, partition)).andReturn(true);
     producerPool.produce(EasyMock.eq(topic),
