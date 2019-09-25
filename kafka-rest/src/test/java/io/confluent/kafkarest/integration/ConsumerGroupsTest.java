@@ -18,11 +18,7 @@ package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.RestConfigUtils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
-import io.confluent.kafkarest.entities.ConsumerEntity;
-import io.confluent.kafkarest.entities.ConsumerGroup;
-import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.TopicName;
+import io.confluent.kafkarest.entities.*;
 import kafka.serializer.Decoder;
 import kafka.serializer.DefaultDecoder;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -113,12 +109,10 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
       assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
       List<ConsumerGroup> groups = response.readEntity(new GenericType<List<ConsumerGroup>>() {
       });
-      List<ConsumerGroup> expected =
-              Collections.singletonList(
-                      new ConsumerGroup(groupName, groups.stream()
-                              .filter(g -> groupName.equals(g.getGroupId()))
-                              .collect(Collectors.toList()).get(0).getCoordinator()));
-      Assert.assertEquals(expected, groups);
+      ConsumerGroupCoordinator expectedCoordinator = groups.stream()
+              .filter(g -> groupName.equals(g.getGroupId()))
+              .collect(Collectors.toList()).get(0).getCoordinator();
+      Assert.assertTrue(groups.contains(new ConsumerGroup(groupName, expectedCoordinator)));
     }
   }
 
