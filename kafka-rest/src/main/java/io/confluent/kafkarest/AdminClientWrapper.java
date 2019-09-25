@@ -24,7 +24,6 @@ import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.config.ConfigResource;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -148,7 +147,8 @@ public class AdminClientWrapper {
   }
 
   private TopicDescription getTopicDescription(String topicName) throws Exception {
-    return adminClient.describeTopics(Collections.unmodifiableList(Collections.singletonList(topicName)))
+    return adminClient.describeTopics(
+            Collections.unmodifiableList(Collections.singletonList(topicName)))
         .values().get(topicName).get(initTimeOut, TimeUnit.MILLISECONDS);
   }
 

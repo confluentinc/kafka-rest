@@ -16,6 +16,7 @@
 
 package io.confluent.kafkarest.integration;
 
+import io.confluent.kafkarest.RestConfigUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.ConsumerEntity;
@@ -26,6 +27,7 @@ import kafka.serializer.Decoder;
 import kafka.serializer.DefaultDecoder;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.Assert;
 import org.junit.Before;
@@ -75,7 +77,7 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
     Properties properties = new Properties();
     String deserializer = StringDeserializer.class.getName();
     properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-            restConfig.bootstrapBrokers());
+            RestConfigUtils.bootstrapBrokers(restConfig));
     properties.put(ConsumerConfig.GROUP_ID_CONFIG, groupName);
     properties.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "30000");
     properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, deserializer);
@@ -103,7 +105,8 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
 
   @Test
   public void testGetConsumerGroups() throws InterruptedException {
-    testProduceToTopic(topicName, topicRecordsWithKeys, binaryDecoder, binaryDecoder,
+    testProduceToTopic(topicName, topicRecordsWithKeys, ByteArrayDeserializer.class.getName(),
+            ByteArrayDeserializer.class.getName(),
             produceOffsets, false);
     try (KafkaConsumer kafkaConsumer = createNativeConsumer(groupName,
             Collections.singleton(topicName))) {
@@ -125,7 +128,8 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
 
   @Test
   public void testGetConsumerGroupMetrics() throws InterruptedException {
-    testProduceToTopic(topicName, topicRecordsWithKeys, binaryDecoder, binaryDecoder,
+    testProduceToTopic(topicName, topicRecordsWithKeys, ByteArrayDeserializer.class.getName(),
+            ByteArrayDeserializer.class.getName(),
             produceOffsets, false);
     try (KafkaConsumer kafkaConsumer = createNativeConsumer(groupName,
             Collections.singleton(topicName))) {
@@ -144,7 +148,8 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
 
   @Test
   public void testGetConsumerGroupTopics() throws InterruptedException {
-    testProduceToTopic(topicName, topicRecordsWithKeys, binaryDecoder, binaryDecoder,
+    testProduceToTopic(topicName, topicRecordsWithKeys, ByteArrayDeserializer.class.getName(),
+            ByteArrayDeserializer.class.getName(),
             produceOffsets, false);
     try (KafkaConsumer kafkaConsumer = createNativeConsumer(groupName,
             Collections.singleton(topicName))) {

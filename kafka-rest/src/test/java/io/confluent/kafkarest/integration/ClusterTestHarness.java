@@ -144,7 +144,7 @@ public abstract class ClusterTestHarness {
     Time time = Time.SYSTEM;
     zkClient = KafkaZkClient.apply(
         zkConnect, JaasUtils.isZkSecurityEnabled(), zkSessionTimeout, zkConnectionTimeout, Integer.MAX_VALUE, time,
-                "testMetricGroup", "testMetricGroupType");
+                "testMetricGroup", "testMetricGroupType", Option.apply("test"));
 
     configs = new Vector<>();
     servers = new Vector<>();
@@ -205,6 +205,7 @@ public abstract class ClusterTestHarness {
     restConfig = new KafkaRestConfig(restProperties);
     restApp = new TestKafkaRestApplication(restConfig,
         getProducerPool(restConfig),
+        null,
         null,
         null,
         getScalaConsumersContext(restConfig));

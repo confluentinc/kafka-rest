@@ -26,8 +26,8 @@ public class ConsumerGroupsTest extends EmbeddedServerTestHarness<KafkaRestConfi
     public ConsumerGroupsTest() throws RestConfigException {
         groupMetadataObserver = EasyMock.createMock(GroupMetadataObserver.class);
         producerPool = EasyMock.createMock(ProducerPool.class);
-        ctx = new DefaultKafkaRestContext(config, null, producerPool, null, null,
-                null,  null, null, groupMetadataObserver);
+        ctx = new DefaultKafkaRestContext(config, producerPool,
+                 null, null, groupMetadataObserver, null);
 
         addResource(new ConsumerGroupsResource(ctx));
     }
@@ -40,7 +40,7 @@ public class ConsumerGroupsTest extends EmbeddedServerTestHarness<KafkaRestConfi
     }
 
     @Test
-    public void testListGroups() {
+    public void testListGroups() throws Exception {
         for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
             final List<ConsumerGroup> groups =
                     Arrays.asList(new ConsumerGroup("foo", new ConsumerGroupCoordinator("127.0.0.1", 9092)),
@@ -61,7 +61,7 @@ public class ConsumerGroupsTest extends EmbeddedServerTestHarness<KafkaRestConfi
     }
 
     @Test
-    public void testListTopicsByGroup() {
+    public void testListTopicsByGroup() throws Exception {
         for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
             final Set<TopicName> groups = new HashSet<>();
             groups.add(new TopicName("foo"));
@@ -82,7 +82,7 @@ public class ConsumerGroupsTest extends EmbeddedServerTestHarness<KafkaRestConfi
     }
 
     @Test
-    public void testTopicGroupOffsets() {
+    public void testTopicGroupOffsets() throws Exception {
         for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
             final ConsumerEntity consumerEntity = new ConsumerEntity(Collections.singletonList(new TopicPartitionEntity("cons1", "127.0.0.1", "topic", 0, 2L, 0L, 2L)), 1, new ConsumerGroupCoordinator("127.0.0.1", 9092));
             EasyMock.expect(groupMetadataObserver.getConsumerGroupInformation("foo", Option.apply("topic"), Option.<Integer>empty(), Option.<Integer>empty()))
@@ -101,7 +101,7 @@ public class ConsumerGroupsTest extends EmbeddedServerTestHarness<KafkaRestConfi
     }
 
     @Test
-    public void testAllTopicsGroupOffsets() {
+    public void testAllTopicsGroupOffsets() throws Exception {
         for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
             final ConsumerEntity consumerEntity = new ConsumerEntity(Arrays.asList(new TopicPartitionEntity("cons1", "127.0.0.1", "topic", 0, 2L, 0L, 2L),
                     new TopicPartitionEntity("cons1", "127.0.0.1", "topic1", 0, 2L, 0L, 2L)), 1, new ConsumerGroupCoordinator("127.0.0.1", 9092));
