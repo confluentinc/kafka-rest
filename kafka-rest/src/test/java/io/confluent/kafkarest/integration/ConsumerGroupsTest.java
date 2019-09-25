@@ -36,14 +36,8 @@ import scala.collection.JavaConversions;
 
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 
@@ -121,7 +115,9 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
       });
       List<ConsumerGroup> expected =
               Collections.singletonList(
-                      new ConsumerGroup(groupName, groups.get(0).getCoordinator()));
+                      new ConsumerGroup(groupName, groups.stream()
+                              .filter(g -> groupName.equals(g.getGroupId()))
+                              .collect(Collectors.toList()).get(0).getCoordinator()));
       Assert.assertEquals(expected, groups);
     }
   }
