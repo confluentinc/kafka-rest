@@ -117,7 +117,6 @@ public class KafkaConsumerManagerTest {
 
     @After
     public void tearDown() {
-        consumer.close();
         consumerManager.shutdown();
     }
 
