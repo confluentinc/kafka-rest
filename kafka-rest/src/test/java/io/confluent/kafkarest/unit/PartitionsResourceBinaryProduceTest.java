@@ -79,10 +79,7 @@ public class PartitionsResourceBinaryProduceTest
     ctx = new DefaultKafkaRestContext(config,
             producerPool,
             null,
-            null,
-            null,
             adminClientWrapper,
-            null,
             null,
             null
         );

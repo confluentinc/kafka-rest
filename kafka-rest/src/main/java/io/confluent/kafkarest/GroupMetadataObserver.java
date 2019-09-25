@@ -21,11 +21,11 @@ import io.confluent.kafkarest.entities.ConsumerGroup;
 import io.confluent.kafkarest.entities.ConsumerGroupCoordinator;
 import io.confluent.kafkarest.entities.TopicName;
 import io.confluent.kafkarest.entities.TopicPartitionEntity;
-import kafka.admin.AdminClient;
-import kafka.admin.AdminClient.ConsumerGroupSummary;
-import kafka.admin.AdminClient.ConsumerSummary;
-import kafka.coordinator.group.GroupOverview;
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.ConsumerGroupDescription;
+import org.apache.kafka.clients.admin.ConsumerGroupListing;
+import org.apache.kafka.clients.admin.MemberDescription;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -39,19 +39,22 @@ import scala.collection.JavaConverters;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Comparator;
+import java.util.concurrent.TimeUnit;
 
 
 public class GroupMetadataObserver {
 
   private static AdminClient createAdminClient(KafkaRestConfig appConfig) {
     final Properties properties = new Properties();
-    properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, appConfig.bootstrapBrokers());
-    properties.putAll(appConfig.getConsumerProperties());
+    properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG,
+            RestConfigUtils.bootstrapBrokers(appConfig));
+    properties.putAll(appConfig.getAdminProperties());
     return AdminClient.create(properties);
   }
 
@@ -59,7 +62,8 @@ public class GroupMetadataObserver {
                                                               KafkaRestConfig appConfig) {
     final Properties properties = new Properties();
     String deserializer = StringDeserializer.class.getName();
-    properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, appConfig.bootstrapBrokers());
+    properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+            RestConfigUtils.bootstrapBrokers(appConfig));
     properties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
     properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
     properties.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "30000");
@@ -74,10 +78,12 @@ public class GroupMetadataObserver {
 
   private final KafkaRestConfig config;
   private final AdminClient adminClient;
+  private final int initTimeOut;
 
   public GroupMetadataObserver(KafkaRestConfig config) {
     this.config = config;
     this.adminClient = createAdminClient(config);
+    this.initTimeOut = config.getInt(KafkaRestConfig.KAFKACLIENT_INIT_TIMEOUT_CONFIG);
   }
 
   /**
@@ -86,20 +92,24 @@ public class GroupMetadataObserver {
    * @return list of consumer groups
    */
   public List<ConsumerGroup> getConsumerGroupList(Option<Integer> offsetOpt,
-                                                  Option<Integer> countOpt) {
+                                                  Option<Integer> countOpt) throws Exception {
     if (Option.apply(adminClient).nonEmpty()) {
-      final Boolean needPartOfData = offsetOpt.nonEmpty()
+      final boolean needPartOfData = offsetOpt.nonEmpty()
               && countOpt.nonEmpty()
               && countOpt.get() > 0;
-      scala.collection.immutable.List<GroupOverview> groupsOverview =
-              adminClient.listAllConsumerGroupsFlattened();
+      Collection<ConsumerGroupListing> groupsOverview =
+              adminClient.listConsumerGroups().all().get(initTimeOut, TimeUnit.MILLISECONDS);
       if (needPartOfData) {
-        groupsOverview = groupsOverview.slice(offsetOpt.get(), offsetOpt.get() + countOpt.get());
+        groupsOverview = JavaConverters.asJavaCollection(
+                JavaConverters.collectionAsScalaIterable(groupsOverview)
+                .slice(offsetOpt.get(), offsetOpt.get() + countOpt.get()));
       }
       final List<ConsumerGroup> result = new ArrayList<>();
-      for (GroupOverview eachGroupInfo :
-              JavaConverters.seqAsJavaListConverter(groupsOverview).asJava()) {
-        final Node node = adminClient.findCoordinator(eachGroupInfo.groupId(), 0);
+      for (ConsumerGroupListing eachGroupInfo : groupsOverview) {
+        final Node node = adminClient.describeConsumerGroups(
+                Collections.singleton(eachGroupInfo.groupId()))
+                .all().get(initTimeOut, TimeUnit.MILLISECONDS)
+                .get(eachGroupInfo.groupId()).coordinator();
         result.add(new ConsumerGroup(eachGroupInfo.groupId(),
                 new ConsumerGroupCoordinator(node.host(), node.port())));
       }
@@ -117,21 +127,21 @@ public class GroupMetadataObserver {
    */
   public Set<TopicName> getConsumerGroupTopicInformation(String groupId,
                                                          Option<Integer> offsetOpt,
-                                                         Option<Integer> countOpt) {
+                                                         Option<Integer> countOpt)
+          throws Exception {
     if (Option.apply(adminClient).nonEmpty()) {
-      final Option<scala.collection.immutable.List<ConsumerSummary>> summariesOpt =
-              adminClient.describeConsumerGroup(groupId, 0).consumers();
-      if (summariesOpt.nonEmpty()) {
+      final Collection<MemberDescription> summariesOpt =
+              adminClient.describeConsumerGroups(Collections.singleton(groupId))
+                      .all().get(initTimeOut, TimeUnit.MILLISECONDS).get(groupId).members();
+      if (summariesOpt.size() > 0) {
         final Set<TopicName> result = new HashSet<>();
-        for (ConsumerSummary eachSummary :
-                JavaConverters.seqAsJavaListConverter(summariesOpt.get()).asJava()) {
-          for (TopicPartition topicPartition :
-                  JavaConverters.seqAsJavaListConverter(eachSummary.assignment()).asJava()) {
+        for (MemberDescription eachSummary : summariesOpt) {
+          for (TopicPartition topicPartition : eachSummary.assignment().topicPartitions()) {
             result.add(new TopicName(topicPartition.topic()));
           }
         }
         log.debug("Get topic list {}", result);
-        final Boolean needPartOfData = offsetOpt.nonEmpty()
+        final boolean needPartOfData = offsetOpt.nonEmpty()
                 && countOpt.nonEmpty()
                 && countOpt.get() > 0;
         if (!needPartOfData) {
@@ -157,7 +167,7 @@ public class GroupMetadataObserver {
    * @return description of consumer group
    *     (all consumed topics with all partition offset information)
    */
-  public ConsumerEntity getConsumerGroupInformation(String groupId) {
+  public ConsumerEntity getConsumerGroupInformation(String groupId) throws Exception {
     return getConsumerGroupInformation(groupId, Option.<String>empty(),
             Option.<Integer>empty(), Option.<Integer>empty());
   }
@@ -175,18 +185,18 @@ public class GroupMetadataObserver {
    */
   public ConsumerEntity getConsumerGroupInformation(String groupId, Option<String> topic,
                                                     Option<Integer> offsetOpt,
-                                                    Option<Integer> countOpt) {
+                                                    Option<Integer> countOpt) throws Exception {
     if (Option.apply(adminClient).nonEmpty()) {
-      final ConsumerGroupSummary consumerGroupSummary =
-              adminClient.describeConsumerGroup(groupId, 0);
-      final Option<scala.collection.immutable.List<ConsumerSummary>> summariesOpt =
-              consumerGroupSummary.consumers();
-      if (summariesOpt.nonEmpty()) {
-        log.debug("Get summary list {}", summariesOpt);
+      final ConsumerGroupDescription consumerGroupSummary =
+              adminClient.describeConsumerGroups(Collections.singleton(groupId))
+                      .all().get(initTimeOut, TimeUnit.MILLISECONDS).get(groupId);
+      final Collection<MemberDescription> summaries =
+              consumerGroupSummary.members();
+      if (summaries.size() > 0) {
+        log.debug("Get summary list {}", summaries);
         try (KafkaConsumer kafkaConsumer = createConsumer(groupId, config)) {
           final List<TopicPartitionEntity> confluentTopicPartitions = new ArrayList<>();
-          for (ConsumerSummary summary :
-                  JavaConverters.asJavaIterableConverter(summariesOpt.get()).asJava()) {
+          for (MemberDescription summary : summaries) {
             final Comparator<TopicPartition> topicPartitionComparator =
                 new Comparator<TopicPartition>() {
                   @Override
@@ -195,8 +205,7 @@ public class GroupMetadataObserver {
                   }
                 };
             final List<TopicPartition> filteredTopicPartitions =
-                    new ArrayList<>(JavaConverters
-                            .seqAsJavaListConverter(summary.assignment()).asJava());
+                    new ArrayList<>(summary.assignment().topicPartitions());
             if (topic.nonEmpty()) {
               final List<TopicPartition> newTopicPartitions = new ArrayList<>();
               for (TopicPartition topicPartition : filteredTopicPartitions) {
@@ -262,7 +271,7 @@ public class GroupMetadataObserver {
           List<TopicPartitionEntity> topicPartitionList,
           Option<Integer> offsetOpt,
           Option<Integer> countOpt) {
-    final Boolean needPartOfData = offsetOpt.nonEmpty()
+    final boolean needPartOfData = offsetOpt.nonEmpty()
             && countOpt.nonEmpty()
             && countOpt.get() > 0;
     if (needPartOfData) {

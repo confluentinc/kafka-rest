@@ -48,8 +48,8 @@ public class PartitionsResourceAbstractConsumeTest extends EmbeddedServerTestHar
     simpleConsumerManager = EasyMock.createMock(SimpleConsumerManager.class);
 
     final ScalaConsumersContext scalaConsumersContext = new ScalaConsumersContext(null, null, simpleConsumerManager);
-    final DefaultKafkaRestContext ctx = new DefaultKafkaRestContext(config, null, null, null, simpleConsumerManager,
-            null, null, null, null, scalaConsumersContext);
+    final DefaultKafkaRestContext ctx = new DefaultKafkaRestContext(config, null,
+            null, null, null, scalaConsumersContext);
     addResource(new PartitionsResource(ctx));
     addResource(InstantConverterProvider.class);
   }

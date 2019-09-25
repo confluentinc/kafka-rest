@@ -15,16 +15,11 @@
 package io.confluent.kafkarest.unit;
 
 import io.confluent.kafkarest.*;
-import io.confluent.kafkarest.entities.BrokerEntity;
-import io.confluent.kafkarest.entities.EndPointEntity;
-import io.confluent.kafkarest.entities.NodeState;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
@@ -39,13 +34,7 @@ import org.apache.kafka.common.Node;
 import org.apache.kafka.common.errors.SaslAuthenticationException;
 import org.apache.kafka.common.internals.KafkaFutureImpl;
 import org.apache.kafka.common.protocol.Errors;
-import org.easymock.EasyMock;
-import org.junit.Before;
-import org.junit.Test;
 
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
 
@@ -67,10 +56,7 @@ public class BrokersResourceTest
     metadataObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
     ctx = new DefaultKafkaRestContext(config,
-        metadataObserver,
         producerPool,
-        null,
-        null,
         null,
         adminClientWrapper,
         null,
@@ -133,41 +119,6 @@ public class BrokersResourceTest
 
       EasyMock.verify(adminClient);
       EasyMock.reset(adminClient, producerPool);
-    }
-  }
-
-  @Test
-  public void testById() {
-    for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-      final BrokerEntity brokerEntity = new BrokerEntity(1,
-              Collections.singletonList(new EndPointEntity("PLAINTEXT", "127.0.0.1", 9092)));
-      EasyMock.expect(metadataObserver.getBroker(1)).andReturn(brokerEntity);
-      EasyMock.replay(metadataObserver);
-
-      Response response = request("/brokers/" + 1, mediatype.header).get();
-      assertOKResponse(response, mediatype.expected);
-      final BrokerEntity returnedBrokerIds = TestUtils.tryReadEntityOrLog(response, new GenericType<BrokerEntity>() {
-      });
-      assertEquals(brokerEntity, returnedBrokerIds);
-      EasyMock.verify(metadataObserver);
-      EasyMock.reset(metadataObserver, adminClientWrapper, producerPool);
-    }
-  }
-
-  @Test
-  public void testBrokerState() {
-    for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-      final NodeState state = new NodeState(true);
-      EasyMock.expect(adminClientWrapper.getBrokerState(1)).andReturn(state);
-      EasyMock.replay(adminClientWrapper);
-
-      Response response = request("/brokers/" + 1 + "/state", mediatype.header).get();
-      assertOKResponse(response, mediatype.expected);
-      final NodeState returnedBrokerIdState = TestUtils.tryReadEntityOrLog(response, new GenericType<NodeState>() {
-      });
-      assertEquals(state, returnedBrokerIdState);
-      EasyMock.verify(adminClientWrapper);
-      EasyMock.reset(adminClientWrapper, producerPool);
     }
   }
 }

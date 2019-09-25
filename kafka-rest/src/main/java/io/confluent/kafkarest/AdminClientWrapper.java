@@ -33,51 +33,26 @@ import java.util.TreeSet;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
-import io.confluent.kafkarest.entities.NodeState;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 
 public class AdminClientWrapper {
 
-  private AdminClient adminClient;
-  private int initTimeOut;
+  private final AdminClient adminClient;
+  private final int initTimeOut;
 
   public AdminClientWrapper(KafkaRestConfig kafkaRestConfig, AdminClient adminClient) {
     this.adminClient = adminClient;
     this.initTimeOut = kafkaRestConfig.getInt(KafkaRestConfig.KAFKACLIENT_INIT_TIMEOUT_CONFIG);
   }
 
-  public static Properties adminProperties(KafkaRestConfig kafkaRestConfig) {
+  static Properties adminProperties(KafkaRestConfig kafkaRestConfig) {
     Properties properties = new Properties();
     properties.putAll(kafkaRestConfig.getAdminProperties());
     properties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG,
         RestConfigUtils.bootstrapBrokers(kafkaRestConfig));
     return properties;
-  }
-
-  /**
-   * <p>Check if broker is available</p>
-   *
-   * @param brokerId - broker ID for check
-   * @return true if brokerInfo by ID not null
-   */
-  public NodeState getBrokerState(Integer brokerId) {
-    DescribeClusterResult clusterResults = adminClient.describeCluster();
-    try {
-      Collection<Node> nodeCollection =
-          clusterResults.nodes().get(initTimeOut, TimeUnit.MILLISECONDS);
-      for (Node eachNode: nodeCollection) {
-        if (brokerId != null && brokerId.equals(eachNode.id())) {
-          return new NodeState(true);
-        }
-      }
-      return new NodeState(false);
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RestServerErrorException(Errors.KAFKA_ERROR_MESSAGE,
-              Errors.KAFKA_ERROR_ERROR_CODE, e
-      );
-    }
   }
 
   public List<Integer> getBrokerIds() throws Exception {
@@ -92,31 +67,27 @@ public class AdminClientWrapper {
   }
 
   public Collection<String> getTopicNames() throws Exception {
-    Collection<String> allTopics = null;
-    allTopics = new TreeSet<>(
+    return new TreeSet<>(
         adminClient.listTopics().names().get(initTimeOut, TimeUnit.MILLISECONDS));
-    return allTopics;
   }
 
   public boolean topicExists(String topic) throws Exception {
-    Collection<String> allTopics = getTopicNames();
-    return allTopics.contains(topic);
+    return getTopicNames().contains(topic);
   }
 
   public Topic getTopic(String topicName) throws Exception {
-    Topic topic = null;
     if (topicExists(topicName)) {
       TopicDescription topicDescription = getTopicDescription(topicName);
 
-      topic = buildTopic(topicName, topicDescription);
+      return buildTopic(topicName, topicDescription);
+    } else {
+      return null;
     }
-    return topic;
   }
 
   public List<Partition> getTopicPartitions(String topicName) throws Exception {
     TopicDescription topicDescription = getTopicDescription(topicName);
-    List<Partition> partitions = buildPartitionsData(topicDescription.partitions(), null);
-    return partitions;
+    return buildPartitionsData(topicDescription.partitions(), null);
   }
 
   public Partition getTopicPartition(String topicName, int partition) throws Exception {
@@ -138,14 +109,13 @@ public class AdminClientWrapper {
 
     ConfigResource topicResource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
     Config config = adminClient.describeConfigs(
-        Collections.unmodifiableList(Arrays.asList(topicResource))
+        Collections.unmodifiableList(Collections.singletonList(topicResource))
     ).values().get(topicResource).get();
     Properties topicProps = new Properties();
     for (ConfigEntry configEntry : config.entries()) {
       topicProps.put(configEntry.name(), configEntry.value());
     }
-    Topic topic = new Topic(topicName, topicProps, partitions);
-    return topic;
+    return new Topic(topicName, topicProps, partitions);
   }
 
   private List<Partition> buildPartitionsData(
@@ -178,7 +148,7 @@ public class AdminClientWrapper {
   }
 
   private TopicDescription getTopicDescription(String topicName) throws Exception {
-    return adminClient.describeTopics(Collections.unmodifiableList(Arrays.asList(topicName)))
+    return adminClient.describeTopics(Collections.unmodifiableList(Collections.singletonList(topicName)))
         .values().get(topicName).get(initTimeOut, TimeUnit.MILLISECONDS);
   }
 

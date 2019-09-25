@@ -64,7 +64,8 @@ public class ConsumerGroupsResource {
   @GET
   @PerformanceMetric("groups.list")
   public List<ConsumerGroup> list(@QueryParam("offset") Integer offset,
-                                  @QueryParam("count") Integer count) {
+                                  @QueryParam("count") Integer count)
+          throws Exception {
     return context.getGroupMetadataObserver()
             .getConsumerGroupList(Option.apply(offset), Option.apply(count));
   }
@@ -78,7 +79,8 @@ public class ConsumerGroupsResource {
   @GET
   @Path("/{groupId}/partitions")
   @PerformanceMetric("groups.get.partitions")
-  public ConsumerEntity getPartitionsInformation(@PathParam("groupId") String groupId) {
+  public ConsumerEntity getPartitionsInformation(@PathParam("groupId") String groupId)
+          throws Exception {
     return context.getGroupMetadataObserver().getConsumerGroupInformation(groupId);
   }
 
@@ -93,7 +95,7 @@ public class ConsumerGroupsResource {
   @PerformanceMetric("groups.get.topics")
   public Set<TopicName> getTopics(@PathParam("groupId") String groupId,
                                   @QueryParam("offset") Integer offset,
-                                  @QueryParam("count") Integer count) {
+                                  @QueryParam("count") Integer count) throws Exception {
     return context.getGroupMetadataObserver()
             .getConsumerGroupTopicInformation(groupId, Option.apply(offset), Option.apply(count));
   }
@@ -110,7 +112,8 @@ public class ConsumerGroupsResource {
   public ConsumerEntity getPartitionsInformationByTopic(@PathParam("groupId") String groupId,
                                                         @PathParam("topic") String topic,
                                                         @QueryParam("offset") Integer offset,
-                                                        @QueryParam("count") Integer count) {
+                                                        @QueryParam("count") Integer count)
+          throws Exception {
     return context.getGroupMetadataObserver()
             .getConsumerGroupInformation(groupId,
                     Option.apply(topic),

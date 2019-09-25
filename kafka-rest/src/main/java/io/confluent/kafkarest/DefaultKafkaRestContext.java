@@ -30,7 +30,6 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   private ProducerPool producerPool;
   private KafkaConsumerManager kafkaConsumerManager;
   private AdminClientWrapper adminClientWrapper;
-  private final ClusterInformationObserver clusterInformationObserver;
   private final GroupMetadataObserver groupMetadataObserver;
 
 
@@ -39,7 +38,6 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
       ProducerPool producerPool,
       KafkaConsumerManager kafkaConsumerManager,
       AdminClientWrapper adminClientWrapper,
-      ClusterInformationObserver clusterInformationObserver,
       GroupMetadataObserver groupMetadataObserver,
       ScalaConsumersContext scalaConsumersContext
   ) {
@@ -48,7 +46,6 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
     this.producerPool = producerPool;
     this.kafkaConsumerManager = kafkaConsumerManager;
     this.adminClientWrapper = adminClientWrapper;
-    this.clusterInformationObserver = clusterInformationObserver;
     this.groupMetadataObserver = groupMetadataObserver;
     this.scalaConsumersContext = scalaConsumersContext;
   }
@@ -97,11 +94,6 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
           AdminClient.create(AdminClientWrapper.adminProperties(config)));
     }
     return adminClientWrapper;
-  }
-
-  @Override
-  public ClusterInformationObserver getClusterInformationObserver() {
-    return clusterInformationObserver;
   }
 
   @Override

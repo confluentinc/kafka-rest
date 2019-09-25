@@ -15,14 +15,10 @@
 
 package io.confluent.kafkarest;
 
-import io.confluent.kafkarest.entities.EndPointEntity;
-import io.confluent.kafkarest.entities.BrokerEntity;
-import kafka.cluster.EndPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
@@ -40,7 +36,6 @@ import kafka.cluster.Broker;
 import kafka.utils.ZkUtils;
 import scala.Option;
 import scala.collection.JavaConversions;
-import scala.collection.JavaConverters;
 import scala.collection.Map;
 import scala.collection.Seq;
 import scala.math.Ordering;
@@ -81,29 +76,6 @@ public class MetadataObserver {
       }
     }
     return false;
-  }
-
-  /**
-   * <p>Get broker metadata</p>
-   *
-   * @param brokerId - broker ID
-   * @return metadata about broker by ID or null if broker not found
-   */
-  public BrokerEntity getBroker(final int brokerId) {
-    try {
-      Broker broker = getBrokerById(brokerId);
-      List<EndPointEntity> endpoints = new ArrayList<>();
-      for (EndPoint endPoint :
-              JavaConverters.seqAsJavaListConverter(broker.endPoints()).asJava()) {
-        endpoints.add(new EndPointEntity(endPoint.securityProtocol().name,
-                endPoint.host(),
-                endPoint.port()));
-      }
-      return new BrokerEntity(broker.id(), endpoints);
-    } catch (RestNotFoundException e) {
-      log.warn("Broker with id = {} not found. Return empty broker information.", brokerId);
-      return BrokerEntity.empty();
-    }
   }
 
   private Collection<String> getTopicNames() {
