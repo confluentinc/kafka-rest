@@ -35,6 +35,7 @@ import io.confluent.kafkarest.resources.ConsumersResource;
 import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.kafkarest.resources.RootResource;
 import io.confluent.kafkarest.resources.TopicsResource;
+import io.confluent.kafkarest.resources.XHeaderReflectingResponseFilter;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.rest.Application;
 import io.confluent.rest.RestConfigException;
@@ -107,6 +108,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new io.confluent.kafkarest.resources.v2.ConsumersResource(context));
     config.register(new io.confluent.kafkarest.resources.v2.PartitionsResource(context));
     config.register(KafkaRestCleanupFilter.class);
+    config.register(new XHeaderReflectingResponseFilter(context));
 
     for (RestResourceExtension restResourceExtension : restResourceExtensions) {
       restResourceExtension.register(config, appConfig);

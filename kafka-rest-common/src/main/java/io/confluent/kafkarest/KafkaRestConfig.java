@@ -45,12 +45,12 @@ public class KafkaRestConfig extends RestConfig {
   public static final String ID_CONFIG = "id";
   private static final String ID_CONFIG_DOC =
       "Unique ID for this REST server instance. This is used in generating unique IDs for "
-      + "consumers that do "
-      + "not specify their ID. The ID is empty by default, which makes a single server setup "
-      + "easier to "
-      + "get up and running, but is not safe for multi-server deployments where automatic "
-      + "consumer IDs "
-      + "are used.";
+          + "consumers that do "
+          + "not specify their ID. The ID is empty by default, which makes a single server setup "
+          + "easier to "
+          + "get up and running, but is not safe for multi-server deployments where automatic "
+          + "consumer IDs "
+          + "are used.";
   public static final String ID_DEFAULT = "";
 
   public static final String MAX_POLL_RECORDS_CONFIG = "max.poll.records";
@@ -62,7 +62,7 @@ public class KafkaRestConfig extends RestConfig {
   public static final String HOST_NAME_CONFIG = "host.name";
   private static final String HOST_NAME_DOC =
       "The host name used to generate absolute URLs in responses. If empty, the default canonical"
-      + " hostname is used";
+          + " hostname is used";
   public static final String HOST_NAME_DEFAULT = "";
 
   public static final String CONSUMER_MAX_THREADS_CONFIG = "consumer.threads";
@@ -74,37 +74,39 @@ public class KafkaRestConfig extends RestConfig {
   public static final String ZOOKEEPER_CONNECT_CONFIG = "zookeeper.connect";
   private static final String ZOOKEEPER_CONNECT_DOC =
       "NOTE: Only required when using v1 Consumer API's. Specifies the ZooKeeper connection "
-      + "string in the form "
-      + "hostname:port where host and port are the host and port of a ZooKeeper server. To allow "
-      + "connecting "
-      + "through other ZooKeeper nodes when that ZooKeeper machine is down you can also specify "
-      + "multiple hosts "
-      + "in the form hostname1:port1,hostname2:port2,hostname3:port3.\n"
-      + "\n"
-      + "The server may also have a ZooKeeper chroot path as part of it's ZooKeeper connection "
-      + "string which puts "
-      + "its data under some path in the global ZooKeeper namespace. If so the consumer should "
-      + "use the same "
-      + "chroot path in its connection string. For example to give a chroot path of /chroot/path "
-      + "you would give "
-      + "the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path. ";
+          + "string in the form hostname:port where host and port are the host and port of a "
+          + "ZooKeeper server. To allow connecting through other ZooKeeper nodes when that "
+          + "ZooKeeper machine is down you can also specify multiple hosts in the form "
+          + "hostname1:port1,hostname2:port2,hostname3:port3."
+          + "\n"
+          + "\n"
+          + "The server may also have a "
+          + "ZooKeeper chroot path as part of it's ZooKeeper connection string which puts its "
+          + "data under some path in the global ZooKeeper namespace. If so the consumer should "
+          + "use the same chroot path in its connection string. For example to give a chroot path "
+          + "of /chroot/path you would give the connection string as hostname1:port1,"
+          + "hostname2:port2,hostname3:port3/chroot/path. ";
   public static final String ZOOKEEPER_CONNECT_DEFAULT = "";
 
   public static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
   private static final String BOOTSTRAP_SERVERS_DOC =
       "A list of host/port pairs to use for establishing the initial connection to the Kafka "
-      + "cluster. "
-      + "The client will make use of all servers irrespective of which servers are specified here"
-      + " for "
-      + "bootstrapping—this list only impacts the initial hosts used to discover the full set of "
-      + "servers. "
-      + "This list should be in the form host1:port1,host2:port2,.... Since these servers are "
-      + "just used for the "
-      + "initial connection to discover the full cluster membership (which may change "
-      + "dynamically), "
-      + "this list need not contain the full set of servers (you may want more than one, though, "
-      + "in case a server is down).";
+          + "cluster. The client will make use of all servers irrespective of which servers are "
+          + "specified here for bootstrapping—this list only impacts the initial hosts used to "
+          + "discover the full set of servers. This list should be in the form host1:port1,"
+          + "host2:port2,.... Since these servers are just used for the initial connection to "
+          + "discover the full cluster membership (which may change dynamically), this list need "
+          + "not contain the full set of servers (you may want more than one, though, in case a "
+          + "server is down).";
+
   public static final String BOOTSTRAP_SERVERS_DEFAULT = "";
+
+  public static final String REFLECT_XHEADERS_CONFIG = "reflect.xheaders";
+  private static final String REFLECT_XHEADERS_DOC =
+      "Set true to have any headers starting with 'x-' or 'X-'"
+          + "reflected unchanged in the response. This can be used for explicitly"
+          + "correlating requests with responses for those clients that need it.";
+  public static final Boolean REFLECT_XHEADERS_DEFAULT = false;
 
   public static final String SCHEMA_REGISTRY_URL_CONFIG = "schema.registry.url";
   private static final String SCHEMA_REGISTRY_URL_DOC =
@@ -129,25 +131,24 @@ public class KafkaRestConfig extends RestConfig {
 
   public static final String CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG = "consumer.iterator.timeout.ms";
   private static final String CONSUMER_ITERATOR_TIMEOUT_MS_DOC =
-      "Timeout for blocking consumer iterator operations. "
-      + "This should be set to a small enough value that it is possible to effectively peek() on "
-      + "the iterator.";
+      "Timeout for blocking consumer iterator operations. This should be set to a small enough "
+          + "value that it is possible to effectively peek() on the iterator.";
   public static final String CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT = "1";
 
   public static final String CONSUMER_ITERATOR_BACKOFF_MS_CONFIG = "consumer.iterator.backoff.ms";
   private static final String CONSUMER_ITERATOR_BACKOFF_MS_DOC =
       "Amount of time to backoff when an iterator runs "
-      + "out of data. If a consumer has a dedicated worker thread, this is effectively the "
-      + "maximum error for the "
-      + "entire request timeout. It should be small enough to closely target the timeout, but "
-      + "large enough to "
-      + "avoid busy waiting.";
+          + "out of data. If a consumer has a dedicated worker thread, this is effectively the "
+          + "maximum error for the "
+          + "entire request timeout. It should be small enough to closely target the timeout, but "
+          + "large enough to "
+          + "avoid busy waiting.";
   public static final String CONSUMER_ITERATOR_BACKOFF_MS_DEFAULT = "50";
 
   public static final String CONSUMER_REQUEST_TIMEOUT_MS_CONFIG = "consumer.request.timeout.ms";
   private static final String CONSUMER_REQUEST_TIMEOUT_MS_DOC =
       "The maximum total time to wait for messages for a "
-      + "request if the maximum number of messages has not yet been reached.";
+          + "request if the maximum number of messages has not yet been reached.";
   public static final String CONSUMER_REQUEST_TIMEOUT_MS_DEFAULT = "1000";
 
   public static final String CONSUMER_REQUEST_MAX_BYTES_CONFIG = "consumer.request.max.bytes";
@@ -163,20 +164,20 @@ public class KafkaRestConfig extends RestConfig {
   public static final String CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG = "consumer.instance.timeout.ms";
   private static final String CONSUMER_INSTANCE_TIMEOUT_MS_DOC =
       "Amount of idle time before a consumer instance "
-      + "is automatically destroyed.";
+          + "is automatically destroyed.";
   public static final String CONSUMER_INSTANCE_TIMEOUT_MS_DEFAULT = "300000";
 
   public static final String SIMPLE_CONSUMER_MAX_POOL_SIZE_CONFIG = "simpleconsumer.pool.size.max";
   private static final String SIMPLE_CONSUMER_MAX_POOL_SIZE_DOC =
       "Maximum number of SimpleConsumers that can be instantiated per broker."
-      + " If 0, then the pool size is not limited.";
+          + " If 0, then the pool size is not limited.";
   public static final String SIMPLE_CONSUMER_MAX_POOL_SIZE_DEFAULT = "25";
 
   public static final String SIMPLE_CONSUMER_POOL_TIMEOUT_MS_CONFIG =
       "simpleconsumer.pool.timeout.ms";
   private static final String SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC =
       "Amount of time to wait for an available SimpleConsumer from the pool before failing."
-      + " Use 0 for no timeout";
+          + " Use 0 for no timeout";
   public static final String SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT = "1000";
 
   // TODO: change this to "http://0.0.0.0:8082" when PORT_CONFIG is deleted.
@@ -246,18 +247,18 @@ public class KafkaRestConfig extends RestConfig {
       "Zookeeper session timeout";
   protected static final String KAFKACLIENT_INIT_TIMEOUT_DOC =
       "The timeout for initialization of the Kafka store, including creation of the Kafka topic "
-      + "that stores schema data.";
+          + "that stores schema data.";
   protected static final String KAFKACLIENT_TIMEOUT_DOC =
       "The timeout for an operation on the Kafka store";
   protected static final String
       ZOOKEEPER_SET_ACL_DOC =
       "Whether or not to set an ACL in ZooKeeper when znodes are created and ZooKeeper SASL "
-      + "authentication is "
-      + "configured. IMPORTANT: if set to `true`, the SASL principal must be the same as the "
-      + "Kafka brokers.";
+          + "authentication is "
+          + "configured. IMPORTANT: if set to `true`, the SASL principal must be the same as the "
+          + "Kafka brokers.";
   protected static final String KAFKACLIENT_SECURITY_PROTOCOL_DOC =
       "The security protocol to use when connecting with Kafka, the underlying persistent storage. "
-      + "Values can be `PLAINTEXT`, `SSL`, `SASL_PLAINTEXT`, or `SASL_SSL`.";
+          + "Values can be `PLAINTEXT`, `SSL`, `SASL_PLAINTEXT`, or `SASL_SSL`.";
   protected static final String KAFKACLIENT_SSL_TRUSTSTORE_LOCATION_DOC =
       "The location of the SSL trust store file.";
   protected static final String KAFKACLIENT_SSL_TRUSTSTORE_PASSWORD_DOC =
@@ -287,12 +288,12 @@ public class KafkaRestConfig extends RestConfig {
   protected static final String
       KAFKACLIENT_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_DOC =
       "The endpoint identification algorithm to validate the server hostname using the server "
-      + "certificate.";
+          + "certificate.";
   public static final String
       KAFKACLIENT_SASL_KERBEROS_SERVICE_NAME_DOC =
       "The Kerberos principal name that the Kafka client runs as. This can be defined either in "
-      + "the JAAS "
-      + "config file or here.";
+          + "the JAAS "
+          + "config file or here.";
   public static final String KAFKACLIENT_SASL_MECHANISM_DOC =
       "The SASL mechanism used for Kafka connections. GSSAPI is the default.";
   public static final String KAFKACLIENT_SASL_KERBEROS_KINIT_CMD_DOC =
@@ -304,13 +305,13 @@ public class KafkaRestConfig extends RestConfig {
   public static final String
       KAFKACLIENT_SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR_DOC =
       "Login thread will sleep until the specified window factor of time from last refresh to "
-      + "ticket's expiry has "
-      + "been reached, at which time it will try to renew the ticket.";
+          + "ticket's expiry has "
+          + "been reached, at which time it will try to renew the ticket.";
   protected static final String KAFKA_REST_RESOURCE_EXTENSION_DOC =
       "  A list of classes to use as RestResourceExtension. Implementing the interface "
-      + " <code>RestResourceExtension</code> allows you to inject user defined resources "
-      + " like filters to Rest Proxy. Typically used to add custom capability like logging, "
-      + " security, etc.";
+          + " <code>RestResourceExtension</code> allows you to inject user defined resources "
+          + " like filters to Rest Proxy. Typically used to add custom capability like logging, "
+          + " security, etc.";
   private static final boolean ZOOKEEPER_SET_ACL_DEFAULT = false;
   private static final ConfigDef config;
 
@@ -611,6 +612,11 @@ public class KafkaRestConfig extends RestConfig {
         "",
         Importance.LOW,
         KAFKA_REST_RESOURCE_EXTENSION_DOC
+    ).define(REFLECT_XHEADERS_CONFIG,
+            Type.BOOLEAN,
+            REFLECT_XHEADERS_DEFAULT,
+            Importance.LOW,
+            REFLECT_XHEADERS_DOC
     );
   }
 
