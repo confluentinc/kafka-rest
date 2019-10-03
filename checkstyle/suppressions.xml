@@ -10,7 +10,6 @@
             checks="(BooleanExpressionComplexity)"
             files="(KafkaRestConfig).java"
     />
-    <!-- End edits after add offset monitoring  -->
 
     <suppress
             checks="(CyclomaticComplexity)"
