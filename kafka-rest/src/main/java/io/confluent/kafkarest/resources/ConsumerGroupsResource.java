@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Confluent Inc.
+ * Copyright 2019 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,10 @@ public class ConsumerGroupsResource {
    * <p>Get consumer group list</p>
    * <p>Example: http://127.0.0.1:2081/groups/</p>
    *
+   * @param count - Optional parameter. Use for paging.
+   *             Restrict count of returned entities with group information.
+   * @param offset - Optional parameter. Use for paging.
+   *               Offset which starts return records from.
    * @return List[ConsumerGroup] -
    *     [{"groupId":"testGroup", "coordinator": {"host": "127.0.0.1", "port": "123"}}]
    */
@@ -74,6 +78,7 @@ public class ConsumerGroupsResource {
    * <p>Get partitions list for group groupId</p>
    * <p>Example: http://127.0.0.1:2081/groups/testGroup/partitions</p>
    *
+   * @param groupId - Group name.
    * @return ConsumerEntity
    */
   @GET
@@ -88,6 +93,11 @@ public class ConsumerGroupsResource {
    * <p>Get topics list for group groupId</p>
    * <p>Example: http://127.0.0.1:2081/groups/testGroup/topics</p>
    *
+   * @param groupId - Group name.
+   * @param count - Optional parameter. Use for paging.
+   *             Restrict count of returned entities with group information.
+   * @param offset - Optional parameter. Use for paging.
+   *               Offset which starts return records from.
    * @return Set[TopicName]
    */
   @GET
@@ -104,6 +114,12 @@ public class ConsumerGroupsResource {
    * <p>Get partitions list for group groupId</p>
    * <p>Example: http://127.0.0.1:2081/groups/testGroup/topics/testTopic?offset=10&count=10</p>
    *
+   * @param groupId - Group name.
+   * @param topic - Topic name.
+   * @param count - Optional parameter. Use for paging.
+   *             Restrict count of returned entities with group information.
+   * @param offset - Optional parameter. Use for paging.
+   *               Offset which starts return records from.
    * @return ConsumerEntity
    */
   @GET

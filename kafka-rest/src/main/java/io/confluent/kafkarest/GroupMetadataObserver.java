@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Confluent Inc.
+ * Copyright 2019 Confluent Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * httcp://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,6 @@ import io.confluent.kafkarest.entities.ConsumerGroup;
 import io.confluent.kafkarest.entities.ConsumerGroupCoordinator;
 import io.confluent.kafkarest.entities.TopicName;
 import io.confluent.kafkarest.entities.TopicPartitionEntity;
-import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
@@ -51,11 +50,7 @@ import java.util.concurrent.TimeUnit;
 public class GroupMetadataObserver {
 
   private static AdminClient createAdminClient(KafkaRestConfig appConfig) {
-    final Properties properties = new Properties();
-    properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG,
-            RestConfigUtils.bootstrapBrokers(appConfig));
-    properties.putAll(appConfig.getAdminProperties());
-    return AdminClient.create(properties);
+    return AdminClient.create(AdminClientWrapper.adminProperties(appConfig));
   }
 
   private static KafkaConsumer<Object, Object> createConsumer(String groupId,
@@ -100,8 +95,12 @@ public class GroupMetadataObserver {
       Collection<ConsumerGroupListing> groupsOverview =
               adminClient.listConsumerGroups().all().get(initTimeOut, TimeUnit.MILLISECONDS);
       if (needPartOfData) {
+        final Comparator<ConsumerGroupListing> consumerGroupListingComparator =
+                Comparator.comparing(ConsumerGroupListing::groupId);
+        List<ConsumerGroupListing> consumerGroupListings = new ArrayList<>(groupsOverview);
+        consumerGroupListings.sort(consumerGroupListingComparator);
         groupsOverview = JavaConverters.asJavaCollection(
-                JavaConverters.collectionAsScalaIterable(groupsOverview)
+                JavaConverters.collectionAsScalaIterable(consumerGroupListings)
                 .slice(offsetOpt.get(), offsetOpt.get() + countOpt.get()));
       }
       final List<ConsumerGroup> result = new ArrayList<>();
@@ -198,12 +197,7 @@ public class GroupMetadataObserver {
           final List<TopicPartitionEntity> confluentTopicPartitions = new ArrayList<>();
           for (MemberDescription summary : summaries) {
             final Comparator<TopicPartition> topicPartitionComparator =
-                new Comparator<TopicPartition>() {
-                  @Override
-                  public int compare(TopicPartition o1, TopicPartition o2) {
-                    return o1.partition() - o2.partition();
-                  }
-                };
+                    Comparator.comparingInt(TopicPartition::partition);
             final List<TopicPartition> filteredTopicPartitions =
                     new ArrayList<>(summary.assignment().topicPartitions());
             if (topic.nonEmpty()) {
@@ -215,7 +209,7 @@ public class GroupMetadataObserver {
               }
               filteredTopicPartitions.addAll(newTopicPartitions);
             }
-            Collections.sort(filteredTopicPartitions, topicPartitionComparator);
+            filteredTopicPartitions.sort(topicPartitionComparator);
             kafkaConsumer.assign(filteredTopicPartitions);
             for (TopicPartition topicPartition : filteredTopicPartitions) {
               final OffsetAndMetadata metadata = kafkaConsumer.committed(topicPartition);
@@ -237,14 +231,8 @@ public class GroupMetadataObserver {
             }
           }
           final Comparator<TopicPartitionEntity> confluentTopicPartitionComparator =
-              new Comparator<TopicPartitionEntity>() {
-                @Override
-                public int compare(TopicPartitionEntity o1,
-                                   TopicPartitionEntity o2) {
-                  return o1.getPartitionId() - o2.getPartitionId();
-                }
-              };
-          Collections.sort(confluentTopicPartitions, confluentTopicPartitionComparator);
+                  Comparator.comparingInt(TopicPartitionEntity::getPartitionId);
+          confluentTopicPartitions.sort(confluentTopicPartitionComparator);
           final Node coordinatorNode = consumerGroupSummary.coordinator();
           return new ConsumerEntity(
                   getPagedTopicPartitionList(confluentTopicPartitions, offsetOpt, countOpt),

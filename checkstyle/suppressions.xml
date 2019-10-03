@@ -11,12 +11,6 @@
             files="(KafkaRestConfig).java"
     />
 
-    <!-- TODO after add offset monitoring -->
-    <suppress
-            checks="(ClassDataAbstractionCoupling)"
-            files="(AdminClientWrapper|GroupMetadataObserver).java"
-    />
-
     <suppress
             checks="(ParameterNumber)"
             files="(KafkaRestApplication|KafkaRestContextProvider).java"
