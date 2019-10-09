@@ -63,17 +63,17 @@ public class ConsumerGroupsTest extends EmbeddedServerTestHarness<KafkaRestConfi
     @Test
     public void testListTopicsByGroup() throws Exception {
         for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-            final Set<TopicName> groups = new HashSet<>();
-            groups.add(new TopicName("foo"));
-            groups.add(new TopicName("bar"));
+            final Set<Topic> groups = new HashSet<>();
+            groups.add(new Topic("foo", null, null));
+            groups.add(new Topic("bar", null, null));
             EasyMock.expect(groupMetadataObserver.getConsumerGroupTopicInformation("foo", Option.<Integer>empty(), Option.<Integer>empty()))
               .andReturn(groups);
             EasyMock.replay(groupMetadataObserver);
 
             Response response = request("/groups/foo/topics", mediatype.header).get();
             assertOKResponse(response, mediatype.expected);
-            final Set<TopicName> consumerGroups = TestUtils.tryReadEntityOrLog(response,
-                    new GenericType<Set<TopicName>>() {});
+            final Set<Topic> consumerGroups = TestUtils.tryReadEntityOrLog(response,
+                    new GenericType<Set<Topic>>() {});
             assertEquals(groups.size(), consumerGroups.size());
             assertEquals(groups, consumerGroups);
             EasyMock.verify(groupMetadataObserver);
@@ -84,17 +84,17 @@ public class ConsumerGroupsTest extends EmbeddedServerTestHarness<KafkaRestConfi
     @Test
     public void testTopicGroupOffsets() throws Exception {
         for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-            final ConsumerEntity consumerEntity = new ConsumerEntity(Collections.singletonList(new TopicPartitionEntity("cons1", "127.0.0.1", "topic", 0, 2L, 0L, 2L)), 1, new ConsumerGroupCoordinator("127.0.0.1", 9092));
+            final ConsumerGroupSubscription consumerGroupSubscription = new ConsumerGroupSubscription(Collections.singletonList(new ConsumerTopicPartitionDescription("cons1", "127.0.0.1", "topic", 0, 2L, 0L, 2L)), 1, new ConsumerGroupCoordinator("127.0.0.1", 9092));
             EasyMock.expect(groupMetadataObserver.getConsumerGroupInformation("foo", Option.apply("topic"), Option.<Integer>empty(), Option.<Integer>empty()))
-              .andReturn(consumerEntity);
+              .andReturn(consumerGroupSubscription);
             EasyMock.replay(groupMetadataObserver);
 
             Response response = request("/groups/foo/topics/topic", mediatype.header).get();
             assertOKResponse(response, mediatype.expected);
-            final ConsumerEntity consumerGroupOffsets = TestUtils.tryReadEntityOrLog(response,
-                    new GenericType<ConsumerEntity>() {});
-            assertEquals(consumerEntity, consumerGroupOffsets);
-            assertEquals(consumerEntity, consumerGroupOffsets);
+            final ConsumerGroupSubscription consumerGroupOffsets = TestUtils.tryReadEntityOrLog(response,
+                    new GenericType<ConsumerGroupSubscription>() {});
+            assertEquals(consumerGroupSubscription, consumerGroupOffsets);
+            assertEquals(consumerGroupSubscription, consumerGroupOffsets);
             EasyMock.verify(groupMetadataObserver);
             EasyMock.reset(groupMetadataObserver, producerPool);
         }
@@ -103,18 +103,18 @@ public class ConsumerGroupsTest extends EmbeddedServerTestHarness<KafkaRestConfi
     @Test
     public void testAllTopicsGroupOffsets() throws Exception {
         for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
-            final ConsumerEntity consumerEntity = new ConsumerEntity(Arrays.asList(new TopicPartitionEntity("cons1", "127.0.0.1", "topic", 0, 2L, 0L, 2L),
-                    new TopicPartitionEntity("cons1", "127.0.0.1", "topic1", 0, 2L, 0L, 2L)), 1, new ConsumerGroupCoordinator("127.0.0.1", 9092));
+            final ConsumerGroupSubscription consumerGroupSubscription = new ConsumerGroupSubscription(Arrays.asList(new ConsumerTopicPartitionDescription("cons1", "127.0.0.1", "topic", 0, 2L, 0L, 2L),
+                    new ConsumerTopicPartitionDescription("cons1", "127.0.0.1", "topic1", 0, 2L, 0L, 2L)), 1, new ConsumerGroupCoordinator("127.0.0.1", 9092));
             EasyMock.expect(groupMetadataObserver.getConsumerGroupInformation("foo"))
-              .andReturn(consumerEntity);
+              .andReturn(consumerGroupSubscription);
             EasyMock.replay(groupMetadataObserver);
 
             Response response = request("/groups/foo/partitions", mediatype.header).get();
             assertOKResponse(response, mediatype.expected);
-            final ConsumerEntity consumerGroupOffsets = TestUtils.tryReadEntityOrLog(response,
-                    new GenericType<ConsumerEntity>() {});
-            assertEquals(consumerEntity, consumerGroupOffsets);
-            assertEquals(consumerEntity, consumerGroupOffsets);
+            final ConsumerGroupSubscription consumerGroupOffsets = TestUtils.tryReadEntityOrLog(response,
+                    new GenericType<ConsumerGroupSubscription>() {});
+            assertEquals(consumerGroupSubscription, consumerGroupOffsets);
+            assertEquals(consumerGroupSubscription, consumerGroupOffsets);
             EasyMock.verify(groupMetadataObserver);
             EasyMock.reset(groupMetadataObserver, producerPool);
         }

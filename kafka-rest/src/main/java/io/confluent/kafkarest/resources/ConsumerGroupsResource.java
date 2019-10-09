@@ -18,9 +18,9 @@ package io.confluent.kafkarest.resources;
 
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.ConsumerEntity;
+import io.confluent.kafkarest.entities.ConsumerGroupSubscription;
 import io.confluent.kafkarest.entities.ConsumerGroup;
-import io.confluent.kafkarest.entities.TopicName;
+import io.confluent.kafkarest.entities.Topic;
 import io.confluent.rest.annotations.PerformanceMetric;
 import scala.Option;
 
@@ -60,18 +60,19 @@ public class ConsumerGroupsResource {
    *
    * @param count - Optional parameter. Use for paging.
    *             Restrict count of returned entities with group information.
-   * @param offset - Optional parameter. Use for paging.
+   * @param pagingOffset - Optional parameter. Use for paging.
    *               Offset which starts return records from.
    * @return List[ConsumerGroup] -
    *     [{"groupId":"testGroup", "coordinator": {"host": "127.0.0.1", "port": "123"}}]
+   *     List of group names with group coordinator host of each group.
    */
   @GET
   @PerformanceMetric("groups.list")
-  public List<ConsumerGroup> list(@QueryParam("offset") Integer offset,
+  public List<ConsumerGroup> list(@QueryParam("paging_offset") Integer pagingOffset,
                                   @QueryParam("count") Integer count)
           throws Exception {
     return context.getGroupMetadataObserver()
-            .getConsumerGroupList(Option.apply(offset), Option.apply(count));
+            .getConsumerGroupList(Option.apply(pagingOffset), Option.apply(count));
   }
 
   /**
@@ -84,7 +85,7 @@ public class ConsumerGroupsResource {
   @GET
   @Path("/{groupId}/partitions")
   @PerformanceMetric("groups.get.partitions")
-  public ConsumerEntity getPartitionsInformation(@PathParam("groupId") String groupId)
+  public ConsumerGroupSubscription getPartitionsInformation(@PathParam("groupId") String groupId)
           throws Exception {
     return context.getGroupMetadataObserver().getConsumerGroupInformation(groupId);
   }
@@ -96,18 +97,20 @@ public class ConsumerGroupsResource {
    * @param groupId - Group name.
    * @param count - Optional parameter. Use for paging.
    *             Restrict count of returned entities with group information.
-   * @param offset - Optional parameter. Use for paging.
+   * @param offsetPaging - Optional parameter. Use for paging.
    *               Offset which starts return records from.
    * @return Set[TopicName]
    */
   @GET
   @Path("/{groupId}/topics")
   @PerformanceMetric("groups.get.topics")
-  public Set<TopicName> getTopics(@PathParam("groupId") String groupId,
-                                  @QueryParam("offset") Integer offset,
-                                  @QueryParam("count") Integer count) throws Exception {
+  public Set<Topic> getTopics(@PathParam("groupId") String groupId,
+                              @QueryParam("offset_paging") Integer offsetPaging,
+                              @QueryParam("count") Integer count) throws Exception {
     return context.getGroupMetadataObserver()
-            .getConsumerGroupTopicInformation(groupId, Option.apply(offset), Option.apply(count));
+            .getConsumerGroupTopicInformation(groupId,
+                    Option.apply(offsetPaging),
+                    Option.apply(count));
   }
 
   /**
@@ -118,22 +121,48 @@ public class ConsumerGroupsResource {
    * @param topic - Topic name.
    * @param count - Optional parameter. Use for paging.
    *             Restrict count of returned entities with group information.
-   * @param offset - Optional parameter. Use for paging.
-   *               Offset which starts return records from.
-   * @return ConsumerEntity
+   * @param offsetPaging - Optional parameter. Use for paging.
+   *             Offset which starts return records from.
+   * @return Consumer subscription information. Include group offsets, lags and
+   *      { "topicPartitionList":[
+   *         { "consumerId":"consumer-1-88792db6-99a2-4064-aad2-38be12b32e88",
+   *            "consumerIp":"/{some_ip}",
+   *            "topicName":"1",
+   *            "partitionId":0,
+   *            "currentOffset":15338734,
+   *            "lag":113812,
+   *            "endOffset":15452546},
+   *         { "consumerId":"consumer-1-88792db6-99a2-4064-aad2-38be12b32e88",
+   *            "consumerIp":"/{some_ip}",
+   *            "topicName":"1",
+   *            "partitionId":1,
+   *            "currentOffset":15753823,
+   *            "lag":136160,
+   *            "endOffset":15889983},
+   *         { "consumerId":"consumer-1-88792db6-99a2-4064-aad2-38be12b32e88",
+   *            "consumerIp":"/{some_ip}",
+   *            "topicName":"1",
+   *            "partitionId":2,
+   *            "currentOffset":15649419,
+   *            "lag":133052,
+   *            "endOffset":15782471}],
+   *        "topicPartitionCount":3,
+   *        "coordinator":{ "host":"{coordinator_host_name}","port":9496 }
+   *      }
    */
   @GET
   @Path("/{groupId}/topics/{topic}")
   @PerformanceMetric("groups.get.topic.partitions")
-  public ConsumerEntity getPartitionsInformationByTopic(@PathParam("groupId") String groupId,
-                                                        @PathParam("topic") String topic,
-                                                        @QueryParam("offset") Integer offset,
-                                                        @QueryParam("count") Integer count)
+  public ConsumerGroupSubscription getPartitionsInformationByTopic(
+          @PathParam("groupId") String groupId,
+          @PathParam("topic") String topic,
+          @QueryParam("offset_paging") Integer offsetPaging,
+          @QueryParam("count") Integer count)
           throws Exception {
     return context.getGroupMetadataObserver()
             .getConsumerGroupInformation(groupId,
                     Option.apply(topic),
-                    Option.apply(offset),
+                    Option.apply(offsetPaging),
                     Option.apply(count));
   }
 }

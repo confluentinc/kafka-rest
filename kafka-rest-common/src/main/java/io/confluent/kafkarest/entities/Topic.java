@@ -23,17 +23,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
-import javax.validation.constraints.NotNull;
-
 public class Topic {
 
   @NotEmpty
   private String name;
 
-  @NotNull
   private Properties configs;
 
-  @NotEmpty
   private List<Partition> partitions;
 
   public Topic(

@@ -15,7 +15,6 @@
 
 package io.confluent.kafkarest;
 
-import io.confluent.kafkarest.exceptions.ZkExceptionMapper;
 import io.confluent.kafkarest.resources.ConsumerGroupsResource;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
@@ -101,8 +100,6 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
                                     + KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG
                                     + " needs to be configured");
     }
-
-    config.register(new ZkExceptionMapper(appConfig));
 
     KafkaRestContextProvider.initialize(config, appConfig, producerPool,
         kafkaConsumerManager, adminClientWrapperInjected,

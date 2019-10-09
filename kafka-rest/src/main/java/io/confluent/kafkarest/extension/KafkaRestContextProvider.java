@@ -52,9 +52,6 @@ public class KafkaRestContextProvider {
         scalaConsumersContext = new ScalaConsumersContext(appConfig);
         ScalaConsumersContext.registerExceptionMappers(config, appConfig);
       }
-      if (groupMetadataObserver == null) {
-        groupMetadataObserver = new GroupMetadataObserver(appConfig);
-      }
       defaultContext =
           new DefaultKafkaRestContext(appConfig, producerPool,
               kafkaConsumerManager, adminClientWrapper,

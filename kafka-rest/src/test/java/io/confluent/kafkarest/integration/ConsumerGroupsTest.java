@@ -130,7 +130,7 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
 
       Response response = request("/groups/"+ groupName + "/partitions").get();
       assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-      ConsumerEntity groupInfo = response.readEntity(ConsumerEntity.class);
+      ConsumerGroupSubscription groupInfo = response.readEntity(ConsumerGroupSubscription.class);
       Assert.assertFalse("Group information should not be null",groupInfo == null);
       Assert.assertEquals(3, groupInfo.getTopicPartitionList().size());
     }
@@ -150,9 +150,9 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
 
       Response response = request("/groups/"+ groupName + "/topics").get();
       assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-      Set<TopicName> groupTopics = response.readEntity(new GenericType<Set<TopicName>>() {});
+      Set<Topic> groupTopics = response.readEntity(new GenericType<Set<Topic>>() {});
       Assert.assertEquals(1, groupTopics.size());
-      Assert.assertEquals(Collections.singleton(new TopicName(topicName)), groupTopics);
+      Assert.assertEquals(Collections.singleton(new Topic(topicName, null, null)), groupTopics);
 
       final int expectedSize = 1;
       Map<String, String> requestParameters = new HashMap<>();
@@ -161,7 +161,7 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
       Response filteredResponse = request("/groups/"+ groupName + "/topics/" + topicName,
               requestParameters).get();
       assertOKResponse(filteredResponse, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-      ConsumerEntity filteredTopicInfo = filteredResponse.readEntity(ConsumerEntity.class);
+      ConsumerGroupSubscription filteredTopicInfo = filteredResponse.readEntity(ConsumerGroupSubscription.class);
       Assert.assertFalse("Group information should not be null",filteredTopicInfo == null);
       Assert.assertEquals(expectedSize, filteredTopicInfo.getTopicPartitionList().size());
       Assert.assertEquals(6, filteredTopicInfo.getTopicPartitionCount().longValue());
@@ -169,7 +169,7 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
 
       Response topicGroupResponse = request("/groups/"+ groupName + "/topics/" + topicName).get();
       assertOKResponse(topicGroupResponse, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-      ConsumerEntity nonFilteredTopicInfo = topicGroupResponse.readEntity(ConsumerEntity.class);
+      ConsumerGroupSubscription nonFilteredTopicInfo = topicGroupResponse.readEntity(ConsumerGroupSubscription.class);
       Assert.assertFalse("Group information should not be null",nonFilteredTopicInfo == null);
       Assert.assertEquals(6, nonFilteredTopicInfo.getTopicPartitionList().size());
       Assert.assertEquals(6, nonFilteredTopicInfo.getTopicPartitionCount().longValue());

@@ -22,20 +22,23 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collections;
 import java.util.List;
 
-public class ConsumerEntity {
+public class ConsumerGroupSubscription {
 
-  public static ConsumerEntity empty() {
-    return new ConsumerEntity(Collections.<TopicPartitionEntity>emptyList(), 0,
+  public static ConsumerGroupSubscription empty() {
+    return new ConsumerGroupSubscription(
+            Collections.<ConsumerTopicPartitionDescription>emptyList(),
+            0,
             ConsumerGroupCoordinator.empty());
   }
 
-  private final List<TopicPartitionEntity> topicPartitionList;
+  private final List<ConsumerTopicPartitionDescription> topicPartitionList;
   private final Integer topicPartitionCount;
   private final ConsumerGroupCoordinator coordinator;
 
   @JsonCreator
-  public ConsumerEntity(
-          @JsonProperty("topicPartitionList") List<TopicPartitionEntity> topicPartitionList,
+  public ConsumerGroupSubscription(
+          @JsonProperty("topicPartitionList") List<ConsumerTopicPartitionDescription>
+                  topicPartitionList,
           @JsonProperty("topicPartitionCount") Integer topicPartitionCount,
           @JsonProperty("coordinator") ConsumerGroupCoordinator coordinator) {
     this.topicPartitionList = topicPartitionList;
@@ -44,7 +47,7 @@ public class ConsumerEntity {
   }
 
   @JsonProperty
-  public List<TopicPartitionEntity> getTopicPartitionList() {
+  public List<ConsumerTopicPartitionDescription> getTopicPartitionList() {
     return topicPartitionList;
   }
 
@@ -76,7 +79,7 @@ public class ConsumerEntity {
       return false;
     }
 
-    ConsumerEntity that = (ConsumerEntity) o;
+    ConsumerGroupSubscription that = (ConsumerGroupSubscription) o;
 
     if (!topicPartitionList.equals(that.topicPartitionList)) {
       return false;

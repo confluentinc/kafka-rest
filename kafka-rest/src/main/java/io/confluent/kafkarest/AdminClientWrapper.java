@@ -16,6 +16,8 @@
 package io.confluent.kafkarest;
 
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.ConsumerGroupListing;
+import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.Config;
 import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
@@ -27,6 +29,7 @@ import org.apache.kafka.common.config.ConfigResource;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -103,6 +106,16 @@ public class AdminClientWrapper {
     return (partition >= 0 && partition < topic.getPartitions().size());
   }
 
+  public Collection<ConsumerGroupListing> listConsumerGroups() throws Exception {
+    return adminClient.listConsumerGroups().all().get(initTimeOut, TimeUnit.MILLISECONDS);
+  }
+
+  public Map<String, ConsumerGroupDescription> describeConsumerGroups(
+          Collection<String> groupIds) throws Exception {
+    return adminClient.describeConsumerGroups(groupIds)
+          .all().get(initTimeOut, TimeUnit.MILLISECONDS);
+  }
+
   private Topic buildTopic(String topicName, TopicDescription topicDescription) throws Exception {
     List<Partition> partitions = buildPartitionsData(topicDescription.partitions(), null);
 
@@ -147,8 +160,7 @@ public class AdminClientWrapper {
   }
 
   private TopicDescription getTopicDescription(String topicName) throws Exception {
-    return adminClient.describeTopics(
-            Collections.unmodifiableList(Collections.singletonList(topicName)))
+    return adminClient.describeTopics(Collections.singletonList(topicName))
         .values().get(topicName).get(initTimeOut, TimeUnit.MILLISECONDS);
   }
 

@@ -19,7 +19,7 @@ package io.confluent.kafkarest.entities;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class TopicPartitionEntity {
+public class ConsumerTopicPartitionDescription {
 
   private final String consumerId;
   private final String consumerIp;
@@ -30,13 +30,13 @@ public class TopicPartitionEntity {
   private final Long endOffset;
 
   @JsonCreator
-  public TopicPartitionEntity(@JsonProperty("consumerId") String consumerId,
-                              @JsonProperty("consumerIp") String consumerIp,
-                              @JsonProperty("topicName") String topicName,
-                              @JsonProperty("partitionId") Integer partitionId,
-                              @JsonProperty("currentOffset") Long currentOffset,
-                              @JsonProperty("lag") Long lag,
-                              @JsonProperty("endOffset") Long endOffset) {
+  public ConsumerTopicPartitionDescription(@JsonProperty("consumerId") String consumerId,
+                                           @JsonProperty("consumerIp") String consumerIp,
+                                           @JsonProperty("topicName") String topicName,
+                                           @JsonProperty("partitionId") Integer partitionId,
+                                           @JsonProperty("currentOffset") Long currentOffset,
+                                           @JsonProperty("lag") Long lag,
+                                           @JsonProperty("endOffset") Long endOffset) {
     this.consumerId = consumerId;
     this.consumerIp = consumerIp;
     this.topicName = topicName;
@@ -103,7 +103,7 @@ public class TopicPartitionEntity {
       return false;
     }
 
-    TopicPartitionEntity that = (TopicPartitionEntity) o;
+    ConsumerTopicPartitionDescription that = (ConsumerTopicPartitionDescription) o;
 
     return consumerId.equals(that.consumerId)
             && consumerIp.equals(that.consumerIp)
