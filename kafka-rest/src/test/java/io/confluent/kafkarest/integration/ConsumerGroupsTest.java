@@ -28,11 +28,19 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
-import java.util.*;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
@@ -86,10 +94,10 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
     final int numPartitions = 3;
     final int replicationFactor = 1;
     kafka.utils.TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-            JavaConversions.asScalaBuffer(this.servers),
+            JavaConverters.asScalaBuffer(this.servers),
             new Properties());
     kafka.utils.TestUtils.createTopic(zkClient, topic2, numPartitions, replicationFactor,
-            JavaConversions.asScalaBuffer(this.servers),
+            JavaConverters.asScalaBuffer(this.servers),
             new Properties());
   }
 
@@ -102,7 +110,7 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
             Collections.singleton(topicName))) {
       Thread.sleep(defaultRebalancedTimeoutInMillis);
 
-      kafkaConsumer.poll(100);
+      kafkaConsumer.poll(Duration.ofMillis(100));
       kafkaConsumer.commitSync();
 
       Response response = request("/groups").get();
@@ -125,7 +133,7 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
             Collections.singleton(topicName))) {
       Thread.sleep(defaultRebalancedTimeoutInMillis);
 
-      kafkaConsumer.poll(100);
+      kafkaConsumer.poll(Duration.ofMillis(100));
       kafkaConsumer.commitSync();
 
       Response response = request("/groups/"+ groupName + "/partitions").get();
@@ -145,7 +153,7 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
             Collections.singleton(topicName))) {
       Thread.sleep(defaultRebalancedTimeoutInMillis);
 
-      kafkaConsumer.poll(100);
+      kafkaConsumer.poll(Duration.ofMillis(100));
       kafkaConsumer.commitSync();
 
       Response response = request("/groups/"+ groupName + "/topics").get();
