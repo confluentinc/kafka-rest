@@ -164,7 +164,7 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
 
       final int expectedSize = 1;
       Map<String, String> requestParameters = new HashMap<>();
-      requestParameters.put("offset", "0");
+      requestParameters.put("offset_paging", "0");
       requestParameters.put("count", "" + expectedSize);
       Response filteredResponse = request("/groups/"+ groupName + "/topics/" + topicName,
               requestParameters).get();

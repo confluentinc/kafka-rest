@@ -215,16 +215,19 @@ public class GroupMetadataObserver {
     for (MemberDescription summary : consumerGroupMembers) {
       final Comparator<TopicPartition> topicPartitionComparator =
               Comparator.comparingInt(TopicPartition::partition);
-      final List<TopicPartition> filteredTopicPartitions =
-              new ArrayList<>(summary.assignment().topicPartitions());
+        final Set<TopicPartition> assignedTopicPartitions =
+                summary.assignment().topicPartitions();
+        final List<TopicPartition> filteredTopicPartitions = new ArrayList<>();
       if (topic.nonEmpty()) {
         final List<TopicPartition> newTopicPartitions = new ArrayList<>();
-        for (TopicPartition topicPartition : filteredTopicPartitions) {
+        for (TopicPartition topicPartition : assignedTopicPartitions) {
           if (topicPartition.topic().equals(topic.get())) {
             newTopicPartitions.add(topicPartition);
           }
         }
         filteredTopicPartitions.addAll(newTopicPartitions);
+      } else {
+          filteredTopicPartitions.addAll(assignedTopicPartitions);
       }
       filteredTopicPartitions.sort(topicPartitionComparator);
       kafkaConsumer.assign(filteredTopicPartitions);
