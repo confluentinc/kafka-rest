@@ -172,7 +172,7 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
       ConsumerGroupSubscription filteredTopicInfo = filteredResponse.readEntity(ConsumerGroupSubscription.class);
       Assert.assertFalse("Group information should not be null",filteredTopicInfo == null);
       Assert.assertEquals(expectedSize, filteredTopicInfo.getTopicPartitionList().size());
-      Assert.assertEquals(6, filteredTopicInfo.getTopicPartitionCount().longValue());
+      Assert.assertEquals(3, filteredTopicInfo.getTopicPartitionCount().longValue());
 
 
       Response topicGroupResponse = request("/groups/"+ groupName + "/topics/" + topicName).get();
