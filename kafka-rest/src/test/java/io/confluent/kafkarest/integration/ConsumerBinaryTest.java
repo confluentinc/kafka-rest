@@ -36,7 +36,7 @@ import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import kafka.utils.TestUtils;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 
@@ -77,7 +77,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     final int numPartitions = 3;
     final int replicationFactor = 1;
     TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-                          JavaConversions.asScalaBuffer(this.servers), new Properties());
+                          JavaConverters.asScalaBuffer(this.servers), new Properties());
   }
 
   @Test
