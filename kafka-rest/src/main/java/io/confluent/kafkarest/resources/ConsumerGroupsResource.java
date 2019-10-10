@@ -62,9 +62,8 @@ public class ConsumerGroupsResource {
    *             Restrict count of returned entities with group information.
    * @param pagingOffset - Optional parameter. Use for paging.
    *               Offset which starts return records from.
-   * @return List[ConsumerGroup] -
+   * @return List of group names with group coordinator host of each group.
    *     [{"groupId":"testGroup", "coordinator": {"host": "127.0.0.1", "port": "123"}}]
-   *     List of group names with group coordinator host of each group.
    */
   @GET
   @PerformanceMetric("groups.list")
@@ -80,7 +79,33 @@ public class ConsumerGroupsResource {
    * <p>Example: http://127.0.0.1:2081/groups/testGroup/partitions</p>
    *
    * @param groupId - Group name.
-   * @return ConsumerEntity
+   * @return Consumer subscription information. Include group offsets, lags and
+   *      group coordinator information.
+   *      { "topicPartitionList":[
+   *         { "consumerId":"consumer-1-88792db6-99a2-4064-aad2-38be12b32e88",
+   *            "consumerIp":"/{some_ip}",
+   *            "topicName":"1",
+   *            "partitionId":0,
+   *            "currentOffset":15338734,
+   *            "lag":113812,
+   *            "endOffset":15452546},
+   *         { "consumerId":"consumer-1-88792db6-99a2-4064-aad2-38be12b32e88",
+   *            "consumerIp":"/{some_ip}",
+   *            "topicName":"1",
+   *            "partitionId":1,
+   *            "currentOffset":15753823,
+   *            "lag":136160,
+   *            "endOffset":15889983},
+   *         { "consumerId":"consumer-1-88792db6-99a2-4064-aad2-38be12b32e88",
+   *            "consumerIp":"/{some_ip}",
+   *            "topicName":"1",
+   *            "partitionId":2,
+   *            "currentOffset":15649419,
+   *            "lag":133052,
+   *            "endOffset":15782471}],
+   *        "topicPartitionCount":3,
+   *        "coordinator":{ "host":"{coordinator_host_name}","port":9496 }
+   *      }
    */
   @GET
   @Path("/{groupId}/partitions")
@@ -99,7 +124,8 @@ public class ConsumerGroupsResource {
    *             Restrict count of returned entities with group information.
    * @param offsetPaging - Optional parameter. Use for paging.
    *               Offset which starts return records from.
-   * @return Set[TopicName]
+   * @return Topic names who read by specified consumer group.
+   *       [{"name":"1"}]
    */
   @GET
   @Path("/{groupId}/topics")
@@ -124,6 +150,7 @@ public class ConsumerGroupsResource {
    * @param offsetPaging - Optional parameter. Use for paging.
    *             Offset which starts return records from.
    * @return Consumer subscription information. Include group offsets, lags and
+   *      group coordinator information.
    *      { "topicPartitionList":[
    *         { "consumerId":"consumer-1-88792db6-99a2-4064-aad2-38be12b32e88",
    *            "consumerIp":"/{some_ip}",
