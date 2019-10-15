@@ -15,26 +15,13 @@
 
 package io.confluent.kafkarest.unit;
 
-import io.confluent.kafkarest.Errors;
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.errors.TopicAuthorizationException;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
-import org.easymock.IAnswer;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
+import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
+import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.AdminClientWrapper;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ProducerPool;
@@ -49,15 +36,26 @@ import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.SchemaHolder;
 import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
-
-import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
-import static io.confluent.kafkarest.TestUtils.assertOKResponse;
-import static org.junit.Assert.assertEquals;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.TopicAuthorizationException;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
+import org.easymock.IAnswer;
+import org.junit.Before;
+import org.junit.Test;
 
 public class PartitionsResourceBinaryProduceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
@@ -87,6 +85,7 @@ public class PartitionsResourceBinaryProduceTest
 
     addResource(new TopicsResource(ctx));
     addResource(new PartitionsResource(ctx));
+    addResource(InstantConverterProvider.class);
 
     produceRecordsOnlyValues = Arrays.asList(
         new BinaryProduceRecord("value".getBytes()),

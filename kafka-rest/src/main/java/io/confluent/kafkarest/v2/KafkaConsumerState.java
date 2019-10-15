@@ -15,22 +15,8 @@
 
 package io.confluent.kafkarest.v2;
 
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
-import org.apache.kafka.common.TopicPartition;
-
-import java.util.Queue;
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.regex.Pattern;
+import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
 
 import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
@@ -44,6 +30,26 @@ import io.confluent.kafkarest.entities.ConsumerSeekToRequest;
 import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.TopicPartitionOffsetMetadata;
+import java.time.Instant;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.Vector;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Pattern;
+import javax.ws.rs.InternalServerErrorException;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
+import org.apache.kafka.common.TopicPartition;
 
 /**
  * Tracks all the state for a consumer. This class is abstract in order to support multiple
@@ -62,7 +68,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   volatile long expiration;
   private ReentrantLock lock;
 
-  public KafkaConsumerState(
+  KafkaConsumerState(
       KafkaRestConfig config,
       ConsumerInstanceId instanceId,
       Consumer<KafkaKeyT, KafkaValueT> consumer
@@ -328,6 +334,82 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     return response;
   }
 
+  /**
+   * Returns the beginning offset of the {@code topic} {@code partition}.
+   */
+  long getBeginningOffset(String topic, int partition) {
+    lock.lock();
+    try {
+      if (consumer == null) {
+        throw new IllegalStateException("KafkaConsumerState has been closed.");
+      }
+
+      Map<TopicPartition, Long> response =
+          consumer.beginningOffsets(singletonList(new TopicPartition(topic, partition)));
+
+      if (response.size() != 1) {
+        throw new InternalServerErrorException(
+            String.format("Expected one offset, but got %d instead.", response.size()));
+      }
+
+      return response.values().stream().findAny().get();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  /**
+   * Returns the end offset of the {@code topic} {@code partition}.
+   */
+  long getEndOffset(String topic, int partition) {
+    lock.lock();
+    try {
+      if (consumer == null) {
+        throw new IllegalStateException("KafkaConsumerState has been closed.");
+      }
+
+      Map<TopicPartition, Long> response =
+          consumer.endOffsets(singletonList(new TopicPartition(topic, partition)));
+
+      if (response.size() != 1) {
+        throw new InternalServerErrorException(
+            String.format("Expected one offset, but got %d instead.", response.size()));
+      }
+
+      return response.values().stream().findAny().get();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  /**
+   * Returns the earliest offset whose timestamp is greater than or equal to the given {@code
+   * timestamp} in the {@code topic} {@code partition}, or empty if such offset does not exist.
+   */
+  Optional<Long> getOffsetForTime(String topic, int partition, Instant timestamp) {
+    lock.lock();
+    try {
+      if (consumer == null) {
+        throw new IllegalStateException("KafkaConsumerState has been closed.");
+      }
+
+      Map<TopicPartition, OffsetAndTimestamp> response =
+          consumer.offsetsForTimes(
+              singletonMap(new TopicPartition(topic, partition), timestamp.toEpochMilli()));
+
+      if (response.size() != 1) {
+        throw new InternalServerErrorException(
+            String.format("Expected one offset, but got %d instead.", response.size()));
+      }
+
+      return response.values().stream()
+          .filter(Objects::nonNull)
+          .findAny()
+          .map(OffsetAndTimestamp::offset);
+    } finally {
+      lock.unlock();
+    }
+  }
 
   public boolean expired(long nowMs) {
     return expiration <= nowMs;

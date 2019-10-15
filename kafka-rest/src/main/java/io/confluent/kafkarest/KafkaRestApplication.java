@@ -15,18 +15,8 @@
 
 package io.confluent.kafkarest;
 
-import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
-import io.confluent.rest.exceptions.KafkaExceptionMapper;
-import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
-import org.eclipse.jetty.util.StringUtil;
-
-import java.lang.reflect.Proxy;
-import java.util.List;
-import java.util.Properties;
-
-import javax.ws.rs.core.Configurable;
-
 import io.confluent.kafkarest.extension.ContextInvocationHandler;
+import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.kafkarest.extension.KafkaRestCleanupFilter;
 import io.confluent.kafkarest.extension.KafkaRestContextProvider;
 import io.confluent.kafkarest.extension.RestResourceExtension;
@@ -38,6 +28,14 @@ import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.rest.Application;
 import io.confluent.rest.RestConfigException;
+import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
+import io.confluent.rest.exceptions.KafkaExceptionMapper;
+import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
+import java.lang.reflect.Proxy;
+import java.util.List;
+import java.util.Properties;
+import javax.ws.rs.core.Configurable;
+import org.eclipse.jetty.util.StringUtil;
 
 
 /**
@@ -107,6 +105,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new io.confluent.kafkarest.resources.v2.ConsumersResource(context));
     config.register(new io.confluent.kafkarest.resources.v2.PartitionsResource(context));
     config.register(KafkaRestCleanupFilter.class);
+    config.register(InstantConverterProvider.class);
 
     for (RestResourceExtension restResourceExtension : restResourceExtensions) {
       restResourceExtension.register(config, appConfig);

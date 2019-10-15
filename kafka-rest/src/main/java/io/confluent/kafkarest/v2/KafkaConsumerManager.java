@@ -15,44 +15,16 @@
 
 package io.confluent.kafkarest.v2;
 
+import static io.confluent.kafkarest.KafkaRestConfig.CONSUMER_MAX_THREADS_CONFIG;
+import static io.confluent.kafkarest.KafkaRestConfig.MAX_POLL_RECORDS_CONFIG;
+import static io.confluent.kafkarest.KafkaRestConfig.MAX_POLL_RECORDS_VALUE;
+
 import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.RestConfigUtils;
 import io.confluent.kafkarest.Time;
-import io.confluent.kafkarest.KafkaRestConfig;
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.config.ConfigException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
-import java.util.Vector;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.DelayQueue;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.RunnableFuture;
-import java.util.concurrent.Delayed;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.ws.rs.core.Response;
-
 import io.confluent.kafkarest.entities.ConsumerAssignmentRequest;
 import io.confluent.kafkarest.entities.ConsumerAssignmentResponse;
 import io.confluent.kafkarest.entities.ConsumerCommittedRequest;
@@ -67,10 +39,38 @@ import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.TopicPartitionOffsetMetadata;
 import io.confluent.rest.exceptions.RestNotFoundException;
 import io.confluent.rest.exceptions.RestServerErrorException;
-
-import static io.confluent.kafkarest.KafkaRestConfig.CONSUMER_MAX_THREADS_CONFIG;
-import static io.confluent.kafkarest.KafkaRestConfig.MAX_POLL_RECORDS_CONFIG;
-import static io.confluent.kafkarest.KafkaRestConfig.MAX_POLL_RECORDS_VALUE;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.UUID;
+import java.util.Vector;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.DelayQueue;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.concurrent.GuardedBy;
+import javax.ws.rs.core.Response;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.config.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages consumer instances by mapping instance IDs to consumer objects, processing read requests,
@@ -103,6 +103,9 @@ public class KafkaConsumerManager {
   final DelayQueue<RunnableReadTask> delayedReadTasks = new DelayQueue<>();
   private final ExpirationThread expirationThread;
   private ReadTaskSchedulerThread readTaskSchedulerThread;
+
+  @GuardedBy("this")
+  private ConsumerInstanceId adminConsumerInstanceId = null;
 
   public KafkaConsumerManager(final KafkaRestConfig config) {
     this.config = config;
@@ -486,6 +489,60 @@ public class KafkaConsumerManager {
     return response;
   }
 
+  /**
+   * Returns the beginning offset of the {@code topic} {@code partition}.
+   */
+  public long getBeginningOffset(String topic, int partition) {
+    log.debug("Beginning offset for topic {} and partition {}.", topic, partition);
+    KafkaConsumerState<?, ?, ?, ?> consumer = getAdminConsumerInstance();
+    return consumer.getBeginningOffset(topic, partition);
+  }
+
+  /**
+   * Returns the end offset of the {@code topic} {@code partition}.
+   */
+  public long getEndOffset(String topic, int partition) {
+    log.debug("End offset for topic {} and partition {}.", topic, partition);
+    KafkaConsumerState<?, ?, ?, ?> consumer = getAdminConsumerInstance();
+    return consumer.getEndOffset(topic, partition);
+  }
+
+  /**
+   * Returns the earliest offset whose timestamp is greater than or equal to the given {@code
+   * timestamp} in the {@code topic} {@code partition}, or empty if such offset does not exist.
+   */
+  public Optional<Long> getOffsetForTime(
+      String topic, int partition, Instant timestamp) {
+    log.debug("Offset for topic {} and partition {} at timestamp {}.", topic, partition, timestamp);
+    KafkaConsumerState<?, ?, ?, ?> consumer = getAdminConsumerInstance();
+    return consumer.getOffsetForTime(topic, partition, timestamp);
+  }
+
+  private String createAdminConsumerGroup() {
+    String serverId = config.getString(KafkaRestConfig.ID_CONFIG);
+    if (serverId.isEmpty()) {
+      return String.format("rest-consumer-group-%s", UUID.randomUUID().toString());
+    } else {
+      return String.format("rest-consumer-group-%s-%s", serverId, UUID.randomUUID().toString());
+    }
+  }
+
+  private synchronized KafkaConsumerState<?, ?, ?, ?> getAdminConsumerInstance() {
+    // Consumers expire when not used for some time. They can also be explicitly deleted by a user
+    // using DELETE /consumers/{consumerGroup}/instances/{consumerInstances}. If the consumer does
+    // not exist, create a new one.
+    if (adminConsumerInstanceId == null || !consumers.containsKey(adminConsumerInstanceId)) {
+      adminConsumerInstanceId = createAdminConsumerInstance();
+    }
+    return getConsumerInstance(adminConsumerInstanceId);
+  }
+
+  private ConsumerInstanceId createAdminConsumerInstance() {
+    String consumerGroup = createAdminConsumerGroup();
+    String consumerInstance = createConsumer(consumerGroup, new ConsumerInstanceConfig());
+    return new ConsumerInstanceId(consumerGroup, consumerInstance);
+  }
+
   public void deleteConsumer(String group, String instance) {
     log.debug("Destroying consumer " + instance + " in group " + group);
     final KafkaConsumerState state = getConsumerInstance(group, instance, true);
@@ -594,7 +651,7 @@ public class KafkaConsumerManager {
    * Gets the specified consumer instance or throws a not found exception. Also removes the
    * consumer's expiration timeout so it is not cleaned up mid-operation.
    */
-  private synchronized KafkaConsumerState getConsumerInstance(
+  private synchronized KafkaConsumerState<?, ?, ?, ?> getConsumerInstance(
       String group,
       String instance,
       boolean toRemove
@@ -608,8 +665,13 @@ public class KafkaConsumerManager {
     return state;
   }
 
-  KafkaConsumerState getConsumerInstance(String group, String instance) {
+  KafkaConsumerState<?, ?, ?, ?> getConsumerInstance(String group, String instance) {
     return getConsumerInstance(group, instance, false);
+  }
+
+  private KafkaConsumerState<?, ?, ?, ?> getConsumerInstance(
+      ConsumerInstanceId consumerInstanceId) {
+    return getConsumerInstance(consumerInstanceId.getGroup(), consumerInstanceId.getInstance());
   }
 
   public interface KafkaConsumerFactory {

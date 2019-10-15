@@ -15,13 +15,25 @@
 
 package io.confluent.kafkarest.resources.v2;
 
+import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.KafkaRestContext;
+import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Utils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.AvroProduceRecord;
+import io.confluent.kafkarest.entities.BinaryProduceRecord;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.JsonProduceRecord;
+import io.confluent.kafkarest.entities.Partition;
+import io.confluent.kafkarest.entities.PartitionOffset;
+import io.confluent.kafkarest.entities.PartitionProduceRequest;
+import io.confluent.kafkarest.entities.ProduceRecord;
+import io.confluent.kafkarest.entities.ProduceResponse;
+import io.confluent.kafkarest.entities.TopicPartitionOffsetResponse;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.List;
 import java.util.Vector;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -33,29 +45,14 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
-
-import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.RecordMetadataOrException;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.AvroProduceRecord;
-import io.confluent.kafkarest.entities.BinaryProduceRecord;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.JsonProduceRecord;
-import io.confluent.kafkarest.entities.Partition;
-import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.PartitionProduceRequest;
-import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.rest.annotations.PerformanceMetric;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("/topics/{topic}/partitions")
 @Produces({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW,
            Versions.KAFKA_V2_JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V2_JSON})
-public class PartitionsResource {
-
+public final class PartitionsResource {
   private static final Logger log = LoggerFactory.getLogger(PartitionsResource.class);
 
   private final KafkaRestContext ctx;
@@ -200,13 +197,53 @@ public class PartitionsResource {
     );
   }
 
-  private boolean topicExists(final String topic)  throws Exception {
+  /**
+   * Returns a summary with beginning and end offsets for the given {@code topic} and {@code
+   * partition}.
+   *
+   * @throws io.confluent.rest.exceptions.RestNotFoundException if either {@code topic} or {@code
+   *                                                            partition} don't exist.
+   */
+  @GET
+  @Path("/{partition}/offsets")
+  public TopicPartitionOffsetResponse getOffsets(
+      @PathParam("topic") String topic,
+      @PathParam("partition") int partition
+  ) throws Exception {
+    checkTopicExists(topic);
+    checkPartitionExists(topic, partition);
+
+    return new TopicPartitionOffsetResponse(
+        getBeginningOffset(topic, partition), getEndOffset(topic, partition));
+  }
+
+  /**
+   * Returns the earliest offset in the {@code topic} {@code partition}.
+   */
+  private long getBeginningOffset(String topic, int partition) {
+    return ctx.getKafkaConsumerManager().getBeginningOffset(topic, partition);
+  }
+
+  /**
+   * Returns the latest offset in the {@code topic} {@code partition}.
+   */
+  private long getEndOffset(String topic, int partition) {
+    return ctx.getKafkaConsumerManager().getEndOffset(topic, partition);
+  }
+
+  private void checkTopicExists(String topic) throws Exception {
+    if (!topicExists(topic)) {
+      throw Errors.topicNotFoundException();
+    }
+  }
+
+  private boolean topicExists(String topic) throws Exception {
     return ctx.getAdminClientWrapper().topicExists(topic);
   }
 
-  private void checkTopicExists(final String topic) throws Exception {
-    if (!topicExists(topic)) {
-      throw Errors.topicNotFoundException();
+  private void checkPartitionExists(String topic, int partition) throws Exception {
+    if (!ctx.getAdminClientWrapper().partitionExists(topic, partition)) {
+      throw Errors.partitionNotFoundException();
     }
   }
 }

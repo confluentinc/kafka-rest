@@ -15,33 +15,15 @@
 
 package io.confluent.kafkarest.resources;
 
-import io.confluent.kafkarest.Utils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.util.Collections.emptyList;
 
-import java.util.List;
-import java.util.Vector;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.Suspended;
-import javax.ws.rs.core.Response;
-
+import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
+import io.confluent.kafkarest.Utils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.entities.AvroProduceRecord;
 import io.confluent.kafkarest.entities.BinaryProduceRecord;
 import io.confluent.kafkarest.entities.ConsumerRecord;
@@ -53,6 +35,27 @@ import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.Vector;
+import javax.annotation.Nullable;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("/topics/{topic}/partitions")
 @Produces({Versions.KAFKA_V1_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW,
@@ -101,14 +104,23 @@ public class PartitionsResource {
              Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
              Versions.JSON_WEIGHTED})
   public void consumeBinary(
-      final @Suspended AsyncResponse asyncResponse,
-      final @PathParam("topic") String topicName,
-      final @PathParam("partition") int partitionId,
-      final @QueryParam("offset") long offset,
-      final @QueryParam("count") @DefaultValue("1") long count
+      @Suspended AsyncResponse asyncResponse,
+      @PathParam("topic") String topicName,
+      @PathParam("partition") int partitionId,
+      @QueryParam("offset") @Nullable Long offset,
+      @QueryParam("timestamp") @Nullable Instant timestamp,
+      @QueryParam("count") @DefaultValue("1") long count
   ) {
+    if ((offset != null) == (timestamp != null)) {
+      throw new BadRequestException(
+          "Either `offset` or `timestamp` query parameters must be set.");
+    }
 
-    consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.BINARY);
+    if (offset != null) {
+      consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.BINARY);
+    } else {
+      consume(asyncResponse, topicName, partitionId, timestamp, count, EmbeddedFormat.BINARY);
+    }
   }
 
   @GET
@@ -116,14 +128,23 @@ public class PartitionsResource {
   @PerformanceMetric("partition.consume-avro")
   @Produces({Versions.KAFKA_V1_JSON_AVRO_WEIGHTED_LOW})
   public void consumeAvro(
-      final @Suspended AsyncResponse asyncResponse,
-      final @PathParam("topic") String topicName,
-      final @PathParam("partition") int partitionId,
-      final @QueryParam("offset") long offset,
-      final @QueryParam("count") @DefaultValue("1") long count
+      @Suspended AsyncResponse asyncResponse,
+      @PathParam("topic") String topicName,
+      @PathParam("partition") int partitionId,
+      @QueryParam("offset") @Nullable Long offset,
+      @QueryParam("timestamp") @Nullable Instant timestamp,
+      @QueryParam("count") @DefaultValue("1") long count
   ) {
+    if ((offset != null) == (timestamp != null)) {
+      throw new BadRequestException(
+          "Either `offset` or `timestamp` query parameters must be set.");
+    }
 
-    consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.AVRO);
+    if (offset != null) {
+      consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.AVRO);
+    } else {
+      consume(asyncResponse, topicName, partitionId, timestamp, count, EmbeddedFormat.AVRO);
+    }
   }
 
   @GET
@@ -131,14 +152,23 @@ public class PartitionsResource {
   @PerformanceMetric("partition.consume-json")
   @Produces({Versions.KAFKA_V1_JSON_JSON_WEIGHTED_LOW})
   public void consumeJson(
-      final @Suspended AsyncResponse asyncResponse,
-      final @PathParam("topic") String topicName,
-      final @PathParam("partition") int partitionId,
-      final @QueryParam("offset") long offset,
-      final @QueryParam("count") @DefaultValue("1") long count
+      @Suspended AsyncResponse asyncResponse,
+      @PathParam("topic") String topicName,
+      @PathParam("partition") int partitionId,
+      @QueryParam("offset") @Nullable Long offset,
+      @QueryParam("timestamp") @Nullable Instant timestamp,
+      @QueryParam("count") @DefaultValue("1") long count
   ) {
+    if ((offset != null) == (timestamp != null)) {
+      throw new BadRequestException(
+          "Either `offset` or `timestamp` query parameters must be set.");
+    }
 
-    consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.JSON);
+    if (offset != null) {
+      consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.JSON);
+    } else {
+      consume(asyncResponse, topicName, partitionId, timestamp, count, EmbeddedFormat.JSON);
+    }
   }
 
   @POST
@@ -194,6 +224,25 @@ public class PartitionsResource {
     }
 
     produce(asyncResponse, topic, partition, EmbeddedFormat.AVRO, request);
+  }
+
+  private void consume(
+      @Suspended AsyncResponse asyncResponse,
+      String topicName,
+      int partitionId,
+      Instant timestamp,
+      long count,
+      EmbeddedFormat embeddedFormat
+  ) {
+    Optional<Long> offset =
+        ctx.getKafkaConsumerManager().getOffsetForTime(topicName, partitionId, timestamp);
+
+    if (offset.isPresent()) {
+      consume(asyncResponse, topicName, partitionId, offset.get(), count, embeddedFormat);
+    } else {
+      // No messages at or after timestamp. Return empty.
+      asyncResponse.resume(emptyList());
+    }
   }
 
   private <K, V> void consume(
