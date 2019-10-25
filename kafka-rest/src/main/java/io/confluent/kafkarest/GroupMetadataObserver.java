@@ -32,8 +32,6 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Option;
-import scala.collection.JavaConverters;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,13 +39,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.Properties;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.HashSet;
 import java.util.Comparator;
 
 
-public class GroupMetadataObserver {
+public final class GroupMetadataObserver {
 
-  private static KafkaConsumer<Object, Object> createConsumer(String groupId,
+  private static KafkaConsumer<?, ?> createConsumer(String groupId,
                                                               KafkaRestConfig appConfig) {
     final Properties properties = new Properties();
     String deserializer = StringDeserializer.class.getName();
@@ -69,8 +69,19 @@ public class GroupMetadataObserver {
   private final AdminClientWrapper adminClientWrapper;
 
   public GroupMetadataObserver(KafkaRestConfig config, AdminClientWrapper adminClientWrapper) {
-    this.config = config;
-    this.adminClientWrapper = adminClientWrapper;
+    this.config = Objects.requireNonNull(config);
+    this.adminClientWrapper = Objects.requireNonNull(adminClientWrapper);
+  }
+
+  /**
+   * <p>Get consumer group list restricted by paging parameters</p>
+   *
+   * @return list of consumer groups
+   */
+  public List<ConsumerGroup> getPagedConsumerGroupList(Integer startPos,
+                                                       Integer count)
+      throws Exception {
+    return getConsumerGroups(getPagedConsumerGroup(startPos, count));
   }
 
   /**
@@ -78,35 +89,33 @@ public class GroupMetadataObserver {
    *
    * @return list of consumer groups
    */
-  public List<ConsumerGroup> getConsumerGroupList(Option<Integer> offsetOpt,
-                                                  Option<Integer> countOpt) throws Exception {
-    if (Option.apply(adminClientWrapper).nonEmpty()) {
-      final boolean needPartOfData = offsetOpt.nonEmpty()
-              && countOpt.nonEmpty()
-              && countOpt.get() > 0;
-      Collection<ConsumerGroupListing> groupsOverview =
-              adminClientWrapper.listConsumerGroups();
-      if (needPartOfData) {
-        final Comparator<ConsumerGroupListing> consumerGroupListingComparator =
-                Comparator.comparing(ConsumerGroupListing::groupId);
-        final List<ConsumerGroupListing> consumerGroupListings = new ArrayList<>(groupsOverview);
-        consumerGroupListings.sort(consumerGroupListingComparator);
-        groupsOverview = JavaConverters.asJavaCollection(
-                JavaConverters.collectionAsScalaIterable(consumerGroupListings)
-                .slice(offsetOpt.get(), offsetOpt.get() + countOpt.get()));
-      }
-      final List<ConsumerGroup> result = new ArrayList<>();
-      for (ConsumerGroupListing eachGroupInfo : groupsOverview) {
-        final Node node = adminClientWrapper.describeConsumerGroups(
-                Collections.singleton(eachGroupInfo.groupId()))
-                .get(eachGroupInfo.groupId()).coordinator();
-        result.add(new ConsumerGroup(eachGroupInfo.groupId(),
-                new ConsumerGroupCoordinator(node.host(), node.port())));
-      }
-      return result;
-    } else {
-      return Collections.emptyList();
+  public List<ConsumerGroup> getConsumerGroupList() throws Exception {
+    return getConsumerGroups(adminClientWrapper.listConsumerGroups());
+  }
+
+  private List<ConsumerGroup> getConsumerGroups(Collection<ConsumerGroupListing> groupsOverview)
+      throws Exception {
+    final List<ConsumerGroup> result = new ArrayList<>();
+    for (ConsumerGroupListing eachGroupInfo : groupsOverview) {
+      final Node node = adminClientWrapper.describeConsumerGroups(
+           Collections.singleton(eachGroupInfo.groupId()))
+               .get(eachGroupInfo.groupId()).coordinator();
+      result.add(new ConsumerGroup(eachGroupInfo.groupId(),
+          new ConsumerGroupCoordinator(node.host(), node.port())));
     }
+    return result;
+  }
+
+  private Collection<ConsumerGroupListing> getPagedConsumerGroup(Integer startPosition,
+                                                                 Integer count)
+      throws Exception {
+    Collection<ConsumerGroupListing> groupsOverview;
+    final List<ConsumerGroupListing> consumerGroupListings =
+        new ArrayList<>(adminClientWrapper.listConsumerGroups());
+    consumerGroupListings.sort(Comparator.comparing(ConsumerGroupListing::groupId));
+    groupsOverview = consumerGroupListings.subList(startPosition,
+        Math.min(consumerGroupListings.size(), startPosition + count));
+    return groupsOverview;
   }
 
   /**
@@ -115,39 +124,43 @@ public class GroupMetadataObserver {
    * @param groupId - group name
    * @return description of consumer group
    */
-  public Set<Topic> getConsumerGroupTopicInformation(String groupId,
-                                                         Option<Integer> offsetOpt,
-                                                         Option<Integer> countOpt)
+  public Set<Topic> getConsumerGroupTopicInformation(String groupId)
           throws Exception {
-    if (Option.apply(adminClientWrapper).nonEmpty()) {
-      final Collection<MemberDescription> summariesOpt =
-              adminClientWrapper.describeConsumerGroups(Collections.singleton(groupId))
-                      .get(groupId).members();
-      if (summariesOpt.size() > 0) {
-        final Set<Topic> result = new HashSet<>();
-        for (MemberDescription eachSummary : summariesOpt) {
-          for (TopicPartition topicPartition : eachSummary.assignment().topicPartitions()) {
-            result.add(new Topic(topicPartition.topic(), null, null));
-          }
-        }
-        log.debug("Get topic list {}", result);
-        final boolean needPartOfData = offsetOpt.nonEmpty()
-                && countOpt.nonEmpty()
-                && countOpt.get() > 0;
-        if (!needPartOfData) {
-          return result;
-        } else {
-          final scala.collection.Set<Topic> slice =
-                  JavaConverters.asScalaSetConverter(result).asScala()
-                          .slice(offsetOpt.get(), offsetOpt.get() + countOpt.get()).toSet();
-          return JavaConverters.setAsJavaSetConverter(slice).asJava();
-        }
-      } else {
-        return Collections.emptySet();
-      }
-    } else {
-      return Collections.emptySet();
+    final List<Topic> result = getConsumerGroupTopics(groupId);
+    log.debug("Get topic list {}", result);
+    return new HashSet<>(result);
+  }
+
+  /**
+   * <p>Get consumer group description restricted by paging parameters</p>
+   *
+   * @param groupId - group name
+   * @return description of consumer group
+   */
+  public Set<Topic> getPagedConsumerGroupTopicInformation(String groupId,
+                                                          Integer startPos,
+                                                          Integer count)
+          throws Exception {
+    final List<Topic> result = getConsumerGroupTopics(groupId);
+    log.debug("Get topic list {}", result);
+    return new HashSet<>(result.subList(startPos,
+        Math.min(result.size(), startPos + count)));
+  }
+
+  private List<Topic> getConsumerGroupTopics(String groupId) throws Exception {
+    final List<Topic> result = new ArrayList<>();
+    final Collection<MemberDescription> memberDescriptions =
+        adminClientWrapper.describeConsumerGroups(Collections.singleton(groupId))
+            .get(groupId).members();
+    if (memberDescriptions.isEmpty()) {
+      return Collections.emptyList();
     }
+    for (MemberDescription eachSummary : memberDescriptions) {
+      for (TopicPartition topicPartition : eachSummary.assignment().topicPartitions()) {
+        result.add(new Topic(topicPartition.topic(), null, null));
+      }
+    }
+    return result;
   }
 
   /**
@@ -158,8 +171,8 @@ public class GroupMetadataObserver {
    *     (all consumed topics with all partition offset information)
    */
   public ConsumerGroupSubscription getConsumerGroupInformation(String groupId) throws Exception {
-    return getConsumerGroupInformation(groupId, Option.<String>empty(),
-            Option.<Integer>empty(), Option.<Integer>empty());
+    return getConsumerGroupInformation(groupId, Optional.<String>empty(),
+            Optional.<Integer>empty(), Optional.<Integer>empty());
   }
 
   /**
@@ -175,50 +188,41 @@ public class GroupMetadataObserver {
    */
   public ConsumerGroupSubscription getConsumerGroupInformation(
           String groupId,
-          Option<String> topic,
-          Option<Integer> offsetOpt,
-          Option<Integer> countOpt) throws Exception {
-    if (Option.apply(adminClientWrapper).nonEmpty()) {
-      final ConsumerGroupDescription consumerGroupSummary =
-              adminClientWrapper.describeConsumerGroups(Collections.singleton(groupId))
-                      .get(groupId);
-      final Collection<MemberDescription> summaries =
-              consumerGroupSummary.members();
-      if (summaries.size() > 0) {
-        log.debug("Get summary list {}", summaries);
-        try (KafkaConsumer kafkaConsumer = createConsumer(groupId, config)) {
-          final List<ConsumerTopicPartitionDescription> consumerTopicPartitionDescriptions =
-              getConsumerTopicPartitionDescriptions(topic, summaries, kafkaConsumer);
-          final Comparator<ConsumerTopicPartitionDescription> confluentTopicPartitionComparator =
-              Comparator.comparingInt(ConsumerTopicPartitionDescription::getPartitionId);
-          consumerTopicPartitionDescriptions.sort(confluentTopicPartitionComparator);
-          final Node coordinatorNode = consumerGroupSummary.coordinator();
-          return new ConsumerGroupSubscription(
-            getPagedTopicPartitionList(consumerTopicPartitionDescriptions, offsetOpt, countOpt),
-            consumerTopicPartitionDescriptions.size(),
-            new ConsumerGroupCoordinator(coordinatorNode.host(), coordinatorNode.port()));
-        }
-      } else {
-        return ConsumerGroupSubscription.empty();
-      }
-    } else {
+          Optional<String> topic,
+          Optional<Integer> offsetOpt,
+          Optional<Integer> countOpt) throws Exception {
+    final ConsumerGroupDescription consumerGroupSummary =
+        adminClientWrapper.describeConsumerGroups(Collections.singleton(groupId))
+            .get(groupId);
+    final Collection<MemberDescription> summaries = consumerGroupSummary.members();
+    if (summaries.isEmpty()) {
       return ConsumerGroupSubscription.empty();
+    }
+    log.debug("Get summary list {}", summaries);
+    try (KafkaConsumer kafkaConsumer = createConsumer(groupId, config)) {
+      final List<ConsumerTopicPartitionDescription> consumerTopicPartitionDescriptions =
+          getConsumerTopicPartitionDescriptions(topic, summaries, kafkaConsumer);
+      consumerTopicPartitionDescriptions.sort(
+          Comparator.comparingInt(ConsumerTopicPartitionDescription::getPartitionId));
+      final Node coordinatorNode = consumerGroupSummary.coordinator();
+      return new ConsumerGroupSubscription(
+          getPagedTopicPartitionList(consumerTopicPartitionDescriptions, offsetOpt, countOpt),
+          consumerTopicPartitionDescriptions.size(),
+          new ConsumerGroupCoordinator(coordinatorNode.host(), coordinatorNode.port()));
     }
   }
 
   private List<ConsumerTopicPartitionDescription> getConsumerTopicPartitionDescriptions(
-          Option<String> topic,
+          Optional<String> topic,
           Collection<MemberDescription> consumerGroupMembers,
           KafkaConsumer kafkaConsumer) {
     final List<ConsumerTopicPartitionDescription> consumerTopicPartitionDescriptions =
             new ArrayList<>();
     for (MemberDescription summary : consumerGroupMembers) {
-      final Comparator<TopicPartition> topicPartitionComparator =
-              Comparator.comparingInt(TopicPartition::partition);
       final Set<TopicPartition> assignedTopicPartitions =
                 summary.assignment().topicPartitions();
       final List<TopicPartition> filteredTopicPartitions = new ArrayList<>();
-      if (topic.nonEmpty()) {
+      if (topic.isPresent()) {
         final List<TopicPartition> newTopicPartitions = new ArrayList<>();
         for (TopicPartition topicPartition : assignedTopicPartitions) {
           if (topicPartition.topic().equals(topic.get())) {
@@ -229,45 +233,52 @@ public class GroupMetadataObserver {
       } else {
         filteredTopicPartitions.addAll(assignedTopicPartitions);
       }
-      filteredTopicPartitions.sort(topicPartitionComparator);
+      filteredTopicPartitions.sort(Comparator.comparingInt(TopicPartition::partition));
       kafkaConsumer.assign(filteredTopicPartitions);
-      for (TopicPartition topicPartition : filteredTopicPartitions) {
-        final OffsetAndMetadata metadata = kafkaConsumer.committed(topicPartition);
-        // Get current offset
-        final Long currentOffset = Option.apply(metadata).nonEmpty() ? metadata.offset() : 0;
-        // Goto end offset for current TopicPartition WITHOUT COMMIT
-        kafkaConsumer.seekToEnd(Collections.singleton(topicPartition));
-        // Get end offset
-        final Long totalOffset = kafkaConsumer.position(topicPartition);
-
-        consumerTopicPartitionDescriptions.add(
-            new ConsumerTopicPartitionDescription(summary.consumerId(),
-              summary.host(),
-              topicPartition.topic(),
-              topicPartition.partition(),
-              currentOffset,
-              totalOffset - currentOffset,
-              totalOffset
-            ));
-      }
+      consumerTopicPartitionDescriptions.addAll(
+          createConsumerTopicPartitionDescriptions(kafkaConsumer,
+              summary, filteredTopicPartitions));
     }
     return consumerTopicPartitionDescriptions;
   }
 
+  private List<ConsumerTopicPartitionDescription> createConsumerTopicPartitionDescriptions(
+      KafkaConsumer kafkaConsumer,
+      MemberDescription summary,
+      List<TopicPartition> filteredTopicPartitions) {
+    final List<ConsumerTopicPartitionDescription> result = new ArrayList<>();
+    for (TopicPartition topicPartition : filteredTopicPartitions) {
+      final OffsetAndMetadata metadata = kafkaConsumer.committed(topicPartition);
+      // Get current offset
+      final Long currentOffset = Optional.ofNullable(metadata).isPresent()
+          ? metadata.offset() : 0;
+      // Goto end offset for current TopicPartition WITHOUT COMMIT
+      kafkaConsumer.seekToEnd(Collections.singleton(topicPartition));
+      // Get end offset
+      final Long totalOffset = kafkaConsumer.position(topicPartition);
+      result.add(
+          new ConsumerTopicPartitionDescription(summary.consumerId(),
+            summary.host(),
+            topicPartition.topic(),
+            topicPartition.partition(),
+            currentOffset,
+            totalOffset - currentOffset,
+            totalOffset
+          ));
+    }
+    return result;
+  }
+
   private List<ConsumerTopicPartitionDescription> getPagedTopicPartitionList(
           List<ConsumerTopicPartitionDescription> topicPartitionList,
-          Option<Integer> offsetOpt,
-          Option<Integer> countOpt) {
-    final boolean needPartOfData = offsetOpt.nonEmpty()
-            && countOpt.nonEmpty()
+          Optional<Integer> offsetOpt,
+          Optional<Integer> countOpt) {
+    final boolean needPartOfData = offsetOpt.isPresent()
+            && countOpt.isPresent()
             && countOpt.get() > 0;
     if (needPartOfData) {
-      return JavaConverters.seqAsJavaListConverter(
-              JavaConverters.iterableAsScalaIterableConverter(topicPartitionList)
-                      .asScala()
-                      .slice(offsetOpt.get(), offsetOpt.get() + countOpt.get())
-                      .toList())
-              .asJava();
+      return topicPartitionList.subList(offsetOpt.get(),
+          Math.min(topicPartitionList.size(), offsetOpt.get() + countOpt.get()));
     } else {
       return topicPartitionList;
     }

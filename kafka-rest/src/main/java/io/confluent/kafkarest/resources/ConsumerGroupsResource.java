@@ -22,7 +22,6 @@ import io.confluent.kafkarest.entities.ConsumerGroupSubscription;
 import io.confluent.kafkarest.entities.ConsumerGroup;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.rest.annotations.PerformanceMetric;
-import scala.Option;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -31,6 +30,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -70,8 +70,14 @@ public class ConsumerGroupsResource {
   public List<ConsumerGroup> list(@QueryParam("paging_offset") Integer pagingOffset,
                                   @QueryParam("count") Integer count)
           throws Exception {
-    return context.getGroupMetadataObserver()
-            .getConsumerGroupList(Option.apply(pagingOffset), Option.apply(count));
+    final boolean needPartOfData = Optional.ofNullable(pagingOffset).isPresent()
+        && Optional.ofNullable(count).isPresent()
+        && count > 0;
+    if (needPartOfData) {
+      return context.getGroupMetadataObserver()
+          .getPagedConsumerGroupList(pagingOffset, count);
+    }
+    return context.getGroupMetadataObserver().getConsumerGroupList();
   }
 
   /**
@@ -122,7 +128,7 @@ public class ConsumerGroupsResource {
    * @param groupId - Group name.
    * @param count - Optional parameter. Use for paging.
    *             Restrict count of returned entities with group information.
-   * @param offsetPaging - Optional parameter. Use for paging.
+   * @param pagingOffset - Optional parameter. Use for paging.
    *               Offset which starts return records from.
    * @return Topic names who read by specified consumer group.
    *       [{"name":"1"}]
@@ -131,12 +137,19 @@ public class ConsumerGroupsResource {
   @Path("/{groupId}/topics")
   @PerformanceMetric("groups.get.topics")
   public Set<Topic> getTopics(@PathParam("groupId") String groupId,
-                              @QueryParam("offset_paging") Integer offsetPaging,
+                              @QueryParam("offset_paging") Integer pagingOffset,
                               @QueryParam("count") Integer count) throws Exception {
+    final boolean needPartOfData = Optional.ofNullable(pagingOffset).isPresent()
+        && Optional.ofNullable(count).isPresent()
+        && count > 0;
+    if (needPartOfData) {
+      return context.getGroupMetadataObserver()
+          .getPagedConsumerGroupTopicInformation(groupId,
+              pagingOffset,
+              count);
+    }
     return context.getGroupMetadataObserver()
-            .getConsumerGroupTopicInformation(groupId,
-                    Option.apply(offsetPaging),
-                    Option.apply(count));
+        .getConsumerGroupTopicInformation(groupId);
   }
 
   /**
@@ -147,7 +160,7 @@ public class ConsumerGroupsResource {
    * @param topic - Topic name.
    * @param count - Optional parameter. Use for paging.
    *             Restrict count of returned entities with group information.
-   * @param offsetPaging - Optional parameter. Use for paging.
+   * @param pagingOffset - Optional parameter. Use for paging.
    *             Offset which starts return records from.
    * @return Consumer subscription information. Include group offsets, lags and
    *      group coordinator information.
@@ -183,13 +196,16 @@ public class ConsumerGroupsResource {
   public ConsumerGroupSubscription getPartitionsInformationByTopic(
           @PathParam("groupId") String groupId,
           @PathParam("topic") String topic,
-          @QueryParam("offset_paging") Integer offsetPaging,
+          @QueryParam("offset_paging") Integer pagingOffset,
           @QueryParam("count") Integer count)
           throws Exception {
+    final boolean needPartOfData = Optional.ofNullable(pagingOffset).isPresent()
+        && Optional.ofNullable(count).isPresent()
+        && count > 0;
     return context.getGroupMetadataObserver()
             .getConsumerGroupInformation(groupId,
-                    Option.apply(topic),
-                    Option.apply(offsetPaging),
-                    Option.apply(count));
+                    Optional.ofNullable(topic),
+                    Optional.ofNullable(pagingOffset),
+                    Optional.ofNullable(count));
   }
 }

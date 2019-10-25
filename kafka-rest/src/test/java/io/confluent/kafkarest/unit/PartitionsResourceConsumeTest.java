@@ -80,6 +80,7 @@ public class PartitionsResourceConsumeTest extends JerseyTest {
           /* producerPool= */ null,
           kafkaConsumerManager,
           /* adminClientWrapper= */ null,
+          /* groupMetadataObserver= */ null,
           new ScalaConsumersContext(
               /* metadataObserver= */ null,
               /* consumerManager= */ null,

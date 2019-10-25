@@ -65,6 +65,7 @@ public class PartitionsResourceTest extends JerseyTest {
           /* producerPool= */ null,
           consumerManager,
           adminClientWrapper,
+          /* groupMetadataObserver= */ null,
           /* scalaConsumersContext= */ null);
     } catch (RestConfigException e) {
       throw new RuntimeException(e);

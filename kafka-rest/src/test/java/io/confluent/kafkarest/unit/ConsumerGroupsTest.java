@@ -8,7 +8,6 @@ import io.confluent.rest.RestConfigException;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
-import scala.Option;
 
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
@@ -45,7 +44,7 @@ public class ConsumerGroupsTest extends EmbeddedServerTestHarness<KafkaRestConfi
             final List<ConsumerGroup> groups =
                     Arrays.asList(new ConsumerGroup("foo", new ConsumerGroupCoordinator("127.0.0.1", 9092)),
                             new ConsumerGroup("bar", new ConsumerGroupCoordinator("127.0.0.1", 9093)));
-            EasyMock.expect(groupMetadataObserver.getConsumerGroupList(Option.<Integer>empty(), Option.<Integer>empty()))
+            EasyMock.expect(groupMetadataObserver.getConsumerGroupList())
               .andReturn(groups);
             EasyMock.replay(groupMetadataObserver);
 
@@ -66,7 +65,7 @@ public class ConsumerGroupsTest extends EmbeddedServerTestHarness<KafkaRestConfi
             final Set<Topic> groups = new HashSet<>();
             groups.add(new Topic("foo", null, null));
             groups.add(new Topic("bar", null, null));
-            EasyMock.expect(groupMetadataObserver.getConsumerGroupTopicInformation("foo", Option.<Integer>empty(), Option.<Integer>empty()))
+            EasyMock.expect(groupMetadataObserver.getConsumerGroupTopicInformation("foo"))
               .andReturn(groups);
             EasyMock.replay(groupMetadataObserver);
 
@@ -85,7 +84,7 @@ public class ConsumerGroupsTest extends EmbeddedServerTestHarness<KafkaRestConfi
     public void testTopicGroupOffsets() throws Exception {
         for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
             final ConsumerGroupSubscription consumerGroupSubscription = new ConsumerGroupSubscription(Collections.singletonList(new ConsumerTopicPartitionDescription("cons1", "127.0.0.1", "topic", 0, 2L, 0L, 2L)), 1, new ConsumerGroupCoordinator("127.0.0.1", 9092));
-            EasyMock.expect(groupMetadataObserver.getConsumerGroupInformation("foo", Option.apply("topic"), Option.<Integer>empty(), Option.<Integer>empty()))
+            EasyMock.expect(groupMetadataObserver.getConsumerGroupInformation("foo", Optional.of("topic"), Optional.empty(), Optional.empty()))
               .andReturn(consumerGroupSubscription);
             EasyMock.replay(groupMetadataObserver);
 
