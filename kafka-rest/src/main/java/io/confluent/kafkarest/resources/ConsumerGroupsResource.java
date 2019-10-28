@@ -29,6 +29,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -202,10 +203,15 @@ public class ConsumerGroupsResource {
     final boolean needPartOfData = Optional.ofNullable(pagingOffset).isPresent()
         && Optional.ofNullable(count).isPresent()
         && count > 0;
+    if (needPartOfData) {
+      return context.getGroupMetadataObserver()
+          .getConsumerGroupInformation(groupId,
+              Collections.singleton(topic),
+              pagingOffset,
+              count);
+    }
     return context.getGroupMetadataObserver()
-            .getConsumerGroupInformation(groupId,
-                    Optional.ofNullable(topic),
-                    Optional.ofNullable(pagingOffset),
-                    Optional.ofNullable(count));
+        .getConsumerGroupInformation(groupId,
+            Collections.singleton(topic));
   }
 }

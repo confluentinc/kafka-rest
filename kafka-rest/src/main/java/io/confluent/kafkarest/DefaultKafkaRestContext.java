@@ -57,7 +57,7 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   }
 
   @Override
-  public ProducerPool getProducerPool() {
+  public synchronized ProducerPool getProducerPool() {
     if (producerPool == null) {
       producerPool = new ProducerPool(config);
     }
@@ -80,7 +80,7 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   }
 
   @Override
-  public KafkaConsumerManager getKafkaConsumerManager() {
+  public synchronized KafkaConsumerManager getKafkaConsumerManager() {
     if (kafkaConsumerManager == null) {
       kafkaConsumerManager = new KafkaConsumerManager(config);
     }
@@ -88,7 +88,7 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   }
 
   @Override
-  public AdminClientWrapper getAdminClientWrapper() {
+  public synchronized AdminClientWrapper getAdminClientWrapper() {
     if (adminClientWrapper == null) {
       adminClientWrapper = new AdminClientWrapper(config,
           AdminClient.create(AdminClientWrapper.adminProperties(config)));
@@ -97,7 +97,7 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   }
 
   @Override
-  public GroupMetadataObserver getGroupMetadataObserver() {
+  public synchronized GroupMetadataObserver getGroupMetadataObserver() {
     if (groupMetadataObserver == null) {
       groupMetadataObserver = new GroupMetadataObserver(config, getAdminClientWrapper());
     }
