@@ -45,7 +45,7 @@ import java.util.HashSet;
 import java.util.Comparator;
 
 
-public final class GroupMetadataObserver {
+public class GroupMetadataObserver {
 
   private static KafkaConsumer<?, ?> createConsumer(String groupId,
                                                               KafkaRestConfig appConfig) {
