@@ -17,7 +17,10 @@ package io.confluent.kafkarest.unit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.apache.avro.Schema;
+import io.confluent.kafka.schemaregistry.ParsedSchema;
+import io.confluent.kafka.schemaregistry.avro.AvroSchema;
+import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
+import io.confluent.kafkarest.converters.AvroConverter;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -31,11 +34,11 @@ import java.util.concurrent.Future;
 import javax.validation.ConstraintViolationException;
 
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
-import io.confluent.kafkarest.AvroRestProducer;
+import io.confluent.kafkarest.SchemaRestProducer;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProduceTask;
 import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
+import io.confluent.kafkarest.entities.SchemaTopicProduceRecord;
 import io.confluent.kafkarest.entities.SchemaHolder;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
 
@@ -48,7 +51,7 @@ public class AvroRestProducerTest {
   private KafkaAvroSerializer keySerializer;
   private KafkaAvroSerializer valueSerializer;
   private KafkaProducer<Object, Object> producer;
-  private AvroRestProducer restProducer;
+  private SchemaRestProducer restProducer;
   private SchemaHolder schemaHolder;
   private ProducerPool.ProduceRequestCallback produceCallback;
 
@@ -57,7 +60,8 @@ public class AvroRestProducerTest {
     keySerializer = EasyMock.createMock(KafkaAvroSerializer.class);
     valueSerializer = EasyMock.createMock(KafkaAvroSerializer.class);
     producer = EasyMock.createMock(KafkaProducer.class);
-    restProducer = new AvroRestProducer(producer, keySerializer, valueSerializer);
+    restProducer = new SchemaRestProducer(producer, keySerializer, valueSerializer,
+        new AvroSchemaProvider(), new AvroConverter());
     produceCallback = EasyMock.createMock(ProducerPool.ProduceRequestCallback.class);
   }
 
@@ -68,7 +72,7 @@ public class AvroRestProducerTest {
         new ProduceTask(schemaHolder, 1, produceCallback),
         "test", null,
         Arrays.asList(
-            new AvroTopicProduceRecord(
+            new SchemaTopicProduceRecord(
                 mapper.readTree("{}"),
                 mapper.readTree("{}"),
                 null)
@@ -84,7 +88,7 @@ public class AvroRestProducerTest {
           new ProduceTask(schemaHolder, 1, produceCallback),
           "test", null,
           Arrays.asList(
-              new AvroTopicProduceRecord(
+              new SchemaTopicProduceRecord(
                   null,
                   mapper.readTree("\"string\""),
                   null
@@ -93,8 +97,8 @@ public class AvroRestProducerTest {
       );
     } catch (RestConstraintViolationException e) {
       // expected, but should contain additional info
-      assert(e.getMessage().startsWith(Errors.JSON_AVRO_CONVERSION_MESSAGE));
-      assert(e.getMessage().length() > Errors.JSON_AVRO_CONVERSION_MESSAGE.length());
+      assert(e.getMessage().startsWith(Errors.JSON_CONVERSION_MESSAGE));
+      assert(e.getMessage().length() > Errors.JSON_CONVERSION_MESSAGE.length());
     } catch (Throwable t) {
       fail("Unexpected exception type");
     }
@@ -104,10 +108,10 @@ public class AvroRestProducerTest {
   public void testRepeatedProducer() throws Exception {
     final int schemaId = 1;
     final String valueSchemaStr = "{\"type\": \"record\", \"name\": \"User\", \"fields\": [{\"name\": \"name\", \"type\": \"string\"}]}";
-    final Schema valueSchema = new Schema.Parser().parse(valueSchemaStr);
+    final ParsedSchema valueSchema = new AvroSchema(valueSchemaStr);
     // This is the key part of the test, we should only call register once with the same schema, and then see the lookup
     // by ID the rest of the times
-    EasyMock.expect(valueSerializer.register(EasyMock.isA(String.class), EasyMock.isA(Schema.class))).andReturn(schemaId);
+    EasyMock.expect(valueSerializer.register(EasyMock.isA(String.class), EasyMock.isA(ParsedSchema.class))).andReturn(schemaId);
     EasyMock.expect(valueSerializer.getById(schemaId)).andReturn(valueSchema).times(9999);
     EasyMock.replay(valueSerializer);
     Future f = EasyMock.createMock(Future.class);
@@ -120,7 +124,7 @@ public class AvroRestProducerTest {
               "test",
               null,
               Arrays.asList(
-                      new AvroTopicProduceRecord(null, mapper.readTree("{\"name\": \"bob\"}"), null)
+                      new SchemaTopicProduceRecord(null, mapper.readTree("{\"name\": \"bob\"}"), null)
               )
       );
     }

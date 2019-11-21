@@ -21,7 +21,7 @@ import java.util.Properties;
 
 import io.confluent.kafka.serializers.KafkaAvroDecoder;
 import io.confluent.kafkarest.converters.AvroConverter;
-import io.confluent.kafkarest.entities.AvroConsumerRecord;
+import io.confluent.kafkarest.entities.SchemaConsumerRecord;
 import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.MessageAndMetadata;
 import kafka.serializer.Decoder;
@@ -60,10 +60,11 @@ public class AvroConsumerState extends ConsumerState<Object, Object, JsonNode, J
   @Override
   public ConsumerRecordAndSize<JsonNode, JsonNode> createConsumerRecord(
       MessageAndMetadata<Object, Object> msg) {
-    AvroConverter.JsonNodeAndSize keyNode = AvroConverter.toJson(msg.key());
-    AvroConverter.JsonNodeAndSize valueNode = AvroConverter.toJson(msg.message());
+    AvroConverter avroConverter = new AvroConverter();
+    AvroConverter.JsonNodeAndSize keyNode = avroConverter.toJson(msg.key());
+    AvroConverter.JsonNodeAndSize valueNode = avroConverter.toJson(msg.message());
     return new ConsumerRecordAndSize<>(
-            new AvroConsumerRecord(msg.topic(),
+            new SchemaConsumerRecord(msg.topic(),
                                    keyNode.json,
                                    valueNode.json,
                                    msg.partition(),

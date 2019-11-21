@@ -17,7 +17,7 @@ package io.confluent.kafkarest.integration;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.converters.AvroConverter;
-import io.confluent.kafkarest.entities.AvroConsumerRecord;
+import io.confluent.kafkarest.entities.SchemaConsumerRecord;
 import kafka.utils.TestUtils;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecordBuilder;
@@ -70,13 +70,13 @@ public class SimpleConsumerAvroTest extends AbstractConsumerTest {
           new GenericRecordBuilder(valueSchema).set("field", 75).build())
   );
 
-  private static final GenericType<List<AvroConsumerRecord>> avroConsumerRecordType
-      = new GenericType<List<AvroConsumerRecord>>() {
+  private static final GenericType<List<SchemaConsumerRecord>> avroConsumerRecordType
+      = new GenericType<List<SchemaConsumerRecord>>() {
   };
   private static final Converter converter = new Converter() {
     @Override
     public Object convert(Object obj) {
-      return AvroConverter.toJson(obj).json;
+      return new AvroConverter().toJson(obj).json;
     }
   };
 

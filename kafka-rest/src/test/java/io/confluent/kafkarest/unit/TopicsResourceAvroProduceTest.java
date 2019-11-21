@@ -42,7 +42,7 @@ import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.TestUtils;
-import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
+import io.confluent.kafkarest.entities.SchemaTopicProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.ProduceRecord;
@@ -88,7 +88,7 @@ public class TopicsResourceAvroProduceTest
       TestUtils.jsonTree("{\"field\": 2}"),
       };
 
-  private List<AvroTopicProduceRecord> produceRecordsWithPartitionsAndKeys;
+  private List<SchemaTopicProduceRecord> produceRecordsWithPartitionsAndKeys;
 
   private static final TopicPartition tp0 = new TopicPartition(topicName, 0);
   private static final TopicPartition tp1 = new TopicPartition(topicName, 1);
@@ -112,8 +112,8 @@ public class TopicsResourceAvroProduceTest
     addResource(new TopicsResource(ctx));
 
     produceRecordsWithPartitionsAndKeys = Arrays.asList(
-        new AvroTopicProduceRecord(testKeys[0], testValues[0], 0),
-        new AvroTopicProduceRecord(testKeys[1], testValues[1], 0)
+        new SchemaTopicProduceRecord(testKeys[0], testValues[0], 0),
+        new SchemaTopicProduceRecord(testKeys[1], testValues[1], 0)
     );
   }
 

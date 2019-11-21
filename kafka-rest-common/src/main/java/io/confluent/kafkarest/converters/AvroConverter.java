@@ -18,6 +18,9 @@ package io.confluent.kafkarest.converters;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.google.common.annotations.VisibleForTesting;
+import io.confluent.kafka.schemaregistry.ParsedSchema;
+import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericContainer;
 import org.apache.avro.generic.GenericDatumReader;
@@ -40,7 +43,7 @@ import java.util.Map;
 /**
  * Provides conversion of JSON to/from Avro.
  */
-public class AvroConverter {
+public class AvroConverter implements SchemaConverter {
 
   private static final Logger log = LoggerFactory.getLogger(AvroConverter.class);
 
@@ -63,7 +66,14 @@ public class AvroConverter {
     primitiveSchemas.put("Bytes", createPrimitiveSchema(parser, "bytes"));
   }
 
-  public static Object toAvro(JsonNode value, Schema schema) {
+  @Override
+  public Object toObject(JsonNode value, ParsedSchema parsedSchema) {
+    Schema schema = ((AvroSchema) parsedSchema).rawSchema();
+    return toObject(value, schema);
+  }
+
+  @VisibleForTesting
+  public Object toObject(JsonNode value, Schema schema) {
     try {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       jsonMapper.writeValue(out, value);
@@ -79,17 +89,6 @@ public class AvroConverter {
     }
   }
 
-  public static class JsonNodeAndSize {
-
-    public JsonNode json;
-    public long size;
-
-    public JsonNodeAndSize(JsonNode json, long size) {
-      this.json = json;
-      this.size = size;
-    }
-  }
-
   /**
    * Converts Avro data (including primitive types) to their equivalent JsonNode representation.
    *
@@ -97,7 +96,8 @@ public class AvroConverter {
    * @return an object containing the root JsonNode representing the converted object and the size
    *     in bytes of the data when serialized
    */
-  public static JsonNodeAndSize toJson(Object value) {
+  @Override
+  public JsonNodeAndSize toJson(Object value) {
     try {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       Schema schema = getSchema(value);

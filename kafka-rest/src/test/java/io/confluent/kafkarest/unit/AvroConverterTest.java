@@ -107,47 +107,47 @@ public class AvroConverterTest {
 
   @Test
   public void testPrimitiveTypesToAvro() {
-    Object result = AvroConverter.toAvro(null, createPrimitiveSchema("null"));
+    Object result = new AvroConverter().toObject(null, createPrimitiveSchema("null"));
     assertTrue(result == null);
 
-    result = AvroConverter.toAvro(TestUtils.jsonTree("true"), createPrimitiveSchema("boolean"));
+    result = new AvroConverter().toObject(TestUtils.jsonTree("true"), createPrimitiveSchema("boolean"));
     assertEquals(true, result);
-    result = AvroConverter.toAvro(TestUtils.jsonTree("false"), createPrimitiveSchema("boolean"));
+    result = new AvroConverter().toObject(TestUtils.jsonTree("false"), createPrimitiveSchema("boolean"));
     assertEquals(false, result);
 
-    result = AvroConverter.toAvro(TestUtils.jsonTree("12"), createPrimitiveSchema("int"));
+    result = new AvroConverter().toObject(TestUtils.jsonTree("12"), createPrimitiveSchema("int"));
     assertTrue(result instanceof Integer);
     assertEquals(12, result);
 
-    result = AvroConverter.toAvro(TestUtils.jsonTree("12"), createPrimitiveSchema("long"));
+    result = new AvroConverter().toObject(TestUtils.jsonTree("12"), createPrimitiveSchema("long"));
     assertTrue(result instanceof Long);
     assertEquals(12L, result);
-    result = AvroConverter.toAvro(TestUtils.jsonTree("5000000000"), createPrimitiveSchema("long"));
+    result = new AvroConverter().toObject(TestUtils.jsonTree("5000000000"), createPrimitiveSchema("long"));
     assertTrue(result instanceof Long);
     assertEquals(5000000000L, result);
 
-    result = AvroConverter.toAvro(TestUtils.jsonTree("23.2"), createPrimitiveSchema("float"));
+    result = new AvroConverter().toObject(TestUtils.jsonTree("23.2"), createPrimitiveSchema("float"));
     assertTrue(result instanceof Float);
     assertEquals(23.2f, result);
-    result = AvroConverter.toAvro(TestUtils.jsonTree("23"), createPrimitiveSchema("float"));
+    result = new AvroConverter().toObject(TestUtils.jsonTree("23"), createPrimitiveSchema("float"));
     assertTrue(result instanceof Float);
     assertEquals(23.0f, result);
 
-    result = AvroConverter.toAvro(TestUtils.jsonTree("23.2"), createPrimitiveSchema("double"));
+    result = new AvroConverter().toObject(TestUtils.jsonTree("23.2"), createPrimitiveSchema("double"));
     assertTrue(result instanceof Double);
     assertEquals(23.2, result);
-    result = AvroConverter.toAvro(TestUtils.jsonTree("23"), createPrimitiveSchema("double"));
+    result = new AvroConverter().toObject(TestUtils.jsonTree("23"), createPrimitiveSchema("double"));
     assertTrue(result instanceof Double);
     assertEquals(23.0, result);
 
     // We can test bytes simply using simple ASCII string since the translation is direct in that
     // case
-    result = AvroConverter.toAvro(new TextNode("hello"), createPrimitiveSchema("bytes"));
+    result = new AvroConverter().toObject(new TextNode("hello"), createPrimitiveSchema("bytes"));
     assertTrue(result instanceof ByteBuffer);
     assertEquals(EntityUtils.encodeBase64Binary("hello".getBytes()),
                  EntityUtils.encodeBase64Binary(((ByteBuffer) result).array()));
 
-    result = AvroConverter.toAvro(TestUtils.jsonTree("\"a string\""),
+    result = new AvroConverter().toObject(TestUtils.jsonTree("\"a string\""),
                                   createPrimitiveSchema("string"));
     assertTrue(result instanceof Utf8);
     assertEquals(new Utf8("a string"), result);
@@ -198,7 +198,7 @@ public class AvroConverterTest {
                   + "    \"string_default\": \"default\"\n"
                   + "}";
 
-    Object result = AvroConverter.toAvro(TestUtils.jsonTree(json), recordSchema);
+    Object result = new AvroConverter().toObject(TestUtils.jsonTree(json), recordSchema);
     assertTrue(result instanceof GenericRecord);
     GenericRecord resultRecord = (GenericRecord) result;
     assertEquals(null, resultRecord.get("null"));
@@ -218,7 +218,7 @@ public class AvroConverterTest {
   public void testArrayToAvro() {
     String json = "[\"one\", \"two\", \"three\"]";
 
-    Object result = AvroConverter.toAvro(TestUtils.jsonTree(json), arraySchema);
+    Object result = new AvroConverter().toObject(TestUtils.jsonTree(json), arraySchema);
     assertTrue(result instanceof GenericArray);
     assertArrayEquals(new Utf8[]{new Utf8("one"), new Utf8("two"), new Utf8("three")},
                       ((GenericArray) result).toArray());
@@ -228,24 +228,24 @@ public class AvroConverterTest {
   public void testMapToAvro() {
     String json = "{\"first\": \"one\", \"second\": \"two\"}";
 
-    Object result = AvroConverter.toAvro(TestUtils.jsonTree(json), mapSchema);
+    Object result = new AvroConverter().toObject(TestUtils.jsonTree(json), mapSchema);
     assertTrue(result instanceof Map);
     assertEquals(2, ((Map<String, Object>) result).size());
   }
 
   @Test
   public void testUnionToAvro() {
-    Object result = AvroConverter.toAvro(
+    Object result = new AvroConverter().toObject(
         TestUtils.jsonTree("{\"union\":{\"string\":\"test string\"}}"),
         unionSchema);
     Object foo = ((GenericRecord) result).get("union");
     assertTrue(((GenericRecord) result).get("union") instanceof Utf8);
 
-    result = AvroConverter.toAvro(TestUtils.jsonTree("{\"union\":{\"int\":12}}"), unionSchema);
+    result = new AvroConverter().toObject(TestUtils.jsonTree("{\"union\":{\"int\":12}}"), unionSchema);
     assertTrue(((GenericRecord) result).get("union") instanceof Integer);
 
     try {
-      AvroConverter.toAvro(TestUtils.jsonTree("12.4"), unionSchema);
+      new AvroConverter().toObject(TestUtils.jsonTree("12.4"), unionSchema);
       fail("Trying to convert floating point number to union(string,int) schema should fail");
     } catch (ConversionException e) {
       // expected
@@ -254,7 +254,7 @@ public class AvroConverterTest {
 
   @Test
   public void testEnumToAvro() {
-    Object result = AvroConverter.toAvro(TestUtils.jsonTree("\"SPADES\""), enumSchema);
+    Object result = new AvroConverter().toObject(TestUtils.jsonTree("\"SPADES\""), enumSchema);
     assertTrue(result instanceof GenericEnumSymbol);
 
     // There's no failure case here because the only failure mode is passing in non-string data.
@@ -265,31 +265,31 @@ public class AvroConverterTest {
 
   @Test
   public void testPrimitiveTypesToJson() {
-    AvroConverter.JsonNodeAndSize result = AvroConverter.toJson((int) 0);
+    AvroConverter.JsonNodeAndSize result = new AvroConverter().toJson((int) 0);
     assertTrue(result.json.isNumber());
     assertTrue(result.size > 0);
 
-    result = AvroConverter.toJson((long) 0);
+    result = new AvroConverter().toJson((long) 0);
     assertTrue(result.json.isNumber());
 
-    result = AvroConverter.toJson(0.1f);
+    result = new AvroConverter().toJson(0.1f);
     assertTrue(result.json.isNumber());
 
-    result = AvroConverter.toJson(0.1);
+    result = new AvroConverter().toJson(0.1);
     assertTrue(result.json.isNumber());
 
-    result = AvroConverter.toJson(true);
+    result = new AvroConverter().toJson(true);
     assertTrue(result.json.isBoolean());
 
     // "Primitive" here refers to Avro primitive types, which are returned as standalone objects,
     // which can't have attached schemas. This includes, for example, Strings and byte[] even
     // though they are not Java primitives
 
-    result = AvroConverter.toJson("abcdefg");
+    result = new AvroConverter().toJson("abcdefg");
     assertTrue(result.json.isTextual());
     assertEquals("abcdefg", result.json.textValue());
 
-    result = AvroConverter.toJson(ByteBuffer.wrap("hello".getBytes()));
+    result = new AvroConverter().toJson(ByteBuffer.wrap("hello".getBytes()));
     assertTrue(result.json.isTextual());
     // Was generated from a string, so the Avro encoding should be equivalent to the string
     assertEquals("hello", result.json.textValue());
@@ -315,7 +315,7 @@ public class AvroConverterTest {
         .set("string", "string")
         .build();
 
-    AvroConverter.JsonNodeAndSize result = AvroConverter.toJson(data);
+    AvroConverter.JsonNodeAndSize result = new AvroConverter().toJson(data);
     assertTrue(result.size > 0);
     assertTrue(result.json.isObject());
     assertTrue(result.json.get("null").isNull());
@@ -341,7 +341,7 @@ public class AvroConverterTest {
   public void testArrayToJson() {
     GenericData.Array<String>
         data = new GenericData.Array(arraySchema, Arrays.asList("one", "two", "three"));
-    AvroConverter.JsonNodeAndSize result = AvroConverter.toJson(data);
+    AvroConverter.JsonNodeAndSize result = new AvroConverter().toJson(data);
     assertTrue(result.size > 0);
 
     assertTrue(result.json.isArray());
@@ -356,7 +356,7 @@ public class AvroConverterTest {
     Map<String, Object> data = new HashMap<String, Object>();
     data.put("first", "one");
     data.put("second", "two");
-    AvroConverter.JsonNodeAndSize result = AvroConverter.toJson(data);
+    AvroConverter.JsonNodeAndSize result = new AvroConverter().toJson(data);
     assertTrue(result.size > 0);
 
     assertTrue(result.json.isObject());
@@ -370,7 +370,7 @@ public class AvroConverterTest {
   @Test
   public void testEnumToJson() {
     AvroConverter.JsonNodeAndSize result
-        = AvroConverter.toJson(new GenericData.EnumSymbol(enumSchema, "SPADES"));
+        = new AvroConverter().toJson(new GenericData.EnumSymbol(enumSchema, "SPADES"));
     assertTrue(result.size > 0);
     assertTrue(result.json.isTextual());
     assertEquals("SPADES", result.json.textValue());
@@ -379,7 +379,7 @@ public class AvroConverterTest {
 
   private static void expectConversionException(JsonNode obj, Schema schema) {
     try {
-      AvroConverter.toAvro(obj, schema);
+      new AvroConverter().toObject(obj, schema);
       fail("Expected conversion of " + (obj == null ? "null" : obj.toString())
            + " to schema " + schema.toString() + " to fail");
     } catch (ConversionException e) {
@@ -389,7 +389,7 @@ public class AvroConverterTest {
 
   private static void expectConversionException(Object obj) {
     try {
-      AvroConverter.toJson(obj);
+      new AvroConverter().toJson(obj);
       fail("Expected conversion of "
            + (obj == null ? "null" : (obj.toString() + " (" + obj.getClass().getName() + ")"))
            + " to fail");

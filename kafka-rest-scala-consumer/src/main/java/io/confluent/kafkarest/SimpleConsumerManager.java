@@ -34,7 +34,7 @@ import javax.ws.rs.core.Response;
 import io.confluent.kafka.serializers.KafkaAvroDecoder;
 import io.confluent.kafka.serializers.KafkaJsonDecoder;
 import io.confluent.kafkarest.converters.AvroConverter;
-import io.confluent.kafkarest.entities.AvroConsumerRecord;
+import io.confluent.kafkarest.entities.SchemaConsumerRecord;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
@@ -236,7 +236,7 @@ public class SimpleConsumerManager {
     );
   }
 
-  private AvroConsumerRecord createAvroConsumerRecord(
+  private SchemaConsumerRecord createAvroConsumerRecord(
       final MessageAndOffset messageAndOffset,
       final String topicName,
       final int partitionId
@@ -252,10 +252,10 @@ public class SimpleConsumerManager {
             0,
             TimestampType.CREATE_TIME
         );
-    return new AvroConsumerRecord(
+    return new SchemaConsumerRecord(
         topicName,
-        AvroConverter.toJson(messageAndMetadata.key()).json,
-        AvroConverter.toJson(messageAndMetadata.message()).json,
+        new AvroConverter().toJson(messageAndMetadata.key()).json,
+        new AvroConverter().toJson(messageAndMetadata.message()).json,
         partitionId,
         messageAndOffset.offset()
     );
