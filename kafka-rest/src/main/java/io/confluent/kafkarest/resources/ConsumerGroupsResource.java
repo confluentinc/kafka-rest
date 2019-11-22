@@ -59,24 +59,24 @@ public class ConsumerGroupsResource {
    * <p>Get consumer group list</p>
    * <p>Example: http://127.0.0.1:2081/groups/</p>
    *
-   * @param count - Optional parameter. Use for paging.
+   * @param pageSize - Optional parameter. Use for paging.
    *             Restrict count of returned entities with group information.
-   * @param pagingOffset - Optional parameter. Use for paging.
+   * @param pageOffset - Optional parameter. Use for paging.
    *               Offset which starts return records from.
    * @return List of group names with group coordinator host of each group.
    *     [{"groupId":"testGroup", "coordinator": {"host": "127.0.0.1", "port": "123"}}]
    */
   @GET
   @PerformanceMetric("groups.list")
-  public List<ConsumerGroup> list(@QueryParam("paging_offset") Integer pagingOffset,
-                                  @QueryParam("count") Integer count)
+  public List<ConsumerGroup> list(@QueryParam("page_offset") Integer pageOffset,
+                                  @QueryParam("page_size") Integer pageSize)
           throws Exception {
-    final boolean needPartOfData = Optional.ofNullable(pagingOffset).isPresent()
-        && Optional.ofNullable(count).isPresent()
-        && count > 0;
+    final boolean needPartOfData = Optional.ofNullable(pageOffset).isPresent()
+        && Optional.ofNullable(pageSize).isPresent()
+        && pageSize > 0;
     if (needPartOfData) {
       return context.getGroupMetadataObserver()
-          .getPagedConsumerGroupList(pagingOffset, count);
+          .getPagedConsumerGroupList(pageOffset, pageSize);
     }
     return context.getGroupMetadataObserver().getConsumerGroupList();
   }
@@ -127,9 +127,9 @@ public class ConsumerGroupsResource {
    * <p>Example: http://127.0.0.1:2081/groups/testGroup/topics</p>
    *
    * @param groupId - Group name.
-   * @param count - Optional parameter. Use for paging.
+   * @param pageSize - Optional parameter. Use for paging.
    *             Restrict count of returned entities with group information.
-   * @param pagingOffset - Optional parameter. Use for paging.
+   * @param pageOffset - Optional parameter. Use for paging.
    *               Offset which starts return records from.
    * @return Topic names who read by specified consumer group.
    *       [{"name":"1"}]
@@ -138,16 +138,16 @@ public class ConsumerGroupsResource {
   @Path("/{groupId}/topics")
   @PerformanceMetric("groups.get.topics")
   public Set<Topic> getTopics(@PathParam("groupId") String groupId,
-                              @QueryParam("offset_paging") Integer pagingOffset,
-                              @QueryParam("count") Integer count) throws Exception {
-    final boolean needPartOfData = Optional.ofNullable(pagingOffset).isPresent()
-        && Optional.ofNullable(count).isPresent()
-        && count > 0;
+                              @QueryParam("page_offset") Integer pageOffset,
+                              @QueryParam("page_size") Integer pageSize) throws Exception {
+    final boolean needPartOfData = Optional.ofNullable(pageOffset).isPresent()
+        && Optional.ofNullable(pageSize).isPresent()
+        && pageSize > 0;
     if (needPartOfData) {
       return context.getGroupMetadataObserver()
           .getPagedConsumerGroupTopicInformation(groupId,
-              pagingOffset,
-              count);
+              pageOffset,
+              pageSize);
     }
     return context.getGroupMetadataObserver()
         .getConsumerGroupTopicInformation(groupId);
@@ -159,9 +159,9 @@ public class ConsumerGroupsResource {
    *
    * @param groupId - Group name.
    * @param topic - Topic name.
-   * @param count - Optional parameter. Use for paging.
+   * @param pageSize - Optional parameter. Use for paging.
    *             Restrict count of returned entities with group information.
-   * @param pagingOffset - Optional parameter. Use for paging.
+   * @param pageOffset - Optional parameter. Use for paging.
    *             Offset which starts return records from.
    * @return Consumer subscription information. Include group offsets, lags and
    *      group coordinator information.
@@ -197,18 +197,18 @@ public class ConsumerGroupsResource {
   public ConsumerGroupSubscription getPartitionsInformationByTopic(
           @PathParam("groupId") String groupId,
           @PathParam("topic") String topic,
-          @QueryParam("offset_paging") Integer pagingOffset,
-          @QueryParam("count") Integer count)
+          @QueryParam("page_offset") Integer pageOffset,
+          @QueryParam("page_size") Integer pageSize)
           throws Exception {
-    final boolean needPartOfData = Optional.ofNullable(pagingOffset).isPresent()
-        && Optional.ofNullable(count).isPresent()
-        && count > 0;
+    final boolean needPartOfData = Optional.ofNullable(pageOffset).isPresent()
+        && Optional.ofNullable(pageSize).isPresent()
+        && pageSize > 0;
     if (needPartOfData) {
       return context.getGroupMetadataObserver()
           .getConsumerGroupInformation(groupId,
               Collections.singleton(topic),
-              pagingOffset,
-              count);
+              pageOffset,
+              pageSize);
     }
     return context.getGroupMetadataObserver()
         .getConsumerGroupInformation(groupId,
