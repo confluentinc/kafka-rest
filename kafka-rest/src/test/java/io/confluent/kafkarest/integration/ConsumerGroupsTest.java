@@ -164,8 +164,8 @@ public class ConsumerGroupsTest extends AbstractProducerTest {
 
       final int expectedSize = 1;
       Map<String, String> requestParameters = new HashMap<>();
-      requestParameters.put("offset_paging", "0");
-      requestParameters.put("count", "" + expectedSize);
+      requestParameters.put("page_offset", "0");
+      requestParameters.put("page_size", "" + expectedSize);
       Response filteredResponse = request("/groups/"+ groupName + "/topics/" + topicName,
               requestParameters).get();
       assertOKResponse(filteredResponse, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
