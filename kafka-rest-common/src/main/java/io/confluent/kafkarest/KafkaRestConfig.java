@@ -656,7 +656,7 @@ public class KafkaRestConfig extends RestConfig {
 
       if (name.startsWith("ssl.") || name.startsWith("sasl.")
           || name.startsWith("client.") || name.startsWith("producer.")
-          || name.startsWith("consumer.")) {
+          || name.startsWith("consumer.") || name.startsWith("schema.registry")) {
         continue;
       }
 
@@ -687,6 +687,9 @@ public class KafkaRestConfig extends RestConfig {
     addPropertiesWithPrefix("client.", producerProps);
     addPropertiesWithPrefix("producer.", producerProps);
 
+    // Propagate Schema Registry properties.
+    producerProps.putAll(originalsWithPrefix("schema.registry", /* strip= */ false));
+
     return producerProps;
   }
 
@@ -695,6 +698,10 @@ public class KafkaRestConfig extends RestConfig {
     //copy cover the properties with prefixes "client." and  "consumer."
     addPropertiesWithPrefix("client.", consumerProps);
     addPropertiesWithPrefix("consumer.", consumerProps);
+
+    // Propagate Schema Registry properties.
+    consumerProps.putAll(originalsWithPrefix("schema.registry", /* strip= */ false));
+
     return consumerProps;
   }
 
