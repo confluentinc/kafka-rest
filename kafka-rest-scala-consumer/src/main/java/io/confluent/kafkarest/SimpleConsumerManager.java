@@ -96,6 +96,7 @@ public class SimpleConsumerManager {
         "schema.registry.url",
         config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG)
     );
+    props.putAll(config.originalsWithPrefix("schema.registry", /* strip= */ false));
     avroDecoder = new KafkaAvroDecoder(new VerifiableProperties(props));
 
     binaryDecoder = new DefaultDecoder(new VerifiableProperties());
