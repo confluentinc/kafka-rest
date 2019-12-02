@@ -43,12 +43,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.HashSet;
 import java.util.Comparator;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 
 public class GroupMetadataObserver {
 
   private static KafkaConsumer<?, ?> createConsumer(String groupId,
-                                                              KafkaRestConfig appConfig) {
+                                                    KafkaRestConfig appConfig) {
     final Properties properties = new Properties();
     String deserializer = StringDeserializer.class.getName();
     properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
@@ -96,11 +98,12 @@ public class GroupMetadataObserver {
   private List<ConsumerGroup> getConsumerGroups(Collection<ConsumerGroupListing> groupsOverview)
       throws Exception {
     final List<ConsumerGroup> result = new ArrayList<>();
-    for (ConsumerGroupListing eachGroupInfo : groupsOverview) {
-      final Node node = adminClientWrapper.describeConsumerGroups(
-           Collections.singleton(eachGroupInfo.groupId()))
-               .get(eachGroupInfo.groupId()).coordinator();
-      result.add(new ConsumerGroup(eachGroupInfo.groupId(),
+    List<String> groupIds =groupsOverview.stream().map(ConsumerGroupListing::groupId)
+        .collect(Collectors.toList());
+    for (Entry<String, ConsumerGroupDescription> eachGroupInfo :
+            adminClientWrapper.describeConsumerGroups(groupIds).entrySet()) {
+      final Node node = eachGroupInfo.getValue().coordinator();
+      result.add(new ConsumerGroup(eachGroupInfo.getKey(),
           new ConsumerGroupCoordinator(node.host(), node.port())));
     }
     return result;
@@ -126,9 +129,9 @@ public class GroupMetadataObserver {
    */
   public Set<Topic> getConsumerGroupTopicInformation(String groupId)
           throws Exception {
-    final List<Topic> result = getConsumerGroupTopics(groupId);
+    final Set<Topic> result = getConsumerGroupTopics(groupId);
     log.debug("Get topic list {}", result);
-    return new HashSet<>(result);
+    return result;
   }
 
   /**
@@ -141,19 +144,21 @@ public class GroupMetadataObserver {
                                                           Integer startPos,
                                                           Integer count)
           throws Exception {
-    final List<Topic> result = getConsumerGroupTopics(groupId);
+    final Set<Topic> result = getConsumerGroupTopics(groupId);
     log.debug("Get topic list {}", result);
-    return new HashSet<>(result.subList(startPos,
-        Math.min(result.size(), startPos + count)));
+     return result.stream()
+              .skip(startPos)
+              .limit(Math.min(result.size(), startPos + count))
+              .collect(Collectors.toSet());
   }
 
-  private List<Topic> getConsumerGroupTopics(String groupId) throws Exception {
-    final List<Topic> result = new ArrayList<>();
+  private Set<Topic> getConsumerGroupTopics(String groupId) throws Exception {
+    final Set<Topic> result = new HashSet<>();
     final Collection<MemberDescription> memberDescriptions =
         adminClientWrapper.describeConsumerGroups(Collections.singleton(groupId))
             .get(groupId).members();
     if (memberDescriptions.isEmpty()) {
-      return Collections.emptyList();
+      return Collections.emptySet();
     }
     for (MemberDescription eachSummary : memberDescriptions) {
       for (TopicPartition topicPartition : eachSummary.assignment().topicPartitions()) {

@@ -59,9 +59,9 @@ public class ConsumerGroupsResource {
    * <p>Get consumer group list</p>
    * <p>Example: http://127.0.0.1:2081/groups/</p>
    *
-   * @param pageSize - Optional parameter. Use for paging.
+   * @param pageSize - Optional parameter. Used for paging.
    *             Restrict count of returned entities with group information.
-   * @param pageOffset - Optional parameter. Use for paging.
+   * @param pageOffset - Optional parameter. Used for paging.
    *               Offset which starts return records from.
    * @return List of group names with group coordinator host of each group.
    *     [{"groupId":"testGroup", "coordinator": {"host": "127.0.0.1", "port": "123"}}]
@@ -127,11 +127,11 @@ public class ConsumerGroupsResource {
    * <p>Example: http://127.0.0.1:2081/groups/testGroup/topics</p>
    *
    * @param groupId - Group name.
-   * @param pageSize - Optional parameter. Use for paging.
+   * @param pageSize - Optional parameter. Used for paging.
    *             Restrict count of returned entities with group information.
-   * @param pageOffset - Optional parameter. Use for paging.
+   * @param pageOffset - Optional parameter. Used for paging.
    *               Offset which starts return records from.
-   * @return Topic names who read by specified consumer group.
+   * @return Topic names who are read by specified consumer group.
    *       [{"name":"1"}]
    */
   @GET
@@ -155,13 +155,13 @@ public class ConsumerGroupsResource {
 
   /**
    * <p>Get partitions list for group groupId</p>
-   * <p>Example: http://127.0.0.1:2081/groups/testGroup/topics/testTopic?offset=10&count=10</p>
+   * <p>Example: http://127.0.0.1:2081/groups/testGroup/topics/testTopic?page_offset=10&page_size=10</p>
    *
    * @param groupId - Group name.
    * @param topic - Topic name.
-   * @param pageSize - Optional parameter. Use for paging.
+   * @param pageSize - Optional parameter. Used for paging.
    *             Restrict count of returned entities with group information.
-   * @param pageOffset - Optional parameter. Use for paging.
+   * @param pageOffset - Optional parameter. Used for paging.
    *             Offset which starts return records from.
    * @return Consumer subscription information. Include group offsets, lags and
    *      group coordinator information.

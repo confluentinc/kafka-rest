@@ -37,7 +37,7 @@ public class ConsumerGroupSubscription {
 
   @JsonCreator
   public ConsumerGroupSubscription(
-          @JsonProperty("topicPartitionList") List<ConsumerTopicPartitionDescription>
+          @JsonProperty("topicPartitions") List<ConsumerTopicPartitionDescription>
                   topicPartitionList,
           @JsonProperty("topicPartitionCount") Integer topicPartitionCount,
           @JsonProperty("coordinator") ConsumerGroupCoordinator coordinator) {
