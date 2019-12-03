@@ -1,0 +1,17 @@
+[Unit]
+Description=A REST proxy for Apache Kafka
+Documentation=http://docs.confluent.io/
+After=network.target confluent-kafka.target
+
+[Service]
+Type=simple
+User=cp-kafka-rest
+Group=confluent
+Environment="LOG_DIR=/var/log/confluent/kafka-rest"
+ExecStart=/usr/bin/kafka-rest-start /etc/kafka-rest/kafka-rest.properties
+LimitNOFILE=100000
+TimeoutStopSec=180
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

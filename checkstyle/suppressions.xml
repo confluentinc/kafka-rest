@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Puppy Crawl//DTD Suppressions 1.1//EN"
+        "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
+
+<suppressions>
+
+    <!-- TODO -->
+    <suppress
+            checks="(BooleanExpressionComplexity)"
+            files="(KafkaRestConfig).java"
+    />
+
+    <suppress
+            checks="(CyclomaticComplexity)"
+            files="(AvroConverter|AvroRestProducer|ConsumerInstanceConfig|ConsumerManager|ConsumerReadTask|KafkaConsumerManager|PartitionOffset|KafkaRestContextProvider).java"
+    />
+
+    <suppress
+            checks="(ClassDataAbstractionCoupling)"
+            files="(AvroConverter|ConsumerManager|KafkaConsumerManager|KafkaRestApplication|SimpleConsumerManager|KafkaRestContextProvider|KafkaConsumerState).java"
+    />
+
+    <suppress
+            checks="(ClassFanOutComplexity)"
+            files="(ConsumerManager|KafkaConsumerState).java"
+    />
+
+    <suppress
+            checks="(JavaNCSS)"
+            files="(ConsumerManager|KafkaConsumerManager).java"
+    />
+
+    <suppress
+            checks="(NPathComplexity)"
+            files="(AvroRestProducer|ConsumerInstanceConfig|ConsumerManager|KafkaConsumerManager|PartitionOffset|KafkaRestContextProvider).java"
+    />
+    <suppress
+            checks="(MethodLength)"
+            files="(KafkaRestConfig).java"
+    />
+</suppressions>

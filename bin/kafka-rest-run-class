@@ -1,28 +1,28 @@
 #!/bin/bash
 #
-# Copyright 2014 Confluent Inc.
+# Copyright 2018 Confluent Inc.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# Licensed under the Confluent Community License (the "License"); you may not use
+# this file except in compliance with the License.  You may obtain a copy of the
+# License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+# http://www.confluent.io/confluent-community-license
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations under the License.
+#
 
 base_dir=$(dirname $0)/..
 
 # Development jars. `mvn package` should collect all the required dependency jars here
-for dir in $base_dir/target/kafka-rest-*-development; do
+for dir in $base_dir/kafka-rest/target/kafka-rest-*-development; do
   CLASSPATH=$CLASSPATH:$dir/share/java/kafka-rest/*
 done
 
 # Production jars
-for library in "confluent-common" "rest-utils" "kafka-rest"; do
+for library in "confluent-security/kafka-rest" "confluent-common" "rest-utils" "kafka-rest" "monitoring-interceptors"; do
   CLASSPATH=$CLASSPATH:$base_dir/share/java/$library/*
 done
 
@@ -37,6 +37,11 @@ if [ "x$KAFKAREST_LOG4J_OPTS" = "x" ]; then
   elif [ -e "/etc/kafka-rest/log4j.properties" ]; then # Normal install layout
     KAFKAREST_LOG4J_OPTS="-Dlog4j.configuration=file:/etc/kafka-rest/log4j.properties"
   fi
+fi
+
+if [[ -n $LOG_DIR ]]; then
+    [[ -d $LOG_DIR ]] || mkdir -p "$LOG_DIR"
+    KAFKAREST_LOG4J_OPTS="-Dkafka-rest.log.dir=$LOG_DIR ${KAFKAREST_LOG4J_OPTS}"
 fi
 
 # JMX settings
@@ -68,7 +73,7 @@ fi
 
 # JVM performance options
 if [ -z "$KAFKAREST_JVM_PERFORMANCE_OPTS" ]; then
-  KAFKAREST_JVM_PERFORMANCE_OPTS="-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+DisableExplicitGC -Djava.awt.headless=true"
+  KAFKAREST_JVM_PERFORMANCE_OPTS="-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+ExplicitGCInvokesConcurrent -Djava.awt.headless=true"
 fi
 
 MAIN=$1

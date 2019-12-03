@@ -4,11 +4,15 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.confluent</groupId>
-    <artifactId>kafka-rest</artifactId>
-    <packaging>jar</packaging>
-    <version>3.2.0-SNAPSHOT</version>
-    <name>kafka-rest</name>
+    <parent>
+        <groupId>io.confluent</groupId>
+        <artifactId>rest-utils-parent</artifactId>
+        <version>5.5.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>kafka-rest-parent</artifactId>
+    <packaging>pom</packaging>
+    <name>kafka-rest-parent</name>
     <organization>
         <name>Confluent, Inc.</name>
         <url>http://confluent.io</url>
@@ -22,8 +26,8 @@
 
     <licenses>
         <license>
-            <name>Apache License 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+            <name>Confluent Community License</name>
+            <url>http://www.confluent.io/confluent-community-license</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -35,15 +39,17 @@
         <tag>HEAD</tag>
     </scm>
 
+    <modules>
+        <module>kafka-rest</module>
+        <module>kafka-rest-console-scripts</module>
+        <module>kafka-rest-common</module>
+        <module>kafka-rest-scala-consumer</module>
+    </modules>
+
     <properties>
-        <confluent.version>3.2.0-SNAPSHOT</confluent.version>
-        <kafka.version>0.10.2.0-SNAPSHOT</kafka.version>
-        <kafka.scala.version>2.11</kafka.scala.version>
-        <!-- See note about workaround below. This should match the version used in the version of rest-utils you're using. -->
-        <confluent.junit.version>4.12</confluent.junit.version>
-        <easymock.version>3.0</easymock.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <confluent.maven.repo>http://packages.confluent.io/maven/</confluent.maven.repo>
+        <log4j.version>1.7.25</log4j.version>
+        <checkstyle.suppressions.location>checkstyle/suppressions.xml</checkstyle.suppressions.location>
     </properties>
 
     <repositories>
@@ -56,162 +62,25 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.confluent</groupId>
-            <artifactId>rest-utils</artifactId>
-            <version>${confluent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka_${kafka.scala.version}</artifactId>
-            <version>${kafka.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.confluent</groupId>
-            <artifactId>kafka-avro-serializer</artifactId>
-            <version>${confluent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.confluent</groupId>
-            <artifactId>kafka-json-serializer</artifactId>
-            <version>${confluent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.confluent</groupId>
-            <artifactId>rest-utils-test</artifactId>
-            <version>${confluent.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <!--
-            This is a workaround for IntelliJ which seems to have a problem including junit + hamcrest
-            as transitive dependencies of rest-utils-test. mvn properly resolves these, so it may have
-            something to do with special junit handling and test scopes since rest-utils-test is not in
-            <scope>test</scope>.
-        -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${confluent.junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <!-- End workaround -->
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka_${kafka.scala.version}</artifactId>
-            <version>${kafka.version}</version>
-            <classifier>test</classifier>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>${kafka.version}</version>
-            <classifier>test</classifier>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.confluent</groupId>
-            <artifactId>kafka-schema-registry</artifactId>
-            <version>${confluent.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.easymock</groupId>
-            <artifactId>easymock</artifactId>
-            <version>${easymock.version}</version>
-            <scope>test</scope>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
         </dependency>
     </dependencies>
 
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.5.1</version>
-                <inherited>true</inherited>
-                <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.2.1</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <mainClass>io.confluent.kafkarest.KafkaRestMain</mainClass>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.5.2</version>
-                <configuration>
-                    <descriptors>
-                        <descriptor>src/assembly/development.xml</descriptor>
-                        <descriptor>src/assembly/package.xml</descriptor>
-                    </descriptors>
-                    <archive>
-                        <manifest>
-                            <mainClass>io.confluent.kafkarest.KafkaRestMain</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.18.1</version>
-                <configuration>
-                    <argLine>-Djava.awt.headless=true</argLine>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>2.6</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.avro</groupId>
+                    <artifactId>avro-maven-plugin</artifactId>
+                    <version>${avro.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>${exec-maven-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
-
-    <profiles>
-        <profile>
-            <id>standalone</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>src/assembly/standalone.xml</descriptor>
-                            </descriptors>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
