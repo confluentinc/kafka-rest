@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Topic {
 
   @NotEmpty
