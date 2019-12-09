@@ -98,7 +98,7 @@ public class GroupMetadataObserver {
   private List<ConsumerGroup> getConsumerGroups(Collection<ConsumerGroupListing> groupsOverview)
       throws Exception {
     final List<ConsumerGroup> result = new ArrayList<>();
-    List<String> groupIds =groupsOverview.stream().map(ConsumerGroupListing::groupId)
+    List<String> groupIds = groupsOverview.stream().map(ConsumerGroupListing::groupId)
         .collect(Collectors.toList());
     for (Entry<String, ConsumerGroupDescription> eachGroupInfo :
             adminClientWrapper.describeConsumerGroups(groupIds).entrySet()) {
@@ -146,10 +146,10 @@ public class GroupMetadataObserver {
           throws Exception {
     final Set<Topic> result = getConsumerGroupTopics(groupId);
     log.debug("Get topic list {}", result);
-     return result.stream()
-              .skip(startPos)
-              .limit(Math.min(result.size(), startPos + count))
-              .collect(Collectors.toSet());
+    return result.stream()
+        .skip(startPos)
+        .limit(Math.min(result.size(), startPos + count))
+        .collect(Collectors.toSet());
   }
 
   private Set<Topic> getConsumerGroupTopics(String groupId) throws Exception {
