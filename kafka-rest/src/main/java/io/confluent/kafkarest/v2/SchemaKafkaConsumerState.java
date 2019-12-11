@@ -39,9 +39,6 @@ public class SchemaKafkaConsumerState
       SchemaConverter schemaConverter) {
     super(config, instanceId, consumer);
     this.schemaConverter = schemaConverter;
-    Properties props = new Properties();
-    props.setProperty("schema.registry.url",
-        config.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG));
   }
 
   @Override

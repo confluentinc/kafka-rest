@@ -18,12 +18,11 @@ package io.confluent.kafkarest.converters;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
+import io.confluent.kafka.schemaregistry.json.JsonSchemaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Provides conversion of JSON to/from JSON Schema.
@@ -36,7 +35,11 @@ public class JsonSchemaConverter implements SchemaConverter {
 
   @Override
   public Object toObject(JsonNode value, ParsedSchema parsedSchema) {
-    return value;
+    try {
+      return JsonSchemaUtils.toObject(value, parsedSchema);
+    } catch (IOException | RuntimeException e) {
+      throw new ConversionException("Failed to convert JSON using JSON Schema: " + e.getMessage());
+    }
   }
 
   /**
@@ -49,13 +52,10 @@ public class JsonSchemaConverter implements SchemaConverter {
   @Override
   public JsonNodeAndSize toJson(Object value) {
     try {
-      if (value == null) {
+      byte[] bytes = JsonSchemaUtils.toJson(value);
+      if (bytes == null) {
         return new JsonNodeAndSize(null, 0);
       }
-      StringWriter out = new StringWriter();
-      jsonMapper.writeValue(out, value);
-      String jsonString = out.toString();
-      byte[] bytes = jsonString.getBytes(StandardCharsets.UTF_8);
       return new JsonNodeAndSize(jsonMapper.readTree(bytes), bytes.length);
     } catch (IOException e) {
       log.error("Jackson failed to deserialize JSON: ", e);
