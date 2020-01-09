@@ -50,7 +50,8 @@ public class AdminClientWrapper {
   public AdminClientWrapper(KafkaRestConfig kafkaRestConfig, AdminClient adminClient) {
     this.adminClient = adminClient;
     this.initTimeOut = kafkaRestConfig.getInt(KafkaRestConfig.KAFKACLIENT_INIT_TIMEOUT_CONFIG);
-    this.requestTimeOut = kafkaRestConfig.getInt(KafkaRestConfig.KAFKACLIENT_REQUEST_TIMEOUT_CONFIG);
+    this.requestTimeOut = kafkaRestConfig.getInt(
+        KafkaRestConfig.KAFKACLIENT_REQUEST_TIMEOUT_CONFIG);
   }
 
   static Properties adminProperties(KafkaRestConfig kafkaRestConfig) {
