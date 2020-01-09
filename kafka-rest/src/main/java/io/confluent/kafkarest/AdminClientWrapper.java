@@ -22,6 +22,8 @@ import org.apache.kafka.clients.admin.Config;
 import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.TopicDescription;
+import org.apache.kafka.clients.admin.ListConsumerGroupsOptions;
+import org.apache.kafka.clients.admin.DescribeConsumerGroupsOptions;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.config.ConfigResource;
@@ -43,10 +45,12 @@ public class AdminClientWrapper {
 
   private final AdminClient adminClient;
   private final int initTimeOut;
+  private final int requestTimeOut;
 
   public AdminClientWrapper(KafkaRestConfig kafkaRestConfig, AdminClient adminClient) {
     this.adminClient = adminClient;
     this.initTimeOut = kafkaRestConfig.getInt(KafkaRestConfig.KAFKACLIENT_INIT_TIMEOUT_CONFIG);
+    this.requestTimeOut = kafkaRestConfig.getInt(KafkaRestConfig.KAFKACLIENT_REQUEST_TIMEOUT_CONFIG);
   }
 
   static Properties adminProperties(KafkaRestConfig kafkaRestConfig) {
@@ -107,13 +111,15 @@ public class AdminClientWrapper {
   }
 
   public Collection<ConsumerGroupListing> listConsumerGroups() throws Exception {
-    return adminClient.listConsumerGroups().all().get(initTimeOut, TimeUnit.MILLISECONDS);
+    return adminClient.listConsumerGroups(new ListConsumerGroupsOptions()
+        .timeoutMs(requestTimeOut)).all().get(requestTimeOut, TimeUnit.MILLISECONDS);
   }
 
   public Map<String, ConsumerGroupDescription> describeConsumerGroups(
           Collection<String> groupIds) throws Exception {
-    return adminClient.describeConsumerGroups(groupIds)
-          .all().get(initTimeOut, TimeUnit.MILLISECONDS);
+    return adminClient.describeConsumerGroups(groupIds,
+        new DescribeConsumerGroupsOptions().timeoutMs(requestTimeOut))
+        .all().get(requestTimeOut, TimeUnit.MILLISECONDS);
   }
 
   private Topic buildTopic(String topicName, TopicDescription topicDescription) throws Exception {

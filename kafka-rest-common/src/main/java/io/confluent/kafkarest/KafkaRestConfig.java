@@ -196,6 +196,10 @@ public class KafkaRestConfig extends RestConfig {
    * <code>client.init.timeout.ms</code>
    */
   public static final String KAFKACLIENT_INIT_TIMEOUT_CONFIG = "client.init.timeout.ms";
+  /**
+   * <code>client.request.timeout.ms</code>
+   */
+  public static final String KAFKACLIENT_REQUEST_TIMEOUT_CONFIG = "client.request.timeout.ms";
 
   public static final String ZOOKEEPER_SET_ACL_CONFIG = "zookeeper.set.acl";
   public static final String KAFKACLIENT_SECURITY_PROTOCOL_CONFIG =
@@ -247,6 +251,9 @@ public class KafkaRestConfig extends RestConfig {
   protected static final String KAFKACLIENT_INIT_TIMEOUT_DOC =
       "The timeout for initialization of the Kafka store, including creation of the Kafka topic "
       + "that stores schema data.";
+  protected static final String KAFKACLIENT_REQUEST_TIMEOUT_DOC =
+      "The timeout for sending any admin-client request to Kafka cluster including waiting for"
+      + " the response on client side.";
   protected static final String KAFKACLIENT_TIMEOUT_DOC =
       "The timeout for an operation on the Kafka store";
   protected static final String
@@ -449,6 +456,14 @@ public class KafkaRestConfig extends RestConfig {
         Range.atLeast(0),
         Importance.MEDIUM,
         KAFKACLIENT_INIT_TIMEOUT_DOC
+    )
+    .define(
+        KAFKACLIENT_REQUEST_TIMEOUT_CONFIG,
+        Type.INT,
+        60000,
+        Range.atLeast(0),
+        Importance.MEDIUM,
+        KAFKACLIENT_REQUEST_TIMEOUT_DOC
     )
     .define(
         KAFKACLIENT_TIMEOUT_CONFIG,
