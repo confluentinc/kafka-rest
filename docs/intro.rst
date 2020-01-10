@@ -335,7 +335,7 @@ dependencies as well.
 Requirements
 ------------
 
-- Kafka 1.1.1-cp1
+- Kafka 1.1.1-cp3
 - Required for Avro support: |sr| 3.0.0 recommended, 1.0 minimum
 
 Contribute
