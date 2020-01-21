@@ -27,6 +27,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -75,14 +76,15 @@ public class SchemaRestProducer implements RestProducer<JsonNode, JsonNode> {
       // If both ID and schema are null, that may be ok. Validation of the ProduceTask by the
       // caller should have checked this already.
       if (keySchemaId != null) {
-        keySchema = keySerializer.getById(keySchemaId);
+        keySchema = keySerializer.getSchemaById(keySchemaId);
       } else if (schemaHolder.getKeySchema() != null) {
-        keySchema = schemaProvider.parseSchema(schemaHolder.getKeySchema()).orElseThrow(
-            () -> Errors.invalidSchemaException(schemaHolder.getKeySchema())
+        keySchema = schemaProvider.parseSchema(
+                schemaHolder.getKeySchema(), Collections.emptyList())
+                .orElseThrow(() -> Errors.invalidSchemaException(schemaHolder.getKeySchema())
         );
         if (schemaIdCache.containsKey(keySchema)) {
           keySchemaId = schemaIdCache.get(keySchema);
-          keySchema = keySerializer.getById(keySchemaId);
+          keySchema = keySerializer.getSchemaById(keySchemaId);
         } else {
           keySchemaId = keySerializer.register(topic + "-key", keySchema);
           schemaIdCache.put(keySchema, keySchemaId);
@@ -90,14 +92,15 @@ public class SchemaRestProducer implements RestProducer<JsonNode, JsonNode> {
       }
 
       if (valueSchemaId != null) {
-        valueSchema = valueSerializer.getById(valueSchemaId);
+        valueSchema = valueSerializer.getSchemaById(valueSchemaId);
       } else if (schemaHolder.getValueSchema() != null) {
-        valueSchema = schemaProvider.parseSchema(schemaHolder.getValueSchema()).orElseThrow(
-            () -> Errors.invalidSchemaException(schemaHolder.getValueSchema())
+        valueSchema = schemaProvider.parseSchema(
+                schemaHolder.getValueSchema(), Collections.emptyList())
+                .orElseThrow(() -> Errors.invalidSchemaException(schemaHolder.getValueSchema())
         );
         if (schemaIdCache.containsKey(valueSchema)) {
           valueSchemaId = schemaIdCache.get(valueSchema);
-          valueSchema = valueSerializer.getById(valueSchemaId);
+          valueSchema = valueSerializer.getSchemaById(valueSchemaId);
         } else {
           valueSchemaId = valueSerializer.register(topic + "-value", valueSchema);
           schemaIdCache.put(valueSchema, valueSchemaId);

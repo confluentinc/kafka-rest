@@ -18,6 +18,7 @@ package io.confluent.kafkarest.converters;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
+import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,8 +37,8 @@ public class ProtobufConverter implements SchemaConverter {
   @Override
   public Object toObject(JsonNode value, ParsedSchema parsedSchema) {
     try {
-      return ProtobufSchemaUtils.toObject(value, parsedSchema);
-    } catch (IOException | RuntimeException e) {
+      return ProtobufSchemaUtils.toObject(value, (ProtobufSchema) parsedSchema);
+    } catch (Exception e) {
       throw new ConversionException("Failed to convert JSON to Protobuf: " + e.getMessage());
     }
   }
