@@ -25,13 +25,13 @@
         </dependency>
         <dependency>
             <groupId>io.confluent</groupId>
-            <artifactId>json-schema-provider</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <artifactId>kafka-json-schema-provider</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>io.confluent</groupId>
-            <artifactId>protobuf-schema-provider</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <artifactId>kafka-protobuf-provider</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.avro</groupId>

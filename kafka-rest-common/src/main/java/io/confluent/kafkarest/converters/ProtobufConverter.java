@@ -17,6 +17,7 @@ package io.confluent.kafkarest.converters;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.Message;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaUtils;
@@ -53,7 +54,7 @@ public class ProtobufConverter implements SchemaConverter {
   @Override
   public JsonNodeAndSize toJson(Object value) {
     try {
-      byte[] bytes = ProtobufSchemaUtils.toJson(value);
+      byte[] bytes = ProtobufSchemaUtils.toJson((Message) value);
       if (bytes == null) {
         return new JsonNodeAndSize(null, 0);
       }
