@@ -18,6 +18,7 @@ package io.confluent.kafkarest.converters;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.annotations.VisibleForTesting;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
@@ -65,7 +66,7 @@ public class AvroConverter implements SchemaConverter {
     try {
       byte[] bytes = AvroSchemaUtils.toJson(value);
       if (bytes == null) {
-        return new JsonNodeAndSize(null, 0);
+        return new JsonNodeAndSize(NullNode.getInstance(), 0);
       }
       return new JsonNodeAndSize(jsonMapper.readTree(bytes), bytes.length);
     } catch (IOException e) {
