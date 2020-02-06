@@ -254,8 +254,8 @@ public class SimpleConsumerManager {
         );
     return new SchemaConsumerRecord(
         topicName,
-        new AvroConverter().toJson(messageAndMetadata.key()).json,
-        new AvroConverter().toJson(messageAndMetadata.message()).json,
+            new AvroConverter().toJson(messageAndMetadata.key()).getJson(),
+            new AvroConverter().toJson(messageAndMetadata.message()).getJson(),
         partitionId,
         messageAndOffset.offset()
     );

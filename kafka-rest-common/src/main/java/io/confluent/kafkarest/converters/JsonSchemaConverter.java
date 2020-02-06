@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Confluent Inc.
+ * Copyright 2020 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -28,11 +28,11 @@ import java.io.IOException;
 /**
  * Provides conversion of JSON to/from JSON Schema.
  */
-public class JsonSchemaConverter implements SchemaConverter {
+public final class JsonSchemaConverter implements SchemaConverter {
 
   private static final Logger log = LoggerFactory.getLogger(JsonSchemaConverter.class);
 
-  private static final ObjectMapper jsonMapper = new ObjectMapper();
+  private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
   @Override
   public Object toObject(JsonNode value, ParsedSchema parsedSchema) {
@@ -57,13 +57,13 @@ public class JsonSchemaConverter implements SchemaConverter {
       if (bytes == null) {
         return new JsonNodeAndSize(null, 0);
       }
-      return new JsonNodeAndSize(jsonMapper.readTree(bytes), bytes.length);
+      return new JsonNodeAndSize(JSON_MAPPER.readTree(bytes), bytes.length);
     } catch (IOException e) {
       log.error("Jackson failed to deserialize JSON: ", e);
       throw new ConversionException("Failed to convert JSON Schema to JSON: " + e.getMessage());
     } catch (RuntimeException e) {
-      log.error("Unexpected exception convertion JSON Schema to JSON: ", e);
-      throw new ConversionException("Failed to convert JSON Schem to JSON: " + e.getMessage());
+      log.error("Unexpected exception converting JSON Schema to JSON: ", e);
+      throw new ConversionException("Failed to convert JSON Schema to JSON: " + e.getMessage());
     }
   }
 }

@@ -76,7 +76,7 @@ public class SimpleConsumerAvroTest extends AbstractConsumerTest {
   private static final Converter converter = new Converter() {
     @Override
     public Object convert(Object obj) {
-      return new AvroConverter().toJson(obj).json;
+      return new AvroConverter().toJson(obj).getJson();
     }
   };
 

@@ -25,17 +25,6 @@ public interface SchemaConverter {
 
   Object toObject(JsonNode value, ParsedSchema schema);
 
-  class JsonNodeAndSize {
-
-    public JsonNode json;
-    public long size;
-
-    public JsonNodeAndSize(JsonNode json, long size) {
-      this.json = json;
-      this.size = size;
-    }
-  }
-
   /**
    * Converts data (including primitive types) to their equivalent JsonNode representation.
    *
@@ -44,4 +33,31 @@ public interface SchemaConverter {
    *     in bytes of the data when serialized
    */
   JsonNodeAndSize toJson(Object value);
+
+  final class JsonNodeAndSize {
+
+    private JsonNode json;
+    private long size;
+
+    public JsonNodeAndSize(JsonNode json, long size) {
+      this.json = json;
+      this.size = size;
+    }
+
+    public JsonNode getJson() {
+      return json;
+    }
+
+    public void setJson(JsonNode json) {
+      this.json = json;
+    }
+
+    public long getSize() {
+      return size;
+    }
+
+    public void setSize(long size) {
+      this.size = size;
+    }
+  }
 }

@@ -120,20 +120,7 @@ public class TopicsResource {
   ) {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
-    boolean hasKeys = false;
-    boolean hasValues = false;
-    for (SchemaTopicProduceRecord rec : request.getRecords()) {
-      hasKeys = hasKeys || !rec.getJsonKey().isNull();
-      hasValues = hasValues || !rec.getJsonValue().isNull();
-    }
-    if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
-      throw Errors.keySchemaMissingException();
-    }
-    if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
-      throw Errors.valueSchemaMissingException();
-    }
-
-    produce(asyncResponse, topicName, EmbeddedFormat.AVRO, request);
+    produceSchema(asyncResponse, topicName, request, EmbeddedFormat.AVRO);
   }
 
   @POST
@@ -145,22 +132,7 @@ public class TopicsResource {
       @PathParam("topic") String topicName,
       @Valid @NotNull TopicProduceRequest<SchemaTopicProduceRecord> request
   ) {
-    // Validations we can't do generically since they depend on the data format -- schemas need to
-    // be available if there are any non-null entries
-    boolean hasKeys = false;
-    boolean hasValues = false;
-    for (SchemaTopicProduceRecord rec : request.getRecords()) {
-      hasKeys = hasKeys || !rec.getJsonKey().isNull();
-      hasValues = hasValues || !rec.getJsonValue().isNull();
-    }
-    if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
-      throw Errors.keySchemaMissingException();
-    }
-    if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
-      throw Errors.valueSchemaMissingException();
-    }
-
-    produce(asyncResponse, topicName, EmbeddedFormat.JSONSCHEMA, request);
+    produceSchema(asyncResponse, topicName, request, EmbeddedFormat.JSONSCHEMA);
   }
 
   @POST
@@ -174,20 +146,7 @@ public class TopicsResource {
   ) {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
-    boolean hasKeys = false;
-    boolean hasValues = false;
-    for (SchemaTopicProduceRecord rec : request.getRecords()) {
-      hasKeys = hasKeys || !rec.getJsonKey().isNull();
-      hasValues = hasValues || !rec.getJsonValue().isNull();
-    }
-    if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
-      throw Errors.keySchemaMissingException();
-    }
-    if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
-      throw Errors.valueSchemaMissingException();
-    }
-
-    produce(asyncResponse, topicName, EmbeddedFormat.PROTOBUF, request);
+    produceSchema(asyncResponse, topicName, request, EmbeddedFormat.PROTOBUF);
   }
 
   public <K, V, R extends TopicProduceRecord<K, V>> void produce(
@@ -236,4 +195,27 @@ public class TopicsResource {
     );
   }
 
+  private void produceSchema(
+          @Suspended AsyncResponse asyncResponse,
+          @PathParam("topic") String topicName,
+          @Valid @NotNull TopicProduceRequest<SchemaTopicProduceRecord> request,
+          EmbeddedFormat jsonschema
+  ) {
+    // Validations we can't do generically since they depend on the data format -- schemas need to
+    // be available if there are any non-null entries
+    boolean hasKeys = false;
+    boolean hasValues = false;
+    for (SchemaTopicProduceRecord rec : request.getRecords()) {
+      hasKeys = hasKeys || !rec.getJsonKey().isNull();
+      hasValues = hasValues || !rec.getJsonValue().isNull();
+    }
+    if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
+      throw Errors.keySchemaMissingException();
+    }
+    if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
+      throw Errors.valueSchemaMissingException();
+    }
+
+    produce(asyncResponse, topicName, jsonschema, request);
+  }
 }

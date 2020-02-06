@@ -266,33 +266,33 @@ public class AvroConverterTest {
   @Test
   public void testPrimitiveTypesToJson() {
     AvroConverter.JsonNodeAndSize result = new AvroConverter().toJson((int) 0);
-    assertTrue(result.json.isNumber());
-    assertTrue(result.size > 0);
+    assertTrue(result.getJson().isNumber());
+    assertTrue(result.getSize() > 0);
 
     result = new AvroConverter().toJson((long) 0);
-    assertTrue(result.json.isNumber());
+    assertTrue(result.getJson().isNumber());
 
     result = new AvroConverter().toJson(0.1f);
-    assertTrue(result.json.isNumber());
+    assertTrue(result.getJson().isNumber());
 
     result = new AvroConverter().toJson(0.1);
-    assertTrue(result.json.isNumber());
+    assertTrue(result.getJson().isNumber());
 
     result = new AvroConverter().toJson(true);
-    assertTrue(result.json.isBoolean());
+    assertTrue(result.getJson().isBoolean());
 
     // "Primitive" here refers to Avro primitive types, which are returned as standalone objects,
     // which can't have attached schemas. This includes, for example, Strings and byte[] even
     // though they are not Java primitives
 
     result = new AvroConverter().toJson("abcdefg");
-    assertTrue(result.json.isTextual());
-    assertEquals("abcdefg", result.json.textValue());
+    assertTrue(result.getJson().isTextual());
+    assertEquals("abcdefg", result.getJson().textValue());
 
     result = new AvroConverter().toJson(ByteBuffer.wrap("hello".getBytes()));
-    assertTrue(result.json.isTextual());
+    assertTrue(result.getJson().isTextual());
     // Was generated from a string, so the Avro encoding should be equivalent to the string
-    assertEquals("hello", result.json.textValue());
+    assertEquals("hello", result.getJson().textValue());
   }
 
   @Test
@@ -316,25 +316,25 @@ public class AvroConverterTest {
         .build();
 
     AvroConverter.JsonNodeAndSize result = new AvroConverter().toJson(data);
-    assertTrue(result.size > 0);
-    assertTrue(result.json.isObject());
-    assertTrue(result.json.get("null").isNull());
-    assertTrue(result.json.get("boolean").isBoolean());
-    assertEquals(true, result.json.get("boolean").booleanValue());
-    assertTrue(result.json.get("int").isIntegralNumber());
-    assertEquals(12, result.json.get("int").intValue());
-    assertTrue(result.json.get("long").isIntegralNumber());
-    assertEquals(5000000000L, result.json.get("long").longValue());
-    assertTrue(result.json.get("float").isFloatingPointNumber());
-    assertEquals(23.4f, result.json.get("float").floatValue(), 0.1);
-    assertTrue(result.json.get("double").isFloatingPointNumber());
-    assertEquals(800.25, result.json.get("double").doubleValue(), 0.01);
-    assertTrue(result.json.get("bytes").isTextual());
+    assertTrue(result.getSize() > 0);
+    assertTrue(result.getJson().isObject());
+    assertTrue(result.getJson().get("null").isNull());
+    assertTrue(result.getJson().get("boolean").isBoolean());
+    assertEquals(true, result.getJson().get("boolean").booleanValue());
+    assertTrue(result.getJson().get("int").isIntegralNumber());
+    assertEquals(12, result.getJson().get("int").intValue());
+    assertTrue(result.getJson().get("long").isIntegralNumber());
+    assertEquals(5000000000L, result.getJson().get("long").longValue());
+    assertTrue(result.getJson().get("float").isFloatingPointNumber());
+    assertEquals(23.4f, result.getJson().get("float").floatValue(), 0.1);
+    assertTrue(result.getJson().get("double").isFloatingPointNumber());
+    assertEquals(800.25, result.getJson().get("double").doubleValue(), 0.01);
+    assertTrue(result.getJson().get("bytes").isTextual());
     // The bytes value was created from an ASCII string, so Avro's encoding should just give that
     // string back to us in the JSON-serialized version
-    assertEquals("bytes", result.json.get("bytes").textValue());
-    assertTrue(result.json.get("string").isTextual());
-    assertEquals("string", result.json.get("string").textValue());
+    assertEquals("bytes", result.getJson().get("bytes").textValue());
+    assertTrue(result.getJson().get("string").isTextual());
+    assertEquals("string", result.getJson().get("string").textValue());
   }
 
   @Test
@@ -342,13 +342,13 @@ public class AvroConverterTest {
     GenericData.Array<String>
         data = new GenericData.Array(arraySchema, Arrays.asList("one", "two", "three"));
     AvroConverter.JsonNodeAndSize result = new AvroConverter().toJson(data);
-    assertTrue(result.size > 0);
+    assertTrue(result.getSize() > 0);
 
-    assertTrue(result.json.isArray());
-    assertEquals(3, result.json.size());
-    assertEquals(JsonNodeFactory.instance.textNode("one"), result.json.get(0));
-    assertEquals(JsonNodeFactory.instance.textNode("two"), result.json.get(1));
-    assertEquals(JsonNodeFactory.instance.textNode("three"), result.json.get(2));
+    assertTrue(result.getJson().isArray());
+    assertEquals(3, result.getJson().size());
+    assertEquals(JsonNodeFactory.instance.textNode("one"), result.getJson().get(0));
+    assertEquals(JsonNodeFactory.instance.textNode("two"), result.getJson().get(1));
+    assertEquals(JsonNodeFactory.instance.textNode("three"), result.getJson().get(2));
   }
 
   @Test
@@ -357,23 +357,23 @@ public class AvroConverterTest {
     data.put("first", "one");
     data.put("second", "two");
     AvroConverter.JsonNodeAndSize result = new AvroConverter().toJson(data);
-    assertTrue(result.size > 0);
+    assertTrue(result.getSize() > 0);
 
-    assertTrue(result.json.isObject());
-    assertEquals(2, result.json.size());
-    assertNotNull(result.json.get("first"));
-    assertEquals("one", result.json.get("first").asText());
-    assertNotNull(result.json.get("second"));
-    assertEquals("two", result.json.get("second").asText());
+    assertTrue(result.getJson().isObject());
+    assertEquals(2, result.getJson().size());
+    assertNotNull(result.getJson().get("first"));
+    assertEquals("one", result.getJson().get("first").asText());
+    assertNotNull(result.getJson().get("second"));
+    assertEquals("two", result.getJson().get("second").asText());
   }
 
   @Test
   public void testEnumToJson() {
     AvroConverter.JsonNodeAndSize result
         = new AvroConverter().toJson(new GenericData.EnumSymbol(enumSchema, "SPADES"));
-    assertTrue(result.size > 0);
-    assertTrue(result.json.isTextual());
-    assertEquals("SPADES", result.json.textValue());
+    assertTrue(result.getSize() > 0);
+    assertTrue(result.getJson().isTextual());
+    assertEquals("SPADES", result.getJson().textValue());
   }
 
 

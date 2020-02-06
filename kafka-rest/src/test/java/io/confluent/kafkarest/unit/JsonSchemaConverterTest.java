@@ -171,28 +171,28 @@ public class JsonSchemaConverterTest {
   @Test
   public void testPrimitiveTypesToJson() {
     JsonSchemaConverter.JsonNodeAndSize result = new JsonSchemaConverter().toJson((int) 0);
-    assertTrue(result.json.isNumber());
-    assertTrue(result.size > 0);
+    assertTrue(result.getJson().isNumber());
+    assertTrue(result.getSize() > 0);
 
     result = new JsonSchemaConverter().toJson((long) 0);
-    assertTrue(result.json.isNumber());
+    assertTrue(result.getJson().isNumber());
 
     result = new JsonSchemaConverter().toJson(0.1f);
-    assertTrue(result.json.isNumber());
+    assertTrue(result.getJson().isNumber());
 
     result = new JsonSchemaConverter().toJson(0.1);
-    assertTrue(result.json.isNumber());
+    assertTrue(result.getJson().isNumber());
 
     result = new JsonSchemaConverter().toJson(true);
-    assertTrue(result.json.isBoolean());
+    assertTrue(result.getJson().isBoolean());
 
     // "Primitive" here refers to JsonSchema primitive types, which are returned as standalone objects,
     // which can't have attached schemas. This includes, for example, Strings and byte[] even
     // though they are not Java primitives
 
     result = new JsonSchemaConverter().toJson("abcdefg");
-    assertTrue(result.json.isTextual());
-    assertEquals("abcdefg", result.json.textValue());
+    assertTrue(result.getJson().isTextual());
+    assertEquals("abcdefg", result.getJson().textValue());
   }
 
   @Test
@@ -205,15 +205,15 @@ public class JsonSchemaConverterTest {
             + "}";
     JsonNode data = new ObjectMapper().readTree(json);
     JsonSchemaConverter.JsonNodeAndSize result = new JsonSchemaConverter().toJson(data);
-    assertTrue(result.size > 0);
-    assertTrue(result.json.isObject());
-    assertTrue(result.json.get("null").isNull());
-    assertTrue(result.json.get("boolean").isBoolean());
-    assertEquals(true, result.json.get("boolean").booleanValue());
-    assertTrue(result.json.get("number").isIntegralNumber());
-    assertEquals(12, result.json.get("number").intValue());
-    assertTrue(result.json.get("string").isTextual());
-    assertEquals("string", result.json.get("string").textValue());
+    assertTrue(result.getSize() > 0);
+    assertTrue(result.getJson().isObject());
+    assertTrue(result.getJson().get("null").isNull());
+    assertTrue(result.getJson().get("boolean").isBoolean());
+    assertEquals(true, result.getJson().get("boolean").booleanValue());
+    assertTrue(result.getJson().get("number").isIntegralNumber());
+    assertEquals(12, result.getJson().get("number").intValue());
+    assertTrue(result.getJson().get("string").isTextual());
+    assertEquals("string", result.getJson().get("string").textValue());
   }
 
   @Test
@@ -221,13 +221,13 @@ public class JsonSchemaConverterTest {
     String json = "[\"one\", \"two\", \"three\"]";
     JsonNode data = new ObjectMapper().readTree(json);
     JsonSchemaConverter.JsonNodeAndSize result = new JsonSchemaConverter().toJson(data);
-    assertTrue(result.size > 0);
+    assertTrue(result.getSize() > 0);
 
-    assertTrue(result.json.isArray());
-    assertEquals(3, result.json.size());
-    assertEquals(JsonNodeFactory.instance.textNode("one"), result.json.get(0));
-    assertEquals(JsonNodeFactory.instance.textNode("two"), result.json.get(1));
-    assertEquals(JsonNodeFactory.instance.textNode("three"), result.json.get(2));
+    assertTrue(result.getJson().isArray());
+    assertEquals(3, result.getJson().size());
+    assertEquals(JsonNodeFactory.instance.textNode("one"), result.getJson().get(0));
+    assertEquals(JsonNodeFactory.instance.textNode("two"), result.getJson().get(1));
+    assertEquals(JsonNodeFactory.instance.textNode("three"), result.getJson().get(2));
   }
 
   private static JsonSchema createPrimitiveSchema(String type) {

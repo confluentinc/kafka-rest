@@ -123,22 +123,7 @@ public final class PartitionsResource {
       final @PathParam("partition") int partition,
       @Valid @NotNull PartitionProduceRequest<SchemaProduceRecord> request
   )  throws Exception {
-    // Validations we can't do generically since they depend on the data format -- schemas need to
-    // be available if there are any non-null entries
-    boolean hasKeys = false;
-    boolean hasValues = false;
-    for (SchemaProduceRecord rec : request.getRecords()) {
-      hasKeys = hasKeys || !rec.getJsonKey().isNull();
-      hasValues = hasValues || !rec.getJsonValue().isNull();
-    }
-    if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
-      throw Errors.keySchemaMissingException();
-    }
-    if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
-      throw Errors.valueSchemaMissingException();
-    }
-
-    produce(asyncResponse, topic, partition, EmbeddedFormat.AVRO, request);
+    produceSchema(asyncResponse, topic, partition, request, EmbeddedFormat.AVRO);
   }
 
   @POST
@@ -153,20 +138,7 @@ public final class PartitionsResource {
   )  throws Exception {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
-    boolean hasKeys = false;
-    boolean hasValues = false;
-    for (SchemaProduceRecord rec : request.getRecords()) {
-      hasKeys = hasKeys || !rec.getJsonKey().isNull();
-      hasValues = hasValues || !rec.getJsonValue().isNull();
-    }
-    if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
-      throw Errors.keySchemaMissingException();
-    }
-    if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
-      throw Errors.valueSchemaMissingException();
-    }
-
-    produce(asyncResponse, topic, partition, EmbeddedFormat.JSONSCHEMA, request);
+    produceSchema(asyncResponse, topic, partition, request, EmbeddedFormat.JSONSCHEMA);
   }
 
   @POST
@@ -181,20 +153,7 @@ public final class PartitionsResource {
   )  throws Exception {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
-    boolean hasKeys = false;
-    boolean hasValues = false;
-    for (SchemaProduceRecord rec : request.getRecords()) {
-      hasKeys = hasKeys || !rec.getJsonKey().isNull();
-      hasValues = hasValues || !rec.getJsonValue().isNull();
-    }
-    if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
-      throw Errors.keySchemaMissingException();
-    }
-    if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
-      throw Errors.valueSchemaMissingException();
-    }
-
-    produce(asyncResponse, topic, partition, EmbeddedFormat.PROTOBUF, request);
+    produceSchema(asyncResponse, topic, partition, request, EmbeddedFormat.PROTOBUF);
   }
 
   protected <K, V, R extends ProduceRecord<K, V>> void produce(
@@ -254,6 +213,31 @@ public final class PartitionsResource {
           }
         }
     );
+  }
+
+  private void produceSchema(
+      @Suspended AsyncResponse asyncResponse,
+      @PathParam("topic") String topic,
+      @PathParam("partition") int partition,
+      @Valid @NotNull PartitionProduceRequest<SchemaProduceRecord> request,
+      EmbeddedFormat avro
+  ) throws Exception {
+    // Validations we can't do generically since they depend on the data format -- schemas need to
+    // be available if there are any non-null entries
+    boolean hasKeys = false;
+    boolean hasValues = false;
+    for (SchemaProduceRecord rec : request.getRecords()) {
+      hasKeys = hasKeys || !rec.getJsonKey().isNull();
+      hasValues = hasValues || !rec.getJsonValue().isNull();
+    }
+    if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
+      throw Errors.keySchemaMissingException();
+    }
+    if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
+      throw Errors.valueSchemaMissingException();
+    }
+
+    produce(asyncResponse, topic, partition, avro, request);
   }
 
   /**

@@ -279,38 +279,38 @@ public class ProtobufConverterTest {
     DynamicMessage message = builder.build();
 
     SchemaConverter.JsonNodeAndSize result = new ProtobufConverter().toJson(message);
-    assertTrue(result.size > 0);
-    assertTrue(result.json.isObject());
-    assertTrue(result.json.get("test_str").isTextual());
-    assertEquals("string", result.json.get("test_str").textValue());
-    assertTrue(result.json.get("testBool").isBoolean());
-    assertEquals(true, result.json.get("testBool").booleanValue());
-    assertTrue(result.json.get("testBytes").isTextual());
-    assertEquals("aGVsbG8=", result.json.get("testBytes").textValue());
-    assertTrue(result.json.get("testDouble").isDouble());
-    assertEquals(800.25, result.json.get("testDouble").doubleValue(), 0.01);
-    assertTrue(result.json.get("testFloat").isDouble());
-    assertEquals(23.4f, result.json.get("testFloat").doubleValue(), 0.1);
-    assertTrue(result.json.get("testFixed32").isInt());
-    assertEquals(32, result.json.get("testFixed32").intValue());
-    assertTrue(result.json.get("testFixed64").isTextual());
-    assertEquals("64", result.json.get("testFixed64").textValue());
-    assertTrue(result.json.get("testInt32").isInt());
-    assertEquals(32, result.json.get("testInt32").intValue());
-    assertTrue(result.json.get("testInt64").isTextual());
-    assertEquals("64", result.json.get("testInt64").textValue());
-    assertTrue(result.json.get("testSfixed32").isInt());
-    assertEquals(32, result.json.get("testSfixed32").intValue());
-    assertTrue(result.json.get("testSfixed64").isTextual());
-    assertEquals("64", result.json.get("testSfixed64").textValue());
-    assertTrue(result.json.get("testSint32").isInt());
-    assertEquals(32, result.json.get("testSint32").intValue());
-    assertTrue(result.json.get("testSint64").isTextual());
-    assertEquals("64", result.json.get("testSint64").textValue());
-    assertTrue(result.json.get("testUint32").isInt());
-    assertEquals(32, result.json.get("testUint32").intValue());
-    assertTrue(result.json.get("testUint64").isTextual());
-    assertEquals("64", result.json.get("testUint64").textValue());
+    assertTrue(result.getSize() > 0);
+    assertTrue(result.getJson().isObject());
+    assertTrue(result.getJson().get("test_str").isTextual());
+    assertEquals("string", result.getJson().get("test_str").textValue());
+    assertTrue(result.getJson().get("testBool").isBoolean());
+    assertEquals(true, result.getJson().get("testBool").booleanValue());
+    assertTrue(result.getJson().get("testBytes").isTextual());
+    assertEquals("aGVsbG8=", result.getJson().get("testBytes").textValue());
+    assertTrue(result.getJson().get("testDouble").isDouble());
+    assertEquals(800.25, result.getJson().get("testDouble").doubleValue(), 0.01);
+    assertTrue(result.getJson().get("testFloat").isDouble());
+    assertEquals(23.4f, result.getJson().get("testFloat").doubleValue(), 0.1);
+    assertTrue(result.getJson().get("testFixed32").isInt());
+    assertEquals(32, result.getJson().get("testFixed32").intValue());
+    assertTrue(result.getJson().get("testFixed64").isTextual());
+    assertEquals("64", result.getJson().get("testFixed64").textValue());
+    assertTrue(result.getJson().get("testInt32").isInt());
+    assertEquals(32, result.getJson().get("testInt32").intValue());
+    assertTrue(result.getJson().get("testInt64").isTextual());
+    assertEquals("64", result.getJson().get("testInt64").textValue());
+    assertTrue(result.getJson().get("testSfixed32").isInt());
+    assertEquals(32, result.getJson().get("testSfixed32").intValue());
+    assertTrue(result.getJson().get("testSfixed64").isTextual());
+    assertEquals("64", result.getJson().get("testSfixed64").textValue());
+    assertTrue(result.getJson().get("testSint32").isInt());
+    assertEquals(32, result.getJson().get("testSint32").intValue());
+    assertTrue(result.getJson().get("testSint64").isTextual());
+    assertEquals("64", result.getJson().get("testSint64").textValue());
+    assertTrue(result.getJson().get("testUint32").isInt());
+    assertEquals(32, result.getJson().get("testUint32").intValue());
+    assertTrue(result.getJson().get("testUint64").isTextual());
+    assertEquals("64", result.getJson().get("testUint64").textValue());
   }
 
   @Test
@@ -321,9 +321,9 @@ public class ProtobufConverterTest {
     builder.setField(fd, Arrays.asList("one", "two", "three"));
     DynamicMessage message = builder.build();
     SchemaConverter.JsonNodeAndSize result = new ProtobufConverter().toJson(message);
-    assertTrue(result.size > 0);
+    assertTrue(result.getSize() > 0);
 
-    JsonNode fieldNode = result.json.get("testArray");
+    JsonNode fieldNode = result.getJson().get("testArray");
     assertTrue(fieldNode.isArray());
     assertEquals(3, fieldNode.size());
     assertEquals(JsonNodeFactory.instance.textNode("one"), fieldNode.get(0));
@@ -355,9 +355,9 @@ public class ProtobufConverterTest {
     builder.setField(fd, Arrays.asList(mapEntry, mapEntry2));
     DynamicMessage message = builder.build();
     SchemaConverter.JsonNodeAndSize result = new ProtobufConverter().toJson(message);
-    assertTrue(result.size > 0);
+    assertTrue(result.getSize() > 0);
 
-    JsonNode fieldNode = result.json.get("testMap");
+    JsonNode fieldNode = result.getJson().get("testMap");
     assertEquals(2, fieldNode.size());
     assertNotNull(fieldNode.get("first"));
     assertEquals("one", fieldNode.get("first").asText());

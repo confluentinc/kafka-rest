@@ -28,10 +28,10 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
  * Schema-specific implementation of KafkaConsumerState, which decodes
  * into Objects or primitive types.
  */
-public class SchemaKafkaConsumerState
+public final class SchemaKafkaConsumerState
     extends KafkaConsumerState<Object, Object, JsonNode, JsonNode> {
 
-  private SchemaConverter schemaConverter;
+  private final SchemaConverter schemaConverter;
 
   public SchemaKafkaConsumerState(KafkaRestConfig config,
       ConsumerInstanceId instanceId,
@@ -47,9 +47,9 @@ public class SchemaKafkaConsumerState
     SchemaConverter.JsonNodeAndSize keyNode = schemaConverter.toJson(record.key());
     SchemaConverter.JsonNodeAndSize valueNode = schemaConverter.toJson(record.value());
     return new ConsumerRecordAndSize<JsonNode, JsonNode>(
-        new SchemaConsumerRecord(record.topic(), keyNode.json, valueNode.json, record.partition(),
-            record.offset()),
-        keyNode.size + valueNode.size
+        new SchemaConsumerRecord(record.topic(), keyNode.getJson(),
+                valueNode.getJson(), record.partition(), record.offset()),
+        keyNode.getSize() + valueNode.getSize()
     );
   }
 }
