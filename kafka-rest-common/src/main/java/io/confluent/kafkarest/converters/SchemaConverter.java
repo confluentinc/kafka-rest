@@ -36,8 +36,8 @@ public interface SchemaConverter {
 
   final class JsonNodeAndSize {
 
-    private JsonNode json;
-    private long size;
+    private final JsonNode json;
+    private final long size;
 
     public JsonNodeAndSize(JsonNode json, long size) {
       this.json = json;
@@ -48,16 +48,8 @@ public interface SchemaConverter {
       return json;
     }
 
-    public void setJson(JsonNode json) {
-      this.json = json;
-    }
-
     public long getSize() {
       return size;
-    }
-
-    public void setSize(long size) {
-      this.size = size;
     }
   }
 }
