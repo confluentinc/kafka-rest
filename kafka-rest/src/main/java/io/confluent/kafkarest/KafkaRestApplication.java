@@ -23,6 +23,7 @@ import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.kafkarest.resources.BrokersResource;
 import io.confluent.kafkarest.resources.ConsumersResource;
 import io.confluent.kafkarest.resources.PartitionsResource;
+import io.confluent.kafkarest.resources.ConsumerGroupsResource;
 import io.confluent.kafkarest.resources.RootResource;
 import io.confluent.kafkarest.resources.TopicsResource;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
@@ -65,7 +66,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
     setupInjectedResources(config, appConfig, null,
-        null, null, null
+        null, null, null, null
     );
   }
 
@@ -78,6 +79,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
       ProducerPool producerPool,
       KafkaConsumerManager kafkaConsumerManager,
       AdminClientWrapper adminClientWrapperInjected,
+      GroupMetadataObserver groupMetadataObserver,
       ScalaConsumersContext scalaConsumersContext
   ) {
     if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))
@@ -87,9 +89,10 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
                                     + KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG
                                     + " needs to be configured");
     }
+
     KafkaRestContextProvider.initialize(config, appConfig, producerPool,
-        kafkaConsumerManager, adminClientWrapperInjected, scalaConsumersContext
-    );
+        kafkaConsumerManager, adminClientWrapperInjected,
+        groupMetadataObserver, scalaConsumersContext);
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
     KafkaRestContext context =
         (KafkaRestContext) Proxy.newProxyInstance(
@@ -102,6 +105,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new TopicsResource(context));
     config.register(new PartitionsResource(context));
     config.register(new ConsumersResource(context));
+    config.register(new ConsumerGroupsResource(context));
     config.register(new io.confluent.kafkarest.resources.v2.ConsumersResource(context));
     config.register(new io.confluent.kafkarest.resources.v2.PartitionsResource(context));
     config.register(KafkaRestCleanupFilter.class);

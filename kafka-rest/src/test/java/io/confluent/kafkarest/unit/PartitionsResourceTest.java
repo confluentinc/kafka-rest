@@ -66,6 +66,7 @@ public class PartitionsResourceTest
             producerPool,
             null,
             adminClientWrapper,
+            null,
             null
         );
 

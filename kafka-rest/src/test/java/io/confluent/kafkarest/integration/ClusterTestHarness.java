@@ -142,11 +142,9 @@ public abstract class ClusterTestHarness {
     zookeeper = new EmbeddedZookeeper();
     zkConnect = String.format("127.0.0.1:%d", zookeeper.port());
     Time time = Time.SYSTEM;
-    zkClient = new KafkaZkClient(
-        new ZooKeeperClient(zkConnect, zkSessionTimeout, zkConnectionTimeout, Integer.MAX_VALUE, time,
-                "testMetricGroup", "testMetricGroupType"),
-        JaasUtils.isZkSecurityEnabled(),
-        time);
+    zkClient = KafkaZkClient.apply(
+        zkConnect, JaasUtils.isZkSecurityEnabled(), zkSessionTimeout, zkConnectionTimeout, Integer.MAX_VALUE, time,
+                "testMetricGroup", "testMetricGroupType", Option.apply("test"));
 
     configs = new Vector<>();
     servers = new Vector<>();
@@ -209,6 +207,7 @@ public abstract class ClusterTestHarness {
         getProducerPool(restConfig),
         null,
         null,
+        null,
         getScalaConsumersContext(restConfig));
     restServer = restApp.createServer();
     restServer.start();
@@ -266,6 +265,7 @@ public abstract class ClusterTestHarness {
 
     for (KafkaServer server : servers) {
       server.shutdown();
+      server.awaitShutdown();
     }
     for (KafkaServer server : servers) {
       CoreUtils.delete(server.config().logDirs());

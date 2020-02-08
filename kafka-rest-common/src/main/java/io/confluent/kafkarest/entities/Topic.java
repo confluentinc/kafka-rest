@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.entities;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.hibernate.validator.constraints.NotEmpty;
@@ -23,17 +24,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
-import javax.validation.constraints.NotNull;
-
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Topic {
 
   @NotEmpty
   private String name;
 
-  @NotNull
   private Properties configs;
 
-  @NotEmpty
   private List<Partition> partitions;
 
   public Topic(

@@ -106,8 +106,9 @@ public class TopicsResourceAvroProduceTest
   public TopicsResourceAvroProduceTest() throws RestConfigException {
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ScalaConsumersContext scalaConsumersContext = new ScalaConsumersContext(mdObserver, null, null);
-    ctx = new DefaultKafkaRestContext(config, producerPool, null, null, scalaConsumersContext);
+      ScalaConsumersContext scalaConsumersContext = new ScalaConsumersContext(mdObserver, null, null);
+    ctx = new DefaultKafkaRestContext(config, producerPool, null, null,
+  null, scalaConsumersContext);
 
     addResource(new TopicsResource(ctx));
 
@@ -130,7 +131,7 @@ public class TopicsResourceAvroProduceTest
                                          final List<RecordMetadataOrException> results) {
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
-        Capture.newInstance();
+            Capture.newInstance();
     producerPool.produce(EasyMock.eq(topic),
         EasyMock.eq((Integer) null),
         EasyMock.eq(recordFormat),

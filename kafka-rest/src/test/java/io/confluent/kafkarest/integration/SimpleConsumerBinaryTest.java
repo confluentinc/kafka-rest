@@ -21,7 +21,7 @@ import kafka.utils.TestUtils;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.Before;
 import org.junit.Test;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
@@ -61,7 +61,7 @@ public class SimpleConsumerBinaryTest extends AbstractConsumerTest {
     final int numPartitions = 1;
     final int replicationFactor = 1;
     TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-                          JavaConversions.asScalaBuffer(this.servers), new Properties());
+                          JavaConverters.asScalaBuffer(this.servers), new Properties());
   }
 
   @Test

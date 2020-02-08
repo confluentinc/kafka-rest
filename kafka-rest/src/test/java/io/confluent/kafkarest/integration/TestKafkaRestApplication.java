@@ -17,6 +17,7 @@ package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.*;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
+import io.confluent.rest.RestConfigException;
 
 import javax.ws.rs.core.Configurable;
 
@@ -29,25 +30,35 @@ public class TestKafkaRestApplication extends KafkaRestApplication {
   ProducerPool producerPoolInjected;
   KafkaConsumerManager kafkaConsumerManagerInjected;
   AdminClientWrapper adminClientWrapperInjected;
+  GroupMetadataObserver groupMetadataObserverInjected;
   ScalaConsumersContext scalaConsumersContextInjected;
 
+  public TestKafkaRestApplication(KafkaRestConfig config, ProducerPool producerPool,
+                                  ConsumerManager consumerManager,
+                                  SimpleConsumerFactory simpleConsumerFactory, SimpleConsumerManager simpleConsumerManager)
+      throws IllegalAccessException, InstantiationException, RestConfigException {
+    this(config, producerPool, null, null, null, null);
+  }
 
-  public TestKafkaRestApplication(KafkaRestConfig config,
-                                  ProducerPool producerPool,
+  public TestKafkaRestApplication(KafkaRestConfig config, ProducerPool producerPool,
                                   KafkaConsumerManager kafkaConsumerManager,
                                   AdminClientWrapper adminClientWrapper,
+                                  GroupMetadataObserver groupMetadataObserver,
                                   ScalaConsumersContext scalaConsumersContext) {
     super(config);
     producerPoolInjected = producerPool;
     kafkaConsumerManagerInjected = kafkaConsumerManager;
     adminClientWrapperInjected = adminClientWrapper;
+    groupMetadataObserverInjected = groupMetadataObserver;
     scalaConsumersContextInjected = scalaConsumersContext;
   }
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-    setupInjectedResources(config, appConfig, producerPoolInjected, kafkaConsumerManagerInjected,
-        adminClientWrapperInjected, scalaConsumersContextInjected);
+    setupInjectedResources(config, appConfig,
+                           producerPoolInjected,
+        kafkaConsumerManagerInjected, adminClientWrapperInjected,
+        groupMetadataObserverInjected, scalaConsumersContextInjected);
   }
 
 }

@@ -35,7 +35,7 @@ import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import kafka.utils.TestUtils;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 public class ConsumerAvroTest extends AbstractConsumerTest {
 
@@ -100,7 +100,7 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
     final int numPartitions = 3;
     final int replicationFactor = 1;
     TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-                          JavaConversions.asScalaBuffer(this.servers), new Properties());
+                          JavaConverters.asScalaBuffer(this.servers), new Properties());
   }
 
   @Test

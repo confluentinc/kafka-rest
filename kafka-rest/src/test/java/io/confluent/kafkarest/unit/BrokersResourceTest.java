@@ -14,12 +14,22 @@
  */
 package io.confluent.kafkarest.unit;
 
+import org.easymock.EasyMock;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.Arrays;
+
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+
 import io.confluent.kafkarest.AdminClientWrapper;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.TestUtils;
+import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.entities.BrokerList;
 import io.confluent.kafkarest.resources.BrokersResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
@@ -30,13 +40,7 @@ import org.apache.kafka.common.Node;
 import org.apache.kafka.common.errors.SaslAuthenticationException;
 import org.apache.kafka.common.internals.KafkaFutureImpl;
 import org.apache.kafka.common.protocol.Errors;
-import org.easymock.EasyMock;
-import org.junit.Before;
-import org.junit.Test;
 
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
 
@@ -48,17 +52,20 @@ public class BrokersResourceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
   private AdminClient adminClient;
+  private MetadataObserver metadataObserver;
   private ProducerPool producerPool;
   private DefaultKafkaRestContext ctx;
 
   public BrokersResourceTest() throws RestConfigException {
     adminClient = EasyMock.createMock(AdminClient.class);
     AdminClientWrapper adminClientWrapper = new AdminClientWrapper(new KafkaRestConfig(new Properties()), adminClient);
+    metadataObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
     ctx = new DefaultKafkaRestContext(config,
         producerPool,
         null,
         adminClientWrapper,
+        null,
         null
     );
     addResource(new BrokersResource(ctx));

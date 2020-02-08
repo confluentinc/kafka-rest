@@ -17,13 +17,15 @@ package io.confluent.kafkarest.extension;
 
 import io.confluent.kafkarest.AdminClientWrapper;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
+import io.confluent.kafkarest.GroupMetadataObserver;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.ScalaConsumersContext;
-import io.confluent.kafkarest.v2.KafkaConsumerManager;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import io.confluent.kafkarest.v2.KafkaConsumerManager;
+
 import javax.ws.rs.core.Configurable;
 
 public class KafkaRestContextProvider {
@@ -41,6 +43,7 @@ public class KafkaRestContextProvider {
       ProducerPool producerPool,
       KafkaConsumerManager kafkaConsumerManager,
       AdminClientWrapper adminClientWrapper,
+      GroupMetadataObserver groupMetadataObserver,
       ScalaConsumersContext scalaConsumersContext
   ) {
     if (initialized.compareAndSet(false, true)) {
@@ -50,8 +53,9 @@ public class KafkaRestContextProvider {
         ScalaConsumersContext.registerExceptionMappers(config, appConfig);
       }
       defaultContext =
-          new DefaultKafkaRestContext(appConfig, producerPool, kafkaConsumerManager,
-              adminClientWrapper, scalaConsumersContext);
+          new DefaultKafkaRestContext(appConfig, producerPool,
+              kafkaConsumerManager, adminClientWrapper,
+              groupMetadataObserver, scalaConsumersContext);
       defaultAppConfig = appConfig;
     }
   }

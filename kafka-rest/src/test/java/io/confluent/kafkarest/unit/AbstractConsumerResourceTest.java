@@ -66,7 +66,8 @@ public class AbstractConsumerResourceTest
     mdObserver = EasyMock.createMock(MetadataObserver.class);
     consumerManager = EasyMock.createMock(ConsumerManager.class);
     ScalaConsumersContext scalaConsumersContext = new ScalaConsumersContext(mdObserver, consumerManager, null);
-    ctx = new DefaultKafkaRestContext(config, null, null, null, scalaConsumersContext);
+    ctx = new DefaultKafkaRestContext(config, null,
+        null, null, null, scalaConsumersContext);
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
     KafkaRestContext contextProxy =
         (KafkaRestContext) Proxy.newProxyInstance(KafkaRestContext.class.getClassLoader(), new

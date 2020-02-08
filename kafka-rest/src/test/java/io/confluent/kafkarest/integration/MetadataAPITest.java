@@ -30,7 +30,7 @@ import io.confluent.kafkarest.entities.BrokerList;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
@@ -82,9 +82,9 @@ public class MetadataAPITest extends ClusterTestHarness {
   public void setUp() throws Exception {
     super.setUp();
     kafka.utils.TestUtils.createTopic(zkClient, topic1Name, topic1Partitions.size(), numReplicas,
-                          JavaConversions.asScalaBuffer(this.servers), new Properties());
+                          JavaConverters.asScalaBuffer(this.servers), new Properties());
     kafka.utils.TestUtils.createTopic(zkClient, topic2Name, topic2Partitions.size(), numReplicas,
-                          JavaConversions.asScalaBuffer(this.servers), topic2Configs);
+                          JavaConverters.asScalaBuffer(this.servers), topic2Configs);
   }
 
   @Test

@@ -26,7 +26,7 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import kafka.utils.TestUtils;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 public class ConsumerTimeoutTest extends AbstractConsumerTest {
 
@@ -48,7 +48,7 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
     final int numPartitions = 3;
     final int replicationFactor = 1;
     TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-                          JavaConversions.asScalaBuffer(this.servers), new Properties());
+                          JavaConverters.asScalaBuffer(this.servers), new Properties());
   }
 
   @Test

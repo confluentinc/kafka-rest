@@ -262,36 +262,37 @@ public class TestUtils {
                                                 Properties deserializerProps,
                                                 boolean validateContents) {
 
-    KafkaConsumer<K, V> consumer = createConsumer(bootstrapServers, "testgroup", "consumer0",
-        20000L, keyDeserializerClassName, valueDeserializerClassName, deserializerProps);
+    try(KafkaConsumer<K, V> consumer = createConsumer(bootstrapServers, "testgroup", "consumer0",
+        20000L, keyDeserializerClassName, valueDeserializerClassName, deserializerProps)) {
 
-    Map<Object, Integer> msgCounts = TestUtils.topicCounts(consumer, topicName, records, partition);
+      Map<Object, Integer> msgCounts = TestUtils.topicCounts(consumer, topicName, records, partition);
 
-    Map<Object, Integer> refMsgCounts = new HashMap<>();
-    for (ProduceRecord rec : records) {
-      Object msg = TestUtils.encodeComparable(rec.getValue());
-      refMsgCounts.put(msg, (refMsgCounts.get(msg) == null ? 0 : refMsgCounts.get(msg)) + 1);
-    }
-
-    // We can't always easily get the data on both ends to be easily comparable, e.g. when the
-    // input data is JSON but it's stored in Avro, so in some cases we use an alternative that
-    // just checks the # of each count matches up, e.g. if we have (a => 3, b => 4) input and (c
-    // => 4, d => 3), it would pass since both have (3 => 1, 4 => 1) counts, even though their
-    // encoded values differ. This, of course, assumes we don't get collisions.
-    if (validateContents) {
-      assertEquals(msgCounts, refMsgCounts);
-    } else {
-      Map<Integer, Integer> refCountCounts = new HashMap<Integer, Integer>();
-      for (Map.Entry<Object, Integer> entry : refMsgCounts.entrySet()) {
-        Integer count = refCountCounts.get(entry.getValue());
-        refCountCounts.put(entry.getValue(), (count == null ? 0 : count) + 1);
+      Map<Object, Integer> refMsgCounts = new HashMap<>();
+      for (ProduceRecord rec : records) {
+        Object msg = TestUtils.encodeComparable(rec.getValue());
+        refMsgCounts.put(msg, (refMsgCounts.get(msg) == null ? 0 : refMsgCounts.get(msg)) + 1);
       }
-      Map<Integer, Integer> msgCountCounts = new HashMap<Integer, Integer>();
-      for (Map.Entry<Object, Integer> entry : msgCounts.entrySet()) {
-        Integer count = msgCountCounts.get(entry.getValue());
-        msgCountCounts.put(entry.getValue(), (count == null ? 0 : count) + 1);
+
+      // We can't always easily get the data on both ends to be easily comparable, e.g. when the
+      // input data is JSON but it's stored in Avro, so in some cases we use an alternative that
+      // just checks the # of each count matches up, e.g. if we have (a => 3, b => 4) input and (c
+      // => 4, d => 3), it would pass since both have (3 => 1, 4 => 1) counts, even though their
+      // encoded values differ. This, of course, assumes we don't get collisions.
+      if (validateContents) {
+        assertEquals(msgCounts, refMsgCounts);
+      } else {
+        Map<Integer, Integer> refCountCounts = new HashMap<Integer, Integer>();
+        for (Map.Entry<Object, Integer> entry : refMsgCounts.entrySet()) {
+          Integer count = refCountCounts.get(entry.getValue());
+          refCountCounts.put(entry.getValue(), (count == null ? 0 : count) + 1);
+        }
+        Map<Integer, Integer> msgCountCounts = new HashMap<Integer, Integer>();
+        for (Map.Entry<Object, Integer> entry : msgCounts.entrySet()) {
+          Integer count = msgCountCounts.get(entry.getValue());
+          msgCountCounts.put(entry.getValue(), (count == null ? 0 : count) + 1);
+        }
+        assertEquals(refCountCounts, msgCountCounts);
       }
-      assertEquals(refCountCounts, msgCountCounts);
     }
   }
 
@@ -332,7 +333,6 @@ public class TestUtils {
       throw new RuntimeException("InterruptedException occurred", e);
     }
 
-    consumer.close();
     return msgCounts;
   }
 

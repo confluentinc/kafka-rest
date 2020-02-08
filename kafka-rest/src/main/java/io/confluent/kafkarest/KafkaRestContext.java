@@ -18,22 +18,24 @@ package io.confluent.kafkarest;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 
 public interface KafkaRestContext {
-  public KafkaRestConfig getConfig();
+  KafkaRestConfig getConfig();
 
-  public ProducerPool getProducerPool();
-
-  @Deprecated
-  public ScalaConsumersContext getScalaConsumersContext();
+  ProducerPool getProducerPool();
 
   @Deprecated
-  public ConsumerManager getConsumerManager();
+  ScalaConsumersContext getScalaConsumersContext();
 
   @Deprecated
-  public SimpleConsumerManager getSimpleConsumerManager();
+  ConsumerManager getConsumerManager();
 
-  public KafkaConsumerManager getKafkaConsumerManager();
+  @Deprecated
+  SimpleConsumerManager getSimpleConsumerManager();
 
-  public AdminClientWrapper getAdminClientWrapper();
+  KafkaConsumerManager getKafkaConsumerManager();
+
+  AdminClientWrapper getAdminClientWrapper();
+
+  GroupMetadataObserver getGroupMetadataObserver();
 
   void shutdown();
 }

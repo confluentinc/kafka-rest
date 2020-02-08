@@ -16,18 +16,22 @@
 package io.confluent.kafkarest;
 
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.ConsumerGroupListing;
+import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.Config;
 import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.TopicDescription;
+import org.apache.kafka.clients.admin.ListConsumerGroupsOptions;
+import org.apache.kafka.clients.admin.DescribeConsumerGroupsOptions;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.config.ConfigResource;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -39,15 +43,18 @@ import io.confluent.kafkarest.entities.Topic;
 
 public class AdminClientWrapper {
 
-  private AdminClient adminClient;
-  private int initTimeOut;
+  private final AdminClient adminClient;
+  private final int initTimeOut;
+  private final int requestTimeOut;
 
   public AdminClientWrapper(KafkaRestConfig kafkaRestConfig, AdminClient adminClient) {
     this.adminClient = adminClient;
     this.initTimeOut = kafkaRestConfig.getInt(KafkaRestConfig.KAFKACLIENT_INIT_TIMEOUT_CONFIG);
+    this.requestTimeOut = kafkaRestConfig.getInt(
+        KafkaRestConfig.KAFKACLIENT_REQUEST_TIMEOUT_CONFIG);
   }
 
-  public static Properties adminProperties(KafkaRestConfig kafkaRestConfig) {
+  static Properties adminProperties(KafkaRestConfig kafkaRestConfig) {
     Properties properties = new Properties();
     properties.putAll(kafkaRestConfig.getAdminProperties());
     properties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG,
@@ -67,36 +74,32 @@ public class AdminClientWrapper {
   }
 
   public Collection<String> getTopicNames() throws Exception {
-    Collection<String> allTopics = null;
-    allTopics = new TreeSet<>(
+    return new TreeSet<>(
         adminClient.listTopics().names().get(initTimeOut, TimeUnit.MILLISECONDS));
-    return allTopics;
   }
 
   public boolean topicExists(String topic) throws Exception {
-    Collection<String> allTopics = getTopicNames();
-    return allTopics.contains(topic);
+    return getTopicNames().contains(topic);
   }
 
   public Topic getTopic(String topicName) throws Exception {
-    Topic topic = null;
     if (topicExists(topicName)) {
       TopicDescription topicDescription = getTopicDescription(topicName);
 
-      topic = buildTopic(topicName, topicDescription);
+      return buildTopic(topicName, topicDescription);
+    } else {
+      return null;
     }
-    return topic;
   }
 
   public List<Partition> getTopicPartitions(String topicName) throws Exception {
     TopicDescription topicDescription = getTopicDescription(topicName);
-    List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), null);
-    return partitions;
+    return buildPartitionsData(topicDescription.partitions(), null);
   }
 
   public Partition getTopicPartition(String topicName, int partition) throws Exception {
     TopicDescription topicDescription = getTopicDescription(topicName);
-    List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), partition);
+    List<Partition> partitions = buildPartitionsData(topicDescription.partitions(), partition);
     if (partitions.isEmpty()) {
       return null;
     }
@@ -108,22 +111,33 @@ public class AdminClientWrapper {
     return (partition >= 0 && partition < topic.getPartitions().size());
   }
 
+  public Collection<ConsumerGroupListing> listConsumerGroups() throws Exception {
+    return adminClient.listConsumerGroups(new ListConsumerGroupsOptions()
+        .timeoutMs(requestTimeOut)).all().get(requestTimeOut, TimeUnit.MILLISECONDS);
+  }
+
+  public Map<String, ConsumerGroupDescription> describeConsumerGroups(
+          Collection<String> groupIds) throws Exception {
+    return adminClient.describeConsumerGroups(groupIds,
+        new DescribeConsumerGroupsOptions().timeoutMs(requestTimeOut))
+        .all().get(requestTimeOut, TimeUnit.MILLISECONDS);
+  }
+
   private Topic buildTopic(String topicName, TopicDescription topicDescription) throws Exception {
-    List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), null);
+    List<Partition> partitions = buildPartitionsData(topicDescription.partitions(), null);
 
     ConfigResource topicResource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
     Config config = adminClient.describeConfigs(
-        Collections.unmodifiableList(Arrays.asList(topicResource))
+        Collections.unmodifiableList(Collections.singletonList(topicResource))
     ).values().get(topicResource).get();
     Properties topicProps = new Properties();
     for (ConfigEntry configEntry : config.entries()) {
       topicProps.put(configEntry.name(), configEntry.value());
     }
-    Topic topic = new Topic(topicName, topicProps, partitions);
-    return topic;
+    return new Topic(topicName, topicProps, partitions);
   }
 
-  private List<Partition> buildPartitonsData(
+  private List<Partition> buildPartitionsData(
       List<TopicPartitionInfo> partitions,
       Integer partitionsFilter
   ) {
@@ -153,7 +167,7 @@ public class AdminClientWrapper {
   }
 
   private TopicDescription getTopicDescription(String topicName) throws Exception {
-    return adminClient.describeTopics(Collections.unmodifiableList(Arrays.asList(topicName)))
+    return adminClient.describeTopics(Collections.singletonList(topicName))
         .values().get(topicName).get(initTimeOut, TimeUnit.MILLISECONDS);
   }
 
