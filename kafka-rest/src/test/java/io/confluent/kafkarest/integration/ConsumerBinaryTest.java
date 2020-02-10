@@ -14,17 +14,7 @@
  */
 package io.confluent.kafkarest.integration;
 
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
+import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
@@ -35,10 +25,15 @@ import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
-import kafka.utils.TestUtils;
-import scala.collection.JavaConversions;
-
-import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.junit.Before;
+import org.junit.Test;
 
 public class ConsumerBinaryTest extends AbstractConsumerTest {
 
@@ -76,8 +71,7 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     super.setUp();
     final int numPartitions = 3;
     final int replicationFactor = 1;
-    TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-                          JavaConversions.asScalaBuffer(this.servers), new Properties());
+    createTopic(topicName, numPartitions, (short) replicationFactor);
   }
 
   @Test
