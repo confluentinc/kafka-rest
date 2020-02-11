@@ -20,11 +20,7 @@ import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.kafkarest.extension.KafkaRestCleanupFilter;
 import io.confluent.kafkarest.extension.KafkaRestContextProvider;
 import io.confluent.kafkarest.extension.RestResourceExtension;
-import io.confluent.kafkarest.resources.BrokersResource;
-import io.confluent.kafkarest.resources.ConsumersResource;
-import io.confluent.kafkarest.resources.PartitionsResource;
-import io.confluent.kafkarest.resources.RootResource;
-import io.confluent.kafkarest.resources.TopicsResource;
+import io.confluent.kafkarest.resources.ResourcesFeature;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.rest.Application;
 import io.confluent.rest.RestConfigException;
@@ -97,13 +93,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
             new Class[]{KafkaRestContext.class},
             contextInvocationHandler
         );
-    config.register(RootResource.class);
-    config.register(new BrokersResource(context));
-    config.register(new TopicsResource(context));
-    config.register(new PartitionsResource(context));
-    config.register(new ConsumersResource(context));
-    config.register(new io.confluent.kafkarest.resources.v2.ConsumersResource(context));
-    config.register(new io.confluent.kafkarest.resources.v2.PartitionsResource(context));
+    config.register(new ResourcesFeature(context));
     config.register(KafkaRestCleanupFilter.class);
     config.register(InstantConverterProvider.class);
 
