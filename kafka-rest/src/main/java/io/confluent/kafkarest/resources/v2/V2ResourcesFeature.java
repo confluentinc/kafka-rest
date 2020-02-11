@@ -33,6 +33,7 @@ public final class V2ResourcesFeature implements Feature {
     configurable.register(new ConsumersResource(context));
     configurable.register(new PartitionsResource(context));
     configurable.register(new RootResource());
+    configurable.register(new TopicsResource(context));
     return true;
   }
 }

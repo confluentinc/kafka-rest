@@ -13,16 +13,27 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.resources;
+package io.confluent.kafkarest.resources.v2;
 
+import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.KafkaRestContext;
+import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Utils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.JsonTopicProduceRecord;
+import io.confluent.kafkarest.entities.PartitionOffset;
+import io.confluent.kafkarest.entities.ProduceResponse;
+import io.confluent.kafkarest.entities.SchemaTopicProduceRecord;
+import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.entities.TopicProduceRecord;
+import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -34,31 +45,16 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
-
-import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.RecordMetadataOrException;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.SchemaTopicProduceRecord;
-import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.JsonTopicProduceRecord;
-import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.Topic;
-import io.confluent.kafkarest.entities.TopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
-import io.confluent.rest.annotations.PerformanceMetric;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("/topics")
-@Produces({Versions.KAFKA_V1_JSON_WEIGHTED, Versions.KAFKA_DEFAULT_JSON_WEIGHTED,
-           Versions.JSON_WEIGHTED, Versions.KAFKA_V2_JSON_WEIGHTED})
-@Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
-           Versions.GENERIC_REQUEST, Versions.KAFKA_V2_JSON})
+@Produces({Versions.KAFKA_V2_JSON_WEIGHTED})
+@Consumes({Versions.KAFKA_V2_JSON})
 public class TopicsResource {
 
-  private static final Logger log = LoggerFactory.getLogger(TopicsResource.class);
+  private static final Logger log = LoggerFactory.getLogger(
+      TopicsResource.class);
 
   private final KafkaRestContext ctx;
 
@@ -67,14 +63,14 @@ public class TopicsResource {
   }
 
   @GET
-  @PerformanceMetric("topics.list")
+  @PerformanceMetric("topics.list+v2")
   public Collection<String> list() throws Exception {
     return ctx.getAdminClientWrapper().getTopicNames();
   }
 
   @GET
   @Path("/{topic}")
-  @PerformanceMetric("topic.get")
+  @PerformanceMetric("topic.get+v2")
   public Topic getTopic(@PathParam("topic") String topicName) throws Exception {
     Topic topic = ctx.getAdminClientWrapper().getTopic(topicName);
     if (topic == null) {
@@ -85,10 +81,8 @@ public class TopicsResource {
 
   @POST
   @Path("/{topic}")
-  @PerformanceMetric("topic.produce-binary")
-  @Consumes({Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON,
-             Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST,
-             Versions.KAFKA_V2_JSON_BINARY, Versions.KAFKA_V2_JSON})
+  @PerformanceMetric("topic.produce-binary+v2")
+  @Consumes({Versions.KAFKA_V2_JSON_BINARY, Versions.KAFKA_V2_JSON})
   public void produceBinary(
       final @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
@@ -99,8 +93,8 @@ public class TopicsResource {
 
   @POST
   @Path("/{topic}")
-  @PerformanceMetric("topic.produce-json")
-  @Consumes({Versions.KAFKA_V1_JSON_JSON, Versions.KAFKA_V2_JSON_JSON})
+  @PerformanceMetric("topic.produce-json+v2")
+  @Consumes({Versions.KAFKA_V2_JSON_JSON})
   public void produceJson(
       final @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
@@ -111,8 +105,8 @@ public class TopicsResource {
 
   @POST
   @Path("/{topic}")
-  @PerformanceMetric("topic.produce-avro")
-  @Consumes({Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V2_JSON_AVRO})
+  @PerformanceMetric("topic.produce-avro+v2")
+  @Consumes({Versions.KAFKA_V2_JSON_AVRO})
   public void produceAvro(
       final @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
@@ -125,7 +119,7 @@ public class TopicsResource {
 
   @POST
   @Path("/{topic}")
-  @PerformanceMetric("topic.produce-jsonschema")
+  @PerformanceMetric("topic.produce-jsonschema+v2")
   @Consumes({Versions.KAFKA_V2_JSON_JSON_SCHEMA})
   public void produceJsonSchema(
       final @Suspended AsyncResponse asyncResponse,
@@ -137,7 +131,7 @@ public class TopicsResource {
 
   @POST
   @Path("/{topic}")
-  @PerformanceMetric("topic.produce-protobuf")
+  @PerformanceMetric("topic.produce-protobuf+v2")
   @Consumes({Versions.KAFKA_V2_JSON_PROTOBUF})
   public void produceProtobuf(
       final @Suspended AsyncResponse asyncResponse,

@@ -13,9 +13,39 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.unit;
+package io.confluent.kafkarest.resources.v1;
 
+import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
+import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static org.junit.Assert.assertEquals;
+
+import io.confluent.kafkarest.DefaultKafkaRestContext;
+import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.KafkaRestApplication;
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.MetadataObserver;
+import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.RecordMetadataOrException;
+import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Utils;
+import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.PartitionOffset;
+import io.confluent.kafkarest.entities.ProduceRecord;
+import io.confluent.kafkarest.entities.ProduceResponse;
+import io.confluent.kafkarest.entities.SchemaHolder;
+import io.confluent.kafkarest.entities.TopicProduceRecord;
+import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.rest.EmbeddedServerTestHarness;
+import io.confluent.rest.RestConfigException;
+import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
+import io.confluent.rest.exceptions.RestServerErrorException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.TopicPartition;
@@ -27,40 +57,6 @@ import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
-
-import io.confluent.kafkarest.DefaultKafkaRestContext;
-import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.KafkaRestApplication;
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
-import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.RecordMetadataOrException;
-import io.confluent.kafkarest.TestUtils;
-import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.SchemaHolder;
-import io.confluent.kafkarest.entities.TopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
-import io.confluent.kafkarest.resources.TopicsResource;
-import io.confluent.rest.EmbeddedServerTestHarness;
-import io.confluent.rest.RestConfigException;
-import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
-import io.confluent.rest.exceptions.RestServerErrorException;
-
-import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
-import static io.confluent.kafkarest.TestUtils.assertOKResponse;
-import static org.junit.Assert.assertEquals;
 
 public class TopicsResourceBinaryProduceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
@@ -151,7 +147,7 @@ public class TopicsResourceBinaryProduceTest
     );
     kafkaRetriableExceptionResults = Arrays.asList(
         new PartitionOffset(null, null, Errors.KAFKA_RETRIABLE_ERROR_ERROR_CODE,
-                            exceptionMessage)
+            exceptionMessage)
     );
 
     produceKafkaAuthorizationExceptionResults = Collections.singletonList(
@@ -181,20 +177,20 @@ public class TopicsResourceBinaryProduceTest
   }
 
   private <K, V> Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
-                                         EmbeddedFormat recordFormat,
-                                         List<? extends TopicProduceRecord<K, V>> records,
-                                         final List<RecordMetadataOrException> results) {
+      EmbeddedFormat recordFormat,
+      List<? extends TopicProduceRecord<K, V>> records,
+      final List<RecordMetadataOrException> results) {
     final TopicProduceRequest request = new TopicProduceRequest();
     request.setRecords(records);
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
         Capture.newInstance();
     producerPool.produce(EasyMock.eq(topic),
-                         EasyMock.eq((Integer) null),
-                         EasyMock.eq(recordFormat),
-                         EasyMock.<SchemaHolder>anyObject(),
-                         EasyMock.<Collection<? extends ProduceRecord<K, V>>>anyObject(),
-                         EasyMock.capture(produceCallback));
+        EasyMock.eq((Integer) null),
+        EasyMock.eq(recordFormat),
+        EasyMock.<SchemaHolder>anyObject(),
+        EasyMock.<Collection<? extends ProduceRecord<K, V>>>anyObject(),
+        EasyMock.capture(produceCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -222,7 +218,7 @@ public class TopicsResourceBinaryProduceTest
         Response
             rawResponse =
             produceToTopic("topic1", mediatype.header, requestMediatype,
-                           EmbeddedFormat.BINARY, records, produceResults);
+                EmbeddedFormat.BINARY, records, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
         ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
@@ -268,10 +264,10 @@ public class TopicsResourceBinaryProduceTest
         Response
             rawResponse =
             produceToTopic("topic1", mediatype.header, requestMediatype,
-                           EmbeddedFormat.BINARY,
-                           produceRecordsWithKeys, null);
+                EmbeddedFormat.BINARY,
+                produceRecordsWithKeys, null);
         assertErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, rawResponse,
-                            mediatype.expected);
+            mediatype.expected);
 
         EasyMock.reset(mdObserver, producerPool);
       }
@@ -285,31 +281,31 @@ public class TopicsResourceBinaryProduceTest
         Response response = request("/topics/topic1", mediatype.header)
             .post(Entity.entity("{}", requestMediatype));
         assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
-                            response,
-                            ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
-                            null,
-                            mediatype.expected);
+            response,
+            ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
+            null,
+            mediatype.expected);
 
         // Invalid base64 encoding
         response = request("/topics/topic1", mediatype.header)
             .post(Entity.entity("{\"records\":[{\"value\":\"aGVsbG8==\"}]}", requestMediatype));
         assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
-                            response,
-                            ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
-                            null,
-                            mediatype.expected);
+            response,
+            ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY_CODE,
+            null,
+            mediatype.expected);
       }
     }
   }
 
   private void testProduceToTopicException(List<RecordMetadataOrException> produceResults,
-                                           List<PartitionOffset> produceExceptionResults) {
+      List<PartitionOffset> produceExceptionResults) {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
         Response
             rawResponse =
             produceToTopic("topic1", mediatype.header, requestMediatype,
-                           EmbeddedFormat.BINARY, produceExceptionData, produceResults);
+                EmbeddedFormat.BINARY, produceExceptionData, produceResults);
 
         if (produceExceptionResults == null) {
           assertErrorResponse(
@@ -319,7 +315,8 @@ public class TopicsResourceBinaryProduceTest
           );
         } else {
           assertOKResponse(rawResponse, mediatype.expected);
-          ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
+          ProduceResponse response = TestUtils
+              .tryReadEntityOrLog(rawResponse, ProduceResponse.class);
           assertEquals(produceExceptionResults, response.getOffsets());
           assertEquals(null, response.getKeySchemaId());
           assertEquals(null, response.getValueSchemaId());
@@ -344,7 +341,7 @@ public class TopicsResourceBinaryProduceTest
   @Test
   public void testProduceToTopicKafkaRetriableException() {
     testProduceToTopicException(produceKafkaRetriableExceptionResults,
-                                kafkaRetriableExceptionResults);
+        kafkaRetriableExceptionResults);
   }
 
   @Test
@@ -360,8 +357,8 @@ public class TopicsResourceBinaryProduceTest
   }
 
   private void testProduceSecurityException(List<RecordMetadataOrException> produceResults,
-                                            List<PartitionOffset> produceExceptionResults,
-                                            Response.Status expectedStatus) {
+      List<PartitionOffset> produceExceptionResults,
+      Response.Status expectedStatus) {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_BINARY) {
         Response

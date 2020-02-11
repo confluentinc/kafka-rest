@@ -33,9 +33,6 @@ public final class ResourcesFeature implements Feature {
   public boolean configure(FeatureContext configurable) {
     configurable.register(new V1ResourcesFeature(context));
     configurable.register(new V2ResourcesFeature(context));
-
-    configurable.register(new TopicsResource(context));
-
     return true;
   }
 }
