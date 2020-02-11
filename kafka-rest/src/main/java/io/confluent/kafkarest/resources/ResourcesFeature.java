@@ -34,7 +34,6 @@ public final class ResourcesFeature implements Feature {
     configurable.register(new V1ResourcesFeature(context));
     configurable.register(new V2ResourcesFeature(context));
 
-    configurable.register(new PartitionsResource(context));
     configurable.register(new RootResource());
     configurable.register(new TopicsResource(context));
 

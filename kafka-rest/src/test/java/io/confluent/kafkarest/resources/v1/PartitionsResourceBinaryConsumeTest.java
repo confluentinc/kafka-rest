@@ -13,7 +13,10 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.unit;
+package io.confluent.kafkarest.resources.v1;
+
+import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
@@ -21,16 +24,12 @@ import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.rest.RestConfigException;
-import org.easymock.EasyMock;
-import org.junit.Test;
-
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.List;
-
-import static io.confluent.kafkarest.TestUtils.assertOKResponse;
-import static org.junit.Assert.assertEquals;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+import org.easymock.EasyMock;
+import org.junit.Test;
 
 public class PartitionsResourceBinaryConsumeTest extends PartitionsResourceAbstractConsumeTest {
 

@@ -31,6 +31,7 @@ public final class V1ResourcesFeature implements Feature {
   public boolean configure(FeatureContext configurable) {
     configurable.register(new BrokersResource(context));
     configurable.register(new ConsumersResource(context));
+    configurable.register(new PartitionsResource(context));
     return true;
   }
 }

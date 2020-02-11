@@ -13,7 +13,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.unit;
+package io.confluent.kafkarest.resources.v1;
 
 import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
@@ -24,7 +24,6 @@ import io.confluent.kafkarest.SimpleConsumerManager;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.extension.InstantConverterProvider;
-import io.confluent.kafkarest.resources.PartitionsResource;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import java.util.List;

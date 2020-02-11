@@ -13,24 +13,23 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.unit;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import io.confluent.kafkarest.TestUtils;
-import io.confluent.kafkarest.entities.SchemaConsumerRecord;
-import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.rest.RestConfigException;
-import org.easymock.EasyMock;
-import org.junit.Test;
-
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
-import java.util.Arrays;
-import java.util.List;
+package io.confluent.kafkarest.resources.v1;
 
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.assertEquals;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import io.confluent.kafkarest.TestUtils;
+import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.SchemaConsumerRecord;
+import io.confluent.rest.RestConfigException;
+import java.util.Arrays;
+import java.util.List;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+import org.easymock.EasyMock;
+import org.junit.Test;
 
 public class PartitionsResourceAvroConsumeTest extends PartitionsResourceAbstractConsumeTest {
 
