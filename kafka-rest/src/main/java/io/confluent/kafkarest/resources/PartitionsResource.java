@@ -24,7 +24,7 @@ import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Utils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.AvroProduceRecord;
+import io.confluent.kafkarest.entities.SchemaProduceRecord;
 import io.confluent.kafkarest.entities.BinaryProduceRecord;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
@@ -206,13 +206,13 @@ public class PartitionsResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("topic") String topic,
       final @PathParam("partition") int partition,
-      @Valid @NotNull PartitionProduceRequest<AvroProduceRecord> request
+      @Valid @NotNull PartitionProduceRequest<SchemaProduceRecord> request
   ) {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
     boolean hasKeys = false;
     boolean hasValues = false;
-    for (AvroProduceRecord rec : request.getRecords()) {
+    for (SchemaProduceRecord rec : request.getRecords()) {
       hasKeys = hasKeys || !rec.getJsonKey().isNull();
       hasValues = hasValues || !rec.getJsonValue().isNull();
     }

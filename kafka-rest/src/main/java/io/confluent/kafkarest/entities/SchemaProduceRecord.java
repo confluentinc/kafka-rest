@@ -15,41 +15,32 @@
 
 package io.confluent.kafkarest.entities;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import javax.validation.constraints.Min;
+public class SchemaProduceRecord extends ProduceRecordBase<JsonNode, JsonNode> {
 
-public class AvroTopicProduceRecord extends AvroProduceRecord
-    implements TopicProduceRecord<JsonNode, JsonNode> {
-
-  // When producing to a topic, a partition may be explicitly requested.
-  @Min(0)
-  protected Integer partition;
-
-  public AvroTopicProduceRecord(
+  @JsonCreator
+  public SchemaProduceRecord(
       @JsonProperty("key") JsonNode key,
-      @JsonProperty("value") JsonNode value,
-      @JsonProperty("partition") Integer partition
+      @JsonProperty("value") JsonNode value
   ) {
     super(key, value);
-    this.partition = partition;
+  }
+
+  public SchemaProduceRecord(JsonNode value) {
+    this(null, value);
   }
 
   @Override
-  public Integer partition() {
-    return partition;
+  public JsonNode getJsonKey() {
+    return key;
   }
 
   @Override
-  @JsonProperty
-  public Integer getPartition() {
-    return partition;
-  }
-
-  @JsonProperty
-  public void setPartition(Integer partition) {
-    this.partition = partition;
+  public JsonNode getJsonValue() {
+    return value;
   }
 
   @Override
@@ -60,13 +51,13 @@ public class AvroTopicProduceRecord extends AvroProduceRecord
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    if (!super.equals(o)) {
+
+    SchemaProduceRecord that = (SchemaProduceRecord) o;
+
+    if (key != null ? !key.equals(that.key) : that.key != null) {
       return false;
     }
-
-    AvroTopicProduceRecord that = (AvroTopicProduceRecord) o;
-
-    if (partition != null ? !partition.equals(that.partition) : that.partition != null) {
+    if (value != null ? !value.equals(that.value) : that.value != null) {
       return false;
     }
 
@@ -75,8 +66,8 @@ public class AvroTopicProduceRecord extends AvroProduceRecord
 
   @Override
   public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + (partition != null ? partition.hashCode() : 0);
+    int result = key != null ? key.hashCode() : 0;
+    result = 31 * result + (value != null ? value.hashCode() : 0);
     return result;
   }
 }

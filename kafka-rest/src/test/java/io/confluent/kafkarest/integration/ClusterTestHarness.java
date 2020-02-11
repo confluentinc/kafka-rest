@@ -14,39 +14,57 @@
  */
 package io.confluent.kafkarest.integration;
 
+import static org.junit.Assert.fail;
+
 import io.confluent.common.utils.IntegrationTest;
-import io.confluent.kafkarest.*;
-
-import kafka.zk.KafkaZkClient;
-import kafka.zookeeper.ZooKeeperClient;
-import org.apache.kafka.common.security.JaasUtils;
-import org.apache.kafka.common.security.auth.SecurityProtocol;
-import org.apache.kafka.common.utils.Time;
-import org.eclipse.jetty.server.Server;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.experimental.categories.Category;
-
+import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
+import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
+import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
+import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import io.confluent.kafka.serializers.KafkaJsonSerializer;
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.ScalaConsumersContext;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
-
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Vector;
+import java.util.concurrent.ExecutionException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
-
-import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
-import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
-import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.CoreUtils;
 import kafka.utils.TestUtils;
 import kafka.zk.EmbeddedZookeeper;
+import kafka.zk.KafkaZkClient;
+import kafka.zookeeper.ZooKeeperClient;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.common.security.auth.SecurityProtocol;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
+import org.apache.kafka.common.utils.Time;
+import org.eclipse.jetty.server.Server;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.experimental.categories.Category;
 import scala.Option;
 import scala.collection.JavaConversions;
 
@@ -319,5 +337,82 @@ public abstract class ClusterTestHarness {
 
   protected Client getClient() {
     return ClientBuilder.newClient();
+  }
+
+  protected final void createTopic(String topicName, int numPartitions, short replicationFactor) {
+    Properties properties = new Properties();
+    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    AdminClient adminClient = AdminClient.create(properties);
+
+    CreateTopicsResult result =
+        adminClient.createTopics(
+            Collections.singletonList(
+                new NewTopic(topicName, numPartitions, replicationFactor)));
+
+    try {
+      result.all().get();
+    } catch (InterruptedException | ExecutionException e) {
+      Assert.fail(String.format("Failed to create topic: %s", e.getMessage()));
+    }
+  }
+
+  protected final void produceAvroMessages(List<ProducerRecord<Object, Object>> records) {
+    HashMap<String, Object> serProps = new HashMap<String, Object>();
+    serProps.put("schema.registry.url", schemaRegConnect);
+    final KafkaAvroSerializer avroKeySerializer = new KafkaAvroSerializer();
+    avroKeySerializer.configure(serProps, true);
+    final KafkaAvroSerializer avroValueSerializer = new KafkaAvroSerializer();
+    avroValueSerializer.configure(serProps, false);
+
+    Properties props = new Properties();
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    props.put(ProducerConfig.ACKS_CONFIG, "all");
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+
+    KafkaProducer<Object, Object> producer
+        = new KafkaProducer<Object, Object>(props, avroKeySerializer, avroValueSerializer);
+    for (ProducerRecord<Object, Object> rec : records) {
+      try {
+        producer.send(rec).get();
+      } catch (Exception e) {
+        fail("Couldn't produce input messages to Kafka: " + e);
+      }
+    }
+    producer.close();
+  }
+
+  protected final void produceBinaryMessages(List<ProducerRecord<byte[], byte[]>> records) {
+    Properties props = new Properties();
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
+    Producer<byte[], byte[]> producer = new KafkaProducer<byte[], byte[]>(props);
+    for (ProducerRecord<byte[], byte[]> rec : records) {
+      try {
+        producer.send(rec).get();
+      } catch (Exception e) {
+        fail("Couldn't produce input messages to Kafka: " + e);
+      }
+    }
+    producer.close();
+  }
+
+  protected final void produceJsonMessages(List<ProducerRecord<Object, Object>> records) {
+    Properties props = new Properties();
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaJsonSerializer.class);
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaJsonSerializer.class);
+    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
+    Producer<Object, Object> producer = new KafkaProducer<Object, Object>(props);
+    for (ProducerRecord<Object, Object> rec : records) {
+      try {
+        producer.send(rec).get();
+      } catch (Exception e) {
+        fail("Couldn't produce input messages to Kafka: " + e);
+      }
+    }
+    producer.close();
   }
 }

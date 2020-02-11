@@ -33,8 +33,8 @@ import javax.ws.rs.core.Response;
 
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.AvroProduceRecord;
-import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
+import io.confluent.kafkarest.entities.SchemaProduceRecord;
+import io.confluent.kafkarest.entities.SchemaTopicProduceRecord;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
@@ -89,11 +89,11 @@ public class AvroProducerTest extends ClusterTestHarness {
 
   // Produce to topic inputs & results
 
-  protected final List<AvroTopicProduceRecord> topicRecordsWithPartitionsAndKeys = Arrays.asList(
-      new AvroTopicProduceRecord(testKeys[0], testValues[0], 0),
-      new AvroTopicProduceRecord(testKeys[1], testValues[1], 1),
-      new AvroTopicProduceRecord(testKeys[2], testValues[2], 1),
-      new AvroTopicProduceRecord(testKeys[3], testValues[3], 2)
+  protected final List<SchemaTopicProduceRecord> topicRecordsWithPartitionsAndKeys = Arrays.asList(
+      new SchemaTopicProduceRecord(testKeys[0], testValues[0], 0),
+      new SchemaTopicProduceRecord(testKeys[1], testValues[1], 1),
+      new SchemaTopicProduceRecord(testKeys[2], testValues[2], 1),
+      new SchemaTopicProduceRecord(testKeys[3], testValues[3], 2)
   );
   protected final List<PartitionOffset> partitionOffsetsWithPartitionsAndKeys = Arrays.asList(
       new PartitionOffset(0, 0L, null, null),
@@ -103,11 +103,11 @@ public class AvroProducerTest extends ClusterTestHarness {
   );
 
   // Produce to partition inputs & results
-  protected final List<AvroProduceRecord> partitionRecordsOnlyValues = Arrays.asList(
-      new AvroProduceRecord(testValues[0]),
-      new AvroProduceRecord(testValues[1]),
-      new AvroProduceRecord(testValues[2]),
-      new AvroProduceRecord(testValues[3])
+  protected final List<SchemaProduceRecord> partitionRecordsOnlyValues = Arrays.asList(
+      new SchemaProduceRecord(testValues[0]),
+      new SchemaProduceRecord(testValues[1]),
+      new SchemaProduceRecord(testValues[2]),
+      new SchemaProduceRecord(testValues[3])
   );
   protected final List<PartitionOffset> producePartitionOffsetOnlyValues = Arrays.asList(
       new PartitionOffset(0, 0L, null, null),

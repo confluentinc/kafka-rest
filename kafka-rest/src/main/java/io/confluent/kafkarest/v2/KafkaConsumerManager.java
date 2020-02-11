@@ -25,6 +25,9 @@ import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.RestConfigUtils;
 import io.confluent.kafkarest.Time;
+import io.confluent.kafkarest.converters.AvroConverter;
+import io.confluent.kafkarest.converters.JsonSchemaConverter;
+import io.confluent.kafkarest.converters.ProtobufConverter;
 import io.confluent.kafkarest.entities.ConsumerAssignmentRequest;
 import io.confluent.kafkarest.entities.ConsumerAssignmentResponse;
 import io.confluent.kafkarest.entities.ConsumerCommittedRequest;
@@ -227,6 +230,18 @@ public class KafkaConsumerManager {
           props.put("key.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
           props.put("value.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
           break;
+        case JSONSCHEMA:
+          props.put("key.deserializer",
+              "io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer");
+          props.put("value.deserializer",
+              "io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer");
+          break;
+        case PROTOBUF:
+          props.put("key.deserializer",
+              "io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer");
+          props.put("value.deserializer",
+              "io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer");
+          break;
         case JSON:
         case BINARY:
         default:
@@ -276,9 +291,13 @@ public class KafkaConsumerManager {
       case BINARY:
         return new BinaryKafkaConsumerState(newConfig, cid, consumer);
       case AVRO:
-        return new AvroKafkaConsumerState(newConfig, cid, consumer);
+        return new SchemaKafkaConsumerState(newConfig, cid, consumer, new AvroConverter());
       case JSON:
         return new JsonKafkaConsumerState(newConfig, cid, consumer);
+      case JSONSCHEMA:
+        return new SchemaKafkaConsumerState(newConfig, cid, consumer, new JsonSchemaConverter());
+      case PROTOBUF:
+        return new SchemaKafkaConsumerState(newConfig, cid, consumer, new ProtobufConverter());
       default:
         throw new RestServerErrorException(
                 String.format("Invalid embedded format %s for new consumer.",

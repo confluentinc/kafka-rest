@@ -40,7 +40,7 @@ import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.AvroTopicProduceRecord;
+import io.confluent.kafkarest.entities.SchemaTopicProduceRecord;
 import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.JsonTopicProduceRecord;
@@ -116,24 +116,37 @@ public class TopicsResource {
   public void produceAvro(
       final @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid @NotNull TopicProduceRequest<AvroTopicProduceRecord> request
+      @Valid @NotNull TopicProduceRequest<SchemaTopicProduceRecord> request
   ) {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
-    boolean hasKeys = false;
-    boolean hasValues = false;
-    for (AvroTopicProduceRecord rec : request.getRecords()) {
-      hasKeys = hasKeys || !rec.getJsonKey().isNull();
-      hasValues = hasValues || !rec.getJsonValue().isNull();
-    }
-    if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
-      throw Errors.keySchemaMissingException();
-    }
-    if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
-      throw Errors.valueSchemaMissingException();
-    }
+    produceSchema(asyncResponse, topicName, request, EmbeddedFormat.AVRO);
+  }
 
-    produce(asyncResponse, topicName, EmbeddedFormat.AVRO, request);
+  @POST
+  @Path("/{topic}")
+  @PerformanceMetric("topic.produce-jsonschema")
+  @Consumes({Versions.KAFKA_V2_JSON_JSON_SCHEMA})
+  public void produceJsonSchema(
+      final @Suspended AsyncResponse asyncResponse,
+      @PathParam("topic") String topicName,
+      @Valid @NotNull TopicProduceRequest<SchemaTopicProduceRecord> request
+  ) {
+    produceSchema(asyncResponse, topicName, request, EmbeddedFormat.JSONSCHEMA);
+  }
+
+  @POST
+  @Path("/{topic}")
+  @PerformanceMetric("topic.produce-protobuf")
+  @Consumes({Versions.KAFKA_V2_JSON_PROTOBUF})
+  public void produceProtobuf(
+      final @Suspended AsyncResponse asyncResponse,
+      @PathParam("topic") String topicName,
+      @Valid @NotNull TopicProduceRequest<SchemaTopicProduceRecord> request
+  ) {
+    // Validations we can't do generically since they depend on the data format -- schemas need to
+    // be available if there are any non-null entries
+    produceSchema(asyncResponse, topicName, request, EmbeddedFormat.PROTOBUF);
   }
 
   public <K, V, R extends TopicProduceRecord<K, V>> void produce(
@@ -182,4 +195,27 @@ public class TopicsResource {
     );
   }
 
+  private void produceSchema(
+          @Suspended AsyncResponse asyncResponse,
+          @PathParam("topic") String topicName,
+          @Valid @NotNull TopicProduceRequest<SchemaTopicProduceRecord> request,
+          EmbeddedFormat jsonschema
+  ) {
+    // Validations we can't do generically since they depend on the data format -- schemas need to
+    // be available if there are any non-null entries
+    boolean hasKeys = false;
+    boolean hasValues = false;
+    for (SchemaTopicProduceRecord rec : request.getRecords()) {
+      hasKeys = hasKeys || !rec.getJsonKey().isNull();
+      hasValues = hasValues || !rec.getJsonValue().isNull();
+    }
+    if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
+      throw Errors.keySchemaMissingException();
+    }
+    if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
+      throw Errors.valueSchemaMissingException();
+    }
+
+    produce(asyncResponse, topicName, jsonschema, request);
+  }
 }
