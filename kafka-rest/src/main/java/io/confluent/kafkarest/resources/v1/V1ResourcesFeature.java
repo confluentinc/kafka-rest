@@ -30,6 +30,7 @@ public final class V1ResourcesFeature implements Feature {
   @Override
   public boolean configure(FeatureContext configurable) {
     configurable.register(new BrokersResource(context));
+    configurable.register(new ConsumersResource(context));
     return true;
   }
 }

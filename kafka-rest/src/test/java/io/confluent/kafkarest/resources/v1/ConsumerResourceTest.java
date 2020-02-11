@@ -12,21 +12,7 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package io.confluent.kafkarest.unit;
-
-import org.easymock.EasyMock;
-import org.junit.Test;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
-
-import io.confluent.kafkarest.BinaryConsumerState;
-import io.confluent.kafkarest.TestUtils;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
-import io.confluent.rest.RestConfigException;
-import io.confluent.rest.exceptions.RestNotFoundException;
+package io.confluent.kafkarest.resources.v1;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
@@ -35,6 +21,18 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+
+import io.confluent.kafkarest.BinaryConsumerState;
+import io.confluent.kafkarest.TestUtils;
+import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
+import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
+import io.confluent.rest.RestConfigException;
+import io.confluent.rest.exceptions.RestNotFoundException;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+import org.easymock.EasyMock;
+import org.junit.Test;
 
 // This test evaluates non-consume functionality for ConsumerResource, exercising functionality
 // that isn't really dependent on the EmbeddedFormat, e.g. invalid requests, commit offsets,

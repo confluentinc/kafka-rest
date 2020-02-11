@@ -13,7 +13,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.resources;
+package io.confluent.kafkarest.resources.v1;
 
 import java.util.List;
 
