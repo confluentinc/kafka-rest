@@ -16,7 +16,6 @@
 package io.confluent.kafkarest;
 
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
-import org.apache.avro.SchemaParseException;
 import org.apache.kafka.common.config.ConfigException;
 
 import javax.ws.rs.core.Response;
@@ -144,13 +143,13 @@ public class Errors {
 
   }
 
-  public static final String JSON_AVRO_CONVERSION_MESSAGE = "Conversion of JSON to Avro failed: ";
-  public static final int JSON_AVRO_CONVERSION_ERROR_CODE = 42203;
+  public static final String JSON_CONVERSION_MESSAGE = "Conversion of JSON to Object failed: ";
+  public static final int JSON_CONVERSION_ERROR_CODE = 42203;
 
-  public static RestConstraintViolationException jsonAvroConversionException(Throwable t) {
+  public static RestConstraintViolationException jsonConversionException(Throwable t) {
     return new RestConstraintViolationException(
-        JSON_AVRO_CONVERSION_MESSAGE + t.getMessage(),
-        JSON_AVRO_CONVERSION_ERROR_CODE
+        JSON_CONVERSION_MESSAGE + t.getMessage(),
+        JSON_CONVERSION_ERROR_CODE
     );
 
   }
@@ -184,10 +183,10 @@ public class Errors {
   public static final int INVALID_SCHEMA_ERROR_CODE = 42205;
 
   public static RestConstraintViolationException invalidSchemaException(
-      SchemaParseException e
+      String schema
   ) {
     return new RestConstraintViolationException(
-        INVALID_SCHEMA_MESSAGE + e.getMessage(),
+        INVALID_SCHEMA_MESSAGE + schema,
         INVALID_SCHEMA_ERROR_CODE
     );
   }

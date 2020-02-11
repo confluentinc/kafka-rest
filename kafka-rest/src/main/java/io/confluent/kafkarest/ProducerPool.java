@@ -15,6 +15,14 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
+import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
+import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
+import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer;
+import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializer;
+import io.confluent.kafkarest.converters.AvroConverter;
+import io.confluent.kafkarest.converters.JsonSchemaConverter;
+import io.confluent.kafkarest.converters.ProtobufConverter;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -71,8 +79,16 @@ public class ProducerPool {
     producers.put(EmbeddedFormat.JSON, buildJsonProducer(jsonProps));
 
     Map<String, Object> avroProps =
-        buildAvroConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
+        buildSchemaConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
     producers.put(EmbeddedFormat.AVRO, buildAvroProducer(avroProps));
+
+    Map<String, Object> jsonSchemaProps =
+        buildSchemaConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
+    producers.put(EmbeddedFormat.JSONSCHEMA, buildJsonSchemaProducer(jsonSchemaProps));
+
+    Map<String, Object> protobufProps =
+        buildSchemaConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
+    producers.put(EmbeddedFormat.PROTOBUF, buildProtobufProducer(protobufProps));
   }
 
   private Map<String, Object> buildStandardConfig(
@@ -110,30 +126,53 @@ public class ProducerPool {
     return new NoSchemaRestProducer<K, V>(producer);
   }
 
-  private Map<String, Object> buildAvroConfig(
+  private Map<String, Object> buildSchemaConfig(
       KafkaRestConfig appConfig,
       String bootstrapBrokers,
       Properties producerConfigOverrides
   ) {
-    Map<String, Object> avroDefaults = new HashMap<String, Object>();
-    avroDefaults.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
-    avroDefaults.put(
+    Map<String, Object> schemaDefaults = new HashMap<String, Object>();
+    schemaDefaults.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
+    schemaDefaults.put(
         "schema.registry.url",
         appConfig.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG)
     );
 
     Properties producerProps = (Properties) appConfig.getProducerProperties();
-    return buildConfig(avroDefaults, producerProps, producerConfigOverrides);
+    return buildConfig(schemaDefaults, producerProps, producerConfigOverrides);
   }
 
-  private AvroRestProducer buildAvroProducer(Map<String, Object> avroProps) {
-    final KafkaAvroSerializer avroKeySerializer = new KafkaAvroSerializer();
-    avroKeySerializer.configure(avroProps, true);
-    final KafkaAvroSerializer avroValueSerializer = new KafkaAvroSerializer();
-    avroValueSerializer.configure(avroProps, false);
-    KafkaProducer<Object, Object> avroProducer
-        = new KafkaProducer<Object, Object>(avroProps, avroKeySerializer, avroValueSerializer);
-    return new AvroRestProducer(avroProducer, avroKeySerializer, avroValueSerializer);
+  private SchemaRestProducer buildAvroProducer(Map<String, Object> props) {
+    final KafkaAvroSerializer keySerializer = new KafkaAvroSerializer();
+    keySerializer.configure(props, true);
+    final KafkaAvroSerializer valueSerializer = new KafkaAvroSerializer();
+    valueSerializer.configure(props, false);
+    KafkaProducer<Object, Object> producer
+        = new KafkaProducer<Object, Object>(props, keySerializer, valueSerializer);
+    return new SchemaRestProducer(producer, keySerializer, valueSerializer,
+        new AvroSchemaProvider(), new AvroConverter());
+  }
+
+  private SchemaRestProducer buildJsonSchemaProducer(Map<String, Object> props) {
+    final KafkaJsonSchemaSerializer keySerializer = new KafkaJsonSchemaSerializer();
+    keySerializer.configure(props, true);
+    final KafkaJsonSchemaSerializer valueSerializer = new KafkaJsonSchemaSerializer();
+    valueSerializer.configure(props, false);
+    KafkaProducer<Object, Object> producer
+        = new KafkaProducer<Object, Object>(props, keySerializer, valueSerializer);
+    return new SchemaRestProducer(producer, keySerializer, valueSerializer,
+        new JsonSchemaProvider(), new JsonSchemaConverter());
+  }
+
+  private SchemaRestProducer buildProtobufProducer(Map<String, Object> props) {
+    final KafkaProtobufSerializer keySerializer = new KafkaProtobufSerializer();
+    keySerializer.configure(props, true);
+    final KafkaProtobufSerializer valueSerializer = new KafkaProtobufSerializer();
+    valueSerializer.configure(props, false);
+    KafkaProducer<Object, Object> producer
+        = new KafkaProducer<Object, Object>(props, keySerializer, valueSerializer);
+    return new SchemaRestProducer(producer, keySerializer, valueSerializer,
+        new ProtobufSchemaProvider(), new ProtobufConverter());
   }
 
   private Map<String, Object> buildConfig(

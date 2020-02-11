@@ -31,5 +31,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 public enum EmbeddedFormat {
   BINARY,
   AVRO,
-  JSON
+  JSON,
+  JSONSCHEMA,
+  PROTOBUF
 }

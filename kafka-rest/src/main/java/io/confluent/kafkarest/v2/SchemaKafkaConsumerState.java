@@ -19,31 +19,37 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.converters.AvroConverter;
-import io.confluent.kafkarest.entities.AvroConsumerRecord;
+import io.confluent.kafkarest.converters.SchemaConverter;
+import io.confluent.kafkarest.entities.SchemaConsumerRecord;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 /**
- * Avro implementation of KafkaConsumerState, which decodes into GenericRecords or primitive types.
+ * Schema-specific implementation of KafkaConsumerState, which decodes
+ * into Objects or primitive types.
  */
-public class AvroKafkaConsumerState extends KafkaConsumerState<Object, Object, JsonNode, JsonNode> {
+public final class SchemaKafkaConsumerState
+    extends KafkaConsumerState<Object, Object, JsonNode, JsonNode> {
 
-  public AvroKafkaConsumerState(KafkaRestConfig config,
+  private final SchemaConverter schemaConverter;
+
+  public SchemaKafkaConsumerState(KafkaRestConfig config,
       ConsumerInstanceId instanceId,
-      Consumer consumer) {
+      Consumer consumer,
+      SchemaConverter schemaConverter) {
     super(config, instanceId, consumer);
+    this.schemaConverter = schemaConverter;
   }
 
   @Override
   public ConsumerRecordAndSize<JsonNode, JsonNode> createConsumerRecord(
       ConsumerRecord<Object, Object> record) {
-    AvroConverter.JsonNodeAndSize keyNode = AvroConverter.toJson(record.key());
-    AvroConverter.JsonNodeAndSize valueNode = AvroConverter.toJson(record.value());
+    SchemaConverter.JsonNodeAndSize keyNode = schemaConverter.toJson(record.key());
+    SchemaConverter.JsonNodeAndSize valueNode = schemaConverter.toJson(record.value());
     return new ConsumerRecordAndSize<JsonNode, JsonNode>(
-        new AvroConsumerRecord(record.topic(), keyNode.json, valueNode.json, record.partition(),
-            record.offset()),
-        keyNode.size + valueNode.size
+        new SchemaConsumerRecord(record.topic(), keyNode.getJson(),
+                valueNode.getJson(), record.partition(), record.offset()),
+        keyNode.getSize() + valueNode.getSize()
     );
   }
 }

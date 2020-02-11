@@ -21,7 +21,7 @@ import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Utils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.AvroProduceRecord;
+import io.confluent.kafkarest.entities.SchemaProduceRecord;
 import io.confluent.kafkarest.entities.BinaryProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.JsonProduceRecord;
@@ -49,7 +49,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Path("/topics/{topic}/partitions")
-@Produces({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED_LOW, Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW,
+@Produces({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED_LOW,
+           Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW,
+           Versions.KAFKA_V2_JSON_JSON_SCHEMA_WEIGHTED_LOW,
+           Versions.KAFKA_V2_JSON_PROTOBUF_WEIGHTED_LOW,
            Versions.KAFKA_V2_JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V2_JSON})
 public final class PartitionsResource {
@@ -118,24 +121,39 @@ public final class PartitionsResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("topic") String topic,
       final @PathParam("partition") int partition,
-      @Valid @NotNull PartitionProduceRequest<AvroProduceRecord> request
+      @Valid @NotNull PartitionProduceRequest<SchemaProduceRecord> request
+  )  throws Exception {
+    produceSchema(asyncResponse, topic, partition, request, EmbeddedFormat.AVRO);
+  }
+
+  @POST
+  @Path("/{partition}")
+  @PerformanceMetric("partition.produce-jsonschema+v2")
+  @Consumes({Versions.KAFKA_V2_JSON_JSON_SCHEMA})
+  public void produceJsonSchema(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("topic") String topic,
+      final @PathParam("partition") int partition,
+      @Valid @NotNull PartitionProduceRequest<SchemaProduceRecord> request
   )  throws Exception {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
-    boolean hasKeys = false;
-    boolean hasValues = false;
-    for (AvroProduceRecord rec : request.getRecords()) {
-      hasKeys = hasKeys || !rec.getJsonKey().isNull();
-      hasValues = hasValues || !rec.getJsonValue().isNull();
-    }
-    if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
-      throw Errors.keySchemaMissingException();
-    }
-    if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
-      throw Errors.valueSchemaMissingException();
-    }
+    produceSchema(asyncResponse, topic, partition, request, EmbeddedFormat.JSONSCHEMA);
+  }
 
-    produce(asyncResponse, topic, partition, EmbeddedFormat.AVRO, request);
+  @POST
+  @Path("/{partition}")
+  @PerformanceMetric("partition.produce-protobuf+v2")
+  @Consumes({Versions.KAFKA_V2_JSON_PROTOBUF})
+  public void produceProtobuf(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("topic") String topic,
+      final @PathParam("partition") int partition,
+      @Valid @NotNull PartitionProduceRequest<SchemaProduceRecord> request
+  )  throws Exception {
+    // Validations we can't do generically since they depend on the data format -- schemas need to
+    // be available if there are any non-null entries
+    produceSchema(asyncResponse, topic, partition, request, EmbeddedFormat.PROTOBUF);
   }
 
   protected <K, V, R extends ProduceRecord<K, V>> void produce(
@@ -195,6 +213,31 @@ public final class PartitionsResource {
           }
         }
     );
+  }
+
+  private void produceSchema(
+      @Suspended AsyncResponse asyncResponse,
+      @PathParam("topic") String topic,
+      @PathParam("partition") int partition,
+      @Valid @NotNull PartitionProduceRequest<SchemaProduceRecord> request,
+      EmbeddedFormat avro
+  ) throws Exception {
+    // Validations we can't do generically since they depend on the data format -- schemas need to
+    // be available if there are any non-null entries
+    boolean hasKeys = false;
+    boolean hasValues = false;
+    for (SchemaProduceRecord rec : request.getRecords()) {
+      hasKeys = hasKeys || !rec.getJsonKey().isNull();
+      hasValues = hasValues || !rec.getJsonValue().isNull();
+    }
+    if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
+      throw Errors.keySchemaMissingException();
+    }
+    if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
+      throw Errors.valueSchemaMissingException();
+    }
+
+    produce(asyncResponse, topic, partition, avro, request);
   }
 
   /**

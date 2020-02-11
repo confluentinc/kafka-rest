@@ -50,7 +50,7 @@ import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.ConsumerSubscriptionResponse;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.kafkarest.v2.AvroKafkaConsumerState;
+import io.confluent.kafkarest.v2.SchemaKafkaConsumerState;
 import io.confluent.kafkarest.v2.BinaryKafkaConsumerState;
 import io.confluent.kafkarest.v2.JsonKafkaConsumerState;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
@@ -65,6 +65,8 @@ import io.confluent.rest.annotations.PerformanceMetric;
         Versions.KAFKA_V2_JSON_BINARY_WEIGHTED_LOW,
         Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW,
         Versions.KAFKA_V2_JSON_JSON_WEIGHTED_LOW,
+        Versions.KAFKA_V2_JSON_JSON_SCHEMA_WEIGHTED_LOW,
+        Versions.KAFKA_V2_JSON_PROTOBUF_WEIGHTED_LOW,
         Versions.KAFKA_V2_JSON_WEIGHTED
     })
 @Consumes(
@@ -72,6 +74,8 @@ import io.confluent.rest.annotations.PerformanceMetric;
         Versions.KAFKA_V2_JSON_BINARY,
         Versions.KAFKA_V2_JSON_AVRO,
         Versions.KAFKA_V2_JSON_JSON,
+        Versions.KAFKA_V2_JSON_JSON_SCHEMA,
+        Versions.KAFKA_V2_JSON_PROTOBUF,
         Versions.KAFKA_V2_JSON
     })
 public class ConsumersResource {
@@ -167,7 +171,7 @@ public class ConsumersResource {
   @GET
   @Path("/{group}/instances/{instance}/records")
   @PerformanceMetric("consumer.records.read-json+v2")
-  @Produces({Versions.KAFKA_V2_JSON_JSON_WEIGHTED_LOW})
+  @Produces({Versions.KAFKA_V2_JSON_JSON_WEIGHTED})
   // Using low weight ensures binary is default
   public void readRecordJson(
       final @Suspended AsyncResponse asyncResponse,
@@ -182,7 +186,7 @@ public class ConsumersResource {
   @GET
   @Path("/{group}/instances/{instance}/records")
   @PerformanceMetric("consumer.records.read-avro+v2")
-  @Produces({Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW})
+  @Produces({Versions.KAFKA_V2_JSON_AVRO_WEIGHTED})
   // Using low weight ensures binary is default
   public void readRecordAvro(
       final @Suspended AsyncResponse asyncResponse,
@@ -191,7 +195,37 @@ public class ConsumersResource {
       @QueryParam("timeout") @DefaultValue("-1") long timeout,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
-    readRecords(asyncResponse, group, instance, timeout, maxBytes, AvroKafkaConsumerState.class);
+    readRecords(asyncResponse, group, instance, timeout, maxBytes, SchemaKafkaConsumerState.class);
+  }
+
+  @GET
+  @Path("/{group}/instances/{instance}/records")
+  @PerformanceMetric("consumer.records.read-jsonschema+v2")
+  @Produces({Versions.KAFKA_V2_JSON_JSON_SCHEMA_WEIGHTED})
+  // Using low weight ensures binary is default
+  public void readRecordJsonSchema(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      @QueryParam("timeout") @DefaultValue("-1") long timeout,
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
+  ) {
+    readRecords(asyncResponse, group, instance, timeout, maxBytes, SchemaKafkaConsumerState.class);
+  }
+
+  @GET
+  @Path("/{group}/instances/{instance}/records")
+  @PerformanceMetric("consumer.records.read-protobuf+v2")
+  @Produces({Versions.KAFKA_V2_JSON_PROTOBUF_WEIGHTED})
+  // Using low weight ensures binary is default
+  public void readRecordProtobuf(
+      final @Suspended AsyncResponse asyncResponse,
+      final @PathParam("group") String group,
+      final @PathParam("instance") String instance,
+      @QueryParam("timeout") @DefaultValue("-1") long timeout,
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
+  ) {
+    readRecords(asyncResponse, group, instance, timeout, maxBytes, SchemaKafkaConsumerState.class);
   }
 
   @POST

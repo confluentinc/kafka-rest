@@ -15,32 +15,41 @@
 
 package io.confluent.kafkarest.entities;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class AvroProduceRecord extends ProduceRecordBase<JsonNode, JsonNode> {
+import javax.validation.constraints.Min;
 
-  @JsonCreator
-  public AvroProduceRecord(
+public class SchemaTopicProduceRecord extends SchemaProduceRecord
+    implements TopicProduceRecord<JsonNode, JsonNode> {
+
+  // When producing to a topic, a partition may be explicitly requested.
+  @Min(0)
+  protected Integer partition;
+
+  public SchemaTopicProduceRecord(
       @JsonProperty("key") JsonNode key,
-      @JsonProperty("value") JsonNode value
+      @JsonProperty("value") JsonNode value,
+      @JsonProperty("partition") Integer partition
   ) {
     super(key, value);
-  }
-
-  public AvroProduceRecord(JsonNode value) {
-    this(null, value);
+    this.partition = partition;
   }
 
   @Override
-  public JsonNode getJsonKey() {
-    return key;
+  public Integer partition() {
+    return partition;
   }
 
   @Override
-  public JsonNode getJsonValue() {
-    return value;
+  @JsonProperty
+  public Integer getPartition() {
+    return partition;
+  }
+
+  @JsonProperty
+  public void setPartition(Integer partition) {
+    this.partition = partition;
   }
 
   @Override
@@ -51,13 +60,13 @@ public class AvroProduceRecord extends ProduceRecordBase<JsonNode, JsonNode> {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
-    AvroProduceRecord that = (AvroProduceRecord) o;
-
-    if (key != null ? !key.equals(that.key) : that.key != null) {
+    if (!super.equals(o)) {
       return false;
     }
-    if (value != null ? !value.equals(that.value) : that.value != null) {
+
+    SchemaTopicProduceRecord that = (SchemaTopicProduceRecord) o;
+
+    if (partition != null ? !partition.equals(that.partition) : that.partition != null) {
       return false;
     }
 
@@ -66,8 +75,8 @@ public class AvroProduceRecord extends ProduceRecordBase<JsonNode, JsonNode> {
 
   @Override
   public int hashCode() {
-    int result = key != null ? key.hashCode() : 0;
-    result = 31 * result + (value != null ? value.hashCode() : 0);
+    int result = super.hashCode();
+    result = 31 * result + (partition != null ? partition.hashCode() : 0);
     return result;
   }
 }

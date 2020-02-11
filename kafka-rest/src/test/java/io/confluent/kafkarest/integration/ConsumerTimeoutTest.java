@@ -14,19 +14,13 @@
  */
 package io.confluent.kafkarest.integration;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.List;
-import java.util.Properties;
-
-import javax.ws.rs.core.GenericType;
-
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import kafka.utils.TestUtils;
-import scala.collection.JavaConversions;
+import java.util.List;
+import javax.ws.rs.core.GenericType;
+import org.junit.Before;
+import org.junit.Test;
 
 public class ConsumerTimeoutTest extends AbstractConsumerTest {
 
@@ -47,8 +41,7 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
     super.setUp();
     final int numPartitions = 3;
     final int replicationFactor = 1;
-    TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-                          JavaConversions.asScalaBuffer(this.servers), new Properties());
+    createTopic(topicName, numPartitions, (short) replicationFactor);
   }
 
   @Test
