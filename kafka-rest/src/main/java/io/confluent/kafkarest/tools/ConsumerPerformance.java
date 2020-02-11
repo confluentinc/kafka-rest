@@ -31,8 +31,8 @@ import io.confluent.common.utils.PerformanceStats;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
-import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
-import io.confluent.kafkarest.entities.ConsumerSubscriptionResponse;
+import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
+import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionResponse;
 import io.confluent.rest.entities.ErrorMessage;
 
 public class ConsumerPerformance extends AbstractPerformanceTest {

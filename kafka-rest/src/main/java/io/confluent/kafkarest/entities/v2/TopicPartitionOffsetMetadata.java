@@ -13,26 +13,32 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.entities;
+package io.confluent.kafkarest.entities.v2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import java.util.Objects;
+import javax.validation.constraints.Min;
 import org.hibernate.validator.constraints.NotEmpty;
 
-import javax.validation.constraints.Min;
-
-public class TopicPartition {
+public class TopicPartitionOffsetMetadata {
 
   @NotEmpty
   private String topic;
   @Min(0)
   private int partition;
-    
-  public TopicPartition(
-      @JsonProperty("topic") String topic, @JsonProperty("partition") int partition
+  @Min(0)
+  private long offset;
+
+  private String metadata;
+
+  public TopicPartitionOffsetMetadata(
+      @JsonProperty("topic") String topic, @JsonProperty("partition") int partition,
+      @JsonProperty("offset") long offset, @JsonProperty("metadata") String metadata
   ) {
     this.topic = topic;
     this.partition = partition;
+    this.offset = offset;
+    this.metadata = metadata;
   }
 
   @JsonProperty
@@ -55,6 +61,26 @@ public class TopicPartition {
     this.partition = partition;
   }
 
+  @JsonProperty
+  public long getOffset() {
+    return offset;
+  }
+
+  @JsonProperty
+  public void setOffset(long offset) {
+    this.offset = offset;
+  }
+
+  @JsonProperty
+  public String getMetadata() {
+    return metadata;
+  }
+
+  @JsonProperty
+  public void setMetadata(String metadata) {
+    this.metadata = metadata;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -64,8 +90,14 @@ public class TopicPartition {
       return false;
     }
 
-    TopicPartition that = (TopicPartition) o;
+    TopicPartitionOffsetMetadata that = (TopicPartitionOffsetMetadata) o;
 
+    if (offset != that.offset) {
+      return false;
+    }
+    if (!Objects.equals(metadata, that.metadata)) {
+      return false;
+    }
     if (partition != that.partition) {
       return false;
     }
@@ -80,6 +112,7 @@ public class TopicPartition {
   public int hashCode() {
     int result = topic != null ? topic.hashCode() : 0;
     result = 31 * result + partition;
+    result = 31 * result + (int) (offset ^ (offset >>> 32));
     return result;
   }
 }

@@ -13,13 +13,12 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.entities;
+package io.confluent.kafkarest.entities.v2;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
-
 import java.util.List;
 
 public class ConsumerSubscriptionRecord {

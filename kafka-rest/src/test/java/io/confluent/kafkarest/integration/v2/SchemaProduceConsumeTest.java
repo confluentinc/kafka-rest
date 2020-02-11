@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
+import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.SchemaConsumerRecord;

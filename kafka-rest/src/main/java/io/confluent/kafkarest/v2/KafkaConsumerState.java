@@ -21,15 +21,15 @@ import static java.util.Collections.singletonMap;
 import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.entities.ConsumerAssignmentRequest;
-import io.confluent.kafkarest.entities.ConsumerCommittedRequest;
-import io.confluent.kafkarest.entities.ConsumerCommittedResponse;
-import io.confluent.kafkarest.entities.ConsumerOffsetCommitRequest;
-import io.confluent.kafkarest.entities.ConsumerSeekToOffsetRequest;
-import io.confluent.kafkarest.entities.ConsumerSeekToRequest;
-import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
+import io.confluent.kafkarest.entities.v2.ConsumerAssignmentRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerCommittedRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerCommittedResponse;
+import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerSeekToOffsetRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerSeekToRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.kafkarest.entities.TopicPartitionOffsetMetadata;
+import io.confluent.kafkarest.entities.v2.TopicPartitionOffsetMetadata;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -148,7 +148,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       if (seekToRequest != null) {
         Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
 
-        for (io.confluent.kafkarest.entities.TopicPartition t : seekToRequest.partitions) {
+        for (io.confluent.kafkarest.entities.v2.TopicPartition t : seekToRequest.partitions) {
           topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
         }
         consumer.seekToBeginning(topicPartitions);
@@ -167,7 +167,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       if (seekToRequest != null) {
         Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
 
-        for (io.confluent.kafkarest.entities.TopicPartition t : seekToRequest.partitions) {
+        for (io.confluent.kafkarest.entities.v2.TopicPartition t : seekToRequest.partitions) {
           topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
         }
         consumer.seekToEnd(topicPartitions);
@@ -204,7 +204,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       if (assignmentRequest != null) {
         Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
 
-        for (io.confluent.kafkarest.entities.TopicPartition t : assignmentRequest.partitions) {
+        for (io.confluent.kafkarest.entities.v2.TopicPartition t : assignmentRequest.partitions) {
           topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
         }
         consumer.assign(topicPartitions);
@@ -313,7 +313,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     lock.lock();
     try {
       if (consumer != null) {
-        for (io.confluent.kafkarest.entities.TopicPartition t : request.partitions) {
+        for (io.confluent.kafkarest.entities.v2.TopicPartition t : request.partitions) {
           TopicPartition partition = new TopicPartition(t.getTopic(), t.getPartition());
           OffsetAndMetadata offsetMetadata = consumer.committed(partition);
           if (offsetMetadata != null) {

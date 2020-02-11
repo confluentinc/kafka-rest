@@ -30,7 +30,7 @@ import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.TopicPartitionOffsetResponse;
+import io.confluent.kafkarest.entities.v2.TopicPartitionOffsetResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.List;
 import java.util.Vector;

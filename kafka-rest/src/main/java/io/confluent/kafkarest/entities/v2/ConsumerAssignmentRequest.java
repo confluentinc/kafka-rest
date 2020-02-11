@@ -13,22 +13,14 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.entities;
+package io.confluent.kafkarest.entities.v2;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 
-public class ConsumerOffsetCommitRequest {
-
-  @JsonCreator
-  public ConsumerOffsetCommitRequest(@JsonProperty("offsets") List<TopicPartitionOffsetMetadata>
-      offsets) {
-    this.offsets = offsets;
-  }
+public class ConsumerAssignmentRequest {
 
   @JsonProperty
-  public List<TopicPartitionOffsetMetadata> offsets;
+  public List<TopicPartition> partitions;
 
 }

@@ -13,15 +13,13 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.entities;
+package io.confluent.kafkarest.entities.v2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 
-public class ConsumerCommittedRequest {
+public class ConsumerSubscriptionResponse {
 
   @JsonProperty
-  public List<TopicPartition> partitions;
-
+  public List<String> topics;
 }
