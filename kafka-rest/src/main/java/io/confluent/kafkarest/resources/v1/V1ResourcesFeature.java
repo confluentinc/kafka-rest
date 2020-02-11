@@ -32,6 +32,7 @@ public final class V1ResourcesFeature implements Feature {
     configurable.register(new BrokersResource(context));
     configurable.register(new ConsumersResource(context));
     configurable.register(new PartitionsResource(context));
+    configurable.register(new RootResource());
     return true;
   }
 }
