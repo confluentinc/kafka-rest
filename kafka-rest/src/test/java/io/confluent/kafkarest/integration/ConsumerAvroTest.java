@@ -15,27 +15,22 @@
 
 package io.confluent.kafkarest.integration;
 
+import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.converters.AvroConverter;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.Partition;
+import io.confluent.kafkarest.entities.PartitionReplica;
+import io.confluent.kafkarest.entities.SchemaConsumerRecord;
+import io.confluent.kafkarest.entities.Topic;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+import javax.ws.rs.core.GenericType;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-
-import javax.ws.rs.core.GenericType;
-
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.converters.AvroConverter;
-import io.confluent.kafkarest.entities.AvroConsumerRecord;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.Partition;
-import io.confluent.kafkarest.entities.PartitionReplica;
-import io.confluent.kafkarest.entities.Topic;
-import kafka.utils.TestUtils;
-import scala.collection.JavaConversions;
 
 public class ConsumerAvroTest extends AbstractConsumerTest {
 
@@ -80,13 +75,13 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
           new GenericRecordBuilder(valueSchema).set("field", 75).build())
   );
 
-  private static final GenericType<List<AvroConsumerRecord>> avroConsumerRecordType
-      = new GenericType<List<AvroConsumerRecord>>() {
+  private static final GenericType<List<SchemaConsumerRecord>> avroConsumerRecordType
+      = new GenericType<List<SchemaConsumerRecord>>() {
   };
   private static final Converter converter = new Converter() {
     @Override
     public Object convert(Object obj) {
-      return AvroConverter.toJson(obj).json;
+      return new AvroConverter().toJson(obj).getJson();
     }
   };
 
@@ -99,8 +94,7 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
     super.setUp();
     final int numPartitions = 3;
     final int replicationFactor = 1;
-    TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-                          JavaConversions.asScalaBuffer(this.servers), new Properties());
+    createTopic(topicName, numPartitions, (short) replicationFactor);
   }
 
   @Test

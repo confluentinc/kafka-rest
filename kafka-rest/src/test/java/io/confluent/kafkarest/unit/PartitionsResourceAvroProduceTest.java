@@ -27,7 +27,7 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.TestUtils;
-import io.confluent.kafkarest.entities.AvroProduceRecord;
+import io.confluent.kafkarest.entities.SchemaProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.PartitionProduceRequest;
@@ -64,7 +64,7 @@ public class PartitionsResourceAvroProduceTest
 
   private final String topicName = "topic1";
 
-  private List<AvroProduceRecord> produceRecordsWithKeys;
+  private List<SchemaProduceRecord> produceRecordsWithKeys;
   private List<RecordMetadataOrException> produceResults;
   private final List<PartitionOffset> offsetResults;
 
@@ -92,8 +92,8 @@ public class PartitionsResourceAvroProduceTest
     addResource(InstantConverterProvider.class);
 
     produceRecordsWithKeys = Arrays.asList(
-        new AvroProduceRecord(TestUtils.jsonTree("1"), TestUtils.jsonTree("{\"field\":42}")),
-        new AvroProduceRecord(TestUtils.jsonTree("2"), TestUtils.jsonTree("{\"field\":84}"))
+        new SchemaProduceRecord(TestUtils.jsonTree("1"), TestUtils.jsonTree("{\"field\":42}")),
+        new SchemaProduceRecord(TestUtils.jsonTree("2"), TestUtils.jsonTree("{\"field\":84}"))
     );
     TopicPartition tp0 = new TopicPartition(topicName, 0);
     produceResults = Arrays.asList(

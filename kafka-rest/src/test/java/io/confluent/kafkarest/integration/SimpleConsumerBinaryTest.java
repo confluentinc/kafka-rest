@@ -14,23 +14,19 @@
  */
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
+
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.BinaryConsumerRecord;
-import kafka.utils.TestUtils;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.junit.Before;
-import org.junit.Test;
-import scala.collection.JavaConversions;
-
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
-
-import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.junit.Before;
+import org.junit.Test;
 
 public class SimpleConsumerBinaryTest extends AbstractConsumerTest {
 
@@ -60,8 +56,7 @@ public class SimpleConsumerBinaryTest extends AbstractConsumerTest {
     super.setUp();
     final int numPartitions = 1;
     final int replicationFactor = 1;
-    TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-                          JavaConversions.asScalaBuffer(this.servers), new Properties());
+    createTopic(topicName, numPartitions, (short) replicationFactor);
   }
 
   @Test
