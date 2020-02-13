@@ -17,7 +17,14 @@ package io.confluent.kafkarest.tools;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import io.confluent.common.utils.AbstractPerformanceTest;
+import io.confluent.common.utils.PerformanceStats;
+import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
+import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
+import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionResponse;
+import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
+import io.confluent.rest.entities.ErrorMessage;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -25,15 +32,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-
-import io.confluent.common.utils.AbstractPerformanceTest;
-import io.confluent.common.utils.PerformanceStats;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
-import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
-import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionResponse;
-import io.confluent.rest.entities.ErrorMessage;
 
 public class ConsumerPerformance extends AbstractPerformanceTest {
 

@@ -26,11 +26,11 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
-import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.v1.BinaryPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest;
 import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
+import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceResponse;
+import io.confluent.kafkarest.entities.v1.PartitionOffset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -143,7 +143,7 @@ public class AuthorizationErrorTest
 
   private void verifySubscribeToTopic(boolean expectFailure) {
     Response createResponse = createConsumerInstance(CONSUMER_GROUP);
-    assertOKResponse(createResponse, Versions.KAFKA_V2_JSON);
+    assertOKResponse(createResponse, Versions.KAFKA_V1_JSON);
 
     //create group
     CreateConsumerInstanceResponse instanceResponse =
@@ -156,19 +156,19 @@ public class AuthorizationErrorTest
 
     //subscribe to group
     request(instanceResponse.getBaseUri() + "/subscription")
-        .post(Entity.entity(topicJson, Versions.KAFKA_V2_JSON_JSON));
+        .post(Entity.entity(topicJson, Versions.KAFKA_V1_JSON_JSON));
 
     //poll some records
     Response response = request(instanceResponse.getBaseUri() + "/records")
-        .accept(Versions.KAFKA_V2_JSON).get();
+        .accept(Versions.KAFKA_V1_JSON).get();
 
     if (expectFailure) {
       assertErrorResponse(Response.Status.FORBIDDEN, response,
           Errors.KAFKA_AUTHORIZATION_ERROR_CODE,
           "Not authorized to access topics",
-          Versions.KAFKA_V2_JSON);
+          Versions.KAFKA_V1_JSON);
     } else {
-      assertOKResponse(response, Versions.KAFKA_V2_JSON);
+      assertOKResponse(response, Versions.KAFKA_V1_JSON);
     }
   }
 
@@ -177,7 +177,7 @@ public class AuthorizationErrorTest
         null, null, null, null);
 
     return request("/consumers/" + groupName)
-        .post(Entity.entity(config, Versions.KAFKA_V2_JSON_JSON));
+        .post(Entity.entity(config, Versions.KAFKA_V1_JSON_JSON));
   }
 
   @Override

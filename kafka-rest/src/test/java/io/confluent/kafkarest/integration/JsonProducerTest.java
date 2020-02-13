@@ -16,11 +16,11 @@ package io.confluent.kafkarest.integration;
 
 import io.confluent.kafka.serializers.KafkaJsonDeserializer;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.v1.JsonPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v1.JsonPartitionProduceRequest.JsonPartitionProduceRecord;
 import io.confluent.kafkarest.entities.v1.JsonTopicProduceRequest;
 import io.confluent.kafkarest.entities.v1.JsonTopicProduceRequest.JsonTopicProduceRecord;
+import io.confluent.kafkarest.entities.v1.PartitionOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;

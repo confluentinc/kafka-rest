@@ -15,8 +15,21 @@
 
 package io.confluent.kafkarest.resources.v1;
 
+import io.confluent.kafkarest.AvroConsumerState;
+import io.confluent.kafkarest.BinaryConsumerState;
+import io.confluent.kafkarest.ConsumerManager;
+import io.confluent.kafkarest.ConsumerReadCallback;
+import io.confluent.kafkarest.ConsumerState;
+import io.confluent.kafkarest.JsonConsumerState;
+import io.confluent.kafkarest.KafkaRestContext;
+import io.confluent.kafkarest.UriUtils;
+import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
+import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceResponse;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.List;
-
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -30,21 +43,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.UriInfo;
-
-import io.confluent.kafkarest.AvroConsumerState;
-import io.confluent.kafkarest.BinaryConsumerState;
-import io.confluent.kafkarest.ConsumerManager;
-import io.confluent.kafkarest.ConsumerState;
-import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.JsonConsumerState;
-import io.confluent.kafkarest.UriUtils;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.ConsumerReadCallback;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.rest.annotations.PerformanceMetric;
 
 @Path("/consumers")
 // We include embedded formats here so you can always use these headers when interacting with

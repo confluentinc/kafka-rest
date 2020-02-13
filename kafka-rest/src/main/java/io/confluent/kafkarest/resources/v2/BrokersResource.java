@@ -17,7 +17,7 @@ package io.confluent.kafkarest.resources.v2;
 
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BrokerList;
+import io.confluent.kafkarest.entities.v2.BrokerList;
 import io.confluent.rest.annotations.PerformanceMetric;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;

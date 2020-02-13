@@ -14,11 +14,15 @@
  */
 package io.confluent.kafkarest;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.apache.avro.generic.IndexedRecord;
-
+import io.confluent.kafkarest.entities.EntityUtils;
+import io.confluent.kafkarest.entities.ProduceRecord;
+import io.confluent.kafkarest.entities.v1.PartitionOffset;
+import io.confluent.rest.entities.ErrorMessage;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,14 +33,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
-
-import io.confluent.kafkarest.entities.EntityUtils;
-import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.rest.entities.ErrorMessage;
+import org.apache.avro.generic.IndexedRecord;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -44,9 +43,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class TestUtils {
 

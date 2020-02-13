@@ -25,7 +25,7 @@ import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.TestUtils;
-import io.confluent.kafkarest.entities.BrokerList;
+import io.confluent.kafkarest.entities.v1.BrokerList;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import java.util.Arrays;

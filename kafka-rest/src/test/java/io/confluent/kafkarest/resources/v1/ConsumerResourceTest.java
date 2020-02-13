@@ -26,7 +26,7 @@ import io.confluent.kafkarest.BinaryConsumerState;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
+import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceResponse;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.RestNotFoundException;
 import javax.ws.rs.client.Entity;

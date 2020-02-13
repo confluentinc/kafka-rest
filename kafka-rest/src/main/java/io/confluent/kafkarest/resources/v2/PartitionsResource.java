@@ -24,12 +24,12 @@ import io.confluent.kafkarest.Utils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.Partition;
-import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceRequest;
-import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v2.JsonPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v2.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.ProduceResponse;
 import io.confluent.kafkarest.entities.v2.SchemaPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v2.TopicPartitionOffsetResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
@@ -233,7 +233,7 @@ public final class PartitionsResource {
                 "Completed topic produce request id={} response={}",
                 asyncResponse, response
             );
-            Response.Status requestStatus = Utils.produceRequestStatus(response);
+            Response.Status requestStatus = response.getRequestStatus();
             asyncResponse.resume(Response.status(requestStatus).entity(response).build());
           }
         }

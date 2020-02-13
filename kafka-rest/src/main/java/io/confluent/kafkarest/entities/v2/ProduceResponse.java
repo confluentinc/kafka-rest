@@ -13,13 +13,14 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.entities;
+package io.confluent.kafkarest.entities.v2;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import org.hibernate.validator.constraints.NotEmpty;
-
+import io.confluent.kafkarest.Errors;
 import java.util.List;
+import javax.ws.rs.core.Response;
+import org.hibernate.validator.constraints.NotEmpty;
 
 public class ProduceResponse {
 
@@ -56,6 +57,22 @@ public class ProduceResponse {
 
   public void setValueSchemaId(Integer valueSchemaId) {
     this.valueSchemaId = valueSchemaId;
+  }
+
+  @JsonIgnore
+  public Response.Status getRequestStatus() {
+    for (PartitionOffset partitionOffset : offsets) {
+      if (partitionOffset.getErrorCode() == null) {
+        continue;
+      }
+
+      if (partitionOffset.getErrorCode() == Errors.KAFKA_AUTHENTICATION_ERROR_CODE) {
+        return Response.Status.UNAUTHORIZED;
+      } else if (partitionOffset.getErrorCode() == Errors.KAFKA_AUTHORIZATION_ERROR_CODE) {
+        return Response.Status.FORBIDDEN;
+      }
+    }
+    return Response.Status.OK;
   }
 
   @Override

@@ -23,13 +23,13 @@ import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Utils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.PartitionOffset;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceRequest;
-import io.confluent.kafkarest.entities.ProduceResponse;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest;
 import io.confluent.kafkarest.entities.v2.JsonTopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.ProduceResponse;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.Collection;
@@ -190,7 +190,7 @@ public class TopicsResource {
             log.trace("Completed topic produce request id={} response={}",
                       asyncResponse, response
             );
-            Response.Status requestStatus = Utils.produceRequestStatus(response);
+            Response.Status requestStatus = response.getRequestStatus();
             asyncResponse.resume(Response.status(requestStatus).entity(response).build());
           }
         }

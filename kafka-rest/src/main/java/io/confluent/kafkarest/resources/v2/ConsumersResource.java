@@ -15,8 +15,31 @@
 
 package io.confluent.kafkarest.resources.v2;
 
+import io.confluent.kafkarest.ConsumerReadCallback;
+import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.KafkaRestContext;
+import io.confluent.kafkarest.UriUtils;
+import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
+import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.entities.v2.ConsumerAssignmentRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerAssignmentResponse;
+import io.confluent.kafkarest.entities.v2.ConsumerCommittedRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerCommittedResponse;
+import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerSeekToOffsetRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerSeekToRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
+import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionResponse;
+import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
+import io.confluent.kafkarest.v2.BinaryKafkaConsumerState;
+import io.confluent.kafkarest.v2.JsonKafkaConsumerState;
+import io.confluent.kafkarest.v2.KafkaConsumerManager;
+import io.confluent.kafkarest.v2.KafkaConsumerState;
+import io.confluent.kafkarest.v2.SchemaKafkaConsumerState;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.List;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -31,31 +54,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.UriInfo;
-
-import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.ConsumerReadCallback;
-import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.UriUtils;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.v2.ConsumerAssignmentRequest;
-import io.confluent.kafkarest.entities.v2.ConsumerAssignmentResponse;
-import io.confluent.kafkarest.entities.v2.ConsumerCommittedRequest;
-import io.confluent.kafkarest.entities.v2.ConsumerCommittedResponse;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
-import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.kafkarest.entities.v2.ConsumerSeekToOffsetRequest;
-import io.confluent.kafkarest.entities.v2.ConsumerSeekToRequest;
-import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
-import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionResponse;
-import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.kafkarest.v2.SchemaKafkaConsumerState;
-import io.confluent.kafkarest.v2.BinaryKafkaConsumerState;
-import io.confluent.kafkarest.v2.JsonKafkaConsumerState;
-import io.confluent.kafkarest.v2.KafkaConsumerManager;
-import io.confluent.kafkarest.v2.KafkaConsumerState;
-import io.confluent.rest.annotations.PerformanceMetric;
 
 @Path("/consumers")
 // We include embedded formats here so you can always use these headers when interacting with

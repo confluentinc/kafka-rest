@@ -14,28 +14,25 @@
  */
 package io.confluent.kafkarest.integration;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
-
-import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BrokerList;
-import io.confluent.kafkarest.entities.Partition;
-import io.confluent.kafkarest.entities.PartitionReplica;
-import io.confluent.kafkarest.entities.Topic;
-import scala.collection.JavaConversions;
-
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static io.confluent.kafkarest.TestUtils.tryReadEntityOrLog;
 import static org.junit.Assert.assertEquals;
+
+import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.Partition;
+import io.confluent.kafkarest.entities.PartitionReplica;
+import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.entities.v1.BrokerList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+import org.junit.Before;
+import org.junit.Test;
+import scala.collection.JavaConversions;
 
 /**
  * Tests metadata access against a real cluster. This isn't exhaustive since the unit tests cover
