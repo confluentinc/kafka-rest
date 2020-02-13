@@ -16,20 +16,17 @@
 package io.confluent.kafkarest.tools;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import io.confluent.common.utils.AbstractPerformanceTest;
+import io.confluent.common.utils.PerformanceStats;
+import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest;
+import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
+import io.confluent.rest.entities.ErrorMessage;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
-
-import io.confluent.common.utils.AbstractPerformanceTest;
-import io.confluent.common.utils.PerformanceStats;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
-import io.confluent.rest.entities.ErrorMessage;
 
 public class ProducerPerformance extends AbstractPerformanceTest {
 
@@ -86,13 +83,10 @@ public class ProducerPerformance extends AbstractPerformanceTest {
 
     /* setup perf test */
     targetUrl = baseUrl + "/topics/" + topic;
-    byte[] payload = new byte[recordSize];
-    Arrays.fill(payload, (byte) 1);
-    TopicProduceRecord record = new BinaryTopicProduceRecord(payload);
-    TopicProduceRecord[] records = new TopicProduceRecord[recordsPerIteration];
+    BinaryTopicProduceRecord record = new BinaryTopicProduceRecord(null, "payload", null);
+    BinaryTopicProduceRecord[] records = new BinaryTopicProduceRecord[recordsPerIteration];
     Arrays.fill(records, record);
-    TopicProduceRequest request = new TopicProduceRequest();
-    request.setRecords(Arrays.asList(records));
+    BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(Arrays.asList(records));
     requestEntity = new ObjectMapper().writeValueAsBytes(request);
     requestEntityLength = Integer.toString(requestEntity.length);
     buffer = new byte[1024 * 1024];

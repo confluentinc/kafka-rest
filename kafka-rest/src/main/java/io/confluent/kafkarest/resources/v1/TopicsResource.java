@@ -15,21 +15,22 @@
 
 package io.confluent.kafkarest.resources.v1;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Utils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.JsonTopicProduceRecord;
 import io.confluent.kafkarest.entities.PartitionOffset;
+import io.confluent.kafkarest.entities.ProduceRecord;
+import io.confluent.kafkarest.entities.ProduceRequest;
 import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.SchemaTopicProduceRecord;
 import io.confluent.kafkarest.entities.Topic;
-import io.confluent.kafkarest.entities.TopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.kafkarest.entities.v1.AvroTopicProduceRequest;
+import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest;
+import io.confluent.kafkarest.entities.v1.JsonTopicProduceRequest;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.Collection;
 import java.util.List;
@@ -89,9 +90,9 @@ public class TopicsResource {
   public void produceBinary(
       final @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid @NotNull TopicProduceRequest<BinaryTopicProduceRecord> request
+      @Valid @NotNull BinaryTopicProduceRequest request
   ) {
-    produce(asyncResponse, topicName, EmbeddedFormat.BINARY, request);
+    produce(asyncResponse, topicName, EmbeddedFormat.BINARY, request.toProduceRequest());
   }
 
   @POST
@@ -101,9 +102,9 @@ public class TopicsResource {
   public void produceJson(
       final @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid @NotNull TopicProduceRequest<JsonTopicProduceRecord> request
+      @Valid @NotNull JsonTopicProduceRequest request
   ) {
-    produce(asyncResponse, topicName, EmbeddedFormat.JSON, request);
+    produce(asyncResponse, topicName, EmbeddedFormat.JSON, request.toProduceRequest());
   }
 
   @POST
@@ -113,26 +114,25 @@ public class TopicsResource {
   public void produceAvro(
       final @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid @NotNull TopicProduceRequest<SchemaTopicProduceRecord> request
+      @Valid @NotNull AvroTopicProduceRequest request
   ) {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
-    produceSchema(asyncResponse, topicName, request, EmbeddedFormat.AVRO);
+    produceSchema(asyncResponse, topicName, request.toProduceRequest(), EmbeddedFormat.AVRO);
   }
 
-  public <K, V, R extends TopicProduceRecord<K, V>> void produce(
+  public <K, V> void produce(
       final AsyncResponse asyncResponse,
       final String topicName,
       final EmbeddedFormat format,
-      final TopicProduceRequest<R> request
+      final ProduceRequest<K, V> request
   ) {
     log.trace("Executing topic produce request id={} topic={} format={} request={}",
-              asyncResponse, topicName, format, request
+        asyncResponse, topicName, format, request
     );
     ctx.getProducerPool().produce(
         topicName, null, format,
         request,
-        request.getRecords(),
         new ProducerPool.ProduceRequestCallback() {
           public void onCompletion(
               Integer keySchemaId, Integer valueSchemaId,
@@ -167,26 +167,37 @@ public class TopicsResource {
   }
 
   private void produceSchema(
-          @Suspended AsyncResponse asyncResponse,
-          @PathParam("topic") String topicName,
-          @Valid @NotNull TopicProduceRequest<SchemaTopicProduceRecord> request,
-          EmbeddedFormat jsonschema
+      AsyncResponse asyncResponse,
+      String topicName,
+      ProduceRequest<JsonNode, JsonNode> request,
+      EmbeddedFormat jsonschema
   ) {
-    // Validations we can't do generically since they depend on the data format -- schemas need to
-    // be available if there are any non-null entries
-    boolean hasKeys = false;
-    boolean hasValues = false;
-    for (SchemaTopicProduceRecord rec : request.getRecords()) {
-      hasKeys = hasKeys || !rec.getJsonKey().isNull();
-      hasValues = hasValues || !rec.getJsonValue().isNull();
-    }
-    if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
+    checkKeySchema(request);
+    checkValueSchema(request);
+    produce(asyncResponse, topicName, jsonschema, request);
+  }
+
+  private static void checkKeySchema(ProduceRequest<JsonNode, ?> request) {
+    for (ProduceRecord<JsonNode, ?> record : request.getRecords()) {
+      if (record.getKey() == null || record.getKey().isNull()) {
+        continue;
+      }
+      if (request.getKeySchema() != null || request.getKeySchemaId() != null) {
+        continue;
+      }
       throw Errors.keySchemaMissingException();
     }
-    if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
+  }
+
+  private static void checkValueSchema(ProduceRequest<?, JsonNode> request) {
+    for (ProduceRecord<?, JsonNode> record : request.getRecords()) {
+      if (record.getValue() == null || record.getValue().isNull()) {
+        continue;
+      }
+      if (request.getValueSchema() != null || request.getValueSchemaId() != null) {
+        continue;
+      }
       throw Errors.valueSchemaMissingException();
     }
-
-    produce(asyncResponse, topicName, jsonschema, request);
   }
 }

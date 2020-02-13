@@ -8,8 +8,8 @@ import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.SchemaConsumerRecord;
-import io.confluent.kafkarest.entities.SchemaTopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import org.junit.Test;
 
@@ -85,10 +85,13 @@ public abstract class SchemaProduceConsumeTest extends ClusterTestHarness {
         .accept(getContentType())
         .get();
 
-    TopicProduceRequest<SchemaTopicProduceRecord> produceRequest = new TopicProduceRequest<>();
-    produceRequest.setRecords(getProduceRecords());
-    produceRequest.setKeySchema(getKeySchema().canonicalString());
-    produceRequest.setValueSchema(getValueSchema().canonicalString());
+    SchemaTopicProduceRequest produceRequest =
+        new SchemaTopicProduceRequest(
+            getProduceRecords(),
+            getKeySchema().canonicalString(),
+            null,
+            getValueSchema().canonicalString(),
+            null);
 
     Response produceResponse =
         request(String.format("/topics/%s", TOPIC))

@@ -28,20 +28,16 @@ import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Utils;
-import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.SchemaHolder;
-import io.confluent.kafkarest.entities.TopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import io.confluent.rest.exceptions.RestServerErrorException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import javax.ws.rs.client.Entity;
@@ -95,24 +91,24 @@ public class TopicsResourceBinaryProduceTest
     addResource(new TopicsResource(ctx));
 
     produceRecordsOnlyValues = Arrays.asList(
-        new BinaryTopicProduceRecord("value".getBytes()),
-        new BinaryTopicProduceRecord("value2".getBytes())
+        new BinaryTopicProduceRecord(null, "value", null),
+        new BinaryTopicProduceRecord(null, "value2", null)
     );
     produceRecordsWithKeys = Arrays.asList(
-        new BinaryTopicProduceRecord("key".getBytes(), "value".getBytes()),
-        new BinaryTopicProduceRecord("key2".getBytes(), "value2".getBytes())
+        new BinaryTopicProduceRecord("key", "value", null),
+        new BinaryTopicProduceRecord("key2", "value2", null)
     );
     produceRecordsWithPartitions = Arrays.asList(
-        new BinaryTopicProduceRecord("value".getBytes(), 0),
-        new BinaryTopicProduceRecord("value2".getBytes(), 0)
+        new BinaryTopicProduceRecord(null, "value", 0),
+        new BinaryTopicProduceRecord(null, "value2", 0)
     );
     produceRecordsWithPartitionsAndKeys = Arrays.asList(
-        new BinaryTopicProduceRecord("key".getBytes(), "value".getBytes(), 0),
-        new BinaryTopicProduceRecord("key2".getBytes(), "value2".getBytes(), 0)
+        new BinaryTopicProduceRecord("key", "value", 0),
+        new BinaryTopicProduceRecord("key2", "value2", 0)
     );
     produceRecordsWithNullValues = Arrays.asList(
-        new BinaryTopicProduceRecord("key".getBytes(), (byte[]) null),
-        new BinaryTopicProduceRecord("key2".getBytes(), (byte[]) null)
+        new BinaryTopicProduceRecord("key", null, null),
+        new BinaryTopicProduceRecord("key2", null, null)
     );
 
     TopicPartition tp0 = new TopicPartition(topicName, 0);
@@ -127,7 +123,7 @@ public class TopicsResourceBinaryProduceTest
     );
 
     produceExceptionData = Arrays.asList(
-        new BinaryTopicProduceRecord((byte[]) null, (byte[]) null)
+        new BinaryTopicProduceRecord(null, null, null)
     );
 
     produceGenericExceptionResults = Arrays.asList(
@@ -178,18 +174,16 @@ public class TopicsResourceBinaryProduceTest
 
   private <K, V> Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
       EmbeddedFormat recordFormat,
-      List<? extends TopicProduceRecord<K, V>> records,
+      List<BinaryTopicProduceRecord> records,
       final List<RecordMetadataOrException> results) {
-    final TopicProduceRequest request = new TopicProduceRequest();
-    request.setRecords(records);
+    BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(records);
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
         Capture.newInstance();
     producerPool.produce(EasyMock.eq(topic),
         EasyMock.eq((Integer) null),
         EasyMock.eq(recordFormat),
-        EasyMock.<SchemaHolder>anyObject(),
-        EasyMock.<Collection<? extends ProduceRecord<K, V>>>anyObject(),
+        EasyMock.anyObject(),
         EasyMock.capture(produceCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override

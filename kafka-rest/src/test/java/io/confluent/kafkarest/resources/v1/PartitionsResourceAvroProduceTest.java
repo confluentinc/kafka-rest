@@ -29,17 +29,14 @@ import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.PartitionProduceRequest;
-import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.SchemaHolder;
-import io.confluent.kafkarest.entities.SchemaProduceRecord;
+import io.confluent.kafkarest.entities.v1.AvroPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v1.AvroPartitionProduceRequest.AvroPartitionProduceRecord;
 import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -62,7 +59,7 @@ public class PartitionsResourceAvroProduceTest
 
   private final String topicName = "topic1";
 
-  private List<SchemaProduceRecord> produceRecordsWithKeys;
+  private List<AvroPartitionProduceRecord> produceRecordsWithKeys;
   private List<RecordMetadataOrException> produceResults;
   private final List<PartitionOffset> offsetResults;
 
@@ -90,8 +87,10 @@ public class PartitionsResourceAvroProduceTest
     addResource(InstantConverterProvider.class);
 
     produceRecordsWithKeys = Arrays.asList(
-        new SchemaProduceRecord(TestUtils.jsonTree("1"), TestUtils.jsonTree("{\"field\":42}")),
-        new SchemaProduceRecord(TestUtils.jsonTree("2"), TestUtils.jsonTree("{\"field\":84}"))
+        new AvroPartitionProduceRecord(
+            TestUtils.jsonTree("1"), TestUtils.jsonTree("{\"field\":42}")),
+        new AvroPartitionProduceRecord(
+            TestUtils.jsonTree("2"), TestUtils.jsonTree("{\"field\":84}"))
     );
     TopicPartition tp0 = new TopicPartition(topicName, 0);
     produceResults = Arrays.asList(
@@ -112,22 +111,21 @@ public class PartitionsResourceAvroProduceTest
   }
 
   private <K, V> Response produceToPartition(String topic, int partition,
-                                             PartitionProduceRequest request,
-                                             String acceptHeader,
-                                             String requestMediatype,
-                                             EmbeddedFormat recordFormat,
-                                             final List<RecordMetadataOrException> results) throws Exception {
+      AvroPartitionProduceRequest request,
+      String acceptHeader,
+      String requestMediatype,
+      EmbeddedFormat recordFormat,
+      final List<RecordMetadataOrException> results) throws Exception {
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
         Capture.newInstance();
     EasyMock.expect(adminClientWrapper.topicExists(topic)).andReturn(true);
     EasyMock.expect(adminClientWrapper.partitionExists(topic, partition)).andReturn(true);
     producerPool.produce(EasyMock.eq(topic),
-                         EasyMock.eq(partition),
-                         EasyMock.eq(recordFormat),
-                         EasyMock.<SchemaHolder>anyObject(),
-                         EasyMock.<Collection<? extends ProduceRecord<K, V>>>anyObject(),
-                         EasyMock.capture(produceCallback));
+        EasyMock.eq(partition),
+        EasyMock.eq(recordFormat),
+        EasyMock.anyObject(),
+        EasyMock.capture(produceCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -156,13 +154,16 @@ public class PartitionsResourceAvroProduceTest
   public void testProduceToPartitionByKey() throws Exception {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_AVRO) {
-        final PartitionProduceRequest request = new PartitionProduceRequest();
-        request.setRecords(produceRecordsWithKeys);
-        request.setKeySchema(keySchemaStr);
-        request.setValueSchema(valueSchemaStr);
+        AvroPartitionProduceRequest request =
+            AvroPartitionProduceRequest.create(
+                produceRecordsWithKeys,
+                keySchemaStr,
+                /* keySchemaId= */ null,
+                valueSchemaStr,
+                /* valueSchemaId= */ null);
         Response rawResponse =
             produceToPartition(topicName, 0, request, mediatype.header, requestMediatype,
-                               EmbeddedFormat.AVRO, produceResults);
+                EmbeddedFormat.AVRO, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
         ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
@@ -177,13 +178,16 @@ public class PartitionsResourceAvroProduceTest
     // Now use schema IDs
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_AVRO) {
-        final PartitionProduceRequest request = new PartitionProduceRequest();
-        request.setRecords(produceRecordsWithKeys);
-        request.setKeySchemaId(1);
-        request.setValueSchemaId(2);
+        AvroPartitionProduceRequest request =
+            AvroPartitionProduceRequest.create(
+                produceRecordsWithKeys,
+                /* keySchema= */ null,
+                /* keySchemaId= */ 1,
+                /* valueSchema= */ null,
+                /* valueSchemaId= */ 2);
         Response rawResponse =
             produceToPartition(topicName, 0, request, mediatype.header, requestMediatype,
-                               EmbeddedFormat.AVRO, produceResults);
+                EmbeddedFormat.AVRO, produceResults);
         assertOKResponse(rawResponse, mediatype.expected);
         ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
@@ -200,17 +204,22 @@ public class PartitionsResourceAvroProduceTest
   public void testProduceMissingSchema() {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_AVRO) {
-        final PartitionProduceRequest request = new PartitionProduceRequest();
-        request.setRecords(produceRecordsWithKeys);
+        AvroPartitionProduceRequest request =
+            AvroPartitionProduceRequest.create(
+                produceRecordsWithKeys,
+                /* keySchema= */ null,
+                /* keySchemaId= */ null,
+                /* valueSchema= */ null,
+                /* valueSchemaId= */ null);
         Response rawResponse =
             request("/topics/" + topicName + "/partitions/0", mediatype.header)
                 .post(Entity.entity(request, requestMediatype));
 
         assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,
-                            rawResponse,
-                            Errors.KEY_SCHEMA_MISSING_ERROR_CODE,
-                            null,
-                            mediatype.expected);
+            rawResponse,
+            Errors.KEY_SCHEMA_MISSING_ERROR_CODE,
+            null,
+            mediatype.expected);
 
         EasyMock.reset(adminClientWrapper, producerPool);
       }

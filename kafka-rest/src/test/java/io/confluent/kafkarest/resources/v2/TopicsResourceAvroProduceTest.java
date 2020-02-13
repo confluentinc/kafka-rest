@@ -32,16 +32,13 @@ import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.SchemaHolder;
-import io.confluent.kafkarest.entities.SchemaTopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -122,7 +119,7 @@ public class TopicsResourceAvroProduceTest
 
   private <K, V> Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
       EmbeddedFormat recordFormat,
-      TopicProduceRequest request,
+      SchemaTopicProduceRequest request,
       final List<RecordMetadataOrException> results) {
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
@@ -130,8 +127,7 @@ public class TopicsResourceAvroProduceTest
     producerPool.produce(EasyMock.eq(topic),
         EasyMock.eq((Integer) null),
         EasyMock.eq(recordFormat),
-        EasyMock.<SchemaHolder>anyObject(),
-        EasyMock.<Collection<? extends ProduceRecord<K, V>>>anyObject(),
+        EasyMock.anyObject(),
         EasyMock.capture(produceCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
@@ -156,10 +152,9 @@ public class TopicsResourceAvroProduceTest
 
   @Test
   public void testProduceToTopicWithPartitionAndKey() {
-    final TopicProduceRequest request = new TopicProduceRequest();
-    request.setRecords(produceRecordsWithPartitionsAndKeys);
-    request.setKeySchema(keySchemaStr);
-    request.setValueSchema(valueSchemaStr);
+    SchemaTopicProduceRequest request =
+        new SchemaTopicProduceRequest(
+            produceRecordsWithPartitionsAndKeys, keySchemaStr, null, valueSchemaStr, null);
 
     Response
         rawResponse =
@@ -176,10 +171,8 @@ public class TopicsResourceAvroProduceTest
     EasyMock.reset(mdObserver, producerPool);
 
     // Test using schema IDs
-    final TopicProduceRequest request2 = new TopicProduceRequest();
-    request2.setRecords(produceRecordsWithPartitionsAndKeys);
-    request2.setKeySchemaId(1);
-    request2.setValueSchemaId(2);
+    SchemaTopicProduceRequest request2 =
+        new SchemaTopicProduceRequest(produceRecordsWithPartitionsAndKeys, null, 1, null, 2);
 
     Response rawResponse2 =
         produceToTopic(topicName, Versions.KAFKA_V2_JSON, Versions.KAFKA_V2_JSON_AVRO,
@@ -191,7 +184,7 @@ public class TopicsResourceAvroProduceTest
   }
 
   private void produceToTopicExpectFailure(String topicName, String acceptHeader,
-      String requestMediatype, TopicProduceRequest request,
+      String requestMediatype, SchemaTopicProduceRequest request,
       String responseMediaType, int errorCode) {
     Response rawResponse = request("/topics/" + topicName, acceptHeader)
         .post(Entity.entity(request, requestMediatype));
@@ -202,9 +195,9 @@ public class TopicsResourceAvroProduceTest
 
   @Test
   public void testMissingKeySchema() {
-    final TopicProduceRequest request = new TopicProduceRequest();
-    request.setRecords(produceRecordsWithPartitionsAndKeys);
-    request.setValueSchema(valueSchemaStr);
+    SchemaTopicProduceRequest request =
+        new SchemaTopicProduceRequest(
+            produceRecordsWithPartitionsAndKeys, null, null, valueSchemaStr, null);
 
     produceToTopicExpectFailure(topicName, Versions.KAFKA_V2_JSON, Versions.KAFKA_V2_JSON_AVRO,
         request, Versions.KAFKA_V2_JSON,
@@ -213,9 +206,9 @@ public class TopicsResourceAvroProduceTest
 
   @Test
   public void testMissingValueSchema() {
-    final TopicProduceRequest request = new TopicProduceRequest();
-    request.setRecords(produceRecordsWithPartitionsAndKeys);
-    request.setKeySchema(keySchemaStr);
+    SchemaTopicProduceRequest request =
+        new SchemaTopicProduceRequest(
+            produceRecordsWithPartitionsAndKeys, keySchemaStr, null, null, null);
 
     produceToTopicExpectFailure(topicName, Versions.KAFKA_V2_JSON, Versions.KAFKA_V2_JSON_AVRO,
         request, Versions.KAFKA_V2_JSON,

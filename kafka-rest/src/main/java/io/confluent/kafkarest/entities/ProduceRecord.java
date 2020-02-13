@@ -15,14 +15,37 @@
 
 package io.confluent.kafkarest.entities;
 
-public interface ProduceRecord<K, V> {
+import javax.annotation.Nullable;
 
-  public K getKey();
+public final class ProduceRecord<K, V> {
 
-  public V getValue();
+  @Nullable
+  private final K key;
 
-  // Non-standard naming so we can unify the interfaces of ProduceRecord and TopicProduceRecord,
-  // but get Jackson to behave properly, not serializing the value & triggering errors if the
-  // field is present during deserialization for types where it should always be null.
-  public Integer partition();
+  @Nullable
+  private final V value;
+
+  @Nullable
+  private final Integer partition;
+
+  public ProduceRecord(@Nullable K key, @Nullable V value, @Nullable Integer partition) {
+    this.key = key;
+    this.value = value;
+    this.partition = partition;
+  }
+
+  @Nullable
+  public K getKey() {
+    return key;
+  }
+
+  @Nullable
+  public V getValue() {
+    return value;
+  }
+
+  @Nullable
+  public Integer getPartition() {
+    return partition;
+  }
 }

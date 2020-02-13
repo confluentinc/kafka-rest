@@ -27,21 +27,18 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.TestUtils;
-import io.confluent.kafkarest.entities.BinaryProduceRecord;
-import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.PartitionProduceRequest;
-import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.SchemaHolder;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.kafkarest.entities.v1.BinaryPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v1.BinaryPartitionProduceRequest.BinaryPartitionProduceRecord;
+import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest;
+import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import javax.ws.rs.client.Entity;
@@ -64,8 +61,8 @@ public class PartitionsResourceBinaryProduceTest
 
   private final String topicName = "topic1";
 
-  private List<BinaryProduceRecord> produceRecordsOnlyValues;
-  private List<BinaryProduceRecord> produceRecordsWithKeys;
+  private List<BinaryPartitionProduceRecord> produceRecordsOnlyValues;
+  private List<BinaryPartitionProduceRecord> produceRecordsWithKeys;
   private List<RecordMetadataOrException> produceResults;
   private final List<PartitionOffset> offsetResults;
   private List<RecordMetadataOrException> produceKafkaAuthorizationExceptionResults;
@@ -75,23 +72,23 @@ public class PartitionsResourceBinaryProduceTest
     adminClientWrapper = EasyMock.createMock(AdminClientWrapper.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
     ctx = new DefaultKafkaRestContext(config,
-            producerPool,
-            null,
-            adminClientWrapper,
-            null
-        );
+        producerPool,
+        null,
+        adminClientWrapper,
+        null
+    );
 
     addResource(new TopicsResource(ctx));
     addResource(new PartitionsResource(ctx));
     addResource(InstantConverterProvider.class);
 
     produceRecordsOnlyValues = Arrays.asList(
-        new BinaryProduceRecord("value".getBytes()),
-        new BinaryProduceRecord("value2".getBytes())
+        new BinaryPartitionProduceRecord(null, "value"),
+        new BinaryPartitionProduceRecord(null, "value2")
     );
     produceRecordsWithKeys = Arrays.asList(
-        new BinaryProduceRecord("key".getBytes(), "value".getBytes()),
-        new BinaryProduceRecord("key2".getBytes(), "value2".getBytes())
+        new BinaryPartitionProduceRecord("key", "value"),
+        new BinaryPartitionProduceRecord("key2", "value2")
     );
     TopicPartition tp0 = new TopicPartition(topicName, 0);
     produceResults = Arrays.asList(
@@ -120,10 +117,9 @@ public class PartitionsResourceBinaryProduceTest
   private <K, V> Response produceToPartition(String topic, int partition, String acceptHeader,
       String requestMediatype,
       EmbeddedFormat recordFormat,
-      List<? extends ProduceRecord<K, V>> records,
-                                             final List<RecordMetadataOrException> results)  throws Exception {
-    final PartitionProduceRequest request = new PartitionProduceRequest();
-    request.setRecords(records);
+      List<BinaryPartitionProduceRecord> records,
+      final List<RecordMetadataOrException> results) throws Exception {
+    BinaryPartitionProduceRequest request = BinaryPartitionProduceRequest.create(records);
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
         Capture.newInstance();
@@ -132,9 +128,8 @@ public class PartitionsResourceBinaryProduceTest
     producerPool.produce(EasyMock.eq(topic),
         EasyMock.eq(partition),
         EasyMock.eq(recordFormat),
-        EasyMock.<SchemaHolder>anyObject(),
-        EasyMock.<Collection<? extends ProduceRecord<K, V>>>anyObject(),
-                         EasyMock.capture(produceCallback));
+        EasyMock.anyObject(),
+        EasyMock.capture(produceCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
       public Object answer() throws Throwable {
@@ -247,9 +242,9 @@ public class PartitionsResourceBinaryProduceTest
         EasyMock.verify();
 
         // Invalid data -- include partition in request
-        TopicProduceRequest topicRequest = new TopicProduceRequest();
-        topicRequest.setRecords(
-            Arrays.asList(new BinaryTopicProduceRecord("key".getBytes(), "value".getBytes(), 0)));
+        BinaryTopicProduceRequest topicRequest =
+            BinaryTopicProduceRequest.create(
+                Collections.singletonList(new BinaryTopicProduceRecord("key", "value", 0)));
         response = request("/topics/" + topicName + "/partitions/0", mediatype.header)
             .post(Entity.entity(topicRequest, requestMediatype));
         assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY,

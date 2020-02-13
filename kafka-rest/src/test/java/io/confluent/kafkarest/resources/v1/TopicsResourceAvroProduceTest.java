@@ -31,16 +31,13 @@ import io.confluent.kafkarest.ScalaConsumersContext;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.SchemaHolder;
-import io.confluent.kafkarest.entities.SchemaTopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
+import io.confluent.kafkarest.entities.v1.AvroTopicProduceRequest;
+import io.confluent.kafkarest.entities.v1.AvroTopicProduceRequest.AvroTopicProduceRecord;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -83,7 +80,7 @@ public class TopicsResourceAvroProduceTest
       TestUtils.jsonTree("{\"field\": 2}"),
   };
 
-  private List<SchemaTopicProduceRecord> produceRecordsWithPartitionsAndKeys;
+  private List<AvroTopicProduceRecord> produceRecordsWithPartitionsAndKeys;
 
   private static final TopicPartition tp0 = new TopicPartition(topicName, 0);
   private static final TopicPartition tp1 = new TopicPartition(topicName, 1);
@@ -107,8 +104,8 @@ public class TopicsResourceAvroProduceTest
     addResource(new TopicsResource(ctx));
 
     produceRecordsWithPartitionsAndKeys = Arrays.asList(
-        new SchemaTopicProduceRecord(testKeys[0], testValues[0], 0),
-        new SchemaTopicProduceRecord(testKeys[1], testValues[1], 0)
+        new AvroTopicProduceRecord(testKeys[0], testValues[0], 0),
+        new AvroTopicProduceRecord(testKeys[1], testValues[1], 0)
     );
   }
 
@@ -121,7 +118,7 @@ public class TopicsResourceAvroProduceTest
 
   private <K, V> Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
       EmbeddedFormat recordFormat,
-      TopicProduceRequest request,
+      AvroTopicProduceRequest request,
       final List<RecordMetadataOrException> results) {
     final Capture<ProducerPool.ProduceRequestCallback>
         produceCallback =
@@ -129,8 +126,7 @@ public class TopicsResourceAvroProduceTest
     producerPool.produce(EasyMock.eq(topic),
         EasyMock.eq((Integer) null),
         EasyMock.eq(recordFormat),
-        EasyMock.<SchemaHolder>anyObject(),
-        EasyMock.<Collection<? extends ProduceRecord<K, V>>>anyObject(),
+        EasyMock.anyObject(),
         EasyMock.capture(produceCallback));
     EasyMock.expectLastCall().andAnswer(new IAnswer<Object>() {
       @Override
@@ -157,10 +153,13 @@ public class TopicsResourceAvroProduceTest
   public void testProduceToTopicWithPartitionAndKey() {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_AVRO) {
-        final TopicProduceRequest request = new TopicProduceRequest();
-        request.setRecords(produceRecordsWithPartitionsAndKeys);
-        request.setKeySchema(keySchemaStr);
-        request.setValueSchema(valueSchemaStr);
+        AvroTopicProduceRequest request =
+            AvroTopicProduceRequest.create(
+                produceRecordsWithPartitionsAndKeys,
+                keySchemaStr,
+                /* keySchemaId= */ null,
+                valueSchemaStr,
+                /* valueSchemaId= */ null);
 
         Response
             rawResponse =
@@ -181,10 +180,13 @@ public class TopicsResourceAvroProduceTest
     // Test using schema IDs
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_AVRO) {
-        final TopicProduceRequest request = new TopicProduceRequest();
-        request.setRecords(produceRecordsWithPartitionsAndKeys);
-        request.setKeySchemaId(1);
-        request.setValueSchemaId(2);
+        AvroTopicProduceRequest request =
+            AvroTopicProduceRequest.create(
+                produceRecordsWithPartitionsAndKeys,
+                /* keySchema= */ null,
+                /* keySchemaId= */ 1,
+                /* valueSchema= */ null,
+                /* valueSchemaId= */ 2);
 
         Response rawResponse =
             produceToTopic(topicName, mediatype.header, requestMediatype,
@@ -198,7 +200,7 @@ public class TopicsResourceAvroProduceTest
   }
 
   private void produceToTopicExpectFailure(String topicName, String acceptHeader,
-      String requestMediatype, TopicProduceRequest request,
+      String requestMediatype, AvroTopicProduceRequest request,
       String responseMediaType, int errorCode) {
     Response rawResponse = request("/topics/" + topicName, acceptHeader)
         .post(Entity.entity(request, requestMediatype));
@@ -211,9 +213,13 @@ public class TopicsResourceAvroProduceTest
   public void testMissingKeySchema() {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_AVRO) {
-        final TopicProduceRequest request = new TopicProduceRequest();
-        request.setRecords(produceRecordsWithPartitionsAndKeys);
-        request.setValueSchema(valueSchemaStr);
+        AvroTopicProduceRequest request =
+            AvroTopicProduceRequest.create(
+                produceRecordsWithPartitionsAndKeys,
+                /* keySchema= */ null,
+                /* keySchemaId= */ null,
+                valueSchemaStr,
+                /* valueSchemaId= */ null);
 
         produceToTopicExpectFailure(topicName, mediatype.header, requestMediatype,
             request, mediatype.expected,
@@ -226,9 +232,13 @@ public class TopicsResourceAvroProduceTest
   public void testMissingValueSchema() {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES_AVRO) {
-        final TopicProduceRequest request = new TopicProduceRequest();
-        request.setRecords(produceRecordsWithPartitionsAndKeys);
-        request.setKeySchema(keySchemaStr);
+        AvroTopicProduceRequest request =
+            AvroTopicProduceRequest.create(
+                produceRecordsWithPartitionsAndKeys,
+                keySchemaStr,
+                /* keySchemaId= */ null,
+                /* valueSchema= */ null,
+                /* valueSchemaId= */ null);
 
         produceToTopicExpectFailure(topicName, mediatype.header, requestMediatype,
             request, mediatype.expected,
