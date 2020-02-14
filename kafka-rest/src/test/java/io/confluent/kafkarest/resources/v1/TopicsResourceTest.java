@@ -29,11 +29,14 @@ import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.entities.v1.GetPartitionResponse;
+import io.confluent.kafkarest.entities.v1.GetTopicResponse;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import org.easymock.EasyMock;
@@ -113,16 +116,28 @@ public class TopicsResourceTest
 
       Response response1 = request("/topics/topic1", mediatype.header).get();
       assertOKResponse(response1, mediatype.expected);
-      final Topic topicResponse1 = TestUtils
-          .tryReadEntityOrLog(response1, new GenericType<Topic>() {
-          });
-      assertEquals(topic1, topicResponse1);
+      final GetTopicResponse topicResponse1 =
+          TestUtils.tryReadEntityOrLog(response1, GetTopicResponse.class);
+      assertEquals(topic1.getName(), topicResponse1.getName());
+      assertEquals(topic1.getConfigs(), topicResponse1.getConfigs());
+      assertEquals(
+          topic1.getPartitions()
+              .stream()
+              .map(GetPartitionResponse::fromPartition)
+              .collect(Collectors.toList()),
+          topicResponse1.getPartitions());
 
       Response response2 = request("/topics/topic2", mediatype.header).get();
-      final Topic topicResponse2 = TestUtils
-          .tryReadEntityOrLog(response2, new GenericType<Topic>() {
-          });
-      assertEquals(topic2, topicResponse2);
+      final GetTopicResponse topicResponse2 =
+          TestUtils.tryReadEntityOrLog(response2, GetTopicResponse.class);
+      assertEquals(topic2.getName(), topicResponse2.getName());
+      assertEquals(topic2.getConfigs(), topicResponse2.getConfigs());
+      assertEquals(
+          topic2.getPartitions()
+              .stream()
+              .map(GetPartitionResponse::fromPartition)
+              .collect(Collectors.toList()),
+          topicResponse2.getPartitions());
 
       EasyMock.verify(adminClientWrapper);
       EasyMock.reset(adminClientWrapper);

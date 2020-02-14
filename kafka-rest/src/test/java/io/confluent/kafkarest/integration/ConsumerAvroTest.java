@@ -18,13 +18,9 @@ package io.confluent.kafkarest.integration;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.Partition;
-import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.SchemaConsumerRecord;
-import io.confluent.kafkarest.entities.Topic;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import javax.ws.rs.core.GenericType;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecordBuilder;
@@ -35,21 +31,14 @@ import org.junit.Test;
 public class ConsumerAvroTest extends AbstractConsumerTest {
 
   private static final String topicName = "topic1";
-  private static final List<Partition> partitions = Arrays.asList(
-      new Partition(0, 0, Arrays.asList(
-          new PartitionReplica(0, true, true),
-          new PartitionReplica(1, false, false)
-      ))
-  );
-  private static final Topic topic = new Topic(topicName, new Properties(), partitions);
   private static final String groupName = "testconsumergroup";
 
   // Primitive types
   private final List<ProducerRecord<Object, Object>> recordsOnlyValues = Arrays.asList(
-      new ProducerRecord<Object, Object>(topicName, 1),
-      new ProducerRecord<Object, Object>(topicName, 2),
-      new ProducerRecord<Object, Object>(topicName, 3),
-      new ProducerRecord<Object, Object>(topicName, 4)
+      new ProducerRecord<>(topicName, 1),
+      new ProducerRecord<>(topicName, 2),
+      new ProducerRecord<>(topicName, 3),
+      new ProducerRecord<>(topicName, 4)
   );
 
   // And primitive keys w/ record values

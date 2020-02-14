@@ -27,6 +27,7 @@ import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceRequest;
 import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v2.GetPartitionResponse;
 import io.confluent.kafkarest.entities.v2.JsonPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
 import io.confluent.kafkarest.entities.v2.ProduceResponse;
@@ -35,6 +36,7 @@ import io.confluent.kafkarest.entities.v2.TopicPartitionOffsetResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.List;
 import java.util.Vector;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -67,24 +69,28 @@ public final class PartitionsResource {
 
   @GET
   @PerformanceMetric("partitions.list+v2")
-  public List<Partition> list(final @PathParam("topic") String topic) throws Exception {
+  public List<GetPartitionResponse> list(final @PathParam("topic") String topic) throws Exception {
     checkTopicExists(topic);
-    return ctx.getAdminClientWrapper().getTopicPartitions(topic);
+    return ctx.getAdminClientWrapper()
+        .getTopicPartitions(topic)
+        .stream()
+        .map(GetPartitionResponse::fromPartition)
+        .collect(Collectors.toList());
   }
 
   @GET
   @Path("/{partition}")
   @PerformanceMetric("partition.get+v2")
-  public Partition getPartition(
+  public GetPartitionResponse getPartition(
       final @PathParam("topic") String topic,
       @PathParam("partition") int partition
-  )  throws Exception {
+  ) throws Exception {
     checkTopicExists(topic);
     Partition part = ctx.getAdminClientWrapper().getTopicPartition(topic, partition);
     if (part == null) {
       throw Errors.partitionNotFoundException();
     }
-    return part;
+    return GetPartitionResponse.fromPartition(part);
   }
 
 

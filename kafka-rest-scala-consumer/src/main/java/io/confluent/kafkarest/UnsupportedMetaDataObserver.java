@@ -15,9 +15,6 @@
 
 package io.confluent.kafkarest;
 
-import java.util.List;
-
-import io.confluent.kafkarest.entities.Topic;
 import kafka.cluster.Broker;
 import kafka.utils.ZkUtils;
 
@@ -29,12 +26,6 @@ public class UnsupportedMetaDataObserver extends MetadataObserver {
 
   @Override
   public Broker getLeader(String topicName, int partitionId) {
-    throw new UnsupportedOperationException("Can't perform operation without zookeeper connect "
-                                            + "details");
-  }
-
-  @Override
-  public List<Topic> getTopics() {
     throw new UnsupportedOperationException("Can't perform operation without zookeeper connect "
                                             + "details");
   }

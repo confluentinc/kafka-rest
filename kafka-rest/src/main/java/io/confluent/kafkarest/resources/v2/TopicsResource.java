@@ -27,6 +27,7 @@ import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceRequest;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.GetTopicResponse;
 import io.confluent.kafkarest.entities.v2.JsonTopicProduceRequest;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
 import io.confluent.kafkarest.entities.v2.ProduceResponse;
@@ -72,12 +73,12 @@ public class TopicsResource {
   @GET
   @Path("/{topic}")
   @PerformanceMetric("topic.get+v2")
-  public Topic getTopic(@PathParam("topic") String topicName) throws Exception {
+  public GetTopicResponse getTopic(@PathParam("topic") String topicName) throws Exception {
     Topic topic = ctx.getAdminClientWrapper().getTopic(topicName);
     if (topic == null) {
       throw Errors.topicNotFoundException();
     }
-    return topic;
+    return GetTopicResponse.fromTopic(topic);
   }
 
   @POST

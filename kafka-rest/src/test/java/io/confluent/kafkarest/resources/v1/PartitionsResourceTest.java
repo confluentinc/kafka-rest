@@ -28,11 +28,13 @@ import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
+import io.confluent.kafkarest.entities.v1.GetPartitionResponse;
 import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import org.easymock.EasyMock;
@@ -91,9 +93,12 @@ public class PartitionsResourceTest
 
       Response response = request("/topics/topic1/partitions", mediatype.header).get();
       assertOKResponse(response, mediatype.expected);
-      List<Partition> partitionsResponse = TestUtils.tryReadEntityOrLog(response, new GenericType<List<Partition>>() {
+      List<GetPartitionResponse> partitionsResponse =
+          TestUtils.tryReadEntityOrLog(response, new GenericType<List<GetPartitionResponse>>() {
           });
-      assertEquals(partitions, partitionsResponse);
+      assertEquals(
+          partitions.stream().map(GetPartitionResponse::fromPartition).collect(Collectors.toList()),
+          partitionsResponse);
 
       EasyMock.verify(adminClientWrapper);
       EasyMock.reset(adminClientWrapper);
@@ -114,15 +119,14 @@ public class PartitionsResourceTest
 
       Response response = request("/topics/topic1/partitions/0", mediatype.header).get();
       assertOKResponse(response, mediatype.expected);
-      Partition partition = TestUtils.tryReadEntityOrLog(response, new GenericType<Partition>() {
-      });
-      assertEquals(partitions.get(0), partition);
+      GetPartitionResponse partition =
+          TestUtils.tryReadEntityOrLog(response, GetPartitionResponse.class);
+      assertEquals(GetPartitionResponse.fromPartition(partitions.get(0)), partition);
 
       response = request("/topics/topic1/partitions/1", mediatype.header).get();
       assertOKResponse(response, mediatype.expected);
-      partition = TestUtils.tryReadEntityOrLog(response, new GenericType<Partition>() {
-      });
-      assertEquals(partitions.get(1), partition);
+      partition = TestUtils.tryReadEntityOrLog(response, GetPartitionResponse.class);
+      assertEquals(GetPartitionResponse.fromPartition(partitions.get(1)), partition);
 
       EasyMock.verify(adminClientWrapper);
       EasyMock.reset(adminClientWrapper);

@@ -22,8 +22,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.Partition;
-import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.v1.AvroPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v1.AvroPartitionProduceRequest.AvroPartitionProduceRecord;
 import io.confluent.kafkarest.entities.v1.AvroTopicProduceRequest;
@@ -47,12 +45,6 @@ import scala.collection.JavaConversions;
 public class AvroProducerTest extends ClusterTestHarness {
 
   private static final String topicName = "topic1";
-  private static final List<Partition> partitions = Arrays.asList(
-      new Partition(0, 0, Arrays.asList(
-          new PartitionReplica(0, true, true),
-          new PartitionReplica(1, false, false)
-      ))
-  );
 
   protected Properties deserializerProps;
 

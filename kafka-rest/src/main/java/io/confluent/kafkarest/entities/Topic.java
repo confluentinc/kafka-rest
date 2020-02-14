@@ -15,39 +15,39 @@
 
 package io.confluent.kafkarest.entities;
 
-public final class TopicPartitionOffset {
+import java.util.List;
+import java.util.Objects;
+import java.util.Properties;
 
-  private String topic;
+public final class Topic {
 
-  private int partition;
+  private String name;
 
-  private long consumed;
+  private Properties configs;
 
-  private long committed;
+  private List<Partition> partitions;
 
-  public TopicPartitionOffset(String topic, int partition, long consumed, long committed) {
-    if (topic.isEmpty()) {
+  public Topic(String name, Properties configs, List<Partition> partitions) {
+    if (name.isEmpty()) {
       throw new IllegalArgumentException();
     }
-    this.topic = topic;
-    this.partition = partition;
-    this.consumed = consumed;
-    this.committed = committed;
+    if (partitions.isEmpty()) {
+      throw new IllegalArgumentException();
+    }
+    this.name = name;
+    this.configs = Objects.requireNonNull(configs);
+    this.partitions = partitions;
   }
 
-  public String getTopic() {
-    return topic;
+  public String getName() {
+    return name;
   }
 
-  public int getPartition() {
-    return partition;
+  public Properties getConfigs() {
+    return configs;
   }
 
-  public long getConsumed() {
-    return consumed;
-  }
-
-  public long getCommitted() {
-    return committed;
+  public List<Partition> getPartitions() {
+    return partitions;
   }
 }

@@ -27,6 +27,7 @@ import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.SchemaConsumerRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.entities.v1.CommitOffsetsResponse;
 import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceResponse;
 import io.confluent.rest.RestConfigException;
 import java.util.Arrays;
@@ -96,18 +97,18 @@ public class ConsumerResourceAvroTest extends AbstractConsumerResourceTest {
         Response readResponse = request(readUrl, mediatype.header).get();
         assertOKResponse(readResponse, expectedMediatype);
         final List<SchemaConsumerRecord> readResponseRecords =
-                TestUtils.tryReadEntityOrLog(readResponse, new GenericType<List<SchemaConsumerRecord>>() {
-            });
+            TestUtils
+                .tryReadEntityOrLog(readResponse, new GenericType<List<SchemaConsumerRecord>>() {
+                });
         assertEquals(expectedReadNoLimit, readResponseRecords);
 
         String commitUrl = instanceBasePath(createResponse) + "/offsets/";
         Response commitResponse = request(commitUrl, mediatype.header)
             .post(Entity.entity(null, requestMediatype));
         assertOKResponse(response, mediatype.expected);
-        final List<TopicPartitionOffset> committedOffsets =
-                TestUtils.tryReadEntityOrLog(commitResponse, new GenericType<List<TopicPartitionOffset>>() {
-            });
-        assertEquals(expectedOffsets, committedOffsets);
+        final CommitOffsetsResponse committedOffsets =
+            TestUtils.tryReadEntityOrLog(commitResponse, CommitOffsetsResponse.class);
+        assertEquals(CommitOffsetsResponse.fromOffsets(expectedOffsets), committedOffsets);
 
         EasyMock.verify(consumerManager);
         EasyMock.reset(consumerManager);

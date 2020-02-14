@@ -27,6 +27,7 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.entities.v1.CommitOffsetsResponse;
 import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.List;
@@ -94,7 +95,7 @@ public class ConsumersResource {
         if (e != null) {
           asyncResponse.resume(e);
         } else {
-          asyncResponse.resume(offsets);
+          asyncResponse.resume(CommitOffsetsResponse.fromOffsets(offsets));
         }
       }
     });

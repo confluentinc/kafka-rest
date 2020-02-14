@@ -29,7 +29,7 @@ import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.entities.v1.CommitOffsetsResponse;
 import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceResponse;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -247,9 +247,8 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     // We don't verify offsets since they'll depend on how data gets distributed to partitions.
     // Just parse to check the output is formatted validly.
-    List<TopicPartitionOffset> offsets =
-            TestUtils.tryReadEntityOrLog(response, new GenericType<List<TopicPartitionOffset>>() {
-        });
+    CommitOffsetsResponse offsets =
+        TestUtils.tryReadEntityOrLog(response, CommitOffsetsResponse.class);
   }
 
   // Either topic or instance not found

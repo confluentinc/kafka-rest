@@ -23,6 +23,7 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.entities.v2.CommitOffsetsResponse;
 import io.confluent.kafkarest.entities.v2.ConsumerAssignmentRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerAssignmentResponse;
 import io.confluent.kafkarest.entities.v2.ConsumerCommittedRequest;
@@ -250,7 +251,7 @@ public class ConsumersResource {
             if (e != null) {
               asyncResponse.resume(e);
             } else {
-              asyncResponse.resume(offsets);
+              asyncResponse.resume(CommitOffsetsResponse.fromOffsets(offsets));
             }
           }
         }

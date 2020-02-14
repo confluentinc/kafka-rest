@@ -143,7 +143,7 @@ public class AuthorizationErrorTest
 
   private void verifySubscribeToTopic(boolean expectFailure) {
     Response createResponse = createConsumerInstance(CONSUMER_GROUP);
-    assertOKResponse(createResponse, Versions.KAFKA_V1_JSON);
+    assertOKResponse(createResponse, Versions.KAFKA_V2_JSON);
 
     //create group
     CreateConsumerInstanceResponse instanceResponse =
@@ -152,23 +152,23 @@ public class AuthorizationErrorTest
     assertTrue("Base URI should contain the consumer instance ID",
         instanceResponse.getBaseUri().contains(instanceResponse.getInstanceId()));
 
-    String topicJson = "{\"topics\":[\""+TOPIC_NAME+ "\"]}";
+    String topicJson = "{\"topics\":[\"" + TOPIC_NAME + "\"]}";
 
     //subscribe to group
-    request(instanceResponse.getBaseUri() + "/subscription")
-        .post(Entity.entity(topicJson, Versions.KAFKA_V1_JSON_JSON));
+    Response subscribe = request(instanceResponse.getBaseUri() + "/subscription")
+        .post(Entity.entity(topicJson, Versions.KAFKA_V2_JSON));
 
     //poll some records
     Response response = request(instanceResponse.getBaseUri() + "/records")
-        .accept(Versions.KAFKA_V1_JSON).get();
+        .accept(Versions.KAFKA_V2_JSON_BINARY).get();
 
     if (expectFailure) {
       assertErrorResponse(Response.Status.FORBIDDEN, response,
           Errors.KAFKA_AUTHORIZATION_ERROR_CODE,
           "Not authorized to access topics",
-          Versions.KAFKA_V1_JSON);
+          Versions.KAFKA_V2_JSON_BINARY);
     } else {
-      assertOKResponse(response, Versions.KAFKA_V1_JSON);
+      assertOKResponse(response, Versions.KAFKA_V2_JSON_BINARY);
     }
   }
 
@@ -176,8 +176,7 @@ public class AuthorizationErrorTest
     ConsumerInstanceConfig config = new ConsumerInstanceConfig(null, null, null,
         null, null, null, null);
 
-    return request("/consumers/" + groupName)
-        .post(Entity.entity(config, Versions.KAFKA_V1_JSON_JSON));
+    return request("/consumers/" + groupName).post(Entity.entity(config, Versions.KAFKA_V2_JSON));
   }
 
   @Override
