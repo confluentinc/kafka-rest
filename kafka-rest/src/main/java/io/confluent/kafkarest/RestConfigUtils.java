@@ -49,7 +49,7 @@ public class RestConfigUtils {
           new ZooKeeperClient(config.getString(ZOOKEEPER_CONNECT_CONFIG), zkSessionTimeoutMs,
               zkSessionTimeoutMs, Integer.MAX_VALUE, time,
               "testMetricGroup", "testMetricGroupType"),
-          JaasUtils.isZkSecurityEnabled(),
+          JaasUtils.isZkSaslEnabled(),
           time);
       return getBootstrapBrokers(zkClient);
     } finally {
