@@ -333,7 +333,7 @@ public class ProtobufConverterTest {
 
   @Test
   public void testMapToJson() {
-    DynamicMessage.Builder mapBuilder = mapSchema.newMessageBuilder("TestMapEntry");
+    DynamicMessage.Builder mapBuilder = mapSchema.newMessageBuilder("TestMap.TestMapEntry");
     Descriptor mapDesc = mapBuilder.getDescriptorForType();
     FieldDescriptor keyField = mapDesc.findFieldByName("key");
     mapBuilder.setField(keyField, "first");
@@ -341,7 +341,7 @@ public class ProtobufConverterTest {
     mapBuilder.setField(valueField, "one");
     DynamicMessage mapEntry = mapBuilder.build();
 
-    DynamicMessage.Builder mapBuilder2 = mapSchema.newMessageBuilder("TestMapEntry");
+    DynamicMessage.Builder mapBuilder2 = mapSchema.newMessageBuilder("TestMap.TestMapEntry");
     Descriptor mapDesc2 = mapBuilder2.getDescriptorForType();
     FieldDescriptor keyField2 = mapDesc2.findFieldByName("key");
     mapBuilder2.setField(keyField2, "second");
