@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest;
 
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.ConsumerRecord;
 import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.MessageAndMetadata;
 import kafka.serializer.Decoder;
@@ -51,12 +51,8 @@ public class BinaryConsumerState extends ConsumerState<byte[], byte[], byte[], b
     long approxSize = (msg.key() != null ? msg.key().length : 0)
                       + (msg.message() != null ? msg.message().length : 0);
     return new ConsumerRecordAndSize<>(
-        new BinaryConsumerRecord(msg.topic(),
-                                 msg.key(),
-                                 msg.message(),
-                                 msg.partition(),
-                                 msg.offset()),
-        approxSize);
+        new ConsumerRecord<>(
+            msg.topic(), msg.key(), msg.message(), msg.partition(), msg.offset()), approxSize);
   }
 
 }

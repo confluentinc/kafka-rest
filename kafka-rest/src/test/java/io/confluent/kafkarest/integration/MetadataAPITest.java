@@ -147,9 +147,8 @@ public class MetadataAPITest extends ClusterTestHarness {
     // Listing
     Response response = request("/topics/" + topic1Name + "/partitions").get();
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    final List<Partition> partitions1Response =
-            tryReadEntityOrLog(response, new GenericType<List<Partition>>() {
-        });
+    List<GetPartitionResponse> partitions1Response =
+            tryReadEntityOrLog(response, new GenericType<List<GetPartitionResponse>>() {});
     // Just verify some basic properties because the exact values can vary based on replica
     // assignment, leader election
     assertEquals(topic1Partitions.size(), partitions1Response.size());
@@ -157,9 +156,8 @@ public class MetadataAPITest extends ClusterTestHarness {
 
     response = request("/topics/" + topic2Name + "/partitions").get();
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    final List<Partition> partitions2Response =
-        tryReadEntityOrLog(response, new GenericType<List<Partition>>() {
-        });
+    List<GetPartitionResponse> partitions2Response =
+        tryReadEntityOrLog(response, new GenericType<List<GetPartitionResponse>>() {});
     assertEquals(topic2Partitions.size(), partitions2Response.size());
     assertEquals(numReplicas, partitions2Response.get(0).getReplicas().size());
     assertEquals(numReplicas, partitions2Response.get(1).getReplicas().size());

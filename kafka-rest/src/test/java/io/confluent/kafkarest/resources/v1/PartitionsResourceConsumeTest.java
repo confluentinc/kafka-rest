@@ -35,7 +35,6 @@ import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.ScalaConsumersContext;
 import io.confluent.kafkarest.SimpleConsumerManager;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.extension.InstantConverterProvider;
@@ -67,9 +66,9 @@ public class PartitionsResourceConsumeTest extends JerseyTest {
   private static final byte[] KEY = "key".getBytes(StandardCharsets.UTF_8);
   private static final byte[] VALUE = "value".getBytes(StandardCharsets.UTF_8);
 
-  private static final List<BinaryConsumerRecord> RECORDS =
+  private static final List<ConsumerRecord<byte[], byte[]>> RECORDS =
       unmodifiableList(
-          singletonList(new BinaryConsumerRecord(TOPIC, KEY, VALUE, PARTITION, OFFSET)));
+          singletonList(new ConsumerRecord<>(TOPIC, KEY, VALUE, PARTITION, OFFSET)));
 
 
   private KafkaConsumerManager kafkaConsumerManager;
@@ -109,7 +108,7 @@ public class PartitionsResourceConsumeTest extends JerseyTest {
       long offset,
       long count,
       EmbeddedFormat embeddedFormat,
-      List<? extends ConsumerRecord<K, V>> records) {
+      List<ConsumerRecord<K, V>> records) {
     Capture<ConsumerReadCallback<K, V>> callback = Capture.newInstance();
     simpleConsumerManager.consume(
         eq(topicName),

@@ -25,13 +25,12 @@ import static org.junit.Assert.fail;
 import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.SystemTime;
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
 import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.rest.RestConfigException;
 import java.time.Instant;
 import java.util.Arrays;
@@ -78,7 +77,7 @@ public class KafkaConsumerManagerTest {
     // Setup holding vars for results from callback
     private boolean sawCallback = false;
     private static Exception actualException = null;
-    private static List<? extends ConsumerRecord<byte[], byte[]>> actualRecords = null;
+    private static List<ConsumerRecord<byte[], byte[]>> actualRecords = null;
     private static List<TopicPartitionOffset> actualOffsets = null;
 
     private Capture<Properties> capturedConsumerConfig;
@@ -276,7 +275,7 @@ public class KafkaConsumerManagerTest {
      */
     @Test
     public void testConsumerMinAndMaxBytes() throws Exception {
-        BinaryConsumerRecord sampleRecord = binaryConsumerRecord(0);
+        ConsumerRecord<byte[], byte[]> sampleRecord = binaryConsumerRecord(0);
         int sampleRecordSize = sampleRecord.getKey().length + sampleRecord.getValue().length;
         // we expect all the records from the first poll to be returned
         Properties props = setUpProperties(new Properties());
@@ -305,7 +304,7 @@ public class KafkaConsumerManagerTest {
 
     @Test
     public void testConsumeMinBytesIsOverridablePerConsumer() throws Exception {
-        BinaryConsumerRecord sampleRecord = binaryConsumerRecord(0);
+        ConsumerRecord<byte[], byte[]> sampleRecord = binaryConsumerRecord(0);
         int sampleRecordSize = sampleRecord.getKey().length + sampleRecord.getValue().length;
         Properties props = setUpProperties(new Properties());
         props.setProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG, Integer.toString(sampleRecordSize * 5));
@@ -381,7 +380,8 @@ public class KafkaConsumerManagerTest {
         consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
                 new ConsumerReadCallback<byte[], byte[]>() {
                     @Override
-                    public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, Exception e) {
+                    public void onCompletion(
+                        List<ConsumerRecord<byte[], byte[]>> records, Exception e) {
                         actualException = e;
                         actualRecords = records;
                         sawCallback = true;
@@ -407,7 +407,8 @@ public class KafkaConsumerManagerTest {
         consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
                 new ConsumerReadCallback<byte[], byte[]>() {
                     @Override
-                    public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, Exception e) {
+                    public void onCompletion(
+                        List<ConsumerRecord<byte[], byte[]>> records, Exception e) {
                         actualException = e;
                         actualRecords = records;
                         sawCallback = true;
@@ -432,7 +433,8 @@ public class KafkaConsumerManagerTest {
         consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
                 new ConsumerReadCallback<byte[], byte[]>() {
                     @Override
-                    public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, Exception e) {
+                    public void onCompletion(
+                        List<ConsumerRecord<byte[], byte[]>> records, Exception e) {
                         actualException = e;
                         actualRecords = records;
                         sawCallback = true;
@@ -482,7 +484,7 @@ public class KafkaConsumerManagerTest {
 
         ConsumerReadCallback callback = new ConsumerReadCallback<byte[], byte[]>() {
             @Override
-            public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, Exception e) {
+            public void onCompletion(List<ConsumerRecord<byte[], byte[]>> records, Exception e) {
                 actualException = e;
                 actualRecords = records;
                 sawCallback = true;
@@ -515,12 +517,11 @@ public class KafkaConsumerManagerTest {
      * Subscribes a consumer to a topic and schedules a poll task
      */
     private List<ConsumerRecord<byte[], byte[]>> bootstrapConsumer(final MockConsumer<byte[], byte[]> consumer, boolean toExpectCreate) {
-        final List<ConsumerRecord<byte[], byte[]>> referenceRecords
-                = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
-                new BinaryConsumerRecord(topicName, "k1".getBytes(), "v1".getBytes(), 0, 0),
-                new BinaryConsumerRecord(topicName, "k2".getBytes(), "v2".getBytes(), 0, 1),
-                new BinaryConsumerRecord(topicName, "k3".getBytes(), "v3".getBytes(), 0, 2)
-        );
+        List<ConsumerRecord<byte[], byte[]>> referenceRecords =
+            Arrays.asList(
+                new ConsumerRecord<>(topicName, "k1".getBytes(), "v1".getBytes(), 0, 0),
+                new ConsumerRecord<>(topicName, "k2".getBytes(), "v2".getBytes(), 0, 1),
+                new ConsumerRecord<>(topicName, "k3".getBytes(), "v3".getBytes(), 0, 2));
 
         if (toExpectCreate)
             expectCreate(consumer);
@@ -548,7 +549,8 @@ public class KafkaConsumerManagerTest {
         consumerManager.readRecords(groupName, cid, BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
             new ConsumerReadCallback<byte[], byte[]>() {
               @Override
-              public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, Exception e) {
+              public void onCompletion(
+                  List<ConsumerRecord<byte[], byte[]>> records, Exception e) {
                 actualException = e;
                 actualRecords = records;
                 sawCallback = true;
@@ -576,8 +578,8 @@ public class KafkaConsumerManagerTest {
         );
     }
 
-    private BinaryConsumerRecord binaryConsumerRecord(int offset) {
-        return new BinaryConsumerRecord(
+    private ConsumerRecord<byte[], byte[]> binaryConsumerRecord(int offset) {
+        return new ConsumerRecord<>(
                 topicName,
                 String.format("k%d", offset).getBytes(),
                 String.format("v%d", offset).getBytes(),

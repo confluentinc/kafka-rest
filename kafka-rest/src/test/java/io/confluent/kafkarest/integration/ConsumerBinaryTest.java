@@ -18,9 +18,9 @@ import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.v1.BinaryConsumerRecord;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import java.util.Arrays;
 import java.util.List;
@@ -71,9 +71,15 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     String instanceUri = startConsumeMessages(groupName, topicName, null,
                                               Versions.KAFKA_V1_JSON_BINARY);
     produceBinaryMessages(recordsOnlyValues);
-    consumeMessages(instanceUri, topicName, recordsOnlyValues,
-                    Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
-                    binaryConsumerRecordType, null);
+    consumeMessages(
+        instanceUri,
+        topicName,
+        recordsOnlyValues,
+        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V1_JSON_BINARY,
+        binaryConsumerRecordType,
+        /* converter= */ null,
+        BinaryConsumerRecord::toConsumerRecord);
     commitOffsets(instanceUri);
   }
 
@@ -82,9 +88,15 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
                                               Versions.KAFKA_V1_JSON_BINARY);
     produceBinaryMessages(recordsWithKeys);
-    consumeMessages(instanceUri, topicName, recordsWithKeys,
-                    Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
-                    binaryConsumerRecordType, null);
+    consumeMessages(
+        instanceUri,
+        topicName,
+        recordsWithKeys,
+        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V1_JSON_BINARY,
+        binaryConsumerRecordType,
+        /* converter= */ null,
+        BinaryConsumerRecord::toConsumerRecord);
     commitOffsets(instanceUri);
   }
 
@@ -94,9 +106,15 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
         Versions.KAFKA_V1_JSON_BINARY);
     produceBinaryMessages(recordsWithKeys);
-    consumeMessages(instanceUri, topicName, recordsWithKeys,
-        Versions.ANYTHING, Versions.KAFKA_V1_JSON_BINARY,
-        binaryConsumerRecordType, null);
+    consumeMessages(
+        instanceUri,
+        topicName,
+        recordsWithKeys,
+        Versions.ANYTHING,
+        Versions.KAFKA_V1_JSON_BINARY,
+        binaryConsumerRecordType,
+        /* converter= */ null,
+        BinaryConsumerRecord::toConsumerRecord);
     commitOffsets(instanceUri);
   }
 
@@ -111,13 +129,21 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
                                               Versions.KAFKA_V1_JSON_BINARY);
     produceBinaryMessages(recordsWithKeys);
-    consumeMessages(instanceUri, topicName, recordsWithKeys,
-                    Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
-                    binaryConsumerRecordType, null);
+    consumeMessages(
+        instanceUri,
+        topicName,
+        recordsWithKeys,
+        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V1_JSON_BINARY,
+        binaryConsumerRecordType,
+        /* converter= */ null,
+        BinaryConsumerRecord::toConsumerRecord);
     consumeForTimeout(
-        instanceUri, topicName,
-        Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY, binaryConsumerRecordType
-    );
+        instanceUri,
+        topicName,
+        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V1_JSON_BINARY,
+        binaryConsumerRecordType);
   }
 
   @Test
@@ -125,9 +151,15 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     String instanceUri = startConsumeMessages(groupName, topicName, null,
                                               Versions.KAFKA_V1_JSON_BINARY);
     produceBinaryMessages(recordsWithKeys);
-    consumeMessages(instanceUri, topicName, recordsWithKeys,
-                    Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
-                    binaryConsumerRecordType, null);
+    consumeMessages(
+        instanceUri,
+        topicName,
+        recordsWithKeys,
+        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V1_JSON_BINARY,
+        binaryConsumerRecordType,
+        /* converter= */ null,
+        BinaryConsumerRecord::toConsumerRecord);
     deleteConsumer(instanceUri);
   }
 

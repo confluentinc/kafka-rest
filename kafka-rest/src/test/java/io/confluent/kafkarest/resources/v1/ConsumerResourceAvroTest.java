@@ -25,13 +25,14 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.SchemaConsumerRecord;
+import io.confluent.kafkarest.entities.v1.AvroConsumerRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.v1.CommitOffsetsResponse;
 import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceResponse;
 import io.confluent.rest.RestConfigException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.GenericType;
@@ -47,14 +48,14 @@ public class ConsumerResourceAvroTest extends AbstractConsumerResourceTest {
 
   @Test
   public void testReadCommit() {
-    List<? extends ConsumerRecord<JsonNode, JsonNode>> expectedReadLimit = Arrays.asList(
-        new SchemaConsumerRecord(
+    List<ConsumerRecord<JsonNode, JsonNode>> expectedReadLimit = Arrays.asList(
+        new ConsumerRecord<>(
             topicName, TestUtils.jsonTree("\"key1\""), TestUtils.jsonTree("\"value1\""), 0, 10)
     );
-    List<? extends ConsumerRecord<JsonNode, JsonNode>> expectedReadNoLimit = Arrays.asList(
-        new SchemaConsumerRecord(
+    List<ConsumerRecord<JsonNode, JsonNode>> expectedReadNoLimit = Arrays.asList(
+        new ConsumerRecord<>(
             topicName, TestUtils.jsonTree("\"key2\""), TestUtils.jsonTree("\"value2\""), 1, 15),
-        new SchemaConsumerRecord(
+        new ConsumerRecord<>(
             topicName, TestUtils.jsonTree("\"key3\""), TestUtils.jsonTree("\"value3\""), 2, 20)
     );
     List<TopicPartitionOffset> expectedOffsets = Arrays.asList(
@@ -89,18 +90,26 @@ public class ConsumerResourceAvroTest extends AbstractConsumerResourceTest {
         String expectedMediatype
             = mediatype.header != null ? mediatype.expected : Versions.KAFKA_V1_JSON_AVRO;
         assertOKResponse(readLimitResponse, expectedMediatype);
-        final List<SchemaConsumerRecord> readLimitResponseRecords =
-            TestUtils.tryReadEntityOrLog(readLimitResponse, new GenericType<List<SchemaConsumerRecord>>() {});
-        assertEquals(expectedReadLimit, readLimitResponseRecords);
+        final List<AvroConsumerRecord> readLimitResponseRecords =
+            TestUtils.tryReadEntityOrLog(
+                readLimitResponse, new GenericType<List<AvroConsumerRecord>>() {});
+        assertEquals(
+            expectedReadLimit.stream()
+                .map(AvroConsumerRecord::fromConsumerRecord)
+                .collect(Collectors.toList()),
+            readLimitResponseRecords);
 
         // Read without size limit
         Response readResponse = request(readUrl, mediatype.header).get();
         assertOKResponse(readResponse, expectedMediatype);
-        final List<SchemaConsumerRecord> readResponseRecords =
-            TestUtils
-                .tryReadEntityOrLog(readResponse, new GenericType<List<SchemaConsumerRecord>>() {
-                });
-        assertEquals(expectedReadNoLimit, readResponseRecords);
+        final List<AvroConsumerRecord> readResponseRecords =
+            TestUtils.tryReadEntityOrLog(
+                readResponse, new GenericType<List<AvroConsumerRecord>>() {});
+        assertEquals(
+            expectedReadNoLimit.stream()
+                .map(AvroConsumerRecord::fromConsumerRecord)
+                .collect(Collectors.toList()),
+            readResponseRecords);
 
         String commitUrl = instanceBasePath(createResponse) + "/offsets/";
         Response commitResponse = request(commitUrl, mediatype.header)

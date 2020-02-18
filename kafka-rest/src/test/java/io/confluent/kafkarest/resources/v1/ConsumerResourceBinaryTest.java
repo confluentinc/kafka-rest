@@ -21,16 +21,19 @@ import static org.junit.Assert.assertEquals;
 import io.confluent.kafkarest.BinaryConsumerState;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.entities.v1.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.v1.CommitOffsetsResponse;
 import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceResponse;
 import io.confluent.rest.RestConfigException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.GenericType;
@@ -46,13 +49,13 @@ public class ConsumerResourceBinaryTest extends AbstractConsumerResourceTest {
 
   @Test
   public void testReadCommit() {
-    List<? extends ConsumerRecord<byte[], byte[]>> expectedReadLimit = Arrays.asList(
-        new BinaryConsumerRecord(topicName, "key1".getBytes(), "value1".getBytes(), 0, 10)
-    );
-    List<? extends ConsumerRecord<byte[], byte[]>> expectedReadNoLimit = Arrays.asList(
-        new BinaryConsumerRecord(topicName, "key2".getBytes(), "value2".getBytes(), 1, 15),
-        new BinaryConsumerRecord(topicName, "key3".getBytes(), "value3".getBytes(), 2, 20)
-    );
+    List<ConsumerRecord<byte[], byte[]>> expectedReadLimit =
+        Collections.singletonList(
+            new ConsumerRecord<>(topicName, "key1".getBytes(), "value1".getBytes(), 0, 10));
+    List<ConsumerRecord<byte[], byte[]>> expectedReadNoLimit =
+        Arrays.asList(
+            new ConsumerRecord<>(topicName, "key2".getBytes(), "value2".getBytes(), 1, 15),
+            new ConsumerRecord<>(topicName, "key3".getBytes(), "value3".getBytes(), 2, 20));
     List<TopicPartitionOffset> expectedOffsets = Arrays.asList(
         new TopicPartitionOffset(topicName, 0, 10, 10),
         new TopicPartitionOffset(topicName, 1, 15, 15),
@@ -88,7 +91,11 @@ public class ConsumerResourceBinaryTest extends AbstractConsumerResourceTest {
         final List<BinaryConsumerRecord> readLimitResponseRecords =
                 TestUtils.tryReadEntityOrLog(readLimitResponse,new GenericType<List<BinaryConsumerRecord>>() {
             });
-        assertEquals(expectedReadLimit, readLimitResponseRecords);
+        assertEquals(
+            expectedReadLimit.stream()
+                .map(BinaryConsumerRecord::fromConsumerRecord)
+                .collect(Collectors.toList()),
+            readLimitResponseRecords);
 
         // Read without size limit
         Response readResponse = request(readUrl, mediatype.header).get();
@@ -97,7 +104,11 @@ public class ConsumerResourceBinaryTest extends AbstractConsumerResourceTest {
             TestUtils
                 .tryReadEntityOrLog(readResponse, new GenericType<List<BinaryConsumerRecord>>() {
                 });
-        assertEquals(expectedReadNoLimit, readResponseRecords);
+        assertEquals(
+            expectedReadNoLimit.stream()
+                .map(BinaryConsumerRecord::fromConsumerRecord)
+                .collect(Collectors.toList()),
+            readResponseRecords);
 
         String commitUrl = instanceBasePath(createResponse) + "/offsets/";
         Response commitResponse = request(commitUrl, mediatype.header)

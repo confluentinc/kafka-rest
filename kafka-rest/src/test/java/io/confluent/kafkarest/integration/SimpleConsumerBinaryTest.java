@@ -18,7 +18,7 @@ import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.v1.BinaryConsumerRecord;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -65,14 +65,14 @@ public class SimpleConsumerBinaryTest extends AbstractConsumerTest {
 
     simpleConsumeMessages(
         topicName,
-        0,
-        null, // No "count" parameter in the query
+        /* offset= */ 0,
+        /* count= */ null, // No "count" parameter in the query
         recordsOnlyValues.subList(0, 1), // We expect only the first record in the response
         Versions.KAFKA_V1_JSON_BINARY,
         Versions.KAFKA_V1_JSON_BINARY,
         binaryConsumerRecordType,
-        null
-        );
+        /* converter= */ null,
+        BinaryConsumerRecord::toConsumerRecord);
   }
 
   @Test
@@ -81,14 +81,14 @@ public class SimpleConsumerBinaryTest extends AbstractConsumerTest {
 
     simpleConsumeMessages(
         topicName,
-        0,
-        null, // No "count" parameter in the query
+        /* offset= */ 0,
+        /* count= */ null, // No "count" parameter in the query
         recordsWithKeys.subList(0, 1),
         Versions.KAFKA_V1_JSON_BINARY,
         Versions.KAFKA_V1_JSON_BINARY,
         binaryConsumerRecordType,
-        null
-    );
+        /* converter= */ null,
+        BinaryConsumerRecord::toConsumerRecord);
   }
 
   @Test
@@ -97,14 +97,14 @@ public class SimpleConsumerBinaryTest extends AbstractConsumerTest {
 
     simpleConsumeMessages(
         topicName,
-        0,
+        /* offset= */ 0,
         recordsOnlyValues.size(),
         recordsOnlyValues,
         Versions.KAFKA_V1_JSON_BINARY,
         Versions.KAFKA_V1_JSON_BINARY,
         binaryConsumerRecordType,
-        null
-    );
+        /* converter= */ null,
+        BinaryConsumerRecord::toConsumerRecord);
   }
 
   @Test
@@ -113,14 +113,14 @@ public class SimpleConsumerBinaryTest extends AbstractConsumerTest {
 
     simpleConsumeMessages(
         topicName,
-        0,
+        /* offset= */ 0,
         recordsWithKeys.size(),
         recordsWithKeys,
         Versions.KAFKA_V1_JSON_BINARY,
         Versions.KAFKA_V1_JSON_BINARY,
         binaryConsumerRecordType,
-        null
-    );
+        /* converter= */ null,
+        BinaryConsumerRecord::toConsumerRecord);
   }
 
   @Test(timeout = 10000)
@@ -129,14 +129,14 @@ public class SimpleConsumerBinaryTest extends AbstractConsumerTest {
 
     simpleConsumeMessages(
         topicName,
-        0,
+        /* offset= */ 0,
         recordsOnlyValues.size()+1, // Ask for more than there is
         recordsOnlyValues,
         Versions.KAFKA_V1_JSON_BINARY,
         Versions.KAFKA_V1_JSON_BINARY,
         binaryConsumerRecordType,
-        null
-    );
+        /* converter= */ null,
+        BinaryConsumerRecord::toConsumerRecord);
   }
 
   @Test

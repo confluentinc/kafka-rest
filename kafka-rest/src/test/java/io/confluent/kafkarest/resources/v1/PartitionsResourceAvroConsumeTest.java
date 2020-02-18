@@ -22,10 +22,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.SchemaConsumerRecord;
+import io.confluent.kafkarest.entities.v1.AvroConsumerRecord;
 import io.confluent.rest.RestConfigException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import org.easymock.EasyMock;
@@ -39,8 +40,8 @@ public class PartitionsResourceAvroConsumeTest extends PartitionsResourceAbstrac
 
   @Test
   public void testConsumeOk() {
-    final List<? extends ConsumerRecord<JsonNode, JsonNode>> records = Arrays.asList(
-        new SchemaConsumerRecord(
+    final List<ConsumerRecord<JsonNode, JsonNode>> records = Arrays.asList(
+        new ConsumerRecord<>(
             topicName, TestUtils.jsonTree("\"key1\""), TestUtils.jsonTree("\"value1\""), 0, 10)
     );
 
@@ -51,9 +52,13 @@ public class PartitionsResourceAvroConsumeTest extends PartitionsResourceAbstrac
       final Response response = request(topicName, partitionId, offset, mediatype.header);
       assertOKResponse(response, mediatype.expected);
 
-      final List<SchemaConsumerRecord> readResponseRecords =
-              TestUtils.tryReadEntityOrLog(response, new GenericType<List<SchemaConsumerRecord>>() {});
-      assertEquals(records, readResponseRecords);
+      final List<AvroConsumerRecord> readResponseRecords =
+          TestUtils.tryReadEntityOrLog(response, new GenericType<List<AvroConsumerRecord>>() {});
+      assertEquals(
+          records.stream()
+              .map(AvroConsumerRecord::fromConsumerRecord)
+              .collect(Collectors.toList()),
+          readResponseRecords);
 
       EasyMock.verify(simpleConsumerManager);
       EasyMock.reset(simpleConsumerManager);

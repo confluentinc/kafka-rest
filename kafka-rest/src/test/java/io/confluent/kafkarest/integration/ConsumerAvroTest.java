@@ -18,7 +18,7 @@ package io.confluent.kafkarest.integration;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.SchemaConsumerRecord;
+import io.confluent.kafkarest.entities.v1.AvroConsumerRecord;
 import java.util.Arrays;
 import java.util.List;
 import javax.ws.rs.core.GenericType;
@@ -64,9 +64,8 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
           new GenericRecordBuilder(valueSchema).set("field", 75).build())
   );
 
-  private static final GenericType<List<SchemaConsumerRecord>> avroConsumerRecordType
-      = new GenericType<List<SchemaConsumerRecord>>() {
-  };
+  private static final GenericType<List<AvroConsumerRecord>> avroConsumerRecordType =
+      new GenericType<List<AvroConsumerRecord>>() {};
   private static final Converter converter = new Converter() {
     @Override
     public Object convert(Object obj) {
@@ -91,9 +90,15 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.AVRO,
                                               Versions.KAFKA_V1_JSON_AVRO);
     produceAvroMessages(recordsOnlyValues);
-    consumeMessages(instanceUri, topicName, recordsOnlyValues,
-                    Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V1_JSON_AVRO,
-                    avroConsumerRecordType, converter);
+    consumeMessages(
+        instanceUri,
+        topicName,
+        recordsOnlyValues,
+        Versions.KAFKA_V1_JSON_AVRO,
+        Versions.KAFKA_V1_JSON_AVRO,
+        avroConsumerRecordType,
+        converter,
+        AvroConsumerRecord::toConsumerRecord);
     commitOffsets(instanceUri);
   }
 
@@ -102,9 +107,15 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.AVRO,
                                               Versions.KAFKA_V1_JSON_AVRO);
     produceAvroMessages(recordsWithKeys);
-    consumeMessages(instanceUri, topicName, recordsWithKeys,
-                    Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V1_JSON_AVRO,
-                    avroConsumerRecordType, converter);
+    consumeMessages(
+        instanceUri,
+        topicName,
+        recordsWithKeys,
+        Versions.KAFKA_V1_JSON_AVRO,
+        Versions.KAFKA_V1_JSON_AVRO,
+        avroConsumerRecordType,
+        converter,
+        AvroConsumerRecord::toConsumerRecord);
     commitOffsets(instanceUri);
   }
 
@@ -119,9 +130,15 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.AVRO,
                                               Versions.KAFKA_V1_JSON_AVRO);
     produceAvroMessages(recordsWithKeys);
-    consumeMessages(instanceUri, topicName, recordsWithKeys,
-                    Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V1_JSON_AVRO,
-                    avroConsumerRecordType, converter);
+    consumeMessages(
+        instanceUri,
+        topicName,
+        recordsWithKeys,
+        Versions.KAFKA_V1_JSON_AVRO,
+        Versions.KAFKA_V1_JSON_AVRO,
+        avroConsumerRecordType,
+        converter,
+        AvroConsumerRecord::toConsumerRecord);
     consumeForTimeout(instanceUri, topicName,
                       Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V1_JSON_AVRO,
                       avroConsumerRecordType);
@@ -132,9 +149,15 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.AVRO,
                                               Versions.KAFKA_V1_JSON_AVRO);
     produceAvroMessages(recordsWithKeys);
-    consumeMessages(instanceUri, topicName, recordsWithKeys,
-                    Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V1_JSON_AVRO,
-                    avroConsumerRecordType, converter);
+    consumeMessages(
+        instanceUri,
+        topicName,
+        recordsWithKeys,
+        Versions.KAFKA_V1_JSON_AVRO,
+        Versions.KAFKA_V1_JSON_AVRO,
+        avroConsumerRecordType,
+        converter,
+        AvroConsumerRecord::toConsumerRecord);
     deleteConsumer(instanceUri);
   }
 }

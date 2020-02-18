@@ -27,10 +27,15 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.entities.v1.AvroConsumerRecord;
+import io.confluent.kafkarest.entities.v1.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.v1.CommitOffsetsResponse;
 import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceResponse;
+import io.confluent.kafkarest.entities.v1.JsonConsumerRecord;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -125,7 +130,14 @@ public class ConsumersResource {
       final @PathParam("topic") String topic,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
-    readTopic(asyncResponse, group, instance, topic, maxBytes, BinaryConsumerState.class);
+    readTopic(
+        asyncResponse,
+        group,
+        instance,
+        topic,
+        maxBytes,
+        BinaryConsumerState.class,
+        BinaryConsumerRecord::fromConsumerRecord);
   }
 
   @GET
@@ -139,7 +151,14 @@ public class ConsumersResource {
       final @PathParam("topic") String topic,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
-    readTopic(asyncResponse, group, instance, topic, maxBytes, JsonConsumerState.class);
+    readTopic(
+        asyncResponse,
+        group,
+        instance,
+        topic,
+        maxBytes,
+        JsonConsumerState.class,
+        JsonConsumerRecord::fromConsumerRecord);
   }
 
   @GET
@@ -153,7 +172,14 @@ public class ConsumersResource {
       final @PathParam("topic") String topic,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
-    readTopic(asyncResponse, group, instance, topic, maxBytes, AvroConsumerState.class);
+    readTopic(
+        asyncResponse,
+        group,
+        instance,
+        topic,
+        maxBytes,
+        AvroConsumerState.class,
+        AvroConsumerRecord::fromConsumerRecord);
   }
 
   private <KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> void readTopic(
@@ -163,7 +189,8 @@ public class ConsumersResource {
       final @PathParam("topic") String topic,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes,
       Class<? extends ConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>>
-          consumerStateType
+          consumerStateType,
+      Function<ConsumerRecord<ClientKeyT, ClientValueT>, ?> toJsonWrapper
   ) {
     maxBytes = (maxBytes <= 0) ? Long.MAX_VALUE : maxBytes;
     ctx.getConsumerManager().readTopic(
@@ -171,13 +198,12 @@ public class ConsumersResource {
         new ConsumerReadCallback<ClientKeyT, ClientValueT>() {
           @Override
           public void onCompletion(
-              List<? extends ConsumerRecord<ClientKeyT, ClientValueT>> records,
-              Exception e
-          ) {
+              List<ConsumerRecord<ClientKeyT, ClientValueT>> records, Exception e) {
             if (e != null) {
               asyncResponse.resume(e);
             } else {
-              asyncResponse.resume(records);
+              asyncResponse.resume(
+                  records.stream().map(toJsonWrapper).collect(Collectors.toList()));
             }
           }
         }

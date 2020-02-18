@@ -15,8 +15,8 @@
 package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.v1.BinaryConsumerRecord;
 import java.util.List;
 import javax.ws.rs.core.GenericType;
 import org.junit.Before;

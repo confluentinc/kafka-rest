@@ -20,12 +20,13 @@ import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.v1.BinaryConsumerRecord;
 import io.confluent.rest.RestConfigException;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import org.easymock.EasyMock;
@@ -39,9 +40,9 @@ public class PartitionsResourceBinaryConsumeTest extends PartitionsResourceAbstr
 
   @Test
   public void testConsumeOk() {
-    List<? extends ConsumerRecord<byte[], byte[]>> records = Arrays.asList(
-        new BinaryConsumerRecord(topicName, "key1".getBytes(), "value1".getBytes(), 0, 10)
-    );
+    List<ConsumerRecord<byte[], byte[]>> records =
+        Collections.singletonList(
+            new ConsumerRecord<>(topicName, "key1".getBytes(), "value1".getBytes(), 0, 10));
 
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES_BINARY) {
 
@@ -56,7 +57,11 @@ public class PartitionsResourceBinaryConsumeTest extends PartitionsResourceAbstr
 
       final List<BinaryConsumerRecord> readResponseRecords =
               TestUtils.tryReadEntityOrLog(response, new GenericType<List<BinaryConsumerRecord>>() {});
-      assertEquals(records, readResponseRecords);
+      assertEquals(
+          records.stream()
+              .map(BinaryConsumerRecord::fromConsumerRecord)
+              .collect(Collectors.toList()),
+          readResponseRecords);
 
       EasyMock.verify(simpleConsumerManager);
       EasyMock.reset(simpleConsumerManager);

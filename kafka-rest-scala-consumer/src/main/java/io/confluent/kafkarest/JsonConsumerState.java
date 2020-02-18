@@ -17,9 +17,9 @@ package io.confluent.kafkarest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.confluent.kafkarest.entities.ConsumerRecord;
 import org.apache.kafka.common.errors.SerializationException;
 
-import io.confluent.kafkarest.entities.JsonConsumerRecord;
 import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.message.MessageAndMetadata;
 import kafka.serializer.Decoder;
@@ -73,9 +73,7 @@ public class JsonConsumerState extends ConsumerState<byte[], byte[], Object, Obj
     }
 
     return new ConsumerRecordAndSize<>(
-        new JsonConsumerRecord(msg.topic(), key, value, msg.partition(), msg.offset()),
-        approxSize
-    );
+        new ConsumerRecord<>(msg.topic(), key, value, msg.partition(), msg.offset()), approxSize);
   }
 
   private Object deserialize(byte[] data) {

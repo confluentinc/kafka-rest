@@ -15,94 +15,53 @@
 
 package io.confluent.kafkarest.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
+import java.util.Arrays;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+public final class ConsumerRecord<K, V> {
 
-public abstract class ConsumerRecord<K, V> {
+  private final String topic;
 
-  protected String topic;
+  @Nullable
+  private final K key;
 
-  protected K key;
-  @NotNull
-  protected V value;
+  @Nullable
+  private final V value;
 
-  @Min(0)
-  protected int partition;
+  private final int partition;
 
-  @Min(0)
-  protected long offset;
+  private final long offset;
 
-  public ConsumerRecord(String topic, K key, V value, int partition, long offset) {
-    this.topic = topic;
+  public ConsumerRecord(
+      String topic, @Nullable K key, @Nullable V value, int partition, long offset) {
+    this.topic = Objects.requireNonNull(topic);
     this.key = key;
     this.value = value;
     this.partition = partition;
     this.offset = offset;
   }
 
-  @JsonProperty
   public String getTopic() {
     return topic;
   }
 
-  @JsonProperty
-  public void setTopic(String topic) {
-    this.topic = topic;
-  }
-
-  @JsonIgnore
+  @Nullable
   public K getKey() {
     return key;
   }
 
-  @JsonProperty("key")
-  public Object getJsonKey() {
-    return key;
-  }
-
-  @JsonIgnore
-  public void setKey(K key) {
-    this.key = key;
-  }
-
-  @JsonIgnore
+  @Nullable
   public V getValue() {
     return value;
   }
 
-  @JsonProperty("value")
-  public Object getJsonValue() {
-    return value;
-  }
-
-  @JsonIgnore
-  public void setValue(V value) {
-    this.value = value;
-  }
-
-  @JsonProperty
   public int getPartition() {
     return partition;
   }
 
-  @JsonProperty
-  public void setPartition(int partition) {
-    this.partition = partition;
-  }
-
-  @JsonProperty
   public long getOffset() {
     return offset;
-  }
-
-  @JsonProperty
-  public void setOffset(int offset) {
-    this.offset = offset;
   }
 
   @Override
@@ -117,13 +76,33 @@ public abstract class ConsumerRecord<K, V> {
     return partition == that.partition
            && offset == that.offset
            && Objects.equals(topic, that.topic)
-           && Objects.equals(key, that.key)
-           && Objects.equals(value, that.value);
+           && genericEquals(key, that.key)
+           && genericEquals(value, that.value);
+  }
+
+  private static boolean genericEquals(Object a, Object b) {
+    // This is required because both K and V can be byte[], and comparing byte[] with Objects#equal
+    // would give the wrong result.
+    if (!(a instanceof byte[] && b instanceof byte[])) {
+      return Objects.equals(a, b);
+    }
+    return Arrays.equals((byte[]) a, (byte[]) b);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(topic, key, value, partition, offset);
+    int result = Objects.hash(topic, partition, offset);
+    result = 31 * result + genericHashCode(key);
+    result = 31 * result + genericHashCode(value);
+    return result;
   }
 
+  private static int genericHashCode(Object a) {
+    // This is required because both K and V can be byte[], and computing hash code of byte[] with
+    // Objects#hashCode would give the wrong result.
+    if (!(a instanceof byte[])) {
+      return Objects.hashCode(a);
+    }
+    return Arrays.hashCode((byte[]) a);
+  }
 }

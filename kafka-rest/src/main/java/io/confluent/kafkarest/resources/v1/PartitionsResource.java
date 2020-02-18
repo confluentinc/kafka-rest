@@ -28,10 +28,13 @@ import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.ProduceRequest;
+import io.confluent.kafkarest.entities.v1.AvroConsumerRecord;
 import io.confluent.kafkarest.entities.v1.AvroPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v1.AvroPartitionProduceRequest.AvroPartitionProduceRecord;
+import io.confluent.kafkarest.entities.v1.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.v1.BinaryPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v1.GetPartitionResponse;
+import io.confluent.kafkarest.entities.v1.JsonConsumerRecord;
 import io.confluent.kafkarest.entities.v1.JsonPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v1.PartitionOffset;
 import io.confluent.kafkarest.entities.v1.ProduceResponse;
@@ -40,6 +43,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Vector;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.Valid;
@@ -122,9 +126,23 @@ public class PartitionsResource {
     }
 
     if (offset != null) {
-      consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.BINARY);
+      consume(
+          asyncResponse,
+          topicName,
+          partitionId,
+          offset,
+          count,
+          EmbeddedFormat.BINARY,
+          BinaryConsumerRecord::fromConsumerRecord);
     } else {
-      consume(asyncResponse, topicName, partitionId, timestamp, count, EmbeddedFormat.BINARY);
+      consume(
+          asyncResponse,
+          topicName,
+          partitionId,
+          timestamp,
+          count,
+          EmbeddedFormat.BINARY,
+          BinaryConsumerRecord::fromConsumerRecord);
     }
   }
 
@@ -146,9 +164,23 @@ public class PartitionsResource {
     }
 
     if (offset != null) {
-      consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.AVRO);
+      consume(
+          asyncResponse,
+          topicName,
+          partitionId,
+          offset,
+          count,
+          EmbeddedFormat.AVRO,
+          AvroConsumerRecord::fromConsumerRecord);
     } else {
-      consume(asyncResponse, topicName, partitionId, timestamp, count, EmbeddedFormat.AVRO);
+      consume(
+          asyncResponse,
+          topicName,
+          partitionId,
+          timestamp,
+          count,
+          EmbeddedFormat.AVRO,
+          AvroConsumerRecord::fromConsumerRecord);
     }
   }
 
@@ -170,9 +202,23 @@ public class PartitionsResource {
     }
 
     if (offset != null) {
-      consume(asyncResponse, topicName, partitionId, offset, count, EmbeddedFormat.JSON);
+      consume(
+          asyncResponse,
+          topicName,
+          partitionId,
+          offset,
+          count,
+          EmbeddedFormat.JSON,
+          JsonConsumerRecord::fromConsumerRecord);
     } else {
-      consume(asyncResponse, topicName, partitionId, timestamp, count, EmbeddedFormat.JSON);
+      consume(
+          asyncResponse,
+          topicName,
+          partitionId,
+          timestamp,
+          count,
+          EmbeddedFormat.JSON,
+          JsonConsumerRecord::fromConsumerRecord);
     }
   }
 
@@ -246,19 +292,27 @@ public class PartitionsResource {
         request.toProduceRequest());
   }
 
-  private void consume(
+  private <K, V> void consume(
       @Suspended AsyncResponse asyncResponse,
       String topicName,
       int partitionId,
       Instant timestamp,
       long count,
-      EmbeddedFormat embeddedFormat
+      EmbeddedFormat embeddedFormat,
+      Function<ConsumerRecord<K, V>, ?> toJsonWrapper
   ) {
     Optional<Long> offset =
         ctx.getKafkaConsumerManager().getOffsetForTime(topicName, partitionId, timestamp);
 
     if (offset.isPresent()) {
-      consume(asyncResponse, topicName, partitionId, offset.get(), count, embeddedFormat);
+      consume(
+          asyncResponse,
+          topicName,
+          partitionId,
+          offset.get(),
+          count,
+          embeddedFormat,
+          toJsonWrapper);
     } else {
       // No messages at or after timestamp. Return empty.
       asyncResponse.resume(emptyList());
@@ -271,7 +325,8 @@ public class PartitionsResource {
       final int partitionId,
       final long offset,
       final long count,
-      final EmbeddedFormat embeddedFormat
+      final EmbeddedFormat embeddedFormat,
+      Function<ConsumerRecord<K, V>, ?> toJsonWrapper
   ) {
 
     log.trace("Executing simple consume id={} topic={} partition={} offset={} count={}",
@@ -283,7 +338,7 @@ public class PartitionsResource {
         new ConsumerReadCallback<K, V>() {
           @Override
           public void onCompletion(
-              List<? extends ConsumerRecord<K, V>> records,
+              List<ConsumerRecord<K, V>> records,
               Exception e
           ) {
             log.trace(
@@ -295,7 +350,8 @@ public class PartitionsResource {
             if (e != null) {
               asyncResponse.resume(e);
             } else {
-              asyncResponse.resume(records);
+              asyncResponse.resume(
+                  records.stream().map(toJsonWrapper).collect(Collectors.toList()));
             }
           }
         }

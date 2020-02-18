@@ -14,15 +14,28 @@
  */
 package io.confluent.kafkarest.v2;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import io.confluent.common.utils.Time;
 import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.SystemTime;
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+import java.util.Random;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.common.TopicPartition;
@@ -33,21 +46,6 @@ import org.easymock.IExpectationSetters;
 import org.easymock.Mock;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-import java.util.Random;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNull;
 
 @RunWith(EasyMockRunner.class)
 public class LoadTest {
@@ -69,10 +67,10 @@ public class LoadTest {
     class ConsumerTestRun {
         private final MockConsumer consumer;
         private final Time time;
-        private ReentrantLock lock = new ReentrantLock();
-        private Condition cond = lock.newCondition();
-        private volatile boolean sawCallback = false;
-        private volatile List<? extends ConsumerRecord<byte[], byte[]>> actualRecords = null;
+      private ReentrantLock lock = new ReentrantLock();
+      private Condition cond = lock.newCondition();
+      private volatile boolean sawCallback = false;
+      private volatile List<ConsumerRecord<byte[], byte[]>> actualRecords = null;
         private volatile Exception actualException;
         private ConsumerReadCallback callback;
         private int latestOffset = 0;
@@ -86,9 +84,10 @@ public class LoadTest {
             this.consumer = consumer;
             this.time = time;
             this.readStartMs = Integer.MAX_VALUE;
+            sawCallback = false;
             callback = new ConsumerReadCallback<byte[], byte[]>() {
                 @Override
-                public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, Exception e) {
+                public void onCompletion(List<ConsumerRecord<byte[], byte[]>> records, Exception e) {
                     lock.lock();
                     try {
                         sawCallback = true;
@@ -144,11 +143,13 @@ public class LoadTest {
         }
 
         private List<ConsumerRecord<byte[], byte[]>> referenceRecords() {
-            return Arrays.<ConsumerRecord<byte[], byte[]>>asList(
-                    new BinaryConsumerRecord(topicName, "k1".getBytes(), "v1".getBytes(), 0, latestOffset - 3),
-                    new BinaryConsumerRecord(topicName, "k2".getBytes(), "v2".getBytes(), 0, latestOffset - 2),
-                    new BinaryConsumerRecord(topicName, "k3".getBytes(), "v3".getBytes(), 0, latestOffset - 1)
-            );
+            return Arrays.asList(
+                new ConsumerRecord<>(
+                    topicName, "k1".getBytes(), "v1".getBytes(), 0, latestOffset - 3),
+                new ConsumerRecord<>(
+                    topicName, "k2".getBytes(), "v2".getBytes(), 0, latestOffset - 2),
+                new ConsumerRecord<>(
+                    topicName, "k3".getBytes(), "v3".getBytes(), 0, latestOffset - 1));
         }
 
         private void schedulePoll() {
