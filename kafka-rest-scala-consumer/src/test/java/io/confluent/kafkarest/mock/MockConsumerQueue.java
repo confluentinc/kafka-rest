@@ -14,10 +14,8 @@
  */
 package io.confluent.kafkarest.mock;
 
-import io.confluent.kafkarest.Time;
-import io.confluent.kafkarest.entities.ConsumerRecord;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,6 +25,9 @@ import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import io.confluent.kafkarest.Time;
+import io.confluent.kafkarest.entities.ConsumerRecord;
 import kafka.common.KafkaException;
 import kafka.consumer.FetchedDataChunk;
 import kafka.consumer.PartitionTopicInfo;
@@ -44,13 +45,13 @@ public class MockConsumerQueue implements BlockingQueue<FetchedDataChunk> {
 
   private Time time;
   private PriorityQueue<ScheduledItems> scheduled = new PriorityQueue<ScheduledItems>();
-  private Queue<ConsumerRecord<byte[], byte[]>> ready = new LinkedList<>();
+  private Queue<ConsumerRecord<byte[], byte[]>> ready
+      = new LinkedList<ConsumerRecord<byte[], byte[]>>();
 
   public MockConsumerQueue(Time time, Map<Integer,
       List<ConsumerRecord<byte[], byte[]>>> schedule) {
     this.time = time;
-    for (Map.Entry<Integer, List<ConsumerRecord<byte[], byte[]>>> item
-        : schedule.entrySet()) {
+    for (Map.Entry<Integer, List<ConsumerRecord<byte[], byte[]>>> item : schedule.entrySet()) {
       scheduled.add(new ScheduledItems(item.getKey(), item.getValue()));
     }
   }
@@ -118,13 +119,8 @@ public class MockConsumerQueue implements BlockingQueue<FetchedDataChunk> {
       }
 
       ByteBufferMessageSet msgSet = new ByteBufferMessageSet(
-          JavaConversions.asScalaBuffer(
-              Collections.singletonList(
-                  new Message(
-                      c.getValue(),
-                      c.getKey(),
-                      -1L,
-                      (byte) 0))));
+          JavaConversions.asScalaBuffer(Arrays.asList(new Message(c.getValue(), c.getKey(), -1L, (byte) 0)))
+      );
       AtomicLong consumedOffset = new AtomicLong(0);
       AtomicLong fetchOffset = new AtomicLong(0);
       PartitionTopicInfo
