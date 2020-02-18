@@ -30,6 +30,7 @@ import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v1.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.v1.CommitOffsetsResponse;
+import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceResponse;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -59,10 +60,17 @@ public class AbstractConsumerTest extends ClusterTestHarness {
 
   protected Response createConsumerInstance(String groupName, String id,
                                             String name, EmbeddedFormat format) {
-    ConsumerInstanceConfig config = null;
+    CreateConsumerInstanceRequest config = null;
     if (id != null || name != null || format != null) {
-      config = new ConsumerInstanceConfig(
-          id, name, (format != null ? format.toString() : null), null, null, null, null);
+      config =
+          new CreateConsumerInstanceRequest(
+              id,
+              name,
+              format != null ? format.toString() : null,
+              /* autoOffsetReset= */ null,
+              /* autoCommitEnable */ null,
+              /* responseMinBytes= */ null,
+              /* requestWaitMs= */ null);
     }
     return request("/consumers/" + groupName)
         .post(Entity.entity(config, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));

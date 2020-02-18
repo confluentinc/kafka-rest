@@ -728,8 +728,8 @@ public class KafkaRestConfig extends RestConfig {
   public static KafkaRestConfig newConsumerConfig(KafkaRestConfig config,
                                                ConsumerInstanceConfig instanceConfig
   ) throws RestServerErrorException {
-    Properties newProps = ConsumerInstanceConfig.attachProxySpecificProperties(
-            (Properties) config.getOriginalProperties().clone(), instanceConfig);
+    Properties newProps = (Properties) config.getOriginalProperties().clone();
+    newProps.putAll(instanceConfig.toProperties());
 
     try {
       return new KafkaRestConfig(newProps, config.getTime());

@@ -26,6 +26,8 @@ import io.confluent.kafkarest.BinaryConsumerState;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceResponse;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.RestNotFoundException;
@@ -49,7 +51,7 @@ public class ConsumerResourceTest extends AbstractConsumerResourceTest {
   public void testCreateInstanceRequestsNewInstance() {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
-        expectCreateGroup(new ConsumerInstanceConfig());
+        expectCreateGroup(new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
         EasyMock.replay(consumerManager);
 
         Response response = request("/consumers/" + groupName, mediatype.header)
@@ -69,16 +71,34 @@ public class ConsumerResourceTest extends AbstractConsumerResourceTest {
 
   @Test
   public void testCreateInstanceWithConfig() {
-    ConsumerInstanceConfig config = new ConsumerInstanceConfig();
-    config.setId("testid");
+    ConsumerInstanceConfig config =
+        new ConsumerInstanceConfig(
+            /* id= */ "testid",
+            /* name= */ null,
+            EmbeddedFormat.BINARY,
+            /* autoOffsetReset= */ null,
+            /* autoCommitEnable= */ null,
+            /* responseMinBytes= */ null,
+            /* requestWaitMs= */ null);
 
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
         expectCreateGroup(config);
         EasyMock.replay(consumerManager);
 
-        Response response = request("/consumers/" + groupName, mediatype.header)
-            .post(Entity.entity(config, requestMediatype));
+        Response response =
+            request("/consumers/" + groupName, mediatype.header)
+                .post(
+                    Entity.entity(
+                        new CreateConsumerInstanceRequest(
+                            /* id= */ "testid",
+                            /* name= */ null,
+                            /* format= */ null,
+                            /* autoOffsetReset= */ null,
+                            /* autoCommitEnable */ null,
+                            /* responseMinBytes= */ null,
+                            /* requestWaitMs= */ null),
+                        requestMediatype));
         assertOKResponse(response, mediatype.expected);
         final CreateConsumerInstanceResponse ciResponse =
                 TestUtils.tryReadEntityOrLog(response, CreateConsumerInstanceResponse.class);
@@ -98,7 +118,7 @@ public class ConsumerResourceTest extends AbstractConsumerResourceTest {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
         // Trying to access either an invalid consumer instance or a missing topic should trigger
         // an error
-        expectCreateGroup(new ConsumerInstanceConfig());
+        expectCreateGroup(new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
         expectReadTopic(topicName, BinaryConsumerState.class, null,
                         new RestNotFoundException(not_found_message, 1000));
         EasyMock.replay(consumerManager);
@@ -129,7 +149,7 @@ public class ConsumerResourceTest extends AbstractConsumerResourceTest {
   public void testDeleteInstance() {
     for (TestUtils.RequestMediaType mediatype : TestUtils.V1_ACCEPT_MEDIATYPES) {
       for (String requestMediatype : TestUtils.V1_REQUEST_ENTITY_TYPES) {
-        expectCreateGroup(new ConsumerInstanceConfig());
+        expectCreateGroup(new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
         expectDeleteGroup(false);
         EasyMock.replay(consumerManager);
 

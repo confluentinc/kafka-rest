@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.common.utils.AbstractPerformanceTest;
 import io.confluent.common.utils.PerformanceStats;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
+import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionResponse;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
@@ -76,8 +76,15 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
     String groupId = "rest-perf-consumer-" + Integer.toString(new Random().nextInt(100000));
 
     // Create consumer instance
-    ConsumerInstanceConfig consumerConfig = new ConsumerInstanceConfig();
-    consumerConfig.setAutoOffsetReset("earliest");
+    CreateConsumerInstanceRequest consumerConfig =
+        new CreateConsumerInstanceRequest(
+            /* id= */ null,
+            /* name= */ null,
+            /* format= */ null,
+            /* autoOffsetReset= */ "earliest",
+            /* autoCommitEnable= */ null,
+            /* responseMinBytes= */ null,
+            /* requestWaitMs= */ null);
     byte[] createPayload = serializer.writeValueAsBytes(consumerConfig);
     CreateConsumerInstanceResponse createResponse = (CreateConsumerInstanceResponse) request(
         baseUrl + "/consumers/" + groupId, "POST", createPayload,

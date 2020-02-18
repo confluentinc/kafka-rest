@@ -20,7 +20,6 @@ import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.UriUtils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.v2.BinaryConsumerRecord;
@@ -34,6 +33,7 @@ import io.confluent.kafkarest.entities.v2.ConsumerSeekToOffsetRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSeekToRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionResponse;
+import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.v2.JsonConsumerRecord;
 import io.confluent.kafkarest.entities.v2.SchemaConsumerRecord;
@@ -97,12 +97,13 @@ public class ConsumersResource {
   public CreateConsumerInstanceResponse createGroup(
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
-      @Valid ConsumerInstanceConfig config
+      @Valid CreateConsumerInstanceRequest config
   ) {
     if (config == null) {
-      config = new ConsumerInstanceConfig();
+      config = CreateConsumerInstanceRequest.PROTOTYPE;
     }
-    String instanceId = ctx.getKafkaConsumerManager().createConsumer(group, config);
+    String instanceId =
+        ctx.getKafkaConsumerManager().createConsumer(group, config.toConsumerInstanceConfig());
     String instanceBaseUri = UriUtils.absoluteUriBuilder(ctx.getConfig(), uriInfo)
         .path("instances").path(instanceId).build().toString();
     return new CreateConsumerInstanceResponse(instanceId, instanceBaseUri);

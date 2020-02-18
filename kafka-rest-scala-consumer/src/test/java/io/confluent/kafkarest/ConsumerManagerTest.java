@@ -282,9 +282,16 @@ public class ConsumerManagerTest {
     EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
     EasyMock.replay(mdObserver, consumerFactory);
 
-    ConsumerInstanceConfig config = new ConsumerInstanceConfig(EmbeddedFormat.BINARY);
     // we expect one record to be returned since the setting is overridden
-    config.setResponseMinBytes(1);
+    ConsumerInstanceConfig config =
+        new ConsumerInstanceConfig(
+            /* id= */ null,
+            /* name= */ null,
+            EmbeddedFormat.BINARY,
+            /* autoOffsetReset= */ null,
+            /* autoCommitEnable= */ null,
+            /* responseMinBytes= */ 1,
+            /* requestWaitMs= */ null);
     readFromDefault(consumerManager.createConsumer(groupName, config));
 
     assertTrue("Callback failed to fire", sawCallback);
@@ -313,8 +320,15 @@ public class ConsumerManagerTest {
     EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
     EasyMock.replay(mdObserver, consumerFactory);
 
-    ConsumerInstanceConfig consumerConfig = new ConsumerInstanceConfig(null, null, EmbeddedFormat.BINARY.name(),
-            null, null, null,  overriddenRequestTimeMs);
+    ConsumerInstanceConfig consumerConfig =
+        new ConsumerInstanceConfig(
+            /* id= */ null,
+            /* name= */ null,
+            EmbeddedFormat.BINARY,
+            /* autoOffsetReset= */ null,
+            /* autoCommitEnable= */ null,
+            /* responseMinBytes= */ null,
+            overriddenRequestTimeMs);
     String cid = consumerManager.createConsumer(groupName, consumerConfig);
     long startTime = System.currentTimeMillis();
     readFromDefault(cid);
@@ -405,8 +419,14 @@ public class ConsumerManagerTest {
 
     String cid = consumerManager.createConsumer(
         groupName,
-        new ConsumerInstanceConfig("id", "name", EmbeddedFormat.BINARY.toString(), null, null, null, null)
-    );
+        new ConsumerInstanceConfig(
+            /* id= */ "id",
+            /* name= */ "name",
+            EmbeddedFormat.BINARY,
+            /* autoOffsetReset= */ null,
+            /* autoCommitEnable= */ null,
+            /* responseMinBytes= */ null,
+            /* requestWaitMs= */ null));
     assertEquals("id", cid);
     assertEquals("id", capturedConsumerConfig.getValue().consumerId().getOrElse(null));
     EasyMock.verify(mdObserver, consumerFactory);
@@ -419,14 +439,26 @@ public class ConsumerManagerTest {
 
     consumerManager.createConsumer(
         groupName,
-        new ConsumerInstanceConfig(null, "name", EmbeddedFormat.BINARY.toString(), null, null, null, null)
-    );
+        new ConsumerInstanceConfig(
+            /* id= */ null,
+            /* name= */ "name",
+            EmbeddedFormat.BINARY,
+            /* autoOffsetReset= */ null,
+            /* autoCommitEnable= */ null,
+            /* responseMinBytes= */ null,
+            /* requestWaitMs= */ null));
 
     try {
       consumerManager.createConsumer(
           groupName,
-          new ConsumerInstanceConfig(null, "name", EmbeddedFormat.BINARY.toString(), null, null, null, null)
-      );
+          new ConsumerInstanceConfig(
+              /* id= */ null,
+              /* name= */ "name",
+              EmbeddedFormat.BINARY,
+              /* autoOffsetReset= */ null,
+              /* autoCommitEnable= */ null,
+              /* responseMinBytes= */ null,
+              /* requestWaitMs= */ null));
       fail("Expected to see exception because consumer already exists");
     } catch (RestException e) {
       // expected

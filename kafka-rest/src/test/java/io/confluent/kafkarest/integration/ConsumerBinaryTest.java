@@ -18,9 +18,9 @@ import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v1.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceRequest;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import java.util.Arrays;
 import java.util.List;
@@ -168,8 +168,15 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   // that isn't specific to the type of embedded data, but since they need
   @Test
   public void testInvalidKafkaConsumerConfig() {
-    ConsumerInstanceConfig config = new ConsumerInstanceConfig("id", "name", "binary",
-                                                               "bad-config", null, null, null);
+    CreateConsumerInstanceRequest config =
+        new CreateConsumerInstanceRequest(
+            /* id= */ "id",
+            /* name= */ "name",
+            /* format= */ "binary",
+            /* autoOffsetReset= */ "bad-config",
+            /* autoCommitEnable */ null,
+            /* responseMinBytes= */ null,
+            /* requestWaitMs= */ null);
     Response response = request("/consumers/" + groupName)
         .post(Entity.entity(config, Versions.KAFKA_V1_JSON));
     assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response,

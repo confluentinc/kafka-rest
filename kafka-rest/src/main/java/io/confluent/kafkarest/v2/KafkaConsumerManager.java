@@ -28,6 +28,7 @@ import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.converters.JsonSchemaConverter;
 import io.confluent.kafkarest.converters.ProtobufConverter;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.ConsumerAssignmentRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerAssignmentResponse;
 import io.confluent.kafkarest.entities.v2.ConsumerCommittedRequest;
@@ -558,7 +559,8 @@ public class KafkaConsumerManager {
 
   private ConsumerInstanceId createAdminConsumerInstance() {
     String consumerGroup = createAdminConsumerGroup();
-    String consumerInstance = createConsumer(consumerGroup, new ConsumerInstanceConfig());
+    String consumerInstance = createConsumer(consumerGroup, new ConsumerInstanceConfig(
+        EmbeddedFormat.BINARY));
     return new ConsumerInstanceId(consumerGroup, consumerInstance);
   }
 

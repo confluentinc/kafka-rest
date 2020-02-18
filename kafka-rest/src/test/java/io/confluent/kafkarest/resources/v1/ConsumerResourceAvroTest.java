@@ -28,6 +28,7 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v1.AvroConsumerRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.v1.CommitOffsetsResponse;
+import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceResponse;
 import io.confluent.rest.RestConfigException;
 import java.util.Arrays;
@@ -72,8 +73,19 @@ public class ConsumerResourceAvroTest extends AbstractConsumerResourceTest {
         expectCommit(expectedOffsets, null);
         EasyMock.replay(consumerManager);
 
-        Response response = request("/consumers/" + groupName, mediatype.header)
-            .post(Entity.entity(new ConsumerInstanceConfig(EmbeddedFormat.AVRO), requestMediatype));
+        Response response =
+            request("/consumers/" + groupName, mediatype.header)
+                .post(
+                    Entity.entity(
+                        new CreateConsumerInstanceRequest(
+                            /* id= */ null,
+                            /* name= */ null,
+                            /* format= */ "avro",
+                            /* autoOffsetReset= */ null,
+                            /* autoCommitEnable */ null,
+                            /* responseMinBytes= */ null,
+                            /* requestWaitMs= */ null),
+                        requestMediatype));
         assertOKResponse(response, mediatype.expected);
         final CreateConsumerInstanceResponse createResponse =
             TestUtils.tryReadEntityOrLog(response, CreateConsumerInstanceResponse.class);

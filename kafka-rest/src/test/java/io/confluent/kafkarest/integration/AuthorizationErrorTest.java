@@ -25,12 +25,12 @@ import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.v1.BinaryPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest;
 import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.v1.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -173,8 +173,7 @@ public class AuthorizationErrorTest
   }
 
   private Response createConsumerInstance(String groupName) {
-    ConsumerInstanceConfig config = new ConsumerInstanceConfig(null, null, null,
-        null, null, null, null);
+    CreateConsumerInstanceRequest config = CreateConsumerInstanceRequest.PROTOTYPE;
 
     return request("/consumers/" + groupName).post(Entity.entity(config, Versions.KAFKA_V2_JSON));
   }

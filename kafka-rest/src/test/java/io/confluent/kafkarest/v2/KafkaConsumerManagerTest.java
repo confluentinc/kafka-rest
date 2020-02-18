@@ -320,9 +320,16 @@ public class KafkaConsumerManagerTest {
         schedulePoll(3);
 
         expectCreate(consumer);
-        ConsumerInstanceConfig config = new ConsumerInstanceConfig(EmbeddedFormat.BINARY);
         // we expect three records to be returned since the setting is overridden and poll() wont be called a second time
-        config.setResponseMinBytes(sampleRecordSize * 2);
+        ConsumerInstanceConfig config =
+            new ConsumerInstanceConfig(
+                /* id= */ null,
+                /* name= */ null,
+                EmbeddedFormat.BINARY,
+                /* autoOffsetReset= */ null,
+                /* autoCommitEnable= */ null,
+                /* responseMinBytes= */ sampleRecordSize * 2,
+                /* requestWaitMs= */ null);
         String cid = consumerManager.createConsumer(
                 groupName, config);
         consumerManager.subscribe(groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));

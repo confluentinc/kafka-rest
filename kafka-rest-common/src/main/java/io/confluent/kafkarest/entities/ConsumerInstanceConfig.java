@@ -15,175 +15,107 @@
 
 package io.confluent.kafkarest.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import org.apache.kafka.common.config.ConfigException;
-
-import javax.validation.constraints.NotNull;
-
-import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.rest.exceptions.RestConstraintViolationException;
-
+import java.util.Objects;
 import java.util.Properties;
+import javax.annotation.Nullable;
 
-public class ConsumerInstanceConfig {
+public final class ConsumerInstanceConfig {
 
-  private static final EmbeddedFormat DEFAULT_FORMAT = EmbeddedFormat.BINARY;
+  @Nullable
+  private final String id;
 
-  private String id;
-  private String name;
-  @NotNull
-  private EmbeddedFormat format;
-  private String autoOffsetReset;
-  private String autoCommitEnable;
-  private Integer responseMinBytes;
-  private Integer requestWaitMs;
+  @Nullable
+  private final String name;
 
-  public ConsumerInstanceConfig() {
-    this(DEFAULT_FORMAT);
-  }
+  private final EmbeddedFormat format;
+
+  @Nullable
+  private final String autoOffsetReset;
+
+  @Nullable
+  private final String autoCommitEnable;
+
+  @Nullable
+  private final Integer responseMinBytes;
+
+  @Nullable
+  private final Integer requestWaitMs;
 
   public ConsumerInstanceConfig(EmbeddedFormat format) {
-    // This constructor is only for tests so reparsing the format name is ok
-    this(null, null, format.name(), null, null, null,  null);
+    this(
+        /* id= */ null,
+        /* name= */ null,
+        format,
+        /* autoOffsetReset= */ null,
+        /* autoCommitEnable= */ null,
+        /* responseMinBytes= */ null,
+        /* requestWaitMs= */ null);
   }
 
   public ConsumerInstanceConfig(
-      @JsonProperty("id") String id,
-      @JsonProperty("name") String name,
-      @JsonProperty("format") String format,
-      @JsonProperty("auto.offset.reset") String autoOffsetReset,
-      @JsonProperty("auto.commit.enable") String autoCommitEnable,
-      @JsonProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG)
-              Integer responseMinBytes,
-      @JsonProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG) Integer requestWaitMs
+      @Nullable String id,
+      @Nullable String name,
+      EmbeddedFormat format,
+      @Nullable String autoOffsetReset,
+      @Nullable String autoCommitEnable,
+      @Nullable Integer responseMinBytes,
+      @Nullable Integer requestWaitMs
   ) {
     this.id = id;
     this.name = name;
-    if (format == null) {
-      this.format = DEFAULT_FORMAT;
-    } else {
-      String formatCanonical = format.toUpperCase();
-      for (EmbeddedFormat f : EmbeddedFormat.values()) {
-        if (f.name().equals(formatCanonical)) {
-          this.format = f;
-          break;
-        }
-      }
-      if (this.format == null) {
-        throw new RestConstraintViolationException(
-            "Invalid format type.",
-            RestConstraintViolationException.DEFAULT_ERROR_CODE
-        );
-      }
-    }
-    this.setResponseMinBytes(responseMinBytes);
+    this.format = Objects.requireNonNull(format);
+    this.responseMinBytes = responseMinBytes;
     this.requestWaitMs = requestWaitMs;
     this.autoOffsetReset = autoOffsetReset;
     this.autoCommitEnable = autoCommitEnable;
   }
 
-  /**
-   * Attaches proxy-specific configurations to the given Properties object
-   */
-  public static Properties attachProxySpecificProperties(Properties props,
-                                                         ConsumerInstanceConfig config) {
-    if (config.getResponseMinBytes() != null) {
-      props.setProperty(KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG,
-              config.getResponseMinBytes().toString());
-    }
-    if (config.getRequestWaitMs() != null) {
-      props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG,
-              config.getRequestWaitMs().toString());
-    }
-
-    return props;
-  }
-
-  @JsonProperty
+  @Nullable
   public String getId() {
     return id;
   }
 
-  @JsonProperty
-  public void setId(String id) {
-    this.id = id;
-  }
-
-  @JsonProperty
+  @Nullable
   public String getName() {
     return name;
   }
 
-  @JsonProperty
-  public Integer getResponseMinBytes() {
-    return this.responseMinBytes;
-  }
-
-  @JsonProperty
-  public void setResponseMinBytes(Integer responseMinBytes)
-      throws RestConstraintViolationException {
-    if (responseMinBytes == null) {
-      this.responseMinBytes = null;
-      return;
-    }
-
-    try {
-      KafkaRestConfig.PROXY_FETCH_MIN_BYTES_VALIDATOR.ensureValid(
-              KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG,
-              responseMinBytes
-      );
-      this.responseMinBytes = responseMinBytes;
-    } catch (ConfigException e) {
-      throw Errors.invalidConsumerConfigConstraintException(e);
-    }
-  }
-
-  @JsonProperty
-  public Integer getRequestWaitMs() {
-    return this.requestWaitMs;
-  }
-
-  @JsonProperty
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  @JsonIgnore
   public EmbeddedFormat getFormat() {
     return format;
   }
 
-  @JsonProperty("format")
-  public String getFormatJson() {
-    return format.name().toLowerCase();
-  }
-
-  @JsonProperty
-  public void setFormat(EmbeddedFormat format) {
-    this.format = format;
-  }
-
-  @JsonProperty("auto.offset.reset")
+  @Nullable
   public String getAutoOffsetReset() {
     return autoOffsetReset;
   }
 
-  @JsonProperty("auto.offset.reset")
-  public void setAutoOffsetReset(String autoOffsetReset) {
-    this.autoOffsetReset = autoOffsetReset;
-  }
-
-  @JsonProperty("auto.commit.enable")
+  @Nullable
   public String getAutoCommitEnable() {
     return autoCommitEnable;
   }
 
-  @JsonProperty("auto.commit.enable")
-  public void setAutoCommitEnable(String autoCommitEnable) {
-    this.autoCommitEnable = autoCommitEnable;
+  @Nullable
+  public Integer getResponseMinBytes() {
+    return this.responseMinBytes;
+  }
+
+  @Nullable
+  public Integer getRequestWaitMs() {
+    return this.requestWaitMs;
+  }
+
+  public Properties toProperties() {
+    Properties properties = new Properties();
+    if (responseMinBytes != null) {
+      properties.setProperty(
+          KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG, responseMinBytes.toString());
+    }
+    if (requestWaitMs != null) {
+      properties.setProperty(
+          KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, requestWaitMs.toString());
+    }
+    return properties;
   }
 
   @Override
@@ -194,33 +126,19 @@ public class ConsumerInstanceConfig {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     ConsumerInstanceConfig that = (ConsumerInstanceConfig) o;
-
-    if (autoCommitEnable != null ? !autoCommitEnable.equals(that.autoCommitEnable)
-                                 : that.autoCommitEnable != null) {
-      return false;
-    }
-    if (autoOffsetReset != null ? !autoOffsetReset.equals(that.autoOffsetReset)
-                                : that.autoOffsetReset != null) {
-      return false;
-    }
-    if (format != that.format) {
-      return false;
-    }
-    if (id != null ? !id.equals(that.id) : that.id != null) {
-      return false;
-    }
-
-    return true;
+    return Objects.equals(id, that.id)
+        && Objects.equals(name, that.name)
+        && format == that.format
+        && Objects.equals(autoOffsetReset, that.autoOffsetReset)
+        && Objects.equals(autoCommitEnable, that.autoCommitEnable)
+        && Objects.equals(responseMinBytes, that.responseMinBytes)
+        && Objects.equals(requestWaitMs, that.requestWaitMs);
   }
 
   @Override
   public int hashCode() {
-    int result = id != null ? id.hashCode() : 0;
-    result = 31 * result + (format != null ? format.hashCode() : 0);
-    result = 31 * result + (autoOffsetReset != null ? autoOffsetReset.hashCode() : 0);
-    result = 31 * result + (autoCommitEnable != null ? autoCommitEnable.hashCode() : 0);
-    return result;
+    return Objects.hash(
+        id, name, format, autoOffsetReset, autoCommitEnable, responseMinBytes, requestWaitMs);
   }
 }

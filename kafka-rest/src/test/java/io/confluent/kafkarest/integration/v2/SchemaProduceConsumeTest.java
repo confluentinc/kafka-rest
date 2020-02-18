@@ -8,9 +8,9 @@ import static org.junit.Assert.fail;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
+import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.v2.SchemaConsumerRecord;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
@@ -55,7 +55,15 @@ public abstract class SchemaProduceConsumeTest extends ClusterTestHarness {
         request(String.format("/consumers/%s", CONSUMER_GROUP))
             .post(
                 Entity.entity(
-                    new ConsumerInstanceConfig(getFormat()), Versions.KAFKA_V2_JSON));
+                    new CreateConsumerInstanceRequest(
+                        /* id= */ null,
+                        /* name= */ null,
+                        getFormat() != null ? getFormat().name() : null,
+                        /* autoOffsetReset= */ null,
+                        /* autoCommitEnable= */ null,
+                        /* responseMinBytes= */ null,
+                        /* requestWaitMs= */ null),
+                    Versions.KAFKA_V2_JSON));
 
     assertEquals(Status.OK.getStatusCode(), createConsumerInstanceResponse.getStatus());
 
