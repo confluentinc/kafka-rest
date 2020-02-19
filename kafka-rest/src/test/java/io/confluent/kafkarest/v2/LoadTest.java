@@ -42,6 +42,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -68,7 +70,9 @@ public class LoadTest {
     class ConsumerTestRun {
         private final MockConsumer consumer;
         private final Time time;
-        private volatile boolean sawCallback;
+        private ReentrantLock lock = new ReentrantLock();
+        private Condition cond = lock.newCondition();
+        private volatile boolean sawCallback = false;
         private volatile List<? extends ConsumerRecord<byte[], byte[]>> actualRecords = null;
         private volatile Exception actualException;
         private ConsumerReadCallback callback;
@@ -83,13 +87,18 @@ public class LoadTest {
             this.consumer = consumer;
             this.time = time;
             this.readStartMs = Integer.MAX_VALUE;
-            sawCallback = false;
             callback = new ConsumerReadCallback<byte[], byte[]>() {
                 @Override
                 public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, Exception e) {
-                    sawCallback = true;
-                    actualRecords = records;
-                    actualException = e;
+                    lock.lock();
+                    try {
+                        sawCallback = true;
+                        actualRecords = records;
+                        actualException = e;
+                        cond.signalAll();
+                    } finally {
+                        lock.unlock();
+                    }
                 }
             };
         }
@@ -109,9 +118,14 @@ public class LoadTest {
         }
 
         void awaitRead() throws InterruptedException {
-            long sleepMs = (long) (this.readStartMs + (requestTimeoutMs * 1.5)) - time.milliseconds();
-            if (sleepMs > 0)
-                Thread.sleep(sleepMs);
+            lock.lock();
+            try {
+                while (!sawCallback) {
+                    cond.await();
+                }
+            } finally {
+                lock.unlock();
+            }
         }
 
         void verifyRead() {
@@ -120,9 +134,14 @@ public class LoadTest {
             List<ConsumerRecord<byte[], byte[]>> expectedRecords = referenceRecords();
             assertEquals("Records returned not as expected", expectedRecords, actualRecords);
 
-            sawCallback = false;
-            actualRecords = null;
-            actualException = null;
+            lock.lock();
+            try {
+                sawCallback = false;
+                actualRecords = null;
+                actualException = null;
+            } finally {
+                lock.unlock();
+            }
         }
 
         private List<ConsumerRecord<byte[], byte[]>> referenceRecords() {
