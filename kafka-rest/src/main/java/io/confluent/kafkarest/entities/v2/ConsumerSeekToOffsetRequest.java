@@ -15,12 +15,52 @@
 
 package io.confluent.kafkarest.entities.v2;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
+import javax.annotation.Nullable;
 
-public class ConsumerSeekToOffsetRequest {
+public final class ConsumerSeekToOffsetRequest {
+
+  @Nullable
+  private final List<TopicPartitionOffsetMetadata> offsets;
+
+  @JsonCreator
+  public ConsumerSeekToOffsetRequest(
+      @JsonProperty("offsets") @Nullable List<TopicPartitionOffsetMetadata> offsets) {
+    this.offsets = offsets;
+  }
 
   @JsonProperty
-  public List<TopicPartitionOffsetMetadata> offsets;
+  @Nullable
+  public List<TopicPartitionOffsetMetadata> getOffsets() {
+    return offsets;
+  }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ConsumerSeekToOffsetRequest that = (ConsumerSeekToOffsetRequest) o;
+    return Objects.equals(offsets, that.offsets);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(offsets);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(
+        ", ", ConsumerSeekToOffsetRequest.class.getSimpleName() + "[", "]")
+        .add("offsets=" + offsets)
+        .toString();
+  }
 }

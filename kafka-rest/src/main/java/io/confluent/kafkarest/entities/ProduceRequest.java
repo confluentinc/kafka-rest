@@ -16,6 +16,8 @@
 package io.confluent.kafkarest.entities;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 public final class ProduceRequest<K, V> {
@@ -75,7 +77,34 @@ public final class ProduceRequest<K, V> {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ProduceRequest<?, ?> that = (ProduceRequest<?, ?>) o;
+    return Objects.equals(records, that.records)
+        && Objects.equals(keySchema, that.keySchema)
+        && Objects.equals(keySchemaId, that.keySchemaId)
+        && Objects.equals(valueSchema, that.valueSchema)
+        && Objects.equals(valueSchemaId, that.valueSchemaId);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(records, keySchema, keySchemaId, valueSchema, valueSchemaId);
+  }
+
+  @Override
   public String toString() {
-    return "ProduceRequest{" + "records=" + records + '}';
+    return new StringJoiner(", ", ProduceRequest.class.getSimpleName() + "[", "]")
+        .add("records=" + records)
+        .add("keySchema='" + keySchema + "'")
+        .add("keySchemaId=" + keySchemaId)
+        .add("valueSchema='" + valueSchema + "'")
+        .add("valueSchemaId=" + valueSchemaId)
+        .toString();
   }
 }

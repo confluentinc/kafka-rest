@@ -15,48 +15,56 @@
 
 package io.confluent.kafkarest.entities.v2;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.kafkarest.Errors;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotEmpty;
 import javax.ws.rs.core.Response;
-import org.hibernate.validator.constraints.NotEmpty;
 
-public class ProduceResponse {
+public final class ProduceResponse {
 
   @NotEmpty
-  private List<PartitionOffset> offsets;
+  @Nullable
+  private final List<PartitionOffset> offsets;
 
-  private Integer keySchemaId;
+  @Nullable
+  private final Integer keySchemaId;
 
-  private Integer valueSchemaId;
+  @Nullable
+  private final Integer valueSchemaId;
+
+  @JsonCreator
+  public ProduceResponse(
+      @JsonProperty("offsets") @Nullable List<PartitionOffset> offsets,
+      @JsonProperty("key_schema_id") @Nullable Integer keySchemaId,
+      @JsonProperty("value_schema_id") @Nullable Integer valueSchemaId
+  ) {
+    this.offsets = offsets;
+    this.keySchemaId = keySchemaId;
+    this.valueSchemaId = valueSchemaId;
+  }
 
   @JsonProperty
+  @Nullable
   public List<PartitionOffset> getOffsets() {
     return offsets;
   }
 
-  @JsonProperty
-  public void setOffsets(List<PartitionOffset> offsets) {
-    this.offsets = offsets;
-  }
-
   @JsonProperty("key_schema_id")
+  @Nullable
   public Integer getKeySchemaId() {
     return keySchemaId;
   }
 
-  public void setKeySchemaId(Integer keySchemaId) {
-    this.keySchemaId = keySchemaId;
-  }
-
   @JsonProperty("value_schema_id")
+  @Nullable
   public Integer getValueSchemaId() {
     return valueSchemaId;
-  }
-
-  public void setValueSchemaId(Integer valueSchemaId) {
-    this.valueSchemaId = valueSchemaId;
   }
 
   @JsonIgnore
@@ -76,11 +84,30 @@ public class ProduceResponse {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ProduceResponse that = (ProduceResponse) o;
+    return Objects.equals(offsets, that.offsets)
+        && Objects.equals(keySchemaId, that.keySchemaId)
+        && Objects.equals(valueSchemaId, that.valueSchemaId);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(offsets, keySchemaId, valueSchemaId);
+  }
+
+  @Override
   public String toString() {
-    return "ProduceResponse{"
-           + "offsets=" + offsets
-           + ", keySchemaId=" + keySchemaId
-           + ", valueSchemaId=" + valueSchemaId
-           + '}';
+    return new StringJoiner(", ", ProduceResponse.class.getSimpleName() + "[", "]")
+        .add("offsets=" + offsets)
+        .add("keySchemaId=" + keySchemaId)
+        .add("valueSchemaId=" + valueSchemaId)
+        .toString();
   }
 }

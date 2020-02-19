@@ -17,6 +17,7 @@ package io.confluent.kafkarest.entities;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 public final class ConsumerRecord<K, V> {
@@ -104,5 +105,16 @@ public final class ConsumerRecord<K, V> {
       return Objects.hashCode(a);
     }
     return Arrays.hashCode((byte[]) a);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", ConsumerRecord.class.getSimpleName() + "[", "]")
+        .add("topic='" + topic + "'")
+        .add("key=" + key)
+        .add("value=" + value)
+        .add("partition=" + partition)
+        .add("offset=" + offset)
+        .toString();
   }
 }

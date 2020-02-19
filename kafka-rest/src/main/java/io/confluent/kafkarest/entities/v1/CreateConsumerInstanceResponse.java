@@ -16,43 +16,66 @@
 package io.confluent.kafkarest.entities.v1;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.hibernate.validator.constraints.NotBlank;
+import java.util.Objects;
+import java.util.StringJoiner;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotBlank;
 import org.hibernate.validator.constraints.URL;
 
-public class CreateConsumerInstanceResponse {
+public final class CreateConsumerInstanceResponse {
 
   @NotBlank
-  String instanceId;
+  @Nullable
+  private final String instanceId;
 
   @NotBlank
   @URL
-  String baseUri;
+  @Nullable
+  private final String baseUri;
 
   public CreateConsumerInstanceResponse(
-      @JsonProperty("instance_id") String instanceId,
-      @JsonProperty("base_uri") String baseUri
+      @JsonProperty("instance_id") @Nullable String instanceId,
+      @JsonProperty("base_uri") @Nullable String baseUri
   ) {
     this.instanceId = instanceId;
     this.baseUri = baseUri;
   }
 
   @JsonProperty("instance_id")
+  @Nullable
   public String getInstanceId() {
     return instanceId;
   }
 
-  @JsonProperty("instance_id")
-  public void setInstanceId(String instanceId) {
-    this.instanceId = instanceId;
-  }
-
   @JsonProperty("base_uri")
+  @Nullable
   public String getBaseUri() {
     return baseUri;
   }
 
-  @JsonProperty("base_uri")
-  public void setBaseUri(String baseUri) {
-    this.baseUri = baseUri;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    CreateConsumerInstanceResponse that = (CreateConsumerInstanceResponse) o;
+    return Objects.equals(instanceId, that.instanceId) && Objects.equals(baseUri, that.baseUri);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(instanceId, baseUri);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(
+        ", ", CreateConsumerInstanceResponse.class.getSimpleName() + "[", "]")
+        .add("instanceId='" + instanceId + "'")
+        .add("baseUri='" + baseUri + "'")
+        .toString();
   }
 }

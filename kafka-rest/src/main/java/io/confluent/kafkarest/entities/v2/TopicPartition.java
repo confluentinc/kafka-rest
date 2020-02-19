@@ -16,41 +16,40 @@
 package io.confluent.kafkarest.entities.v2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import javax.validation.constraints.Min;
-import org.hibernate.validator.constraints.NotEmpty;
+import java.util.Objects;
+import java.util.StringJoiner;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.PositiveOrZero;
 
-public class TopicPartition {
+public final class TopicPartition {
 
   @NotEmpty
-  private String topic;
-  @Min(0)
-  private int partition;
+  @Nullable
+  private final String topic;
+
+  @PositiveOrZero
+  @Nullable
+  private final Integer partition;
     
   public TopicPartition(
-      @JsonProperty("topic") String topic, @JsonProperty("partition") int partition
+      @JsonProperty("topic") @Nullable String topic,
+      @JsonProperty("partition") @Nullable Integer partition
   ) {
     this.topic = topic;
     this.partition = partition;
   }
 
   @JsonProperty
+  @Nullable
   public String getTopic() {
     return topic;
   }
 
   @JsonProperty
-  public void setTopic(String topic) {
-    this.topic = topic;
-  }
-
-  @JsonProperty
-  public int getPartition() {
+  @Nullable
+  public Integer getPartition() {
     return partition;
-  }
-
-  @JsonProperty
-  public void setPartition(int partition) {
-    this.partition = partition;
   }
 
   @Override
@@ -61,23 +60,20 @@ public class TopicPartition {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     TopicPartition that = (TopicPartition) o;
-
-    if (partition != that.partition) {
-      return false;
-    }
-    if (topic != null ? !topic.equals(that.topic) : that.topic != null) {
-      return false;
-    }
-
-    return true;
+    return Objects.equals(topic, that.topic) && Objects.equals(partition, that.partition);
   }
 
   @Override
   public int hashCode() {
-    int result = topic != null ? topic.hashCode() : 0;
-    result = 31 * result + partition;
-    return result;
+    return Objects.hash(topic, partition);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", TopicPartition.class.getSimpleName() + "[", "]")
+        .add("topic='" + topic + "'")
+        .add("partition=" + partition)
+        .toString();
   }
 }

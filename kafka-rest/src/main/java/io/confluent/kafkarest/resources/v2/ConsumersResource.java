@@ -82,7 +82,7 @@ import javax.ws.rs.core.UriInfo;
         Versions.KAFKA_V2_JSON_PROTOBUF,
         Versions.KAFKA_V2_JSON
     })
-public class ConsumersResource {
+public final class ConsumersResource {
 
   private final KafkaRestContext ctx;
 

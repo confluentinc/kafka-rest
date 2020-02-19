@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceRequest;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotEmpty;
@@ -74,6 +76,30 @@ public final class JsonTopicProduceRequest {
         /* valueSchemaId= */ null);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    JsonTopicProduceRequest request = (JsonTopicProduceRequest) o;
+    return Objects.equals(records, request.records);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(records);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", JsonTopicProduceRequest.class.getSimpleName() + "[", "]")
+        .add("records=" + records)
+        .toString();
+  }
+
   public static final class JsonTopicProduceRecord {
 
     @Nullable
@@ -113,6 +139,34 @@ public final class JsonTopicProduceRequest {
     @Nullable
     public Integer getPartition() {
       return partition;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      JsonTopicProduceRecord that = (JsonTopicProduceRecord) o;
+      return Objects.equals(key, that.key)
+          && Objects.equals(value, that.value)
+          && Objects.equals(partition, that.partition);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(key, value, partition);
+    }
+
+    @Override
+    public String toString() {
+      return new StringJoiner(", ", JsonTopicProduceRecord.class.getSimpleName() + "[", "]")
+          .add("key=" + key)
+          .add("value=" + value)
+          .add("partition=" + partition)
+          .toString();
     }
   }
 }

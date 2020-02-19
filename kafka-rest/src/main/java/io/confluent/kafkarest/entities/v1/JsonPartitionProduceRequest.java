@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceRequest;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotEmpty;
@@ -73,6 +75,31 @@ public final class JsonPartitionProduceRequest {
         /* valueSchemaId= */ null);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    JsonPartitionProduceRequest request = (JsonPartitionProduceRequest) o;
+    return Objects.equals(records, request.records);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(records);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(
+        ", ", JsonPartitionProduceRequest.class.getSimpleName() + "[", "]")
+        .add("records=" + records)
+        .toString();
+  }
+
   public static final class JsonPartitionProduceRecord {
 
     @Nullable
@@ -100,6 +127,32 @@ public final class JsonPartitionProduceRequest {
     @Nullable
     public Object getValue() {
       return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      JsonPartitionProduceRecord that = (JsonPartitionProduceRecord) o;
+      return Objects.equals(key, that.key) && Objects.equals(value, that.value);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(key, value);
+    }
+
+    @Override
+    public String toString() {
+      return new StringJoiner(
+          ", ", JsonPartitionProduceRecord.class.getSimpleName() + "[", "]")
+          .add("key=" + key)
+          .add("value=" + value)
+          .toString();
     }
   }
 }

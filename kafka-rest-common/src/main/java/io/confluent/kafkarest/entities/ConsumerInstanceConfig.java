@@ -18,6 +18,7 @@ package io.confluent.kafkarest.entities;
 import io.confluent.kafkarest.KafkaRestConfig;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 public final class ConsumerInstanceConfig {
@@ -140,5 +141,18 @@ public final class ConsumerInstanceConfig {
   public int hashCode() {
     return Objects.hash(
         id, name, format, autoOffsetReset, autoCommitEnable, responseMinBytes, requestWaitMs);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", ConsumerInstanceConfig.class.getSimpleName() + "[", "]")
+        .add("id='" + id + "'")
+        .add("name='" + name + "'")
+        .add("format=" + format)
+        .add("autoOffsetReset='" + autoOffsetReset + "'")
+        .add("autoCommitEnable='" + autoCommitEnable + "'")
+        .add("responseMinBytes=" + responseMinBytes)
+        .add("requestWaitMs=" + requestWaitMs)
+        .toString();
   }
 }

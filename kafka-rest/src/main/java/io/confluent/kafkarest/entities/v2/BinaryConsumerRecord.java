@@ -21,6 +21,7 @@ import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EntityUtils;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.StringJoiner;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
@@ -140,5 +141,16 @@ public final class BinaryConsumerRecord {
     result = 31 * result + Arrays.hashCode(key);
     result = 31 * result + Arrays.hashCode(value);
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", BinaryConsumerRecord.class.getSimpleName() + "[", "]")
+        .add("topic='" + topic + "'")
+        .add("key=" + Arrays.toString(key))
+        .add("value=" + Arrays.toString(value))
+        .add("partition=" + partition)
+        .add("offset=" + offset)
+        .toString();
   }
 }

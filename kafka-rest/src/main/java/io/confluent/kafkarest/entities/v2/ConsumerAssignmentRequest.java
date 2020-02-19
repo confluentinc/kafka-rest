@@ -15,12 +15,52 @@
 
 package io.confluent.kafkarest.entities.v2;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
+import javax.annotation.Nullable;
 
-public class ConsumerAssignmentRequest {
+public final class ConsumerAssignmentRequest {
+
+  @Nullable
+  private final List<TopicPartition> partitions;
+
+  @JsonCreator
+  private ConsumerAssignmentRequest(
+      @JsonProperty("partitions") @Nullable List<TopicPartition> partitions) {
+    this.partitions = partitions;
+  }
 
   @JsonProperty
-  public List<TopicPartition> partitions;
+  @Nullable
+  public List<TopicPartition> getPartitions() {
+    return partitions;
+  }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ConsumerAssignmentRequest that = (ConsumerAssignmentRequest) o;
+    return Objects.equals(partitions, that.partitions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(partitions);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(
+        ", ", ConsumerAssignmentRequest.class.getSimpleName() + "[", "]")
+        .add("partitions=" + partitions)
+        .toString();
+  }
 }

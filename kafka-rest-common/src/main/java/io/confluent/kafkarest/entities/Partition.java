@@ -16,19 +16,18 @@
 package io.confluent.kafkarest.entities;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 public final class Partition {
 
-  private int partition;
+  private final int partition;
 
-  private int leader;
+  private final int leader;
 
   @Nullable
   private List<PartitionReplica> replicas;
-
-  public Partition() {
-  }
 
   public Partition(int partition, int leader, @Nullable List<PartitionReplica> replicas) {
     this.partition = partition;
@@ -40,16 +39,8 @@ public final class Partition {
     return partition;
   }
 
-  public void setPartition(int partition) {
-    this.partition = partition;
-  }
-
   public int getLeader() {
     return leader;
-  }
-
-  public void setLeader(int leader) {
-    this.leader = leader;
   }
 
   @Nullable
@@ -57,7 +48,31 @@ public final class Partition {
     return replicas;
   }
 
-  public void setReplicas(@Nullable List<PartitionReplica> replicas) {
-    this.replicas = replicas;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Partition partition1 = (Partition) o;
+    return partition == partition1.partition
+        && leader == partition1.leader
+        && Objects.equals(replicas, partition1.replicas);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(partition, leader, replicas);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", Partition.class.getSimpleName() + "[", "]")
+        .add("partition=" + partition)
+        .add("leader=" + leader)
+        .add("replicas=" + replicas)
+        .toString();
   }
 }

@@ -29,7 +29,7 @@ import javax.ws.rs.Produces;
 @Path("/")
 @Produces({Versions.KAFKA_V2_JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V2_JSON})
-public class RootResource {
+public final class RootResource {
 
   @GET
   @PerformanceMetric("root.get+v2")

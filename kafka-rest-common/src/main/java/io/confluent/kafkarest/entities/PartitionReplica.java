@@ -15,13 +15,16 @@
 
 package io.confluent.kafkarest.entities;
 
+import java.util.Objects;
+import java.util.StringJoiner;
+
 public final class PartitionReplica {
 
-  private int broker;
+  private final int broker;
 
-  private boolean leader;
+  private final boolean leader;
 
-  private boolean inSync;
+  private final boolean inSync;
 
   public PartitionReplica(int broker, boolean leader, boolean inSync) {
     this.broker = broker;
@@ -39,5 +42,31 @@ public final class PartitionReplica {
 
   public boolean isInSync() {
     return inSync;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    PartitionReplica that = (PartitionReplica) o;
+    return broker == that.broker && leader == that.leader && inSync == that.inSync;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(broker, leader, inSync);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", PartitionReplica.class.getSimpleName() + "[", "]")
+        .add("broker=" + broker)
+        .add("leader=" + leader)
+        .add("inSync=" + inSync)
+        .toString();
   }
 }

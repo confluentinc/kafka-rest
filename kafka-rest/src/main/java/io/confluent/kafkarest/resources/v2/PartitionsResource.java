@@ -215,7 +215,6 @@ public final class PartitionsResource {
               Integer keySchemaId, Integer valueSchemaId,
               List<RecordMetadataOrException> results
           ) {
-            ProduceResponse response = new ProduceResponse();
             List<PartitionOffset> offsets = new Vector<PartitionOffset>();
             for (RecordMetadataOrException result : results) {
               if (result.getException() != null) {
@@ -232,9 +231,7 @@ public final class PartitionsResource {
                 ));
               }
             }
-            response.setOffsets(offsets);
-            response.setKeySchemaId(keySchemaId);
-            response.setValueSchemaId(valueSchemaId);
+            ProduceResponse response = new ProduceResponse(offsets, keySchemaId, valueSchemaId);
             log.trace(
                 "Completed topic produce request id={} response={}",
                 asyncResponse, response

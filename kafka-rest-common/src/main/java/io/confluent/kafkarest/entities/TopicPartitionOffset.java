@@ -15,15 +15,18 @@
 
 package io.confluent.kafkarest.entities;
 
+import java.util.Objects;
+import java.util.StringJoiner;
+
 public final class TopicPartitionOffset {
 
-  private String topic;
+  private final String topic;
 
-  private int partition;
+  private final int partition;
 
-  private long consumed;
+  private final long consumed;
 
-  private long committed;
+  private final long committed;
 
   public TopicPartitionOffset(String topic, int partition, long consumed, long committed) {
     if (topic.isEmpty()) {
@@ -49,5 +52,35 @@ public final class TopicPartitionOffset {
 
   public long getCommitted() {
     return committed;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    TopicPartitionOffset that = (TopicPartitionOffset) o;
+    return partition == that.partition
+        && consumed == that.consumed
+        && committed == that.committed
+        && Objects.equals(topic, that.topic);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(topic, partition, consumed, committed);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", TopicPartitionOffset.class.getSimpleName() + "[", "]")
+        .add("topic='" + topic + "'")
+        .add("partition=" + partition)
+        .add("consumed=" + consumed)
+        .add("committed=" + committed)
+        .toString();
   }
 }

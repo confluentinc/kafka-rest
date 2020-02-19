@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import java.util.Objects;
+import java.util.StringJoiner;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
@@ -135,5 +136,16 @@ public final class SchemaConsumerRecord {
   @Override
   public int hashCode() {
     return Objects.hash(topic, key, value, partition, offset);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", SchemaConsumerRecord.class.getSimpleName() + "[", "]")
+        .add("topic='" + topic + "'")
+        .add("key=" + key)
+        .add("value=" + value)
+        .add("partition=" + partition)
+        .add("offset=" + offset)
+        .toString();
   }
 }

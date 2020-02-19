@@ -17,23 +17,33 @@ package io.confluent.kafkarest.entities.v2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
-import javax.validation.constraints.Min;
-import org.hibernate.validator.constraints.NotEmpty;
+import java.util.StringJoiner;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.PositiveOrZero;
 
-public class TopicPartitionOffsetMetadata {
+public final class TopicPartitionOffsetMetadata {
 
   @NotEmpty
-  private String topic;
-  @Min(0)
-  private int partition;
-  @Min(0)
-  private long offset;
+  @Nullable
+  private final String topic;
 
-  private String metadata;
+  @PositiveOrZero
+  @Nullable
+  private final Integer partition;
+
+  @PositiveOrZero
+  @Nullable
+  private final Long offset;
+
+  @Nullable
+  private final String metadata;
 
   public TopicPartitionOffsetMetadata(
-      @JsonProperty("topic") String topic, @JsonProperty("partition") int partition,
-      @JsonProperty("offset") long offset, @JsonProperty("metadata") String metadata
+      @JsonProperty("topic") @Nullable String topic,
+      @JsonProperty("partition") @Nullable Integer partition,
+      @JsonProperty("offset") @Nullable Long offset,
+      @JsonProperty("metadata") @Nullable String metadata
   ) {
     this.topic = topic;
     this.partition = partition;
@@ -42,43 +52,27 @@ public class TopicPartitionOffsetMetadata {
   }
 
   @JsonProperty
+  @Nullable
   public String getTopic() {
     return topic;
   }
 
   @JsonProperty
-  public void setTopic(String topic) {
-    this.topic = topic;
-  }
-
-  @JsonProperty
-  public int getPartition() {
+  @Nullable
+  public Integer getPartition() {
     return partition;
   }
 
   @JsonProperty
-  public void setPartition(int partition) {
-    this.partition = partition;
-  }
-
-  @JsonProperty
-  public long getOffset() {
+  @Nullable
+  public Long getOffset() {
     return offset;
   }
 
   @JsonProperty
-  public void setOffset(long offset) {
-    this.offset = offset;
-  }
-
-  @JsonProperty
+  @Nullable
   public String getMetadata() {
     return metadata;
-  }
-
-  @JsonProperty
-  public void setMetadata(String metadata) {
-    this.metadata = metadata;
   }
 
   @Override
@@ -89,30 +83,26 @@ public class TopicPartitionOffsetMetadata {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     TopicPartitionOffsetMetadata that = (TopicPartitionOffsetMetadata) o;
-
-    if (offset != that.offset) {
-      return false;
-    }
-    if (!Objects.equals(metadata, that.metadata)) {
-      return false;
-    }
-    if (partition != that.partition) {
-      return false;
-    }
-    if (topic != null ? !topic.equals(that.topic) : that.topic != null) {
-      return false;
-    }
-
-    return true;
+    return Objects.equals(topic, that.topic)
+        && Objects.equals(partition, that.partition)
+        && Objects.equals(offset, that.offset)
+        && Objects.equals(metadata, that.metadata);
   }
 
   @Override
   public int hashCode() {
-    int result = topic != null ? topic.hashCode() : 0;
-    result = 31 * result + partition;
-    result = 31 * result + (int) (offset ^ (offset >>> 32));
-    return result;
+    return Objects.hash(topic, partition, offset, metadata);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(
+        ", ", TopicPartitionOffsetMetadata.class.getSimpleName() + "[", "]")
+        .add("topic='" + topic + "'")
+        .add("partition=" + partition)
+        .add("offset=" + offset)
+        .add("metadata='" + metadata + "'")
+        .toString();
   }
 }

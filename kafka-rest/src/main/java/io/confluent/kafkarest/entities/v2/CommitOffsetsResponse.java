@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotEmpty;
@@ -62,6 +63,13 @@ public final class CommitOffsetsResponse {
   @Override
   public int hashCode() {
     return Objects.hash(offsets);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", CommitOffsetsResponse.class.getSimpleName() + "[", "]")
+        .add("offsets=" + offsets)
+        .toString();
   }
 
   public static final class Offset {
@@ -142,6 +150,16 @@ public final class CommitOffsetsResponse {
     @Override
     public int hashCode() {
       return Objects.hash(topic, partition, consumed, committed);
+    }
+
+    @Override
+    public String toString() {
+      return new StringJoiner(", ", Offset.class.getSimpleName() + "[", "]")
+          .add("topic='" + topic + "'")
+          .add("partition=" + partition)
+          .add("consumed=" + consumed)
+          .add("committed=" + committed)
+          .toString();
     }
   }
 }

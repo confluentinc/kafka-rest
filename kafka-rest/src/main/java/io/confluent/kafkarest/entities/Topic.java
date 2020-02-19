@@ -18,14 +18,15 @@ package io.confluent.kafkarest.entities;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.StringJoiner;
 
 public final class Topic {
 
-  private String name;
+  private final String name;
 
-  private Properties configs;
+  private final Properties configs;
 
-  private List<Partition> partitions;
+  private final List<Partition> partitions;
 
   public Topic(String name, Properties configs, List<Partition> partitions) {
     if (name.isEmpty()) {
@@ -49,5 +50,33 @@ public final class Topic {
 
   public List<Partition> getPartitions() {
     return partitions;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Topic topic = (Topic) o;
+    return Objects.equals(name, topic.name)
+        && Objects.equals(configs, topic.configs)
+        && Objects.equals(partitions, topic.partitions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, configs, partitions);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", Topic.class.getSimpleName() + "[", "]")
+        .add("name='" + name + "'")
+        .add("configs=" + configs)
+        .add("partitions=" + partitions)
+        .toString();
   }
 }

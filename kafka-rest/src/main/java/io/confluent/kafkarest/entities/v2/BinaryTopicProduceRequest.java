@@ -21,7 +21,10 @@ import io.confluent.kafkarest.entities.EntityUtils;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceRequest;
 import io.confluent.rest.validation.ConstraintViolations;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotEmpty;
@@ -76,6 +79,31 @@ public final class BinaryTopicProduceRequest {
         /* valueSchemaId= */ null);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    BinaryTopicProduceRequest request = (BinaryTopicProduceRequest) o;
+    return Objects.equals(records, request.records);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(records);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(
+        ", ", BinaryTopicProduceRequest.class.getSimpleName() + "[", "]")
+        .add("records=" + records)
+        .toString();
+  }
+
   public static final class BinaryTopicProduceRecord {
 
     @Nullable
@@ -123,6 +151,37 @@ public final class BinaryTopicProduceRequest {
     @Nullable
     public Integer getPartition() {
       return partition;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      BinaryTopicProduceRecord that = (BinaryTopicProduceRecord) o;
+      return Arrays.equals(key, that.key)
+          && Arrays.equals(value, that.value)
+          && Objects.equals(partition, that.partition);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = Objects.hash(partition);
+      result = 31 * result + Arrays.hashCode(key);
+      result = 31 * result + Arrays.hashCode(value);
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return new StringJoiner(", ", BinaryTopicProduceRecord.class.getSimpleName() + "[", "]")
+          .add("key=" + Arrays.toString(key))
+          .add("value=" + Arrays.toString(value))
+          .add("partition=" + partition)
+          .toString();
     }
   }
 }

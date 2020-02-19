@@ -18,31 +18,26 @@ package io.confluent.kafkarest.entities.v1;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
-public class BrokerList {
+public final class BrokerList {
 
   @NotNull
-  private List<Integer> brokers;
+  @Nullable
+  private final List<Integer> brokers;
 
   @JsonCreator
-  public BrokerList(@JsonProperty("brokers") List<Integer> brokers) {
+  public BrokerList(@JsonProperty("brokers") @Nullable List<Integer> brokers) {
     this.brokers = brokers;
   }
 
   @JsonProperty
+  @Nullable
   public List<Integer> getBrokers() {
     return brokers;
-  }
-
-  @JsonProperty
-  public void setBrokers(List<Integer> brokers) {
-    this.brokers = brokers;
-  }
-
-  @Override
-  public String toString() {
-    return "BrokerList{" + "brokers=" + brokers + '}';
   }
 
   @Override
@@ -50,17 +45,22 @@ public class BrokerList {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof BrokerList)) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     BrokerList that = (BrokerList) o;
-
-    return brokers.equals(that.brokers);
+    return Objects.equals(brokers, that.brokers);
   }
 
   @Override
   public int hashCode() {
-    return brokers.hashCode();
+    return Objects.hash(brokers);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", BrokerList.class.getSimpleName() + "[", "]")
+        .add("brokers=" + brokers)
+        .toString();
   }
 }

@@ -15,11 +15,51 @@
 
 package io.confluent.kafkarest.entities.v2;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
+import javax.annotation.Nullable;
 
-public class ConsumerSubscriptionResponse {
+public final class ConsumerSubscriptionResponse {
+
+  @Nullable
+  private final List<String> topics;
+
+  @JsonCreator
+  public ConsumerSubscriptionResponse(@JsonProperty("topics") @Nullable List<String> topics) {
+    this.topics = topics;
+  }
 
   @JsonProperty
-  public List<String> topics;
+  @Nullable
+  public List<String> getTopics() {
+    return topics;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ConsumerSubscriptionResponse that = (ConsumerSubscriptionResponse) o;
+    return Objects.equals(topics, that.topics);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(topics);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(
+        ", ", ConsumerSubscriptionResponse.class.getSimpleName() + "[", "]")
+        .add("topics=" + topics)
+        .toString();
+  }
 }

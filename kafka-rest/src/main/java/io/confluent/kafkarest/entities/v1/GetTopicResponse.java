@@ -19,7 +19,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.kafkarest.entities.Topic;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotEmpty;
@@ -29,15 +31,15 @@ public final class GetTopicResponse {
 
   @NotEmpty
   @Nullable
-  private String name;
+  private final String name;
 
   @NotNull
   @Nullable
-  private Properties configs;
+  private final Properties configs;
 
   @NotEmpty
   @Nullable
-  private List<GetPartitionResponse> partitions;
+  private final List<GetPartitionResponse> partitions;
 
   @JsonCreator
   private GetTopicResponse(
@@ -75,5 +77,33 @@ public final class GetTopicResponse {
             .stream()
             .map(GetPartitionResponse::fromPartition)
             .collect(Collectors.toList()));
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    GetTopicResponse that = (GetTopicResponse) o;
+    return Objects.equals(name, that.name)
+        && Objects.equals(configs, that.configs)
+        && Objects.equals(partitions, that.partitions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, configs, partitions);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", GetTopicResponse.class.getSimpleName() + "[", "]")
+        .add("name='" + name + "'")
+        .add("configs=" + configs)
+        .add("partitions=" + partitions)
+        .toString();
   }
 }

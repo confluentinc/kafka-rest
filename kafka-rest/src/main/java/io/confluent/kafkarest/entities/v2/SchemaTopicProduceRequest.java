@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceRequest;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotEmpty;
@@ -116,6 +118,39 @@ public final class SchemaTopicProduceRequest {
         valueSchemaId);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    SchemaTopicProduceRequest that = (SchemaTopicProduceRequest) o;
+    return Objects.equals(records, that.records)
+        && Objects.equals(keySchema, that.keySchema)
+        && Objects.equals(keySchemaId, that.keySchemaId)
+        && Objects.equals(valueSchema, that.valueSchema)
+        && Objects.equals(valueSchemaId, that.valueSchemaId);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(records, keySchema, keySchemaId, valueSchema, valueSchemaId);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(
+        ", ", SchemaTopicProduceRequest.class.getSimpleName() + "[", "]")
+        .add("records=" + records)
+        .add("keySchema='" + keySchema + "'")
+        .add("keySchemaId=" + keySchemaId)
+        .add("valueSchema='" + valueSchema + "'")
+        .add("valueSchemaId=" + valueSchemaId)
+        .toString();
+  }
+
   public static final class SchemaTopicProduceRecord {
 
     @Nullable
@@ -156,6 +191,34 @@ public final class SchemaTopicProduceRequest {
     @Nullable
     public Integer getPartition() {
       return partition;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      SchemaTopicProduceRecord that = (SchemaTopicProduceRecord) o;
+      return Objects.equals(key, that.key)
+          && Objects.equals(value, that.value)
+          && Objects.equals(partition, that.partition);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(key, value, partition);
+    }
+
+    @Override
+    public String toString() {
+      return new StringJoiner(", ", SchemaTopicProduceRecord.class.getSimpleName() + "[", "]")
+          .add("key=" + key)
+          .add("value=" + value)
+          .add("partition=" + partition)
+          .toString();
     }
   }
 }

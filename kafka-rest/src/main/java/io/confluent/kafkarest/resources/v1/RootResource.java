@@ -31,7 +31,7 @@ import javax.ws.rs.Produces;
            Versions.JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
            Versions.GENERIC_REQUEST})
-public class RootResource {
+public final class RootResource {
 
   @GET
   @PerformanceMetric("root.get")

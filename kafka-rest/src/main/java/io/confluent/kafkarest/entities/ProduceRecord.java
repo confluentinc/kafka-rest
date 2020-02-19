@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest.entities;
 
+import java.util.Objects;
+import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 public final class ProduceRecord<K, V> {
@@ -47,5 +49,33 @@ public final class ProduceRecord<K, V> {
   @Nullable
   public Integer getPartition() {
     return partition;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ProduceRecord<?, ?> that = (ProduceRecord<?, ?>) o;
+    return Objects.equals(key, that.key)
+        && Objects.equals(value, that.value)
+        && Objects.equals(partition, that.partition);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(key, value, partition);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", ProduceRecord.class.getSimpleName() + "[", "]")
+        .add("key=" + key)
+        .add("value=" + value)
+        .add("partition=" + partition)
+        .toString();
   }
 }

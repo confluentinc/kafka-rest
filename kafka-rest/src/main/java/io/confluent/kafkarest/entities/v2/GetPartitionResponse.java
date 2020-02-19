@@ -22,6 +22,7 @@ import io.confluent.kafkarest.entities.PartitionReplica;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.PositiveOrZero;
@@ -30,14 +31,14 @@ public final class GetPartitionResponse {
 
   @PositiveOrZero
   @Nullable
-  private Integer partition;
+  private final Integer partition;
 
   @PositiveOrZero
   @Nullable
-  private Integer leader;
+  private final Integer leader;
 
   @Nullable
-  private List<Replica> replicas;
+  private final List<Replica> replicas;
 
   @JsonCreator
   private GetPartitionResponse(
@@ -94,6 +95,15 @@ public final class GetPartitionResponse {
   @Override
   public int hashCode() {
     return Objects.hash(partition, leader, replicas);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", GetPartitionResponse.class.getSimpleName() + "[", "]")
+        .add("partition=" + partition)
+        .add("leader=" + leader)
+        .add("replicas=" + replicas)
+        .toString();
   }
 
   public static final class Replica {
@@ -157,6 +167,15 @@ public final class GetPartitionResponse {
     @Override
     public int hashCode() {
       return Objects.hash(broker, leader, inSync);
+    }
+
+    @Override
+    public String toString() {
+      return new StringJoiner(", ", Replica.class.getSimpleName() + "[", "]")
+          .add("broker=" + broker)
+          .add("leader=" + leader)
+          .add("inSync=" + inSync)
+          .toString();
     }
   }
 }

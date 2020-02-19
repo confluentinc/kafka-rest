@@ -55,7 +55,7 @@ import org.slf4j.LoggerFactory;
            Versions.JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
            Versions.GENERIC_REQUEST})
-public class TopicsResource {
+public final class TopicsResource {
 
   private static final Logger log = LoggerFactory.getLogger(
       TopicsResource.class);
@@ -139,7 +139,6 @@ public class TopicsResource {
               Integer keySchemaId, Integer valueSchemaId,
               List<RecordMetadataOrException> results
           ) {
-            ProduceResponse response = new ProduceResponse();
             List<PartitionOffset> offsets = new Vector<PartitionOffset>();
             for (RecordMetadataOrException result : results) {
               if (result.getException() != null) {
@@ -154,9 +153,7 @@ public class TopicsResource {
                 ));
               }
             }
-            response.setOffsets(offsets);
-            response.setKeySchemaId(keySchemaId);
-            response.setValueSchemaId(valueSchemaId);
+            ProduceResponse response = new ProduceResponse(offsets, keySchemaId, valueSchemaId);
             log.trace("Completed topic produce request id={} response={}",
                       asyncResponse, response
             );

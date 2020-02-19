@@ -119,12 +119,9 @@ public class MetadataObserver {
         continue;
       }
 
-      Partition p = new Partition();
-      p.setPartition(partId);
       Option<LeaderAndIsr> leaderAndIsrOpt = zkUtils.getLeaderAndIsrForPartition(topic, partId);
       if (!leaderAndIsrOpt.isEmpty()) {
         LeaderAndIsr leaderAndIsr = leaderAndIsrOpt.get();
-        p.setLeader(leaderAndIsr.leader());
         scala.collection.immutable.Set<Integer> isr = leaderAndIsr.isr().toSet();
         List<PartitionReplica> partReplicas = new Vector<PartitionReplica>();
         for (Object brokerObj : JavaConversions.asJavaCollection(part.getValue())) {
@@ -133,7 +130,7 @@ public class MetadataObserver {
               new PartitionReplica(broker, (leaderAndIsr.leader() == broker), isr.contains(broker));
           partReplicas.add(r);
         }
-        p.setReplicas(partReplicas);
+        Partition p = new Partition(partId, leaderAndIsr.leader(), partReplicas);
         partitions.add(p);
       }
     }

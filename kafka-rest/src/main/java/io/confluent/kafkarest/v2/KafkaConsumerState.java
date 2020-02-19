@@ -116,7 +116,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
             new HashMap<TopicPartition, OffsetAndMetadata>();
 
         //commit each given offset
-        for (TopicPartitionOffsetMetadata t : offsetCommitRequest.offsets) {
+        for (TopicPartitionOffsetMetadata t : offsetCommitRequest.getOffsets()) {
           if (t.getMetadata() == null) {
             offsetMap.put(
                 new TopicPartition(t.getTopic(), t.getPartition()),
@@ -148,7 +148,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       if (seekToRequest != null) {
         Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
 
-        for (io.confluent.kafkarest.entities.v2.TopicPartition t : seekToRequest.partitions) {
+        for (io.confluent.kafkarest.entities.v2.TopicPartition t : seekToRequest.getPartitions()) {
           topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
         }
         consumer.seekToBeginning(topicPartitions);
@@ -167,7 +167,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       if (seekToRequest != null) {
         Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
 
-        for (io.confluent.kafkarest.entities.v2.TopicPartition t : seekToRequest.partitions) {
+        for (io.confluent.kafkarest.entities.v2.TopicPartition t : seekToRequest.getPartitions()) {
           topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
         }
         consumer.seekToEnd(topicPartitions);
@@ -184,7 +184,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     lock.lock();
     try {
       if (seekToOffsetRequest != null) {
-        for (TopicPartitionOffsetMetadata t : seekToOffsetRequest.offsets) {
+        for (TopicPartitionOffsetMetadata t : seekToOffsetRequest.getOffsets()) {
           TopicPartition topicPartition = new TopicPartition(t.getTopic(), t.getPartition());
           consumer.seek(topicPartition, t.getOffset());
         }
@@ -204,7 +204,8 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
       if (assignmentRequest != null) {
         Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
 
-        for (io.confluent.kafkarest.entities.v2.TopicPartition t : assignmentRequest.partitions) {
+        for (io.confluent.kafkarest.entities.v2.TopicPartition t
+            : assignmentRequest.getPartitions()) {
           topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
         }
         consumer.assign(topicPartitions);
@@ -243,8 +244,8 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     lock.lock();
     try {
       if (consumer != null) {
-        if (subscription.topics != null) {
-          consumer.subscribe(subscription.topics);
+        if (subscription.getTopics() != null) {
+          consumer.subscribe(subscription.getTopics());
         } else if (subscription.getTopicPattern() != null) {
           Pattern topicPattern = Pattern.compile(subscription.getTopicPattern());
           NoOpOnRebalance noOpOnRebalance = new NoOpOnRebalance();
@@ -308,16 +309,15 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * this process or another).
    */
   public ConsumerCommittedResponse committed(ConsumerCommittedRequest request) {
-    ConsumerCommittedResponse response = new ConsumerCommittedResponse();
-    response.offsets = new Vector<TopicPartitionOffsetMetadata>();
     lock.lock();
     try {
+      Vector<TopicPartitionOffsetMetadata> offsets = new Vector<>();
       if (consumer != null) {
-        for (io.confluent.kafkarest.entities.v2.TopicPartition t : request.partitions) {
+        for (io.confluent.kafkarest.entities.v2.TopicPartition t : request.getPartitions()) {
           TopicPartition partition = new TopicPartition(t.getTopic(), t.getPartition());
           OffsetAndMetadata offsetMetadata = consumer.committed(partition);
           if (offsetMetadata != null) {
-            response.offsets.add(
+            offsets.add(
                 new TopicPartitionOffsetMetadata(
                     partition.topic(),
                     partition.partition(),
@@ -328,10 +328,10 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
           }
         }
       }
+      return new ConsumerCommittedResponse(offsets);
     } finally {
       lock.unlock();
     }
-    return response;
   }
 
   /**

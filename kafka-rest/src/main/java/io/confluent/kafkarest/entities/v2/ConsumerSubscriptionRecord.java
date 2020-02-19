@@ -16,34 +16,64 @@
 package io.confluent.kafkarest.entities.v2;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSetter;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
+import javax.annotation.Nullable;
 
-public class ConsumerSubscriptionRecord {
+public final class ConsumerSubscriptionRecord {
 
-  private String topicPattern;
+  @Nullable
+  private final List<String> topics;
+
+  @Nullable
+  private final String topicPattern;
 
   @JsonCreator
   public ConsumerSubscriptionRecord(
-      @JsonProperty("topics") List<String> topics,
-      @JsonProperty("topic_pattern") String topicPattern
+      @JsonProperty("topics") @Nullable List<String> topics,
+      @JsonProperty("topic_pattern") @Nullable String topicPattern
   ) {
     this.topics = topics;
     this.topicPattern = topicPattern;
   }
 
-  @JsonGetter("topic_pattern")
+  @JsonProperty
+  @Nullable
+  public List<String> getTopics() {
+    return topics;
+  }
+
+  @JsonProperty("topic_pattern")
+  @Nullable
   public String getTopicPattern() {
     return this.topicPattern;
   }
 
-  @JsonSetter("topic_pattern")
-  public void setTopicPattern(String topicPattern) {
-    this.topicPattern = topicPattern;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ConsumerSubscriptionRecord that = (ConsumerSubscriptionRecord) o;
+    return Objects.equals(topics, that.topics) && Objects.equals(topicPattern, that.topicPattern);
   }
 
-  @JsonProperty
-  public List<String> topics;
+  @Override
+  public int hashCode() {
+    return Objects.hash(topics, topicPattern);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(
+        ", ", ConsumerSubscriptionRecord.class.getSimpleName() + "[", "]")
+        .add("topics=" + topics)
+        .add("topicPattern='" + topicPattern + "'")
+        .toString();
+  }
 }

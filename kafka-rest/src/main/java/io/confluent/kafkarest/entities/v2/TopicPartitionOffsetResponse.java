@@ -15,8 +15,12 @@
 
 package io.confluent.kafkarest.entities.v2;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
+import java.util.Objects;
+import java.util.StringJoiner;
+import javax.annotation.Nullable;
 
 /**
  * Response for GET /topics/(topic)/partitions/(partition)/offsets requests.
@@ -25,10 +29,17 @@ import com.fasterxml.jackson.annotation.JsonProperty.Access;
  */
 public final class TopicPartitionOffsetResponse {
 
-  private final long beginningOffset;
-  private final long endOffset;
+  @Nullable
+  private final Long beginningOffset;
 
-  public TopicPartitionOffsetResponse(long beginningOffset, long endOffset) {
+  @Nullable
+  private final Long endOffset;
+
+  @JsonCreator
+  public TopicPartitionOffsetResponse(
+      @JsonProperty("beginning_offset") @Nullable Long beginningOffset,
+      @JsonProperty("end_offset") @Nullable Long endOffset
+  ) {
     this.beginningOffset = beginningOffset;
     this.endOffset = endOffset;
   }
@@ -37,7 +48,8 @@ public final class TopicPartitionOffsetResponse {
    * The earliest offset in the topic partition.
    */
   @JsonProperty(value = "beginning_offset", access = Access.READ_ONLY)
-  public long getBeginningOffset() {
+  @Nullable
+  public Long getBeginningOffset() {
     return beginningOffset;
   }
 
@@ -45,7 +57,35 @@ public final class TopicPartitionOffsetResponse {
    * The latest offset in the topic partition.
    */
   @JsonProperty(value = "end_offset", access = Access.READ_ONLY)
-  public long getEndOffset() {
+  @Nullable
+  public Long getEndOffset() {
     return endOffset;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    TopicPartitionOffsetResponse that = (TopicPartitionOffsetResponse) o;
+    return Objects.equals(beginningOffset, that.beginningOffset)
+        && Objects.equals(endOffset, that.endOffset);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(beginningOffset, endOffset);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(
+        ", ", TopicPartitionOffsetResponse.class.getSimpleName() + "[", "]")
+        .add("beginningOffset=" + beginningOffset)
+        .add("endOffset=" + endOffset)
+        .toString();
   }
 }

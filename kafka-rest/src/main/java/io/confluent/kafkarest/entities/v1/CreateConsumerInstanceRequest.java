@@ -23,6 +23,8 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
+import java.util.Objects;
+import java.util.StringJoiner;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import org.apache.kafka.common.config.ConfigException;
@@ -42,25 +44,25 @@ public final class CreateConsumerInstanceRequest {
           /* requestWaitMs= */ null);
 
   @Nullable
-  private String id;
+  private final String id;
 
   @Nullable
-  private String name;
+  private final String name;
 
   @NotNull
-  private EmbeddedFormat format;
+  private final EmbeddedFormat format;
 
   @Nullable
-  private String autoOffsetReset;
+  private final String autoOffsetReset;
 
   @Nullable
-  private String autoCommitEnable;
+  private final String autoCommitEnable;
 
   @Nullable
-  private Integer responseMinBytes;
+  private final Integer responseMinBytes;
 
   @Nullable
-  private Integer requestWaitMs;
+  private final Integer requestWaitMs;
 
   @JsonCreator
   public CreateConsumerInstanceRequest(
@@ -161,5 +163,43 @@ public final class CreateConsumerInstanceRequest {
         autoCommitEnable,
         responseMinBytes,
         requestWaitMs);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    CreateConsumerInstanceRequest that = (CreateConsumerInstanceRequest) o;
+    return Objects.equals(id, that.id)
+        && Objects.equals(name, that.name)
+        && format == that.format
+        && Objects.equals(autoOffsetReset, that.autoOffsetReset)
+        && Objects.equals(autoCommitEnable, that.autoCommitEnable)
+        && Objects.equals(responseMinBytes, that.responseMinBytes)
+        && Objects.equals(requestWaitMs, that.requestWaitMs);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        id, name, format, autoOffsetReset, autoCommitEnable, responseMinBytes, requestWaitMs);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(
+        ", ", CreateConsumerInstanceRequest.class.getSimpleName() + "[", "]")
+        .add("id='" + id + "'")
+        .add("name='" + name + "'")
+        .add("format=" + format)
+        .add("autoOffsetReset='" + autoOffsetReset + "'")
+        .add("autoCommitEnable='" + autoCommitEnable + "'")
+        .add("responseMinBytes=" + responseMinBytes)
+        .add("requestWaitMs=" + requestWaitMs)
+        .toString();
   }
 }

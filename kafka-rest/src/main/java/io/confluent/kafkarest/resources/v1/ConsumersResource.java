@@ -59,7 +59,7 @@ import javax.ws.rs.core.UriInfo;
 @Consumes({Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V1_JSON_JSON,
            Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON,
            Versions.GENERIC_REQUEST})
-public class ConsumersResource {
+public final class ConsumersResource {
 
   private final KafkaRestContext ctx;
 

@@ -17,24 +17,33 @@ package io.confluent.kafkarest.entities.v1;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import javax.validation.constraints.Min;
+import java.util.Objects;
+import java.util.StringJoiner;
+import javax.annotation.Nullable;
+import javax.validation.constraints.PositiveOrZero;
 
-public class PartitionOffset {
+public final class PartitionOffset {
 
-  @Min(0)
-  private Integer partition;
-  @Min(0)
-  private Long offset;
+  @PositiveOrZero
+  @Nullable
+  private final Integer partition;
 
-  private Integer errorCode;
-  private String error;
+  @PositiveOrZero
+  @Nullable
+  private final Long offset;
+
+  @Nullable
+  private final Integer errorCode;
+
+  @Nullable
+  private final String error;
 
   @JsonCreator
   public PartitionOffset(
-      @JsonProperty("partition") Integer partition,
-      @JsonProperty("offset") Long offset,
-      @JsonProperty("error_code") Integer errorCode,
-      @JsonProperty("error") String error
+      @JsonProperty("partition") @Nullable Integer partition,
+      @JsonProperty("offset") @Nullable Long offset,
+      @JsonProperty("error_code") @Nullable Integer errorCode,
+      @JsonProperty("error") @Nullable String error
   ) {
     this.partition = partition;
     this.offset = offset;
@@ -43,49 +52,27 @@ public class PartitionOffset {
   }
 
   @JsonProperty
+  @Nullable
   public Integer getPartition() {
     return partition;
   }
 
-  public void setPartition(Integer partition) {
-    this.partition = partition;
-  }
-
   @JsonProperty
+  @Nullable
   public Long getOffset() {
     return offset;
   }
 
-  public void setOffset(Long offset) {
-    this.offset = offset;
-  }
-
   @JsonProperty("error_code")
+  @Nullable
   public Integer getErrorCode() {
     return errorCode;
   }
 
-  public void setErrorCode(Integer errorCode) {
-    this.errorCode = errorCode;
-  }
-
   @JsonProperty("error")
+  @Nullable
   public String getError() {
     return error;
-  }
-
-  public void setError(String error) {
-    this.error = error;
-  }
-
-  @Override
-  public String toString() {
-    return "PartitionOffset{"
-           + "partition=" + partition
-           + ", offset=" + offset
-           + ", errorCode=" + errorCode
-           + ", error='" + error + '\''
-           + '}';
   }
 
   @Override
@@ -96,31 +83,25 @@ public class PartitionOffset {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     PartitionOffset that = (PartitionOffset) o;
-
-    if (error != null ? !error.equals(that.error) : that.error != null) {
-      return false;
-    }
-    if (errorCode != null ? !errorCode.equals(that.errorCode) : that.errorCode != null) {
-      return false;
-    }
-    if (offset != null ? !offset.equals(that.offset) : that.offset != null) {
-      return false;
-    }
-    if (partition != null ? !partition.equals(that.partition) : that.partition != null) {
-      return false;
-    }
-
-    return true;
+    return Objects.equals(partition, that.partition)
+        && Objects.equals(offset, that.offset)
+        && Objects.equals(errorCode, that.errorCode)
+        && Objects.equals(error, that.error);
   }
 
   @Override
   public int hashCode() {
-    int result = partition != null ? partition.hashCode() : 0;
-    result = 31 * result + (offset != null ? offset.hashCode() : 0);
-    result = 31 * result + (errorCode != null ? errorCode.hashCode() : 0);
-    result = 31 * result + (error != null ? error.hashCode() : 0);
-    return result;
+    return Objects.hash(partition, offset, errorCode, error);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", PartitionOffset.class.getSimpleName() + "[", "]")
+        .add("partition=" + partition)
+        .add("offset=" + offset)
+        .add("errorCode=" + errorCode)
+        .add("error='" + error + "'")
+        .toString();
   }
 }
