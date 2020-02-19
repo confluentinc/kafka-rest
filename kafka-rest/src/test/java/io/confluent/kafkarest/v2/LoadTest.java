@@ -109,7 +109,7 @@ public class LoadTest {
         }
 
         void awaitRead() throws InterruptedException {
-            long sleepMs = (long) (this.readStartMs + (requestTimeoutMs * 1.5)) - time.milliseconds();
+            long sleepMs = (long) (this.readStartMs + (requestTimeoutMs * 3.68)) - time.milliseconds();
             if (sleepMs > 0)
                 Thread.sleep(sleepMs);
         }
