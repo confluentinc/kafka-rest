@@ -19,7 +19,7 @@ import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.converters.AvroConverter;
-import io.confluent.kafkarest.entities.SchemaConsumerRecord;
+import io.confluent.kafkarest.entities.v1.AvroConsumerRecord;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -66,9 +66,8 @@ public class SimpleConsumerAvroTest extends AbstractConsumerTest {
           new GenericRecordBuilder(valueSchema).set("field", 75).build())
   );
 
-  private static final GenericType<List<SchemaConsumerRecord>> avroConsumerRecordType
-      = new GenericType<List<SchemaConsumerRecord>>() {
-  };
+  private static final GenericType<List<AvroConsumerRecord>> avroConsumerRecordType =
+      new GenericType<List<AvroConsumerRecord>>() {};
   private static final Converter converter = new Converter() {
     @Override
     public Object convert(Object obj) {
@@ -95,14 +94,14 @@ public class SimpleConsumerAvroTest extends AbstractConsumerTest {
 
     simpleConsumeMessages(
         topicName,
-        0,
-        null, // No "count" parameter in the query
+        /* offset= */ 0,
+        /* count= */ null, // No "count" parameter in the query
         recordsOnlyValues.subList(0, 1), // We expect only the first record in the response
         Versions.KAFKA_V1_JSON_AVRO,
         Versions.KAFKA_V1_JSON_AVRO,
         avroConsumerRecordType,
-        converter
-    );
+        converter,
+        AvroConsumerRecord::toConsumerRecord);
   }
 
   @Test
@@ -111,14 +110,14 @@ public class SimpleConsumerAvroTest extends AbstractConsumerTest {
 
     simpleConsumeMessages(
         topicName,
-        0,
-        null, // No "count" parameter in the query
+        /* offset= */ 0,
+        /* count= */ null, // No "count" parameter in the query
         recordsWithKeys.subList(0, 1),
         Versions.KAFKA_V1_JSON_AVRO,
         Versions.KAFKA_V1_JSON_AVRO,
         avroConsumerRecordType,
-        converter
-    );
+        converter,
+        AvroConsumerRecord::toConsumerRecord);
   }
 
   @Test
@@ -127,14 +126,14 @@ public class SimpleConsumerAvroTest extends AbstractConsumerTest {
 
     simpleConsumeMessages(
         topicName,
-        0,
+        /* offset= */ 0,
         recordsOnlyValues.size(),
         recordsOnlyValues,
         Versions.KAFKA_V1_JSON_AVRO,
         Versions.KAFKA_V1_JSON_AVRO,
         avroConsumerRecordType,
-        converter
-    );
+        converter,
+        AvroConsumerRecord::toConsumerRecord);
   }
 
   @Test
@@ -143,14 +142,14 @@ public class SimpleConsumerAvroTest extends AbstractConsumerTest {
 
     simpleConsumeMessages(
         topicName,
-        0,
+        /* offset= */ 0,
         recordsWithKeys.size(),
         recordsWithKeys,
         Versions.KAFKA_V1_JSON_AVRO,
         Versions.KAFKA_V1_JSON_AVRO,
         avroConsumerRecordType,
-        converter
-    );
+        converter,
+        AvroConsumerRecord::toConsumerRecord);
   }
 
   @Test

@@ -15,34 +15,31 @@
 
 package io.confluent.kafkarest.unit;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.junit.Assert.fail;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
+import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.ProduceTask;
+import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.SchemaRestProducer;
 import io.confluent.kafkarest.converters.AvroConverter;
+import io.confluent.kafkarest.entities.ProduceRecord;
+import io.confluent.kafkarest.entities.ProduceRequest;
+import io.confluent.rest.exceptions.RestConstraintViolationException;
+import java.util.Collections;
+import java.util.concurrent.Future;
+import javax.validation.ConstraintViolationException;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.concurrent.Future;
-
-import javax.validation.ConstraintViolationException;
-
-import io.confluent.kafka.serializers.KafkaAvroSerializer;
-import io.confluent.kafkarest.SchemaRestProducer;
-import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.ProduceTask;
-import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.entities.SchemaTopicProduceRecord;
-import io.confluent.kafkarest.entities.SchemaHolder;
-import io.confluent.rest.exceptions.RestConstraintViolationException;
-
-import static org.junit.Assert.fail;
 
 public class AvroRestProducerTest {
 
@@ -52,7 +49,7 @@ public class AvroRestProducerTest {
   private KafkaAvroSerializer valueSerializer;
   private KafkaProducer<Object, Object> producer;
   private SchemaRestProducer restProducer;
-  private SchemaHolder schemaHolder;
+  private ProduceRequest<JsonNode, JsonNode> schemaHolder;
   private ProducerPool.ProduceRequestCallback produceCallback;
 
   @Before
@@ -67,38 +64,41 @@ public class AvroRestProducerTest {
 
   @Test(expected= ConstraintViolationException.class)
   public void testInvalidSchema() throws Exception {
-    schemaHolder = new SchemaHolder(null, "invalidValueSchema");
+    schemaHolder =
+        new ProduceRequest<>(
+            Collections.singletonList(
+                new ProduceRecord<>(mapper.readTree("{}"), mapper.readTree("{}"), null)),
+            /* keySchema= */ null,
+            /* keySchemaId= */ null,
+            "invalidValueSchema",
+            /* valueSchemaId= */ null);
     restProducer.produce(
         new ProduceTask(schemaHolder, 1, produceCallback),
-        "test", null,
-        Arrays.asList(
-            new SchemaTopicProduceRecord(
-                mapper.readTree("{}"),
-                mapper.readTree("{}"),
-                null)
-        )
-    );
+        /* topic= */ "test",
+        /* partition= */ null,
+        schemaHolder.getRecords());
   }
 
   @Test
   public void testInvalidData() throws Exception {
-    schemaHolder = new SchemaHolder(null, "\"int\"");
+    schemaHolder =
+        new ProduceRequest<>(
+            Collections.singletonList(
+                new ProduceRecord<>(null, mapper.readTree("\"string\""), null)),
+            /* keySchema= */ null,
+            /* keySchemaId= */ null,
+            /* valueSchema= */ "\"int\"",
+            /* valueSchemaId= */ null);
     try {
       restProducer.produce(
           new ProduceTask(schemaHolder, 1, produceCallback),
-          "test", null,
-          Arrays.asList(
-              new SchemaTopicProduceRecord(
-                  null,
-                  mapper.readTree("\"string\""),
-                  null
-              )
-          )
-      );
+          /* topic= */ "test",
+          /* partition= */ null,
+          schemaHolder.getRecords());
     } catch (RestConstraintViolationException e) {
       // expected, but should contain additional info
-      assert(e.getMessage().startsWith(Errors.JSON_CONVERSION_MESSAGE));
-      assert(e.getMessage().length() > Errors.JSON_CONVERSION_MESSAGE.length());
+      assert (e.getMessage().startsWith(Errors.JSON_CONVERSION_MESSAGE));
+      assert (e.getMessage().length() > Errors.JSON_CONVERSION_MESSAGE.length());
     } catch (Throwable t) {
       fail("Unexpected exception type");
     }
@@ -107,26 +107,40 @@ public class AvroRestProducerTest {
   @Test
   public void testRepeatedProducer() throws Exception {
     final int schemaId = 1;
-    final String valueSchemaStr = "{\"type\": \"record\", \"name\": \"User\", \"fields\": [{\"name\": \"name\", \"type\": \"string\"}]}";
+    final String valueSchemaStr =
+        ""
+            + "{"
+            + "\"type\": \"record\","
+            + "\"name\": \"User\","
+            + "\"fields\": [{\"name\": \"name\", \"type\": \"string\"}]"
+            + "}";
     final ParsedSchema valueSchema = new AvroSchema(valueSchemaStr);
     // This is the key part of the test, we should only call register once with the same schema, and then see the lookup
     // by ID the rest of the times
-    EasyMock.expect(valueSerializer.register(EasyMock.isA(String.class), EasyMock.isA(ParsedSchema.class))).andReturn(schemaId);
+    EasyMock.expect(
+        valueSerializer.register(EasyMock.isA(String.class), EasyMock.isA(ParsedSchema.class)))
+        .andReturn(schemaId);
     EasyMock.expect(valueSerializer.getSchemaById(schemaId)).andReturn(valueSchema).times(9999);
     EasyMock.replay(valueSerializer);
     Future f = EasyMock.createMock(Future.class);
-    EasyMock.expect(producer.send(EasyMock.isA(ProducerRecord.class), EasyMock.isA(Callback.class))).andStubReturn(f);
+    EasyMock.expect(
+        producer.send(EasyMock.isA(ProducerRecord.class), EasyMock.isA(Callback.class)))
+        .andStubReturn(f);
     EasyMock.replay(producer);
-    schemaHolder = new SchemaHolder(null, valueSchemaStr);
+    schemaHolder =
+        new ProduceRequest<>(
+            Collections.singletonList(
+                new ProduceRecord<>(null, mapper.readTree("{\"name\": \"bob\"}"), null)),
+            /* keySchema= */ null,
+            /* keySchemaId= */ null,
+            valueSchemaStr,
+            /* valueSchemaId= */ null);
     for (int i = 0; i < 10000; ++i) {
       restProducer.produce(
-              new ProduceTask(schemaHolder, 1, produceCallback),
-              "test",
-              null,
-              Arrays.asList(
-                      new SchemaTopicProduceRecord(null, mapper.readTree("{\"name\": \"bob\"}"), null)
-              )
-      );
+          new ProduceTask(schemaHolder, 1, produceCallback),
+          /* topic= */ "test",
+          /* partition= */ null,
+          schemaHolder.getRecords());
     }
 
   }

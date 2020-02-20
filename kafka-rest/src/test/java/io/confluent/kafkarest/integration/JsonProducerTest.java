@@ -16,21 +16,23 @@ package io.confluent.kafkarest.integration;
 
 import io.confluent.kafka.serializers.KafkaJsonDeserializer;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.JsonProduceRecord;
-import io.confluent.kafkarest.entities.JsonTopicProduceRecord;
-import io.confluent.kafkarest.entities.PartitionOffset;
-import org.junit.Before;
-import org.junit.Test;
-import scala.collection.JavaConversions;
-
+import io.confluent.kafkarest.entities.v1.JsonPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v1.JsonPartitionProduceRequest.JsonPartitionProduceRecord;
+import io.confluent.kafkarest.entities.v1.JsonTopicProduceRequest;
+import io.confluent.kafkarest.entities.v1.JsonTopicProduceRequest.JsonTopicProduceRecord;
+import io.confluent.kafkarest.entities.v1.PartitionOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import org.junit.Before;
+import org.junit.Test;
+import scala.collection.JavaConversions;
 
-public class JsonProducerTest extends AbstractProducerTest {
+public class JsonProducerTest
+    extends AbstractProducerTest<JsonTopicProduceRequest, JsonPartitionProduceRequest> {
 
   private String topicName = "topic1";
 
@@ -79,30 +81,30 @@ public class JsonProducerTest extends AbstractProducerTest {
   );
 
   private final List<JsonTopicProduceRecord> topicRecordsWithoutKeys = Arrays.asList(
-      new JsonTopicProduceRecord("value", 0),
-      new JsonTopicProduceRecord(null, 0),
-      new JsonTopicProduceRecord(53.4, 0),
-      new JsonTopicProduceRecord(45, 0),
-      new JsonTopicProduceRecord(exampleMapValue(), 0),
-      new JsonTopicProduceRecord(exampleListValue(), 0)
+      new JsonTopicProduceRecord(null, "value", 0),
+      new JsonTopicProduceRecord(null, null, 0),
+      new JsonTopicProduceRecord(null, 53.4, 0),
+      new JsonTopicProduceRecord(null, 45, 0),
+      new JsonTopicProduceRecord(null, exampleMapValue(), 0),
+      new JsonTopicProduceRecord(null, exampleListValue(), 0)
   );
 
-  private final List<JsonProduceRecord> partitionRecordsWithKeys = Arrays.asList(
-      new JsonProduceRecord("key", "value"),
-      new JsonProduceRecord("key", null),
-      new JsonProduceRecord("key", 53.4),
-      new JsonProduceRecord("key", 45),
-      new JsonProduceRecord("key", exampleMapValue()),
-      new JsonProduceRecord("key", exampleListValue())
+  private final List<JsonPartitionProduceRecord> partitionRecordsWithKeys = Arrays.asList(
+      new JsonPartitionProduceRecord("key", "value"),
+      new JsonPartitionProduceRecord("key", null),
+      new JsonPartitionProduceRecord("key", 53.4),
+      new JsonPartitionProduceRecord("key", 45),
+      new JsonPartitionProduceRecord("key", exampleMapValue()),
+      new JsonPartitionProduceRecord("key", exampleListValue())
   );
 
-  private final List<JsonProduceRecord> partitionRecordsWithoutKeys = Arrays.asList(
-      new JsonProduceRecord("value"),
-      new JsonProduceRecord(null),
-      new JsonProduceRecord(53.4),
-      new JsonProduceRecord(45),
-      new JsonProduceRecord(exampleMapValue()),
-      new JsonProduceRecord(exampleListValue())
+  private final List<JsonPartitionProduceRecord> partitionRecordsWithoutKeys = Arrays.asList(
+      new JsonPartitionProduceRecord(null, "value"),
+      new JsonPartitionProduceRecord(null, null),
+      new JsonPartitionProduceRecord(null, 53.4),
+      new JsonPartitionProduceRecord(null, 45),
+      new JsonPartitionProduceRecord(null, exampleMapValue()),
+      new JsonPartitionProduceRecord(null, exampleListValue())
   );
 
   private final List<PartitionOffset> produceOffsets = Arrays.asList(
@@ -116,28 +118,56 @@ public class JsonProducerTest extends AbstractProducerTest {
 
   @Test
   public void testProduceToTopicKeyAndValue() {
-    testProduceToTopic(topicName, topicRecordsWithKeys, KafkaJsonDeserializer.class.getName(),
-        KafkaJsonDeserializer.class.getName(), produceOffsets, true);
+    JsonTopicProduceRequest request = JsonTopicProduceRequest.create(topicRecordsWithKeys);
+    testProduceToTopic(
+        topicName,
+        request,
+        KafkaJsonDeserializer.class.getName(),
+        KafkaJsonDeserializer.class.getName(),
+        produceOffsets,
+        true,
+        request.toProduceRequest().getRecords());
   }
 
   @Test
   public void testProduceToTopicNoKey() {
-    testProduceToTopic(topicName, topicRecordsWithoutKeys, KafkaJsonDeserializer.class.getName(),
-        KafkaJsonDeserializer.class.getName(), produceOffsets, true);
+    JsonTopicProduceRequest request = JsonTopicProduceRequest.create(topicRecordsWithoutKeys);
+    testProduceToTopic(
+        topicName,
+        request,
+        KafkaJsonDeserializer.class.getName(),
+        KafkaJsonDeserializer.class.getName(),
+        produceOffsets,
+        true,
+        request.toProduceRequest().getRecords());
   }
 
   @Test
   public void testProduceToPartitionKeyAndValue() {
-    testProduceToPartition(topicName, 0, partitionRecordsWithKeys,
-        KafkaJsonDeserializer.class.getName(), KafkaJsonDeserializer.class.getName(),
-        produceOffsets);
+    JsonPartitionProduceRequest request =
+        JsonPartitionProduceRequest.create(partitionRecordsWithKeys);
+    testProduceToPartition(
+        topicName,
+        0,
+        request,
+        KafkaJsonDeserializer.class.getName(),
+        KafkaJsonDeserializer.class.getName(),
+        produceOffsets,
+        request.toProduceRequest().getRecords());
   }
 
   @Test
   public void testProduceToPartitionNoKey() {
-    testProduceToPartition(topicName, 0, partitionRecordsWithoutKeys,
-        KafkaJsonDeserializer.class.getName(), KafkaJsonDeserializer.class.getName(),
-        produceOffsets);
+    JsonPartitionProduceRequest request =
+        JsonPartitionProduceRequest.create(partitionRecordsWithoutKeys);
+    testProduceToPartition(
+        topicName,
+        0,
+        request,
+        KafkaJsonDeserializer.class.getName(),
+        KafkaJsonDeserializer.class.getName(),
+        produceOffsets,
+        request.toProduceRequest().getRecords());
   }
 
 }

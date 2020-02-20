@@ -3,7 +3,6 @@ package io.confluent.kafkarest.unit;
 import io.confluent.kafkarest.AdminClientWrapper;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.entities.Topic;
-import io.confluent.rest.RestConfigException;
 import org.apache.kafka.clients.admin.MockAdminClient;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartitionInfo;

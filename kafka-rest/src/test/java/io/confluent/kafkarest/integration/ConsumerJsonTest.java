@@ -16,7 +16,7 @@ package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.JsonConsumerRecord;
+import io.confluent.kafkarest.entities.v1.JsonConsumerRecord;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -86,9 +86,15 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.JSON,
         Versions.KAFKA_V1_JSON_JSON);
     produceJsonMessages(recordsWithKeys);
-    consumeMessages(instanceUri, topicName, recordsWithKeys,
-        Versions.KAFKA_V1_JSON_JSON, Versions.KAFKA_V1_JSON_JSON,
-        jsonConsumerRecordType, null);
+    consumeMessages(
+        instanceUri,
+        topicName,
+        recordsWithKeys,
+        Versions.KAFKA_V1_JSON_JSON,
+        Versions.KAFKA_V1_JSON_JSON,
+        jsonConsumerRecordType,
+        /* converter= */ null,
+        JsonConsumerRecord::toConsumerRecord);
     commitOffsets(instanceUri);
   }
 
@@ -97,9 +103,15 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.JSON,
         Versions.KAFKA_V1_JSON_JSON);
     produceJsonMessages(recordsOnlyValues);
-    consumeMessages(instanceUri, topicName, recordsOnlyValues,
-        Versions.KAFKA_V1_JSON_JSON, Versions.KAFKA_V1_JSON_JSON,
-        jsonConsumerRecordType, null);
+    consumeMessages(
+        instanceUri,
+        topicName,
+        recordsOnlyValues,
+        Versions.KAFKA_V1_JSON_JSON,
+        Versions.KAFKA_V1_JSON_JSON,
+        jsonConsumerRecordType,
+        /* converter= */ null,
+        JsonConsumerRecord::toConsumerRecord);
     commitOffsets(instanceUri);
   }
 

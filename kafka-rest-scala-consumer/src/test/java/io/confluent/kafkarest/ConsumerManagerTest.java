@@ -14,35 +14,6 @@
  */
 package io.confluent.kafkarest;
 
-import org.easymock.Capture;
-import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.kafkarest.mock.MockConsumerConnector;
-import io.confluent.rest.RestConfigException;
-import io.confluent.rest.exceptions.RestException;
-import io.confluent.rest.exceptions.RestNotFoundException;
-import kafka.consumer.ConsumerConfig;
-import kafka.javaapi.consumer.ConsumerConnector;
-
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -51,6 +22,32 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
+import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.mock.MockConsumerConnector;
+import io.confluent.rest.RestConfigException;
+import io.confluent.rest.exceptions.RestException;
+import io.confluent.rest.exceptions.RestNotFoundException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import kafka.consumer.ConsumerConfig;
+import kafka.javaapi.consumer.ConsumerConnector;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests basic create/read/commit/delete functionality of ConsumerManager. This only exercises the
@@ -71,7 +68,7 @@ public class ConsumerManagerTest {
   // Setup holding vars for results from callback
   private boolean sawCallback = false;
   private static Exception actualException = null;
-  private static List<? extends ConsumerRecord<byte[], byte[]>> actualRecords = null;
+  private static List<ConsumerRecord<byte[], byte[]>> actualRecords = null;
   private int actualLength = 0;
   private static List<TopicPartitionOffset> actualOffsets = null;
 
@@ -285,9 +282,16 @@ public class ConsumerManagerTest {
     EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
     EasyMock.replay(mdObserver, consumerFactory);
 
-    ConsumerInstanceConfig config = new ConsumerInstanceConfig(EmbeddedFormat.BINARY);
     // we expect one record to be returned since the setting is overridden
-    config.setResponseMinBytes(1);
+    ConsumerInstanceConfig config =
+        new ConsumerInstanceConfig(
+            /* id= */ null,
+            /* name= */ null,
+            EmbeddedFormat.BINARY,
+            /* autoOffsetReset= */ null,
+            /* autoCommitEnable= */ null,
+            /* responseMinBytes= */ 1,
+            /* requestWaitMs= */ null);
     readFromDefault(consumerManager.createConsumer(groupName, config));
 
     assertTrue("Callback failed to fire", sawCallback);
@@ -316,8 +320,15 @@ public class ConsumerManagerTest {
     EasyMock.expect(mdObserver.topicExists(topicName)).andReturn(true);
     EasyMock.replay(mdObserver, consumerFactory);
 
-    ConsumerInstanceConfig consumerConfig = new ConsumerInstanceConfig(null, null, EmbeddedFormat.BINARY.name(),
-            null, null, null,  overriddenRequestTimeMs);
+    ConsumerInstanceConfig consumerConfig =
+        new ConsumerInstanceConfig(
+            /* id= */ null,
+            /* name= */ null,
+            EmbeddedFormat.BINARY,
+            /* autoOffsetReset= */ null,
+            /* autoCommitEnable= */ null,
+            /* responseMinBytes= */ null,
+            overriddenRequestTimeMs);
     String cid = consumerManager.createConsumer(groupName, consumerConfig);
     long startTime = System.currentTimeMillis();
     readFromDefault(cid);
@@ -336,10 +347,10 @@ public class ConsumerManagerTest {
     final List<ConsumerRecord<byte[], byte[]>> referenceRecords
         = Arrays.<ConsumerRecord<byte[], byte[]>>asList(
         // Don't use 512 as this happens to fall on boundary
-        new BinaryConsumerRecord(topicName, null, new byte[511], 0, 0),
-        new BinaryConsumerRecord(topicName, null, new byte[511], 1, 0),
-        new BinaryConsumerRecord(topicName, null, new byte[511], 2, 0),
-        new BinaryConsumerRecord(topicName, null, new byte[511], 3, 0)
+        new ConsumerRecord<>(topicName, null, new byte[511], 0, 0),
+        new ConsumerRecord<>(topicName, null, new byte[511], 1, 0),
+        new ConsumerRecord<>(topicName, null, new byte[511], 2, 0),
+        new ConsumerRecord<>(topicName, null, new byte[511], 3, 0)
     );
     Map<Integer, List<ConsumerRecord<byte[], byte[]>>> referenceSchedule
         = new HashMap<Integer, List<ConsumerRecord<byte[], byte[]>>>();
@@ -363,8 +374,7 @@ public class ConsumerManagerTest {
     actualLength = 0;
     readTopic(cid, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
-      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               Exception e) {
+      public void onCompletion(List<ConsumerRecord<byte[], byte[]>> records, Exception e) {
         sawCallback = true;
         actualException = e;
         // Should only see the first two messages since the third pushes us over the limit.
@@ -382,8 +392,7 @@ public class ConsumerManagerTest {
     actualLength = 0;
     readTopic(cid, 512, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
-      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               Exception e) {
+      public void onCompletion(List<ConsumerRecord<byte[], byte[]>> records, Exception e) {
         sawCallback = true;
         actualException = e;
         // Should only see the first two messages since the third pushes us over the limit.
@@ -410,8 +419,14 @@ public class ConsumerManagerTest {
 
     String cid = consumerManager.createConsumer(
         groupName,
-        new ConsumerInstanceConfig("id", "name", EmbeddedFormat.BINARY.toString(), null, null, null, null)
-    );
+        new ConsumerInstanceConfig(
+            /* id= */ "id",
+            /* name= */ "name",
+            EmbeddedFormat.BINARY,
+            /* autoOffsetReset= */ null,
+            /* autoCommitEnable= */ null,
+            /* responseMinBytes= */ null,
+            /* requestWaitMs= */ null));
     assertEquals("id", cid);
     assertEquals("id", capturedConsumerConfig.getValue().consumerId().getOrElse(null));
     EasyMock.verify(mdObserver, consumerFactory);
@@ -424,14 +439,26 @@ public class ConsumerManagerTest {
 
     consumerManager.createConsumer(
         groupName,
-        new ConsumerInstanceConfig(null, "name", EmbeddedFormat.BINARY.toString(), null, null, null, null)
-    );
+        new ConsumerInstanceConfig(
+            /* id= */ null,
+            /* name= */ "name",
+            EmbeddedFormat.BINARY,
+            /* autoOffsetReset= */ null,
+            /* autoCommitEnable= */ null,
+            /* responseMinBytes= */ null,
+            /* requestWaitMs= */ null));
 
     try {
       consumerManager.createConsumer(
           groupName,
-          new ConsumerInstanceConfig(null, "name", EmbeddedFormat.BINARY.toString(), null, null, null, null)
-      );
+          new ConsumerInstanceConfig(
+              /* id= */ null,
+              /* name= */ "name",
+              EmbeddedFormat.BINARY,
+              /* autoOffsetReset= */ null,
+              /* autoCommitEnable= */ null,
+              /* responseMinBytes= */ null,
+              /* requestWaitMs= */ null));
       fail("Expected to see exception because consumer already exists");
     } catch (RestException e) {
       // expected
@@ -493,8 +520,7 @@ public class ConsumerManagerTest {
             new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
     Future f = readTopicFuture(cid, topicName, Long.MAX_VALUE, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
-      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               Exception e) {
+      public void onCompletion(List<ConsumerRecord<byte[], byte[]>> records, Exception e) {
         sawCallback = true;
         actualException = e;
       }
@@ -530,8 +556,7 @@ public class ConsumerManagerTest {
             new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
     Future f = readTopicFuture(cid, topicName, Long.MAX_VALUE, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
-      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               Exception e) {
+      public void onCompletion(List<ConsumerRecord<byte[], byte[]>> records, Exception e) {
         sawCallback = true;
         actualRecords = records;
         actualException = e;
@@ -562,8 +587,7 @@ public class ConsumerManagerTest {
 
     Future f = readTopicFuture(cid, topicName, Long.MAX_VALUE, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
-      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               Exception e) {
+      public void onCompletion(List<ConsumerRecord<byte[], byte[]>> records, Exception e) {
         sawCallback = true;
         actualRecords = records;
         actualException = e;
@@ -653,8 +677,7 @@ public class ConsumerManagerTest {
     sawCallback = false;
     readTopic(cid, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
-      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               Exception e) {
+      public void onCompletion(List<ConsumerRecord<byte[], byte[]>> records, Exception e) {
         sawCallback = true;
         assertNull(e);
         assertEquals(referenceRecords, records);
@@ -677,8 +700,7 @@ public class ConsumerManagerTest {
   private void readTopic(final String cid, String topic) throws Exception {
     readTopic(cid, topic, Long.MAX_VALUE, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
-      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               Exception e) {
+      public void onCompletion(List<ConsumerRecord<byte[], byte[]>> records, Exception e) {
         sawCallback = true;
         actualRecords = records;
         actualException = e;
@@ -712,7 +734,7 @@ public class ConsumerManagerTest {
     List<ConsumerRecord<byte[], byte[]>> records = new ArrayList<>();
     for (int i = 0; i < count; i++) {
       records.add(
-          new BinaryConsumerRecord(
+          new ConsumerRecord<>(
               topicName,
               ("k" + (i + 1)).getBytes(),
               ("v" + (i + 1)).getBytes(), i, 0)
@@ -729,8 +751,7 @@ public class ConsumerManagerTest {
             groupName, cid, topicName, BinaryConsumerState.class, Long.MAX_VALUE,
         new ConsumerReadCallback<byte[], byte[]>() {
           @Override
-          public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                                   Exception e) {
+          public void onCompletion(List<ConsumerRecord<byte[], byte[]>> records, Exception e) {
             actualException = e;
             actualRecords = records;
             sawCallback = true;
@@ -744,8 +765,7 @@ public class ConsumerManagerTest {
     actualException = null;
     Future future = readTopicFuture(cid, topic, Long.MAX_VALUE, new ConsumerReadCallback<byte[], byte[]>() {
       @Override
-      public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records,
-                               Exception e) {
+      public void onCompletion(List<ConsumerRecord<byte[], byte[]>> records, Exception e) {
         sawCallback = true;
         actualRecords = records;
         actualException = e;
@@ -758,7 +778,7 @@ public class ConsumerManagerTest {
     assertNull(future);
   }
 
-  private void verifyRead(List<? extends ConsumerRecord<byte[], byte[]>> records, Class exception) {
+  private void verifyRead(List<ConsumerRecord<byte[], byte[]>> records, Class exception) {
     assertTrue("Callback was not called", sawCallback);
     if (records == null) {
       assertNull("Callback records should be null", actualRecords);

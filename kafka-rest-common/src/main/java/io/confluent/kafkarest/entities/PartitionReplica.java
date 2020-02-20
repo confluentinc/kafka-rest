@@ -15,19 +15,16 @@
 
 package io.confluent.kafkarest.entities;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
+import java.util.StringJoiner;
 
-import javax.validation.constraints.Min;
+public final class PartitionReplica {
 
-public class PartitionReplica {
+  private final int broker;
 
-  @Min(0)
-  private int broker;
-  private boolean leader;
-  private boolean inSync;
+  private final boolean leader;
 
-  public PartitionReplica() {
-  }
+  private final boolean inSync;
 
   public PartitionReplica(int broker, boolean leader, boolean inSync) {
     this.broker = broker;
@@ -35,34 +32,16 @@ public class PartitionReplica {
     this.inSync = inSync;
   }
 
-  @JsonProperty
   public int getBroker() {
     return broker;
   }
 
-  @JsonProperty
-  public void setBroker(int broker) {
-    this.broker = broker;
-  }
-
-  @JsonProperty
   public boolean isLeader() {
     return leader;
   }
 
-  @JsonProperty
-  public void setLeader(boolean leader) {
-    this.leader = leader;
-  }
-
-  @JsonProperty("in_sync")
   public boolean isInSync() {
     return inSync;
-  }
-
-  @JsonProperty("in_sync")
-  public void setInSync(boolean inSync) {
-    this.inSync = inSync;
   }
 
   @Override
@@ -70,39 +49,24 @@ public class PartitionReplica {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof PartitionReplica)) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     PartitionReplica that = (PartitionReplica) o;
-
-    if (broker != that.broker) {
-      return false;
-    }
-    if (inSync != that.inSync) {
-      return false;
-    }
-    if (leader != that.leader) {
-      return false;
-    }
-
-    return true;
+    return broker == that.broker && leader == that.leader && inSync == that.inSync;
   }
 
   @Override
   public int hashCode() {
-    int result = broker;
-    result = 31 * result + (leader ? 1 : 0);
-    result = 31 * result + (inSync ? 1 : 0);
-    return result;
+    return Objects.hash(broker, leader, inSync);
   }
 
   @Override
   public String toString() {
-    return "PartitionReplica{"
-           + "broker=" + broker
-           + ", leader=" + leader
-           + ", inSync=" + inSync
-           + '}';
+    return new StringJoiner(", ", PartitionReplica.class.getSimpleName() + "[", "]")
+        .add("broker=" + broker)
+        .add("leader=" + leader)
+        .add("inSync=" + inSync)
+        .toString();
   }
 }

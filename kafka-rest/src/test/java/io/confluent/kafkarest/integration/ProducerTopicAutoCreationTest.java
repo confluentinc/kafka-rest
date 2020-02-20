@@ -15,25 +15,26 @@
 
 package io.confluent.kafkarest.integration;
 
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
-import org.junit.Test;
-
+import io.confluent.kafkarest.entities.v1.BinaryPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest;
+import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
+import io.confluent.kafkarest.entities.v1.PartitionOffset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.junit.Test;
 
-import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
-import io.confluent.kafkarest.entities.PartitionOffset;
-
-public class ProducerTopicAutoCreationTest extends AbstractProducerTest {
+public class ProducerTopicAutoCreationTest
+    extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
 
   private static final String topicName = "nonexistant";
 
   private final List<BinaryTopicProduceRecord> topicRecords = Arrays.asList(
-      new BinaryTopicProduceRecord("key".getBytes(), "value".getBytes()),
-      new BinaryTopicProduceRecord("key".getBytes(), "value2".getBytes()),
-      new BinaryTopicProduceRecord("key".getBytes(), "value3".getBytes()),
-      new BinaryTopicProduceRecord("key".getBytes(), "value4".getBytes())
+      new BinaryTopicProduceRecord("key", "value", null),
+      new BinaryTopicProduceRecord("key", "value2", null),
+      new BinaryTopicProduceRecord("key", "value3", null),
+      new BinaryTopicProduceRecord("key", "value4", null)
   );
   private final List<PartitionOffset> partitionOffsets = Arrays.asList(
       new PartitionOffset(0, 0L, null, null),
@@ -50,8 +51,15 @@ public class ProducerTopicAutoCreationTest extends AbstractProducerTest {
 
   @Test
   public void testProduceToMissingTopic() {
+    BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(topicRecords);
     // Should create topic
-    testProduceToTopic(topicName, topicRecords, ByteArrayDeserializer.class.getName(),
-        ByteArrayDeserializer.class.getName(), partitionOffsets, false);
+    testProduceToTopic(
+        topicName,
+        request,
+        ByteArrayDeserializer.class.getName(),
+        ByteArrayDeserializer.class.getName(),
+        partitionOffsets,
+        false,
+        request.toProduceRequest().getRecords());
   }
 }

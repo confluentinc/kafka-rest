@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.kafka.common.record.TimestampType;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.slf4j.Logger;
@@ -34,11 +35,8 @@ import javax.ws.rs.core.Response;
 import io.confluent.kafka.serializers.KafkaAvroDecoder;
 import io.confluent.kafka.serializers.KafkaJsonDecoder;
 import io.confluent.kafkarest.converters.AvroConverter;
-import io.confluent.kafkarest.entities.SchemaConsumerRecord;
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.JsonConsumerRecord;
 import io.confluent.rest.exceptions.RestException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 import kafka.api.PartitionFetchInfo;
@@ -211,7 +209,7 @@ public class SimpleConsumerManager {
     callback.onCompletion(records, exception);
   }
 
-  private BinaryConsumerRecord createBinaryConsumerRecord(
+  private ConsumerRecord<byte[], byte[]> createBinaryConsumerRecord(
       final MessageAndOffset messageAndOffset,
       final String topicName,
       final int partitionId
@@ -227,7 +225,7 @@ public class SimpleConsumerManager {
             0,
             TimestampType.CREATE_TIME
         );
-    return new BinaryConsumerRecord(
+    return new ConsumerRecord<>(
         topicName,
         messageAndMetadata.key(),
         messageAndMetadata.message(),
@@ -236,7 +234,7 @@ public class SimpleConsumerManager {
     );
   }
 
-  private SchemaConsumerRecord createAvroConsumerRecord(
+  private ConsumerRecord<JsonNode, JsonNode> createAvroConsumerRecord(
       final MessageAndOffset messageAndOffset,
       final String topicName,
       final int partitionId
@@ -252,7 +250,7 @@ public class SimpleConsumerManager {
             0,
             TimestampType.CREATE_TIME
         );
-    return new SchemaConsumerRecord(
+    return new ConsumerRecord<>(
         topicName,
             new AvroConverter().toJson(messageAndMetadata.key()).getJson(),
             new AvroConverter().toJson(messageAndMetadata.message()).getJson(),
@@ -262,7 +260,7 @@ public class SimpleConsumerManager {
   }
 
 
-  private JsonConsumerRecord createJsonConsumerRecord(
+  private ConsumerRecord<Object, Object> createJsonConsumerRecord(
       final MessageAndOffset messageAndOffset,
       final String topicName,
       final int partitionId
@@ -278,7 +276,7 @@ public class SimpleConsumerManager {
             0,
             TimestampType.CREATE_TIME
         );
-    return new JsonConsumerRecord(
+    return new ConsumerRecord<>(
         topicName,
         messageAndMetadata.key(),
         messageAndMetadata.message(),

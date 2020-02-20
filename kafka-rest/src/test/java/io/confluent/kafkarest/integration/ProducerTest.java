@@ -14,88 +14,88 @@
  */
 package io.confluent.kafkarest.integration;
 
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.errors.RecordTooLargeException;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BinaryProduceRecord;
-import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.ProduceRecord;
+import io.confluent.kafkarest.entities.v1.BinaryPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v1.BinaryPartitionProduceRequest.BinaryPartitionProduceRecord;
+import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest;
+import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
+import io.confluent.kafkarest.entities.v1.PartitionOffset;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.errors.RecordTooLargeException;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.junit.Before;
+import org.junit.Test;
 import scala.collection.JavaConversions;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-public class ProducerTest extends AbstractProducerTest {
+public class ProducerTest
+    extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
 
   private static final String topicName = "topic1";
 
   // Produce to topic inputs & results
 
   private final List<BinaryTopicProduceRecord> topicRecordsWithKeys = Arrays.asList(
-      new BinaryTopicProduceRecord("key".getBytes(), "value".getBytes()),
-      new BinaryTopicProduceRecord("key".getBytes(), "value2".getBytes()),
-      new BinaryTopicProduceRecord("key".getBytes(), "value3".getBytes()),
-      new BinaryTopicProduceRecord("key".getBytes(), "value4".getBytes())
+      new BinaryTopicProduceRecord("key", "value", null),
+      new BinaryTopicProduceRecord("key", "value2", null),
+      new BinaryTopicProduceRecord("key", "value3", null),
+      new BinaryTopicProduceRecord("key", "value4", null)
   );
 
   private final List<BinaryTopicProduceRecord> topicRecordsWithPartitions = Arrays.asList(
-      new BinaryTopicProduceRecord("value".getBytes(), 0),
-      new BinaryTopicProduceRecord("value2".getBytes(), 1),
-      new BinaryTopicProduceRecord("value3".getBytes(), 1),
-      new BinaryTopicProduceRecord("value4".getBytes(), 2)
+      new BinaryTopicProduceRecord(null, "value", 0),
+      new BinaryTopicProduceRecord(null, "value2", 1),
+      new BinaryTopicProduceRecord(null, "value3", 1),
+      new BinaryTopicProduceRecord(null, "value4", 2)
   );
 
   private final List<BinaryTopicProduceRecord> topicRecordsWithPartitionsAndKeys = Arrays.asList(
-      new BinaryTopicProduceRecord("key".getBytes(), "value".getBytes(), 0),
-      new BinaryTopicProduceRecord("key2".getBytes(), "value2".getBytes(), 1),
-      new BinaryTopicProduceRecord("key3".getBytes(), "value3".getBytes(), 1),
-      new BinaryTopicProduceRecord("key4".getBytes(), "value4".getBytes(), 2)
+      new BinaryTopicProduceRecord("key", "value", 0),
+      new BinaryTopicProduceRecord("key2", "value2", 1),
+      new BinaryTopicProduceRecord("key3", "value3", 1),
+      new BinaryTopicProduceRecord("key4", "value4", 2)
   );
 
   private final List<BinaryTopicProduceRecord> topicRecordsWithNullValues = Arrays.asList(
-      new BinaryTopicProduceRecord("key".getBytes(), (byte[]) null),
-      new BinaryTopicProduceRecord("key".getBytes(), (byte[]) null),
-      new BinaryTopicProduceRecord("key".getBytes(), (byte[]) null),
-      new BinaryTopicProduceRecord("key".getBytes(), (byte[]) null)
+      new BinaryTopicProduceRecord("key", null, null),
+      new BinaryTopicProduceRecord("key", null, null),
+      new BinaryTopicProduceRecord("key", null, null),
+      new BinaryTopicProduceRecord("key", null, null)
   );
 
   // Produce to partition inputs & results
-  private final List<BinaryProduceRecord> partitionRecordsOnlyValues = Arrays.asList(
-      new BinaryProduceRecord("value".getBytes()),
-      new BinaryProduceRecord("value2".getBytes()),
-      new BinaryProduceRecord("value3".getBytes()),
-      new BinaryProduceRecord("value4".getBytes())
+  private final List<BinaryPartitionProduceRecord> partitionRecordsOnlyValues = Arrays.asList(
+      new BinaryPartitionProduceRecord(null, "value"),
+      new BinaryPartitionProduceRecord(null, "value2"),
+      new BinaryPartitionProduceRecord(null, "value3"),
+      new BinaryPartitionProduceRecord(null, "value4")
   );
 
-  private final List<BinaryProduceRecord> partitionRecordsWithKeys = Arrays.asList(
-      new BinaryProduceRecord("key".getBytes(), "value".getBytes()),
-      new BinaryProduceRecord("key".getBytes(), "value2".getBytes()),
-      new BinaryProduceRecord("key".getBytes(), "value3".getBytes()),
-      new BinaryProduceRecord("key".getBytes(), "value4".getBytes())
+  private final List<BinaryPartitionProduceRecord> partitionRecordsWithKeys = Arrays.asList(
+      new BinaryPartitionProduceRecord("key", "value"),
+      new BinaryPartitionProduceRecord("key", "value2"),
+      new BinaryPartitionProduceRecord("key", "value3"),
+      new BinaryPartitionProduceRecord("key", "value4")
   );
 
-  private final List<BinaryProduceRecord> partitionRecordsWithNullValues = Arrays.asList(
-      new BinaryProduceRecord("key1".getBytes(), null),
-      new BinaryProduceRecord("key2".getBytes(), null),
-      new BinaryProduceRecord("key3".getBytes(), null),
-      new BinaryProduceRecord("key4".getBytes(), null)
+  private final List<BinaryPartitionProduceRecord> partitionRecordsWithNullValues = Arrays.asList(
+      new BinaryPartitionProduceRecord("key1", null),
+      new BinaryPartitionProduceRecord("key2", null),
+      new BinaryPartitionProduceRecord("key3", null),
+      new BinaryPartitionProduceRecord("key4", null)
   );
 
   private final List<PartitionOffset> produceOffsets = Arrays.asList(
@@ -145,61 +145,106 @@ public class ProducerTest extends AbstractProducerTest {
     // getProducerPool doesn't work here
     ProducerPool pool = new ProducerPool(this.restConfig, this.brokerList, overrides);
 
+    BinaryPartitionProduceRequest request =
+        BinaryPartitionProduceRequest.create(
+            Collections.singletonList(new BinaryPartitionProduceRecord(null, "data")));
+
     sawCallback = false;
-    pool.produce(topicName, 0, EmbeddedFormat.BINARY, null,
-                 Arrays.asList(new BinaryProduceRecord("data".getBytes())),
-                 new ProducerPool.ProduceRequestCallback() {
-                   @Override
-                   public void onCompletion(
-                       Integer keySchemaId,
-                       Integer valueSchemaId,
-                       List<RecordMetadataOrException> results) {
-                     sawCallback = true;
-                     assertNotNull(results.get(0).getException());
-                     assertEquals(results.get(0).getException().getClass(),
-                                  RecordTooLargeException.class);
-                   }
-                 });
+    pool.produce(
+        topicName,
+        0,
+        EmbeddedFormat.BINARY,
+        request.toProduceRequest(),
+        new ProducerPool.ProduceRequestCallback() {
+          @Override
+          public void onCompletion(
+              Integer keySchemaId,
+              Integer valueSchemaId,
+              List<RecordMetadataOrException> results) {
+            sawCallback = true;
+            assertNotNull(results.get(0).getException());
+            assertEquals(results.get(0).getException().getClass(), RecordTooLargeException.class);
+          }
+        });
     assertTrue(sawCallback);
   }
 
   @Test
   public void testProduceToTopicWithKeys() {
-    testProduceToTopic(topicName, topicRecordsWithKeys, ByteArrayDeserializer.class.getName(),
-        ByteArrayDeserializer.class.getName(), produceOffsets, false);
+    BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(topicRecordsWithKeys);
+    testProduceToTopic(
+        topicName,
+        request,
+        ByteArrayDeserializer.class.getName(),
+        ByteArrayDeserializer.class.getName(),
+        produceOffsets,
+        false,
+        request.toProduceRequest().getRecords());
   }
 
   @Test
   public void testProduceToTopicWithPartitions() {
-    testProduceToTopic(topicName, topicRecordsWithPartitions, ByteArrayDeserializer.class.getName(),
-        ByteArrayDeserializer.class.getName(), producePartitionedOffsets, true);
+    BinaryTopicProduceRequest request =
+        BinaryTopicProduceRequest.create(topicRecordsWithPartitions);
+    testProduceToTopic(
+        topicName,
+        request,
+        ByteArrayDeserializer.class.getName(),
+        ByteArrayDeserializer.class.getName(),
+        producePartitionedOffsets,
+        true,
+        request.toProduceRequest().getRecords());
   }
 
   @Test
   public void testProduceToTopicWithPartitionsAndKeys() {
-    testProduceToTopic(topicName, topicRecordsWithPartitionsAndKeys, ByteArrayDeserializer.class.getName(),
-        ByteArrayDeserializer.class.getName(), producePartitionedOffsets, true);
+    BinaryTopicProduceRequest request =
+        BinaryTopicProduceRequest.create(topicRecordsWithPartitionsAndKeys);
+    testProduceToTopic(
+        topicName,
+        request,
+        ByteArrayDeserializer.class.getName(),
+        ByteArrayDeserializer.class.getName(),
+        producePartitionedOffsets,
+        true,
+        request.toProduceRequest().getRecords());
   }
 
   @Test
   public void testProduceToTopicWithNullValues() {
-    testProduceToTopic(topicName, topicRecordsWithNullValues, ByteArrayDeserializer.class.getName(),
-        ByteArrayDeserializer.class.getName(), produceOffsets, false);
+    BinaryTopicProduceRequest request =
+        BinaryTopicProduceRequest.create(topicRecordsWithNullValues);
+    testProduceToTopic(
+        topicName,
+        request,
+        ByteArrayDeserializer.class.getName(),
+        ByteArrayDeserializer.class.getName(),
+        produceOffsets,
+        false,
+        request.toProduceRequest().getRecords());
   }
 
   @Test
   public void testProduceToInvalidTopic() {
+    BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(topicRecordsWithKeys);
     // This test turns auto-create off, so this should generate an error. Ideally it would
     // generate a 404, but Kafka as of 0.8.2.0 doesn't generate the correct exception, see
     // KAFKA-1884. For now this will just show up as failure to send all the messages.
-    testProduceToTopicFails("invalid-topic", topicRecordsWithKeys);
+    testProduceToTopicFails("invalid-topic", request);
   }
 
 
-  protected void testProduceToPartition(List<? extends ProduceRecord<byte[], byte[]>> records,
-                                        List<PartitionOffset> offsetResponse) {
-    testProduceToPartition(topicName, 0, records, ByteArrayDeserializer.class.getName(),
-        ByteArrayDeserializer.class.getName(), offsetResponse);
+  protected void testProduceToPartition(List<BinaryPartitionProduceRecord> records,
+      List<PartitionOffset> offsetResponse) {
+    BinaryPartitionProduceRequest request = BinaryPartitionProduceRequest.create(records);
+    testProduceToPartition(
+        topicName,
+        0,
+        request,
+        ByteArrayDeserializer.class.getName(),
+        ByteArrayDeserializer.class.getName(),
+        offsetResponse,
+        request.toProduceRequest().getRecords());
   }
 
   @Test
