@@ -18,29 +18,25 @@ package io.confluent.kafkarest;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
 import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
+import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializer;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.converters.JsonSchemaConverter;
 import io.confluent.kafkarest.converters.ProtobufConverter;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.ProduceRequest;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import io.confluent.kafka.serializers.KafkaAvroSerializer;
-import io.confluent.kafka.serializers.KafkaJsonSerializer;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.kafkarest.entities.SchemaHolder;
 
 /**
  * Shared pool of Kafka producers used to send messages. The pool manages batched sends, tracking
@@ -199,14 +195,22 @@ public class ProducerPool {
       String topic,
       Integer partition,
       EmbeddedFormat recordFormat,
-      SchemaHolder schemaHolder,
-      Collection<? extends ProduceRecord<K, V>> records,
+      ProduceRequest<K, V> produceRequest,
       ProduceRequestCallback callback
   ) {
-    ProduceTask task = new ProduceTask(schemaHolder, records.size(), callback);
+    ProduceTask task =
+        new ProduceTask(
+            produceRequest,
+            produceRequest.getRecords().size(),
+            callback);
     log.trace("Starting produce task " + task.toString());
-    RestProducer restProducer = producers.get(recordFormat);
-    restProducer.produce(task, topic, partition, records);
+    @SuppressWarnings("unchecked")
+    RestProducer<K, V> restProducer = (RestProducer<K, V>) producers.get(recordFormat);
+    restProducer.produce(
+        task,
+        topic,
+        partition,
+        produceRequest.getRecords());
   }
 
   public void shutdown() {

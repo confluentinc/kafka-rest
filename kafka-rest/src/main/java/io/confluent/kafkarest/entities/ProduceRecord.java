@@ -15,14 +15,67 @@
 
 package io.confluent.kafkarest.entities;
 
-public interface ProduceRecord<K, V> {
+import java.util.Objects;
+import java.util.StringJoiner;
+import javax.annotation.Nullable;
 
-  public K getKey();
+public final class ProduceRecord<K, V> {
 
-  public V getValue();
+  @Nullable
+  private final K key;
 
-  // Non-standard naming so we can unify the interfaces of ProduceRecord and TopicProduceRecord,
-  // but get Jackson to behave properly, not serializing the value & triggering errors if the
-  // field is present during deserialization for types where it should always be null.
-  public Integer partition();
+  @Nullable
+  private final V value;
+
+  @Nullable
+  private final Integer partition;
+
+  public ProduceRecord(@Nullable K key, @Nullable V value, @Nullable Integer partition) {
+    this.key = key;
+    this.value = value;
+    this.partition = partition;
+  }
+
+  @Nullable
+  public K getKey() {
+    return key;
+  }
+
+  @Nullable
+  public V getValue() {
+    return value;
+  }
+
+  @Nullable
+  public Integer getPartition() {
+    return partition;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ProduceRecord<?, ?> that = (ProduceRecord<?, ?>) o;
+    return Objects.equals(key, that.key)
+        && Objects.equals(value, that.value)
+        && Objects.equals(partition, that.partition);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(key, value, partition);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", ProduceRecord.class.getSimpleName() + "[", "]")
+        .add("key=" + key)
+        .add("value=" + value)
+        .add("partition=" + partition)
+        .toString();
+  }
 }

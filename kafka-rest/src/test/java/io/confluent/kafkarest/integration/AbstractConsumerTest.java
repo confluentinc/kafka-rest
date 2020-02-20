@@ -25,17 +25,20 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ScalaConsumersContext;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.entities.v1.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.v1.CommitOffsetsResponse;
+import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceRequest;
+import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceResponse;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
@@ -57,10 +60,17 @@ public class AbstractConsumerTest extends ClusterTestHarness {
 
   protected Response createConsumerInstance(String groupName, String id,
                                             String name, EmbeddedFormat format) {
-    ConsumerInstanceConfig config = null;
+    CreateConsumerInstanceRequest config = null;
     if (id != null || name != null || format != null) {
-      config = new ConsumerInstanceConfig(
-          id, name, (format != null ? format.toString() : null), null, null, null, null);
+      config =
+          new CreateConsumerInstanceRequest(
+              id,
+              name,
+              format != null ? format.toString() : null,
+              /* autoOffsetReset= */ null,
+              /* autoCommitEnable */ null,
+              /* responseMinBytes= */ null,
+              /* requestWaitMs= */ null);
     }
     return request("/consumers/" + groupName)
         .post(Entity.entity(config, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
@@ -137,10 +147,9 @@ public class AbstractConsumerTest extends ClusterTestHarness {
   // This requires a lot of type info because we use the raw ProducerRecords used to work with
   // the Kafka producer directly (e.g. Object for GenericRecord+primitive for Avro) and the
   // consumed data type on the receiver (JsonNode, since the data has been converted to Json).
-  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType extends ConsumerRecord<ClientK, ClientV>>
-  void assertEqualsMessages(
+  protected <KafkaK, KafkaV, ClientK, ClientV> void assertEqualsMessages(
       List<ProducerRecord<KafkaK, KafkaV>> records, // input messages
-      List<RecordType> consumed, // output messages
+      List<ConsumerRecord<ClientK, ClientV>> consumed, // output messages
       Converter converter) {
 
     // Since this is used for unkeyed messages, this can't rely on ordering of messages
@@ -169,7 +178,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     assertEquals(inputSetCounts, outputSetCounts);
   }
 
-  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType extends ConsumerRecord<ClientK, ClientV>>
+  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType>
   void simpleConsumeMessages(
       String topicName,
       int offset,
@@ -178,7 +187,8 @@ public class AbstractConsumerTest extends ClusterTestHarness {
       String accept,
       String responseMediatype,
       GenericType<List<RecordType>> responseEntityType,
-      Converter converter) {
+      Converter converter,
+      Function<RecordType, ConsumerRecord<ClientK, ClientV>> fromJsonWrapper) {
 
     Map<String, String> queryParams = new HashMap<String, String>();
     queryParams.put("offset", Integer.toString(offset));
@@ -192,25 +202,28 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     List<RecordType> consumed = TestUtils.tryReadEntityOrLog(response, responseEntityType);
     assertEquals(records.size(), consumed.size());
 
-    assertEqualsMessages(records, consumed, converter);
+    assertEqualsMessages(
+        records, consumed.stream().map(fromJsonWrapper).collect(Collectors.toList()), converter);
   }
 
-  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType extends ConsumerRecord<ClientK, ClientV>>
+  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType>
   void consumeMessages(
       String instanceUri, String topic, List<ProducerRecord<KafkaK, KafkaV>> records,
       String accept, String responseMediatype,
       GenericType<List<RecordType>> responseEntityType,
-      Converter converter) {
+      Converter converter,
+      Function<RecordType, ConsumerRecord<ClientK, ClientV>> fromJsonWrapper) {
     Response response = request(instanceUri + "/topics/" + topic)
         .accept(accept).get();
     assertOKResponse(response, responseMediatype);
     List<RecordType> consumed = TestUtils.tryReadEntityOrLog(response, responseEntityType);
     assertEquals(records.size(), consumed.size());
 
-    assertEqualsMessages(records, consumed, converter);
+    assertEqualsMessages(
+        records, consumed.stream().map(fromJsonWrapper).collect(Collectors.toList()), converter);
   }
 
-  protected <K, V, RecordType extends ConsumerRecord<K, V>> void consumeForTimeout(
+  protected <RecordType> void consumeForTimeout(
       String instanceUri, String topic, String accept, String responseMediatype,
       GenericType<List<RecordType>> responseEntityType) {
     long started = System.currentTimeMillis();
@@ -247,9 +260,8 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     // We don't verify offsets since they'll depend on how data gets distributed to partitions.
     // Just parse to check the output is formatted validly.
-    List<TopicPartitionOffset> offsets =
-            TestUtils.tryReadEntityOrLog(response, new GenericType<List<TopicPartitionOffset>>() {
-        });
+    CommitOffsetsResponse offsets =
+        TestUtils.tryReadEntityOrLog(response, CommitOffsetsResponse.class);
   }
 
   // Either topic or instance not found

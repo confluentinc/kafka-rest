@@ -6,7 +6,7 @@ import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.SchemaTopicProduceRecord;
+import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.avro.Schema;

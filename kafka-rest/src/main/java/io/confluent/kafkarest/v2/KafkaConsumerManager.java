@@ -28,18 +28,18 @@ import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.converters.JsonSchemaConverter;
 import io.confluent.kafkarest.converters.ProtobufConverter;
-import io.confluent.kafkarest.entities.ConsumerAssignmentRequest;
-import io.confluent.kafkarest.entities.ConsumerAssignmentResponse;
-import io.confluent.kafkarest.entities.ConsumerCommittedRequest;
-import io.confluent.kafkarest.entities.ConsumerCommittedResponse;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.v2.ConsumerAssignmentRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerAssignmentResponse;
+import io.confluent.kafkarest.entities.v2.ConsumerCommittedRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerCommittedResponse;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.ConsumerOffsetCommitRequest;
-import io.confluent.kafkarest.entities.ConsumerSeekToOffsetRequest;
-import io.confluent.kafkarest.entities.ConsumerSeekToRequest;
-import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
-import io.confluent.kafkarest.entities.ConsumerSubscriptionResponse;
+import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerSeekToOffsetRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerSeekToRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
+import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionResponse;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.kafkarest.entities.TopicPartitionOffsetMetadata;
 import io.confluent.rest.exceptions.RestNotFoundException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 import java.time.Instant;
@@ -498,12 +498,12 @@ public class KafkaConsumerManager {
       ConsumerCommittedRequest request
   ) {
     log.debug("Committed offsets for consumer " + instance + " in group " + group);
-    ConsumerCommittedResponse response = new ConsumerCommittedResponse();
+    ConsumerCommittedResponse response;
     KafkaConsumerState state = getConsumerInstance(group, instance);
     if (state != null) {
       response = state.committed(request);
     } else {
-      response.offsets = new ArrayList<TopicPartitionOffsetMetadata>();
+      response = new ConsumerCommittedResponse(new ArrayList<>());
     }
     return response;
   }
@@ -558,7 +558,8 @@ public class KafkaConsumerManager {
 
   private ConsumerInstanceId createAdminConsumerInstance() {
     String consumerGroup = createAdminConsumerGroup();
-    String consumerInstance = createConsumer(consumerGroup, new ConsumerInstanceConfig());
+    String consumerInstance = createConsumer(consumerGroup, new ConsumerInstanceConfig(
+        EmbeddedFormat.BINARY));
     return new ConsumerInstanceId(consumerGroup, consumerInstance);
   }
 
@@ -585,15 +586,12 @@ public class KafkaConsumerManager {
   }
 
   public ConsumerSubscriptionResponse subscription(String group, String instance) {
-    ConsumerSubscriptionResponse response = new ConsumerSubscriptionResponse();
-    KafkaConsumerState state = getConsumerInstance(group, instance);
+    KafkaConsumerState<?, ?, ?, ?> state = getConsumerInstance(group, instance);
     if (state != null) {
-      java.util.Set<java.lang.String> topics = state.subscription();
-      response.topics = new ArrayList<String>(topics);
+      return new ConsumerSubscriptionResponse(new ArrayList<>(state.subscription()));
     } else {
-      response.topics = new ArrayList<String>();
+      return new ConsumerSubscriptionResponse(new ArrayList<>());
     }
-    return response;
   }
 
   public void seekToBeginning(String group, String instance, ConsumerSeekToRequest seekToRequest) {
@@ -634,18 +632,17 @@ public class KafkaConsumerManager {
 
   public ConsumerAssignmentResponse assignment(String group, String instance) {
     log.debug("getting assignment for  " + instance + " in group " + group);
-    ConsumerAssignmentResponse response = new ConsumerAssignmentResponse();
-    response.partitions = new Vector<io.confluent.kafkarest.entities.TopicPartition>();
+    Vector<io.confluent.kafkarest.entities.v2.TopicPartition> partitions = new Vector<>();
     KafkaConsumerState state = getConsumerInstance(group, instance);
     if (state != null) {
       java.util.Set<TopicPartition> topicPartitions = state.assignment();
       for (TopicPartition t : topicPartitions) {
-        response.partitions.add(
-            new io.confluent.kafkarest.entities.TopicPartition(t.topic(), t.partition())
+        partitions.add(
+            new io.confluent.kafkarest.entities.v2.TopicPartition(t.topic(), t.partition())
         );
       }
     }
-    return response;
+    return new ConsumerAssignmentResponse(partitions);
   }
 
 

@@ -16,14 +16,26 @@
 
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
+import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
-import io.confluent.kafkarest.entities.PartitionOffset;
+import io.confluent.kafkarest.entities.v1.BinaryPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest;
+import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
+import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceResponse;
+import io.confluent.kafkarest.entities.v1.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
 import kafka.security.auth.SimpleAclAuthorizer;
 import kafka.server.KafkaConfig;
 import org.apache.kafka.common.security.auth.KafkaPrincipal;
@@ -35,18 +47,8 @@ import org.junit.Test;
 import scala.Option;
 import scala.collection.JavaConversions;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-
-import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
-import static io.confluent.kafkarest.TestUtils.assertOKResponse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-  public class AuthorizationErrorTest extends AbstractProducerTest {
+public class AuthorizationErrorTest
+    extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
 
   private static final String TOPIC_NAME = "topic1";
   private static final String CONSUMER_GROUP = "app1-consumer-group";
@@ -54,10 +56,10 @@ import static org.junit.Assert.assertTrue;
 
   // Produce to topic inputs & results
   private final List<BinaryTopicProduceRecord> topicRecords = Arrays.asList(
-      new BinaryTopicProduceRecord("key".getBytes(), "value".getBytes()),
-      new BinaryTopicProduceRecord("key".getBytes(), "value2".getBytes()),
-      new BinaryTopicProduceRecord("key".getBytes(), "value3".getBytes()),
-      new BinaryTopicProduceRecord("key".getBytes(), "value4".getBytes())
+      new BinaryTopicProduceRecord("key", "value", null),
+      new BinaryTopicProduceRecord("key", "value2", null),
+      new BinaryTopicProduceRecord("key", "value3", null),
+      new BinaryTopicProduceRecord("key", "value4", null)
   );
 
   private final List<PartitionOffset> produceOffsets = Arrays.asList(
@@ -124,12 +126,19 @@ import static org.junit.Assert.assertTrue;
 
   @Test
   public void testProducerAuthorization() {
+    BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(topicRecords);
     // test without any acls
-    testProduceToAuthorizationError(TOPIC_NAME, topicRecords);
+    testProduceToAuthorizationError(TOPIC_NAME, request);
     //add acls
     SecureTestUtils.setProduceAcls(zkConnect, TOPIC_NAME, USERNAME);
-    testProduceToTopic(TOPIC_NAME, topicRecords, ByteArrayDeserializer.class.getName(),
-        ByteArrayDeserializer.class.getName(), produceOffsets, false);
+    testProduceToTopic(
+        TOPIC_NAME,
+        request,
+        ByteArrayDeserializer.class.getName(),
+        ByteArrayDeserializer.class.getName(),
+        produceOffsets,
+        false,
+        request.toProduceRequest().getRecords());
   }
 
   private void verifySubscribeToTopic(boolean expectFailure) {
@@ -143,32 +152,30 @@ import static org.junit.Assert.assertTrue;
     assertTrue("Base URI should contain the consumer instance ID",
         instanceResponse.getBaseUri().contains(instanceResponse.getInstanceId()));
 
-    String topicJson = "{\"topics\":[\""+TOPIC_NAME+ "\"]}";
+    String topicJson = "{\"topics\":[\"" + TOPIC_NAME + "\"]}";
 
     //subscribe to group
-    request(instanceResponse.getBaseUri() + "/subscription")
-        .post(Entity.entity(topicJson, Versions.KAFKA_V2_JSON_JSON));
+    Response subscribe = request(instanceResponse.getBaseUri() + "/subscription")
+        .post(Entity.entity(topicJson, Versions.KAFKA_V2_JSON));
 
     //poll some records
     Response response = request(instanceResponse.getBaseUri() + "/records")
-        .accept(Versions.KAFKA_V2_JSON).get();
+        .accept(Versions.KAFKA_V2_JSON_BINARY).get();
 
     if (expectFailure) {
       assertErrorResponse(Response.Status.FORBIDDEN, response,
           Errors.KAFKA_AUTHORIZATION_ERROR_CODE,
           "Not authorized to access topics",
-          Versions.KAFKA_V2_JSON);
+          Versions.KAFKA_V2_JSON_BINARY);
     } else {
-      assertOKResponse(response, Versions.KAFKA_V2_JSON);
+      assertOKResponse(response, Versions.KAFKA_V2_JSON_BINARY);
     }
   }
 
   private Response createConsumerInstance(String groupName) {
-    ConsumerInstanceConfig config = new ConsumerInstanceConfig(null, null, null,
-        null, null, null, null);
+    CreateConsumerInstanceRequest config = CreateConsumerInstanceRequest.PROTOTYPE;
 
-    return request("/consumers/" + groupName)
-        .post(Entity.entity(config, Versions.KAFKA_V2_JSON_JSON));
+    return request("/consumers/" + groupName).post(Entity.entity(config, Versions.KAFKA_V2_JSON));
   }
 
   @Override

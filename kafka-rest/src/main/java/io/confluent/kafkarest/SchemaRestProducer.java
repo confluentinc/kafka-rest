@@ -16,26 +16,23 @@
 package io.confluent.kafkarest;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.SchemaProvider;
+import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDe;
+import io.confluent.kafkarest.converters.ConversionException;
 import io.confluent.kafkarest.converters.SchemaConverter;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-
+import io.confluent.kafkarest.entities.ProduceRecord;
+import io.confluent.kafkarest.entities.ProduceRequest;
+import io.confluent.rest.exceptions.RestException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
-import io.confluent.kafkarest.converters.ConversionException;
-import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.kafkarest.entities.SchemaHolder;
-import io.confluent.rest.exceptions.RestException;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 
 public class SchemaRestProducer implements RestProducer<JsonNode, JsonNode> {
 
@@ -67,7 +64,7 @@ public class SchemaRestProducer implements RestProducer<JsonNode, JsonNode> {
       Integer partition,
       Collection<? extends ProduceRecord<JsonNode, JsonNode>> records
   ) {
-    SchemaHolder schemaHolder = task.getSchemaHolder();
+    ProduceRequest<?, ?> schemaHolder = task.getSchemaHolder();
     ParsedSchema keySchema = null;
     ParsedSchema valueSchema = null;
     Integer keySchemaId = schemaHolder.getKeySchemaId();
@@ -132,7 +129,7 @@ public class SchemaRestProducer implements RestProducer<JsonNode, JsonNode> {
             ? schemaConverter.toObject(record.getValue(), valueSchema) : null;
         Integer recordPartition = partition;
         if (recordPartition == null) {
-          recordPartition = record.partition();
+          recordPartition = record.getPartition();
         }
         kafkaRecords.add(new ProducerRecord(topic, recordPartition, key, value));
       }

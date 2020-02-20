@@ -15,12 +15,10 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.kafkarest.entities.ProduceRecord;
+import java.util.Collection;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-
-import java.util.Collection;
-
-import io.confluent.kafkarest.entities.ProduceRecord;
 
 /**
  * Wrapper producer for content types which have no associated schema (e.g. binary or JSON).
@@ -43,10 +41,10 @@ public class NoSchemaRestProducer<K, V> implements RestProducer<K, V> {
     for (ProduceRecord<K, V> record : produceRecords) {
       Integer recordPartition = partition;
       if (recordPartition == null) {
-        recordPartition = record.partition();
+        recordPartition = record.getPartition();
       }
       producer.send(
-          new ProducerRecord(topic, recordPartition, record.getKey(), record.getValue()),
+          new ProducerRecord<>(topic, recordPartition, record.getKey(), record.getValue()),
           task.createCallback()
       );
     }

@@ -8,7 +8,7 @@ import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.converters.ProtobufConverter;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.SchemaTopicProduceRecord;
+import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
 
 import java.util.Arrays;
 import java.util.List;
@@ -40,7 +40,8 @@ public final class ProtobufProduceConsumeTest extends SchemaProduceConsumeTest {
 
   private static Message getMessage(ProtobufSchema schema, String fieldName, int value) {
     DynamicMessage.Builder messageBuilder = schema.newMessageBuilder();
-    Descriptors.FieldDescriptor fieldDesc = messageBuilder.getDescriptorForType().findFieldByName(fieldName);
+    Descriptors.FieldDescriptor fieldDesc =
+        messageBuilder.getDescriptorForType().findFieldByName(fieldName);
     messageBuilder.setField(fieldDesc, value);
     return messageBuilder.build();
   }

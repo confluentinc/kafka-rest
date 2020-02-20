@@ -15,15 +15,13 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.kafkarest.entities.ProduceRequest;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import io.confluent.kafkarest.entities.SchemaHolder;
 
 /**
  * Container for state associated with one REST-ful produce request, i.e. a batched send
@@ -32,7 +30,7 @@ public class ProduceTask {
 
   private static final Logger log = LoggerFactory.getLogger(ProduceTask.class);
 
-  private final SchemaHolder schemaHolder;
+  private final ProduceRequest<?, ?> produceRequest;
   private final int numRecords;
   private final ProducerPool.ProduceRequestCallback callback;
   private int completed;
@@ -40,9 +38,9 @@ public class ProduceTask {
   private Integer valueSchemaId;
   private List<RecordMetadataOrException> results;
 
-  public ProduceTask(SchemaHolder schemaHolder, int numRecords,
-                     ProducerPool.ProduceRequestCallback callback) {
-    this.schemaHolder = schemaHolder;
+  public ProduceTask(ProduceRequest<?, ?> produceRequest, int numRecords,
+      ProducerPool.ProduceRequestCallback callback) {
+    this.produceRequest = produceRequest;
     this.numRecords = numRecords;
     this.callback = callback;
     this.completed = 0;
@@ -77,8 +75,8 @@ public class ProduceTask {
     }
   }
 
-  public SchemaHolder getSchemaHolder() {
-    return schemaHolder;
+  public ProduceRequest<?, ?> getSchemaHolder() {
+    return produceRequest;
   }
 
   public void setSchemaIds(Integer keySchemaId, Integer valueSchemaId) {

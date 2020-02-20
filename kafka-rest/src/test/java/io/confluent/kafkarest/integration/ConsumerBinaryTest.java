@@ -18,16 +18,12 @@ import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.Partition;
-import io.confluent.kafkarest.entities.PartitionReplica;
-import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.entities.v1.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceRequest;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
@@ -38,27 +34,20 @@ import org.junit.Test;
 public class ConsumerBinaryTest extends AbstractConsumerTest {
 
   private static final String topicName = "topic1";
-  private static final List<Partition> partitions = Arrays.asList(
-      new Partition(0, 0, Arrays.asList(
-          new PartitionReplica(0, true, true),
-          new PartitionReplica(1, false, false)
-      ))
-  );
-  private static final Topic topic = new Topic(topicName, new Properties(), partitions);
   private static final String groupName = "testconsumergroup";
 
   private final List<ProducerRecord<byte[], byte[]>> recordsOnlyValues = Arrays.asList(
-      new ProducerRecord<byte[], byte[]>(topicName, "value".getBytes()),
-      new ProducerRecord<byte[], byte[]>(topicName, "value2".getBytes()),
-      new ProducerRecord<byte[], byte[]>(topicName, "value3".getBytes()),
-      new ProducerRecord<byte[], byte[]>(topicName, "value4".getBytes())
+      new ProducerRecord<>(topicName, "value".getBytes()),
+      new ProducerRecord<>(topicName, "value2".getBytes()),
+      new ProducerRecord<>(topicName, "value3".getBytes()),
+      new ProducerRecord<>(topicName, "value4".getBytes())
   );
 
   private final List<ProducerRecord<byte[], byte[]>> recordsWithKeys = Arrays.asList(
-      new ProducerRecord<byte[], byte[]>(topicName, "key".getBytes(), "value".getBytes()),
-      new ProducerRecord<byte[], byte[]>(topicName, "key".getBytes(), "value2".getBytes()),
-      new ProducerRecord<byte[], byte[]>(topicName, "key".getBytes(), "value3".getBytes()),
-      new ProducerRecord<byte[], byte[]>(topicName, "key".getBytes(), "value4".getBytes())
+      new ProducerRecord<>(topicName, "key".getBytes(), "value".getBytes()),
+      new ProducerRecord<>(topicName, "key".getBytes(), "value2".getBytes()),
+      new ProducerRecord<>(topicName, "key".getBytes(), "value3".getBytes()),
+      new ProducerRecord<>(topicName, "key".getBytes(), "value4".getBytes())
   );
 
   private static final GenericType<List<BinaryConsumerRecord>> binaryConsumerRecordType
@@ -82,9 +71,15 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     String instanceUri = startConsumeMessages(groupName, topicName, null,
                                               Versions.KAFKA_V1_JSON_BINARY);
     produceBinaryMessages(recordsOnlyValues);
-    consumeMessages(instanceUri, topicName, recordsOnlyValues,
-                    Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
-                    binaryConsumerRecordType, null);
+    consumeMessages(
+        instanceUri,
+        topicName,
+        recordsOnlyValues,
+        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V1_JSON_BINARY,
+        binaryConsumerRecordType,
+        /* converter= */ null,
+        BinaryConsumerRecord::toConsumerRecord);
     commitOffsets(instanceUri);
   }
 
@@ -93,9 +88,15 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
                                               Versions.KAFKA_V1_JSON_BINARY);
     produceBinaryMessages(recordsWithKeys);
-    consumeMessages(instanceUri, topicName, recordsWithKeys,
-                    Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
-                    binaryConsumerRecordType, null);
+    consumeMessages(
+        instanceUri,
+        topicName,
+        recordsWithKeys,
+        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V1_JSON_BINARY,
+        binaryConsumerRecordType,
+        /* converter= */ null,
+        BinaryConsumerRecord::toConsumerRecord);
     commitOffsets(instanceUri);
   }
 
@@ -105,9 +106,15 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
         Versions.KAFKA_V1_JSON_BINARY);
     produceBinaryMessages(recordsWithKeys);
-    consumeMessages(instanceUri, topicName, recordsWithKeys,
-        Versions.ANYTHING, Versions.KAFKA_V1_JSON_BINARY,
-        binaryConsumerRecordType, null);
+    consumeMessages(
+        instanceUri,
+        topicName,
+        recordsWithKeys,
+        Versions.ANYTHING,
+        Versions.KAFKA_V1_JSON_BINARY,
+        binaryConsumerRecordType,
+        /* converter= */ null,
+        BinaryConsumerRecord::toConsumerRecord);
     commitOffsets(instanceUri);
   }
 
@@ -122,13 +129,21 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
                                               Versions.KAFKA_V1_JSON_BINARY);
     produceBinaryMessages(recordsWithKeys);
-    consumeMessages(instanceUri, topicName, recordsWithKeys,
-                    Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
-                    binaryConsumerRecordType, null);
+    consumeMessages(
+        instanceUri,
+        topicName,
+        recordsWithKeys,
+        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V1_JSON_BINARY,
+        binaryConsumerRecordType,
+        /* converter= */ null,
+        BinaryConsumerRecord::toConsumerRecord);
     consumeForTimeout(
-        instanceUri, topicName,
-        Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY, binaryConsumerRecordType
-    );
+        instanceUri,
+        topicName,
+        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V1_JSON_BINARY,
+        binaryConsumerRecordType);
   }
 
   @Test
@@ -136,9 +151,15 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
     String instanceUri = startConsumeMessages(groupName, topicName, null,
                                               Versions.KAFKA_V1_JSON_BINARY);
     produceBinaryMessages(recordsWithKeys);
-    consumeMessages(instanceUri, topicName, recordsWithKeys,
-                    Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
-                    binaryConsumerRecordType, null);
+    consumeMessages(
+        instanceUri,
+        topicName,
+        recordsWithKeys,
+        Versions.KAFKA_V1_JSON_BINARY,
+        Versions.KAFKA_V1_JSON_BINARY,
+        binaryConsumerRecordType,
+        /* converter= */ null,
+        BinaryConsumerRecord::toConsumerRecord);
     deleteConsumer(instanceUri);
   }
 
@@ -147,8 +168,15 @@ public class ConsumerBinaryTest extends AbstractConsumerTest {
   // that isn't specific to the type of embedded data, but since they need
   @Test
   public void testInvalidKafkaConsumerConfig() {
-    ConsumerInstanceConfig config = new ConsumerInstanceConfig("id", "name", "binary",
-                                                               "bad-config", null, null, null);
+    CreateConsumerInstanceRequest config =
+        new CreateConsumerInstanceRequest(
+            /* id= */ "id",
+            /* name= */ "name",
+            /* format= */ "binary",
+            /* autoOffsetReset= */ "bad-config",
+            /* autoCommitEnable */ null,
+            /* responseMinBytes= */ null,
+            /* requestWaitMs= */ null);
     Response response = request("/consumers/" + groupName)
         .post(Entity.entity(config, Versions.KAFKA_V1_JSON));
     assertErrorResponse(ConstraintViolationExceptionMapper.UNPROCESSABLE_ENTITY, response,

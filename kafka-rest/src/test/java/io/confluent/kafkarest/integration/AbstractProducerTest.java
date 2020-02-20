@@ -15,130 +15,135 @@
 
 package io.confluent.kafkarest.integration;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
-
-import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.TestUtils;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.PartitionProduceRequest;
-import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.TopicProduceRecord;
-import io.confluent.kafkarest.entities.TopicProduceRequest;
-
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class AbstractProducerTest extends ClusterTestHarness {
+import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.TestUtils;
+import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.ProduceRecord;
+import io.confluent.kafkarest.entities.v1.PartitionOffset;
+import io.confluent.kafkarest.entities.v1.ProduceResponse;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
 
-  protected <K, V> void testProduceToTopic(String topicName,
-                                           List<? extends TopicProduceRecord> records,
-                                           String keyDeserializerClassName,
-                                           String valueDeserializerClassName,
-                                           List<PartitionOffset> offsetResponses,
-                                           boolean matchPartitions) {
+public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends ClusterTestHarness {
+
+  protected <K, V> void testProduceToTopic(
+      String topicName,
+      TopicRequestT request,
+      String keyDeserializerClassName,
+      String valueDeserializerClassName,
+      List<PartitionOffset> offsetResponses,
+      boolean matchPartitions,
+      List<ProduceRecord<K, V>> expected
+  ) {
     testProduceToTopic(topicName,
-        records,
+        request,
         keyDeserializerClassName,
         valueDeserializerClassName,
         offsetResponses,
         matchPartitions,
-        Collections.emptyMap());
+        Collections.emptyMap(),
+        expected);
   }
 
-  protected <K, V> void testProduceToTopic(String topicName,
-                                           List<? extends TopicProduceRecord> records,
-                                           String keyDeserializerClassName,
-                                           String valueDeserializerClassName,
-                                           List<PartitionOffset> offsetResponses,
-                                           boolean matchPartitions,
-                                           Map<String, String> queryParams) {
-    TopicProduceRequest payload = new TopicProduceRequest();
-    payload.setRecords(records);
+  protected <K, V> void testProduceToTopic(
+      String topicName,
+      TopicRequestT request,
+      String keyDeserializerClassName,
+      String valueDeserializerClassName,
+      List<PartitionOffset> offsetResponses,
+      boolean matchPartitions,
+      Map<String, String> queryParams,
+      List<ProduceRecord<K, V>> expected
+  ) {
     Response response = request("/topics/" + topicName, queryParams)
-        .post(Entity.entity(payload, getEmbeddedContentType()));
+        .post(Entity.entity(request, getEmbeddedContentType()));
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    final ProduceResponse produceResponse = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
+    final ProduceResponse produceResponse =
+        TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
     if (matchPartitions) {
       TestUtils.assertPartitionsEqual(offsetResponses, produceResponse.getOffsets());
     }
     TestUtils.assertPartitionOffsetsEqual(offsetResponses, produceResponse.getOffsets());
     TestUtils.assertTopicContains(plaintextBrokerList, topicName,
-        payload.getRecords(), null,
+        expected, null,
         keyDeserializerClassName, valueDeserializerClassName, true);
   }
 
-  protected <K, V> void testProduceToPartition(String topicName,
-                                               int partition,
-                                               List<? extends ProduceRecord<K, V>> records,
-                                               String keySerializerClassName,
-                                               String valueSerializerClassName,
-                                               List<PartitionOffset> offsetResponse) {
-    testProduceToPartition(topicName, partition, records, keySerializerClassName,
-        valueSerializerClassName, offsetResponse, Collections.emptyMap());
+  protected <K, V> void testProduceToPartition(
+      String topicName,
+      int partition,
+      PartitionRequestT request,
+      String keySerializerClassName,
+      String valueSerializerClassName,
+      List<PartitionOffset> offsetResponse,
+      List<ProduceRecord<K, V>> expected
+  ) {
+    testProduceToPartition(topicName, partition, request, keySerializerClassName,
+        valueSerializerClassName, offsetResponse, Collections.emptyMap(), expected);
   }
 
-  protected <K, V> void testProduceToPartition(String topicName,
-                                               int partition,
-                                               List<? extends ProduceRecord<K, V>> records,
-                                               String keySerializerClassName,
-                                               String valueSerializerClassName,
-                                               List<PartitionOffset> offsetResponse,
-                                               Map<String, String> queryParams) {
-    PartitionProduceRequest payload = new PartitionProduceRequest();
-    payload.setRecords(records);
+  protected <K, V> void testProduceToPartition(
+      String topicName,
+      int partition,
+      PartitionRequestT request,
+      String keySerializerClassName,
+      String valueSerializerClassName,
+      List<PartitionOffset> offsetResponse,
+      Map<String, String> queryParams,
+      List<ProduceRecord<K, V>> expected
+  ) {
     Response response = request("/topics/" + topicName + "/partitions/0", queryParams)
-        .post(Entity.entity(payload, getEmbeddedContentType()));
+        .post(Entity.entity(request, getEmbeddedContentType()));
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
     final ProduceResponse poffsetResponse
         = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
     assertEquals(offsetResponse, poffsetResponse.getOffsets());
     TestUtils.assertTopicContains(plaintextBrokerList, topicName,
-        payload.getRecords(), partition,
+        expected, partition,
         keySerializerClassName, valueSerializerClassName, true);
   }
 
-  protected void testProduceToTopicFails(String topicName,
-                                         List<? extends TopicProduceRecord> records) {
-    testProduceToTopicFails(topicName, records, Collections.emptyMap());
+  protected void testProduceToTopicFails(String topicName, TopicRequestT request) {
+    testProduceToTopicFails(topicName, request, Collections.emptyMap());
   }
 
-  protected void testProduceToTopicFails(String topicName,
-                                         List<? extends TopicProduceRecord> records,
-                                         Map<String, String> queryParams) {
-    TopicProduceRequest payload = new TopicProduceRequest();
-    payload.setRecords(records);
+  protected void testProduceToTopicFails(
+      String topicName,
+      TopicRequestT request,
+      Map<String, String> queryParams
+  ) {
     Response response = request("/topics/" + topicName, queryParams)
-        .post(Entity.entity(payload, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
+        .post(Entity.entity(request, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
     assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
-    final ProduceResponse produceResponse = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
+    final ProduceResponse produceResponse =
+        TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
     for (PartitionOffset pOffset : produceResponse.getOffsets()) {
       assertNotNull(pOffset.getError());
     }
   }
 
-  protected void testProduceToAuthorizationError(String topicName,
-                                                 List<? extends TopicProduceRecord> records) {
-    testProduceToAuthorizationError(topicName, records, Collections.emptyMap());
+  protected void testProduceToAuthorizationError(String topicName, TopicRequestT request) {
+    testProduceToAuthorizationError(topicName, request, Collections.emptyMap());
   }
 
-  protected void testProduceToAuthorizationError(String topicName,
-                                         List<? extends TopicProduceRecord> records,
-                                         Map<String, String> queryParams) {
-    TopicProduceRequest payload = new TopicProduceRequest();
-    payload.setRecords(records);
+  protected void testProduceToAuthorizationError(
+      String topicName,
+      TopicRequestT request,
+      Map<String, String> queryParams
+  ) {
     Response response = request("/topics/" + topicName, queryParams)
-        .post(Entity.entity(payload, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
+        .post(Entity.entity(request, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
 
     assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response.getStatus());
-    final ProduceResponse produceResponse = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
+    final ProduceResponse produceResponse =
+        TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
     for (PartitionOffset pOffset : produceResponse.getOffsets()) {
       assertEquals(Errors.KAFKA_AUTHORIZATION_ERROR_CODE, (int) pOffset.getErrorCode());
     }

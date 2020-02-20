@@ -134,19 +134,15 @@ public class AdminClientWrapper {
         continue;
       }
 
-      Partition p = new Partition();
-      p.setPartition(topicPartitionInfo.partition());
       Node partitionLeader = topicPartitionInfo.leader();
       int leaderId = partitionLeader != null ? partitionLeader.id() : -1;
-      p.setLeader(leaderId);
       List<PartitionReplica> partitionReplicas = new Vector<>();
-
       for (Node replicaNode : topicPartitionInfo.replicas()) {
         partitionReplicas.add(new PartitionReplica(replicaNode.id(),
-            replicaNode.id() == p.getLeader(), topicPartitionInfo.isr().contains(replicaNode)
+            replicaNode.id() == leaderId, topicPartitionInfo.isr().contains(replicaNode)
         ));
       }
-      p.setReplicas(partitionReplicas);
+      Partition p = new Partition(topicPartitionInfo.partition(), leaderId, partitionReplicas);
       partitionList.add(p);
     }
     return partitionList;

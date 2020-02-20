@@ -15,8 +15,6 @@
 
 package io.confluent.kafkarest.entities;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
 /**
  * Permitted formats for ProduceRecords embedded in produce requests/consume responses, e.g.
  * base64-encoded binary, JSON-encoded Avro, etc. Each of these correspond to a content type, a
@@ -27,7 +25,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
  * serializer. This means each serializer should handle both it's complex type (e.g.
  * Indexed/Generic/SpecificRecord for Avro) and boxed primitive types (Integer, Boolean, etc.).
  */
-@JsonFormat(shape = JsonFormat.Shape.STRING)
 public enum EmbeddedFormat {
   BINARY,
   AVRO,

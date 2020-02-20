@@ -20,7 +20,6 @@ import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.converters.SchemaConverter;
-import io.confluent.kafkarest.entities.SchemaConsumerRecord;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
@@ -46,10 +45,13 @@ public final class SchemaKafkaConsumerState
       ConsumerRecord<Object, Object> record) {
     SchemaConverter.JsonNodeAndSize keyNode = schemaConverter.toJson(record.key());
     SchemaConverter.JsonNodeAndSize valueNode = schemaConverter.toJson(record.value());
-    return new ConsumerRecordAndSize<JsonNode, JsonNode>(
-        new SchemaConsumerRecord(record.topic(), keyNode.getJson(),
-                valueNode.getJson(), record.partition(), record.offset()),
-        keyNode.getSize() + valueNode.getSize()
-    );
+    return new ConsumerRecordAndSize<>(
+        new io.confluent.kafkarest.entities.ConsumerRecord<>(
+            record.topic(),
+            keyNode.getJson(),
+            valueNode.getJson(),
+            record.partition(),
+            record.offset()),
+        keyNode.getSize() + valueNode.getSize());
   }
 }

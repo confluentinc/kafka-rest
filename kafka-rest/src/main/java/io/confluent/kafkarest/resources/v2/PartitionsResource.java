@@ -15,25 +15,28 @@
 
 package io.confluent.kafkarest.resources.v2;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Utils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.SchemaProduceRecord;
-import io.confluent.kafkarest.entities.BinaryProduceRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.JsonProduceRecord;
 import io.confluent.kafkarest.entities.Partition;
-import io.confluent.kafkarest.entities.PartitionOffset;
-import io.confluent.kafkarest.entities.PartitionProduceRequest;
 import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.kafkarest.entities.ProduceResponse;
-import io.confluent.kafkarest.entities.TopicPartitionOffsetResponse;
+import io.confluent.kafkarest.entities.ProduceRequest;
+import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v2.GetPartitionResponse;
+import io.confluent.kafkarest.entities.v2.JsonPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v2.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.ProduceResponse;
+import io.confluent.kafkarest.entities.v2.SchemaPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v2.TopicPartitionOffsetResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.List;
 import java.util.Vector;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -66,24 +69,28 @@ public final class PartitionsResource {
 
   @GET
   @PerformanceMetric("partitions.list+v2")
-  public List<Partition> list(final @PathParam("topic") String topic) throws Exception {
+  public List<GetPartitionResponse> list(final @PathParam("topic") String topic) throws Exception {
     checkTopicExists(topic);
-    return ctx.getAdminClientWrapper().getTopicPartitions(topic);
+    return ctx.getAdminClientWrapper()
+        .getTopicPartitions(topic)
+        .stream()
+        .map(GetPartitionResponse::fromPartition)
+        .collect(Collectors.toList());
   }
 
   @GET
   @Path("/{partition}")
   @PerformanceMetric("partition.get+v2")
-  public Partition getPartition(
+  public GetPartitionResponse getPartition(
       final @PathParam("topic") String topic,
       @PathParam("partition") int partition
-  )  throws Exception {
+  ) throws Exception {
     checkTopicExists(topic);
     Partition part = ctx.getAdminClientWrapper().getTopicPartition(topic, partition);
     if (part == null) {
       throw Errors.partitionNotFoundException();
     }
-    return part;
+    return GetPartitionResponse.fromPartition(part);
   }
 
 
@@ -95,9 +102,14 @@ public final class PartitionsResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("topic") String topic,
       final @PathParam("partition") int partition,
-      @Valid @NotNull PartitionProduceRequest<BinaryProduceRecord> request
+      @Valid @NotNull BinaryPartitionProduceRequest request
   )  throws Exception {
-    produce(asyncResponse, topic, partition, EmbeddedFormat.BINARY, request);
+    produce(
+        asyncResponse,
+        topic,
+        partition,
+        EmbeddedFormat.BINARY,
+        request.toProduceRequest());
   }
 
   @POST
@@ -108,9 +120,14 @@ public final class PartitionsResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("topic") String topic,
       final @PathParam("partition") int partition,
-      @Valid @NotNull PartitionProduceRequest<JsonProduceRecord> request
+      @Valid @NotNull JsonPartitionProduceRequest request
   )  throws Exception {
-    produce(asyncResponse, topic, partition, EmbeddedFormat.JSON, request);
+    produce(
+        asyncResponse,
+        topic,
+        partition,
+        EmbeddedFormat.JSON,
+        request.toProduceRequest());
   }
 
   @POST
@@ -121,9 +138,14 @@ public final class PartitionsResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("topic") String topic,
       final @PathParam("partition") int partition,
-      @Valid @NotNull PartitionProduceRequest<SchemaProduceRecord> request
+      @Valid @NotNull SchemaPartitionProduceRequest request
   )  throws Exception {
-    produceSchema(asyncResponse, topic, partition, request, EmbeddedFormat.AVRO);
+    produceSchema(
+        asyncResponse,
+        topic,
+        partition,
+        request.toProduceRequest(),
+        EmbeddedFormat.AVRO);
   }
 
   @POST
@@ -134,11 +156,16 @@ public final class PartitionsResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("topic") String topic,
       final @PathParam("partition") int partition,
-      @Valid @NotNull PartitionProduceRequest<SchemaProduceRecord> request
+      @Valid @NotNull SchemaPartitionProduceRequest request
   )  throws Exception {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
-    produceSchema(asyncResponse, topic, partition, request, EmbeddedFormat.JSONSCHEMA);
+    produceSchema(
+        asyncResponse,
+        topic,
+        partition,
+        request.toProduceRequest(),
+        EmbeddedFormat.JSONSCHEMA);
   }
 
   @POST
@@ -149,20 +176,25 @@ public final class PartitionsResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("topic") String topic,
       final @PathParam("partition") int partition,
-      @Valid @NotNull PartitionProduceRequest<SchemaProduceRecord> request
+      @Valid @NotNull SchemaPartitionProduceRequest request
   )  throws Exception {
     // Validations we can't do generically since they depend on the data format -- schemas need to
     // be available if there are any non-null entries
-    produceSchema(asyncResponse, topic, partition, request, EmbeddedFormat.PROTOBUF);
+    produceSchema(
+        asyncResponse,
+        topic,
+        partition,
+        request.toProduceRequest(),
+        EmbeddedFormat.PROTOBUF);
   }
 
-  protected <K, V, R extends ProduceRecord<K, V>> void produce(
+  protected <K, V> void produce(
       final AsyncResponse asyncResponse,
       final String topic,
       final int partition,
       final EmbeddedFormat format,
-      final PartitionProduceRequest<R> request
-  )  throws Exception {
+      final ProduceRequest<K, V> request
+  ) throws Exception {
     // If the topic already exists, we can proactively check for the partition
     if (topicExists(topic)) {
       if (!ctx.getAdminClientWrapper().partitionExists(topic, partition)) {
@@ -178,13 +210,11 @@ public final class PartitionsResource {
     ctx.getProducerPool().produce(
         topic, partition, format,
         request,
-        request.getRecords(),
         new ProducerPool.ProduceRequestCallback() {
           public void onCompletion(
               Integer keySchemaId, Integer valueSchemaId,
               List<RecordMetadataOrException> results
           ) {
-            ProduceResponse response = new ProduceResponse();
             List<PartitionOffset> offsets = new Vector<PartitionOffset>();
             for (RecordMetadataOrException result : results) {
               if (result.getException() != null) {
@@ -201,14 +231,12 @@ public final class PartitionsResource {
                 ));
               }
             }
-            response.setOffsets(offsets);
-            response.setKeySchemaId(keySchemaId);
-            response.setValueSchemaId(valueSchemaId);
+            ProduceResponse response = new ProduceResponse(offsets, keySchemaId, valueSchemaId);
             log.trace(
                 "Completed topic produce request id={} response={}",
                 asyncResponse, response
             );
-            Response.Status requestStatus = Utils.produceRequestStatus(response);
+            Response.Status requestStatus = response.getRequestStatus();
             asyncResponse.resume(Response.status(requestStatus).entity(response).build());
           }
         }
@@ -216,28 +244,39 @@ public final class PartitionsResource {
   }
 
   private void produceSchema(
-      @Suspended AsyncResponse asyncResponse,
-      @PathParam("topic") String topic,
-      @PathParam("partition") int partition,
-      @Valid @NotNull PartitionProduceRequest<SchemaProduceRecord> request,
+      AsyncResponse asyncResponse,
+      String topic,
+      int partition,
+      ProduceRequest<JsonNode, JsonNode> request,
       EmbeddedFormat avro
   ) throws Exception {
-    // Validations we can't do generically since they depend on the data format -- schemas need to
-    // be available if there are any non-null entries
-    boolean hasKeys = false;
-    boolean hasValues = false;
-    for (SchemaProduceRecord rec : request.getRecords()) {
-      hasKeys = hasKeys || !rec.getJsonKey().isNull();
-      hasValues = hasValues || !rec.getJsonValue().isNull();
-    }
-    if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
+    checkKeySchema(request);
+    checkValueSchema(request);
+    produce(asyncResponse, topic, partition, avro, request);
+  }
+
+  private static void checkKeySchema(ProduceRequest<JsonNode, ?> request) {
+    for (ProduceRecord<JsonNode, ?> record : request.getRecords()) {
+      if (record.getKey() == null || record.getKey().isNull()) {
+        continue;
+      }
+      if (request.getKeySchema() != null || request.getKeySchemaId() != null) {
+        continue;
+      }
       throw Errors.keySchemaMissingException();
     }
-    if (hasValues && request.getValueSchema() == null && request.getValueSchemaId() == null) {
+  }
+
+  private static void checkValueSchema(ProduceRequest<?, JsonNode> request) {
+    for (ProduceRecord<?, JsonNode> record : request.getRecords()) {
+      if (record.getValue() == null || record.getValue().isNull()) {
+        continue;
+      }
+      if (request.getValueSchema() != null || request.getValueSchemaId() != null) {
+        continue;
+      }
       throw Errors.valueSchemaMissingException();
     }
-
-    produce(asyncResponse, topic, partition, avro, request);
   }
 
   /**

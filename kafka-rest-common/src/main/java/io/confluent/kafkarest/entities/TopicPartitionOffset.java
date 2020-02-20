@@ -15,73 +15,43 @@
 
 package io.confluent.kafkarest.entities;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
+import java.util.StringJoiner;
 
-import org.hibernate.validator.constraints.NotEmpty;
+public final class TopicPartitionOffset {
 
-import javax.validation.constraints.Min;
+  private final String topic;
 
-public class TopicPartitionOffset {
+  private final int partition;
 
-  @NotEmpty
-  private String topic;
-  @Min(0)
-  private int partition;
-  @Min(0)
-  private long consumed;
-  @Min(0)
-  private long committed;
+  private final long consumed;
 
-  public TopicPartitionOffset(
-      @JsonProperty("topic") String topic,
-      @JsonProperty("partition") int partition,
-      @JsonProperty("consumed") long consumed,
-      @JsonProperty("committed") long committed
-  ) {
+  private final long committed;
+
+  public TopicPartitionOffset(String topic, int partition, long consumed, long committed) {
+    if (topic.isEmpty()) {
+      throw new IllegalArgumentException();
+    }
     this.topic = topic;
     this.partition = partition;
     this.consumed = consumed;
     this.committed = committed;
   }
 
-  @JsonProperty
   public String getTopic() {
     return topic;
   }
 
-  @JsonProperty
-  public void setTopic(String topic) {
-    this.topic = topic;
-  }
-
-  @JsonProperty
   public int getPartition() {
     return partition;
   }
 
-  @JsonProperty
-  public void setPartition(int partition) {
-    this.partition = partition;
-  }
-
-  @JsonProperty
   public long getConsumed() {
     return consumed;
   }
 
-  @JsonProperty
-  public void setConsumed(long consumed) {
-    this.consumed = consumed;
-  }
-
-  @JsonProperty
   public long getCommitted() {
     return committed;
-  }
-
-  @JsonProperty
-  public void setCommitted(long committed) {
-    this.committed = committed;
   }
 
   @Override
@@ -92,31 +62,25 @@ public class TopicPartitionOffset {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     TopicPartitionOffset that = (TopicPartitionOffset) o;
-
-    if (committed != that.committed) {
-      return false;
-    }
-    if (consumed != that.consumed) {
-      return false;
-    }
-    if (partition != that.partition) {
-      return false;
-    }
-    if (topic != null ? !topic.equals(that.topic) : that.topic != null) {
-      return false;
-    }
-
-    return true;
+    return partition == that.partition
+        && consumed == that.consumed
+        && committed == that.committed
+        && Objects.equals(topic, that.topic);
   }
 
   @Override
   public int hashCode() {
-    int result = topic != null ? topic.hashCode() : 0;
-    result = 31 * result + partition;
-    result = 31 * result + (int) (consumed ^ (consumed >>> 32));
-    result = 31 * result + (int) (committed ^ (committed >>> 32));
-    return result;
+    return Objects.hash(topic, partition, consumed, committed);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", TopicPartitionOffset.class.getSimpleName() + "[", "]")
+        .add("topic='" + topic + "'")
+        .add("partition=" + partition)
+        .add("consumed=" + consumed)
+        .add("committed=" + committed)
+        .toString();
   }
 }

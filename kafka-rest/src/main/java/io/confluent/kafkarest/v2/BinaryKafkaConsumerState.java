@@ -18,7 +18,6 @@ package io.confluent.kafkarest.v2;
 import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.entities.BinaryConsumerRecord;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
@@ -42,7 +41,8 @@ public class BinaryKafkaConsumerState extends KafkaConsumerState<byte[], byte[],
         + (record.value() != null ? record.value().length : 0);
 
     return new ConsumerRecordAndSize<byte[], byte[]>(
-        new BinaryConsumerRecord(record.topic(), record.key(), record.value(), record.partition(),
-            record.offset()), approxSize);
+        new io.confluent.kafkarest.entities.ConsumerRecord<>(
+            record.topic(), record.key(), record.value(), record.partition(), record.offset()),
+        approxSize);
   }
 }

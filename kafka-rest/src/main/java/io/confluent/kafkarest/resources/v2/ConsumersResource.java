@@ -15,8 +15,37 @@
 
 package io.confluent.kafkarest.resources.v2;
 
+import io.confluent.kafkarest.ConsumerReadCallback;
+import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.KafkaRestContext;
+import io.confluent.kafkarest.UriUtils;
+import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.entities.v2.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.v2.CommitOffsetsResponse;
+import io.confluent.kafkarest.entities.v2.ConsumerAssignmentRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerAssignmentResponse;
+import io.confluent.kafkarest.entities.v2.ConsumerCommittedRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerCommittedResponse;
+import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerSeekToOffsetRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerSeekToRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
+import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionResponse;
+import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
+import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
+import io.confluent.kafkarest.entities.v2.JsonConsumerRecord;
+import io.confluent.kafkarest.entities.v2.SchemaConsumerRecord;
+import io.confluent.kafkarest.v2.BinaryKafkaConsumerState;
+import io.confluent.kafkarest.v2.JsonKafkaConsumerState;
+import io.confluent.kafkarest.v2.KafkaConsumerManager;
+import io.confluent.kafkarest.v2.KafkaConsumerState;
+import io.confluent.kafkarest.v2.SchemaKafkaConsumerState;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.List;
-
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -31,31 +60,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.UriInfo;
-
-import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.ConsumerReadCallback;
-import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.UriUtils;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.ConsumerAssignmentRequest;
-import io.confluent.kafkarest.entities.ConsumerAssignmentResponse;
-import io.confluent.kafkarest.entities.ConsumerCommittedRequest;
-import io.confluent.kafkarest.entities.ConsumerCommittedResponse;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.ConsumerOffsetCommitRequest;
-import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.kafkarest.entities.ConsumerSeekToOffsetRequest;
-import io.confluent.kafkarest.entities.ConsumerSeekToRequest;
-import io.confluent.kafkarest.entities.ConsumerSubscriptionRecord;
-import io.confluent.kafkarest.entities.ConsumerSubscriptionResponse;
-import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.kafkarest.v2.SchemaKafkaConsumerState;
-import io.confluent.kafkarest.v2.BinaryKafkaConsumerState;
-import io.confluent.kafkarest.v2.JsonKafkaConsumerState;
-import io.confluent.kafkarest.v2.KafkaConsumerManager;
-import io.confluent.kafkarest.v2.KafkaConsumerState;
-import io.confluent.rest.annotations.PerformanceMetric;
 
 @Path("/consumers")
 // We include embedded formats here so you can always use these headers when interacting with
@@ -78,7 +82,7 @@ import io.confluent.rest.annotations.PerformanceMetric;
         Versions.KAFKA_V2_JSON_PROTOBUF,
         Versions.KAFKA_V2_JSON
     })
-public class ConsumersResource {
+public final class ConsumersResource {
 
   private final KafkaRestContext ctx;
 
@@ -93,12 +97,13 @@ public class ConsumersResource {
   public CreateConsumerInstanceResponse createGroup(
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
-      @Valid ConsumerInstanceConfig config
+      @Valid CreateConsumerInstanceRequest config
   ) {
     if (config == null) {
-      config = new ConsumerInstanceConfig();
+      config = CreateConsumerInstanceRequest.PROTOTYPE;
     }
-    String instanceId = ctx.getKafkaConsumerManager().createConsumer(group, config);
+    String instanceId =
+        ctx.getKafkaConsumerManager().createConsumer(group, config.toConsumerInstanceConfig());
     String instanceBaseUri = UriUtils.absoluteUriBuilder(ctx.getConfig(), uriInfo)
         .path("instances").path(instanceId).build().toString();
     return new CreateConsumerInstanceResponse(instanceId, instanceBaseUri);
@@ -165,7 +170,14 @@ public class ConsumersResource {
       @QueryParam("timeout") @DefaultValue("-1") long timeout,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
-    readRecords(asyncResponse, group, instance, timeout, maxBytes, BinaryKafkaConsumerState.class);
+    readRecords(
+        asyncResponse,
+        group,
+        instance,
+        timeout,
+        maxBytes,
+        BinaryKafkaConsumerState.class,
+        BinaryConsumerRecord::fromConsumerRecord);
   }
 
   @GET
@@ -180,7 +192,14 @@ public class ConsumersResource {
       @QueryParam("timeout") @DefaultValue("-1") long timeout,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
-    readRecords(asyncResponse, group, instance, timeout, maxBytes, JsonKafkaConsumerState.class);
+    readRecords(
+        asyncResponse,
+        group,
+        instance,
+        timeout,
+        maxBytes,
+        JsonKafkaConsumerState.class,
+        JsonConsumerRecord::fromConsumerRecord);
   }
 
   @GET
@@ -195,7 +214,14 @@ public class ConsumersResource {
       @QueryParam("timeout") @DefaultValue("-1") long timeout,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
-    readRecords(asyncResponse, group, instance, timeout, maxBytes, SchemaKafkaConsumerState.class);
+    readRecords(
+        asyncResponse,
+        group,
+        instance,
+        timeout,
+        maxBytes,
+        SchemaKafkaConsumerState.class,
+        SchemaConsumerRecord::fromConsumerRecord);
   }
 
   @GET
@@ -210,7 +236,14 @@ public class ConsumersResource {
       @QueryParam("timeout") @DefaultValue("-1") long timeout,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
-    readRecords(asyncResponse, group, instance, timeout, maxBytes, SchemaKafkaConsumerState.class);
+    readRecords(
+        asyncResponse,
+        group,
+        instance,
+        timeout,
+        maxBytes,
+        SchemaKafkaConsumerState.class,
+        SchemaConsumerRecord::fromConsumerRecord);
   }
 
   @GET
@@ -225,7 +258,14 @@ public class ConsumersResource {
       @QueryParam("timeout") @DefaultValue("-1") long timeout,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
-    readRecords(asyncResponse, group, instance, timeout, maxBytes, SchemaKafkaConsumerState.class);
+    readRecords(
+        asyncResponse,
+        group,
+        instance,
+        timeout,
+        maxBytes,
+        SchemaKafkaConsumerState.class,
+        SchemaConsumerRecord::fromConsumerRecord);
   }
 
   @POST
@@ -252,7 +292,7 @@ public class ConsumersResource {
             if (e != null) {
               asyncResponse.resume(e);
             } else {
-              asyncResponse.resume(offsets);
+              asyncResponse.resume(CommitOffsetsResponse.fromOffsets(offsets));
             }
           }
         }
@@ -355,7 +395,8 @@ public class ConsumersResource {
       @QueryParam("timeout") @DefaultValue("-1") long timeout,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes,
       Class<? extends KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>>
-          consumerStateType
+          consumerStateType,
+      Function<ConsumerRecord<ClientKeyT, ClientValueT>, ?> toJsonWrapper
   ) {
     maxBytes = (maxBytes <= 0) ? Long.MAX_VALUE : maxBytes;
 
@@ -364,13 +405,13 @@ public class ConsumersResource {
         new ConsumerReadCallback<ClientKeyT, ClientValueT>() {
           @Override
           public void onCompletion(
-              List<? extends ConsumerRecord<ClientKeyT, ClientValueT>> records,
-              Exception e
+              List<ConsumerRecord<ClientKeyT, ClientValueT>> records, Exception e
           ) {
             if (e != null) {
               asyncResponse.resume(e);
             } else {
-              asyncResponse.resume(records);
+              asyncResponse.resume(
+                  records.stream().map(toJsonWrapper).collect(Collectors.toList()));
             }
           }
         }

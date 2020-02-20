@@ -9,7 +9,7 @@ import io.confluent.kafka.schemaregistry.json.JsonSchema;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.converters.JsonSchemaConverter;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.SchemaTopicProduceRecord;
+import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
 
 import java.util.Arrays;
 import java.util.List;
