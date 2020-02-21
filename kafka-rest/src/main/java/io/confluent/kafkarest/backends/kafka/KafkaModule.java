@@ -13,28 +13,31 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.resources;
+package io.confluent.kafkarest.backends.kafka;
 
 import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.resources.v1.V1ResourcesFeature;
-import io.confluent.kafkarest.resources.v2.V2ResourcesFeature;
-import io.confluent.kafkarest.resources.v3.V3ResourcesFeature;
 import java.util.Objects;
-import javax.ws.rs.core.Feature;
-import javax.ws.rs.core.FeatureContext;
+import org.apache.kafka.clients.admin.Admin;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
-public final class ResourcesFeature implements Feature {
+/**
+ * A module to configure access to Kafka.
+ *
+ * <p>Right now this module does little but delegate to {@link KafkaRestContext}, since access to
+ * Kafka is currently being configured there. It's the author's intention to move such logic here,
+ * and eliminate {@code KafkaRestContext}, once dependence injection is properly used elsewhere.</p>
+ */
+public final class KafkaModule extends AbstractBinder {
+
   private final KafkaRestContext context;
 
-  public ResourcesFeature(KafkaRestContext context) {
+  public KafkaModule(KafkaRestContext context) {
     this.context = Objects.requireNonNull(context);
   }
 
   @Override
-  public boolean configure(FeatureContext configurable) {
-    configurable.register(new V1ResourcesFeature(context));
-    configurable.register(new V2ResourcesFeature(context));
-    configurable.register(V3ResourcesFeature.class);
-    return true;
+  protected void configure() {
+    // Reuse the AdminClient being constructed in KafkaRestContext.
+    bind(context.getAdmin()).to(Admin.class);
   }
 }

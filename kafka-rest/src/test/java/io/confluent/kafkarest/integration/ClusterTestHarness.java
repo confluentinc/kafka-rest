@@ -339,6 +339,30 @@ public abstract class ClusterTestHarness {
     return ClientBuilder.newClient();
   }
 
+  protected final String getClusterId() {
+    Properties properties = new Properties();
+    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    AdminClient adminClient = AdminClient.create(properties);
+
+    try {
+      return adminClient.describeCluster().clusterId().get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  protected final int getControllerID() {
+    Properties properties = new Properties();
+    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    AdminClient adminClient = AdminClient.create(properties);
+
+    try {
+      return adminClient.describeCluster().controller().get().id();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   protected final void createTopic(String topicName, int numPartitions, short replicationFactor) {
     Properties properties = new Properties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);

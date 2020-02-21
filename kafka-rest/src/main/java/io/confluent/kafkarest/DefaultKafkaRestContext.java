@@ -30,7 +30,7 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   private ProducerPool producerPool;
   private KafkaConsumerManager kafkaConsumerManager;
   private AdminClientWrapper adminClientWrapper;
-
+  private AdminClient admin;
 
   public DefaultKafkaRestContext(
       KafkaRestConfig config,
@@ -87,10 +87,17 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   @Override
   public AdminClientWrapper getAdminClientWrapper() {
     if (adminClientWrapper == null) {
-      adminClientWrapper = new AdminClientWrapper(config,
-          AdminClient.create(AdminClientWrapper.adminProperties(config)));
+      adminClientWrapper = new AdminClientWrapper(config, getAdmin());
     }
     return adminClientWrapper;
+  }
+
+  @Override
+  public AdminClient getAdmin() {
+    if (admin == null) {
+      admin = AdminClient.create(AdminClientWrapper.adminProperties(config));
+    }
+    return admin;
   }
 
   @Override
