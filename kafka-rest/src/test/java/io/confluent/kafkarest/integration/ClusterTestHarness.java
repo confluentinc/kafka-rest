@@ -163,7 +163,7 @@ public abstract class ClusterTestHarness {
     zkClient = new KafkaZkClient(
         new ZooKeeperClient(zkConnect, zkSessionTimeout, zkConnectionTimeout, Integer.MAX_VALUE, time,
                 "testMetricGroup", "testMetricGroupType"),
-        JaasUtils.isZkSecurityEnabled(),
+        JaasUtils.isZkSaslEnabled(),
         time);
 
     configs = new Vector<>();
