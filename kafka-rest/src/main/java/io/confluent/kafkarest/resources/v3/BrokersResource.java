@@ -24,7 +24,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
 
 @Path("/v3/clusters/{clusterId}/brokers")
-public class BrokersResource {
+public final class BrokersResource {
 
   @GET
   @Produces(Versions.JSON_API)
