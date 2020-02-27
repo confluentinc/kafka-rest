@@ -43,53 +43,53 @@ final class ClusterManagerImpl implements ClusterManager {
 
   @Override
   public CompletableFuture<List<Cluster>> listClusters() {
-    DescribeClusterResult describeCluster =
+    DescribeClusterResult describeClusterResult =
         adminClient.describeCluster(
             new DescribeClusterOptions().includeAuthorizedOperations(false));
 
     return CompletableFuture.completedFuture(new Cluster.Builder())
         .thenCombine(
-            toCompletableFuture(describeCluster.clusterId()),
-            (cluster, clusterId) -> {
+            toCompletableFuture(describeClusterResult.clusterId()),
+            (clusterBuilder, clusterId) -> {
               if (clusterId == null) {
                 // If clusterId is null (e.g. MetadataResponse version is < 2), we can't address the
                 // cluster by clusterId, therefore we are not interested on it.
                 return null;
               }
-              return cluster.setClusterId(clusterId);
+              return clusterBuilder.setClusterId(clusterId);
             })
         .thenCombine(
-            toCompletableFuture(describeCluster.controller()),
-            (cluster, controller) -> {
-              if (cluster == null) {
+            toCompletableFuture(describeClusterResult.controller()),
+            (clusterBuilder, controller) -> {
+              if (clusterBuilder == null) {
                 return null;
               }
               if (controller == null || controller.isEmpty()) {
-                return cluster;
+                return clusterBuilder;
               }
-              return cluster.setController(Broker.fromNode(controller));
+              return clusterBuilder.setController(Broker.fromNode(controller));
             })
         .thenCombine(
-            toCompletableFuture(describeCluster.nodes()),
-            (cluster, nodes) -> {
-              if (cluster == null) {
+            toCompletableFuture(describeClusterResult.nodes()),
+            (clusterBuilder, nodes) -> {
+              if (clusterBuilder == null) {
                 return null;
               }
               if (nodes == null) {
-                return cluster;
+                return clusterBuilder;
               }
-              return cluster.addAllBrokers(
+              return clusterBuilder.addAllBrokers(
                   nodes.stream()
                       .filter(node -> node != null && !node.isEmpty())
                       .map(Broker::fromNode)
                       .collect(Collectors.toList()));
             })
         .thenApply(
-            cluster -> {
-              if (cluster == null) {
+            clusterBuilder -> {
+              if (clusterBuilder == null) {
                 return emptyList();
               }
-              return unmodifiableList(singletonList(cluster.build()));
+              return unmodifiableList(singletonList(clusterBuilder.build()));
             });
   }
 
