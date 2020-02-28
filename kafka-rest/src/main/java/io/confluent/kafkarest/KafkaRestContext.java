@@ -16,6 +16,7 @@
 package io.confluent.kafkarest;
 
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
+import org.apache.kafka.clients.admin.Admin;
 
 public interface KafkaRestContext {
   public KafkaRestConfig getConfig();
@@ -34,6 +35,8 @@ public interface KafkaRestContext {
   public KafkaConsumerManager getKafkaConsumerManager();
 
   public AdminClientWrapper getAdminClientWrapper();
+
+  Admin getAdmin();
 
   void shutdown();
 }

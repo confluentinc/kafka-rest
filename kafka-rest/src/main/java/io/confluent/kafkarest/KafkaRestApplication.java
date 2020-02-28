@@ -15,12 +15,16 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.kafkarest.backends.BackendsModule;
+import io.confluent.kafkarest.config.ConfigModule;
+import io.confluent.kafkarest.controllers.ControllersModule;
 import io.confluent.kafkarest.extension.ContextInvocationHandler;
 import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.kafkarest.extension.KafkaRestCleanupFilter;
 import io.confluent.kafkarest.extension.KafkaRestContextProvider;
 import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.kafkarest.resources.ResourcesFeature;
+import io.confluent.kafkarest.response.ResponseModule;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.rest.Application;
 import io.confluent.rest.RestConfigException;
@@ -93,7 +97,13 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
             new Class[]{KafkaRestContext.class},
             contextInvocationHandler
         );
+
+    config.register(new BackendsModule(context));
+    config.register(new ConfigModule(appConfig));
+    config.register(new ControllersModule());
     config.register(new ResourcesFeature(context));
+    config.register(new ResponseModule());
+
     config.register(KafkaRestCleanupFilter.class);
     config.register(InstantConverterProvider.class);
 

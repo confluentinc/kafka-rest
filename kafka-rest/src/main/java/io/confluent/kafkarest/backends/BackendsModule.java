@@ -13,28 +13,26 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.resources;
+package io.confluent.kafkarest.backends;
 
 import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.resources.v1.V1ResourcesFeature;
-import io.confluent.kafkarest.resources.v2.V2ResourcesFeature;
-import io.confluent.kafkarest.resources.v3.V3ResourcesFeature;
+import io.confluent.kafkarest.backends.kafka.KafkaModule;
 import java.util.Objects;
-import javax.ws.rs.core.Feature;
-import javax.ws.rs.core.FeatureContext;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
-public final class ResourcesFeature implements Feature {
+/**
+ * A module to configure access to external dependencies.
+ */
+public final class BackendsModule extends AbstractBinder {
+
   private final KafkaRestContext context;
 
-  public ResourcesFeature(KafkaRestContext context) {
+  public BackendsModule(KafkaRestContext context) {
     this.context = Objects.requireNonNull(context);
   }
 
   @Override
-  public boolean configure(FeatureContext configurable) {
-    configurable.register(new V1ResourcesFeature(context));
-    configurable.register(new V2ResourcesFeature(context));
-    configurable.register(V3ResourcesFeature.class);
-    return true;
+  protected void configure() {
+    install(new KafkaModule(context));
   }
 }

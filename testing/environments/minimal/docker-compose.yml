@@ -74,6 +74,7 @@ services:
       - zookeeper
       - kafka-1
     environment:
+      KAFKA_REST_ADVERTISED_LISTENERS: "http://localhost:9291"
       KAFKA_REST_BOOTSTRAP_SERVERS: "PLAINTEXT://kafka-1:9191"
       KAFKA_REST_LISTENERS: "http://kafka-rest:9291"
       KAFKA_REST_ZOOKEEPER_CONNECT: "zookeeper:9091"
