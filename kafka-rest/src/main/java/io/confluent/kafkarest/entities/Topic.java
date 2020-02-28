@@ -15,10 +15,7 @@
 
 package io.confluent.kafkarest.entities;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.StringJoiner;
+import java.util.*;
 
 public final class Topic {
 
@@ -78,5 +75,33 @@ public final class Topic {
         .add("configs=" + configs)
         .add("partitions=" + partitions)
         .toString();
+  }
+
+  public static final class Builder {
+    private String topicName;
+    private Properties configs;
+    private List<Partition> partitions = new ArrayList<>();
+
+    public Builder() {
+    }
+
+    public Builder setTopicName(String topicName) {
+      this.topicName = topicName;
+      return this;
+    }
+
+    public Builder setConfigs(Properties configs) {
+      this.configs = configs;
+      return this;
+    }
+
+    public Builder setPartitions(List<Partition> partitions) {
+      this.partitions.addAll(partitions);
+      return this;
+    }
+
+    public Topic build() {
+      return new Topic(topicName, configs, partitions);
+    }
   }
 }
