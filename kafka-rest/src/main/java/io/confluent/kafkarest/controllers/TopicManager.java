@@ -16,5 +16,5 @@ public interface TopicManager {
      */
     CompletableFuture<List<Topic>> listTopics(String clusterId) throws ExecutionException, InterruptedException;
 
-    CompletableFuture<Optional<Topic>> getTopic(String clusterId, String topicName);
+    CompletableFuture<List<Topic>> getTopic(String clusterId, String topicName);
 }

@@ -15,7 +15,12 @@
 
 package io.confluent.kafkarest.entities;
 
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.StringJoiner;
 
 public final class Topic {
 
@@ -25,7 +30,15 @@ public final class Topic {
 
   private final List<Partition> partitions;
 
-  public Topic(String name, Properties configs, List<Partition> partitions) {
+  private final long replicationFactor;
+
+  private final boolean isInternal;
+
+  public Topic(String name,
+               Properties configs,
+               List<Partition> partitions,
+               long replicationFactor,
+               boolean isInternal) {
     if (name.isEmpty()) {
       throw new IllegalArgumentException();
     }
@@ -35,6 +48,8 @@ public final class Topic {
     this.name = name;
     this.configs = Objects.requireNonNull(configs);
     this.partitions = partitions;
+    this.replicationFactor = replicationFactor;
+    this.isInternal = isInternal;
   }
 
   public String getName() {
@@ -49,6 +64,14 @@ public final class Topic {
     return partitions;
   }
 
+  public long getReplicationFactor() {
+    return replicationFactor;
+  }
+
+  public boolean getIsInternal() {
+    return isInternal;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -60,12 +83,14 @@ public final class Topic {
     Topic topic = (Topic) o;
     return Objects.equals(name, topic.name)
         && Objects.equals(configs, topic.configs)
-        && Objects.equals(partitions, topic.partitions);
+        && Objects.equals(partitions, topic.partitions)
+        && Objects.equals(replicationFactor, topic.replicationFactor)
+        && Objects.equals(isInternal, topic.isInternal);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, configs, partitions);
+    return Objects.hash(name, configs, partitions, isInternal, replicationFactor);
   }
 
   @Override
@@ -74,6 +99,8 @@ public final class Topic {
         .add("name='" + name + "'")
         .add("configs=" + configs)
         .add("partitions=" + partitions)
+        .add("replication factor=" + replicationFactor)
+        .add("isInternal="+isInternal)
         .toString();
   }
 
@@ -81,6 +108,8 @@ public final class Topic {
     private String topicName;
     private Properties configs;
     private List<Partition> partitions = new ArrayList<>();
+    private long replicationFactor;
+    private boolean isInternal;
 
     public Builder() {
     }
@@ -100,8 +129,18 @@ public final class Topic {
       return this;
     }
 
+    public Builder setReplicationFactor(long replicationFactor) {
+      this.replicationFactor = replicationFactor;
+      return this;
+    }
+
+    public Builder setIsInternal(boolean isInternal) {
+      this.isInternal = isInternal;
+      return this;
+    }
+
     public Topic build() {
-      return new Topic(topicName, configs, partitions);
+      return new Topic(topicName, configs, partitions, replicationFactor, isInternal);
     }
   }
 }
