@@ -47,19 +47,12 @@ public final class TopicsResource {
     }
 
     private TopicData toTopicData(Topic topic) {
-        Relationship controller;
-        if(topic.getController() != null) {
-            controller =
-                    new Relationship(
-                            urlFactory.create(
-                                    "v3",
-                                    "topics",
-                                    topic.getTopic());
-                            )
-                    )
-        } else {
-            controller = null;
-        }
+        Relationship configs =
+                new Relationship(urlFactory.create("v3", "topics", topic.getName(), "configs"));
+        Relationship replicationFactor = new Relationship(urlFactory.create("v3", "topics", topic.getName(), "replicationFactor"));
+
+        Relationship isInternal =
+                new Relationship(urlFactory.create("v3", "topics", topic.getName(), "isInternal"));
     }
 
 }
