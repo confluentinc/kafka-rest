@@ -1,8 +1,8 @@
 package io.confluent.kafkarest.controllers;
 
 import io.confluent.kafkarest.entities.Cluster;
+import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.Topic;
-import io.confluent.kafkarest.entities.TopicInfo;
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.common.KafkaFuture;
 import static java.util.Collections.unmodifiableList;
@@ -14,8 +14,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletionException;
 
 import static java.util.Collections.*;
 
@@ -33,30 +34,15 @@ public class TopicManagerImpl implements TopicManager {
     @Override
     public CompletableFuture<List<Topic>> listTopics(String clusterId) {
         Objects.requireNonNull(clusterId);
-        //todo check if clusterId is correct this way is sufficient
-        CompletableFuture<Optional<Cluster>> futureCluster = clusterManager.getCluster(clusterId);
-        Objects.requireNonNull(futureCluster);
+          // todo check if clusterId is correct with clustermanager
+//        CompletableFuture<Optional<Cluster>> c = clusterManager.listClusters().thenApply(
+//                clusters ->
+//                        clusters.stream()
+//                                .filter(cluster -> cluster.getClusterId().equals(clusterId))
+//                                .findAny());
 
-        ListTopicsResult listTopicsResult = adminClient.
-                listTopics(new ListTopicsOptions());
+        ListTopicsResult listTopicsResult = adminClient.listTopics();
 
-//        return CompletableFuture.completedFuture(new TopicInfo.Builder())
-//            .thenCombine(
-//                toCompletableFuture(listTopicsResult.listings()),
-//                (topicInfoBuilder, topicListings) -> {
-//                    if (topicListings == null) {
-//                        return null;
-//                    }
-//                    return topicInfoBuilder.setTopicListings((List<TopicListing>) topicListings);
-//                })
-//            .thenApply(
-//                topicInfoBuilder -> {
-//                    if (topicInfoBuilder == null) {
-//                        return null;
-//                    }
-//                    topicInfoBuilder.setClusterId(clusterId);
-//                    return topicInfoBuilder.build();
-//                });
         return CompletableFuture.completedFuture(new ArrayList<Topic.Builder>())
                 .thenCombine(
                         toCompletableFuture(listTopicsResult.namesToListings()),
@@ -68,6 +54,10 @@ public class TopicManagerImpl implements TopicManager {
                                 Topic.Builder topicBuilder = new Topic.Builder();
                                 topicBuilder.setTopicName(k);
                                 topicBuilder.setIsInternal(v.isInternal());
+                                topicBuilder.setConfigs(new Properties());
+                                // for now
+                                topicBuilder.setPartitions(new ArrayList<Partition>(
+                                        Collections.singleton(new Partition(0, 1, null))));
                                 // todo we can add clusterid as a attribute to topics
                                 // topicBuilder.setClusterId(clusterId);
                                 topicBuilderList.add(topicBuilder);
@@ -106,22 +96,22 @@ public class TopicManagerImpl implements TopicManager {
                         }
                         return topicBuilder.setTopicName(topicName);
                     })
-            .thenCombine(
-                    toCompletableFuture(describeTopicResult.values().get(topicName)),
-                    (topicBuilder, description) -> {
-                        if(topicBuilder == null) {
-                            return null;
-                        }
-                        if(description.partitions() == null) {
-                            return topicBuilder;
-                        }
-                        // todo needs some processing since partitions in description are TopicPartitionsInfo
-                        return topicBuilder.setPartitions(
-                                description.partitions().stream()
-                                .filter(topicPartitionInfo -> topicPartitionInfo != null)
-                                .map(Partition::new)
-                                .collect(Collectors.toList()));
-                    })
+//            .thenCombine(
+//                    toCompletableFuture(describeTopicResult.values().get(topicName)),
+//                    (topicBuilder, description) -> {
+//                        if(topicBuilder == null) {
+//                            return null;
+//                        }
+//                        if(description.partitions() == null) {
+//                            return topicBuilder;
+//                        }
+//                        // todo needs some processing since partitions in description are TopicPartitionsInfo
+//                        return topicBuilder.setPartitions(
+//                                description.partitions().stream()
+//                                .filter(topicPartitionInfo -> topicPartitionInfo != null)
+//                                .map(Partition::new)
+//                                .collect(Collectors.toList()));
+//                    })
             .thenCombine(
                     toCompletableFuture(describeTopicResult.values().get(topicName)),
                     (topicBuilder, description) -> {

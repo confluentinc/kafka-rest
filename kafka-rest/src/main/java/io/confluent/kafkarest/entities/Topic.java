@@ -52,6 +52,12 @@ public final class Topic {
     this.isInternal = isInternal;
   }
 
+  public Topic(String name,
+               Properties configs,
+               List<Partition> partitions) {
+    this(name, configs, partitions, 0, false);
+  }
+
   public String getName() {
     return name;
   }

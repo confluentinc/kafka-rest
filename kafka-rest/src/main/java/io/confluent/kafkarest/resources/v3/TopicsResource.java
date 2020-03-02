@@ -3,14 +3,12 @@ package io.confluent.kafkarest.resources.v3;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.Topic;
-import io.confluent.kafkarest.entities.v3.TopicInfoData;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.ListTopicsResponse;
 import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.entities.v3.TopicData;
 import io.confluent.kafkarest.response.UrlFactory;
-import org.apache.kafka.clients.admin.TopicListing;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -64,15 +62,6 @@ public final class TopicsResource {
         @PathParam("topicName") String topicName) {
         topicManager.getTopic(clusterId, topicName);
         //todo develop remaining logic
-    }
-
-    private TopicInfoData toTopicInfoData(TopicListing topicListing) {
-        Relationship topicRelationship =
-                new Relationship(urlFactory.create("v3", "topics", topicListing.name(), "topicListing"));
-        return new TopicInfoData(
-                new ResourceLink((urlFactory.create("v3", "topics", topicListing.name()))),
-                topicListing.name(),
-                topicRelationship);
     }
 
     private TopicData toTopicData(Topic topic) {

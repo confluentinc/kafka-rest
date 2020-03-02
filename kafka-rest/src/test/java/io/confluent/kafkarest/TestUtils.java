@@ -41,6 +41,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.KafkaFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -349,5 +350,10 @@ public class TestUtils {
     consumerConfig.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializerClassName);
     consumerConfig.putAll(deserializerProps);
     return new KafkaConsumer<>(consumerConfig);
+  }
+
+  public static <T> KafkaFuture<T> failedFuture(RuntimeException exception) {
+    KafkaFuture<T> future = KafkaFuture.completedFuture(null);
+    return future.whenComplete((value, error) -> { throw exception; });
   }
 }
