@@ -23,7 +23,6 @@ public class TopicData {
             String topic,
             Relationship isInternal,
             Relationship replicationFactor,
-            Relationship cluster,
             Relationship configuration,
             Relationship partitions
     ) {
@@ -31,7 +30,6 @@ public class TopicData {
         this.attributes = new Attributes(topic);
         this.relationships = new Relationships(isInternal,
                 replicationFactor,
-                cluster,
                 configuration,
                 partitions);
     }
@@ -126,7 +124,6 @@ public class TopicData {
 
         private final Relationship isInternal;
         private final Relationship replicationFactor;
-        private final Relationship cluster;
         private final Relationship configuration;
         private final Relationship partitions;
 
@@ -136,12 +133,10 @@ public class TopicData {
         //todo check this later
         public Relationships(Relationship isInternal,
                              Relationship replicationFactor,
-                             Relationship cluster,
                              Relationship configuration,
                              Relationship partitions) {
             this.isInternal = isInternal;
             this.replicationFactor = replicationFactor;
-            this.cluster = cluster;
             this.configuration = configuration;
             this.partitions = partitions;
         }
@@ -154,11 +149,6 @@ public class TopicData {
         @JsonProperty("replicationFactor")
         public Relationship getReplicationFactor() {
             return replicationFactor;
-        }
-
-        @JsonProperty("cluster")
-        public Relationship getCluster() {
-            return cluster;
         }
 
         @JsonProperty("configuration")
@@ -183,7 +173,6 @@ public class TopicData {
             Relationships that = (Relationships) o;
             return Objects.equals(isInternal, that.isInternal)
                     && Objects.equals(replicationFactor, that.replicationFactor)
-                    && Objects.equals(cluster, that.cluster)
                     && Objects.equals(configuration, that.configuration)
                     && Objects.equals(partitions, that.partitions);
 
@@ -192,7 +181,6 @@ public class TopicData {
         public int hashCode() {
             return Objects.hash(isInternal,
                     replicationFactor,
-                    cluster,
                     configuration,
                     partitions);
         }
@@ -201,7 +189,6 @@ public class TopicData {
             return new StringJoiner(", ", Relationships.class.getSimpleName() + "[", "]")
                     .add("isInternal=" + isInternal)
                     .add("replicationFactor=" + replicationFactor)
-                    .add("cluster="+cluster)
                     .add("configuration="+configuration)
                     .add("partitions=" + partitions)
                     .toString();
