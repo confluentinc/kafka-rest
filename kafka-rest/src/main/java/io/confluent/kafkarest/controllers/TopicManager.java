@@ -1,7 +1,6 @@
 package io.confluent.kafkarest.controllers;
 
 import io.confluent.kafkarest.entities.Topic;
-import io.confluent.kafkarest.entities.TopicInfo;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
