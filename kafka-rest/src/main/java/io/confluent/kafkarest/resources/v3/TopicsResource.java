@@ -3,7 +3,10 @@ package io.confluent.kafkarest.resources.v3;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.entities.TopicsMap;
+import io.confluent.kafkarest.entities.TopicsMapData;
 import io.confluent.kafkarest.entities.v3.Relationship;
+import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.entities.v3.TopicData;
 import io.confluent.kafkarest.response.UrlFactory;
 
@@ -46,13 +49,32 @@ public final class TopicsResource {
         //todo develop remaining logic
     }
 
+    private TopicsMapData toTopicsMapData(TopicsMap topicsMap) {
+        Relationship topicsMapRelationship =
+                new Relationship(urlFactory.create("v3", "topics", topicsMap.getTopicsMap().toString(), "topicsMap"));
+        return new TopicsMapData(
+                new ResourceLink((urlFactory.create("v3", "topicsMap"))),
+                topicsMap,
+                topicsMapRelationship);
+    }
+
     private TopicData toTopicData(Topic topic) {
         Relationship configs =
-                new Relationship(urlFactory.create("v3", "topics", topic.getName(), "configs"));
-        Relationship replicationFactor = new Relationship(urlFactory.create("v3", "topics", topic.getName(), "replicationFactor"));
+                new Relationship(urlFactory.create("v3", "topic", topic.getName(), "configs"));
+        Relationship replicationFactor = new Relationship(urlFactory.create("v3", "topic", topic.getName(), "replicationFactor"));
 
         Relationship isInternal =
-                new Relationship(urlFactory.create("v3", "topics", topic.getName(), "isInternal"));
+                new Relationship(urlFactory.create("v3", "topic", topic.getName(), "isInternal"));
+        Relationship partitions =
+                new Relationship((urlFactory.create("v3", "topic", topic.getName(), "cluster")));
+
+        return new TopicData(
+                new ResourceLink(urlFactory.create("v3", "topic", topic.getName())),
+                topic.getName(),
+                isInternal,
+                replicationFactor,
+                configs,
+                partitions);
     }
 
 }

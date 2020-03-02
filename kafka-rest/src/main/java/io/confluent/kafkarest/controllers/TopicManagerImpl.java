@@ -3,6 +3,7 @@ package io.confluent.kafkarest.controllers;
 import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.entities.TopicsMap;
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.common.KafkaFuture;
 
@@ -28,32 +29,32 @@ public class TopicManagerImpl implements TopicManager {
         this.clusterManager = Objects.requireNonNull(clusterManager);
     }
 
-    public CompletableFuture<List<Topic>> listTopics(String clusterId) {
+    @Override
+    public CompletableFuture<TopicsMap> listTopics(String clusterId) {
         Objects.requireNonNull(clusterId);
-        // check if clusterId is correct
+        //todo check if clusterId is correct this way is sufficient
         CompletableFuture<Optional<Cluster>> futureCluster = clusterManager.getCluster(clusterId);
         Objects.requireNonNull(futureCluster);
 
         ListTopicsResult listTopicsResult = adminClient.
                 listTopics(new ListTopicsOptions());
 
-        return CompletableFuture.completedFuture(new Topic.Builder())
-                .thenCombine(
-                        toCompletableFuture(listTopicsResult.names()),
-                        (topicBuilder, names) -> {
-                            if (topicBuilder == null) {
-                                return null;
-                            }
-                            if (names == null) {
-                                return topicBuilder;
-                            }
-                            // yet to develop the logic to return all topics
-                            return topicBuilder;
-                            )
-                        }
-                )
-
-
+        return CompletableFuture.completedFuture(new TopicsMap.Builder())
+            .thenCombine(
+                toCompletableFuture(listTopicsResult.namesToListings()),
+                (topicsMapBuilder, namesToListings) -> {
+                    if (namesToListings == null) {
+                        return null;
+                    }
+                    return topicsMapBuilder.setTopicsMap(namesToListings);
+                })
+            .thenApply(
+                topicsMapBuilder -> {
+                    if (topicsMapBuilder == null) {
+                        return null;
+                    }
+                    return topicsMapBuilder.build();
+                });
     }
 
     public CompletableFuture<List<Topic>> getTopic(String clusterId, String topicName) {
@@ -107,7 +108,6 @@ public class TopicManagerImpl implements TopicManager {
                         }
                         return unmodifiableList(singletonList(topicBuilder.build()));
                     });
-
     }
 
     private static <T> CompletableFuture<T> toCompletableFuture(KafkaFuture<T> kafkaFuture) {
