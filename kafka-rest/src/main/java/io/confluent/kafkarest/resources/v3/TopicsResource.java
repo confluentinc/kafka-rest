@@ -3,22 +3,24 @@ package io.confluent.kafkarest.resources.v3;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.Topic;
-import io.confluent.kafkarest.entities.TopicsMap;
-import io.confluent.kafkarest.entities.TopicsMapData;
+import io.confluent.kafkarest.entities.v3.TopicInfoData;
+import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.v3.ListTopicsResponse;
 import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.entities.v3.TopicData;
 import io.confluent.kafkarest.response.UrlFactory;
+import org.apache.kafka.clients.admin.TopicListing;
 
-import javax.annotation.Generated;
 import javax.inject.Inject;
-import javax.management.relation.Relation;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import java.util.concurrent.CompletionException;
+import java.util.stream.Collectors;
 
 @Path("/v3/clusters/{clusterId}/topics")
 public final class TopicsResource {
@@ -35,7 +37,22 @@ public final class TopicsResource {
     @Produces(Versions.JSON_API)
     public void listTopics(@Suspended AsyncResponse asyncResponse,
                            @PathParam("clusterId") String clusterId) {
-        topicManager.listTopics(clusterId);
+        topicManager.listTopics(clusterId)
+            .thenApply(
+                    topics ->
+                            new ListTopicsResponse(
+                                    new CollectionLink(urlFactory.create("v3", "topics"), null),
+                                    topics.stream().map(this::toTopicData).collect(Collectors.toList())))
+            .whenComplete(
+                    (response, exception) -> {
+                        if (exception == null) {
+                            asyncResponse.resume(response);
+                        } else if (exception instanceof CompletionException) {
+                            asyncResponse.resume(exception.getCause());
+                        } else {
+                            asyncResponse.resume(exception);
+                        }
+                    });
         //todo develop this logic
     }
 
@@ -49,13 +66,13 @@ public final class TopicsResource {
         //todo develop remaining logic
     }
 
-    private TopicsMapData toTopicsMapData(TopicsMap topicsMap) {
-        Relationship topicsMapRelationship =
-                new Relationship(urlFactory.create("v3", "topics", topicsMap.getTopicsMap().toString(), "topicsMap"));
-        return new TopicsMapData(
-                new ResourceLink((urlFactory.create("v3", "topicsMap"))),
-                topicsMap,
-                topicsMapRelationship);
+    private TopicInfoData toTopicInfoData(TopicListing topicListing) {
+        Relationship topicRelationship =
+                new Relationship(urlFactory.create("v3", "topics", topicListing.name(), "topicListing"));
+        return new TopicInfoData(
+                new ResourceLink((urlFactory.create("v3", "topics", topicListing.name()))),
+                topicListing.name(),
+                topicRelationship);
     }
 
     private TopicData toTopicData(Topic topic) {

@@ -1,39 +1,35 @@
-package io.confluent.kafkarest.entities;
+package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.confluent.kafkarest.entities.v3.ClusterData;
-import io.confluent.kafkarest.entities.v3.Relationship;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
-import io.confluent.kafkarest.entities.v3.TopicData;
-import org.w3c.dom.Attr;
 
 import java.util.Objects;
 import java.util.StringJoiner;
-import java.util.jar.Attributes;
 
-public class TopicsMapData {
+public class TopicInfoData {
     private final ResourceLink links;
 
     private final Attributes attributes;
 
     private final Relationships relationships;
 
-    public TopicsMapData(
+    public TopicInfoData(
             ResourceLink links,
-            TopicsMap map,
-            Relationship topicsMap
+            // TopicsMap topicsMap,
+//            TopicListing topicListing,
+            String topicName,
+            Relationship topicListing
     ) {
         this.links = links;
         // check what attributes should be for listTopics
-        this.attributes = new Attributes(map);
-        this.relationships = new Relationships(topicsMap);
+        // this.attributes = new Attributes(topicsMap);
+        this.attributes = new Attributes(topicName);
+        this.relationships = new Relationships(topicListing);
     }
 
-    @JsonProperty("topicsMap")
-    public TopicsMap topic() {
-        return attributes.getTopicsMap();
+    @JsonProperty("topic_name")
+    public String getTopicName() {
+        return attributes.getTopicName();
     }
-
     @JsonProperty("links")
     public ResourceLink getLinks() {
         return links;
@@ -58,7 +54,7 @@ public class TopicsMapData {
             return false;
         }
 
-        TopicsMapData that = (TopicsMapData) o;
+        TopicInfoData that = (TopicInfoData) o;
         return Objects.equals(links, that.links)
                 && Objects.equals(attributes, that.attributes)
                 && Objects.equals(relationships, that.relationships);
@@ -79,15 +75,17 @@ public class TopicsMapData {
     }
 
     public static final class Attributes {
-        private final TopicsMap topicsMap;
+        // private final TopicsMap topicsMap;
+        private final String topicName;
 
-        public Attributes(TopicsMap topicsMap) {
-            this.topicsMap = topicsMap;
+        public Attributes(String topicName) {
+            // this.topicsMap = topicsMap;
+            this.topicName = topicName;
         }
 
-        @JsonProperty("topicsMap")
-        public TopicsMap getTopicsMap() {
-            return topicsMap;
+        @JsonProperty("topic_name")
+        public String getTopicName() {
+            return topicName;
         }
 
         @Override
@@ -98,33 +96,33 @@ public class TopicsMapData {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            TopicsMapData.Attributes that = (TopicsMapData.Attributes) o;
-            return Objects.equals(topicsMap, that.topicsMap);
+            TopicInfoData.Attributes that = (TopicInfoData.Attributes) o;
+            return Objects.equals(topicName, that.topicName);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(topicsMap);
+            return Objects.hash(topicName);
         }
 
         @Override
         public String toString() {
-            return new StringJoiner(", ", TopicsMapData.Attributes.class.getSimpleName() + "[", "]")
-                    .add("topicsMap='" + topicsMap + "'")
+            return new StringJoiner(", ", TopicInfoData.Attributes.class.getSimpleName() + "[", "]")
+                    .add("topicName='" + topicName + "'")
                     .toString();
         }
     }
 
     public static final class Relationships {
-        private final Relationship topicsMap;
+        private final Relationship topicListing;
 
         public Relationships (Relationship topicsMap) {
-            this.topicsMap = topicsMap;
+            this.topicListing = topicsMap;
         }
 
-        @JsonProperty("topicsMap")
-        public Relationship getTopicsMap() {
-            return topicsMap;
+        @JsonProperty("topicListing")
+        public Relationship getTopicListing() {
+            return topicListing;
         }
 
         @Override
@@ -132,18 +130,18 @@ public class TopicsMapData {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Relationships that = (Relationships) o;
-            return Objects.equals(topicsMap, that.topicsMap);
+            return Objects.equals(topicListing, that.topicListing);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(topicsMap);
+            return Objects.hash(topicListing);
         }
 
         @Override
         public String toString() {
             return new StringJoiner(", ", Relationships.class.getSimpleName() + "[", "]")
-                    .add("TopicsMapData="+ topicsMap)
+                    .add("topicListing="+ topicListing)
                     .toString();
         }
     }

@@ -1,13 +1,14 @@
 package io.confluent.kafkarest.controllers;
 
 import io.confluent.kafkarest.entities.Cluster;
-import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.Topic;
-import io.confluent.kafkarest.entities.TopicsMap;
+import io.confluent.kafkarest.entities.TopicInfo;
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.common.KafkaFuture;
+import static java.util.Collections.unmodifiableList;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -30,7 +31,7 @@ public class TopicManagerImpl implements TopicManager {
     }
 
     @Override
-    public CompletableFuture<TopicsMap> listTopics(String clusterId) {
+    public CompletableFuture<List<Topic>> listTopics(String clusterId) {
         Objects.requireNonNull(clusterId);
         //todo check if clusterId is correct this way is sufficient
         CompletableFuture<Optional<Cluster>> futureCluster = clusterManager.getCluster(clusterId);
@@ -39,22 +40,52 @@ public class TopicManagerImpl implements TopicManager {
         ListTopicsResult listTopicsResult = adminClient.
                 listTopics(new ListTopicsOptions());
 
-        return CompletableFuture.completedFuture(new TopicsMap.Builder())
-            .thenCombine(
-                toCompletableFuture(listTopicsResult.namesToListings()),
-                (topicsMapBuilder, namesToListings) -> {
-                    if (namesToListings == null) {
-                        return null;
-                    }
-                    return topicsMapBuilder.setTopicsMap(namesToListings);
-                })
-            .thenApply(
-                topicsMapBuilder -> {
-                    if (topicsMapBuilder == null) {
-                        return null;
-                    }
-                    return topicsMapBuilder.build();
-                });
+//        return CompletableFuture.completedFuture(new TopicInfo.Builder())
+//            .thenCombine(
+//                toCompletableFuture(listTopicsResult.listings()),
+//                (topicInfoBuilder, topicListings) -> {
+//                    if (topicListings == null) {
+//                        return null;
+//                    }
+//                    return topicInfoBuilder.setTopicListings((List<TopicListing>) topicListings);
+//                })
+//            .thenApply(
+//                topicInfoBuilder -> {
+//                    if (topicInfoBuilder == null) {
+//                        return null;
+//                    }
+//                    topicInfoBuilder.setClusterId(clusterId);
+//                    return topicInfoBuilder.build();
+//                });
+        return CompletableFuture.completedFuture(new ArrayList<Topic.Builder>())
+                .thenCombine(
+                        toCompletableFuture(listTopicsResult.namesToListings()),
+                        (topicBuilderList, topicsMap) -> {
+                            if (topicsMap == null) {
+                                return null;
+                            }
+                            topicsMap.forEach((k, v) -> {
+                                Topic.Builder topicBuilder = new Topic.Builder();
+                                topicBuilder.setTopicName(k);
+                                topicBuilder.setIsInternal(v.isInternal());
+                                // todo we can add clusterid as a attribute to topics
+                                // topicBuilder.setClusterId(clusterId);
+                                topicBuilderList.add(topicBuilder);
+                            });
+                            return topicBuilderList;
+                        })
+                .thenApply(
+                        topicBuilderList -> {
+                            if (topicBuilderList == null) {
+                                return null;
+                            }
+                            // topicInfoBuilder.setClusterId(clusterId);
+                            List<Topic> topicsList = new ArrayList<>();
+                            for(Topic.Builder topicBuilder : topicBuilderList) {
+                                topicsList.add(topicBuilder.build());
+                            }
+                            return topicsList;
+                        });
     }
 
     public CompletableFuture<List<Topic>> getTopic(String clusterId, String topicName) {
