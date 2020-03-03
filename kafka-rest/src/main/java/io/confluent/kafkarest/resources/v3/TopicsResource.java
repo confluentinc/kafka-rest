@@ -22,65 +22,64 @@ import java.util.stream.Collectors;
 
 @Path("/v3/clusters/{clusterId}/topics")
 public final class TopicsResource {
-    private final TopicManager topicManager;
-    private final UrlFactory urlFactory;
+  private final TopicManager topicManager;
+  private final UrlFactory urlFactory;
 
-    @Inject
-    public TopicsResource(TopicManager topicManager, UrlFactory urlFactory) {
-        this.topicManager = topicManager;
-        this.urlFactory = urlFactory;
-    }
+  @Inject
+  public TopicsResource(TopicManager topicManager, UrlFactory urlFactory) {
+    this.topicManager = topicManager;
+    this.urlFactory = urlFactory;
+  }
 
-    @GET
-    @Produces(Versions.JSON_API)
-    public void listTopics(@Suspended AsyncResponse asyncResponse,
-                           @PathParam("clusterId") String clusterId) {
-        topicManager.listTopics(clusterId)
-            .thenApply(
-                    topics ->
-                            new ListTopicsResponse(
-                                    new CollectionLink(urlFactory.create("v3", "topics"), null),
-                                    topics.stream().map(this::toTopicData).collect(Collectors.toList())))
-            .whenComplete(
-                    (response, exception) -> {
-                        if (exception == null) {
-                            asyncResponse.resume(response);
-                        } else if (exception instanceof CompletionException) {
-                            asyncResponse.resume(exception.getCause());
-                        } else {
-                            asyncResponse.resume(exception);
-                        }
-                    });
-        //todo develop this logic
-    }
+  @GET
+  @Produces(Versions.JSON_API)
+  public void listTopics(@Suspended AsyncResponse asyncResponse,
+                         @PathParam("clusterId") String clusterId) {
+    topicManager.listTopics(clusterId)
+      .thenApply(
+        topics ->
+          new ListTopicsResponse(
+            new CollectionLink(urlFactory.create("v3", "topics"), null),
+            topics.stream().map(this::toTopicData).collect(Collectors.toList())))
+      .whenComplete(
+        (response, exception) -> {
+          if (exception == null) {
+            asyncResponse.resume(response);
+          } else if (exception instanceof CompletionException) {
+            asyncResponse.resume(exception.getCause());
+          } else {
+            asyncResponse.resume(exception);
+          }
+        });
+  }
 
-    @GET
-    @Path("/{topicName}")
-    @Produces(Versions.JSON_API)
-    public void getTopic(@Suspended AsyncResponse asyncResponse,
-        @PathParam("clusterId") String clusterId,
-        @PathParam("topicName") String topicName) {
-        topicManager.getTopic(clusterId, topicName);
-        //todo develop remaining logic
-    }
+  @GET
+  @Path("/{topicName}")
+  @Produces(Versions.JSON_API)
+  public void getTopic(@Suspended AsyncResponse asyncResponse,
+                       @PathParam("clusterId") String clusterId,
+                       @PathParam("topicName") String topicName) {
+    topicManager.getTopic(clusterId, topicName);
+    // todo develop this logic
+  }
 
-    private TopicData toTopicData(Topic topic) {
-        Relationship configs =
-                new Relationship(urlFactory.create("v3", "topic", topic.getName(), "configs"));
-        Relationship replicationFactor = new Relationship(urlFactory.create("v3", "topic", topic.getName(), "replicationFactor"));
+  private TopicData toTopicData(Topic topic) {
+    Relationship configs =
+      new Relationship(urlFactory.create("v3", "topic", topic.getName(), "configs"));
+    Relationship replicationFactor = new Relationship(urlFactory.create("v3", "topic", topic.getName(), "replicationFactor"));
 
-        Relationship isInternal =
-                new Relationship(urlFactory.create("v3", "topic", topic.getName(), "isInternal"));
-        Relationship partitions =
-                new Relationship((urlFactory.create("v3", "topic", topic.getName(), "cluster")));
+    Relationship isInternal =
+      new Relationship(urlFactory.create("v3", "topic", topic.getName(), "isInternal"));
+    Relationship partitions =
+      new Relationship(urlFactory.create("v3", "topic", topic.getName(), "cluster"));
 
-        return new TopicData(
-                new ResourceLink(urlFactory.create("v3", "topic", topic.getName())),
-                topic.getName(),
-                isInternal,
-                replicationFactor,
-                configs,
-                partitions);
-    }
+    return new TopicData(
+      new ResourceLink(urlFactory.create("v3", "topic", topic.getName())),
+      topic.getName(),
+      isInternal,
+      replicationFactor,
+      configs,
+      partitions);
+  }
 
 }

@@ -88,10 +88,10 @@ public final class Topic {
     }
     Topic topic = (Topic) o;
     return Objects.equals(name, topic.name)
-        && Objects.equals(configs, topic.configs)
-        && Objects.equals(partitions, topic.partitions)
-        && Objects.equals(replicationFactor, topic.replicationFactor)
-        && Objects.equals(isInternal, topic.isInternal);
+      && Objects.equals(configs, topic.configs)
+      && Objects.equals(partitions, topic.partitions)
+      && Objects.equals(replicationFactor, topic.replicationFactor)
+      && Objects.equals(isInternal, topic.isInternal);
   }
 
   @Override
@@ -102,12 +102,12 @@ public final class Topic {
   @Override
   public String toString() {
     return new StringJoiner(", ", Topic.class.getSimpleName() + "[", "]")
-        .add("name='" + name + "'")
-        .add("configs=" + configs)
-        .add("partitions=" + partitions)
-        .add("replication factor=" + replicationFactor)
-        .add("isInternal="+isInternal)
-        .toString();
+      .add("name='" + name + "'")
+      .add("configs=" + configs)
+      .add("partitions=" + partitions)
+      .add("replication factor=" + replicationFactor)
+      .add("isInternal=" + isInternal)
+      .toString();
   }
 
   public static final class Builder {
