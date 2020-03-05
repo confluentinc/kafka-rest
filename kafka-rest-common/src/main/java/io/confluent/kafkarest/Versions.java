@@ -20,6 +20,9 @@ import java.util.List;
 
 public class Versions {
 
+  // Constants for version 3
+  public static final String JSON_API = "application/vnd.api+json";
+
   // Constants for version 2
   public static final String KAFKA_V2_JSON = "application/vnd.kafka.v2+json";
   // This is set < 1 because it is only the most-specific type if there isn't an embedded data type.

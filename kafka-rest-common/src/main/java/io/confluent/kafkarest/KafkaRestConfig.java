@@ -65,6 +65,13 @@ public class KafkaRestConfig extends RestConfig {
       + " hostname is used";
   public static final String HOST_NAME_DEFAULT = "";
 
+  public static final String ADVERTISED_LISTENERS_CONFIG = "advertised.listeners";
+  protected static final String ADVERTISED_LISTENERS_DOC =
+      "List of advertised listeners. Used when generating absolute URLs in responses. Protocols"
+          + " http and https are supported. Each listener must include the protocol, hostname, and"
+          + " port. For example: http://myhost:8080, https://0.0.0.0:8081";
+  protected static final String ADVERTISED_LISTENERS_DEFAULT = "";
+
   public static final String CONSUMER_MAX_THREADS_CONFIG = "consumer.threads";
   private static final String CONSUMER_MAX_THREADS_DOC =
       "The maximum number of threads to run consumer requests on."
@@ -341,6 +348,13 @@ public class KafkaRestConfig extends RestConfig {
         Type.STRING,
         HOST_NAME_DEFAULT,
         Importance.MEDIUM, HOST_NAME_DOC
+    )
+    .define(
+        ADVERTISED_LISTENERS_CONFIG,
+        Type.LIST,
+        ADVERTISED_LISTENERS_DEFAULT,
+        Importance.MEDIUM,
+        ADVERTISED_LISTENERS_DOC
     )
     .define(
         CONSUMER_MAX_THREADS_CONFIG,
