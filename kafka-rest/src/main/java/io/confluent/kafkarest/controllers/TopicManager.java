@@ -3,6 +3,7 @@ package io.confluent.kafkarest.controllers;
 import io.confluent.kafkarest.entities.Topic;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -14,5 +15,5 @@ public interface TopicManager {
    */
   CompletableFuture<List<Topic>> listTopics(String clusterId);
 
-  CompletableFuture<Topic> getTopic(String clusterId, String topicName);
+  CompletableFuture<Optional<Topic>> getTopic(String clusterId, String topicName);
 }

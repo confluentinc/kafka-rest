@@ -30,15 +30,18 @@ public final class Topic {
 
   private final List<Partition> partitions;
 
-  private final long replicationFactor;
+  private final int replicationFactor;
 
   private final boolean isInternal;
 
+  private final String clusterId;
+
   public Topic(String name,
-               Properties configs,
-               List<Partition> partitions,
-               long replicationFactor,
-               boolean isInternal) {
+      Properties configs,
+      List<Partition> partitions,
+      int replicationFactor,
+      boolean isInternal,
+      String clusterId) {
     if (name.isEmpty()) {
       throw new IllegalArgumentException();
     }
@@ -50,12 +53,13 @@ public final class Topic {
     this.partitions = partitions;
     this.replicationFactor = replicationFactor;
     this.isInternal = isInternal;
+    this.clusterId = clusterId;
   }
 
   public Topic(String name,
-               Properties configs,
-               List<Partition> partitions) {
-    this(name, configs, partitions, 0, false);
+      Properties configs,
+      List<Partition> partitions) {
+    this(name, configs, partitions, 0, false, "");
   }
 
   public String getName() {
@@ -70,12 +74,16 @@ public final class Topic {
     return partitions;
   }
 
-  public long getReplicationFactor() {
+  public int getReplicationFactor() {
     return replicationFactor;
   }
 
   public boolean getIsInternal() {
     return isInternal;
+  }
+
+  public String getClusterId() {
+    return clusterId;
   }
 
   @Override
@@ -86,36 +94,40 @@ public final class Topic {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Topic topic = (Topic) o;
-    return Objects.equals(name, topic.name)
-      && Objects.equals(configs, topic.configs)
-      && Objects.equals(partitions, topic.partitions)
-      && Objects.equals(replicationFactor, topic.replicationFactor)
-      && Objects.equals(isInternal, topic.isInternal);
+    Topic that = (Topic) o;
+    return Objects.equals(name, that.name)
+        && Objects.equals(configs, that.configs)
+        && Objects.equals(partitions, that.partitions)
+        && Objects.equals(replicationFactor, that.replicationFactor)
+        && Objects.equals(isInternal, that.isInternal)
+        && Objects.equals(clusterId, that.clusterId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, configs, partitions, isInternal, replicationFactor);
+    return Objects.hash(name, configs, partitions, isInternal, replicationFactor, clusterId);
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", Topic.class.getSimpleName() + "[", "]")
-      .add("name='" + name + "'")
-      .add("configs=" + configs)
-      .add("partitions=" + partitions)
-      .add("replication factor=" + replicationFactor)
-      .add("isInternal=" + isInternal)
-      .toString();
+        .add("name='" + name + "'")
+        .add("configs=" + configs)
+        .add("partitions=" + partitions)
+        .add("replication factor=" + replicationFactor)
+        .add("isInternal=" + isInternal)
+        .add("clusterId=" + clusterId)
+        .toString();
   }
 
   public static final class Builder {
+
     private String topicName;
     private Properties configs;
     private List<Partition> partitions = new ArrayList<>();
-    private long replicationFactor;
+    private int replicationFactor;
     private boolean isInternal;
+    private String clusterId;
 
     public Builder() {
     }
@@ -135,7 +147,7 @@ public final class Topic {
       return this;
     }
 
-    public Builder setReplicationFactor(long replicationFactor) {
+    public Builder setReplicationFactor(int replicationFactor) {
       this.replicationFactor = replicationFactor;
       return this;
     }
@@ -145,8 +157,13 @@ public final class Topic {
       return this;
     }
 
+    public Builder setClusterId(String clusterId) {
+      this.clusterId = clusterId;
+      return this;
+    }
+
     public Topic build() {
-      return new Topic(topicName, configs, partitions, replicationFactor, isInternal);
+      return new Topic(topicName, configs, partitions, replicationFactor, isInternal, clusterId);
     }
   }
 }

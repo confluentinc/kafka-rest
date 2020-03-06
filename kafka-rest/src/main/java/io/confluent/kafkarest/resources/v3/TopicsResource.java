@@ -4,6 +4,7 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.v3.GetTopicResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicsResponse;
 import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
@@ -12,6 +13,7 @@ import io.confluent.kafkarest.response.UrlFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Path("/v3/clusters/{clusterId}/topics")
 public final class TopicsResource {
+
   private final TopicManager topicManager;
   private final UrlFactory urlFactory;
 
@@ -34,52 +37,77 @@ public final class TopicsResource {
   @GET
   @Produces(Versions.JSON_API)
   public void listTopics(@Suspended AsyncResponse asyncResponse,
-                         @PathParam("clusterId") String clusterId) {
+      @PathParam("clusterId") String clusterId) {
     topicManager.listTopics(clusterId)
-      .thenApply(
-        topics ->
-          new ListTopicsResponse(
-            new CollectionLink(urlFactory.create("v3", "topics"), null),
-            topics.stream().map(this::toTopicData).collect(Collectors.toList())))
-      .whenComplete(
-        (response, exception) -> {
-          if (exception == null) {
-            asyncResponse.resume(response);
-          } else if (exception instanceof CompletionException) {
-            asyncResponse.resume(exception.getCause());
-          } else {
-            asyncResponse.resume(exception);
-          }
-        });
+        .thenApply(
+            topics ->
+                new ListTopicsResponse(
+                    new CollectionLink(urlFactory.create("v3", "clusters", clusterId, "topics"), null),
+                    topics.stream().map(this::toTopicData).collect(Collectors.toList())))
+        .whenComplete(
+            (response, exception) -> {
+              if (exception == null) {
+                asyncResponse.resume(response);
+              } else if (exception instanceof CompletionException) {
+                asyncResponse.resume(exception.getCause());
+              } else {
+                asyncResponse.resume(exception);
+              }
+            });
   }
 
   @GET
   @Path("/{topicName}")
   @Produces(Versions.JSON_API)
   public void getTopic(@Suspended AsyncResponse asyncResponse,
-                       @PathParam("clusterId") String clusterId,
-                       @PathParam("topicName") String topicName) {
-    topicManager.getTopic(clusterId, topicName);
-    // todo develop this logic
+      @PathParam("clusterId") String clusterId,
+      @PathParam("topicName") String topicName) {
+    topicManager.getTopic(clusterId, topicName)
+        .thenApply(
+            topic ->
+                topic.map(this::toTopicData)
+                    .map(GetTopicResponse::new)
+                    .orElseThrow(NotFoundException::new))
+        .whenComplete(
+            (response, exception) -> {
+              if (exception == null) {
+                asyncResponse.resume(response);
+              } else if (exception instanceof CompletionException) {
+                asyncResponse.resume(exception.getCause());
+              } else {
+                asyncResponse.resume(exception);
+              }
+            });
   }
 
   private TopicData toTopicData(Topic topic) {
     Relationship configs =
-      new Relationship(urlFactory.create("v3", "topic", topic.getName(), "configs"));
-    Relationship replicationFactor = new Relationship(urlFactory.create("v3", "topic", topic.getName(), "replicationFactor"));
-
-    Relationship isInternal =
-      new Relationship(urlFactory.create("v3", "topic", topic.getName(), "isInternal"));
+        new Relationship(urlFactory.create(
+            "v3",
+            "clusters",
+            topic.getClusterId(),
+            "topics",
+            topic.getName(),
+            "configs"));
     Relationship partitions =
-      new Relationship(urlFactory.create("v3", "topic", topic.getName(), "cluster"));
+        new Relationship(urlFactory.create(
+            "v3",
+            "clusters",
+            topic.getClusterId(),
+            "topics",
+            topic.getName(),
+            "partitions"
+        ));
 
     return new TopicData(
-      new ResourceLink(urlFactory.create("v3", "topic", topic.getName())),
-      topic.getName(),
-      isInternal,
-      replicationFactor,
-      configs,
-      partitions);
+        new ResourceLink(
+            urlFactory.create("v3", "clusters", topic.getClusterId(), "topics", topic.getName())),
+        topic.getName(),
+        topic.getClusterId(),
+        topic.getIsInternal(),
+        topic.getReplicationFactor(),
+        configs,
+        partitions);
   }
 
 }
