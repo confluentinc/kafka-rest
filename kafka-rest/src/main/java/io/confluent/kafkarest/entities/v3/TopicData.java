@@ -18,24 +18,24 @@ public class TopicData {
   private final Relationships relationships;
 
   public TopicData(
-        ResourceLink links,
-        String topic,
-        Relationship isInternal,
-        Relationship replicationFactor,
-        Relationship configuration,
-        Relationship partitions
+      ResourceLink links,
+      String topicName,
+      String clusterId,
+      boolean isInternal,
+      int replicationFactor,
+      Relationship configuration,
+      Relationship partitions
   ) {
     this.links = links;
-    this.attributes = new Attributes(topic);
-    this.relationships = new Relationships(isInternal,
-      replicationFactor,
-      configuration,
-      partitions);
+    this.attributes = new Attributes(topicName, clusterId, isInternal, replicationFactor);
+    this.relationships = new Relationships(
+        configuration,
+        partitions);
   }
 
   @JsonProperty("topic")
   public String topic() {
-    return attributes.getTopic();
+    return attributes.getTopicName();
   }
 
   @JsonProperty("links")
@@ -64,8 +64,8 @@ public class TopicData {
 
     TopicData that = (TopicData) o;
     return Objects.equals(links, that.links)
-      && Objects.equals(attributes, that.attributes)
-      && Objects.equals(relationships, that.relationships);
+        && Objects.equals(attributes, that.attributes)
+        && Objects.equals(relationships, that.relationships);
   }
 
   @Override
@@ -76,22 +76,45 @@ public class TopicData {
   @Override
   public String toString() {
     return new StringJoiner(", ", ClusterData.class.getSimpleName() + "[", "]")
-      .add("links=" + links)
-      .add("attributes=" + attributes)
-      .add("relationships=" + relationships)
-      .toString();
+        .add("links=" + links)
+        .add("attributes=" + attributes)
+        .add("relationships=" + relationships)
+        .toString();
   }
 
   public static final class Attributes {
-    private final String topic;
 
-    public Attributes(String topic) {
-      this.topic = Objects.requireNonNull(topic);
+    private final String topicName;
+    private final String clusterId;
+    private final boolean isInternal;
+    private final int replicationFactor;
+
+    public Attributes(String topicName, String clusterId, boolean isInternal,
+        int replicationFactor) {
+      this.topicName = topicName;
+      this.clusterId = Objects.requireNonNull(clusterId);
+      this.isInternal = Objects.requireNonNull(isInternal);
+      this.replicationFactor = Objects.requireNonNull(replicationFactor);
     }
 
     @JsonProperty("topic")
-    public String getTopic() {
-      return topic;
+    public String getTopicName() {
+      return topicName;
+    }
+
+    @JsonProperty("clusterId")
+    public String getClusterId() {
+      return clusterId;
+    }
+
+    @JsonProperty("isInternal")
+    public boolean isInternal() {
+      return isInternal;
+    }
+
+    @JsonProperty("replicationFactor")
+    public int getReplicationFactor() {
+      return replicationFactor;
     }
 
     @Override
@@ -102,27 +125,31 @@ public class TopicData {
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-      TopicData.Attributes that = (TopicData.Attributes) o;
-      return Objects.equals(topic, that.topic);
+      Attributes that = (Attributes) o;
+      return isInternal == that.isInternal &&
+          replicationFactor == that.replicationFactor &&
+          Objects.equals(topicName, that.topicName) &&
+          Objects.equals(clusterId, that.clusterId);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(topic);
+      return Objects.hash(topicName, clusterId, isInternal, replicationFactor);
     }
 
     @Override
     public String toString() {
       return new StringJoiner(", ", ClusterData.Attributes.class.getSimpleName() + "[", "]")
-        .add("topic='" + topic + "'")
-        .toString();
+          .add("topic='" + topicName + "'")
+          .add("clusterId='" + clusterId + "'")
+          .add("isInternal='" + isInternal + "'")
+          .add("replicationFactor='" + replicationFactor + "'")
+          .toString();
     }
   }
 
   public static final class Relationships {
 
-    private final Relationship isInternal;
-    private final Relationship replicationFactor;
     private final Relationship configuration;
     private final Relationship partitions;
 
@@ -130,24 +157,10 @@ public class TopicData {
     // private final Relationship clusterId;
 
     //todo check this later
-    public Relationships(Relationship isInternal,
-                         Relationship replicationFactor,
-                         Relationship configuration,
-                         Relationship partitions) {
-      this.isInternal = isInternal;
-      this.replicationFactor = replicationFactor;
+    public Relationships(Relationship configuration,
+        Relationship partitions) {
       this.configuration = configuration;
       this.partitions = partitions;
-    }
-
-    @JsonProperty("isInternal")
-    public Relationship getIsInternal() {
-      return isInternal;
-    }
-
-    @JsonProperty("replicationFactor")
-    public Relationship getReplicationFactor() {
-      return replicationFactor;
     }
 
     @JsonProperty("configuration")
@@ -170,27 +183,20 @@ public class TopicData {
       }
 
       Relationships that = (Relationships) o;
-      return Objects.equals(isInternal, that.isInternal)
-        && Objects.equals(replicationFactor, that.replicationFactor)
-        && Objects.equals(configuration, that.configuration)
-        && Objects.equals(partitions, that.partitions);
+      return Objects.equals(configuration, that.configuration)
+          && Objects.equals(partitions, that.partitions);
 
     }
 
     public int hashCode() {
-      return Objects.hash(isInternal,
-        replicationFactor,
-        configuration,
-        partitions);
+      return Objects.hash(configuration, partitions);
     }
 
     public String toString() {
       return new StringJoiner(", ", Relationships.class.getSimpleName() + "[", "]")
-        .add("isInternal=" + isInternal)
-        .add("replicationFactor=" + replicationFactor)
-        .add("configuration=" + configuration)
-        .add("partitions=" + partitions)
-        .toString();
+          .add("configuration=" + configuration)
+          .add("partitions=" + partitions)
+          .toString();
     }
   }
 }

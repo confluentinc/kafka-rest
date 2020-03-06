@@ -26,7 +26,7 @@ public class GetTopicResponse {
 
   private final TopicData data;
 
-  public GetTopicResponse(TopicData topicData) {
+  public GetTopicResponse(TopicData data) {
     this.data = Objects.requireNonNull(data);
   }
 

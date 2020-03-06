@@ -16,14 +16,22 @@
 package io.confluent.kafkarest.controllers;
 
 import io.confluent.kafkarest.entities.Partition;
+import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
+import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.admin.TopicListing;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.Node;
+import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.errors.TimeoutException;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
@@ -37,14 +45,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
-import static io.confluent.kafkarest.TestUtils.failedFuture;
+import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class TopicManagerImplTest {
@@ -53,16 +61,32 @@ public class TopicManagerImplTest {
   private static final Node NODE_1 = new Node(1, "broker-1", 9091);
   private static final Node NODE_2 = new Node(2, "broker-2", 9092);
   private static final Node NODE_3 = new Node(3, "broker-3", 9093);
+  private static final Node NODE_4 = new Node(4, "broker-4", 9094);
+
   private static final List<Node> NODES = Arrays.asList(NODE_1, NODE_2, NODE_3);
 
   // mock data for list topics
-  TopicListing topicListing1 = new TopicListing("topic1", true);
-  TopicListing topicListing2 = new TopicListing("topic2", true);
-  TopicListing topicListing3 = new TopicListing("topic3", false);
+  private static final String TOPIC_NAME = "topic1";
+  private static final TopicListing TOPIC_LISTING_1 = new TopicListing("topic1", true);
+  private static final TopicListing TOPIC_LISTING_2 = new TopicListing("topic2", true);
+  private static final TopicListing TOPIC_LISTING_3 = new TopicListing("topic3", false);
   private static final Map<String, TopicListing> TOPICS_MAP = new HashMap<>();
 
-  List<Partition> partitions = new ArrayList<Partition>(Collections.singleton(
-    new Partition(0, 1, null)));
+
+  // mock data for get topic
+  List<Node> REPLICAS = Arrays.asList(NODE_2, NODE_3, NODE_4);
+  TopicPartitionInfo TOPIC_PARTITION_INFO = new TopicPartitionInfo(0, NODE_1, REPLICAS, REPLICAS);
+  TopicDescription TOPIC_DESCRIPTION = new TopicDescription("topic1", true,
+      Collections.singletonList(TOPIC_PARTITION_INFO),new HashSet<>());
+  Map<String, TopicDescription> TOPIC_DESC_MAP = new HashMap<>();
+
+  PartitionReplica PARTITION_REPLICA_1 = new PartitionReplica(2, false, true);
+  PartitionReplica PARTITION_REPLICA_2 = new PartitionReplica(3, false, true);
+  PartitionReplica PARTITION_REPLICA_3 = new PartitionReplica(4, false, true);
+
+  List<PartitionReplica> partitionReplicas = new ArrayList<>();
+
+  List<Partition> PARTITIONS = new ArrayList<>();
 
   @Rule
   public final EasyMockRule mocks = new EasyMockRule(this);
@@ -75,7 +99,7 @@ public class TopicManagerImplTest {
   @Mock
   private ListTopicsResult listTopicsResult;
   @Mock
-  private DescribeTopicsResult describeTopicsResult;
+  private DescribeTopicsResult describeTopicResult;
 
   private TopicManagerImpl topicManager;
   private ClusterManagerImpl clusterManager;
@@ -84,40 +108,49 @@ public class TopicManagerImplTest {
   public void setUp() {
     clusterManager = new ClusterManagerImpl(adminClient);
     topicManager = new TopicManagerImpl(adminClient, clusterManager);
-    initializeTopicsMap();
+    populateMockData();
   }
 
-  public void initializeTopicsMap() {
-    TOPICS_MAP.put(topicListing1.name(), topicListing1);
-    TOPICS_MAP.put(topicListing2.name(), topicListing2);
-    TOPICS_MAP.put(topicListing3.name(), topicListing3);
+  public void populateMockData() {
+    TOPICS_MAP.put(TOPIC_LISTING_1.name(), TOPIC_LISTING_1);
+    TOPICS_MAP.put(TOPIC_LISTING_2.name(), TOPIC_LISTING_2);
+    TOPICS_MAP.put(TOPIC_LISTING_3.name(), TOPIC_LISTING_3);
+    TOPIC_DESC_MAP.put(TOPIC_NAME, TOPIC_DESCRIPTION);
+    partitionReplicas.add(PARTITION_REPLICA_1);
+    partitionReplicas.add(PARTITION_REPLICA_2);
+    partitionReplicas.add(PARTITION_REPLICA_3);
+    Partition partition = new Partition(0, 1, partitionReplicas);
+    PARTITIONS.add(partition);
   }
 
   @Test
   public void testListTopics() throws Exception {
+    expect(adminClient.describeCluster(anyObject())).andReturn(describeClusterResult);
+    expect(describeClusterResult.clusterId()).andReturn(KafkaFuture.completedFuture(CLUSTER_ID));
+    expect(describeClusterResult.controller()).andReturn(KafkaFuture.completedFuture(NODE_1));
+    expect(describeClusterResult.nodes()).andReturn(KafkaFuture.completedFuture(NODES));
     expect(adminClient.listTopics()).andReturn(listTopicsResult);
-    expect(listTopicsResult.namesToListings()).andReturn(KafkaFuture.completedFuture(TOPICS_MAP));
-    expect(listTopicsResult.names()).andReturn(KafkaFuture.completedFuture(TOPICS_MAP.keySet()));
     expect(listTopicsResult.listings()).andReturn(KafkaFuture.completedFuture(TOPICS_MAP.values()));
-    replay(adminClient, listTopicsResult);
+    expect(adminClient.describeTopics(anyObject())).andReturn(describeTopicResult);
+    expect(describeTopicResult.all()).andReturn(KafkaFuture.completedFuture(TOPIC_DESC_MAP));
+    replay(adminClient, listTopicsResult, describeClusterResult, describeTopicResult);
 
     List<Topic> actualTopics = topicManager.listTopics(CLUSTER_ID).get();
 
     List<Topic> expectedTopics = new ArrayList<>();
-    expectedTopics.add(new Topic("topic1", new Properties(), partitions, 0, true));
-    expectedTopics.add(new Topic("topic2", new Properties(), partitions, 0, true));
-    expectedTopics.add(new Topic("topic3", new Properties(), partitions, 0, false));
-
+    expectedTopics.add(new Topic(TOPIC_NAME, new Properties(), PARTITIONS, 3, true, CLUSTER_ID));
     assertEquals(expectedTopics, actualTopics);
   }
 
   @Test
   public void testListTopics_timeoutException_returnTimeoutException() throws Exception {
+    expect(adminClient.describeCluster(anyObject())).andReturn(describeClusterResult);
+    expect(describeClusterResult.clusterId()).andReturn(KafkaFuture.completedFuture(CLUSTER_ID));
+    expect(describeClusterResult.controller()).andReturn(KafkaFuture.completedFuture(NODE_1));
+    expect(describeClusterResult.nodes()).andReturn(KafkaFuture.completedFuture(NODES));
     expect(adminClient.listTopics()).andReturn(listTopicsResult);
-    expect(listTopicsResult.namesToListings()).andReturn(failedFuture(new TimeoutException()));
-    expect(listTopicsResult.names()).andReturn(failedFuture(new TimeoutException()));
     expect(listTopicsResult.listings()).andReturn(failedFuture(new TimeoutException()));
-    replay(adminClient, listTopicsResult);
+    replay(adminClient, describeClusterResult, listTopicsResult);
 
     CompletableFuture<List<Topic>> topics = topicManager.listTopics(CLUSTER_ID);
 
@@ -127,5 +160,59 @@ public class TopicManagerImplTest {
     } catch (ExecutionException e) {
       assertEquals(TimeoutException.class, e.getCause().getClass());
     }
+  }
+
+  @Test
+  public void testListTopic_differentClusterId_returnsEmptyList() throws Exception {
+    expect(adminClient.describeCluster(anyObject())).andReturn(describeClusterResult);
+    expect(describeClusterResult.clusterId()).andReturn(KafkaFuture.completedFuture(CLUSTER_ID));
+    expect(describeClusterResult.controller()).andReturn(KafkaFuture.completedFuture(NODE_1));
+    expect(describeClusterResult.nodes()).andReturn(KafkaFuture.completedFuture(NODES));
+    replay(adminClient, describeClusterResult);
+
+    List<Topic> topics = topicManager.listTopics("2").get();
+    assertTrue(topics.isEmpty());
+  }
+
+  @Test
+  public void testGetTopic_ownClusterId_returnsTopic() throws Exception {
+    expect(adminClient.describeCluster(anyObject())).andReturn(describeClusterResult);
+    expect(describeClusterResult.clusterId()).andReturn(KafkaFuture.completedFuture(CLUSTER_ID));
+    expect(describeClusterResult.controller()).andReturn(KafkaFuture.completedFuture(NODE_1));
+    expect(describeClusterResult.nodes()).andReturn(KafkaFuture.completedFuture(NODES));
+    expect(adminClient.describeTopics(anyObject())).andReturn(describeTopicResult);
+    expect(describeTopicResult.all()).andReturn(KafkaFuture.completedFuture(TOPIC_DESC_MAP));
+    replay(adminClient, describeTopicResult, describeClusterResult);
+
+    Topic topic = topicManager.getTopic(CLUSTER_ID, TOPIC_NAME).get().get();
+    Topic expectedTopic =
+        new Topic(TOPIC_NAME,
+            new Properties(),
+            PARTITIONS,
+            3,
+            true,
+            CLUSTER_ID
+            );
+
+    assertEquals(expectedTopic, topic);
+  }
+
+  @Test
+  public void testGetTopic_differentClusterId_returnsNull() throws Exception {
+    expect(adminClient.describeCluster(anyObject())).andReturn(describeClusterResult);
+    expect(describeClusterResult.clusterId()).andReturn(KafkaFuture.completedFuture(CLUSTER_ID));
+    expect(describeClusterResult.controller()).andReturn(KafkaFuture.completedFuture(NODE_1));
+    expect(describeClusterResult.nodes()).andReturn(KafkaFuture.completedFuture(NODES));
+    expect(adminClient.describeTopics(anyObject())).andReturn(describeTopicResult);
+    expect(describeTopicResult.all()).andReturn(KafkaFuture.completedFuture(TOPIC_DESC_MAP));
+    replay(adminClient, describeTopicResult, describeClusterResult);
+
+    Optional<Topic> topic = topicManager.getTopic("2", TOPIC_NAME).get();
+    assertFalse(topic.isPresent());
+  }
+
+  private static <T> KafkaFuture<T> failedFuture(RuntimeException exception) {
+    KafkaFuture<T> future = KafkaFuture.completedFuture(null);
+    return future.whenComplete((value, error) -> { throw exception; });
   }
 }
