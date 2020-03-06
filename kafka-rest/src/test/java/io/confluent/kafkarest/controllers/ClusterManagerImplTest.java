@@ -83,11 +83,14 @@ public class ClusterManagerImplTest {
         singletonList(
             new Cluster(
                 CLUSTER_ID,
-                new Broker(NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
+                new Broker(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
                 Arrays.asList(
-                    new Broker(NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
-                    new Broker(NODE_2.id(), NODE_2.host(), NODE_2.port(), NODE_2.rack()),
-                    new Broker(NODE_3.id(), NODE_3.host(), NODE_3.port(), NODE_3.rack()))));
+                    new Broker(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(),
+                        NODE_1.rack()),
+                    new Broker(CLUSTER_ID, NODE_2.id(), NODE_2.host(), NODE_2.port(),
+                        NODE_2.rack()),
+                    new Broker(CLUSTER_ID, NODE_3.id(), NODE_3.host(), NODE_3.port(),
+                        NODE_3.rack()))));
 
     assertEquals(expected, clusters);
   }
@@ -122,9 +125,12 @@ public class ClusterManagerImplTest {
                 CLUSTER_ID,
                 /* controller= */ null,
                 Arrays.asList(
-                    new Broker(NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
-                    new Broker(NODE_2.id(), NODE_2.host(), NODE_2.port(), NODE_2.rack()),
-                    new Broker(NODE_3.id(), NODE_3.host(), NODE_3.port(), NODE_3.rack()))));
+                    new Broker(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(),
+                        NODE_1.rack()),
+                    new Broker(CLUSTER_ID, NODE_2.id(), NODE_2.host(), NODE_2.port(),
+                        NODE_2.rack()),
+                    new Broker(CLUSTER_ID, NODE_3.id(), NODE_3.host(), NODE_3.port(),
+                        NODE_3.rack()))));
 
     assertEquals(expected, clusters);
   }
@@ -178,11 +184,11 @@ public class ClusterManagerImplTest {
     Cluster expected =
         new Cluster(
             CLUSTER_ID,
-            new Broker(NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
+            new Broker(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
             Arrays.asList(
-                new Broker(NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
-                new Broker(NODE_2.id(), NODE_2.host(), NODE_2.port(), NODE_2.rack()),
-                new Broker(NODE_3.id(), NODE_3.host(), NODE_3.port(), NODE_3.rack())));
+                new Broker(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
+                new Broker(CLUSTER_ID, NODE_2.id(), NODE_2.host(), NODE_2.port(), NODE_2.rack()),
+                new Broker(CLUSTER_ID, NODE_3.id(), NODE_3.host(), NODE_3.port(), NODE_3.rack())));
 
     assertEquals(expected, cluster);
   }
@@ -202,6 +208,8 @@ public class ClusterManagerImplTest {
 
   private static <T> KafkaFuture<T> failedFuture(RuntimeException exception) {
     KafkaFuture<T> future = KafkaFuture.completedFuture(null);
-    return future.whenComplete((value, error) -> { throw exception; });
+    return future.whenComplete((value, error) -> {
+      throw exception;
+    });
   }
 }

@@ -66,7 +66,8 @@ final class ClusterManagerImpl implements ClusterManager {
               if (controller == null || controller.isEmpty()) {
                 return clusterBuilder;
               }
-              return clusterBuilder.setController(Broker.fromNode(controller));
+              return clusterBuilder.setController(
+                  Broker.fromNode(clusterBuilder.getClusterId(), controller));
             })
         .thenCombine(
             KafkaFutures.toCompletableFuture(describeClusterResult.nodes()),
@@ -80,7 +81,7 @@ final class ClusterManagerImpl implements ClusterManager {
               return clusterBuilder.addAllBrokers(
                   nodes.stream()
                       .filter(node -> node != null && !node.isEmpty())
-                      .map(Broker::fromNode)
+                      .map(node -> Broker.fromNode(clusterBuilder.getClusterId(), node))
                       .collect(Collectors.toList()));
             })
         .thenApply(

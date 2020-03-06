@@ -96,6 +96,11 @@ public final class Cluster {
     public Builder() {
     }
 
+    @Nullable
+    public String getClusterId() {
+      return clusterId;
+    }
+
     public Builder setClusterId(String clusterId) {
       this.clusterId = clusterId;
       return this;

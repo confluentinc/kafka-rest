@@ -25,23 +25,34 @@ import org.apache.kafka.common.Node;
  */
 public final class Broker {
 
-  private int brokerId;
+  private final String clusterId;
+
+  private final int brokerId;
 
   @Nullable
-  private String host;
+  private final String host;
 
   @Nullable
-  private Integer port;
+  private final Integer port;
 
   @Nullable
-  private String rack;
+  private final String rack;
 
   public Broker(
-      int brokerId, @Nullable String host, @Nullable Integer port, @Nullable String rack) {
+      String clusterId,
+      int brokerId,
+      @Nullable String host,
+      @Nullable Integer port,
+      @Nullable String rack) {
+    this.clusterId = clusterId;
     this.brokerId = brokerId;
     this.host = host;
     this.port = port;
     this.rack = rack;
+  }
+
+  public String getClusterId() {
+    return clusterId;
   }
 
   public int getBrokerId() {
@@ -63,8 +74,9 @@ public final class Broker {
     return rack;
   }
 
-  public static Broker fromNode(Node node) {
+  public static Broker fromNode(String clusterId, Node node) {
     return new Broker(
+        clusterId,
         node.id(),
         !node.host().equals("") ? node.host() : null,
         node.port() != -1 ? node.port() : null,
@@ -80,7 +92,8 @@ public final class Broker {
       return false;
     }
     Broker broker = (Broker) o;
-    return brokerId == broker.brokerId
+    return Objects.equals(clusterId, broker.clusterId)
+        && brokerId == broker.brokerId
         && Objects.equals(host, broker.host)
         && Objects.equals(port, broker.port)
         && Objects.equals(rack, broker.rack);
@@ -88,12 +101,13 @@ public final class Broker {
 
   @Override
   public int hashCode() {
-    return Objects.hash(brokerId, host, port, rack);
+    return Objects.hash(clusterId, brokerId, host, port, rack);
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", Broker.class.getSimpleName() + "[", "]")
+        .add("clusterId=" + clusterId)
         .add("brokerId=" + brokerId)
         .add("host='" + host + "'")
         .add("port=" + port)

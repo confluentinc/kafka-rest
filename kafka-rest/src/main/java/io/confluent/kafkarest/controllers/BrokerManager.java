@@ -15,15 +15,24 @@
 
 package io.confluent.kafkarest.controllers;
 
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import io.confluent.kafkarest.entities.Broker;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
- * A module to install the various controllers required by the application.
+ * A service to manage Kafka {@link Broker Brokers}.
  */
-public final class ControllersModule extends AbstractBinder {
+public interface BrokerManager {
 
-  protected void configure() {
-    bind(BrokerManagerImpl.class).to(BrokerManager.class);
-    bind(ClusterManagerImpl.class).to(ClusterManager.class);
-  }
+  /**
+   * Returns the list of Kafka {@link Broker Brokers} belonging to the {@link
+   * io.confluent.kafkarest.entities.Cluster} with the given {@code clusterId}.
+   */
+  CompletableFuture<List<Broker>> listBrokers(String clusterId);
+
+  /**
+   * Returns the Kafka {@link Broker} with the given {@code brokerId}.
+   */
+  CompletableFuture<Optional<Broker>> getBroker(String clusterId, int brokerId);
 }
