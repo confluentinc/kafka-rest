@@ -34,8 +34,10 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Response.Status;
 
 @Path("/v3/clusters/{clusterId}/brokers")
 public final class BrokersResource {
@@ -83,6 +85,22 @@ public final class BrokersResource {
                         .orElseThrow(NotFoundException::new));
 
     AsyncResponses.asyncResume(asyncResponse, response);
+  }
+
+  @GET
+  @Path("/{brokerId}/configurations")
+  @Produces(Versions.JSON_API)
+  public void listBrokerConfigurations(
+      @PathParam("clusterId") String clusterId, @PathParam("brokerId") String brokerId) {
+    throw new WebApplicationException(Status.NOT_IMPLEMENTED);
+  }
+
+  @GET
+  @Path("/{brokerId}/partition_replicas")
+  @Produces(Versions.JSON_API)
+  public void listBrokerPartitionReplicas(
+      @PathParam("clusterId") String clusterId, @PathParam("brokerId") String brokerId) {
+    throw new WebApplicationException(Status.NOT_IMPLEMENTED);
   }
 
   private BrokerData toBrokerData(Broker broker) {
