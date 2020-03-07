@@ -1,8 +1,21 @@
+/*
+ * Copyright 2018 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.confluent.kafkarest.entities.v3;
 
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Objects;
 import java.util.StringJoiner;
 
@@ -97,22 +110,22 @@ public class TopicData {
       this.replicationFactor = Objects.requireNonNull(replicationFactor);
     }
 
-    @JsonProperty("topic")
+    @JsonProperty("topic_name")
     public String getTopicName() {
       return topicName;
     }
 
-    @JsonProperty("clusterId")
+    @JsonProperty("cluster_id")
     public String getClusterId() {
       return clusterId;
     }
 
-    @JsonProperty("isInternal")
+    @JsonProperty("is_internal")
     public boolean isInternal() {
       return isInternal;
     }
 
-    @JsonProperty("replicationFactor")
+    @JsonProperty("replication_factor")
     public int getReplicationFactor() {
       return replicationFactor;
     }
@@ -126,10 +139,10 @@ public class TopicData {
         return false;
       }
       Attributes that = (Attributes) o;
-      return isInternal == that.isInternal &&
-          replicationFactor == that.replicationFactor &&
-          Objects.equals(topicName, that.topicName) &&
-          Objects.equals(clusterId, that.clusterId);
+      return isInternal == that.isInternal
+          && replicationFactor == that.replicationFactor
+          && Objects.equals(topicName, that.topicName)
+          && Objects.equals(clusterId, that.clusterId);
     }
 
     @Override
