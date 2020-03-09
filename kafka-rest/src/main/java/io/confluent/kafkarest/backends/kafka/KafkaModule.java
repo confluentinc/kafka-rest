@@ -18,7 +18,9 @@ package io.confluent.kafkarest.backends.kafka;
 import io.confluent.kafkarest.KafkaRestContext;
 import java.util.Objects;
 import org.apache.kafka.clients.admin.Admin;
+import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.process.internal.RequestScoped;
 
 /**
  * A module to configure access to Kafka.
@@ -37,7 +39,33 @@ public final class KafkaModule extends AbstractBinder {
 
   @Override
   protected void configure() {
-    // Reuse the AdminClient being constructed in KafkaRestContext.
-    bind(context.getAdmin()).to(Admin.class);
+    // Reuse the AdminClient being constructed in KafkaRestContext. The request-scope is needed
+    // because the Admin creation logic uses request-scoped auth information. KafkaRestContext
+    // itself is a proxied instance, so the result will be cached there appropriately, after it is
+    // created. See KafkaRestContextProvider and ContextInvocationHandler for more information.
+    bindFactory(new AdminFactory(context))
+        .to(Admin.class)
+        .in(RequestScoped.class)
+        .proxy(true)
+        .proxyForSameScope(true);
+  }
+
+  private static final class AdminFactory implements Factory<Admin> {
+
+    private final KafkaRestContext context;
+
+    private AdminFactory(KafkaRestContext context) {
+      this.context = Objects.requireNonNull(context);
+    }
+
+    @Override
+    public Admin provide() {
+      return context.getAdmin();
+    }
+
+    @Override
+    public void dispose(Admin instance) {
+      // Do nothing.
+    }
   }
 }
