@@ -20,7 +20,7 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
- * A KafkaTopic resource type
+ * A KafkaTopic resource type.
  */
 public final class TopicData {
 

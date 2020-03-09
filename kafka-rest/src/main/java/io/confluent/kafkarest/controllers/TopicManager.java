@@ -27,9 +27,13 @@ import java.util.concurrent.CompletableFuture;
 public interface TopicManager {
 
   /**
-   * Returns the list of Kafka {@link Topic Topics} known.
+   * Returns the list of Kafka {@link Topic Topics} belonging to the {@link
+   * io.confluent.kafkarest.entities.Cluster} with the given {@code clusterId}.
    */
   CompletableFuture<List<Topic>> listTopics(String clusterId);
 
+  /**
+   * Returns the Kafka {@link Topic} with the given {@code brokerId}.
+   */
   CompletableFuture<Optional<Topic>> getTopic(String clusterId, String topicName);
 }

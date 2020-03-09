@@ -22,7 +22,7 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
- * Response body for {@code GET /v3/clusters/<clusterId>/topics} requests
+ * Response body for {@code GET /v3/clusters/<clusterId>/topics} requests.
  */
 public final class ListTopicsResponse {
 
