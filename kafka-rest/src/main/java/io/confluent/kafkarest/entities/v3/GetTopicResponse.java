@@ -20,9 +20,9 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
- * Response body for {@code GET /topics/<topic>} requests.
+ * Response body for {@code GET /v3/cluster/<clusterId>/topics/<topicName>} requests.
  */
-public class GetTopicResponse {
+public final class GetTopicResponse {
 
   private final TopicData data;
 
@@ -55,7 +55,7 @@ public class GetTopicResponse {
   @Override
   public String toString() {
     return new StringJoiner(", ", GetTopicResponse.class.getSimpleName() + "[", "]")
-      .add("data=" + data)
-      .toString();
+        .add("data=" + data)
+        .toString();
   }
 }

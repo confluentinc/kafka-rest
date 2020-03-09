@@ -22,11 +22,12 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
- * Response body for {@code GET /topics} requests
+ * Response body for {@code GET /v3/clusters/<clusterId>/topics} requests
  */
-public class ListTopicsResponse {
+public final class ListTopicsResponse {
 
   private final CollectionLink links;
+
   private final List<TopicData> data;
 
   public ListTopicsResponse(CollectionLink links, List<TopicData> data) {
@@ -53,8 +54,7 @@ public class ListTopicsResponse {
       return false;
     }
     ListTopicsResponse that = (ListTopicsResponse) o;
-    return Objects.equals(links, that.links)
-        && Objects.equals(data, that.data);
+    return Objects.equals(links, that.links) && Objects.equals(data, that.data);
   }
 
   @Override

@@ -36,11 +36,12 @@ public final class ClusterData {
       ResourceLink links,
       String clusterId,
       Relationship controller,
-      Relationship brokers
+      Relationship brokers,
+      Relationship topics
   ) {
     this.links = Objects.requireNonNull(links);
     this.attributes = new Attributes(clusterId);
-    this.relationships = new Relationships(controller, brokers);
+    this.relationships = new Relationships(controller, brokers, topics);
   }
 
   @JsonProperty("type")
@@ -142,9 +143,13 @@ public final class ClusterData {
 
     private final Relationship brokers;
 
-    public Relationships(@Nullable Relationship controller, Relationship brokers) {
+    private final Relationship topics;
+
+    public Relationships(
+        @Nullable Relationship controller, Relationship brokers, Relationship topics) {
       this.controller = controller;
       this.brokers = Objects.requireNonNull(brokers);
+      this.topics = Objects.requireNonNull(topics);
     }
 
     @JsonProperty("controller")
@@ -159,6 +164,11 @@ public final class ClusterData {
       return brokers;
     }
 
+    @JsonProperty("topics")
+    public Relationship getTopics() {
+      return topics;
+    }
+
     @Override
     public boolean equals(Object o) {
       if (this == o) {
@@ -168,12 +178,14 @@ public final class ClusterData {
         return false;
       }
       Relationships that = (Relationships) o;
-      return Objects.equals(controller, that.controller) && Objects.equals(brokers, that.brokers);
+      return Objects.equals(controller, that.controller)
+          && Objects.equals(brokers, that.brokers)
+          && Objects.equals(topics, that.topics);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(controller, brokers);
+      return Objects.hash(controller, brokers, topics);
     }
 
     @Override
@@ -181,6 +193,7 @@ public final class ClusterData {
       return new StringJoiner(", ", Relationships.class.getSimpleName() + "[", "]")
           .add("controller=" + controller)
           .add("brokers=" + brokers)
+          .add("topics=" + topics)
           .toString();
     }
   }

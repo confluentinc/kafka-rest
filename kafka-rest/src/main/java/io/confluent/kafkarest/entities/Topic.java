@@ -16,7 +16,6 @@
 package io.confluent.kafkarest.entities;
 
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -24,9 +23,11 @@ import java.util.StringJoiner;
 
 public final class Topic {
 
+  private final String clusterId;
+
   private final String name;
 
-  private final Properties configs;
+  private final Properties configurations;
 
   private final List<Partition> partitions;
 
@@ -34,32 +35,39 @@ public final class Topic {
 
   private final boolean isInternal;
 
-  private final String clusterId;
-
-  public Topic(String name,
-      Properties configs,
+  public Topic(
+      String clusterId,
+      String name,
+      Properties configurations,
       List<Partition> partitions,
       int replicationFactor,
-      boolean isInternal,
-      String clusterId) {
+      boolean isInternal) {
     if (name.isEmpty()) {
       throw new IllegalArgumentException();
     }
     if (partitions.isEmpty()) {
       throw new IllegalArgumentException();
     }
+    this.clusterId = Objects.requireNonNull(clusterId);
     this.name = name;
-    this.configs = Objects.requireNonNull(configs);
+    this.configurations = Objects.requireNonNull(configurations);
     this.partitions = partitions;
     this.replicationFactor = replicationFactor;
     this.isInternal = isInternal;
-    this.clusterId = clusterId;
   }
 
-  public Topic(String name,
-      Properties configs,
-      List<Partition> partitions) {
-    this(name, configs, partitions, 0, false, "");
+  /**
+   * @deprecated use {@link #Topic(String, String, Properties, List, int, boolean)} instead
+   */
+  @Deprecated
+  public Topic(String name, Properties configs, List<Partition> partitions) {
+    this(
+        /* clusterId= */ "",
+        name,
+        configs,
+        partitions,
+        /* replicationFactor= */ 0,
+        /* isInternal= */ false);
   }
 
   public String getName() {
@@ -67,7 +75,7 @@ public final class Topic {
   }
 
   public Properties getConfigs() {
-    return configs;
+    return configurations;
   }
 
   public List<Partition> getPartitions() {
@@ -94,76 +102,29 @@ public final class Topic {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Topic that = (Topic) o;
-    return Objects.equals(name, that.name)
-        && Objects.equals(configs, that.configs)
-        && Objects.equals(partitions, that.partitions)
-        && Objects.equals(replicationFactor, that.replicationFactor)
-        && Objects.equals(isInternal, that.isInternal)
-        && Objects.equals(clusterId, that.clusterId);
+    Topic topic = (Topic) o;
+    return replicationFactor == topic.replicationFactor
+        && isInternal == topic.isInternal
+        && Objects.equals(clusterId, topic.clusterId)
+        && Objects.equals(name, topic.name)
+        && Objects.equals(configurations, topic.configurations)
+        && Objects.equals(partitions, topic.partitions);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, configs, partitions, isInternal, replicationFactor, clusterId);
+    return Objects.hash(clusterId, name, configurations, partitions, replicationFactor, isInternal);
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", Topic.class.getSimpleName() + "[", "]")
+        .add("clusterId='" + clusterId + "'")
         .add("name='" + name + "'")
-        .add("configs=" + configs)
+        .add("configurations=" + configurations)
         .add("partitions=" + partitions)
-        .add("replication factor=" + replicationFactor)
+        .add("replicationFactor=" + replicationFactor)
         .add("isInternal=" + isInternal)
-        .add("clusterId=" + clusterId)
         .toString();
-  }
-
-  public static final class Builder {
-
-    private String topicName;
-    private Properties configs;
-    private List<Partition> partitions = new ArrayList<>();
-    private int replicationFactor;
-    private boolean isInternal;
-    private String clusterId;
-
-    public Builder() {
-    }
-
-    public Builder setTopicName(String topicName) {
-      this.topicName = topicName;
-      return this;
-    }
-
-    public Builder setConfigs(Properties configs) {
-      this.configs = configs;
-      return this;
-    }
-
-    public Builder setPartitions(List<Partition> partitions) {
-      this.partitions.addAll(partitions);
-      return this;
-    }
-
-    public Builder setReplicationFactor(int replicationFactor) {
-      this.replicationFactor = replicationFactor;
-      return this;
-    }
-
-    public Builder setIsInternal(boolean isInternal) {
-      this.isInternal = isInternal;
-      return this;
-    }
-
-    public Builder setClusterId(String clusterId) {
-      this.clusterId = clusterId;
-      return this;
-    }
-
-    public Topic build() {
-      return new Topic(topicName, configs, partitions, replicationFactor, isInternal, clusterId);
-    }
   }
 }

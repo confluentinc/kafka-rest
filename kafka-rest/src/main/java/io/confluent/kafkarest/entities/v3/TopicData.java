@@ -20,9 +20,9 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
- * A KafkaCluster resource type
+ * A KafkaTopic resource type
  */
-public class TopicData {
+public final class TopicData {
 
   private final ResourceLink links;
 
@@ -32,23 +32,26 @@ public class TopicData {
 
   public TopicData(
       ResourceLink links,
-      String topicName,
       String clusterId,
+      String topicName,
       boolean isInternal,
       int replicationFactor,
-      Relationship configuration,
+      Relationship configurations,
       Relationship partitions
   ) {
-    this.links = links;
-    this.attributes = new Attributes(topicName, clusterId, isInternal, replicationFactor);
-    this.relationships = new Relationships(
-        configuration,
-        partitions);
+    this.links = Objects.requireNonNull(links);
+    attributes = new Attributes(clusterId, topicName, isInternal, replicationFactor);
+    relationships = new Relationships(configurations, partitions);
   }
 
-  @JsonProperty("topic")
-  public String topic() {
-    return attributes.getTopicName();
+  @JsonProperty("type")
+  public String getType() {
+    return "KafkaTopic";
+  }
+
+  @JsonProperty("id")
+  public String getId() {
+    return String.format("%s/%s", attributes.getClusterId(), attributes.getTopicName());
   }
 
   @JsonProperty("links")
@@ -74,11 +77,10 @@ public class TopicData {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
-    TopicData that = (TopicData) o;
-    return Objects.equals(links, that.links)
-        && Objects.equals(attributes, that.attributes)
-        && Objects.equals(relationships, that.relationships);
+    TopicData topicData = (TopicData) o;
+    return Objects.equals(links, topicData.links)
+        && Objects.equals(attributes, topicData.attributes)
+        && Objects.equals(relationships, topicData.relationships);
   }
 
   @Override
@@ -88,7 +90,7 @@ public class TopicData {
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", ClusterData.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", TopicData.class.getSimpleName() + "[", "]")
         .add("links=" + links)
         .add("attributes=" + attributes)
         .add("relationships=" + relationships)
@@ -97,27 +99,30 @@ public class TopicData {
 
   public static final class Attributes {
 
-    private final String topicName;
     private final String clusterId;
+
+    private final String topicName;
+
     private final boolean isInternal;
+
     private final int replicationFactor;
 
-    public Attributes(String topicName, String clusterId, boolean isInternal,
-        int replicationFactor) {
-      this.topicName = topicName;
+    public Attributes(
+        String clusterId, String topicName, boolean isInternal, int replicationFactor) {
       this.clusterId = Objects.requireNonNull(clusterId);
-      this.isInternal = Objects.requireNonNull(isInternal);
-      this.replicationFactor = Objects.requireNonNull(replicationFactor);
-    }
-
-    @JsonProperty("topic_name")
-    public String getTopicName() {
-      return topicName;
+      this.topicName = Objects.requireNonNull(topicName);
+      this.isInternal = isInternal;
+      this.replicationFactor = replicationFactor;
     }
 
     @JsonProperty("cluster_id")
     public String getClusterId() {
       return clusterId;
+    }
+
+    @JsonProperty("topic_name")
+    public String getTopicName() {
+      return topicName;
     }
 
     @JsonProperty("is_internal")
@@ -141,44 +146,40 @@ public class TopicData {
       Attributes that = (Attributes) o;
       return isInternal == that.isInternal
           && replicationFactor == that.replicationFactor
-          && Objects.equals(topicName, that.topicName)
-          && Objects.equals(clusterId, that.clusterId);
+          && Objects.equals(clusterId, that.clusterId)
+          && Objects.equals(topicName, that.topicName);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(topicName, clusterId, isInternal, replicationFactor);
+      return Objects.hash(clusterId, topicName, isInternal, replicationFactor);
     }
 
     @Override
     public String toString() {
-      return new StringJoiner(", ", ClusterData.Attributes.class.getSimpleName() + "[", "]")
-          .add("topic='" + topicName + "'")
+      return new StringJoiner(", ", Attributes.class.getSimpleName() + "[", "]")
           .add("clusterId='" + clusterId + "'")
-          .add("isInternal='" + isInternal + "'")
-          .add("replicationFactor='" + replicationFactor + "'")
+          .add("topicName='" + topicName + "'")
+          .add("isInternal=" + isInternal)
+          .add("replicationFactor=" + replicationFactor)
           .toString();
     }
   }
 
   public static final class Relationships {
 
-    private final Relationship configuration;
+    private final Relationship configurations;
+
     private final Relationship partitions;
 
-    // todo ask if this is to be added
-    // private final Relationship clusterId;
-
-    //todo check this later
-    public Relationships(Relationship configuration,
-        Relationship partitions) {
-      this.configuration = configuration;
+    public Relationships(Relationship configurations, Relationship partitions) {
+      this.configurations = configurations;
       this.partitions = partitions;
     }
 
-    @JsonProperty("configuration")
-    public Relationship getConfiguration() {
-      return configuration;
+    @JsonProperty("configurations")
+    public Relationship getConfigurations() {
+      return configurations;
     }
 
     @JsonProperty("partitions")
@@ -186,28 +187,28 @@ public class TopicData {
       return partitions;
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) {
         return true;
       }
-
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-
       Relationships that = (Relationships) o;
-      return Objects.equals(configuration, that.configuration)
+      return Objects.equals(configurations, that.configurations)
           && Objects.equals(partitions, that.partitions);
-
     }
 
+    @Override
     public int hashCode() {
-      return Objects.hash(configuration, partitions);
+      return Objects.hash(configurations, partitions);
     }
 
+    @Override
     public String toString() {
       return new StringJoiner(", ", Relationships.class.getSimpleName() + "[", "]")
-          .add("configuration=" + configuration)
+          .add("configurations=" + configurations)
           .add("partitions=" + partitions)
           .toString();
     }
