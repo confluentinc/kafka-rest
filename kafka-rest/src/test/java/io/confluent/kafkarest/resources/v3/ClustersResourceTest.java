@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.resources.v3;
 
-import static io.confluent.kafkarest.resources.v3.CompletableFutures.failedFuture;
+import static io.confluent.kafkarest.CompletableFutures.failedFuture;
 import static java.util.Collections.singletonList;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;

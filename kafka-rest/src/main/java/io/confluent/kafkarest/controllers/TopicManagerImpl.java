@@ -104,13 +104,14 @@ final class TopicManagerImpl implements TopicManager {
         topicDescription.name(),
         new Properties(),
         topicDescription.partitions().stream()
-            .map(TopicManagerImpl::toPartition)
+            .map(partition -> toPartition(clusterId, topicDescription.name(), partition))
             .collect(Collectors.toList()),
         topicDescription.partitions().get(0).replicas().size(),
         topicDescription.isInternal());
   }
 
-  private static Partition toPartition(TopicPartitionInfo partitionInfo) {
+  private static Partition toPartition(
+      String clusterId, String topicName, TopicPartitionInfo partitionInfo) {
     Set<Node> inSyncReplicas = new HashSet<>(partitionInfo.isr());
     List<PartitionReplica> replicas = new ArrayList<>();
     for (Node replica : partitionInfo.replicas()) {
@@ -120,6 +121,6 @@ final class TopicManagerImpl implements TopicManager {
               partitionInfo.leader().equals(replica),
               inSyncReplicas.contains(replica)));
     }
-    return new Partition(partitionInfo.partition(), partitionInfo.leader().id(), replicas);
+    return new Partition(clusterId, topicName, partitionInfo.partition(), replicas);
   }
 }

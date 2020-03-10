@@ -90,13 +90,14 @@ public class AdminClientWrapper {
 
   public List<Partition> getTopicPartitions(String topicName) throws Exception {
     TopicDescription topicDescription = getTopicDescription(topicName);
-    List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), null);
+    List<Partition> partitions = buildPartitonsData(topicName, topicDescription.partitions(), null);
     return partitions;
   }
 
   public Partition getTopicPartition(String topicName, int partition) throws Exception {
     TopicDescription topicDescription = getTopicDescription(topicName);
-    List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), partition);
+    List<Partition> partitions =
+        buildPartitonsData(topicName, topicDescription.partitions(), partition);
     if (partitions.isEmpty()) {
       return null;
     }
@@ -109,7 +110,7 @@ public class AdminClientWrapper {
   }
 
   private Topic buildTopic(String topicName, TopicDescription topicDescription) throws Exception {
-    List<Partition> partitions = buildPartitonsData(topicDescription.partitions(), null);
+    List<Partition> partitions = buildPartitonsData(topicName, topicDescription.partitions(), null);
 
     ConfigResource topicResource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
     Config config = adminClient.describeConfigs(
@@ -124,6 +125,7 @@ public class AdminClientWrapper {
   }
 
   private List<Partition> buildPartitonsData(
+      String topicName,
       List<TopicPartitionInfo> partitions,
       Integer partitionsFilter
   ) {
@@ -142,7 +144,12 @@ public class AdminClientWrapper {
             replicaNode.id() == leaderId, topicPartitionInfo.isr().contains(replicaNode)
         ));
       }
-      Partition p = new Partition(topicPartitionInfo.partition(), leaderId, partitionReplicas);
+      Partition p =
+          new Partition(
+              /* clusterId= */ "",
+              topicName,
+              topicPartitionInfo.partition(),
+              partitionReplicas);
       partitionList.add(p);
     }
     return partitionList;

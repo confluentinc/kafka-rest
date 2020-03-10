@@ -74,8 +74,8 @@ public class MetadataObserver {
     }
 
     for (final Partition partition : partitions) {
-      if (partition.getPartition() == partitionId) {
-        return partition.getLeader();
+      if (partition.getPartitionId() == partitionId) {
+        return partition.getLeader().map(PartitionReplica::getBroker).orElse(-1);
       }
     }
 
@@ -130,7 +130,7 @@ public class MetadataObserver {
               new PartitionReplica(broker, (leaderAndIsr.leader() == broker), isr.contains(broker));
           partReplicas.add(r);
         }
-        Partition p = new Partition(partId, leaderAndIsr.leader(), partReplicas);
+        Partition p = new Partition(/* clusterId= */ "", topic, partId, partReplicas);
         partitions.add(p);
       }
     }

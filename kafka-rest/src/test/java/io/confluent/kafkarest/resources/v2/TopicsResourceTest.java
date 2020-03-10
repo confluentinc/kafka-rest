@@ -88,17 +88,17 @@ public class TopicsResourceTest
     Properties nonEmptyConfig = new Properties();
     nonEmptyConfig.setProperty("cleanup.policy", "delete");
     final List<Partition> partitions1 = Arrays.asList(
-        new Partition(0, 0, Arrays.asList(
+        new Partition(/* clusterId= */ "", "topic1", 0, Arrays.asList(
             new PartitionReplica(0, true, true),
             new PartitionReplica(1, false, false)
         )),
-        new Partition(1, 1, Arrays.asList(
+        new Partition(/* clusterId= */ "", "topic1", 1, Arrays.asList(
             new PartitionReplica(0, false, true),
             new PartitionReplica(1, true, true)
         ))
     );
     final List<Partition> partitions2 = Arrays.asList(
-        new Partition(0, 0, Arrays.asList(
+        new Partition(/* clusterId= */ "", "topic2", 0, Arrays.asList(
             new PartitionReplica(0, true, true),
             new PartitionReplica(1, false, false)
         ))

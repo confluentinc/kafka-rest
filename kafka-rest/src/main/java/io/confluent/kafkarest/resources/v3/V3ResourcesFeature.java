@@ -24,6 +24,7 @@ public final class V3ResourcesFeature implements Feature {
   public boolean configure(FeatureContext configurable) {
     configurable.register(BrokersResource.class);
     configurable.register(ClustersResource.class);
+    configurable.register(PartitionsResource.class);
     configurable.register(TopicsResource.class);
     return true;
   }
