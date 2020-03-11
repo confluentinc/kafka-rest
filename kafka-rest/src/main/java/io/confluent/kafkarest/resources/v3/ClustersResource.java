@@ -70,11 +70,8 @@ public final class ClustersResource {
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<GetClusterResponse> response =
         clusterManager.getCluster(clusterId)
-            .thenApply(
-                cluster ->
-                    cluster.map(this::toClusterData)
-                        .map(GetClusterResponse::new)
-                        .orElseThrow(NotFoundException::new));
+            .thenApply(cluster -> cluster.orElseThrow(NotFoundException::new))
+            .thenApply(cluster -> new GetClusterResponse(toClusterData(cluster)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }

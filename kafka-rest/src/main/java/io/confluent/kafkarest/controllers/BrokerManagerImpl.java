@@ -15,6 +15,9 @@
 
 package io.confluent.kafkarest.controllers;
 
+import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
+import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
+
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Cluster;
 import java.util.List;
@@ -22,7 +25,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
-import javax.ws.rs.NotFoundException;
 
 final class BrokerManagerImpl implements BrokerManager {
 
@@ -36,17 +38,13 @@ final class BrokerManagerImpl implements BrokerManager {
   @Override
   public CompletableFuture<List<Broker>> listBrokers(String clusterId) {
     return clusterManager.getCluster(clusterId)
-        .thenApply(cluster ->
-            cluster.map(Cluster::getBrokers)
-                .orElseThrow(
-                    () -> new NotFoundException(
-                        String.format("Cluster %s cannot be found.", clusterId))));
+        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
+        .thenApply(Cluster::getBrokers);
   }
 
   @Override
   public CompletableFuture<Optional<Broker>> getBroker(String clusterId, int brokerId) {
     return listBrokers(clusterId)
-        .thenApply(brokers ->
-            brokers.stream().filter(broker -> broker.getBrokerId() == brokerId).findAny());
+        .thenApply(brokers -> findEntityByKey(brokers, Broker::getBrokerId, brokerId));
   }
 }

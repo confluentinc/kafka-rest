@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.controllers;
 
+import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
@@ -96,11 +97,7 @@ final class ClusterManagerImpl implements ClusterManager {
   @Override
   public CompletableFuture<Optional<Cluster>> getCluster(String clusterId) {
     Objects.requireNonNull(clusterId);
-
-    return listClusters().thenApply(
-        clusters ->
-            clusters.stream()
-                .filter(cluster -> cluster.getClusterId().equals(clusterId))
-                .findAny());
+    return listClusters()
+        .thenApply(clusters -> findEntityByKey(clusters, Cluster::getClusterId, clusterId));
   }
 }

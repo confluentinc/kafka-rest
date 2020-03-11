@@ -78,11 +78,8 @@ public final class BrokersResource {
   ) {
     CompletableFuture<GetBrokerResponse> response =
         brokerManager.getBroker(clusterId, brokerId)
-            .thenApply(
-                broker ->
-                    broker.map(this::toBrokerData)
-                        .map(GetBrokerResponse::new)
-                        .orElseThrow(NotFoundException::new));
+            .thenApply(broker -> broker.orElseThrow(NotFoundException::new))
+            .thenApply(broker -> new GetBrokerResponse(toBrokerData(broker)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
