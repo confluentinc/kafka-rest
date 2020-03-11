@@ -15,15 +15,24 @@
 
 package io.confluent.kafkarest.controllers;
 
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import java.util.concurrent.CompletableFuture;
+import org.apache.kafka.common.KafkaFuture;
 
-/**
- * A module to install the various controllers required by the application.
- */
-public final class ControllersModule extends AbstractBinder {
+final class KafkaFutures {
 
-  protected void configure() {
-    bind(BrokerManagerImpl.class).to(BrokerManager.class);
-    bind(ClusterManagerImpl.class).to(ClusterManager.class);
+  private KafkaFutures() {
+  }
+
+  static <T> CompletableFuture<T> toCompletableFuture(KafkaFuture<T> kafkaFuture) {
+    CompletableFuture<T> completableFuture = new CompletableFuture<>();
+    kafkaFuture.whenComplete(
+        (value, exception) -> {
+          if (exception == null) {
+            completableFuture.complete(value);
+          } else {
+            completableFuture.completeExceptionally(exception);
+          }
+        });
+    return completableFuture;
   }
 }
