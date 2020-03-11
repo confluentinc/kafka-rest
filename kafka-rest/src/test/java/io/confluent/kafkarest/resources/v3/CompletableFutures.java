@@ -13,17 +13,18 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.controllers;
+package io.confluent.kafkarest.resources.v3;
 
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import java.util.concurrent.CompletableFuture;
 
-/**
- * A module to install the various controllers required by the application.
- */
-public final class ControllersModule extends AbstractBinder {
+final class CompletableFutures {
 
-  protected void configure() {
-    bind(BrokerManagerImpl.class).to(BrokerManager.class);
-    bind(ClusterManagerImpl.class).to(ClusterManager.class);
+  private CompletableFutures() {
+  }
+
+  static <T> CompletableFuture<T> failedFuture(Throwable exception) {
+    CompletableFuture<T> future = new CompletableFuture<>();
+    future.completeExceptionally(exception);
+    return future;
   }
 }

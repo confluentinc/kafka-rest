@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import static io.confluent.kafkarest.resources.v3.CompletableFutures.failedFuture;
 import static java.util.Collections.singletonList;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -47,9 +48,9 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ClustersResourceTest {
 
-  private static final Broker BROKER_1 = new Broker(1, "broker-1", 9091, "rack-1");
-  private static final Broker BROKER_2 = new Broker(2, "broker-2", 9092, null);
-  private static final Broker BROKER_3 = new Broker(3, "broker-3", 9093, null);
+  private static final Broker BROKER_1 = new Broker("cluster-1", 1, "broker-1", 9091, "rack-1");
+  private static final Broker BROKER_2 = new Broker("cluster-1", 2, "broker-2", 9092, null);
+  private static final Broker BROKER_3 = new Broker("cluster-1", 3, "broker-3", 9093, null);
   private static final Cluster CLUSTER_1 =
       new Cluster("cluster-1", BROKER_1, Arrays.asList(BROKER_1, BROKER_2, BROKER_3));
 
@@ -141,11 +142,5 @@ public class ClustersResourceTest {
     clustersResource.getCluster(response, CLUSTER_1.getClusterId());
 
     assertEquals(TimeoutException.class, response.getException().getClass());
-  }
-
-  private static <T> CompletableFuture<T> failedFuture(Throwable exception) {
-    CompletableFuture<T> future = new CompletableFuture<>();
-    future.completeExceptionally(exception);
-    return future;
   }
 }

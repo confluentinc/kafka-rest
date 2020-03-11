@@ -26,7 +26,7 @@ import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.response.UrlFactory;
 import java.util.Objects;
-import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -52,22 +52,15 @@ public final class ClustersResource {
   @GET
   @Produces(Versions.JSON_API)
   public void listClusters(@Suspended AsyncResponse asyncResponse) {
-    clusterManager.listClusters()
-        .thenApply(
-            clusters ->
-                new ListClustersResponse(
-                    new CollectionLink(urlFactory.create("v3", "clusters"), /* next= */ null),
-                    clusters.stream().map(this::toClusterData).collect(Collectors.toList())))
-        .whenComplete(
-            (response, exception) -> {
-              if (exception == null) {
-                asyncResponse.resume(response);
-              } else if (exception instanceof CompletionException) {
-                asyncResponse.resume(exception.getCause());
-              } else {
-                asyncResponse.resume(exception);
-              }
-            });
+    CompletableFuture<ListClustersResponse> response =
+        clusterManager.listClusters()
+            .thenApply(
+                clusters ->
+                    new ListClustersResponse(
+                        new CollectionLink(urlFactory.create("v3", "clusters"), /* next= */ null),
+                        clusters.stream().map(this::toClusterData).collect(Collectors.toList())));
+
+    AsyncResponses.asyncResume(asyncResponse, response);
   }
 
   @GET
@@ -75,22 +68,12 @@ public final class ClustersResource {
   @Produces(Versions.JSON_API)
   public void getCluster(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
-    clusterManager.getCluster(clusterId)
-        .thenApply(
-            cluster ->
-                cluster.map(this::toClusterData)
-                    .map(GetClusterResponse::new)
-                    .orElseThrow(NotFoundException::new))
-        .whenComplete(
-            (response, exception) -> {
-              if (exception == null) {
-                asyncResponse.resume(response);
-              } else if (exception instanceof CompletionException) {
-                asyncResponse.resume(exception.getCause());
-              } else {
-                asyncResponse.resume(exception);
-              }
-            });
+    CompletableFuture<GetClusterResponse> response =
+        clusterManager.getCluster(clusterId)
+            .thenApply(cluster -> cluster.orElseThrow(NotFoundException::new))
+            .thenApply(cluster -> new GetClusterResponse(toClusterData(cluster)));
+
+    AsyncResponses.asyncResume(asyncResponse, response);
   }
 
   private ClusterData toClusterData(Cluster cluster) {

@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.controllers;
 
+import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
@@ -30,7 +31,6 @@ import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.DescribeClusterOptions;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
-import org.apache.kafka.common.KafkaFuture;
 
 final class ClusterManagerImpl implements ClusterManager {
 
@@ -49,7 +49,7 @@ final class ClusterManagerImpl implements ClusterManager {
 
     return CompletableFuture.completedFuture(new Cluster.Builder())
         .thenCombine(
-            toCompletableFuture(describeClusterResult.clusterId()),
+            KafkaFutures.toCompletableFuture(describeClusterResult.clusterId()),
             (clusterBuilder, clusterId) -> {
               if (clusterId == null) {
                 // If clusterId is null (e.g. MetadataResponse version is < 2), we can't address the
@@ -59,7 +59,7 @@ final class ClusterManagerImpl implements ClusterManager {
               return clusterBuilder.setClusterId(clusterId);
             })
         .thenCombine(
-            toCompletableFuture(describeClusterResult.controller()),
+            KafkaFutures.toCompletableFuture(describeClusterResult.controller()),
             (clusterBuilder, controller) -> {
               if (clusterBuilder == null) {
                 return null;
@@ -67,10 +67,11 @@ final class ClusterManagerImpl implements ClusterManager {
               if (controller == null || controller.isEmpty()) {
                 return clusterBuilder;
               }
-              return clusterBuilder.setController(Broker.fromNode(controller));
+              return clusterBuilder.setController(
+                  Broker.fromNode(clusterBuilder.getClusterId(), controller));
             })
         .thenCombine(
-            toCompletableFuture(describeClusterResult.nodes()),
+            KafkaFutures.toCompletableFuture(describeClusterResult.nodes()),
             (clusterBuilder, nodes) -> {
               if (clusterBuilder == null) {
                 return null;
@@ -81,7 +82,7 @@ final class ClusterManagerImpl implements ClusterManager {
               return clusterBuilder.addAllBrokers(
                   nodes.stream()
                       .filter(node -> node != null && !node.isEmpty())
-                      .map(Broker::fromNode)
+                      .map(node -> Broker.fromNode(clusterBuilder.getClusterId(), node))
                       .collect(Collectors.toList()));
             })
         .thenApply(
@@ -96,24 +97,7 @@ final class ClusterManagerImpl implements ClusterManager {
   @Override
   public CompletableFuture<Optional<Cluster>> getCluster(String clusterId) {
     Objects.requireNonNull(clusterId);
-
-    return listClusters().thenApply(
-        clusters ->
-            clusters.stream()
-                .filter(cluster -> cluster.getClusterId().equals(clusterId))
-                .findAny());
-  }
-
-  private static <T> CompletableFuture<T> toCompletableFuture(KafkaFuture<T> kafkaFuture) {
-    CompletableFuture<T> completableFuture = new CompletableFuture<>();
-    kafkaFuture.whenComplete(
-        (value, exception) -> {
-          if (exception == null) {
-            completableFuture.complete(value);
-          } else {
-            completableFuture.completeExceptionally(exception);
-          }
-        });
-    return completableFuture;
+    return listClusters()
+        .thenApply(clusters -> findEntityByKey(clusters, Cluster::getClusterId, clusterId));
   }
 }

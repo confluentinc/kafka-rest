@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -56,6 +57,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.Node;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -358,6 +360,18 @@ public abstract class ClusterTestHarness {
 
     try {
       return adminClient.describeCluster().controller().get().id();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  protected final ArrayList<Node> getBrokers() {
+    Properties properties = new Properties();
+    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    AdminClient adminClient = AdminClient.create(properties);
+
+    try {
+      return new ArrayList<>(adminClient.describeCluster().nodes().get());
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
