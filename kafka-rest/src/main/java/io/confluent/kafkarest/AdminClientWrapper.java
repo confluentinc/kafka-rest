@@ -140,9 +140,14 @@ public class AdminClientWrapper {
       int leaderId = partitionLeader != null ? partitionLeader.id() : -1;
       List<PartitionReplica> partitionReplicas = new Vector<>();
       for (Node replicaNode : topicPartitionInfo.replicas()) {
-        partitionReplicas.add(new PartitionReplica(replicaNode.id(),
-            replicaNode.id() == leaderId, topicPartitionInfo.isr().contains(replicaNode)
-        ));
+        partitionReplicas.add(
+            new PartitionReplica(
+                /* clusterId= */ "",
+                topicName,
+                topicPartitionInfo.partition(),
+                replicaNode.id(),
+                replicaNode.id() == leaderId,
+                topicPartitionInfo.isr().contains(replicaNode)));
       }
       Partition p =
           new Partition(

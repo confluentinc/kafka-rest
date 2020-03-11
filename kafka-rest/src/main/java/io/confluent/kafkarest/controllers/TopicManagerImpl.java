@@ -117,6 +117,9 @@ final class TopicManagerImpl implements TopicManager {
     for (Node replica : partitionInfo.replicas()) {
       replicas.add(
           new PartitionReplica(
+              clusterId,
+              topicName,
+              partition.partition(),
               replica.id(),
               partitionInfo.leader().equals(replica),
               inSyncReplicas.contains(replica)));

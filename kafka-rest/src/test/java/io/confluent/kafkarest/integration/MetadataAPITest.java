@@ -45,20 +45,20 @@ public class MetadataAPITest extends ClusterTestHarness {
   private static final String topic1Name = "topic1";
   private static final List<Partition> topic1Partitions = Arrays.asList(
       new Partition(/* clusterId= */ "", "topic1", 0, Arrays.asList(
-          new PartitionReplica(0, true, true),
-          new PartitionReplica(1, false, false)
+          new PartitionReplica(/* clusterId= */ "", "topic1", 0, 0, true, true),
+          new PartitionReplica(/* clusterId= */ "", "topic1", 0, 1, false, false)
       ))
   );
   private static final Topic topic1 = new Topic(topic1Name, new Properties(), topic1Partitions);
   private static final String topic2Name = "topic2";
   private static final List<Partition> topic2Partitions = Arrays.asList(
       new Partition(/* clusterId= */ "", "topic2", 0, Arrays.asList(
-          new PartitionReplica(0, true, true),
-          new PartitionReplica(1, false, false)
+          new PartitionReplica(/* clusterId= */ "", "topic2", 0, 0, true, true),
+          new PartitionReplica(/* clusterId= */ "", "topic2", 0, 1, false, false)
       )),
       new Partition(/* clusterId= */ "", "topic2", 1, Arrays.asList(
-          new PartitionReplica(0, false, true),
-          new PartitionReplica(1, true, true)
+          new PartitionReplica(/* clusterId= */ "", "topic2", 1, 0, false, true),
+          new PartitionReplica(/* clusterId= */ "", "topic2", 1, 1, true, true)
       ))
   );
   private static final Properties topic2Configs;
