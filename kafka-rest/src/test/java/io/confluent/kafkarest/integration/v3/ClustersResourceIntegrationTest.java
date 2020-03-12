@@ -15,9 +15,17 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.v3.ClusterData;
+import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.v3.GetClusterResponse;
+import io.confluent.kafkarest.entities.v3.ListClustersResponse;
+import io.confluent.kafkarest.entities.v3.Relationship;
+import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -25,46 +33,30 @@ import org.junit.Test;
 
 public class ClustersResourceIntegrationTest extends ClusterTestHarness {
 
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
   public ClustersResourceIntegrationTest() {
     super(/* numBrokers= */ 3, /* withSchemaRegistry= */ false);
   }
 
   @Test
-  public void listClusters_returnsArrayWithOwnCluster() {
+  public void listClusters_returnsArrayWithOwnCluster() throws Exception {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
     int controllerId = getControllerID();
 
-    String expected = "{"
-        + "\"links\":{"
-        +   "\"self\":\"" + baseUrl + "/v3/clusters\","
-        +   "\"next\":null"
-        + "},"
-        + "\"data\":["
-        +   "{"
-        +     "\"links\":{"
-        +       "\"self\":\"" + baseUrl + "/v3/clusters/" + clusterId + "\""
-        +     "},"
-        +     "\"attributes\":{"
-        +       "\"cluster_id\":\"" + clusterId + "\""
-        +     "},"
-        +     "\"relationships\":{"
-        +       "\"controller\":{"
-        +         "\"links\":{"
-        +           "\"related\":\""
-        +             baseUrl + "/v3/clusters/" + clusterId + "/brokers/" + controllerId + "\""
-        +         "}"
-        +       "},"
-        +       "\"brokers\":{"
-        +         "\"links\":{"
-        +           "\"related\":\"" + baseUrl + "/v3/clusters/" + clusterId + "/brokers\""
-        +         "}"
-        +       "}"
-        +     "},"
-        +     "\"id\":\"" + clusterId + "\","
-        +     "\"type\":\"KafkaCluster\""
-        +   "}"
-        + "]}";
+    String expected =
+        OBJECT_MAPPER.writeValueAsString(
+            new ListClustersResponse(
+                new CollectionLink(baseUrl + "/v3/clusters", /* next= */ null),
+                singletonList(
+                    new ClusterData(
+                        new ResourceLink(baseUrl + "/v3/clusters/" + clusterId),
+                        clusterId,
+                        new Relationship(
+                            baseUrl + "/v3/clusters/" + clusterId + "/brokers/" + controllerId),
+                        new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/brokers"),
+                        new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/topics")))));
 
     Response response = request("/v3/clusters").accept(Versions.JSON_API).get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
@@ -72,35 +64,21 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void getCluster_ownCluster_returnsOwnCluster() {
+  public void getCluster_ownCluster_returnsOwnCluster() throws Exception {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
     int controllerId = getControllerID();
 
-    String expected = "{"
-        + "\"data\":{"
-        +   "\"links\":{"
-        +     "\"self\":\"" + baseUrl + "/v3/clusters/" + clusterId + "\""
-        +   "},"
-        +   "\"attributes\":{"
-        +     "\"cluster_id\":\"" + clusterId + "\""
-        +   "},"
-        +   "\"relationships\":{"
-        +     "\"controller\":{"
-        +       "\"links\":{"
-        +         "\"related\":\""
-        +           baseUrl + "/v3/clusters/" + clusterId + "/brokers/" + controllerId + "\""
-        +       "}"
-        +     "},"
-        +     "\"brokers\":{"
-        +       "\"links\":{"
-        +         "\"related\":\"" + baseUrl + "/v3/clusters/" + clusterId + "/brokers\""
-        +       "}"
-        +     "}"
-        +   "},"
-        +   "\"id\":\"" + clusterId + "\","
-        +   "\"type\":\"KafkaCluster\""
-        + "}}";
+    String expected =
+        OBJECT_MAPPER.writeValueAsString(
+            new GetClusterResponse(
+                new ClusterData(
+                    new ResourceLink(baseUrl + "/v3/clusters/" + clusterId),
+                    clusterId,
+                    new Relationship(
+                        baseUrl + "/v3/clusters/" + clusterId + "/brokers/" + controllerId),
+                    new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/brokers"),
+                    new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/topics"))));
 
     Response response =
         request(String.format("/v3/clusters/%s", clusterId))

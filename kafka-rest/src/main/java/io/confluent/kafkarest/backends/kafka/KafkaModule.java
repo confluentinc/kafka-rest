@@ -19,8 +19,8 @@ import io.confluent.kafkarest.KafkaRestContext;
 import java.util.Objects;
 import org.apache.kafka.clients.admin.Admin;
 import org.glassfish.hk2.api.Factory;
+import org.glassfish.hk2.api.PerLookup;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.process.internal.RequestScoped;
 
 /**
  * A module to configure access to Kafka.
@@ -39,15 +39,14 @@ public final class KafkaModule extends AbstractBinder {
 
   @Override
   protected void configure() {
-    // Reuse the AdminClient being constructed in KafkaRestContext. The request-scope is needed
-    // because the Admin creation logic uses request-scoped auth information. KafkaRestContext
-    // itself is a proxied instance, so the result will be cached there appropriately, after it is
-    // created. See KafkaRestContextProvider and ContextInvocationHandler for more information.
-    bindFactory(new AdminFactory(context))
-        .to(Admin.class)
-        .in(RequestScoped.class)
-        .proxy(true)
-        .proxyForSameScope(true);
+    // Reuse the AdminClient being constructed in KafkaRestContext. The per-lookup scope is needed
+    // because the Admin creation logic uses request-scoped auth information. This binding cannot
+    // use request scope because it will be injected from multiple non-inheritable threads.
+    //
+    // KafkaRestContext itself is a proxied instance, so the result will be cached there
+    // appropriately after it is created. See KafkaRestContextProvider and ContextInvocationHandler
+    // for more information.
+    bindFactory(new AdminFactory(context)).to(Admin.class).in(PerLookup.class);
   }
 
   private static final class AdminFactory implements Factory<Admin> {
