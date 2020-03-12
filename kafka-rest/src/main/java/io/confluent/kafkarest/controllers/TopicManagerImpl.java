@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Confluent Inc.
+ * Copyright 2020 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.controllers;
 
+import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
@@ -31,7 +32,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.admin.TopicListing;
@@ -52,22 +52,17 @@ final class TopicManagerImpl implements TopicManager {
   @Override
   public CompletableFuture<List<Topic>> listTopics(String clusterId) {
     return clusterManager.getCluster(clusterId)
+        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenCompose(
-            cluster -> {
-              if (!cluster.isPresent()) {
-                throw new NotFoundException(
-                    String.format("Cluster %s cannot be found.", clusterId));
-              }
-              return KafkaFutures.toCompletableFuture(adminClient.listTopics().listings());
-            })
+            cluster -> KafkaFutures.toCompletableFuture(adminClient.listTopics().listings()))
         .thenCompose(
-            topics -> {
-              if (topics == null) {
+            topicListings -> {
+              if (topicListings == null) {
                 return CompletableFuture.completedFuture(emptyList());
               }
               return describeTopics(
                   clusterId,
-                  topics.stream().map(TopicListing::name).collect(Collectors.toList()));
+                  topicListings.stream().map(TopicListing::name).collect(Collectors.toList()));
             });
   }
 
@@ -76,14 +71,8 @@ final class TopicManagerImpl implements TopicManager {
     Objects.requireNonNull(topicName);
 
     return clusterManager.getCluster(clusterId)
-        .thenCompose(
-            cluster -> {
-              if (!cluster.isPresent()) {
-                throw new NotFoundException(
-                    String.format("Cluster %s cannot be found.", clusterId));
-              }
-              return describeTopics(clusterId, singletonList(topicName));
-            })
+        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
+        .thenCompose(cluster -> describeTopics(clusterId, singletonList(topicName)))
         .thenApply(
             topics -> {
               if (topics == null || topics.isEmpty()) {
@@ -105,7 +94,7 @@ final class TopicManagerImpl implements TopicManager {
         .thenApply(
             topics ->
                 topics.values().stream()
-                    .map(topic -> toTopic(clusterId, topic))
+                    .map(topicDescription -> toTopic(clusterId, topicDescription))
                     .collect(Collectors.toList()));
   }
 
@@ -121,16 +110,16 @@ final class TopicManagerImpl implements TopicManager {
         topicDescription.isInternal());
   }
 
-  private static Partition toPartition(TopicPartitionInfo partition) {
-    Set<Node> inSyncReplicas = new HashSet<>(partition.isr());
+  private static Partition toPartition(TopicPartitionInfo partitionInfo) {
+    Set<Node> inSyncReplicas = new HashSet<>(partitionInfo.isr());
     List<PartitionReplica> replicas = new ArrayList<>();
-    for (Node replica : partition.replicas()) {
+    for (Node replica : partitionInfo.replicas()) {
       replicas.add(
           new PartitionReplica(
               replica.id(),
-              partition.leader().equals(replica),
+              partitionInfo.leader().equals(replica),
               inSyncReplicas.contains(replica)));
     }
-    return new Partition(partition.partition(), partition.leader().id(), replicas);
+    return new Partition(partitionInfo.partition(), partitionInfo.leader().id(), replicas);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Confluent Inc.
+ * Copyright 2020 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -33,7 +33,7 @@ public interface TopicManager {
   CompletableFuture<List<Topic>> listTopics(String clusterId);
 
   /**
-   * Returns the Kafka {@link Topic} with the given {@code brokerId}.
+   * Returns the Kafka {@link Topic} with the given {@code topicName}.
    */
   CompletableFuture<Optional<Topic>> getTopic(String clusterId, String topicName);
 }
