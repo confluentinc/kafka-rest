@@ -15,6 +15,9 @@
 
 package io.confluent.kafkarest.controllers;
 
+import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
+import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
+
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.Topic;
 import java.util.List;
@@ -37,11 +40,7 @@ class PartitionManagerImpl implements PartitionManager {
   @Override
   public CompletableFuture<List<Partition>> listPartitions(String clusterId, String topicName) {
     return topicManager.getTopic(clusterId, topicName)
-        .thenApply(
-            topic ->
-                topic.orElseThrow(
-                    () -> new NotFoundException(
-                        String.format("Topic %s cannot be found.", topicName))))
+        .thenApply(topic -> checkEntityExists(topic, "Topic %s cannot be found.", topic))
         .thenApply(Topic::getPartitions);
   }
 
@@ -50,10 +49,6 @@ class PartitionManagerImpl implements PartitionManager {
       String clusterId, String topicName, int partitionId) {
     return listPartitions(clusterId, topicName)
         .thenApply(
-            partitions ->
-                partitions.stream()
-                    .filter(partition -> partition.getPartitionId() == partitionId)
-                    .collect(Collectors.toList()))
-        .thenApply(partitions -> partitions.stream().findAny());
+            partitions -> findEntityByKey(partitions, Partition::getPartitionId, partitionId));
   }
 }
