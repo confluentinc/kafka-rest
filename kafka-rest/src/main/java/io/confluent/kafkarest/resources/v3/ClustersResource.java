@@ -93,11 +93,14 @@ public final class ClustersResource {
 
     Relationship brokers =
         new Relationship(urlFactory.create("v3", "clusters", cluster.getClusterId(), "brokers"));
+    Relationship topics =
+        new Relationship(urlFactory.create("v3", "clusters", cluster.getClusterId(), "topics"));
 
     return new ClusterData(
         new ResourceLink(urlFactory.create("v3", "clusters", cluster.getClusterId())),
         cluster.getClusterId(),
         controller,
-        brokers);
+        brokers,
+        topics);
   }
 }

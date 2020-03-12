@@ -84,7 +84,8 @@ public class ClustersResourceTest {
                     new ResourceLink("/v3/clusters/cluster-1"),
                     "cluster-1",
                     new Relationship("/v3/clusters/cluster-1/brokers/1"),
-                    new Relationship("/v3/clusters/cluster-1/brokers"))));
+                    new Relationship("/v3/clusters/cluster-1/brokers"),
+                    new Relationship("/v3/clusters/cluster-1/topics"))));
 
     assertEquals(expected, response.getValue());
   }
@@ -115,7 +116,8 @@ public class ClustersResourceTest {
                 new ResourceLink("/v3/clusters/cluster-1"),
                 "cluster-1",
                 new Relationship("/v3/clusters/cluster-1/brokers/1"),
-                new Relationship("/v3/clusters/cluster-1/brokers")));
+                new Relationship("/v3/clusters/cluster-1/brokers"),
+                new Relationship("/v3/clusters/cluster-1/topics")));
 
     assertEquals(expected, response.getValue());
   }

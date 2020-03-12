@@ -15,16 +15,25 @@
 
 package io.confluent.kafkarest.controllers;
 
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import io.confluent.kafkarest.entities.Topic;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
- * A module to install the various controllers required by the application.
+ * A service to manage Kafka {@link Topic Topics}.
  */
-public final class ControllersModule extends AbstractBinder {
+public interface TopicManager {
 
-  protected void configure() {
-    bind(BrokerManagerImpl.class).to(BrokerManager.class);
-    bind(ClusterManagerImpl.class).to(ClusterManager.class);
-    bind(TopicManagerImpl.class).to(TopicManager.class);
-  }
+  /**
+   * Returns the list of Kafka {@link Topic Topics} belonging to the {@link
+   * io.confluent.kafkarest.entities.Cluster} with the given {@code clusterId}.
+   */
+  CompletableFuture<List<Topic>> listTopics(String clusterId);
+
+  /**
+   * Returns the Kafka {@link Topic} with the given {@code topicName}.
+   */
+  CompletableFuture<Optional<Topic>> getTopic(String clusterId, String topicName);
 }
