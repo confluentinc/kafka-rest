@@ -24,9 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.ws.rs.NotFoundException;
 
 class PartitionManagerImpl implements PartitionManager {
 
