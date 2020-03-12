@@ -81,10 +81,8 @@ public final class PartitionsResource {
       @PathParam("partitionId") Integer partitionId) {
     CompletableFuture<GetPartitionResponse> response =
         partitionManager.getPartition(clusterId, topicName, partitionId)
-            .thenApply(
-                partition ->
-                    new GetPartitionResponse(
-                        toPartitionData(partition.orElseThrow(NotFoundException::new))));
+            .thenApply(partition -> partition.orElseThrow(NotFoundException::new))
+            .thenApply(partition -> new GetPartitionResponse(toPartitionData(partition)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
