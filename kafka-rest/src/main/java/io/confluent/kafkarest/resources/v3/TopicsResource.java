@@ -80,11 +80,8 @@ public final class TopicsResource {
   ) {
     CompletableFuture<GetTopicResponse> response =
         topicManager.getTopic(clusterId, topicName)
-            .thenApply(
-                topic ->
-                    topic.map(this::toTopicData)
-                        .map(GetTopicResponse::new)
-                        .orElseThrow(NotFoundException::new));
+            .thenApply(topic -> topic.orElseThrow(NotFoundException::new))
+            .thenApply(topic -> new GetTopicResponse(toTopicData(topic)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
