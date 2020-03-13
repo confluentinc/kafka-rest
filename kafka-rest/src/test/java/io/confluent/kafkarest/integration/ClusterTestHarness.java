@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.client.Client;
@@ -52,6 +53,7 @@ import kafka.zookeeper.ZooKeeperClient;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -374,6 +376,20 @@ public abstract class ClusterTestHarness {
       return new ArrayList<>(adminClient.describeCluster().nodes().get());
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  protected final Set<String> getTopicNames() {
+    Properties properties = new Properties();
+    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    AdminClient adminClient = AdminClient.create(properties);
+
+    ListTopicsResult result = adminClient.listTopics();
+
+    try {
+      return result.names().get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(String.format("Failed to create topic: %s", e.getMessage()));
     }
   }
 

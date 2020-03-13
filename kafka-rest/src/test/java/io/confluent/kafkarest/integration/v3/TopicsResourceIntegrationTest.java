@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.integration.v3;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.Versions;
@@ -224,6 +225,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                     Versions.JSON_API));
     assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
     assertEquals(expected, response.readEntity(String.class));
+    assertTrue(getTopicNames().contains(topicName));
   }
 
   @Test
@@ -299,6 +301,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                     Versions.JSON_API));
     assertEquals(Status.CREATED.getStatusCode(), createTopicResponse.getStatus());
     assertEquals(expectedCreateTopicResponse, createTopicResponse.readEntity(String.class));
+    assertTrue(getTopicNames().contains(topicName));
 
     String expectedExistingTopicResponse =
         OBJECT_MAPPER.writeValueAsString(
