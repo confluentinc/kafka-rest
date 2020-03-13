@@ -33,7 +33,7 @@ final class AsyncResponses {
     AsyncResponseBuilder.from(Response.ok()).entity(entity).asyncResume(asyncResponse);
   }
 
-  public static final class AsyncResponseBuilder {
+  static final class AsyncResponseBuilder {
 
     private final ResponseBuilder responseBuilder;
 
@@ -47,22 +47,22 @@ final class AsyncResponses {
       this.responseBuilder = responseBuilder.clone();
     }
 
-    public static AsyncResponseBuilder from(ResponseBuilder responseBuilder) {
+    static AsyncResponseBuilder from(ResponseBuilder responseBuilder) {
       return new AsyncResponseBuilder(responseBuilder);
     }
 
-    public AsyncResponseBuilder entity(CompletableFuture<?> entity) {
+    AsyncResponseBuilder entity(CompletableFuture<?> entity) {
       entityFuture = entity;
       return this;
     }
 
-    public AsyncResponseBuilder entity(CompletableFuture<?> entity, Annotation[] annotations) {
+    AsyncResponseBuilder entity(CompletableFuture<?> entity, Annotation[] annotations) {
       entityFuture = entity;
       entityAnnotations = annotations;
       return this;
     }
 
-    public void asyncResume(AsyncResponse asyncResponse) {
+    void asyncResume(AsyncResponse asyncResponse) {
       if (entityFuture == null) {
         throw new IllegalStateException();
       }
