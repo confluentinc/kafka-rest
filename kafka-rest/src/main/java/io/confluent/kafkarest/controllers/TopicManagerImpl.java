@@ -33,6 +33,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.admin.TopicListing;
 import org.apache.kafka.common.Node;
@@ -106,7 +107,7 @@ final class TopicManagerImpl implements TopicManager {
         topicDescription.partitions().stream()
             .map(partition -> toPartition(clusterId, topicDescription.name(), partition))
             .collect(Collectors.toList()),
-        topicDescription.partitions().get(0).replicas().size(),
+        (short) topicDescription.partitions().get(0).replicas().size(),
         topicDescription.isInternal());
   }
 
@@ -125,5 +126,20 @@ final class TopicManagerImpl implements TopicManager {
               inSyncReplicas.contains(replica)));
     }
     return new Partition(clusterId, topicName, partitionInfo.partition(), replicas);
+  }
+
+  @Override
+  public CompletableFuture<Void> createTopic(
+      String clusterId, String topicName, int partitionsCount, short replicationFactor) {
+    Objects.requireNonNull(topicName);
+
+    NewTopic createTopicRequest = new NewTopic(topicName, partitionsCount, replicationFactor);
+
+    return clusterManager.getCluster(clusterId)
+        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
+        .thenCompose(
+            cluster ->
+                KafkaFutures.toCompletableFuture(
+                    adminClient.createTopics(singletonList(createTopicRequest)).all()));
   }
 }
