@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Confluent Inc.
+ * Copyright 2020 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -17,35 +17,48 @@ package io.confluent.kafkarest.entities;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.StringJoiner;
-import javax.annotation.Nullable;
 
 public final class Partition {
 
-  private final int partition;
+  private final String clusterId;
 
-  private final int leader;
+  private final String topicName;
 
-  @Nullable
-  private List<PartitionReplica> replicas;
+  private final int partitionId;
 
-  public Partition(int partition, int leader, @Nullable List<PartitionReplica> replicas) {
-    this.partition = partition;
-    this.leader = leader;
-    this.replicas = replicas;
+  private final List<PartitionReplica> replicas;
+
+  public Partition(
+      String clusterId,
+      String topicName,
+      int partitionId,
+      List<PartitionReplica> replicas) {
+    this.clusterId = Objects.requireNonNull(clusterId);
+    this.topicName = Objects.requireNonNull(topicName);
+    this.partitionId = partitionId;
+    this.replicas = Objects.requireNonNull(replicas);
   }
 
-  public int getPartition() {
-    return partition;
+  public String getClusterId() {
+    return clusterId;
   }
 
-  public int getLeader() {
-    return leader;
+  public String getTopicName() {
+    return topicName;
   }
 
-  @Nullable
+  public int getPartitionId() {
+    return partitionId;
+  }
+
   public List<PartitionReplica> getReplicas() {
     return replicas;
+  }
+
+  public Optional<PartitionReplica> getLeader() {
+    return replicas.stream().filter(PartitionReplica::isLeader).findAny();
   }
 
   @Override
@@ -56,22 +69,24 @@ public final class Partition {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Partition partition1 = (Partition) o;
-    return partition == partition1.partition
-        && leader == partition1.leader
-        && Objects.equals(replicas, partition1.replicas);
+    Partition partition = (Partition) o;
+    return partitionId == partition.partitionId
+        && Objects.equals(clusterId, partition.clusterId)
+        && Objects.equals(topicName, partition.topicName)
+        && Objects.equals(replicas, partition.replicas);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(partition, leader, replicas);
+    return Objects.hash(clusterId, topicName, partitionId, replicas);
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", Partition.class.getSimpleName() + "[", "]")
-        .add("partition=" + partition)
-        .add("leader=" + leader)
+        .add("clusterId='" + clusterId + "'")
+        .add("topicName='" + topicName + "'")
+        .add("partitionId=" + partitionId)
         .add("replicas=" + replicas)
         .toString();
   }
