@@ -18,7 +18,7 @@
 
     <suppress
             checks="(ClassDataAbstractionCoupling)"
-            files="(AvroConverter|ConsumerManager|KafkaConsumerManager|KafkaRestApplication|SimpleConsumerManager|KafkaRestContextProvider|KafkaConsumerState|ProducerPool).java"
+            files="(AvroConverter|ConsumerManager|KafkaConsumerManager|KafkaRestApplication|SimpleConsumerManager|KafkaRestContextProvider|KafkaConsumerState|ProducerPool|TopicsResource).java"
     />
 
     <suppress

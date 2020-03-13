@@ -31,7 +31,7 @@ public final class Topic {
 
   private final List<Partition> partitions;
 
-  private final int replicationFactor;
+  private final short replicationFactor;
 
   private final boolean isInternal;
 
@@ -40,24 +40,21 @@ public final class Topic {
       String name,
       Properties configurations,
       List<Partition> partitions,
-      int replicationFactor,
+      short replicationFactor,
       boolean isInternal) {
     if (name.isEmpty()) {
-      throw new IllegalArgumentException();
-    }
-    if (partitions.isEmpty()) {
       throw new IllegalArgumentException();
     }
     this.clusterId = Objects.requireNonNull(clusterId);
     this.name = name;
     this.configurations = Objects.requireNonNull(configurations);
-    this.partitions = partitions;
+    this.partitions = Objects.requireNonNull(partitions);
     this.replicationFactor = replicationFactor;
     this.isInternal = isInternal;
   }
 
   /**
-   * @deprecated use {@link #Topic(String, String, Properties, List, int, boolean)} instead
+   * @deprecated use {@link #Topic(String, String, Properties, List, short, boolean)} instead
    */
   @Deprecated
   public Topic(String name, Properties configs, List<Partition> partitions) {
@@ -66,7 +63,7 @@ public final class Topic {
         name,
         configs,
         partitions,
-        /* replicationFactor= */ 0,
+        /* replicationFactor= */ (short) 0,
         /* isInternal= */ false);
   }
 
@@ -82,7 +79,7 @@ public final class Topic {
     return partitions;
   }
 
-  public int getReplicationFactor() {
+  public short getReplicationFactor() {
     return replicationFactor;
   }
 

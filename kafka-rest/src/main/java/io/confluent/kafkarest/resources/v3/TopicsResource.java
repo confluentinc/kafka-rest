@@ -15,28 +15,40 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import static java.util.Collections.emptyList;
+
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.v3.CreateTopicRequest;
+import io.confluent.kafkarest.entities.v3.CreateTopicResponse;
 import io.confluent.kafkarest.entities.v3.GetTopicResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicsResponse;
 import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.entities.v3.TopicData;
+import io.confluent.kafkarest.resources.v3.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.UrlFactory;
+import java.net.URI;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.validation.Valid;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 @Path("/v3/clusters/{clusterId}/topics")
 public final class TopicsResource {
@@ -84,6 +96,38 @@ public final class TopicsResource {
             .thenApply(topic -> new GetTopicResponse(toTopicData(topic)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
+  }
+
+  @POST
+  @Consumes(Versions.JSON_API)
+  @Produces(Versions.JSON_API)
+  public void createTopic(
+      @Suspended AsyncResponse asyncResponse,
+      @PathParam("clusterId") String clusterId,
+      @Valid CreateTopicRequest request
+  ) {
+    String topicName = request.getData().getAttributes().getTopicName();
+    int partitionsCount =  request.getData().getAttributes().getPartitionsCount();
+    short replicationFactor = request.getData().getAttributes().getReplicationFactor();
+
+    TopicData topicData =
+        toTopicData(
+            new Topic(
+                clusterId,
+                topicName,
+                /* configurations= */ new Properties(),
+                /* partitions= */ emptyList(),
+                replicationFactor,
+                /* isInternal= */ false));
+
+    CompletableFuture<CreateTopicResponse> response =
+        topicManager.createTopic(clusterId, topicName, partitionsCount, replicationFactor)
+            .thenApply(none -> new CreateTopicResponse(topicData));
+
+    AsyncResponseBuilder.from(
+        Response.status(Status.CREATED).location(URI.create(topicData.getLinks().getSelf())))
+        .entity(response)
+        .asyncResume(asyncResponse);
   }
 
   private TopicData toTopicData(Topic topic) {

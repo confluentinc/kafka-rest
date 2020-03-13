@@ -15,25 +15,78 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import java.lang.annotation.Annotation;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import javax.annotation.Nullable;
 import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 
 final class AsyncResponses {
 
   private AsyncResponses() {
   }
 
-  static void asyncResume(AsyncResponse asyncResponse, CompletableFuture<?> future) {
-    future.whenComplete(
-        (response, exception) -> {
-          if (exception == null) {
-            asyncResponse.resume(response);
-          } else if (exception instanceof CompletionException) {
-            asyncResponse.resume(exception.getCause());
-          } else {
-            asyncResponse.resume(exception);
-          }
-        });
+  static void asyncResume(AsyncResponse asyncResponse, CompletableFuture<?> entity) {
+    AsyncResponseBuilder.from(Response.ok()).entity(entity).asyncResume(asyncResponse);
+  }
+
+  public static final class AsyncResponseBuilder {
+
+    private final ResponseBuilder responseBuilder;
+
+    @Nullable
+    private CompletableFuture<?> entityFuture;
+
+    @Nullable
+    private Annotation[] entityAnnotations;
+
+    private AsyncResponseBuilder(ResponseBuilder responseBuilder) {
+      this.responseBuilder = responseBuilder.clone();
+    }
+
+    public static AsyncResponseBuilder from(ResponseBuilder responseBuilder) {
+      return new AsyncResponseBuilder(responseBuilder);
+    }
+
+    public AsyncResponseBuilder entity(CompletableFuture<?> entity) {
+      entityFuture = entity;
+      return this;
+    }
+
+    public AsyncResponseBuilder entity(CompletableFuture<?> entity, Annotation[] annotations) {
+      entityFuture = entity;
+      entityAnnotations = annotations;
+      return this;
+    }
+
+    public void asyncResume(AsyncResponse asyncResponse) {
+      if (entityFuture == null) {
+        throw new IllegalStateException();
+      }
+
+      ResponseBuilder response = responseBuilder.clone();
+      Annotation[] annotations =
+          entityAnnotations != null
+              ? Arrays.copyOf(entityAnnotations, entityAnnotations.length)
+              : null;
+
+      entityFuture.whenComplete(
+          (entity, exception) -> {
+            if (exception == null) {
+              if (annotations != null) {
+                asyncResponse.resume(response.entity(entity, annotations).build());
+              } else {
+                asyncResponse.resume(response.entity(entity).build());
+              }
+            } else if (exception instanceof CompletionException) {
+              asyncResponse.resume(exception.getCause());
+            } else {
+              asyncResponse.resume(exception);
+            }
+          });
+    }
   }
 }

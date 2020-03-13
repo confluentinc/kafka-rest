@@ -134,7 +134,7 @@ public class PartitionManagerImplTest {
           TOPIC_NAME,
           new Properties(),
           Arrays.asList(PARTITION_1, PARTITION_2, PARTITION_3),
-          /* replicationFactor= */ 3,
+          /* replicationFactor= */ (short) 3,
           /* isInternal= */ false);
 
   @Rule
