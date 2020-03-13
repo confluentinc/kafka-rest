@@ -36,4 +36,10 @@ public interface TopicManager {
    * Returns the Kafka {@link Topic} with the given {@code topicName}.
    */
   CompletableFuture<Optional<Topic>> getTopic(String clusterId, String topicName);
+
+  /**
+   * Creates a new Kafka {@link Topic}.
+   */
+  CompletableFuture<Void> createTopic(
+      String clusterId, String topicName, int partitionsCount, short replicationFactor);
 }

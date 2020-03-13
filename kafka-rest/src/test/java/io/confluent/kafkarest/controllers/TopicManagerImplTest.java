@@ -21,6 +21,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
@@ -40,14 +41,17 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.admin.TopicListing;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.errors.TimeoutException;
+import org.apache.kafka.common.errors.TopicExistsException;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
 import org.junit.Before;
@@ -198,7 +202,7 @@ public class TopicManagerImplTest {
                           /* brokerId= */ 3,
                           /* isLeader= */ true,
                           /* isInSync= */ true)))),
-          /* replicationFactor= */ 3,
+          /* replicationFactor= */ (short) 3,
           /* isInternal= */ true);
 
   private static final Topic TOPIC_2 =
@@ -285,7 +289,7 @@ public class TopicManagerImplTest {
                           /* brokerId= */ 3,
                           /* isLeader= */ false,
                           /* isInSync= */ false)))),
-          /* replicationFactor= */ 3,
+          /* replicationFactor= */ (short) 3,
           /* isInternal= */ true);
 
   private static final Topic TOPIC_3 =
@@ -372,7 +376,7 @@ public class TopicManagerImplTest {
                           /* brokerId= */ 3,
                           /* isLeader= */ false,
                           /* isInSync= */ false)))),
-          /* replicationFactor= */ 3,
+          /* replicationFactor= */ (short) 3,
           /* isInternal= */ false);
 
   @Rule
@@ -389,6 +393,9 @@ public class TopicManagerImplTest {
 
   @Mock
   private DescribeTopicsResult describeTopicResult;
+
+  @Mock
+  private CreateTopicsResult createTopicsResult;
 
   private TopicManagerImpl topicManager;
 
@@ -480,6 +487,74 @@ public class TopicManagerImplTest {
     Optional<Topic> topic = topicManager.getTopic(CLUSTER_ID, TOPIC_1.getName()).get();
 
     assertFalse(topic.isPresent());
+  }
+
+  @Test
+  public void createTopic_nonExistingTopic_createsTopic() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(
+        adminClient.createTopics(
+            singletonList(
+                new NewTopic(
+                    TOPIC_1.getName(),
+                    TOPIC_1.getPartitions().size(),
+                    TOPIC_1.getReplicationFactor()))))
+        .andReturn(createTopicsResult);
+    expect(createTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
+    replay(clusterManager, adminClient, createTopicsResult);
+
+    topicManager.createTopic(
+        CLUSTER_ID,
+        TOPIC_1.getName(),
+        TOPIC_1.getPartitions().size(),
+        TOPIC_1.getReplicationFactor()).get();
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void createTopic_existingTopic_throwsTopicExists() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(
+        adminClient.createTopics(
+            singletonList(
+                new NewTopic(
+                    TOPIC_1.getName(),
+                    TOPIC_1.getPartitions().size(),
+                    TOPIC_1.getReplicationFactor()))))
+        .andReturn(createTopicsResult);
+    expect(createTopicsResult.all()).andReturn(failedFuture(new TopicExistsException("")));
+    replay(clusterManager, adminClient, createTopicsResult);
+
+    try {
+      topicManager.createTopic(
+          CLUSTER_ID,
+          TOPIC_1.getName(),
+          TOPIC_1.getPartitions().size(),
+          TOPIC_1.getReplicationFactor()).get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(TopicExistsException.class, e.getCause().getClass());
+    }
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void createTopic_nonExistingCluster_throwsNotFound() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
+    replay(clusterManager);
+
+    try {
+      topicManager.createTopic(
+          CLUSTER_ID,
+          TOPIC_1.getName(),
+          TOPIC_1.getPartitions().size(),
+          TOPIC_1.getReplicationFactor()).get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(NotFoundException.class, e.getCause().getClass());
+    }
   }
 
   private static Map<String, TopicDescription> createTopicDescriptionMap(

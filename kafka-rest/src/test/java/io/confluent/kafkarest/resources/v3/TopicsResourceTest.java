@@ -26,6 +26,8 @@ import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.v3.CreateTopicRequest;
+import io.confluent.kafkarest.entities.v3.CreateTopicResponse;
 import io.confluent.kafkarest.entities.v3.GetTopicResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicsResponse;
 import io.confluent.kafkarest.entities.v3.Relationship;
@@ -38,6 +40,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
 import javax.ws.rs.NotFoundException;
+import org.apache.kafka.common.errors.TopicExistsException;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
 import org.junit.Before;
@@ -132,7 +135,7 @@ public class TopicsResourceTest {
                           /* brokerId= */ 3,
                           /* isLeader= */ true,
                           /* isInSync= */ true)))),
-          /* replicationFactor= */ 3,
+          /* replicationFactor= */ (short) 3,
           /* isInternal= */ true);
 
   private static final Topic TOPIC_2 =
@@ -219,7 +222,7 @@ public class TopicsResourceTest {
                           /* brokerId= */ 3,
                           /* isLeader= */ false,
                           /* isInSync= */ false)))),
-          /* replicationFactor= */ 3,
+          /* replicationFactor= */ (short) 3,
           /* isInternal= */ true);
 
   private static final Topic TOPIC_3 =
@@ -306,7 +309,7 @@ public class TopicsResourceTest {
                           /* brokerId= */ 3,
                           /* isLeader= */ false,
                           /* isInSync= */ false)))),
-          /* replicationFactor= */ 3,
+          /* replicationFactor= */ (short) 3,
           /* isInternal= */ false);
 
   @Rule
@@ -429,6 +432,92 @@ public class TopicsResourceTest {
 
     FakeAsyncResponse response = new FakeAsyncResponse();
     topicsResource.getTopic(response, TOPIC_1.getClusterId(), TOPIC_1.getName());
+
+    assertEquals(NotFoundException.class, response.getException().getClass());
+  }
+
+  @Test
+  public void createTopic_nonExistingTopic_createsTopic() {
+    expect(
+        topicManager.createTopic(
+            CLUSTER_ID,
+            TOPIC_1.getName(),
+            TOPIC_1.getPartitions().size(),
+            TOPIC_1.getReplicationFactor()))
+        .andReturn(completedFuture(null));
+    replay(topicManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    topicsResource.createTopic(
+        response,
+        TOPIC_1.getClusterId(),
+        new CreateTopicRequest(
+            new CreateTopicRequest.Data(
+                new CreateTopicRequest.Data.Attributes(
+                    TOPIC_1.getName(),
+                    TOPIC_1.getPartitions().size(),
+                    TOPIC_1.getReplicationFactor()))));
+
+    CreateTopicResponse expected = new CreateTopicResponse(
+        new TopicData(
+            new ResourceLink("/v3/clusters/cluster-1/topics/topic-1"),
+            "cluster-1",
+            "topic-1",
+            /* isInternal= */ false,
+            /* replicationFactor= */ 3,
+            new Relationship("/v3/clusters/cluster-1/topics/topic-1/configurations"),
+            new Relationship("/v3/clusters/cluster-1/topics/topic-1/partitions")));
+
+    assertEquals(expected, response.getValue());
+  }
+
+
+  @Test
+  public void createTopic_existingTopic_throwsTopicExists() {
+    expect(
+        topicManager.createTopic(
+            CLUSTER_ID,
+            TOPIC_1.getName(),
+            TOPIC_1.getPartitions().size(),
+            TOPIC_1.getReplicationFactor()))
+        .andReturn(failedFuture(new TopicExistsException("")));
+    replay(topicManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    topicsResource.createTopic(
+        response,
+        TOPIC_1.getClusterId(),
+        new CreateTopicRequest(
+            new CreateTopicRequest.Data(
+                new CreateTopicRequest.Data.Attributes(
+                    TOPIC_1.getName(),
+                    TOPIC_1.getPartitions().size(),
+                    TOPIC_1.getReplicationFactor()))));
+
+    assertEquals(TopicExistsException.class, response.getException().getClass());
+  }
+
+  @Test
+  public void createTopic_nonExistingCluster_throwsNotFound() {
+    expect(
+        topicManager.createTopic(
+            CLUSTER_ID,
+            TOPIC_1.getName(),
+            TOPIC_1.getPartitions().size(),
+            TOPIC_1.getReplicationFactor()))
+        .andReturn(failedFuture(new NotFoundException()));
+    replay(topicManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    topicsResource.createTopic(
+        response,
+        TOPIC_1.getClusterId(),
+        new CreateTopicRequest(
+            new CreateTopicRequest.Data(
+                new CreateTopicRequest.Data.Attributes(
+                    TOPIC_1.getName(),
+                    TOPIC_1.getPartitions().size(),
+                    TOPIC_1.getReplicationFactor()))));
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }
