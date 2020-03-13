@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -126,6 +127,20 @@ public final class TopicsResource {
 
     AsyncResponseBuilder.from(
         Response.status(Status.CREATED).location(URI.create(topicData.getLinks().getSelf())))
+        .entity(response)
+        .asyncResume(asyncResponse);
+  }
+
+  @DELETE
+  @Path("/{topicName}")
+  public void deleteTopic(
+      @Suspended AsyncResponse asyncResponse,
+      @PathParam("clusterId") String clusterId,
+      @PathParam("topicName") String topicName
+  ) {
+    CompletableFuture<Void> response = topicManager.deleteTopic(clusterId, topicName);
+
+    AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
         .entity(response)
         .asyncResume(asyncResponse);
   }

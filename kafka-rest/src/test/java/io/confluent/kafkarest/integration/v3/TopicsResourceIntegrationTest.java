@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.integration.v3;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,6 +30,7 @@ import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.entities.v3.TopicData;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
+import java.util.Properties;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -55,6 +57,12 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
     createTopic(TOPIC_1, 1, (short) 1);
     createTopic(TOPIC_2, 1, (short) 1);
     createTopic(TOPIC_3, 1, (short) 1);
+  }
+
+  @Override
+  public Properties overrideBrokerProperties(int i, Properties props) {
+    props.put("delete.topic.enable", true);
+    return props;
   }
 
   @Test
@@ -257,9 +265,42 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
+  public void deleteTopic_existingTopic_deletesTopic() {
+    String clusterId = getClusterId();
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1)
+            .accept(Versions.JSON_API)
+            .delete();
+    assertEquals(Status.NO_CONTENT.getStatusCode(), response.getStatus());
+    assertTrue(response.readEntity(String.class).isEmpty());
+    assertFalse(getTopicNames().contains(TOPIC_1));
+  }
+
+  @Test
+  public void deleteTopic_nonExistingTopic_returnsNotFound() {
+    String clusterId = getClusterId();
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics/foobar")
+            .accept(Versions.JSON_API)
+            .delete();
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void deleteTopic_nonExistingCluster_returnsNotFound() {
+    Response response =
+        request("/v3/clusters/foobar/topics/" + TOPIC_1)
+            .accept(Versions.JSON_API)
+            .delete();
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
   public void
-  getTopic_nonExistingTopic_returnsEmpty_thenCreateTopicAndGetTopic_returnsCreatedTopic()
-      throws Exception {
+  getTopic_nonExistingTopic_returnsEmpty_thenCreateTopicAndGetTopic_returnsCreatedTopic_thenDeleteTopicAndGetTopic_returnsEmpty
+      () throws Exception {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
     String topicName = "topic-4";
@@ -303,7 +344,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(expectedCreateTopicResponse, createTopicResponse.readEntity(String.class));
     assertTrue(getTopicNames().contains(topicName));
 
-    String expectedExistingTopicResponse =
+    String expectedExistingGetTopicResponse =
         OBJECT_MAPPER.writeValueAsString(
             new GetTopicResponse(
                 new TopicData(
@@ -331,6 +372,20 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), existingTopicResponse.getStatus());
-    assertEquals(expectedExistingTopicResponse, existingTopicResponse.readEntity(String.class));
+    assertEquals(expectedExistingGetTopicResponse, existingTopicResponse.readEntity(String.class));
+
+    Response deleteTopicResponse =
+        request("/v3/clusters/" + clusterId + "/topics/" + topicName)
+            .accept(Versions.JSON_API)
+            .delete();
+    assertEquals(Status.NO_CONTENT.getStatusCode(), deleteTopicResponse.getStatus());
+    assertTrue(deleteTopicResponse.readEntity(String.class).isEmpty());
+    assertFalse(getTopicNames().contains(topicName));
+
+    Response deletedGetTopicResponse =
+        request("/v3/clusters/" + clusterId + "/topics/" + topicName)
+            .accept(Versions.JSON_API)
+            .get();
+    assertEquals(Status.NOT_FOUND.getStatusCode(), deletedGetTopicResponse.getStatus());
   }
 }
