@@ -20,6 +20,8 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.Partition;
@@ -41,6 +43,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeoutException;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.common.errors.TopicExistsException;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
 import org.junit.Before;
@@ -518,6 +521,44 @@ public class TopicsResourceTest {
                     TOPIC_1.getName(),
                     TOPIC_1.getPartitions().size(),
                     TOPIC_1.getReplicationFactor()))));
+
+    assertEquals(NotFoundException.class, response.getException().getClass());
+  }
+
+  @Test
+  public void deleteTopic_existingTopic_deletesTopic() {
+    expect(topicManager.deleteTopic(CLUSTER_ID, TOPIC_1.getName()))
+        .andReturn(completedFuture(null));
+    replay(topicManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    topicsResource.deleteTopic(response, TOPIC_1.getClusterId(), TOPIC_1.getName());
+
+    assertNull(response.getValue());
+    assertNull(response.getException());
+    assertTrue(response.isDone());
+  }
+
+  @Test
+  public void deleteTopic_nonExistingTopic_throwsUnknownTopicOfPartitionException() {
+    expect(topicManager.deleteTopic(CLUSTER_ID, TOPIC_1.getName()))
+        .andReturn(failedFuture(new UnknownTopicOrPartitionException("")));
+    replay(topicManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    topicsResource.deleteTopic(response, TOPIC_1.getClusterId(), TOPIC_1.getName());
+
+    assertEquals(UnknownTopicOrPartitionException.class, response.getException().getClass());
+  }
+
+  @Test
+  public void deleteTopic_nonExistingCluster_throwsNotFound() {
+    expect(topicManager.deleteTopic(CLUSTER_ID, TOPIC_1.getName()))
+        .andReturn(failedFuture(new NotFoundException()));
+    replay(topicManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    topicsResource.deleteTopic(response, TOPIC_1.getClusterId(), TOPIC_1.getName());
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }

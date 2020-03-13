@@ -42,6 +42,7 @@ import java.util.concurrent.ExecutionException;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.DeleteTopicsResult;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -52,6 +53,7 @@ import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.errors.TimeoutException;
 import org.apache.kafka.common.errors.TopicExistsException;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
 import org.junit.Before;
@@ -397,6 +399,9 @@ public class TopicManagerImplTest {
   @Mock
   private CreateTopicsResult createTopicsResult;
 
+  @Mock
+  private DeleteTopicsResult deleteTopicsResult;
+
   private TopicManagerImpl topicManager;
 
   @Before
@@ -551,6 +556,51 @@ public class TopicManagerImplTest {
           TOPIC_1.getName(),
           TOPIC_1.getPartitions().size(),
           TOPIC_1.getReplicationFactor()).get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(NotFoundException.class, e.getCause().getClass());
+    }
+  }
+
+  @Test
+  public void deleteTopic_existingTopic_deletesTopic() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.deleteTopics(singletonList(TOPIC_1.getName())))
+        .andReturn(deleteTopicsResult);
+    expect(deleteTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
+    replay(clusterManager, adminClient, deleteTopicsResult);
+
+    topicManager.deleteTopic(CLUSTER_ID, TOPIC_1.getName()).get();
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void deleteTopic_nonExistingTopic_throwsUnknownTopicOrPartition() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.deleteTopics(singletonList(TOPIC_1.getName())))
+        .andReturn(deleteTopicsResult);
+    expect(deleteTopicsResult.all())
+        .andReturn(failedFuture(new UnknownTopicOrPartitionException("")));
+    replay(clusterManager, adminClient, deleteTopicsResult);
+
+    try {
+      topicManager.deleteTopic(CLUSTER_ID, TOPIC_1.getName()).get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
+    }
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void deleteTopic_nonExistingCluster_throwsNotFound() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
+    replay(clusterManager);
+
+    try {
+      topicManager.deleteTopic(CLUSTER_ID, TOPIC_1.getName()).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());

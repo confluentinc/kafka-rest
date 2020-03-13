@@ -142,4 +142,16 @@ final class TopicManagerImpl implements TopicManager {
                 KafkaFutures.toCompletableFuture(
                     adminClient.createTopics(singletonList(createTopicRequest)).all()));
   }
+
+  @Override
+  public CompletableFuture<Void> deleteTopic(String clusterId, String topicName) {
+    Objects.requireNonNull(topicName);
+
+    return clusterManager.getCluster(clusterId)
+        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
+        .thenCompose(
+            cluster ->
+                KafkaFutures.toCompletableFuture(
+                    adminClient.deleteTopics(singletonList(topicName)).all()));
+  }
 }
