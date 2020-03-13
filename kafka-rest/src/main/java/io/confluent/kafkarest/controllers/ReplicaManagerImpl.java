@@ -15,6 +15,9 @@
 
 package io.confluent.kafkarest.controllers;
 
+import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
+import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
+
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import java.util.List;
@@ -22,7 +25,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
-import javax.ws.rs.NotFoundException;
 
 final class ReplicaManagerImpl implements ReplicaManager {
 
@@ -37,15 +39,11 @@ final class ReplicaManagerImpl implements ReplicaManager {
   public CompletableFuture<List<PartitionReplica>> listReplicas(
       String clusterId, String topicName, int partitionId) {
     return partitionManager.getPartition(clusterId, topicName, partitionId)
-        .thenApply(
-            partition ->
-                partition.orElseThrow(
-                    () -> new NotFoundException(
-                        String.format(
-                            "Partition %d of topic %s could not be found on cluster %s.",
-                            partitionId,
-                            topicName,
-                            clusterId))))
+        .thenApply(partition ->
+            checkEntityExists(
+                partition,
+                "Partition %d of topic %s could not be found on cluster %s.",
+                partitionId, topicName, clusterId))
         .thenApply(Partition::getReplicas);
   }
 
@@ -53,10 +51,6 @@ final class ReplicaManagerImpl implements ReplicaManager {
   public CompletableFuture<Optional<PartitionReplica>> getReplica(
       String clusterId, String topicName, int partitionId, int brokerId) {
     return listReplicas(clusterId, topicName, partitionId)
-        .thenApply(
-            replicas ->
-                replicas.stream()
-                    .filter(replica -> replica.getBrokerId() == brokerId)
-                    .findAny());
+        .thenApply(replicas -> findEntityByKey(replicas, PartitionReplica::getBrokerId, brokerId));
   }
 }

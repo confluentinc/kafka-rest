@@ -92,10 +92,8 @@ public final class ReplicasResource {
   ) {
     CompletableFuture<GetReplicaResponse> response =
         replicaManager.getReplica(clusterId, topicName, partitionId, brokerId)
-            .thenApply(
-                replica ->
-                    new GetReplicaResponse(
-                        toReplicaData(replica.orElseThrow(NotFoundException::new))));
+            .thenApply(replica -> replica.orElseThrow(NotFoundException::new))
+            .thenApply(replica -> new GetReplicaResponse(toReplicaData(replica)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
