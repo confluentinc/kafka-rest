@@ -74,7 +74,7 @@ public final class GetPartitionResponse {
         partition.getReplicas() != null ? partition.getReplicas() : Collections.emptyList();
     return new GetPartitionResponse(
         partition.getPartitionId(),
-        partition.getLeader().map(PartitionReplica::getBroker).orElse(-1),
+        partition.getLeader().map(PartitionReplica::getBrokerId).orElse(-1),
         replicas.stream().map(Replica::fromPartitionReplica).collect(Collectors.toList()));
   }
 
@@ -147,7 +147,7 @@ public final class GetPartitionResponse {
     }
 
     public static Replica fromPartitionReplica(PartitionReplica replica) {
-      return new Replica(replica.getBroker(), replica.isLeader(), replica.isInSync());
+      return new Replica(replica.getBrokerId(), replica.isLeader(), replica.isInSync());
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Confluent Inc.
+ * Copyright 2020 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -20,28 +20,56 @@ import java.util.StringJoiner;
 
 public final class PartitionReplica {
 
-  private final int broker;
+  private final String clusterId;
 
-  private final boolean leader;
+  private final String topicName;
 
-  private final boolean inSync;
+  private final int partitionId;
 
-  public PartitionReplica(int broker, boolean leader, boolean inSync) {
-    this.broker = broker;
-    this.leader = leader;
-    this.inSync = inSync;
+  private final int brokerId;
+
+  private final boolean isLeader;
+
+  private final boolean isInSync;
+
+  public PartitionReplica(
+      String clusterId,
+      String topicName,
+      int partitionId,
+      int brokerId,
+      boolean isLeader,
+      boolean isInSync
+  ) {
+    this.clusterId = Objects.requireNonNull(clusterId);
+    this.topicName = Objects.requireNonNull(topicName);
+    this.partitionId = partitionId;
+    this.brokerId = brokerId;
+    this.isLeader = isLeader;
+    this.isInSync = isInSync;
   }
 
-  public int getBroker() {
-    return broker;
+  public String getClusterId() {
+    return clusterId;
+  }
+
+  public String getTopicName() {
+    return topicName;
+  }
+
+  public int getPartitionId() {
+    return partitionId;
+  }
+
+  public int getBrokerId() {
+    return brokerId;
   }
 
   public boolean isLeader() {
-    return leader;
+    return isLeader;
   }
 
   public boolean isInSync() {
-    return inSync;
+    return isInSync;
   }
 
   @Override
@@ -53,20 +81,28 @@ public final class PartitionReplica {
       return false;
     }
     PartitionReplica that = (PartitionReplica) o;
-    return broker == that.broker && leader == that.leader && inSync == that.inSync;
+    return partitionId == that.partitionId
+        && brokerId == that.brokerId
+        && isLeader == that.isLeader
+        && isInSync == that.isInSync
+        && Objects.equals(clusterId, that.clusterId)
+        && Objects.equals(topicName, that.topicName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(broker, leader, inSync);
+    return Objects.hash(clusterId, topicName, partitionId, brokerId, isLeader, isInSync);
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", PartitionReplica.class.getSimpleName() + "[", "]")
-        .add("broker=" + broker)
-        .add("leader=" + leader)
-        .add("inSync=" + inSync)
+        .add("clusterId='" + clusterId + "'")
+        .add("topicName='" + topicName + "'")
+        .add("partitionId=" + partitionId)
+        .add("brokerId=" + brokerId)
+        .add("isLeader=" + isLeader)
+        .add("isInSync=" + isInSync)
         .toString();
   }
 }
