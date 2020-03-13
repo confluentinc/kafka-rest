@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.v3.CreateTopicResponse;
 import io.confluent.kafkarest.entities.v3.GetTopicResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicsResponse;
 import io.confluent.kafkarest.entities.v3.Relationship;
@@ -194,7 +195,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
     String expected =
         OBJECT_MAPPER.writeValueAsString(
-            new GetTopicResponse(
+            new CreateTopicResponse(
                 new TopicData(
                     new ResourceLink(
                         baseUrl + "/v3/clusters/" + clusterId + "/topics/" + topicName),
@@ -251,5 +252,82 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                         + "\"replication_factor\":1}}}",
                     Versions.JSON_API));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void
+  getTopic_nonExistingTopic_returnsEmpty_thenCreateTopicAndGetTopic_returnsCreatedTopic()
+      throws Exception {
+    String baseUrl = restConnect;
+    String clusterId = getClusterId();
+    String topicName = "topic-4";
+
+    Response nonExistingGetTopicResponse =
+        request("/v3/clusters/" + clusterId + "/topics/" + topicName)
+            .accept(Versions.JSON_API)
+            .get();
+    assertEquals(Status.NOT_FOUND.getStatusCode(), nonExistingGetTopicResponse.getStatus());
+
+    String expectedCreateTopicResponse =
+        OBJECT_MAPPER.writeValueAsString(
+            new CreateTopicResponse(
+                new TopicData(
+                    new ResourceLink(
+                        baseUrl + "/v3/clusters/" + clusterId + "/topics/" + topicName),
+                    clusterId,
+                    topicName,
+                    /* isInternal= */ false,
+                    /* replicationFactor= */ 1,
+                    new Relationship(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/topics/" + topicName
+                            + "/configurations"),
+                    new Relationship(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/topics/" + topicName
+                            + "/partitions"))));
+
+    Response createTopicResponse =
+        request("/v3/clusters/" + clusterId + "/topics")
+            .accept(Versions.JSON_API)
+            .post(
+                Entity.entity(
+                    "{\"data\":{\"attributes\":{\"topic_name\":\""
+                        + topicName + "\",\"partitions_count\":1,\"replication_factor\":1}}}",
+                    Versions.JSON_API));
+    assertEquals(Status.CREATED.getStatusCode(), createTopicResponse.getStatus());
+    assertEquals(expectedCreateTopicResponse, createTopicResponse.readEntity(String.class));
+
+    String expectedExistingTopicResponse =
+        OBJECT_MAPPER.writeValueAsString(
+            new GetTopicResponse(
+                new TopicData(
+                    new ResourceLink(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/topics/" + topicName),
+                    clusterId,
+                    topicName,
+                    /* isInternal= */ false,
+                    /* replicationFactor= */ 1,
+                    new Relationship(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/topics/" + topicName
+                            + "/configurations"),
+                    new Relationship(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/topics/" + topicName
+                            + "/partitions"))));
+
+    Response existingTopicResponse =
+        request("/v3/clusters/" + clusterId + "/topics/" + topicName)
+            .accept(Versions.JSON_API)
+            .get();
+    assertEquals(Status.OK.getStatusCode(), existingTopicResponse.getStatus());
+    assertEquals(expectedExistingTopicResponse, existingTopicResponse.readEntity(String.class));
   }
 }
