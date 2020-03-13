@@ -53,17 +53,26 @@ public class PartitionManagerImplTest {
           /* partitionId= */ 0,
           Arrays.asList(
               new PartitionReplica(
-                  /* broker= */ 1,
-                  /* leader= */ true,
-                  /* inSync= */ false),
+                  CLUSTER_ID,
+                  TOPIC_NAME,
+                  /* partitionId= */ 0,
+                  /* brokerId= */ 1,
+                  /* isLeader= */ true,
+                  /* isInSync= */ false),
               new PartitionReplica(
-                  /* broker= */ 2,
-                  /* leader= */ false,
-                  /* inSync= */ true),
+                  CLUSTER_ID,
+                  TOPIC_NAME,
+                  /* partitionId= */ 0,
+                  /* brokerId= */ 2,
+                  /* isLeader= */ false,
+                  /* isInSync= */ true),
               new PartitionReplica(
-                  /* broker= */ 3,
-                  /* leader= */ false,
-                  /* inSync= */ false)));
+                  CLUSTER_ID,
+                  TOPIC_NAME,
+                  /* partitionId= */ 0,
+                  /* brokerId= */ 3,
+                  /* isLeader= */ false,
+                  /* isInSync= */ false)));
   private static final Partition PARTITION_2 =
       new Partition(
           CLUSTER_ID,
@@ -71,17 +80,26 @@ public class PartitionManagerImplTest {
           /* partitionId= */ 1,
           Arrays.asList(
               new PartitionReplica(
-                  /* broker= */ 2,
-                  /* leader= */ true,
-                  /* inSync= */ false),
+                  CLUSTER_ID,
+                  TOPIC_NAME,
+                  /* partitionId= */ 1,
+                  /* brokerId= */ 2,
+                  /* isLeader= */ true,
+                  /* isInSync= */ false),
               new PartitionReplica(
-                  /* broker= */ 3,
-                  /* leader= */ false,
-                  /* inSync= */ true),
+                  CLUSTER_ID,
+                  TOPIC_NAME,
+                  /* partitionId= */ 1,
+                  /* brokerId= */ 3,
+                  /* isLeader= */ false,
+                  /* isInSync= */ true),
               new PartitionReplica(
-                  /* broker= */ 1,
-                  /* leader= */ false,
-                  /* inSync= */ false)));
+                  CLUSTER_ID,
+                  TOPIC_NAME,
+                  /* partitionId= */ 1,
+                  /* brokerId= */ 1,
+                  /* isLeader= */ false,
+                  /* isInSync= */ false)));
   private static final Partition PARTITION_3 =
       new Partition(
           CLUSTER_ID,
@@ -89,17 +107,26 @@ public class PartitionManagerImplTest {
           /* partitionId= */ 2,
           Arrays.asList(
               new PartitionReplica(
-                  /* broker= */ 3,
-                  /* leader= */ true,
-                  /* inSync= */ false),
+                  CLUSTER_ID,
+                  TOPIC_NAME,
+                  /* partitionId= */ 2,
+                  /* brokerId= */ 3,
+                  /* isLeader= */ true,
+                  /* isInSync= */ false),
               new PartitionReplica(
-                  /* broker= */ 1,
-                  /* leader= */ false,
-                  /* inSync= */ true),
+                  CLUSTER_ID,
+                  TOPIC_NAME,
+                  /* partitionId= */ 2,
+                  /* brokerId= */ 1,
+                  /* isLeader= */ false,
+                  /* isInSync= */ true),
               new PartitionReplica(
-                  /* broker= */ 2,
-                  /* leader= */ false,
-                  /* inSync= */ false)));
+                  CLUSTER_ID,
+                  TOPIC_NAME,
+                  /* partitionId= */ 2,
+                  /* brokerId= */ 2,
+                  /* isLeader= */ false,
+                  /* isInSync= */ false)));
 
   private static final Topic TOPIC =
       new Topic(

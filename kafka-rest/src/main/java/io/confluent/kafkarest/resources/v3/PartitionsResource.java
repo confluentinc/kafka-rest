@@ -112,7 +112,7 @@ public final class PartitionsResource {
                             "partitions",
                             Integer.toString(partition.getPartitionId()),
                             "replicas",
-                            Integer.toString(replica.getBroker()))))
+                            Integer.toString(replica.getBrokerId()))))
             .orElse(null);
     Relationship replicas =
         new Relationship(
