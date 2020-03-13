@@ -13,16 +13,23 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.resources.v3;
+package io.confluent.kafkarest;
 
 import java.util.concurrent.CompletableFuture;
 
-final class CompletableFutures {
+/**
+ * Utilities to deal with {@link CompletableFuture}.
+ */
+public final class CompletableFutures {
 
   private CompletableFutures() {
   }
 
-  static <T> CompletableFuture<T> failedFuture(Throwable exception) {
+  /**
+   * Returns a {@link CompletableFuture} that is completed exceptionally with the given {@code
+   * exception}.
+   */
+  public static <T> CompletableFuture<T> failedFuture(Throwable exception) {
     CompletableFuture<T> future = new CompletableFuture<>();
     future.completeExceptionally(exception);
     return future;

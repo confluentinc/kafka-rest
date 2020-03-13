@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.resources.v3;
 
-import static io.confluent.kafkarest.resources.v3.CompletableFutures.failedFuture;
+import static io.confluent.kafkarest.CompletableFutures.failedFuture;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -55,22 +55,25 @@ public class TopicsResourceTest {
           new Properties(),
           Arrays.asList(
               new Partition(
+                  CLUSTER_ID,
+                  "topic-1",
                   /* partition= */ 0,
-                  /* leader= */ 1,
                   Arrays.asList(
                       new PartitionReplica(1, /* leader= */ true, /* inSync= */ true),
                       new PartitionReplica(2, /* leader= */ false, /* inSync= */ false),
                       new PartitionReplica(3, /* leader= */ false, /* inSync= */ false))),
               new Partition(
+                  CLUSTER_ID,
+                  "topic-1",
                   /* partition= */ 1,
-                  /* leader= */ 2,
                   Arrays.asList(
                       new PartitionReplica(1, /* leader= */ false, /* inSync= */ false),
                       new PartitionReplica(2, /* leader= */ true, /* inSync= */ true),
                       new PartitionReplica(3, /* leader= */ false, /* inSync= */ false))),
               new Partition(
+                  CLUSTER_ID,
+                  "topic-1",
                   /* partition= */2,
-                  /* leader= */ 3,
                   Arrays.asList(
                       new PartitionReplica(1, /* leader= */ false, /* inSync= */ false),
                       new PartitionReplica(2, /* leader= */ false, /* inSync= */ false),
@@ -85,22 +88,25 @@ public class TopicsResourceTest {
           new Properties(),
           Arrays.asList(
               new Partition(
+                  CLUSTER_ID,
+                  "topic-2",
                   /* partition= */ 0,
-                  /* leader= */ 3,
                   Arrays.asList(
                       new PartitionReplica(1, /* leader= */ false, /* inSync= */ false),
                       new PartitionReplica(2, /* leader= */ false, /* inSync= */ false),
                       new PartitionReplica(3, /* leader= */ true, /* inSync= */ true))),
               new Partition(
+                  CLUSTER_ID,
+                  "topic-2",
                   /* partition= */ 1,
-                  /* leader= */ 1,
                   Arrays.asList(
                       new PartitionReplica(1, /* leader= */ true, /* inSync= */ true),
                       new PartitionReplica(2, /* leader= */ false, /* inSync= */ false),
                       new PartitionReplica(3, /* leader= */ false, /* inSync= */ false))),
               new Partition(
+                  CLUSTER_ID,
+                  "topic-2",
                   /* partition= */2,
-                  /* leader= */ 2,
                   Arrays.asList(
                       new PartitionReplica(1, /* leader= */ false, /* inSync= */ false),
                       new PartitionReplica(2, /* leader= */ true, /* inSync= */ true),
@@ -115,22 +121,25 @@ public class TopicsResourceTest {
           new Properties(),
           Arrays.asList(
               new Partition(
+                  CLUSTER_ID,
+                  "topic-3",
                   /* partition= */ 0,
-                  /* leader= */ 2,
                   Arrays.asList(
                       new PartitionReplica(1, /* leader= */ false, /* inSync= */ false),
                       new PartitionReplica(2, /* leader= */ true, /* inSync= */ true),
                       new PartitionReplica(3, /* leader= */ false, /* inSync= */ false))),
               new Partition(
+                  CLUSTER_ID,
+                  "topic-3",
                   /* partition= */ 1,
-                  /* leader= */ 3,
                   Arrays.asList(
                       new PartitionReplica(1, /* leader= */ false, /* inSync= */ false),
                       new PartitionReplica(2, /* leader= */ false, /* inSync= */ false),
                       new PartitionReplica(3, /* leader= */ true, /* inSync= */ true))),
               new Partition(
+                  CLUSTER_ID,
+                  "topic-3",
                   /* partition= */2,
-                  /* leader= */ 1,
                   Arrays.asList(
                       new PartitionReplica(1, /* leader= */ true, /* inSync= */ true),
                       new PartitionReplica(2, /* leader= */ false, /* inSync= */ false),

@@ -16,22 +16,31 @@
 package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
- * Response body for {@code GET /v3/clusters/<clusterId>/topics/<topicName>} requests.
+ * Response body for {@code GET /v3/clusters/<clusterId>/topics/<topicName>/partitions} requests.
  */
-public final class GetTopicResponse {
+public final class ListPartitionsResponse {
 
-  private final TopicData data;
+  private final CollectionLink links;
 
-  public GetTopicResponse(TopicData data) {
+  private final List<PartitionData> data;
+
+  public ListPartitionsResponse(CollectionLink links, List<PartitionData> data) {
+    this.links = Objects.requireNonNull(links);
     this.data = Objects.requireNonNull(data);
   }
 
+  @JsonProperty("links")
+  public CollectionLink getLinks() {
+    return links;
+  }
+
   @JsonProperty("data")
-  public TopicData getData() {
+  public List<PartitionData> getData() {
     return data;
   }
 
@@ -43,18 +52,19 @@ public final class GetTopicResponse {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    GetTopicResponse that = (GetTopicResponse) o;
-    return Objects.equals(data, that.data);
+    ListPartitionsResponse that = (ListPartitionsResponse) o;
+    return Objects.equals(links, that.links) && Objects.equals(data, that.data);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(data);
+    return Objects.hash(links, data);
   }
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", GetTopicResponse.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", ListPartitionsResponse.class.getSimpleName() + "[", "]")
+        .add("links=" + links)
         .add("data=" + data)
         .toString();
   }

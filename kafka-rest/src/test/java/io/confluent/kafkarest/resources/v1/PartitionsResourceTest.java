@@ -50,11 +50,11 @@ public class PartitionsResourceTest
 
   private final String topicName = "topic1";
   private final List<Partition> partitions = Arrays.asList(
-      new Partition(0, 0, Arrays.asList(
+      new Partition(/* clusterId= */ "", "topic1", 0, Arrays.asList(
           new PartitionReplica(0, true, true),
           new PartitionReplica(1, false, false)
       )),
-      new Partition(1, 1, Arrays.asList(
+      new Partition(/* clusterId= */ "", "topic1", 1, Arrays.asList(
           new PartitionReplica(0, false, true),
           new PartitionReplica(1, true, true)
       ))

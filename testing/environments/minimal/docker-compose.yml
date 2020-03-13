@@ -32,11 +32,14 @@ services:
     depends_on:
       - zookeeper
     environment:
-      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-1:9191"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka-1:9191,EXTERNAL://localhost:9291"
       KAFKA_BROKER_ID: 1
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_LISTENERS: "INTERNAL://0.0.0.0:9191,EXTERNAL://0.0.0.0:9291"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:9091"
     ports:
-      - "9191:9191"
+      - "9291:9291"
 
   kafka-2:
     image: confluentinc/cp-server:latest
@@ -45,11 +48,14 @@ services:
     depends_on:
       - zookeeper
     environment:
-      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-2:9192"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka-2:9192,EXTERNAL://localhost:9292"
       KAFKA_BROKER_ID: 2
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_LISTENERS: "INTERNAL://0.0.0.0:9192,EXTERNAL://0.0.0.0:9292"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:9091"
     ports:
-      - "9192:9192"
+      - "9292:9292"
 
   kafka-3:
     image: confluentinc/cp-server:latest
@@ -58,11 +64,14 @@ services:
     depends_on:
       - zookeeper
     environment:
-      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-3:9193"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka-3:9193,EXTERNAL://localhost:9293"
       KAFKA_BROKER_ID: 3
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_LISTENERS: "INTERNAL://0.0.0.0:9193,EXTERNAL://0.0.0.0:9293"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:9091"
     ports:
-      - "9193:9193"
+      - "9293:9293"
 
   kafka-rest:
     build:
@@ -74,9 +83,9 @@ services:
       - zookeeper
       - kafka-1
     environment:
-      KAFKA_REST_ADVERTISED_LISTENERS: "http://localhost:9291"
-      KAFKA_REST_BOOTSTRAP_SERVERS: "PLAINTEXT://kafka-1:9191"
-      KAFKA_REST_LISTENERS: "http://kafka-rest:9291"
+      KAFKA_REST_ADVERTISED_LISTENERS: "http://localhost:9391"
+      KAFKA_REST_BOOTSTRAP_SERVERS: "kafka-1:9191"
+      KAFKA_REST_LISTENERS: "http://0.0.0.0:9391"
       KAFKA_REST_ZOOKEEPER_CONNECT: "zookeeper:9091"
     ports:
-      - "9291:9291"
+      - "9391:9391"

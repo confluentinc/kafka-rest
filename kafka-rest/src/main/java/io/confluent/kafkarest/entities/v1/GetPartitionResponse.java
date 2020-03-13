@@ -73,8 +73,8 @@ public final class GetPartitionResponse {
     List<PartitionReplica> replicas =
         partition.getReplicas() != null ? partition.getReplicas() : Collections.emptyList();
     return new GetPartitionResponse(
-        partition.getPartition(),
-        partition.getLeader(),
+        partition.getPartitionId(),
+        partition.getLeader().map(PartitionReplica::getBroker).orElse(-1),
         replicas.stream().map(Replica::fromPartitionReplica).collect(Collectors.toList()));
   }
 

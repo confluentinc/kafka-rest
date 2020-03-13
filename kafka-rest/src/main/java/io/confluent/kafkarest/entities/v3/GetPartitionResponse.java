@@ -20,18 +20,19 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
- * Response body for {@code GET /v3/clusters/<clusterId>/topics/<topicName>} requests.
+ * Response body for {@code GET /v3/clusters/<clusterId>/topics/<topicName>/partitions/<partitionId}
+ * requests.
  */
-public final class GetTopicResponse {
+public final class GetPartitionResponse {
 
-  private final TopicData data;
+  private final PartitionData data;
 
-  public GetTopicResponse(TopicData data) {
+  public GetPartitionResponse(PartitionData data) {
     this.data = Objects.requireNonNull(data);
   }
 
   @JsonProperty("data")
-  public TopicData getData() {
+  public PartitionData getData() {
     return data;
   }
 
@@ -43,7 +44,7 @@ public final class GetTopicResponse {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    GetTopicResponse that = (GetTopicResponse) o;
+    GetPartitionResponse that = (GetPartitionResponse) o;
     return Objects.equals(data, that.data);
   }
 
@@ -54,7 +55,7 @@ public final class GetTopicResponse {
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", GetTopicResponse.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", GetPartitionResponse.class.getSimpleName() + "[", "]")
         .add("data=" + data)
         .toString();
   }
