@@ -27,6 +27,7 @@ public final class ControllersModule extends AbstractBinder {
     bind(ClusterManagerImpl.class).to(ClusterManager.class);
     bind(PartitionManagerImpl.class).to(PartitionManager.class);
     bind(ReplicaManagerImpl.class).to(ReplicaManager.class);
+    bind(TopicConfigurationManagerImpl.class).to(TopicConfigurationManager.class);
     bind(TopicManagerImpl.class).to(TopicManager.class);
   }
 }

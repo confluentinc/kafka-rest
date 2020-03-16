@@ -15,8 +15,13 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import static java.util.Collections.emptyMap;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.StringJoiner;
 import javax.annotation.Nullable;
@@ -115,15 +120,20 @@ public final class CreateTopicRequest {
 
       private final short replicationFactor;
 
+      @Nullable
+      private final List<Configuration> configurations;
+
       @JsonCreator
       public Attributes(
           @JsonProperty("topic_name") @Nullable String topicName,
           @JsonProperty("partitions_count") int partitionsCount,
-          @JsonProperty("replication_factor") short replicationFactor
+          @JsonProperty("replication_factor") short replicationFactor,
+          @JsonProperty("configurations") @Nullable List<Configuration> configurations
       ) {
         this.topicName = topicName;
         this.partitionsCount = partitionsCount;
         this.replicationFactor = replicationFactor;
+        this.configurations = configurations;
       }
 
       @Nullable
@@ -139,6 +149,18 @@ public final class CreateTopicRequest {
         return replicationFactor;
       }
 
+      public Map<String, String> getConfigurations() {
+        if (this.configurations == null) {
+          return emptyMap();
+        }
+
+        HashMap<String, String> configurations = new HashMap<>();
+        for (Configuration configuration : this.configurations) {
+          configurations.put(configuration.getName(), configuration.getValue());
+        }
+        return configurations;
+      }
+
       @Override
       public boolean equals(Object o) {
         if (this == o) {
@@ -150,12 +172,13 @@ public final class CreateTopicRequest {
         Attributes that = (Attributes) o;
         return partitionsCount == that.partitionsCount
             && replicationFactor == that.replicationFactor
-            && Objects.equals(topicName, that.topicName);
+            && Objects.equals(topicName, that.topicName)
+            && Objects.equals(configurations, that.configurations);
       }
 
       @Override
       public int hashCode() {
-        return Objects.hash(topicName, partitionsCount, replicationFactor);
+        return Objects.hash(topicName, partitionsCount, replicationFactor, configurations);
       }
 
       @Override
@@ -164,7 +187,61 @@ public final class CreateTopicRequest {
             .add("topicName='" + topicName + "'")
             .add("partitionsCount=" + partitionsCount)
             .add("replicationFactor=" + replicationFactor)
+            .add("configurations=" + configurations)
             .toString();
+      }
+
+      public static final class Configuration {
+
+        @NotNull
+        @Nullable
+        private final String name;
+
+        @Nullable
+        private final String value;
+
+        @JsonCreator
+        public Configuration(
+            @JsonProperty("name") @Nullable String name,
+            @JsonProperty("value") @Nullable String value) {
+          this.name = name;
+          this.value = value;
+        }
+
+        @Nullable
+        public String getName() {
+          return name;
+        }
+
+        @Nullable
+        public String getValue() {
+          return value;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+          if (this == o) {
+            return true;
+          }
+          if (o == null || getClass() != o.getClass()) {
+            return false;
+          }
+          Configuration that = (Configuration) o;
+          return Objects.equals(name, that.name) && Objects.equals(value, that.value);
+        }
+
+        @Override
+        public int hashCode() {
+          return Objects.hash(name, value);
+        }
+
+        @Override
+        public String toString() {
+          return new StringJoiner(", ", Configuration.class.getSimpleName() + "[", "]")
+              .add("name='" + name + "'")
+              .add("value='" + value + "'")
+              .toString();
+        }
       }
     }
   }

@@ -26,7 +26,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 
-class PartitionManagerImpl implements PartitionManager {
+final class PartitionManagerImpl implements PartitionManager {
 
   private final TopicManager topicManager;
 

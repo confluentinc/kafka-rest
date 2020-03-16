@@ -25,9 +25,9 @@ import io.confluent.kafkarest.entities.Topic;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -103,7 +103,6 @@ final class TopicManagerImpl implements TopicManager {
     return new Topic(
         clusterId,
         topicDescription.name(),
-        new Properties(),
         topicDescription.partitions().stream()
             .map(partition -> toPartition(clusterId, topicDescription.name(), partition))
             .collect(Collectors.toList()),
@@ -130,10 +129,15 @@ final class TopicManagerImpl implements TopicManager {
 
   @Override
   public CompletableFuture<Void> createTopic(
-      String clusterId, String topicName, int partitionsCount, short replicationFactor) {
+      String clusterId,
+      String topicName,
+      int partitionsCount,
+      short replicationFactor,
+      Map<String, String> configurations) {
     Objects.requireNonNull(topicName);
 
-    NewTopic createTopicRequest = new NewTopic(topicName, partitionsCount, replicationFactor);
+    NewTopic createTopicRequest =
+        new NewTopic(topicName, partitionsCount, replicationFactor).configs(configurations);
 
     return clusterManager.getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
