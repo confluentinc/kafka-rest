@@ -17,6 +17,7 @@ package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.TestUtils.failedFuture;
 import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
@@ -37,7 +38,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
@@ -124,7 +124,6 @@ public class TopicManagerImplTest {
       new Topic(
           CLUSTER_ID,
           "topic-1",
-          new Properties(),
           Arrays.asList(
               new Partition(
                   CLUSTER_ID,
@@ -211,7 +210,6 @@ public class TopicManagerImplTest {
       new Topic(
           CLUSTER_ID,
           "topic-2",
-          new Properties(),
           Arrays.asList(
               new Partition(
                   CLUSTER_ID,
@@ -298,7 +296,6 @@ public class TopicManagerImplTest {
       new Topic(
           CLUSTER_ID,
           "topic-3",
-          new Properties(),
           Arrays.asList(
               new Partition(
                   CLUSTER_ID,
@@ -503,7 +500,8 @@ public class TopicManagerImplTest {
                 new NewTopic(
                     TOPIC_1.getName(),
                     TOPIC_1.getPartitions().size(),
-                    TOPIC_1.getReplicationFactor()))))
+                    TOPIC_1.getReplicationFactor())
+            .configs(singletonMap("cleanup.policy", "compact")))))
         .andReturn(createTopicsResult);
     expect(createTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
     replay(clusterManager, adminClient, createTopicsResult);
@@ -512,7 +510,8 @@ public class TopicManagerImplTest {
         CLUSTER_ID,
         TOPIC_1.getName(),
         TOPIC_1.getPartitions().size(),
-        TOPIC_1.getReplicationFactor()).get();
+        TOPIC_1.getReplicationFactor(),
+        singletonMap("cleanup.policy", "compact")).get();
 
     verify(adminClient);
   }
@@ -526,7 +525,8 @@ public class TopicManagerImplTest {
                 new NewTopic(
                     TOPIC_1.getName(),
                     TOPIC_1.getPartitions().size(),
-                    TOPIC_1.getReplicationFactor()))))
+                    TOPIC_1.getReplicationFactor())
+            .configs(singletonMap("cleanup.policy", "compact")))))
         .andReturn(createTopicsResult);
     expect(createTopicsResult.all()).andReturn(failedFuture(new TopicExistsException("")));
     replay(clusterManager, adminClient, createTopicsResult);
@@ -536,7 +536,8 @@ public class TopicManagerImplTest {
           CLUSTER_ID,
           TOPIC_1.getName(),
           TOPIC_1.getPartitions().size(),
-          TOPIC_1.getReplicationFactor()).get();
+          TOPIC_1.getReplicationFactor(),
+          singletonMap("cleanup.policy", "compact")).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(TopicExistsException.class, e.getCause().getClass());
@@ -555,7 +556,8 @@ public class TopicManagerImplTest {
           CLUSTER_ID,
           TOPIC_1.getName(),
           TOPIC_1.getPartitions().size(),
-          TOPIC_1.getReplicationFactor()).get();
+          TOPIC_1.getReplicationFactor(),
+          singletonMap("cleanup.policy", "compact")).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());

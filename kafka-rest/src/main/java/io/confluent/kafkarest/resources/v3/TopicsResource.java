@@ -32,8 +32,8 @@ import io.confluent.kafkarest.resources.v3.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.UrlFactory;
 import java.net.URI;
 import java.util.Comparator;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -110,19 +110,20 @@ public final class TopicsResource {
     String topicName = request.getData().getAttributes().getTopicName();
     int partitionsCount =  request.getData().getAttributes().getPartitionsCount();
     short replicationFactor = request.getData().getAttributes().getReplicationFactor();
+    Map<String, String> configurations = request.getData().getAttributes().getConfigurations();
 
     TopicData topicData =
         toTopicData(
             new Topic(
                 clusterId,
                 topicName,
-                /* configurations= */ new Properties(),
                 /* partitions= */ emptyList(),
                 replicationFactor,
                 /* isInternal= */ false));
 
     CompletableFuture<CreateTopicResponse> response =
-        topicManager.createTopic(clusterId, topicName, partitionsCount, replicationFactor)
+        topicManager.createTopic(
+            clusterId, topicName, partitionsCount, replicationFactor, configurations)
             .thenApply(none -> new CreateTopicResponse(topicData));
 
     AsyncResponseBuilder.from(

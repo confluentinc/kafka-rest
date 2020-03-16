@@ -16,6 +16,8 @@
 package io.confluent.kafkarest.resources.v3;
 
 import static io.confluent.kafkarest.CompletableFutures.failedFuture;
+import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -39,7 +41,6 @@ import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.concurrent.TimeoutException;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.common.errors.TopicExistsException;
@@ -49,7 +50,10 @@ import org.easymock.Mock;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+@RunWith(JUnit4.class)
 public class TopicsResourceTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -58,7 +62,6 @@ public class TopicsResourceTest {
       new Topic(
           CLUSTER_ID,
           "topic-1",
-          new Properties(),
           Arrays.asList(
               new Partition(
                   CLUSTER_ID,
@@ -145,7 +148,6 @@ public class TopicsResourceTest {
       new Topic(
           CLUSTER_ID,
           "topic-2",
-          new Properties(),
           Arrays.asList(
               new Partition(
                   CLUSTER_ID,
@@ -232,7 +234,6 @@ public class TopicsResourceTest {
       new Topic(
           CLUSTER_ID,
           "topic-3",
-          new Properties(),
           Arrays.asList(
               new Partition(
                   CLUSTER_ID,
@@ -446,7 +447,8 @@ public class TopicsResourceTest {
             CLUSTER_ID,
             TOPIC_1.getName(),
             TOPIC_1.getPartitions().size(),
-            TOPIC_1.getReplicationFactor()))
+            TOPIC_1.getReplicationFactor(),
+            singletonMap("cleanup.policy", "compact")))
         .andReturn(completedFuture(null));
     replay(topicManager);
 
@@ -459,7 +461,10 @@ public class TopicsResourceTest {
                 new CreateTopicRequest.Data.Attributes(
                     TOPIC_1.getName(),
                     TOPIC_1.getPartitions().size(),
-                    TOPIC_1.getReplicationFactor()))));
+                    TOPIC_1.getReplicationFactor(),
+                    singletonList(
+                        new CreateTopicRequest.Data.Attributes.Configuration(
+                            "cleanup.policy", "compact"))))));
 
     CreateTopicResponse expected = new CreateTopicResponse(
         new TopicData(
@@ -482,7 +487,8 @@ public class TopicsResourceTest {
             CLUSTER_ID,
             TOPIC_1.getName(),
             TOPIC_1.getPartitions().size(),
-            TOPIC_1.getReplicationFactor()))
+            TOPIC_1.getReplicationFactor(),
+            singletonMap("cleanup.policy", "compact")))
         .andReturn(failedFuture(new TopicExistsException("")));
     replay(topicManager);
 
@@ -495,7 +501,10 @@ public class TopicsResourceTest {
                 new CreateTopicRequest.Data.Attributes(
                     TOPIC_1.getName(),
                     TOPIC_1.getPartitions().size(),
-                    TOPIC_1.getReplicationFactor()))));
+                    TOPIC_1.getReplicationFactor(),
+                    singletonList(
+                        new CreateTopicRequest.Data.Attributes.Configuration(
+                            "cleanup.policy", "compact"))))));
 
     assertEquals(TopicExistsException.class, response.getException().getClass());
   }
@@ -507,7 +516,8 @@ public class TopicsResourceTest {
             CLUSTER_ID,
             TOPIC_1.getName(),
             TOPIC_1.getPartitions().size(),
-            TOPIC_1.getReplicationFactor()))
+            TOPIC_1.getReplicationFactor(),
+            singletonMap("cleanup.policy", "compact")))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);
 
@@ -520,7 +530,10 @@ public class TopicsResourceTest {
                 new CreateTopicRequest.Data.Attributes(
                     TOPIC_1.getName(),
                     TOPIC_1.getPartitions().size(),
-                    TOPIC_1.getReplicationFactor()))));
+                    TOPIC_1.getReplicationFactor(),
+                    singletonList(
+                        new CreateTopicRequest.Data.Attributes.Configuration(
+                            "cleanup.policy", "compact"))))));
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }

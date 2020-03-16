@@ -28,7 +28,6 @@ import io.confluent.kafkarest.entities.Topic;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.NotFoundException;
@@ -132,7 +131,6 @@ public class PartitionManagerImplTest {
       new Topic(
           CLUSTER_ID,
           TOPIC_NAME,
-          new Properties(),
           Arrays.asList(PARTITION_1, PARTITION_2, PARTITION_3),
           /* replicationFactor= */ (short) 3,
           /* isInternal= */ false);

@@ -15,7 +15,6 @@
 
 package io.confluent.kafkarest.entities;
 
-
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -27,6 +26,7 @@ public final class Topic {
 
   private final String name;
 
+  @Deprecated
   private final Properties configurations;
 
   private final List<Partition> partitions;
@@ -36,6 +36,35 @@ public final class Topic {
   private final boolean isInternal;
 
   public Topic(
+      String clusterId,
+      String name,
+      List<Partition> partitions,
+      short replicationFactor,
+      boolean isInternal) {
+    this(
+        clusterId,
+        name,
+        /* configurations= */ new Properties(),
+        partitions,
+        replicationFactor,
+        isInternal);
+  }
+
+  /**
+   * @deprecated use {@link #Topic(String, String, Properties, List, short, boolean)} instead
+   */
+  @Deprecated
+  public Topic(String name, Properties configs, List<Partition> partitions) {
+    this(
+        /* clusterId= */ "",
+        name,
+        configs,
+        partitions,
+        /* replicationFactor= */ (short) 0,
+        /* isInternal= */ false);
+  }
+
+  private Topic(
       String clusterId,
       String name,
       Properties configurations,
@@ -53,24 +82,20 @@ public final class Topic {
     this.isInternal = isInternal;
   }
 
-  /**
-   * @deprecated use {@link #Topic(String, String, Properties, List, short, boolean)} instead
-   */
-  @Deprecated
-  public Topic(String name, Properties configs, List<Partition> partitions) {
-    this(
-        /* clusterId= */ "",
-        name,
-        configs,
-        partitions,
-        /* replicationFactor= */ (short) 0,
-        /* isInternal= */ false);
+  public String getClusterId() {
+    return clusterId;
   }
 
   public String getName() {
     return name;
   }
 
+  /**
+   * @deprecated Use {@link
+   * io.confluent.kafkarest.controllers.TopicConfigurationManager#listTopicConfigurations(String,
+   * String)} instead.
+   */
+  @Deprecated
   public Properties getConfigs() {
     return configurations;
   }
@@ -85,10 +110,6 @@ public final class Topic {
 
   public boolean getIsInternal() {
     return isInternal;
-  }
-
-  public String getClusterId() {
-    return clusterId;
   }
 
   @Override

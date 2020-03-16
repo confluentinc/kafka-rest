@@ -18,6 +18,7 @@ package io.confluent.kafkarest.controllers;
 import io.confluent.kafkarest.entities.Topic;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -41,7 +42,11 @@ public interface TopicManager {
    * Creates a new Kafka {@link Topic}.
    */
   CompletableFuture<Void> createTopic(
-      String clusterId, String topicName, int partitionsCount, short replicationFactor);
+      String clusterId,
+      String topicName,
+      int partitionsCount,
+      short replicationFactor,
+      Map<String, String> configurations);
 
   /**
    * Deletes the Kafka {@link Topic} with the given {@code topicName}.
