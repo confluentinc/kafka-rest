@@ -129,13 +129,13 @@ public final class ReplicasResource {
 
     return new ReplicaData(
         crnFactory.create(
-            ClusterData.TYPE,
+            ClusterData.ELEMENT_TYPE,
             replica.getClusterId(),
-            TopicData.TYPE,
+            TopicData.ELEMENT_TYPE,
             replica.getTopicName(),
-            PartitionData.TYPE,
+            PartitionData.ELEMENT_TYPE,
             Integer.toString(replica.getPartitionId()),
-            ReplicaData.TYPE,
+            ReplicaData.ELEMENT_TYPE,
             Integer.toString(replica.getBrokerId())),
         links,
         replica.getClusterId(),

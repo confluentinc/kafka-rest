@@ -79,7 +79,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                     baseUrl + "/v3/clusters/" + clusterId + "/topics", /* next= */ null),
                 Arrays.asList(
                     new TopicData(
-                        "crn://kafka=" + clusterId + "/topic=" + TOPIC_1,
+                        "crn:///kafka=" + clusterId + "/topic=" + TOPIC_1,
                         new ResourceLink(
                             baseUrl
                                 + "/v3/clusters/" + clusterId
@@ -99,7 +99,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                                 + "/topics/" + TOPIC_1
                                 + "/partitions")),
                     new TopicData(
-                        "crn://kafka=" + clusterId + "/topic=" + TOPIC_2,
+                        "crn:///kafka=" + clusterId + "/topic=" + TOPIC_2,
                         new ResourceLink(
                             baseUrl
                                 + "/v3/clusters/" + clusterId
@@ -119,7 +119,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                                 + "/topics/" + TOPIC_2
                                 + "/partitions")),
                     new TopicData(
-                        "crn://kafka=" + clusterId + "/topic=" + TOPIC_3,
+                        "crn:///kafka=" + clusterId + "/topic=" + TOPIC_3,
                         new ResourceLink(
                             baseUrl
                                 + "/v3/clusters/" + clusterId
@@ -160,7 +160,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
         OBJECT_MAPPER.writeValueAsString(
             new GetTopicResponse(
                 new TopicData(
-                    "crn://kafka=" + clusterId + "/topic=" + TOPIC_1,
+                    "crn:///kafka=" + clusterId + "/topic=" + TOPIC_1,
                     new ResourceLink(
                         baseUrl
                             + "/v3/clusters/" + clusterId
@@ -212,7 +212,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
         OBJECT_MAPPER.writeValueAsString(
             new CreateTopicResponse(
                 new TopicData(
-                    "crn://kafka=" + clusterId + "/topic=" + topicName,
+                    "crn:///kafka=" + clusterId + "/topic=" + topicName,
                     new ResourceLink(
                         baseUrl + "/v3/clusters/" + clusterId + "/topics/" + topicName),
                     clusterId,
@@ -322,7 +322,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
         OBJECT_MAPPER.writeValueAsString(
             new CreateTopicResponse(
                 new TopicData(
-                    "crn://kafka=" + clusterId + "/topic=" + topicName,
+                    "crn:///kafka=" + clusterId + "/topic=" + topicName,
                     new ResourceLink(
                         baseUrl + "/v3/clusters/" + clusterId + "/topics/" + topicName),
                     clusterId,
@@ -358,7 +358,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
         OBJECT_MAPPER.writeValueAsString(
             new GetTopicResponse(
                 new TopicData(
-                    "crn://kafka=" + clusterId + "/topic=" + topicName,
+                    "crn:///kafka=" + clusterId + "/topic=" + topicName,
                     new ResourceLink(
                         baseUrl
                             + "/v3/clusters/" + clusterId
@@ -389,7 +389,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
         OBJECT_MAPPER.writeValueAsString(
             new GetTopicConfigurationResponse(
                 new TopicConfigurationData(
-                    "crn://kafka=" + clusterId
+                    "crn:///kafka=" + clusterId
                         + "/topic=" + topicName
                         + "/configuration=cleanup.policy",
                     new ResourceLink(

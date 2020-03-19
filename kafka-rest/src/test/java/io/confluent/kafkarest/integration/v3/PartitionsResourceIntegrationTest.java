@@ -66,7 +66,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
                     /* next= */ null),
                 singletonList(
                     new PartitionData(
-                        "crn://kafka=" + clusterId + "/topic=" + TOPIC_NAME + "/partition=0",
+                        "crn:///kafka=" + clusterId + "/topic=" + TOPIC_NAME + "/partition=0",
                         new ResourceLink(
                             baseUrl
                             + "/v3/clusters/" + clusterId
@@ -123,7 +123,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
         OBJECT_MAPPER.writeValueAsString(
             new GetPartitionResponse(
                 new PartitionData(
-                    "crn://kafka=" + clusterId + "/topic=" + TOPIC_NAME + "/partition=0",
+                    "crn:///kafka=" + clusterId + "/topic=" + TOPIC_NAME + "/partition=0",
                     new ResourceLink(
                         baseUrl
                             + "/v3/clusters/" + clusterId

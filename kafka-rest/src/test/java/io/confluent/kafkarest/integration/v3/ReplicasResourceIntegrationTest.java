@@ -66,7 +66,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
                     /* next= */ null),
                 singletonList(
                     new ReplicaData(
-                        "crn://kafka=" + clusterId
+                        "crn:///kafka=" + clusterId
                             + "/topic=" + TOPIC_NAME
                             + "/partition=0/replica=0",
                         new ResourceLink(
@@ -130,7 +130,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
         OBJECT_MAPPER.writeValueAsString(
             new GetReplicaResponse(
                 new ReplicaData(
-                    "crn://kafka=" + clusterId
+                    "crn:///kafka=" + clusterId
                         + "/topic=" + TOPIC_NAME
                         + "/partition=0/replica=0",
                     new ResourceLink(

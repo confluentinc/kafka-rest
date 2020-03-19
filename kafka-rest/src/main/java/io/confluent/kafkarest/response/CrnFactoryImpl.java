@@ -40,7 +40,7 @@ public final class CrnFactoryImpl implements CrnFactory {
       throw new IllegalArgumentException(
           "Expected an even number of components on the form: type1, id1, type2, id2, etc.");
     }
-    StringJoiner joiner = new StringJoiner(String.valueOf(SEPARATOR), baseCrn, "");
+    StringJoiner joiner = new StringJoiner(String.valueOf(SEPARATOR)).add(baseCrn);
     for (int i = 0; i < components.length; i += 2) {
       joiner.add(
           String.format("%s=%s", trimSeparator(components[i]), trimSeparator(components[i + 1])));
@@ -49,8 +49,7 @@ public final class CrnFactoryImpl implements CrnFactory {
   }
 
   private static String computeBaseCrn(String crnAuthorityConfig) {
-    String trimmedAuthority = trimSeparator(crnAuthorityConfig);
-    return String.format("crn://%s%s", trimmedAuthority, trimmedAuthority.isEmpty() ? "" : "/");
+    return String.format("crn://%s", trimSeparator(crnAuthorityConfig));
   }
 
   private static String trimSeparator(String component) {

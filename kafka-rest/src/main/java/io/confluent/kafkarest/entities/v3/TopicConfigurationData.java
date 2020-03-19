@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
  */
 public final class TopicConfigurationData {
 
-  public static final String TYPE = "configuration";
+  public static final String ELEMENT_TYPE = "configuration";
 
   private final String id;
 
@@ -51,7 +51,7 @@ public final class TopicConfigurationData {
 
   @JsonProperty("type")
   public String getType() {
-    return "configuration";
+    return "KafkaTopicConfiguration";
   }
 
   @JsonProperty("id")

@@ -135,9 +135,9 @@ public final class BrokersResource {
 
     return new BrokerData(
         crnFactory.create(
-            ClusterData.TYPE,
+            ClusterData.ELEMENT_TYPE,
             broker.getClusterId(),
-            BrokerData.TYPE,
+            BrokerData.ELEMENT_TYPE,
             Integer.toString(broker.getBrokerId())),
         links,
         broker.getClusterId(),

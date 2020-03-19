@@ -346,7 +346,7 @@ public class TopicsResourceTest {
             new CollectionLink("/v3/clusters/cluster-1/topics", null),
             Arrays.asList(
                 new TopicData(
-                    "crn://kafka=cluster-1/topic=topic-1",
+                    "crn:///kafka=cluster-1/topic=topic-1",
                     new ResourceLink("/v3/clusters/cluster-1/topics/topic-1"),
                     "cluster-1",
                     "topic-1",
@@ -355,7 +355,7 @@ public class TopicsResourceTest {
                     new Relationship("/v3/clusters/cluster-1/topics/topic-1/configurations"),
                     new Relationship("/v3/clusters/cluster-1/topics/topic-1/partitions")),
                 new TopicData(
-                    "crn://kafka=cluster-1/topic=topic-2",
+                    "crn:///kafka=cluster-1/topic=topic-2",
                     new ResourceLink("/v3/clusters/cluster-1/topics/topic-2"),
                     "cluster-1",
                     "topic-2",
@@ -364,7 +364,7 @@ public class TopicsResourceTest {
                     new Relationship("/v3/clusters/cluster-1/topics/topic-2/configurations"),
                     new Relationship("/v3/clusters/cluster-1/topics/topic-2/partitions")),
                 new TopicData(
-                    "crn://kafka=cluster-1/topic=topic-3",
+                    "crn:///kafka=cluster-1/topic=topic-3",
                     new ResourceLink("/v3/clusters/cluster-1/topics/topic-3"),
                     "cluster-1",
                     "topic-3",
@@ -411,7 +411,7 @@ public class TopicsResourceTest {
 
     GetTopicResponse expected = new GetTopicResponse(
         new TopicData(
-            "crn://kafka=cluster-1/topic=topic-1",
+            "crn:///kafka=cluster-1/topic=topic-1",
             new ResourceLink("/v3/clusters/cluster-1/topics/topic-1"),
             "cluster-1",
             "topic-1",
@@ -475,7 +475,7 @@ public class TopicsResourceTest {
 
     CreateTopicResponse expected = new CreateTopicResponse(
         new TopicData(
-            "crn://kafka=cluster-1/topic=topic-1",
+            "crn:///kafka=cluster-1/topic=topic-1",
             new ResourceLink("/v3/clusters/cluster-1/topics/topic-1"),
             "cluster-1",
             "topic-1",

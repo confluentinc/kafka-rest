@@ -13,7 +13,7 @@ public class CrnFactoryImplTest {
   @Test
   public void create_noAuthority_returnsCrnWithNoAuthority() {
     CrnFactoryImpl crnFactory = new CrnFactoryImpl(/* crnAuthorityConfig= */ "");
-    assertEquals("crn://foo=xxx/bar=yyy", crnFactory.create("foo", "xxx", "bar", "yyy"));
+    assertEquals("crn:///foo=xxx/bar=yyy", crnFactory.create("foo", "xxx", "bar", "yyy"));
   }
 
   @Test

@@ -134,11 +134,11 @@ public final class PartitionsResource {
 
     return new PartitionData(
         crnFactory.create(
-            ClusterData.TYPE,
+            ClusterData.ELEMENT_TYPE,
             partition.getClusterId(),
-            TopicData.TYPE,
+            TopicData.ELEMENT_TYPE,
             partition.getTopicName(),
-            PartitionData.TYPE,
+            PartitionData.ELEMENT_TYPE,
             Integer.toString(partition.getPartitionId())),
         links,
         partition.getClusterId(),

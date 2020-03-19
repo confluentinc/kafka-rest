@@ -54,7 +54,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                     baseUrl + "/v3/clusters/" + clusterId + "/brokers", /* next= */ null),
                 Arrays.asList(
                     new BrokerData(
-                        "crn://kafka=" + clusterId + "/broker=" + nodes.get(0).id(),
+                        "crn:///kafka=" + clusterId + "/broker=" + nodes.get(0).id(),
                         new ResourceLink(
                             baseUrl
                                 + "/v3/clusters/" + clusterId
@@ -75,7 +75,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                                 + "/brokers/" + nodes.get(0).id()
                                 + "/partition_replicas")),
                     new BrokerData(
-                        "crn://kafka=" + clusterId + "/broker=" + nodes.get(1).id(),
+                        "crn:///kafka=" + clusterId + "/broker=" + nodes.get(1).id(),
                         new ResourceLink(
                             baseUrl
                                 + "/v3/clusters/" + clusterId
@@ -96,7 +96,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                                 + "/brokers/" + nodes.get(1).id()
                                 + "/partition_replicas")),
                     new BrokerData(
-                        "crn://kafka=" + clusterId + "/broker=" + nodes.get(2).id(),
+                        "crn:///kafka=" + clusterId + "/broker=" + nodes.get(2).id(),
                         new ResourceLink(
                             baseUrl
                                 + "/v3/clusters/" + clusterId
@@ -139,7 +139,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
         OBJECT_MAPPER.writeValueAsString(
             new GetBrokerResponse(
                 new BrokerData(
-                    "crn://kafka=" + clusterId + "/broker=" + nodes.get(0).id(),
+                    "crn:///kafka=" + clusterId + "/broker=" + nodes.get(0).id(),
                     new ResourceLink(
                         baseUrl
                             + "/v3/clusters/" + clusterId

@@ -170,9 +170,9 @@ public final class TopicsResource {
 
     return new TopicData(
         crnFactory.create(
-            ClusterData.TYPE,
+            ClusterData.ELEMENT_TYPE,
             topic.getClusterId(),
-            TopicData.TYPE,
+            TopicData.ELEMENT_TYPE,
             topic.getName()),
         new ResourceLink(
             urlFactory.create("v3", "clusters", topic.getClusterId(), "topics", topic.getName())),

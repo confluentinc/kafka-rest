@@ -51,7 +51,7 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
                 new CollectionLink(baseUrl + "/v3/clusters", /* next= */ null),
                 singletonList(
                     new ClusterData(
-                        "crn://kafka=" + clusterId,
+                        "crn:///kafka=" + clusterId,
                         new ResourceLink(baseUrl + "/v3/clusters/" + clusterId),
                         clusterId,
                         new Relationship(
@@ -74,7 +74,7 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
         OBJECT_MAPPER.writeValueAsString(
             new GetClusterResponse(
                 new ClusterData(
-                    "crn://kafka=" + clusterId,
+                    "crn:///kafka=" + clusterId,
                     new ResourceLink(baseUrl + "/v3/clusters/" + clusterId),
                     clusterId,
                     new Relationship(

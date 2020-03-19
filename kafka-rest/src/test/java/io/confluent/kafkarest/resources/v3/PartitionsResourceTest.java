@@ -165,7 +165,7 @@ public class PartitionsResourceTest {
             new CollectionLink("/v3/clusters/cluster-1/topics/topic-1/partitions", /* next= */ null),
             Arrays.asList(
                 new PartitionData(
-                    "crn://kafka=cluster-1/topic=topic-1/partition=0",
+                    "crn:///kafka=cluster-1/topic=topic-1/partition=0",
                     new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/0"),
                     CLUSTER_ID,
                     TOPIC_NAME,
@@ -175,7 +175,7 @@ public class PartitionsResourceTest {
                     new Relationship(
                         "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas")),
                 new PartitionData(
-                    "crn://kafka=cluster-1/topic=topic-1/partition=1",
+                    "crn:///kafka=cluster-1/topic=topic-1/partition=1",
                     new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/1"),
                     CLUSTER_ID,
                     TOPIC_NAME,
@@ -185,7 +185,7 @@ public class PartitionsResourceTest {
                     new Relationship(
                         "/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas")),
                 new PartitionData(
-                    "crn://kafka=cluster-1/topic=topic-1/partition=2",
+                    "crn:///kafka=cluster-1/topic=topic-1/partition=2",
                     new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/2"),
                     CLUSTER_ID,
                     TOPIC_NAME,
@@ -222,7 +222,7 @@ public class PartitionsResourceTest {
     GetPartitionResponse expected =
         new GetPartitionResponse(
             new PartitionData(
-                "crn://kafka=cluster-1/topic=topic-1/partition=0",
+                "crn:///kafka=cluster-1/topic=topic-1/partition=0",
                 new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/0"),
                 CLUSTER_ID,
                 TOPIC_NAME,

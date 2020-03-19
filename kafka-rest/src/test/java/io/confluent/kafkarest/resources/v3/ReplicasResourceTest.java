@@ -105,7 +105,7 @@ public class ReplicasResourceTest {
                 "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas", /* next= */ null),
             Arrays.asList(
                 new ReplicaData(
-                    "crn://kafka=cluster-1/topic=topic-1/partition=0/replica=1",
+                    "crn:///kafka=cluster-1/topic=topic-1/partition=0/replica=1",
                     new ResourceLink(
                         "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/1"),
                     CLUSTER_ID,
@@ -116,7 +116,7 @@ public class ReplicasResourceTest {
                     /* isInSync= */ true,
                     new Relationship("/v3/clusters/cluster-1/brokers/1")),
                 new ReplicaData(
-                    "crn://kafka=cluster-1/topic=topic-1/partition=0/replica=2",
+                    "crn:///kafka=cluster-1/topic=topic-1/partition=0/replica=2",
                     new ResourceLink(
                         "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/2"),
                     CLUSTER_ID,
@@ -127,7 +127,7 @@ public class ReplicasResourceTest {
                     /* isInSync= */ true,
                     new Relationship("/v3/clusters/cluster-1/brokers/2")),
                 new ReplicaData(
-                    "crn://kafka=cluster-1/topic=topic-1/partition=0/replica=3",
+                    "crn:///kafka=cluster-1/topic=topic-1/partition=0/replica=3",
                     new ResourceLink(
                         "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/3"),
                     CLUSTER_ID,
@@ -166,7 +166,7 @@ public class ReplicasResourceTest {
     GetReplicaResponse expected =
         new GetReplicaResponse(
             new ReplicaData(
-                "crn://kafka=cluster-1/topic=topic-1/partition=0/replica=1",
+                "crn:///kafka=cluster-1/topic=topic-1/partition=0/replica=1",
                 new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/1"),
                 CLUSTER_ID,
                 TOPIC_NAME,

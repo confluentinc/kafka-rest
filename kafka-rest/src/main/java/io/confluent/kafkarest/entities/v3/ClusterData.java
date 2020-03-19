@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
  */
 public final class ClusterData {
 
-  public static final String TYPE = "kafka";
+  public static final String ELEMENT_TYPE = "kafka";
 
   private final String id;
 
@@ -52,7 +52,7 @@ public final class ClusterData {
 
   @JsonProperty("type")
   public String getType() {
-    return TYPE;
+    return "KafkaCluster";
   }
 
   @JsonProperty("id")

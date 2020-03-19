@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
  */
 public final class BrokerData {
 
-  public static final String TYPE = "broker";
+  public static final String ELEMENT_TYPE = "broker";
 
   private final String id;
 
@@ -53,7 +53,7 @@ public final class BrokerData {
 
   @JsonProperty("type")
   public String getType() {
-    return TYPE;
+    return "KafkaBroker";
   }
 
   @JsonProperty("id")

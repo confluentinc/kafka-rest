@@ -80,7 +80,7 @@ public final class BrokersResourceTest {
             new CollectionLink("/v3/clusters/cluster-1/brokers", /* next= */ null),
             Arrays.asList(
                 new BrokerData(
-                    "crn://kafka=cluster-1/broker=1",
+                    "crn:///kafka=cluster-1/broker=1",
                     new ResourceLink("/v3/clusters/cluster-1/brokers/1"),
                     CLUSTER_ID,
                     BROKER_1.getBrokerId(),
@@ -90,7 +90,7 @@ public final class BrokersResourceTest {
                     new Relationship("/v3/clusters/cluster-1/brokers/1/configurations"),
                     new Relationship("/v3/clusters/cluster-1/brokers/1/partition_replicas")),
                 new BrokerData(
-                    "crn://kafka=cluster-1/broker=2",
+                    "crn:///kafka=cluster-1/broker=2",
                     new ResourceLink("/v3/clusters/cluster-1/brokers/2"),
                     CLUSTER_ID,
                     BROKER_2.getBrokerId(),
@@ -100,7 +100,7 @@ public final class BrokersResourceTest {
                     new Relationship("/v3/clusters/cluster-1/brokers/2/configurations"),
                     new Relationship("/v3/clusters/cluster-1/brokers/2/partition_replicas")),
                 new BrokerData(
-                    "crn://kafka=cluster-1/broker=3",
+                    "crn:///kafka=cluster-1/broker=3",
                     new ResourceLink("/v3/clusters/cluster-1/brokers/3"),
                     CLUSTER_ID,
                     BROKER_3.getBrokerId(),
@@ -136,7 +136,7 @@ public final class BrokersResourceTest {
     GetBrokerResponse expected =
         new GetBrokerResponse(
             new BrokerData(
-                "crn://kafka=cluster-1/broker=1",
+                "crn:///kafka=cluster-1/broker=1",
                 new ResourceLink("/v3/clusters/cluster-1/brokers/1"),
                 CLUSTER_ID,
                 BROKER_1.getBrokerId(),

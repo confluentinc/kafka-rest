@@ -144,11 +144,11 @@ public final class TopicConfigurationsResource {
   private TopicConfigurationData toTopicConfigurationData(TopicConfiguration topicConfiguration) {
     return new TopicConfigurationData(
         crnFactory.create(
-            ClusterData.TYPE,
+            ClusterData.ELEMENT_TYPE,
             topicConfiguration.getClusterId(),
-            TopicData.TYPE,
+            TopicData.ELEMENT_TYPE,
             topicConfiguration.getTopicName(),
-            TopicConfigurationData.TYPE,
+            TopicConfigurationData.ELEMENT_TYPE,
             topicConfiguration.getName()),
         new ResourceLink(
             urlFactory.create(

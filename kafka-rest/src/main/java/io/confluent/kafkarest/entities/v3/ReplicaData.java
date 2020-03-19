@@ -24,7 +24,7 @@ import java.util.StringJoiner;
  */
 public final class ReplicaData {
 
-  public static final String TYPE = "replica";
+  public static final String ELEMENT_TYPE = "replica";
 
   private final String id;
 
@@ -52,7 +52,7 @@ public final class ReplicaData {
 
   @JsonProperty("type")
   public String getType() {
-    return TYPE;
+    return "KafkaReplica";
   }
 
   @JsonProperty("id")

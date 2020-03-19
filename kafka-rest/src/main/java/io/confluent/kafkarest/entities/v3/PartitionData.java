@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
  */
 public final class PartitionData {
 
-  public static final String TYPE = "partition";
+  public static final String ELEMENT_TYPE = "partition";
 
   private final String id;
 
@@ -52,7 +52,7 @@ public final class PartitionData {
 
   @JsonProperty("type")
   public String getType() {
-    return TYPE;
+    return "KafkaPartition";
   }
 
   @JsonProperty("id")

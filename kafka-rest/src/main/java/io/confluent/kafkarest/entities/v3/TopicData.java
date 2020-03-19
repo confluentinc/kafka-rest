@@ -24,7 +24,7 @@ import java.util.StringJoiner;
  */
 public final class TopicData {
 
-  public static final String TYPE = "topic";
+  public static final String ELEMENT_TYPE = "topic";
 
   private final String id;
 
@@ -52,7 +52,7 @@ public final class TopicData {
 
   @JsonProperty("type")
   public String getType() {
-    return TYPE;
+    return "KafkaTopic";
   }
 
   @JsonProperty("id")

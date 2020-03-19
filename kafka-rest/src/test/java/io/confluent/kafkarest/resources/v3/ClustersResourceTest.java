@@ -84,7 +84,7 @@ public class ClustersResourceTest {
             new CollectionLink("/v3/clusters", /* next= */ null),
             singletonList(
                 new ClusterData(
-                    "crn://kafka=cluster-1",
+                    "crn:///kafka=cluster-1",
                     new ResourceLink("/v3/clusters/cluster-1"),
                     "cluster-1",
                     new Relationship("/v3/clusters/cluster-1/brokers/1"),
@@ -117,7 +117,7 @@ public class ClustersResourceTest {
     GetClusterResponse expected =
         new GetClusterResponse(
             new ClusterData(
-                "crn://kafka=cluster-1",
+                "crn:///kafka=cluster-1",
                 new ResourceLink("/v3/clusters/cluster-1"),
                 "cluster-1",
                 new Relationship("/v3/clusters/cluster-1/brokers/1"),

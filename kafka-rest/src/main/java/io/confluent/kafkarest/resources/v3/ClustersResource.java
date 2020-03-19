@@ -101,7 +101,7 @@ public final class ClustersResource {
         new Relationship(urlFactory.create("v3", "clusters", cluster.getClusterId(), "topics"));
 
     return new ClusterData(
-        crnFactory.create(ClusterData.TYPE, cluster.getClusterId()),
+        crnFactory.create(ClusterData.ELEMENT_TYPE, cluster.getClusterId()),
         new ResourceLink(urlFactory.create("v3", "clusters", cluster.getClusterId())),
         cluster.getClusterId(),
         controller,

@@ -65,7 +65,7 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
     String expectedConfig1 =
         OBJECT_MAPPER.writeValueAsString(
             new TopicConfigurationData(
-                "crn://kafka=" + clusterId + "/topic=" + TOPIC_1 + "/configuration=cleanup.policy",
+                "crn:///kafka=" + clusterId + "/topic=" + TOPIC_1 + "/configuration=cleanup.policy",
                 new ResourceLink(
                     baseUrl
                         + "/v3/clusters/" + clusterId
@@ -81,7 +81,7 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
     String expectedConfig2 =
         OBJECT_MAPPER.writeValueAsString(
             new TopicConfigurationData(
-                "crn://kafka=" + clusterId
+                "crn:///kafka=" + clusterId
                     + "/topic=" + TOPIC_1
                     + "/configuration=compression.type",
                 new ResourceLink(
@@ -99,7 +99,7 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
     String expectedConfig3 =
         OBJECT_MAPPER.writeValueAsString(
             new TopicConfigurationData(
-                "crn://kafka=" + clusterId
+                "crn:///kafka=" + clusterId
                     + "/topic=" + TOPIC_1
                     + "/configuration=delete.retention.ms",
                 new ResourceLink(
@@ -164,7 +164,7 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
         OBJECT_MAPPER.writeValueAsString(
             new GetTopicConfigurationResponse(
                 new TopicConfigurationData(
-                    "crn://kafka=" + clusterId
+                    "crn:///kafka=" + clusterId
                         + "/topic=" + TOPIC_1
                         + "/configuration=cleanup.policy",
                     new ResourceLink(
@@ -233,7 +233,7 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
         OBJECT_MAPPER.writeValueAsString(
             new GetTopicConfigurationResponse(
                 new TopicConfigurationData(
-                    "crn://kafka=" + clusterId
+                    "crn:///kafka=" + clusterId
                         + "/topic=" + TOPIC_1
                         + "/configuration=cleanup.policy",
                     new ResourceLink(
@@ -272,7 +272,7 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
         OBJECT_MAPPER.writeValueAsString(
             new GetTopicConfigurationResponse(
                 new TopicConfigurationData(
-                    "crn://kafka=" + clusterId
+                    "crn:///kafka=" + clusterId
                         + "/topic=" + TOPIC_1
                         + "/configuration=cleanup.policy",
                     new ResourceLink(
@@ -309,7 +309,7 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
         OBJECT_MAPPER.writeValueAsString(
             new GetTopicConfigurationResponse(
                 new TopicConfigurationData(
-                    "crn://kafka=" + clusterId
+                    "crn:///kafka=" + clusterId
                         + "/topic=" + TOPIC_1
                         + "/configuration=cleanup.policy",
                     new ResourceLink(
