@@ -20,9 +20,13 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
- * A KafkaPartition resource type.
+ * A replica resource type.
  */
 public final class ReplicaData {
+
+  public static final String ELEMENT_TYPE = "replica";
+
+  private final String id;
 
   private final ResourceLink links;
 
@@ -31,6 +35,7 @@ public final class ReplicaData {
   private final Relationships relationships;
 
   public ReplicaData(
+      String id,
       ResourceLink links,
       String clusterId,
       String topicName,
@@ -39,6 +44,7 @@ public final class ReplicaData {
       Boolean isLeader,
       Boolean isInSync,
       Relationship broker) {
+    this.id = Objects.requireNonNull(id);
     this.links = Objects.requireNonNull(links);
     attributes = new Attributes(clusterId, topicName, partitionId, brokerId, isLeader, isInSync);
     relationships = new Relationships(broker);
@@ -51,12 +57,7 @@ public final class ReplicaData {
 
   @JsonProperty("id")
   public String getId() {
-    return String.format(
-        "%s/%s/%s/%s",
-        attributes.getClusterId(),
-        attributes.getTopicName(),
-        attributes.getPartitionId(),
-        attributes.getBrokerId());
+    return id;
   }
 
   @JsonProperty("links")
@@ -83,19 +84,21 @@ public final class ReplicaData {
       return false;
     }
     ReplicaData that = (ReplicaData) o;
-    return Objects.equals(links, that.links)
+    return Objects.equals(id, that.id)
+        && Objects.equals(links, that.links)
         && Objects.equals(attributes, that.attributes)
         && Objects.equals(relationships, that.relationships);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(links, attributes, relationships);
+    return Objects.hash(id, links, attributes, relationships);
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", ReplicaData.class.getSimpleName() + "[", "]")
+        .add("id='" + id + "'")
         .add("links=" + links)
         .add("attributes=" + attributes)
         .add("relationships=" + relationships)

@@ -31,6 +31,7 @@ import io.confluent.kafkarest.entities.v3.ListTopicConfigurationsResponse;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.entities.v3.TopicConfigurationData;
 import io.confluent.kafkarest.entities.v3.UpdateTopicConfigurationRequest;
+import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.Arrays;
@@ -89,7 +90,10 @@ public class TopicConfigurationsResourceTest {
   @Before
   public void setUp() {
     topicConfigurationsResource =
-        new TopicConfigurationsResource(topicConfigurationManager, new FakeUrlFactory());
+        new TopicConfigurationsResource(
+            topicConfigurationManager,
+            new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
+            new FakeUrlFactory());
   }
 
   @Test
@@ -108,6 +112,7 @@ public class TopicConfigurationsResourceTest {
                 "/v3/clusters/cluster-1/topics/topic-1/configurations", /* next= */ null),
             Arrays.asList(
                 new TopicConfigurationData(
+                    "crn:///kafka=cluster-1/topic=topic-1/configuration=config-1",
                     new ResourceLink(
                         "/v3/clusters/cluster-1/topics/topic-1/configurations/config-1"),
                     CLUSTER_ID,
@@ -118,6 +123,7 @@ public class TopicConfigurationsResourceTest {
                     CONFIGURATION_1.isReadOnly(),
                     CONFIGURATION_1.isSensitive()),
                 new TopicConfigurationData(
+                    "crn:///kafka=cluster-1/topic=topic-1/configuration=config-2",
                     new ResourceLink(
                         "/v3/clusters/cluster-1/topics/topic-1/configurations/config-2"),
                     CLUSTER_ID,
@@ -128,6 +134,7 @@ public class TopicConfigurationsResourceTest {
                     CONFIGURATION_2.isReadOnly(),
                     CONFIGURATION_2.isSensitive()),
                 new TopicConfigurationData(
+                    "crn:///kafka=cluster-1/topic=topic-1/configuration=config-3",
                     new ResourceLink(
                         "/v3/clusters/cluster-1/topics/topic-1/configurations/config-3"),
                     CLUSTER_ID,
@@ -168,6 +175,7 @@ public class TopicConfigurationsResourceTest {
     GetTopicConfigurationResponse expected =
         new GetTopicConfigurationResponse(
             new TopicConfigurationData(
+                "crn:///kafka=cluster-1/topic=topic-1/configuration=config-1",
                 new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/configurations/config-1"),
                 CLUSTER_ID,
                 TOPIC_NAME,

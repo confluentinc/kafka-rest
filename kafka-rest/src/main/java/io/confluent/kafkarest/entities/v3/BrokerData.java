@@ -21,9 +21,13 @@ import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 /**
- * A KafkaBroker resource type.
+ * A broker resource type.
  */
 public final class BrokerData {
+
+  public static final String ELEMENT_TYPE = "broker";
+
+  private final String id;
 
   private final ResourceLink links;
 
@@ -32,6 +36,7 @@ public final class BrokerData {
   private final Relationships relationships;
 
   public BrokerData(
+      String id,
       ResourceLink links,
       String clusterId,
       Integer brokerId,
@@ -40,6 +45,7 @@ public final class BrokerData {
       @Nullable String rack,
       Relationship configurations,
       Relationship partitionReplicas) {
+    this.id = Objects.requireNonNull(id);
     this.links = Objects.requireNonNull(links);
     attributes = new Attributes(clusterId, brokerId, host, port, rack);
     relationships = new Relationships(configurations, partitionReplicas);
@@ -52,7 +58,7 @@ public final class BrokerData {
 
   @JsonProperty("id")
   public String getId() {
-    return String.format("%s/%s", attributes.getClusterId(), attributes.getBrokerId());
+    return id;
   }
 
   @JsonProperty("links")
@@ -79,19 +85,21 @@ public final class BrokerData {
       return false;
     }
     BrokerData that = (BrokerData) o;
-    return Objects.equals(links, that.links)
+    return Objects.equals(id, that.id)
+        && Objects.equals(links, that.links)
         && Objects.equals(attributes, that.attributes)
         && Objects.equals(relationships, that.relationships);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(links, attributes, relationships);
+    return Objects.hash(id, links, attributes, relationships);
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", BrokerData.class.getSimpleName() + "[", "]")
+        .add("id='" + id + "'")
         .add("links=" + links)
         .add("attributes=" + attributes)
         .add("relationships=" + relationships)

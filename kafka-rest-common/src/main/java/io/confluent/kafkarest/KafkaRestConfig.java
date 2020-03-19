@@ -319,6 +319,14 @@ public class KafkaRestConfig extends RestConfig {
       + " like filters to Rest Proxy. Typically used to add custom capability like logging, "
       + " security, etc.";
   private static final boolean ZOOKEEPER_SET_ACL_DEFAULT = false;
+
+  public static final String CRN_AUTHORITY_CONFIG =
+      "confluent.resource.name.authority";
+  private static final String CONFLUENT_RESOURCE_NAME_AUTHORITY_DOC =
+      "Authority to which the governance of the name space defined by the remainder of the CRN "
+          + "should be delegated to. Examples: confluent.cloud, mds-01.example.com.";
+  private static final String CONFLUENT_RESOURCE_NAME_AUTHORITY_DEFAULT = "";
+
   private static final ConfigDef config;
 
   public static final String HTTPS = "https";
@@ -625,7 +633,13 @@ public class KafkaRestConfig extends RestConfig {
         "",
         Importance.LOW,
         KAFKA_REST_RESOURCE_EXTENSION_DOC
-    );
+    )
+    .define(
+        CRN_AUTHORITY_CONFIG,
+        Type.STRING,
+        CONFLUENT_RESOURCE_NAME_AUTHORITY_DEFAULT,
+        Importance.LOW,
+        CONFLUENT_RESOURCE_NAME_AUTHORITY_DOC);
   }
 
   private Time time;

@@ -30,6 +30,7 @@ import io.confluent.kafkarest.entities.v3.GetClusterResponse;
 import io.confluent.kafkarest.entities.v3.ListClustersResponse;
 import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.Arrays;
@@ -64,7 +65,9 @@ public class ClustersResourceTest {
 
   @Before
   public void setUp() {
-    clustersResource = new ClustersResource(clusterManager, new FakeUrlFactory());
+    clustersResource =
+        new ClustersResource(
+            clusterManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""), new FakeUrlFactory());
   }
 
   @Test
@@ -81,6 +84,7 @@ public class ClustersResourceTest {
             new CollectionLink("/v3/clusters", /* next= */ null),
             singletonList(
                 new ClusterData(
+                    "crn:///kafka=cluster-1",
                     new ResourceLink("/v3/clusters/cluster-1"),
                     "cluster-1",
                     new Relationship("/v3/clusters/cluster-1/brokers/1"),
@@ -113,6 +117,7 @@ public class ClustersResourceTest {
     GetClusterResponse expected =
         new GetClusterResponse(
             new ClusterData(
+                "crn:///kafka=cluster-1",
                 new ResourceLink("/v3/clusters/cluster-1"),
                 "cluster-1",
                 new Relationship("/v3/clusters/cluster-1/brokers/1"),

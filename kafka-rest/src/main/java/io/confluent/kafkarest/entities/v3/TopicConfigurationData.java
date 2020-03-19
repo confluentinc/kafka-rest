@@ -21,15 +21,20 @@ import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 /**
- * A KafkaTopicConfiguration resource type.
+ * A (Topic) configuration resource type.
  */
 public final class TopicConfigurationData {
+
+  public static final String ELEMENT_TYPE = "configuration";
+
+  private final String id;
 
   private final ResourceLink links;
 
   private final Attributes attributes;
 
   public TopicConfigurationData(
+      String id,
       ResourceLink links,
       String clusterId,
       String topicName,
@@ -38,6 +43,7 @@ public final class TopicConfigurationData {
       boolean isDefault,
       boolean isReadOnly,
       boolean isSensitive) {
+    this.id = Objects.requireNonNull(id);
     this.links = Objects.requireNonNull(links);
     attributes =
         new Attributes(clusterId, topicName, name, value, isDefault, isReadOnly, isSensitive);
@@ -50,8 +56,7 @@ public final class TopicConfigurationData {
 
   @JsonProperty("id")
   public String getId() {
-    return String.format(
-        "%s/%s/%s", attributes.getClusterId(), attributes.getTopicName(), attributes.getName());
+    return id;
   }
 
   @JsonProperty("links")
@@ -73,17 +78,20 @@ public final class TopicConfigurationData {
       return false;
     }
     TopicConfigurationData that = (TopicConfigurationData) o;
-    return Objects.equals(links, that.links) && Objects.equals(attributes, that.attributes);
+    return Objects.equals(id, that.id)
+        && Objects.equals(links, that.links)
+        && Objects.equals(attributes, that.attributes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(links, attributes);
+    return Objects.hash(id, links, attributes);
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", TopicConfigurationData.class.getSimpleName() + "[", "]")
+        .add("id='" + id + "'")
         .add("links=" + links)
         .add("attributes=" + attributes)
         .toString();

@@ -21,9 +21,13 @@ import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 /**
- * A KafkaPartition resource type.
+ * A partition resource type.
  */
 public final class PartitionData {
+
+  public static final String ELEMENT_TYPE = "partition";
+
+  private final String id;
 
   private final ResourceLink links;
 
@@ -32,6 +36,7 @@ public final class PartitionData {
   private final Relationships relationships;
 
   public PartitionData(
+      String id,
       ResourceLink links,
       String clusterId,
       String topicName,
@@ -39,6 +44,7 @@ public final class PartitionData {
       @Nullable Relationship leader,
       Relationship replicas
   ) {
+    this.id = Objects.requireNonNull(id);
     this.links = Objects.requireNonNull(links);
     attributes = new Attributes(clusterId, topicName, partitionId);
     relationships = new Relationships(leader, replicas);
@@ -51,11 +57,7 @@ public final class PartitionData {
 
   @JsonProperty("id")
   public String getId() {
-    return String.format(
-        "%s/%s/%s",
-        attributes.getClusterId(),
-        attributes.getTopicName(),
-        attributes.getPartitionId());
+    return id;
   }
 
   @JsonProperty("links")
@@ -82,19 +84,21 @@ public final class PartitionData {
       return false;
     }
     PartitionData that = (PartitionData) o;
-    return Objects.equals(links, that.links)
+    return Objects.equals(id, that.id)
+        && Objects.equals(links, that.links)
         && Objects.equals(attributes, that.attributes)
         && Objects.equals(relationships, that.relationships);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(links, attributes, relationships);
+    return Objects.hash(id, links, attributes, relationships);
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", PartitionData.class.getSimpleName() + "[", "]")
+        .add("id='" + id + "'")
         .add("links=" + links)
         .add("attributes=" + attributes)
         .add("relationships=" + relationships)
