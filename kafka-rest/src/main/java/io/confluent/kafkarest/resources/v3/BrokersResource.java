@@ -19,11 +19,13 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.BrokerManager;
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.v3.BrokerData;
+import io.confluent.kafkarest.entities.v3.ClusterData;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.GetBrokerResponse;
 import io.confluent.kafkarest.entities.v3.ListBrokersResponse;
 import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -43,11 +45,14 @@ import javax.ws.rs.core.Response.Status;
 public final class BrokersResource {
 
   private final BrokerManager brokerManager;
+  private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
-  public BrokersResource(BrokerManager brokerManager, UrlFactory urlFactory) {
+  public BrokersResource(
+      BrokerManager brokerManager, CrnFactory crnFactory, UrlFactory urlFactory) {
     this.brokerManager = Objects.requireNonNull(brokerManager);
+    this.crnFactory = Objects.requireNonNull(crnFactory);
     this.urlFactory = Objects.requireNonNull(urlFactory);
   }
 
@@ -129,6 +134,11 @@ public final class BrokersResource {
                 "partition_replicas"));
 
     return new BrokerData(
+        crnFactory.create(
+            ClusterData.ELEMENT_TYPE,
+            broker.getClusterId(),
+            BrokerData.ELEMENT_TYPE,
+            Integer.toString(broker.getBrokerId())),
         links,
         broker.getClusterId(),
         broker.getBrokerId(),

@@ -29,6 +29,7 @@ import io.confluent.kafkarest.entities.v3.ListReplicasResponse;
 import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ReplicaData;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.Arrays;
@@ -84,7 +85,9 @@ public class ReplicasResourceTest {
 
   @Before
   public void setUp() {
-    replicasResource = new ReplicasResource(replicaManager, new FakeUrlFactory());
+    replicasResource =
+        new ReplicasResource(
+            replicaManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""), new FakeUrlFactory());
   }
 
   @Test
@@ -102,6 +105,7 @@ public class ReplicasResourceTest {
                 "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas", /* next= */ null),
             Arrays.asList(
                 new ReplicaData(
+                    "crn:///kafka=cluster-1/topic=topic-1/partition=0/replica=1",
                     new ResourceLink(
                         "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/1"),
                     CLUSTER_ID,
@@ -112,6 +116,7 @@ public class ReplicasResourceTest {
                     /* isInSync= */ true,
                     new Relationship("/v3/clusters/cluster-1/brokers/1")),
                 new ReplicaData(
+                    "crn:///kafka=cluster-1/topic=topic-1/partition=0/replica=2",
                     new ResourceLink(
                         "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/2"),
                     CLUSTER_ID,
@@ -122,6 +127,7 @@ public class ReplicasResourceTest {
                     /* isInSync= */ true,
                     new Relationship("/v3/clusters/cluster-1/brokers/2")),
                 new ReplicaData(
+                    "crn:///kafka=cluster-1/topic=topic-1/partition=0/replica=3",
                     new ResourceLink(
                         "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/3"),
                     CLUSTER_ID,
@@ -160,6 +166,7 @@ public class ReplicasResourceTest {
     GetReplicaResponse expected =
         new GetReplicaResponse(
             new ReplicaData(
+                "crn:///kafka=cluster-1/topic=topic-1/partition=0/replica=1",
                 new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/1"),
                 CLUSTER_ID,
                 TOPIC_NAME,

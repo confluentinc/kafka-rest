@@ -51,6 +51,10 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new AdvertisedListenersConfigImpl())
         .to(new TypeLiteral<List<String>>() { });
 
+    bind(config.getString(KafkaRestConfig.CRN_AUTHORITY_CONFIG))
+        .qualifiedBy(new CrnAuthorityConfigImpl())
+        .to(String.class);
+
     bind(config.getString(KafkaRestConfig.HOST_NAME_CONFIG))
         .qualifiedBy(new HostNameConfigImpl())
         .to(String.class);
@@ -72,6 +76,16 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class AdvertisedListenersConfigImpl
       extends AnnotationLiteral<AdvertisedListenersConfig> implements AdvertisedListenersConfig {
+  }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER })
+  public @interface CrnAuthorityConfig {
+  }
+
+  private static final class CrnAuthorityConfigImpl
+      extends AnnotationLiteral<CrnAuthorityConfig> implements CrnAuthorityConfig {
   }
 
   @Qualifier
