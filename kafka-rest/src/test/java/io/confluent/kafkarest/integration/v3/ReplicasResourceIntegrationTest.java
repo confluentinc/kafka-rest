@@ -66,6 +66,9 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
                     /* next= */ null),
                 singletonList(
                     new ReplicaData(
+                        "crn://kafka=" + clusterId
+                            + "/topic=" + TOPIC_NAME
+                            + "/partition=0/replica=0",
                         new ResourceLink(
                             baseUrl
                                 + "/v3/clusters/" + clusterId
@@ -127,6 +130,9 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
         OBJECT_MAPPER.writeValueAsString(
             new GetReplicaResponse(
                 new ReplicaData(
+                    "crn://kafka=" + clusterId
+                        + "/topic=" + TOPIC_NAME
+                        + "/partition=0/replica=0",
                     new ResourceLink(
                         baseUrl
                             + "/v3/clusters/" + clusterId

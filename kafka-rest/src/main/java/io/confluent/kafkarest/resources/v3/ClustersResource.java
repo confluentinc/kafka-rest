@@ -24,6 +24,7 @@ import io.confluent.kafkarest.entities.v3.GetClusterResponse;
 import io.confluent.kafkarest.entities.v3.ListClustersResponse;
 import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -41,11 +42,14 @@ import javax.ws.rs.container.Suspended;
 public final class ClustersResource {
 
   private final ClusterManager clusterManager;
+  private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
-  public ClustersResource(ClusterManager clusterManager, UrlFactory urlFactory) {
+  public ClustersResource(
+      ClusterManager clusterManager, CrnFactory crnFactory, UrlFactory urlFactory) {
     this.clusterManager = Objects.requireNonNull(clusterManager);
+    this.crnFactory = Objects.requireNonNull(crnFactory);
     this.urlFactory = Objects.requireNonNull(urlFactory);
   }
 
@@ -97,6 +101,7 @@ public final class ClustersResource {
         new Relationship(urlFactory.create("v3", "clusters", cluster.getClusterId(), "topics"));
 
     return new ClusterData(
+        crnFactory.create(ClusterData.TYPE, cluster.getClusterId()),
         new ResourceLink(urlFactory.create("v3", "clusters", cluster.getClusterId())),
         cluster.getClusterId(),
         controller,

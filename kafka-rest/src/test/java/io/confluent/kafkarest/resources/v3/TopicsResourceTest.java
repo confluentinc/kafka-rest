@@ -37,6 +37,7 @@ import io.confluent.kafkarest.entities.v3.ListTopicsResponse;
 import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.entities.v3.TopicData;
+import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.Arrays;
@@ -326,7 +327,9 @@ public class TopicsResourceTest {
 
   @Before
   public void setUp() {
-    topicsResource = new TopicsResource(topicManager, new FakeUrlFactory());
+    topicsResource =
+        new TopicsResource(
+            topicManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""), new FakeUrlFactory());
   }
 
   @Test
@@ -343,6 +346,7 @@ public class TopicsResourceTest {
             new CollectionLink("/v3/clusters/cluster-1/topics", null),
             Arrays.asList(
                 new TopicData(
+                    "crn://kafka=cluster-1/topic=topic-1",
                     new ResourceLink("/v3/clusters/cluster-1/topics/topic-1"),
                     "cluster-1",
                     "topic-1",
@@ -351,6 +355,7 @@ public class TopicsResourceTest {
                     new Relationship("/v3/clusters/cluster-1/topics/topic-1/configurations"),
                     new Relationship("/v3/clusters/cluster-1/topics/topic-1/partitions")),
                 new TopicData(
+                    "crn://kafka=cluster-1/topic=topic-2",
                     new ResourceLink("/v3/clusters/cluster-1/topics/topic-2"),
                     "cluster-1",
                     "topic-2",
@@ -359,6 +364,7 @@ public class TopicsResourceTest {
                     new Relationship("/v3/clusters/cluster-1/topics/topic-2/configurations"),
                     new Relationship("/v3/clusters/cluster-1/topics/topic-2/partitions")),
                 new TopicData(
+                    "crn://kafka=cluster-1/topic=topic-3",
                     new ResourceLink("/v3/clusters/cluster-1/topics/topic-3"),
                     "cluster-1",
                     "topic-3",
@@ -405,6 +411,7 @@ public class TopicsResourceTest {
 
     GetTopicResponse expected = new GetTopicResponse(
         new TopicData(
+            "crn://kafka=cluster-1/topic=topic-1",
             new ResourceLink("/v3/clusters/cluster-1/topics/topic-1"),
             "cluster-1",
             "topic-1",
@@ -468,6 +475,7 @@ public class TopicsResourceTest {
 
     CreateTopicResponse expected = new CreateTopicResponse(
         new TopicData(
+            "crn://kafka=cluster-1/topic=topic-1",
             new ResourceLink("/v3/clusters/cluster-1/topics/topic-1"),
             "cluster-1",
             "topic-1",

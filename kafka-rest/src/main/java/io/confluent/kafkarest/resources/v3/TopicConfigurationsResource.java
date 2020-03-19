@@ -18,13 +18,16 @@ package io.confluent.kafkarest.resources.v3;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.TopicConfigurationManager;
 import io.confluent.kafkarest.entities.TopicConfiguration;
+import io.confluent.kafkarest.entities.v3.ClusterData;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.GetTopicConfigurationResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicConfigurationsResponse;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.entities.v3.TopicConfigurationData;
+import io.confluent.kafkarest.entities.v3.TopicData;
 import io.confluent.kafkarest.entities.v3.UpdateTopicConfigurationRequest;
 import io.confluent.kafkarest.resources.v3.AsyncResponses.AsyncResponseBuilder;
+import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
 import java.util.Comparator;
 import java.util.Objects;
@@ -49,12 +52,16 @@ import javax.ws.rs.core.Response.Status;
 public final class TopicConfigurationsResource {
 
   private final TopicConfigurationManager topicConfigurationManager;
+  private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
   public TopicConfigurationsResource(
-      TopicConfigurationManager topicConfigurationManager, UrlFactory urlFactory) {
+      TopicConfigurationManager topicConfigurationManager,
+      CrnFactory crnFactory,
+      UrlFactory urlFactory) {
     this.topicConfigurationManager = Objects.requireNonNull(topicConfigurationManager);
+    this.crnFactory = Objects.requireNonNull(crnFactory);
     this.urlFactory = Objects.requireNonNull(urlFactory);
   }
 
@@ -136,6 +143,13 @@ public final class TopicConfigurationsResource {
 
   private TopicConfigurationData toTopicConfigurationData(TopicConfiguration topicConfiguration) {
     return new TopicConfigurationData(
+        crnFactory.create(
+            ClusterData.TYPE,
+            topicConfiguration.getClusterId(),
+            TopicData.TYPE,
+            topicConfiguration.getTopicName(),
+            TopicConfigurationData.TYPE,
+            topicConfiguration.getName()),
         new ResourceLink(
             urlFactory.create(
                 "v3",

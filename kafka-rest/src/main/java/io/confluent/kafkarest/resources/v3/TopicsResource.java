@@ -20,6 +20,7 @@ import static java.util.Collections.emptyList;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.entities.v3.ClusterData;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.CreateTopicRequest;
 import io.confluent.kafkarest.entities.v3.CreateTopicResponse;
@@ -29,6 +30,7 @@ import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.entities.v3.TopicData;
 import io.confluent.kafkarest.resources.v3.AsyncResponses.AsyncResponseBuilder;
+import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
 import java.net.URI;
 import java.util.Comparator;
@@ -55,11 +57,13 @@ import javax.ws.rs.core.Response.Status;
 public final class TopicsResource {
 
   private final TopicManager topicManager;
+  private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
-  public TopicsResource(TopicManager topicManager, UrlFactory urlFactory) {
+  public TopicsResource(TopicManager topicManager, CrnFactory crnFactory, UrlFactory urlFactory) {
     this.topicManager = Objects.requireNonNull(topicManager);
+    this.crnFactory = Objects.requireNonNull(crnFactory);
     this.urlFactory = Objects.requireNonNull(urlFactory);
   }
 
@@ -165,6 +169,11 @@ public final class TopicsResource {
             "partitions"));
 
     return new TopicData(
+        crnFactory.create(
+            ClusterData.TYPE,
+            topic.getClusterId(),
+            TopicData.TYPE,
+            topic.getName()),
         new ResourceLink(
             urlFactory.create("v3", "clusters", topic.getClusterId(), "topics", topic.getName())),
         topic.getClusterId(),

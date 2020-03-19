@@ -15,13 +15,18 @@
 
 package io.confluent.kafkarest.response;
 
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.process.internal.RequestScoped;
+/**
+ * A factory to create Confluent Resource Names to resources in this application.
+ */
+public interface CrnFactory {
 
-public final class ResponseModule extends AbstractBinder {
-
-  protected void configure() {
-    bind(CrnFactoryImpl.class).to(CrnFactory.class);
-    bind(UrlFactoryImpl.class).to(UrlFactory.class).in(RequestScoped.class);
-  }
+  /**
+   * Returns an Confluent Resource Name that uniquely identifies a resource from the given {@code
+   * components}.
+   *
+   * <p>The components are expected to be even numbered, with adjacent pairs on the format type1,
+   * id1, type2, id2, typeN, idN, where typeK is the k-th Confluent Resource Type, and idK is the
+   * k-th Confluent Resource Identifier. Scopes are resolved from left to right.</p>
+   */
+  String create(String... components);
 }

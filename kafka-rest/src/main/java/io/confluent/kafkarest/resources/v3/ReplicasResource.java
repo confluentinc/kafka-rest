@@ -18,12 +18,16 @@ package io.confluent.kafkarest.resources.v3;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.ReplicaManager;
 import io.confluent.kafkarest.entities.PartitionReplica;
+import io.confluent.kafkarest.entities.v3.ClusterData;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.GetReplicaResponse;
 import io.confluent.kafkarest.entities.v3.ListReplicasResponse;
+import io.confluent.kafkarest.entities.v3.PartitionData;
 import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ReplicaData;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.TopicData;
+import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -41,11 +45,14 @@ import javax.ws.rs.container.Suspended;
 public final class ReplicasResource {
 
   private final ReplicaManager replicaManager;
+  private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
-  public ReplicasResource(ReplicaManager replicaManager, UrlFactory urlFactory) {
+  public ReplicasResource(
+      ReplicaManager replicaManager, CrnFactory crnFactory, UrlFactory urlFactory) {
     this.replicaManager = Objects.requireNonNull(replicaManager);
+    this.crnFactory = Objects.requireNonNull(crnFactory);
     this.urlFactory = Objects.requireNonNull(urlFactory);
   }
 
@@ -121,6 +128,15 @@ public final class ReplicasResource {
                 Integer.toString(replica.getBrokerId())));
 
     return new ReplicaData(
+        crnFactory.create(
+            ClusterData.TYPE,
+            replica.getClusterId(),
+            TopicData.TYPE,
+            replica.getTopicName(),
+            PartitionData.TYPE,
+            Integer.toString(replica.getPartitionId()),
+            ReplicaData.TYPE,
+            Integer.toString(replica.getBrokerId())),
         links,
         replica.getClusterId(),
         replica.getTopicName(),

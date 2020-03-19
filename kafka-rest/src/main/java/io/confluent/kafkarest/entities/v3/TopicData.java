@@ -20,9 +20,13 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
- * A KafkaTopic resource type.
+ * A topic resource type.
  */
 public final class TopicData {
+
+  public static final String TYPE = "topic";
+
+  private final String id;
 
   private final ResourceLink links;
 
@@ -31,6 +35,7 @@ public final class TopicData {
   private final Relationships relationships;
 
   public TopicData(
+      String id,
       ResourceLink links,
       String clusterId,
       String topicName,
@@ -39,6 +44,7 @@ public final class TopicData {
       Relationship configurations,
       Relationship partitions
   ) {
+    this.id = Objects.requireNonNull(id);
     this.links = Objects.requireNonNull(links);
     attributes = new Attributes(clusterId, topicName, isInternal, replicationFactor);
     relationships = new Relationships(configurations, partitions);
@@ -46,12 +52,12 @@ public final class TopicData {
 
   @JsonProperty("type")
   public String getType() {
-    return "KafkaTopic";
+    return TYPE;
   }
 
   @JsonProperty("id")
   public String getId() {
-    return String.format("%s/%s", attributes.getClusterId(), attributes.getTopicName());
+    return id;
   }
 
   @JsonProperty("links")
@@ -78,19 +84,21 @@ public final class TopicData {
       return false;
     }
     TopicData topicData = (TopicData) o;
-    return Objects.equals(links, topicData.links)
+    return Objects.equals(id, topicData.id)
+        && Objects.equals(links, topicData.links)
         && Objects.equals(attributes, topicData.attributes)
         && Objects.equals(relationships, topicData.relationships);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(links, attributes, relationships);
+    return Objects.hash(id, links, attributes, relationships);
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", TopicData.class.getSimpleName() + "[", "]")
+        .add("id='" + id + "'")
         .add("links=" + links)
         .add("attributes=" + attributes)
         .add("relationships=" + relationships)

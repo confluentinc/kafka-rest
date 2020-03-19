@@ -18,12 +18,15 @@ package io.confluent.kafkarest.resources.v3;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.PartitionManager;
 import io.confluent.kafkarest.entities.Partition;
+import io.confluent.kafkarest.entities.v3.ClusterData;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.GetPartitionResponse;
 import io.confluent.kafkarest.entities.v3.ListPartitionsResponse;
 import io.confluent.kafkarest.entities.v3.PartitionData;
 import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.TopicData;
+import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -41,11 +44,14 @@ import javax.ws.rs.container.Suspended;
 public final class PartitionsResource {
 
   private final PartitionManager partitionManager;
+  private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
-  public PartitionsResource(PartitionManager partitionManager, UrlFactory urlFactory) {
+  public PartitionsResource(
+      PartitionManager partitionManager, CrnFactory crnFactory, UrlFactory urlFactory) {
     this.partitionManager = Objects.requireNonNull(partitionManager);
+    this.crnFactory = Objects.requireNonNull(crnFactory);
     this.urlFactory = Objects.requireNonNull(urlFactory);
   }
 
@@ -127,6 +133,13 @@ public final class PartitionsResource {
                 "replicas"));
 
     return new PartitionData(
+        crnFactory.create(
+            ClusterData.TYPE,
+            partition.getClusterId(),
+            TopicData.TYPE,
+            partition.getTopicName(),
+            PartitionData.TYPE,
+            Integer.toString(partition.getPartitionId())),
         links,
         partition.getClusterId(),
         partition.getTopicName(),

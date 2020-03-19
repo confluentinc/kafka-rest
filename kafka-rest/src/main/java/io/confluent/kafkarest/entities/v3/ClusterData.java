@@ -22,9 +22,13 @@ import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 /**
- * A KafkaCluster resource type.
+ * A kafka resource type.
  */
 public final class ClusterData {
+
+  public static final String TYPE = "kafka";
+
+  private final String id;
 
   private final ResourceLink links;
 
@@ -33,12 +37,14 @@ public final class ClusterData {
   private final Relationships relationships;
 
   public ClusterData(
+      String id,
       ResourceLink links,
       String clusterId,
       Relationship controller,
       Relationship brokers,
       Relationship topics
   ) {
+    this.id = Objects.requireNonNull(id);
     this.links = Objects.requireNonNull(links);
     this.attributes = new Attributes(clusterId);
     this.relationships = new Relationships(controller, brokers, topics);
@@ -46,12 +52,12 @@ public final class ClusterData {
 
   @JsonProperty("type")
   public String getType() {
-    return "KafkaCluster";
+    return TYPE;
   }
 
   @JsonProperty("id")
   public String getId() {
-    return attributes.getClusterId();
+    return id;
   }
 
   @JsonProperty("links")
@@ -78,7 +84,8 @@ public final class ClusterData {
       return false;
     }
     ClusterData that = (ClusterData) o;
-    return Objects.equals(links, that.links)
+    return Objects.equals(id, that.id)
+        && Objects.equals(links, that.links)
         && Objects.equals(attributes, that.attributes)
         && Objects.equals(relationships, that.relationships);
 
@@ -86,12 +93,13 @@ public final class ClusterData {
 
   @Override
   public int hashCode() {
-    return Objects.hash(links, attributes, relationships);
+    return Objects.hash(id, links, attributes, relationships);
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", ClusterData.class.getSimpleName() + "[", "]")
+        .add("id='" + id + "'")
         .add("links=" + links)
         .add("attributes=" + attributes)
         .add("relationships=" + relationships)
