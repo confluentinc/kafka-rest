@@ -138,6 +138,7 @@ public final class TopicsResource {
 
   @DELETE
   @Path("/{topicName}")
+  @Produces(Versions.JSON_API)
   public void deleteTopic(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

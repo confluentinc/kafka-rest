@@ -108,6 +108,7 @@ public final class TopicConfigurationsResource {
   @PUT
   @Path("/{name}")
   @Consumes(Versions.JSON_API)
+  @Produces(Versions.JSON_API)
   public void updateTopicConfiguration(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -127,6 +128,7 @@ public final class TopicConfigurationsResource {
 
   @DELETE
   @Path("/{name}")
+  @Produces(Versions.JSON_API)
   public void resetTopicConfiguration(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
