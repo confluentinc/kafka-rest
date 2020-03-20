@@ -305,6 +305,12 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
+  public void deleteTopic_nonExistingCluster_noContentType_returnsNotFound() {
+    Response response = request("/v3/clusters/foobar/topics/" + TOPIC_1).delete();
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
   public void
   getTopic_nonExistingTopic_returnsEmpty_thenCreateTopicAndGetTopic_returnsCreatedTopic_thenDeleteTopicAndGetTopic_returnsEmpty
       () throws Exception {
