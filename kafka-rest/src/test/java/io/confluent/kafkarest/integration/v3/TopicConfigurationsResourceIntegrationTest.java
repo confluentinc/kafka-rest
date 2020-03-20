@@ -374,6 +374,16 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
   }
 
   @Test
+  public void updateTopicConfiguration_nonExistingCluster_noContentType_throwsNotFound() {
+    Response response =
+        request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configurations/cleanup.policy")
+            .put(
+                Entity.entity(
+                    "{\"data\":{\"attributes\":{\"value\":\"compact\"}}}", Versions.JSON_API));
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
   public void resetTopicConfiguration_nonExistingConfiguration_throwsNotFound() {
     String clusterId = getClusterId();
 
@@ -400,6 +410,14 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configurations/cleanup.policy")
             .accept(Versions.JSON_API)
+            .delete();
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void resetTopicConfiguration_nonExistingCluster_noContentType_throwsNotFound() {
+    Response response =
+        request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configurations/cleanup.policy")
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
