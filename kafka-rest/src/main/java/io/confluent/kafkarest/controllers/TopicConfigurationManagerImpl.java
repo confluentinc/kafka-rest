@@ -35,12 +35,12 @@ import org.apache.kafka.common.config.ConfigResource;
 final class TopicConfigurationManagerImpl implements TopicConfigurationManager {
 
   private final Admin adminClient;
-  private final TopicManager topicManager;
+  private final ClusterManager clusterManager;
 
   @Inject
-  TopicConfigurationManagerImpl(Admin adminClient, TopicManager topicManager) {
+  TopicConfigurationManagerImpl(Admin adminClient, ClusterManager clusterManager) {
     this.adminClient = Objects.requireNonNull(adminClient);
-    this.topicManager = Objects.requireNonNull(topicManager);
+    this.clusterManager = Objects.requireNonNull(clusterManager);
   }
 
   @Override
@@ -48,11 +48,8 @@ final class TopicConfigurationManagerImpl implements TopicConfigurationManager {
       String clusterId, String topicName) {
     ConfigResource resource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
 
-    return topicManager.getTopic(clusterId, topicName)
-        .thenApply(
-            topic ->
-                checkEntityExists(
-                    topic, "Topic %s cannot be found in cluster %s.", topicName, clusterId))
+    return clusterManager.getCluster(clusterId)
+        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenCompose(
             topic ->
                 KafkaFutures.toCompletableFuture(
