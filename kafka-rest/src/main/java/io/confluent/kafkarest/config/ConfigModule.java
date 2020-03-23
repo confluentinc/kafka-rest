@@ -21,6 +21,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import javax.inject.Qualifier;
@@ -62,6 +63,20 @@ public final class ConfigModule extends AbstractBinder {
     bind(config.getList(RestConfig.LISTENERS_CONFIG))
         .qualifiedBy(new ListenersConfigImpl())
         .to(new TypeLiteral<List<String>>() { });
+
+    bind(config.getInt(KafkaRestConfig.NON_BLOCKING_EXECUTOR_CORE_POOL_SIZE_CONFIG))
+        .qualifiedBy(new NonBlockingExecutorCorePoolSizeConfigImpl())
+        .to(Integer.class);
+
+    bind(config.getInt(KafkaRestConfig.NON_BLOCKING_EXECUTOR_MAX_POOL_SIZE_CONFIG))
+        .qualifiedBy(new NonBlockingExecutorMaxPoolSizeConfigImpl())
+        .to(Integer.class);
+
+    bind(
+        Duration.ofMillis(
+            config.getLong(KafkaRestConfig.NON_BLOCKING_EXECUTOR_KEEP_ALIVE_MS_CONFIG)))
+        .qualifiedBy(new NonBlockingExecutorKeepAliveConfigImpl())
+        .to(Duration.class);
 
     bind(config.getInt(RestConfig.PORT_CONFIG))
         .qualifiedBy(new PortConfigImpl())
@@ -107,6 +122,36 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class ListenersConfigImpl
       extends AnnotationLiteral<ListenersConfig> implements ListenersConfig {
+  }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER })
+  public @interface NonBlockingExecutorCorePoolSizeConfig {
+  }
+
+  private static final class NonBlockingExecutorCorePoolSizeConfigImpl
+      extends AnnotationLiteral<ListenersConfig> implements NonBlockingExecutorCorePoolSizeConfig {
+  }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER })
+  public @interface NonBlockingExecutorMaxPoolSizeConfig {
+  }
+
+  private static final class NonBlockingExecutorMaxPoolSizeConfigImpl
+      extends AnnotationLiteral<ListenersConfig> implements NonBlockingExecutorMaxPoolSizeConfig {
+  }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER })
+  public @interface NonBlockingExecutorKeepAliveConfig {
+  }
+
+  private static final class NonBlockingExecutorKeepAliveConfigImpl
+      extends AnnotationLiteral<ListenersConfig> implements NonBlockingExecutorKeepAliveConfig {
   }
 
   @Qualifier

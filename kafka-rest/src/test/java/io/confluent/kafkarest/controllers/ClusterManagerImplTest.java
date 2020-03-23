@@ -17,6 +17,7 @@ package io.confluent.kafkarest.controllers;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -66,7 +67,7 @@ public class ClusterManagerImplTest {
 
   @Before
   public void setUp() {
-    clusterManager = new ClusterManagerImpl(adminClient);
+    clusterManager = new ClusterManagerImpl(adminClient, newSingleThreadExecutor());
   }
 
   @Test

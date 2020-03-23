@@ -16,6 +16,7 @@
 package io.confluent.kafkarest;
 
 import io.confluent.kafkarest.backends.BackendsModule;
+import io.confluent.kafkarest.concurrent.NonBlockingExecutorModule;
 import io.confluent.kafkarest.config.ConfigModule;
 import io.confluent.kafkarest.controllers.ControllersModule;
 import io.confluent.kafkarest.extension.ContextInvocationHandler;
@@ -101,6 +102,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new BackendsModule(context));
     config.register(new ConfigModule(appConfig));
     config.register(new ControllersModule());
+    config.register(new NonBlockingExecutorModule());
     config.register(new ResourcesFeature(context));
     config.register(new ResponseModule());
 

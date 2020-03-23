@@ -20,11 +20,13 @@ import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
+import io.confluent.kafkarest.concurrent.NonBlockingExecutor;
 import io.confluent.kafkarest.entities.TopicConfiguration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
@@ -36,11 +38,16 @@ final class TopicConfigurationManagerImpl implements TopicConfigurationManager {
 
   private final Admin adminClient;
   private final ClusterManager clusterManager;
+  private final ExecutorService executor;
 
   @Inject
-  TopicConfigurationManagerImpl(Admin adminClient, ClusterManager clusterManager) {
+  TopicConfigurationManagerImpl(
+      Admin adminClient,
+      ClusterManager clusterManager,
+      @NonBlockingExecutor ExecutorService executor) {
     this.adminClient = Objects.requireNonNull(adminClient);
     this.clusterManager = Objects.requireNonNull(clusterManager);
+    this.executor = Objects.requireNonNull(executor);
   }
 
   @Override
@@ -49,12 +56,15 @@ final class TopicConfigurationManagerImpl implements TopicConfigurationManager {
     ConfigResource resource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
 
     return clusterManager.getCluster(clusterId)
-        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
-        .thenCompose(
+        .thenApplyAsync(
+            cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId),
+            executor)
+        .thenComposeAsync(
             topic ->
                 KafkaFutures.toCompletableFuture(
-                    adminClient.describeConfigs(singletonList(resource)).values().get(resource)))
-        .thenApply(
+                    adminClient.describeConfigs(singletonList(resource)).values().get(resource)),
+            executor)
+        .thenApplyAsync(
             config ->
                 config.entries().stream()
                     .map(
@@ -67,15 +77,17 @@ final class TopicConfigurationManagerImpl implements TopicConfigurationManager {
                                 entry.isDefault(),
                                 entry.isReadOnly(),
                                 entry.isSensitive()))
-                    .collect(Collectors.toList()));
+                    .collect(Collectors.toList()),
+            executor);
   }
 
   @Override
   public CompletableFuture<Optional<TopicConfiguration>> getTopicConfiguration(
       String clusterId, String topicName, String name) {
     return listTopicConfigurations(clusterId, topicName)
-        .thenApply(
-            configurations -> findEntityByKey(configurations, TopicConfiguration::getName, name));
+        .thenApplyAsync(
+            configurations -> findEntityByKey(configurations, TopicConfiguration::getName, name),
+            executor);
   }
 
   @Override
@@ -84,15 +96,16 @@ final class TopicConfigurationManagerImpl implements TopicConfigurationManager {
     ConfigResource resource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
 
     return getTopicConfiguration(clusterId, topicName, name)
-        .thenApply(
+        .thenApplyAsync(
             configuration ->
                 checkEntityExists(
                     configuration,
                     "Configuration %s cannot be found for topic %s in cluster %s.",
                     name,
                     topicName,
-                    clusterId))
-        .thenCompose(
+                    clusterId),
+            executor)
+        .thenComposeAsync(
             topic ->
                 KafkaFutures.toCompletableFuture(
                     adminClient.incrementalAlterConfigs(
@@ -102,7 +115,8 @@ final class TopicConfigurationManagerImpl implements TopicConfigurationManager {
                                 new AlterConfigOp(
                                     new ConfigEntry(name, newValue), AlterConfigOp.OpType.SET))))
                         .values()
-                        .get(resource)));
+                        .get(resource)),
+            executor);
   }
 
   @Override
@@ -111,15 +125,16 @@ final class TopicConfigurationManagerImpl implements TopicConfigurationManager {
     ConfigResource resource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
 
     return getTopicConfiguration(clusterId, topicName, name)
-        .thenApply(
+        .thenApplyAsync(
             configuration ->
                 checkEntityExists(
                     configuration,
                     "Configuration %s cannot be found for topic %s in cluster %s.",
                     name,
                     topicName,
-                    clusterId))
-        .thenCompose(
+                    clusterId),
+            executor)
+        .thenComposeAsync(
             topic ->
                 KafkaFutures.toCompletableFuture(
                     adminClient.incrementalAlterConfigs(
@@ -130,6 +145,7 @@ final class TopicConfigurationManagerImpl implements TopicConfigurationManager {
                                     new ConfigEntry(name, /* value= */ null),
                                     AlterConfigOp.OpType.DELETE))))
                         .values()
-                        .get(resource)));
+                        .get(resource)),
+            executor);
   }
 }

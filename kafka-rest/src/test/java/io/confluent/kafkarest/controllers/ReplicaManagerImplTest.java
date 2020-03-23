@@ -17,6 +17,7 @@ package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.CompletableFutures.failedFuture;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
@@ -87,7 +88,7 @@ public class ReplicaManagerImplTest {
 
   @Before
   public void setUp() {
-    replicaManager = new ReplicaManagerImpl(partitionManager);
+    replicaManager = new ReplicaManagerImpl(partitionManager, newSingleThreadExecutor());
   }
 
   @Test

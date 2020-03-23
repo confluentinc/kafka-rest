@@ -19,6 +19,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
@@ -130,7 +131,8 @@ public class TopicConfigurationManagerImplTest {
 
   @Before
   public void setUp() {
-    topicConfigurationManager = new TopicConfigurationManagerImpl(adminClient, clusterManager);
+    topicConfigurationManager =
+        new TopicConfigurationManagerImpl(adminClient, clusterManager, newSingleThreadExecutor());
   }
 
   @Test

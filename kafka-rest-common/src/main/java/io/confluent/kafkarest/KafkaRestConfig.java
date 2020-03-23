@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest;
 
+import java.time.Duration;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Range;
@@ -326,6 +327,22 @@ public class KafkaRestConfig extends RestConfig {
       "Authority to which the governance of the name space defined by the remainder of the CRN "
           + "should be delegated to. Examples: confluent.cloud, mds-01.example.com.";
   private static final String CONFLUENT_RESOURCE_NAME_AUTHORITY_DEFAULT = "";
+
+  public static final String NON_BLOCKING_EXECUTOR_CORE_POOL_SIZE_CONFIG =
+      "non.blocking.executor.core.pool.size";
+  private static final String NON_BLOCKING_EXECUTOR_CORE_POOL_SIZE_DOC = "";
+  private static final int NON_BLOCKING_EXECUTOR_CORE_POOL_SIZE_DEFAULT = 8;
+
+  public static final String NON_BLOCKING_EXECUTOR_MAX_POOL_SIZE_CONFIG =
+      "non.blocking.executor.max.pool.size";
+  private static final String NON_BLOCKING_EXECUTOR_MAX_POOL_SIZE_DOC = "";
+  private static final int NON_BLOCKING_EXECUTOR_MAX_POOL_SIZE_DEFAULT = 8;
+
+  public static final String NON_BLOCKING_EXECUTOR_KEEP_ALIVE_MS_CONFIG =
+      "non.blocking.executor.keep.alive.ms";
+  private static final String NON_BLOCKING_EXECUTOR_KEEP_ALIVE_MS_DOC = "";
+  private static final long NON_BLOCKING_EXECUTOR_KEEP_ALIVE_MS_DEFAULT =
+      Duration.ofMinutes(1).toMillis();
 
   private static final ConfigDef config;
 
@@ -639,7 +656,28 @@ public class KafkaRestConfig extends RestConfig {
         Type.STRING,
         CONFLUENT_RESOURCE_NAME_AUTHORITY_DEFAULT,
         Importance.LOW,
-        CONFLUENT_RESOURCE_NAME_AUTHORITY_DOC);
+        CONFLUENT_RESOURCE_NAME_AUTHORITY_DOC
+    )
+    .define(
+        NON_BLOCKING_EXECUTOR_CORE_POOL_SIZE_CONFIG,
+        Type.INT,
+        NON_BLOCKING_EXECUTOR_CORE_POOL_SIZE_DEFAULT,
+        Importance.LOW,
+        NON_BLOCKING_EXECUTOR_CORE_POOL_SIZE_DOC
+    )
+    .define(
+        NON_BLOCKING_EXECUTOR_MAX_POOL_SIZE_CONFIG,
+        Type.INT,
+        NON_BLOCKING_EXECUTOR_MAX_POOL_SIZE_DEFAULT,
+        Importance.LOW,
+        NON_BLOCKING_EXECUTOR_MAX_POOL_SIZE_DOC
+    )
+    .define(
+        NON_BLOCKING_EXECUTOR_KEEP_ALIVE_MS_CONFIG,
+        Type.LONG,
+        NON_BLOCKING_EXECUTOR_KEEP_ALIVE_MS_DEFAULT,
+        Importance.LOW,
+        NON_BLOCKING_EXECUTOR_KEEP_ALIVE_MS_DOC);
   }
 
   private Time time;

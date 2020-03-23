@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.CompletableFutures.failedFuture;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
@@ -145,7 +146,7 @@ public class PartitionManagerImplTest {
 
   @Before
   public void setUp() {
-    partitionManager = new PartitionManagerImpl(topicManager);
+    partitionManager = new PartitionManagerImpl(topicManager, newSingleThreadExecutor());
   }
 
   @Test

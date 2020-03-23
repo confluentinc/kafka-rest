@@ -18,33 +18,40 @@ package io.confluent.kafkarest.controllers;
 import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
 import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
 
+import io.confluent.kafkarest.concurrent.NonBlockingExecutor;
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Cluster;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import javax.inject.Inject;
 
 final class BrokerManagerImpl implements BrokerManager {
 
   private final ClusterManager clusterManager;
+  private final ExecutorService executor;
 
   @Inject
-  BrokerManagerImpl(ClusterManager clusterManager) {
+  BrokerManagerImpl(ClusterManager clusterManager, @NonBlockingExecutor ExecutorService executor) {
     this.clusterManager = Objects.requireNonNull(clusterManager);
+    this.executor = Objects.requireNonNull(executor);
   }
 
   @Override
   public CompletableFuture<List<Broker>> listBrokers(String clusterId) {
     return clusterManager.getCluster(clusterId)
-        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
-        .thenApply(Cluster::getBrokers);
+        .thenApplyAsync(
+            cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId),
+            executor)
+        .thenApplyAsync(Cluster::getBrokers, executor);
   }
 
   @Override
   public CompletableFuture<Optional<Broker>> getBroker(String clusterId, int brokerId) {
     return listBrokers(clusterId)
-        .thenApply(brokers -> findEntityByKey(brokers, Broker::getBrokerId, brokerId));
+        .thenApplyAsync(
+            brokers -> findEntityByKey(brokers, Broker::getBrokerId, brokerId), executor);
   }
 }

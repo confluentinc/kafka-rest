@@ -18,39 +18,48 @@ package io.confluent.kafkarest.controllers;
 import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
 import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
 
+import io.confluent.kafkarest.concurrent.NonBlockingExecutor;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import javax.inject.Inject;
 
 final class ReplicaManagerImpl implements ReplicaManager {
 
   private final PartitionManager partitionManager;
+  private final ExecutorService executor;
 
   @Inject
-  ReplicaManagerImpl(PartitionManager partitionManager) {
+  ReplicaManagerImpl(
+      PartitionManager partitionManager, @NonBlockingExecutor ExecutorService executor) {
     this.partitionManager = Objects.requireNonNull(partitionManager);
+    this.executor = Objects.requireNonNull(executor);
   }
 
   @Override
   public CompletableFuture<List<PartitionReplica>> listReplicas(
       String clusterId, String topicName, int partitionId) {
     return partitionManager.getPartition(clusterId, topicName, partitionId)
-        .thenApply(partition ->
-            checkEntityExists(
-                partition,
-                "Partition %d of topic %s could not be found on cluster %s.",
-                partitionId, topicName, clusterId))
-        .thenApply(Partition::getReplicas);
+        .thenApplyAsync(
+            partition ->
+                checkEntityExists(
+                    partition,
+                    "Partition %d of topic %s could not be found on cluster %s.",
+                    partitionId, topicName, clusterId),
+            executor)
+        .thenApplyAsync(Partition::getReplicas, executor);
   }
 
   @Override
   public CompletableFuture<Optional<PartitionReplica>> getReplica(
       String clusterId, String topicName, int partitionId, int brokerId) {
     return listReplicas(clusterId, topicName, partitionId)
-        .thenApply(replicas -> findEntityByKey(replicas, PartitionReplica::getBrokerId, brokerId));
+        .thenApplyAsync(
+            replicas -> findEntityByKey(replicas, PartitionReplica::getBrokerId, brokerId),
+            executor);
   }
 }

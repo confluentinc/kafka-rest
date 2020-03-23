@@ -20,12 +20,14 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 
+import io.confluent.kafkarest.concurrent.NonBlockingExecutor;
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Cluster;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
@@ -35,10 +37,12 @@ import org.apache.kafka.clients.admin.DescribeClusterResult;
 final class ClusterManagerImpl implements ClusterManager {
 
   private final Admin adminClient;
+  private final ExecutorService executor;
 
   @Inject
-  ClusterManagerImpl(Admin adminClient) {
+  ClusterManagerImpl(Admin adminClient, @NonBlockingExecutor ExecutorService executor) {
     this.adminClient = Objects.requireNonNull(adminClient);
+    this.executor = Objects.requireNonNull(executor);
   }
 
   @Override
@@ -48,7 +52,7 @@ final class ClusterManagerImpl implements ClusterManager {
             new DescribeClusterOptions().includeAuthorizedOperations(false));
 
     return CompletableFuture.completedFuture(new Cluster.Builder())
-        .thenCombine(
+        .thenCombineAsync(
             KafkaFutures.toCompletableFuture(describeClusterResult.clusterId()),
             (clusterBuilder, clusterId) -> {
               if (clusterId == null) {
@@ -57,8 +61,9 @@ final class ClusterManagerImpl implements ClusterManager {
                 return null;
               }
               return clusterBuilder.setClusterId(clusterId);
-            })
-        .thenCombine(
+            },
+            executor)
+        .thenCombineAsync(
             KafkaFutures.toCompletableFuture(describeClusterResult.controller()),
             (clusterBuilder, controller) -> {
               if (clusterBuilder == null) {
@@ -69,8 +74,9 @@ final class ClusterManagerImpl implements ClusterManager {
               }
               return clusterBuilder.setController(
                   Broker.fromNode(clusterBuilder.getClusterId(), controller));
-            })
-        .thenCombine(
+            },
+            executor)
+        .thenCombineAsync(
             KafkaFutures.toCompletableFuture(describeClusterResult.nodes()),
             (clusterBuilder, nodes) -> {
               if (clusterBuilder == null) {
@@ -84,20 +90,23 @@ final class ClusterManagerImpl implements ClusterManager {
                       .filter(node -> node != null && !node.isEmpty())
                       .map(node -> Broker.fromNode(clusterBuilder.getClusterId(), node))
                       .collect(Collectors.toList()));
-            })
-        .thenApply(
+            },
+            executor)
+        .thenApplyAsync(
             clusterBuilder -> {
               if (clusterBuilder == null) {
                 return emptyList();
               }
               return unmodifiableList(singletonList(clusterBuilder.build()));
-            });
+            },
+            executor);
   }
 
   @Override
   public CompletableFuture<Optional<Cluster>> getCluster(String clusterId) {
     Objects.requireNonNull(clusterId);
     return listClusters()
-        .thenApply(clusters -> findEntityByKey(clusters, Cluster::getClusterId, clusterId));
+        .thenApplyAsync(
+            clusters -> findEntityByKey(clusters, Cluster::getClusterId, clusterId), executor);
   }
 }

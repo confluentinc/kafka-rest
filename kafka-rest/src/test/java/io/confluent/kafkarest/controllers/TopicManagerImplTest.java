@@ -19,6 +19,7 @@ import static io.confluent.kafkarest.TestUtils.failedFuture;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -403,7 +404,7 @@ public class TopicManagerImplTest {
 
   @Before
   public void setUp() {
-    topicManager = new TopicManagerImpl(adminClient, clusterManager);
+    topicManager = new TopicManagerImpl(adminClient, clusterManager, newSingleThreadExecutor());
   }
 
   @Test

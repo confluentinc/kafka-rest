@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.controllers;
 
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
@@ -59,7 +60,7 @@ public class BrokerManagerImplTest {
 
   @Before
   public void setUp() {
-    brokerManager = new BrokerManagerImpl(clusterManager);
+    brokerManager = new BrokerManagerImpl(clusterManager, newSingleThreadExecutor());
   }
 
   @Test

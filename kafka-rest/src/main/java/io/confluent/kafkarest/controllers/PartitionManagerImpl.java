@@ -18,35 +18,41 @@ package io.confluent.kafkarest.controllers;
 import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
 import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
 
+import io.confluent.kafkarest.concurrent.NonBlockingExecutor;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.Topic;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import javax.inject.Inject;
 
 final class PartitionManagerImpl implements PartitionManager {
 
   private final TopicManager topicManager;
+  private final ExecutorService executor;
 
   @Inject
-  PartitionManagerImpl(TopicManager topicManager) {
+  PartitionManagerImpl(TopicManager topicManager, @NonBlockingExecutor ExecutorService executor) {
     this.topicManager = Objects.requireNonNull(topicManager);
+    this.executor = Objects.requireNonNull(executor);
   }
 
   @Override
   public CompletableFuture<List<Partition>> listPartitions(String clusterId, String topicName) {
     return topicManager.getTopic(clusterId, topicName)
-        .thenApply(topic -> checkEntityExists(topic, "Topic %s cannot be found.", topic))
-        .thenApply(Topic::getPartitions);
+        .thenApplyAsync(
+            topic -> checkEntityExists(topic, "Topic %s cannot be found.", topic), executor)
+        .thenApplyAsync(Topic::getPartitions, executor);
   }
 
   @Override
   public CompletableFuture<Optional<Partition>> getPartition(
       String clusterId, String topicName, int partitionId) {
     return listPartitions(clusterId, topicName)
-        .thenApply(
-            partitions -> findEntityByKey(partitions, Partition::getPartitionId, partitionId));
+        .thenApplyAsync(
+            partitions -> findEntityByKey(partitions, Partition::getPartitionId, partitionId),
+            executor);
   }
 }
