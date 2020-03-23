@@ -15,6 +15,9 @@
 
 package io.confluent.kafkarest.concurrent;
 
+import io.confluent.kafkarest.config.ConfigModule.NonBlockingExecutorCorePoolSizeConfig;
+import io.confluent.kafkarest.config.ConfigModule.NonBlockingExecutorKeepAliveConfig;
+import io.confluent.kafkarest.config.ConfigModule.NonBlockingExecutorMaxPoolSizeConfig;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
@@ -43,7 +46,10 @@ public class NonBlockingExecutorModule extends AbstractBinder {
     private final Duration keepAlive;
 
     @Inject
-    private ExecutorServiceFactory(int corePoolSize, int maxPoolSize, Duration keepAlive) {
+    private ExecutorServiceFactory(
+        @NonBlockingExecutorCorePoolSizeConfig int corePoolSize,
+        @NonBlockingExecutorMaxPoolSizeConfig int maxPoolSize,
+        @NonBlockingExecutorKeepAliveConfig Duration keepAlive) {
       this.corePoolSize = corePoolSize;
       this.maxPoolSize = maxPoolSize;
       this.keepAlive = Objects.requireNonNull(keepAlive);
