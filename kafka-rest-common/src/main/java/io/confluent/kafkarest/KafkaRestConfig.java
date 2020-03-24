@@ -15,7 +15,6 @@
 
 package io.confluent.kafkarest;
 
-import java.time.Duration;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Range;
@@ -341,8 +340,7 @@ public class KafkaRestConfig extends RestConfig {
   public static final String NON_BLOCKING_EXECUTOR_KEEP_ALIVE_MS_CONFIG =
       "non.blocking.executor.keep.alive.ms";
   private static final String NON_BLOCKING_EXECUTOR_KEEP_ALIVE_MS_DOC = "";
-  private static final long NON_BLOCKING_EXECUTOR_KEEP_ALIVE_MS_DEFAULT =
-      Duration.ofMinutes(1).toMillis();
+  private static final long NON_BLOCKING_EXECUTOR_KEEP_ALIVE_MS_DEFAULT = 0;
 
   private static final ConfigDef config;
 
