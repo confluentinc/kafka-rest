@@ -29,10 +29,10 @@ import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 /**
- * A module to populate the injector with the configurations passed to this application.
+ * A module to populate the injector with the configs passed to this application.
  *
- * <p>In addition to {@link KafkaRestConfig}, which contains all configurations, individual
- * configurations are also exposed, on a need-to-know basis.</p>
+ * <p>In addition to {@link KafkaRestConfig}, which contains all configs, individual configs are
+ * also exposed, on a need-to-know basis.</p>
  */
 public final class ConfigModule extends AbstractBinder {
 

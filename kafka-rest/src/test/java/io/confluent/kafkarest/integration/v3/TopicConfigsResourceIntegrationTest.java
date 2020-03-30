@@ -21,9 +21,9 @@ import static org.junit.Assert.assertTrue;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
-import io.confluent.kafkarest.entities.v3.GetTopicConfigurationResponse;
+import io.confluent.kafkarest.entities.v3.GetTopicConfigResponse;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
-import io.confluent.kafkarest.entities.v3.TopicConfigurationData;
+import io.confluent.kafkarest.entities.v3.TopicConfigData;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -31,13 +31,13 @@ import javax.ws.rs.core.Response.Status;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarness {
+public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private static final String TOPIC_1 = "topic-1";
 
-  public TopicConfigurationsResourceIntegrationTest() {
+  public TopicConfigsResourceIntegrationTest() {
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ false);
   }
 
@@ -50,7 +50,7 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
   }
 
   @Test
-  public void listTopicConfigurations_existingTopic_returnsConfigurations() throws Exception {
+  public void listTopicConfigs_existingTopic_returnsConfigs() throws Exception {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -60,17 +60,17 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
                 baseUrl
                     + "/v3/clusters/" + clusterId
                     + "/topics/" + TOPIC_1
-                    + "/configurations",
+                    + "/configs",
                 /* next= */ null));
     String expectedConfig1 =
         OBJECT_MAPPER.writeValueAsString(
-            new TopicConfigurationData(
-                "crn:///kafka=" + clusterId + "/topic=" + TOPIC_1 + "/configuration=cleanup.policy",
+            new TopicConfigData(
+                "crn:///kafka=" + clusterId + "/topic=" + TOPIC_1 + "/config=cleanup.policy",
                 new ResourceLink(
                     baseUrl
                         + "/v3/clusters/" + clusterId
                         + "/topics/" + TOPIC_1
-                        + "/configurations/cleanup.policy"),
+                        + "/configs/cleanup.policy"),
                 clusterId,
                 TOPIC_1,
                 "cleanup.policy",
@@ -80,15 +80,15 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
                 /* isSensitive= */ false));
     String expectedConfig2 =
         OBJECT_MAPPER.writeValueAsString(
-            new TopicConfigurationData(
+            new TopicConfigData(
                 "crn:///kafka=" + clusterId
                     + "/topic=" + TOPIC_1
-                    + "/configuration=compression.type",
+                    + "/config=compression.type",
                 new ResourceLink(
                     baseUrl
                         + "/v3/clusters/" + clusterId
                         + "/topics/" + TOPIC_1
-                        + "/configurations/compression.type"),
+                        + "/configs/compression.type"),
                 clusterId,
                 TOPIC_1,
                 "compression.type",
@@ -98,15 +98,15 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
                 /* isSensitive= */ false));
     String expectedConfig3 =
         OBJECT_MAPPER.writeValueAsString(
-            new TopicConfigurationData(
+            new TopicConfigData(
                 "crn:///kafka=" + clusterId
                     + "/topic=" + TOPIC_1
-                    + "/configuration=delete.retention.ms",
+                    + "/config=delete.retention.ms",
                 new ResourceLink(
                     baseUrl
                         + "/v3/clusters/" + clusterId
                         + "/topics/" + TOPIC_1
-                        + "/configurations/delete.retention.ms"),
+                        + "/configs/delete.retention.ms"),
                 clusterId,
                 TOPIC_1,
                 "delete.retention.ms",
@@ -116,7 +116,7 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
                 /* isSensitive= */ false));
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configurations")
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs")
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
@@ -136,42 +136,42 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
   }
 
   @Test
-  public void listTopicConfigurations_nonExistingTopic_throwsNotFound() {
+  public void listTopicConfigs_nonExistingTopic_throwsNotFound() {
     String clusterId = getClusterId();
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/topics/foobar/configurations")
+        request("/v3/clusters/" + clusterId + "/topics/foobar/configs")
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void listTopicConfigurations_nonExistingCluster_throwsNotFound() {
+  public void listTopicConfigs_nonExistingCluster_throwsNotFound() {
     Response response =
-        request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configurations")
+        request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs")
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void getTopicConfiguration_existingConfiguration_returnsConfiguration() throws Exception {
+  public void getTopicConfig_existingConfig_returnsConfig() throws Exception {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
     String expected =
         OBJECT_MAPPER.writeValueAsString(
-            new GetTopicConfigurationResponse(
-                new TopicConfigurationData(
+            new GetTopicConfigResponse(
+                new TopicConfigData(
                     "crn:///kafka=" + clusterId
                         + "/topic=" + TOPIC_1
-                        + "/configuration=cleanup.policy",
+                        + "/config=cleanup.policy",
                     new ResourceLink(
                         baseUrl
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + TOPIC_1
-                            + "/configurations/cleanup.policy"),
+                            + "/configs/cleanup.policy"),
                     clusterId,
                     TOPIC_1,
                     "cleanup.policy",
@@ -184,7 +184,7 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
         request(
             "/v3/clusters/" + clusterId
                 + "/topics/" + TOPIC_1
-                + "/configurations/cleanup.policy")
+                + "/configs/cleanup.policy")
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
@@ -192,31 +192,31 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
   }
 
   @Test
-  public void getTopicConfiguration_nonExistingConfiguration_throwsNotFound() {
+  public void getTopicConfig_nonExistingConfig_throwsNotFound() {
     String clusterId = getClusterId();
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configurations/foobar")
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/foobar")
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void getTopicConfiguration_nonExistingTopic_throwsNotFound() {
+  public void getTopicConfig_nonExistingTopic_throwsNotFound() {
     String clusterId = getClusterId();
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/topics/foobar/configurations/cleanup.policy")
+        request("/v3/clusters/" + clusterId + "/topics/foobar/configs/cleanup.policy")
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void getTopicConfiguration_nonExistingCluster_throwsNotFound() {
+  public void getTopicConfig_nonExistingCluster_throwsNotFound() {
     Response response =
-        request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configurations/cleanup.policy")
+        request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy")
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -224,23 +224,23 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
 
   @Test
   public void
-  getThenUpdateThenGetThenResetThenGet_existingConfiguration_returnsDefaultThenUpdatesThenReturnsUpdatedThenResetsThenReturnsDefault
+  getThenUpdateThenGetThenResetThenGet_existingConfig_returnsDefaultThenUpdatesThenReturnsUpdatedThenResetsThenReturnsDefault
       () throws Exception {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
     String expectedBeforeUpdate =
         OBJECT_MAPPER.writeValueAsString(
-            new GetTopicConfigurationResponse(
-                new TopicConfigurationData(
+            new GetTopicConfigResponse(
+                new TopicConfigData(
                     "crn:///kafka=" + clusterId
                         + "/topic=" + TOPIC_1
-                        + "/configuration=cleanup.policy",
+                        + "/config=cleanup.policy",
                     new ResourceLink(
                         baseUrl
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + TOPIC_1
-                            + "/configurations/cleanup.policy"),
+                            + "/configs/cleanup.policy"),
                     clusterId,
                     TOPIC_1,
                     "cleanup.policy",
@@ -253,7 +253,7 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
         request(
             "/v3/clusters/" + clusterId
                 + "/topics/" + TOPIC_1
-                + "/configurations/cleanup.policy")
+                + "/configs/cleanup.policy")
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), responseBeforeUpdate.getStatus());
@@ -261,7 +261,7 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
 
     Response updateResponse =
         request(
-            "/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configurations/cleanup.policy")
+            "/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/cleanup.policy")
             .accept(Versions.JSON_API)
             .put(
                 Entity.entity(
@@ -270,16 +270,16 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
 
     String expectedAfterUpdate =
         OBJECT_MAPPER.writeValueAsString(
-            new GetTopicConfigurationResponse(
-                new TopicConfigurationData(
+            new GetTopicConfigResponse(
+                new TopicConfigData(
                     "crn:///kafka=" + clusterId
                         + "/topic=" + TOPIC_1
-                        + "/configuration=cleanup.policy",
+                        + "/config=cleanup.policy",
                     new ResourceLink(
                         baseUrl
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + TOPIC_1
-                            + "/configurations/cleanup.policy"),
+                            + "/configs/cleanup.policy"),
                     clusterId,
                     TOPIC_1,
                     "cleanup.policy",
@@ -292,7 +292,7 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
         request(
             "/v3/clusters/" + clusterId
                 + "/topics/" + TOPIC_1
-                + "/configurations/cleanup.policy")
+                + "/configs/cleanup.policy")
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), responseAfterUpdate.getStatus());
@@ -300,23 +300,23 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
 
     Response resetResponse =
         request(
-            "/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configurations/cleanup.policy")
+            "/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/cleanup.policy")
             .accept(Versions.JSON_API)
             .delete();
     assertEquals(Status.NO_CONTENT.getStatusCode(), resetResponse.getStatus());
 
     String expectedAfterReset =
         OBJECT_MAPPER.writeValueAsString(
-            new GetTopicConfigurationResponse(
-                new TopicConfigurationData(
+            new GetTopicConfigResponse(
+                new TopicConfigData(
                     "crn:///kafka=" + clusterId
                         + "/topic=" + TOPIC_1
-                        + "/configuration=cleanup.policy",
+                        + "/config=cleanup.policy",
                     new ResourceLink(
                         baseUrl
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + TOPIC_1
-                            + "/configurations/cleanup.policy"),
+                            + "/configs/cleanup.policy"),
                     clusterId,
                     TOPIC_1,
                     "cleanup.policy",
@@ -329,7 +329,7 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
         request(
             "/v3/clusters/" + clusterId
                 + "/topics/" + TOPIC_1
-                + "/configurations/cleanup.policy")
+                + "/configs/cleanup.policy")
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), responseAfterReset.getStatus());
@@ -337,11 +337,11 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
   }
 
   @Test
-  public void updateTopicConfiguration_nonExistingConfiguration_throwsNotFound() {
+  public void updateTopicConfig_nonExistingConfig_throwsNotFound() {
     String clusterId = getClusterId();
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configurations/foobar")
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/foobar")
             .accept(Versions.JSON_API)
             .put(
                 Entity.entity(
@@ -350,11 +350,11 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
   }
 
   @Test
-  public void updateTopicConfiguration_nonExistingTopic_throwsNotFound() {
+  public void updateTopicConfig_nonExistingTopic_throwsNotFound() {
     String clusterId = getClusterId();
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/topics/foobar/configurations/cleanup.policy")
+        request("/v3/clusters/" + clusterId + "/topics/foobar/configs/cleanup.policy")
             .accept(Versions.JSON_API)
             .put(
                 Entity.entity(
@@ -363,9 +363,9 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
   }
 
   @Test
-  public void updateTopicConfiguration_nonExistingCluster_throwsNotFound() {
+  public void updateTopicConfig_nonExistingCluster_throwsNotFound() {
     Response response =
-        request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configurations/cleanup.policy")
+        request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy")
             .accept(Versions.JSON_API)
             .put(
                 Entity.entity(
@@ -374,9 +374,9 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
   }
 
   @Test
-  public void updateTopicConfiguration_nonExistingCluster_noContentType_throwsNotFound() {
+  public void updateTopicConfig_nonExistingCluster_noContentType_throwsNotFound() {
     Response response =
-        request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configurations/cleanup.policy")
+        request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy")
             .put(
                 Entity.entity(
                     "{\"data\":{\"attributes\":{\"value\":\"compact\"}}}", Versions.JSON_API));
@@ -384,40 +384,40 @@ public class TopicConfigurationsResourceIntegrationTest extends ClusterTestHarne
   }
 
   @Test
-  public void resetTopicConfiguration_nonExistingConfiguration_throwsNotFound() {
+  public void resetTopicConfig_nonExistingConfig_throwsNotFound() {
     String clusterId = getClusterId();
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configurations/foobar")
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs/foobar")
             .accept(Versions.JSON_API)
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void resetTopicConfiguration_nonExistingTopic_throwsNotFound() {
+  public void resetTopicConfig_nonExistingTopic_throwsNotFound() {
     String clusterId = getClusterId();
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/topics/foobar/configurations/cleanup.policy")
+        request("/v3/clusters/" + clusterId + "/topics/foobar/configs/cleanup.policy")
             .accept(Versions.JSON_API)
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void resetTopicConfiguration_nonExistingCluster_throwsNotFound() {
+  public void resetTopicConfig_nonExistingCluster_throwsNotFound() {
     Response response =
-        request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configurations/cleanup.policy")
+        request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy")
             .accept(Versions.JSON_API)
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void resetTopicConfiguration_nonExistingCluster_noContentType_throwsNotFound() {
+  public void resetTopicConfig_nonExistingCluster_noContentType_throwsNotFound() {
     Response response =
-        request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configurations/cleanup.policy")
+        request("/v3/clusters/foobar/topics/" + TOPIC_1 + "/configs/cleanup.policy")
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }

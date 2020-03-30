@@ -133,11 +133,11 @@ final class TopicManagerImpl implements TopicManager {
       String topicName,
       int partitionsCount,
       short replicationFactor,
-      Map<String, String> configurations) {
+      Map<String, String> configs) {
     Objects.requireNonNull(topicName);
 
     NewTopic createTopicRequest =
-        new NewTopic(topicName, partitionsCount, replicationFactor).configs(configurations);
+        new NewTopic(topicName, partitionsCount, replicationFactor).configs(configs);
 
     return clusterManager.getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))

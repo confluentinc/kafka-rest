@@ -41,13 +41,13 @@ public final class TopicData {
       String topicName,
       boolean isInternal,
       int replicationFactor,
-      Relationship configurations,
+      Relationship configs,
       Relationship partitions
   ) {
     this.id = Objects.requireNonNull(id);
     this.links = Objects.requireNonNull(links);
     attributes = new Attributes(clusterId, topicName, isInternal, replicationFactor);
-    relationships = new Relationships(configurations, partitions);
+    relationships = new Relationships(configs, partitions);
   }
 
   @JsonProperty("type")
@@ -176,18 +176,18 @@ public final class TopicData {
 
   public static final class Relationships {
 
-    private final Relationship configurations;
+    private final Relationship configs;
 
     private final Relationship partitions;
 
-    public Relationships(Relationship configurations, Relationship partitions) {
-      this.configurations = configurations;
+    public Relationships(Relationship configs, Relationship partitions) {
+      this.configs = configs;
       this.partitions = partitions;
     }
 
-    @JsonProperty("configurations")
-    public Relationship getConfigurations() {
-      return configurations;
+    @JsonProperty("configs")
+    public Relationship getConfigs() {
+      return configs;
     }
 
     @JsonProperty("partitions")
@@ -204,19 +204,19 @@ public final class TopicData {
         return false;
       }
       Relationships that = (Relationships) o;
-      return Objects.equals(configurations, that.configurations)
+      return Objects.equals(configs, that.configs)
           && Objects.equals(partitions, that.partitions);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(configurations, partitions);
+      return Objects.hash(configs, partitions);
     }
 
     @Override
     public String toString() {
       return new StringJoiner(", ", Relationships.class.getSimpleName() + "[", "]")
-          .add("configurations=" + configurations)
+          .add("configs=" + configs)
           .add("partitions=" + partitions)
           .toString();
     }

@@ -15,39 +15,37 @@
 
 package io.confluent.kafkarest.controllers;
 
-import io.confluent.kafkarest.entities.TopicConfiguration;
+import io.confluent.kafkarest.entities.TopicConfig;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * A service to manage Kafka {@link TopicConfiguration TopicConfigurations}.
+ * A service to manage Kafka {@link TopicConfig TopicConfigs}.
  */
-public interface TopicConfigurationManager {
+public interface TopicConfigManager {
 
   /**
-   * Returns the list of Kafka {@link TopicConfiguration TopicConfigurations} belonging to the
+   * Returns the list of Kafka {@link TopicConfig TopicConfigs} belonging to the
    * {@link io.confluent.kafkarest.entities.Topic} with the given {@code topicName}.
    */
-  CompletableFuture<List<TopicConfiguration>> listTopicConfigurations(
-      String clusterId, String topicName);
+  CompletableFuture<List<TopicConfig>> listTopicConfigs(String clusterId, String topicName);
 
   /**
-   * Returns the Kafka {@link TopicConfiguration} with the given {@code name}.
+   * Returns the Kafka {@link TopicConfig} with the given {@code name}.
    */
-  CompletableFuture<Optional<TopicConfiguration>> getTopicConfiguration(
+  CompletableFuture<Optional<TopicConfig>> getTopicConfig(
       String clusterId, String topicName, String name);
 
   /**
-   * Updates the Kafka {@link TopicConfiguration} with the given {@code name} to the given {@code
+   * Updates the Kafka {@link TopicConfig} with the given {@code name} to the given {@code
    * newValue}.
    */
-  CompletableFuture<Void> updateTopicConfiguration(
+  CompletableFuture<Void> updateTopicConfig(
       String clusterId, String topicName, String name, String newValue);
 
   /**
-   * Resets the Kafka {@link TopicConfiguration} with the given {@code name} to its default value.
+   * Resets the Kafka {@link TopicConfig} with the given {@code name} to its default value.
    */
-  CompletableFuture<Void> resetTopicConfiguration(
-      String clusterId, String topicName, String name);
+  CompletableFuture<Void> resetTopicConfig(String clusterId, String topicName, String name);
 }

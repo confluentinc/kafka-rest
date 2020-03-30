@@ -21,11 +21,11 @@ import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 /**
- * A (Topic) configuration resource type.
+ * A (Topic) config resource type.
  */
-public final class TopicConfigurationData {
+public final class TopicConfigData {
 
-  public static final String ELEMENT_TYPE = "configuration";
+  public static final String ELEMENT_TYPE = "config";
 
   private final String id;
 
@@ -33,7 +33,7 @@ public final class TopicConfigurationData {
 
   private final Attributes attributes;
 
-  public TopicConfigurationData(
+  public TopicConfigData(
       String id,
       ResourceLink links,
       String clusterId,
@@ -51,7 +51,7 @@ public final class TopicConfigurationData {
 
   @JsonProperty("type")
   public String getType() {
-    return "KafkaTopicConfiguration";
+    return "KafkaTopicConfig";
   }
 
   @JsonProperty("id")
@@ -77,7 +77,7 @@ public final class TopicConfigurationData {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TopicConfigurationData that = (TopicConfigurationData) o;
+    TopicConfigData that = (TopicConfigData) o;
     return Objects.equals(id, that.id)
         && Objects.equals(links, that.links)
         && Objects.equals(attributes, that.attributes);
@@ -90,7 +90,7 @@ public final class TopicConfigurationData {
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", TopicConfigurationData.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", TopicConfigData.class.getSimpleName() + "[", "]")
         .add("id='" + id + "'")
         .add("links=" + links)
         .add("attributes=" + attributes)

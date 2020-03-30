@@ -43,12 +43,12 @@ public final class BrokerData {
       @Nullable String host,
       @Nullable Integer port,
       @Nullable String rack,
-      Relationship configurations,
+      Relationship configs,
       Relationship partitionReplicas) {
     this.id = Objects.requireNonNull(id);
     this.links = Objects.requireNonNull(links);
     attributes = new Attributes(clusterId, brokerId, host, port, rack);
-    relationships = new Relationships(configurations, partitionReplicas);
+    relationships = new Relationships(configs, partitionReplicas);
   }
 
   @JsonProperty("type")
@@ -197,18 +197,18 @@ public final class BrokerData {
 
   public static final class Relationships {
 
-    private final Relationship configurations;
+    private final Relationship configs;
 
     private final Relationship partitionReplicas;
 
-    public Relationships(Relationship configurations, Relationship partitionReplicas) {
-      this.configurations = Objects.requireNonNull(configurations);
+    public Relationships(Relationship configs, Relationship partitionReplicas) {
+      this.configs = Objects.requireNonNull(configs);
       this.partitionReplicas = Objects.requireNonNull(partitionReplicas);
     }
 
-    @JsonProperty("configurations")
-    public Relationship getConfigurations() {
-      return configurations;
+    @JsonProperty("configs")
+    public Relationship getConfigs() {
+      return configs;
     }
 
     @JsonProperty("partition_replicas")
@@ -225,19 +225,19 @@ public final class BrokerData {
         return false;
       }
       Relationships that = (Relationships) o;
-      return Objects.equals(configurations, that.configurations)
+      return Objects.equals(configs, that.configs)
           && Objects.equals(partitionReplicas, that.partitionReplicas);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(configurations, partitionReplicas);
+      return Objects.hash(configs, partitionReplicas);
     }
 
     @Override
     public String toString() {
       return new StringJoiner(", ", Relationships.class.getSimpleName() + "[", "]")
-          .add("configurations=" + configurations)
+          .add("configs=" + configs)
           .add("partitionReplicas=" + partitionReplicas)
           .toString();
     }

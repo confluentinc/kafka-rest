@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.entities;
 
+import io.confluent.kafkarest.controllers.TopicConfigManager;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -27,7 +28,7 @@ public final class Topic {
   private final String name;
 
   @Deprecated
-  private final Properties configurations;
+  private final Properties configs;
 
   private final List<Partition> partitions;
 
@@ -44,7 +45,7 @@ public final class Topic {
     this(
         clusterId,
         name,
-        /* configurations= */ new Properties(),
+        /* configs= */ new Properties(),
         partitions,
         replicationFactor,
         isInternal);
@@ -67,7 +68,7 @@ public final class Topic {
   private Topic(
       String clusterId,
       String name,
-      Properties configurations,
+      Properties configs,
       List<Partition> partitions,
       short replicationFactor,
       boolean isInternal) {
@@ -76,7 +77,7 @@ public final class Topic {
     }
     this.clusterId = Objects.requireNonNull(clusterId);
     this.name = name;
-    this.configurations = Objects.requireNonNull(configurations);
+    this.configs = Objects.requireNonNull(configs);
     this.partitions = Objects.requireNonNull(partitions);
     this.replicationFactor = replicationFactor;
     this.isInternal = isInternal;
@@ -91,13 +92,11 @@ public final class Topic {
   }
 
   /**
-   * @deprecated Use {@link
-   * io.confluent.kafkarest.controllers.TopicConfigurationManager#listTopicConfigurations(String,
-   * String)} instead.
+   * @deprecated Use {@link TopicConfigManager#listTopicConfigs(String, String)} instead.
    */
   @Deprecated
   public Properties getConfigs() {
-    return configurations;
+    return configs;
   }
 
   public List<Partition> getPartitions() {
@@ -125,13 +124,13 @@ public final class Topic {
         && isInternal == topic.isInternal
         && Objects.equals(clusterId, topic.clusterId)
         && Objects.equals(name, topic.name)
-        && Objects.equals(configurations, topic.configurations)
+        && Objects.equals(configs, topic.configs)
         && Objects.equals(partitions, topic.partitions);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(clusterId, name, configurations, partitions, replicationFactor, isInternal);
+    return Objects.hash(clusterId, name, configs, partitions, replicationFactor, isInternal);
   }
 
   @Override
@@ -139,7 +138,7 @@ public final class Topic {
     return new StringJoiner(", ", Topic.class.getSimpleName() + "[", "]")
         .add("clusterId='" + clusterId + "'")
         .add("name='" + name + "'")
-        .add("configurations=" + configurations)
+        .add("configs=" + configs)
         .add("partitions=" + partitions)
         .add("replicationFactor=" + replicationFactor)
         .add("isInternal=" + isInternal)

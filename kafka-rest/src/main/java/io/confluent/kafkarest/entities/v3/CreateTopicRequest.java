@@ -121,19 +121,19 @@ public final class CreateTopicRequest {
       private final short replicationFactor;
 
       @Nullable
-      private final List<Configuration> configurations;
+      private final List<Config> configs;
 
       @JsonCreator
       public Attributes(
           @JsonProperty("topic_name") @Nullable String topicName,
           @JsonProperty("partitions_count") int partitionsCount,
           @JsonProperty("replication_factor") short replicationFactor,
-          @JsonProperty("configurations") @Nullable List<Configuration> configurations
+          @JsonProperty("configs") @Nullable List<Config> configs
       ) {
         this.topicName = topicName;
         this.partitionsCount = partitionsCount;
         this.replicationFactor = replicationFactor;
-        this.configurations = configurations;
+        this.configs = configs;
       }
 
       @Nullable
@@ -149,16 +149,16 @@ public final class CreateTopicRequest {
         return replicationFactor;
       }
 
-      public Map<String, String> getConfigurations() {
-        if (this.configurations == null) {
+      public Map<String, String> getConfigs() {
+        if (this.configs == null) {
           return emptyMap();
         }
 
-        HashMap<String, String> configurations = new HashMap<>();
-        for (Configuration configuration : this.configurations) {
-          configurations.put(configuration.getName(), configuration.getValue());
+        HashMap<String, String> configs = new HashMap<>();
+        for (Config config : this.configs) {
+          configs.put(config.getName(), config.getValue());
         }
-        return configurations;
+        return configs;
       }
 
       @Override
@@ -173,12 +173,12 @@ public final class CreateTopicRequest {
         return partitionsCount == that.partitionsCount
             && replicationFactor == that.replicationFactor
             && Objects.equals(topicName, that.topicName)
-            && Objects.equals(configurations, that.configurations);
+            && Objects.equals(configs, that.configs);
       }
 
       @Override
       public int hashCode() {
-        return Objects.hash(topicName, partitionsCount, replicationFactor, configurations);
+        return Objects.hash(topicName, partitionsCount, replicationFactor, configs);
       }
 
       @Override
@@ -187,11 +187,11 @@ public final class CreateTopicRequest {
             .add("topicName='" + topicName + "'")
             .add("partitionsCount=" + partitionsCount)
             .add("replicationFactor=" + replicationFactor)
-            .add("configurations=" + configurations)
+            .add("configs=" + configs)
             .toString();
       }
 
-      public static final class Configuration {
+      public static final class Config {
 
         @NotNull
         @Nullable
@@ -201,7 +201,7 @@ public final class CreateTopicRequest {
         private final String value;
 
         @JsonCreator
-        public Configuration(
+        public Config(
             @JsonProperty("name") @Nullable String name,
             @JsonProperty("value") @Nullable String value) {
           this.name = name;
@@ -226,7 +226,7 @@ public final class CreateTopicRequest {
           if (o == null || getClass() != o.getClass()) {
             return false;
           }
-          Configuration that = (Configuration) o;
+          Config that = (Config) o;
           return Objects.equals(name, that.name) && Objects.equals(value, that.value);
         }
 
@@ -237,7 +237,7 @@ public final class CreateTopicRequest {
 
         @Override
         public String toString() {
-          return new StringJoiner(", ", Configuration.class.getSimpleName() + "[", "]")
+          return new StringJoiner(", ", Config.class.getSimpleName() + "[", "]")
               .add("name='" + name + "'")
               .add("value='" + value + "'")
               .toString();
