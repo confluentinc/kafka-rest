@@ -341,7 +341,7 @@ public class KafkaRestConfig extends RestConfig {
         KAFKAREST_PORT_DEFAULT,
         KAFKAREST_LISTENERS_DEFAULT,
         String.join("," , Versions.PREFERRED_RESPONSE_TYPES),
-        Versions.KAFKA_MOST_SPECIFIC_DEFAULT,
+        Versions.JSON_API,
         METRICS_JMX_PREFIX_DEFAULT_OVERRIDE
     )
     .define(

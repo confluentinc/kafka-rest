@@ -23,15 +23,6 @@ public interface KafkaRestContext {
 
   public ProducerPool getProducerPool();
 
-  @Deprecated
-  public ScalaConsumersContext getScalaConsumersContext();
-
-  @Deprecated
-  public ConsumerManager getConsumerManager();
-
-  @Deprecated
-  public SimpleConsumerManager getSimpleConsumerManager();
-
   public KafkaConsumerManager getKafkaConsumerManager();
 
   public AdminClientWrapper getAdminClientWrapper();

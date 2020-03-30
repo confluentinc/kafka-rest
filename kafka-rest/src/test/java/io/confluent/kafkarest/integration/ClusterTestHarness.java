@@ -24,7 +24,6 @@ import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.ScalaConsumersContext;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -230,8 +229,7 @@ public abstract class ClusterTestHarness {
     restApp = new TestKafkaRestApplication(restConfig,
         getProducerPool(restConfig),
         null,
-        null,
-        getScalaConsumersContext(restConfig));
+        null);
     restServer = restApp.createServer();
     restServer.start();
   }
@@ -267,10 +265,6 @@ public abstract class ClusterTestHarness {
   }
 
   protected ProducerPool getProducerPool(KafkaRestConfig appConfig) {
-    return null;
-  }
-
-  protected ScalaConsumersContext getScalaConsumersContext(KafkaRestConfig appConfig) {
     return null;
   }
 

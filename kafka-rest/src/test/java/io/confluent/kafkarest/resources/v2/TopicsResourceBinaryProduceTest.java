@@ -23,7 +23,6 @@ import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.TestUtils;
@@ -58,7 +57,6 @@ import org.junit.Test;
 public class TopicsResourceBinaryProduceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
-  private MetadataObserver mdObserver;
   private ProducerPool producerPool;
   private DefaultKafkaRestContext ctx;
 
@@ -85,9 +83,8 @@ public class TopicsResourceBinaryProduceTest
   private static final String exceptionMessage = "Error message";
 
   public TopicsResourceBinaryProduceTest() throws RestConfigException {
-    mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new DefaultKafkaRestContext(config, producerPool, null, null, null);
+    ctx = new DefaultKafkaRestContext(config, producerPool, null, null);
 
     addResource(new TopicsResource(ctx));
 
@@ -170,7 +167,7 @@ public class TopicsResourceBinaryProduceTest
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    EasyMock.reset(mdObserver, producerPool);
+    EasyMock.reset(producerPool);
   }
 
   private <K, V> Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
@@ -197,12 +194,12 @@ public class TopicsResourceBinaryProduceTest
         return null;
       }
     });
-    EasyMock.replay(mdObserver, producerPool);
+    EasyMock.replay(producerPool);
 
     Response response = request("/topics/" + topic, acceptHeader)
         .post(Entity.entity(request, requestMediatype));
 
-    EasyMock.verify(mdObserver, producerPool);
+    EasyMock.verify(producerPool);
 
     return response;
   }
@@ -218,7 +215,7 @@ public class TopicsResourceBinaryProduceTest
     assertEquals(null, response.getKeySchemaId());
     assertEquals(null, response.getValueSchemaId());
 
-    EasyMock.reset(mdObserver, producerPool);
+    EasyMock.reset(producerPool);
   }
 
   @Test
@@ -257,7 +254,7 @@ public class TopicsResourceBinaryProduceTest
     assertErrorResponse(Response.Status.INTERNAL_SERVER_ERROR, rawResponse,
         Versions.KAFKA_V2_JSON);
 
-    EasyMock.reset(mdObserver, producerPool);
+    EasyMock.reset(producerPool);
   }
 
   @Test
@@ -302,7 +299,7 @@ public class TopicsResourceBinaryProduceTest
       assertEquals(null, response.getValueSchemaId());
     }
 
-    EasyMock.reset(mdObserver, producerPool);
+    EasyMock.reset(producerPool);
   }
 
   @Test
@@ -348,6 +345,6 @@ public class TopicsResourceBinaryProduceTest
     assertEquals(null, response.getKeySchemaId());
     assertEquals(null, response.getValueSchemaId());
 
-    EasyMock.reset(mdObserver, producerPool);
+    EasyMock.reset(producerPool);
   }
 }

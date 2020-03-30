@@ -16,7 +16,7 @@ package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.v1.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.v2.BinaryConsumerRecord;
 import java.util.List;
 import javax.ws.rs.core.GenericType;
 import org.junit.Before;
@@ -47,20 +47,20 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
   @Test
   public void testConsumerTimeout() throws InterruptedException {
     String instanceUri = startConsumeMessages(groupName, topicName, EmbeddedFormat.BINARY,
-                                              Versions.KAFKA_V1_JSON_BINARY);
+                                              Versions.KAFKA_V2_JSON_BINARY);
     // Even with identical timeouts, should be able to consume multiple times without the
     // instance timing out
-    consumeForTimeout(instanceUri, topicName,
-                      Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
+    consumeForTimeout(instanceUri,
+                      Versions.KAFKA_V2_JSON_BINARY, Versions.KAFKA_V2_JSON_BINARY,
                       new GenericType<List<BinaryConsumerRecord>>() {
                       });
-    consumeForTimeout(instanceUri, topicName,
-                      Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY,
+    consumeForTimeout(instanceUri,
+                      Versions.KAFKA_V2_JSON_BINARY, Versions.KAFKA_V2_JSON_BINARY,
                       new GenericType<List<BinaryConsumerRecord>>() {
                       });
     // Then sleep long enough for it to expire
     Thread.sleep(instanceTimeout + slackTime);
 
-    consumeForNotFoundError(instanceUri, topicName);
+    consumeForNotFoundError(instanceUri);
   }
 }

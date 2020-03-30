@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.entities.EntityUtils;
 import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.kafkarest.entities.v1.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.PartitionOffset;
 import io.confluent.rest.entities.ErrorMessage;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -49,67 +49,6 @@ public class TestUtils {
 
   private static final Logger log = LoggerFactory.getLogger(TestUtils.class);
   private static final ObjectMapper jsonParser = new ObjectMapper();
-
-  // Media type collections that should be tested together (i.e. expect the same raw output). The
-  // expected output format is included so these lists can include weighted Accept headers.
-  public static final RequestMediaType[] V1_ACCEPT_MEDIATYPES = {
-      // Single type in Accept header
-      new RequestMediaType(Versions.KAFKA_V1_JSON, Versions.KAFKA_V1_JSON),
-      new RequestMediaType(Versions.KAFKA_DEFAULT_JSON, Versions.KAFKA_DEFAULT_JSON),
-      new RequestMediaType(Versions.JSON, Versions.JSON),
-      // Weighted options in Accept header should select the highest weighted option
-      new RequestMediaType(
-          Versions.KAFKA_V1_JSON_WEIGHTED + ", " + Versions.KAFKA_DEFAULT_JSON_WEIGHTED + ", "
-          + Versions.JSON, Versions.KAFKA_V1_JSON),
-      new RequestMediaType(
-          Versions.KAFKA_V1_JSON + "; q=0.8, " + Versions.KAFKA_DEFAULT_JSON + "; q=0.9, "
-          + Versions.JSON + "; q=0.7", Versions.KAFKA_DEFAULT_JSON),
-      new RequestMediaType(
-          Versions.KAFKA_V1_JSON + "; q=0.8, " + Versions.KAFKA_DEFAULT_JSON + "; q=0.7, "
-          + Versions.JSON + "; q=0.9", Versions.JSON),
-      // No accept header, should use most specific default media type. Note that in cases with
-      // embedded data this won't be the most specific value since the version with the embedded
-      // type will be used instead
-      new RequestMediaType(null, Versions.KAFKA_MOST_SPECIFIC_DEFAULT)
-  };
-  public static final List<RequestMediaType> V1_ACCEPT_MEDIATYPES_BINARY;
-
-  static {
-    V1_ACCEPT_MEDIATYPES_BINARY =
-        new ArrayList<RequestMediaType>(Arrays.asList(V1_ACCEPT_MEDIATYPES));
-    V1_ACCEPT_MEDIATYPES_BINARY.add(
-        new RequestMediaType(Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY));
-  }
-
-  public static final RequestMediaType[] V1_ACCEPT_MEDIATYPES_AVRO = {
-      new RequestMediaType(Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V1_JSON_AVRO)
-  };
-
-  // Response content types we should never allow to be produced
-  public static final String[] V1_INVALID_MEDIATYPES = {
-      "text/plain",
-      "application/octet-stream"
-  };
-
-  public static final String[] V1_REQUEST_ENTITY_TYPES = {
-      Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST
-  };
-  public static final List<String> V1_REQUEST_ENTITY_TYPES_BINARY;
-
-  static {
-    V1_REQUEST_ENTITY_TYPES_BINARY = new ArrayList<String>(Arrays.asList(V1_REQUEST_ENTITY_TYPES));
-    V1_REQUEST_ENTITY_TYPES_BINARY.add(Versions.KAFKA_V1_JSON_BINARY);
-  }
-
-  public static final List<String> V1_REQUEST_ENTITY_TYPES_AVRO = Arrays.asList(
-      Versions.KAFKA_V1_JSON_AVRO
-  );
-
-  // Request content types we'll always ignore
-  public static final String[] V1_INVALID_REQUEST_MEDIATYPES = {
-      "text/plain"
-  };
-
 
   /**
    * Try to read the entity. If parsing fails, errors are rethrown, but the raw entity is also logged for debugging.

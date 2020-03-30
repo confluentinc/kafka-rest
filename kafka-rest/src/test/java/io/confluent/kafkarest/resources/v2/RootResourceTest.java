@@ -39,7 +39,7 @@ public class RootResourceTest
   private DefaultKafkaRestContext ctx;
 
   public RootResourceTest() throws RestConfigException {
-    ctx = new DefaultKafkaRestContext(config, null, null, null, null);
+    ctx = new DefaultKafkaRestContext(config, null, null, null);
     addResource(RootResource.class);
   }
 
@@ -68,14 +68,14 @@ public class RootResourceTest
     Response.Status UNSUPPORTED_MEDIA_TYPE = Response.Status.UNSUPPORTED_MEDIA_TYPE;
     Response
         response =
-        request("/", Versions.KAFKA_MOST_SPECIFIC_DEFAULT + ", " + Versions.GENERIC_REQUEST)
+        request("/", Versions.KAFKA_V2_JSON + ", " + Versions.GENERIC_REQUEST)
             .post(Entity.entity("", "text/plain"));
     assertErrorResponse(
         UNSUPPORTED_MEDIA_TYPE, response,
         UNSUPPORTED_MEDIA_TYPE.getStatusCode(),
         "HTTP " + UNSUPPORTED_MEDIA_TYPE.getStatusCode() + " " + UNSUPPORTED_MEDIA_TYPE
             .getReasonPhrase(),
-        Versions.KAFKA_MOST_SPECIFIC_DEFAULT
+        Versions.KAFKA_V2_JSON
     );
   }
 }

@@ -24,10 +24,8 @@ import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.MetadataObserver;
 import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
-import io.confluent.kafkarest.ScalaConsumersContext;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
@@ -56,7 +54,6 @@ import org.junit.Test;
 public class TopicsResourceAvroProduceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
-  private MetadataObserver mdObserver;
   private ProducerPool producerPool;
   private DefaultKafkaRestContext ctx;
 
@@ -97,10 +94,8 @@ public class TopicsResourceAvroProduceTest
   );
 
   public TopicsResourceAvroProduceTest() throws RestConfigException {
-    mdObserver = EasyMock.createMock(MetadataObserver.class);
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ScalaConsumersContext scalaConsumersContext = new ScalaConsumersContext(mdObserver, null, null);
-    ctx = new DefaultKafkaRestContext(config, producerPool, null, null, scalaConsumersContext);
+    ctx = new DefaultKafkaRestContext(config, producerPool, null, null);
 
     addResource(new TopicsResource(ctx));
 
@@ -114,7 +109,7 @@ public class TopicsResourceAvroProduceTest
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    EasyMock.reset(mdObserver, producerPool);
+    EasyMock.reset(producerPool);
   }
 
   private <K, V> Response produceToTopic(String topic, String acceptHeader, String requestMediatype,
@@ -140,12 +135,12 @@ public class TopicsResourceAvroProduceTest
         return null;
       }
     });
-    EasyMock.replay(mdObserver, producerPool);
+    EasyMock.replay(producerPool);
 
     Response response = request("/topics/" + topic, acceptHeader)
         .post(Entity.entity(request, requestMediatype));
 
-    EasyMock.verify(mdObserver, producerPool);
+    EasyMock.verify(producerPool);
 
     return response;
   }
@@ -168,7 +163,7 @@ public class TopicsResourceAvroProduceTest
     assertEquals((Integer) 1, response.getKeySchemaId());
     assertEquals((Integer) 2, response.getValueSchemaId());
 
-    EasyMock.reset(mdObserver, producerPool);
+    EasyMock.reset(producerPool);
 
     // Test using schema IDs
     SchemaTopicProduceRequest request2 =
@@ -180,7 +175,7 @@ public class TopicsResourceAvroProduceTest
             request2, produceResults);
     assertOKResponse(rawResponse2, Versions.KAFKA_V2_JSON);
 
-    EasyMock.reset(mdObserver, producerPool);
+    EasyMock.reset(producerPool);
   }
 
   private void produceToTopicExpectFailure(String topicName, String acceptHeader,
