@@ -26,10 +26,10 @@ public interface UrlFactory {
    *
    * <p>The URL will be in the form {@code <schema>://<authority>/<base_path>/<components>}, where
    * {@code schema} will be the same as the incoming request schema, {@code authority} will be
-   * derived from {@code host.name} and {@code port} configurations, {@code advertised.listeners}
-   * configuration, {@code listeners} configuration, or the incoming request authority, in order of
-   * preference, and {@code base_path} will be the base path this application's {@link
-   * javax.servlet.ServletContext} was installed at.</p>
+   * derived from {@code host.name} and {@code port} configs, {@code advertised.listeners} config,
+   * {@code listeners} config, or the incoming request authority, in order of preference, and {@code
+   * base_path} will be the base path this application's {@link javax.servlet.ServletContext} was
+   * installed at.</p>
    */
   String create(String... components);
 }

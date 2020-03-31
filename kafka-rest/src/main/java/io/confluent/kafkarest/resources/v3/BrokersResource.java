@@ -90,9 +90,9 @@ public final class BrokersResource {
   }
 
   @GET
-  @Path("/{brokerId}/configurations")
+  @Path("/{brokerId}/configs")
   @Produces(Versions.JSON_API)
-  public void listBrokerConfigurations(
+  public void listBrokerConfigs(
       @PathParam("clusterId") String clusterId, @PathParam("brokerId") String brokerId) {
     throw new WebApplicationException(Status.NOT_IMPLEMENTED);
   }
@@ -114,7 +114,7 @@ public final class BrokersResource {
                 broker.getClusterId(),
                 "brokers",
                 Integer.toString(broker.getBrokerId())));
-    Relationship configurations =
+    Relationship configs =
         new Relationship(
             urlFactory.create(
                 "v3",
@@ -122,7 +122,7 @@ public final class BrokersResource {
                 broker.getClusterId(),
                 "brokers",
                 Integer.toString(broker.getBrokerId()),
-                "configurations"));
+                "configs"));
     Relationship partitionReplicas =
         new Relationship(
             urlFactory.create(
@@ -145,7 +145,7 @@ public final class BrokersResource {
         broker.getHost(),
         broker.getPort(),
         broker.getRack(),
-        configurations,
+        configs,
         partitionReplicas);
   }
 }

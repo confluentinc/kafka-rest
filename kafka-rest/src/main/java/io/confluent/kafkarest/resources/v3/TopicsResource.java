@@ -114,7 +114,7 @@ public final class TopicsResource {
     String topicName = request.getData().getAttributes().getTopicName();
     int partitionsCount =  request.getData().getAttributes().getPartitionsCount();
     short replicationFactor = request.getData().getAttributes().getReplicationFactor();
-    Map<String, String> configurations = request.getData().getAttributes().getConfigurations();
+    Map<String, String> configs = request.getData().getAttributes().getConfigs();
 
     TopicData topicData =
         toTopicData(
@@ -127,7 +127,7 @@ public final class TopicsResource {
 
     CompletableFuture<CreateTopicResponse> response =
         topicManager.createTopic(
-            clusterId, topicName, partitionsCount, replicationFactor, configurations)
+            clusterId, topicName, partitionsCount, replicationFactor, configs)
             .thenApply(none -> new CreateTopicResponse(topicData));
 
     AsyncResponseBuilder.from(
@@ -152,14 +152,14 @@ public final class TopicsResource {
   }
 
   private TopicData toTopicData(Topic topic) {
-    Relationship configurations =
+    Relationship configs =
         new Relationship(urlFactory.create(
             "v3",
             "clusters",
             topic.getClusterId(),
             "topics",
             topic.getName(),
-            "configurations"));
+            "configs"));
     Relationship partitions =
         new Relationship(urlFactory.create(
             "v3",
@@ -181,7 +181,7 @@ public final class TopicsResource {
         topic.getName(),
         topic.getIsInternal(),
         topic.getReplicationFactor(),
-        configurations,
+        configs,
         partitions);
   }
 }

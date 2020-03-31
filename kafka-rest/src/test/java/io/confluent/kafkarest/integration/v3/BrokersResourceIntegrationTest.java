@@ -68,7 +68,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                             baseUrl
                                 + "/v3/clusters/" + clusterId
                                 + "/brokers/" + nodes.get(0).id()
-                                + "/configurations"),
+                                + "/configs"),
                         new Relationship(
                             baseUrl
                                 + "/v3/clusters/" + clusterId
@@ -89,7 +89,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                             baseUrl
                                 + "/v3/clusters/" + clusterId
                                 + "/brokers/" + nodes.get(1).id()
-                                + "/configurations"),
+                                + "/configs"),
                         new Relationship(
                             baseUrl
                                 + "/v3/clusters/" + clusterId
@@ -110,7 +110,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                             baseUrl
                                 + "/v3/clusters/" + clusterId
                                 + "/brokers/" + nodes.get(2).id()
-                                + "/configurations"),
+                                + "/configs"),
                         new Relationship(
                             baseUrl
                                 + "/v3/clusters/" + clusterId
@@ -153,7 +153,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                         baseUrl
                             + "/v3/clusters/" + clusterId
                             + "/brokers/" + nodes.get(0).id()
-                            + "/configurations"),
+                            + "/configs"),
                     new Relationship(
                         baseUrl
                             + "/v3/clusters/" + clusterId

@@ -21,16 +21,16 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
- * Response body for {@code GET /v3/clusters/<clusterId>/topics/<topicName>/configurations}
+ * Response body for {@code GET /v3/clusters/<clusterId>/topics/<topicName>/configs}
  * requests.
  */
-public final class ListTopicConfigurationsResponse {
+public final class ListTopicConfigsResponse {
 
   private final CollectionLink links;
 
-  private final List<TopicConfigurationData> data;
+  private final List<TopicConfigData> data;
 
-  public ListTopicConfigurationsResponse(CollectionLink links, List<TopicConfigurationData> data) {
+  public ListTopicConfigsResponse(CollectionLink links, List<TopicConfigData> data) {
     this.links = Objects.requireNonNull(links);
     this.data = Objects.requireNonNull(data);
   }
@@ -41,7 +41,7 @@ public final class ListTopicConfigurationsResponse {
   }
 
   @JsonProperty("data")
-  public List<TopicConfigurationData> getData() {
+  public List<TopicConfigData> getData() {
     return data;
   }
 
@@ -53,7 +53,7 @@ public final class ListTopicConfigurationsResponse {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ListTopicConfigurationsResponse that = (ListTopicConfigurationsResponse) o;
+    ListTopicConfigsResponse that = (ListTopicConfigsResponse) o;
     return Objects.equals(links, that.links) && Objects.equals(data, that.data);
   }
 
@@ -65,7 +65,7 @@ public final class ListTopicConfigurationsResponse {
   @Override
   public String toString() {
     return new StringJoiner(
-        ", ", ListTopicConfigurationsResponse.class.getSimpleName() + "[", "]")
+        ", ", ListTopicConfigsResponse.class.getSimpleName() + "[", "]")
         .add("links=" + links)
         .add("data=" + data)
         .toString();

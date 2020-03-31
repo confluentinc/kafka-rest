@@ -20,7 +20,7 @@ import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
-import io.confluent.kafkarest.entities.TopicConfiguration;
+import io.confluent.kafkarest.entities.TopicConfig;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -32,19 +32,19 @@ import org.apache.kafka.clients.admin.AlterConfigOp;
 import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.common.config.ConfigResource;
 
-final class TopicConfigurationManagerImpl implements TopicConfigurationManager {
+final class TopicConfigManagerImpl implements TopicConfigManager {
 
   private final Admin adminClient;
   private final ClusterManager clusterManager;
 
   @Inject
-  TopicConfigurationManagerImpl(Admin adminClient, ClusterManager clusterManager) {
+  TopicConfigManagerImpl(Admin adminClient, ClusterManager clusterManager) {
     this.adminClient = Objects.requireNonNull(adminClient);
     this.clusterManager = Objects.requireNonNull(clusterManager);
   }
 
   @Override
-  public CompletableFuture<List<TopicConfiguration>> listTopicConfigurations(
+  public CompletableFuture<List<TopicConfig>> listTopicConfigs(
       String clusterId, String topicName) {
     ConfigResource resource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
 
@@ -59,7 +59,7 @@ final class TopicConfigurationManagerImpl implements TopicConfigurationManager {
                 config.entries().stream()
                     .map(
                         entry ->
-                            new TopicConfiguration(
+                            new TopicConfig(
                                 clusterId,
                                 topicName,
                                 entry.name(),
@@ -71,24 +71,23 @@ final class TopicConfigurationManagerImpl implements TopicConfigurationManager {
   }
 
   @Override
-  public CompletableFuture<Optional<TopicConfiguration>> getTopicConfiguration(
+  public CompletableFuture<Optional<TopicConfig>> getTopicConfig(
       String clusterId, String topicName, String name) {
-    return listTopicConfigurations(clusterId, topicName)
-        .thenApply(
-            configurations -> findEntityByKey(configurations, TopicConfiguration::getName, name));
+    return listTopicConfigs(clusterId, topicName)
+        .thenApply(configs -> findEntityByKey(configs, TopicConfig::getName, name));
   }
 
   @Override
-  public CompletableFuture<Void> updateTopicConfiguration(
+  public CompletableFuture<Void> updateTopicConfig(
       String clusterId, String topicName, String name, String newValue) {
     ConfigResource resource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
 
-    return getTopicConfiguration(clusterId, topicName, name)
+    return getTopicConfig(clusterId, topicName, name)
         .thenApply(
-            configuration ->
+            config ->
                 checkEntityExists(
-                    configuration,
-                    "Configuration %s cannot be found for topic %s in cluster %s.",
+                    config,
+                    "Config %s cannot be found for topic %s in cluster %s.",
                     name,
                     topicName,
                     clusterId))
@@ -106,16 +105,16 @@ final class TopicConfigurationManagerImpl implements TopicConfigurationManager {
   }
 
   @Override
-  public CompletableFuture<Void> resetTopicConfiguration(
+  public CompletableFuture<Void> resetTopicConfig(
       String clusterId, String topicName, String name) {
     ConfigResource resource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
 
-    return getTopicConfiguration(clusterId, topicName, name)
+    return getTopicConfig(clusterId, topicName, name)
         .thenApply(
-            configuration ->
+            config ->
                 checkEntityExists(
-                    configuration,
-                    "Configuration %s cannot be found for topic %s in cluster %s.",
+                    config,
+                    "Config %s cannot be found for topic %s in cluster %s.",
                     name,
                     topicName,
                     clusterId))

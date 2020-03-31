@@ -16,16 +16,16 @@
 package io.confluent.kafkarest.resources.v3;
 
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.controllers.TopicConfigurationManager;
-import io.confluent.kafkarest.entities.TopicConfiguration;
+import io.confluent.kafkarest.controllers.TopicConfigManager;
+import io.confluent.kafkarest.entities.TopicConfig;
 import io.confluent.kafkarest.entities.v3.ClusterData;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
-import io.confluent.kafkarest.entities.v3.GetTopicConfigurationResponse;
-import io.confluent.kafkarest.entities.v3.ListTopicConfigurationsResponse;
+import io.confluent.kafkarest.entities.v3.GetTopicConfigResponse;
+import io.confluent.kafkarest.entities.v3.ListTopicConfigsResponse;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
-import io.confluent.kafkarest.entities.v3.TopicConfigurationData;
+import io.confluent.kafkarest.entities.v3.TopicConfigData;
 import io.confluent.kafkarest.entities.v3.TopicData;
-import io.confluent.kafkarest.entities.v3.UpdateTopicConfigurationRequest;
+import io.confluent.kafkarest.entities.v3.UpdateTopicConfigRequest;
 import io.confluent.kafkarest.resources.v3.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -48,41 +48,41 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-@Path("/v3/clusters/{clusterId}/topics/{topicName}/configurations")
-public final class TopicConfigurationsResource {
+@Path("/v3/clusters/{clusterId}/topics/{topicName}/configs")
+public final class TopicConfigsResource {
 
-  private final TopicConfigurationManager topicConfigurationManager;
+  private final TopicConfigManager topicConfigManager;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
-  public TopicConfigurationsResource(
-      TopicConfigurationManager topicConfigurationManager,
+  public TopicConfigsResource(
+      TopicConfigManager topicConfigManager,
       CrnFactory crnFactory,
       UrlFactory urlFactory) {
-    this.topicConfigurationManager = Objects.requireNonNull(topicConfigurationManager);
+    this.topicConfigManager = Objects.requireNonNull(topicConfigManager);
     this.crnFactory = Objects.requireNonNull(crnFactory);
     this.urlFactory = Objects.requireNonNull(urlFactory);
   }
 
   @GET
   @Produces(Versions.JSON_API)
-  public void listTopicConfigurations(
+  public void listTopicConfigs(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName) {
-    CompletableFuture<ListTopicConfigurationsResponse> response =
-        topicConfigurationManager.listTopicConfigurations(clusterId, topicName)
+    CompletableFuture<ListTopicConfigsResponse> response =
+        topicConfigManager.listTopicConfigs(clusterId, topicName)
             .thenApply(
-                configurations ->
-                    new ListTopicConfigurationsResponse(
+                configs ->
+                    new ListTopicConfigsResponse(
                         new CollectionLink(
                             urlFactory.create(
-                                "v3", "clusters", clusterId, "topics", topicName, "configurations"),
+                                "v3", "clusters", clusterId, "topics", topicName, "configs"),
                             /* next= */ null),
-                        configurations.stream()
-                            .sorted(Comparator.comparing(TopicConfiguration::getName))
-                            .map(this::toTopicConfigurationData)
+                        configs.stream()
+                            .sorted(Comparator.comparing(TopicConfig::getName))
+                            .map(this::toTopicConfigData)
                             .collect(Collectors.toList())));
 
     AsyncResponses.asyncResume(asyncResponse, response);
@@ -91,16 +91,16 @@ public final class TopicConfigurationsResource {
   @GET
   @Path("/{name}")
   @Produces(Versions.JSON_API)
-  public void getTopicConfiguration(
+  public void getTopicConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
       @PathParam("name") String name
   ) {
-    CompletableFuture<GetTopicConfigurationResponse> response =
-        topicConfigurationManager.getTopicConfiguration(clusterId, topicName, name)
+    CompletableFuture<GetTopicConfigResponse> response =
+        topicConfigManager.getTopicConfig(clusterId, topicName, name)
             .thenApply(topic -> topic.orElseThrow(NotFoundException::new))
-            .thenApply(topic -> new GetTopicConfigurationResponse(toTopicConfigurationData(topic)));
+            .thenApply(topic -> new GetTopicConfigResponse(toTopicConfigData(topic)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
@@ -109,17 +109,17 @@ public final class TopicConfigurationsResource {
   @Path("/{name}")
   @Consumes(Versions.JSON_API)
   @Produces(Versions.JSON_API)
-  public void updateTopicConfiguration(
+  public void updateTopicConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
       @PathParam("name") String name,
-      @Valid UpdateTopicConfigurationRequest request
+      @Valid UpdateTopicConfigRequest request
   ) {
     String newValue = request.getData().getAttributes().getValue();
 
     CompletableFuture<Void> response =
-        topicConfigurationManager.updateTopicConfiguration(clusterId, topicName, name, newValue);
+        topicConfigManager.updateTopicConfig(clusterId, topicName, name, newValue);
 
     AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
         .entity(response)
@@ -129,44 +129,44 @@ public final class TopicConfigurationsResource {
   @DELETE
   @Path("/{name}")
   @Produces(Versions.JSON_API)
-  public void resetTopicConfiguration(
+  public void resetTopicConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
       @PathParam("name") String name
   ) {
     CompletableFuture<Void> response =
-        topicConfigurationManager.resetTopicConfiguration(clusterId, topicName, name);
+        topicConfigManager.resetTopicConfig(clusterId, topicName, name);
 
     AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
         .entity(response)
         .asyncResume(asyncResponse);
   }
 
-  private TopicConfigurationData toTopicConfigurationData(TopicConfiguration topicConfiguration) {
-    return new TopicConfigurationData(
+  private TopicConfigData toTopicConfigData(TopicConfig topicConfig) {
+    return new TopicConfigData(
         crnFactory.create(
             ClusterData.ELEMENT_TYPE,
-            topicConfiguration.getClusterId(),
+            topicConfig.getClusterId(),
             TopicData.ELEMENT_TYPE,
-            topicConfiguration.getTopicName(),
-            TopicConfigurationData.ELEMENT_TYPE,
-            topicConfiguration.getName()),
+            topicConfig.getTopicName(),
+            TopicConfigData.ELEMENT_TYPE,
+            topicConfig.getName()),
         new ResourceLink(
             urlFactory.create(
                 "v3",
                 "clusters",
-                topicConfiguration.getClusterId(),
+                topicConfig.getClusterId(),
                 "topics",
-                topicConfiguration.getTopicName(),
-                "configurations",
-                topicConfiguration.getName())),
-        topicConfiguration.getClusterId(),
-        topicConfiguration.getTopicName(),
-        topicConfiguration.getName(),
-        topicConfiguration.getValue(),
-        topicConfiguration.isDefault(),
-        topicConfiguration.isReadOnly(),
-        topicConfiguration.isSensitive());
+                topicConfig.getTopicName(),
+                "configs",
+                topicConfig.getName())),
+        topicConfig.getClusterId(),
+        topicConfig.getTopicName(),
+        topicConfig.getName(),
+        topicConfig.getValue(),
+        topicConfig.isDefault(),
+        topicConfig.isReadOnly(),
+        topicConfig.isSensitive());
   }
 }

@@ -28,7 +28,7 @@ import static org.junit.Assert.fail;
 
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.Cluster;
-import io.confluent.kafkarest.entities.TopicConfiguration;
+import io.confluent.kafkarest.entities.TopicConfig;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -53,7 +53,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class TopicConfigurationManagerImplTest {
+public class TopicConfigManagerImplTest {
 
   private static final String CLUSTER_ID = "cluster-1";
   private static final String TOPIC_NAME = "topic-1";
@@ -61,8 +61,8 @@ public class TopicConfigurationManagerImplTest {
   private static final Cluster CLUSTER =
       new Cluster(CLUSTER_ID, /* controller= */ null, emptyList());
 
-  private static final TopicConfiguration CONFIGURATION_1 =
-      new TopicConfiguration(
+  private static final TopicConfig CONFIG_1 =
+      new TopicConfig(
           CLUSTER_ID,
           TOPIC_NAME,
           "config-1",
@@ -70,8 +70,8 @@ public class TopicConfigurationManagerImplTest {
           /* isDefault= */ true,
           /* isReadOnly= */ false,
           /* isSensitive= */ false);
-  private static final TopicConfiguration CONFIGURATION_2 =
-      new TopicConfiguration(
+  private static final TopicConfig CONFIG_2 =
+      new TopicConfig(
           CLUSTER_ID,
           TOPIC_NAME,
           "config-2",
@@ -79,8 +79,8 @@ public class TopicConfigurationManagerImplTest {
           /* isDefault= */ false,
           /* isReadOnly= */ true,
           /* isSensitive= */ false);
-  private static final TopicConfiguration CONFIGURATION_3 =
-      new TopicConfiguration(
+  private static final TopicConfig CONFIG_3 =
+      new TopicConfig(
           CLUSTER_ID,
           TOPIC_NAME,
           "config-3",
@@ -93,23 +93,23 @@ public class TopicConfigurationManagerImplTest {
       new Config(
           Arrays.asList(
               new ConfigEntry(
-                  CONFIGURATION_1.getName(),
-                  CONFIGURATION_1.getValue(),
-                  CONFIGURATION_1.isDefault(),
-                  CONFIGURATION_1.isSensitive(),
-                  CONFIGURATION_1.isReadOnly()),
+                  CONFIG_1.getName(),
+                  CONFIG_1.getValue(),
+                  CONFIG_1.isDefault(),
+                  CONFIG_1.isSensitive(),
+                  CONFIG_1.isReadOnly()),
               new ConfigEntry(
-                  CONFIGURATION_2.getName(),
-                  CONFIGURATION_2.getValue(),
-                  CONFIGURATION_2.isDefault(),
-                  CONFIGURATION_2.isSensitive(),
-                  CONFIGURATION_2.isReadOnly()),
+                  CONFIG_2.getName(),
+                  CONFIG_2.getValue(),
+                  CONFIG_2.isDefault(),
+                  CONFIG_2.isSensitive(),
+                  CONFIG_2.isReadOnly()),
               new ConfigEntry(
-                  CONFIGURATION_3.getName(),
-                  CONFIGURATION_3.getValue(),
-                  CONFIGURATION_3.isDefault(),
-                  CONFIGURATION_3.isSensitive(),
-                  CONFIGURATION_3.isReadOnly())));
+                  CONFIG_3.getName(),
+                  CONFIG_3.getValue(),
+                  CONFIG_3.isDefault(),
+                  CONFIG_3.isSensitive(),
+                  CONFIG_3.isReadOnly())));
 
   @Rule
   public final EasyMockRule mocks = new EasyMockRule(this);
@@ -126,15 +126,15 @@ public class TopicConfigurationManagerImplTest {
   @Mock
   private AlterConfigsResult alterConfigsResult;
 
-  private TopicConfigurationManagerImpl topicConfigurationManager;
+  private TopicConfigManagerImpl topicConfigManager;
 
   @Before
   public void setUp() {
-    topicConfigurationManager = new TopicConfigurationManagerImpl(adminClient, clusterManager);
+    topicConfigManager = new TopicConfigManagerImpl(adminClient, clusterManager);
   }
 
   @Test
-  public void listTopicConfigurations_existingTopic_returnsConfigurations() throws Exception {
+  public void listTopicConfigs_existingTopic_returnsConfigs() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
@@ -147,16 +147,14 @@ public class TopicConfigurationManagerImplTest {
                 KafkaFuture.completedFuture(CONFIG)));
     replay(adminClient, clusterManager, describeConfigsResult);
 
-    List<TopicConfiguration> configurations =
-        topicConfigurationManager.listTopicConfigurations(CLUSTER_ID, TOPIC_NAME).get();
+    List<TopicConfig> configs = topicConfigManager.listTopicConfigs(CLUSTER_ID, TOPIC_NAME).get();
 
     assertEquals(
-        new HashSet<>(Arrays.asList(CONFIGURATION_1, CONFIGURATION_2, CONFIGURATION_3)),
-        new HashSet<>(configurations));
+        new HashSet<>(Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3)), new HashSet<>(configs));
   }
 
   @Test
-  public void listTopicConfigurations_nonExistingTopic_throwsNotFound() throws Exception {
+  public void listTopicConfigs_nonExistingTopic_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
@@ -170,7 +168,7 @@ public class TopicConfigurationManagerImplTest {
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      topicConfigurationManager.listTopicConfigurations(CLUSTER_ID, TOPIC_NAME).get();
+      topicConfigManager.listTopicConfigs(CLUSTER_ID, TOPIC_NAME).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
@@ -178,12 +176,12 @@ public class TopicConfigurationManagerImplTest {
   }
 
   @Test
-  public void listTopicConfigurations_nonExistingCluster_throwsNotFound() throws Exception {
+  public void listTopicConfigs_nonExistingCluster_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
     replay(clusterManager);
 
     try {
-      topicConfigurationManager.listTopicConfigurations(CLUSTER_ID, TOPIC_NAME).get();
+      topicConfigManager.listTopicConfigs(CLUSTER_ID, TOPIC_NAME).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -191,7 +189,7 @@ public class TopicConfigurationManagerImplTest {
   }
 
   @Test
-  public void getTopicConfiguration_existingConfiguration_returnsConfiguration() throws Exception {
+  public void getTopicConfig_existingConfig_returnsConfig() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
@@ -204,17 +202,17 @@ public class TopicConfigurationManagerImplTest {
                 KafkaFuture.completedFuture(CONFIG)));
     replay(adminClient, clusterManager, describeConfigsResult);
 
-    TopicConfiguration configuration =
-        topicConfigurationManager.getTopicConfiguration(
-            CLUSTER_ID, TOPIC_NAME, CONFIGURATION_1.getName())
+    TopicConfig config =
+        topicConfigManager.getTopicConfig(
+            CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName())
             .get()
             .get();
 
-    assertEquals(CONFIGURATION_1, configuration);
+    assertEquals(CONFIG_1, config);
   }
 
   @Test
-  public void getTopicConfiguration_nonExistingConfiguration_returnsEmpty() throws Exception {
+  public void getTopicConfig_nonExistingConfig_returnsEmpty() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
@@ -227,14 +225,14 @@ public class TopicConfigurationManagerImplTest {
                 KafkaFuture.completedFuture(CONFIG)));
     replay(adminClient, clusterManager, describeConfigsResult);
 
-    Optional<TopicConfiguration> configuration =
-        topicConfigurationManager.getTopicConfiguration(CLUSTER_ID, TOPIC_NAME, "foobar").get();
+    Optional<TopicConfig> config =
+        topicConfigManager.getTopicConfig(CLUSTER_ID, TOPIC_NAME, "foobar").get();
 
-    assertFalse(configuration.isPresent());
+    assertFalse(config.isPresent());
   }
 
   @Test
-  public void getTopicConfiguration_nonExistingTopic_throwsNotFound() throws Exception {
+  public void getTopicConfig_nonExistingTopic_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
@@ -248,8 +246,8 @@ public class TopicConfigurationManagerImplTest {
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      topicConfigurationManager.getTopicConfiguration(
-          CLUSTER_ID, TOPIC_NAME, CONFIGURATION_1.getName()).get();
+      topicConfigManager.getTopicConfig(
+          CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
@@ -257,13 +255,13 @@ public class TopicConfigurationManagerImplTest {
   }
 
   @Test
-  public void getTopicConfiguration_nonExistingCluster_throwsNotFound() throws Exception {
+  public void getTopicConfig_nonExistingCluster_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
     replay(clusterManager);
 
     try {
-      topicConfigurationManager.getTopicConfiguration(
-          CLUSTER_ID, TOPIC_NAME, CONFIGURATION_1.getName()).get();
+      topicConfigManager.getTopicConfig(
+          CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -271,8 +269,7 @@ public class TopicConfigurationManagerImplTest {
   }
 
   @Test
-  public void updateTopicConfiguration_existingConfiguration_updatesConfiguration()
-      throws Exception {
+  public void updateTopicConfig_existingConfig_updatesConfig() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
@@ -289,7 +286,7 @@ public class TopicConfigurationManagerImplTest {
                 new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
                 singletonList(
                     new AlterConfigOp(
-                        new ConfigEntry(CONFIGURATION_1.getName(), "new-value"),
+                        new ConfigEntry(CONFIG_1.getName(), "new-value"),
                         AlterConfigOp.OpType.SET)))))
         .andReturn(alterConfigsResult);
     expect(alterConfigsResult.values())
@@ -299,15 +296,14 @@ public class TopicConfigurationManagerImplTest {
                 KafkaFuture.completedFuture(null)));
     replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
 
-    topicConfigurationManager.updateTopicConfiguration(
-        CLUSTER_ID, TOPIC_NAME, CONFIGURATION_1.getName(), "new-value").get();
+    topicConfigManager.updateTopicConfig(
+        CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName(), "new-value").get();
 
     verify(adminClient);
   }
 
   @Test
-  public void updateTopicConfiguration_nonExistingConfiguration_throwsNotFound()
-      throws Exception {
+  public void updateTopicConfig_nonExistingConfig_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
@@ -321,7 +317,7 @@ public class TopicConfigurationManagerImplTest {
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      topicConfigurationManager.updateTopicConfiguration(
+      topicConfigManager.updateTopicConfig(
           CLUSTER_ID, TOPIC_NAME, "foobar", "new-value").get();
       fail();
     } catch (ExecutionException e) {
@@ -332,8 +328,7 @@ public class TopicConfigurationManagerImplTest {
   }
 
   @Test
-  public void updateTopicConfiguration_nonExistingTopic_throwsNotFound()
-      throws Exception {
+  public void updateTopicConfig_nonExistingTopic_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
@@ -347,8 +342,8 @@ public class TopicConfigurationManagerImplTest {
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      topicConfigurationManager.updateTopicConfiguration(
-          CLUSTER_ID, TOPIC_NAME, CONFIGURATION_1.getName(), "new-value").get();
+      topicConfigManager.updateTopicConfig(
+          CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName(), "new-value").get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
@@ -358,14 +353,13 @@ public class TopicConfigurationManagerImplTest {
   }
 
   @Test
-  public void updateTopicConfiguration_nonExistingCluster_throwsNotFound()
-      throws Exception {
+  public void updateTopicConfig_nonExistingCluster_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
     replay(clusterManager, adminClient);
 
     try {
-      topicConfigurationManager.updateTopicConfiguration(
-          CLUSTER_ID, TOPIC_NAME, CONFIGURATION_1.getName(), "new-value").get();
+      topicConfigManager.updateTopicConfig(
+          CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName(), "new-value").get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -375,8 +369,7 @@ public class TopicConfigurationManagerImplTest {
   }
 
   @Test
-  public void resetTopicConfiguration_existingConfiguration_resetsConfiguration()
-      throws Exception {
+  public void resetTopicConfig_existingConfig_resetsConfig() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
@@ -393,7 +386,7 @@ public class TopicConfigurationManagerImplTest {
                 new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
                 singletonList(
                     new AlterConfigOp(
-                        new ConfigEntry(CONFIGURATION_1.getName(), /* value= */ null),
+                        new ConfigEntry(CONFIG_1.getName(), /* value= */ null),
                         AlterConfigOp.OpType.DELETE)))))
         .andReturn(alterConfigsResult);
     expect(alterConfigsResult.values())
@@ -403,15 +396,14 @@ public class TopicConfigurationManagerImplTest {
                 KafkaFuture.completedFuture(null)));
     replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
 
-    topicConfigurationManager.resetTopicConfiguration(
-        CLUSTER_ID, TOPIC_NAME, CONFIGURATION_1.getName()).get();
+    topicConfigManager.resetTopicConfig(
+        CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()).get();
 
     verify(adminClient);
   }
 
   @Test
-  public void resetTopicConfiguration_nonExistingConfiguration_throwsNotFound()
-      throws Exception {
+  public void resetTopicConfig_nonExistingConfig_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
@@ -425,7 +417,7 @@ public class TopicConfigurationManagerImplTest {
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      topicConfigurationManager.resetTopicConfiguration(CLUSTER_ID, TOPIC_NAME, "foobar").get();
+      topicConfigManager.resetTopicConfig(CLUSTER_ID, TOPIC_NAME, "foobar").get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -435,8 +427,7 @@ public class TopicConfigurationManagerImplTest {
   }
 
   @Test
-  public void resetTopicConfiguration_nonExistingTopic_throwsNotFound()
-      throws Exception {
+  public void resetTopicConfig_nonExistingTopic_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
@@ -450,8 +441,8 @@ public class TopicConfigurationManagerImplTest {
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      topicConfigurationManager.resetTopicConfiguration(
-          CLUSTER_ID, TOPIC_NAME, CONFIGURATION_1.getName()).get();
+      topicConfigManager.resetTopicConfig(
+          CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
@@ -461,14 +452,13 @@ public class TopicConfigurationManagerImplTest {
   }
 
   @Test
-  public void resetTopicConfiguration_nonExistingCluster_throwsNotFound()
-      throws Exception {
+  public void resetTopicConfig_nonExistingCluster_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
     replay(clusterManager, adminClient);
 
     try {
-      topicConfigurationManager.resetTopicConfiguration(
-          CLUSTER_ID, TOPIC_NAME, CONFIGURATION_1.getName()).get();
+      topicConfigManager.resetTopicConfig(
+          CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
