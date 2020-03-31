@@ -87,7 +87,7 @@ public final class BrokersResourceTest {
                     BROKER_1.getHost(),
                     BROKER_1.getPort(),
                     BROKER_1.getRack(),
-                    new Relationship("/v3/clusters/cluster-1/brokers/1/configurations"),
+                    new Relationship("/v3/clusters/cluster-1/brokers/1/configs"),
                     new Relationship("/v3/clusters/cluster-1/brokers/1/partition_replicas")),
                 new BrokerData(
                     "crn:///kafka=cluster-1/broker=2",
@@ -97,7 +97,7 @@ public final class BrokersResourceTest {
                     BROKER_2.getHost(),
                     BROKER_2.getPort(),
                     BROKER_2.getRack(),
-                    new Relationship("/v3/clusters/cluster-1/brokers/2/configurations"),
+                    new Relationship("/v3/clusters/cluster-1/brokers/2/configs"),
                     new Relationship("/v3/clusters/cluster-1/brokers/2/partition_replicas")),
                 new BrokerData(
                     "crn:///kafka=cluster-1/broker=3",
@@ -107,7 +107,7 @@ public final class BrokersResourceTest {
                     BROKER_3.getHost(),
                     BROKER_3.getPort(),
                     BROKER_3.getRack(),
-                    new Relationship("/v3/clusters/cluster-1/brokers/3/configurations"),
+                    new Relationship("/v3/clusters/cluster-1/brokers/3/configs"),
                     new Relationship("/v3/clusters/cluster-1/brokers/3/partition_replicas"))));
 
     assertEquals(expected, response.getValue());
@@ -143,7 +143,7 @@ public final class BrokersResourceTest {
                 BROKER_1.getHost(),
                 BROKER_1.getPort(),
                 BROKER_1.getRack(),
-                new Relationship("/v3/clusters/cluster-1/brokers/1/configurations"),
+                new Relationship("/v3/clusters/cluster-1/brokers/1/configs"),
                 new Relationship("/v3/clusters/cluster-1/brokers/1/partition_replicas")));
 
     assertEquals(expected, response.getValue());

@@ -23,17 +23,17 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 /**
- * Request body for {@code PUT /v3/clusters/<clusterId>/topics/<topicName>/configurations/<name>}
+ * Request body for {@code PUT /v3/clusters/<clusterId>/topics/<topicName>/configs/<name>}
  * requests.
  */
-public final class UpdateTopicConfigurationRequest {
+public final class UpdateTopicConfigRequest {
 
   @NotNull
   @Nullable
   private final Data data;
 
   @JsonCreator
-  public UpdateTopicConfigurationRequest(@JsonProperty("data") @Nullable Data data) {
+  public UpdateTopicConfigRequest(@JsonProperty("data") @Nullable Data data) {
     this.data = data;
   }
 
@@ -50,7 +50,7 @@ public final class UpdateTopicConfigurationRequest {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    UpdateTopicConfigurationRequest that = (UpdateTopicConfigurationRequest) o;
+    UpdateTopicConfigRequest that = (UpdateTopicConfigRequest) o;
     return Objects.equals(data, that.data);
   }
 
@@ -62,7 +62,7 @@ public final class UpdateTopicConfigurationRequest {
   @Override
   public String toString() {
     return new StringJoiner(", ",
-        UpdateTopicConfigurationRequest.class.getSimpleName() + "[", "]")
+        UpdateTopicConfigRequest.class.getSimpleName() + "[", "]")
         .add("data=" + data)
         .toString();
   }

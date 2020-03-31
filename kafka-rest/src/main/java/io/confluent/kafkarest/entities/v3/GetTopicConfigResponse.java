@@ -20,19 +20,19 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
- * Response body for {@code GET /v3/clusters/<clusterId>/topics/<topicName>/configurations/<name>}
+ * Response body for {@code GET /v3/clusters/<clusterId>/topics/<topicName>/configs/<name>}
  * requests.
  */
-public final class GetTopicConfigurationResponse {
+public final class GetTopicConfigResponse {
 
-  private final TopicConfigurationData data;
+  private final TopicConfigData data;
 
-  public GetTopicConfigurationResponse(TopicConfigurationData data) {
+  public GetTopicConfigResponse(TopicConfigData data) {
     this.data = Objects.requireNonNull(data);
   }
 
   @JsonProperty("data")
-  public TopicConfigurationData getData() {
+  public TopicConfigData getData() {
     return data;
   }
 
@@ -44,7 +44,7 @@ public final class GetTopicConfigurationResponse {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    GetTopicConfigurationResponse that = (GetTopicConfigurationResponse) o;
+    GetTopicConfigResponse that = (GetTopicConfigResponse) o;
     return Objects.equals(data, that.data);
   }
 
@@ -56,7 +56,7 @@ public final class GetTopicConfigurationResponse {
   @Override
   public String toString() {
     return new StringJoiner(
-        ", ", GetTopicConfigurationResponse.class.getSimpleName() + "[", "]")
+        ", ", GetTopicConfigResponse.class.getSimpleName() + "[", "]")
         .add("data=" + data)
         .toString();
   }

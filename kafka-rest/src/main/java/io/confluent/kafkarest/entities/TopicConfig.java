@@ -20,9 +20,9 @@ import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 /**
- * A Kafka Topic Configuration.
+ * A Kafka Topic Config.
  */
-public final class TopicConfiguration {
+public final class TopicConfig {
 
   private final String clusterId;
 
@@ -39,7 +39,7 @@ public final class TopicConfiguration {
 
   private final boolean isSensitive;
 
-  public TopicConfiguration(
+  public TopicConfig(
       String clusterId,
       String topicName,
       String name,
@@ -94,7 +94,7 @@ public final class TopicConfiguration {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TopicConfiguration that = (TopicConfiguration) o;
+    TopicConfig that = (TopicConfig) o;
     return isDefault == that.isDefault
         && isReadOnly == that.isReadOnly
         && isSensitive == that.isSensitive
@@ -112,7 +112,7 @@ public final class TopicConfiguration {
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", TopicConfiguration.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", TopicConfig.class.getSimpleName() + "[", "]")
         .add("clusterId='" + clusterId + "'")
         .add("topicName='" + topicName + "'")
         .add("name='" + name + "'")

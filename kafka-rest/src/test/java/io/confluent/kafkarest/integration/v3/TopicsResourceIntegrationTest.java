@@ -23,12 +23,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.CreateTopicResponse;
-import io.confluent.kafkarest.entities.v3.GetTopicConfigurationResponse;
+import io.confluent.kafkarest.entities.v3.GetTopicConfigResponse;
 import io.confluent.kafkarest.entities.v3.GetTopicResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicsResponse;
 import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
-import io.confluent.kafkarest.entities.v3.TopicConfigurationData;
+import io.confluent.kafkarest.entities.v3.TopicConfigData;
 import io.confluent.kafkarest.entities.v3.TopicData;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
@@ -92,7 +92,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             baseUrl
                                 + "/v3/clusters/" + clusterId
                                 + "/topics/" + TOPIC_1
-                                + "/configurations"),
+                                + "/configs"),
                         new Relationship(
                             baseUrl
                                 + "/v3/clusters/" + clusterId
@@ -112,7 +112,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             baseUrl
                                 + "/v3/clusters/" + clusterId
                                 + "/topics/" + TOPIC_2
-                                + "/configurations"),
+                                + "/configs"),
                         new Relationship(
                             baseUrl
                                 + "/v3/clusters/" + clusterId
@@ -132,7 +132,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             baseUrl
                                 + "/v3/clusters/" + clusterId
                                 + "/topics/" + TOPIC_3
-                                + "/configurations"),
+                                + "/configs"),
                         new Relationship(
                             baseUrl
                                 + "/v3/clusters/" + clusterId
@@ -173,7 +173,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                         baseUrl
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + TOPIC_1
-                            + "/configurations"),
+                            + "/configs"),
                     new Relationship(
                         baseUrl
                             + "/v3/clusters/" + clusterId
@@ -223,7 +223,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                         baseUrl
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + topicName
-                            + "/configurations"),
+                            + "/configs"),
                     new Relationship(
                         baseUrl
                             + "/v3/clusters/" + clusterId
@@ -339,7 +339,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                         baseUrl
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + topicName
-                            + "/configurations"),
+                            + "/configs"),
                     new Relationship(
                         baseUrl
                             + "/v3/clusters/" + clusterId
@@ -353,8 +353,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 Entity.entity(
                     "{\"data\":{\"attributes\":{\"topic_name\":\""
                         + topicName + "\",\"partitions_count\":1,\"replication_factor\":1,"
-                        + "\"configurations\":[{\"name\":\"cleanup.policy\",\"value\":\"compact\"}]"
-                        + "}}}",
+                        + "\"configs\":[{\"name\":\"cleanup.policy\",\"value\":\"compact\"}]}}}",
                     Versions.JSON_API));
     assertEquals(Status.CREATED.getStatusCode(), createTopicResponse.getStatus());
     assertEquals(expectedCreateTopicResponse, createTopicResponse.readEntity(String.class));
@@ -377,7 +376,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                         baseUrl
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + topicName
-                            + "/configurations"),
+                            + "/configs"),
                     new Relationship(
                         baseUrl
                             + "/v3/clusters/" + clusterId
@@ -391,18 +390,18 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.OK.getStatusCode(), existingTopicResponse.getStatus());
     assertEquals(expectedExistingGetTopicResponse, existingTopicResponse.readEntity(String.class));
 
-    String expectedExistingGetTopicConfigurationResponse =
+    String expectedExistingGetTopicConfigResponse =
         OBJECT_MAPPER.writeValueAsString(
-            new GetTopicConfigurationResponse(
-                new TopicConfigurationData(
+            new GetTopicConfigResponse(
+                new TopicConfigData(
                     "crn:///kafka=" + clusterId
                         + "/topic=" + topicName
-                        + "/configuration=cleanup.policy",
+                        + "/config=cleanup.policy",
                     new ResourceLink(
                         baseUrl
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + topicName
-                            + "/configurations/cleanup.policy"),
+                            + "/configs/cleanup.policy"),
                     clusterId,
                     topicName,
                     "cleanup.policy",
@@ -411,17 +410,17 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                     /* isReadOnly= */ false,
                     /* isSensitive= */ false)));
 
-    Response existingGetTopicConfigurationResponse =
+    Response existingGetTopicConfigResponse =
         request(
             "/v3/clusters/" + clusterId
                 + "/topics/" + topicName
-                + "/configurations/cleanup.policy")
+                + "/configs/cleanup.policy")
             .accept(Versions.JSON_API)
             .get();
-    assertEquals(Status.OK.getStatusCode(), existingGetTopicConfigurationResponse.getStatus());
+    assertEquals(Status.OK.getStatusCode(), existingGetTopicConfigResponse.getStatus());
     assertEquals(
-        expectedExistingGetTopicConfigurationResponse,
-        existingGetTopicConfigurationResponse.readEntity(String.class));
+        expectedExistingGetTopicConfigResponse,
+        existingGetTopicConfigResponse.readEntity(String.class));
 
     Response deleteTopicResponse =
         request("/v3/clusters/" + clusterId + "/topics/" + topicName)

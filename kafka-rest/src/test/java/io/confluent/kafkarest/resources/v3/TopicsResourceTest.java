@@ -31,6 +31,7 @@ import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.CreateTopicRequest;
+import io.confluent.kafkarest.entities.v3.CreateTopicRequest.Data.Attributes.Config;
 import io.confluent.kafkarest.entities.v3.CreateTopicResponse;
 import io.confluent.kafkarest.entities.v3.GetTopicResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicsResponse;
@@ -352,7 +353,7 @@ public class TopicsResourceTest {
                     "topic-1",
                     /* isInternal= */ true,
                     /* replicationFactor= */ 3,
-                    new Relationship("/v3/clusters/cluster-1/topics/topic-1/configurations"),
+                    new Relationship("/v3/clusters/cluster-1/topics/topic-1/configs"),
                     new Relationship("/v3/clusters/cluster-1/topics/topic-1/partitions")),
                 new TopicData(
                     "crn:///kafka=cluster-1/topic=topic-2",
@@ -361,7 +362,7 @@ public class TopicsResourceTest {
                     "topic-2",
                     /* isInternal= */ true,
                     /* replicationFactor= */ 3,
-                    new Relationship("/v3/clusters/cluster-1/topics/topic-2/configurations"),
+                    new Relationship("/v3/clusters/cluster-1/topics/topic-2/configs"),
                     new Relationship("/v3/clusters/cluster-1/topics/topic-2/partitions")),
                 new TopicData(
                     "crn:///kafka=cluster-1/topic=topic-3",
@@ -370,7 +371,7 @@ public class TopicsResourceTest {
                     "topic-3",
                     /* isInternal= */ false,
                     /* replicationFactor= */ 3,
-                    new Relationship("/v3/clusters/cluster-1/topics/topic-3/configurations"),
+                    new Relationship("/v3/clusters/cluster-1/topics/topic-3/configs"),
                     new Relationship("/v3/clusters/cluster-1/topics/topic-3/partitions"))));
 
     assertEquals(expected, response.getValue());
@@ -417,7 +418,7 @@ public class TopicsResourceTest {
             "topic-1",
             /* isInternal= */ true,
             /* replicationFactor= */ 3,
-            new Relationship("/v3/clusters/cluster-1/topics/topic-1/configurations"),
+            new Relationship("/v3/clusters/cluster-1/topics/topic-1/configs"),
             new Relationship("/v3/clusters/cluster-1/topics/topic-1/partitions")));
 
     assertEquals(expected, response.getValue());
@@ -470,7 +471,7 @@ public class TopicsResourceTest {
                     TOPIC_1.getPartitions().size(),
                     TOPIC_1.getReplicationFactor(),
                     singletonList(
-                        new CreateTopicRequest.Data.Attributes.Configuration(
+                        new Config(
                             "cleanup.policy", "compact"))))));
 
     CreateTopicResponse expected = new CreateTopicResponse(
@@ -481,7 +482,7 @@ public class TopicsResourceTest {
             "topic-1",
             /* isInternal= */ false,
             /* replicationFactor= */ 3,
-            new Relationship("/v3/clusters/cluster-1/topics/topic-1/configurations"),
+            new Relationship("/v3/clusters/cluster-1/topics/topic-1/configs"),
             new Relationship("/v3/clusters/cluster-1/topics/topic-1/partitions")));
 
     assertEquals(expected, response.getValue());
@@ -511,7 +512,7 @@ public class TopicsResourceTest {
                     TOPIC_1.getPartitions().size(),
                     TOPIC_1.getReplicationFactor(),
                     singletonList(
-                        new CreateTopicRequest.Data.Attributes.Configuration(
+                        new Config(
                             "cleanup.policy", "compact"))))));
 
     assertEquals(TopicExistsException.class, response.getException().getClass());
@@ -540,7 +541,7 @@ public class TopicsResourceTest {
                     TOPIC_1.getPartitions().size(),
                     TOPIC_1.getReplicationFactor(),
                     singletonList(
-                        new CreateTopicRequest.Data.Attributes.Configuration(
+                        new Config(
                             "cleanup.policy", "compact"))))));
 
     assertEquals(NotFoundException.class, response.getException().getClass());

@@ -46,7 +46,7 @@ public interface TopicManager {
       String topicName,
       int partitionsCount,
       short replicationFactor,
-      Map<String, String> configurations);
+      Map<String, String> configs);
 
   /**
    * Deletes the Kafka {@link Topic} with the given {@code topicName}.
