@@ -15,7 +15,6 @@
 
 package io.confluent.kafkarest.entities;
 
-import io.confluent.kafkarest.controllers.TopicConfigManager;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -92,7 +91,8 @@ public final class Topic {
   }
 
   /**
-   * @deprecated Use {@link TopicConfigManager#listTopicConfigs(String, String)} instead.
+   * @deprecated Use {@link io.confluent.kafkarest.controllers.TopicConfigManager#listTopicConfigs(
+   * String, String)} instead.
    */
   @Deprecated
   public Properties getConfigs() {
