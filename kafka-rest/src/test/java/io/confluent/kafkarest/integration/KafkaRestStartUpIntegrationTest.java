@@ -18,6 +18,7 @@ public class KafkaRestStartUpIntegrationTest extends ClusterTestHarness {
     restProperties.put("client.security.protocol", "SASL_PLAINTEXT");
     restProperties.put("client.sasl.mechanism", "OAUTHBEARER");
     restProperties.put("client.sasl.kerberos.service.name", "kafka");
+    restProperties.put("response.http.headers.config", "add X-XSS-Protection: 1; mode=block");
   }
 
   @Test
@@ -29,5 +30,11 @@ public class KafkaRestStartUpIntegrationTest extends ClusterTestHarness {
     // The server started up successfully. Now make sure doing a request that require Admin fails.
     Response response = request("/v3/clusters").accept("application/vnd.api+json").get();
     assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void testHttpResponseHeader() {
+    Response response = request("/v3/clusters").accept("application/vnd.api+json").get();
+    assertEquals(response.getHeaderString("X-XSS-Protection"), "1; mode=block");
   }
 }
