@@ -20,9 +20,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.NumericNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.confluent.kafka.schemaregistry.json.JsonSchema;
+import io.confluent.kafka.schemaregistry.json.JsonSchemaUtils;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.converters.ConversionException;
 import io.confluent.kafkarest.converters.JsonSchemaConverter;
@@ -73,22 +75,28 @@ public class JsonSchemaConverterTest {
 
   @Test
   public void testPrimitiveTypesToJsonSchema() {
-    Object result = new JsonSchemaConverter().toObject(null, createPrimitiveSchema("null"));
-    assertTrue(result == null);
+    Object envelope = new JsonSchemaConverter().toObject(null, createPrimitiveSchema("null"));
+    JsonNode result = (JsonNode) JsonSchemaUtils.getValue(envelope);
+    assertEquals(NullNode.getInstance(), result);
 
-    result = new JsonSchemaConverter().toObject(TestUtils.jsonTree("true"), createPrimitiveSchema("boolean"));
+    envelope = new JsonSchemaConverter().toObject(TestUtils.jsonTree("true"), createPrimitiveSchema("boolean"));
+    result = (JsonNode) JsonSchemaUtils.getValue(envelope);
     assertEquals(true, ((BooleanNode)result).asBoolean());
 
-    result = new JsonSchemaConverter().toObject(TestUtils.jsonTree("false"), createPrimitiveSchema("boolean"));
+    envelope = new JsonSchemaConverter().toObject(TestUtils.jsonTree("false"), createPrimitiveSchema("boolean"));
+    result = (JsonNode) JsonSchemaUtils.getValue(envelope);
     assertEquals(false, ((BooleanNode)result).asBoolean());
 
-    result = new JsonSchemaConverter().toObject(TestUtils.jsonTree("12"), createPrimitiveSchema("number"));
+    envelope = new JsonSchemaConverter().toObject(TestUtils.jsonTree("12"), createPrimitiveSchema("number"));
+    result = (JsonNode) JsonSchemaUtils.getValue(envelope);
     assertEquals(12, ((NumericNode)result).asInt());
 
-    result = new JsonSchemaConverter().toObject(TestUtils.jsonTree("23.2"), createPrimitiveSchema("number"));
+    envelope = new JsonSchemaConverter().toObject(TestUtils.jsonTree("23.2"), createPrimitiveSchema("number"));
+    result = (JsonNode) JsonSchemaUtils.getValue(envelope);
     assertEquals(23.2, ((NumericNode)result).asDouble(), 0.1);
 
-    result = new JsonSchemaConverter().toObject(TestUtils.jsonTree("\"a string\""), createPrimitiveSchema("string"));
+    envelope = new JsonSchemaConverter().toObject(TestUtils.jsonTree("\"a string\""), createPrimitiveSchema("string"));
+    result = (JsonNode) JsonSchemaUtils.getValue(envelope);
     assertEquals("a string", ((TextNode)result).asText());
   }
 
@@ -101,7 +109,8 @@ public class JsonSchemaConverterTest {
             + "    \"string\": \"string\"\n"
             + "}";
 
-    JsonNode result = (JsonNode) new JsonSchemaConverter().toObject(TestUtils.jsonTree(json), recordSchema);
+    JsonNode envelope = (JsonNode) new JsonSchemaConverter().toObject(TestUtils.jsonTree(json), recordSchema);
+    JsonNode result = (JsonNode) JsonSchemaUtils.getValue(envelope);
     assertEquals(true, result.get("null").isNull());
     assertEquals(true, result.get("boolean").booleanValue());
     assertEquals(12, result.get("number").intValue());
@@ -118,7 +127,8 @@ public class JsonSchemaConverterTest {
                   + "    \"badString\": \"string\"\n"
                   + "}";
 
-    JsonNode result = (JsonNode) new JsonSchemaConverter().toObject(TestUtils.jsonTree(json), recordSchema);
+    JsonNode envelope = (JsonNode) new JsonSchemaConverter().toObject(TestUtils.jsonTree(json), recordSchema);
+    JsonNode result = (JsonNode) JsonSchemaUtils.getValue(envelope);
     assertEquals(true, result.get("null").isNull());
     assertEquals(true, result.get("boolean").booleanValue());
     assertEquals(12, result.get("number").intValue());
@@ -129,7 +139,8 @@ public class JsonSchemaConverterTest {
   public void testArrayToJsonSchema() {
     String json = "[\"one\", \"two\", \"three\"]";
 
-    Object result = new JsonSchemaConverter().toObject(TestUtils.jsonTree(json), arraySchema);
+    Object envelope = new JsonSchemaConverter().toObject(TestUtils.jsonTree(json), arraySchema);
+    JsonNode result = (JsonNode) JsonSchemaUtils.getValue(envelope);
     ArrayNode arrayNode = (ArrayNode) result;
     Iterator<JsonNode> elements = arrayNode.elements();
     List<String> strings = new ArrayList<String>();
@@ -141,10 +152,12 @@ public class JsonSchemaConverterTest {
 
   @Test
   public void testUnionToJsonSchema() {
-    Object result = new JsonSchemaConverter().toObject(TestUtils.jsonTree("\"test\""), unionSchema);
+    Object envelope = new JsonSchemaConverter().toObject(TestUtils.jsonTree("\"test\""), unionSchema);
+    JsonNode result = (JsonNode) JsonSchemaUtils.getValue(envelope);
     assertEquals("test", ((TextNode)result).asText());
 
-    result = new JsonSchemaConverter().toObject(TestUtils.jsonTree("12"), unionSchema);
+    envelope = new JsonSchemaConverter().toObject(TestUtils.jsonTree("12"), unionSchema);
+    result = (JsonNode) JsonSchemaUtils.getValue(envelope);
     assertEquals(12, ((NumericNode)result).asInt());
 
     try {
@@ -157,7 +170,8 @@ public class JsonSchemaConverterTest {
 
   @Test
   public void testEnumToJsonSchema() {
-    Object result = new JsonSchemaConverter().toObject(TestUtils.jsonTree("\"red\""), enumSchema);
+    Object envelope = new JsonSchemaConverter().toObject(TestUtils.jsonTree("\"red\""), enumSchema);
+    JsonNode result = (JsonNode) JsonSchemaUtils.getValue(envelope);
     assertEquals("red", ((TextNode)result).asText());
 
     try {
