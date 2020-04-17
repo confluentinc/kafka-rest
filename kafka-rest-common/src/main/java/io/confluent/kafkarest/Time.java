@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest;
 
-public interface Time extends io.confluent.common.utils.Time {
+public interface Time extends org.apache.kafka.common.utils.Time {
 
   public long milliseconds();
 

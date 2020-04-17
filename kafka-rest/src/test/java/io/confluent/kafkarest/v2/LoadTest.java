@@ -19,11 +19,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import io.confluent.common.utils.Time;
 import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.SystemTime;
+import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
+import io.confluent.kafkarest.SystemTime;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
