@@ -90,14 +90,6 @@ public final class BrokersResource {
   }
 
   @GET
-  @Path("/{brokerId}/configs")
-  @Produces(Versions.JSON_API)
-  public void listBrokerConfigs(
-      @PathParam("clusterId") String clusterId, @PathParam("brokerId") String brokerId) {
-    throw new WebApplicationException(Status.NOT_IMPLEMENTED);
-  }
-
-  @GET
   @Path("/{brokerId}/partition_replicas")
   @Produces(Versions.JSON_API)
   public void listBrokerPartitionReplicas(
