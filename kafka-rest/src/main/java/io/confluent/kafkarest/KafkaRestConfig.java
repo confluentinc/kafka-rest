@@ -22,6 +22,8 @@ import org.apache.kafka.common.config.ConfigDef.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -29,7 +31,6 @@ import java.util.Properties;
 
 import javax.ws.rs.core.Response;
 
-import io.confluent.common.config.AbstractConfig;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
@@ -649,8 +650,23 @@ public class KafkaRestConfig extends RestConfig {
     this(new Properties());
   }
 
+  private static Properties getPropsFromFile(String propsFile) throws RestConfigException {
+    Properties props = new Properties();
+    if (propsFile == null) {
+      return props;
+    }
+
+    try (FileInputStream propStream = new FileInputStream(propsFile)) {
+      props.load(propStream);
+    } catch (IOException e) {
+      throw new RestConfigException("Couldn't load properties from " + propsFile, e);
+    }
+
+    return props;
+  }
+
   public KafkaRestConfig(String propsFile) throws RestConfigException {
-    this(AbstractConfig.getPropsFromFile(propsFile));
+    this(getPropsFromFile(propsFile));
   }
 
   public KafkaRestConfig(Properties props) throws RestConfigException {
