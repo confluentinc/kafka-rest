@@ -48,7 +48,7 @@ public final class BrokerConfig {
       boolean isReadOnly,
       boolean isSensitive) {
     this.clusterId = Objects.requireNonNull(clusterId);
-    this.brokerId = Objects.requireNonNull(brokerId);
+    this.brokerId = brokerId;
     this.name = Objects.requireNonNull(name);
     this.value = value;
     this.isDefault = isDefault;
@@ -98,7 +98,7 @@ public final class BrokerConfig {
         && isReadOnly == that.isReadOnly
         && isSensitive == that.isSensitive
         && Objects.equals(clusterId, that.clusterId)
-        && Objects.equals(brokerId, that.brokerId)
+        && brokerId == that.brokerId
         && Objects.equals(name, that.name)
         && Objects.equals(value, that.value);
   }
@@ -112,7 +112,7 @@ public final class BrokerConfig {
   public String toString() {
     return new StringJoiner(", ", BrokerConfig.class.getSimpleName() + "[", "]")
         .add("clusterId='" + clusterId + "'")
-        .add("brokerId='" + brokerId + "'")
+        .add("brokerId=" + brokerId)
         .add("name='" + name + "'")
         .add("value='" + value + "'")
         .add("isDefault=" + isDefault)

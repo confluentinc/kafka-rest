@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.confluent.kafkarest.entities.v3.TopicConfigData.Attributes;
 import java.util.Objects;
 import java.util.StringJoiner;
 import javax.annotation.Nullable;
@@ -123,7 +124,7 @@ public final class BrokerConfigData {
         boolean isReadOnly,
         boolean isSensitive) {
       this.clusterId = Objects.requireNonNull(clusterId);
-      this.brokerId = Objects.requireNonNull(brokerId);
+      this.brokerId = brokerId;
       this.name = Objects.requireNonNull(name);
       this.value = value;
       this.isDefault = isDefault;
@@ -180,7 +181,7 @@ public final class BrokerConfigData {
           && isReadOnly == that.isReadOnly
           && isSensitive == that.isSensitive
           && Objects.equals(clusterId, that.clusterId)
-          && Objects.equals(brokerId, that.brokerId)
+          && brokerId == that.brokerId
           && Objects.equals(name, that.name)
           && Objects.equals(value, that.value);
     }
@@ -192,9 +193,9 @@ public final class BrokerConfigData {
 
     @Override
     public String toString() {
-      return new StringJoiner(", ", BrokerConfigData.Attributes.class.getSimpleName() + "[", "]")
+      return new StringJoiner(", ", TopicConfigData.Attributes.class.getSimpleName() + "[", "]")
           .add("clusterId='" + clusterId + "'")
-          .add("brokerId='" + brokerId + "'")
+          .add("brokerId=" + brokerId)
           .add("name='" + name + "'")
           .add("value='" + value + "'")
           .add("isDefault=" + isDefault)
