@@ -91,11 +91,11 @@ public final class BrokerConfigResourceTest {
     ListBrokerConfigsResponse expected =
         new ListBrokerConfigsResponse(
             new CollectionLink(
-                "/v3/clusters/cluster-1/brokers/broker-1/configs", null),
+                "/v3/clusters/cluster-1/brokers/1/configs", null),
             Arrays.asList(
                 new BrokerConfigData(
-                    "crn:///kafka=cluster-1/broker=broker-1/config=config-1",
-                    new ResourceLink("/v3/clusters/cluster-1/brokers/broker-1/configs/config-1"),
+                    "crn:///kafka=cluster-1/broker=1/config=config-1",
+                    new ResourceLink("/v3/clusters/cluster-1/brokers/1/configs/config-1"),
                     CLUSTER_ID,
                     BROKER_ID,
                     CONFIG_1.getName(),
@@ -104,8 +104,8 @@ public final class BrokerConfigResourceTest {
                     CONFIG_1.isReadOnly(),
                     CONFIG_1.isSensitive()),
                 new BrokerConfigData(
-                    "crn:///kafka=cluster-1/broker=broker-1/config=config-2",
-                    new ResourceLink("/v3/clusters/cluster-1/brokers/broker-1/configs/config-2"),
+                    "crn:///kafka=cluster-1/broker=1/config=config-2",
+                    new ResourceLink("/v3/clusters/cluster-1/brokers/1/configs/config-2"),
                     CLUSTER_ID,
                     BROKER_ID,
                     CONFIG_2.getName(),
@@ -114,8 +114,8 @@ public final class BrokerConfigResourceTest {
                     CONFIG_2.isReadOnly(),
                     CONFIG_2.isSensitive()),
                 new BrokerConfigData(
-                    "crn:///kafka=cluster-1/broker=broker-1/config=config-3",
-                    new ResourceLink("/v3/clusters/cluster-1/brokers/broker-1/configs/config-3"),
+                    "crn:///kafka=cluster-1/broker=1/config=config-3",
+                    new ResourceLink("/v3/clusters/cluster-1/brokers/1/configs/config-3"),
                     CLUSTER_ID,
                     BROKER_ID,
                     CONFIG_3.getName(),
@@ -151,8 +151,8 @@ public final class BrokerConfigResourceTest {
     GetBrokerConfigResponse expected =
         new GetBrokerConfigResponse(
             new BrokerConfigData(
-                "crn:///kafka=cluster-1/broker=broker-1/config=config-1",
-                new ResourceLink("/v3/clusters/cluster-1/brokers/broker-1/configs/config-1"),
+                "crn:///kafka=cluster-1/broker=1/config=config-1",
+                new ResourceLink("/v3/clusters/cluster-1/brokers/1/configs/config-1"),
                 CLUSTER_ID,
                 BROKER_ID,
                 CONFIG_1.getName(),
