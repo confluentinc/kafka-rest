@@ -7,10 +7,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v3.BrokerConfigData;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.v3.GetBrokerConfigResponse;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
@@ -31,18 +33,20 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
         OBJECT_MAPPER.writeValueAsString(
             new CollectionLink(
                 baseUrl
-                    + "/v3/clusters" + clusterId
+                    + "/v3/clusters/" + clusterId
                     + "/brokers/" + brokerId
                     + "/configs",
                 /* next= */ null));
     String expectedConfig1 =
         OBJECT_MAPPER.writeValueAsString(
             new BrokerConfigData(
-                "crn:///kafka=" + clusterId + "/broker=" + brokerId + "/config=max.connections",
+                "crn:///kafka=" + clusterId
+                    + "/broker=" + brokerId
+                    + "/config=max.connections",
                 new ResourceLink(
                     baseUrl
                         + "/v3/clusters/" + clusterId
-                        + "/brokers" + brokerId
+                        + "/brokers/" + brokerId
                         + "/configs/max.connections"),
                 clusterId,
                 brokerId,
@@ -55,16 +59,18 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     String expectedConfig2 =
         OBJECT_MAPPER.writeValueAsString(
             new BrokerConfigData(
-                "crn:///kafka=" + clusterId + "/broker=" + brokerId + "/config=log.dir",
+                "crn:///kafka=" + clusterId
+                    + "/broker=" + brokerId
+                    + "/config=compression.type",
                 new ResourceLink(
                     baseUrl
                         + "/v3/clusters/" + clusterId
-                        + "/brokers" + brokerId
-                        + "/configs/log.dir"),
+                        + "/brokers/" + brokerId
+                        + "/configs/compression.type"),
                 clusterId,
                 brokerId,
-                "log.dir",
-                "/tmp/kafka-logs",
+                "compression.type",
+                "producer",
                 /* isDefault= */ true,
                 /* isReadOnly= */ false,
                 /* isSensitive= */ false));
@@ -72,11 +78,13 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     String expectedConfig3 =
         OBJECT_MAPPER.writeValueAsString(
             new BrokerConfigData(
-                "crn:///kafka=" + clusterId + "/broker=" + brokerId + "/config=log.cleaner.threads",
+                "crn:///kafka=" + clusterId
+                    + "/broker=" + brokerId
+                    + "/config=log.cleaner.threads",
                 new ResourceLink(
                     baseUrl
                         + "/v3/clusters/" + clusterId
-                        + "/brokers" + brokerId
+                        + "/brokers/" + brokerId
                         + "/configs/log.cleaner.threads"),
                 clusterId,
                 brokerId,
@@ -105,4 +113,96 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
         String.format("Not true that `%s' contains `%s'.", responseBody, expectedConfig3),
         responseBody.contains(expectedConfig3));
   }
+
+  @Test
+  public void listBrokerConfigs_nonExistingBroker_throwsNotFound() {
+    String clusterId = getClusterId();
+    Response response =
+        request("/v3/clusters/" + clusterId + "/brokers/foobar/configs")
+            .accept(Versions.JSON_API)
+            .get();
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void listBrokerConfigs_nonExistingCluster_throwsNotFound() {
+    int brokerId = getBrokers().get(0).id();
+
+    Response response =
+        request("/v3/clusters/foobar/brokers/" + brokerId + "/configs")
+            .accept(Versions.JSON_API)
+            .get();
+    Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void getBrokerConfig_existingConfig_returnsConfig() throws Exception {
+    String baseUrl = restConnect;
+    String clusterId = getClusterId();
+    int brokerId = getBrokers().get(0).id();
+
+    String expected =
+        OBJECT_MAPPER.writeValueAsString(
+            new GetBrokerConfigResponse(
+                new BrokerConfigData(
+                    "crn:///kafka=" + clusterId
+                        + "/broker=" + brokerId
+                        + "/config=max.connections",
+                    new ResourceLink(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/brokers/" + brokerId
+                            + "/configs/max.connections"),
+                    clusterId,
+                    brokerId,
+                    "max.connections",
+                    "2147483647",
+                    /* isDefault= */ true,
+                    /* isReadOnly= */ false,
+                    /* isSensitive= */ false)));
+
+    Response response =
+        request(
+            "/v3/clusters/" + clusterId
+                + "/brokers/" + brokerId
+                + "/configs/max.connections")
+            .accept(Versions.JSON_API)
+            .get();
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(expected, response.readEntity(String.class));
+  }
+
+  @Test
+  public void getBrokerConfig_nonExistingConfig_throwsNotFound() {
+    String clusterId = getClusterId();
+    int brokerId = getBrokers().get(0).id();
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/foobar")
+            .accept(Versions.JSON_API)
+            .get();
+    Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void getBrokerConfig_nonExistingBroker_throwsNotFound() {
+    String clusterId = getClusterId();
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/brokers/foobar/configs/max.connections")
+            .accept(Versions.JSON_API)
+            .get();
+    Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void getBrokerConfig_nonExistingCluster_throwsNotFound() {
+    int brokerId = getBrokers().get(0).id();
+    Response response =
+        request("/v3/clusters/foobar/brokers/" + brokerId + "/configs/max.connections")
+            .accept(Versions.JSON_API)
+            .get();
+    Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
 }

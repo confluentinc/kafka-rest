@@ -31,6 +31,7 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
@@ -46,6 +47,7 @@ public final class BrokerConfigsResource {
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
+  @Inject
   public BrokerConfigsResource(
       BrokerConfigManager brokerConfigManager,
       CrnFactory crnFactory,
@@ -114,7 +116,7 @@ public final class BrokerConfigsResource {
                 "configs",
                 brokerConfig.getName())),
         brokerConfig.getClusterId(),
-        String.valueOf(brokerConfig.getBrokerId()),
+        brokerConfig.getBrokerId(),
         brokerConfig.getName(),
         brokerConfig.getValue(),
         brokerConfig.isDefault(),
