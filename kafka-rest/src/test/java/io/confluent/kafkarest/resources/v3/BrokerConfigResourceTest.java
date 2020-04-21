@@ -28,10 +28,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class BrokerConfigResourceTest {
+public final class BrokerConfigResourceTest {
 
   private static final String CLUSTER_ID = "cluster-1";
-  private static final String BROKER_ID = "broker-1";
+  private static final int BROKER_ID = 1;
 
   private static final BrokerConfig CONFIG_1 =
       new BrokerConfig(

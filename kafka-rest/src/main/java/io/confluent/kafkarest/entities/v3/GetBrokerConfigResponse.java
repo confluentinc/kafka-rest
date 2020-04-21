@@ -23,7 +23,7 @@ import java.util.StringJoiner;
  * Response body for {@code GET /v3/clusters/<clusterId>/brokers/<brokerId>/configs/<name>}
  * requests.
  */
-public class GetBrokerConfigResponse {
+public final class GetBrokerConfigResponse {
 
   private final BrokerConfigData data;
 

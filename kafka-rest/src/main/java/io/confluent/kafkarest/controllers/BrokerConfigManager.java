@@ -26,12 +26,12 @@ public interface BrokerConfigManager {
    * Returns a list of Kafka {@link BrokerConfig BrokerConfigs} belonging  to the
    * {@link io.confluent.kafkarest.entities.Broker} with the given {@code brokerId}.
    */
-  CompletableFuture<List<BrokerConfig>> listBrokerConfigs(String clusterId, String brokerId);
+  CompletableFuture<List<BrokerConfig>> listBrokerConfigs(String clusterId, int brokerId);
 
   /**
    * Returns the Kafka {@link BrokerConfig} with the given {@code name}.
    */
   CompletableFuture<Optional<BrokerConfig>> getBrokerConfig(
-      String clusterId, String brokerId, String name);
+      String clusterId, int brokerId, String name);
 
 }

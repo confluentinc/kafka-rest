@@ -21,6 +21,7 @@ import static java.util.Collections.singletonList;
 
 import io.confluent.kafkarest.entities.BrokerConfig;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -29,28 +30,27 @@ import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.config.ConfigResource.Type;
 
-public class BrokerConfigManagerImpl implements  BrokerConfigManager {
+final class BrokerConfigManagerImpl implements BrokerConfigManager {
 
   private final Admin adminClient;
   private final ClusterManager clusterManager;
 
   @Inject
   BrokerConfigManagerImpl(Admin adminClient, ClusterManager clusterManager) {
-    this.adminClient = adminClient;
-    this.clusterManager = clusterManager;
+    this.adminClient = Objects.requireNonNull(adminClient);
+    this.clusterManager = Objects.requireNonNull(clusterManager);
   }
 
-
   @Override
-  public CompletableFuture<List<BrokerConfig>> listBrokerConfigs(String clusterId,
-      String brokerId) {
-    ConfigResource resource = new ConfigResource(Type.BROKER, brokerId);
+  public CompletableFuture<List<BrokerConfig>> listBrokerConfigs(
+      String clusterId, int brokerId) {
+    ConfigResource resource = new ConfigResource(Type.BROKER, String.valueOf(brokerId));
     return clusterManager.getCluster(clusterId)
-    .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
-    .thenCompose(
-        broker ->
-            KafkaFutures.toCompletableFuture(
-                adminClient.describeConfigs(singletonList(resource)).values().get(resource)))
+        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
+        .thenCompose(
+            broker ->
+                KafkaFutures.toCompletableFuture(
+                    adminClient.describeConfigs(singletonList(resource)).values().get(resource)))
         .thenApply(
             config ->
                 config.entries().stream()
@@ -68,8 +68,8 @@ public class BrokerConfigManagerImpl implements  BrokerConfigManager {
   }
 
   @Override
-  public CompletableFuture<Optional<BrokerConfig>> getBrokerConfig(String clusterId,
-      String brokerId, String name) {
+  public CompletableFuture<Optional<BrokerConfig>> getBrokerConfig(
+      String clusterId, int brokerId, String name) {
     return listBrokerConfigs(clusterId, brokerId)
         .thenApply(configs -> findEntityByKey(configs, BrokerConfig::getName, name));
   }

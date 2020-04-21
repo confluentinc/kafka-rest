@@ -40,12 +40,11 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 
 @Path("/v3/clusters/{clusterId}/brokers/{brokerId}/configs")
-public class BrokerConfigsResource {
+public final class BrokerConfigsResource {
 
   private final BrokerConfigManager brokerConfigManager;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
-
 
   public BrokerConfigsResource(
       BrokerConfigManager brokerConfigManager,
@@ -61,20 +60,21 @@ public class BrokerConfigsResource {
   public void listBrokerConfigs(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @PathParam("brokerId") String brokerId) {
+      @PathParam("brokerId") int brokerId) {
     CompletableFuture<ListBrokerConfigsResponse> response =
         brokerConfigManager.listBrokerConfigs(clusterId, brokerId)
-          .thenApply(
-               configs ->
-                   new ListBrokerConfigsResponse(
-                       new CollectionLink(
-                           urlFactory.create(
-                               "v3", "clusters", clusterId, "brokers", brokerId, "configs"),
-                           null),
-                       configs.stream()
-                       .sorted(Comparator.comparing(BrokerConfig::getName))
-                       .map(this::toBrokerConfigData)
-                       .collect(Collectors.toList())));
+            .thenApply(
+                configs ->
+                    new ListBrokerConfigsResponse(
+                        new CollectionLink(
+                            urlFactory.create(
+                                "v3", "clusters", clusterId, "brokers", String.valueOf(brokerId),
+                                "configs"),
+                            /* next= */null),
+                        configs.stream()
+                            .sorted(Comparator.comparing(BrokerConfig::getName))
+                            .map(this::toBrokerConfigData)
+                            .collect(Collectors.toList())));
     AsyncResponses.asyncResume(asyncResponse, response);
   }
 
@@ -84,7 +84,7 @@ public class BrokerConfigsResource {
   public void getBrokerConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @PathParam("brokerId") String brokerId,
+      @PathParam("brokerId") int brokerId,
       @PathParam("name") String name
   ) {
     CompletableFuture<GetBrokerConfigResponse> response =
@@ -101,7 +101,7 @@ public class BrokerConfigsResource {
             ClusterData.ELEMENT_TYPE,
             brokerConfig.getClusterId(),
             BrokerData.ELEMENT_TYPE,
-            brokerConfig.getBrokerId(),
+            String.valueOf(brokerConfig.getBrokerId()),
             BrokerConfigData.ELEMENT_TYPE,
             brokerConfig.getName()),
         new ResourceLink(
@@ -110,11 +110,11 @@ public class BrokerConfigsResource {
                 "clusters",
                 brokerConfig.getClusterId(),
                 "brokers",
-                brokerConfig.getBrokerId(),
+                String.valueOf(brokerConfig.getBrokerId()),
                 "configs",
                 brokerConfig.getName())),
         brokerConfig.getClusterId(),
-        brokerConfig.getBrokerId(),
+        String.valueOf(brokerConfig.getBrokerId()),
         brokerConfig.getName(),
         brokerConfig.getValue(),
         brokerConfig.isDefault(),

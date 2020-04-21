@@ -16,7 +16,6 @@
 package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.confluent.kafkarest.entities.v3.TopicConfigData.Attributes;
 import java.util.Objects;
 import java.util.StringJoiner;
 import javax.annotation.Nullable;
@@ -24,7 +23,7 @@ import javax.annotation.Nullable;
 /**
  * A (Broker) config resource type.
  */
-public class BrokerConfigData {
+public final class BrokerConfigData {
 
   public static final String ELEMENT_TYPE = "config";
 
@@ -38,7 +37,7 @@ public class BrokerConfigData {
       String id,
       ResourceLink links,
       String clusterId,
-      String brokerId,
+      int brokerId,
       String name,
       @Nullable String value,
       boolean isDefault,
@@ -102,7 +101,7 @@ public class BrokerConfigData {
 
     private final String clusterId;
 
-    private final String brokerId;
+    private final int brokerId;
 
     private final String name;
 
@@ -117,7 +116,7 @@ public class BrokerConfigData {
 
     public Attributes(
         String clusterId,
-        String brokerId,
+        int brokerId,
         String name,
         @Nullable String value,
         boolean isDefault,
@@ -138,7 +137,7 @@ public class BrokerConfigData {
     }
 
     @JsonProperty("broker_id")
-    public String getBrokerId() {
+    public int getBrokerId() {
       return brokerId;
     }
 

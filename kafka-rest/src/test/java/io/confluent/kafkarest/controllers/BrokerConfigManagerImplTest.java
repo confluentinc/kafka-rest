@@ -28,7 +28,6 @@ import static org.easymock.EasyMock.replay;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.BrokerConfig;
 import io.confluent.kafkarest.entities.Cluster;
-import io.confluent.kafkarest.entities.v3.CreateTopicRequest.Data.Attributes;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -43,18 +42,19 @@ import org.apache.kafka.clients.admin.DescribeConfigsResult;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.config.ConfigResource.Type;
-import org.apache.kafka.common.errors.BrokerNotAvailableException;
-import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+@RunWith(JUnit4.class)
 public class BrokerConfigManagerImplTest {
 
   private static final String CLUSTER_ID = "cluster-1";
-  private static final String BROKER_ID = "broker-1";
+  private static final int BROKER_ID = 1;
 
   private static final Cluster CLUSTER =
       new Cluster(CLUSTER_ID, null, emptyList());
@@ -136,12 +136,12 @@ public class BrokerConfigManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
-            singletonList(new ConfigResource(Type.BROKER, BROKER_ID))))
+            singletonList(new ConfigResource(Type.BROKER, String.valueOf(BROKER_ID)))))
             .andReturn(describeConfigsResult);
     expect(describeConfigsResult.values())
         .andReturn(
             singletonMap(
-                new ConfigResource(Type.BROKER, BROKER_ID),
+                new ConfigResource(Type.BROKER, String.valueOf(BROKER_ID)),
                 KafkaFuture.completedFuture(CONFIG)));
     replay(adminClient, clusterManager, describeConfigsResult);
 
@@ -156,20 +156,20 @@ public class BrokerConfigManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
-            singletonList(new ConfigResource(Type.BROKER, BROKER_ID))))
+            singletonList(new ConfigResource(Type.BROKER, String.valueOf(BROKER_ID)))))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.values())
         .andReturn(
             singletonMap(
-                new ConfigResource(Type.BROKER, BROKER_ID),
-                TestUtils.failedFuture(new BrokerNotAvailableException("Broker not found."))));
+                new ConfigResource(Type.BROKER, String.valueOf(BROKER_ID)),
+                TestUtils.failedFuture(new NotFoundException("Broker not found."))));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
       brokerConfigManager.listBrokerConfigs(CLUSTER_ID, BROKER_ID).get();
       fail();
     } catch (ExecutionException e) {
-      assertEquals(BrokerNotAvailableException.class, e.getCause().getClass());
+      assertEquals(NotFoundException.class, e.getCause().getClass());
     }
   }
 
@@ -190,12 +190,12 @@ public class BrokerConfigManagerImplTest {
   public void getBrokerConfig_existingConfig_returnsConfig() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.describeConfigs(
-        singletonList(new ConfigResource(Type.BROKER, BROKER_ID))))
+        singletonList(new ConfigResource(Type.BROKER, String.valueOf(BROKER_ID)))))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.values())
         .andReturn(
             singletonMap(
-                new ConfigResource(Type.BROKER, BROKER_ID),
+                new ConfigResource(Type.BROKER, String.valueOf(BROKER_ID)),
                 KafkaFuture.completedFuture(CONFIG)));
     replay(adminClient, clusterManager, describeConfigsResult);
 
@@ -213,12 +213,12 @@ public class BrokerConfigManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
-            singletonList(new ConfigResource(Type.BROKER, BROKER_ID))))
+            singletonList(new ConfigResource(Type.BROKER, String.valueOf(BROKER_ID)))))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.values())
         .andReturn(
             singletonMap(
-                new ConfigResource(Type.BROKER, BROKER_ID),
+                new ConfigResource(Type.BROKER, String.valueOf(BROKER_ID)),
                 KafkaFuture.completedFuture(CONFIG)));
     replay(adminClient, clusterManager, describeConfigsResult);
 
@@ -233,13 +233,13 @@ public class BrokerConfigManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
-            singletonList(new ConfigResource(Type.BROKER, BROKER_ID))))
+            singletonList(new ConfigResource(Type.BROKER, String.valueOf(BROKER_ID)))))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.values())
         .andReturn(
             singletonMap(
-                new ConfigResource(Type.BROKER, BROKER_ID),
-                TestUtils.failedFuture(new BrokerNotAvailableException("Broker not found."))));
+                new ConfigResource(Type.BROKER, String.valueOf(BROKER_ID)),
+                TestUtils.failedFuture(new NotFoundException("Broker not found."))));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
@@ -247,7 +247,7 @@ public class BrokerConfigManagerImplTest {
           CLUSTER_ID, BROKER_ID, CONFIG_1.getName()).get();
       fail();
     } catch (ExecutionException e) {
-      assertEquals(BrokerNotAvailableException.class, e.getCause().getClass());
+      assertEquals(NotFoundException.class, e.getCause().getClass());
     }
   }
 

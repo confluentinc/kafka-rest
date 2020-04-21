@@ -24,7 +24,7 @@ import java.util.StringJoiner;
  * Response body for {@code GET /v3/clusters/<clusterId>/brokers/<brokerId>/configs}
  * requests.
  */
-public class ListBrokerConfigsResponse {
+public final class ListBrokerConfigsResponse {
 
   private final CollectionLink links;
 
