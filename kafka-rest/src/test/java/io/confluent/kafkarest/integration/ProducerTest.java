@@ -23,11 +23,11 @@ import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.v1.BinaryPartitionProduceRequest;
-import io.confluent.kafkarest.entities.v1.BinaryPartitionProduceRequest.BinaryPartitionProduceRecord;
-import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest;
-import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
-import io.confluent.kafkarest.entities.v1.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest.BinaryPartitionProduceRecord;
+import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
+import io.confluent.kafkarest.entities.v2.PartitionOffset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -265,11 +265,8 @@ public class ProducerTest
   @Test
   public void testNullPayload() {
 
-    List<String> versions = Arrays.asList(Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON,
-        Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST,
-        Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V2_JSON_AVRO, Versions.KAFKA_V1_JSON_JSON,
-        Versions.KAFKA_V2_JSON_JSON, Versions.KAFKA_V2_JSON_BINARY, Versions.KAFKA_V2_JSON_JSON,
-        Versions.KAFKA_V2_JSON_AVRO
+    List<String> versions = Arrays.asList(
+        Versions.KAFKA_V2_JSON_AVRO, Versions.KAFKA_V2_JSON_JSON, Versions.KAFKA_V2_JSON_BINARY
     );
 
     for (String version : versions) {

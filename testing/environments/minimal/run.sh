@@ -33,9 +33,7 @@ env_dir=$(dirname "$0")
 base_dir=$env_dir/../../..
 
 # Make sure kafka-rest is packaged.
-mvn -f "$base_dir"/kafka-rest-common/pom.xml          -Dmaven.test.skip=true install
-mvn -f "$base_dir"/kafka-rest-scala-consumer/pom.xml -Dmaven.test.skip=true install
-mvn -f "$base_dir"/kafka-rest/pom.xml                 -Dmaven.test.skip=true package
+mvn -f "$base_dir"/kafka-rest/pom.xml -Dmaven.test.skip=true package
 
 # For some reason `up --build --force-recreate` is not enough. Make sure everything is clean.
 docker-compose -f "$env_dir"/docker-compose.yml rm -fsv

@@ -29,25 +29,22 @@ public class TestKafkaRestApplication extends KafkaRestApplication {
   ProducerPool producerPoolInjected;
   KafkaConsumerManager kafkaConsumerManagerInjected;
   AdminClientWrapper adminClientWrapperInjected;
-  ScalaConsumersContext scalaConsumersContextInjected;
 
 
   public TestKafkaRestApplication(KafkaRestConfig config,
                                   ProducerPool producerPool,
                                   KafkaConsumerManager kafkaConsumerManager,
-                                  AdminClientWrapper adminClientWrapper,
-                                  ScalaConsumersContext scalaConsumersContext) {
+                                  AdminClientWrapper adminClientWrapper) {
     super(config);
     producerPoolInjected = producerPool;
     kafkaConsumerManagerInjected = kafkaConsumerManager;
     adminClientWrapperInjected = adminClientWrapper;
-    scalaConsumersContextInjected = scalaConsumersContext;
   }
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
     setupInjectedResources(config, appConfig, producerPoolInjected, kafkaConsumerManagerInjected,
-        adminClientWrapperInjected, scalaConsumersContextInjected);
+        adminClientWrapperInjected);
   }
 
 }

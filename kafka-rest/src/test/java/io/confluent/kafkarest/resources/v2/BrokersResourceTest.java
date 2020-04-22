@@ -58,8 +58,7 @@ public class BrokersResourceTest
     ctx = new DefaultKafkaRestContext(config,
         producerPool,
         null,
-        adminClientWrapper,
-        null
+        adminClientWrapper
     );
     addResource(new BrokersResource(ctx));
   }

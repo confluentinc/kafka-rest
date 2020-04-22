@@ -64,8 +64,7 @@ public class PartitionsResourceTest extends JerseyTest {
           new KafkaRestConfig(),
           /* producerPool= */ null,
           consumerManager,
-          adminClientWrapper,
-          /* scalaConsumersContext= */ null);
+          adminClientWrapper);
     } catch (RestConfigException e) {
       throw new RuntimeException(e);
     }

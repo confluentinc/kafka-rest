@@ -26,7 +26,6 @@ import org.apache.kafka.clients.admin.AdminClient;
 public class DefaultKafkaRestContext implements KafkaRestContext {
 
   private final KafkaRestConfig config;
-  private final ScalaConsumersContext scalaConsumersContext;
   private ProducerPool producerPool;
   private KafkaConsumerManager kafkaConsumerManager;
   private AdminClientWrapper adminClientWrapper;
@@ -36,15 +35,13 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
       KafkaRestConfig config,
       ProducerPool producerPool,
       KafkaConsumerManager kafkaConsumerManager,
-      AdminClientWrapper adminClientWrapper,
-      ScalaConsumersContext scalaConsumersContext
+      AdminClientWrapper adminClientWrapper
   ) {
 
     this.config = config;
     this.producerPool = producerPool;
     this.kafkaConsumerManager = kafkaConsumerManager;
     this.adminClientWrapper = adminClientWrapper;
-    this.scalaConsumersContext = scalaConsumersContext;
   }
 
 
@@ -59,21 +56,6 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
       producerPool = new ProducerPool(config);
     }
     return producerPool;
-  }
-
-  @Override
-  public ScalaConsumersContext getScalaConsumersContext() {
-    return scalaConsumersContext;
-  }
-
-  @Override
-  public ConsumerManager getConsumerManager() {
-    return scalaConsumersContext.getConsumerManager();
-  }
-
-  @Override
-  public SimpleConsumerManager getSimpleConsumerManager() {
-    return scalaConsumersContext.getSimpleConsumerManager();
   }
 
   @Override
@@ -110,9 +92,6 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
     }
     if (adminClientWrapper != null) {
       adminClientWrapper.shutdown();
-    }
-    if (scalaConsumersContext != null) {
-      scalaConsumersContext.shutdown();
     }
   }
 }
