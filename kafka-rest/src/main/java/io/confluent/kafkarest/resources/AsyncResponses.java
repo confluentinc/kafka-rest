@@ -13,7 +13,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.resources.v3;
+package io.confluent.kafkarest.resources;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
@@ -24,16 +24,25 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
-final class AsyncResponses {
+/**
+ * Utilities to deal with {@link AsyncResponse}.
+ */
+public final class AsyncResponses {
 
   private AsyncResponses() {
   }
 
-  static void asyncResume(AsyncResponse asyncResponse, CompletableFuture<?> entity) {
+  /**
+   * Resumes the given {@code asyncResponse} with the result of {@code entity}.
+   */
+  public static void asyncResume(AsyncResponse asyncResponse, CompletableFuture<?> entity) {
     AsyncResponseBuilder.from(Response.ok()).entity(entity).asyncResume(asyncResponse);
   }
 
-  static final class AsyncResponseBuilder {
+  /**
+   * A analogous of {@link AsyncResponse} for {@link ResponseBuilder}.
+   */
+  public static final class AsyncResponseBuilder {
 
     private final ResponseBuilder responseBuilder;
 
@@ -47,39 +56,46 @@ final class AsyncResponses {
       this.responseBuilder = responseBuilder.clone();
     }
 
-    static AsyncResponseBuilder from(ResponseBuilder responseBuilder) {
+    /**
+     * Returns a new {@link AsyncResponseBuilder} that when resumed, will return a response built
+     * from the given {@code responseBuilder}.
+     */
+    public static AsyncResponseBuilder from(ResponseBuilder responseBuilder) {
       return new AsyncResponseBuilder(responseBuilder);
     }
 
-    AsyncResponseBuilder entity(CompletableFuture<?> entity) {
+    /**
+     * See {@link ResponseBuilder#entity(Object)}.
+     */
+    public AsyncResponseBuilder entity(CompletableFuture<?> entity) {
       entityFuture = entity;
       return this;
     }
 
-    AsyncResponseBuilder entity(CompletableFuture<?> entity, Annotation[] annotations) {
+    /**
+     * See {@link ResponseBuilder#entity(Object, Annotation[])}.
+     */
+    public AsyncResponseBuilder entity(CompletableFuture<?> entity, Annotation[] annotations) {
       entityFuture = entity;
-      entityAnnotations = annotations;
+      entityAnnotations = Arrays.copyOf(annotations, annotations.length);
       return this;
     }
 
-    void asyncResume(AsyncResponse asyncResponse) {
+    /**
+     * Resumes this {@code AsyncResponseBuilder}.
+     */
+    public void asyncResume(AsyncResponse asyncResponse) {
       if (entityFuture == null) {
         throw new IllegalStateException();
       }
 
-      ResponseBuilder response = responseBuilder.clone();
-      Annotation[] annotations =
-          entityAnnotations != null
-              ? Arrays.copyOf(entityAnnotations, entityAnnotations.length)
-              : null;
-
       entityFuture.whenComplete(
           (entity, exception) -> {
             if (exception == null) {
-              if (annotations != null) {
-                asyncResponse.resume(response.entity(entity, annotations).build());
+              if (entityAnnotations != null) {
+                asyncResponse.resume(responseBuilder.entity(entity, entityAnnotations).build());
               } else {
-                asyncResponse.resume(response.entity(entity).build());
+                asyncResponse.resume(responseBuilder.entity(entity).build());
               }
             } else if (exception instanceof CompletionException) {
               asyncResponse.resume(exception.getCause());

@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import static java.util.Objects.requireNonNull;
+
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.PartitionManager;
 import io.confluent.kafkarest.entities.Partition;
@@ -26,9 +28,9 @@ import io.confluent.kafkarest.entities.v3.PartitionData;
 import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.entities.v3.TopicData;
+import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -50,9 +52,9 @@ public final class PartitionsResource {
   @Inject
   public PartitionsResource(
       PartitionManager partitionManager, CrnFactory crnFactory, UrlFactory urlFactory) {
-    this.partitionManager = Objects.requireNonNull(partitionManager);
-    this.crnFactory = Objects.requireNonNull(crnFactory);
-    this.urlFactory = Objects.requireNonNull(urlFactory);
+    this.partitionManager = requireNonNull(partitionManager);
+    this.crnFactory = requireNonNull(crnFactory);
+    this.urlFactory = requireNonNull(urlFactory);
   }
 
   @GET

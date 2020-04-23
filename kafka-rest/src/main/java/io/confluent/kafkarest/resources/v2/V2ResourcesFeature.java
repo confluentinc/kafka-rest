@@ -29,7 +29,7 @@ public final class V2ResourcesFeature implements Feature {
 
   @Override
   public boolean configure(FeatureContext configurable) {
-    configurable.register(new BrokersResource(context));
+    configurable.register(BrokersResource.class);
     configurable.register(new ConsumersResource(context));
     configurable.register(new PartitionsResource(context));
     configurable.register(new RootResource());

@@ -17,11 +17,11 @@ package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
 import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
+import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Cluster;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
@@ -32,7 +32,7 @@ final class BrokerManagerImpl implements BrokerManager {
 
   @Inject
   BrokerManagerImpl(ClusterManager clusterManager) {
-    this.clusterManager = Objects.requireNonNull(clusterManager);
+    this.clusterManager = requireNonNull(clusterManager);
   }
 
   @Override
@@ -46,5 +46,10 @@ final class BrokerManagerImpl implements BrokerManager {
   public CompletableFuture<Optional<Broker>> getBroker(String clusterId, int brokerId) {
     return listBrokers(clusterId)
         .thenApply(brokers -> findEntityByKey(brokers, Broker::getBrokerId, brokerId));
+  }
+
+  @Override
+  public CompletableFuture<List<Broker>> listLocalBrokers() {
+    return clusterManager.getLocalCluster().thenApply(Cluster::getBrokers);
   }
 }

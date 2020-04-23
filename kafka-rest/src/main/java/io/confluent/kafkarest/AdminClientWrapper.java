@@ -18,7 +18,6 @@ package io.confluent.kafkarest;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.Config;
 import org.apache.kafka.clients.admin.ConfigEntry;
-import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartitionInfo;
@@ -53,17 +52,6 @@ public class AdminClientWrapper {
     properties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG,
         RestConfigUtils.bootstrapBrokers(kafkaRestConfig));
     return properties;
-  }
-
-  public List<Integer> getBrokerIds() throws Exception {
-    List<Integer> brokerIds = new Vector<>();
-    DescribeClusterResult clusterResults = adminClient.describeCluster();
-    Collection<Node> nodeCollection =
-        clusterResults.nodes().get(initTimeOut, TimeUnit.MILLISECONDS);
-    for (Node node : nodeCollection) {
-      brokerIds.add(node.id());
-    }
-    return brokerIds;
   }
 
   public Collection<String> getTopicNames() throws Exception {

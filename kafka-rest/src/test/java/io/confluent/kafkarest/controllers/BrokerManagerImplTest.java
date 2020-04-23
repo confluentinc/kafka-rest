@@ -122,4 +122,14 @@ public class BrokerManagerImplTest {
 
     assertFalse(broker.isPresent());
   }
+
+  @Test
+  public void listLocalBrokers_returnsBrokers() throws Exception {
+    expect(clusterManager.getLocalCluster()).andReturn(CompletableFuture.completedFuture(CLUSTER));
+    replay(clusterManager);
+
+    List<Broker> brokers = brokerManager.listLocalBrokers().get();
+
+    assertEquals(CLUSTER.getBrokers(), brokers);
+  }
 }
