@@ -194,14 +194,7 @@ public final class PartitionsResource {
       final int partition,
       final EmbeddedFormat format,
       final ProduceRequest<K, V> request
-  ) throws Exception {
-    // If the topic already exists, we can proactively check for the partition
-    if (topicExists(topic)) {
-      if (!ctx.getAdminClientWrapper().partitionExists(topic, partition)) {
-        throw Errors.partitionNotFoundException();
-      }
-    }
-
+  ) {
     log.trace(
         "Executing topic produce request id={} topic={} partition={} format={} request={}",
         asyncResponse, topic, partition, format, request
