@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Confluent Inc.
+ * Copyright 2020 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import static java.util.Objects.requireNonNull;
+
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.BrokerConfigManager;
 import io.confluent.kafkarest.entities.BrokerConfig;
@@ -25,10 +27,10 @@ import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.GetBrokerConfigResponse;
 import io.confluent.kafkarest.entities.v3.ListBrokerConfigsResponse;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
 import java.util.Comparator;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -52,9 +54,9 @@ public final class BrokerConfigsResource {
       BrokerConfigManager brokerConfigManager,
       CrnFactory crnFactory,
       UrlFactory urlFactory) {
-    this.brokerConfigManager = Objects.requireNonNull(brokerConfigManager);
-    this.crnFactory = Objects.requireNonNull(crnFactory);
-    this.urlFactory = Objects.requireNonNull(urlFactory);
+    this.brokerConfigManager = requireNonNull(brokerConfigManager);
+    this.crnFactory = requireNonNull(crnFactory);
+    this.urlFactory = requireNonNull(urlFactory);
   }
 
   @GET

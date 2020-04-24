@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.controllers;
 
+import static io.confluent.kafkarest.TestUtils.failedFuture;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.easymock.EasyMock.anyObject;
@@ -26,6 +27,7 @@ import static org.junit.Assert.fail;
 
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Cluster;
+import io.confluent.kafkarest.exceptions.UnsupportedProtocolException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -96,16 +98,19 @@ public class ClusterManagerImplTest {
   }
 
   @Test
-  public void listClusters_noClusterId_returnEmpty() throws Exception {
+  public void listClusters_noClusterId_throwsUnsupportedProtocol() throws Exception {
     expect(adminClient.describeCluster(anyObject())).andReturn(describeClusterResult);
     expect(describeClusterResult.clusterId()).andReturn(KafkaFuture.completedFuture(null));
     expect(describeClusterResult.controller()).andReturn(KafkaFuture.completedFuture(NODE_1));
     expect(describeClusterResult.nodes()).andReturn(KafkaFuture.completedFuture(NODES));
     replay(adminClient, describeClusterResult);
 
-    List<Cluster> clusters = clusterManager.listClusters().get();
-
-    assertEquals(emptyList(), clusters);
+    try {
+      clusterManager.listClusters().get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(UnsupportedProtocolException.class,  e.getCause().getClass());
+    }
   }
 
   @Test
@@ -206,10 +211,41 @@ public class ClusterManagerImplTest {
     assertFalse(cluster.isPresent());
   }
 
-  private static <T> KafkaFuture<T> failedFuture(RuntimeException exception) {
-    KafkaFuture<T> future = KafkaFuture.completedFuture(null);
-    return future.whenComplete((value, error) -> {
-      throw exception;
-    });
+  @Test
+  public void getLocalCluster_returnsCluster() throws Exception {
+    expect(adminClient.describeCluster(anyObject())).andReturn(describeClusterResult);
+    expect(describeClusterResult.clusterId()).andReturn(KafkaFuture.completedFuture(CLUSTER_ID));
+    expect(describeClusterResult.controller()).andReturn(KafkaFuture.completedFuture(NODE_1));
+    expect(describeClusterResult.nodes()).andReturn(KafkaFuture.completedFuture(NODES));
+    replay(adminClient, describeClusterResult);
+
+    Cluster cluster = clusterManager.getLocalCluster().get();
+
+    Cluster expected =
+        new Cluster(
+            CLUSTER_ID,
+            new Broker(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
+            Arrays.asList(
+                new Broker(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
+                new Broker(CLUSTER_ID, NODE_2.id(), NODE_2.host(), NODE_2.port(), NODE_2.rack()),
+                new Broker(CLUSTER_ID, NODE_3.id(), NODE_3.host(), NODE_3.port(), NODE_3.rack())));
+
+    assertEquals(expected, cluster);
+  }
+
+  @Test
+  public void getLocalCluster_noClusterId_throwsUnsupportedProtocol() throws Exception {
+    expect(adminClient.describeCluster(anyObject())).andReturn(describeClusterResult);
+    expect(describeClusterResult.clusterId()).andReturn(KafkaFuture.completedFuture(null));
+    expect(describeClusterResult.controller()).andReturn(KafkaFuture.completedFuture(NODE_1));
+    expect(describeClusterResult.nodes()).andReturn(KafkaFuture.completedFuture(NODES));
+    replay(adminClient, describeClusterResult);
+
+    try {
+      clusterManager.getLocalCluster().get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(UnsupportedProtocolException.class,  e.getCause().getClass());
+    }
   }
 }

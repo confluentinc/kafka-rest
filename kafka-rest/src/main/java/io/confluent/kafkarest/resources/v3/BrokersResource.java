@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import static java.util.Objects.requireNonNull;
+
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.BrokerManager;
 import io.confluent.kafkarest.entities.Broker;
@@ -25,9 +27,9 @@ import io.confluent.kafkarest.entities.v3.GetBrokerResponse;
 import io.confluent.kafkarest.entities.v3.ListBrokersResponse;
 import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -51,9 +53,9 @@ public final class BrokersResource {
   @Inject
   public BrokersResource(
       BrokerManager brokerManager, CrnFactory crnFactory, UrlFactory urlFactory) {
-    this.brokerManager = Objects.requireNonNull(brokerManager);
-    this.crnFactory = Objects.requireNonNull(crnFactory);
-    this.urlFactory = Objects.requireNonNull(urlFactory);
+    this.brokerManager = requireNonNull(brokerManager);
+    this.crnFactory = requireNonNull(crnFactory);
+    this.urlFactory = requireNonNull(urlFactory);
   }
 
   @GET

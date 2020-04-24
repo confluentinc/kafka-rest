@@ -16,14 +16,14 @@
 package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
+import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Cluster;
+import io.confluent.kafkarest.exceptions.UnsupportedProtocolException;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -38,11 +38,23 @@ final class ClusterManagerImpl implements ClusterManager {
 
   @Inject
   ClusterManagerImpl(Admin adminClient) {
-    this.adminClient = Objects.requireNonNull(adminClient);
+    this.adminClient = requireNonNull(adminClient);
   }
 
   @Override
   public CompletableFuture<List<Cluster>> listClusters() {
+    return getLocalCluster().thenApply(cluster -> unmodifiableList(singletonList(cluster)));
+  }
+
+  @Override
+  public CompletableFuture<Optional<Cluster>> getCluster(String clusterId) {
+    requireNonNull(clusterId);
+    return listClusters()
+        .thenApply(clusters -> findEntityByKey(clusters, Cluster::getClusterId, clusterId));
+  }
+
+  @Override
+  public CompletableFuture<Cluster> getLocalCluster() {
     DescribeClusterResult describeClusterResult =
         adminClient.describeCluster(
             new DescribeClusterOptions().includeAuthorizedOperations(false));
@@ -54,16 +66,14 @@ final class ClusterManagerImpl implements ClusterManager {
               if (clusterId == null) {
                 // If clusterId is null (e.g. MetadataResponse version is < 2), we can't address the
                 // cluster by clusterId, therefore we are not interested on it.
-                return null;
+                throw new UnsupportedProtocolException(
+                    "Metadata Response protocol version >= 2 required.");
               }
               return clusterBuilder.setClusterId(clusterId);
             })
         .thenCombine(
             KafkaFutures.toCompletableFuture(describeClusterResult.controller()),
             (clusterBuilder, controller) -> {
-              if (clusterBuilder == null) {
-                return null;
-              }
               if (controller == null || controller.isEmpty()) {
                 return clusterBuilder;
               }
@@ -73,9 +83,6 @@ final class ClusterManagerImpl implements ClusterManager {
         .thenCombine(
             KafkaFutures.toCompletableFuture(describeClusterResult.nodes()),
             (clusterBuilder, nodes) -> {
-              if (clusterBuilder == null) {
-                return null;
-              }
               if (nodes == null) {
                 return clusterBuilder;
               }
@@ -85,19 +92,6 @@ final class ClusterManagerImpl implements ClusterManager {
                       .map(node -> Broker.fromNode(clusterBuilder.getClusterId(), node))
                       .collect(Collectors.toList()));
             })
-        .thenApply(
-            clusterBuilder -> {
-              if (clusterBuilder == null) {
-                return emptyList();
-              }
-              return unmodifiableList(singletonList(clusterBuilder.build()));
-            });
-  }
-
-  @Override
-  public CompletableFuture<Optional<Cluster>> getCluster(String clusterId) {
-    Objects.requireNonNull(clusterId);
-    return listClusters()
-        .thenApply(clusters -> findEntityByKey(clusters, Cluster::getClusterId, clusterId));
+        .thenApply(Cluster.Builder::build);
   }
 }

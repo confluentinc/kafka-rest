@@ -35,4 +35,10 @@ public interface BrokerManager {
    * Returns the Kafka {@link Broker} with the given {@code brokerId}.
    */
   CompletableFuture<Optional<Broker>> getBroker(String clusterId, int brokerId);
+
+  /**
+   * Returns the list of Kafka {@link Broker Brokers} belonging to the {@link
+   * io.confluent.kafkarest.entities.Cluster} that this application is connected to.
+   */
+  CompletableFuture<List<Broker>> listLocalBrokers();
 }
