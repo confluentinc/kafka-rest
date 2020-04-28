@@ -31,9 +31,11 @@ public final class V2ResourcesFeature implements Feature {
   public boolean configure(FeatureContext configurable) {
     configurable.register(BrokersResource.class);
     configurable.register(new ConsumersResource(context));
-    configurable.register(new PartitionsResource(context));
-    configurable.register(new RootResource());
-    configurable.register(new TopicsResource(context));
+    configurable.register(PartitionsResource.class);
+    configurable.register(new ProduceToPartitionAction(context));
+    configurable.register(new ProduceToTopicAction(context));
+    configurable.register(RootResource.class);
+    configurable.register(TopicsResource.class);
     return true;
   }
 }

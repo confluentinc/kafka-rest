@@ -440,6 +440,24 @@ public class TopicManagerImplTest {
   }
 
   @Test
+  public void listLocalTopics_returnsTopics() throws Exception {
+    expect(clusterManager.getLocalCluster()).andReturn(completedFuture(CLUSTER));
+    expect(adminClient.listTopics()).andReturn(listTopicsResult);
+    expect(listTopicsResult.listings()).andReturn(KafkaFuture.completedFuture(TOPIC_LISTINGS));
+    expect(adminClient.describeTopics(anyObject())).andReturn(describeTopicResult);
+    expect(describeTopicResult.all())
+        .andReturn(
+            KafkaFuture.completedFuture(
+                createTopicDescriptionMap(
+                    TOPIC_DESCRIPTION_1, TOPIC_DESCRIPTION_2, TOPIC_DESCRIPTION_3)));
+    replay(clusterManager, adminClient, listTopicsResult, describeTopicResult);
+
+    List<Topic> topics = topicManager.listLocalTopics().get();
+
+    assertEquals(Arrays.asList(TOPIC_1, TOPIC_2, TOPIC_3), topics);
+  }
+
+  @Test
   public void listTopic_nonExistingCluster_throwsNotFoundException() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
     replay(clusterManager);
@@ -487,6 +505,31 @@ public class TopicManagerImplTest {
     replay(clusterManager, adminClient, describeTopicResult);
 
     Optional<Topic> topic = topicManager.getTopic(CLUSTER_ID, TOPIC_1.getName()).get();
+
+    assertFalse(topic.isPresent());
+  }
+
+  @Test
+  public void getLocalTopic_existingTopic_returnsTopic() throws Exception {
+    expect(clusterManager.getLocalCluster()).andReturn(completedFuture(CLUSTER));
+    expect(adminClient.describeTopics(anyObject())).andReturn(describeTopicResult);
+    expect(describeTopicResult.all())
+        .andReturn(KafkaFuture.completedFuture(createTopicDescriptionMap(TOPIC_DESCRIPTION_1)));
+    replay(clusterManager, adminClient, describeTopicResult);
+
+    Topic topic = topicManager.getLocalTopic(TOPIC_1.getName()).get().get();
+
+    assertEquals(TOPIC_1, topic);
+  }
+
+  @Test
+  public void getLocalTopic_nonExistingTopic_returnsEmpty() throws Exception {
+    expect(clusterManager.getLocalCluster()).andReturn(completedFuture(CLUSTER));
+    expect(adminClient.describeTopics(anyObject())).andReturn(describeTopicResult);
+    expect(describeTopicResult.all()).andReturn(KafkaFuture.completedFuture(new HashMap<>()));
+    replay(clusterManager, adminClient, describeTopicResult);
+
+    Optional<Topic> topic = topicManager.getLocalTopic(TOPIC_1.getName()).get();
 
     assertFalse(topic.isPresent());
   }

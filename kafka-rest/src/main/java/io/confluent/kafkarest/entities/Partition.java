@@ -15,10 +15,13 @@
 
 package io.confluent.kafkarest.entities;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
+import javax.annotation.Nullable;
 
 public final class Partition {
 
@@ -30,15 +33,39 @@ public final class Partition {
 
   private final List<PartitionReplica> replicas;
 
+  @Nullable
+  private final Long earliestOffset;
+
+  @Nullable
+  private final Long latestOffset;
+
   public Partition(
       String clusterId,
       String topicName,
       int partitionId,
       List<PartitionReplica> replicas) {
-    this.clusterId = Objects.requireNonNull(clusterId);
-    this.topicName = Objects.requireNonNull(topicName);
+    this(
+        clusterId,
+        topicName,
+        partitionId,
+        replicas,
+        /* earliestOffset= */ null,
+        /* latestOffset= */ null);
+  }
+
+  public Partition(
+      String clusterId,
+      String topicName,
+      int partitionId,
+      List<PartitionReplica> replicas,
+      @Nullable Long earliestOffset,
+      @Nullable Long latestOffset) {
+    this.clusterId = requireNonNull(clusterId);
+    this.topicName = requireNonNull(topicName);
     this.partitionId = partitionId;
-    this.replicas = Objects.requireNonNull(replicas);
+    this.replicas = requireNonNull(replicas);
+    this.earliestOffset = earliestOffset;
+    this.latestOffset = latestOffset;
   }
 
   public String getClusterId() {
@@ -57,6 +84,16 @@ public final class Partition {
     return replicas;
   }
 
+  @Nullable
+  public Long getEarliestOffset() {
+    return earliestOffset;
+  }
+
+  @Nullable
+  public Long getLatestOffset() {
+    return latestOffset;
+  }
+
   public Optional<PartitionReplica> getLeader() {
     return replicas.stream().filter(PartitionReplica::isLeader).findAny();
   }
@@ -71,14 +108,16 @@ public final class Partition {
     }
     Partition partition = (Partition) o;
     return partitionId == partition.partitionId
-        && Objects.equals(clusterId, partition.clusterId)
-        && Objects.equals(topicName, partition.topicName)
-        && Objects.equals(replicas, partition.replicas);
+        && clusterId.equals(partition.clusterId)
+        && topicName.equals(partition.topicName)
+        && replicas.equals(partition.replicas)
+        && Objects.equals(earliestOffset, partition.earliestOffset)
+        && Objects.equals(latestOffset, partition.latestOffset);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(clusterId, topicName, partitionId, replicas);
+    return Objects.hash(clusterId, topicName, partitionId, replicas, earliestOffset, latestOffset);
   }
 
   @Override
@@ -88,6 +127,8 @@ public final class Partition {
         .add("topicName='" + topicName + "'")
         .add("partitionId=" + partitionId)
         .add("replicas=" + replicas)
+        .add("earliestOffset=" + earliestOffset)
+        .add("latestOffset=" + latestOffset)
         .toString();
   }
 }

@@ -27,6 +27,7 @@ import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.v2.BrokerList;
 import io.confluent.kafkarest.entities.v2.GetPartitionResponse;
 import io.confluent.kafkarest.entities.v2.GetTopicResponse;
+import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -49,7 +50,7 @@ public class MetadataAPITest extends ClusterTestHarness {
           new PartitionReplica(/* clusterId= */ "", "topic1", 0, 1, false, false)
       ))
   );
-  private static final Topic topic1 = new Topic(topic1Name, new Properties(), topic1Partitions);
+  private static final Topic topic1 = new Topic("", topic1Name, topic1Partitions, (short) 2, false);
   private static final String topic2Name = "topic2";
   private static final List<Partition> topic2Partitions = Arrays.asList(
       new Partition(/* clusterId= */ "", "topic2", 0, Arrays.asList(
@@ -137,8 +138,8 @@ public class MetadataAPITest extends ClusterTestHarness {
     // Get invalid topic
     final Response invalidResponse = request("/topics/{topic}", "topic", "topicdoesntexist").get();
     assertErrorResponse(Response.Status.NOT_FOUND, invalidResponse,
-                        Errors.TOPIC_NOT_FOUND_ERROR_CODE,
-                        Errors.TOPIC_NOT_FOUND_MESSAGE,
+                        KafkaExceptionMapper.KAFKA_UNKNOWN_TOPIC_PARTITION_CODE,
+                        null,
                         Versions.KAFKA_V2_JSON);
   }
 
