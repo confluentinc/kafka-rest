@@ -27,20 +27,27 @@ import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.GetBrokerConfigResponse;
 import io.confluent.kafkarest.entities.v3.ListBrokerConfigsResponse;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.UpdateBrokerConfigRequest;
 import io.confluent.kafkarest.resources.AsyncResponses;
+import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.validation.Valid;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 @Path("/v3/clusters/{clusterId}/brokers/{brokerId}/configs")
 public final class BrokerConfigsResource {
@@ -97,6 +104,27 @@ public final class BrokerConfigsResource {
             .thenApply(broker -> new GetBrokerConfigResponse(toBrokerConfigData(broker)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
+  }
+
+  @PUT
+  @Path("/{name}")
+  @Consumes(Versions.JSON_API)
+  @Produces(Versions.JSON_API)
+  public void updateBrokerConfig(
+      @Suspended AsyncResponse asyncResponse,
+      @PathParam("clusterId") String clusterId,
+      @PathParam("brokerId") int brokerId,
+      @PathParam("name") String name,
+      @Valid UpdateBrokerConfigRequest request
+  ) {
+    String newValue = request.getData().getAttributes().getValue();
+
+    CompletableFuture<Void> response =
+        brokerConfigManager.updateBrokerConfig(clusterId, brokerId, name, newValue);
+
+    AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
+        .entity(response)
+        .asyncResume(asyncResponse);
   }
 
   private BrokerConfigData toBrokerConfigData(BrokerConfig brokerConfig) {

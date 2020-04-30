@@ -23,8 +23,8 @@ import java.util.concurrent.CompletableFuture;
 public interface BrokerConfigManager {
 
   /**
-   * Returns a list of Kafka {@link BrokerConfig BrokerConfigs} belonging to the
-   * {@link io.confluent.kafkarest.entities.Broker} with the given {@code brokerId}.
+   * Returns a list of Kafka {@link BrokerConfig BrokerConfigs} belonging to the {@link
+   * io.confluent.kafkarest.entities.Broker} with the given {@code brokerId}.
    */
   CompletableFuture<List<BrokerConfig>> listBrokerConfigs(String clusterId, int brokerId);
 
@@ -34,4 +34,10 @@ public interface BrokerConfigManager {
   CompletableFuture<Optional<BrokerConfig>> getBrokerConfig(
       String clusterId, int brokerId, String name);
 
+  /**
+   * Updates the Kafka {@link BrokerConfig} with the given {@code name} to the given {@code
+   * newValue}.
+   */
+  CompletableFuture<Void> updateBrokerConfig(
+      String clusterId, int brokerId, String name, String newValue);
 }
