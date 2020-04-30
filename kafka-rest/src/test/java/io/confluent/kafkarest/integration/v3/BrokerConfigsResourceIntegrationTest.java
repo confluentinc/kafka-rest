@@ -213,15 +213,15 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/foobar")
-        .accept(Versions.JSON_API)
-        .put(
-            Entity.entity(
-                "{\"data\":{\"attributes\":{\"value\":\"producer\"}}}", Versions.JSON_API));
+            .accept(Versions.JSON_API)
+            .put(
+                Entity.entity(
+                    "{\"data\":{\"attributes\":{\"value\":\"producer\"}}}", Versions.JSON_API));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void updateTopicConfig_nonExistingBroker_throwsNotFound() {
+  public void updateBrokerConfig_nonExistingBroker_throwsNotFound() {
     String clusterId = getClusterId();
 
     Response response =

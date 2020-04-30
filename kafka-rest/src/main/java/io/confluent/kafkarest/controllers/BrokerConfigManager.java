@@ -23,8 +23,8 @@ import java.util.concurrent.CompletableFuture;
 public interface BrokerConfigManager {
 
   /**
-   * Returns a list of Kafka {@link BrokerConfig BrokerConfigs} belonging to the
-   * {@link io.confluent.kafkarest.entities.Broker} with the given {@code brokerId}.
+   * Returns a list of Kafka {@link BrokerConfig BrokerConfigs} belonging to the {@link
+   * io.confluent.kafkarest.entities.Broker} with the given {@code brokerId}.
    */
   CompletableFuture<List<BrokerConfig>> listBrokerConfigs(String clusterId, int brokerId);
 

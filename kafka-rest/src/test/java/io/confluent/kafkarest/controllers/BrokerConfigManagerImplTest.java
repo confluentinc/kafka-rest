@@ -29,7 +29,6 @@ import static org.easymock.EasyMock.verify;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.entities.BrokerConfig;
 import io.confluent.kafkarest.entities.Cluster;
-import io.confluent.kafkarest.entities.v3.CreateTopicRequest.Data.Attributes;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -293,7 +292,7 @@ public class BrokerConfigManagerImplTest {
         .andReturn(
             singletonMap(
                 new ConfigResource(Type.BROKER, String.valueOf(BROKER_ID)),
-                    KafkaFuture.completedFuture(null)));
+                KafkaFuture.completedFuture(null)));
     replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
 
     brokerConfigManager.updateBrokerConfig(
