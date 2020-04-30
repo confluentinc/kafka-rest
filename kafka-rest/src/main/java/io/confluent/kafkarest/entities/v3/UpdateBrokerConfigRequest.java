@@ -26,7 +26,7 @@ import javax.validation.constraints.NotNull;
  * Request body for {@code PUT /v3/clusters?/<clusterId>/brokers/<brokerId>/configs/<name>}
  * requests.
  */
-public class UpdateBrokerConfigRequest {
+public final class UpdateBrokerConfigRequest {
 
   @NotNull
   @Nullable
