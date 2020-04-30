@@ -2,9 +2,11 @@ package io.confluent.kafkarest.resources.v3;
 
 import static io.confluent.kafkarest.CompletableFutures.failedFuture;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static junit.framework.TestCase.assertEquals;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import io.confluent.kafkarest.controllers.BrokerConfigManager;
 import io.confluent.kafkarest.entities.BrokerConfig;
@@ -13,6 +15,8 @@ import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.GetBrokerConfigResponse;
 import io.confluent.kafkarest.entities.v3.ListBrokerConfigsResponse;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.UpdateBrokerConfigRequest;
+import io.confluent.kafkarest.entities.v3.UpdateBrokerConfigRequest.Data;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
@@ -21,6 +25,7 @@ import java.util.Optional;
 import javax.ws.rs.NotFoundException;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
+import org.easymock.internal.matchers.Not;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -168,7 +173,7 @@ public final class BrokerConfigResourceTest {
   public void getBrokerConfig_nonExistingConfig_throwsNotFound() {
     expect(brokerConfigManager.getBrokerConfig(
         CLUSTER_ID, BROKER_ID, CONFIG_1.getName()))
-    .andReturn(failedFuture(new NotFoundException()));
+        .andReturn(failedFuture(new NotFoundException()));
     replay(brokerConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -188,6 +193,55 @@ public final class BrokerConfigResourceTest {
     FakeAsyncResponse response = new FakeAsyncResponse();
     brokerConfigsResource.getBrokerConfig(
         response, CLUSTER_ID, BROKER_ID, CONFIG_1.getName());
+
+    assertEquals(NotFoundException.class, response.getException().getClass());
+  }
+
+  @Test
+  public void updateBrokerConfig_existingConfig_updatesConfig() {
+    expect(
+        brokerConfigManager.updateBrokerConfig(
+            CLUSTER_ID,
+            BROKER_ID,
+            CONFIG_1.getName(),
+            "new-value"))
+        .andReturn(completedFuture(null));
+    replay(brokerConfigManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    brokerConfigsResource.updateBrokerConfig(
+        response,
+        CLUSTER_ID,
+        BROKER_ID,
+        CONFIG_1.getName(),
+        new UpdateBrokerConfigRequest(
+            new UpdateBrokerConfigRequest.Data(
+                new UpdateBrokerConfigRequest.Data.Attributes("new-value"))));
+    assertNull(response.getValue());
+    assertNull(response.getException());
+    assertTrue(response.isDone());
+  }
+
+  @Test
+  public void updateConfig_nonExistingConfigOrBrokerOrCluster_throwsNotFound() {
+    expect(
+        brokerConfigManager.updateBrokerConfig(
+            CLUSTER_ID,
+            BROKER_ID,
+            CONFIG_1.getName(),
+            "new-value"))
+        .andReturn(failedFuture(new NotFoundException()));
+    replay(brokerConfigManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    brokerConfigsResource.updateBrokerConfig(
+        response,
+        CLUSTER_ID,
+        BROKER_ID,
+        CONFIG_1.getName(),
+        new UpdateBrokerConfigRequest(
+            new UpdateBrokerConfigRequest.Data(
+                new UpdateBrokerConfigRequest.Data.Attributes("new-value"))));
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }

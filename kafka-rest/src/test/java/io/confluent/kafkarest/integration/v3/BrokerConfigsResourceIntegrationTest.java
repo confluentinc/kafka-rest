@@ -10,6 +10,7 @@ import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.GetBrokerConfigResponse;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.Assert;
@@ -205,4 +206,55 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
+  @Test
+  public void updateBrokerConfig_nonExistingConfig_throwsNotFound() {
+    String clusterId = getClusterId();
+    int brokerId = getBrokers().get(0).id();
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/foobar")
+        .accept(Versions.JSON_API)
+        .put(
+            Entity.entity(
+                "{\"data\":{\"attributes\":{\"value\":\"producer\"}}}", Versions.JSON_API));
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void updateTopicConfig_nonExistingBroker_throwsNotFound() {
+    String clusterId = getClusterId();
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/brokers/foobar/configs/compression.type")
+            .accept(Versions.JSON_API)
+            .put(
+                Entity.entity(
+                    "{\"data\":{\"attributes\":{\"value\":\"producer\"}}}", Versions.JSON_API));
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void updateBrokerConfig_nonExistingCluster_throwsNotFound() {
+    int brokerId = getBrokers().get(0).id();
+
+    Response response =
+        request("/v3/clusters/foobar/brokers/" + brokerId + "/configs/compression.type")
+            .accept(Versions.JSON_API)
+            .put(
+                Entity.entity(
+                    "{\"data\":{\"attributes\":{\"value\":\"producer\"}}}", Versions.JSON_API));
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void updateBrokerConfig_nonExistingCluster_noContentType_throwsNotFound() {
+    int brokerId = getBrokers().get(0).id();
+
+    Response response =
+        request("/v3/clusters/foobar/brokers/" + brokerId + "/configs/compression.type")
+            .put(
+                Entity.entity(
+                    "{\"data\":{\"attributes\":{\"value\":\"producer\"}}}", Versions.JSON_API));
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
 }
