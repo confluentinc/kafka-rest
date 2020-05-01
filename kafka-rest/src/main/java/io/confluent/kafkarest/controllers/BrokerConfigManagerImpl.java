@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AlterConfigOp;
-import org.apache.kafka.clients.admin.AlterConfigOp.OpType;
 import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.config.ConfigResource.Type;
@@ -88,7 +87,7 @@ final class BrokerConfigManagerImpl implements BrokerConfigManager {
             config ->
                 checkEntityExists(
                     config,
-                    "Config %s cannot be found for topic %s in cluster %s.",
+                    "Config %s cannot be found for broker %s in cluster %s.",
                     name,
                     brokerId,
                     clusterId))
@@ -100,7 +99,35 @@ final class BrokerConfigManagerImpl implements BrokerConfigManager {
                             resource,
                             singletonList(
                                 new AlterConfigOp(
-                                    new ConfigEntry(name, newValue), OpType.SET))))
+                                    new ConfigEntry(name, newValue), AlterConfigOp.OpType.SET))))
+                        .values()
+                        .get(resource)));
+  }
+
+  @Override
+  public CompletableFuture<Void> resetBrokerConfig(
+      String clusterId, int brokerId, String name) {
+    ConfigResource resource = new ConfigResource(Type.BROKER, String.valueOf(brokerId));
+
+    return getBrokerConfig(clusterId, brokerId, name)
+        .thenApply(
+            config ->
+                checkEntityExists(
+                    config,
+                    "Config %s cannot be found for broker %s in cluster %s.",
+                    name,
+                    brokerId,
+                    clusterId))
+        .thenCompose(
+            broker ->
+                KafkaFutures.toCompletableFuture(
+                    adminClient.incrementalAlterConfigs(
+                        singletonMap(
+                            resource,
+                            singletonList(
+                                new AlterConfigOp(
+                                    new ConfigEntry(name, /* value= */ null),
+                                    AlterConfigOp.OpType.DELETE))))
                         .values()
                         .get(resource)));
   }

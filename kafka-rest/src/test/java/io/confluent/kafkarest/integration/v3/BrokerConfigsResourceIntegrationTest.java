@@ -207,6 +207,121 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
+  public void
+  getThenUpdateThenGetThenResetThenGet_existingConfig_returnsDefaultThenUpdatesThenReturnsUpdatedThenReturnsDefault
+      () throws Exception {
+    String baseUrl = restConnect;
+    String clusterId = getClusterId();
+    int brokerId = getBrokers().get(0).id();
+
+    String expectedBeforeUpdate =
+        OBJECT_MAPPER.writeValueAsString(
+            new GetBrokerConfigResponse(
+                new BrokerConfigData(
+                    "crn:///kafka=" + clusterId
+                        + "/broker=" + brokerId
+                        + "/config=compression.type",
+                    new ResourceLink(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/brokers/" + brokerId
+                            + "/configs/compression.type"),
+                    clusterId,
+                    brokerId,
+                    "compression.type",
+                    "producer",
+                    /* isDefault= */ true,
+                    /* isReadOnly= */ false,
+                    /* isSensitive= */ false)));
+
+    Response responseBeforeUpdate =
+        request(
+            "/v3/clusters/" + clusterId
+                + "/brokers/" + brokerId
+                + "/configs/compression.type")
+            .accept(Versions.JSON_API)
+            .get();
+    assertEquals(Status.OK.getStatusCode(), responseBeforeUpdate.getStatus());
+    assertEquals(expectedBeforeUpdate, responseBeforeUpdate.readEntity(String.class));
+
+    Response updateResponse =
+        request(
+            "/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/compression.type")
+            .accept(Versions.JSON_API)
+            .put(
+                Entity.entity(
+                    "{\"data\":{\"attributes\":{\"value\":\"producer\"}}}", Versions.JSON_API));
+    assertEquals(Status.NO_CONTENT.getStatusCode(), updateResponse.getStatus());
+
+    String expectedAfterUpdate =
+        OBJECT_MAPPER.writeValueAsString(
+            new GetBrokerConfigResponse(
+                new BrokerConfigData(
+                    "crn:///kafka=" + clusterId
+                        + "/broker=" + brokerId
+                        + "/config=compression.type",
+                    new ResourceLink(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/brokers/" + brokerId
+                            + "/configs/compression.type"),
+                    clusterId,
+                    brokerId,
+                    "compression.type",
+                    "producer",
+                    /* isDefault= */ false,
+                    /* isReadOnly= */ false,
+                    /* isSensitive= */ false)));
+
+    Response responseAfterUpdate =
+        request(
+            "/v3/clusters/" + clusterId
+                + "/brokers/" + brokerId
+                + "/configs/compression.type")
+            .accept(Versions.JSON_API)
+            .get();
+    assertEquals(Status.OK.getStatusCode(), responseAfterUpdate.getStatus());
+    assertEquals(expectedAfterUpdate, responseAfterUpdate.readEntity(String.class));
+
+    Response resetResponse =
+        request(
+            "/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/compression.type")
+            .accept(Versions.JSON_API)
+            .delete();
+    assertEquals(Status.NO_CONTENT.getStatusCode(), resetResponse.getStatus());
+
+    String expectedAfterReset =
+        OBJECT_MAPPER.writeValueAsString(
+            new GetBrokerConfigResponse(
+                new BrokerConfigData(
+                    "crn:///kafka=" + clusterId
+                        + "/broker=" + brokerId
+                        + "/config=compression.type",
+                    new ResourceLink(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/brokers/" + brokerId
+                            + "/configs/compression.type"),
+                    clusterId,
+                    brokerId,
+                    "compression.type",
+                    "producer",
+                    /* isDefault= */ true,
+                    /* isReadOnly= */ false,
+                    /* isSensitive= */ false)));
+
+    Response responseAfterReset =
+        request(
+            "/v3/clusters/" + clusterId
+                + "/brokers/" + brokerId
+                + "/configs/compression.type")
+            .accept(Versions.JSON_API)
+            .get();
+    assertEquals(Status.OK.getStatusCode(), responseAfterReset.getStatus());
+    assertEquals(expectedAfterReset, responseAfterReset.readEntity(String.class));
+  }
+
+  @Test
   public void updateBrokerConfig_nonExistingConfig_throwsNotFound() {
     String clusterId = getClusterId();
     int brokerId = getBrokers().get(0).id();
@@ -257,4 +372,49 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "{\"data\":{\"attributes\":{\"value\":\"producer\"}}}", Versions.JSON_API));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
+
+  @Test
+  public void resetBrokerConfig_nonExistingConfig_throwsNotFound() {
+    String clusterId = getClusterId();
+    int brokerId = getBrokers().get(0).id();
+    Response response =
+        request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/foobar")
+            .accept(Versions.JSON_API)
+            .delete();
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void resetBrokerConfig_nonExistingBroker_throwsNotFound() {
+    String clusterId = getClusterId();
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/brokers/foobar/configs/compression.type")
+            .accept(Versions.JSON_API)
+            .delete();
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void resetBrokerConfig_nonExistingCluster_throwsNotFound() {
+    int brokerId = getBrokers().get(0).id();
+
+    Response response =
+        request("/v3/clusters/foobar/brokers/" + brokerId + "/configs/compression.type")
+            .accept(Versions.JSON_API)
+            .delete();
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  public void resetBrokerConfig_nonExistingCluster_noContentType_throwsNotFound() {
+    int brokerId = getBrokers().get(0).id();
+
+    Response response =
+        request("/v3/clusters/foobar/brokers/" + brokerId + "/configs/compression.type")
+            .delete();
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+
 }

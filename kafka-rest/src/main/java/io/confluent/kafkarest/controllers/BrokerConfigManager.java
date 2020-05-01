@@ -40,4 +40,9 @@ public interface BrokerConfigManager {
    */
   CompletableFuture<Void> updateBrokerConfig(
       String clusterId, int brokerId, String name, String newValue);
+
+  /**
+   * Resets the Kafka {@link BrokerConfig} with the given {@code name} to its default value.
+   */
+  CompletableFuture<Void> resetBrokerConfig(String clusterId, int brokerId, String name);
 }

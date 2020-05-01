@@ -243,4 +243,40 @@ public final class BrokerConfigResourceTest {
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }
+
+  @Test
+  public void resetBrokerConfig_existingConfig_resetsConfig() {
+    expect(
+        brokerConfigManager.resetBrokerConfig(
+            CLUSTER_ID,
+            BROKER_ID,
+            CONFIG_1.getName()))
+        .andReturn(completedFuture(null));
+    replay(brokerConfigManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    brokerConfigsResource.resetBrokerConfig(
+        response, CLUSTER_ID, BROKER_ID, CONFIG_1.getName());
+
+    assertNull(response.getValue());
+    assertNull(response.getException());
+    assertTrue(response.isDone());
+  }
+
+  @Test
+  public void resetBrokerConfig_nonExistingConfigOrBrokerOrCluster_throwsNotFound() {
+    expect(
+        brokerConfigManager.resetBrokerConfig(
+            CLUSTER_ID,
+            BROKER_ID,
+            CONFIG_1.getName()))
+        .andReturn(failedFuture(new NotFoundException()));
+    replay(brokerConfigManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    brokerConfigsResource.resetBrokerConfig(
+        response, CLUSTER_ID, BROKER_ID, CONFIG_1.getName());
+
+    assertEquals(NotFoundException.class, response.getException().getClass());
+  }
 }
