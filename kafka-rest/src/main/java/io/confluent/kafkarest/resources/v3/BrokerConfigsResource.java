@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PUT;
@@ -121,6 +122,23 @@ public final class BrokerConfigsResource {
 
     CompletableFuture<Void> response =
         brokerConfigManager.updateBrokerConfig(clusterId, brokerId, name, newValue);
+
+    AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
+        .entity(response)
+        .asyncResume(asyncResponse);
+  }
+
+  @DELETE
+  @Path("/{name}")
+  @Produces(Versions.JSON_API)
+  public void resetBrokerConfig(
+      @Suspended AsyncResponse asyncResponse,
+      @PathParam("clusterId") String clusterId,
+      @PathParam("brokerId") int brokerId,
+      @PathParam("name") String name
+  ) {
+    CompletableFuture<Void> response =
+        brokerConfigManager.resetBrokerConfig(clusterId, brokerId, name);
 
     AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
         .entity(response)

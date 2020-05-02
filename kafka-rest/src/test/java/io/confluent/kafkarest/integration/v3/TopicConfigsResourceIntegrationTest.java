@@ -223,9 +223,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void
-  getThenUpdateThenGetThenResetThenGet_existingConfig_returnsDefaultThenUpdatesThenReturnsUpdatedThenResetsThenReturnsDefault
-      () throws Exception {
+  public void getUpdateReset_withExistingConfig() throws Exception {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
