@@ -36,7 +36,7 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 
 @Path("/v3/clusters/{clusterId}/brokers/{brokerId}/partition-replicas")
-public class SearchReplicasByBrokerAction {
+public final class SearchReplicasByBrokerAction {
 
   private final ReplicaManager replicaManager;
   private final CrnFactory crnFactory;
