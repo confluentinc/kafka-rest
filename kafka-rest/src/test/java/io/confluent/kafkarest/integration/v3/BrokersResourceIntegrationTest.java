@@ -73,7 +73,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                             baseUrl
                                 + "/v3/clusters/" + clusterId
                                 + "/brokers/" + nodes.get(0).id()
-                                + "/partition_replicas")),
+                                + "/partition-replicas")),
                     new BrokerData(
                         "crn:///kafka=" + clusterId + "/broker=" + nodes.get(1).id(),
                         new ResourceLink(
@@ -94,7 +94,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                             baseUrl
                                 + "/v3/clusters/" + clusterId
                                 + "/brokers/" + nodes.get(1).id()
-                                + "/partition_replicas")),
+                                + "/partition-replicas")),
                     new BrokerData(
                         "crn:///kafka=" + clusterId + "/broker=" + nodes.get(2).id(),
                         new ResourceLink(
@@ -115,7 +115,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                             baseUrl
                                 + "/v3/clusters/" + clusterId
                                 + "/brokers/" + nodes.get(2).id()
-                                + "/partition_replicas")))));
+                                + "/partition-replicas")))));
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers").accept(Versions.JSON_API).get();
@@ -158,7 +158,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                         baseUrl
                             + "/v3/clusters/" + clusterId
                             + "/brokers/" + nodes.get(0).id()
-                            + "/partition_replicas"))));
+                            + "/partition-replicas"))));
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/" + nodes.get(0).id())
