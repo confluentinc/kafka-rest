@@ -42,5 +42,6 @@ public interface ReplicaManager {
    * Returns the list of Kafka {@link PartitionReplica Replicas} living on the {@link
    * io.confluent.kafkarest.entities.Broker} with the given {@code brokerId}.
    */
-  CompletableFuture<List<PartitionReplica>> searchReplicasByBrokerId(String clusterId, int brokerId);
+  CompletableFuture<List<PartitionReplica>> searchReplicasByBrokerId(
+      String clusterId, int brokerId);
 }
