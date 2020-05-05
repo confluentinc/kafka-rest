@@ -20,7 +20,6 @@ import static java.util.Objects.requireNonNull;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.ReplicaManager;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
-import io.confluent.kafkarest.entities.v3.GetReplicaResponse;
 import io.confluent.kafkarest.entities.v3.ListReplicasResponse;
 import io.confluent.kafkarest.entities.v3.ReplicaData;
 import io.confluent.kafkarest.resources.AsyncResponses;
@@ -30,22 +29,21 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 
-@Path("/v3/clusters/{clusterId}/topics/{topicName}/partitions/{partitionId}/replicas")
-public final class ReplicasResource {
+@Path("/v3/clusters/{clusterId}/brokers/{brokerId}/partition-replicas")
+public final class SearchReplicasByBrokerAction {
 
   private final ReplicaManager replicaManager;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
-  public ReplicasResource(
+  public SearchReplicasByBrokerAction(
       ReplicaManager replicaManager, CrnFactory crnFactory, UrlFactory urlFactory) {
     this.replicaManager = requireNonNull(replicaManager);
     this.crnFactory = requireNonNull(crnFactory);
@@ -54,14 +52,12 @@ public final class ReplicasResource {
 
   @GET
   @Produces(Versions.JSON_API)
-  public void listReplicas(
+  public void searchReplicasByBroker(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @PathParam("topicName") String topicName,
-      @PathParam("partitionId") Integer partitionId
-  ) {
+      @PathParam("brokerId") Integer brokerId) {
     CompletableFuture<ListReplicasResponse> response =
-        replicaManager.listReplicas(clusterId, topicName, partitionId)
+        replicaManager.searchReplicasByBrokerId(clusterId, brokerId)
             .thenApply(
                 replicas ->
                     new ListReplicasResponse(
@@ -70,34 +66,13 @@ public final class ReplicasResource {
                                 "v3",
                                 "clusters",
                                 clusterId,
-                                "topics",
-                                topicName,
-                                "partitions",
-                                Integer.toString(partitionId),
-                                "replicas"),
+                                "brokers",
+                                Integer.toString(brokerId),
+                                "partition-replicas"),
                             /* next= */ null),
                         replicas.stream()
                             .map(replica -> ReplicaData.create(crnFactory, urlFactory, replica))
                             .collect(Collectors.toList())));
-
-    AsyncResponses.asyncResume(asyncResponse, response);
-  }
-
-  @GET
-  @Path("/{brokerId}")
-  @Produces(Versions.JSON_API)
-  public void getReplica(
-      @Suspended AsyncResponse asyncResponse,
-      @PathParam("clusterId") String clusterId,
-      @PathParam("topicName") String topicName,
-      @PathParam("partitionId") Integer partitionId,
-      @PathParam("brokerId") Integer brokerId
-  ) {
-    CompletableFuture<GetReplicaResponse> response =
-        replicaManager.getReplica(clusterId, topicName, partitionId, brokerId)
-            .thenApply(replica -> replica.orElseThrow(NotFoundException::new))
-            .thenApply(replica ->
-                new GetReplicaResponse(ReplicaData.create(crnFactory, urlFactory, replica)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }

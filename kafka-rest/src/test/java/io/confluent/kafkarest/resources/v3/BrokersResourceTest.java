@@ -88,7 +88,7 @@ public final class BrokersResourceTest {
                     BROKER_1.getPort(),
                     BROKER_1.getRack(),
                     new Relationship("/v3/clusters/cluster-1/brokers/1/configs"),
-                    new Relationship("/v3/clusters/cluster-1/brokers/1/partition_replicas")),
+                    new Relationship("/v3/clusters/cluster-1/brokers/1/partition-replicas")),
                 new BrokerData(
                     "crn:///kafka=cluster-1/broker=2",
                     new ResourceLink("/v3/clusters/cluster-1/brokers/2"),
@@ -98,7 +98,7 @@ public final class BrokersResourceTest {
                     BROKER_2.getPort(),
                     BROKER_2.getRack(),
                     new Relationship("/v3/clusters/cluster-1/brokers/2/configs"),
-                    new Relationship("/v3/clusters/cluster-1/brokers/2/partition_replicas")),
+                    new Relationship("/v3/clusters/cluster-1/brokers/2/partition-replicas")),
                 new BrokerData(
                     "crn:///kafka=cluster-1/broker=3",
                     new ResourceLink("/v3/clusters/cluster-1/brokers/3"),
@@ -108,7 +108,7 @@ public final class BrokersResourceTest {
                     BROKER_3.getPort(),
                     BROKER_3.getRack(),
                     new Relationship("/v3/clusters/cluster-1/brokers/3/configs"),
-                    new Relationship("/v3/clusters/cluster-1/brokers/3/partition_replicas"))));
+                    new Relationship("/v3/clusters/cluster-1/brokers/3/partition-replicas"))));
 
     assertEquals(expected, response.getValue());
   }
@@ -144,7 +144,7 @@ public final class BrokersResourceTest {
                 BROKER_1.getPort(),
                 BROKER_1.getRack(),
                 new Relationship("/v3/clusters/cluster-1/brokers/1/configs"),
-                new Relationship("/v3/clusters/cluster-1/brokers/1/partition_replicas")));
+                new Relationship("/v3/clusters/cluster-1/brokers/1/partition-replicas")));
 
     assertEquals(expected, response.getValue());
   }

@@ -15,7 +15,12 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import static java.util.Objects.requireNonNull;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.confluent.kafkarest.entities.PartitionReplica;
+import io.confluent.kafkarest.response.CrnFactory;
+import io.confluent.kafkarest.response.UrlFactory;
 import java.util.Objects;
 import java.util.StringJoiner;
 
@@ -44,10 +49,58 @@ public final class ReplicaData {
       Boolean isLeader,
       Boolean isInSync,
       Relationship broker) {
-    this.id = Objects.requireNonNull(id);
-    this.links = Objects.requireNonNull(links);
+    this.id = requireNonNull(id);
+    this.links = requireNonNull(links);
     attributes = new Attributes(clusterId, topicName, partitionId, brokerId, isLeader, isInSync);
     relationships = new Relationships(broker);
+  }
+
+  public static ReplicaData create(
+      CrnFactory crnFactory, UrlFactory urlFactory, PartitionReplica replica) {
+    return new ReplicaData(
+        createId(crnFactory, replica),
+        new ResourceLink(createSelfLink(urlFactory, replica)),
+        replica.getClusterId(),
+        replica.getTopicName(),
+        replica.getPartitionId(),
+        replica.getBrokerId(),
+        replica.isLeader(),
+        replica.isInSync(),
+        new Relationship(createBrokerLink(urlFactory, replica)));
+  }
+
+  private static String createId(CrnFactory crnFactory, PartitionReplica replica) {
+    return crnFactory.create(
+        ClusterData.ELEMENT_TYPE,
+        replica.getClusterId(),
+        TopicData.ELEMENT_TYPE,
+        replica.getTopicName(),
+        PartitionData.ELEMENT_TYPE,
+        Integer.toString(replica.getPartitionId()),
+        ReplicaData.ELEMENT_TYPE,
+        Integer.toString(replica.getBrokerId()));
+  }
+
+  private static String createSelfLink(UrlFactory urlFactory, PartitionReplica replica) {
+    return urlFactory.create(
+        "v3",
+        "clusters",
+        replica.getClusterId(),
+        "topics",
+        replica.getTopicName(),
+        "partitions",
+        Integer.toString(replica.getPartitionId()),
+        "replicas",
+        Integer.toString(replica.getBrokerId()));
+  }
+
+  private static String createBrokerLink(UrlFactory urlFactory, PartitionReplica replica) {
+    return urlFactory.create(
+        "v3",
+        "clusters",
+        replica.getClusterId(),
+        "brokers",
+        Integer.toString(replica.getBrokerId()));
   }
 
   @JsonProperty("type")
@@ -127,12 +180,12 @@ public final class ReplicaData {
         Boolean isLeader,
         Boolean isInSync
     ) {
-      this.clusterId = Objects.requireNonNull(clusterId);
-      this.topicName = Objects.requireNonNull(topicName);
-      this.partitionId = Objects.requireNonNull(partitionId);
-      this.brokerId = Objects.requireNonNull(brokerId);
-      this.isLeader = Objects.requireNonNull(isLeader);
-      this.isInSync = Objects.requireNonNull(isInSync);
+      this.clusterId = requireNonNull(clusterId);
+      this.topicName = requireNonNull(topicName);
+      this.partitionId = requireNonNull(partitionId);
+      this.brokerId = requireNonNull(brokerId);
+      this.isLeader = requireNonNull(isLeader);
+      this.isInSync = requireNonNull(isInSync);
     }
 
     @JsonProperty("cluster_id")
@@ -205,7 +258,7 @@ public final class ReplicaData {
     public final Relationship broker;
 
     public Relationships(Relationship broker) {
-      this.broker = Objects.requireNonNull(broker);
+      this.broker = requireNonNull(broker);
     }
 
     @JsonProperty("broker")
