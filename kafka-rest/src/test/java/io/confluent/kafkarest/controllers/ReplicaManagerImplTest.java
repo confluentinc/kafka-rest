@@ -59,6 +59,8 @@ public class ReplicaManagerImplTest {
   private static final int PARTITION_ID_1 = 0;
   private static final int PARTITION_ID_2 = 1;
   private static final int BROKER_ID_1 = 1;
+  private static final int BROKER_ID_2 = 2;
+  private static final int BROKER_ID_3 = 3;
 
   private static final Broker BROKER_1 =
       new Broker(CLUSTER_ID, BROKER_ID_1, "1.2.3.4", 5, /* rack= */ null);
@@ -68,7 +70,7 @@ public class ReplicaManagerImplTest {
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID_1,
-          /* brokerId= */ BROKER_ID_1,
+          BROKER_ID_1,
           /* isLeader= */ true,
           /* isInSync= */ false);
   private static final PartitionReplica REPLICA_1_2 =
@@ -76,7 +78,7 @@ public class ReplicaManagerImplTest {
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID_1,
-          /* brokerId= */ 2,
+          BROKER_ID_2,
           /* isLeader= */ false,
           /* isInSync= */ true);
   private static final PartitionReplica REPLICA_1_3 =
@@ -84,7 +86,7 @@ public class ReplicaManagerImplTest {
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID_1,
-          /* brokerId= */ 3,
+          BROKER_ID_3,
           /* isLeader= */ false,
           /* isInSync= */ false);
   private static final PartitionReplica REPLICA_2_1 =
@@ -92,7 +94,7 @@ public class ReplicaManagerImplTest {
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID_2,
-          /* brokerId= */ BROKER_ID_1,
+          BROKER_ID_1,
           /* isLeader= */ false,
           /* isInSync= */ false);
   private static final PartitionReplica REPLICA_2_2 =
@@ -100,7 +102,7 @@ public class ReplicaManagerImplTest {
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID_2,
-          /* brokerId= */ 2,
+          BROKER_ID_2,
           /* isLeader= */ true,
           /* isInSync= */ true);
 
