@@ -86,11 +86,11 @@ public class KafkaConsumerManagerTest {
 
 
     @Before
-    public void setUp() throws RestConfigException {
+    public void setUp() {
         setUpConsumer(setUpProperties());
     }
 
-    private void setUpConsumer(Properties properties) throws RestConfigException {
+    private void setUpConsumer(Properties properties) {
         config = new KafkaRestConfig(properties, new SystemTime());
         consumerManager = new KafkaConsumerManager(config, consumerFactory);
         consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST, groupName);
