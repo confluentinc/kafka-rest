@@ -9,8 +9,7 @@ import org.junit.Test;
 public class KafkaRestConfigTest {
 
   @Test
-  public void getProducerProperties_propagatesSchemaRegistryProperties()
-      throws RestConfigException {
+  public void getProducerProperties_propagatesSchemaRegistryProperties() {
     Properties properties = new Properties();
     properties.put("schema.registry.url", "https://schemaregistry:8085");
     KafkaRestConfig config = new KafkaRestConfig(properties);
@@ -20,8 +19,7 @@ public class KafkaRestConfigTest {
   }
 
   @Test
-  public void getConsumerProperties_propagatesSchemaRegistryProperties()
-      throws RestConfigException{
+  public void getConsumerProperties_propagatesSchemaRegistryProperties() {
     Properties properties = new Properties();
     properties.put("schema.registry.url", "https://schemaregistry:8085");
     KafkaRestConfig config = new KafkaRestConfig(properties);

@@ -19,6 +19,7 @@ import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Range;
 import org.apache.kafka.common.config.ConfigDef.Type;
+import org.apache.kafka.common.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -646,7 +647,7 @@ public class KafkaRestConfig extends RestConfig {
   private Time time;
   private Properties originalProperties;
 
-  public KafkaRestConfig() throws RestConfigException {
+  public KafkaRestConfig() {
     this(new Properties());
   }
 
@@ -669,16 +670,15 @@ public class KafkaRestConfig extends RestConfig {
     this(getPropsFromFile(propsFile));
   }
 
-  public KafkaRestConfig(Properties props) throws RestConfigException {
+  public KafkaRestConfig(Properties props) {
     this(props, new SystemTime());
   }
 
-  public KafkaRestConfig(Properties props, Time time) throws RestConfigException {
+  public KafkaRestConfig(Properties props, Time time) {
     this(config, props, time);
   }
 
-  public KafkaRestConfig(ConfigDef configDef, Properties props, Time time)
-      throws RestConfigException {
+  public KafkaRestConfig(ConfigDef configDef, Properties props, Time time) {
     super(configDef, props);
     this.originalProperties = props;
     this.time = time;
@@ -777,7 +777,7 @@ public class KafkaRestConfig extends RestConfig {
 
     try {
       return new KafkaRestConfig(newProps, config.getTime());
-    } catch (io.confluent.rest.RestConfigException e) {
+    } catch (ConfigException e) {
       throw new RestServerErrorException(
               String.format("Invalid configuration for new consumer: %s", newProps),
               Response.Status.BAD_REQUEST.getStatusCode(),

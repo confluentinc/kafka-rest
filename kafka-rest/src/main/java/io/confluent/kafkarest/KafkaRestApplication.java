@@ -28,7 +28,6 @@ import io.confluent.kafkarest.resources.ResourcesFeature;
 import io.confluent.kafkarest.response.ResponseModule;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.rest.Application;
-import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
@@ -46,11 +45,11 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   List<RestResourceExtension> restResourceExtensions;
 
-  public KafkaRestApplication() throws RestConfigException {
+  public KafkaRestApplication() {
     this(new Properties());
   }
 
-  public KafkaRestApplication(Properties props) throws RestConfigException {
+  public KafkaRestApplication(Properties props) {
     super(new KafkaRestConfig(props));
   }
 

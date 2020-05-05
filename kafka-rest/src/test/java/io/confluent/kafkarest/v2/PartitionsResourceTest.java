@@ -32,6 +32,8 @@ import io.confluent.rest.validation.JacksonMessageBodyProvider;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import org.apache.kafka.common.config.ConfigException;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Before;
@@ -65,7 +67,7 @@ public class PartitionsResourceTest extends JerseyTest {
           /* producerPool= */ null,
           consumerManager,
           adminClientWrapper);
-    } catch (RestConfigException e) {
+    } catch (ConfigException e) {
       throw new RuntimeException(e);
     }
   }
