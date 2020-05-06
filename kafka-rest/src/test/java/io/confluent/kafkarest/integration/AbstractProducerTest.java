@@ -120,7 +120,7 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
       Map<String, String> queryParams
   ) {
     Response response = request("/topics/" + topicName, queryParams)
-        .post(Entity.entity(request, Versions.KAFKA_V2_JSON));
+        .post(Entity.entity(request, Versions.KAFKA_V2_JSON_BINARY));
     assertOKResponse(response, Versions.KAFKA_V2_JSON);
     final ProduceResponse produceResponse =
         TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
@@ -139,7 +139,7 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
       Map<String, String> queryParams
   ) {
     Response response = request("/topics/" + topicName, queryParams)
-        .post(Entity.entity(request, Versions.KAFKA_V2_JSON));
+        .post(Entity.entity(request, Versions.KAFKA_V2_JSON_BINARY));
 
     assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response.getStatus());
     final ProduceResponse produceResponse =

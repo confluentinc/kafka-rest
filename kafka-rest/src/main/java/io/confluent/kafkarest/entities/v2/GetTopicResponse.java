@@ -18,9 +18,11 @@ package io.confluent.kafkarest.entities.v2;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.entities.TopicConfig;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -35,7 +37,7 @@ public final class GetTopicResponse {
 
   @NotNull
   @Nullable
-  private final Properties configs;
+  private final Map<String, String> configs;
 
   @NotEmpty
   @Nullable
@@ -44,7 +46,7 @@ public final class GetTopicResponse {
   @JsonCreator
   private GetTopicResponse(
       @JsonProperty("name") @Nullable String name,
-      @JsonProperty("configs") @Nullable Properties configs,
+      @JsonProperty("configs") @Nullable Map<String, String> configs,
       @JsonProperty("partitions") @Nullable List<GetPartitionResponse> partitions) {
     this.name = name;
     this.configs = configs;
@@ -59,7 +61,7 @@ public final class GetTopicResponse {
 
   @JsonProperty
   @Nullable
-  public Properties getConfigs() {
+  public Map<String, String> getConfigs() {
     return configs;
   }
 
@@ -69,10 +71,14 @@ public final class GetTopicResponse {
     return partitions;
   }
 
-  public static GetTopicResponse fromTopic(Topic topic) {
+  public static GetTopicResponse fromTopic(Topic topic, List<TopicConfig> configs) {
+    HashMap<String, String> configsMap = new HashMap<>();
+    for (TopicConfig config : configs) {
+      configsMap.put(config.getName(), config.getValue());
+    }
     return new GetTopicResponse(
         topic.getName(),
-        topic.getConfigs(),
+        configsMap,
         topic.getPartitions()
             .stream()
             .map(GetPartitionResponse::fromPartition)

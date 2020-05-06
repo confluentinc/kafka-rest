@@ -86,7 +86,7 @@ public class TopicsResourceBinaryProduceTest
     producerPool = EasyMock.createMock(ProducerPool.class);
     ctx = new DefaultKafkaRestContext(config, producerPool, null, null);
 
-    addResource(new TopicsResource(ctx));
+    addResource(new ProduceToTopicAction(ctx));
 
     produceRecordsOnlyValues = Arrays.asList(
         new BinaryTopicProduceRecord(null, "value", null),

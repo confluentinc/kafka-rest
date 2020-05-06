@@ -97,7 +97,7 @@ public class TopicsResourceAvroProduceTest
     producerPool = EasyMock.createMock(ProducerPool.class);
     ctx = new DefaultKafkaRestContext(config, producerPool, null, null);
 
-    addResource(new TopicsResource(ctx));
+    addResource(new ProduceToTopicAction(ctx));
 
     produceRecordsWithPartitionsAndKeys = Arrays.asList(
         new SchemaTopicProduceRecord(testKeys[0], testValues[0], 0),

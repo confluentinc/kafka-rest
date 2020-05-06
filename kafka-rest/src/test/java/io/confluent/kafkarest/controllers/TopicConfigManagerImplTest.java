@@ -26,7 +26,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
-import io.confluent.kafkarest.TestUtils;
+import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.TopicConfig;
 import java.util.Arrays;
@@ -164,7 +164,7 @@ public class TopicConfigManagerImplTest {
         .andReturn(
             singletonMap(
                 new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                TestUtils.failedFuture(new UnknownTopicOrPartitionException())));
+                KafkaFutures.failedFuture(new UnknownTopicOrPartitionException())));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
@@ -242,7 +242,7 @@ public class TopicConfigManagerImplTest {
         .andReturn(
             singletonMap(
                 new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                TestUtils.failedFuture(new UnknownTopicOrPartitionException())));
+                KafkaFutures.failedFuture(new UnknownTopicOrPartitionException())));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
@@ -338,7 +338,7 @@ public class TopicConfigManagerImplTest {
         .andReturn(
             singletonMap(
                 new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                TestUtils.failedFuture(new UnknownTopicOrPartitionException())));
+                KafkaFutures.failedFuture(new UnknownTopicOrPartitionException())));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
@@ -437,7 +437,7 @@ public class TopicConfigManagerImplTest {
         .andReturn(
             singletonMap(
                 new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                TestUtils.failedFuture(new UnknownTopicOrPartitionException())));
+                KafkaFutures.failedFuture(new UnknownTopicOrPartitionException())));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {

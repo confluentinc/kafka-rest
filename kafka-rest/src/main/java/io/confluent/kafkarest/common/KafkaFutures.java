@@ -13,17 +13,31 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.controllers;
+package io.confluent.kafkarest.common;
 
 import java.util.concurrent.CompletableFuture;
 import org.apache.kafka.common.KafkaFuture;
+import org.apache.kafka.common.internals.KafkaFutureImpl;
 
-final class KafkaFutures {
+public final class KafkaFutures {
 
   private KafkaFutures() {
   }
 
-  static <T> CompletableFuture<T> toCompletableFuture(KafkaFuture<T> kafkaFuture) {
+  /**
+   * Returns a {@link KafkaFuture} that is completed exceptionally with the given {@code
+   * exception}.
+   */
+  public static <T> KafkaFuture<T> failedFuture(Throwable exception) {
+    KafkaFutureImpl<T> future = new KafkaFutureImpl<>();
+    future.completeExceptionally(exception);
+    return future;
+  }
+
+  /**
+   * Converts the given {@link KafkaFuture} to a {@link CompletableFuture}.
+   */
+  public static <T> CompletableFuture<T> toCompletableFuture(KafkaFuture<T> kafkaFuture) {
     CompletableFuture<T> completableFuture = new CompletableFuture<>();
     kafkaFuture.whenComplete(
         (value, exception) -> {

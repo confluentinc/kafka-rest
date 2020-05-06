@@ -20,6 +20,7 @@ import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
+import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.TopicConfig;
 import java.util.List;
 import java.util.Objects;

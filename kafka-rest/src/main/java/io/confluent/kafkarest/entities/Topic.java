@@ -17,7 +17,6 @@ package io.confluent.kafkarest.entities;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.StringJoiner;
 
 public final class Topic {
@@ -25,9 +24,6 @@ public final class Topic {
   private final String clusterId;
 
   private final String name;
-
-  @Deprecated
-  private final Properties configs;
 
   private final List<Partition> partitions;
 
@@ -41,42 +37,11 @@ public final class Topic {
       List<Partition> partitions,
       short replicationFactor,
       boolean isInternal) {
-    this(
-        clusterId,
-        name,
-        /* configs= */ new Properties(),
-        partitions,
-        replicationFactor,
-        isInternal);
-  }
-
-  /**
-   * @deprecated use {@link #Topic(String, String, Properties, List, short, boolean)} instead
-   */
-  @Deprecated
-  public Topic(String name, Properties configs, List<Partition> partitions) {
-    this(
-        /* clusterId= */ "",
-        name,
-        configs,
-        partitions,
-        /* replicationFactor= */ (short) 0,
-        /* isInternal= */ false);
-  }
-
-  private Topic(
-      String clusterId,
-      String name,
-      Properties configs,
-      List<Partition> partitions,
-      short replicationFactor,
-      boolean isInternal) {
     if (name.isEmpty()) {
       throw new IllegalArgumentException();
     }
     this.clusterId = Objects.requireNonNull(clusterId);
     this.name = name;
-    this.configs = Objects.requireNonNull(configs);
     this.partitions = Objects.requireNonNull(partitions);
     this.replicationFactor = replicationFactor;
     this.isInternal = isInternal;
@@ -88,15 +53,6 @@ public final class Topic {
 
   public String getName() {
     return name;
-  }
-
-  /**
-   * @deprecated Use {@link io.confluent.kafkarest.controllers.TopicConfigManager#listTopicConfigs(
-   * String, String)} instead.
-   */
-  @Deprecated
-  public Properties getConfigs() {
-    return configs;
   }
 
   public List<Partition> getPartitions() {
@@ -124,13 +80,12 @@ public final class Topic {
         && isInternal == topic.isInternal
         && Objects.equals(clusterId, topic.clusterId)
         && Objects.equals(name, topic.name)
-        && Objects.equals(configs, topic.configs)
         && Objects.equals(partitions, topic.partitions);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(clusterId, name, configs, partitions, replicationFactor, isInternal);
+    return Objects.hash(clusterId, name, partitions, replicationFactor, isInternal);
   }
 
   @Override
@@ -138,7 +93,6 @@ public final class Topic {
     return new StringJoiner(", ", Topic.class.getSimpleName() + "[", "]")
         .add("clusterId='" + clusterId + "'")
         .add("name='" + name + "'")
-        .add("configs=" + configs)
         .add("partitions=" + partitions)
         .add("replicationFactor=" + replicationFactor)
         .add("isInternal=" + isInternal)
