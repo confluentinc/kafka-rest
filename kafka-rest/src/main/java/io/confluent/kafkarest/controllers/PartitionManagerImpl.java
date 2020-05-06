@@ -21,6 +21,8 @@ import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
+import io.confluent.kafkarest.common.CompletableFutures;
+import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.Topic;
 import java.util.ArrayList;
@@ -100,7 +102,7 @@ final class PartitionManagerImpl implements PartitionManager {
     ListOffsetsResult earliestResponse = listOffsets(partitions, OffsetSpec.earliest());
     ListOffsetsResult latestResponse = listOffsets(partitions, OffsetSpec.latest());
 
-    CompletableFuture<List<Partition>> partitionsWithOffsets = completedFuture(new ArrayList<>());
+    List<CompletableFuture<Partition>> partitionsWithOffsets = new ArrayList<>();
     for (Partition partition : partitions) {
       CompletableFuture<ListOffsetsResultInfo> earliestFuture =
           KafkaFutures.toCompletableFuture(
@@ -121,16 +123,10 @@ final class PartitionManagerImpl implements PartitionManager {
                       earliest.offset(),
                       latest.offset()));
 
-      partitionsWithOffsets =
-          partitionsWithOffsets.thenCombine(
-              partitionWithOffset,
-              (list, element) -> {
-                list.add(element);
-                return list;
-              });
+      partitionsWithOffsets.add(partitionWithOffset);
     }
 
-    return partitionsWithOffsets;
+    return CompletableFutures.allAsList(partitionsWithOffsets);
   }
 
   private ListOffsetsResult listOffsets(List<Partition> partitions, OffsetSpec offsetSpec) {

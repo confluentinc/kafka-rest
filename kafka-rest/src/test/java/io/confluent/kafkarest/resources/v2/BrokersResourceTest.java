@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.resources.v2;
 
-import static io.confluent.kafkarest.CompletableFutures.failedFuture;
+import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static java.util.concurrent.CompletableFuture.completedFuture;

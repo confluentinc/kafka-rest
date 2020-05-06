@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.controllers;
 
-import static io.confluent.kafkarest.TestUtils.failedFuture;
+import static io.confluent.kafkarest.common.KafkaFutures.failedFuture;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;

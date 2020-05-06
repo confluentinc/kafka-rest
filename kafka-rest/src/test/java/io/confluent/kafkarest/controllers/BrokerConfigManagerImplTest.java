@@ -26,7 +26,7 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 
-import io.confluent.kafkarest.TestUtils;
+import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.BrokerConfig;
 import io.confluent.kafkarest.entities.Cluster;
 import java.util.Arrays;
@@ -165,7 +165,7 @@ public class BrokerConfigManagerImplTest {
         .andReturn(
             singletonMap(
                 new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
-                TestUtils.failedFuture(new NotFoundException("Broker not found."))));
+                KafkaFutures.failedFuture(new NotFoundException("Broker not found."))));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
@@ -244,7 +244,7 @@ public class BrokerConfigManagerImplTest {
         .andReturn(
             singletonMap(
                 new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
-                TestUtils.failedFuture(new NotFoundException("Broker not found."))));
+                KafkaFutures.failedFuture(new NotFoundException("Broker not found."))));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
@@ -342,7 +342,7 @@ public class BrokerConfigManagerImplTest {
         .andReturn(
             singletonMap(
                 new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
-                TestUtils.failedFuture(new NotFoundException())));
+                KafkaFutures.failedFuture(new NotFoundException())));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
@@ -441,7 +441,7 @@ public class BrokerConfigManagerImplTest {
     expect(describeConfigsResult.values())
         .andReturn(singletonMap(
             new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
-            TestUtils.failedFuture(new NotFoundException())));
+            KafkaFutures.failedFuture(new NotFoundException())));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {

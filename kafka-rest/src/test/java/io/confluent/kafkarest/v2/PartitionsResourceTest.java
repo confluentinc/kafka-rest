@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.v2;
 
-import static io.confluent.kafkarest.CompletableFutures.failedFuture;
+import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
