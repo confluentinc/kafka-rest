@@ -53,23 +53,6 @@ public class SearchReplicasByBrokerActionIntegrationTest  extends ClusterTestHar
                     new ReplicaData(
                         "crn:///kafka=" + clusterId
                             + "/topic=" + TOPIC_NAME
-                            + "/partition=1/replica=" + BROKER_ID,
-                        new ResourceLink(
-                            baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/topics/" + TOPIC_NAME
-                                + "/partitions/1/replicas/" + BROKER_ID),
-                        clusterId,
-                        TOPIC_NAME,
-                        /* partitionId= */ 1,
-                        /* brokerId= */ BROKER_ID,
-                        /* isLeader= */ false,
-                        /* isInSync= */ true,
-                        new Relationship(
-                            baseUrl + "/v3/clusters/" + clusterId + "/brokers/" + BROKER_ID)),
-                    new ReplicaData(
-                        "crn:///kafka=" + clusterId
-                            + "/topic=" + TOPIC_NAME
                             + "/partition=0/replica=" + BROKER_ID,
                         new ResourceLink(
                             baseUrl
@@ -81,6 +64,23 @@ public class SearchReplicasByBrokerActionIntegrationTest  extends ClusterTestHar
                         /* partitionId= */ 0,
                         /* brokerId= */ BROKER_ID,
                         /* isLeader= */ true,
+                        /* isInSync= */ true,
+                        new Relationship(
+                            baseUrl + "/v3/clusters/" + clusterId + "/brokers/" + BROKER_ID)),
+                    new ReplicaData(
+                        "crn:///kafka=" + clusterId
+                            + "/topic=" + TOPIC_NAME
+                            + "/partition=1/replica=" + BROKER_ID,
+                        new ResourceLink(
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/topics/" + TOPIC_NAME
+                                + "/partitions/1/replicas/" + BROKER_ID),
+                        clusterId,
+                        TOPIC_NAME,
+                        /* partitionId= */ 1,
+                        /* brokerId= */ BROKER_ID,
+                        /* isLeader= */ false,
                         /* isInSync= */ true,
                         new Relationship(
                             baseUrl + "/v3/clusters/" + clusterId + "/brokers/" + BROKER_ID)))));
