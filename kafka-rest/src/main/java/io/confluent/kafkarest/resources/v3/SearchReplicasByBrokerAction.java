@@ -27,7 +27,6 @@ import io.confluent.kafkarest.entities.v3.ReplicaData;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
-import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
