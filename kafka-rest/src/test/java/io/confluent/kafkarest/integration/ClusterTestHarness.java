@@ -404,6 +404,23 @@ public abstract class ClusterTestHarness {
     }
   }
 
+  protected final void createTopic(
+      String topicName, Map<Integer, List<Integer>> replicasAssignments) {
+    Properties properties = new Properties();
+    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    AdminClient adminClient = AdminClient.create(properties);
+
+    CreateTopicsResult result =
+        adminClient.createTopics(
+            Collections.singletonList(new NewTopic(topicName, replicasAssignments)));
+
+    try {
+      result.all().get();
+    } catch (InterruptedException | ExecutionException e) {
+      Assert.fail(String.format("Failed to create topic: %s", e.getMessage()));
+    }
+  }
+
   protected final void produceAvroMessages(List<ProducerRecord<Object, Object>> records) {
     HashMap<String, Object> serProps = new HashMap<String, Object>();
     serProps.put("schema.registry.url", schemaRegConnect);

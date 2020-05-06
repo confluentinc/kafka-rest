@@ -15,10 +15,12 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.ReplicaManager;
+import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.ListReplicasResponse;
 import io.confluent.kafkarest.entities.v3.ReplicaData;
@@ -71,6 +73,9 @@ public final class SearchReplicasByBrokerAction {
                                 "partition-replicas"),
                             /* next= */ null),
                         replicas.stream()
+                            .sorted(
+                                comparing(PartitionReplica::getTopicName)
+                                    .thenComparing(PartitionReplica::getPartitionId))
                             .map(replica -> ReplicaData.create(crnFactory, urlFactory, replica))
                             .collect(Collectors.toList())));
 
