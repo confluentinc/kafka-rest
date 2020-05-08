@@ -50,7 +50,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   }
 
   public KafkaRestApplication(Properties props) {
-    super(new KafkaRestConfig(props));
+    this(new KafkaRestConfig(props));
   }
 
   public KafkaRestApplication(KafkaRestConfig config) {
