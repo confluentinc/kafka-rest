@@ -338,7 +338,7 @@ public abstract class ClusterTestHarness {
   }
 
   protected final String getClusterId() {
-    Properties properties = new Properties();
+    Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     AdminClient adminClient = AdminClient.create(properties);
 
@@ -350,7 +350,7 @@ public abstract class ClusterTestHarness {
   }
 
   protected final int getControllerID() {
-    Properties properties = new Properties();
+    Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     AdminClient adminClient = AdminClient.create(properties);
 
@@ -362,7 +362,7 @@ public abstract class ClusterTestHarness {
   }
 
   protected final ArrayList<Node> getBrokers() {
-    Properties properties = new Properties();
+    Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     AdminClient adminClient = AdminClient.create(properties);
 
@@ -374,7 +374,7 @@ public abstract class ClusterTestHarness {
   }
 
   protected final Set<String> getTopicNames() {
-    Properties properties = new Properties();
+    Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     AdminClient adminClient = AdminClient.create(properties);
 
@@ -388,7 +388,7 @@ public abstract class ClusterTestHarness {
   }
 
   protected final void createTopic(String topicName, int numPartitions, short replicationFactor) {
-    Properties properties = new Properties();
+    Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     AdminClient adminClient = AdminClient.create(properties);
 
@@ -406,7 +406,7 @@ public abstract class ClusterTestHarness {
 
   protected final void createTopic(
       String topicName, Map<Integer, List<Integer>> replicasAssignments) {
-    Properties properties = new Properties();
+    Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     AdminClient adminClient = AdminClient.create(properties);
 
