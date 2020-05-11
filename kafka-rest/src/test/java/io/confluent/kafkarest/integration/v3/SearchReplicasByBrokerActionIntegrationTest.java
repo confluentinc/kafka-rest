@@ -96,9 +96,8 @@ public class SearchReplicasByBrokerActionIntegrationTest  extends ClusterTestHar
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    ListReplicasResponse actual = OBJECT_MAPPER.readValue(
-            response.readEntity(String.class),
-            ListReplicasResponse.class);
+    ListReplicasResponse actual =
+            response.readEntity(ListReplicasResponse.class);
     assertEquals(expected, actual);
   }
 

@@ -142,9 +142,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
         request("/v3/clusters/" + clusterId + "/topics").accept(Versions.JSON_API).get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    ListTopicsResponse actual = OBJECT_MAPPER.readValue(
-            response.readEntity(String.class),
-            ListTopicsResponse.class);
+    ListTopicsResponse actual =
+            response.readEntity(ListTopicsResponse.class);
     assertEquals(expected, actual);
   }
 
@@ -186,9 +185,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1).accept(Versions.JSON_API).get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    GetTopicResponse actual = OBJECT_MAPPER.readValue(
-            response.readEntity(String.class),
-            GetTopicResponse.class);
+    GetTopicResponse actual =
+            response.readEntity(GetTopicResponse.class);
     assertEquals(expected, actual);
   }
 
@@ -245,9 +243,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                     Versions.JSON_API));
     assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
 
-    CreateTopicResponse actual = OBJECT_MAPPER.readValue(
-            response.readEntity(String.class),
-            CreateTopicResponse.class);
+    CreateTopicResponse actual =
+            response.readEntity(CreateTopicResponse.class);
     assertEquals(expected, actual);
 
     assertTrue(getTopicNames().contains(topicName));
@@ -366,9 +363,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                     Versions.JSON_API));
     assertEquals(Status.CREATED.getStatusCode(), createTopicResponse.getStatus());
 
-    CreateTopicResponse actualCreateTopicResponse = OBJECT_MAPPER.readValue(
-            createTopicResponse.readEntity(String.class),
-            CreateTopicResponse.class);
+    CreateTopicResponse actualCreateTopicResponse =
+            createTopicResponse.readEntity(CreateTopicResponse.class);
 
     assertEquals(expectedCreateTopicResponse, actualCreateTopicResponse);
     assertTrue(getTopicNames().contains(topicName));
@@ -402,9 +398,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), existingTopicResponse.getStatus());
 
-    GetTopicResponse actualExistingGetTopicResponse = OBJECT_MAPPER.readValue(
-            existingTopicResponse.readEntity(String.class),
-            GetTopicResponse.class);
+    GetTopicResponse actualExistingGetTopicResponse =
+            existingTopicResponse.readEntity(GetTopicResponse.class);
     assertEquals(expectedExistingGetTopicResponse, actualExistingGetTopicResponse);
 
     GetTopicConfigResponse expectedExistingGetTopicConfigResponse =
@@ -435,9 +430,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), existingGetTopicConfigResponse.getStatus());
 
-    GetTopicConfigResponse actualGetTopicConfigResponse = OBJECT_MAPPER.readValue(
-            existingGetTopicConfigResponse.readEntity(String.class),
-            GetTopicConfigResponse.class);
+    GetTopicConfigResponse actualGetTopicConfigResponse =
+            existingGetTopicConfigResponse.readEntity(GetTopicConfigResponse.class);
     assertEquals(
         expectedExistingGetTopicConfigResponse,
         actualGetTopicConfigResponse);

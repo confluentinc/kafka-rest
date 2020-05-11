@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
 /**
  * A (Broker) config resource type.
  */
-@JsonIgnoreProperties(value = { "type" }, allowGetters = true)
+@JsonIgnoreProperties(value = {"type"}, allowGetters = true)
 public final class BrokerConfigData {
 
   public static final String ELEMENT_TYPE = "config";

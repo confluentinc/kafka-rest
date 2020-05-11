@@ -76,7 +76,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
                         /* partitionId= */ 0,
                         new Relationship(
                             baseUrl
-                            + "/v3/clusters/" + clusterId
+                             + "/v3/clusters/" + clusterId
                             + "/topics/" + TOPIC_NAME
                             + "/partitions/0/replicas/0"),
                         new Relationship(
@@ -91,9 +91,8 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    ListPartitionsResponse actual = OBJECT_MAPPER.readValue(
-            response.readEntity(String.class),
-            ListPartitionsResponse.class);
+    ListPartitionsResponse actual =
+            response.readEntity(ListPartitionsResponse.class);
     assertEquals(expected, actual);
   }
 
@@ -151,9 +150,8 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    GetPartitionResponse actual = OBJECT_MAPPER.readValue(
-            response.readEntity(String.class),
-            GetPartitionResponse.class);
+    GetPartitionResponse actual =
+            response.readEntity(GetPartitionResponse.class);
     assertEquals(expected, actual);
   }
 

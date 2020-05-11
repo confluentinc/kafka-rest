@@ -87,9 +87,8 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    ListReplicasResponse actual = OBJECT_MAPPER.readValue(
-            response.readEntity(String.class),
-            ListReplicasResponse.class);
+    ListReplicasResponse actual =
+            response.readEntity(ListReplicasResponse.class);
     assertEquals(expected, actual);
   }
 
@@ -154,9 +153,8 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    GetReplicaResponse actual = OBJECT_MAPPER.readValue(
-            response.readEntity(String.class),
-            GetReplicaResponse.class);
+    GetReplicaResponse actual =
+            response.readEntity(GetReplicaResponse.class);
     assertEquals(expected, actual);
   }
 

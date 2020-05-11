@@ -96,9 +96,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    ListBrokerConfigsResponse actual = OBJECT_MAPPER.readValue(
-            response.readEntity(String.class),
-            ListBrokerConfigsResponse.class);
+    ListBrokerConfigsResponse actual = response.readEntity(ListBrokerConfigsResponse.class);
     assertTrue(
             String.format("Not true that `%s' contains `%s'.", actual.getLinks(), expectedLinks),
             actual.getData().contains(expectedConfig1)
@@ -168,10 +166,9 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    assertEquals(expected,
-            OBJECT_MAPPER.readValue(
-                    response.readEntity(String.class),
-                    GetBrokerConfigResponse.class));
+
+    GetBrokerConfigResponse actual = response.readEntity(GetBrokerConfigResponse.class);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -243,9 +240,8 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), responseBeforeUpdate.getStatus());
 
-    GetBrokerConfigResponse actualBeforeUpdate = OBJECT_MAPPER.readValue(
-            responseBeforeUpdate.readEntity(String.class),
-            GetBrokerConfigResponse.class);
+    GetBrokerConfigResponse actualBeforeUpdate =
+            responseBeforeUpdate.readEntity(GetBrokerConfigResponse.class);
     assertEquals(expectedBeforeUpdate, actualBeforeUpdate);
 
     Response updateResponse =
@@ -285,9 +281,8 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), responseAfterUpdate.getStatus());
 
-    GetBrokerConfigResponse actualAfterUpdate = OBJECT_MAPPER.readValue(
-            responseAfterUpdate.readEntity(String.class),
-            GetBrokerConfigResponse.class);
+    GetBrokerConfigResponse actualAfterUpdate =
+            responseAfterUpdate.readEntity(GetBrokerConfigResponse.class);
     assertEquals(expectedAfterUpdate, actualAfterUpdate);
 
     Response resetResponse =
@@ -325,9 +320,8 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), responseAfterReset.getStatus());
 
-    GetBrokerConfigResponse actualAfterReset = OBJECT_MAPPER.readValue(
-            responseAfterReset.readEntity(String.class),
-            GetBrokerConfigResponse.class);
+    GetBrokerConfigResponse actualAfterReset =
+            responseAfterReset.readEntity(GetBrokerConfigResponse.class);
     assertEquals(expectedAfterReset, actualAfterReset);
   }
 

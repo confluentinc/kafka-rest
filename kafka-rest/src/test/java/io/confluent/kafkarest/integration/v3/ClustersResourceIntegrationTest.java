@@ -61,9 +61,8 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
     Response response = request("/v3/clusters").accept(Versions.JSON_API).get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    ListClustersResponse actual = OBJECT_MAPPER.readValue(
-            response.readEntity(String.class),
-            ListClustersResponse.class);
+    ListClustersResponse actual =
+            response.readEntity(ListClustersResponse.class);
     assertEquals(expected, actual);
   }
 
@@ -90,9 +89,8 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    GetClusterResponse actual = OBJECT_MAPPER.readValue(
-            response.readEntity(String.class),
-            GetClusterResponse.class);
+    GetClusterResponse actual =
+            response.readEntity(GetClusterResponse.class);
     assertEquals(expected, actual);
   }
 

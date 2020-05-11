@@ -188,9 +188,8 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    GetTopicConfigResponse actual = OBJECT_MAPPER.readValue(
-            response.readEntity(String.class),
-            GetTopicConfigResponse.class);
+    GetTopicConfigResponse actual =
+            response.readEntity(GetTopicConfigResponse.class);
     assertEquals(expected, actual);
   }
 
@@ -258,9 +257,8 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), responseBeforeUpdate.getStatus());
 
-    GetTopicConfigResponse actualResponseBeforeUpdate = OBJECT_MAPPER.readValue(
-            responseBeforeUpdate.readEntity(String.class),
-            GetTopicConfigResponse.class);
+    GetTopicConfigResponse actualResponseBeforeUpdate =
+            responseBeforeUpdate.readEntity(GetTopicConfigResponse.class);
 
     assertEquals(expectedBeforeUpdate, actualResponseBeforeUpdate);
 
@@ -301,9 +299,8 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), responseAfterUpdate.getStatus());
 
-    GetTopicConfigResponse actualResponseAfterUpdate = OBJECT_MAPPER.readValue(
-            responseAfterUpdate.readEntity(String.class),
-            GetTopicConfigResponse.class);
+    GetTopicConfigResponse actualResponseAfterUpdate =
+            responseAfterUpdate.readEntity(GetTopicConfigResponse.class);
     assertEquals(expectedAfterUpdate, actualResponseAfterUpdate);
 
     Response resetResponse =
@@ -341,9 +338,8 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), responseAfterReset.getStatus());
 
-    GetTopicConfigResponse actualResponseAfterReset = OBJECT_MAPPER.readValue(
-            responseAfterReset.readEntity(String.class),
-            GetTopicConfigResponse.class);
+    GetTopicConfigResponse actualResponseAfterReset =
+            responseAfterReset.readEntity(GetTopicConfigResponse.class);
     assertEquals(expectedAfterReset, actualResponseAfterReset);
   }
 

@@ -120,9 +120,8 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
         request("/v3/clusters/" + clusterId + "/brokers").accept(Versions.JSON_API).get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    ListBrokersResponse actual = OBJECT_MAPPER.readValue(
-            response.readEntity(String.class),
-            ListBrokersResponse.class);
+    ListBrokersResponse actual =
+            response.readEntity(ListBrokersResponse.class);
     assertEquals(expected, actual);
   }
 
@@ -168,9 +167,8 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    GetBrokerResponse actual = OBJECT_MAPPER.readValue(
-            response.readEntity(String.class),
-            GetBrokerResponse.class);
+    GetBrokerResponse actual =
+            response.readEntity(GetBrokerResponse.class);
     assertEquals(expected, actual);
   }
 
