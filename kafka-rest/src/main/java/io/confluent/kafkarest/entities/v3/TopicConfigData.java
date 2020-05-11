@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -23,6 +25,7 @@ import javax.annotation.Nullable;
 /**
  * A (Topic) config resource type.
  */
+@JsonIgnoreProperties(value = {"type"}, allowGetters = true)
 public final class TopicConfigData {
 
   public static final String ELEMENT_TYPE = "config";
@@ -43,10 +46,20 @@ public final class TopicConfigData {
       boolean isDefault,
       boolean isReadOnly,
       boolean isSensitive) {
+    this(id, links,
+            new Attributes(clusterId, topicName, name, value,
+                    isDefault, isReadOnly, isSensitive));
+  }
+
+  @JsonCreator
+  public TopicConfigData(
+          @JsonProperty("id") String id,
+          @JsonProperty("links") ResourceLink links,
+          @JsonProperty("attributes") Attributes attributes
+  ) {
     this.id = Objects.requireNonNull(id);
     this.links = Objects.requireNonNull(links);
-    attributes =
-        new Attributes(clusterId, topicName, name, value, isDefault, isReadOnly, isSensitive);
+    this.attributes = attributes;
   }
 
   @JsonProperty("type")
@@ -114,14 +127,15 @@ public final class TopicConfigData {
 
     private final boolean isSensitive;
 
+    @JsonCreator
     public Attributes(
-        String clusterId,
-        String topicName,
-        String name,
-        @Nullable String value,
-        boolean isDefault,
-        boolean isReadOnly,
-        boolean isSensitive) {
+        @JsonProperty("cluster_id") String clusterId,
+        @JsonProperty("topic_name") String topicName,
+        @JsonProperty("name") String name,
+        @JsonProperty("value") @Nullable String value,
+        @JsonProperty("is_default") boolean isDefault,
+        @JsonProperty("is_read_only") boolean isReadOnly,
+        @JsonProperty("is_sensitive") boolean isSensitive) {
       this.clusterId = Objects.requireNonNull(clusterId);
       this.topicName = Objects.requireNonNull(topicName);
       this.name = Objects.requireNonNull(name);

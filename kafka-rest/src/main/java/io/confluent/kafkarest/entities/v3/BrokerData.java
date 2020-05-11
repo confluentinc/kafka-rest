@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -23,6 +25,7 @@ import javax.annotation.Nullable;
 /**
  * A broker resource type.
  */
+@JsonIgnoreProperties(value = {"type"}, allowGetters = true)
 public final class BrokerData {
 
   public static final String ELEMENT_TYPE = "broker";
@@ -45,10 +48,21 @@ public final class BrokerData {
       @Nullable String rack,
       Relationship configs,
       Relationship partitionReplicas) {
+    this(id, links,
+            new Attributes(clusterId, brokerId, host, port, rack),
+            new Relationships(configs, partitionReplicas));
+  }
+
+  @JsonCreator
+  public BrokerData(
+          @JsonProperty("id") String id,
+          @JsonProperty("links") ResourceLink links,
+          @JsonProperty("attributes") Attributes attributes,
+          @JsonProperty("relationships") Relationships relationships) {
     this.id = Objects.requireNonNull(id);
     this.links = Objects.requireNonNull(links);
-    attributes = new Attributes(clusterId, brokerId, host, port, rack);
-    relationships = new Relationships(configs, partitionReplicas);
+    this.attributes = attributes;
+    this.relationships = relationships;
   }
 
   @JsonProperty("type")
@@ -121,12 +135,13 @@ public final class BrokerData {
     @Nullable
     private final String rack;
 
+    @JsonCreator
     public Attributes(
-        String clusterId,
-        Integer brokerId,
-        @Nullable String host,
-        @Nullable Integer port,
-        @Nullable String rack) {
+        @JsonProperty("cluster_id") String clusterId,
+        @JsonProperty("broker_id") Integer brokerId,
+        @JsonProperty("host") @Nullable String host,
+        @JsonProperty("port") @Nullable Integer port,
+        @JsonProperty("rack") @Nullable String rack) {
       this.clusterId = Objects.requireNonNull(clusterId);
       this.brokerId = Objects.requireNonNull(brokerId);
       this.host = host;
@@ -201,7 +216,9 @@ public final class BrokerData {
 
     private final Relationship partitionReplicas;
 
-    public Relationships(Relationship configs, Relationship partitionReplicas) {
+    @JsonCreator
+    public Relationships(@JsonProperty("configs") Relationship configs,
+                         @JsonProperty("partition_replicas") Relationship partitionReplicas) {
       this.configs = Objects.requireNonNull(configs);
       this.partitionReplicas = Objects.requireNonNull(partitionReplicas);
     }

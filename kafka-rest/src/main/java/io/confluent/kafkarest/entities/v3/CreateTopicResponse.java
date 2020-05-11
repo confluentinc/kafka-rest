@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -26,7 +27,8 @@ public final class CreateTopicResponse {
 
   private final TopicData data;
 
-  public CreateTopicResponse(TopicData data) {
+  @JsonCreator
+  public CreateTopicResponse(@JsonProperty("data") TopicData data) {
     this.data = Objects.requireNonNull(data);
   }
 

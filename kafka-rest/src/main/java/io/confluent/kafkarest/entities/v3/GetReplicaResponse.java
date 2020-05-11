@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -28,7 +29,8 @@ public final class GetReplicaResponse {
 
   private final ReplicaData data;
 
-  public GetReplicaResponse(ReplicaData data) {
+  @JsonCreator
+  public GetReplicaResponse(@JsonProperty("data") ReplicaData data) {
     this.data = Objects.requireNonNull(data);
   }
 

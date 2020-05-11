@@ -5,10 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.v3.BrokerConfigData;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
-import io.confluent.kafkarest.entities.v3.GetBrokerConfigResponse;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.*;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -30,16 +27,15 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
     int brokerId = getBrokers().get(0).id();
 
-    String expectedLinks =
-        OBJECT_MAPPER.writeValueAsString(
+    CollectionLink expectedLinks =
             new CollectionLink(
                 baseUrl
                     + "/v3/clusters/" + clusterId
                     + "/brokers/" + brokerId
                     + "/configs",
-                /* next= */ null));
-    String expectedConfig1 =
-        OBJECT_MAPPER.writeValueAsString(
+                /* next= */ null);
+
+    BrokerConfigData expectedConfig1 =
             new BrokerConfigData(
                 "crn:///kafka=" + clusterId
                     + "/broker=" + brokerId
@@ -55,10 +51,9 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                 "2147483647",
                 /* isDefault= */ true,
                 /* isReadOnly= */ false,
-                /* isSensitive= */ false));
+                /* isSensitive= */ false);
 
-    String expectedConfig2 =
-        OBJECT_MAPPER.writeValueAsString(
+    BrokerConfigData expectedConfig2 =
             new BrokerConfigData(
                 "crn:///kafka=" + clusterId
                     + "/broker=" + brokerId
@@ -74,10 +69,9 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                 "producer",
                 /* isDefault= */ true,
                 /* isReadOnly= */ false,
-                /* isSensitive= */ false));
+                /* isSensitive= */ false);
 
-    String expectedConfig3 =
-        OBJECT_MAPPER.writeValueAsString(
+    BrokerConfigData expectedConfig3 =
             new BrokerConfigData(
                 "crn:///kafka=" + clusterId
                     + "/broker=" + brokerId
@@ -93,26 +87,31 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                 "1",
                 /* isDefault= */ true,
                 /* isReadOnly= */ false,
-                /* isSensitive= */ false));
+                /* isSensitive= */ false);
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs")
             .accept(Versions.JSON_API)
             .get();
+
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    String responseBody = response.readEntity(String.class);
+
+    ListBrokerConfigsResponse actual = OBJECT_MAPPER.readValue(
+            response.readEntity(String.class),
+            ListBrokerConfigsResponse.class);
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedLinks),
-        responseBody.contains(expectedLinks));
+            String.format("Not true that `%s' contains `%s'.", actual.getLinks(), expectedLinks),
+            actual.getData().contains(expectedConfig1)
+    );
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedConfig1),
-        responseBody.contains(expectedConfig1));
+        String.format("Not true that `%s' contains `%s'.", actual.getData(), expectedConfig1),
+        actual.getData().contains(expectedConfig1));
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedConfig2),
-        responseBody.contains(expectedConfig2));
+        String.format("Not true that `%s' contains `%s'.", actual.getData(), expectedConfig2),
+        actual.getData().contains(expectedConfig2));
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedConfig3),
-        responseBody.contains(expectedConfig3));
+        String.format("Not true that `%s' contains `%s'.", actual.getData(), expectedConfig3),
+        actual.getData().contains(expectedConfig3));
   }
 
   @Test
@@ -142,8 +141,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
     int brokerId = getBrokers().get(0).id();
 
-    String expected =
-        OBJECT_MAPPER.writeValueAsString(
+    GetBrokerConfigResponse expected =
             new GetBrokerConfigResponse(
                 new BrokerConfigData(
                     "crn:///kafka=" + clusterId
@@ -160,7 +158,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "2147483647",
                     /* isDefault= */ true,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false)));
+                    /* isSensitive= */ false));
 
     Response response =
         request(
@@ -170,7 +168,10 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    assertEquals(expected, response.readEntity(String.class));
+    assertEquals(expected,
+            OBJECT_MAPPER.readValue(
+                    response.readEntity(String.class),
+                    GetBrokerConfigResponse.class));
   }
 
   @Test
@@ -214,8 +215,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
     int brokerId = getBrokers().get(0).id();
 
-    String expectedBeforeUpdate =
-        OBJECT_MAPPER.writeValueAsString(
+    GetBrokerConfigResponse expectedBeforeUpdate =
             new GetBrokerConfigResponse(
                 new BrokerConfigData(
                     "crn:///kafka=" + clusterId
@@ -232,7 +232,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "producer",
                     /* isDefault= */ true,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false)));
+                    /* isSensitive= */ false));
 
     Response responseBeforeUpdate =
         request(
@@ -242,7 +242,11 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), responseBeforeUpdate.getStatus());
-    assertEquals(expectedBeforeUpdate, responseBeforeUpdate.readEntity(String.class));
+
+    GetBrokerConfigResponse actualBeforeUpdate = OBJECT_MAPPER.readValue(
+            responseBeforeUpdate.readEntity(String.class),
+            GetBrokerConfigResponse.class);
+    assertEquals(expectedBeforeUpdate, actualBeforeUpdate);
 
     Response updateResponse =
         request(
@@ -253,8 +257,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "{\"data\":{\"attributes\":{\"value\":\"producer\"}}}", Versions.JSON_API));
     assertEquals(Status.NO_CONTENT.getStatusCode(), updateResponse.getStatus());
 
-    String expectedAfterUpdate =
-        OBJECT_MAPPER.writeValueAsString(
+    GetBrokerConfigResponse expectedAfterUpdate =
             new GetBrokerConfigResponse(
                 new BrokerConfigData(
                     "crn:///kafka=" + clusterId
@@ -271,7 +274,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "producer",
                     /* isDefault= */ false,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false)));
+                    /* isSensitive= */ false));
 
     Response responseAfterUpdate =
         request(
@@ -281,7 +284,11 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), responseAfterUpdate.getStatus());
-    assertEquals(expectedAfterUpdate, responseAfterUpdate.readEntity(String.class));
+
+    GetBrokerConfigResponse actualAfterUpdate = OBJECT_MAPPER.readValue(
+            responseAfterUpdate.readEntity(String.class),
+            GetBrokerConfigResponse.class);
+    assertEquals(expectedAfterUpdate, actualAfterUpdate);
 
     Response resetResponse =
         request(
@@ -290,8 +297,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             .delete();
     assertEquals(Status.NO_CONTENT.getStatusCode(), resetResponse.getStatus());
 
-    String expectedAfterReset =
-        OBJECT_MAPPER.writeValueAsString(
+    GetBrokerConfigResponse expectedAfterReset =
             new GetBrokerConfigResponse(
                 new BrokerConfigData(
                     "crn:///kafka=" + clusterId
@@ -308,7 +314,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "producer",
                     /* isDefault= */ true,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false)));
+                    /* isSensitive= */ false));
 
     Response responseAfterReset =
         request(
@@ -318,7 +324,11 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), responseAfterReset.getStatus());
-    assertEquals(expectedAfterReset, responseAfterReset.readEntity(String.class));
+
+    GetBrokerConfigResponse actualAfterReset = OBJECT_MAPPER.readValue(
+            responseAfterReset.readEntity(String.class),
+            GetBrokerConfigResponse.class);
+    assertEquals(expectedAfterReset, actualAfterReset);
   }
 
   @Test

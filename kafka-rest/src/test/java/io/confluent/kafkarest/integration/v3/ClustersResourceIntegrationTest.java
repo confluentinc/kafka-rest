@@ -45,8 +45,7 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
     int controllerId = getControllerID();
 
-    String expected =
-        OBJECT_MAPPER.writeValueAsString(
+    ListClustersResponse expected =
             new ListClustersResponse(
                 new CollectionLink(baseUrl + "/v3/clusters", /* next= */ null),
                 singletonList(
@@ -57,11 +56,15 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
                         new Relationship(
                             baseUrl + "/v3/clusters/" + clusterId + "/brokers/" + controllerId),
                         new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/brokers"),
-                        new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/topics")))));
+                        new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/topics"))));
 
     Response response = request("/v3/clusters").accept(Versions.JSON_API).get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    assertEquals(expected, response.readEntity(String.class));
+
+    ListClustersResponse actual = OBJECT_MAPPER.readValue(
+            response.readEntity(String.class),
+            ListClustersResponse.class);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -70,8 +73,7 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
     int controllerId = getControllerID();
 
-    String expected =
-        OBJECT_MAPPER.writeValueAsString(
+    GetClusterResponse expected =
             new GetClusterResponse(
                 new ClusterData(
                     "crn:///kafka=" + clusterId,
@@ -80,14 +82,18 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
                     new Relationship(
                         baseUrl + "/v3/clusters/" + clusterId + "/brokers/" + controllerId),
                     new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/brokers"),
-                    new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/topics"))));
+                    new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/topics")));
 
     Response response =
         request(String.format("/v3/clusters/%s", clusterId))
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    assertEquals(expected, response.readEntity(String.class));
+
+    GetClusterResponse actual = OBJECT_MAPPER.readValue(
+            response.readEntity(String.class),
+            GetClusterResponse.class);
+    assertEquals(expected, actual);
   }
 
   @Test

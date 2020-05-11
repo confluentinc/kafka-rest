@@ -46,8 +46,7 @@ public class SearchReplicasByBrokerActionIntegrationTest  extends ClusterTestHar
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
-    String expected =
-        OBJECT_MAPPER.writeValueAsString(
+    ListReplicasResponse expected =
             new ListReplicasResponse(
                 new CollectionLink(
                     baseUrl
@@ -89,14 +88,18 @@ public class SearchReplicasByBrokerActionIntegrationTest  extends ClusterTestHar
                         /* isLeader= */ false,
                         /* isInSync= */ true,
                         new Relationship(
-                            baseUrl + "/v3/clusters/" + clusterId + "/brokers/" + BROKER_ID)))));
+                            baseUrl + "/v3/clusters/" + clusterId + "/brokers/" + BROKER_ID))));
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/" + BROKER_ID + "/partition-replicas")
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    assertEquals(expected, response.readEntity(String.class));
+
+    ListReplicasResponse actual = OBJECT_MAPPER.readValue(
+            response.readEntity(String.class),
+            ListReplicasResponse.class);
+    assertEquals(expected, actual);
   }
 
   @Test
