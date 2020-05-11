@@ -47,8 +47,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
     ArrayList<Node> nodes = getBrokers();
 
-    String expected =
-        OBJECT_MAPPER.writeValueAsString(
+    ListBrokersResponse expected =
             new ListBrokersResponse(
                 new CollectionLink(
                     baseUrl + "/v3/clusters/" + clusterId + "/brokers", /* next= */ null),
@@ -115,12 +114,15 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                             baseUrl
                                 + "/v3/clusters/" + clusterId
                                 + "/brokers/" + nodes.get(2).id()
-                                + "/partition-replicas")))));
+                                + "/partition-replicas"))));
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers").accept(Versions.JSON_API).get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    assertEquals(expected, response.readEntity(String.class));
+
+    ListBrokersResponse actual =
+            response.readEntity(ListBrokersResponse.class);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -135,8 +137,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
     ArrayList<Node> nodes = getBrokers();
 
-    String expected =
-        OBJECT_MAPPER.writeValueAsString(
+    GetBrokerResponse expected =
             new GetBrokerResponse(
                 new BrokerData(
                     "crn:///kafka=" + clusterId + "/broker=" + nodes.get(0).id(),
@@ -158,14 +159,17 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                         baseUrl
                             + "/v3/clusters/" + clusterId
                             + "/brokers/" + nodes.get(0).id()
-                            + "/partition-replicas"))));
+                            + "/partition-replicas")));
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/" + nodes.get(0).id())
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    assertEquals(expected, response.readEntity(String.class));
+
+    GetBrokerResponse actual =
+            response.readEntity(GetBrokerResponse.class);
+    assertEquals(expected, actual);
   }
 
   @Test

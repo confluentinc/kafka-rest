@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -23,6 +25,7 @@ import javax.annotation.Nullable;
 /**
  * A partition resource type.
  */
+@JsonIgnoreProperties(value = {"type"}, allowGetters = true)
 public final class PartitionData {
 
   public static final String ELEMENT_TYPE = "partition";
@@ -44,10 +47,22 @@ public final class PartitionData {
       @Nullable Relationship leader,
       Relationship replicas
   ) {
+    this(id, links,
+            new Attributes(clusterId, topicName, partitionId),
+            new Relationships(leader, replicas));
+  }
+
+  @JsonCreator
+  public PartitionData(
+          @JsonProperty("id") String id,
+          @JsonProperty("links") ResourceLink links,
+          @JsonProperty("attributes") Attributes attributes,
+          @JsonProperty("relationships") Relationships relationships
+  ) {
     this.id = Objects.requireNonNull(id);
     this.links = Objects.requireNonNull(links);
-    attributes = new Attributes(clusterId, topicName, partitionId);
-    relationships = new Relationships(leader, replicas);
+    this.attributes = attributes;
+    this.relationships = relationships;
   }
 
   @JsonProperty("type")
@@ -113,10 +128,11 @@ public final class PartitionData {
 
     private final Integer partitionId;
 
+    @JsonCreator
     private Attributes(
-        String clusterId,
-        String topicName,
-        Integer partitionId
+        @JsonProperty("cluster_id") String clusterId,
+        @JsonProperty("topic_name") String topicName,
+        @JsonProperty("partition_id") Integer partitionId
     ) {
       this.clusterId = Objects.requireNonNull(clusterId);
       this.topicName = Objects.requireNonNull(topicName);
@@ -174,7 +190,10 @@ public final class PartitionData {
 
     private final Relationship replicas;
 
-    private Relationships(@Nullable Relationship leader, Relationship replicas) {
+    @JsonCreator
+    private Relationships(
+            @JsonProperty("leader") @Nullable Relationship leader,
+            @JsonProperty("replicas") Relationship replicas) {
       this.leader = leader;
       this.replicas = Objects.requireNonNull(replicas);
     }

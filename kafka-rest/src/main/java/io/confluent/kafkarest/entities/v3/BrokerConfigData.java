@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.kafkarest.entities.v3.TopicConfigData.Attributes;
 import java.util.Objects;
@@ -24,6 +26,7 @@ import javax.annotation.Nullable;
 /**
  * A (Broker) config resource type.
  */
+@JsonIgnoreProperties(value = {"type"}, allowGetters = true)
 public final class BrokerConfigData {
 
   public static final String ELEMENT_TYPE = "config";
@@ -44,10 +47,21 @@ public final class BrokerConfigData {
       boolean isDefault,
       boolean isReadOnly,
       boolean isSensitive) {
+
+    this(id, links,
+            new Attributes(clusterId, brokerId, name, value,
+                    isDefault, isReadOnly, isSensitive));
+  }
+
+  @JsonCreator
+  public BrokerConfigData(
+          @JsonProperty("id") String id,
+          @JsonProperty("links") ResourceLink links,
+          @JsonProperty("attributes") Attributes attributes
+  ) {
     this.id = id;
     this.links = links;
-    attributes =
-        new Attributes(clusterId, brokerId, name, value, isDefault, isReadOnly, isSensitive);
+    this.attributes = attributes;
   }
 
   @JsonProperty("type")
@@ -115,14 +129,15 @@ public final class BrokerConfigData {
 
     private final boolean isSensitive;
 
+    @JsonCreator
     public Attributes(
-        String clusterId,
-        int brokerId,
-        String name,
-        @Nullable String value,
-        boolean isDefault,
-        boolean isReadOnly,
-        boolean isSensitive) {
+        @JsonProperty("cluster_id") String clusterId,
+        @JsonProperty("broker_id") int brokerId,
+        @JsonProperty("name") String name,
+        @JsonProperty("value") @Nullable String value,
+        @JsonProperty("is_default") boolean isDefault,
+        @JsonProperty("is_read_only") boolean isReadOnly,
+        @JsonProperty("is_sensitive") boolean isSensitive) {
       this.clusterId = Objects.requireNonNull(clusterId);
       this.brokerId = brokerId;
       this.name = Objects.requireNonNull(name);

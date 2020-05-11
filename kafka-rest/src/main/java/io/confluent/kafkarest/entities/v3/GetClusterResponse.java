@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -26,7 +27,8 @@ public final class GetClusterResponse {
 
   private final ClusterData data;
 
-  public GetClusterResponse(ClusterData data) {
+  @JsonCreator
+  public GetClusterResponse(@JsonProperty("data") ClusterData data) {
     this.data = Objects.requireNonNull(data);
   }
 

@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -26,7 +27,8 @@ public final class GetBrokerResponse {
 
   private final BrokerData data;
 
-  public GetBrokerResponse(BrokerData data) {
+  @JsonCreator
+  public GetBrokerResponse(@JsonProperty("data") BrokerData data) {
     this.data = Objects.requireNonNull(data);
   }
 

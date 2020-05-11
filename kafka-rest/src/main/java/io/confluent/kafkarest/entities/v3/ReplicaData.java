@@ -17,6 +17,8 @@ package io.confluent.kafkarest.entities.v3;
 
 import static java.util.Objects.requireNonNull;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.response.CrnFactory;
@@ -27,6 +29,7 @@ import java.util.StringJoiner;
 /**
  * A replica resource type.
  */
+@JsonIgnoreProperties(value = {"type"}, allowGetters = true)
 public final class ReplicaData {
 
   public static final String ELEMENT_TYPE = "replica";
@@ -49,10 +52,22 @@ public final class ReplicaData {
       Boolean isLeader,
       Boolean isInSync,
       Relationship broker) {
+    this(id, links,
+            new Attributes(clusterId, topicName, partitionId, brokerId, isLeader, isInSync),
+            new Relationships(broker));
+  }
+
+  @JsonCreator
+  public ReplicaData(
+          @JsonProperty("id") String id,
+          @JsonProperty("links") ResourceLink links,
+          @JsonProperty("attributes") Attributes attributes,
+          @JsonProperty("relationships") Relationships relationships
+  ) {
     this.id = requireNonNull(id);
     this.links = requireNonNull(links);
-    attributes = new Attributes(clusterId, topicName, partitionId, brokerId, isLeader, isInSync);
-    relationships = new Relationships(broker);
+    this.attributes = attributes;
+    this.relationships = relationships;
   }
 
   public static ReplicaData create(
@@ -172,13 +187,14 @@ public final class ReplicaData {
 
     private final Boolean isInSync;
 
+    @JsonCreator
     public Attributes(
-        String clusterId,
-        String topicName,
-        Integer partitionId,
-        Integer brokerId,
-        Boolean isLeader,
-        Boolean isInSync
+        @JsonProperty("cluster_id") String clusterId,
+        @JsonProperty("topic_name") String topicName,
+        @JsonProperty("partition_id") Integer partitionId,
+        @JsonProperty("broker_id") Integer brokerId,
+        @JsonProperty("is_leader") Boolean isLeader,
+        @JsonProperty("is_in_sync") Boolean isInSync
     ) {
       this.clusterId = requireNonNull(clusterId);
       this.topicName = requireNonNull(topicName);
@@ -257,7 +273,8 @@ public final class ReplicaData {
 
     public final Relationship broker;
 
-    public Relationships(Relationship broker) {
+    @JsonCreator
+    public Relationships(@JsonProperty("broker") Relationship broker) {
       this.broker = requireNonNull(broker);
     }
 

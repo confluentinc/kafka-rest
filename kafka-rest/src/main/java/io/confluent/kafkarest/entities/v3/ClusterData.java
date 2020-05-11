@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
@@ -36,6 +37,7 @@ public final class ClusterData {
 
   private final Relationships relationships;
 
+
   public ClusterData(
       String id,
       ResourceLink links,
@@ -44,10 +46,22 @@ public final class ClusterData {
       Relationship brokers,
       Relationship topics
   ) {
+    this(id, links,
+            new Attributes(clusterId),
+            new Relationships(controller, brokers, topics));
+  }
+
+  @JsonCreator
+  public ClusterData(
+          @JsonProperty("type") String id,
+          @JsonProperty("links") ResourceLink links,
+          @JsonProperty("cluster_id") Attributes attributes,
+          @JsonProperty("relationships") Relationships relationships
+  ) {
     this.id = Objects.requireNonNull(id);
     this.links = Objects.requireNonNull(links);
-    this.attributes = new Attributes(clusterId);
-    this.relationships = new Relationships(controller, brokers, topics);
+    this.attributes = attributes;
+    this.relationships = relationships;
   }
 
   @JsonProperty("type")
@@ -110,7 +124,8 @@ public final class ClusterData {
 
     private final String clusterId;
 
-    public Attributes(String clusterId) {
+    @JsonCreator
+    public Attributes(@JsonProperty("cluster_id") String clusterId) {
       this.clusterId = Objects.requireNonNull(clusterId);
     }
 
@@ -153,8 +168,11 @@ public final class ClusterData {
 
     private final Relationship topics;
 
+    @JsonCreator
     public Relationships(
-        @Nullable Relationship controller, Relationship brokers, Relationship topics) {
+        @JsonProperty("controller") @Nullable Relationship controller,
+        @JsonProperty("brokers") Relationship brokers,
+        @JsonProperty("topics") Relationship topics) {
       this.controller = controller;
       this.brokers = Objects.requireNonNull(brokers);
       this.topics = Objects.requireNonNull(topics);

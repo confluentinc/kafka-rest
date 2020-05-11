@@ -55,8 +55,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
-    String expected =
-        OBJECT_MAPPER.writeValueAsString(
+    ListPartitionsResponse expected =
             new ListPartitionsResponse(
                 new CollectionLink(
                     baseUrl
@@ -77,21 +76,24 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
                         /* partitionId= */ 0,
                         new Relationship(
                             baseUrl
-                            + "/v3/clusters/" + clusterId
+                             + "/v3/clusters/" + clusterId
                             + "/topics/" + TOPIC_NAME
                             + "/partitions/0/replicas/0"),
                         new Relationship(
                             baseUrl
                                 + "/v3/clusters/" + clusterId
                                 + "/topics/" + TOPIC_NAME
-                                + "/partitions/0/replicas")))));
+                                + "/partitions/0/replicas"))));
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions")
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    assertEquals(expected, response.readEntity(String.class));
+
+    ListPartitionsResponse actual =
+            response.readEntity(ListPartitionsResponse.class);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -119,8 +121,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
-    String expected =
-        OBJECT_MAPPER.writeValueAsString(
+    GetPartitionResponse expected =
             new GetPartitionResponse(
                 new PartitionData(
                     "crn:///kafka=" + clusterId + "/topic=" + TOPIC_NAME + "/partition=0",
@@ -141,14 +142,17 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
                         baseUrl
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + TOPIC_NAME
-                            + "/partitions/0/replicas"))));
+                            + "/partitions/0/replicas")));
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/0")
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    assertEquals(expected, response.readEntity(String.class));
+
+    GetPartitionResponse actual =
+            response.readEntity(GetPartitionResponse.class);
+    assertEquals(expected, actual);
   }
 
   @Test

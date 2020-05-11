@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -22,6 +24,7 @@ import java.util.StringJoiner;
 /**
  * A topic resource type.
  */
+@JsonIgnoreProperties(value = {"type"}, allowGetters = true)
 public final class TopicData {
 
   public static final String ELEMENT_TYPE = "topic";
@@ -44,10 +47,22 @@ public final class TopicData {
       Relationship configs,
       Relationship partitions
   ) {
+    this(id, links,
+            new Attributes(clusterId, topicName, isInternal, replicationFactor),
+            new Relationships(configs, partitions));
+  }
+
+  @JsonCreator
+  public TopicData(
+          @JsonProperty("id") String id,
+          @JsonProperty("links") ResourceLink links,
+          @JsonProperty("attributes") Attributes attributes,
+          @JsonProperty("relationships") Relationships relationships
+  ) {
     this.id = Objects.requireNonNull(id);
     this.links = Objects.requireNonNull(links);
-    attributes = new Attributes(clusterId, topicName, isInternal, replicationFactor);
-    relationships = new Relationships(configs, partitions);
+    this.attributes = attributes;
+    this.relationships = relationships;
   }
 
   @JsonProperty("type")
@@ -115,8 +130,12 @@ public final class TopicData {
 
     private final int replicationFactor;
 
+    @JsonCreator
     public Attributes(
-        String clusterId, String topicName, boolean isInternal, int replicationFactor) {
+        @JsonProperty("cluster_id") String clusterId,
+        @JsonProperty("topic_name") String topicName,
+        @JsonProperty("is_internal") boolean isInternal,
+        @JsonProperty("replication_factor") int replicationFactor) {
       this.clusterId = Objects.requireNonNull(clusterId);
       this.topicName = Objects.requireNonNull(topicName);
       this.isInternal = isInternal;
@@ -180,7 +199,10 @@ public final class TopicData {
 
     private final Relationship partitions;
 
-    public Relationships(Relationship configs, Relationship partitions) {
+    @JsonCreator
+    public Relationships(
+            @JsonProperty("configs") Relationship configs,
+            @JsonProperty("partitions") Relationship partitions) {
       this.configs = configs;
       this.partitions = partitions;
     }

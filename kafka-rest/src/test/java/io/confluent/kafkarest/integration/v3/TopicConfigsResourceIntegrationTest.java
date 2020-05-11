@@ -160,8 +160,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
-    String expected =
-        OBJECT_MAPPER.writeValueAsString(
+    GetTopicConfigResponse expected =
             new GetTopicConfigResponse(
                 new TopicConfigData(
                     "crn:///kafka=" + clusterId
@@ -178,7 +177,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "delete",
                     /* isDefault= */ true,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false)));
+                    /* isSensitive= */ false));
 
     Response response =
         request(
@@ -188,7 +187,10 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    assertEquals(expected, response.readEntity(String.class));
+
+    GetTopicConfigResponse actual =
+            response.readEntity(GetTopicConfigResponse.class);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -227,8 +229,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
-    String expectedBeforeUpdate =
-        OBJECT_MAPPER.writeValueAsString(
+    GetTopicConfigResponse expectedBeforeUpdate =
             new GetTopicConfigResponse(
                 new TopicConfigData(
                     "crn:///kafka=" + clusterId
@@ -245,7 +246,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "delete",
                     /* isDefault= */ true,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false)));
+                    /* isSensitive= */ false));
 
     Response responseBeforeUpdate =
         request(
@@ -255,7 +256,11 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), responseBeforeUpdate.getStatus());
-    assertEquals(expectedBeforeUpdate, responseBeforeUpdate.readEntity(String.class));
+
+    GetTopicConfigResponse actualResponseBeforeUpdate =
+            responseBeforeUpdate.readEntity(GetTopicConfigResponse.class);
+
+    assertEquals(expectedBeforeUpdate, actualResponseBeforeUpdate);
 
     Response updateResponse =
         request(
@@ -266,8 +271,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "{\"data\":{\"attributes\":{\"value\":\"compact\"}}}", Versions.JSON_API));
     assertEquals(Status.NO_CONTENT.getStatusCode(), updateResponse.getStatus());
 
-    String expectedAfterUpdate =
-        OBJECT_MAPPER.writeValueAsString(
+    GetTopicConfigResponse expectedAfterUpdate =
             new GetTopicConfigResponse(
                 new TopicConfigData(
                     "crn:///kafka=" + clusterId
@@ -284,7 +288,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "compact",
                     /* isDefault= */ false,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false)));
+                    /* isSensitive= */ false));
 
     Response responseAfterUpdate =
         request(
@@ -294,7 +298,10 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), responseAfterUpdate.getStatus());
-    assertEquals(expectedAfterUpdate, responseAfterUpdate.readEntity(String.class));
+
+    GetTopicConfigResponse actualResponseAfterUpdate =
+            responseAfterUpdate.readEntity(GetTopicConfigResponse.class);
+    assertEquals(expectedAfterUpdate, actualResponseAfterUpdate);
 
     Response resetResponse =
         request(
@@ -303,8 +310,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
             .delete();
     assertEquals(Status.NO_CONTENT.getStatusCode(), resetResponse.getStatus());
 
-    String expectedAfterReset =
-        OBJECT_MAPPER.writeValueAsString(
+    GetTopicConfigResponse expectedAfterReset =
             new GetTopicConfigResponse(
                 new TopicConfigData(
                     "crn:///kafka=" + clusterId
@@ -321,7 +327,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "delete",
                     /* isDefault= */ true,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false)));
+                    /* isSensitive= */ false));
 
     Response responseAfterReset =
         request(
@@ -331,7 +337,10 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), responseAfterReset.getStatus());
-    assertEquals(expectedAfterReset, responseAfterReset.readEntity(String.class));
+
+    GetTopicConfigResponse actualResponseAfterReset =
+            responseAfterReset.readEntity(GetTopicConfigResponse.class);
+    assertEquals(expectedAfterReset, actualResponseAfterReset);
   }
 
   @Test

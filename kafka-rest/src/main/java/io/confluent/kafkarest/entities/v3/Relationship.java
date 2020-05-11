@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
@@ -32,13 +33,20 @@ public final class Relationship {
   private final Data data;
 
   public Relationship(String related) {
-    this.links = new Link(related);
-    this.data = null;
+    this(new Link(related), null);
   }
 
-  public Relationship(String related, String type, String id) {
-    this.links = new Link(related);
-    this.data = new Data(type, id);
+  public Relationship(String related,
+                      String type,
+                      String id) {
+    this(new Link(related), new Data(type, id));
+  }
+
+  @JsonCreator
+  public Relationship(@JsonProperty("links") Link link,
+                      @JsonProperty("data") @Nullable Data data) {
+    this.links = link;
+    this.data = data;
   }
 
   @JsonProperty("links")
@@ -82,7 +90,8 @@ public final class Relationship {
 
     private final String related;
 
-    private Link(String related) {
+    @JsonCreator
+    private Link(@JsonProperty("related") String related) {
       this.related = Objects.requireNonNull(related);
     }
 
@@ -122,7 +131,9 @@ public final class Relationship {
 
     private final String id;
 
-    private Data(String type, String id) {
+    @JsonCreator
+    private Data(@JsonProperty("type") String type,
+                 @JsonProperty("id") String id) {
       this.type = Objects.requireNonNull(type);
       this.id = Objects.requireNonNull(id);
     }

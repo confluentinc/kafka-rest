@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Objects;
@@ -29,7 +30,9 @@ public final class ListClustersResponse {
 
   private final List<ClusterData> data;
 
-  public ListClustersResponse(CollectionLink links, List<ClusterData> data) {
+  @JsonCreator
+  public ListClustersResponse(@JsonProperty("links") CollectionLink links,
+                              @JsonProperty("data") List<ClusterData> data) {
     this.links = Objects.requireNonNull(links);
     this.data = Objects.requireNonNull(data);
   }

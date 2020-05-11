@@ -55,8 +55,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
-    String expected =
-        OBJECT_MAPPER.writeValueAsString(
+    ListReplicasResponse expected =
             new ListReplicasResponse(
                 new CollectionLink(
                     baseUrl
@@ -80,14 +79,17 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
                         /* brokerId= */ 0,
                         /* isLeader= */ true,
                         /* isInSync= */ true,
-                        new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/brokers/0")))));
+                        new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/brokers/0"))));
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/0/replicas")
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    assertEquals(expected, response.readEntity(String.class));
+
+    ListReplicasResponse actual =
+            response.readEntity(ListReplicasResponse.class);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -126,8 +128,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
-    String expected =
-        OBJECT_MAPPER.writeValueAsString(
+    GetReplicaResponse expected =
             new GetReplicaResponse(
                 new ReplicaData(
                     "crn:///kafka=" + clusterId
@@ -144,14 +145,17 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
                     /* brokerId= */ 0,
                     /* isLeader= */ true,
                     /* isInSync= */ true,
-                    new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/brokers/0"))));
+                    new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/brokers/0")));
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/0/replicas/0")
             .accept(Versions.JSON_API)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    assertEquals(expected, response.readEntity(String.class));
+
+    GetReplicaResponse actual =
+            response.readEntity(GetReplicaResponse.class);
+    assertEquals(expected, actual);
   }
 
   @Test
