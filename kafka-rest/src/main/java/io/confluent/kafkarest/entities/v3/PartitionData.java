@@ -120,7 +120,7 @@ public final class PartitionData {
         .toString();
   }
 
-  private static final class Attributes {
+  public static final class Attributes {
 
     private final String clusterId;
 
@@ -129,7 +129,7 @@ public final class PartitionData {
     private final Integer partitionId;
 
     @JsonCreator
-    private Attributes(
+    public Attributes(
         @JsonProperty("cluster_id") String clusterId,
         @JsonProperty("topic_name") String topicName,
         @JsonProperty("partition_id") Integer partitionId
