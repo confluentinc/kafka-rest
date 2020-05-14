@@ -83,7 +83,7 @@ public class PartitionsResourceTest extends JerseyTest {
   protected Application configure() {
     partitionManager = createMock(PartitionManager.class);
     ResourceConfig application = new ResourceConfig();
-    application.register(new PartitionsResource(partitionManager));
+    application.register(new PartitionsResource(() -> partitionManager));
     application.register(new JacksonMessageBodyProvider());
     return application;
   }

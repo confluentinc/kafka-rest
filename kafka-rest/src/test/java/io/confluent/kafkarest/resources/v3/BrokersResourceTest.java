@@ -63,7 +63,8 @@ public final class BrokersResourceTest {
   public void setUp() {
     brokersResource =
         new BrokersResource(
-            brokerManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""), new FakeUrlFactory());
+            () -> brokerManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
+            new FakeUrlFactory());
   }
 
   @Test

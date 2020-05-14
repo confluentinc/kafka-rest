@@ -36,6 +36,7 @@ import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -53,13 +54,13 @@ import javax.ws.rs.core.Response.Status;
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/configs")
 public final class TopicConfigsResource {
 
-  private final TopicConfigManager topicConfigManager;
+  private final Provider<TopicConfigManager> topicConfigManager;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
   public TopicConfigsResource(
-      TopicConfigManager topicConfigManager,
+      Provider<TopicConfigManager> topicConfigManager,
       CrnFactory crnFactory,
       UrlFactory urlFactory) {
     this.topicConfigManager = requireNonNull(topicConfigManager);
@@ -74,7 +75,8 @@ public final class TopicConfigsResource {
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName) {
     CompletableFuture<ListTopicConfigsResponse> response =
-        topicConfigManager.listTopicConfigs(clusterId, topicName)
+        topicConfigManager.get()
+            .listTopicConfigs(clusterId, topicName)
             .thenApply(
                 configs ->
                     new ListTopicConfigsResponse(
@@ -100,7 +102,8 @@ public final class TopicConfigsResource {
       @PathParam("name") String name
   ) {
     CompletableFuture<GetTopicConfigResponse> response =
-        topicConfigManager.getTopicConfig(clusterId, topicName, name)
+        topicConfigManager.get()
+            .getTopicConfig(clusterId, topicName, name)
             .thenApply(topic -> topic.orElseThrow(NotFoundException::new))
             .thenApply(topic -> new GetTopicConfigResponse(toTopicConfigData(topic)));
 
@@ -121,7 +124,7 @@ public final class TopicConfigsResource {
     String newValue = request.getData().getAttributes().getValue();
 
     CompletableFuture<Void> response =
-        topicConfigManager.updateTopicConfig(clusterId, topicName, name, newValue);
+        topicConfigManager.get().updateTopicConfig(clusterId, topicName, name, newValue);
 
     AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
         .entity(response)
@@ -138,7 +141,7 @@ public final class TopicConfigsResource {
       @PathParam("name") String name
   ) {
     CompletableFuture<Void> response =
-        topicConfigManager.resetTopicConfig(clusterId, topicName, name);
+        topicConfigManager.get().resetTopicConfig(clusterId, topicName, name);
 
     AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
         .entity(response)

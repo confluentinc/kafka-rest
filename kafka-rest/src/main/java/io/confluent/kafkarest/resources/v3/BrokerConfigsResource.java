@@ -36,6 +36,7 @@ import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -53,13 +54,13 @@ import javax.ws.rs.core.Response.Status;
 @Path("/v3/clusters/{clusterId}/brokers/{brokerId}/configs")
 public final class BrokerConfigsResource {
 
-  private final BrokerConfigManager brokerConfigManager;
+  private final Provider<BrokerConfigManager> brokerConfigManager;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
   public BrokerConfigsResource(
-      BrokerConfigManager brokerConfigManager,
+      Provider<BrokerConfigManager> brokerConfigManager,
       CrnFactory crnFactory,
       UrlFactory urlFactory) {
     this.brokerConfigManager = requireNonNull(brokerConfigManager);
@@ -74,7 +75,8 @@ public final class BrokerConfigsResource {
       @PathParam("clusterId") String clusterId,
       @PathParam("brokerId") int brokerId) {
     CompletableFuture<ListBrokerConfigsResponse> response =
-        brokerConfigManager.listBrokerConfigs(clusterId, brokerId)
+        brokerConfigManager.get()
+            .listBrokerConfigs(clusterId, brokerId)
             .thenApply(
                 configs ->
                     new ListBrokerConfigsResponse(
@@ -100,7 +102,8 @@ public final class BrokerConfigsResource {
       @PathParam("name") String name
   ) {
     CompletableFuture<GetBrokerConfigResponse> response =
-        brokerConfigManager.getBrokerConfig(clusterId, brokerId, name)
+        brokerConfigManager.get()
+            .getBrokerConfig(clusterId, brokerId, name)
             .thenApply(broker -> broker.orElseThrow(NotFoundException::new))
             .thenApply(broker -> new GetBrokerConfigResponse(toBrokerConfigData(broker)));
 
@@ -121,7 +124,7 @@ public final class BrokerConfigsResource {
     String newValue = request.getData().getAttributes().getValue();
 
     CompletableFuture<Void> response =
-        brokerConfigManager.updateBrokerConfig(clusterId, brokerId, name, newValue);
+        brokerConfigManager.get().updateBrokerConfig(clusterId, brokerId, name, newValue);
 
     AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
         .entity(response)
@@ -138,7 +141,7 @@ public final class BrokerConfigsResource {
       @PathParam("name") String name
   ) {
     CompletableFuture<Void> response =
-        brokerConfigManager.resetBrokerConfig(clusterId, brokerId, name);
+        brokerConfigManager.get().resetBrokerConfig(clusterId, brokerId, name);
 
     AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
         .entity(response)

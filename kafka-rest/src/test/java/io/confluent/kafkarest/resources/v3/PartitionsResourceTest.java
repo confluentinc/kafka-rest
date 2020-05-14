@@ -144,7 +144,7 @@ public class PartitionsResourceTest {
   public void setUp() {
     partitionsResource =
         new PartitionsResource(
-            partitionManager,
+            () -> partitionManager,
             new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
             new FakeUrlFactory());
   }

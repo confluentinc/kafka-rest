@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -42,11 +43,12 @@ import javax.ws.rs.container.Suspended;
 @Produces({Versions.KAFKA_V2_JSON})
 public final class TopicsResource {
 
-  private final TopicManager topicManager;
-  private final TopicConfigManager topicConfigManager;
+  private final Provider<TopicManager> topicManager;
+  private final Provider<TopicConfigManager> topicConfigManager;
 
   @Inject
-  public TopicsResource(TopicManager topicManager, TopicConfigManager topicConfigManager) {
+  public TopicsResource(
+      Provider<TopicManager> topicManager, Provider<TopicConfigManager> topicConfigManager) {
     this.topicManager = requireNonNull(topicManager);
     this.topicConfigManager = requireNonNull(topicConfigManager);
   }
@@ -55,7 +57,7 @@ public final class TopicsResource {
   @PerformanceMetric("topics.list+v2")
   public void list(@Suspended AsyncResponse asyncResponse) {
     CompletableFuture<List<String>> response =
-        topicManager.listLocalTopics()
+        topicManager.get().listLocalTopics()
             .thenApply(topics -> topics.stream().map(Topic::getName).collect(Collectors.toList()));
 
     AsyncResponses.asyncResume(asyncResponse, response);
@@ -67,11 +69,11 @@ public final class TopicsResource {
   public void getTopic(
       @Suspended AsyncResponse asyncResponse, @PathParam("topic") String topicName) {
     CompletableFuture<Topic> topicFuture =
-        topicManager.getLocalTopic(topicName)
+        topicManager.get().getLocalTopic(topicName)
             .thenApply(topic -> topic.orElseThrow(Errors::topicNotFoundException));
     CompletableFuture<GetTopicResponse> response =
         topicFuture.thenCompose(
-            topic -> topicConfigManager.listTopicConfigs(topic.getClusterId(), topicName))
+            topic -> topicConfigManager.get().listTopicConfigs(topic.getClusterId(), topicName))
             .thenCombine(
                 topicFuture,
                 (configs, topic) -> GetTopicResponse.fromTopic(topic, configs));

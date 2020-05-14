@@ -354,7 +354,7 @@ public class TopicsResourceTest
   @Before
   @Override
   public void setUp() throws Exception {
-    addResource(new TopicsResource(topicManager, topicConfigManager));
+    addResource(new TopicsResource(() -> topicManager, () -> topicConfigManager));
     super.setUp();
   }
 

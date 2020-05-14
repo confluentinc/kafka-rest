@@ -94,7 +94,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
             contextInvocationHandler
         );
 
-    config.register(new BackendsModule(context));
+    config.register(new BackendsModule());
     config.register(new ConfigModule(appConfig));
     config.register(new ControllersModule());
     config.register(new ExceptionsModule());

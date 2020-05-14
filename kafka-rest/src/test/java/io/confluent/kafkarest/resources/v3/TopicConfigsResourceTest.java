@@ -91,7 +91,7 @@ public class TopicConfigsResourceTest {
   public void setUp() {
     topicConfigsResource =
         new TopicConfigsResource(
-            topicConfigManager,
+            () -> topicConfigManager,
             new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
             new FakeUrlFactory());
   }
