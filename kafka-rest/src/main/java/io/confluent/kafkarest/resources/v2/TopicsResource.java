@@ -43,21 +43,24 @@ import javax.ws.rs.container.Suspended;
 @Produces({Versions.KAFKA_V2_JSON})
 public final class TopicsResource {
 
-  private final Provider<TopicManager> topicManager;
-  private final Provider<TopicConfigManager> topicConfigManager;
+  private final Provider<TopicManager> topicManagerProvider;
+  private final Provider<TopicConfigManager> topicConfigManagerProvider;
 
   @Inject
   public TopicsResource(
-      Provider<TopicManager> topicManager, Provider<TopicConfigManager> topicConfigManager) {
-    this.topicManager = requireNonNull(topicManager);
-    this.topicConfigManager = requireNonNull(topicConfigManager);
+      Provider<TopicManager> topicManagerProvider,
+      Provider<TopicConfigManager> topicConfigManagerProvider) {
+    this.topicManagerProvider = requireNonNull(topicManagerProvider);
+    this.topicConfigManagerProvider = requireNonNull(topicConfigManagerProvider);
   }
 
   @GET
   @PerformanceMetric("topics.list+v2")
   public void list(@Suspended AsyncResponse asyncResponse) {
+    TopicManager topicManager = topicManagerProvider.get();
+
     CompletableFuture<List<String>> response =
-        topicManager.get().listLocalTopics()
+        topicManager.listLocalTopics()
             .thenApply(topics -> topics.stream().map(Topic::getName).collect(Collectors.toList()));
 
     AsyncResponses.asyncResume(asyncResponse, response);
@@ -68,12 +71,15 @@ public final class TopicsResource {
   @PerformanceMetric("topic.get+v2")
   public void getTopic(
       @Suspended AsyncResponse asyncResponse, @PathParam("topic") String topicName) {
+    TopicManager topicManager = topicManagerProvider.get();
+    TopicConfigManager topicConfigManager = topicConfigManagerProvider.get();
+
     CompletableFuture<Topic> topicFuture =
-        topicManager.get().getLocalTopic(topicName)
+        topicManager.getLocalTopic(topicName)
             .thenApply(topic -> topic.orElseThrow(Errors::topicNotFoundException));
     CompletableFuture<GetTopicResponse> response =
         topicFuture.thenCompose(
-            topic -> topicConfigManager.get().listTopicConfigs(topic.getClusterId(), topicName))
+            topic -> topicConfigManager.listTopicConfigs(topic.getClusterId(), topicName))
             .thenCombine(
                 topicFuture,
                 (configs, topic) -> GetTopicResponse.fromTopic(topic, configs));
