@@ -62,7 +62,8 @@ public class SearchReplicasByBrokerActionTest {
   public void setUp() {
     searchReplicasByBrokerAction =
         new SearchReplicasByBrokerAction(
-            replicaManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""), new FakeUrlFactory());
+            () -> replicaManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
+            new FakeUrlFactory());
   }
 
   @Test

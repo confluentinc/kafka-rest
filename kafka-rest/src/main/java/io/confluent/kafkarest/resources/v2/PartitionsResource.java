@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -41,10 +42,10 @@ import javax.ws.rs.container.Suspended;
 @Produces({Versions.KAFKA_V2_JSON})
 public final class PartitionsResource {
 
-  private final PartitionManager partitionManager;
+  private final Provider<PartitionManager> partitionManager;
 
   @Inject
-  public PartitionsResource(PartitionManager partitionManager) {
+  public PartitionsResource(Provider<PartitionManager> partitionManager) {
     this.partitionManager = requireNonNull(partitionManager);
   }
 
@@ -52,7 +53,8 @@ public final class PartitionsResource {
   @PerformanceMetric("partitions.list+v2")
   public void list(@Suspended AsyncResponse asyncResponse, @PathParam("topic") String topic) {
     CompletableFuture<List<GetPartitionResponse>> response =
-        partitionManager.listLocalPartitions(topic)
+        partitionManager.get()
+            .listLocalPartitions(topic)
             .thenApply(
                 partitions ->
                     partitions.stream()
@@ -71,7 +73,8 @@ public final class PartitionsResource {
       @PathParam("partition") int partitionId
   ) {
     CompletableFuture<GetPartitionResponse> response =
-        partitionManager.getLocalPartition(topic, partitionId)
+        partitionManager.get()
+            .getLocalPartition(topic, partitionId)
             .thenApply(partition -> partition.orElseThrow(Errors::partitionNotFoundException))
             .thenApply(GetPartitionResponse::fromPartition);
 
@@ -93,7 +96,8 @@ public final class PartitionsResource {
       @PathParam("partition") int partitionId
   ) {
     CompletableFuture<TopicPartitionOffsetResponse> response =
-        partitionManager.getLocalPartition(topic, partitionId)
+        partitionManager.get()
+            .getLocalPartition(topic, partitionId)
             .thenApply(partition -> partition.orElseThrow(Errors::partitionNotFoundException))
             .thenApply(
                 partition ->

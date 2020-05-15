@@ -33,6 +33,7 @@ import io.confluent.kafkarest.response.UrlFactory;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
@@ -44,13 +45,13 @@ import javax.ws.rs.container.Suspended;
 @Path("/v3/clusters/{clusterId}/brokers")
 public final class BrokersResource {
 
-  private final BrokerManager brokerManager;
+  private final Provider<BrokerManager> brokerManager;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
   public BrokersResource(
-      BrokerManager brokerManager, CrnFactory crnFactory, UrlFactory urlFactory) {
+      Provider<BrokerManager> brokerManager, CrnFactory crnFactory, UrlFactory urlFactory) {
     this.brokerManager = requireNonNull(brokerManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
@@ -61,7 +62,8 @@ public final class BrokersResource {
   public void listBrokers(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<ListBrokersResponse> response =
-        brokerManager.listBrokers(clusterId)
+        brokerManager.get()
+            .listBrokers(clusterId)
             .thenApply(
                 brokers ->
                     new ListBrokersResponse(
@@ -82,7 +84,8 @@ public final class BrokersResource {
       @PathParam("brokerId") Integer brokerId
   ) {
     CompletableFuture<GetBrokerResponse> response =
-        brokerManager.getBroker(clusterId, brokerId)
+        brokerManager.get()
+            .getBroker(clusterId, brokerId)
             .thenApply(broker -> broker.orElseThrow(NotFoundException::new))
             .thenApply(broker -> new GetBrokerResponse(toBrokerData(broker)));
 

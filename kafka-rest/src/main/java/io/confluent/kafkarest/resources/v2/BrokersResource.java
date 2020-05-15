@@ -26,6 +26,7 @@ import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -41,10 +42,10 @@ import javax.ws.rs.container.Suspended;
 @Consumes()
 public final class BrokersResource {
 
-  private final BrokerManager brokerManager;
+  private final Provider<BrokerManager> brokerManager;
 
   @Inject
-  BrokersResource(BrokerManager brokerManager) {
+  BrokersResource(Provider<BrokerManager> brokerManager) {
     this.brokerManager = requireNonNull(brokerManager);
   }
 
@@ -52,7 +53,8 @@ public final class BrokersResource {
   @PerformanceMetric("brokers.list+v2")
   public void list(@Suspended AsyncResponse asyncResponse) {
     CompletableFuture<BrokerList> response =
-        brokerManager.listLocalBrokers()
+        brokerManager.get()
+            .listLocalBrokers()
             .thenApply(
                 brokers ->
                     new BrokerList(

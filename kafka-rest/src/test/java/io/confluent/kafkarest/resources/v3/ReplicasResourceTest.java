@@ -87,7 +87,8 @@ public class ReplicasResourceTest {
   public void setUp() {
     replicasResource =
         new ReplicasResource(
-            replicaManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""), new FakeUrlFactory());
+            () -> replicaManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
+            new FakeUrlFactory());
   }
 
   @Test

@@ -63,7 +63,7 @@ public class BrokersResourceTest
 
   @Before
   public void setUp() throws Exception {
-    addResource(new BrokersResource(brokerManager));
+    addResource(new BrokersResource(() -> brokerManager));
     super.setUp();
   }
 

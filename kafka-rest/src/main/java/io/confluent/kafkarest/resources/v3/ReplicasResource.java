@@ -29,6 +29,7 @@ import io.confluent.kafkarest.response.UrlFactory;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
@@ -40,13 +41,13 @@ import javax.ws.rs.container.Suspended;
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/partitions/{partitionId}/replicas")
 public final class ReplicasResource {
 
-  private final ReplicaManager replicaManager;
+  private final Provider<ReplicaManager> replicaManager;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
   public ReplicasResource(
-      ReplicaManager replicaManager, CrnFactory crnFactory, UrlFactory urlFactory) {
+      Provider<ReplicaManager> replicaManager, CrnFactory crnFactory, UrlFactory urlFactory) {
     this.replicaManager = requireNonNull(replicaManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
@@ -61,7 +62,8 @@ public final class ReplicasResource {
       @PathParam("partitionId") Integer partitionId
   ) {
     CompletableFuture<ListReplicasResponse> response =
-        replicaManager.listReplicas(clusterId, topicName, partitionId)
+        replicaManager.get()
+            .listReplicas(clusterId, topicName, partitionId)
             .thenApply(
                 replicas ->
                     new ListReplicasResponse(
@@ -94,7 +96,8 @@ public final class ReplicasResource {
       @PathParam("brokerId") Integer brokerId
   ) {
     CompletableFuture<GetReplicaResponse> response =
-        replicaManager.getReplica(clusterId, topicName, partitionId, brokerId)
+        replicaManager.get()
+            .getReplica(clusterId, topicName, partitionId, brokerId)
             .thenApply(replica -> replica.orElseThrow(NotFoundException::new))
             .thenApply(replica ->
                 new GetReplicaResponse(ReplicaData.create(crnFactory, urlFactory, replica)));

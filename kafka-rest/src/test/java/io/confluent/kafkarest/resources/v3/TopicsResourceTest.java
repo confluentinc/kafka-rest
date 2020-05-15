@@ -330,7 +330,8 @@ public class TopicsResourceTest {
   public void setUp() {
     topicsResource =
         new TopicsResource(
-            topicManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""), new FakeUrlFactory());
+            () -> topicManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
+            new FakeUrlFactory());
   }
 
   @Test

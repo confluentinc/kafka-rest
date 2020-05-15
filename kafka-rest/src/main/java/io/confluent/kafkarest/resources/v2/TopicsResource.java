@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -42,18 +43,22 @@ import javax.ws.rs.container.Suspended;
 @Produces({Versions.KAFKA_V2_JSON})
 public final class TopicsResource {
 
-  private final TopicManager topicManager;
-  private final TopicConfigManager topicConfigManager;
+  private final Provider<TopicManager> topicManagerProvider;
+  private final Provider<TopicConfigManager> topicConfigManagerProvider;
 
   @Inject
-  public TopicsResource(TopicManager topicManager, TopicConfigManager topicConfigManager) {
-    this.topicManager = requireNonNull(topicManager);
-    this.topicConfigManager = requireNonNull(topicConfigManager);
+  public TopicsResource(
+      Provider<TopicManager> topicManagerProvider,
+      Provider<TopicConfigManager> topicConfigManagerProvider) {
+    this.topicManagerProvider = requireNonNull(topicManagerProvider);
+    this.topicConfigManagerProvider = requireNonNull(topicConfigManagerProvider);
   }
 
   @GET
   @PerformanceMetric("topics.list+v2")
   public void list(@Suspended AsyncResponse asyncResponse) {
+    TopicManager topicManager = topicManagerProvider.get();
+
     CompletableFuture<List<String>> response =
         topicManager.listLocalTopics()
             .thenApply(topics -> topics.stream().map(Topic::getName).collect(Collectors.toList()));
@@ -66,6 +71,9 @@ public final class TopicsResource {
   @PerformanceMetric("topic.get+v2")
   public void getTopic(
       @Suspended AsyncResponse asyncResponse, @PathParam("topic") String topicName) {
+    TopicManager topicManager = topicManagerProvider.get();
+    TopicConfigManager topicConfigManager = topicConfigManagerProvider.get();
+
     CompletableFuture<Topic> topicFuture =
         topicManager.getLocalTopic(topicName)
             .thenApply(topic -> topic.orElseThrow(Errors::topicNotFoundException));

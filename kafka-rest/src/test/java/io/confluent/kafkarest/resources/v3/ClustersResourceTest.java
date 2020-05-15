@@ -67,7 +67,8 @@ public class ClustersResourceTest {
   public void setUp() {
     clustersResource =
         new ClustersResource(
-            clusterManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""), new FakeUrlFactory());
+            () -> clusterManager,
+            new CrnFactoryImpl(/* crnAuthorityConfig= */ ""), new FakeUrlFactory());
   }
 
   @Test

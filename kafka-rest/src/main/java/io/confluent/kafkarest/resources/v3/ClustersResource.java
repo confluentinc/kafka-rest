@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import static java.util.Objects.requireNonNull;
+
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.ClusterManager;
 import io.confluent.kafkarest.entities.Cluster;
@@ -27,10 +29,10 @@ import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
@@ -42,23 +44,24 @@ import javax.ws.rs.container.Suspended;
 @Path("/v3/clusters")
 public final class ClustersResource {
 
-  private final ClusterManager clusterManager;
+  private final Provider<ClusterManager> clusterManager;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
   public ClustersResource(
-      ClusterManager clusterManager, CrnFactory crnFactory, UrlFactory urlFactory) {
-    this.clusterManager = Objects.requireNonNull(clusterManager);
-    this.crnFactory = Objects.requireNonNull(crnFactory);
-    this.urlFactory = Objects.requireNonNull(urlFactory);
+      Provider<ClusterManager> clusterManager, CrnFactory crnFactory, UrlFactory urlFactory) {
+    this.clusterManager = requireNonNull(clusterManager);
+    this.crnFactory = requireNonNull(crnFactory);
+    this.urlFactory = requireNonNull(urlFactory);
   }
 
   @GET
   @Produces(Versions.JSON_API)
   public void listClusters(@Suspended AsyncResponse asyncResponse) {
     CompletableFuture<ListClustersResponse> response =
-        clusterManager.listClusters()
+        clusterManager.get()
+            .listClusters()
             .thenApply(
                 clusters ->
                     new ListClustersResponse(
@@ -74,7 +77,8 @@ public final class ClustersResource {
   public void getCluster(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<GetClusterResponse> response =
-        clusterManager.getCluster(clusterId)
+        clusterManager.get()
+            .getCluster(clusterId)
             .thenApply(cluster -> cluster.orElseThrow(NotFoundException::new))
             .thenApply(cluster -> new GetClusterResponse(toClusterData(cluster)));
 

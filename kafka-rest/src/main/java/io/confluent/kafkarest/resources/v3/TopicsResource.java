@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -57,12 +58,13 @@ import javax.ws.rs.core.Response.Status;
 @Path("/v3/clusters/{clusterId}/topics")
 public final class TopicsResource {
 
-  private final TopicManager topicManager;
+  private final Provider<TopicManager> topicManager;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
-  public TopicsResource(TopicManager topicManager, CrnFactory crnFactory, UrlFactory urlFactory) {
+  public TopicsResource(
+      Provider<TopicManager> topicManager, CrnFactory crnFactory, UrlFactory urlFactory) {
     this.topicManager = requireNonNull(topicManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
@@ -73,7 +75,8 @@ public final class TopicsResource {
   public void listTopics(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<ListTopicsResponse> response =
-        topicManager.listTopics(clusterId)
+        topicManager.get()
+            .listTopics(clusterId)
             .thenApply(
                 topics ->
                     new ListTopicsResponse(
@@ -97,7 +100,8 @@ public final class TopicsResource {
       @PathParam("topicName") String topicName
   ) {
     CompletableFuture<GetTopicResponse> response =
-        topicManager.getTopic(clusterId, topicName)
+        topicManager.get()
+            .getTopic(clusterId, topicName)
             .thenApply(topic -> topic.orElseThrow(NotFoundException::new))
             .thenApply(topic -> new GetTopicResponse(toTopicData(topic)));
 
@@ -127,8 +131,8 @@ public final class TopicsResource {
                 /* isInternal= */ false));
 
     CompletableFuture<CreateTopicResponse> response =
-        topicManager.createTopic(
-            clusterId, topicName, partitionsCount, replicationFactor, configs)
+        topicManager.get()
+            .createTopic(clusterId, topicName, partitionsCount, replicationFactor, configs)
             .thenApply(none -> new CreateTopicResponse(topicData));
 
     AsyncResponseBuilder.from(
@@ -145,7 +149,7 @@ public final class TopicsResource {
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName
   ) {
-    CompletableFuture<Void> response = topicManager.deleteTopic(clusterId, topicName);
+    CompletableFuture<Void> response = topicManager.get().deleteTopic(clusterId, topicName);
 
     AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
         .entity(response)

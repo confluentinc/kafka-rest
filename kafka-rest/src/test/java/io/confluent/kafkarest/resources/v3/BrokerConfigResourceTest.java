@@ -76,7 +76,7 @@ public final class BrokerConfigResourceTest {
   public void setUp() {
     brokerConfigsResource =
         new BrokerConfigsResource(
-            brokerConfigManager,
+            () -> brokerConfigManager,
             new CrnFactoryImpl(/* crnAuthorityConfig= */""),
             new FakeUrlFactory());
   }

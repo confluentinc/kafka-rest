@@ -34,6 +34,7 @@ import io.confluent.kafkarest.response.UrlFactory;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
@@ -45,13 +46,13 @@ import javax.ws.rs.container.Suspended;
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/partitions")
 public final class PartitionsResource {
 
-  private final PartitionManager partitionManager;
+  private final Provider<PartitionManager> partitionManager;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
   public PartitionsResource(
-      PartitionManager partitionManager, CrnFactory crnFactory, UrlFactory urlFactory) {
+      Provider<PartitionManager> partitionManager, CrnFactory crnFactory, UrlFactory urlFactory) {
     this.partitionManager = requireNonNull(partitionManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
@@ -64,7 +65,8 @@ public final class PartitionsResource {
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName) {
     CompletableFuture<ListPartitionsResponse> response =
-        partitionManager.listPartitions(clusterId, topicName)
+        partitionManager.get()
+            .listPartitions(clusterId, topicName)
             .thenApply(
                 partitions ->
                     new ListPartitionsResponse(
@@ -88,7 +90,8 @@ public final class PartitionsResource {
       @PathParam("topicName") String topicName,
       @PathParam("partitionId") Integer partitionId) {
     CompletableFuture<GetPartitionResponse> response =
-        partitionManager.getPartition(clusterId, topicName, partitionId)
+        partitionManager.get()
+            .getPartition(clusterId, topicName, partitionId)
             .thenApply(partition -> partition.orElseThrow(NotFoundException::new))
             .thenApply(partition -> new GetPartitionResponse(toPartitionData(partition)));
 
