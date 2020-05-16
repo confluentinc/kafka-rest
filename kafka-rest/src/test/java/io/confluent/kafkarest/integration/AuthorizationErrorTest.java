@@ -45,7 +45,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import scala.Option;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 public class AuthorizationErrorTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
@@ -73,7 +73,7 @@ public class AuthorizationErrorTest
   public void setUp() throws Exception {
     super.setUp();
     kafka.utils.TestUtils.createTopic(zkClient, TOPIC_NAME, 1, 1,
-        JavaConversions.asScalaBuffer(this.servers),
+        JavaConverters.asScalaBuffer(this.servers),
         new Properties());
   }
 

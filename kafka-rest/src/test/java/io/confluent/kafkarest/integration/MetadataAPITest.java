@@ -35,7 +35,7 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import org.junit.Before;
 import org.junit.Test;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 /**
  * Tests metadata access against a real cluster. This isn't exhaustive since the unit tests cover
@@ -80,9 +80,9 @@ public class MetadataAPITest extends ClusterTestHarness {
   public void setUp() throws Exception {
     super.setUp();
     kafka.utils.TestUtils.createTopic(zkClient, topic1Name, topic1Partitions.size(), numReplicas,
-                          JavaConversions.asScalaBuffer(this.servers), new Properties());
+        JavaConverters.asScalaBuffer(this.servers), new Properties());
     kafka.utils.TestUtils.createTopic(zkClient, topic2Name, topic2Partitions.size(), numReplicas,
-                          JavaConversions.asScalaBuffer(this.servers), topic2Configs);
+        JavaConverters.asScalaBuffer(this.servers), topic2Configs);
   }
 
   @Test

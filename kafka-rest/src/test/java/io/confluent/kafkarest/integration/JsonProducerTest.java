@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Properties;
 import org.junit.Before;
 import org.junit.Test;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 public class JsonProducerTest
     extends AbstractProducerTest<JsonTopicProduceRequest, JsonPartitionProduceRequest> {
@@ -43,7 +43,7 @@ public class JsonProducerTest
     final int numPartitions = 3;
     final int replicationFactor = 1;
     kafka.utils.TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-        JavaConversions.asScalaBuffer(this.servers),
+        JavaConverters.asScalaBuffer(this.servers),
         new Properties());
   }
 

@@ -38,7 +38,7 @@ import javax.ws.rs.core.Response;
 import org.apache.avro.Schema;
 import org.junit.Before;
 import org.junit.Test;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 // This test is much lighter than the Binary one which exercises all variants. Since binary
 // covers most code paths well, this just tries to exercise Schema-specific parts.
@@ -113,7 +113,7 @@ public class AvroProducerTest extends ClusterTestHarness {
     final int numPartitions = 3;
     final int replicationFactor = 1;
     kafka.utils.TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-        JavaConversions.asScalaBuffer(this.servers),
+        JavaConverters.asScalaBuffer(this.servers),
         new Properties());
 
     deserializerProps = new Properties();
