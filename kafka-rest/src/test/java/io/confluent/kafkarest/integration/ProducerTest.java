@@ -39,7 +39,7 @@ import org.apache.kafka.common.errors.RecordTooLargeException;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.Before;
 import org.junit.Test;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 public class ProducerTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
@@ -130,8 +130,8 @@ public class ProducerTest
     final int numPartitions = 3;
     final int replicationFactor = 1;
     kafka.utils.TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-                                      JavaConversions.asScalaBuffer(this.servers),
-                                      new Properties());
+        JavaConverters.asScalaBuffer(this.servers),
+        new Properties());
   }
 
   // This should really be a unit test, but producer settings aren't accessible and any requests

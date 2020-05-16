@@ -69,7 +69,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.experimental.categories.Category;
 import scala.Option;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 /**
  * Test harness to run against a real, local Kafka cluster and REST proxy. This is essentially
@@ -184,10 +184,10 @@ public abstract class ClusterTestHarness {
     }
 
     brokerList =
-        TestUtils.getBrokerListStrFromServers(JavaConversions.asScalaBuffer(servers),
+        TestUtils.getBrokerListStrFromServers(JavaConverters.asScalaBuffer(servers),
                                               getBrokerSecurityProtocol());
     plaintextBrokerList =
-        TestUtils.getBrokerListStrFromServers(JavaConversions.asScalaBuffer(servers),
+        TestUtils.getBrokerListStrFromServers(JavaConverters.asScalaBuffer(servers),
             SecurityProtocol.PLAINTEXT);
 
     setupAcls();
@@ -202,7 +202,7 @@ public abstract class ClusterTestHarness {
       schemaRegProperties.put(SchemaRegistryConfig.COMPATIBILITY_CONFIG,
                               schemaRegCompatibility);
       String broker = SecurityProtocol.PLAINTEXT.name+"://"+TestUtils
-          .getBrokerListStrFromServers(JavaConversions.asScalaBuffer
+          .getBrokerListStrFromServers(JavaConverters.asScalaBuffer
               (servers), SecurityProtocol.PLAINTEXT);
       schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, broker);
       schemaRegConnect = String.format("http://localhost:%d", schemaRegPort);

@@ -29,7 +29,7 @@ import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.common.utils.Utils;
 import org.eclipse.jetty.util.StringUtil;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
 public class RestConfigUtils {
@@ -62,10 +62,10 @@ public class RestConfigUtils {
   private static String getBootstrapBrokers(KafkaZkClient zkClient) {
     Seq<Broker> brokerSeq = zkClient.getAllBrokersInCluster();
 
-    List<Broker> brokers = JavaConversions.seqAsJavaList(brokerSeq);
+    List<Broker> brokers = JavaConverters.seqAsJavaList(brokerSeq);
     String bootstrapBrokers = "";
     for (int i = 0; i < brokers.size(); i++) {
-      for (EndPoint ep : JavaConversions.asJavaCollection(brokers.get(i).endPoints())) {
+      for (EndPoint ep : JavaConverters.asJavaCollection(brokers.get(i).endPoints())) {
         if (bootstrapBrokers.length() > 0) {
           bootstrapBrokers += ",";
         }
