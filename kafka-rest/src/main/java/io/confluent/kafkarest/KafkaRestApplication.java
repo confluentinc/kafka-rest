@@ -35,6 +35,7 @@ import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Properties;
 import javax.ws.rs.core.Configurable;
+import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.StringUtil;
 
 
@@ -61,6 +62,13 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
         RestResourceExtension.class);
   }
 
+  @Override
+  public void configurePreResourceHandling(ServletContextHandler context) {
+  }
+
+  @Override
+  public void configurePostResourceHandling(ServletContextHandler context) {
+  }
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
