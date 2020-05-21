@@ -18,7 +18,7 @@ services:
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     hostname: zookeeper
-    container_name: zookeeper
+    container_name: minimal-zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: "9091"
       ZOOKEEPER_SERVER_ID: 1
@@ -28,7 +28,7 @@ services:
   kafka-1:
     image: confluentinc/cp-server:latest
     hostname: kafka-1
-    container_name: kafka-1
+    container_name: minimal-kafka-1
     depends_on:
       - zookeeper
     environment:
@@ -45,7 +45,7 @@ services:
   kafka-2:
     image: confluentinc/cp-server:latest
     hostname: kafka-2
-    container_name: kafka-2
+    container_name: minimal-kafka-2
     depends_on:
       - zookeeper
     environment:
@@ -62,7 +62,7 @@ services:
   kafka-3:
     image: confluentinc/cp-server:latest
     hostname: kafka-3
-    container_name: kafka-3
+    container_name: minimal-kafka-3
     depends_on:
       - zookeeper
     environment:
@@ -81,7 +81,7 @@ services:
       context: ../../..
       dockerfile: "testing/image/Dockerfile"
     hostname: kafka-rest
-    container_name: kafka-rest
+    container_name: minimal-kafka-rest
     depends_on:
       - zookeeper
       - kafka-1
