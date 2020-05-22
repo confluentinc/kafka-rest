@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
-import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -23,10 +23,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
 import io.confluent.kafkarest.entities.v3.GetTopicConfigResponse;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.entities.v3.TopicConfigData;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import java.util.Arrays;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -81,7 +83,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                 /* isReadOnly= */ false,
                 /* isSensitive= */ false,
                 ConfigSource.DEFAULT_CONFIG,
-                /* synonyms= */ emptyList()));
+                singletonList(
+                    new ConfigSynonymData(
+                        "log.cleanup.policy", "delete", ConfigSource.DEFAULT_CONFIG))));
     String expectedConfig2 =
         OBJECT_MAPPER.writeValueAsString(
             new TopicConfigData(
@@ -101,7 +105,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                 /* isReadOnly= */ false,
                 /* isSensitive= */ false,
                 ConfigSource.DEFAULT_CONFIG,
-                /* synonyms= */ emptyList()));
+                singletonList(
+                    new ConfigSynonymData(
+                        "compression.type", "producer", ConfigSource.DEFAULT_CONFIG))));
     String expectedConfig3 =
         OBJECT_MAPPER.writeValueAsString(
             new TopicConfigData(
@@ -121,7 +127,11 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                 /* isReadOnly= */ false,
                 /* isSensitive= */ false,
                 ConfigSource.DEFAULT_CONFIG,
-                /* synonyms= */ emptyList()));
+                singletonList(
+                    new ConfigSynonymData(
+                        "log.cleaner.delete.retention.ms",
+                        "86400000",
+                        ConfigSource.DEFAULT_CONFIG))));
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs")
@@ -164,7 +174,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void getTopicConfig_existingConfig_returnsConfig() throws Exception {
+  public void getTopicConfig_existingConfig_returnsConfig() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -187,7 +197,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                     /* isReadOnly= */ false,
                     /* isSensitive= */ false,
                     ConfigSource.DEFAULT_CONFIG,
-                    /* synonyms= */ emptyList()));
+                    singletonList(
+                        new ConfigSynonymData(
+                            "log.cleanup.policy", "delete", ConfigSource.DEFAULT_CONFIG))));
 
     Response response =
         request(
@@ -235,7 +247,7 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void getUpdateReset_withExistingConfig() throws Exception {
+  public void getUpdateReset_withExistingConfig() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -258,7 +270,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                     /* isReadOnly= */ false,
                     /* isSensitive= */ false,
                     ConfigSource.DEFAULT_CONFIG,
-                    /* synonyms= */ emptyList()));
+                    singletonList(
+                        new ConfigSynonymData(
+                            "log.cleanup.policy", "delete", ConfigSource.DEFAULT_CONFIG))));
 
     Response responseBeforeUpdate =
         request(
@@ -302,7 +316,11 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                     /* isReadOnly= */ false,
                     /* isSensitive= */ false,
                     ConfigSource.DYNAMIC_TOPIC_CONFIG,
-                    /* synonyms= */ emptyList()));
+                    Arrays.asList(
+                        new ConfigSynonymData(
+                            "cleanup.policy", "compact", ConfigSource.DYNAMIC_TOPIC_CONFIG),
+                        new ConfigSynonymData(
+                            "log.cleanup.policy", "delete", ConfigSource.DEFAULT_CONFIG))));
 
     Response responseAfterUpdate =
         request(
@@ -343,7 +361,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                     /* isReadOnly= */ false,
                     /* isSensitive= */ false,
                     ConfigSource.DEFAULT_CONFIG,
-                    /* synonyms= */ emptyList()));
+                    singletonList(
+                        new ConfigSynonymData(
+                            "log.cleanup.policy", "delete", ConfigSource.DEFAULT_CONFIG))));
 
     Response responseAfterReset =
         request(

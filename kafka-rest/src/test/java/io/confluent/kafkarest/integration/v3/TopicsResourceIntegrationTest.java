@@ -15,15 +15,14 @@
 
 package io.confluent.kafkarest.integration.v3;
 
-import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
 import io.confluent.kafkarest.entities.v3.CreateTopicResponse;
 import io.confluent.kafkarest.entities.v3.GetTopicConfigResponse;
 import io.confluent.kafkarest.entities.v3.GetTopicResponse;
@@ -68,7 +67,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void listTopics_existingCluster_returnsTopics() throws Exception {
+  public void listTopics_existingCluster_returnsTopics() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -154,7 +153,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void getTopic_existingClusterExistingTopic_returnsTopic() throws Exception {
+  public void getTopic_existingClusterExistingTopic_returnsTopic() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -207,7 +206,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void createTopic_nonExistingTopic_returnsCreatedTopic() throws Exception {
+  public void createTopic_nonExistingTopic_returnsCreatedTopic() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
     String topicName = "topic-4";
@@ -318,9 +317,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void
-  getTopic_nonExistingTopic_returnsEmpty_thenCreateTopicAndGetTopic_returnsCreatedTopic_thenDeleteTopicAndGetTopic_returnsEmpty
-      () throws Exception {
+  public void createAndDelete_nonExisting_returnsNotFoundCreatedAndNotFound() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
     String topicName = "topic-4";
@@ -421,7 +418,11 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                     /* isReadOnly= */ false,
                     /* isSensitive= */ false,
                     ConfigSource.DYNAMIC_TOPIC_CONFIG,
-                    /* synonyms= */ emptyList()));
+                    Arrays.asList(
+                        new ConfigSynonymData(
+                            "cleanup.policy", "compact", ConfigSource.DYNAMIC_TOPIC_CONFIG),
+                        new ConfigSynonymData(
+                            "log.cleanup.policy", "delete", ConfigSource.DEFAULT_CONFIG))));
 
     Response existingGetTopicConfigResponse =
         request(
