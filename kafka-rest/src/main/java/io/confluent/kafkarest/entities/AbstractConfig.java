@@ -88,7 +88,7 @@ public abstract class AbstractConfig {
     return isSensitive;
   }
 
-  public ConfigSource getSource() {
+  public final ConfigSource getSource() {
     return source;
   }
 
