@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.entities;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 import javax.annotation.Nullable;
@@ -22,22 +23,9 @@ import javax.annotation.Nullable;
 /**
  * A Kafka Broker Config
  */
-public final class BrokerConfig {
-
-  private final String clusterId;
+public final class BrokerConfig extends AbstractConfig {
 
   private final int brokerId;
-
-  private final String name;
-
-  @Nullable
-  private final String value;
-
-  private final boolean isDefault;
-
-  private final boolean isReadOnly;
-
-  private final boolean isSensitive;
 
   public BrokerConfig(
       String clusterId,
@@ -46,77 +34,38 @@ public final class BrokerConfig {
       @Nullable String value,
       boolean isDefault,
       boolean isReadOnly,
-      boolean isSensitive) {
-    this.clusterId = Objects.requireNonNull(clusterId);
+      boolean isSensitive,
+      ConfigSource source,
+      List<ConfigSynonym> synonyms) {
+    super(clusterId, name, value, isDefault, isReadOnly, isSensitive, source, synonyms);
     this.brokerId = brokerId;
-    this.name = Objects.requireNonNull(name);
-    this.value = value;
-    this.isDefault = isDefault;
-    this.isReadOnly = isReadOnly;
-    this.isSensitive = isSensitive;
-  }
-
-  public String getClusterId() {
-    return clusterId;
   }
 
   public int getBrokerId() {
     return brokerId;
   }
 
-  public String getName() {
-    return name;
-  }
-
-  @Nullable
-  public String getValue() {
-    return value;
-  }
-
-  public boolean isDefault() {
-    return isDefault;
-  }
-
-  public boolean isReadOnly() {
-    return isReadOnly;
-  }
-
-  public boolean isSensitive() {
-    return isSensitive;
-  }
-
   @Override
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    BrokerConfig that = (BrokerConfig) o;
-    return isDefault == that.isDefault
-        && isReadOnly == that.isReadOnly
-        && isSensitive == that.isSensitive
-        && Objects.equals(clusterId, that.clusterId)
-        && brokerId == that.brokerId
-        && Objects.equals(name, that.name)
-        && Objects.equals(value, that.value);
+    return super.equals(o) && brokerId == ((BrokerConfig) o).brokerId;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(clusterId, brokerId, name, value, isDefault, isReadOnly, isSensitive);
+    return Objects.hash(super.hashCode(), brokerId);
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", BrokerConfig.class.getSimpleName() + "[", "]")
-        .add("clusterId='" + clusterId + "'")
+        .add("clusterId='" + getClusterId() + "'")
         .add("brokerId=" + brokerId)
-        .add("name='" + name + "'")
-        .add("value='" + value + "'")
-        .add("isDefault=" + isDefault)
-        .add("isSensitive=" + isSensitive)
+        .add("name='" + getName() + "'")
+        .add("value='" + getValue() + "'")
+        .add("isDefault=" + isDefault())
+        .add("isSensitive=" + isSensitive())
+        .add("source=" + getSource())
+        .add("synonyms=" + getSynonyms())
         .toString();
   }
 }

@@ -21,6 +21,7 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.BrokerConfigManager;
 import io.confluent.kafkarest.entities.BrokerConfig;
 import io.confluent.kafkarest.entities.v3.BrokerConfigData;
+import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
 import io.confluent.kafkarest.entities.v3.BrokerData;
 import io.confluent.kafkarest.entities.v3.ClusterData;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
@@ -172,6 +173,10 @@ public final class BrokerConfigsResource {
         brokerConfig.getValue(),
         brokerConfig.isDefault(),
         brokerConfig.isReadOnly(),
-        brokerConfig.isSensitive());
+        brokerConfig.isSensitive(),
+        brokerConfig.getSource(),
+        brokerConfig.getSynonyms().stream()
+            .map(ConfigSynonymData::fromConfigSynonym)
+            .collect(Collectors.toList()));
   }
 }

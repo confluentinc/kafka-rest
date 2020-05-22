@@ -15,12 +15,14 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.CreateTopicResponse;
 import io.confluent.kafkarest.entities.v3.GetTopicConfigResponse;
@@ -40,8 +42,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TopicsResourceIntegrationTest extends ClusterTestHarness {
-
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private static final String TOPIC_1 = "topic-1";
   private static final String TOPIC_2 = "topic-2";
@@ -419,7 +419,9 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                     "compact",
                     /* isDefault= */ false,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false));
+                    /* isSensitive= */ false,
+                    ConfigSource.DYNAMIC_TOPIC_CONFIG,
+                    /* synonyms= */ emptyList()));
 
     Response existingGetTopicConfigResponse =
         request(

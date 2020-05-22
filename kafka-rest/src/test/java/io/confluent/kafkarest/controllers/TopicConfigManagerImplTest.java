@@ -19,6 +19,8 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
@@ -28,6 +30,7 @@ import static org.junit.Assert.fail;
 
 import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.Cluster;
+import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.TopicConfig;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -40,6 +43,7 @@ import org.apache.kafka.clients.admin.AlterConfigOp;
 import org.apache.kafka.clients.admin.AlterConfigsResult;
 import org.apache.kafka.clients.admin.Config;
 import org.apache.kafka.clients.admin.ConfigEntry;
+import org.apache.kafka.clients.admin.DescribeConfigsOptions;
 import org.apache.kafka.clients.admin.DescribeConfigsResult;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.config.ConfigResource;
@@ -69,7 +73,9 @@ public class TopicConfigManagerImplTest {
           "value-1",
           /* isDefault= */ true,
           /* isReadOnly= */ false,
-          /* isSensitive= */ false);
+          /* isSensitive= */ false,
+          ConfigSource.DEFAULT_CONFIG,
+          /* synonyms= */ emptyList());
   private static final TopicConfig CONFIG_2 =
       new TopicConfig(
           CLUSTER_ID,
@@ -78,7 +84,9 @@ public class TopicConfigManagerImplTest {
           "value-2",
           /* isDefault= */ false,
           /* isReadOnly= */ true,
-          /* isSensitive= */ false);
+          /* isSensitive= */ false,
+          ConfigSource.UNKNOWN,
+          /* synonyms= */ emptyList());
   private static final TopicConfig CONFIG_3 =
       new TopicConfig(
           CLUSTER_ID,
@@ -87,7 +95,9 @@ public class TopicConfigManagerImplTest {
           null,
           /* isDefault= */ false,
           /* isReadOnly= */ false,
-          /* isSensitive= */ true);
+          /* isSensitive= */ true,
+          ConfigSource.UNKNOWN,
+          /* synonyms= */ emptyList());
 
   private static final Config CONFIG =
       new Config(
@@ -138,7 +148,8 @@ public class TopicConfigManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
-            singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))))
+            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+            anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.values())
         .andReturn(
@@ -158,7 +169,8 @@ public class TopicConfigManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
-            singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))))
+            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+            anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.values())
         .andReturn(
@@ -193,7 +205,8 @@ public class TopicConfigManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
-            singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))))
+            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+            anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.values())
         .andReturn(
@@ -216,7 +229,8 @@ public class TopicConfigManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
-            singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))))
+            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+            anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.values())
         .andReturn(
@@ -236,7 +250,8 @@ public class TopicConfigManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
-            singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))))
+            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+            anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.values())
         .andReturn(
@@ -273,7 +288,8 @@ public class TopicConfigManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
-            singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))))
+            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+            anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.values())
         .andReturn(
@@ -307,7 +323,8 @@ public class TopicConfigManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
-            singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))))
+            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+            anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.values())
         .andReturn(
@@ -332,7 +349,8 @@ public class TopicConfigManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
-            singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))))
+            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+            anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.values())
         .andReturn(
@@ -373,7 +391,8 @@ public class TopicConfigManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
-            singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))))
+            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+            anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.values())
         .andReturn(
@@ -407,7 +426,8 @@ public class TopicConfigManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
-            singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))))
+            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+            anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.values())
         .andReturn(
@@ -431,7 +451,8 @@ public class TopicConfigManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
-            singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))))
+            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+            anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.values())
         .andReturn(

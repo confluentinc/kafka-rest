@@ -15,11 +15,13 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.GetTopicConfigResponse;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
@@ -77,7 +79,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                 "delete",
                 /* isDefault= */ true,
                 /* isReadOnly= */ false,
-                /* isSensitive= */ false));
+                /* isSensitive= */ false,
+                ConfigSource.DEFAULT_CONFIG,
+                /* synonyms= */ emptyList()));
     String expectedConfig2 =
         OBJECT_MAPPER.writeValueAsString(
             new TopicConfigData(
@@ -95,7 +99,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                 "producer",
                 /* isDefault= */ true,
                 /* isReadOnly= */ false,
-                /* isSensitive= */ false));
+                /* isSensitive= */ false,
+                ConfigSource.DEFAULT_CONFIG,
+                /* synonyms= */ emptyList()));
     String expectedConfig3 =
         OBJECT_MAPPER.writeValueAsString(
             new TopicConfigData(
@@ -113,7 +119,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                 "86400000",
                 /* isDefault= */ true,
                 /* isReadOnly= */ false,
-                /* isSensitive= */ false));
+                /* isSensitive= */ false,
+                ConfigSource.DEFAULT_CONFIG,
+                /* synonyms= */ emptyList()));
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs")
@@ -177,7 +185,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "delete",
                     /* isDefault= */ true,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false));
+                    /* isSensitive= */ false,
+                    ConfigSource.DEFAULT_CONFIG,
+                    /* synonyms= */ emptyList()));
 
     Response response =
         request(
@@ -246,7 +256,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "delete",
                     /* isDefault= */ true,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false));
+                    /* isSensitive= */ false,
+                    ConfigSource.DEFAULT_CONFIG,
+                    /* synonyms= */ emptyList()));
 
     Response responseBeforeUpdate =
         request(
@@ -288,7 +300,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "compact",
                     /* isDefault= */ false,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false));
+                    /* isSensitive= */ false,
+                    ConfigSource.DYNAMIC_TOPIC_CONFIG,
+                    /* synonyms= */ emptyList()));
 
     Response responseAfterUpdate =
         request(
@@ -327,7 +341,9 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "delete",
                     /* isDefault= */ true,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false));
+                    /* isSensitive= */ false,
+                    ConfigSource.DEFAULT_CONFIG,
+                    /* synonyms= */ emptyList()));
 
     Response responseAfterReset =
         request(

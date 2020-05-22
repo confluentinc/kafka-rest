@@ -17,6 +17,7 @@ package io.confluent.kafkarest.resources.v2;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -29,6 +30,7 @@ import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.TopicConfigManager;
 import io.confluent.kafkarest.controllers.TopicManager;
+import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
@@ -318,7 +320,9 @@ public class TopicsResourceTest
           "value-1",
           /* isDefault= */ true,
           /* isReadOnly= */ false,
-          /* isSensitive= */ false);
+          /* isSensitive= */ false,
+          ConfigSource.DEFAULT_CONFIG,
+          /* synonyms= */ emptyList());
   private static final TopicConfig CONFIG_2 =
       new TopicConfig(
           CLUSTER_ID,
@@ -327,7 +331,9 @@ public class TopicsResourceTest
           "value-2",
           /* isDefault= */ false,
           /* isReadOnly= */ true,
-          /* isSensitive= */ false);
+          /* isSensitive= */ false,
+          ConfigSource.DYNAMIC_TOPIC_CONFIG,
+          /* synonyms= */ emptyList());
   private static final TopicConfig CONFIG_3 =
       new TopicConfig(
           CLUSTER_ID,
@@ -336,7 +342,9 @@ public class TopicsResourceTest
           null,
           /* isDefault= */ false,
           /* isReadOnly= */ false,
-          /* isSensitive= */ true);
+          /* isSensitive= */ true,
+          ConfigSource.DYNAMIC_TOPIC_CONFIG,
+          /* synonyms= */ emptyList());
 
   @Rule
   public final EasyMockRule mocks = new EasyMockRule(this);

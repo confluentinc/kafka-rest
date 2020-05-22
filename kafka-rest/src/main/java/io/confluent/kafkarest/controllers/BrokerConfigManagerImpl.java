@@ -21,6 +21,8 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
 import io.confluent.kafkarest.common.KafkaFutures;
+import io.confluent.kafkarest.entities.ConfigSource;
+import io.confluent.kafkarest.entities.ConfigSynonym;
 import io.confluent.kafkarest.entities.BrokerConfig;
 import java.util.List;
 import java.util.Objects;
@@ -31,6 +33,7 @@ import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AlterConfigOp;
 import org.apache.kafka.clients.admin.ConfigEntry;
+import org.apache.kafka.clients.admin.DescribeConfigsOptions;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.config.ConfigResource.Type;
 
@@ -54,7 +57,11 @@ final class BrokerConfigManagerImpl implements BrokerConfigManager {
         .thenCompose(
             broker ->
                 KafkaFutures.toCompletableFuture(
-                    adminClient.describeConfigs(singletonList(resource)).values().get(resource)))
+                    adminClient.describeConfigs(
+                        singletonList(resource),
+                        new DescribeConfigsOptions().includeSynonyms(true))
+                        .values()
+                        .get(resource)))
         .thenApply(
             config ->
                 config.entries().stream()
@@ -67,7 +74,11 @@ final class BrokerConfigManagerImpl implements BrokerConfigManager {
                                 entry.value(),
                                 entry.isDefault(),
                                 entry.isReadOnly(),
-                                entry.isSensitive()))
+                                entry.isSensitive(),
+                                ConfigSource.fromAdminConfigSource(entry.source()),
+                                entry.synonyms().stream()
+                                    .map(ConfigSynonym::fromAdminConfigSynonym)
+                                    .collect(Collectors.toList())))
                     .collect(Collectors.toList()));
   }
 

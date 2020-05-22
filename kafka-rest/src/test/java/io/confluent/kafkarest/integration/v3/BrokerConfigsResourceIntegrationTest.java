@@ -1,10 +1,11 @@
 package io.confluent.kafkarest.integration.v3;
 
+import static java.util.Collections.emptyList;
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.v3.*;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import javax.ws.rs.client.Entity;
@@ -14,8 +15,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
-
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   public BrokerConfigsResourceIntegrationTest() {
     super(/* numBrokers= */ 3, /* withSchemaRegistry= */ false);
@@ -51,7 +50,9 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                 "2147483647",
                 /* isDefault= */ true,
                 /* isReadOnly= */ false,
-                /* isSensitive= */ false);
+                /* isSensitive= */ false,
+                ConfigSource.DEFAULT_CONFIG,
+                /* synonyms= */ emptyList());
 
     BrokerConfigData expectedConfig2 =
             new BrokerConfigData(
@@ -69,7 +70,9 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                 "producer",
                 /* isDefault= */ true,
                 /* isReadOnly= */ false,
-                /* isSensitive= */ false);
+                /* isSensitive= */ false,
+                ConfigSource.DEFAULT_CONFIG,
+                /* synonyms= */ emptyList());
 
     BrokerConfigData expectedConfig3 =
             new BrokerConfigData(
@@ -87,7 +90,9 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                 "1",
                 /* isDefault= */ true,
                 /* isReadOnly= */ false,
-                /* isSensitive= */ false);
+                /* isSensitive= */ false,
+                ConfigSource.DEFAULT_CONFIG,
+                /* synonyms= */ emptyList());
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs")
@@ -156,7 +161,9 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "2147483647",
                     /* isDefault= */ true,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false));
+                    /* isSensitive= */ false,
+                    ConfigSource.DEFAULT_CONFIG,
+                    /* synonyms= */ emptyList()));
 
     Response response =
         request(
@@ -229,7 +236,9 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "producer",
                     /* isDefault= */ true,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false));
+                    /* isSensitive= */ false,
+                    ConfigSource.DEFAULT_CONFIG,
+                    /* synonyms= */ emptyList()));
 
     Response responseBeforeUpdate =
         request(
@@ -270,7 +279,9 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "producer",
                     /* isDefault= */ false,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false));
+                    /* isSensitive= */ false,
+                    ConfigSource.DYNAMIC_BROKER_CONFIG,
+                    /* synonyms= */ emptyList()));
 
     Response responseAfterUpdate =
         request(
@@ -309,7 +320,9 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "producer",
                     /* isDefault= */ true,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false));
+                    /* isSensitive= */ false,
+                    ConfigSource.DEFAULT_CONFIG,
+                    /* synonyms= */ emptyList()));
 
     Response responseAfterReset =
         request(
@@ -419,6 +432,4 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
-
-
 }
