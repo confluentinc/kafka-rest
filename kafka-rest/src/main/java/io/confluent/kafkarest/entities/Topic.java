@@ -15,87 +15,33 @@
 
 package io.confluent.kafkarest.entities;
 
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import java.util.List;
-import java.util.Objects;
-import java.util.StringJoiner;
 
-public final class Topic {
+@AutoValue
+public abstract class Topic {
 
-  private final String clusterId;
+  Topic() {
+  }
 
-  private final String name;
+  public abstract String getClusterId();
 
-  private final List<Partition> partitions;
+  public abstract String getName();
 
-  private final short replicationFactor;
+  public abstract ImmutableList<Partition> getPartitions();
 
-  private final boolean isInternal;
+  public abstract short getReplicationFactor();
 
-  public Topic(
+  public abstract boolean isInternal();
+
+  public static Topic create(
       String clusterId,
       String name,
       List<Partition> partitions,
       short replicationFactor,
       boolean isInternal) {
-    if (name.isEmpty()) {
-      throw new IllegalArgumentException();
-    }
-    this.clusterId = Objects.requireNonNull(clusterId);
-    this.name = name;
-    this.partitions = Objects.requireNonNull(partitions);
-    this.replicationFactor = replicationFactor;
-    this.isInternal = isInternal;
-  }
-
-  public String getClusterId() {
-    return clusterId;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public List<Partition> getPartitions() {
-    return partitions;
-  }
-
-  public short getReplicationFactor() {
-    return replicationFactor;
-  }
-
-  public boolean getIsInternal() {
-    return isInternal;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    Topic topic = (Topic) o;
-    return replicationFactor == topic.replicationFactor
-        && isInternal == topic.isInternal
-        && Objects.equals(clusterId, topic.clusterId)
-        && Objects.equals(name, topic.name)
-        && Objects.equals(partitions, topic.partitions);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(clusterId, name, partitions, replicationFactor, isInternal);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", Topic.class.getSimpleName() + "[", "]")
-        .add("clusterId='" + clusterId + "'")
-        .add("name='" + name + "'")
-        .add("partitions=" + partitions)
-        .add("replicationFactor=" + replicationFactor)
-        .add("isInternal=" + isInternal)
-        .toString();
+    return new AutoValue_Topic(
+        clusterId, name, ImmutableList.copyOf(partitions), replicationFactor, isInternal);
   }
 }

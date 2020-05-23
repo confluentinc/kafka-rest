@@ -15,67 +15,26 @@
 
 package io.confluent.kafkarest.entities;
 
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.google.auto.value.AutoValue;
 import javax.annotation.Nullable;
 
-public final class ProduceRecord<K, V> {
+@AutoValue
+public abstract class ProduceRecord<K, V> {
 
-  @Nullable
-  private final K key;
-
-  @Nullable
-  private final V value;
-
-  @Nullable
-  private final Integer partition;
-
-  public ProduceRecord(@Nullable K key, @Nullable V value, @Nullable Integer partition) {
-    this.key = key;
-    this.value = value;
-    this.partition = partition;
+  ProduceRecord() {
   }
 
   @Nullable
-  public K getKey() {
-    return key;
-  }
+  public abstract K getKey();
 
   @Nullable
-  public V getValue() {
-    return value;
-  }
+  public abstract V getValue();
 
   @Nullable
-  public Integer getPartition() {
-    return partition;
-  }
+  public abstract Integer getPartition();
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ProduceRecord<?, ?> that = (ProduceRecord<?, ?>) o;
-    return Objects.equals(key, that.key)
-        && Objects.equals(value, that.value)
-        && Objects.equals(partition, that.partition);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(key, value, partition);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", ProduceRecord.class.getSimpleName() + "[", "]")
-        .add("key=" + key)
-        .add("value=" + value)
-        .add("partition=" + partition)
-        .toString();
+  public static <K, V> ProduceRecord<K, V> create(
+      @Nullable K key, @Nullable V value, @Nullable Integer partition) {
+    return new AutoValue_ProduceRecord<>(key, value, partition);
   }
 }

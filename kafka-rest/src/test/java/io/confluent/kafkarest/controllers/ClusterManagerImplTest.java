@@ -83,16 +83,16 @@ public class ClusterManagerImplTest {
 
     List<Cluster> expected =
         singletonList(
-            new Cluster(
+            Cluster.create(
                 CLUSTER_ID,
-                new Broker(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
+                Broker.create(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
                 Arrays.asList(
-                    new Broker(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(),
-                        NODE_1.rack()),
-                    new Broker(CLUSTER_ID, NODE_2.id(), NODE_2.host(), NODE_2.port(),
-                        NODE_2.rack()),
-                    new Broker(CLUSTER_ID, NODE_3.id(), NODE_3.host(), NODE_3.port(),
-                        NODE_3.rack()))));
+                    Broker.create(
+                        CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
+                    Broker.create(
+                        CLUSTER_ID, NODE_2.id(), NODE_2.host(), NODE_2.port(), NODE_2.rack()),
+                    Broker.create(
+                        CLUSTER_ID, NODE_3.id(), NODE_3.host(), NODE_3.port(), NODE_3.rack()))));
 
     assertEquals(expected, clusters);
   }
@@ -126,16 +126,16 @@ public class ClusterManagerImplTest {
 
     List<Cluster> expected =
         singletonList(
-            new Cluster(
+            Cluster.create(
                 CLUSTER_ID,
                 /* controller= */ null,
                 Arrays.asList(
-                    new Broker(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(),
-                        NODE_1.rack()),
-                    new Broker(CLUSTER_ID, NODE_2.id(), NODE_2.host(), NODE_2.port(),
-                        NODE_2.rack()),
-                    new Broker(CLUSTER_ID, NODE_3.id(), NODE_3.host(), NODE_3.port(),
-                        NODE_3.rack()))));
+                    Broker.create(
+                        CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
+                    Broker.create(
+                        CLUSTER_ID, NODE_2.id(), NODE_2.host(), NODE_2.port(), NODE_2.rack()),
+                    Broker.create(
+                        CLUSTER_ID, NODE_3.id(), NODE_3.host(), NODE_3.port(), NODE_3.rack()))));
 
     assertEquals(expected, clusters);
   }
@@ -152,7 +152,7 @@ public class ClusterManagerImplTest {
     List<Cluster> clusters = clusterManager.listClusters().get();
 
     List<Cluster> expected =
-        singletonList(new Cluster(CLUSTER_ID, /* controller= */ null, emptyList()));
+        singletonList(Cluster.create(CLUSTER_ID, /* controller= */ null, emptyList()));
 
     assertEquals(expected, clusters);
   }
@@ -187,13 +187,14 @@ public class ClusterManagerImplTest {
     Cluster cluster = clusterManager.getCluster(CLUSTER_ID).get().get();
 
     Cluster expected =
-        new Cluster(
+        Cluster.create(
             CLUSTER_ID,
-            new Broker(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
+            Broker.create(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
             Arrays.asList(
-                new Broker(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
-                new Broker(CLUSTER_ID, NODE_2.id(), NODE_2.host(), NODE_2.port(), NODE_2.rack()),
-                new Broker(CLUSTER_ID, NODE_3.id(), NODE_3.host(), NODE_3.port(), NODE_3.rack())));
+                Broker.create(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
+                Broker.create(CLUSTER_ID, NODE_2.id(), NODE_2.host(), NODE_2.port(), NODE_2.rack()),
+                Broker.create(
+                    CLUSTER_ID, NODE_3.id(), NODE_3.host(), NODE_3.port(), NODE_3.rack())));
 
     assertEquals(expected, cluster);
   }
@@ -222,13 +223,14 @@ public class ClusterManagerImplTest {
     Cluster cluster = clusterManager.getLocalCluster().get();
 
     Cluster expected =
-        new Cluster(
+        Cluster.create(
             CLUSTER_ID,
-            new Broker(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
+            Broker.create(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
             Arrays.asList(
-                new Broker(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
-                new Broker(CLUSTER_ID, NODE_2.id(), NODE_2.host(), NODE_2.port(), NODE_2.rack()),
-                new Broker(CLUSTER_ID, NODE_3.id(), NODE_3.host(), NODE_3.port(), NODE_3.rack())));
+                Broker.create(CLUSTER_ID, NODE_1.id(), NODE_1.host(), NODE_1.port(), NODE_1.rack()),
+                Broker.create(CLUSTER_ID, NODE_2.id(), NODE_2.host(), NODE_2.port(), NODE_2.rack()),
+                Broker.create(
+                    CLUSTER_ID, NODE_3.id(), NODE_3.host(), NODE_3.port(), NODE_3.rack())));
 
     assertEquals(expected, cluster);
   }

@@ -15,36 +15,42 @@
 
 package io.confluent.kafkarest.entities;
 
-import static java.util.Objects.requireNonNull;
-
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
-public final class Partition {
+@AutoValue
+public abstract class Partition {
 
-  private final String clusterId;
+  Partition() {
+  }
 
-  private final String topicName;
+  public abstract String getClusterId();
 
-  private final int partitionId;
+  public abstract String getTopicName();
 
-  private final List<PartitionReplica> replicas;
+  public abstract int getPartitionId();
+
+  public abstract ImmutableList<PartitionReplica> getReplicas();
 
   @Nullable
-  private final Long earliestOffset;
+  public abstract Long getEarliestOffset();
 
   @Nullable
-  private final Long latestOffset;
+  public abstract Long getLatestOffset();
 
-  public Partition(
+  public final Optional<PartitionReplica> getLeader() {
+    return getReplicas().stream().filter(PartitionReplica::isLeader).findAny();
+  }
+
+  public static Partition create(
       String clusterId,
       String topicName,
       int partitionId,
       List<PartitionReplica> replicas) {
-    this(
+    return create(
         clusterId,
         topicName,
         partitionId,
@@ -53,82 +59,19 @@ public final class Partition {
         /* latestOffset= */ null);
   }
 
-  public Partition(
+  public static Partition create(
       String clusterId,
       String topicName,
       int partitionId,
       List<PartitionReplica> replicas,
       @Nullable Long earliestOffset,
       @Nullable Long latestOffset) {
-    this.clusterId = requireNonNull(clusterId);
-    this.topicName = requireNonNull(topicName);
-    this.partitionId = partitionId;
-    this.replicas = requireNonNull(replicas);
-    this.earliestOffset = earliestOffset;
-    this.latestOffset = latestOffset;
-  }
-
-  public String getClusterId() {
-    return clusterId;
-  }
-
-  public String getTopicName() {
-    return topicName;
-  }
-
-  public int getPartitionId() {
-    return partitionId;
-  }
-
-  public List<PartitionReplica> getReplicas() {
-    return replicas;
-  }
-
-  @Nullable
-  public Long getEarliestOffset() {
-    return earliestOffset;
-  }
-
-  @Nullable
-  public Long getLatestOffset() {
-    return latestOffset;
-  }
-
-  public Optional<PartitionReplica> getLeader() {
-    return replicas.stream().filter(PartitionReplica::isLeader).findAny();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    Partition partition = (Partition) o;
-    return partitionId == partition.partitionId
-        && clusterId.equals(partition.clusterId)
-        && topicName.equals(partition.topicName)
-        && replicas.equals(partition.replicas)
-        && Objects.equals(earliestOffset, partition.earliestOffset)
-        && Objects.equals(latestOffset, partition.latestOffset);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(clusterId, topicName, partitionId, replicas, earliestOffset, latestOffset);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", Partition.class.getSimpleName() + "[", "]")
-        .add("clusterId='" + clusterId + "'")
-        .add("topicName='" + topicName + "'")
-        .add("partitionId=" + partitionId)
-        .add("replicas=" + replicas)
-        .add("earliestOffset=" + earliestOffset)
-        .add("latestOffset=" + latestOffset)
-        .toString();
+    return new AutoValue_Partition(
+        clusterId,
+        topicName,
+        partitionId,
+        ImmutableList.copyOf(replicas),
+        earliestOffset,
+        latestOffset);
   }
 }

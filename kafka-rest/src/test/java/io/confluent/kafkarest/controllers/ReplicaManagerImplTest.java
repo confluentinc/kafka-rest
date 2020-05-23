@@ -63,10 +63,10 @@ public class ReplicaManagerImplTest {
   private static final int BROKER_ID_3 = 3;
 
   private static final Broker BROKER_1 =
-      new Broker(CLUSTER_ID, BROKER_ID_1, "1.2.3.4", 5, /* rack= */ null);
+      Broker.create(CLUSTER_ID, BROKER_ID_1, "1.2.3.4", 5, /* rack= */ null);
 
   private static final PartitionReplica REPLICA_1_1 =
-      new PartitionReplica(
+      PartitionReplica.create(
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID_1,
@@ -74,7 +74,7 @@ public class ReplicaManagerImplTest {
           /* isLeader= */ true,
           /* isInSync= */ false);
   private static final PartitionReplica REPLICA_1_2 =
-      new PartitionReplica(
+      PartitionReplica.create(
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID_1,
@@ -82,7 +82,7 @@ public class ReplicaManagerImplTest {
           /* isLeader= */ false,
           /* isInSync= */ true);
   private static final PartitionReplica REPLICA_1_3 =
-      new PartitionReplica(
+      PartitionReplica.create(
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID_1,
@@ -90,7 +90,7 @@ public class ReplicaManagerImplTest {
           /* isLeader= */ false,
           /* isInSync= */ false);
   private static final PartitionReplica REPLICA_2_1 =
-      new PartitionReplica(
+      PartitionReplica.create(
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID_2,
@@ -98,7 +98,7 @@ public class ReplicaManagerImplTest {
           /* isLeader= */ false,
           /* isInSync= */ false);
   private static final PartitionReplica REPLICA_2_2 =
-      new PartitionReplica(
+      PartitionReplica.create(
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID_2,
@@ -107,13 +107,13 @@ public class ReplicaManagerImplTest {
           /* isInSync= */ true);
 
   private static final Partition PARTITION_1 =
-      new Partition(
+      Partition.create(
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID_1,
           Arrays.asList(REPLICA_1_1, REPLICA_1_2, REPLICA_1_3));
   private static final Partition PARTITION_2 =
-      new Partition(
+      Partition.create(
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID_2,

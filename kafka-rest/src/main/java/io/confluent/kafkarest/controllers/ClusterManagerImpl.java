@@ -60,7 +60,7 @@ final class ClusterManagerImpl implements ClusterManager {
         adminClient.describeCluster(
             new DescribeClusterOptions().includeAuthorizedOperations(false));
 
-    return CompletableFuture.completedFuture(new Cluster.Builder())
+    return CompletableFuture.completedFuture(Cluster.builder())
         .thenCombine(
             KafkaFutures.toCompletableFuture(describeClusterResult.clusterId()),
             (clusterBuilder, clusterId) -> {
@@ -79,7 +79,7 @@ final class ClusterManagerImpl implements ClusterManager {
                 return clusterBuilder;
               }
               return clusterBuilder.setController(
-                  Broker.fromNode(clusterBuilder.getClusterId(), controller));
+                  Broker.fromNode(clusterBuilder.build().getClusterId(), controller));
             })
         .thenCombine(
             KafkaFutures.toCompletableFuture(describeClusterResult.nodes()),
@@ -90,7 +90,7 @@ final class ClusterManagerImpl implements ClusterManager {
               return clusterBuilder.addAllBrokers(
                   nodes.stream()
                       .filter(node -> node != null && !node.isEmpty())
-                      .map(node -> Broker.fromNode(clusterBuilder.getClusterId(), node))
+                      .map(node -> Broker.fromNode(clusterBuilder.build().getClusterId(), node))
                       .collect(Collectors.toList()));
             })
         .thenApply(Cluster.Builder::build);

@@ -115,7 +115,7 @@ final class PartitionManagerImpl implements PartitionManager {
           earliestFuture.thenCombine(
               latestFuture,
               (earliest, latest) ->
-                  new Partition(
+                  Partition.create(
                       partition.getClusterId(),
                       partition.getTopicName(),
                       partition.getPartitionId(),

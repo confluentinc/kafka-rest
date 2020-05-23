@@ -61,82 +61,82 @@ public class TopicsResourceTest {
   private static final String CLUSTER_ID = "cluster-1";
 
   private static final Topic TOPIC_1 =
-      new Topic(
+      Topic.create(
           CLUSTER_ID,
           "topic-1",
           Arrays.asList(
-              new Partition(
+              Partition.create(
                   CLUSTER_ID,
                   "topic-1",
                   /* partitionId= */ 0,
                   Arrays.asList(
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-1",
                           /* partitionId= */ 0,
                           /* brokerId= */ 1,
                           /* isLeader= */ true,
                           /* isInSync= */ true),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-1",
                           /* partitionId= */ 0,
                           /* brokerId= */ 2,
                           /* isLeader= */ false,
                           /* isInSync= */ false),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-1",
                           /* partitionId= */ 0,
                           /* brokerId= */ 3,
                           /* isLeader= */ false,
                           /* isInSync= */ false))),
-              new Partition(
+              Partition.create(
                   CLUSTER_ID,
                   "topic-1",
                   /* partitionId= */ 1,
                   Arrays.asList(
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-1",
                           /* partitionId= */ 1,
                           /* brokerId= */ 1,
                           /* isLeader= */ false,
                           /* isInSync= */ false),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-1",
                           /* partitionId= */ 1,
                           /* brokerId= */ 2,
                           /* isLeader= */ true,
                           /* isInSync= */ true),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-1",
                           /* partitionId= */ 1,
                           /* brokerId= */ 3,
                           /* isLeader= */ false,
                           /* isInSync= */ false))),
-              new Partition(
+              Partition.create(
                   CLUSTER_ID,
                   "topic-1",
                   /* partitionId= */2,
                   Arrays.asList(
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-1",
                           /* partitionId= */ 2,
                           /* brokerId= */ 1,
                           /* isLeader= */ false,
                           /* isInSync= */ false),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-1",
                           /* partitionId= */ 2,
                           /* brokerId= */ 2,
                           /* isLeader= */ false,
                           /* isInSync= */ false),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-1",
                           /* partitionId= */ 2,
@@ -147,82 +147,82 @@ public class TopicsResourceTest {
           /* isInternal= */ true);
 
   private static final Topic TOPIC_2 =
-      new Topic(
+      Topic.create(
           CLUSTER_ID,
           "topic-2",
           Arrays.asList(
-              new Partition(
+              Partition.create(
                   CLUSTER_ID,
                   "topic-2",
                   /* partitionId= */ 0,
                   Arrays.asList(
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-2",
                           /* partitionId= */ 0,
                           /* brokerId= */ 1,
                           /* isLeader= */ false,
                           /* isInSync= */ false),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-2",
                           /* partitionId= */ 0,
                           /* brokerId= */ 2,
                           /* isLeader= */ false,
                           /* isInSync= */ false),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-2",
                           /* partitionId= */ 0,
                           /* brokerId= */ 3,
                           /* isLeader= */ true,
                           /* isInSync= */ true))),
-              new Partition(
+              Partition.create(
                   CLUSTER_ID,
                   "topic-2",
                   /* partitionId= */ 1,
                   Arrays.asList(
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-2",
                           /* partitionId= */ 1,
                           /* brokerId= */ 1,
                           /* isLeader= */ true,
                           /* isInSync= */ true),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-2",
                           /* partitionId= */ 1,
                           /* brokerId= */ 2,
                           /* isLeader= */ false,
                           /* isInSync= */ false),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-2",
                           /* partitionId= */ 1,
                           /* brokerId= */ 3,
                           /* isLeader= */ false,
                           /* isInSync= */ false))),
-              new Partition(
+              Partition.create(
                   CLUSTER_ID,
                   "topic-2",
                   /* partitionId= */2,
                   Arrays.asList(
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-2",
                           /* partitionId= */ 2,
                           /* brokerId= */ 1,
                           /* isLeader= */ false,
                           /* isInSync= */ false),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-2",
                           /* partitionId= */ 2,
                           /* brokerId= */ 2,
                           /* isLeader= */ true,
                           /* isInSync= */ true),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-2",
                           /* partitionId= */ 2,
@@ -233,82 +233,82 @@ public class TopicsResourceTest {
           /* isInternal= */ true);
 
   private static final Topic TOPIC_3 =
-      new Topic(
+      Topic.create(
           CLUSTER_ID,
           "topic-3",
           Arrays.asList(
-              new Partition(
+              Partition.create(
                   CLUSTER_ID,
                   "topic-3",
                   /* partitionId= */ 0,
                   Arrays.asList(
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-3",
                           /* partitionId= */ 0,
                           /* brokerId= */ 1,
                           /* isLeader= */ false,
                           /* isInSync= */ false),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-3",
                           /* partitionId= */ 0,
                           /* brokerId= */ 2,
                           /* isLeader= */ true,
                           /* isInSync= */ true),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-3",
                           /* partitionId= */ 0,
                           /* brokerId= */ 3,
                           /* isLeader= */ false,
                           /* isInSync= */ false))),
-              new Partition(
+              Partition.create(
                   CLUSTER_ID,
                   "topic-3",
                   /* partitionId= */ 1,
                   Arrays.asList(
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-3",
                           /* partitionId= */ 1,
                           /* brokerId= */ 1,
                           /* isLeader= */ false,
                           /* isInSync= */ false),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-3",
                           /* partitionId= */ 1,
                           /* brokerId= */ 2,
                           /* isLeader= */ false,
                           /* isInSync= */ false),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-3",
                           /* partitionId= */ 1,
                           /* brokerId= */ 3,
                           /* isLeader= */ true,
                           /* isInSync= */ true))),
-              new Partition(
+              Partition.create(
                   CLUSTER_ID,
                   "topic-3",
                   /* partitionId= */2,
                   Arrays.asList(
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-3",
                           /* partitionId= */ 2,
                           /* brokerId= */ 1,
                           /* isLeader= */ true,
                           /* isInSync= */ true),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-3",
                           /* partitionId= */ 2,
                           /* brokerId= */ 2,
                           /* isLeader= */ false,
                           /* isInSync= */ false),
-                      new PartitionReplica(
+                      PartitionReplica.create(
                           CLUSTER_ID,
                           "topic-3",
                           /* partitionId= */ 2,

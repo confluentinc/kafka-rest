@@ -15,10 +15,7 @@
 
 package io.confluent.kafkarest.entities;
 
-import static java.util.Objects.requireNonNull;
-
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.google.auto.value.AutoValue;
 import javax.annotation.Nullable;
 import org.apache.kafka.clients.admin.ConfigEntry;
 
@@ -30,64 +27,21 @@ import org.apache.kafka.clients.admin.ConfigEntry;
  *      https://cwiki.apache.org/confluence/display/KAFKA/KIP-226+-+Dynamic+Broker+Configuration">
  *      KIP-226 - Dynamic Broker Configuration</a>
  */
-public final class ConfigSynonym {
+@AutoValue
+public abstract class ConfigSynonym {
 
-  private final String name;
+  ConfigSynonym() {
+  }
+
+  public abstract String getName();
 
   @Nullable
-  private final String value;
+  public abstract String getValue();
 
-  private final ConfigSource source;
-
-  public ConfigSynonym(String name, @Nullable String value, ConfigSource source) {
-    this.name = requireNonNull(name);
-    this.value = value;
-    this.source = requireNonNull(source);
-  }
+  public abstract ConfigSource getSource();
 
   public static ConfigSynonym fromAdminConfigSynonym(ConfigEntry.ConfigSynonym synonym) {
-    return new ConfigSynonym(
+    return new AutoValue_ConfigSynonym(
         synonym.name(), synonym.value(), ConfigSource.fromAdminConfigSource(synonym.source()));
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  @Nullable
-  public String getValue() {
-    return value;
-  }
-
-  public ConfigSource getSource() {
-    return source;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ConfigSynonym synonym = (ConfigSynonym) o;
-    return name.equals(synonym.name)
-        && Objects.equals(value, synonym.value)
-        && source == synonym.source;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(name, value, source);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", ConfigSynonym.class.getSimpleName() + "[", "]")
-        .add("name='" + name + "'")
-        .add("value='" + value + "'")
-        .add("source=" + source)
-        .toString();
   }
 }

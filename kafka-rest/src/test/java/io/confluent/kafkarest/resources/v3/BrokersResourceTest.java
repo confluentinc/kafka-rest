@@ -47,9 +47,9 @@ import org.junit.runners.JUnit4;
 public final class BrokersResourceTest {
 
   private static final String CLUSTER_ID = "cluster-1";
-  private static final Broker BROKER_1 = new Broker(CLUSTER_ID, 1, "broker-1", 9091, "rack-1");
-  private static final Broker BROKER_2 = new Broker(CLUSTER_ID, 2, "broker-2", 9092, null);
-  private static final Broker BROKER_3 = new Broker(CLUSTER_ID, 3, "broker-3", 9093, null);
+  private static final Broker BROKER_1 = Broker.create(CLUSTER_ID, 1, "broker-1", 9091, "rack-1");
+  private static final Broker BROKER_2 = Broker.create(CLUSTER_ID, 2, "broker-2", 9092, null);
+  private static final Broker BROKER_3 = Broker.create(CLUSTER_ID, 3, "broker-3", 9093, null);
 
   @Rule
   public final EasyMockRule mocks = new EasyMockRule(this);

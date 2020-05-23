@@ -15,19 +15,23 @@
 
 package io.confluent.kafkarest.entities;
 
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import java.util.List;
-import java.util.Objects;
-import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 /**
  * A Kafka Broker Config
  */
-public final class BrokerConfig extends AbstractConfig {
+@AutoValue
+public abstract class BrokerConfig extends AbstractConfig {
 
-  private final int brokerId;
+  BrokerConfig() {
+  }
 
-  public BrokerConfig(
+  public abstract int getBrokerId();
+
+  public static BrokerConfig create(
       String clusterId,
       int brokerId,
       String name,
@@ -37,35 +41,15 @@ public final class BrokerConfig extends AbstractConfig {
       boolean isSensitive,
       ConfigSource source,
       List<ConfigSynonym> synonyms) {
-    super(clusterId, name, value, isDefault, isReadOnly, isSensitive, source, synonyms);
-    this.brokerId = brokerId;
-  }
-
-  public int getBrokerId() {
-    return brokerId;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    return super.equals(o) && brokerId == ((BrokerConfig) o).brokerId;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(super.hashCode(), brokerId);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", BrokerConfig.class.getSimpleName() + "[", "]")
-        .add("clusterId='" + getClusterId() + "'")
-        .add("brokerId=" + brokerId)
-        .add("name='" + getName() + "'")
-        .add("value='" + getValue() + "'")
-        .add("isDefault=" + isDefault())
-        .add("isSensitive=" + isSensitive())
-        .add("source=" + getSource())
-        .add("synonyms=" + getSynonyms())
-        .toString();
+    return new AutoValue_BrokerConfig(
+        clusterId,
+        name,
+        value,
+        isDefault,
+        isReadOnly,
+        isSensitive,
+        source,
+        ImmutableList.copyOf(synonyms),
+        brokerId);
   }
 }

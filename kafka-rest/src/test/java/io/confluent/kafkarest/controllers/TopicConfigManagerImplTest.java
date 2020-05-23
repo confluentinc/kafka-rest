@@ -63,10 +63,10 @@ public class TopicConfigManagerImplTest {
   private static final String TOPIC_NAME = "topic-1";
 
   private static final Cluster CLUSTER =
-      new Cluster(CLUSTER_ID, /* controller= */ null, emptyList());
+      Cluster.create(CLUSTER_ID, /* controller= */ null, emptyList());
 
   private static final TopicConfig CONFIG_1 =
-      new TopicConfig(
+      TopicConfig.create(
           CLUSTER_ID,
           TOPIC_NAME,
           "config-1",
@@ -77,7 +77,7 @@ public class TopicConfigManagerImplTest {
           ConfigSource.DEFAULT_CONFIG,
           /* synonyms= */ emptyList());
   private static final TopicConfig CONFIG_2 =
-      new TopicConfig(
+      TopicConfig.create(
           CLUSTER_ID,
           TOPIC_NAME,
           "config-2",
@@ -88,7 +88,7 @@ public class TopicConfigManagerImplTest {
           ConfigSource.UNKNOWN,
           /* synonyms= */ emptyList());
   private static final TopicConfig CONFIG_3 =
-      new TopicConfig(
+      TopicConfig.create(
           CLUSTER_ID,
           TOPIC_NAME,
           "config-3",

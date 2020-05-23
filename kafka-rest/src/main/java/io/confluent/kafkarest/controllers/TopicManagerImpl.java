@@ -139,7 +139,7 @@ final class TopicManagerImpl implements TopicManager {
   }
 
   private static Topic toTopic(String clusterId, TopicDescription topicDescription) {
-    return new Topic(
+    return Topic.create(
         clusterId,
         topicDescription.name(),
         topicDescription.partitions().stream()
@@ -155,7 +155,7 @@ final class TopicManagerImpl implements TopicManager {
     List<PartitionReplica> replicas = new ArrayList<>();
     for (Node replica : partitionInfo.replicas()) {
       replicas.add(
-          new PartitionReplica(
+          PartitionReplica.create(
               clusterId,
               topicName,
               partitionInfo.partition(),
@@ -163,7 +163,7 @@ final class TopicManagerImpl implements TopicManager {
               partitionInfo.leader().equals(replica),
               inSyncReplicas.contains(replica)));
     }
-    return new Partition(clusterId, topicName, partitionInfo.partition(), replicas);
+    return Partition.create(clusterId, topicName, partitionInfo.partition(), replicas);
   }
 
   @Override

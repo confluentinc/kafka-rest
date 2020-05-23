@@ -15,106 +15,29 @@
 
 package io.confluent.kafkarest.entities;
 
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.google.auto.value.AutoValue;
 import javax.annotation.Nullable;
 
-public final class ConsumerRecord<K, V> {
+@AutoValue
+public abstract class ConsumerRecord<K, V> {
 
-  private final String topic;
+  ConsumerRecord() {
+  }
+
+  public abstract String getTopic();
 
   @Nullable
-  private final K key;
+  public abstract K getKey();
 
   @Nullable
-  private final V value;
+  public abstract V getValue();
 
-  private final int partition;
+  public abstract int getPartition();
 
-  private final long offset;
+  public abstract long getOffset();
 
-  public ConsumerRecord(
+  public static <K, V> ConsumerRecord<K, V> create(
       String topic, @Nullable K key, @Nullable V value, int partition, long offset) {
-    this.topic = Objects.requireNonNull(topic);
-    this.key = key;
-    this.value = value;
-    this.partition = partition;
-    this.offset = offset;
-  }
-
-  public String getTopic() {
-    return topic;
-  }
-
-  @Nullable
-  public K getKey() {
-    return key;
-  }
-
-  @Nullable
-  public V getValue() {
-    return value;
-  }
-
-  public int getPartition() {
-    return partition;
-  }
-
-  public long getOffset() {
-    return offset;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ConsumerRecord<?, ?> that = (ConsumerRecord<?, ?>) o;
-    return partition == that.partition
-           && offset == that.offset
-           && Objects.equals(topic, that.topic)
-           && genericEquals(key, that.key)
-           && genericEquals(value, that.value);
-  }
-
-  private static boolean genericEquals(Object a, Object b) {
-    // This is required because both K and V can be byte[], and comparing byte[] with Objects#equal
-    // would give the wrong result.
-    if (!(a instanceof byte[] && b instanceof byte[])) {
-      return Objects.equals(a, b);
-    }
-    return Arrays.equals((byte[]) a, (byte[]) b);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = Objects.hash(topic, partition, offset);
-    result = 31 * result + genericHashCode(key);
-    result = 31 * result + genericHashCode(value);
-    return result;
-  }
-
-  private static int genericHashCode(Object a) {
-    // This is required because both K and V can be byte[], and computing hash code of byte[] with
-    // Objects#hashCode would give the wrong result.
-    if (!(a instanceof byte[])) {
-      return Objects.hashCode(a);
-    }
-    return Arrays.hashCode((byte[]) a);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", ConsumerRecord.class.getSimpleName() + "[", "]")
-        .add("topic='" + topic + "'")
-        .add("key=" + key)
-        .add("value=" + value)
-        .add("partition=" + partition)
-        .add("offset=" + offset)
-        .toString();
+    return new AutoValue_ConsumerRecord<>(topic, key, value, partition, offset);
   }
 }

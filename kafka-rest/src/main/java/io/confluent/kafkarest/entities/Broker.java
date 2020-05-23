@@ -15,103 +15,47 @@
 
 package io.confluent.kafkarest.entities;
 
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.google.auto.value.AutoValue;
 import javax.annotation.Nullable;
 import org.apache.kafka.common.Node;
 
 /**
  * A Kafka broker.
  */
-public final class Broker {
+@AutoValue
+public abstract class Broker {
 
-  private final String clusterId;
+  Broker() {
+  }
 
-  private final int brokerId;
+  public abstract String getClusterId();
 
-  @Nullable
-  private final String host;
-
-  @Nullable
-  private final Integer port;
+  public abstract int getBrokerId();
 
   @Nullable
-  private final String rack;
+  public abstract String getHost();
 
-  public Broker(
+  @Nullable
+  public abstract Integer getPort();
+
+  @Nullable
+  public abstract String getRack();
+
+  public static Broker create(
       String clusterId,
       int brokerId,
       @Nullable String host,
       @Nullable Integer port,
       @Nullable String rack) {
-    this.clusterId = clusterId;
-    this.brokerId = brokerId;
-    this.host = host;
-    this.port = port;
-    this.rack = rack;
-  }
-
-  public String getClusterId() {
-    return clusterId;
-  }
-
-  public int getBrokerId() {
-    return brokerId;
-  }
-
-  @Nullable
-  public String getHost() {
-    return host;
-  }
-
-  @Nullable
-  public Integer getPort() {
-    return port;
-  }
-
-  @Nullable
-  public String getRack() {
-    return rack;
+    return new AutoValue_Broker(clusterId, brokerId, host, port, rack);
   }
 
   public static Broker fromNode(String clusterId, Node node) {
-    return new Broker(
+    return create(
         clusterId,
         node.id(),
         !node.host().equals("") ? node.host() : null,
         node.port() != -1 ? node.port() : null,
         node.rack());
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    Broker broker = (Broker) o;
-    return Objects.equals(clusterId, broker.clusterId)
-        && brokerId == broker.brokerId
-        && Objects.equals(host, broker.host)
-        && Objects.equals(port, broker.port)
-        && Objects.equals(rack, broker.rack);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(clusterId, brokerId, host, port, rack);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", Broker.class.getSimpleName() + "[", "]")
-        .add("clusterId=" + clusterId)
-        .add("brokerId=" + brokerId)
-        .add("host='" + host + "'")
-        .add("port=" + port)
-        .add("rack='" + rack + "'")
-        .toString();
   }
 }

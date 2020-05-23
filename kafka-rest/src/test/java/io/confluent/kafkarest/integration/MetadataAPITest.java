@@ -17,6 +17,7 @@ package io.confluent.kafkarest.integration;
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static io.confluent.kafkarest.TestUtils.tryReadEntityOrLog;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.Errors;
@@ -44,24 +45,34 @@ import scala.collection.JavaConverters;
 public class MetadataAPITest extends ClusterTestHarness {
 
   private static final String topic1Name = "topic1";
-  private static final List<Partition> topic1Partitions = Arrays.asList(
-      new Partition(/* clusterId= */ "", "topic1", 0, Arrays.asList(
-          new PartitionReplica(/* clusterId= */ "", "topic1", 0, 0, true, true),
-          new PartitionReplica(/* clusterId= */ "", "topic1", 0, 1, false, false)
-      ))
-  );
-  private static final Topic topic1 = new Topic("", topic1Name, topic1Partitions, (short) 2, false);
+  private static final List<Partition> topic1Partitions =
+      singletonList(
+          Partition.create(
+              /* clusterId= */ "",
+              "topic1",
+              /* partitionId= */ 0,
+              Arrays.asList(
+                  PartitionReplica.create(/* clusterId= */ "", "topic1", 0, 0, true, true),
+                  PartitionReplica.create(/* clusterId= */ "", "topic1", 0, 1, false, false))));
+  private static final Topic topic1 =
+      Topic.create("", topic1Name, topic1Partitions, (short) 2, false);
   private static final String topic2Name = "topic2";
-  private static final List<Partition> topic2Partitions = Arrays.asList(
-      new Partition(/* clusterId= */ "", "topic2", 0, Arrays.asList(
-          new PartitionReplica(/* clusterId= */ "", "topic2", 0, 0, true, true),
-          new PartitionReplica(/* clusterId= */ "", "topic2", 0, 1, false, false)
-      )),
-      new Partition(/* clusterId= */ "", "topic2", 1, Arrays.asList(
-          new PartitionReplica(/* clusterId= */ "", "topic2", 1, 0, false, true),
-          new PartitionReplica(/* clusterId= */ "", "topic2", 1, 1, true, true)
-      ))
-  );
+  private static final List<Partition> topic2Partitions =
+      Arrays.asList(
+          Partition.create(
+              /* clusterId= */ "",
+              "topic2",
+              /* partitionId= */ 0,
+              Arrays.asList(
+                  PartitionReplica.create(/* clusterId= */ "", "topic2", 0, 0, true, true),
+                  PartitionReplica.create(/* clusterId= */ "", "topic2", 0, 1, false, false))),
+          Partition.create(
+              /* clusterId= */ "",
+              "topic2",
+              /* partitionId= */ 1,
+              Arrays.asList(
+                  PartitionReplica.create(/* clusterId= */ "", "topic2", 1, 0, false, true),
+                  PartitionReplica.create(/* clusterId= */ "", "topic2", 1, 1, true, true))));
   private static final Properties topic2Configs;
 
   static {

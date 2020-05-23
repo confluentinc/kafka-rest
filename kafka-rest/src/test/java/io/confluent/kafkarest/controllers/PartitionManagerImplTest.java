@@ -52,26 +52,26 @@ public class PartitionManagerImplTest {
   private static final String TOPIC_NAME = "topic-1";
 
   private static final Partition PARTITION_1 =
-      new Partition(
+      Partition.create(
           CLUSTER_ID,
           TOPIC_NAME,
           /* partitionId= */ 0,
           Arrays.asList(
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 0,
                   /* brokerId= */ 1,
                   /* isLeader= */ true,
                   /* isInSync= */ false),
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 0,
                   /* brokerId= */ 2,
                   /* isLeader= */ false,
                   /* isInSync= */ true),
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 0,
@@ -81,26 +81,26 @@ public class PartitionManagerImplTest {
           /* earliestOffset= */ 100L,
           /* latestOffset= */ 1000L);
   private static final Partition PARTITION_2 =
-      new Partition(
+      Partition.create(
           CLUSTER_ID,
           TOPIC_NAME,
           /* partitionId= */ 1,
           Arrays.asList(
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 1,
                   /* brokerId= */ 2,
                   /* isLeader= */ true,
                   /* isInSync= */ false),
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 1,
                   /* brokerId= */ 3,
                   /* isLeader= */ false,
                   /* isInSync= */ true),
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 1,
@@ -110,26 +110,26 @@ public class PartitionManagerImplTest {
           /* earliestOffset= */ 200L,
           /* latestOffset= */ 2000L);
   private static final Partition PARTITION_3 =
-      new Partition(
+      Partition.create(
           CLUSTER_ID,
           TOPIC_NAME,
           /* partitionId= */ 2,
           Arrays.asList(
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 2,
                   /* brokerId= */ 3,
                   /* isLeader= */ true,
                   /* isInSync= */ false),
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 2,
                   /* brokerId= */ 1,
                   /* isLeader= */ false,
                   /* isInSync= */ true),
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 2,
@@ -140,7 +140,7 @@ public class PartitionManagerImplTest {
           /* latestOffset= */ 3000L);
 
   private static final Topic TOPIC =
-      new Topic(
+      Topic.create(
           CLUSTER_ID,
           TOPIC_NAME,
           Arrays.asList(PARTITION_1, PARTITION_2, PARTITION_3),

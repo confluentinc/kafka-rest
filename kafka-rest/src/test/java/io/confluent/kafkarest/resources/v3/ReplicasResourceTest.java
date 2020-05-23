@@ -51,7 +51,7 @@ public class ReplicasResourceTest {
   private static final int PARTITION_ID = 0;
 
   private static final PartitionReplica REPLICA_1 =
-      new PartitionReplica(
+      PartitionReplica.create(
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID,
@@ -59,7 +59,7 @@ public class ReplicasResourceTest {
           /* isLeader= */ true,
           /* isInSync= */ true);
   private static final PartitionReplica REPLICA_2 =
-      new PartitionReplica(
+      PartitionReplica.create(
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID,
@@ -67,7 +67,7 @@ public class ReplicasResourceTest {
           /* isLeader= */ false,
           /* isInSync= */ true);
   private static final PartitionReplica REPLICA_3 =
-      new PartitionReplica(
+      PartitionReplica.create(
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID,

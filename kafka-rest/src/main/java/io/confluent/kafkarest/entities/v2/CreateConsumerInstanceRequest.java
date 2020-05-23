@@ -155,7 +155,7 @@ public final class CreateConsumerInstanceRequest {
   }
 
   public ConsumerInstanceConfig toConsumerInstanceConfig() {
-    return new ConsumerInstanceConfig(
+    return ConsumerInstanceConfig.create(
         id,
         name,
         format,

@@ -67,7 +67,7 @@ final class BrokerConfigManagerImpl implements BrokerConfigManager {
                 config.entries().stream()
                     .map(
                         entry ->
-                            new BrokerConfig(
+                            BrokerConfig.create(
                                 clusterId,
                                 brokerId,
                                 entry.name(),

@@ -15,36 +15,52 @@
 
 package io.confluent.kafkarest.entities;
 
+import com.google.auto.value.AutoValue;
 import io.confluent.kafkarest.KafkaRestConfig;
-import java.util.Objects;
 import java.util.Properties;
-import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
-public final class ConsumerInstanceConfig {
+@AutoValue
+public abstract class ConsumerInstanceConfig {
+
+  ConsumerInstanceConfig() {
+  }
 
   @Nullable
-  private final String id;
+  public abstract String getId();
 
   @Nullable
-  private final String name;
+  public abstract String getName();
 
-  private final EmbeddedFormat format;
-
-  @Nullable
-  private final String autoOffsetReset;
+  public abstract EmbeddedFormat getFormat();
 
   @Nullable
-  private final String autoCommitEnable;
+  public abstract String getAutoOffsetReset();
 
   @Nullable
-  private final Integer responseMinBytes;
+  public abstract String getAutoCommitEnable();
 
   @Nullable
-  private final Integer requestWaitMs;
+  public abstract Integer getResponseMinBytes();
 
-  public ConsumerInstanceConfig(EmbeddedFormat format) {
-    this(
+  @Nullable
+  public abstract Integer getRequestWaitMs();
+
+  public final Properties toProperties() {
+    Properties properties = new Properties();
+    if (getResponseMinBytes() != null) {
+      properties.setProperty(
+          KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG, getResponseMinBytes().toString());
+    }
+    if (getRequestWaitMs() != null) {
+      properties.setProperty(
+          KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, getRequestWaitMs().toString());
+    }
+    return properties;
+  }
+
+  public static ConsumerInstanceConfig create(EmbeddedFormat format) {
+    return create(
         /* id= */ null,
         /* name= */ null,
         format,
@@ -54,7 +70,7 @@ public final class ConsumerInstanceConfig {
         /* requestWaitMs= */ null);
   }
 
-  public ConsumerInstanceConfig(
+  public static ConsumerInstanceConfig create(
       @Nullable String id,
       @Nullable String name,
       EmbeddedFormat format,
@@ -63,96 +79,7 @@ public final class ConsumerInstanceConfig {
       @Nullable Integer responseMinBytes,
       @Nullable Integer requestWaitMs
   ) {
-    this.id = id;
-    this.name = name;
-    this.format = Objects.requireNonNull(format);
-    this.responseMinBytes = responseMinBytes;
-    this.requestWaitMs = requestWaitMs;
-    this.autoOffsetReset = autoOffsetReset;
-    this.autoCommitEnable = autoCommitEnable;
-  }
-
-  @Nullable
-  public String getId() {
-    return id;
-  }
-
-  @Nullable
-  public String getName() {
-    return name;
-  }
-
-  public EmbeddedFormat getFormat() {
-    return format;
-  }
-
-  @Nullable
-  public String getAutoOffsetReset() {
-    return autoOffsetReset;
-  }
-
-  @Nullable
-  public String getAutoCommitEnable() {
-    return autoCommitEnable;
-  }
-
-  @Nullable
-  public Integer getResponseMinBytes() {
-    return this.responseMinBytes;
-  }
-
-  @Nullable
-  public Integer getRequestWaitMs() {
-    return this.requestWaitMs;
-  }
-
-  public Properties toProperties() {
-    Properties properties = new Properties();
-    if (responseMinBytes != null) {
-      properties.setProperty(
-          KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG, responseMinBytes.toString());
-    }
-    if (requestWaitMs != null) {
-      properties.setProperty(
-          KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, requestWaitMs.toString());
-    }
-    return properties;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ConsumerInstanceConfig that = (ConsumerInstanceConfig) o;
-    return Objects.equals(id, that.id)
-        && Objects.equals(name, that.name)
-        && format == that.format
-        && Objects.equals(autoOffsetReset, that.autoOffsetReset)
-        && Objects.equals(autoCommitEnable, that.autoCommitEnable)
-        && Objects.equals(responseMinBytes, that.responseMinBytes)
-        && Objects.equals(requestWaitMs, that.requestWaitMs);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(
+    return new AutoValue_ConsumerInstanceConfig(
         id, name, format, autoOffsetReset, autoCommitEnable, responseMinBytes, requestWaitMs);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", ConsumerInstanceConfig.class.getSimpleName() + "[", "]")
-        .add("id='" + id + "'")
-        .add("name='" + name + "'")
-        .add("format=" + format)
-        .add("autoOffsetReset='" + autoOffsetReset + "'")
-        .add("autoCommitEnable='" + autoCommitEnable + "'")
-        .add("responseMinBytes=" + responseMinBytes)
-        .add("requestWaitMs=" + requestWaitMs)
-        .toString();
   }
 }

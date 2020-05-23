@@ -49,11 +49,11 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ClustersResourceTest {
 
-  private static final Broker BROKER_1 = new Broker("cluster-1", 1, "broker-1", 9091, "rack-1");
-  private static final Broker BROKER_2 = new Broker("cluster-1", 2, "broker-2", 9092, null);
-  private static final Broker BROKER_3 = new Broker("cluster-1", 3, "broker-3", 9093, null);
+  private static final Broker BROKER_1 = Broker.create("cluster-1", 1, "broker-1", 9091, "rack-1");
+  private static final Broker BROKER_2 = Broker.create("cluster-1", 2, "broker-2", 9092, null);
+  private static final Broker BROKER_3 = Broker.create("cluster-1", 3, "broker-3", 9093, null);
   private static final Cluster CLUSTER_1 =
-      new Cluster("cluster-1", BROKER_1, Arrays.asList(BROKER_1, BROKER_2, BROKER_3));
+      Cluster.create("cluster-1", BROKER_1, Arrays.asList(BROKER_1, BROKER_2, BROKER_3));
 
   @Rule
   public final EasyMockRule mocks = new EasyMockRule(this);
