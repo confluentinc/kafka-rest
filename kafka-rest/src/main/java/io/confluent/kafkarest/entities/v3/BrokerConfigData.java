@@ -18,7 +18,8 @@ package io.confluent.kafkarest.entities.v3;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.confluent.kafkarest.entities.v3.TopicConfigData.Attributes;
+import io.confluent.kafkarest.entities.ConfigSource;
+import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 import javax.annotation.Nullable;
@@ -37,6 +38,7 @@ public final class BrokerConfigData {
 
   private final Attributes attributes;
 
+  // CHECKSTYLE:OFF:ParameterNumber
   public BrokerConfigData(
       String id,
       ResourceLink links,
@@ -46,12 +48,24 @@ public final class BrokerConfigData {
       @Nullable String value,
       boolean isDefault,
       boolean isReadOnly,
-      boolean isSensitive) {
-
-    this(id, links,
-            new Attributes(clusterId, brokerId, name, value,
-                    isDefault, isReadOnly, isSensitive));
+      boolean isSensitive,
+      ConfigSource source,
+      List<ConfigSynonymData> synonyms) {
+    this(
+        id,
+        links,
+        new Attributes(
+            clusterId,
+            brokerId,
+            name,
+            value,
+            isDefault,
+            isReadOnly,
+            isSensitive,
+            source,
+            synonyms));
   }
+  // CHECKSTYLE:ON:ParameterNumber
 
   @JsonCreator
   public BrokerConfigData(
@@ -129,6 +143,10 @@ public final class BrokerConfigData {
 
     private final boolean isSensitive;
 
+    private final ConfigSource source;
+
+    private final List<ConfigSynonymData> synonyms;
+
     @JsonCreator
     public Attributes(
         @JsonProperty("cluster_id") String clusterId,
@@ -137,14 +155,18 @@ public final class BrokerConfigData {
         @JsonProperty("value") @Nullable String value,
         @JsonProperty("is_default") boolean isDefault,
         @JsonProperty("is_read_only") boolean isReadOnly,
-        @JsonProperty("is_sensitive") boolean isSensitive) {
-      this.clusterId = Objects.requireNonNull(clusterId);
+        @JsonProperty("is_sensitive") boolean isSensitive,
+        @JsonProperty("source") ConfigSource source,
+        @JsonProperty("synonyms") List<ConfigSynonymData> synonyms) {
+      this.clusterId = clusterId;
       this.brokerId = brokerId;
-      this.name = Objects.requireNonNull(name);
+      this.name = name;
       this.value = value;
       this.isDefault = isDefault;
       this.isReadOnly = isReadOnly;
       this.isSensitive = isSensitive;
+      this.source = source;
+      this.synonyms = synonyms;
     }
 
     @JsonProperty("cluster_id")
@@ -183,6 +205,17 @@ public final class BrokerConfigData {
       return isSensitive;
     }
 
+    @JsonProperty("source")
+    public ConfigSource getSource() {
+      return source;
+    }
+
+    @JsonProperty("synonyms")
+    public List<ConfigSynonymData> getSynonyms() {
+      return synonyms;
+    }
+
+    // CHECKSTYLE:OFF:CyclomaticComplexity
     @Override
     public boolean equals(Object o) {
       if (this == o) {
@@ -192,23 +225,27 @@ public final class BrokerConfigData {
         return false;
       }
       BrokerConfigData.Attributes that = (BrokerConfigData.Attributes) o;
-      return isDefault == that.isDefault
-          && isReadOnly == that.isReadOnly
-          && isSensitive == that.isSensitive
-          && Objects.equals(clusterId, that.clusterId)
+      return Objects.equals(clusterId, that.clusterId)
           && brokerId == that.brokerId
           && Objects.equals(name, that.name)
-          && Objects.equals(value, that.value);
+          && Objects.equals(value, that.value)
+          && isDefault == that.isDefault
+          && isReadOnly == that.isReadOnly
+          && isSensitive == that.isSensitive
+          && Objects.equals(source, that.source)
+          && Objects.equals(synonyms, that.synonyms);
     }
+    // CHECKSTYLE:ON:CyclomaticComplexity
 
     @Override
     public int hashCode() {
-      return Objects.hash(clusterId, brokerId, name, value, isDefault, isReadOnly, isSensitive);
+      return Objects.hash(
+          clusterId, brokerId, name, value, isDefault, isReadOnly, isSensitive, synonyms);
     }
 
     @Override
     public String toString() {
-      return new StringJoiner(", ", TopicConfigData.Attributes.class.getSimpleName() + "[", "]")
+      return new StringJoiner(", ", BrokerConfigData.Attributes.class.getSimpleName() + "[", "]")
           .add("clusterId='" + clusterId + "'")
           .add("brokerId=" + brokerId)
           .add("name='" + name + "'")
@@ -216,6 +253,8 @@ public final class BrokerConfigData {
           .add("isDefault=" + isDefault)
           .add("isReadOnly=" + isReadOnly)
           .add("isSensitive=" + isSensitive)
+          .add("source=" + source)
+          .add("synonyms=" + synonyms)
           .toString();
     }
   }

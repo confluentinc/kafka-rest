@@ -22,6 +22,7 @@ import io.confluent.kafkarest.controllers.TopicConfigManager;
 import io.confluent.kafkarest.entities.TopicConfig;
 import io.confluent.kafkarest.entities.v3.ClusterData;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
 import io.confluent.kafkarest.entities.v3.GetTopicConfigResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicConfigsResponse;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
@@ -172,6 +173,10 @@ public final class TopicConfigsResource {
         topicConfig.getValue(),
         topicConfig.isDefault(),
         topicConfig.isReadOnly(),
-        topicConfig.isSensitive());
+        topicConfig.isSensitive(),
+        topicConfig.getSource(),
+        topicConfig.getSynonyms().stream()
+            .map(ConfigSynonymData::fromConfigSynonym)
+            .collect(Collectors.toList()));
   }
 }

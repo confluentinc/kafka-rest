@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.resources.v3;
 
 import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -24,8 +25,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import io.confluent.kafkarest.controllers.TopicConfigManager;
+import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.TopicConfig;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
 import io.confluent.kafkarest.entities.v3.GetTopicConfigResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicConfigsResponse;
 import io.confluent.kafkarest.entities.v3.ResourceLink;
@@ -36,6 +39,7 @@ import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
@@ -59,7 +63,9 @@ public class TopicConfigsResourceTest {
           "value-1",
           /* isDefault= */ true,
           /* isReadOnly= */ false,
-          /* isSensitive= */ false);
+          /* isSensitive= */ false,
+          ConfigSource.DEFAULT_CONFIG,
+          /* synonyms= */ emptyList());
   private static final TopicConfig CONFIG_2 =
       new TopicConfig(
           CLUSTER_ID,
@@ -68,7 +74,9 @@ public class TopicConfigsResourceTest {
           "value-2",
           /* isDefault= */ false,
           /* isReadOnly= */ true,
-          /* isSensitive= */ false);
+          /* isSensitive= */ false,
+          ConfigSource.DYNAMIC_TOPIC_CONFIG,
+          /* synonyms= */ emptyList());
   private static final TopicConfig CONFIG_3 =
       new TopicConfig(
           CLUSTER_ID,
@@ -77,7 +85,9 @@ public class TopicConfigsResourceTest {
           null,
           /* isDefault= */ false,
           /* isReadOnly= */ false,
-          /* isSensitive= */ true);
+          /* isSensitive= */ true,
+          ConfigSource.DYNAMIC_TOPIC_CONFIG,
+          /* synonyms= */ emptyList());
 
   @Rule
   public final EasyMockRule mocks = new EasyMockRule(this);
@@ -120,7 +130,11 @@ public class TopicConfigsResourceTest {
                     CONFIG_1.getValue(),
                     CONFIG_1.isDefault(),
                     CONFIG_1.isReadOnly(),
-                    CONFIG_1.isSensitive()),
+                    CONFIG_1.isSensitive(),
+                    CONFIG_1.getSource(),
+                    CONFIG_1.getSynonyms().stream()
+                        .map(ConfigSynonymData::fromConfigSynonym)
+                        .collect(Collectors.toList())),
                 new TopicConfigData(
                     "crn:///kafka=cluster-1/topic=topic-1/config=config-2",
                     new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/configs/config-2"),
@@ -130,7 +144,11 @@ public class TopicConfigsResourceTest {
                     CONFIG_2.getValue(),
                     CONFIG_2.isDefault(),
                     CONFIG_2.isReadOnly(),
-                    CONFIG_2.isSensitive()),
+                    CONFIG_2.isSensitive(),
+                    CONFIG_2.getSource(),
+                    CONFIG_2.getSynonyms().stream()
+                        .map(ConfigSynonymData::fromConfigSynonym)
+                        .collect(Collectors.toList())),
                 new TopicConfigData(
                     "crn:///kafka=cluster-1/topic=topic-1/config=config-3",
                     new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/configs/config-3"),
@@ -140,7 +158,11 @@ public class TopicConfigsResourceTest {
                     CONFIG_3.getValue(),
                     CONFIG_3.isDefault(),
                     CONFIG_3.isReadOnly(),
-                    CONFIG_3.isSensitive())));
+                    CONFIG_3.isSensitive(),
+                    CONFIG_3.getSource(),
+                    CONFIG_3.getSynonyms().stream()
+                        .map(ConfigSynonymData::fromConfigSynonym)
+                        .collect(Collectors.toList()))));
 
     assertEquals(expected, response.getValue());
   }
@@ -179,7 +201,11 @@ public class TopicConfigsResourceTest {
                 CONFIG_1.getValue(),
                 CONFIG_1.isDefault(),
                 CONFIG_1.isReadOnly(),
-                CONFIG_1.isSensitive()));
+                CONFIG_1.isSensitive(),
+                CONFIG_1.getSource(),
+                CONFIG_1.getSynonyms().stream()
+                    .map(ConfigSynonymData::fromConfigSynonym)
+                    .collect(Collectors.toList())));
 
     assertEquals(expected, response.getValue());
   }

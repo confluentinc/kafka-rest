@@ -1,12 +1,14 @@
 package io.confluent.kafkarest.integration.v3;
 
+import static java.util.Collections.singletonList;
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.v3.*;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import java.util.Arrays;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -15,14 +17,12 @@ import org.junit.Test;
 
 public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
   public BrokerConfigsResourceIntegrationTest() {
     super(/* numBrokers= */ 3, /* withSchemaRegistry= */ false);
   }
 
   @Test
-  public void listBrokerConfigs_existingBroker_returnsConfigs() throws Exception {
+  public void listBrokerConfigs_existingBroker_returnsConfigs() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
     int brokerId = getBrokers().get(0).id();
@@ -51,7 +51,11 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                 "2147483647",
                 /* isDefault= */ true,
                 /* isReadOnly= */ false,
-                /* isSensitive= */ false);
+                /* isSensitive= */ false,
+                ConfigSource.DEFAULT_CONFIG,
+                singletonList(
+                    new ConfigSynonymData(
+                        "max.connections", "2147483647", ConfigSource.DEFAULT_CONFIG)));
 
     BrokerConfigData expectedConfig2 =
             new BrokerConfigData(
@@ -69,7 +73,11 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                 "producer",
                 /* isDefault= */ true,
                 /* isReadOnly= */ false,
-                /* isSensitive= */ false);
+                /* isSensitive= */ false,
+                ConfigSource.DEFAULT_CONFIG,
+                singletonList(
+                    new ConfigSynonymData(
+                        "compression.type", "producer", ConfigSource.DEFAULT_CONFIG)));
 
     BrokerConfigData expectedConfig3 =
             new BrokerConfigData(
@@ -87,7 +95,11 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                 "1",
                 /* isDefault= */ true,
                 /* isReadOnly= */ false,
-                /* isSensitive= */ false);
+                /* isSensitive= */ false,
+                ConfigSource.DEFAULT_CONFIG,
+                singletonList(
+                    new ConfigSynonymData(
+                        "log.cleaner.threads", "1", ConfigSource.DEFAULT_CONFIG)));
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs")
@@ -98,9 +110,8 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     ListBrokerConfigsResponse actual = response.readEntity(ListBrokerConfigsResponse.class);
     assertTrue(
-            String.format("Not true that `%s' contains `%s'.", actual.getLinks(), expectedLinks),
-            actual.getData().contains(expectedConfig1)
-    );
+        String.format("Not true that `%s' contains `%s'.", actual.getLinks(), expectedLinks),
+        actual.getData().contains(expectedConfig1));
     assertTrue(
         String.format("Not true that `%s' contains `%s'.", actual.getData(), expectedConfig1),
         actual.getData().contains(expectedConfig1));
@@ -134,7 +145,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void getBrokerConfig_existingConfig_returnsConfig() throws Exception {
+  public void getBrokerConfig_existingConfig_returnsConfig() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
     int brokerId = getBrokers().get(0).id();
@@ -156,7 +167,11 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "2147483647",
                     /* isDefault= */ true,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false));
+                    /* isSensitive= */ false,
+                    ConfigSource.DEFAULT_CONFIG,
+                    singletonList(
+                        new ConfigSynonymData(
+                            "max.connections", "2147483647", ConfigSource.DEFAULT_CONFIG))));
 
     Response response =
         request(
@@ -205,9 +220,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void
-  getThenUpdateThenGetThenResetThenGet_existingConfig_returnsDefaultThenUpdatesThenReturnsUpdatedThenReturnsDefault
-      () throws Exception {
+  public void updateAndReset_existingConfig_returnsDefaultUpdatedAndDefaultAgain() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
     int brokerId = getBrokers().get(0).id();
@@ -229,7 +242,11 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "producer",
                     /* isDefault= */ true,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false));
+                    /* isSensitive= */ false,
+                    ConfigSource.DEFAULT_CONFIG,
+                    singletonList(
+                        new ConfigSynonymData(
+                            "compression.type", "producer", ConfigSource.DEFAULT_CONFIG))));
 
     Response responseBeforeUpdate =
         request(
@@ -250,7 +267,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             .accept(Versions.JSON_API)
             .put(
                 Entity.entity(
-                    "{\"data\":{\"attributes\":{\"value\":\"producer\"}}}", Versions.JSON_API));
+                    "{\"data\":{\"attributes\":{\"value\":\"gzip\"}}}", Versions.JSON_API));
     assertEquals(Status.NO_CONTENT.getStatusCode(), updateResponse.getStatus());
 
     GetBrokerConfigResponse expectedAfterUpdate =
@@ -267,10 +284,16 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     clusterId,
                     brokerId,
                     "compression.type",
-                    "producer",
+                    "gzip",
                     /* isDefault= */ false,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false));
+                    /* isSensitive= */ false,
+                    ConfigSource.DYNAMIC_BROKER_CONFIG,
+                    Arrays.asList(
+                        new ConfigSynonymData(
+                            "compression.type", "gzip", ConfigSource.DYNAMIC_BROKER_CONFIG),
+                        new ConfigSynonymData(
+                            "compression.type", "producer", ConfigSource.DEFAULT_CONFIG))));
 
     Response responseAfterUpdate =
         request(
@@ -309,7 +332,11 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     "producer",
                     /* isDefault= */ true,
                     /* isReadOnly= */ false,
-                    /* isSensitive= */ false));
+                    /* isSensitive= */ false,
+                    ConfigSource.DEFAULT_CONFIG,
+                    singletonList(
+                        new ConfigSynonymData(
+                            "compression.type", "producer", ConfigSource.DEFAULT_CONFIG))));
 
     Response responseAfterReset =
         request(
@@ -419,6 +446,4 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
-
-
 }

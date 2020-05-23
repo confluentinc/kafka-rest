@@ -1,6 +1,7 @@
 package io.confluent.kafkarest.resources.v3;
 
 import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -10,7 +11,9 @@ import static org.junit.Assert.assertTrue;
 
 import io.confluent.kafkarest.controllers.BrokerConfigManager;
 import io.confluent.kafkarest.entities.BrokerConfig;
+import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.v3.BrokerConfigData;
+import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.GetBrokerConfigResponse;
 import io.confluent.kafkarest.entities.v3.ListBrokerConfigsResponse;
@@ -21,6 +24,7 @@ import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
@@ -42,27 +46,33 @@ public final class BrokerConfigResourceTest {
           BROKER_ID,
           "config-1",
           "value-1",
-          true,
-          false,
-          false);
+          /* isDefault= */ true,
+          /* isReadOnly= */ false,
+          /* isSensitive */ false,
+          ConfigSource.DEFAULT_CONFIG,
+          /* synonyms= */ emptyList());
   private static final BrokerConfig CONFIG_2 =
       new BrokerConfig(
           CLUSTER_ID,
           BROKER_ID,
           "config-2",
           "value-2",
-          false,
-          true,
-          false);
+          /* isDefault= */ false,
+          /* isReadOnly= */ true,
+          /* isSensitive */ false,
+          ConfigSource.STATIC_BROKER_CONFIG,
+          /* synonyms= */ emptyList());
   private static final BrokerConfig CONFIG_3 =
       new BrokerConfig(
           CLUSTER_ID,
           BROKER_ID,
           "config-3",
           "value-3",
-          false,
-          false,
-          true);
+          /* isDefault= */ false,
+          /* isReadOnly= */ false,
+          /* isSensitive */ true,
+          ConfigSource.DYNAMIC_BROKER_CONFIG,
+          /* synonyms= */ emptyList());
 
   @Rule
   public final EasyMockRule mocks = new EasyMockRule(this);
@@ -105,7 +115,11 @@ public final class BrokerConfigResourceTest {
                     CONFIG_1.getValue(),
                     CONFIG_1.isDefault(),
                     CONFIG_1.isReadOnly(),
-                    CONFIG_1.isSensitive()),
+                    CONFIG_1.isSensitive(),
+                    CONFIG_1.getSource(),
+                    CONFIG_1.getSynonyms().stream()
+                        .map(ConfigSynonymData::fromConfigSynonym)
+                        .collect(Collectors.toList())),
                 new BrokerConfigData(
                     "crn:///kafka=cluster-1/broker=1/config=config-2",
                     new ResourceLink("/v3/clusters/cluster-1/brokers/1/configs/config-2"),
@@ -115,7 +129,11 @@ public final class BrokerConfigResourceTest {
                     CONFIG_2.getValue(),
                     CONFIG_2.isDefault(),
                     CONFIG_2.isReadOnly(),
-                    CONFIG_2.isSensitive()),
+                    CONFIG_2.isSensitive(),
+                    CONFIG_2.getSource(),
+                    CONFIG_2.getSynonyms().stream()
+                        .map(ConfigSynonymData::fromConfigSynonym)
+                        .collect(Collectors.toList())),
                 new BrokerConfigData(
                     "crn:///kafka=cluster-1/broker=1/config=config-3",
                     new ResourceLink("/v3/clusters/cluster-1/brokers/1/configs/config-3"),
@@ -125,7 +143,11 @@ public final class BrokerConfigResourceTest {
                     CONFIG_3.getValue(),
                     CONFIG_3.isDefault(),
                     CONFIG_3.isReadOnly(),
-                    CONFIG_3.isSensitive())));
+                    CONFIG_3.isSensitive(),
+                    CONFIG_3.getSource(),
+                    CONFIG_3.getSynonyms().stream()
+                        .map(ConfigSynonymData::fromConfigSynonym)
+                        .collect(Collectors.toList()))));
 
     assertEquals(expected, response.getValue());
   }
@@ -162,7 +184,11 @@ public final class BrokerConfigResourceTest {
                 CONFIG_1.getValue(),
                 CONFIG_1.isDefault(),
                 CONFIG_1.isReadOnly(),
-                CONFIG_1.isSensitive()));
+                CONFIG_1.isSensitive(),
+                CONFIG_1.getSource(),
+                CONFIG_1.getSynonyms().stream()
+                    .map(ConfigSynonymData::fromConfigSynonym)
+                    .collect(Collectors.toList())));
 
     assertEquals(expected, response.getValue());
   }
