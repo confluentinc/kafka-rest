@@ -36,7 +36,8 @@ final class BrokerManagerImpl implements BrokerManager {
   }
 
   @Override
-  public CompletableFuture<List<Broker>> listBrokers(String clusterId) {
+  public CompletableFuture<List<Broker>>
+  listBrokers(String clusterId) {
     return clusterManager.getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenApply(Cluster::getBrokers);
