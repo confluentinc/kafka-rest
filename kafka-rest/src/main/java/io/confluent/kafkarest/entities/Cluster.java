@@ -55,6 +55,19 @@ public final class Cluster {
     return brokers;
   }
 
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static Cluster create(
+      String clusterId, @Nullable Broker controller, List<Broker> brokers) {
+    return builder()
+        .setClusterId(clusterId)
+        .setController(controller)
+        .addAllBrokers(brokers)
+        .build();
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
