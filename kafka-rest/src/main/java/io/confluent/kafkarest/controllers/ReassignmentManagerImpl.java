@@ -21,6 +21,7 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.Reassignment;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
@@ -57,6 +58,9 @@ public class ReassignmentManagerImpl implements ReassignmentManager {
               }
               return reassignments.entrySet().stream()
                   .map(reassignment -> toReassignment(clusterId, reassignment))
+                  .sorted(
+                      Comparator.comparing(Reassignment::getTopicName)
+                          .thenComparing(Reassignment::getPartitionId))
                   .collect(Collectors.toList());
             });
   }

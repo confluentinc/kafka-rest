@@ -42,13 +42,12 @@ public class ReassignmentData {
       String clusterId,
       String topicName,
       Integer partitionId,
-      Relationship addingReplicas,
-      Relationship removingReplicas
+      Relationship replicas
   ) {
     this.id = id;
     this.links = links;
     this.attributes = new Attributes(clusterId, topicName, partitionId);
-    this.relationships = new Relationships(addingReplicas, removingReplicas);
+    this.relationships = new Relationships(replicas);
   }
 
   @JsonProperty("type")
@@ -172,23 +171,15 @@ public class ReassignmentData {
 
   private static final class Relationships {
 
-    private final Relationship addingReplicas;
+    private final Relationship replicas;
 
-    private final Relationship removingReplicas;
-
-    private Relationships(Relationship addingReplicas, Relationship removingReplicas) {
-      this.addingReplicas = addingReplicas;
-      this.removingReplicas = removingReplicas;
+    private Relationships(Relationship replicas) {
+      this.replicas = replicas;
     }
 
-    @JsonProperty("adding_replicas")
-    public Relationship getAddingReplicas() {
-      return addingReplicas;
-    }
-
-    @JsonProperty("removing_replicas")
-    public Relationship getRemovingReplicas() {
-      return removingReplicas;
+    @JsonProperty("replicas")
+    public Relationship getReplicas() {
+      return replicas;
     }
 
     @Override
@@ -200,20 +191,18 @@ public class ReassignmentData {
         return false;
       }
       Relationships that = (Relationships) o;
-      return Objects.equals(addingReplicas, that.addingReplicas) &&
-          Objects.equals(removingReplicas, that.removingReplicas);
+      return Objects.equals(replicas, that.replicas);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(addingReplicas, removingReplicas);
+      return Objects.hash(replicas);
     }
 
     @Override
     public String toString() {
       return new StringJoiner(", ", Relationships.class.getSimpleName() + "[", "]")
-          .add("addingReplicas=" + addingReplicas)
-          .add("removingReplicas=" + removingReplicas)
+          .add("replicas=" + replicas)
           .toString();
     }
   }

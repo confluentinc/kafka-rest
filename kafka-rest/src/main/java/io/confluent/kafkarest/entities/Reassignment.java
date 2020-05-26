@@ -1,10 +1,24 @@
+/*
+ * Copyright 2020 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.confluent.kafkarest.entities;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-// maybe TopicPartitionReassignment or Reassignments
 public final class Reassignment {
 
   private final String clusterId;
@@ -26,7 +40,7 @@ public final class Reassignment {
       List<Integer> replicas,
       List<Integer> addingReplicas,
       List<Integer> removingReplicas
-      ) {
+  ) {
     this.clusterId = clusterId;
     this.topicName = topicName;
     this.partitionId = partitionId;
@@ -68,17 +82,18 @@ public final class Reassignment {
       return false;
     }
     Reassignment that = (Reassignment) o;
-    return partitionId == that.partitionId &&
-        clusterId.equals(that.clusterId) &&
-        topicName.equals(that.topicName) &&
-        replicas.equals(that.replicas) &&
-        addingReplicas.equals(that.addingReplicas) &&
-        removingReplicas.equals(that.removingReplicas);
+    return partitionId == that.partitionId
+        && clusterId.equals(that.clusterId)
+        && topicName.equals(that.topicName)
+        && replicas.equals(that.replicas)
+        && addingReplicas.equals(that.addingReplicas)
+        && removingReplicas.equals(that.removingReplicas);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(clusterId, topicName, partitionId, replicas, addingReplicas, removingReplicas);
+    return Objects
+        .hash(clusterId, topicName, partitionId, replicas, addingReplicas, removingReplicas);
   }
 
   @Override
