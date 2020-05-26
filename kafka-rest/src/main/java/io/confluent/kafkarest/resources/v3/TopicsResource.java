@@ -123,7 +123,7 @@ public final class TopicsResource {
 
     TopicData topicData =
         toTopicData(
-            new Topic(
+            Topic.create(
                 clusterId,
                 topicName,
                 /* partitions= */ emptyList(),
@@ -184,7 +184,7 @@ public final class TopicsResource {
             urlFactory.create("v3", "clusters", topic.getClusterId(), "topics", topic.getName())),
         topic.getClusterId(),
         topic.getName(),
-        topic.getIsInternal(),
+        topic.isInternal(),
         topic.getReplicationFactor(),
         configs,
         partitions);

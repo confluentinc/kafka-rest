@@ -62,10 +62,10 @@ public class BrokerConfigManagerImplTest {
   private static final int BROKER_ID = 1;
 
   private static final Cluster CLUSTER =
-      new Cluster(CLUSTER_ID, null, emptyList());
+      Cluster.create(CLUSTER_ID, null, emptyList());
 
   private static final BrokerConfig CONFIG_1 =
-      new BrokerConfig(
+      BrokerConfig.create(
           CLUSTER_ID,
           BROKER_ID,
           "config-1",
@@ -76,7 +76,7 @@ public class BrokerConfigManagerImplTest {
           ConfigSource.DEFAULT_CONFIG,
           /* synonyms= */ emptyList());
   private static final BrokerConfig CONFIG_2 =
-      new BrokerConfig(
+      BrokerConfig.create(
           CLUSTER_ID,
           BROKER_ID,
           "config-2",
@@ -87,7 +87,7 @@ public class BrokerConfigManagerImplTest {
           ConfigSource.UNKNOWN,
           /* synonyms= */ emptyList());
   private static final BrokerConfig CONFIG_3 =
-      new BrokerConfig(
+      BrokerConfig.create(
           CLUSTER_ID,
           BROKER_ID,
           "config-3",

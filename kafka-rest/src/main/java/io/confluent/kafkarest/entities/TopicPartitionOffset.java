@@ -15,72 +15,27 @@
 
 package io.confluent.kafkarest.entities;
 
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.google.auto.value.AutoValue;
 
-public final class TopicPartitionOffset {
+@AutoValue
+public abstract class TopicPartitionOffset {
 
-  private final String topic;
+  TopicPartitionOffset() {
+  }
 
-  private final int partition;
+  public abstract String getTopic();
 
-  private final long consumed;
+  public abstract int getPartition();
 
-  private final long committed;
+  public abstract long getConsumed();
 
-  public TopicPartitionOffset(String topic, int partition, long consumed, long committed) {
+  public abstract long getCommitted();
+
+  public static TopicPartitionOffset create(
+      String topic, int partition, long consumed, long committed) {
     if (topic.isEmpty()) {
       throw new IllegalArgumentException();
     }
-    this.topic = topic;
-    this.partition = partition;
-    this.consumed = consumed;
-    this.committed = committed;
-  }
-
-  public String getTopic() {
-    return topic;
-  }
-
-  public int getPartition() {
-    return partition;
-  }
-
-  public long getConsumed() {
-    return consumed;
-  }
-
-  public long getCommitted() {
-    return committed;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    TopicPartitionOffset that = (TopicPartitionOffset) o;
-    return partition == that.partition
-        && consumed == that.consumed
-        && committed == that.committed
-        && Objects.equals(topic, that.topic);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(topic, partition, consumed, committed);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", TopicPartitionOffset.class.getSimpleName() + "[", "]")
-        .add("topic='" + topic + "'")
-        .add("partition=" + partition)
-        .add("consumed=" + consumed)
-        .add("committed=" + committed)
-        .toString();
+    return new AutoValue_TopicPartitionOffset(topic, partition, consumed, committed);
   }
 }

@@ -19,6 +19,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.entities.EntityUtils;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
@@ -168,6 +169,8 @@ public class TestUtils {
       return null;
     } else if (k instanceof byte[]) {
       return EntityUtils.encodeBase64Binary((byte[]) k);
+    } else if (k instanceof ByteString) {
+      return EntityUtils.encodeBase64Binary(((ByteString) k).toByteArray());
     } else if (k instanceof JsonNode) {
       return k;
     } else if (k instanceof IndexedRecord) {

@@ -56,7 +56,7 @@ public class TopicConfigsResourceTest {
   private static final String TOPIC_NAME = "topic-1";
 
   private static final TopicConfig CONFIG_1 =
-      new TopicConfig(
+      TopicConfig.create(
           CLUSTER_ID,
           TOPIC_NAME,
           "config-1",
@@ -67,7 +67,7 @@ public class TopicConfigsResourceTest {
           ConfigSource.DEFAULT_CONFIG,
           /* synonyms= */ emptyList());
   private static final TopicConfig CONFIG_2 =
-      new TopicConfig(
+      TopicConfig.create(
           CLUSTER_ID,
           TOPIC_NAME,
           "config-2",
@@ -78,7 +78,7 @@ public class TopicConfigsResourceTest {
           ConfigSource.DYNAMIC_TOPIC_CONFIG,
           /* synonyms= */ emptyList());
   private static final TopicConfig CONFIG_3 =
-      new TopicConfig(
+      TopicConfig.create(
           CLUSTER_ID,
           TOPIC_NAME,
           "config-3",

@@ -34,7 +34,7 @@ public class SearchReplicasByBrokerActionTest {
   private static final int BROKER_ID = 1;
 
   private static final PartitionReplica REPLICA_1 =
-      new PartitionReplica(
+      PartitionReplica.create(
           CLUSTER_ID,
           TOPIC_NAME,
           /* partitionId= */ 1,
@@ -42,7 +42,7 @@ public class SearchReplicasByBrokerActionTest {
           /* isLeader= */ true,
           /* isInSync= */ true);
   private static final PartitionReplica REPLICA_2 =
-      new PartitionReplica(
+      PartitionReplica.create(
           CLUSTER_ID,
           TOPIC_NAME,
           /* partitionId= */ 2,

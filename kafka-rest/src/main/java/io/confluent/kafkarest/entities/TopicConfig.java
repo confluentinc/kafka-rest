@@ -15,21 +15,23 @@
 
 package io.confluent.kafkarest.entities;
 
-import static java.util.Objects.requireNonNull;
-
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import java.util.List;
-import java.util.Objects;
-import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 /**
  * A Kafka Topic Config.
  */
-public final class TopicConfig extends AbstractConfig {
+@AutoValue
+public abstract class TopicConfig extends AbstractConfig {
 
-  private final String topicName;
+  TopicConfig() {
+  }
 
-  public TopicConfig(
+  public abstract String getTopicName();
+
+  public static TopicConfig create(
       String clusterId,
       String topicName,
       String name,
@@ -39,35 +41,15 @@ public final class TopicConfig extends AbstractConfig {
       boolean isSensitive,
       ConfigSource source,
       List<ConfigSynonym> synonyms) {
-    super(clusterId, name, value, isDefault, isReadOnly, isSensitive, source, synonyms);
-    this.topicName = requireNonNull(topicName);
-  }
-
-  public String getTopicName() {
-    return topicName;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    return super.equals(o) && topicName.equals(((TopicConfig) o).topicName);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(super.hashCode(), topicName);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", TopicConfig.class.getSimpleName() + "[", "]")
-        .add("clusterId='" + getClusterId() + "'")
-        .add("topicName=" + topicName)
-        .add("name='" + getName() + "'")
-        .add("value='" + getValue() + "'")
-        .add("isDefault=" + isDefault())
-        .add("isSensitive=" + isSensitive())
-        .add("source=" + getSource())
-        .add("synonyms=" + getSynonyms())
-        .toString();
+    return new AutoValue_TopicConfig(
+        clusterId,
+        name,
+        value,
+        isDefault,
+        isReadOnly,
+        isSensitive,
+        source,
+        ImmutableList.copyOf(synonyms),
+        topicName);
   }
 }

@@ -51,26 +51,26 @@ public class PartitionsResourceTest {
   private static final String TOPIC_NAME = "topic-1";
 
   private static final Partition PARTITION_1 =
-      new Partition(
+      Partition.create(
           CLUSTER_ID,
           TOPIC_NAME,
           /* partitionId= */ 0,
           Arrays.asList(
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 0,
                   /* brokerId= */ 1,
                   /* isLeader= */ true,
                   /* isInSync= */ false),
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 0,
                   /* brokerId= */ 2,
                   /* isLeader= */ false,
                   /* isInSync= */ true),
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 0,
@@ -78,26 +78,26 @@ public class PartitionsResourceTest {
                   /* isLeader= */ false,
                   /* isInSync= */ false)));
   private static final Partition PARTITION_2 =
-      new Partition(
+      Partition.create(
           CLUSTER_ID,
           TOPIC_NAME,
           /* partitionId= */ 1,
           Arrays.asList(
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 1,
                   /* brokerId= */ 2,
                   /* isLeader= */ true,
                   /* isInSync= */ false),
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 1,
                   /* brokerId= */ 3,
                   /* isLeader= */ false,
                   /* isInSync= */ true),
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 1,
@@ -105,26 +105,26 @@ public class PartitionsResourceTest {
                   /* isLeader= */ false,
                   /* isInSync= */ false)));
   private static final Partition PARTITION_3 =
-      new Partition(
+      Partition.create(
           CLUSTER_ID,
           TOPIC_NAME,
           /* partitionId= */ 2,
           Arrays.asList(
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 2,
                   /* brokerId= */ 3,
                   /* isLeader= */ true,
                   /* isInSync= */ false),
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 2,
                   /* brokerId= */ 1,
                   /* isLeader= */ false,
                   /* isInSync= */ true),
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 2,

@@ -67,7 +67,7 @@ final class TopicConfigManagerImpl implements TopicConfigManager {
                 config.entries().stream()
                     .map(
                         entry ->
-                            new TopicConfig(
+                            TopicConfig.create(
                                 clusterId,
                                 topicName,
                                 entry.name(),

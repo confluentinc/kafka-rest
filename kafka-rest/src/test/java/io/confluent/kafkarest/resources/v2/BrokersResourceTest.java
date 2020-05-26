@@ -47,9 +47,9 @@ public class BrokersResourceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
   private static final String CLUSTER_ID = "cluster-1";
-  private static final Broker BROKER_1 = new Broker(CLUSTER_ID, 1, "host1", 1, /* rack= */ null);
-  private static final Broker BROKER_2 = new Broker(CLUSTER_ID, 2, "host2", 2, /* rack= */ null);
-  private static final Broker BROKER_3 = new Broker(CLUSTER_ID, 3, "host3", 3, /* rack= */ null);
+  private static final Broker BROKER_1 = Broker.create(CLUSTER_ID, 1, "host1", 1, /* rack= */ null);
+  private static final Broker BROKER_2 = Broker.create(CLUSTER_ID, 2, "host2", 2, /* rack= */ null);
+  private static final Broker BROKER_3 = Broker.create(CLUSTER_ID, 3, "host3", 3, /* rack= */ null);
 
   @Rule
   public final EasyMockRule mocks = new EasyMockRule(this);

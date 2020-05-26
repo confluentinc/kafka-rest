@@ -41,7 +41,7 @@ public final class BrokerConfigResourceTest {
   private static final int BROKER_ID = 1;
 
   private static final BrokerConfig CONFIG_1 =
-      new BrokerConfig(
+      BrokerConfig.create(
           CLUSTER_ID,
           BROKER_ID,
           "config-1",
@@ -52,7 +52,7 @@ public final class BrokerConfigResourceTest {
           ConfigSource.DEFAULT_CONFIG,
           /* synonyms= */ emptyList());
   private static final BrokerConfig CONFIG_2 =
-      new BrokerConfig(
+      BrokerConfig.create(
           CLUSTER_ID,
           BROKER_ID,
           "config-2",
@@ -63,7 +63,7 @@ public final class BrokerConfigResourceTest {
           ConfigSource.STATIC_BROKER_CONFIG,
           /* synonyms= */ emptyList());
   private static final BrokerConfig CONFIG_3 =
-      new BrokerConfig(
+      BrokerConfig.create(
           CLUSTER_ID,
           BROKER_ID,
           "config-3",

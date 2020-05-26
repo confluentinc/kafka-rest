@@ -47,26 +47,26 @@ public class PartitionsResourceTest extends JerseyTest {
   private static final String TOPIC_NAME = "topic-1";
 
   private static final Partition PARTITION =
-      new Partition(
+      Partition.create(
           CLUSTER_ID,
           TOPIC_NAME,
           /* partitionId= */ 0,
           Arrays.asList(
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 0,
                   /* brokerId= */ 1,
                   /* isLeader= */ true,
                   /* isInSync= */ true),
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 0,
                   /* brokerId= */ 2,
                   /* isLeader= */ false,
                   /* isInSync= */ false),
-              new PartitionReplica(
+              PartitionReplica.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   /* partitionId= */ 0,
