@@ -42,13 +42,13 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 
 @Path("/v3/clusters/{clusterId}/topics/-/partitions/-/reassignments")
-public final class ListAllReassignmentsResource {
+public final class ListAllReassignments {
 
   private final Provider<ReassignmentManager> reassignmentManager;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
-  public ListAllReassignmentsResource(
+  public ListAllReassignments(
       Provider<ReassignmentManager> reassignmentManager, CrnFactory crnFactory,
       UrlFactory urlFactory) {
     this.reassignmentManager = requireNonNull(reassignmentManager);
@@ -58,16 +58,17 @@ public final class ListAllReassignmentsResource {
 
   @GET
   @Produces(Versions.JSON_API)
-  public void listReassignment(
+  public void listReassignments(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId) {
     CompletableFuture<ListReassignmentsResponse> response =
-        reassignmentManager.get().listPartitionReassignments(clusterId)
+        reassignmentManager.get().listReassignments(clusterId)
             .thenApply(
                 reassignments ->
                     new ListReassignmentsResponse(
                         new CollectionLink(
-                            urlFactory.create("v3", "clusters", clusterId, "reassignments"),
+                            urlFactory.create("v3", "clusters", clusterId, "topics", "-",
+                                "partitions", "-", "reassignments"),
                             /* next= */ null),
                         reassignments.stream()
                             .map(this::toReassignmentData)
@@ -86,7 +87,8 @@ public final class ListAllReassignmentsResource {
             reassignment.getTopicName(),
             "partitions",
             Integer.toString(reassignment.getPartitionId()),
-            "reassignments"));
+            "reassignments",
+            Integer.toString(reassignment.getPartitionId())));
 
     Relationship replicas = new Relationship(urlFactory.create(
         "v3",
@@ -94,6 +96,8 @@ public final class ListAllReassignmentsResource {
         reassignment.getClusterId(),
         "topics",
         reassignment.getTopicName(),
+        "partitions",
+        Integer.toString(reassignment.getPartitionId()),
         "replicas"));
 
     return new ReassignmentData(
@@ -104,7 +108,8 @@ public final class ListAllReassignmentsResource {
             reassignment.getTopicName(),
             PartitionData.ELEMENT_TYPE,
             Integer.toString(reassignment.getPartitionId()),
-            ReassignmentData.ELEMENT_TYPE),
+            ReassignmentData.ELEMENT_TYPE,
+            Integer.toString(reassignment.getPartitionId())),
         links,
         reassignment.getClusterId(),
         reassignment.getTopicName(),

@@ -44,7 +44,7 @@ public class ReassignmentManagerImpl implements ReassignmentManager {
   }
 
   @Override
-  public CompletableFuture<List<Reassignment>> listPartitionReassignments(
+  public CompletableFuture<List<Reassignment>> listReassignments(
       String clusterId) {
     return clusterManager.getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
