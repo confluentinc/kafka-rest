@@ -26,6 +26,6 @@ public interface ReassignmentManager {
    * reassignments for all Kafka {@link io.confluent.kafkarest.entities.Topic Topics} for a
    * Kafka {@link io.confluent.kafkarest.entities.Cluster cluster} with the given {@code clusterId}.
    */
-  CompletableFuture<List<Reassignment>> listPartitionReassignments(String clusterId);
+  CompletableFuture<List<Reassignment>> listReassignments(String clusterId);
 
 }

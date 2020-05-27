@@ -1,43 +1,30 @@
-/*
- * Copyright 2020 Confluent Inc.
- *
- * Licensed under the Confluent Community License (the "License"); you may not use
- * this file except in compliance with the License.  You may obtain a copy of the
- * License at
- *
- * http://www.confluent.io/confluent-community-license
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations under the License.
- */
+package io.confluent.kafkarest.resources.v3;
 
-package io.confluent.kafkarest.controllers;
-
-import static io.confluent.kafkarest.common.KafkaFutures.failedFuture;
+import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
 import static java.util.Arrays.asList;
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
+import io.confluent.kafkarest.controllers.ReassignmentManager;
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.Reassignment;
+import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.v3.ListReassignmentsResponse;
+import io.confluent.kafkarest.entities.v3.ReassignmentData;
+import io.confluent.kafkarest.entities.v3.Relationship;
+import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.response.CrnFactoryImpl;
+import io.confluent.kafkarest.response.FakeAsyncResponse;
+import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.CompletableFuture;
 import javax.ws.rs.NotFoundException;
-import org.apache.kafka.clients.admin.Admin;
-import org.apache.kafka.clients.admin.ListPartitionReassignmentsResult;
 import org.apache.kafka.clients.admin.PartitionReassignment;
-import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
 import org.easymock.EasyMockRule;
@@ -46,7 +33,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-public class ReassignmentManagerImplTest {
+public class ListAllReassignmentsTest {
 
   private static final String CLUSTER_ID = "cluster-1";
 
@@ -109,65 +96,75 @@ public class ReassignmentManagerImplTest {
   public final EasyMockRule mocks = new EasyMockRule(this);
 
   @Mock
-  private Admin adminClient;
+  private ReassignmentManager reassignmentManager;
 
-  @Mock
-  private ListPartitionReassignmentsResult listPartitionReassignmentsResult;
-
-  @Mock
-  private ClusterManager clusterManager;
-
-  private ReassignmentManagerImpl reassignmentManager;
+  private ListAllReassignments listAllReassignments;
 
   @Before
   public void setUp() {
-    reassignmentManager = new ReassignmentManagerImpl(adminClient, clusterManager);
-    REASSIGNMENT_MAP.put(TOPIC_PARTITION_1, PARTITION_REASSIGNMENT_1);
-    REASSIGNMENT_MAP.put(TOPIC_PARTITION_2, PARTITION_REASSIGNMENT_2);
-    REASSIGNMENT_MAP.put(TOPIC_PARTITION_3, PARTITION_REASSIGNMENT_3);
+    listAllReassignments = new ListAllReassignments(
+        () -> reassignmentManager,
+        new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
+        new FakeUrlFactory());
   }
 
   @Test
-  public void listAllReassignments_existingCluster_returnsReassignments() throws Exception {
-    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
-    expect(adminClient.listPartitionReassignments()).andReturn(listPartitionReassignmentsResult);
-    expect(listPartitionReassignmentsResult.reassignments())
-        .andReturn(KafkaFuture.completedFuture(REASSIGNMENT_MAP));
-    replay(clusterManager, adminClient, listPartitionReassignmentsResult);
+  public void listAllReassignments_existingCluster_returnsReassignments() {
+    expect(reassignmentManager.listReassignments(CLUSTER_ID))
+        .andReturn(
+            CompletableFuture.completedFuture(
+                asList(REASSIGNMENT_1, REASSIGNMENT_2, REASSIGNMENT_3)));
+    replay(reassignmentManager);
 
-    List<Reassignment> reassignments = reassignmentManager.listReassignments(CLUSTER_ID)
-        .get();
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    listAllReassignments.listReassignments(response, CLUSTER_ID);
 
-    assertEquals(asList(REASSIGNMENT_1, REASSIGNMENT_2, REASSIGNMENT_3), reassignments);
+    ListReassignmentsResponse expected =
+        new ListReassignmentsResponse(
+            new CollectionLink("/v3/clusters/cluster-1/topics/-/partitions/-/reassignments",
+                /* next= */ null),
+            Arrays.asList(
+                new ReassignmentData(
+                    "crn:///kafka=cluster-1/topic=topic-1/partition=1/reassignment=1",
+                    new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/1"
+                        + "/reassignments/1"),
+                    CLUSTER_ID,
+                    TOPIC_1,
+                    PARTITION_ID_1,
+                    new Relationship(
+                        "/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas")),
+                new ReassignmentData(
+                    "crn:///kafka=cluster-1/topic=topic-1/partition=2/reassignment=2",
+                    new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/2"
+                        + "/reassignments/2"),
+                    CLUSTER_ID,
+                    TOPIC_1,
+                    PARTITION_ID_2,
+                    new Relationship(
+                        "/v3/clusters/cluster-1/topics/topic-1/partitions/2/replicas")),
+                new ReassignmentData(
+                    "crn:///kafka=cluster-1/topic=topic-1/partition=3/reassignment=3",
+                    new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/3"
+                        + "/reassignments/3"),
+                    CLUSTER_ID,
+                    TOPIC_1,
+                    PARTITION_ID_3,
+                    new Relationship(
+                        "/v3/clusters/cluster-1/topics/topic-1/partitions/3/replicas"))));
+
+    assertEquals(expected, response.getValue());
   }
 
   @Test
-  public void listAllReassignments_timeoutException_throwsTimeoutException() throws Exception {
-    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
-    expect(adminClient.listPartitionReassignments()).andReturn(listPartitionReassignmentsResult);
-    expect(listPartitionReassignmentsResult.reassignments())
-        .andReturn(failedFuture(new TimeoutException()));
-    replay(clusterManager, adminClient, listPartitionReassignmentsResult);
+  public void listPartitions_nonExistingCluster_throwsNotFound() {
+    expect(reassignmentManager.listReassignments(CLUSTER_ID))
+        .andReturn(failedFuture(new NotFoundException()));
+    replay(reassignmentManager);
 
-    try {
-      reassignmentManager.listReassignments(CLUSTER_ID).get();
-      fail();
-    } catch (ExecutionException e) {
-      assertEquals(TimeoutException.class, e.getCause().getClass());
-    }
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    listAllReassignments.listReassignments(response, CLUSTER_ID);
+
+    assertEquals(NotFoundException.class, response.getException().getClass());
   }
 
-  @Test
-  public void listAllReassignments_nonExistingCluster_throwsNotFound() throws Exception {
-    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
-    replay(clusterManager);
-
-    try {
-      reassignmentManager.listReassignments(CLUSTER_ID).get();
-      fail();
-    } catch (ExecutionException e) {
-      assertEquals(NotFoundException.class, e.getCause().getClass());
-    }
-
-  }
 }
