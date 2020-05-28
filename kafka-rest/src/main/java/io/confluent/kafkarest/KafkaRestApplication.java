@@ -19,6 +19,7 @@ import io.confluent.kafkarest.backends.BackendsModule;
 import io.confluent.kafkarest.config.ConfigModule;
 import io.confluent.kafkarest.controllers.ControllersModule;
 import io.confluent.kafkarest.exceptions.ExceptionsModule;
+import io.confluent.kafkarest.extension.ClusterConfigTypeConverterProvider;
 import io.confluent.kafkarest.extension.ContextInvocationHandler;
 import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.kafkarest.extension.KafkaRestCleanupFilter;
@@ -110,6 +111,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new ResponseModule());
 
     config.register(KafkaRestCleanupFilter.class);
+
+    config.register(ClusterConfigTypeConverterProvider.class);
     config.register(InstantConverterProvider.class);
 
     for (RestResourceExtension restResourceExtension : restResourceExtensions) {

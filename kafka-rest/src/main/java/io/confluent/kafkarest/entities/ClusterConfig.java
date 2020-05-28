@@ -18,32 +18,33 @@ package io.confluent.kafkarest.entities;
 import com.google.auto.value.AutoValue;
 import java.util.List;
 import javax.annotation.Nullable;
+import org.apache.kafka.common.config.ConfigResource;
 
 /**
- * A Kafka topic config.
+ * A Kafka cluster-wide dynamic default config.
  */
 @AutoValue
-public abstract class TopicConfig extends AbstractConfig {
+public abstract class ClusterConfig extends AbstractConfig {
 
-  TopicConfig() {
+  ClusterConfig() {
   }
 
-  public abstract String getTopicName();
+  public abstract Type getType();
 
-  public static Builder builder() {
-    return new AutoValue_TopicConfig.Builder();
+  public static ClusterConfig.Builder builder() {
+    return new AutoValue_ClusterConfig.Builder();
   }
 
-  public static TopicConfig create(
+  public static ClusterConfig create(
       String clusterId,
-      String topicName,
       String name,
       @Nullable String value,
       boolean isDefault,
       boolean isReadOnly,
       boolean isSensitive,
       ConfigSource source,
-      List<ConfigSynonym> synonyms) {
+      List<ConfigSynonym> synonyms,
+      Type type) {
     return builder()
         .setClusterId(clusterId)
         .setName(name)
@@ -53,19 +54,45 @@ public abstract class TopicConfig extends AbstractConfig {
         .setSensitive(isSensitive)
         .setSource(source)
         .setSynonyms(synonyms)
-        .setTopicName(topicName)
+        .setType(type)
         .build();
   }
 
   /**
-   * A builder for {@link TopicConfig}.
+   * A builder for {@link ClusterConfig}.
    */
   @AutoValue.Builder
-  public abstract static class Builder extends AbstractConfig.Builder<TopicConfig, Builder> {
+  public abstract static class Builder extends AbstractConfig.Builder<ClusterConfig, Builder> {
 
     Builder() {
     }
 
-    public abstract Builder setTopicName(String topicName);
+    public abstract Builder setType(Type type);
+  }
+
+  /**
+   * The type of the {@link ClusterConfig}.
+   */
+  public enum Type {
+
+    /**
+     * A cluster-wide dynamic default broker config.
+     */
+    BROKER(ConfigResource.Type.BROKER),
+
+    /**
+     * A cluster-wide dynamic default topic config.
+     */
+    TOPIC(ConfigResource.Type.TOPIC);
+
+    private final ConfigResource.Type adminType;
+
+    Type(ConfigResource.Type adminType) {
+      this.adminType = adminType;
+    }
+
+    public ConfigResource.Type getAdminType() {
+      return adminType;
+    }
   }
 }
