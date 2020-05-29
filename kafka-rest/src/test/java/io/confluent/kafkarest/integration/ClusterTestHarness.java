@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
@@ -51,14 +52,17 @@ import kafka.zk.KafkaZkClient;
 import kafka.zookeeper.ZooKeeperClient;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.AlterPartitionReassignmentsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
+import org.apache.kafka.clients.admin.NewPartitionReassignment;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Node;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -419,6 +423,15 @@ public abstract class ClusterTestHarness {
     } catch (InterruptedException | ExecutionException e) {
       Assert.fail(String.format("Failed to create topic: %s", e.getMessage()));
     }
+  }
+
+  protected final void alterPartitionReassignment(Map<TopicPartition,
+      Optional<NewPartitionReassignment>> reassignments) {
+    Properties properties = restConfig.getAdminProperties();
+    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    AdminClient adminClient = AdminClient.create(properties);
+
+    adminClient.alterPartitionReassignments(reassignments);
   }
 
   protected final void produceAvroMessages(List<ProducerRecord<Object, Object>> records) {

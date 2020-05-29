@@ -47,7 +47,8 @@ public class ReassignmentManagerImpl implements ReassignmentManager {
   public CompletableFuture<List<Reassignment>> listReassignments(
       String clusterId) {
     return clusterManager.getCluster(clusterId)
-        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
+        .thenApply(cluster -> checkEntityExists(cluster,
+        "Cluster %s cannot be found.", clusterId))
         .thenCompose(
             cluster -> KafkaFutures
                 .toCompletableFuture(adminClient.listPartitionReassignments().reassignments()))
@@ -67,7 +68,7 @@ public class ReassignmentManagerImpl implements ReassignmentManager {
 
   private static Reassignment toReassignment(String clusterId,
       Entry<TopicPartition, PartitionReassignment> reassignment) {
-    return new Reassignment(
+    return Reassignment.create(
         clusterId,
         reassignment.getKey().topic(),
         reassignment.getKey().partition(),
@@ -75,4 +76,5 @@ public class ReassignmentManagerImpl implements ReassignmentManager {
         reassignment.getValue().addingReplicas(),
         reassignment.getValue().removingReplicas());
   }
+
 }
