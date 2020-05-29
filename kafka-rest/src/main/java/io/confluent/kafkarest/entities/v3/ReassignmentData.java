@@ -21,6 +21,9 @@ import static java.util.Objects.requireNonNull;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.confluent.kafkarest.entities.Reassignment;
+import io.confluent.kafkarest.response.CrnFactory;
+import io.confluent.kafkarest.response.UrlFactory;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -54,7 +57,7 @@ public final class ReassignmentData {
   ) {
     this(id, links,
         new Attributes(
-        clusterId, topicName, partitionId, replicas, addingReplicas, removingReplicas),
+            clusterId, topicName, partitionId, replicas, addingReplicas, removingReplicas),
         new Relationships(replicasLink));
   }
 
@@ -69,6 +72,57 @@ public final class ReassignmentData {
     this.links = links;
     this.attributes = attributes;
     this.relationships = relationships;
+  }
+
+  public static ReassignmentData create(
+      CrnFactory crnFactory, UrlFactory urlFactory, Reassignment reassignment) {
+    return new ReassignmentData(
+        createId(crnFactory, reassignment),
+        new ResourceLink(createSelfLink(urlFactory, reassignment)),
+        reassignment.getClusterId(),
+        reassignment.getTopicName(),
+        reassignment.getPartitionId(),
+        reassignment.getReplicas(),
+        reassignment.getAddingReplicas(),
+        reassignment.getRemovingReplicas(),
+        new Relationship((createReplicaLink(urlFactory, reassignment))));
+  }
+
+  private static String createId(CrnFactory crnFactory, Reassignment reassignment) {
+    return crnFactory.create(
+        ClusterData.ELEMENT_TYPE,
+        reassignment.getClusterId(),
+        TopicData.ELEMENT_TYPE,
+        reassignment.getTopicName(),
+        PartitionData.ELEMENT_TYPE,
+        Integer.toString(reassignment.getPartitionId()),
+        ReassignmentData.ELEMENT_TYPE,
+        Integer.toString(reassignment.getPartitionId()));
+  }
+
+  private static String createSelfLink(UrlFactory urlFactory, Reassignment reassignment) {
+    return urlFactory.create(
+        "v3",
+        "clusters",
+        reassignment.getClusterId(),
+        "topics",
+        reassignment.getTopicName(),
+        "partitions",
+        Integer.toString(reassignment.getPartitionId()),
+        "reassignments",
+        Integer.toString(reassignment.getPartitionId()));
+  }
+
+  private static String createReplicaLink(UrlFactory urlFactory, Reassignment reassignment) {
+    return urlFactory.create(
+        "v3",
+        "clusters",
+        reassignment.getClusterId(),
+        "topics",
+        reassignment.getTopicName(),
+        "partitions",
+        Integer.toString(reassignment.getPartitionId()),
+        "replicas");
   }
 
   @JsonProperty("type")

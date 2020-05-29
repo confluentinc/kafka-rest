@@ -16,15 +16,16 @@
 package io.confluent.kafkarest.controllers;
 
 import io.confluent.kafkarest.entities.Reassignment;
+import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.entities.Cluster;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public interface ReassignmentManager {
 
   /**
-   * Returns a list of Kafka {@link io.confluent.kafkarest.entities.Partition Partitions}
-   * reassignments for all Kafka {@link io.confluent.kafkarest.entities.Topic Topics} for a
-   * Kafka {@link io.confluent.kafkarest.entities.Cluster cluster} with the given {@code clusterId}.
+   * Returns a list of Kafka {@link Reassignment} for all Kafka {@link Topic}   * reassignments
+   * for a Kafka {@link Cluster} with the given {@code clusterId}.
    */
   CompletableFuture<List<Reassignment>> listReassignments(String clusterId);
 

@@ -19,15 +19,9 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.ReassignmentManager;
-import io.confluent.kafkarest.entities.Reassignment;
-import io.confluent.kafkarest.entities.v3.ClusterData;
 import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.ListReassignmentsResponse;
-import io.confluent.kafkarest.entities.v3.PartitionData;
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
-import io.confluent.kafkarest.entities.v3.Relationship;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
-import io.confluent.kafkarest.entities.v3.TopicData;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -70,56 +64,21 @@ public final class ListAllReassignmentsAction {
                 reassignments ->
                     new ListReassignmentsResponse(
                         new CollectionLink(
-                            urlFactory.create("v3", "clusters", clusterId, "topics", "-",
-                                "partitions", "-", "reassignments"),
+                            urlFactory.create(
+                                "v3",
+                                "clusters",
+                                clusterId,
+                                "topics",
+                                "-",
+                                "partitions",
+                                "-",
+                                "reassignments"),
                             /* next= */ null),
                         reassignments.stream()
-                            .map(this::toReassignmentData)
+                            .map(reassignment -> ReassignmentData
+                                .create(crnFactory, urlFactory, reassignment))
                             .collect(Collectors.toList())));
 
     AsyncResponses.asyncResume(asyncResponse, response);
-  }
-
-  private ReassignmentData toReassignmentData(Reassignment reassignment) {
-    ResourceLink links = new ResourceLink(
-        urlFactory.create(
-            "v3",
-            "clusters",
-            reassignment.getClusterId(),
-            "topics",
-            reassignment.getTopicName(),
-            "partitions",
-            Integer.toString(reassignment.getPartitionId()),
-            "reassignments",
-            Integer.toString(reassignment.getPartitionId())));
-
-    Relationship replicas = new Relationship(urlFactory.create(
-        "v3",
-        "clusters",
-        reassignment.getClusterId(),
-        "topics",
-        reassignment.getTopicName(),
-        "partitions",
-        Integer.toString(reassignment.getPartitionId()),
-        "replicas"));
-
-    return new ReassignmentData(
-        crnFactory.create(
-            ClusterData.ELEMENT_TYPE,
-            reassignment.getClusterId(),
-            TopicData.ELEMENT_TYPE,
-            reassignment.getTopicName(),
-            PartitionData.ELEMENT_TYPE,
-            Integer.toString(reassignment.getPartitionId()),
-            ReassignmentData.ELEMENT_TYPE,
-            Integer.toString(reassignment.getPartitionId())),
-        links,
-        reassignment.getClusterId(),
-        reassignment.getTopicName(),
-        reassignment.getPartitionId(),
-        reassignment.getReplicas(),
-        reassignment.getAddingReplicas(),
-        reassignment.getRemovingReplicas(),
-        replicas);
   }
 }
