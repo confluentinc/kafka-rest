@@ -3,12 +3,10 @@ package io.confluent.kafkarest.integration.v3;
 import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.v3.ListAllReassignmentsResponse;
 import io.confluent.kafkarest.entities.v3.ListReassignmentsResponse;
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,14 +41,15 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
 
     alterPartitionReassignment(reassignmentMap);
 
-    Response response =
-        request("/v3/clusters/" + clusterId + "/topics/-/partitions/-/reassignments")
-            .accept(Versions.JSON_API)
-            .get();
+    Response response = request("/v3/clusters/" + clusterId + "/topics/-/partitions"
+        + "/-/reassignments")
+        .accept(Versions.JSON_API)
+        .get();
+
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    ListAllReassignmentsResponse actualReassignments =
-        response.readEntity(ListAllReassignmentsResponse.class);
+    ListReassignmentsResponse actualReassignments =
+        response.readEntity(ListReassignmentsResponse.class);
     for (ReassignmentData data : actualReassignments.getValue().getData()) {
       assertEquals(
           data.getAddingReplicas(),

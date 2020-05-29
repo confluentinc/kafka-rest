@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
+import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
@@ -24,6 +25,7 @@ import io.confluent.kafkarest.entities.Reassignment;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -64,6 +66,16 @@ public class ReassignmentManagerImpl implements ReassignmentManager {
                           .thenComparing(Reassignment::getPartitionId))
                   .collect(Collectors.toList());
             });
+  }
+
+  @Override
+  public CompletableFuture<Optional<Reassignment>> getReassignment(
+      String clusterId, String topicName, Integer partitionId) {
+    return listReassignments(clusterId)
+        .thenApply(reassignments -> reassignments.stream()
+            .filter(reassignment -> reassignment.getTopicName().equals(topicName)
+                && reassignment.getPartitionId() == partitionId)
+            .findAny());
   }
 
   private static Reassignment toReassignment(String clusterId,

@@ -16,62 +16,28 @@
 package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.auto.value.AutoValue;
 
 /**
  * Response body for {@code GET /v3/clusters/<clusterId>/topics/-/partitions/-/reassignments}
  * requests.
  */
-public final class ListReassignmentsResponse {
+@AutoValue
+public abstract class ListReassignmentsResponse {
 
-  private final CollectionLink links;
+  ListReassignmentsResponse() {
+  }
 
-  private final List<ReassignmentData> data;
+  @JsonValue
+  public abstract ReassignmentDataList getValue();
+
+  public static ListReassignmentsResponse create(ReassignmentDataList value) {
+    return new AutoValue_ListReassignmentsResponse(value);
+  }
 
   @JsonCreator
-  public ListReassignmentsResponse(
-      @JsonProperty("links") CollectionLink links,
-      @JsonProperty("data") List<ReassignmentData> data) {
-    this.links = Objects.requireNonNull(links);
-    this.data = Objects.requireNonNull(data);
+  static ListReassignmentsResponse fromJson(ReassignmentDataList value) {
+    return create(value);
   }
-
-  @JsonProperty("links")
-  public CollectionLink getLinks() {
-    return links;
-  }
-
-  @JsonProperty("data")
-  public List<ReassignmentData> getData() {
-    return data;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ListReassignmentsResponse that = (ListReassignmentsResponse) o;
-    return Objects.equals(links, that.links) && Objects.equals(data, that.data);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(links, data);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", ListReassignmentsResponse.class.getSimpleName() + "[", "]")
-        .add("links=" + links)
-        .add("data=" + data)
-        .toString();
-  }
-
 }
