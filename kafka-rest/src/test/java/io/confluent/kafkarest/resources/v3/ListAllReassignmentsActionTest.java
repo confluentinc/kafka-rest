@@ -142,7 +142,7 @@ public class ListAllReassignmentsActionTest {
   }
 
   @Test
-  public void listPartitions_nonExistingCluster_throwsNotFound() {
+  public void listAllReassignments_nonExistingCluster_throwsNotFound() {
     expect(reassignmentManager.listReassignments(CLUSTER_ID))
         .andReturn(failedFuture(new NotFoundException()));
     replay(reassignmentManager);

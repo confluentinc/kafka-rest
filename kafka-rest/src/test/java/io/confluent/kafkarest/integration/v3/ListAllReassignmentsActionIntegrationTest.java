@@ -40,39 +40,12 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
 
   @Test
   public void listAllReassignments_returnsReassignments() throws Exception {
-    String baseUrl = restConnect;
     String clusterId = getClusterId();
 
     Map<TopicPartition, Optional<NewPartitionReassignment>> reassignmentMap =
         createReassignment(Arrays.asList(3, 4, 5));
 
     alterPartitionReassignment(reassignmentMap);
-
-    ListReassignmentsResponse expected =
-        new ListReassignmentsResponse(
-            new CollectionLink(
-                baseUrl
-                    + "/v3/clusters/" + clusterId
-                    + "/topics/-/partitions/-/reassignments",
-                /* next= */ null),
-            singletonList(
-                new ReassignmentData(
-                    "crn:///kafka=" + clusterId
-                        + "/topic=" + TOPIC_NAME
-                        + "/partition=0/reassignment=0",
-                    new ResourceLink(
-                        baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + TOPIC_NAME
-                            + "/partitions/0/replicas/0/reassignments/0"),
-                    clusterId,
-                    TOPIC_NAME,
-                    /* partitionId= */ 0,
-                    Arrays.asList(0, 1, 2),
-                    Arrays.asList(2),
-                    Arrays.asList(0),
-                    new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/topics/"
-                        + TOPIC_NAME + "/partitions/0/replicas"))));
 
     Response response = request("/v3/clusters/" + clusterId + "/topics/-/partitions"
         + "/-/reassignments")
@@ -82,23 +55,25 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
 
     List<ReassignmentData> actualReassignments =
         response.readEntity(ListReassignmentsResponse.class).getData();
-    for(ReassignmentData data : actualReassignments) {
-      assertEquals(data.getAttributes().getAddingReplicas(), reassignmentMap.get(new TopicPartition(TOPIC_NAME,
-          data.getAttributes().getPartitionId())).get().targetReplicas());
+    for (ReassignmentData data : actualReassignments) {
+      assertEquals(data.getAttributes().getAddingReplicas(),
+          reassignmentMap.get(new TopicPartition(TOPIC_NAME,
+              data.getAttributes().getPartitionId())).get().targetReplicas());
     }
   }
 
   private Map<Integer, List<Integer>> createAssignment(List<Integer> replicaIds) {
     Map<Integer, List<Integer>> replicaAssignments = new HashMap<>();
-    for(int i = 0; i < 100; i++) {
+    for (int i = 0; i < 100; i++) {
       replicaAssignments.put(i, replicaIds);
     }
     return replicaAssignments;
   }
 
-  private Map<TopicPartition, Optional<NewPartitionReassignment>> createReassignment(List<Integer> replicaIds) {
+  private Map<TopicPartition, Optional<NewPartitionReassignment>> createReassignment(
+      List<Integer> replicaIds) {
     Map<TopicPartition, Optional<NewPartitionReassignment>> reassignmentMap = new HashMap<>();
-    for(int i = 0; i < 100; i++) {
+    for (int i = 0; i < 100; i++) {
       reassignmentMap.put(new TopicPartition(TOPIC_NAME, i),
           Optional.of(new NewPartitionReassignment(replicaIds)));
     }

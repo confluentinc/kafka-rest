@@ -48,7 +48,7 @@ public class ReassignmentManagerImpl implements ReassignmentManager {
       String clusterId) {
     return clusterManager.getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster,
-        "Cluster %s cannot be found.", clusterId))
+            "Cluster %s cannot be found.", clusterId))
         .thenCompose(
             cluster -> KafkaFutures
                 .toCompletableFuture(adminClient.listPartitionReassignments().reassignments()))
