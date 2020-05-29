@@ -33,6 +33,7 @@ import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -42,14 +43,16 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 
 @Path("/v3/clusters/{clusterId}/topics/-/partitions/-/reassignments")
-public final class ListAllReassignments {
+public final class ListAllReassignmentsAction {
 
   private final Provider<ReassignmentManager> reassignmentManager;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
-  public ListAllReassignments(
-      Provider<ReassignmentManager> reassignmentManager, CrnFactory crnFactory,
+  @Inject
+  public ListAllReassignmentsAction(
+      Provider<ReassignmentManager> reassignmentManager,
+      CrnFactory crnFactory,
       UrlFactory urlFactory) {
     this.reassignmentManager = requireNonNull(reassignmentManager);
     this.crnFactory = requireNonNull(crnFactory);
@@ -114,6 +117,9 @@ public final class ListAllReassignments {
         reassignment.getClusterId(),
         reassignment.getTopicName(),
         reassignment.getPartitionId(),
+        reassignment.getReplicas(),
+        reassignment.getAddingReplicas(),
+        reassignment.getRemovingReplicas(),
         replicas);
   }
 }

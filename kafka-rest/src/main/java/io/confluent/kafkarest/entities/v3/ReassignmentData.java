@@ -16,15 +16,20 @@
 package io.confluent.kafkarest.entities.v3;
 
 
+import static java.util.Objects.requireNonNull;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
  * A reassignment resource type.
  */
-public class ReassignmentData {
+@JsonIgnoreProperties(value = {"type"}, allowGetters = true)
+public final class ReassignmentData {
 
   public static final String ELEMENT_TYPE = "reassignment";
 
@@ -42,12 +47,28 @@ public class ReassignmentData {
       String clusterId,
       String topicName,
       Integer partitionId,
-      Relationship replicas
+      List<Integer> replicas,
+      List<Integer> addingReplicas,
+      List<Integer> removingReplicas,
+      Relationship replicasLink
+  ) {
+    this(id, links,
+        new Attributes(
+        clusterId, topicName, partitionId, replicas, addingReplicas, removingReplicas),
+        new Relationships(replicasLink));
+  }
+
+  @JsonCreator
+  public ReassignmentData(
+      @JsonProperty("id") String id,
+      @JsonProperty("links") ResourceLink links,
+      @JsonProperty("attributes") Attributes attributes,
+      @JsonProperty("relationships") Relationships relationships
   ) {
     this.id = id;
     this.links = links;
-    this.attributes = new Attributes(clusterId, topicName, partitionId);
-    this.relationships = new Relationships(replicas);
+    this.attributes = attributes;
+    this.relationships = relationships;
   }
 
   @JsonProperty("type")
@@ -114,15 +135,27 @@ public class ReassignmentData {
 
     private final Integer partitionId;
 
+    private final List<Integer> replicas;
+
+    private final List<Integer> addingReplicas;
+
+    private final List<Integer> removingReplicas;
+
     @JsonCreator
     public Attributes(
         @JsonProperty("cluster_id") String clusterId,
         @JsonProperty("topic_name") String topicName,
-        @JsonProperty("partition_id") Integer partitionId
+        @JsonProperty("partition_id") Integer partitionId,
+        @JsonProperty("replicas") List<Integer> replicas,
+        @JsonProperty("adding_replicas") List<Integer> addingReplicas,
+        @JsonProperty("removing_replicas") List<Integer> removingReplicas
     ) {
-      this.clusterId = Objects.requireNonNull(clusterId);
-      this.topicName = Objects.requireNonNull(topicName);
-      this.partitionId = Objects.requireNonNull(partitionId);
+      this.clusterId = requireNonNull(clusterId);
+      this.topicName = requireNonNull(topicName);
+      this.partitionId = requireNonNull(partitionId);
+      this.replicas = requireNonNull(replicas);
+      this.addingReplicas = requireNonNull(addingReplicas);
+      this.removingReplicas = requireNonNull(removingReplicas);
     }
 
     @JsonProperty("cluster_id")
@@ -140,6 +173,21 @@ public class ReassignmentData {
       return partitionId;
     }
 
+    @JsonProperty("replicas")
+    public List<Integer> getReplicas() {
+      return replicas;
+    }
+
+    @JsonProperty("adding_replicas")
+    public List<Integer> getAddingReplicas() {
+      return addingReplicas;
+    }
+
+    @JsonProperty("removing_replicas")
+    public List<Integer> getRemovingReplicas() {
+      return removingReplicas;
+    }
+
     @Override
     public boolean equals(Object o) {
       if (this == o) {
@@ -151,12 +199,16 @@ public class ReassignmentData {
       Attributes that = (Attributes) o;
       return Objects.equals(clusterId, that.clusterId)
           && Objects.equals(topicName, that.topicName)
-          && Objects.equals(partitionId, that.partitionId);
+          && Objects.equals(partitionId, that.partitionId)
+          && Objects.equals(replicas, that.replicas)
+          && Objects.equals(addingReplicas, that.addingReplicas)
+          && Objects.equals(removingReplicas, that.removingReplicas);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(clusterId, topicName, partitionId);
+      return Objects
+          .hash(clusterId, topicName, partitionId, replicas, addingReplicas, removingReplicas);
     }
 
     @Override
@@ -165,6 +217,9 @@ public class ReassignmentData {
           .add("clusterId='" + clusterId + "'")
           .add("topicName='" + topicName + "'")
           .add("partitionId=" + partitionId)
+          .add("replicas=" + replicas)
+          .add("addingReplicas=" + addingReplicas)
+          .add("removingReplicas=" + removingReplicas)
           .toString();
     }
   }
@@ -173,7 +228,7 @@ public class ReassignmentData {
 
     private final Relationship replicas;
 
-    private Relationships(Relationship replicas) {
+    private Relationships(@JsonProperty("replicas") Relationship replicas) {
       this.replicas = replicas;
     }
 

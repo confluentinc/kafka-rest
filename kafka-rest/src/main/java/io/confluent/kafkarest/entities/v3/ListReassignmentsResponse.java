@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Objects;
@@ -30,7 +31,10 @@ public final class ListReassignmentsResponse {
 
   private final List<ReassignmentData> data;
 
-  public ListReassignmentsResponse(CollectionLink links, List<ReassignmentData> data) {
+  @JsonCreator
+  public ListReassignmentsResponse(
+      @JsonProperty("links") CollectionLink links,
+      @JsonProperty("data") List<ReassignmentData> data) {
     this.links = Objects.requireNonNull(links);
     this.data = Objects.requireNonNull(data);
   }
