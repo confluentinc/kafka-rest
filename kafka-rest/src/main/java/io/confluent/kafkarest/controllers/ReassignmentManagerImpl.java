@@ -16,7 +16,6 @@
 package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
-import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 

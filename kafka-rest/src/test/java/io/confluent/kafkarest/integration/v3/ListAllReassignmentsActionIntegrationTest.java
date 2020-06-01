@@ -66,7 +66,6 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
         + "/-/reassignments")
         .accept(Versions.JSON_API)
         .get();
-
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 }
