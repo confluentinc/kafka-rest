@@ -1,15 +1,10 @@
 package io.confluent.kafkarest.integration.v3;
 
-import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.Reassignment;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.ListReassignmentsResponse;
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
-import io.confluent.kafkarest.entities.v3.Relationship;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -61,6 +56,18 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
               data.getAttributes().getPartitionId())).get().targetReplicas());
     }
   }
+
+  @Test
+  public void listAllReassignments_nonExistingCluster_returnsNotFound() throws Exception {
+
+    Response response = request("/v3/clusters/foobar/topics/-/partitions"
+        + "/-/reassignments")
+        .accept(Versions.JSON_API)
+        .get();
+
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
 
   private Map<Integer, List<Integer>> createAssignment(List<Integer> replicaIds) {
     Map<Integer, List<Integer>> replicaAssignments = new HashMap<>();
