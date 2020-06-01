@@ -19,14 +19,9 @@ import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v3.GetReassignmentResponse;
-import io.confluent.kafkarest.entities.v3.ListReassignmentsResponse;
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
-import io.confluent.kafkarest.resources.v3.ListAllReassignmentsAction;
-import io.confluent.kafkarest.resources.v3.ListAllReassignmentsActionTest;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
