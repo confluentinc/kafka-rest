@@ -16,60 +16,24 @@
 package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.auto.value.AutoValue;
 
-/**
- * Response body for {@code GET
- * /v3/clusters/<clusterId>/topics/<topicName>/partitions/<partitionId>/replicas} requests.
- */
-public final class ListReplicasResponse {
+@AutoValue
+public abstract class ListReplicasResponse {
 
-  private final CollectionLink links;
+  ListReplicasResponse() {
+  }
 
-  private final List<ReplicaData> data;
+  @JsonValue
+  public abstract ReplicaDataList getValue();
+
+  public static ListReplicasResponse create(ReplicaDataList value) {
+    return new AutoValue_ListReplicasResponse(value);
+  }
 
   @JsonCreator
-  public ListReplicasResponse(@JsonProperty("links") CollectionLink links,
-                              @JsonProperty("data") List<ReplicaData> data) {
-    this.links = Objects.requireNonNull(links);
-    this.data = Objects.requireNonNull(data);
-  }
-
-  @JsonProperty("links")
-  public CollectionLink getLinks() {
-    return links;
-  }
-
-  @JsonProperty("data")
-  public List<ReplicaData> getData() {
-    return data;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ListReplicasResponse that = (ListReplicasResponse) o;
-    return Objects.equals(links, that.links) && Objects.equals(data, that.data);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(links, data);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", ListReplicasResponse.class.getSimpleName() + "[", "]")
-        .add("links=" + links)
-        .add("data=" + data)
-        .toString();
+  static ListReplicasResponse fromJson(ReplicaDataList value) {
+    return create(value);
   }
 }

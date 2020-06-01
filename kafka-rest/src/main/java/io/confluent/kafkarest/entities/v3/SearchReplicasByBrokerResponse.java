@@ -16,26 +16,24 @@
 package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.auto.value.AutoValue;
-import java.util.Optional;
-import javax.annotation.Nullable;
 
 @AutoValue
-public abstract class UpdateBrokerConfigRequest {
+public abstract class SearchReplicasByBrokerResponse {
 
-  UpdateBrokerConfigRequest() {
+  SearchReplicasByBrokerResponse() {
   }
 
-  @JsonProperty("value")
-  public abstract Optional<String> getValue();
+  @JsonValue
+  public abstract ReplicaDataList getValue();
 
-  public static UpdateBrokerConfigRequest create(@Nullable String value) {
-    return new AutoValue_UpdateBrokerConfigRequest(Optional.ofNullable(value));
+  public static SearchReplicasByBrokerResponse create(ReplicaDataList value) {
+    return new AutoValue_SearchReplicasByBrokerResponse(value);
   }
 
   @JsonCreator
-  static UpdateBrokerConfigRequest fromJson(@JsonProperty("value") @Nullable String value) {
+  static SearchReplicasByBrokerResponse fromJson(ReplicaDataList value) {
     return create(value);
   }
 }

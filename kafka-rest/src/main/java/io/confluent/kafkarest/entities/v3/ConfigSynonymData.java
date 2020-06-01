@@ -15,74 +15,66 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.auto.value.AutoValue;
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.ConfigSynonym;
-import java.util.Objects;
-import java.util.StringJoiner;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
-public final class ConfigSynonymData {
+@AutoValue
+public abstract class ConfigSynonymData {
 
-  private final String name;
-
-  @Nullable
-  private final String value;
-
-  private final ConfigSource source;
-
-  public ConfigSynonymData(
-      @JsonProperty("name") String name,
-      @JsonProperty("value") @Nullable String value,
-      @JsonProperty("source") ConfigSource source) {
-    this.name = name;
-    this.value = value;
-    this.source = source;
-  }
-
-  public static ConfigSynonymData fromConfigSynonym(ConfigSynonym synonym) {
-    return new ConfigSynonymData(synonym.getName(), synonym.getValue(), synonym.getSource());
+  ConfigSynonymData() {
   }
 
   @JsonProperty("name")
-  public String getName() {
-    return name;
-  }
+  public abstract String getName();
 
   @JsonProperty("value")
-  @Nullable
-  public String getValue() {
-    return value;
-  }
+  public abstract Optional<String> getValue();
 
   @JsonProperty("source")
-  public ConfigSource getSource() {
-    return source;
+  public abstract ConfigSource getSource();
+
+  public static Builder builder() {
+    return new AutoValue_ConfigSynonymData.Builder();
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
+  public static ConfigSynonymData fromConfigSynonym(ConfigSynonym synonym) {
+    return builder()
+        .setName(synonym.getName())
+        .setValue(synonym.getValue())
+        .setSource(synonym.getSource())
+        .build();
+  }
+
+  @JsonCreator
+  static ConfigSynonymData fromJson(
+      @JsonProperty("name") String name,
+      @JsonProperty("value") @Nullable String value,
+      @JsonProperty("source") ConfigSource source
+  ) {
+    return builder()
+        .setName(name)
+        .setValue(value)
+        .setSource(source)
+        .build();
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder {
+
+    Builder() {
     }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ConfigSynonymData that = (ConfigSynonymData) o;
-    return name.equals(that.name) && Objects.equals(value, that.value) && source == that.source;
-  }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(getName(), getValue(), getSource());
-  }
+    public abstract Builder setName(String name);
 
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", ConfigSynonymData.class.getSimpleName() + "[", "]")
-        .add("name='" + name + "'")
-        .add("value='" + value + "'")
-        .add("source=" + source)
-        .toString();
+    public abstract Builder setValue(@Nullable String value);
+
+    public abstract Builder setSource(ConfigSource source);
+
+    public abstract ConfigSynonymData build();
   }
 }

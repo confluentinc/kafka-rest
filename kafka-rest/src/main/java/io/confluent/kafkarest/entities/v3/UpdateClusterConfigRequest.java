@@ -17,133 +17,25 @@ package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.google.auto.value.AutoValue;
+import java.util.Optional;
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
-/**
- * Request body for {@code PUT /v3/clusters?/<clusterId>/<config_type>-configs/<name>} requests.
- */
-public final class UpdateClusterConfigRequest {
+@AutoValue
+public abstract class UpdateClusterConfigRequest {
 
-  @NotNull
-  @Nullable
-  private final Data data;
+  UpdateClusterConfigRequest() {
+  }
+
+  @JsonProperty("value")
+  public abstract Optional<String> getValue();
+
+  public static UpdateClusterConfigRequest create(@Nullable String value) {
+    return new AutoValue_UpdateClusterConfigRequest(Optional.ofNullable(value));
+  }
 
   @JsonCreator
-  public UpdateClusterConfigRequest(@JsonProperty("data") @Nullable Data data) {
-    this.data = data;
-  }
-
-  @Nullable
-  public Data getData() {
-    return data;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    UpdateClusterConfigRequest that = (UpdateClusterConfigRequest) o;
-    return Objects.equals(data, that.data);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(data);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", UpdateClusterConfigRequest.class.getSimpleName() + "[", "]")
-        .add("data=" + data)
-        .toString();
-  }
-
-  public static final class Data {
-
-    @NotNull
-    @Nullable
-    private final Attributes attributes;
-
-    @JsonCreator
-    public Data(@JsonProperty("attributes") @Nullable Attributes attributes) {
-      this.attributes = attributes;
-    }
-
-    @Nullable
-    public Attributes getAttributes() {
-      return attributes;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      Data data = (Data) o;
-      return Objects.equals(attributes, data.attributes);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(attributes);
-    }
-
-    @Override
-    public String toString() {
-      return new StringJoiner(
-          ", ", UpdateClusterConfigRequest.Data.class.getSimpleName() + "[", "]")
-          .add("attributes=" + attributes)
-          .toString();
-    }
-
-    public static final class Attributes {
-
-      @Nullable
-      private final String value;
-
-      @JsonCreator
-      public Attributes(@JsonProperty("value") @Nullable String value) {
-        this.value = value;
-      }
-
-      @Nullable
-      public String getValue() {
-        return value;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-        if (this == o) {
-          return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-          return false;
-        }
-        Attributes that = (Attributes) o;
-        return Objects.equals(value, that.value);
-      }
-
-      @Override
-      public int hashCode() {
-        return Objects.hash(value);
-      }
-
-      @Override
-      public String toString() {
-        return new StringJoiner(", ", Attributes.class.getSimpleName() + "[", "]")
-            .add("value='" + value + "'")
-            .toString();
-      }
-    }
+  static UpdateClusterConfigRequest fromJson(@JsonProperty("value") @Nullable String value) {
+    return create(value);
   }
 }

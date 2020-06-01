@@ -16,62 +16,24 @@
 package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.auto.value.AutoValue;
 
-/**
- * Response body for {@code GET /v3/clusters/<clusterId>/brokers/<brokerId>/configs}
- * requests.
- */
-public final class ListBrokerConfigsResponse {
+@AutoValue
+public abstract class ListBrokerConfigsResponse {
 
-  private final CollectionLink links;
+  ListBrokerConfigsResponse() {
+  }
 
-  private final List<BrokerConfigData> data;
+  @JsonValue
+  public abstract BrokerConfigDataList getValue();
+
+  public static ListBrokerConfigsResponse create(BrokerConfigDataList value) {
+    return new AutoValue_ListBrokerConfigsResponse(value);
+  }
 
   @JsonCreator
-  public ListBrokerConfigsResponse(@JsonProperty("links") CollectionLink links,
-                                   @JsonProperty("data") List<BrokerConfigData> data) {
-    this.links = Objects.requireNonNull(links);
-    this.data = Objects.requireNonNull(data);
+  static ListBrokerConfigsResponse fromJson(BrokerConfigDataList value) {
+    return create(value);
   }
-
-  @JsonProperty("links")
-  public CollectionLink getLinks() {
-    return links;
-  }
-
-  @JsonProperty("data")
-  public List<BrokerConfigData> getData() {
-    return data;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ListBrokerConfigsResponse that = (ListBrokerConfigsResponse) o;
-    return Objects.equals(links, that.links) && Objects.equals(data, that.data);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(links, data);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(
-        ", ", ListBrokerConfigsResponse.class.getSimpleName() + "[", "]")
-        .add("links=" + links)
-        .add("data=" + data)
-        .toString();
-  }
-
 }

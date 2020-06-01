@@ -23,12 +23,12 @@ import static org.junit.Assert.assertEquals;
 import io.confluent.kafkarest.controllers.PartitionManager;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.GetPartitionResponse;
 import io.confluent.kafkarest.entities.v3.ListPartitionsResponse;
 import io.confluent.kafkarest.entities.v3.PartitionData;
-import io.confluent.kafkarest.entities.v3.Relationship;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.PartitionDataList;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
@@ -161,39 +161,69 @@ public class PartitionsResourceTest {
     partitionsResource.listPartitions(response, CLUSTER_ID, TOPIC_NAME);
 
     ListPartitionsResponse expected =
-        new ListPartitionsResponse(
-            new CollectionLink("/v3/clusters/cluster-1/topics/topic-1/partitions", /* next= */ null),
-            Arrays.asList(
-                new PartitionData(
-                    "crn:///kafka=cluster-1/topic=topic-1/partition=0",
-                    new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/0"),
-                    CLUSTER_ID,
-                    TOPIC_NAME,
-                    PARTITION_1.getPartitionId(),
-                    new Relationship(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/1"),
-                    new Relationship(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas")),
-                new PartitionData(
-                    "crn:///kafka=cluster-1/topic=topic-1/partition=1",
-                    new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/1"),
-                    CLUSTER_ID,
-                    TOPIC_NAME,
-                    PARTITION_2.getPartitionId(),
-                    new Relationship(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas/2"),
-                    new Relationship(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas")),
-                new PartitionData(
-                    "crn:///kafka=cluster-1/topic=topic-1/partition=2",
-                    new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/2"),
-                    CLUSTER_ID,
-                    TOPIC_NAME,
-                    PARTITION_3.getPartitionId(),
-                    new Relationship(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/2/replicas/3"),
-                    new Relationship(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/2/replicas"))));
+        ListPartitionsResponse.create(
+            PartitionDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder()
+                        .setSelf("/v3/clusters/cluster-1/topics/topic-1/partitions")
+                        .build())
+                .setData(
+                    Arrays.asList(
+                        PartitionData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf("/v3/clusters/cluster-1/topics/topic-1/partitions/0")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/partition=0")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_NAME)
+                            .setPartitionId(PARTITION_1.getPartitionId())
+                            .setLeader(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/0" +
+                                        "/replicas/1"))
+                            .setReplicas(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas"))
+                            .build(),
+                        PartitionData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf("/v3/clusters/cluster-1/topics/topic-1/partitions/1")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/partition=1")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_NAME)
+                            .setPartitionId(PARTITION_2.getPartitionId())
+                            .setLeader(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/1" +
+                                        "/replicas/2"))
+                            .setReplicas(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas"))
+                            .build(),
+                        PartitionData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf("/v3/clusters/cluster-1/topics/topic-1/partitions/2")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/partition=2")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_NAME)
+                            .setPartitionId(PARTITION_3.getPartitionId())
+                            .setLeader(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/2" +
+                                        "/replicas/3"))
+                            .setReplicas(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/2/replicas"))
+                            .build()))
+                .build());
 
     assertEquals(expected, response.getValue());
   }
@@ -220,17 +250,23 @@ public class PartitionsResourceTest {
     partitionsResource.getPartition(response, CLUSTER_ID, TOPIC_NAME, PARTITION_1.getPartitionId());
 
     GetPartitionResponse expected =
-        new GetPartitionResponse(
-            new PartitionData(
-                "crn:///kafka=cluster-1/topic=topic-1/partition=0",
-                new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/0"),
-                CLUSTER_ID,
-                TOPIC_NAME,
-                PARTITION_1.getPartitionId(),
-                new Relationship(
-                    "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/1"),
-                new Relationship(
-                    "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas")));
+        GetPartitionResponse.create(
+            PartitionData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf("/v3/clusters/cluster-1/topics/topic-1/partitions/0")
+                        .setResourceName("crn:///kafka=cluster-1/topic=topic-1/partition=0")
+                        .build())
+                .setClusterId(CLUSTER_ID)
+                .setTopicName(TOPIC_NAME)
+                .setPartitionId(PARTITION_1.getPartitionId())
+                .setLeader(
+                    Resource.Relationship.create(
+                        "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/1"))
+                .setReplicas(
+                    Resource.Relationship.create(
+                        "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas"))
+                .build());
 
     assertEquals(expected, response.getValue());
   }

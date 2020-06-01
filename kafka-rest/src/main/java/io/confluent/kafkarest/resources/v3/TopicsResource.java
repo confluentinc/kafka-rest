@@ -21,21 +21,21 @@ import static java.util.Objects.requireNonNull;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.Topic;
-import io.confluent.kafkarest.entities.v3.ClusterData;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.CreateTopicRequest;
 import io.confluent.kafkarest.entities.v3.CreateTopicResponse;
 import io.confluent.kafkarest.entities.v3.GetTopicResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicsResponse;
-import io.confluent.kafkarest.entities.v3.Relationship;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.TopicData;
+import io.confluent.kafkarest.entities.v3.TopicDataList;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
 import java.net.URI;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -64,7 +64,10 @@ public final class TopicsResource {
 
   @Inject
   public TopicsResource(
-      Provider<TopicManager> topicManager, CrnFactory crnFactory, UrlFactory urlFactory) {
+      Provider<TopicManager> topicManager,
+      CrnFactory crnFactory,
+      UrlFactory urlFactory
+  ) {
     this.topicManager = requireNonNull(topicManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
@@ -79,14 +82,19 @@ public final class TopicsResource {
             .listTopics(clusterId)
             .thenApply(
                 topics ->
-                    new ListTopicsResponse(
-                        new CollectionLink(
-                            urlFactory.create("v3", "clusters", clusterId, "topics"),
-                            /* next= */ null),
-                        topics.stream()
-                            .sorted(Comparator.comparing(Topic::getName))
-                            .map(this::toTopicData)
-                            .collect(Collectors.toList())));
+                    ListTopicsResponse.create(
+                        TopicDataList.builder()
+                            .setMetadata(
+                                ResourceCollection.Metadata.builder()
+                                    .setSelf(
+                                        urlFactory.create("v3", "clusters", clusterId, "topics"))
+                                    .build())
+                            .setData(
+                                topics.stream()
+                                    .sorted(Comparator.comparing(Topic::getName))
+                                    .map(this::toTopicData)
+                                    .collect(Collectors.toList()))
+                            .build()));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
@@ -103,7 +111,7 @@ public final class TopicsResource {
         topicManager.get()
             .getTopic(clusterId, topicName)
             .thenApply(topic -> topic.orElseThrow(NotFoundException::new))
-            .thenApply(topic -> new GetTopicResponse(toTopicData(topic)));
+            .thenApply(topic -> GetTopicResponse.create(toTopicData(topic)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
@@ -116,10 +124,14 @@ public final class TopicsResource {
       @PathParam("clusterId") String clusterId,
       @Valid CreateTopicRequest request
   ) {
-    String topicName = request.getData().getAttributes().getTopicName();
-    int partitionsCount =  request.getData().getAttributes().getPartitionsCount();
-    short replicationFactor = request.getData().getAttributes().getReplicationFactor();
-    Map<String, String> configs = request.getData().getAttributes().getConfigs();
+    String topicName = request.getTopicName();
+    int partitionsCount = request.getPartitionsCount();
+    short replicationFactor = request.getReplicationFactor();
+
+    // TODO: Change to Map<String, Optional<String>>
+    Map<String, String> configs = new HashMap<>();
+    request.getConfigs()
+        .forEach(entry -> configs.put(entry.getName(), entry.getValue().orElse(null)));
 
     TopicData topicData =
         toTopicData(
@@ -133,10 +145,10 @@ public final class TopicsResource {
     CompletableFuture<CreateTopicResponse> response =
         topicManager.get()
             .createTopic(clusterId, topicName, partitionsCount, replicationFactor, configs)
-            .thenApply(none -> new CreateTopicResponse(topicData));
+            .thenApply(none -> CreateTopicResponse.create(topicData));
 
     AsyncResponseBuilder.from(
-        Response.status(Status.CREATED).location(URI.create(topicData.getLinks().getSelf())))
+        Response.status(Status.CREATED).location(URI.create(topicData.getMetadata().getSelf())))
         .entity(response)
         .asyncResume(asyncResponse);
   }
@@ -157,36 +169,33 @@ public final class TopicsResource {
   }
 
   private TopicData toTopicData(Topic topic) {
-    Relationship configs =
-        new Relationship(urlFactory.create(
-            "v3",
-            "clusters",
-            topic.getClusterId(),
-            "topics",
-            topic.getName(),
-            "configs"));
-    Relationship partitions =
-        new Relationship(urlFactory.create(
-            "v3",
-            "clusters",
-            topic.getClusterId(),
-            "topics",
-            topic.getName(),
-            "partitions"));
-
-    return new TopicData(
-        crnFactory.create(
-            ClusterData.ELEMENT_TYPE,
-            topic.getClusterId(),
-            TopicData.ELEMENT_TYPE,
-            topic.getName()),
-        new ResourceLink(
-            urlFactory.create("v3", "clusters", topic.getClusterId(), "topics", topic.getName())),
-        topic.getClusterId(),
-        topic.getName(),
-        topic.isInternal(),
-        topic.getReplicationFactor(),
-        configs,
-        partitions);
+    return TopicData.fromTopic(topic)
+        .setMetadata(
+            Resource.Metadata.builder()
+                .setSelf(
+                    urlFactory.create(
+                        "v3", "clusters", topic.getClusterId(), "topics", topic.getName()))
+                .setResourceName(
+                    crnFactory.create("kafka", topic.getClusterId(), "topic", topic.getName()))
+                .build())
+        .setPartitions(
+            Resource.Relationship.create(
+                urlFactory.create(
+                    "v3",
+                    "clusters",
+                    topic.getClusterId(),
+                    "topics",
+                    topic.getName(),
+                    "partitions")))
+        .setConfigs(
+            Resource.Relationship.create(
+                urlFactory.create(
+                    "v3",
+                    "clusters",
+                    topic.getClusterId(),
+                    "topics",
+                    topic.getName(),
+                    "configs")))
+        .build();
   }
 }

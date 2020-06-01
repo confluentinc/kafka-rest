@@ -6,7 +6,12 @@ import static org.junit.Assert.assertTrue;
 
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConfigSource;
-import io.confluent.kafkarest.entities.v3.*;
+import io.confluent.kafkarest.entities.v3.BrokerConfigData;
+import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
+import io.confluent.kafkarest.entities.v3.GetBrokerConfigResponse;
+import io.confluent.kafkarest.entities.v3.ListBrokerConfigsResponse;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
 import javax.ws.rs.client.Entity;
@@ -27,79 +32,108 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
     int brokerId = getBrokers().get(0).id();
 
-    CollectionLink expectedLinks =
-            new CollectionLink(
+    ResourceCollection.Metadata expectedMetadata =
+        ResourceCollection.Metadata.builder()
+            .setSelf(
                 baseUrl
                     + "/v3/clusters/" + clusterId
                     + "/brokers/" + brokerId
-                    + "/configs",
-                /* next= */ null);
+                    + "/configs")
+            .build();
 
     BrokerConfigData expectedConfig1 =
-            new BrokerConfigData(
-                "crn:///kafka=" + clusterId
-                    + "/broker=" + brokerId
-                    + "/config=max.connections",
-                new ResourceLink(
-                    baseUrl
-                        + "/v3/clusters/" + clusterId
-                        + "/brokers/" + brokerId
-                        + "/configs/max.connections"),
-                clusterId,
-                brokerId,
-                "max.connections",
-                "2147483647",
-                /* isDefault= */ true,
-                /* isReadOnly= */ false,
-                /* isSensitive= */ false,
-                ConfigSource.DEFAULT_CONFIG,
+        BrokerConfigData.builder()
+            .setMetadata(
+                Resource.Metadata.builder()
+                    .setSelf(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/brokers/" + brokerId
+                            + "/configs/max.connections")
+                    .setResourceName(
+                        "crn:///kafka=" + clusterId
+                            + "/broker=" + brokerId
+                            + "/config=max.connections")
+                    .build())
+            .setClusterId(clusterId)
+            .setBrokerId(brokerId)
+            .setName("max.connections")
+            .setValue("2147483647")
+            .setDefault(true)
+            .setReadOnly(false)
+            .setSensitive(false)
+            .setSource(ConfigSource.DEFAULT_CONFIG)
+            .setSynonyms(
                 singletonList(
-                    new ConfigSynonymData(
-                        "max.connections", "2147483647", ConfigSource.DEFAULT_CONFIG)));
+                    ConfigSynonymData.builder()
+                        .setName("max.connections")
+                        .setValue("2147483647")
+                        .setSource(ConfigSource.DEFAULT_CONFIG)
+                        .build()))
+            .build();
 
     BrokerConfigData expectedConfig2 =
-            new BrokerConfigData(
-                "crn:///kafka=" + clusterId
-                    + "/broker=" + brokerId
-                    + "/config=compression.type",
-                new ResourceLink(
-                    baseUrl
-                        + "/v3/clusters/" + clusterId
-                        + "/brokers/" + brokerId
-                        + "/configs/compression.type"),
-                clusterId,
-                brokerId,
-                "compression.type",
-                "producer",
-                /* isDefault= */ true,
-                /* isReadOnly= */ false,
-                /* isSensitive= */ false,
-                ConfigSource.DEFAULT_CONFIG,
+        BrokerConfigData.builder()
+            .setMetadata(
+                Resource.Metadata.builder()
+                    .setSelf(
+
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/brokers/" + brokerId
+                            + "/configs/compression.type")
+                    .setResourceName(
+                        "crn:///kafka=" + clusterId
+                            + "/broker=" + brokerId
+                            + "/config=compression.type")
+                    .build())
+            .setClusterId(clusterId)
+            .setBrokerId(brokerId)
+            .setName("compression.type")
+            .setValue("producer")
+            .setDefault(true)
+            .setReadOnly(false)
+            .setSensitive(false)
+            .setSource(ConfigSource.DEFAULT_CONFIG)
+            .setSynonyms(
                 singletonList(
-                    new ConfigSynonymData(
-                        "compression.type", "producer", ConfigSource.DEFAULT_CONFIG)));
+                    ConfigSynonymData.builder()
+                        .setName("compression.type")
+                        .setValue("producer")
+                        .setSource(ConfigSource.DEFAULT_CONFIG)
+                        .build()))
+            .build();
 
     BrokerConfigData expectedConfig3 =
-            new BrokerConfigData(
-                "crn:///kafka=" + clusterId
-                    + "/broker=" + brokerId
-                    + "/config=log.cleaner.threads",
-                new ResourceLink(
-                    baseUrl
-                        + "/v3/clusters/" + clusterId
-                        + "/brokers/" + brokerId
-                        + "/configs/log.cleaner.threads"),
-                clusterId,
-                brokerId,
-                "log.cleaner.threads",
-                "1",
-                /* isDefault= */ true,
-                /* isReadOnly= */ false,
-                /* isSensitive= */ false,
-                ConfigSource.DEFAULT_CONFIG,
+        BrokerConfigData.builder()
+            .setMetadata(
+                Resource.Metadata.builder()
+                    .setSelf(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/brokers/" + brokerId
+                            + "/configs/log.cleaner.threads")
+                    .setResourceName(
+                        "crn:///kafka=" + clusterId
+                            + "/broker=" + brokerId
+                            + "/config=log.cleaner.threads")
+                    .build())
+            .setClusterId(clusterId)
+            .setBrokerId(brokerId)
+            .setName("log.cleaner.threads")
+            .setValue("1")
+            .setDefault(true)
+            .setReadOnly(false)
+            .setSensitive(false)
+            .setSource(ConfigSource.DEFAULT_CONFIG)
+            .setSynonyms(
                 singletonList(
-                    new ConfigSynonymData(
-                        "log.cleaner.threads", "1", ConfigSource.DEFAULT_CONFIG)));
+                    ConfigSynonymData.builder()
+                        .setName("log.cleaner.threads")
+                        .setValue("1")
+                        .setSource(ConfigSource.DEFAULT_CONFIG)
+                        .build()))
+            .build();
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs")
@@ -109,18 +143,19 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
     ListBrokerConfigsResponse actual = response.readEntity(ListBrokerConfigsResponse.class);
+    assertEquals(expectedMetadata, actual.getValue().getMetadata());
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", actual.getLinks(), expectedLinks),
-        actual.getData().contains(expectedConfig1));
+        String.format(
+            "Not true that `%s' contains `%s'.", actual.getValue().getData(), expectedConfig1),
+        actual.getValue().getData().contains(expectedConfig1));
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", actual.getData(), expectedConfig1),
-        actual.getData().contains(expectedConfig1));
+        String.format(
+            "Not true that `%s' contains `%s'.", actual.getValue().getData(), expectedConfig2),
+        actual.getValue().getData().contains(expectedConfig2));
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", actual.getData(), expectedConfig2),
-        actual.getData().contains(expectedConfig2));
-    assertTrue(
-        String.format("Not true that `%s' contains `%s'.", actual.getData(), expectedConfig3),
-        actual.getData().contains(expectedConfig3));
+        String.format(
+            "Not true that `%s' contains `%s'.", actual.getValue().getData(), expectedConfig3),
+        actual.getValue().getData().contains(expectedConfig3));
   }
 
   @Test
@@ -151,27 +186,36 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     int brokerId = getBrokers().get(0).id();
 
     GetBrokerConfigResponse expected =
-            new GetBrokerConfigResponse(
-                new BrokerConfigData(
-                    "crn:///kafka=" + clusterId
-                        + "/broker=" + brokerId
-                        + "/config=max.connections",
-                    new ResourceLink(
-                        baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/brokers/" + brokerId
-                            + "/configs/max.connections"),
-                    clusterId,
-                    brokerId,
-                    "max.connections",
-                    "2147483647",
-                    /* isDefault= */ true,
-                    /* isReadOnly= */ false,
-                    /* isSensitive= */ false,
-                    ConfigSource.DEFAULT_CONFIG,
+        GetBrokerConfigResponse.create(
+            BrokerConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/brokers/" + brokerId
+                                + "/configs/max.connections")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId
+                                + "/broker=" + brokerId
+                                + "/config=max.connections")
+                        .build())
+                .setClusterId(clusterId)
+                .setBrokerId(brokerId)
+                .setName("max.connections")
+                .setValue("2147483647")
+                .setDefault(true)
+                .setReadOnly(false)
+                .setSensitive(false)
+                .setSource(ConfigSource.DEFAULT_CONFIG)
+                .setSynonyms(
                     singletonList(
-                        new ConfigSynonymData(
-                            "max.connections", "2147483647", ConfigSource.DEFAULT_CONFIG))));
+                        ConfigSynonymData.builder()
+                            .setName("max.connections")
+                            .setValue("2147483647")
+                            .setSource(ConfigSource.DEFAULT_CONFIG)
+                            .build()))
+                .build());
 
     Response response =
         request(
@@ -226,27 +270,36 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     int brokerId = getBrokers().get(0).id();
 
     GetBrokerConfigResponse expectedBeforeUpdate =
-            new GetBrokerConfigResponse(
-                new BrokerConfigData(
-                    "crn:///kafka=" + clusterId
-                        + "/broker=" + brokerId
-                        + "/config=compression.type",
-                    new ResourceLink(
-                        baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/brokers/" + brokerId
-                            + "/configs/compression.type"),
-                    clusterId,
-                    brokerId,
-                    "compression.type",
-                    "producer",
-                    /* isDefault= */ true,
-                    /* isReadOnly= */ false,
-                    /* isSensitive= */ false,
-                    ConfigSource.DEFAULT_CONFIG,
+        GetBrokerConfigResponse.create(
+            BrokerConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/brokers/" + brokerId
+                                + "/configs/compression.type")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId
+                                + "/broker=" + brokerId
+                                + "/config=compression.type")
+                        .build())
+                .setClusterId(clusterId)
+                .setBrokerId(brokerId)
+                .setName("compression.type")
+                .setValue("producer")
+                .setDefault(true)
+                .setReadOnly(false)
+                .setSensitive(false)
+                .setSource(ConfigSource.DEFAULT_CONFIG)
+                .setSynonyms(
                     singletonList(
-                        new ConfigSynonymData(
-                            "compression.type", "producer", ConfigSource.DEFAULT_CONFIG))));
+                        ConfigSynonymData.builder()
+                            .setName("compression.type")
+                            .setValue("producer")
+                            .setSource(ConfigSource.DEFAULT_CONFIG)
+                            .build()))
+                .build());
 
     Response responseBeforeUpdate =
         request(
@@ -258,42 +311,52 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.OK.getStatusCode(), responseBeforeUpdate.getStatus());
 
     GetBrokerConfigResponse actualBeforeUpdate =
-            responseBeforeUpdate.readEntity(GetBrokerConfigResponse.class);
+        responseBeforeUpdate.readEntity(GetBrokerConfigResponse.class);
     assertEquals(expectedBeforeUpdate, actualBeforeUpdate);
 
     Response updateResponse =
         request(
             "/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/compression.type")
             .accept(Versions.JSON_API)
-            .put(
-                Entity.entity(
-                    "{\"data\":{\"attributes\":{\"value\":\"gzip\"}}}", Versions.JSON_API));
+            .put(Entity.entity("{\"value\":\"gzip\"}", Versions.JSON_API));
     assertEquals(Status.NO_CONTENT.getStatusCode(), updateResponse.getStatus());
 
     GetBrokerConfigResponse expectedAfterUpdate =
-            new GetBrokerConfigResponse(
-                new BrokerConfigData(
-                    "crn:///kafka=" + clusterId
-                        + "/broker=" + brokerId
-                        + "/config=compression.type",
-                    new ResourceLink(
-                        baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/brokers/" + brokerId
-                            + "/configs/compression.type"),
-                    clusterId,
-                    brokerId,
-                    "compression.type",
-                    "gzip",
-                    /* isDefault= */ false,
-                    /* isReadOnly= */ false,
-                    /* isSensitive= */ false,
-                    ConfigSource.DYNAMIC_BROKER_CONFIG,
+        GetBrokerConfigResponse.create(
+            BrokerConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/brokers/" + brokerId
+                                + "/configs/compression.type")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId
+                                + "/broker=" + brokerId
+                                + "/config=compression.type")
+                        .build())
+                .setClusterId(clusterId)
+                .setBrokerId(brokerId)
+                .setName("compression.type")
+                .setValue("gzip")
+                .setDefault(false)
+                .setReadOnly(false)
+                .setSensitive(false)
+                .setSource(ConfigSource.DYNAMIC_BROKER_CONFIG)
+                .setSynonyms(
                     Arrays.asList(
-                        new ConfigSynonymData(
-                            "compression.type", "gzip", ConfigSource.DYNAMIC_BROKER_CONFIG),
-                        new ConfigSynonymData(
-                            "compression.type", "producer", ConfigSource.DEFAULT_CONFIG))));
+                        ConfigSynonymData.builder()
+                            .setName("compression.type")
+                            .setValue("gzip")
+                            .setSource(ConfigSource.DYNAMIC_BROKER_CONFIG)
+                            .build(),
+                        ConfigSynonymData.builder()
+                            .setName("compression.type")
+                            .setValue("producer")
+                            .setSource(ConfigSource.DEFAULT_CONFIG)
+                            .build()))
+                .build());
 
     Response responseAfterUpdate =
         request(
@@ -305,7 +368,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.OK.getStatusCode(), responseAfterUpdate.getStatus());
 
     GetBrokerConfigResponse actualAfterUpdate =
-            responseAfterUpdate.readEntity(GetBrokerConfigResponse.class);
+        responseAfterUpdate.readEntity(GetBrokerConfigResponse.class);
     assertEquals(expectedAfterUpdate, actualAfterUpdate);
 
     Response resetResponse =
@@ -316,27 +379,36 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NO_CONTENT.getStatusCode(), resetResponse.getStatus());
 
     GetBrokerConfigResponse expectedAfterReset =
-            new GetBrokerConfigResponse(
-                new BrokerConfigData(
-                    "crn:///kafka=" + clusterId
-                        + "/broker=" + brokerId
-                        + "/config=compression.type",
-                    new ResourceLink(
-                        baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/brokers/" + brokerId
-                            + "/configs/compression.type"),
-                    clusterId,
-                    brokerId,
-                    "compression.type",
-                    "producer",
-                    /* isDefault= */ true,
-                    /* isReadOnly= */ false,
-                    /* isSensitive= */ false,
-                    ConfigSource.DEFAULT_CONFIG,
+        GetBrokerConfigResponse.create(
+            BrokerConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/brokers/" + brokerId
+                                + "/configs/compression.type")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId
+                                + "/broker=" + brokerId
+                                + "/config=compression.type")
+                        .build())
+                .setClusterId(clusterId)
+                .setBrokerId(brokerId)
+                .setName("compression.type")
+                .setValue("producer")
+                .setDefault(true)
+                .setReadOnly(false)
+                .setSensitive(false)
+                .setSource(ConfigSource.DEFAULT_CONFIG)
+                .setSynonyms(
                     singletonList(
-                        new ConfigSynonymData(
-                            "compression.type", "producer", ConfigSource.DEFAULT_CONFIG))));
+                        ConfigSynonymData.builder()
+                            .setName("compression.type")
+                            .setValue("producer")
+                            .setSource(ConfigSource.DEFAULT_CONFIG)
+                            .build()))
+                .build());
 
     Response responseAfterReset =
         request(
@@ -348,7 +420,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.OK.getStatusCode(), responseAfterReset.getStatus());
 
     GetBrokerConfigResponse actualAfterReset =
-            responseAfterReset.readEntity(GetBrokerConfigResponse.class);
+        responseAfterReset.readEntity(GetBrokerConfigResponse.class);
     assertEquals(expectedAfterReset, actualAfterReset);
   }
 
@@ -360,9 +432,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/foobar")
             .accept(Versions.JSON_API)
-            .put(
-                Entity.entity(
-                    "{\"data\":{\"attributes\":{\"value\":\"producer\"}}}", Versions.JSON_API));
+            .put(Entity.entity("{\"value\":\"producer\"}", Versions.JSON_API));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -386,9 +456,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     Response response =
         request("/v3/clusters/foobar/brokers/" + brokerId + "/configs/compression.type")
             .accept(Versions.JSON_API)
-            .put(
-                Entity.entity(
-                    "{\"data\":{\"attributes\":{\"value\":\"producer\"}}}", Versions.JSON_API));
+            .put(Entity.entity("{\"value\":\"producer\"}", Versions.JSON_API));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -398,9 +466,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/foobar/brokers/" + brokerId + "/configs/compression.type")
-            .put(
-                Entity.entity(
-                    "{\"data\":{\"attributes\":{\"value\":\"producer\"}}}", Versions.JSON_API));
+            .put(Entity.entity("{\"value\":\"producer\"}", Versions.JSON_API));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
