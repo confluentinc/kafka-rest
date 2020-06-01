@@ -24,7 +24,7 @@ import java.util.concurrent.CompletableFuture;
 public interface ReassignmentManager {
 
   /**
-   * Returns a list of Kafka {@link Reassignment} for all Kafka {@link Topic}   * reassignments
+   * Returns a list of Kafka {@link Reassignment Reassignments} for all Kafka {@link Topic Topics}
    * for a Kafka {@link Cluster} with the given {@code clusterId}.
    */
   CompletableFuture<List<Reassignment>> listReassignments(String clusterId);
