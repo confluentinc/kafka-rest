@@ -54,6 +54,9 @@ final class ClusterConfigManagerImpl
   @Override
   public CompletableFuture<Void> upsertClusterConfig(
       String clusterId, ClusterConfig.Type type, String name, String newValue) {
+    // Since listing cluster configs will only return the ones dynamically created, there's no way
+    // currently of knowing which config names are valid to create/update. So we skip the existence
+    // check. If the config is not valid, it will fail silently.
     return unsafeUpdateConfig(
         clusterId, new ConfigResource(type.getAdminType(), ""), name, newValue);
   }
@@ -61,6 +64,9 @@ final class ClusterConfigManagerImpl
   @Override
   public CompletableFuture<Void> deleteClusterConfig(
       String clusterId, ClusterConfig.Type type, String name) {
+    // Since listing cluster configs will only return the ones dynamically created, there's no way
+    // currently of knowing which config names are valid to delete. So we skip the existence check.
+    // If the config is not valid, it will fail silently.
     return unsafeResetConfig(clusterId, new ConfigResource(type.getAdminType(), ""), name);
   }
 }

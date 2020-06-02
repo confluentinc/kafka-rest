@@ -86,6 +86,9 @@ abstract class AbstractConfigManager<
         .thenApply(configs -> findEntityByKey(configs, AbstractConfig::getName, name));
   }
 
+  /**
+   * Updates the config {@code name} value to {@code newValue}, checking if the config exists first.
+   */
   final CompletableFuture<Void> safeUpdateConfig(
       String clusterId, ConfigResource resourceId, B prototype, String name, String newValue) {
     return getConfig(clusterId, resourceId, prototype, name)
@@ -101,6 +104,10 @@ abstract class AbstractConfigManager<
         .thenCompose(config -> updateConfig(resourceId, name, newValue));
   }
 
+  /**
+   * Updates the config {@code name} value to {@code newValue}, without checking if the config
+   * exists first.
+   */
   final CompletableFuture<Void> unsafeUpdateConfig(
       String clusterId, ConfigResource resourceId, String name, String newValue) {
     return clusterManager.getCluster(clusterId)
@@ -120,6 +127,9 @@ abstract class AbstractConfigManager<
             .get(resourceId));
   }
 
+  /**
+   * Resets the config {@code name} to its default value, checking if the config exists first.
+   */
   final CompletableFuture<Void> safeResetConfig(
       String clusterId, ConfigResource resourceId, B prototype, String name) {
     return getConfig(clusterId, resourceId, prototype, name)
@@ -135,6 +145,10 @@ abstract class AbstractConfigManager<
         .thenCompose(config -> resetConfig(resourceId, name));
   }
 
+  /**
+   * Resets the config {@code name} to its default value, without checking if the config exists
+   * first.
+   */
   final CompletableFuture<Void> unsafeResetConfig(
       String clusterId, ConfigResource resourceId, String name) {
     return clusterManager.getCluster(clusterId)
