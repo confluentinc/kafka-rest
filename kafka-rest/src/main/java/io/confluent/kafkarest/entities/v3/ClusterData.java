@@ -25,6 +25,8 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ClusterData extends Resource {
 
+  public static final String ELEMENT_TYPE = "kafka";
+
   ClusterData() {
   }
 
