@@ -15,132 +15,60 @@
 
 package io.confluent.kafkarest.controllers;
 
-import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
-import static io.confluent.kafkarest.controllers.Entities.findEntityByKey;
-import static java.util.Collections.singletonList;
-import static java.util.Collections.singletonMap;
-
-import io.confluent.kafkarest.common.KafkaFutures;
-import io.confluent.kafkarest.entities.ConfigSource;
-import io.confluent.kafkarest.entities.ConfigSynonym;
 import io.confluent.kafkarest.entities.BrokerConfig;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
-import org.apache.kafka.clients.admin.AlterConfigOp;
-import org.apache.kafka.clients.admin.ConfigEntry;
-import org.apache.kafka.clients.admin.DescribeConfigsOptions;
 import org.apache.kafka.common.config.ConfigResource;
-import org.apache.kafka.common.config.ConfigResource.Type;
 
-final class BrokerConfigManagerImpl implements BrokerConfigManager {
-
-  private final Admin adminClient;
-  private final ClusterManager clusterManager;
+final class BrokerConfigManagerImpl
+    extends AbstractConfigManager<BrokerConfig, BrokerConfig.Builder>
+    implements BrokerConfigManager {
 
   @Inject
   BrokerConfigManagerImpl(Admin adminClient, ClusterManager clusterManager) {
-    this.adminClient = Objects.requireNonNull(adminClient);
-    this.clusterManager = Objects.requireNonNull(clusterManager);
+    super(adminClient, clusterManager);
   }
 
   @Override
   public CompletableFuture<List<BrokerConfig>> listBrokerConfigs(
       String clusterId, int brokerId) {
-    ConfigResource resource = new ConfigResource(Type.BROKER, String.valueOf(brokerId));
-    return clusterManager.getCluster(clusterId)
-        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
-        .thenCompose(
-            broker ->
-                KafkaFutures.toCompletableFuture(
-                    adminClient.describeConfigs(
-                        singletonList(resource),
-                        new DescribeConfigsOptions().includeSynonyms(true))
-                        .values()
-                        .get(resource)))
-        .thenApply(
-            config ->
-                config.entries().stream()
-                    .map(
-                        entry ->
-                            BrokerConfig.create(
-                                clusterId,
-                                brokerId,
-                                entry.name(),
-                                entry.value(),
-                                entry.isDefault(),
-                                entry.isReadOnly(),
-                                entry.isSensitive(),
-                                ConfigSource.fromAdminConfigSource(entry.source()),
-                                entry.synonyms().stream()
-                                    .map(ConfigSynonym::fromAdminConfigSynonym)
-                                    .collect(Collectors.toList())))
-                    .collect(Collectors.toList()));
+    return listConfigs(
+        clusterId,
+        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(brokerId)),
+        BrokerConfig.builder().setClusterId(clusterId).setBrokerId(brokerId));
   }
 
   @Override
   public CompletableFuture<Optional<BrokerConfig>> getBrokerConfig(
       String clusterId, int brokerId, String name) {
-    return listBrokerConfigs(clusterId, brokerId)
-        .thenApply(configs -> findEntityByKey(configs, BrokerConfig::getName, name));
+    return getConfig(
+        clusterId,
+        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(brokerId)),
+        BrokerConfig.builder().setClusterId(clusterId).setBrokerId(brokerId),
+        name);
   }
 
   @Override
   public CompletableFuture<Void> updateBrokerConfig(
       String clusterId, int brokerId, String name, String newValue) {
-    ConfigResource resource = new ConfigResource(Type.BROKER, String.valueOf(brokerId));
-
-    return getBrokerConfig(clusterId, brokerId, name)
-        .thenApply(
-            config ->
-                checkEntityExists(
-                    config,
-                    "Config %s cannot be found for broker %s in cluster %s.",
-                    name,
-                    brokerId,
-                    clusterId))
-        .thenCompose(
-            broker ->
-                KafkaFutures.toCompletableFuture(
-                    adminClient.incrementalAlterConfigs(
-                        singletonMap(
-                            resource,
-                            singletonList(
-                                new AlterConfigOp(
-                                    new ConfigEntry(name, newValue), AlterConfigOp.OpType.SET))))
-                        .values()
-                        .get(resource)));
+    return safeUpdateConfig(
+        clusterId,
+        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(brokerId)),
+        BrokerConfig.builder().setClusterId(clusterId).setBrokerId(brokerId),
+        name,
+        newValue);
   }
 
   @Override
   public CompletableFuture<Void> resetBrokerConfig(
       String clusterId, int brokerId, String name) {
-    ConfigResource resource = new ConfigResource(Type.BROKER, String.valueOf(brokerId));
-
-    return getBrokerConfig(clusterId, brokerId, name)
-        .thenApply(
-            config ->
-                checkEntityExists(
-                    config,
-                    "Config %s cannot be found for broker %s in cluster %s.",
-                    name,
-                    brokerId,
-                    clusterId))
-        .thenCompose(
-            broker ->
-                KafkaFutures.toCompletableFuture(
-                    adminClient.incrementalAlterConfigs(
-                        singletonMap(
-                            resource,
-                            singletonList(
-                                new AlterConfigOp(
-                                    new ConfigEntry(name, /* value= */ null),
-                                    AlterConfigOp.OpType.DELETE))))
-                        .values()
-                        .get(resource)));
+    return safeResetConfig(
+        clusterId,
+        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(brokerId)),
+        BrokerConfig.builder().setClusterId(clusterId).setBrokerId(brokerId),
+        name);
   }
 }

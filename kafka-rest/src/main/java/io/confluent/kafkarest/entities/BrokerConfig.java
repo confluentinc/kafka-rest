@@ -16,12 +16,11 @@
 package io.confluent.kafkarest.entities;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableList;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * A Kafka Broker Config
+ * A Kafka broker config
  */
 @AutoValue
 public abstract class BrokerConfig extends AbstractConfig {
@@ -30,6 +29,10 @@ public abstract class BrokerConfig extends AbstractConfig {
   }
 
   public abstract int getBrokerId();
+
+  public static Builder builder() {
+    return new AutoValue_BrokerConfig.Builder();
+  }
 
   public static BrokerConfig create(
       String clusterId,
@@ -41,15 +44,28 @@ public abstract class BrokerConfig extends AbstractConfig {
       boolean isSensitive,
       ConfigSource source,
       List<ConfigSynonym> synonyms) {
-    return new AutoValue_BrokerConfig(
-        clusterId,
-        name,
-        value,
-        isDefault,
-        isReadOnly,
-        isSensitive,
-        source,
-        ImmutableList.copyOf(synonyms),
-        brokerId);
+    return builder()
+        .setClusterId(clusterId)
+        .setName(name)
+        .setValue(value)
+        .setDefault(isDefault)
+        .setReadOnly(isReadOnly)
+        .setSensitive(isSensitive)
+        .setSource(source)
+        .setSynonyms(synonyms)
+        .setBrokerId(brokerId)
+        .build();
+  }
+
+  /**
+   * A builder for {@link BrokerConfig}.
+   */
+  @AutoValue.Builder
+  public abstract static class Builder extends AbstractConfig.Builder<BrokerConfig, Builder> {
+
+    Builder() {
+    }
+
+    public abstract Builder setBrokerId(int brokerId);
   }
 }
