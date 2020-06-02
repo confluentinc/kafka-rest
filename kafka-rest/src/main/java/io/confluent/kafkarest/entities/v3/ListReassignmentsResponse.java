@@ -22,8 +22,8 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
- * Response body for {@code GET /v3/clusters/<clusterId>/topics/-/partitions/-/reassignments}
- * requests.
+ * Response body for {@code GET /v3/clusters/<clusterId>/topics/-/partitions/-/reassignments} and
+ * {@code GET /v3/clusters/<clusterId>/topics/-/partitions/-/reassignments} requests.
  */
 public final class ListReassignmentsResponse {
 
