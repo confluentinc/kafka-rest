@@ -18,24 +18,36 @@ package io.confluent.kafkarest.entities.v3;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
-import java.util.Optional;
-import javax.annotation.Nullable;
+import java.util.List;
 
 @AutoValue
-public abstract class UpdateBrokerConfigRequest {
+public abstract class ReplicaDataList extends ResourceCollection<ReplicaData> {
 
-  UpdateBrokerConfigRequest() {
+  ReplicaDataList() {
   }
 
-  @JsonProperty("value")
-  public abstract Optional<String> getValue();
-
-  public static UpdateBrokerConfigRequest create(@Nullable String value) {
-    return new AutoValue_UpdateBrokerConfigRequest(Optional.ofNullable(value));
+  public static Builder builder() {
+    return new AutoValue_ReplicaDataList.Builder().setKind("KafkaReplicaList");
   }
 
   @JsonCreator
-  static UpdateBrokerConfigRequest fromJson(@JsonProperty("value") @Nullable String value) {
-    return create(value);
+  static ReplicaDataList fromJson(
+      @JsonProperty("kind") String kind,
+      @JsonProperty("metadata") Metadata metadata,
+      @JsonProperty("data") List<ReplicaData> data
+  ) {
+    return builder()
+        .setKind(kind)
+        .setMetadata(metadata)
+        .setData(data)
+        .build();
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder
+      extends ResourceCollection.Builder<ReplicaData, ReplicaDataList, Builder> {
+
+    Builder() {
+    }
   }
 }

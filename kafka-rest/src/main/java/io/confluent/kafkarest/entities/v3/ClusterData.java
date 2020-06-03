@@ -16,211 +16,87 @@
 package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.google.auto.value.AutoValue;
+import io.confluent.kafkarest.entities.Cluster;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
-/**
- * A kafka resource type.
- */
-public final class ClusterData {
+@AutoValue
+public abstract class ClusterData extends Resource {
 
   public static final String ELEMENT_TYPE = "kafka";
 
-  private final String id;
+  ClusterData() {
+  }
 
-  private final ResourceLink links;
+  @JsonProperty("cluster_id")
+  public abstract String getClusterId();
 
-  private final Attributes attributes;
+  @JsonProperty("controller")
+  public abstract Optional<Relationship> getController();
 
-  private final Relationships relationships;
+  @JsonProperty("brokers")
+  public abstract Relationship getBrokers();
 
+  @JsonProperty("topics")
+  public abstract Relationship getTopics();
 
-  public ClusterData(
-      String id,
-      ResourceLink links,
-      String clusterId,
-      Relationship controller,
-      Relationship brokers,
-      Relationship topics
-  ) {
-    this(id, links,
-            new Attributes(clusterId),
-            new Relationships(controller, brokers, topics));
+  @JsonProperty("broker_configs")
+  public abstract Relationship getBrokerConfigs();
+
+  @JsonProperty("topic_configs")
+  public abstract Relationship getTopicConfigs();
+
+  public static Builder builder() {
+    return new AutoValue_ClusterData.Builder().setKind("KafkaCluster");
+  }
+
+  public static Builder fromCluster(Cluster cluster) {
+    return builder().setClusterId(cluster.getClusterId());
   }
 
   @JsonCreator
-  public ClusterData(
-          @JsonProperty("type") String id,
-          @JsonProperty("links") ResourceLink links,
-          @JsonProperty("cluster_id") Attributes attributes,
-          @JsonProperty("relationships") Relationships relationships
+  static ClusterData fromJson(
+      @JsonProperty("kind") String kind,
+      @JsonProperty("metadata") Metadata metadata,
+      @JsonProperty("cluster_id") String clusterId,
+      @JsonProperty("controller") @Nullable Relationship controller,
+      @JsonProperty("brokers") Relationship brokers,
+      @JsonProperty("topics") Relationship topics,
+      @JsonProperty("broker_configs") Relationship brokerConfigs,
+      @JsonProperty("topic_configs") Relationship topicConfigs
   ) {
-    this.id = Objects.requireNonNull(id);
-    this.links = Objects.requireNonNull(links);
-    this.attributes = attributes;
-    this.relationships = relationships;
+    return builder()
+        .setKind(kind)
+        .setMetadata(metadata)
+        .setClusterId(clusterId)
+        .setController(controller)
+        .setBrokers(brokers)
+        .setTopics(topics)
+        .setBrokerConfigs(brokerConfigs)
+        .setTopicConfigs(topicConfigs)
+        .build();
   }
 
-  @JsonProperty("type")
-  public String getType() {
-    return "KafkaCluster";
-  }
+  @AutoValue.Builder
+  public abstract static class Builder extends Resource.Builder<Builder> {
 
-  @JsonProperty("id")
-  public String getId() {
-    return id;
-  }
-
-  @JsonProperty("links")
-  public ResourceLink getLinks() {
-    return links;
-  }
-
-  @JsonProperty("attributes")
-  public Attributes getAttributes() {
-    return attributes;
-  }
-
-  @JsonProperty("relationships")
-  public Relationships getRelationships() {
-    return relationships;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ClusterData that = (ClusterData) o;
-    return Objects.equals(id, that.id)
-        && Objects.equals(links, that.links)
-        && Objects.equals(attributes, that.attributes)
-        && Objects.equals(relationships, that.relationships);
-
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id, links, attributes, relationships);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", ClusterData.class.getSimpleName() + "[", "]")
-        .add("id='" + id + "'")
-        .add("links=" + links)
-        .add("attributes=" + attributes)
-        .add("relationships=" + relationships)
-        .toString();
-  }
-
-  public static final class Attributes {
-
-    private final String clusterId;
-
-    @JsonCreator
-    public Attributes(@JsonProperty("cluster_id") String clusterId) {
-      this.clusterId = Objects.requireNonNull(clusterId);
+    Builder() {
     }
 
-    @JsonProperty("cluster_id")
-    public String getClusterId() {
-      return clusterId;
-    }
+    public abstract Builder setClusterId(String clusterId);
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      Attributes that = (Attributes) o;
-      return Objects.equals(clusterId, that.clusterId);
-    }
+    public abstract Builder setController(@Nullable Relationship controller);
 
-    @Override
-    public int hashCode() {
-      return Objects.hash(clusterId);
-    }
+    public abstract Builder setBrokers(Relationship brokers);
 
-    @Override
-    public String toString() {
-      return new StringJoiner(", ", Attributes.class.getSimpleName() + "[", "]")
-          .add("clusterId='" + clusterId + "'")
-          .toString();
-    }
-  }
+    public abstract Builder setTopics(Relationship topics);
 
-  public static final class Relationships {
+    public abstract Builder setBrokerConfigs(Relationship brokerConfigs);
 
-    @Nullable
-    private final Relationship controller;
+    public abstract Builder setTopicConfigs(Relationship topicConfigs);
 
-    private final Relationship brokers;
-
-    private final Relationship topics;
-
-    @JsonCreator
-    public Relationships(
-        @JsonProperty("controller") @Nullable Relationship controller,
-        @JsonProperty("brokers") Relationship brokers,
-        @JsonProperty("topics") Relationship topics) {
-      this.controller = controller;
-      this.brokers = Objects.requireNonNull(brokers);
-      this.topics = Objects.requireNonNull(topics);
-    }
-
-    @JsonProperty("controller")
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @Nullable
-    public Relationship getController() {
-      return controller;
-    }
-
-    @JsonProperty("brokers")
-    public Relationship getBrokers() {
-      return brokers;
-    }
-
-    @JsonProperty("topics")
-    public Relationship getTopics() {
-      return topics;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      Relationships that = (Relationships) o;
-      return Objects.equals(controller, that.controller)
-          && Objects.equals(brokers, that.brokers)
-          && Objects.equals(topics, that.topics);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(controller, brokers, topics);
-    }
-
-    @Override
-    public String toString() {
-      return new StringJoiner(", ", Relationships.class.getSimpleName() + "[", "]")
-          .add("controller=" + controller)
-          .add("brokers=" + brokers)
-          .add("topics=" + topics)
-          .toString();
-    }
+    public abstract ClusterData build();
   }
 }

@@ -16,50 +16,24 @@
 package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.auto.value.AutoValue;
 
-/**
- * Response body for {@code GET /v3/clusters/<clusterId>/brokers/<brokerId>/configs/<name>}
- * requests.
- */
-public final class GetBrokerConfigResponse {
+@AutoValue
+public abstract class GetBrokerConfigResponse {
 
-  private final BrokerConfigData data;
+  GetBrokerConfigResponse() {
+  }
+
+  @JsonValue
+  public abstract BrokerConfigData getValue();
+
+  public static GetBrokerConfigResponse create(BrokerConfigData value) {
+    return new AutoValue_GetBrokerConfigResponse(value);
+  }
 
   @JsonCreator
-  public GetBrokerConfigResponse(@JsonProperty("data") BrokerConfigData data) {
-    this.data = Objects.requireNonNull(data);
-  }
-
-  @JsonProperty
-  public BrokerConfigData getData() {
-    return data;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    GetBrokerConfigResponse that = (GetBrokerConfigResponse) o;
-    return Objects.equals(data, that.data);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(data);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(
-        ", ", GetBrokerConfigResponse.class.getSimpleName() + "[", "]")
-        .add("data=" + data)
-        .toString();
+  static GetBrokerConfigResponse fromJson(BrokerConfigData value) {
+    return create(value);
   }
 }

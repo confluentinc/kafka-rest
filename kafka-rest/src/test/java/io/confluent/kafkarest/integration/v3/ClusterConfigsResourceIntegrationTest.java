@@ -11,7 +11,7 @@ import io.confluent.kafkarest.entities.v3.ClusterConfigData;
 import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
 import io.confluent.kafkarest.entities.v3.GetBrokerConfigResponse;
 import io.confluent.kafkarest.entities.v3.GetClusterConfigResponse;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
 import javax.ws.rs.client.Entity;
@@ -68,27 +68,36 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), responseBeforeUpdate.getStatus());
 
     GetBrokerConfigResponse expectedBrokerBeforeUpdate =
-        new GetBrokerConfigResponse(
-            new BrokerConfigData(
-                "crn:///kafka=" + clusterId
-                    + "/broker=" + brokerId
-                    + "/config=compression.type",
-                new ResourceLink(
-                    baseUrl
-                        + "/v3/clusters/" + clusterId
-                        + "/brokers/" + brokerId
-                        + "/configs/compression.type"),
-                clusterId,
-                brokerId,
-                "compression.type",
-                "producer",
-                /* isDefault= */ true,
-                /* isReadOnly= */ false,
-                /* isSensitive= */ false,
-                ConfigSource.DEFAULT_CONFIG,
-                singletonList(
-                    new ConfigSynonymData(
-                        "compression.type", "producer", ConfigSource.DEFAULT_CONFIG))));
+        GetBrokerConfigResponse.create(
+            BrokerConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/brokers/" + brokerId
+                                + "/configs/compression.type")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId
+                                + "/broker=" + brokerId
+                                + "/config=compression.type")
+                        .build())
+                .setClusterId(clusterId)
+                .setBrokerId(brokerId)
+                .setName("compression.type")
+                .setValue("producer")
+                .setDefault(true)
+                .setReadOnly(false)
+                .setSensitive(false)
+                .setSource(ConfigSource.DEFAULT_CONFIG)
+                .setSynonyms(
+                    singletonList(
+                        ConfigSynonymData.builder()
+                            .setName("compression.type")
+                            .setValue("producer")
+                            .setSource(ConfigSource.DEFAULT_CONFIG)
+                            .build()))
+                .build());
 
     Response brokerResponseBeforeUpdate =
         request(
@@ -106,30 +115,37 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
     Response updateResponse =
         request("/v3/clusters/" + clusterId + "/broker-configs/compression.type")
             .accept(Versions.JSON_API)
-            .put(
-                Entity.entity(
-                    "{\"data\":{\"attributes\":{\"value\":\"gzip\"}}}", Versions.JSON_API));
+            .put(Entity.entity("{\"value\":\"gzip\"}", Versions.JSON_API));
     assertEquals(Status.NO_CONTENT.getStatusCode(), updateResponse.getStatus());
 
     GetClusterConfigResponse expectedAfterUpdate =
-        new GetClusterConfigResponse(
-            new ClusterConfigData(
-                "crn:///kafka=" + clusterId + "/broker-config=compression.type",
-                new ResourceLink(
-                    baseUrl + "/v3/clusters/" + clusterId + "/broker-configs/compression.type"),
-                clusterId,
-                ClusterConfig.Type.BROKER,
-                "compression.type",
-                "gzip",
-                /* isDefault= */ false,
-                /* isReadOnly= */ false,
-                /* isSensitive= */ false,
-                ConfigSource.DYNAMIC_DEFAULT_BROKER_CONFIG,
-                singletonList(
-                    new ConfigSynonymData(
-                        "compression.type",
-                        "gzip",
-                        ConfigSource.DYNAMIC_DEFAULT_BROKER_CONFIG))));
+        GetClusterConfigResponse.create(
+            ClusterConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/broker-configs/compression.type")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId + "/broker-config=compression.type")
+                        .build())
+                .setClusterId(clusterId)
+                .setConfigType(ClusterConfig.Type.BROKER)
+                .setName("compression.type")
+                .setValue("gzip")
+                .setDefault(false)
+                .setReadOnly(false)
+                .setSensitive(false)
+                .setSource(ConfigSource.DYNAMIC_DEFAULT_BROKER_CONFIG)
+                .setSynonyms(
+                    singletonList(
+                        ConfigSynonymData.builder()
+                            .setName("compression.type")
+                            .setValue("gzip")
+                            .setSource(ConfigSource.DYNAMIC_DEFAULT_BROKER_CONFIG)
+                            .build()))
+                .build());
 
     Response responseAfterUpdate =
         request("/v3/clusters/" + clusterId + "/broker-configs/compression.type")
@@ -142,29 +158,41 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(expectedAfterUpdate, actualAfterUpdate);
 
     GetBrokerConfigResponse expectedBrokerAfterUpdate =
-        new GetBrokerConfigResponse(
-            new BrokerConfigData(
-                "crn:///kafka=" + clusterId
-                    + "/broker=" + brokerId
-                    + "/config=compression.type",
-                new ResourceLink(
-                    baseUrl
-                        + "/v3/clusters/" + clusterId
-                        + "/brokers/" + brokerId
-                        + "/configs/compression.type"),
-                clusterId,
-                brokerId,
-                "compression.type",
-                "gzip",
-                /* isDefault= */ false,
-                /* isReadOnly= */ false,
-                /* isSensitive= */ false,
-                ConfigSource.DYNAMIC_DEFAULT_BROKER_CONFIG,
-                Arrays.asList(
-                    new ConfigSynonymData(
-                        "compression.type", "gzip", ConfigSource.DYNAMIC_DEFAULT_BROKER_CONFIG),
-                    new ConfigSynonymData(
-                        "compression.type", "producer", ConfigSource.DEFAULT_CONFIG))));
+        GetBrokerConfigResponse.create(
+            BrokerConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/brokers/" + brokerId
+                                + "/configs/compression.type")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId
+                                + "/broker=" + brokerId
+                                + "/config=compression.type")
+                        .build())
+                .setClusterId(clusterId)
+                .setBrokerId(brokerId)
+                .setName("compression.type")
+                .setValue("gzip")
+                .setDefault(false)
+                .setReadOnly(false)
+                .setSensitive(false)
+                .setSource(ConfigSource.DYNAMIC_DEFAULT_BROKER_CONFIG)
+                .setSynonyms(
+                    Arrays.asList(
+                        ConfigSynonymData.builder()
+                            .setName("compression.type")
+                            .setValue("gzip")
+                            .setSource(ConfigSource.DYNAMIC_DEFAULT_BROKER_CONFIG)
+                            .build(),
+                        ConfigSynonymData.builder()
+                            .setName("compression.type")
+                            .setValue("producer")
+                            .setSource(ConfigSource.DEFAULT_CONFIG)
+                            .build()))
+                .build());
 
     Response responseBrokerAfterUpdate =
         request(
@@ -192,27 +220,36 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NOT_FOUND.getStatusCode(), responseAfterReset.getStatus());
 
     GetBrokerConfigResponse expectedBrokerAfterReset =
-        new GetBrokerConfigResponse(
-            new BrokerConfigData(
-                "crn:///kafka=" + clusterId
-                    + "/broker=" + brokerId
-                    + "/config=compression.type",
-                new ResourceLink(
-                    baseUrl
-                        + "/v3/clusters/" + clusterId
-                        + "/brokers/" + brokerId
-                        + "/configs/compression.type"),
-                clusterId,
-                brokerId,
-                "compression.type",
-                "producer",
-                /* isDefault= */ true,
-                /* isReadOnly= */ false,
-                /* isSensitive= */ false,
-                ConfigSource.DEFAULT_CONFIG,
-                singletonList(
-                    new ConfigSynonymData(
-                        "compression.type", "producer", ConfigSource.DEFAULT_CONFIG))));
+        GetBrokerConfigResponse.create(
+            BrokerConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/brokers/" + brokerId
+                                + "/configs/compression.type")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId
+                                + "/broker=" + brokerId
+                                + "/config=compression.type")
+                        .build())
+                .setClusterId(clusterId)
+                .setBrokerId(brokerId)
+                .setName("compression.type")
+                .setValue("producer")
+                .setDefault(true)
+                .setReadOnly(false)
+                .setSensitive(false)
+                .setSource(ConfigSource.DEFAULT_CONFIG)
+                .setSynonyms(
+                    singletonList(
+                        ConfigSynonymData.builder()
+                            .setName("compression.type")
+                            .setValue("producer")
+                            .setSource(ConfigSource.DEFAULT_CONFIG)
+                            .build()))
+                .build());
 
     Response brokerResponseAfterReset =
         request(
@@ -233,9 +270,7 @@ public class ClusterConfigsResourceIntegrationTest extends ClusterTestHarness {
     Response response =
         request("/v3/clusters/foobar/broker-configs/compression.type")
             .accept(Versions.JSON_API)
-            .put(
-                Entity.entity(
-                    "{\"data\":{\"attributes\":{\"value\":\"producer\"}}}", Versions.JSON_API));
+            .put(Entity.entity("{\"value\":\"producer\"}", Versions.JSON_API));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 

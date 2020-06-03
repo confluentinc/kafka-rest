@@ -67,6 +67,14 @@
             <artifactId>slf4j-log4j12</artifactId>
             <version>${log4j.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jdk8</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-guava</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>io.confluent</groupId>
@@ -163,6 +171,10 @@
                             <groupId>com.google.auto.value</groupId>
                             <artifactId>auto-value</artifactId>
                         </annotationProcessorPath>
+                        <path>
+                            <groupId>com.google.auto.service</groupId>
+                            <artifactId>auto-service-annotations</artifactId>
+                        </path>
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>

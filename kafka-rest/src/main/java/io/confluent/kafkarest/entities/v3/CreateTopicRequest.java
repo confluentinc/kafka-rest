@@ -15,234 +15,88 @@
 
 package io.confluent.kafkarest.entities.v3;
 
-import static java.util.Collections.emptyMap;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.HashMap;
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.StringJoiner;
+import java.util.Optional;
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
-/**
- * Request body for {@code POST /v3/clusters/<clusterId>/topics} requests.
- */
-public final class CreateTopicRequest {
+@AutoValue
+public abstract class CreateTopicRequest {
 
-  @NotNull
-  @Nullable
-  private final Data data;
+  CreateTopicRequest() {
+  }
+
+  @JsonProperty("topic_name")
+  public abstract String getTopicName();
+
+  @JsonProperty("partitions_count")
+  public abstract int getPartitionsCount();
+
+  @JsonProperty("replication_factor")
+  public abstract short getReplicationFactor();
+
+  @JsonProperty("configs")
+  public abstract ImmutableList<ConfigEntry> getConfigs();
+
+  public static Builder builder() {
+    return new AutoValue_CreateTopicRequest.Builder();
+  }
 
   @JsonCreator
-  public CreateTopicRequest(@JsonProperty("data") @Nullable Data data) {
-    this.data = data;
+  static CreateTopicRequest fromJson(
+      @JsonProperty("topic_name") String topicName,
+      @JsonProperty("partitions_count") int partitionsCount,
+      @JsonProperty("replication_factor") short replicationFactor,
+      @JsonProperty("configs") @Nullable List<ConfigEntry> configs
+  ) {
+    return builder()
+        .setTopicName(topicName)
+        .setPartitionsCount(partitionsCount)
+        .setReplicationFactor(replicationFactor)
+        .setConfigs(configs != null ? configs : ImmutableList.of())
+        .build();
   }
 
-  @Nullable
-  public Data getData() {
-    return data;
-  }
+  @AutoValue.Builder
+  public abstract static class Builder {
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
+    Builder() {
     }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
+
+    public abstract Builder setTopicName(String topicName);
+
+    public abstract Builder setPartitionsCount(int partitionsCount);
+
+    public abstract Builder setReplicationFactor(short replicationFactor);
+
+    public abstract Builder setConfigs(List<ConfigEntry> configs);
+
+    public abstract CreateTopicRequest build();
+  }
+
+  @AutoValue
+  public abstract static class ConfigEntry {
+
+    ConfigEntry() {
     }
-    CreateTopicRequest that = (CreateTopicRequest) o;
-    return Objects.equals(data, that.data);
-  }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(data);
-  }
+    @JsonProperty("name")
+    public abstract String getName();
 
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", CreateTopicRequest.class.getSimpleName() + "[", "]")
-        .add("data=" + data)
-        .toString();
-  }
+    @JsonProperty("value")
+    public abstract Optional<String> getValue();
 
-  public static final class Data {
-
-    @NotNull
-    @Nullable
-    private final Attributes attributes;
+    public static ConfigEntry create(String name, @Nullable String value) {
+      return new AutoValue_CreateTopicRequest_ConfigEntry(name, Optional.ofNullable(value));
+    }
 
     @JsonCreator
-    public Data(@JsonProperty("attributes") @Nullable Attributes attributes) {
-      this.attributes = attributes;
-    }
-
-    @Nullable
-    public Attributes getAttributes() {
-      return attributes;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      Data data = (Data) o;
-      return Objects.equals(attributes, data.attributes);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(attributes);
-    }
-
-    @Override
-    public String toString() {
-      return new StringJoiner(", ", Data.class.getSimpleName() + "[", "]")
-          .add("attributes=" + attributes)
-          .toString();
-    }
-
-    public static final class Attributes {
-
-      @NotNull
-      @Nullable
-      private final String topicName;
-
-      private final int partitionsCount;
-
-      private final short replicationFactor;
-
-      @Nullable
-      private final List<Config> configs;
-
-      @JsonCreator
-      public Attributes(
-          @JsonProperty("topic_name") @Nullable String topicName,
-          @JsonProperty("partitions_count") int partitionsCount,
-          @JsonProperty("replication_factor") short replicationFactor,
-          @JsonProperty("configs") @Nullable List<Config> configs
-      ) {
-        this.topicName = topicName;
-        this.partitionsCount = partitionsCount;
-        this.replicationFactor = replicationFactor;
-        this.configs = configs;
-      }
-
-      @Nullable
-      public String getTopicName() {
-        return topicName;
-      }
-
-      public int getPartitionsCount() {
-        return partitionsCount;
-      }
-
-      public short getReplicationFactor() {
-        return replicationFactor;
-      }
-
-      public Map<String, String> getConfigs() {
-        if (this.configs == null) {
-          return emptyMap();
-        }
-
-        HashMap<String, String> configs = new HashMap<>();
-        for (Config config : this.configs) {
-          configs.put(config.getName(), config.getValue());
-        }
-        return configs;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-        if (this == o) {
-          return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-          return false;
-        }
-        Attributes that = (Attributes) o;
-        return partitionsCount == that.partitionsCount
-            && replicationFactor == that.replicationFactor
-            && Objects.equals(topicName, that.topicName)
-            && Objects.equals(configs, that.configs);
-      }
-
-      @Override
-      public int hashCode() {
-        return Objects.hash(topicName, partitionsCount, replicationFactor, configs);
-      }
-
-      @Override
-      public String toString() {
-        return new StringJoiner(", ", Attributes.class.getSimpleName() + "[", "]")
-            .add("topicName='" + topicName + "'")
-            .add("partitionsCount=" + partitionsCount)
-            .add("replicationFactor=" + replicationFactor)
-            .add("configs=" + configs)
-            .toString();
-      }
-
-      public static final class Config {
-
-        @NotNull
-        @Nullable
-        private final String name;
-
-        @Nullable
-        private final String value;
-
-        @JsonCreator
-        public Config(
-            @JsonProperty("name") @Nullable String name,
-            @JsonProperty("value") @Nullable String value) {
-          this.name = name;
-          this.value = value;
-        }
-
-        @Nullable
-        public String getName() {
-          return name;
-        }
-
-        @Nullable
-        public String getValue() {
-          return value;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-          if (this == o) {
-            return true;
-          }
-          if (o == null || getClass() != o.getClass()) {
-            return false;
-          }
-          Config that = (Config) o;
-          return Objects.equals(name, that.name) && Objects.equals(value, that.value);
-        }
-
-        @Override
-        public int hashCode() {
-          return Objects.hash(name, value);
-        }
-
-        @Override
-        public String toString() {
-          return new StringJoiner(", ", Config.class.getSimpleName() + "[", "]")
-              .add("name='" + name + "'")
-              .add("value='" + value + "'")
-              .toString();
-        }
-      }
+    static ConfigEntry fromJson(
+        @JsonProperty("name") String name, @JsonProperty("value") @Nullable String value) {
+      return create(name, value);
     }
   }
 }
