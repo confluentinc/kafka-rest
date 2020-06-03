@@ -15,304 +15,91 @@
 
 package io.confluent.kafkarest.entities.v3;
 
-
-import static java.util.Objects.requireNonNull;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.entities.Reassignment;
-import io.confluent.kafkarest.response.CrnFactory;
-import io.confluent.kafkarest.response.UrlFactory;
 import java.util.List;
-import java.util.Objects;
-import java.util.StringJoiner;
 
-/**
- * A reassignment resource type.
- */
-@JsonIgnoreProperties(value = {"type"}, allowGetters = true)
-public final class ReassignmentData {
+@AutoValue
+public abstract class ReassignmentData extends Resource {
 
-  public static final String ELEMENT_TYPE = "reassignment";
+  ReassignmentData() {
+  }
 
-  private final String id;
+  @JsonProperty("cluster_id")
+  public abstract String getClusterId();
 
-  private final ResourceLink links;
+  @JsonProperty("topic_name")
+  public abstract String getTopicName();
 
-  private final Attributes attributes;
+  @JsonProperty("partition_id")
+  public abstract int getPartitionId();
 
-  private final Relationships relationships;
+  @JsonProperty("adding_replicas")
+  public abstract ImmutableList<Integer> getAddingReplicas();
 
-  public ReassignmentData(
-      String id,
-      ResourceLink links,
-      String clusterId,
-      String topicName,
-      Integer partitionId,
-      List<Integer> replicas,
-      List<Integer> addingReplicas,
-      List<Integer> removingReplicas,
-      Relationship replicasLink
-  ) {
-    this(id, links,
-        new Attributes(
-            clusterId, topicName, partitionId, replicas, addingReplicas, removingReplicas),
-        new Relationships(replicasLink));
+  @JsonProperty("removing_replicas")
+  public abstract ImmutableList<Integer> getRemovingReplicas();
+
+  @JsonProperty("replicas")
+  public abstract Relationship getReplicas();
+
+  public static Builder builder() {
+    return new AutoValue_ReassignmentData.Builder().setKind("KafkaReassignment");
+  }
+
+  public static Builder fromReassignment(Reassignment reassignment) {
+    return builder()
+        .setClusterId(reassignment.getClusterId())
+        .setTopicName(reassignment.getTopicName())
+        .setPartitionId(reassignment.getPartitionId())
+        .setAddingReplicas(reassignment.getAddingReplicas())
+        .setRemovingReplicas(reassignment.getRemovingReplicas());
   }
 
   @JsonCreator
-  public ReassignmentData(
-      @JsonProperty("id") String id,
-      @JsonProperty("links") ResourceLink links,
-      @JsonProperty("attributes") Attributes attributes,
-      @JsonProperty("relationships") Relationships relationships
+  static ReassignmentData fromJson(
+      @JsonProperty("kind") String kind,
+      @JsonProperty("metadata") Metadata metadata,
+      @JsonProperty("cluster_id") String clusterId,
+      @JsonProperty("topic_name") String topicName,
+      @JsonProperty("partition_id") int partitionId,
+      @JsonProperty("adding_replicas") List<Integer> addingReplicas,
+      @JsonProperty("removing_replicas") List<Integer> removingReplicas,
+      @JsonProperty("replicas") Relationship replicas
   ) {
-    this.id = id;
-    this.links = links;
-    this.attributes = attributes;
-    this.relationships = relationships;
+    return builder()
+        .setKind(kind)
+        .setMetadata(metadata)
+        .setClusterId(clusterId)
+        .setTopicName(topicName)
+        .setPartitionId(partitionId)
+        .setAddingReplicas(addingReplicas)
+        .setRemovingReplicas(removingReplicas)
+        .setReplicas(replicas)
+        .build();
   }
 
-  public static ReassignmentData create(
-      CrnFactory crnFactory, UrlFactory urlFactory, Reassignment reassignment) {
-    return new ReassignmentData(
-        createId(crnFactory, reassignment),
-        new ResourceLink(createSelfLink(urlFactory, reassignment)),
-        reassignment.getClusterId(),
-        reassignment.getTopicName(),
-        reassignment.getPartitionId(),
-        reassignment.getReplicas(),
-        reassignment.getAddingReplicas(),
-        reassignment.getRemovingReplicas(),
-        new Relationship((createReplicaLink(urlFactory, reassignment))));
-  }
+  @AutoValue.Builder
+  public abstract static class Builder extends Resource.Builder<Builder> {
 
-  private static String createId(CrnFactory crnFactory, Reassignment reassignment) {
-    return crnFactory.create(
-        ClusterData.ELEMENT_TYPE,
-        reassignment.getClusterId(),
-        TopicData.ELEMENT_TYPE,
-        reassignment.getTopicName(),
-        PartitionData.ELEMENT_TYPE,
-        Integer.toString(reassignment.getPartitionId()),
-        ReassignmentData.ELEMENT_TYPE,
-        Integer.toString(reassignment.getPartitionId()));
-  }
-
-  private static String createSelfLink(UrlFactory urlFactory, Reassignment reassignment) {
-    return urlFactory.create(
-        "v3",
-        "clusters",
-        reassignment.getClusterId(),
-        "topics",
-        reassignment.getTopicName(),
-        "partitions",
-        Integer.toString(reassignment.getPartitionId()),
-        "reassignments",
-        Integer.toString(reassignment.getPartitionId()));
-  }
-
-  private static String createReplicaLink(UrlFactory urlFactory, Reassignment reassignment) {
-    return urlFactory.create(
-        "v3",
-        "clusters",
-        reassignment.getClusterId(),
-        "topics",
-        reassignment.getTopicName(),
-        "partitions",
-        Integer.toString(reassignment.getPartitionId()),
-        "replicas");
-  }
-
-  @JsonProperty("type")
-  public String getType() {
-    return "KafkaReassignment";
-  }
-
-  @JsonProperty("id")
-  public String getId() {
-    return id;
-  }
-
-  @JsonProperty("links")
-  public ResourceLink getLinks() {
-    return links;
-  }
-
-  @JsonProperty("attributes")
-  public Attributes getAttributes() {
-    return attributes;
-  }
-
-  @JsonProperty("relationships")
-  public Relationships getRelationships() {
-    return relationships;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ReassignmentData that = (ReassignmentData) o;
-    return Objects.equals(id, that.id)
-        && Objects.equals(links, that.links)
-        && Objects.equals(attributes, that.attributes)
-        && Objects.equals(relationships, that.relationships);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id, links, attributes, relationships);
-  }
-
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", ReassignmentData.class.getSimpleName() + "[", "]")
-        .add("id='" + id + "'")
-        .add("links=" + links)
-        .add("attributes=" + attributes)
-        .add("relationships=" + relationships)
-        .toString();
-  }
-
-  public static final class Attributes {
-
-    private final String clusterId;
-
-    private final String topicName;
-
-    private final Integer partitionId;
-
-    private final List<Integer> replicas;
-
-    private final List<Integer> addingReplicas;
-
-    private final List<Integer> removingReplicas;
-
-    @JsonCreator
-    public Attributes(
-        @JsonProperty("cluster_id") String clusterId,
-        @JsonProperty("topic_name") String topicName,
-        @JsonProperty("partition_id") Integer partitionId,
-        @JsonProperty("replicas") List<Integer> replicas,
-        @JsonProperty("adding_replicas") List<Integer> addingReplicas,
-        @JsonProperty("removing_replicas") List<Integer> removingReplicas
-    ) {
-      this.clusterId = requireNonNull(clusterId);
-      this.topicName = requireNonNull(topicName);
-      this.partitionId = requireNonNull(partitionId);
-      this.replicas = requireNonNull(replicas);
-      this.addingReplicas = requireNonNull(addingReplicas);
-      this.removingReplicas = requireNonNull(removingReplicas);
+    Builder() {
     }
 
-    @JsonProperty("cluster_id")
-    public String getClusterId() {
-      return clusterId;
-    }
+    public abstract Builder setClusterId(String clusterId);
 
-    @JsonProperty("topic_name")
-    public String getTopicName() {
-      return topicName;
-    }
+    public abstract Builder setTopicName(String topicName);
 
-    @JsonProperty("partition_id")
-    public Integer getPartitionId() {
-      return partitionId;
-    }
+    public abstract Builder setPartitionId(int partitionId);
 
-    @JsonProperty("replicas")
-    public List<Integer> getReplicas() {
-      return replicas;
-    }
+    public abstract Builder setAddingReplicas(List<Integer> addingReplicas);
 
-    @JsonProperty("adding_replicas")
-    public List<Integer> getAddingReplicas() {
-      return addingReplicas;
-    }
+    public abstract Builder setRemovingReplicas(List<Integer> removingReplicas);
 
-    @JsonProperty("removing_replicas")
-    public List<Integer> getRemovingReplicas() {
-      return removingReplicas;
-    }
+    public abstract Builder setReplicas(Relationship replicas);
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      Attributes that = (Attributes) o;
-      return Objects.equals(clusterId, that.clusterId)
-          && Objects.equals(topicName, that.topicName)
-          && Objects.equals(partitionId, that.partitionId)
-          && Objects.equals(replicas, that.replicas)
-          && Objects.equals(addingReplicas, that.addingReplicas)
-          && Objects.equals(removingReplicas, that.removingReplicas);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects
-          .hash(clusterId, topicName, partitionId, replicas, addingReplicas, removingReplicas);
-    }
-
-    @Override
-    public String toString() {
-      return new StringJoiner(", ", Attributes.class.getSimpleName() + "[", "]")
-          .add("clusterId='" + clusterId + "'")
-          .add("topicName='" + topicName + "'")
-          .add("partitionId=" + partitionId)
-          .add("replicas=" + replicas)
-          .add("addingReplicas=" + addingReplicas)
-          .add("removingReplicas=" + removingReplicas)
-          .toString();
-    }
-  }
-
-  private static final class Relationships {
-
-    private final Relationship replicas;
-
-    private Relationships(@JsonProperty("replicas") Relationship replicas) {
-      this.replicas = replicas;
-    }
-
-    @JsonProperty("replicas")
-    public Relationship getReplicas() {
-      return replicas;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      Relationships that = (Relationships) o;
-      return Objects.equals(replicas, that.replicas);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(replicas);
-    }
-
-    @Override
-    public String toString() {
-      return new StringJoiner(", ", Relationships.class.getSimpleName() + "[", "]")
-          .add("replicas=" + replicas)
-          .toString();
-    }
+    public abstract ReassignmentData build();
   }
 }

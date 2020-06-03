@@ -3,7 +3,7 @@ package io.confluent.kafkarest.integration.v3;
 import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.v3.ListReassignmentsResponse;
+import io.confluent.kafkarest.entities.v3.ListAllReassignmentsResponse;
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
@@ -34,7 +34,7 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
   }
 
   @Test
-  public void listAllReassignments_returnsReassignments() throws Exception {
+  public void listAllReassignments_returnsReassignments() {
     String clusterId = getClusterId();
 
     Map<TopicPartition, Optional<NewPartitionReassignment>> reassignmentMap =
@@ -42,18 +42,20 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
 
     alterPartitionReassignment(reassignmentMap);
 
-    Response response = request("/v3/clusters/" + clusterId + "/topics/-/partitions"
-        + "/-/reassignments")
-        .accept(Versions.JSON_API)
-        .get();
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics/-/partitions/-/reassignments")
+            .accept(Versions.JSON_API)
+            .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    List<ReassignmentData> actualReassignments =
-        response.readEntity(ListReassignmentsResponse.class).getData();
-    for (ReassignmentData data : actualReassignments) {
-      assertEquals(data.getAttributes().getAddingReplicas(),
-          reassignmentMap.get(new TopicPartition(TOPIC_NAME,
-              data.getAttributes().getPartitionId())).get().targetReplicas());
+    ListAllReassignmentsResponse actualReassignments =
+        response.readEntity(ListAllReassignmentsResponse.class);
+    for (ReassignmentData data : actualReassignments.getValue().getData()) {
+      assertEquals(
+          data.getAddingReplicas(),
+          reassignmentMap.get(new TopicPartition(TOPIC_NAME, data.getPartitionId()))
+              .get()
+              .targetReplicas());
     }
   }
 
@@ -86,5 +88,4 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
     }
     return reassignmentMap;
   }
-
 }
