@@ -16,9 +16,9 @@
 package io.confluent.kafkarest;
 
 import io.confluent.rest.metrics.RestMetricsContext;
+import java.util.Map;
 import org.apache.kafka.common.utils.AppInfoParser;
 
-import java.util.Map;
 
 public final class KafkaRestMetricsContext {
   /**
@@ -56,7 +56,7 @@ public final class KafkaRestMetricsContext {
   /**
    * Sets {@link RestMetricsContext} resource label if not previously set.
    */
-  protected void setResourceLabel(String resource, String value) {
+  private void setResourceLabel(String resource, String value) {
     if (metricsContext.getLabel(resource) == null) {
       metricsContext.setLabel(resource, value);
     }
