@@ -76,7 +76,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-    setupInjectedResources(config, appConfig, null, null, null);
+    setupInjectedResources(
+        config, appConfig, /* producerPool= */ null, /* kafkaConsumerManager= */ null);
   }
 
   /**
@@ -86,8 +87,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   protected void setupInjectedResources(
       Configurable<?> config, KafkaRestConfig appConfig,
       ProducerPool producerPool,
-      KafkaConsumerManager kafkaConsumerManager,
-      AdminClientWrapper adminClientWrapperInjected
+      KafkaConsumerManager kafkaConsumerManager
   ) {
     if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))
         && StringUtil.isBlank(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG))) {
@@ -97,7 +97,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
                                     + " needs to be configured");
     }
     KafkaRestContextProvider.initialize(config, appConfig, producerPool,
-        kafkaConsumerManager, adminClientWrapperInjected);
+        kafkaConsumerManager);
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
     KafkaRestContext context =
         (KafkaRestContext) Proxy.newProxyInstance(
