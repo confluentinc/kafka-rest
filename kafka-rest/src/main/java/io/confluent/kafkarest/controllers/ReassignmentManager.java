@@ -28,5 +28,4 @@ public interface ReassignmentManager {
    * for a Kafka {@link Cluster} with the given {@code clusterId}.
    */
   CompletableFuture<List<Reassignment>> listReassignments(String clusterId);
-
 }

@@ -31,8 +31,6 @@ public abstract class Reassignment {
 
   public abstract int getPartitionId();
 
-  public abstract List<Integer> getReplicas();
-
   public abstract List<Integer> getAddingReplicas();
 
   public abstract List<Integer> getRemovingReplicas();

@@ -45,7 +45,10 @@ import org.easymock.Mock;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+@RunWith(JUnit4.class)
 public class ReassignmentManagerImplTest {
 
   private static final String CLUSTER_ID = "cluster-1";
