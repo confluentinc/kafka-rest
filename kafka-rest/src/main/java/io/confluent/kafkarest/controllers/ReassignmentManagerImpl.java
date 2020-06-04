@@ -23,7 +23,7 @@ import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.Reassignment;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -32,7 +32,7 @@ import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.PartitionReassignment;
 import org.apache.kafka.common.TopicPartition;
 
-public class ReassignmentManagerImpl implements ReassignmentManager {
+final class ReassignmentManagerImpl implements ReassignmentManager {
 
   private final Admin adminClient;
   private final ClusterManager clusterManager;
@@ -72,13 +72,13 @@ public class ReassignmentManagerImpl implements ReassignmentManager {
       String clusterId, String topicName, Integer partitionId) {
     return listReassignments(clusterId)
         .thenApply(reassignments -> reassignments.stream()
-            .filter(reassignment -> reassignment.getTopicName().equals(topicName)
-                && reassignment.getPartitionId() == partitionId)
+            .filter(reassignment -> reassignment.getTopicName().equals(topicName))
+            .filter(reassignment -> reassignment.getPartitionId() == partitionId)
             .findAny());
   }
 
   private static Reassignment toReassignment(String clusterId,
-      Entry<TopicPartition, PartitionReassignment> reassignment) {
+      Map.Entry<TopicPartition, PartitionReassignment> reassignment) {
     return Reassignment.create(
         clusterId,
         reassignment.getKey().topic(),
@@ -87,5 +87,4 @@ public class ReassignmentManagerImpl implements ReassignmentManager {
         reassignment.getValue().addingReplicas(),
         reassignment.getValue().removingReplicas());
   }
-
 }
