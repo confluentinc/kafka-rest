@@ -25,11 +25,11 @@ import io.confluent.kafkarest.controllers.ClusterManager;
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.v3.ClusterData;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.v3.ClusterDataList;
 import io.confluent.kafkarest.entities.v3.GetClusterResponse;
 import io.confluent.kafkarest.entities.v3.ListClustersResponse;
-import io.confluent.kafkarest.entities.v3.Relationship;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
@@ -68,7 +68,8 @@ public class ClustersResourceTest {
     clustersResource =
         new ClustersResource(
             () -> clusterManager,
-            new CrnFactoryImpl(/* crnAuthorityConfig= */ ""), new FakeUrlFactory());
+            new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
+            new FakeUrlFactory());
   }
 
   @Test
@@ -81,16 +82,32 @@ public class ClustersResourceTest {
     clustersResource.listClusters(response);
 
     ListClustersResponse expected =
-        new ListClustersResponse(
-            new CollectionLink("/v3/clusters", /* next= */ null),
-            singletonList(
-                new ClusterData(
-                    "crn:///kafka=cluster-1",
-                    new ResourceLink("/v3/clusters/cluster-1"),
-                    "cluster-1",
-                    new Relationship("/v3/clusters/cluster-1/brokers/1"),
-                    new Relationship("/v3/clusters/cluster-1/brokers"),
-                    new Relationship("/v3/clusters/cluster-1/topics"))));
+        ListClustersResponse.create(
+            ClusterDataList.builder()
+                .setMetadata(ResourceCollection.Metadata.builder().setSelf("/v3/clusters").build())
+                .setData(
+                    singletonList(
+                        ClusterData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf("/v3/clusters/cluster-1")
+                                    .setResourceName("crn:///kafka=cluster-1")
+                                    .build())
+                            .setClusterId("cluster-1")
+                            .setController(
+                                Resource.Relationship.create("/v3/clusters/cluster-1/brokers/1"))
+                            .setBrokers(
+                                Resource.Relationship.create("/v3/clusters/cluster-1/brokers"))
+                            .setTopics(
+                                Resource.Relationship.create("/v3/clusters/cluster-1/topics"))
+                            .setBrokerConfigs(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/broker-configs"))
+                            .setTopicConfigs(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topic-configs"))
+                            .build()))
+                .build());
 
     assertEquals(expected, response.getValue());
   }
@@ -116,14 +133,22 @@ public class ClustersResourceTest {
     clustersResource.getCluster(response, CLUSTER_1.getClusterId());
 
     GetClusterResponse expected =
-        new GetClusterResponse(
-            new ClusterData(
-                "crn:///kafka=cluster-1",
-                new ResourceLink("/v3/clusters/cluster-1"),
-                "cluster-1",
-                new Relationship("/v3/clusters/cluster-1/brokers/1"),
-                new Relationship("/v3/clusters/cluster-1/brokers"),
-                new Relationship("/v3/clusters/cluster-1/topics")));
+        GetClusterResponse.create(
+            ClusterData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf("/v3/clusters/cluster-1")
+                        .setResourceName("crn:///kafka=cluster-1")
+                        .build())
+                .setClusterId("cluster-1")
+                .setController(Resource.Relationship.create("/v3/clusters/cluster-1/brokers/1"))
+                .setBrokers(Resource.Relationship.create("/v3/clusters/cluster-1/brokers"))
+                .setTopics(Resource.Relationship.create("/v3/clusters/cluster-1/topics"))
+                .setBrokerConfigs(
+                    Resource.Relationship.create("/v3/clusters/cluster-1/broker-configs"))
+                .setTopicConfigs(
+                    Resource.Relationship.create("/v3/clusters/cluster-1/topic-configs"))
+                .build());
 
     assertEquals(expected, response.getValue());
   }

@@ -19,10 +19,13 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.ReplicaManager;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.v3.GetReplicaResponse;
 import io.confluent.kafkarest.entities.v3.ListReplicasResponse;
 import io.confluent.kafkarest.entities.v3.ReplicaData;
+import io.confluent.kafkarest.entities.v3.ReplicaDataList;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -66,21 +69,26 @@ public final class ReplicasResource {
             .listReplicas(clusterId, topicName, partitionId)
             .thenApply(
                 replicas ->
-                    new ListReplicasResponse(
-                        new CollectionLink(
-                            urlFactory.create(
-                                "v3",
-                                "clusters",
-                                clusterId,
-                                "topics",
-                                topicName,
-                                "partitions",
-                                Integer.toString(partitionId),
-                                "replicas"),
-                            /* next= */ null),
-                        replicas.stream()
-                            .map(replica -> ReplicaData.create(crnFactory, urlFactory, replica))
-                            .collect(Collectors.toList())));
+                    ListReplicasResponse.create(
+                        ReplicaDataList.builder()
+                            .setMetadata(
+                                ResourceCollection.Metadata.builder()
+                                    .setSelf(
+                                        urlFactory.create(
+                                            "v3",
+                                            "clusters",
+                                            clusterId,
+                                            "topics",
+                                            topicName,
+                                            "partitions",
+                                            Integer.toString(partitionId),
+                                            "replicas"))
+                                    .build())
+                            .setData(
+                                replicas.stream()
+                                    .map(this::toReplicaData)
+                                    .collect(Collectors.toList()))
+                            .build()));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
@@ -99,9 +107,45 @@ public final class ReplicasResource {
         replicaManager.get()
             .getReplica(clusterId, topicName, partitionId, brokerId)
             .thenApply(replica -> replica.orElseThrow(NotFoundException::new))
-            .thenApply(replica ->
-                new GetReplicaResponse(ReplicaData.create(crnFactory, urlFactory, replica)));
+            .thenApply(replica -> GetReplicaResponse.create(toReplicaData(replica)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
+  }
+
+  private ReplicaData toReplicaData(PartitionReplica replica) {
+    return ReplicaData.fromPartitionReplica(replica)
+        .setMetadata(
+            Resource.Metadata.builder()
+                .setSelf(
+                    urlFactory.create(
+                        "v3",
+                        "clusters",
+                        replica.getClusterId(),
+                        "topics",
+                        replica.getTopicName(),
+                        "partitions",
+                        Integer.toString(replica.getPartitionId()),
+                        "replicas",
+                        Integer.toString(replica.getBrokerId())))
+                .setResourceName(
+                    crnFactory.create(
+                        "kafka",
+                        replica.getClusterId(),
+                        "topic",
+                        replica.getTopicName(),
+                        "partition",
+                        Integer.toString(replica.getPartitionId()),
+                        "replica",
+                        Integer.toString(replica.getBrokerId())))
+                .build())
+        .setBroker(
+            Resource.Relationship.create(
+                urlFactory.create(
+                    "v3",
+                    "clusters",
+                    replica.getClusterId(),
+                    "brokers",
+                    Integer.toString(replica.getBrokerId()))))
+        .build();
   }
 }

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.confluent.kafkarest.resources.v3;
 
 import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
@@ -8,11 +23,11 @@ import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.controllers.ReplicaManager;
 import io.confluent.kafkarest.entities.PartitionReplica;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
-import io.confluent.kafkarest.entities.v3.ListReplicasResponse;
-import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ReplicaData;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.ReplicaDataList;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
+import io.confluent.kafkarest.entities.v3.SearchReplicasByBrokerResponse;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
@@ -75,33 +90,54 @@ public class SearchReplicasByBrokerActionTest {
     FakeAsyncResponse response = new FakeAsyncResponse();
     searchReplicasByBrokerAction.searchReplicasByBroker(response, CLUSTER_ID, BROKER_ID);
 
-    ListReplicasResponse expected =
-        new ListReplicasResponse(
-            new CollectionLink(
-                "/v3/clusters/cluster-1/brokers/1/partition-replicas", /* next= */ null),
-            Arrays.asList(
-                new ReplicaData(
-                    "crn:///kafka=cluster-1/topic=topic-1/partition=1/replica=1",
-                    new ResourceLink(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas/1"),
-                    CLUSTER_ID,
-                    TOPIC_NAME,
-                    REPLICA_1.getPartitionId(),
-                    BROKER_ID,
-                    /* isLeader= */ true,
-                    /* isInSync= */ true,
-                    new Relationship("/v3/clusters/cluster-1/brokers/1")),
-                new ReplicaData(
-                    "crn:///kafka=cluster-1/topic=topic-1/partition=2/replica=1",
-                    new ResourceLink(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/2/replicas/1"),
-                    CLUSTER_ID,
-                    TOPIC_NAME,
-                    REPLICA_2.getPartitionId(),
-                    BROKER_ID,
-                    /* isLeader= */ false,
-                    /* isInSync= */ false,
-                    new Relationship("/v3/clusters/cluster-1/brokers/1"))));
+    SearchReplicasByBrokerResponse expected =
+        SearchReplicasByBrokerResponse.create(
+            ReplicaDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder()
+                        .setSelf("/v3/clusters/cluster-1/brokers/1/partition-replicas")
+                        .build())
+                .setData(
+                    Arrays.asList(
+                        ReplicaData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/topic-1/partitions/1"
+                                            + "/replicas/1")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/partition=1"
+                                            + "/replica=1")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_NAME)
+                            .setPartitionId(REPLICA_1.getPartitionId())
+                            .setBrokerId(BROKER_ID)
+                            .setLeader(true)
+                            .setInSync(true)
+                            .setBroker(
+                                Resource.Relationship.create("/v3/clusters/cluster-1/brokers/1"))
+                            .build(),
+                        ReplicaData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/topic-1/partitions/2"
+                                            + "/replicas/1")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/partition=2"
+                                            + "/replica=1")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_NAME)
+                            .setPartitionId(REPLICA_2.getPartitionId())
+                            .setBrokerId(BROKER_ID)
+                            .setLeader(false)
+                            .setInSync(false)
+                            .setBroker(
+                                Resource.Relationship.create("/v3/clusters/cluster-1/brokers/1"))
+                            .build()))
+                .build());
 
     assertEquals(expected, response.getValue());
   }

@@ -27,12 +27,13 @@ import static org.junit.Assert.assertTrue;
 import io.confluent.kafkarest.controllers.TopicConfigManager;
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.TopicConfig;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
 import io.confluent.kafkarest.entities.v3.GetTopicConfigResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicConfigsResponse;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.TopicConfigData;
+import io.confluent.kafkarest.entities.v3.TopicConfigDataList;
 import io.confluent.kafkarest.entities.v3.UpdateTopicConfigRequest;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
@@ -117,52 +118,79 @@ public class TopicConfigsResourceTest {
     topicConfigsResource.listTopicConfigs(response, CLUSTER_ID, TOPIC_NAME);
 
     ListTopicConfigsResponse expected =
-        new ListTopicConfigsResponse(
-            new CollectionLink(
-                "/v3/clusters/cluster-1/topics/topic-1/configs", /* next= */ null),
-            Arrays.asList(
-                new TopicConfigData(
-                    "crn:///kafka=cluster-1/topic=topic-1/config=config-1",
-                    new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/configs/config-1"),
-                    CLUSTER_ID,
-                    TOPIC_NAME,
-                    CONFIG_1.getName(),
-                    CONFIG_1.getValue(),
-                    CONFIG_1.isDefault(),
-                    CONFIG_1.isReadOnly(),
-                    CONFIG_1.isSensitive(),
-                    CONFIG_1.getSource(),
-                    CONFIG_1.getSynonyms().stream()
-                        .map(ConfigSynonymData::fromConfigSynonym)
-                        .collect(Collectors.toList())),
-                new TopicConfigData(
-                    "crn:///kafka=cluster-1/topic=topic-1/config=config-2",
-                    new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/configs/config-2"),
-                    CLUSTER_ID,
-                    TOPIC_NAME,
-                    CONFIG_2.getName(),
-                    CONFIG_2.getValue(),
-                    CONFIG_2.isDefault(),
-                    CONFIG_2.isReadOnly(),
-                    CONFIG_2.isSensitive(),
-                    CONFIG_2.getSource(),
-                    CONFIG_2.getSynonyms().stream()
-                        .map(ConfigSynonymData::fromConfigSynonym)
-                        .collect(Collectors.toList())),
-                new TopicConfigData(
-                    "crn:///kafka=cluster-1/topic=topic-1/config=config-3",
-                    new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/configs/config-3"),
-                    CLUSTER_ID,
-                    TOPIC_NAME,
-                    CONFIG_3.getName(),
-                    CONFIG_3.getValue(),
-                    CONFIG_3.isDefault(),
-                    CONFIG_3.isReadOnly(),
-                    CONFIG_3.isSensitive(),
-                    CONFIG_3.getSource(),
-                    CONFIG_3.getSynonyms().stream()
-                        .map(ConfigSynonymData::fromConfigSynonym)
-                        .collect(Collectors.toList()))));
+        ListTopicConfigsResponse.create(
+            TopicConfigDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder()
+                        .setSelf(
+                            "/v3/clusters/cluster-1/topics/topic-1/configs")
+                        .build())
+                .setData(
+                    Arrays.asList(
+                        TopicConfigData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/topic-1/configs/config-1")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/config=config-1")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_NAME)
+                            .setName(CONFIG_1.getName())
+                            .setValue(CONFIG_1.getValue())
+                            .setDefault(CONFIG_1.isDefault())
+                            .setReadOnly(CONFIG_1.isReadOnly())
+                            .setSensitive(CONFIG_1.isSensitive())
+                            .setSource(CONFIG_1.getSource())
+                            .setSynonyms(
+                                CONFIG_1.getSynonyms().stream()
+                                    .map(ConfigSynonymData::fromConfigSynonym)
+                                    .collect(Collectors.toList()))
+                            .build(),
+                        TopicConfigData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/topic-1/configs/config-2")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/config=config-2")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_NAME)
+                            .setName(CONFIG_2.getName())
+                            .setValue(CONFIG_2.getValue())
+                            .setDefault(CONFIG_2.isDefault())
+                            .setReadOnly(CONFIG_2.isReadOnly())
+                            .setSensitive(CONFIG_2.isSensitive())
+                            .setSource(CONFIG_2.getSource())
+                            .setSynonyms(
+                                CONFIG_2.getSynonyms().stream()
+                                    .map(ConfigSynonymData::fromConfigSynonym)
+                                    .collect(Collectors.toList()))
+                            .build(),
+                        TopicConfigData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/topic-1/configs/config-3")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/config=config-3")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_NAME)
+                            .setName(CONFIG_3.getName())
+                            .setValue(CONFIG_3.getValue())
+                            .setDefault(CONFIG_3.isDefault())
+                            .setReadOnly(CONFIG_3.isReadOnly())
+                            .setSensitive(CONFIG_3.isSensitive())
+                            .setSource(CONFIG_3.getSource())
+                            .setSynonyms(
+                                CONFIG_3.getSynonyms().stream()
+                                    .map(ConfigSynonymData::fromConfigSynonym)
+                                    .collect(Collectors.toList()))
+                            .build()))
+                .build());
 
     assertEquals(expected, response.getValue());
   }
@@ -191,21 +219,28 @@ public class TopicConfigsResourceTest {
     topicConfigsResource.getTopicConfig(response, CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName());
 
     GetTopicConfigResponse expected =
-        new GetTopicConfigResponse(
-            new TopicConfigData(
-                "crn:///kafka=cluster-1/topic=topic-1/config=config-1",
-                new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/configs/config-1"),
-                CLUSTER_ID,
-                TOPIC_NAME,
-                CONFIG_1.getName(),
-                CONFIG_1.getValue(),
-                CONFIG_1.isDefault(),
-                CONFIG_1.isReadOnly(),
-                CONFIG_1.isSensitive(),
-                CONFIG_1.getSource(),
-                CONFIG_1.getSynonyms().stream()
-                    .map(ConfigSynonymData::fromConfigSynonym)
-                    .collect(Collectors.toList())));
+        GetTopicConfigResponse.create(
+            TopicConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            "/v3/clusters/cluster-1/topics/topic-1/configs/config-1")
+                        .setResourceName(
+                            "crn:///kafka=cluster-1/topic=topic-1/config=config-1")
+                        .build())
+                .setClusterId(CLUSTER_ID)
+                .setTopicName(TOPIC_NAME)
+                .setName(CONFIG_1.getName())
+                .setValue(CONFIG_1.getValue())
+                .setDefault(CONFIG_1.isDefault())
+                .setReadOnly(CONFIG_1.isReadOnly())
+                .setSensitive(CONFIG_1.isSensitive())
+                .setSource(CONFIG_1.getSource())
+                .setSynonyms(
+                    CONFIG_1.getSynonyms().stream()
+                        .map(ConfigSynonymData::fromConfigSynonym)
+                        .collect(Collectors.toList()))
+                .build());
 
     assertEquals(expected, response.getValue());
   }
@@ -257,9 +292,7 @@ public class TopicConfigsResourceTest {
         CLUSTER_ID,
         TOPIC_NAME,
         CONFIG_1.getName(),
-        new UpdateTopicConfigRequest(
-            new UpdateTopicConfigRequest.Data(
-                new UpdateTopicConfigRequest.Data.Attributes("new-value"))));
+        UpdateTopicConfigRequest.create("new-value"));
 
     assertNull(response.getValue());
     assertNull(response.getException());
@@ -283,9 +316,7 @@ public class TopicConfigsResourceTest {
         CLUSTER_ID,
         TOPIC_NAME,
         CONFIG_1.getName(),
-        new UpdateTopicConfigRequest(
-            new UpdateTopicConfigRequest.Data(
-                new UpdateTopicConfigRequest.Data.Attributes("new-value"))));
+        UpdateTopicConfigRequest.create("new-value"));
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }
