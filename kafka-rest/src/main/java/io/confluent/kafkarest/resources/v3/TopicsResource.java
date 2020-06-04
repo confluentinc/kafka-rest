@@ -18,7 +18,6 @@ package io.confluent.kafkarest.resources.v3;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.v3.CreateTopicRequest;
@@ -52,6 +51,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -74,7 +74,7 @@ public final class TopicsResource {
   }
 
   @GET
-  @Produces(Versions.JSON_API)
+  @Produces(MediaType.APPLICATION_JSON)
   public void listTopics(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<ListTopicsResponse> response =
@@ -101,7 +101,7 @@ public final class TopicsResource {
 
   @GET
   @Path("/{topicName}")
-  @Produces(Versions.JSON_API)
+  @Produces(MediaType.APPLICATION_JSON)
   public void getTopic(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -117,8 +117,8 @@ public final class TopicsResource {
   }
 
   @POST
-  @Consumes(Versions.JSON_API)
-  @Produces(Versions.JSON_API)
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
   public void createTopic(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -155,7 +155,7 @@ public final class TopicsResource {
 
   @DELETE
   @Path("/{topicName}")
-  @Produces(Versions.JSON_API)
+  @Produces(MediaType.APPLICATION_JSON)
   public void deleteTopic(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

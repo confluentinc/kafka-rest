@@ -4,7 +4,6 @@ import static java.util.Collections.singletonList;
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.v3.BrokerConfigData;
 import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
@@ -15,6 +14,7 @@ import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.Assert;
@@ -137,7 +137,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
 
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
@@ -163,7 +163,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/foobar/configs")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -174,7 +174,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/foobar/brokers/" + brokerId + "/configs")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -222,7 +222,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             "/v3/clusters/" + clusterId
                 + "/brokers/" + brokerId
                 + "/configs/max.connections")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
@@ -237,7 +237,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/foobar")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -248,7 +248,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/foobar/configs/max.connections")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -258,7 +258,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     int brokerId = getBrokers().get(0).id();
     Response response =
         request("/v3/clusters/foobar/brokers/" + brokerId + "/configs/max.connections")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     Assert.assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -306,7 +306,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             "/v3/clusters/" + clusterId
                 + "/brokers/" + brokerId
                 + "/configs/compression.type")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), responseBeforeUpdate.getStatus());
 
@@ -317,8 +317,8 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     Response updateResponse =
         request(
             "/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/compression.type")
-            .accept(Versions.JSON_API)
-            .put(Entity.entity("{\"value\":\"gzip\"}", Versions.JSON_API));
+            .accept(MediaType.APPLICATION_JSON)
+            .put(Entity.entity("{\"value\":\"gzip\"}", MediaType.APPLICATION_JSON));
     assertEquals(Status.NO_CONTENT.getStatusCode(), updateResponse.getStatus());
 
     GetBrokerConfigResponse expectedAfterUpdate =
@@ -363,7 +363,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             "/v3/clusters/" + clusterId
                 + "/brokers/" + brokerId
                 + "/configs/compression.type")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), responseAfterUpdate.getStatus());
 
@@ -374,7 +374,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     Response resetResponse =
         request(
             "/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/compression.type")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .delete();
     assertEquals(Status.NO_CONTENT.getStatusCode(), resetResponse.getStatus());
 
@@ -415,7 +415,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             "/v3/clusters/" + clusterId
                 + "/brokers/" + brokerId
                 + "/configs/compression.type")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), responseAfterReset.getStatus());
 
@@ -431,8 +431,8 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/foobar")
-            .accept(Versions.JSON_API)
-            .put(Entity.entity("{\"value\":\"producer\"}", Versions.JSON_API));
+            .accept(MediaType.APPLICATION_JSON)
+            .put(Entity.entity("{\"value\":\"producer\"}", MediaType.APPLICATION_JSON));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -442,10 +442,11 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/foobar/configs/compression.type")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .put(
                 Entity.entity(
-                    "{\"data\":{\"attributes\":{\"value\":\"producer\"}}}", Versions.JSON_API));
+                    "{\"data\":{\"attributes\":{\"value\":\"producer\"}}}",
+                    MediaType.APPLICATION_JSON));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -455,8 +456,8 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/foobar/brokers/" + brokerId + "/configs/compression.type")
-            .accept(Versions.JSON_API)
-            .put(Entity.entity("{\"value\":\"producer\"}", Versions.JSON_API));
+            .accept(MediaType.APPLICATION_JSON)
+            .put(Entity.entity("{\"value\":\"producer\"}", MediaType.APPLICATION_JSON));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -466,7 +467,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/foobar/brokers/" + brokerId + "/configs/compression.type")
-            .put(Entity.entity("{\"value\":\"producer\"}", Versions.JSON_API));
+            .put(Entity.entity("{\"value\":\"producer\"}", MediaType.APPLICATION_JSON));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -476,7 +477,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     int brokerId = getBrokers().get(0).id();
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/foobar")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -487,7 +488,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/foobar/configs/compression.type")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -498,7 +499,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/foobar/brokers/" + brokerId + "/configs/compression.type")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }

@@ -16,6 +16,7 @@
 package io.confluent.kafkarest;
 
 import io.confluent.rest.metrics.RestMetricsContext;
+import javax.ws.rs.core.MediaType;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Range;
@@ -349,7 +350,7 @@ public class KafkaRestConfig extends RestConfig {
         KAFKAREST_PORT_DEFAULT,
         KAFKAREST_LISTENERS_DEFAULT,
         String.join("," , Versions.PREFERRED_RESPONSE_TYPES),
-        Versions.JSON_API,
+        MediaType.APPLICATION_JSON,
         METRICS_JMX_PREFIX_DEFAULT_OVERRIDE
     )
     .define(

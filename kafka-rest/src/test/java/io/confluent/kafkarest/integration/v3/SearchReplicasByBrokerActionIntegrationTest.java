@@ -17,7 +17,6 @@ package io.confluent.kafkarest.integration.v3;
 
 import static org.junit.Assert.assertEquals;
 
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v3.ReplicaData;
 import io.confluent.kafkarest.entities.v3.ReplicaDataList;
 import io.confluent.kafkarest.entities.v3.Resource;
@@ -27,6 +26,7 @@ import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.Before;
@@ -126,7 +126,7 @@ public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarn
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/" + BROKER_ID + "/partition-replicas")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
@@ -141,7 +141,7 @@ public class SearchReplicasByBrokerActionIntegrationTest extends ClusterTestHarn
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/100/partition-replicas")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }

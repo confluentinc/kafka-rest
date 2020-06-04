@@ -17,6 +17,7 @@ package io.confluent.kafkarest;
 
 import java.util.Arrays;
 import java.util.List;
+import javax.ws.rs.core.MediaType;
 
 public class Versions {
 
@@ -62,7 +63,7 @@ public class Versions {
 
 
   public static final List<String> PREFERRED_RESPONSE_TYPES =
-      Arrays.asList(Versions.JSON_API, Versions.KAFKA_V2_JSON, Versions.JSON);
+      Arrays.asList(MediaType.APPLICATION_JSON, Versions.KAFKA_V2_JSON);
 
   // This type is completely generic and carries no actual information about the type of data,
   // but it is the default for request entities if no content type is specified. Well behaving

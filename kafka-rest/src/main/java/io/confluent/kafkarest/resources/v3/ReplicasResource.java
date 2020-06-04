@@ -17,7 +17,6 @@ package io.confluent.kafkarest.resources.v3;
 
 import static java.util.Objects.requireNonNull;
 
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.ReplicaManager;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.v3.GetReplicaResponse;
@@ -40,6 +39,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.MediaType;
 
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/partitions/{partitionId}/replicas")
 public final class ReplicasResource {
@@ -57,7 +57,7 @@ public final class ReplicasResource {
   }
 
   @GET
-  @Produces(Versions.JSON_API)
+  @Produces(MediaType.APPLICATION_JSON)
   public void listReplicas(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -95,7 +95,7 @@ public final class ReplicasResource {
 
   @GET
   @Path("/{brokerId}")
-  @Produces(Versions.JSON_API)
+  @Produces(MediaType.APPLICATION_JSON)
   public void getReplica(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
