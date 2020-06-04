@@ -49,10 +49,6 @@ public class ListAllReassignmentsActionTest {
   private static final int PARTITION_ID_2 = 2;
   private static final int PARTITION_ID_3 = 3;
 
-  private static final List<Integer> REPLICAS_1 = Arrays.asList(1, 2, 3, 4, 5);
-  private static final List<Integer> REPLICAS_2 = Arrays.asList(1, 2, 3, 4);
-  private static final List<Integer> REPLICAS_3 = Arrays.asList(4, 5, 6);
-
   private static final List<Integer> ADDING_REPLICAS_1 = Arrays.asList(1, 2, 3);
   private static final List<Integer> ADDING_REPLICAS_2 = Arrays.asList(1, 2, 3);
   private static final List<Integer> ADDING_REPLICAS_3 = Arrays.asList(5, 6);
@@ -62,11 +58,11 @@ public class ListAllReassignmentsActionTest {
   private static final List<Integer> REMOVING_REPLICAS_3 = Arrays.asList(4);
 
   private static final Reassignment REASSIGNMENT_1 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_1, REPLICAS_1, ADDING_REPLICAS_1, REMOVING_REPLICAS_1);
+      PARTITION_ID_1, ADDING_REPLICAS_1, REMOVING_REPLICAS_1);
   private static final Reassignment REASSIGNMENT_2 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_2, REPLICAS_2, ADDING_REPLICAS_2, REMOVING_REPLICAS_2);
+      PARTITION_ID_2, ADDING_REPLICAS_2, REMOVING_REPLICAS_2);
   private static final Reassignment REASSIGNMENT_3 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_3, REPLICAS_3, ADDING_REPLICAS_3, REMOVING_REPLICAS_3);
+      PARTITION_ID_3, ADDING_REPLICAS_3, REMOVING_REPLICAS_3);
 
   @Rule
   public final EasyMockRule mocks = new EasyMockRule(this);
