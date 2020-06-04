@@ -19,7 +19,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
 import io.confluent.kafkarest.entities.v3.CreateTopicResponse;
@@ -35,6 +34,7 @@ import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
 import java.util.Properties;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.Before;
@@ -164,7 +164,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .build());
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/topics").accept(Versions.JSON_API).get();
+        request("/v3/clusters/" + clusterId + "/topics").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
     ListTopicsResponse actual = response.readEntity(ListTopicsResponse.class);
@@ -173,7 +173,9 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
   @Test
   public void listTopics_nonExistingCluster_returnsNotFound() {
-    Response response = request("/v3/clusters/foobar/topics").accept(Versions.JSON_API).get();
+    Response response =
+        request("/v3/clusters/foobar/topics")
+            .accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -211,7 +213,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .build());
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1).accept(Versions.JSON_API).get();
+        request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1)
+            .accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
     GetTopicResponse actual = response.readEntity(GetTopicResponse.class);
@@ -221,7 +224,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   @Test
   public void getTopic_nonExistingCluster_returnsNotFound() {
     Response response =
-        request("/v3/clusters/foobar/topics/" + TOPIC_1).accept(Versions.JSON_API).get();
+        request("/v3/clusters/foobar/topics/" + TOPIC_1).accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -230,7 +233,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/topics/foobar").accept(Versions.JSON_API).get();
+        request("/v3/clusters/" + clusterId + "/topics/foobar")
+            .accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -268,12 +272,12 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .post(
                 Entity.entity(
                     "{\"topic_name\":\"" + topicName + "\",\"partitions_count\":1," +
                         "\"replication_factor\":1}",
-                    Versions.JSON_API));
+                    MediaType.APPLICATION_JSON));
     assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
 
     CreateTopicResponse actual = response.readEntity(CreateTopicResponse.class);
@@ -288,12 +292,12 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .post(
                 Entity.entity(
                     "{\"topic_name\":\"" + TOPIC_1 + "\",\"partitions_count\":1,\\" +
                         "replication_factor\":1}",
-                    Versions.JSON_API));
+                    MediaType.APPLICATION_JSON));
     assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
@@ -301,11 +305,11 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   public void createTopic_nonExistingCluster_returnsNotFound() {
     Response response =
         request("/v3/clusters/foobar/topics")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .post(
                 Entity.entity(
                     "{\"topic_name\":\"topic-4\",\"partitions_count\":1,\"replication_factor\":1}",
-                    Versions.JSON_API));
+                    MediaType.APPLICATION_JSON));
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -315,7 +319,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1)
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .delete();
     assertEquals(Status.NO_CONTENT.getStatusCode(), response.getStatus());
     assertTrue(response.readEntity(String.class).isEmpty());
@@ -328,7 +332,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/foobar")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -337,7 +341,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   public void deleteTopic_nonExistingCluster_returnsNotFound() {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1)
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -356,7 +360,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
     Response nonExistingGetTopicResponse =
         request("/v3/clusters/" + clusterId + "/topics/" + topicName)
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), nonExistingGetTopicResponse.getStatus());
 
@@ -388,13 +392,13 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
     Response createTopicResponse =
         request("/v3/clusters/" + clusterId + "/topics")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .post(
                 Entity.entity(
                     "{\"topic_name\":\"" + topicName + "\",\"partitions_count\":1," +
                         "\"replication_factor\":1,\"configs\":[{\"name\":\"cleanup.policy\"," +
                         "\"value\":\"compact\"}]}",
-                    Versions.JSON_API));
+                    MediaType.APPLICATION_JSON));
     assertEquals(Status.CREATED.getStatusCode(), createTopicResponse.getStatus());
 
     CreateTopicResponse actualCreateTopicResponse =
@@ -435,7 +439,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
     Response existingTopicResponse =
         request("/v3/clusters/" + clusterId + "/topics/" + topicName)
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), existingTopicResponse.getStatus());
 
@@ -484,7 +488,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             "/v3/clusters/" + clusterId
                 + "/topics/" + topicName
                 + "/configs/cleanup.policy")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), existingGetTopicConfigResponse.getStatus());
 
@@ -496,7 +500,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
     Response deleteTopicResponse =
         request("/v3/clusters/" + clusterId + "/topics/" + topicName)
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .delete();
     assertEquals(Status.NO_CONTENT.getStatusCode(), deleteTopicResponse.getStatus());
     assertTrue(deleteTopicResponse.readEntity(String.class).isEmpty());
@@ -504,7 +508,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
     Response deletedGetTopicResponse =
         request("/v3/clusters/" + clusterId + "/topics/" + topicName)
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), deletedGetTopicResponse.getStatus());
   }
