@@ -7,7 +7,6 @@ import io.confluent.kafkarest.entities.v3.ListReassignmentsResponse;
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,7 +28,7 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    Map<Integer, List<Integer>> replicaAssignments = createAssignment(Arrays.asList(0, 1, 2));
+    Map<Integer, List<Integer>> replicaAssignments = createAssignment(Arrays.asList(0, 1, 2), 100);
     createTopic(TOPIC_NAME, replicaAssignments);
   }
 
@@ -38,7 +37,7 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
     String clusterId = getClusterId();
 
     Map<TopicPartition, Optional<NewPartitionReassignment>> reassignmentMap =
-        createReassignment(Arrays.asList(3, 4, 5));
+        createReassignment(Arrays.asList(3, 4, 5), TOPIC_NAME, 100);
 
     alterPartitionReassignment(reassignmentMap);
 
@@ -67,24 +66,4 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
 
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
-
-
-  private Map<Integer, List<Integer>> createAssignment(List<Integer> replicaIds) {
-    Map<Integer, List<Integer>> replicaAssignments = new HashMap<>();
-    for (int i = 0; i < 100; i++) {
-      replicaAssignments.put(i, replicaIds);
-    }
-    return replicaAssignments;
-  }
-
-  private Map<TopicPartition, Optional<NewPartitionReassignment>> createReassignment(
-      List<Integer> replicaIds) {
-    Map<TopicPartition, Optional<NewPartitionReassignment>> reassignmentMap = new HashMap<>();
-    for (int i = 0; i < 100; i++) {
-      reassignmentMap.put(new TopicPartition(TOPIC_NAME, i),
-          Optional.of(new NewPartitionReassignment(replicaIds)));
-    }
-    return reassignmentMap;
-  }
-
 }

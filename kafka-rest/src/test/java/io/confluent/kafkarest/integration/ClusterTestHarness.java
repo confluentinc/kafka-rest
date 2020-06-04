@@ -96,8 +96,9 @@ public abstract class ClusterTestHarness {
         sockets[i] = new ServerSocket(0);
         ports[i] = sockets[i].getLocalPort();
       }
-      for (int i = 0; i < count; i++)
+      for (int i = 0; i < count; i++) {
         sockets[i].close();
+      }
       return ports;
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -168,8 +169,9 @@ public abstract class ClusterTestHarness {
     zkConnect = String.format("127.0.0.1:%d", zookeeper.port());
     Time time = Time.SYSTEM;
     zkClient = new KafkaZkClient(
-        new ZooKeeperClient(zkConnect, zkSessionTimeout, zkConnectionTimeout, Integer.MAX_VALUE, time,
-                "testMetricGroup", "testMetricGroupType"),
+        new ZooKeeperClient(zkConnect, zkSessionTimeout, zkConnectionTimeout, Integer.MAX_VALUE,
+            time,
+            "testMetricGroup", "testMetricGroupType"),
         JaasUtils.isZkSaslEnabled(),
         time);
 
@@ -189,7 +191,7 @@ public abstract class ClusterTestHarness {
 
     brokerList =
         TestUtils.getBrokerListStrFromServers(JavaConverters.asScalaBuffer(servers),
-                                              getBrokerSecurityProtocol());
+            getBrokerSecurityProtocol());
     plaintextBrokerList =
         TestUtils.getBrokerListStrFromServers(JavaConverters.asScalaBuffer(servers),
             SecurityProtocol.PLAINTEXT);
@@ -198,14 +200,14 @@ public abstract class ClusterTestHarness {
     if (withSchemaRegistry) {
       int schemaRegPort = choosePort();
       schemaRegProperties.put(SchemaRegistryConfig.PORT_CONFIG,
-                              ((Integer) schemaRegPort).toString());
+          ((Integer) schemaRegPort).toString());
       schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG,
-                              zkConnect);
+          zkConnect);
       schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG,
-                              SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC);
+          SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC);
       schemaRegProperties.put(SchemaRegistryConfig.COMPATIBILITY_CONFIG,
-                              schemaRegCompatibility);
-      String broker = SecurityProtocol.PLAINTEXT.name+"://"+TestUtils
+          schemaRegCompatibility);
+      String broker = SecurityProtocol.PLAINTEXT.name + "://" + TestUtils
           .getBrokerListStrFromServers(JavaConverters.asScalaBuffer
               (servers), SecurityProtocol.PLAINTEXT);
       schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, broker);
@@ -227,7 +229,7 @@ public abstract class ClusterTestHarness {
       restProperties.put(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegConnect);
     }
     restConnect = getRestConnectString(restPort);
-    restProperties.put("listeners",restConnect);
+    restProperties.put("listeners", restConnect);
 
     restConfig = new KafkaRestConfig(restProperties);
     restApp = new TestKafkaRestApplication(restConfig,
@@ -241,7 +243,7 @@ public abstract class ClusterTestHarness {
   protected void setupAcls() {
   }
 
-  protected SecurityProtocol getBrokerSecurityProtocol(){
+  protected SecurityProtocol getBrokerSecurityProtocol() {
     return SecurityProtocol.PLAINTEXT;
   }
 
@@ -308,7 +310,7 @@ public abstract class ClusterTestHarness {
   }
 
   protected Invocation.Builder request(String path, String templateName, Object templateValue,
-                                       Map<String, String> queryParams) {
+      Map<String, String> queryParams) {
 
     Client client = getClient();
     // Only configure base application here because as a client we shouldn't need the resources
@@ -492,5 +494,24 @@ public abstract class ClusterTestHarness {
       }
     }
     producer.close();
+  }
+
+  protected Map<Integer, List<Integer>> createAssignment(
+      List<Integer> replicaIds, int numReplicas) {
+    Map<Integer, List<Integer>> replicaAssignments = new HashMap<>();
+    for (int i = 0; i < numReplicas; i++) {
+      replicaAssignments.put(i, replicaIds);
+    }
+    return replicaAssignments;
+  }
+
+  protected Map<TopicPartition, Optional<NewPartitionReassignment>> createReassignment(
+      List<Integer> replicaIds, String topicName, int numReplicas) {
+    Map<TopicPartition, Optional<NewPartitionReassignment>> reassignmentMap = new HashMap<>();
+    for (int i = 0; i < numReplicas; i++) {
+      reassignmentMap.put(new TopicPartition(topicName, i),
+          Optional.of(new NewPartitionReassignment(replicaIds)));
+    }
+    return reassignmentMap;
   }
 }
