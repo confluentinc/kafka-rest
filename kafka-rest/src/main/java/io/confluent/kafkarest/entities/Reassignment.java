@@ -31,9 +31,9 @@ public abstract class Reassignment {
 
   public abstract int getPartitionId();
 
-  public abstract List<Integer> getAddingReplicas();
+  public abstract ImmutableList<Integer> getAddingReplicas();
 
-  public abstract List<Integer> getRemovingReplicas();
+  public abstract ImmutableList<Integer> getRemovingReplicas();
 
   public static Reassignment create(
       String clusterId,

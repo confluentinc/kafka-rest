@@ -16,11 +16,11 @@
 package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.common.KafkaFutures.failedFuture;
-import static java.util.Arrays.asList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 import io.confluent.kafkarest.entities.Broker;
@@ -68,7 +68,7 @@ public class ReassignmentManagerImplTest {
 
 
   private static final Cluster CLUSTER =
-      Cluster.create(CLUSTER_ID, BROKER_1, asList(BROKER_1, BROKER_2, BROKER_3));
+      Cluster.create(CLUSTER_ID, BROKER_1, Arrays.asList(BROKER_1, BROKER_2, BROKER_3));
 
   private static final List<Integer> REPLICAS_1 = Arrays.asList(1, 2, 3, 4, 5);
   private static final List<Integer> REPLICAS_2 = Arrays.asList(1, 2, 3, 4);
@@ -141,7 +141,7 @@ public class ReassignmentManagerImplTest {
     List<Reassignment> reassignments = reassignmentManager.listReassignments(CLUSTER_ID)
         .get();
 
-    assertEquals(asList(REASSIGNMENT_1, REASSIGNMENT_2, REASSIGNMENT_3), reassignments);
+    assertEquals(Arrays.asList(REASSIGNMENT_1, REASSIGNMENT_2, REASSIGNMENT_3), reassignments);
   }
 
   @Test
@@ -171,6 +171,61 @@ public class ReassignmentManagerImplTest {
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
     }
+  }
 
+  @Test
+  public void getReassignment_existingClusterTopicPartition_returnsReassignment()
+      throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.listPartitionReassignments()).andReturn(listPartitionReassignmentsResult);
+    expect(listPartitionReassignmentsResult.reassignments())
+        .andReturn(KafkaFuture.completedFuture(REASSIGNMENT_MAP));
+    replay(clusterManager, adminClient, listPartitionReassignmentsResult);
+
+    Optional<Reassignment> reassignment = reassignmentManager.getReassignment(CLUSTER_ID, TOPIC_1
+        , PARTITION_ID_1).get();
+
+    assertEquals(REASSIGNMENT_1, reassignment.get());
+  }
+
+  @Test
+  public void getReassignment_nonExistingCluster_returnsNotFound() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
+    replay(clusterManager);
+
+    try {
+      reassignmentManager.getReassignment(CLUSTER_ID, TOPIC_1, PARTITION_ID_1).get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(NotFoundException.class, e.getCause().getClass());
+    }
+  }
+
+  @Test
+  public void getReassignment_nonExistingTopic_returnsEmpty() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.listPartitionReassignments()).andReturn(listPartitionReassignmentsResult);
+    expect(listPartitionReassignmentsResult.reassignments())
+        .andReturn(KafkaFuture.completedFuture(REASSIGNMENT_MAP));
+    replay(clusterManager, adminClient, listPartitionReassignmentsResult);
+
+    Optional<Reassignment> reassignment = reassignmentManager.getReassignment(CLUSTER_ID, "foobar",
+        3).get();
+
+    assertFalse(reassignment.isPresent());
+  }
+
+  @Test
+  public void getReassignment_nonExistingPartition_returnsEmpty() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.listPartitionReassignments()).andReturn(listPartitionReassignmentsResult);
+    expect(listPartitionReassignmentsResult.reassignments())
+        .andReturn(KafkaFuture.completedFuture(REASSIGNMENT_MAP));
+    replay(clusterManager, adminClient, listPartitionReassignmentsResult);
+
+    Optional<Reassignment> reassignment = reassignmentManager.getReassignment(CLUSTER_ID, TOPIC_1
+        , 4).get();
+
+    assertFalse(reassignment.isPresent());
   }
 }

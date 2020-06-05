@@ -23,7 +23,8 @@ import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.Reassignment;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -66,8 +67,18 @@ final class ReassignmentManagerImpl implements ReassignmentManager {
             });
   }
 
+  @Override
+  public CompletableFuture<Optional<Reassignment>> getReassignment(
+      String clusterId, String topicName, Integer partitionId) {
+    return listReassignments(clusterId)
+        .thenApply(reassignments -> reassignments.stream()
+            .filter(reassignment -> reassignment.getTopicName().equals(topicName))
+            .filter(reassignment -> reassignment.getPartitionId() == partitionId)
+            .findAny());
+  }
+
   private static Reassignment toReassignment(String clusterId,
-      Entry<TopicPartition, PartitionReassignment> reassignment) {
+      Map.Entry<TopicPartition, PartitionReassignment> reassignment) {
     return Reassignment.create(
         clusterId,
         reassignment.getKey().topic(),
