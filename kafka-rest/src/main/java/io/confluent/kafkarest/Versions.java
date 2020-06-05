@@ -21,9 +21,6 @@ import javax.ws.rs.core.MediaType;
 
 public class Versions {
 
-  // Constants for version 3
-  public static final String JSON_API = "application/vnd.api+json";
-
   // Constants for version 2
   public static final String KAFKA_V2_JSON = "application/vnd.kafka.v2+json";
   // This is set < 1 because it is only the most-specific type if there isn't an embedded data type.
@@ -34,20 +31,16 @@ public class Versions {
   // be convenient to always use the same type, but where their use should really be discouraged
   public static final String KAFKA_V2_JSON_BINARY_WEIGHTED_LOW = KAFKA_V2_JSON_BINARY + "; qs=0.1";
   public static final String KAFKA_V2_JSON_AVRO = "application/vnd.kafka.avro.v2+json";
-  public static final String KAFKA_V2_JSON_AVRO_WEIGHTED = KAFKA_V2_JSON_AVRO;
   public static final String KAFKA_V2_JSON_AVRO_WEIGHTED_LOW = KAFKA_V2_JSON_AVRO + "; qs=0.1";
 
   public static final String KAFKA_V2_JSON_JSON = "application/vnd.kafka.json.v2+json";
-  public static final String KAFKA_V2_JSON_JSON_WEIGHTED = KAFKA_V2_JSON_JSON;
   public static final String KAFKA_V2_JSON_JSON_WEIGHTED_LOW = KAFKA_V2_JSON_JSON + "; qs=0.1";
 
   public static final String KAFKA_V2_JSON_JSON_SCHEMA = "application/vnd.kafka.jsonschema.v2+json";
-  public static final String KAFKA_V2_JSON_JSON_SCHEMA_WEIGHTED = KAFKA_V2_JSON_JSON_SCHEMA;
   public static final String KAFKA_V2_JSON_JSON_SCHEMA_WEIGHTED_LOW =
       KAFKA_V2_JSON_JSON_SCHEMA + "; qs=0.1";
 
   public static final String KAFKA_V2_JSON_PROTOBUF = "application/vnd.kafka.protobuf.v2+json";
-  public static final String KAFKA_V2_JSON_PROTOBUF_WEIGHTED = KAFKA_V2_JSON_PROTOBUF;
   public static final String KAFKA_V2_JSON_PROTOBUF_WEIGHTED_LOW =
       KAFKA_V2_JSON_PROTOBUF + "; qs=0.1";
 
