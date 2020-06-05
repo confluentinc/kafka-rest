@@ -232,10 +232,9 @@ public abstract class ClusterTestHarness {
     restProperties.put("listeners", restConnect);
 
     restConfig = new KafkaRestConfig(restProperties);
-    restApp = new TestKafkaRestApplication(restConfig,
-        getProducerPool(restConfig),
-        null,
-        null);
+    restApp =
+        new TestKafkaRestApplication(
+            restConfig, getProducerPool(restConfig), /* kafkaConsumerManager= */ null);
     restServer = restApp.createServer();
     restServer.start();
   }

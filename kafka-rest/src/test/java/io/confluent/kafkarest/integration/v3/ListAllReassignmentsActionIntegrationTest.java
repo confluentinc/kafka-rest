@@ -63,6 +63,7 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
 
   @Test
   public void listAllReassignments_nonExistingCluster_returnsNotFound() throws Exception {
+
     Response response = request("/v3/clusters/foobar/topics/-/partitions/-/reassignments")
         .accept(MediaType.APPLICATION_JSON)
         .get();

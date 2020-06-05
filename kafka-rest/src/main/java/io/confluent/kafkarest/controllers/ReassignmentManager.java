@@ -17,8 +17,10 @@ package io.confluent.kafkarest.controllers;
 
 import io.confluent.kafkarest.entities.Reassignment;
 import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.Cluster;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public interface ReassignmentManager {
@@ -35,4 +37,12 @@ public interface ReassignmentManager {
    */
   CompletableFuture<List<Reassignment>> searchReassignmentsByTopicName(
       String clusterId, String topicName);
+
+  /**
+   * Returns a list of Kafka {@link Reassignment Reassignments} for a Kafka {@link Topic Topic} with
+   * given {@code topicName} for a Kafka {@link Partition Partition} with the given {@code
+   * partitionId} for a Kafka {@link Cluster Cluster} with the given {@code clusterId}.
+   */
+  CompletableFuture<Optional<Reassignment>> getReassignment(
+      String clusterId, String topicName, Integer partitionId);
 }

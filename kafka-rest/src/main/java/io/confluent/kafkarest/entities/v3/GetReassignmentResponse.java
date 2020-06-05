@@ -20,20 +20,20 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.auto.value.AutoValue;
 
 @AutoValue
-public abstract class ListAllReassignmentsResponse {
+public abstract class GetReassignmentResponse {
 
-  ListAllReassignmentsResponse() {
+  GetReassignmentResponse() {
   }
 
   @JsonValue
-  public abstract ReassignmentDataList getValue();
+  public abstract ReassignmentData getValue();
 
-  public static ListAllReassignmentsResponse create(ReassignmentDataList value) {
-    return new AutoValue_ListAllReassignmentsResponse(value);
+  public static GetReassignmentResponse create(ReassignmentData value) {
+    return new AutoValue_GetReassignmentResponse(value);
   }
 
   @JsonCreator
-  static ListAllReassignmentsResponse fromJson(ReassignmentDataList value) {
+  static GetReassignmentResponse fromJson(ReassignmentData value) {
     return create(value);
   }
 }
