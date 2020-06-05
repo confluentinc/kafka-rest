@@ -67,7 +67,7 @@ final class ReassignmentManagerImpl implements ReassignmentManager {
   }
 
   @Override
-  public CompletableFuture<List<Reassignment>> listReassignmentsByTopicName(
+  public CompletableFuture<List<Reassignment>> searchReassignmentsByTopicName(
       String clusterId, String topicName) {
     return listReassignments(clusterId)
         .thenApply(reassignments -> reassignments.stream()

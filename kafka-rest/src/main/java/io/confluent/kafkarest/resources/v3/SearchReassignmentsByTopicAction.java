@@ -19,11 +19,11 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.controllers.ReassignmentManager;
 import io.confluent.kafkarest.entities.Reassignment;
-import io.confluent.kafkarest.entities.v3.ListAllReassignmentsResponse;
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
 import io.confluent.kafkarest.entities.v3.ReassignmentDataList;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
+import io.confluent.kafkarest.entities.v3.SearchReassignmentsByTopicResponse;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -40,14 +40,14 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/partitions/-/reassignments")
-public final class ListReassignmentsByTopicAction {
+public final class SearchReassignmentsByTopicAction {
 
   private final Provider<ReassignmentManager> reassignmentManager;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
-  public ListReassignmentsByTopicAction(
+  public SearchReassignmentsByTopicAction(
       Provider<ReassignmentManager> reassignmentManager,
       CrnFactory crnFactory,
       UrlFactory urlFactory) {
@@ -62,11 +62,11 @@ public final class ListReassignmentsByTopicAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName) {
-    CompletableFuture<ListAllReassignmentsResponse> response =
-        reassignmentManager.get().listReassignmentsByTopicName(clusterId, topicName)
+    CompletableFuture<SearchReassignmentsByTopicResponse> response =
+        reassignmentManager.get().searchReassignmentsByTopicName(clusterId, topicName)
             .thenApply(
                 reassignments ->
-                    ListAllReassignmentsResponse.create(
+                    SearchReassignmentsByTopicResponse.create(
                         ReassignmentDataList.builder()
                             .setMetadata(
                                 ResourceCollection.Metadata.builder()

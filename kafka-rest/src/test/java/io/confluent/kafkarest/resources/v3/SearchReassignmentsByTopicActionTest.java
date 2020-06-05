@@ -23,11 +23,11 @@ import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.controllers.ReassignmentManager;
 import io.confluent.kafkarest.entities.Reassignment;
-import io.confluent.kafkarest.entities.v3.ListAllReassignmentsResponse;
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
 import io.confluent.kafkarest.entities.v3.ReassignmentDataList;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
+import io.confluent.kafkarest.entities.v3.SearchReassignmentsByTopicResponse;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
@@ -41,7 +41,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-public class ListReassignmentsByTopicActionTest {
+public class SearchReassignmentsByTopicActionTest {
 
   private static final String CLUSTER_ID = "cluster-1";
   private static final String TOPIC_1 = "topic-1";
@@ -71,19 +71,19 @@ public class ListReassignmentsByTopicActionTest {
   @Mock
   private ReassignmentManager reassignmentManager;
 
-  private ListReassignmentsByTopicAction listReassignmentsByTopicAction;
+  private SearchReassignmentsByTopicAction listReassignmentsByTopicAction;
 
   @Before
   public void setUp() {
-    listReassignmentsByTopicAction = new ListReassignmentsByTopicAction(
+    listReassignmentsByTopicAction = new SearchReassignmentsByTopicAction(
         () -> reassignmentManager,
         new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
         new FakeUrlFactory());
   }
 
   @Test
-  public void listAllReassignments_existingCluster_returnsReassignments() {
-    expect(reassignmentManager.listReassignmentsByTopicName(CLUSTER_ID, TOPIC_1))
+  public void searchReassignments_existingCluster_returnsReassignments() {
+    expect(reassignmentManager.searchReassignmentsByTopicName(CLUSTER_ID, TOPIC_1))
         .andReturn(
             CompletableFuture.completedFuture(
                 asList(REASSIGNMENT_1, REASSIGNMENT_2, REASSIGNMENT_3)));
@@ -92,8 +92,8 @@ public class ListReassignmentsByTopicActionTest {
     FakeAsyncResponse response = new FakeAsyncResponse();
     listReassignmentsByTopicAction.listReassignmentsByTopic(response, CLUSTER_ID, TOPIC_1);
 
-    ListAllReassignmentsResponse expected =
-        ListAllReassignmentsResponse.create(
+    SearchReassignmentsByTopicResponse expected =
+        SearchReassignmentsByTopicResponse.create(
             ReassignmentDataList.builder()
                 .setMetadata(
                     ResourceCollection.Metadata.builder()
@@ -164,8 +164,8 @@ public class ListReassignmentsByTopicActionTest {
   }
 
   @Test
-  public void listAllReassignments_nonExistingCluster_throwsNotFound() {
-    expect(reassignmentManager.listReassignmentsByTopicName(CLUSTER_ID, TOPIC_1))
+  public void searchReassignments_nonExistingCluster_throwsNotFound() {
+    expect(reassignmentManager.searchReassignmentsByTopicName(CLUSTER_ID, TOPIC_1))
         .andReturn(failedFuture(new NotFoundException()));
     replay(reassignmentManager);
 

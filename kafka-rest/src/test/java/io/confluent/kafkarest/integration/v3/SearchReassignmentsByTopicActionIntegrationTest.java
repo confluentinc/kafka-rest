@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 import io.confluent.kafkarest.entities.v3.ListAllReassignmentsResponse;
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
+import io.confluent.kafkarest.entities.v3.SearchReassignmentsByTopicResponse;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
 import java.util.List;
@@ -36,11 +37,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class ListReassignmentsByTopicActionIntegrationTest extends ClusterTestHarness {
+public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTestHarness {
 
   private static final String TOPIC_NAME = "topic-1";
 
-  public ListReassignmentsByTopicActionIntegrationTest() {
+  public SearchReassignmentsByTopicActionIntegrationTest() {
     super(/* numBrokers= */ 6, /* withSchemaRegistry= */ false);
   }
 
@@ -52,7 +53,7 @@ public class ListReassignmentsByTopicActionIntegrationTest extends ClusterTestHa
   }
 
   @Test
-  public void listReassignmentsByTopic_returnsReassignments() throws Exception {
+  public void searchReassignmentsByTopic_returnsReassignments() throws Exception {
     String clusterId = getClusterId();
 
     Map<TopicPartition, Optional<NewPartitionReassignment>> reassignmentMap =
@@ -66,8 +67,8 @@ public class ListReassignmentsByTopicActionIntegrationTest extends ClusterTestHa
         .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    ListAllReassignmentsResponse actualReassignments =
-        response.readEntity(ListAllReassignmentsResponse.class);
+    SearchReassignmentsByTopicResponse actualReassignments =
+        response.readEntity(SearchReassignmentsByTopicResponse.class);
     for (ReassignmentData data : actualReassignments.getValue().getData()) {
       assertEquals(data.getAddingReplicas(),
           reassignmentMap.get(new TopicPartition(TOPIC_NAME,
@@ -76,7 +77,7 @@ public class ListReassignmentsByTopicActionIntegrationTest extends ClusterTestHa
   }
 
   @Test
-  public void listReassignmentsByTopic_nonExistingCluster_returnsNotFound() throws Exception {
+  public void searchReassignmentsByTopic_nonExistingCluster_returnsNotFound() throws Exception {
 
     Response response =
         request("/v3/clusters/foobar/topics/topic-1/partitions/-/reassignments")
@@ -87,7 +88,7 @@ public class ListReassignmentsByTopicActionIntegrationTest extends ClusterTestHa
   }
 
   @Test
-  public void listReassignmentsByTopic_nonExistingTopic_returnsEmpty() throws Exception {
+  public void searchReassignmentsByTopic_nonExistingTopic_returnsEmpty() throws Exception {
     String clusterId = getClusterId();
 
     Response response =
@@ -97,6 +98,6 @@ public class ListReassignmentsByTopicActionIntegrationTest extends ClusterTestHa
 
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
     assertTrue(
-        response.readEntity(ListAllReassignmentsResponse.class).getValue().getData().isEmpty());
+        response.readEntity(SearchReassignmentsByTopicResponse.class).getValue().getData().isEmpty());
   }
 }

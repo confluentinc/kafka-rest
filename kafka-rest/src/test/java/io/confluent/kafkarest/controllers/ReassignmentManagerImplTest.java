@@ -173,7 +173,7 @@ public class ReassignmentManagerImplTest {
   }
 
   @Test
-  public void listReassignmentsByTopic_existingCluster_returnsReassignments() throws Exception {
+  public void searchReassignmentsByTopic_existingCluster_returnsReassignments() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.listPartitionReassignments()).andReturn(listPartitionReassignmentsResult);
     expect(listPartitionReassignmentsResult.reassignments())
@@ -181,18 +181,18 @@ public class ReassignmentManagerImplTest {
     replay(clusterManager, adminClient, listPartitionReassignmentsResult);
 
     List<Reassignment> reassignments =
-        reassignmentManager.listReassignmentsByTopicName(CLUSTER_ID, TOPIC_1).get();
+        reassignmentManager.searchReassignmentsByTopicName(CLUSTER_ID, TOPIC_1).get();
 
     assertEquals(Arrays.asList(REASSIGNMENT_1, REASSIGNMENT_2, REASSIGNMENT_3), reassignments);
   }
 
   @Test
-  public void listReassignmentsByTopic_nonExistingCluster_returnsNotFound() throws Exception {
+  public void searchReassignmentsByTopic_nonExistingCluster_returnsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
     replay(clusterManager);
 
     try {
-      reassignmentManager.listReassignmentsByTopicName(CLUSTER_ID, TOPIC_1).get();
+      reassignmentManager.searchReassignmentsByTopicName(CLUSTER_ID, TOPIC_1).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -200,7 +200,7 @@ public class ReassignmentManagerImplTest {
   }
 
   @Test
-  public void listReassignmentsByTopic_nonExistingTopic_returnsEmpty() throws Exception {
+  public void searchReassignmentsByTopic_nonExistingTopic_returnsEmpty() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.listPartitionReassignments()).andReturn(listPartitionReassignmentsResult);
     expect(listPartitionReassignmentsResult.reassignments())
@@ -208,7 +208,7 @@ public class ReassignmentManagerImplTest {
     replay(clusterManager, adminClient, listPartitionReassignmentsResult);
 
     List<Reassignment> reassignments =
-        reassignmentManager.listReassignmentsByTopicName(CLUSTER_ID, "topic-2").get();
+        reassignmentManager.searchReassignmentsByTopicName(CLUSTER_ID, "topic-2").get();
 
     assertTrue(reassignments.isEmpty());
   }
