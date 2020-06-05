@@ -89,7 +89,7 @@ public final class ListAllReassignmentsAction {
     AsyncResponses.asyncResume(asyncResponse, response);
   }
 
-  public ReassignmentData toReassignmentData(Reassignment reassignment) {
+  private ReassignmentData toReassignmentData(Reassignment reassignment) {
     return ReassignmentData.fromReassignment(reassignment)
         .setMetadata(
             Resource.Metadata.builder()
