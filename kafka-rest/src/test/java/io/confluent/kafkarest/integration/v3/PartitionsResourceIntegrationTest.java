@@ -18,15 +18,14 @@ package io.confluent.kafkarest.integration.v3;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.GetPartitionResponse;
 import io.confluent.kafkarest.entities.v3.ListPartitionsResponse;
 import io.confluent.kafkarest.entities.v3.PartitionData;
-import io.confluent.kafkarest.entities.v3.Relationship;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.PartitionDataList;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.Before;
@@ -35,8 +34,6 @@ import org.junit.Test;
 public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
 
   private static final String TOPIC_NAME = "topic-1";
-
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   public PartitionsResourceIntegrationTest() {
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ false);
@@ -51,48 +48,62 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void listPartitions_existingTopic_returnPartitions() throws Exception {
+  public void listPartitions_existingTopic_returnPartitions() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
     ListPartitionsResponse expected =
-            new ListPartitionsResponse(
-                new CollectionLink(
-                    baseUrl
-                        + "/v3/clusters/" + clusterId
-                        + "/topics/" + TOPIC_NAME
-                        + "/partitions",
-                    /* next= */ null),
-                singletonList(
-                    new PartitionData(
-                        "crn:///kafka=" + clusterId + "/topic=" + TOPIC_NAME + "/partition=0",
-                        new ResourceLink(
-                            baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + TOPIC_NAME
-                            + "/partitions/0"),
-                        clusterId,
-                        TOPIC_NAME,
-                        /* partitionId= */ 0,
-                        new Relationship(
-                            baseUrl
-                             + "/v3/clusters/" + clusterId
-                            + "/topics/" + TOPIC_NAME
-                            + "/partitions/0/replicas/0"),
-                        new Relationship(
+        ListPartitionsResponse.create(
+            PartitionDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder()
+                        .setSelf(
                             baseUrl
                                 + "/v3/clusters/" + clusterId
                                 + "/topics/" + TOPIC_NAME
-                                + "/partitions/0/replicas"))));
+                                + "/partitions")
+                        .build())
+                .setData(
+                    singletonList(
+                        PartitionData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        baseUrl
+                                            + "/v3/clusters/" + clusterId
+                                            + "/topics/" + TOPIC_NAME
+                                            + "/partitions/0")
+                                    .setResourceName(
+                                        "crn://"
+                                            + "/kafka=" + clusterId
+                                            + "/topic=" + TOPIC_NAME
+                                            + "/partition=0")
+                                    .build())
+                            .setClusterId(clusterId)
+                            .setTopicName(TOPIC_NAME)
+                            .setPartitionId(0)
+                            .setLeader(
+                                Resource.Relationship.create(
+                                    baseUrl
+                                        + "/v3/clusters/" + clusterId
+                                        + "/topics/" + TOPIC_NAME
+                                        + "/partitions/0/replicas/0"))
+                            .setReplicas(
+                                Resource.Relationship.create(
+                                    baseUrl
+                                        + "/v3/clusters/" + clusterId
+                                        + "/topics/" + TOPIC_NAME
+                                        + "/partitions/0/replicas"))
+                            .build()))
+                .build());
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    ListPartitionsResponse actual =
-            response.readEntity(ListPartitionsResponse.class);
+    ListPartitionsResponse actual = response.readEntity(ListPartitionsResponse.class);
     assertEquals(expected, actual);
   }
 
@@ -102,7 +113,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/foobar/partitions")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -110,8 +121,8 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
   @Test
   public void listPartitions_nonExistingCluster_returnsNotFound() {
     Response response =
-        request("/v3/clusters/foobar/topics/"+ TOPIC_NAME + "/partitions")
-            .accept(Versions.JSON_API)
+        request("/v3/clusters/foobar/topics/" + TOPIC_NAME + "/partitions")
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -122,36 +133,42 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
 
     GetPartitionResponse expected =
-            new GetPartitionResponse(
-                new PartitionData(
-                    "crn:///kafka=" + clusterId + "/topic=" + TOPIC_NAME + "/partition=0",
-                    new ResourceLink(
+        GetPartitionResponse.create(
+            PartitionData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/topics/" + TOPIC_NAME
+                                + "/partitions/0")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId + "/topic=" + TOPIC_NAME + "/partition=0")
+                        .build())
+                .setClusterId(clusterId)
+                .setTopicName(TOPIC_NAME)
+                .setPartitionId(0)
+                .setLeader(
+                    Resource.Relationship.create(
                         baseUrl
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + TOPIC_NAME
-                            + "/partitions/0"),
-                    clusterId,
-                    TOPIC_NAME,
-                    /* partitionId= */ 0,
-                    new Relationship(
+                            + "/partitions/0/replicas/0"))
+                .setReplicas(
+                    Resource.Relationship.create(
                         baseUrl
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + TOPIC_NAME
-                            + "/partitions/0/replicas/0"),
-                    new Relationship(
-                        baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + TOPIC_NAME
-                            + "/partitions/0/replicas")));
+                            + "/partitions/0/replicas"))
+                .build());
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/0")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    GetPartitionResponse actual =
-            response.readEntity(GetPartitionResponse.class);
+    GetPartitionResponse actual = response.readEntity(GetPartitionResponse.class);
     assertEquals(expected, actual);
   }
 
@@ -161,7 +178,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/100")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -172,7 +189,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/foobar/partitions/0")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -181,7 +198,7 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
   public void getPartition_nonExistingCluster_returnsNotFound() {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_NAME + "/partitions/0")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }

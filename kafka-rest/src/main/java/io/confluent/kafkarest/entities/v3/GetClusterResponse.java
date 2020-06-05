@@ -16,48 +16,24 @@
 package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.auto.value.AutoValue;
 
-/**
- * Response body for {@code GET /clusters/<clusterId>} requests.
- */
-public final class GetClusterResponse {
+@AutoValue
+public abstract class GetClusterResponse {
 
-  private final ClusterData data;
+  GetClusterResponse() {
+  }
+
+  @JsonValue
+  public abstract ClusterData getValue();
+
+  public static GetClusterResponse create(ClusterData value) {
+    return new AutoValue_GetClusterResponse(value);
+  }
 
   @JsonCreator
-  public GetClusterResponse(@JsonProperty("data") ClusterData data) {
-    this.data = Objects.requireNonNull(data);
-  }
-
-  @JsonProperty("data")
-  public ClusterData getData() {
-    return data;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    GetClusterResponse that = (GetClusterResponse) o;
-    return Objects.equals(data, that.data);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(data);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", GetClusterResponse.class.getSimpleName() + "[", "]")
-        .add("data=" + data)
-        .toString();
+  static GetClusterResponse fromJson(ClusterData value) {
+    return create(value);
   }
 }

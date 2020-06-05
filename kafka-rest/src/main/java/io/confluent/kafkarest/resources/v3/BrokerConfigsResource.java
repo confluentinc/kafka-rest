@@ -17,17 +17,14 @@ package io.confluent.kafkarest.resources.v3;
 
 import static java.util.Objects.requireNonNull;
 
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.BrokerConfigManager;
 import io.confluent.kafkarest.entities.BrokerConfig;
 import io.confluent.kafkarest.entities.v3.BrokerConfigData;
-import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
-import io.confluent.kafkarest.entities.v3.BrokerData;
-import io.confluent.kafkarest.entities.v3.ClusterData;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.v3.BrokerConfigDataList;
 import io.confluent.kafkarest.entities.v3.GetBrokerConfigResponse;
 import io.confluent.kafkarest.entities.v3.ListBrokerConfigsResponse;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.UpdateBrokerConfigRequest;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
@@ -49,6 +46,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -63,14 +61,15 @@ public final class BrokerConfigsResource {
   public BrokerConfigsResource(
       Provider<BrokerConfigManager> brokerConfigManager,
       CrnFactory crnFactory,
-      UrlFactory urlFactory) {
+      UrlFactory urlFactory
+  ) {
     this.brokerConfigManager = requireNonNull(brokerConfigManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
   }
 
   @GET
-  @Produces(Versions.JSON_API)
+  @Produces(MediaType.APPLICATION_JSON)
   public void listBrokerConfigs(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -80,22 +79,32 @@ public final class BrokerConfigsResource {
             .listBrokerConfigs(clusterId, brokerId)
             .thenApply(
                 configs ->
-                    new ListBrokerConfigsResponse(
-                        new CollectionLink(
-                            urlFactory.create(
-                                "v3", "clusters", clusterId, "brokers", String.valueOf(brokerId),
-                                "configs"),
-                            /* next= */null),
-                        configs.stream()
-                            .sorted(Comparator.comparing(BrokerConfig::getName))
-                            .map(this::toBrokerConfigData)
-                            .collect(Collectors.toList())));
+                    ListBrokerConfigsResponse.create(
+                        BrokerConfigDataList.builder()
+                            .setMetadata(
+                                ResourceCollection.Metadata.builder()
+                                    .setSelf(
+                                        urlFactory.create(
+                                            "v3",
+                                            "clusters",
+                                            clusterId,
+                                            "brokers",
+                                            String.valueOf(brokerId),
+                                            "configs"))
+                                    .build())
+                            .setData(
+                                configs.stream()
+                                    .sorted(Comparator.comparing(BrokerConfig::getName))
+                                    .map(this::toBrokerConfigData)
+                                    .collect(Collectors.toList()))
+                            .build()));
+
     AsyncResponses.asyncResume(asyncResponse, response);
   }
 
   @GET
   @Path("/{name}")
-  @Produces(Versions.JSON_API)
+  @Produces(MediaType.APPLICATION_JSON)
   public void getBrokerConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -106,15 +115,15 @@ public final class BrokerConfigsResource {
         brokerConfigManager.get()
             .getBrokerConfig(clusterId, brokerId, name)
             .thenApply(broker -> broker.orElseThrow(NotFoundException::new))
-            .thenApply(broker -> new GetBrokerConfigResponse(toBrokerConfigData(broker)));
+            .thenApply(broker -> GetBrokerConfigResponse.create(toBrokerConfigData(broker)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
 
   @PUT
   @Path("/{name}")
-  @Consumes(Versions.JSON_API)
-  @Produces(Versions.JSON_API)
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
   public void updateBrokerConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -122,7 +131,7 @@ public final class BrokerConfigsResource {
       @PathParam("name") String name,
       @Valid UpdateBrokerConfigRequest request
   ) {
-    String newValue = request.getData().getAttributes().getValue();
+    String newValue = request.getValue().orElse(null);
 
     CompletableFuture<Void> response =
         brokerConfigManager.get().updateBrokerConfig(clusterId, brokerId, name, newValue);
@@ -134,7 +143,7 @@ public final class BrokerConfigsResource {
 
   @DELETE
   @Path("/{name}")
-  @Produces(Versions.JSON_API)
+  @Produces(MediaType.APPLICATION_JSON)
   public void resetBrokerConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -150,33 +159,27 @@ public final class BrokerConfigsResource {
   }
 
   private BrokerConfigData toBrokerConfigData(BrokerConfig brokerConfig) {
-    return new BrokerConfigData(
-        crnFactory.create(
-            ClusterData.ELEMENT_TYPE,
-            brokerConfig.getClusterId(),
-            BrokerData.ELEMENT_TYPE,
-            String.valueOf(brokerConfig.getBrokerId()),
-            BrokerConfigData.ELEMENT_TYPE,
-            brokerConfig.getName()),
-        new ResourceLink(
-            urlFactory.create(
-                "v3",
-                "clusters",
-                brokerConfig.getClusterId(),
-                "brokers",
-                String.valueOf(brokerConfig.getBrokerId()),
-                "configs",
-                brokerConfig.getName())),
-        brokerConfig.getClusterId(),
-        brokerConfig.getBrokerId(),
-        brokerConfig.getName(),
-        brokerConfig.getValue(),
-        brokerConfig.isDefault(),
-        brokerConfig.isReadOnly(),
-        brokerConfig.isSensitive(),
-        brokerConfig.getSource(),
-        brokerConfig.getSynonyms().stream()
-            .map(ConfigSynonymData::fromConfigSynonym)
-            .collect(Collectors.toList()));
+    return BrokerConfigData.fromBrokerConfig(brokerConfig)
+        .setMetadata(
+            Resource.Metadata.builder()
+                .setSelf(
+                    urlFactory.create(
+                        "v3",
+                        "clusters",
+                        brokerConfig.getClusterId(),
+                        "brokers",
+                        String.valueOf(brokerConfig.getBrokerId()),
+                        "configs",
+                        brokerConfig.getName()))
+                .setResourceName(
+                    crnFactory.create(
+                        "kafka",
+                        brokerConfig.getClusterId(),
+                        "broker",
+                        String.valueOf(brokerConfig.getBrokerId()),
+                        "config",
+                        brokerConfig.getName()))
+                .build())
+        .build();
   }
 }

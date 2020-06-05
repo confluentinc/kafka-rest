@@ -13,11 +13,12 @@ import io.confluent.kafkarest.controllers.BrokerConfigManager;
 import io.confluent.kafkarest.entities.BrokerConfig;
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.v3.BrokerConfigData;
+import io.confluent.kafkarest.entities.v3.BrokerConfigDataList;
 import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.GetBrokerConfigResponse;
 import io.confluent.kafkarest.entities.v3.ListBrokerConfigsResponse;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.UpdateBrokerConfigRequest;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
@@ -102,52 +103,79 @@ public final class BrokerConfigResourceTest {
     brokerConfigsResource.listBrokerConfigs(response, CLUSTER_ID, BROKER_ID);
 
     ListBrokerConfigsResponse expected =
-        new ListBrokerConfigsResponse(
-            new CollectionLink(
-                "/v3/clusters/cluster-1/brokers/1/configs", null),
-            Arrays.asList(
-                new BrokerConfigData(
-                    "crn:///kafka=cluster-1/broker=1/config=config-1",
-                    new ResourceLink("/v3/clusters/cluster-1/brokers/1/configs/config-1"),
-                    CLUSTER_ID,
-                    BROKER_ID,
-                    CONFIG_1.getName(),
-                    CONFIG_1.getValue(),
-                    CONFIG_1.isDefault(),
-                    CONFIG_1.isReadOnly(),
-                    CONFIG_1.isSensitive(),
-                    CONFIG_1.getSource(),
-                    CONFIG_1.getSynonyms().stream()
-                        .map(ConfigSynonymData::fromConfigSynonym)
-                        .collect(Collectors.toList())),
-                new BrokerConfigData(
-                    "crn:///kafka=cluster-1/broker=1/config=config-2",
-                    new ResourceLink("/v3/clusters/cluster-1/brokers/1/configs/config-2"),
-                    CLUSTER_ID,
-                    BROKER_ID,
-                    CONFIG_2.getName(),
-                    CONFIG_2.getValue(),
-                    CONFIG_2.isDefault(),
-                    CONFIG_2.isReadOnly(),
-                    CONFIG_2.isSensitive(),
-                    CONFIG_2.getSource(),
-                    CONFIG_2.getSynonyms().stream()
-                        .map(ConfigSynonymData::fromConfigSynonym)
-                        .collect(Collectors.toList())),
-                new BrokerConfigData(
-                    "crn:///kafka=cluster-1/broker=1/config=config-3",
-                    new ResourceLink("/v3/clusters/cluster-1/brokers/1/configs/config-3"),
-                    CLUSTER_ID,
-                    BROKER_ID,
-                    CONFIG_3.getName(),
-                    CONFIG_3.getValue(),
-                    CONFIG_3.isDefault(),
-                    CONFIG_3.isReadOnly(),
-                    CONFIG_3.isSensitive(),
-                    CONFIG_3.getSource(),
-                    CONFIG_3.getSynonyms().stream()
-                        .map(ConfigSynonymData::fromConfigSynonym)
-                        .collect(Collectors.toList()))));
+        ListBrokerConfigsResponse.create(
+            BrokerConfigDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder()
+                        .setSelf(
+                            "/v3/clusters/cluster-1/brokers/1/configs")
+                        .build())
+                .setData(
+                    Arrays.asList(
+                        BrokerConfigData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/brokers/1/configs/config-1")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/broker=1/config=config-1")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setBrokerId(BROKER_ID)
+                            .setName(CONFIG_1.getName())
+                            .setValue(CONFIG_1.getValue())
+                            .setDefault(CONFIG_1.isDefault())
+                            .setReadOnly(CONFIG_1.isReadOnly())
+                            .setSensitive(CONFIG_1.isSensitive())
+                            .setSource(CONFIG_1.getSource())
+                            .setSynonyms(
+                                CONFIG_1.getSynonyms().stream()
+                                    .map(ConfigSynonymData::fromConfigSynonym)
+                                    .collect(Collectors.toList()))
+                            .build(),
+                        BrokerConfigData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/brokers/1/configs/config-2")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/broker=1/config=config-2")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setBrokerId(BROKER_ID)
+                            .setName(CONFIG_2.getName())
+                            .setValue(CONFIG_2.getValue())
+                            .setDefault(CONFIG_2.isDefault())
+                            .setReadOnly(CONFIG_2.isReadOnly())
+                            .setSensitive(CONFIG_2.isSensitive())
+                            .setSource(CONFIG_2.getSource())
+                            .setSynonyms(
+                                CONFIG_2.getSynonyms().stream()
+                                    .map(ConfigSynonymData::fromConfigSynonym)
+                                    .collect(Collectors.toList()))
+                            .build(),
+                        BrokerConfigData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/brokers/1/configs/config-3")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/broker=1/config=config-3")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setBrokerId(BROKER_ID)
+                            .setName(CONFIG_3.getName())
+                            .setValue(CONFIG_3.getValue())
+                            .setDefault(CONFIG_3.isDefault())
+                            .setReadOnly(CONFIG_3.isReadOnly())
+                            .setSensitive(CONFIG_3.isSensitive())
+                            .setSource(CONFIG_3.getSource())
+                            .setSynonyms(
+                                CONFIG_3.getSynonyms().stream()
+                                    .map(ConfigSynonymData::fromConfigSynonym)
+                                    .collect(Collectors.toList()))
+                            .build()))
+                .build());
 
     assertEquals(expected, response.getValue());
   }
@@ -174,21 +202,28 @@ public final class BrokerConfigResourceTest {
     FakeAsyncResponse response = new FakeAsyncResponse();
     brokerConfigsResource.getBrokerConfig(response, CLUSTER_ID, BROKER_ID, CONFIG_1.getName());
     GetBrokerConfigResponse expected =
-        new GetBrokerConfigResponse(
-            new BrokerConfigData(
-                "crn:///kafka=cluster-1/broker=1/config=config-1",
-                new ResourceLink("/v3/clusters/cluster-1/brokers/1/configs/config-1"),
-                CLUSTER_ID,
-                BROKER_ID,
-                CONFIG_1.getName(),
-                CONFIG_1.getValue(),
-                CONFIG_1.isDefault(),
-                CONFIG_1.isReadOnly(),
-                CONFIG_1.isSensitive(),
-                CONFIG_1.getSource(),
-                CONFIG_1.getSynonyms().stream()
-                    .map(ConfigSynonymData::fromConfigSynonym)
-                    .collect(Collectors.toList())));
+        GetBrokerConfigResponse.create(
+            BrokerConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            "/v3/clusters/cluster-1/brokers/1/configs/config-1")
+                        .setResourceName(
+                            "crn:///kafka=cluster-1/broker=1/config=config-1")
+                        .build())
+                .setClusterId(CLUSTER_ID)
+                .setBrokerId(BROKER_ID)
+                .setName(CONFIG_1.getName())
+                .setValue(CONFIG_1.getValue())
+                .setDefault(CONFIG_1.isDefault())
+                .setReadOnly(CONFIG_1.isReadOnly())
+                .setSensitive(CONFIG_1.isSensitive())
+                .setSource(CONFIG_1.getSource())
+                .setSynonyms(
+                    CONFIG_1.getSynonyms().stream()
+                        .map(ConfigSynonymData::fromConfigSynonym)
+                        .collect(Collectors.toList()))
+                .build());
 
     assertEquals(expected, response.getValue());
   }
@@ -238,9 +273,7 @@ public final class BrokerConfigResourceTest {
         CLUSTER_ID,
         BROKER_ID,
         CONFIG_1.getName(),
-        new UpdateBrokerConfigRequest(
-            new UpdateBrokerConfigRequest.Data(
-                new UpdateBrokerConfigRequest.Data.Attributes("new-value"))));
+        UpdateBrokerConfigRequest.create("new-value"));
     assertNull(response.getValue());
     assertNull(response.getException());
     assertTrue(response.isDone());
@@ -263,9 +296,7 @@ public final class BrokerConfigResourceTest {
         CLUSTER_ID,
         BROKER_ID,
         CONFIG_1.getName(),
-        new UpdateBrokerConfigRequest(
-            new UpdateBrokerConfigRequest.Data(
-                new UpdateBrokerConfigRequest.Data.Attributes("new-value"))));
+        UpdateBrokerConfigRequest.create("new-value"));
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }

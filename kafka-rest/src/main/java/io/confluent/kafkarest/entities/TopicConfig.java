@@ -16,12 +16,11 @@
 package io.confluent.kafkarest.entities;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableList;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * A Kafka Topic Config.
+ * A Kafka topic config.
  */
 @AutoValue
 public abstract class TopicConfig extends AbstractConfig {
@@ -30,6 +29,10 @@ public abstract class TopicConfig extends AbstractConfig {
   }
 
   public abstract String getTopicName();
+
+  public static Builder builder() {
+    return new AutoValue_TopicConfig.Builder();
+  }
 
   public static TopicConfig create(
       String clusterId,
@@ -41,15 +44,28 @@ public abstract class TopicConfig extends AbstractConfig {
       boolean isSensitive,
       ConfigSource source,
       List<ConfigSynonym> synonyms) {
-    return new AutoValue_TopicConfig(
-        clusterId,
-        name,
-        value,
-        isDefault,
-        isReadOnly,
-        isSensitive,
-        source,
-        ImmutableList.copyOf(synonyms),
-        topicName);
+    return builder()
+        .setClusterId(clusterId)
+        .setName(name)
+        .setValue(value)
+        .setDefault(isDefault)
+        .setReadOnly(isReadOnly)
+        .setSensitive(isSensitive)
+        .setSource(source)
+        .setSynonyms(synonyms)
+        .setTopicName(topicName)
+        .build();
+  }
+
+  /**
+   * A builder for {@link TopicConfig}.
+   */
+  @AutoValue.Builder
+  public abstract static class Builder extends AbstractConfig.Builder<TopicConfig, Builder> {
+
+    Builder() {
+    }
+
+    public abstract Builder setTopicName(String topicName);
   }
 }

@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.entities;
 
 import com.google.common.collect.ImmutableList;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -42,4 +43,28 @@ public abstract class AbstractConfig {
   public abstract ConfigSource getSource();
 
   public abstract ImmutableList<ConfigSynonym> getSynonyms();
+
+  /**
+   * A builder for {@link AbstractConfig}.
+   */
+  public abstract static class Builder<T extends AbstractConfig, B extends Builder<T, B>> {
+
+    public abstract B setClusterId(String clusterId);
+
+    public abstract B setName(String name);
+
+    public abstract B setValue(@Nullable String value);
+
+    public abstract B setDefault(boolean isDefault);
+
+    public abstract B setReadOnly(boolean isReadOnly);
+
+    public abstract B setSensitive(boolean isSensitive);
+
+    public abstract B setSource(ConfigSource source);
+
+    public abstract B setSynonyms(List<ConfigSynonym> synonyms);
+
+    public abstract T build();
+  }
 }

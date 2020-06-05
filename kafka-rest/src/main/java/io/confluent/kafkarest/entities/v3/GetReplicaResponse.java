@@ -16,50 +16,24 @@
 package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.auto.value.AutoValue;
 
-/**
- * Response body for {@code GET
- * /v3/clusters/<clusterId>/topics/<topicName>/partitions/<partitionId>/replicas/<brokerId>}
- * requests.
- */
-public final class GetReplicaResponse {
+@AutoValue
+public abstract class GetReplicaResponse {
 
-  private final ReplicaData data;
+  GetReplicaResponse() {
+  }
+
+  @JsonValue
+  public abstract ReplicaData getValue();
+
+  public static GetReplicaResponse create(ReplicaData value) {
+    return new AutoValue_GetReplicaResponse(value);
+  }
 
   @JsonCreator
-  public GetReplicaResponse(@JsonProperty("data") ReplicaData data) {
-    this.data = Objects.requireNonNull(data);
-  }
-
-  @JsonProperty("data")
-  public ReplicaData getData() {
-    return data;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    GetReplicaResponse that = (GetReplicaResponse) o;
-    return Objects.equals(data, that.data);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(data);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", GetReplicaResponse.class.getSimpleName() + "[", "]")
-        .add("data=" + data)
-        .toString();
+  static GetReplicaResponse fromJson(ReplicaData value) {
+    return create(value);
   }
 }

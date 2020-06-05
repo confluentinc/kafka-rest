@@ -15,10 +15,14 @@
 
 package io.confluent.kafkarest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.confluent.kafkarest.backends.BackendsModule;
 import io.confluent.kafkarest.config.ConfigModule;
 import io.confluent.kafkarest.controllers.ControllersModule;
 import io.confluent.kafkarest.exceptions.ExceptionsModule;
+import io.confluent.kafkarest.extension.ClusterConfigTypeConverterProvider;
 import io.confluent.kafkarest.extension.ContextInvocationHandler;
 import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.kafkarest.extension.KafkaRestCleanupFilter;
@@ -110,11 +114,20 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new ResponseModule());
 
     config.register(KafkaRestCleanupFilter.class);
+
+    config.register(ClusterConfigTypeConverterProvider.class);
     config.register(InstantConverterProvider.class);
 
     for (RestResourceExtension restResourceExtension : restResourceExtensions) {
       restResourceExtension.register(config, appConfig);
     }
+  }
+
+  @Override
+  protected ObjectMapper getJsonMapper() {
+    return super.getJsonMapper()
+        .registerModule(new GuavaModule())
+        .registerModule(new Jdk8Module());
   }
 
   @Override

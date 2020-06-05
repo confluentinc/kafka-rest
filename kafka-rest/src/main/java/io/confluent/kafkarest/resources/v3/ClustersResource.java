@@ -17,15 +17,14 @@ package io.confluent.kafkarest.resources.v3;
 
 import static java.util.Objects.requireNonNull;
 
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.ClusterManager;
 import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.v3.ClusterData;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
+import io.confluent.kafkarest.entities.v3.ClusterDataList;
 import io.confluent.kafkarest.entities.v3.GetClusterResponse;
 import io.confluent.kafkarest.entities.v3.ListClustersResponse;
-import io.confluent.kafkarest.entities.v3.Relationship;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -40,6 +39,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.MediaType;
 
 @Path("/v3/clusters")
 public final class ClustersResource {
@@ -50,67 +50,84 @@ public final class ClustersResource {
 
   @Inject
   public ClustersResource(
-      Provider<ClusterManager> clusterManager, CrnFactory crnFactory, UrlFactory urlFactory) {
+      Provider<ClusterManager> clusterManager,
+      CrnFactory crnFactory,
+      UrlFactory urlFactory
+  ) {
     this.clusterManager = requireNonNull(clusterManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
   }
 
   @GET
-  @Produces(Versions.JSON_API)
+  @Produces(MediaType.APPLICATION_JSON)
   public void listClusters(@Suspended AsyncResponse asyncResponse) {
     CompletableFuture<ListClustersResponse> response =
         clusterManager.get()
             .listClusters()
             .thenApply(
                 clusters ->
-                    new ListClustersResponse(
-                        new CollectionLink(urlFactory.create("v3", "clusters"), /* next= */ null),
-                        clusters.stream().map(this::toClusterData).collect(Collectors.toList())));
+                    ListClustersResponse.create(
+                        ClusterDataList.builder()
+                            .setMetadata(
+                                ResourceCollection.Metadata.builder()
+                                    .setSelf(urlFactory.create("v3", "clusters"))
+                                    .build())
+                            .setData(
+                                clusters.stream()
+                                    .map(this::toClusterData)
+                                    .collect(Collectors.toList()))
+                            .build()));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
 
   @GET
   @Path("/{clusterId}")
-  @Produces(Versions.JSON_API)
+  @Produces(MediaType.APPLICATION_JSON)
   public void getCluster(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<GetClusterResponse> response =
         clusterManager.get()
             .getCluster(clusterId)
             .thenApply(cluster -> cluster.orElseThrow(NotFoundException::new))
-            .thenApply(cluster -> new GetClusterResponse(toClusterData(cluster)));
+            .thenApply(cluster -> GetClusterResponse.create(toClusterData(cluster)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
 
   private ClusterData toClusterData(Cluster cluster) {
-    Relationship controller;
+    ClusterData.Builder clusterData =
+        ClusterData.fromCluster(cluster)
+            .setMetadata(
+                Resource.Metadata.builder()
+                    .setSelf(urlFactory.create("v3", "clusters", cluster.getClusterId()))
+                    .setResourceName(crnFactory.create("kafka", cluster.getClusterId()))
+                    .build())
+            .setBrokers(
+                Resource.Relationship.create(
+                    urlFactory.create("v3", "clusters", cluster.getClusterId(), "brokers")))
+            .setTopics(
+                Resource.Relationship.create(
+                    urlFactory.create("v3", "clusters", cluster.getClusterId(), "topics")))
+            .setBrokerConfigs(
+                Resource.Relationship.create(
+                    urlFactory.create("v3", "clusters", cluster.getClusterId(), "broker-configs")))
+            .setTopicConfigs(
+                Resource.Relationship.create(
+                    urlFactory.create("v3", "clusters", cluster.getClusterId(), "topic-configs")));
+
     if (cluster.getController() != null) {
-      controller =
-          new Relationship(
+      clusterData.setController(
+          Resource.Relationship.create(
               urlFactory.create(
                   "v3",
                   "clusters",
                   cluster.getClusterId(),
                   "brokers",
-                  Integer.toString(cluster.getController().getBrokerId())));
-    } else {
-      controller = null;
+                  Integer.toString(cluster.getController().getBrokerId()))));
     }
 
-    Relationship brokers =
-        new Relationship(urlFactory.create("v3", "clusters", cluster.getClusterId(), "brokers"));
-    Relationship topics =
-        new Relationship(urlFactory.create("v3", "clusters", cluster.getClusterId(), "topics"));
-
-    return new ClusterData(
-        crnFactory.create(ClusterData.ELEMENT_TYPE, cluster.getClusterId()),
-        new ResourceLink(urlFactory.create("v3", "clusters", cluster.getClusterId())),
-        cluster.getClusterId(),
-        controller,
-        brokers,
-        topics);
+    return clusterData.build();
   }
 }

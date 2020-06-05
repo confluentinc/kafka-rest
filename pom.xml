@@ -63,7 +63,17 @@
             <dependency>
                 <groupId>com.google.auto.value</groupId>
                 <artifactId>auto-value-annotations</artifactId>
-                <version>1.6.2</version>
+                <version>1.7.2</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jdk8</artifactId>
+                <version>2.11.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-guava</artifactId>
+                <version>2.10.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -89,8 +99,13 @@
                             <annotationProcessorPath>
                                 <groupId>com.google.auto.value</groupId>
                                 <artifactId>auto-value</artifactId>
-                                <version>1.6.2</version>
+                                <version>1.7.2</version>
                             </annotationProcessorPath>
+                            <path>
+                                <groupId>com.google.auto.service</groupId>
+                                <artifactId>auto-service-annotations</artifactId>
+                                <version>1.0-rc6</version>
+                            </path>
                         </annotationProcessorPaths>
                     </configuration>
                 </plugin>

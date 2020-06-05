@@ -18,15 +18,14 @@ package io.confluent.kafkarest.integration.v3;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.GetReplicaResponse;
 import io.confluent.kafkarest.entities.v3.ListReplicasResponse;
-import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ReplicaData;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.ReplicaDataList;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.Before;
@@ -35,8 +34,6 @@ import org.junit.Test;
 public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
 
   private static final String TOPIC_NAME = "topic-1";
-
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   public ReplicasResourceIntegrationTest() {
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ false);
@@ -51,44 +48,55 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void listReplicas_existingPartition_returnsReplicas() throws Exception {
+  public void listReplicas_existingPartition_returnsReplicas() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
     ListReplicasResponse expected =
-            new ListReplicasResponse(
-                new CollectionLink(
-                    baseUrl
-                        + "/v3/clusters/" + clusterId
-                        + "/topics/" + TOPIC_NAME
-                        + "/partitions/0/replicas",
-                    /* next= */ null),
-                singletonList(
-                    new ReplicaData(
-                        "crn:///kafka=" + clusterId
-                            + "/topic=" + TOPIC_NAME
-                            + "/partition=0/replica=0",
-                        new ResourceLink(
+        ListReplicasResponse.create(
+            ReplicaDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder()
+                        .setSelf(
                             baseUrl
                                 + "/v3/clusters/" + clusterId
                                 + "/topics/" + TOPIC_NAME
-                                + "/partitions/0/replicas/0"),
-                        clusterId,
-                        TOPIC_NAME,
-                        /* partitionId= */ 0,
-                        /* brokerId= */ 0,
-                        /* isLeader= */ true,
-                        /* isInSync= */ true,
-                        new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/brokers/0"))));
+                                + "/partitions/0/replicas")
+                        .build())
+                .setData(
+                    singletonList(
+                        ReplicaData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        baseUrl
+                                            + "/v3/clusters/" + clusterId
+                                            + "/topics/" + TOPIC_NAME
+                                            + "/partitions/0/replicas/0")
+                                    .setResourceName(
+                                        "crn:///kafka=" + clusterId
+                                            + "/topic=" + TOPIC_NAME
+                                            + "/partition=0/replica=0")
+                                    .build())
+                            .setClusterId(clusterId)
+                            .setTopicName(TOPIC_NAME)
+                            .setPartitionId(0)
+                            .setBrokerId(0)
+                            .setLeader(true)
+                            .setInSync(true)
+                            .setBroker(
+                                Resource.Relationship.create(
+                                    baseUrl + "/v3/clusters/" + clusterId + "/brokers/0"))
+                            .build()))
+                .build());
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/0/replicas")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    ListReplicasResponse actual =
-            response.readEntity(ListReplicasResponse.class);
+    ListReplicasResponse actual = response.readEntity(ListReplicasResponse.class);
     assertEquals(expected, actual);
   }
 
@@ -98,7 +106,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/100/replicas")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -109,7 +117,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/foobar/partitions/0/replicas")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -118,43 +126,49 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
   public void listReplicas_nonExistingCluster_returnsNotFound() {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_NAME + "/partitions/0/replicas")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void getReplica_existingReplica_returnsReplica() throws Exception {
+  public void getReplica_existingReplica_returnsReplica() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
     GetReplicaResponse expected =
-            new GetReplicaResponse(
-                new ReplicaData(
-                    "crn:///kafka=" + clusterId
-                        + "/topic=" + TOPIC_NAME
-                        + "/partition=0/replica=0",
-                    new ResourceLink(
-                        baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + TOPIC_NAME
-                            + "/partitions/0/replicas/0"),
-                    clusterId,
-                    TOPIC_NAME,
-                    /* partitionId= */ 0,
-                    /* brokerId= */ 0,
-                    /* isLeader= */ true,
-                    /* isInSync= */ true,
-                    new Relationship(baseUrl + "/v3/clusters/" + clusterId + "/brokers/0")));
+        GetReplicaResponse.create(
+            ReplicaData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/topics/" + TOPIC_NAME
+                                + "/partitions/0/replicas/0")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId
+                                + "/topic=" + TOPIC_NAME
+                                + "/partition=0/replica=0")
+                        .build())
+                .setClusterId(clusterId)
+                .setTopicName(TOPIC_NAME)
+                .setPartitionId(0)
+                .setBrokerId(0)
+                .setLeader(true)
+                .setInSync(true)
+                .setBroker(
+                    Resource.Relationship.create(
+                        baseUrl + "/v3/clusters/" + clusterId + "/brokers/0"))
+                .build());
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/0/replicas/0")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    GetReplicaResponse actual =
-            response.readEntity(GetReplicaResponse.class);
+    GetReplicaResponse actual = response.readEntity(GetReplicaResponse.class);
     assertEquals(expected, actual);
   }
 
@@ -165,7 +179,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
     Response response =
         request(
             "/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/0/replicas/100")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -177,7 +191,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
     Response response =
         request(
             "/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/100/replicas/0")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -188,7 +202,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/foobar/partitions/0/replicas/0")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -197,7 +211,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
   public void getReplica_nonExistingCluster_returnsNotFound() {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_NAME + "/partitions/0/replicas/0")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }

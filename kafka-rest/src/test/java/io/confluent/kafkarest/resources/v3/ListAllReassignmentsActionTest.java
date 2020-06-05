@@ -23,11 +23,11 @@ import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.controllers.ReassignmentManager;
 import io.confluent.kafkarest.entities.Reassignment;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
-import io.confluent.kafkarest.entities.v3.ListReassignmentsResponse;
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
-import io.confluent.kafkarest.entities.v3.Relationship;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.ListAllReassignmentsResponse;
+import io.confluent.kafkarest.entities.v3.ReassignmentDataList;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
@@ -50,10 +50,6 @@ public class ListAllReassignmentsActionTest {
   private static final int PARTITION_ID_2 = 2;
   private static final int PARTITION_ID_3 = 3;
 
-  private static final List<Integer> REPLICAS_1 = Arrays.asList(1, 2, 3, 4, 5);
-  private static final List<Integer> REPLICAS_2 = Arrays.asList(1, 2, 3, 4);
-  private static final List<Integer> REPLICAS_3 = Arrays.asList(4, 5, 6);
-
   private static final List<Integer> ADDING_REPLICAS_1 = Arrays.asList(1, 2, 3);
   private static final List<Integer> ADDING_REPLICAS_2 = Arrays.asList(1, 2, 3);
   private static final List<Integer> ADDING_REPLICAS_3 = Arrays.asList(5, 6);
@@ -63,11 +59,11 @@ public class ListAllReassignmentsActionTest {
   private static final List<Integer> REMOVING_REPLICAS_3 = Arrays.asList(4);
 
   private static final Reassignment REASSIGNMENT_1 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_1, REPLICAS_1, ADDING_REPLICAS_1, REMOVING_REPLICAS_1);
+      PARTITION_ID_1, ADDING_REPLICAS_1, REMOVING_REPLICAS_1);
   private static final Reassignment REASSIGNMENT_2 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_2, REPLICAS_2, ADDING_REPLICAS_2, REMOVING_REPLICAS_2);
+      PARTITION_ID_2, ADDING_REPLICAS_2, REMOVING_REPLICAS_2);
   private static final Reassignment REASSIGNMENT_3 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_3, REPLICAS_3, ADDING_REPLICAS_3, REMOVING_REPLICAS_3);
+      PARTITION_ID_3, ADDING_REPLICAS_3, REMOVING_REPLICAS_3);
 
   @Rule
   public final EasyMockRule mocks = new EasyMockRule(this);
@@ -96,47 +92,73 @@ public class ListAllReassignmentsActionTest {
     FakeAsyncResponse response = new FakeAsyncResponse();
     listAllReassignmentsAction.listReassignments(response, CLUSTER_ID);
 
-    ListReassignmentsResponse expected =
-        new ListReassignmentsResponse(
-            new CollectionLink("/v3/clusters/cluster-1/topics/-/partitions/-/reassignments",
-                /* next= */ null),
-            Arrays.asList(
-                new ReassignmentData(
-                    "crn:///kafka=cluster-1/topic=topic-1/partition=1/reassignment=1",
-                    new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/1"
-                        + "/reassignments/1"),
-                    CLUSTER_ID,
-                    TOPIC_1,
-                    PARTITION_ID_1,
-                    REPLICAS_1,
-                    ADDING_REPLICAS_1,
-                    REMOVING_REPLICAS_1,
-                    new Relationship(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas")),
-                new ReassignmentData(
-                    "crn:///kafka=cluster-1/topic=topic-1/partition=2/reassignment=2",
-                    new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/2"
-                        + "/reassignments/2"),
-                    CLUSTER_ID,
-                    TOPIC_1,
-                    PARTITION_ID_2,
-                    REPLICAS_2,
-                    ADDING_REPLICAS_2,
-                    REMOVING_REPLICAS_2,
-                    new Relationship(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/2/replicas")),
-                new ReassignmentData(
-                    "crn:///kafka=cluster-1/topic=topic-1/partition=3/reassignment=3",
-                    new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/3"
-                        + "/reassignments/3"),
-                    CLUSTER_ID,
-                    TOPIC_1,
-                    PARTITION_ID_3,
-                    REPLICAS_3,
-                    ADDING_REPLICAS_3,
-                    REMOVING_REPLICAS_3,
-                    new Relationship(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/3/replicas"))));
+    ListAllReassignmentsResponse expected =
+        ListAllReassignmentsResponse.create(
+            ReassignmentDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder()
+                        .setSelf("/v3/clusters/cluster-1/topics/-/partitions/-/reassignments")
+                        .build())
+                .setData(
+                    Arrays.asList(
+                        ReassignmentData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/topic-1/partitions/1"
+                                            + "/reassignments")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/partition=1"
+                                            + "/reassignments")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_1)
+                            .setPartitionId(PARTITION_ID_1)
+                            .setAddingReplicas(ADDING_REPLICAS_1)
+                            .setRemovingReplicas(REMOVING_REPLICAS_1)
+                            .setReplicas(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas"))
+                            .build(),
+                        ReassignmentData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/topic-1/partitions/2"
+                                            + "/reassignments")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/partition=2"
+                                            + "/reassignments")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_1)
+                            .setPartitionId(PARTITION_ID_2)
+                            .setAddingReplicas(ADDING_REPLICAS_2)
+                            .setRemovingReplicas(REMOVING_REPLICAS_2)
+                            .setReplicas(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/2/replicas"))
+                            .build(),
+                        ReassignmentData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/topic-1/partitions/3"
+                                            + "/reassignments")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/partition=3"
+                                            + "/reassignments")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_1)
+                            .setPartitionId(PARTITION_ID_3)
+                            .setAddingReplicas(ADDING_REPLICAS_3)
+                            .setRemovingReplicas(REMOVING_REPLICAS_3)
+                            .setReplicas(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/3/replicas"))
+                            .build()))
+                .build());
 
     assertEquals(expected, response.getValue());
   }
@@ -152,5 +174,4 @@ public class ListAllReassignmentsActionTest {
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }
-
 }

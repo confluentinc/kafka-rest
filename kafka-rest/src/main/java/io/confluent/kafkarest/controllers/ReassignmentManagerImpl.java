@@ -31,7 +31,7 @@ import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.PartitionReassignment;
 import org.apache.kafka.common.TopicPartition;
 
-public class ReassignmentManagerImpl implements ReassignmentManager {
+final class ReassignmentManagerImpl implements ReassignmentManager {
 
   private final Admin adminClient;
   private final ClusterManager clusterManager;
@@ -84,9 +84,7 @@ public class ReassignmentManagerImpl implements ReassignmentManager {
         clusterId,
         reassignment.getKey().topic(),
         reassignment.getKey().partition(),
-        reassignment.getValue().replicas(),
         reassignment.getValue().addingReplicas(),
         reassignment.getValue().removingReplicas());
   }
-
 }

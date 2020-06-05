@@ -16,59 +16,24 @@
 package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.auto.value.AutoValue;
 
-/**
- * Response body for {@code GET /v3/clusters/<clusterId>/topics/<topicName>/partitions} requests.
- */
-public final class ListPartitionsResponse {
+@AutoValue
+public abstract class ListPartitionsResponse {
 
-  private final CollectionLink links;
+  ListPartitionsResponse() {
+  }
 
-  private final List<PartitionData> data;
+  @JsonValue
+  public abstract PartitionDataList getValue();
+
+  public static ListPartitionsResponse create(PartitionDataList value) {
+    return new AutoValue_ListPartitionsResponse(value);
+  }
 
   @JsonCreator
-  public ListPartitionsResponse(@JsonProperty("links") CollectionLink links,
-                                @JsonProperty("data") List<PartitionData> data) {
-    this.links = Objects.requireNonNull(links);
-    this.data = Objects.requireNonNull(data);
-  }
-
-  @JsonProperty("links")
-  public CollectionLink getLinks() {
-    return links;
-  }
-
-  @JsonProperty("data")
-  public List<PartitionData> getData() {
-    return data;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ListPartitionsResponse that = (ListPartitionsResponse) o;
-    return Objects.equals(links, that.links) && Objects.equals(data, that.data);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(links, data);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", ListPartitionsResponse.class.getSimpleName() + "[", "]")
-        .add("links=" + links)
-        .add("data=" + data)
-        .toString();
+  static ListPartitionsResponse fromJson(PartitionDataList value) {
+    return create(value);
   }
 }

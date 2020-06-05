@@ -31,8 +31,6 @@ public abstract class Reassignment {
 
   public abstract int getPartitionId();
 
-  public abstract List<Integer> getReplicas();
-
   public abstract List<Integer> getAddingReplicas();
 
   public abstract List<Integer> getRemovingReplicas();
@@ -41,14 +39,12 @@ public abstract class Reassignment {
       String clusterId,
       String topicName,
       int partitionId,
-      List<Integer> replicas,
       List<Integer> addingReplicas,
       List<Integer> removingReplicas) {
     return new AutoValue_Reassignment(
         clusterId,
         topicName,
         partitionId,
-        ImmutableList.copyOf(replicas),
         ImmutableList.copyOf(addingReplicas),
         ImmutableList.copyOf(removingReplicas)
     );
