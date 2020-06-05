@@ -19,25 +19,21 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.auto.value.AutoValue;
 
-/**
- * Response body for {@code GET /v3/clusters/<clusterId>/topics/-/partitions/-/reassignments}
- * requests.
- */
 @AutoValue
-public abstract class ListReassignmentsResponse {
+public abstract class ListAllReassignmentsResponse {
 
-  ListReassignmentsResponse() {
+  ListAllReassignmentsResponse() {
   }
 
   @JsonValue
   public abstract ReassignmentDataList getValue();
 
-  public static ListReassignmentsResponse create(ReassignmentDataList value) {
-    return new AutoValue_ListReassignmentsResponse(value);
+  public static ListAllReassignmentsResponse create(ReassignmentDataList value) {
+    return new AutoValue_ListAllReassignmentsResponse(value);
   }
 
   @JsonCreator
-  static ListReassignmentsResponse fromJson(ReassignmentDataList value) {
+  static ListAllReassignmentsResponse fromJson(ReassignmentDataList value) {
     return create(value);
   }
 }

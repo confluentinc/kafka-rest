@@ -2,21 +2,24 @@ package io.confluent.kafkarest.integration.v3;
 
 import static org.junit.Assert.assertEquals;
 
-import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.v3.ListReassignmentsResponse;
+import io.confluent.kafkarest.entities.v3.ListAllReassignmentsResponse;
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.admin.NewPartitionReassignment;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+@RunWith(JUnit4.class)
 public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarness {
 
   private static final String TOPIC_NAME = "topic-1";
@@ -43,13 +46,13 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
 
     Response response = request("/v3/clusters/" + clusterId + "/topics/-/partitions"
         + "/-/reassignments")
-        .accept(Versions.JSON_API)
+        .accept(MediaType.APPLICATION_JSON)
         .get();
 
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    ListReassignmentsResponse actualReassignments =
-        response.readEntity(ListReassignmentsResponse.class);
+    ListAllReassignmentsResponse actualReassignments =
+        response.readEntity(ListAllReassignmentsResponse.class);
     for (ReassignmentData data : actualReassignments.getValue().getData()) {
       assertEquals(
           data.getAddingReplicas(),
@@ -64,7 +67,7 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
 
     Response response = request("/v3/clusters/foobar/topics/-/partitions"
         + "/-/reassignments")
-        .accept(Versions.JSON_API)
+        .accept(MediaType.APPLICATION_JSON)
         .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }

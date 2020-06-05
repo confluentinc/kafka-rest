@@ -46,7 +46,10 @@ import org.easymock.Mock;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+@RunWith(JUnit4.class)
 public class ReassignmentManagerImplTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -99,11 +102,11 @@ public class ReassignmentManagerImplTest {
       new HashMap<>();
 
   private static final Reassignment REASSIGNMENT_1 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_1, REPLICAS_1, ADDING_REPLICAS_1, REMOVING_REPLICAS_1);
+      PARTITION_ID_1, ADDING_REPLICAS_1, REMOVING_REPLICAS_1);
   private static final Reassignment REASSIGNMENT_2 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_2, REPLICAS_2, ADDING_REPLICAS_2, REMOVING_REPLICAS_2);
+      PARTITION_ID_2, ADDING_REPLICAS_2, REMOVING_REPLICAS_2);
   private static final Reassignment REASSIGNMENT_3 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_3, REPLICAS_3, ADDING_REPLICAS_3, REMOVING_REPLICAS_3);
+      PARTITION_ID_3, ADDING_REPLICAS_3, REMOVING_REPLICAS_3);
 
 
   @Rule
@@ -172,7 +175,7 @@ public class ReassignmentManagerImplTest {
   }
 
   @Test
-  public void getReassignment_existingClusterTopicPartition_returnsReassignments()
+  public void getReassignment_existingClusterTopicPartition_returnsReassignment()
       throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.listPartitionReassignments()).andReturn(listPartitionReassignmentsResult);

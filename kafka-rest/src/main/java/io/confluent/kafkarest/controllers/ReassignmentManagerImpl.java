@@ -83,7 +83,6 @@ final class ReassignmentManagerImpl implements ReassignmentManager {
         clusterId,
         reassignment.getKey().topic(),
         reassignment.getKey().partition(),
-        reassignment.getValue().replicas(),
         reassignment.getValue().addingReplicas(),
         reassignment.getValue().removingReplicas());
   }

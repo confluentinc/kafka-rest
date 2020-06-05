@@ -17,21 +17,23 @@ package io.confluent.kafkarest.integration.v3;
 
 import static org.junit.Assert.assertEquals;
 
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v3.GetReassignmentResponse;
-import io.confluent.kafkarest.entities.v3.ReassignmentData;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.admin.NewPartitionReassignment;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+@RunWith(JUnit4.class)
 public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
 
   private static final String TOPIC_NAME = "topic-1";
@@ -44,8 +46,7 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    Map<Integer, List<Integer>> replicaAssignments =
-        ListAllReassignmentsActionIntegrationTest.createAssignment(Arrays.asList(0, 1, 2));
+    Map<Integer, List<Integer>> replicaAssignments = createAssignment(Arrays.asList(0, 1, 2), 100);
     createTopic(TOPIC_NAME, replicaAssignments);
   }
 
@@ -54,22 +55,22 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
 
     Map<TopicPartition, Optional<NewPartitionReassignment>> reassignmentMap =
-        ListAllReassignmentsActionIntegrationTest.createReassignment(Arrays.asList(3, 4, 5));
+        createReassignment(Arrays.asList(3, 4, 5), TOPIC_NAME, 100);
 
     alterPartitionReassignment(reassignmentMap);
 
     Response response = request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME +
-        "/partitions/" + PARTITION_ID + "/reassignments")
-        .accept(Versions.JSON_API)
+        "/partitions/" + PARTITION_ID + "/reassignment")
+        .accept(MediaType.APPLICATION_JSON)
         .get();
 
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    ReassignmentData actualReassignment =
-        response.readEntity(GetReassignmentResponse.class).getData();
-    assertEquals(actualReassignment.getAttributes().getAddingReplicas(),
+    GetReassignmentResponse actualReassignment =
+        response.readEntity(GetReassignmentResponse.class);
+    assertEquals(actualReassignment.getValue().getAddingReplicas(),
         reassignmentMap.get(new TopicPartition(TOPIC_NAME,
-            actualReassignment.getAttributes().getPartitionId())).get().targetReplicas());
+            actualReassignment.getValue().getPartitionId())).get().targetReplicas());
   }
 
   @Test
@@ -78,7 +79,7 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_NAME + "/partitions/" + PARTITION_ID
             + "/reassignments")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -89,7 +90,7 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
 
     Response response = request("/v3/clusters/" + clusterId + "/topics/foobar/partitions/"
         + PARTITION_ID + "/reassignments")
-        .accept(Versions.JSON_API)
+        .accept(MediaType.APPLICATION_JSON)
         .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -100,7 +101,7 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
 
     Response response = request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME
         + "/partitions/10/reassignments")
-        .accept(Versions.JSON_API)
+        .accept(MediaType.APPLICATION_JSON)
         .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
