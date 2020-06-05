@@ -18,7 +18,6 @@ package io.confluent.kafkarest.resources.v3;
 import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.ReplicaManager;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.v3.ReplicaData;
@@ -39,6 +38,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.MediaType;
 
 @Path("/v3/clusters/{clusterId}/brokers/{brokerId}/partition-replicas")
 public final class SearchReplicasByBrokerAction {
@@ -56,7 +56,7 @@ public final class SearchReplicasByBrokerAction {
   }
 
   @GET
-  @Produces(Versions.JSON_API)
+  @Produces(MediaType.APPLICATION_JSON)
   public void searchReplicasByBroker(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

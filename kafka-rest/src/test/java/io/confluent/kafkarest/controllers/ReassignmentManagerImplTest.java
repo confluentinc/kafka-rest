@@ -16,7 +16,6 @@
 package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.common.KafkaFutures.failedFuture;
-import static java.util.Arrays.asList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -69,7 +68,7 @@ public class ReassignmentManagerImplTest {
 
 
   private static final Cluster CLUSTER =
-      Cluster.create(CLUSTER_ID, BROKER_1, asList(BROKER_1, BROKER_2, BROKER_3));
+      Cluster.create(CLUSTER_ID, BROKER_1, Arrays.asList(BROKER_1, BROKER_2, BROKER_3));
 
   private static final List<Integer> REPLICAS_1 = Arrays.asList(1, 2, 3, 4, 5);
   private static final List<Integer> REPLICAS_2 = Arrays.asList(1, 2, 3, 4);
@@ -142,7 +141,7 @@ public class ReassignmentManagerImplTest {
     List<Reassignment> reassignments = reassignmentManager.listReassignments(CLUSTER_ID)
         .get();
 
-    assertEquals(asList(REASSIGNMENT_1, REASSIGNMENT_2, REASSIGNMENT_3), reassignments);
+    assertEquals(Arrays.asList(REASSIGNMENT_1, REASSIGNMENT_2, REASSIGNMENT_3), reassignments);
   }
 
   @Test

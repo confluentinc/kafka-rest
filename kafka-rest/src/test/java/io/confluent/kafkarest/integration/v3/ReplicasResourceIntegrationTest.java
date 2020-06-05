@@ -18,7 +18,6 @@ package io.confluent.kafkarest.integration.v3;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v3.GetReplicaResponse;
 import io.confluent.kafkarest.entities.v3.ListReplicasResponse;
 import io.confluent.kafkarest.entities.v3.ReplicaData;
@@ -26,6 +25,7 @@ import io.confluent.kafkarest.entities.v3.ReplicaDataList;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.Before;
@@ -92,7 +92,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/0/replicas")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
@@ -106,7 +106,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/100/replicas")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -117,7 +117,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/foobar/partitions/0/replicas")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -126,7 +126,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
   public void listReplicas_nonExistingCluster_returnsNotFound() {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_NAME + "/partitions/0/replicas")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -164,7 +164,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/0/replicas/0")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
@@ -179,7 +179,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
     Response response =
         request(
             "/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/0/replicas/100")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -191,7 +191,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
     Response response =
         request(
             "/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/100/replicas/0")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -202,7 +202,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/foobar/partitions/0/replicas/0")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
@@ -211,7 +211,7 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
   public void getReplica_nonExistingCluster_returnsNotFound() {
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_NAME + "/partitions/0/replicas/0")
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }

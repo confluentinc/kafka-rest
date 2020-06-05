@@ -17,7 +17,6 @@ package io.confluent.kafkarest.resources.v3;
 
 import static java.util.Objects.requireNonNull;
 
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.PartitionManager;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.v3.GetPartitionResponse;
@@ -40,6 +39,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.MediaType;
 
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/partitions")
 public final class PartitionsResource {
@@ -60,7 +60,7 @@ public final class PartitionsResource {
   }
 
   @GET
-  @Produces(Versions.JSON_API)
+  @Produces(MediaType.APPLICATION_JSON)
   public void listPartitions(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -94,7 +94,7 @@ public final class PartitionsResource {
 
   @GET
   @Path("/{partitionId}")
-  @Produces(Versions.JSON_API)
+  @Produces(MediaType.APPLICATION_JSON)
   public void getPartition(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

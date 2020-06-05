@@ -18,7 +18,6 @@ package io.confluent.kafkarest.integration.v3;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v3.ClusterData;
 import io.confluent.kafkarest.entities.v3.ClusterDataList;
 import io.confluent.kafkarest.entities.v3.GetClusterResponse;
@@ -26,6 +25,7 @@ import io.confluent.kafkarest.entities.v3.ListClustersResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.Test;
@@ -78,7 +78,7 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
                             .build()))
                 .build());
 
-    Response response = request("/v3/clusters").accept(Versions.JSON_API).get();
+    Response response = request("/v3/clusters").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
     ListClustersResponse actual = response.readEntity(ListClustersResponse.class);
@@ -119,7 +119,7 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request(String.format("/v3/clusters/%s", clusterId))
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
@@ -129,7 +129,7 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
 
   @Test
   public void getCluster_differentCluster_returnsNotFound() {
-    Response response = request("/v3/clusters/foobar").accept(Versions.JSON_API).get();
+    Response response = request("/v3/clusters/foobar").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 }

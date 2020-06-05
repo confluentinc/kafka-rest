@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.rest.metrics.RestMetricsContext;
+import javax.ws.rs.core.MediaType;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Range;
@@ -37,12 +39,17 @@ import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 
+import static org.apache.kafka.clients.CommonClientConfigs.METRICS_CONTEXT_PREFIX;
+
 /**
  * Settings for the REST proxy server.
  */
 public class KafkaRestConfig extends RestConfig {
 
   private static final Logger log = LoggerFactory.getLogger(KafkaRestConfig.class);
+  private final KafkaRestMetricsContext metricsContext;
+  private static final String TELEMETRY_PREFIX = "confluent.telemetry";
+  private static final String METRIC_REPORTERS_PREFIX = "metric.reporters";
 
   public static final String ID_CONFIG = "id";
   private static final String ID_CONFIG_DOC =
@@ -343,7 +350,7 @@ public class KafkaRestConfig extends RestConfig {
         KAFKAREST_PORT_DEFAULT,
         KAFKAREST_LISTENERS_DEFAULT,
         String.join("," , Versions.PREFERRED_RESPONSE_TYPES),
-        Versions.JSON_API,
+        MediaType.APPLICATION_JSON,
         METRICS_JMX_PREFIX_DEFAULT_OVERRIDE
     )
     .define(
@@ -682,6 +689,9 @@ public class KafkaRestConfig extends RestConfig {
     super(configDef, props);
     this.originalProperties = props;
     this.time = time;
+    metricsContext = new KafkaRestMetricsContext(
+            getString(METRICS_JMX_PREFIX_CONFIG),
+            originalsWithPrefix(METRICS_CONTEXT_PREFIX));
   }
 
   public Time getTime() {
@@ -724,6 +734,9 @@ public class KafkaRestConfig extends RestConfig {
 
   public Properties getProducerProperties() {
     Properties producerProps = new Properties();
+    /* Propagate MetricsContext labels to managed components
+    / as prefixed configuration properties. */
+    addMetricsReporterProperties(producerProps);
     //add properties for V1 version of configuration parameters for backward compability
     //since producers need to support V1 with configuration change
     addExistingV1Properties(producerProps);
@@ -739,6 +752,9 @@ public class KafkaRestConfig extends RestConfig {
 
   public Properties getConsumerProperties() {
     Properties consumerProps = new Properties();
+    /* Propagate MetricsContext labels to managed components
+    / as prefixed configuration properties. */
+    addMetricsReporterProperties(consumerProps);
     //copy cover the properties with prefixes "client." and  "consumer."
     addPropertiesWithPrefix("client.", consumerProps);
     addPropertiesWithPrefix("consumer.", consumerProps);
@@ -750,11 +766,26 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   public Properties getAdminProperties() {
-    Properties consumerProps = new Properties();
+    Properties adminProps = new Properties();
+    /* Propagate MetricsContext labels to managed components
+       as prefixed configuration properties. */
+    addMetricsReporterProperties(adminProps);
     //copy cover the properties with prefixes "client." and  "admin."
-    addPropertiesWithPrefix("client.", consumerProps);
-    addPropertiesWithPrefix("admin.", consumerProps);
-    return consumerProps;
+    addPropertiesWithPrefix("client.", adminProps);
+    addPropertiesWithPrefix("admin.", adminProps);
+    return adminProps;
+  }
+
+  public void addMetricsReporterProperties(Properties props) {
+    getMetricsContext().contextLabels()
+            .forEach((label, value) -> props.put(METRICS_CONTEXT_PREFIX + label, value));
+    props.putAll(originalsWithPrefix(TELEMETRY_PREFIX, false));
+    props.putAll(originalsWithPrefix(METRIC_REPORTERS_PREFIX, false));
+  }
+
+  @Override
+  public RestMetricsContext getMetricsContext() {
+    return metricsContext.metricsContext();
   }
 
   public int consumerPort(String scheme) throws URISyntaxException {

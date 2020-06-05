@@ -17,7 +17,6 @@ package io.confluent.kafkarest.resources.v3;
 
 import static java.util.Objects.requireNonNull;
 
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.ClusterManager;
 import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.v3.ClusterData;
@@ -40,6 +39,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.MediaType;
 
 @Path("/v3/clusters")
 public final class ClustersResource {
@@ -60,7 +60,7 @@ public final class ClustersResource {
   }
 
   @GET
-  @Produces(Versions.JSON_API)
+  @Produces(MediaType.APPLICATION_JSON)
   public void listClusters(@Suspended AsyncResponse asyncResponse) {
     CompletableFuture<ListClustersResponse> response =
         clusterManager.get()
@@ -84,7 +84,7 @@ public final class ClustersResource {
 
   @GET
   @Path("/{clusterId}")
-  @Produces(Versions.JSON_API)
+  @Produces(MediaType.APPLICATION_JSON)
   public void getCluster(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<GetClusterResponse> response =

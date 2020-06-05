@@ -17,7 +17,6 @@ package io.confluent.kafkarest.integration.v3;
 
 import static org.junit.Assert.assertEquals;
 
-import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v3.BrokerData;
 import io.confluent.kafkarest.entities.v3.BrokerDataList;
 import io.confluent.kafkarest.entities.v3.GetBrokerResponse;
@@ -28,6 +27,7 @@ import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.ArrayList;
 import java.util.Arrays;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.common.Node;
@@ -147,7 +147,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                 .build());
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/brokers").accept(Versions.JSON_API).get();
+        request("/v3/clusters/" + clusterId + "/brokers").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
     ListBrokersResponse actual = response.readEntity(ListBrokersResponse.class);
@@ -156,7 +156,9 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
 
   @Test
   public void listBrokers_nonExistingCluster_returnsNotFound() {
-    Response response = request("/v3/clusters/foobar/brokers").accept(Versions.JSON_API).get();
+    Response response =
+        request("/v3/clusters/foobar/brokers")
+            .accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -200,7 +202,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/" + nodes.get(0).id())
-            .accept(Versions.JSON_API)
+            .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
@@ -210,7 +212,9 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
 
   @Test
   public void getBroker_nonExistingCluster_returnsNotFound() {
-    Response response = request("/v3/clusters/foobar/brokers/1").accept(Versions.JSON_API).get();
+    Response response =
+        request("/v3/clusters/foobar/brokers/1")
+            .accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -219,7 +223,8 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/brokers/100").accept(Versions.JSON_API).get();
+        request("/v3/clusters/" + clusterId + "/brokers/100")
+            .accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 }

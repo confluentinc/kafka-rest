@@ -44,11 +44,10 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
 
     alterPartitionReassignment(reassignmentMap);
 
-    Response response = request("/v3/clusters/" + clusterId + "/topics/-/partitions"
-        + "/-/reassignments")
-        .accept(MediaType.APPLICATION_JSON)
-        .get();
-
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics/-/partitions/-/reassignments")
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
     ListAllReassignmentsResponse actualReassignments =
@@ -65,10 +64,10 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
   @Test
   public void listAllReassignments_nonExistingCluster_returnsNotFound() throws Exception {
 
-    Response response = request("/v3/clusters/foobar/topics/-/partitions"
-        + "/-/reassignments")
+    Response response = request("/v3/clusters/foobar/topics/-/partitions/-/reassignments")
         .accept(MediaType.APPLICATION_JSON)
         .get();
+
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 }
