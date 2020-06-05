@@ -32,6 +32,13 @@ public interface ReassignmentManager {
   CompletableFuture<List<Reassignment>> listReassignments(String clusterId);
 
   /**
+   * Returns a list of Kafka {@link Reassignment Reassignments} for Kafka {@link Topic Topic} with
+   * the given {@code topicName} for a Kafka {@link Cluster} with the given {@code clusterId}.
+   */
+  CompletableFuture<List<Reassignment>> searchReassignmentsByTopicName(
+      String clusterId, String topicName);
+
+  /**
    * Returns a list of Kafka {@link Reassignment Reassignments} for a Kafka {@link Topic Topic} with
    * given {@code topicName} for a Kafka {@link Partition Partition} with the given {@code
    * partitionId} for a Kafka {@link Cluster Cluster} with the given {@code clusterId}.

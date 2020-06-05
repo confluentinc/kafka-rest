@@ -68,6 +68,18 @@ final class ReassignmentManagerImpl implements ReassignmentManager {
   }
 
   @Override
+  public CompletableFuture<List<Reassignment>> searchReassignmentsByTopicName(
+      String clusterId, String topicName) {
+    return listReassignments(clusterId)
+        .thenApply(reassignments -> reassignments.stream()
+            .filter(reassignment -> reassignment.getTopicName().equals(topicName))
+            .sorted(
+                Comparator.comparing(Reassignment::getTopicName)
+                    .thenComparing(Reassignment::getPartitionId))
+            .collect(Collectors.toList()));
+  }
+
+  @Override
   public CompletableFuture<Optional<Reassignment>> getReassignment(
       String clusterId, String topicName, Integer partitionId) {
     return listReassignments(clusterId)
