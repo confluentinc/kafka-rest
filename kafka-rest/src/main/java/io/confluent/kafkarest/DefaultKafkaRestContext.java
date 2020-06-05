@@ -16,6 +16,8 @@
 package io.confluent.kafkarest;
 
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
+import java.util.Properties;
+import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AdminClient;
 
 /**
@@ -28,20 +30,16 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   private final KafkaRestConfig config;
   private ProducerPool producerPool;
   private KafkaConsumerManager kafkaConsumerManager;
-  private AdminClientWrapper adminClientWrapper;
-  private AdminClient admin;
+  private Admin adminClient;
 
   public DefaultKafkaRestContext(
       KafkaRestConfig config,
       ProducerPool producerPool,
-      KafkaConsumerManager kafkaConsumerManager,
-      AdminClientWrapper adminClientWrapper
+      KafkaConsumerManager kafkaConsumerManager
   ) {
-
     this.config = config;
     this.producerPool = producerPool;
     this.kafkaConsumerManager = kafkaConsumerManager;
-    this.adminClientWrapper = adminClientWrapper;
   }
 
 
@@ -67,19 +65,20 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   }
 
   @Override
-  public AdminClientWrapper getAdminClientWrapper() {
-    if (adminClientWrapper == null) {
-      adminClientWrapper = new AdminClientWrapper(config, getAdmin());
+  public Admin getAdmin() {
+    if (adminClient == null) {
+      adminClient = AdminClient.create(adminProperties(config));
     }
-    return adminClientWrapper;
+    return adminClient;
   }
 
-  @Override
-  public AdminClient getAdmin() {
-    if (admin == null) {
-      admin = AdminClient.create(AdminClientWrapper.adminProperties(config));
-    }
-    return admin;
+  public static Properties adminProperties(KafkaRestConfig kafkaRestConfig) {
+    Properties properties = new Properties();
+    properties.putAll(kafkaRestConfig.getAdminProperties());
+    properties.put(
+        KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG,
+        RestConfigUtils.bootstrapBrokers(kafkaRestConfig));
+    return properties;
   }
 
   @Override
@@ -90,8 +89,8 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
     if (producerPool != null) {
       producerPool.shutdown();
     }
-    if (adminClientWrapper != null) {
-      adminClientWrapper.shutdown();
+    if (adminClient != null) {
+      adminClient.close();
     }
   }
 }

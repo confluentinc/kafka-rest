@@ -95,7 +95,7 @@ public class TopicsResourceAvroProduceTest
 
   public TopicsResourceAvroProduceTest() throws RestConfigException {
     producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new DefaultKafkaRestContext(config, producerPool, null, null);
+    ctx = new DefaultKafkaRestContext(config, producerPool, /* kafkaConsumerManager= */ null);
 
     addResource(new ProduceToTopicAction(ctx));
 
