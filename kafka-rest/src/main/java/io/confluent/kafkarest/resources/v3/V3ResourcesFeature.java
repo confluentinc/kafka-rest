@@ -22,6 +22,7 @@ public final class V3ResourcesFeature implements Feature {
 
   @Override
   public boolean configure(FeatureContext configurable) {
+    configurable.register(AclsResource.class);
     configurable.register(BrokerConfigsResource.class);
     configurable.register(BrokersResource.class);
     configurable.register(ClusterConfigsResource.class);

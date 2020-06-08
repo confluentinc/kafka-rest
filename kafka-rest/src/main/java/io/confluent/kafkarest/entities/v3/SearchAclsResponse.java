@@ -13,26 +13,27 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.response;
+package io.confluent.kafkarest.entities.v3;
 
-/**
- * A fake {@link UrlFactory} to be used in tests.
- */
-public final class FakeUrlFactory implements UrlFactory {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.auto.value.AutoValue;
 
-  private static final char SEPARATOR = '/';
+@AutoValue
+public abstract class SearchAclsResponse {
 
-  @Override
-  public String create(String... segments) {
-    UrlBuilder urlBuilder = newUrlBuilder();
-    for (String segment : segments) {
-      urlBuilder.appendPathSegment(segment);
-    }
-    return urlBuilder.toString();
+  SearchAclsResponse() {
   }
 
-  @Override
-  public UrlBuilder newUrlBuilder() {
-    return new UrlBuilder(/* baseUrl= */ "");
+  @JsonValue
+  public abstract AclDataList getValue();
+
+  public static SearchAclsResponse create(AclDataList value) {
+    return new AutoValue_SearchAclsResponse(value);
+  }
+
+  @JsonCreator
+  static SearchAclsResponse fromJson(AclDataList value) {
+    return create(value);
   }
 }
