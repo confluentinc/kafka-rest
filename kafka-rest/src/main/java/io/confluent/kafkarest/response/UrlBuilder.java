@@ -41,8 +41,7 @@ public final class UrlBuilder {
     return this;
   }
 
-  @Override
-  public String toString() {
+  public String build() {
     StringBuilder url = new StringBuilder().append(baseUrl);
     for (String pathSegment : pathSegments) {
       url.append('/').append(pathSegment);

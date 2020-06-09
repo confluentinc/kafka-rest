@@ -28,7 +28,7 @@ public final class FakeUrlFactory implements UrlFactory {
     for (String segment : segments) {
       urlBuilder.appendPathSegment(segment);
     }
-    return urlBuilder.toString();
+    return urlBuilder.build();
   }
 
   @Override

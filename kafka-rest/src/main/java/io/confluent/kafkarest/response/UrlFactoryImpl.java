@@ -53,7 +53,7 @@ final class UrlFactoryImpl implements UrlFactory {
         urlBuilder.appendPathSegment(stripped);
       }
     }
-    return urlBuilder.toString();
+    return urlBuilder.build();
   }
 
   @Override

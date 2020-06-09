@@ -124,7 +124,7 @@ public final class AclsResource {
                                             .putQueryParameter("host", host)
                                             .putQueryParameter("operation", operation.name())
                                             .putQueryParameter("permission", permission.name())
-                                            .toString())
+                                            .build())
                                     .build())
                             .setData(
                                 acls.stream()
@@ -198,7 +198,7 @@ public final class AclsResource {
                         .putQueryParameter("host", request.getHost())
                         .putQueryParameter("operation", request.getOperation().name())
                         .putQueryParameter("permission", request.getPermission().name())
-                        .toString())))
+                        .build())))
         .entity(response)
         .asyncResume(asyncResponse);
   }
@@ -275,7 +275,7 @@ public final class AclsResource {
                         .putQueryParameter("host", acl.getHost())
                         .putQueryParameter("operation", acl.getOperation().name())
                         .putQueryParameter("permission", acl.getPermission().name())
-                        .toString())
+                        .build())
                 .build())
         .build();
   }
