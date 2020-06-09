@@ -1,5 +1,5 @@
-Kafka REST Proxy
-================
+Kafka REST Proxy - rest test hello world
+================ 
 
 The Kafka REST Proxy provides a RESTful interface to a Kafka cluster. It makes
 it easy to produce and consume messages, view the state of the cluster, and
