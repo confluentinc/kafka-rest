@@ -16,8 +16,12 @@
 package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
 public abstract class Resource {
 
@@ -50,7 +54,8 @@ public abstract class Resource {
     public abstract String getSelf();
 
     @JsonProperty("resource_name")
-    public abstract String getResourceName();
+    @JsonInclude(Include.NON_ABSENT)
+    public abstract Optional<String> getResourceName();
 
     public static Builder builder() {
       return new AutoValue_Resource_Metadata.Builder();
@@ -58,7 +63,8 @@ public abstract class Resource {
 
     @JsonCreator
     static Metadata fromJson(
-        @JsonProperty("self") String self, @JsonProperty("resource_name") String resourceName) {
+        @JsonProperty("self") String self,
+        @JsonProperty("resource_name") @Nullable String resourceName) {
       return builder()
           .setSelf(self)
           .setResourceName(resourceName)
@@ -73,7 +79,7 @@ public abstract class Resource {
 
       public abstract Builder setSelf(String self);
 
-      public abstract Builder setResourceName(String resourceName);
+      public abstract Builder setResourceName(@Nullable String resourceName);
 
       public abstract Metadata build();
     }

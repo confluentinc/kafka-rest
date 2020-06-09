@@ -223,7 +223,7 @@ public abstract class ClusterTestHarness {
 
     int restPort = choosePort();
     restProperties.put(KafkaRestConfig.PORT_CONFIG, ((Integer) restPort).toString());
-    restProperties.put(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG, zkConnect);
+    restProperties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     overrideKafkaRestConfigs(restProperties);
     if (withSchemaRegistry) {
       restProperties.put(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegConnect);
@@ -256,7 +256,8 @@ public abstract class ClusterTestHarness {
 
   protected Properties getBrokerProperties(int i) {
     final Option<File> noFile = Option.apply(null);
-    final Option<SecurityProtocol> noInterBrokerSecurityProtocol = Option.apply(null);
+    final Option<SecurityProtocol> noInterBrokerSecurityProtocol =
+        Option.apply(getBrokerSecurityProtocol());
     Properties props = TestUtils.createBrokerConfig(
         i, zkConnect, false, false, TestUtils.RandomPort(), noInterBrokerSecurityProtocol,
         noFile, Option.<Properties>empty(), true, false, TestUtils.RandomPort(), false,

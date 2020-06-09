@@ -17,7 +17,11 @@
 set -euo pipefail
 
 echo "===> Configuring kafka-rest..."
-env | grep ^KAFKA_REST | sed -e 's/KAFKA_REST_\([^=]*\)/\L\1/' -e 's/_/./' > /etc/kafka-rest/kafka-rest.properties
+env | grep ^KAFKA_REST \
+  | sed -e 's/KAFKA_REST_\([^=]*\)/\L\1/' -e 's/=.*/\n&/' \
+  | sed -e '/^[^=]/ s/_/./g' \
+  | sed -e '/./{H;$!d} ; x ; s/\n=/=/g' \
+  > /etc/kafka-rest/kafka-rest.properties
 
 echo "===> Installed files:"
 find /etc/kafka-rest/ /usr/share/kafka-rest/ -type f -print | sort
