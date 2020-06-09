@@ -1,4 +1,4 @@
-Kafka REST Proxy
+Kafka REST Proxy - HELLO WORLD
 ================
 
 The Kafka REST Proxy provides a RESTful interface to a Kafka cluster. It makes
