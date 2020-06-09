@@ -15,38 +15,45 @@
 
 package io.confluent.kafkarest.extension;
 
-import io.confluent.kafkarest.entities.ClusterConfig;
+import static java.util.Objects.requireNonNull;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import javax.ws.rs.ext.ParamConverter;
 import javax.ws.rs.ext.ParamConverterProvider;
 
-public final class ClusterConfigTypeConverterProvider implements ParamConverterProvider {
+public final class EnumConverterProvider implements ParamConverterProvider {
 
   @Override
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   public <T> ParamConverter<T> getConverter(
       Class<T> rawType, Type genericType, Annotation[] annotations) {
-    if (!rawType.equals(ClusterConfig.Type.class)) {
+    if (!Enum.class.isAssignableFrom(rawType)) {
       return null;
     }
-    return (ParamConverter<T>) ClusterConfigTypeConverter.INSTANCE;
+    return (ParamConverter<T>) new EnumConverter<>((Class<Enum>) rawType);
   }
 
-  private enum ClusterConfigTypeConverter implements ParamConverter<ClusterConfig.Type> {
-    INSTANCE;
+  private static final class EnumConverter<T extends Enum<T>>
+      implements ParamConverter<T> {
+
+    private final Class<T> enumClass;
+
+    private EnumConverter(Class<T> enumClass) {
+      this.enumClass = requireNonNull(enumClass);
+    }
 
     @Override
-    public ClusterConfig.Type fromString(String value) {
+    public T fromString(String value) {
       if (value == null) {
         return null;
       }
-      return ClusterConfig.Type.valueOf(value.toUpperCase());
+      return Enum.valueOf(enumClass, value.toUpperCase());
     }
 
     @Override
-    public String toString(ClusterConfig.Type value) {
-      return value.toString().toLowerCase();
+    public String toString(T value) {
+      throw new UnsupportedOperationException();
     }
   }
 }

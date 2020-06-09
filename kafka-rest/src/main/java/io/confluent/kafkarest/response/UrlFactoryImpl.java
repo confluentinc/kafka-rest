@@ -21,7 +21,6 @@ import io.confluent.kafkarest.config.ConfigModule.HostNameConfig;
 import io.confluent.kafkarest.config.ConfigModule.ListenersConfig;
 import io.confluent.kafkarest.config.ConfigModule.PortConfig;
 import java.util.List;
-import java.util.StringJoiner;
 import javax.inject.Inject;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
@@ -46,15 +45,20 @@ final class UrlFactoryImpl implements UrlFactory {
   }
 
   @Override
-  public String create(String... components) {
-    StringJoiner joiner = new StringJoiner(String.valueOf(SEPARATOR)).add(baseUrl);
-    for (String component : components) {
+  public String create(String... segments) {
+    UrlBuilder urlBuilder = newUrlBuilder();
+    for (String component : segments) {
       String stripped = trimSeparator(component);
       if (!stripped.isEmpty()) {
-        joiner.add(stripped);
+        urlBuilder.appendPathSegment(stripped);
       }
     }
-    return joiner.toString();
+    return urlBuilder.build();
+  }
+
+  @Override
+  public UrlBuilder newUrlBuilder() {
+    return new UrlBuilder(baseUrl);
   }
 
   private static String computeBaseUrl(

@@ -23,6 +23,7 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 public final class ControllersModule extends AbstractBinder {
 
   protected void configure() {
+    bind(AclManagerImpl.class).to(AclManager.class);
     bind(BrokerConfigManagerImpl.class).to(BrokerConfigManager.class);
     bind(BrokerManagerImpl.class).to(BrokerManager.class);
     bind(ClusterConfigManagerImpl.class).to(ClusterConfigManager.class);
