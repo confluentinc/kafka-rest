@@ -48,6 +48,9 @@ public abstract class ClusterData extends Resource {
   @JsonProperty("topic_configs")
   public abstract Relationship getTopicConfigs();
 
+  @JsonProperty("reassignment")
+  public abstract Relationship getReassignment();
+
   public static Builder builder() {
     return new AutoValue_ClusterData.Builder().setKind("KafkaCluster");
   }
@@ -65,7 +68,8 @@ public abstract class ClusterData extends Resource {
       @JsonProperty("brokers") Relationship brokers,
       @JsonProperty("topics") Relationship topics,
       @JsonProperty("broker_configs") Relationship brokerConfigs,
-      @JsonProperty("topic_configs") Relationship topicConfigs
+      @JsonProperty("topic_configs") Relationship topicConfigs,
+      @JsonProperty("reassignment") Relationship reassignment
   ) {
     return builder()
         .setKind(kind)
@@ -76,6 +80,7 @@ public abstract class ClusterData extends Resource {
         .setTopics(topics)
         .setBrokerConfigs(brokerConfigs)
         .setTopicConfigs(topicConfigs)
+        .setReassignment(reassignment)
         .build();
   }
 
@@ -96,6 +101,8 @@ public abstract class ClusterData extends Resource {
     public abstract Builder setBrokerConfigs(Relationship brokerConfigs);
 
     public abstract Builder setTopicConfigs(Relationship topicConfigs);
+
+    public abstract Builder setReassignment(Relationship reassignment);
 
     public abstract ClusterData build();
   }

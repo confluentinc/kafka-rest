@@ -142,7 +142,18 @@ public final class PartitionsResource {
                         partition.getTopicName(),
                         "partitions",
                         Integer.toString(partition.getPartitionId()),
-                        "replicas")));
+                        "replicas")))
+        .setReassignment(
+            Resource.Relationship.create(
+                urlFactory.create(
+                    "v3",
+                    "clusters",
+                    partition.getClusterId(),
+                    "topics",
+                    partition.getTopicName(),
+                    "partitions",
+                    Integer.toString(partition.getPartitionId()),
+                    "reassignment")));
 
     partition.getLeader()
         .map(

@@ -115,7 +115,11 @@ public final class ClustersResource {
                     urlFactory.create("v3", "clusters", cluster.getClusterId(), "broker-configs")))
             .setTopicConfigs(
                 Resource.Relationship.create(
-                    urlFactory.create("v3", "clusters", cluster.getClusterId(), "topic-configs")));
+                    urlFactory.create("v3", "clusters", cluster.getClusterId(), "topic-configs")))
+            .setReassignment(
+                Resource.Relationship.create(
+                    urlFactory.create("v3", "clusters", cluster.getClusterId(), "topics", "-",
+                        "partitions", "-", "reassignment")));
 
     if (cluster.getController() != null) {
       clusterData.setController(

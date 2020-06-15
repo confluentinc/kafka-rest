@@ -106,6 +106,9 @@ public class ClustersResourceTest {
                             .setTopicConfigs(
                                 Resource.Relationship.create(
                                     "/v3/clusters/cluster-1/topic-configs"))
+                            .setReassignment(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/-/partitions/-/reassignment"))
                             .build()))
                 .build());
 
@@ -148,6 +151,9 @@ public class ClustersResourceTest {
                     Resource.Relationship.create("/v3/clusters/cluster-1/broker-configs"))
                 .setTopicConfigs(
                     Resource.Relationship.create("/v3/clusters/cluster-1/topic-configs"))
+                .setReassignment(
+                    Resource.Relationship.create("/v3/clusters/cluster-1/topics/-/partitions"
+                        + "/-/reassignment"))
                 .build());
 
     assertEquals(expected, response.getValue());

@@ -78,7 +78,7 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_NAME + "/partitions/" + PARTITION_ID
-            + "/reassignments")
+            + "/reassignment")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -89,7 +89,7 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
 
     Response response = request("/v3/clusters/" + clusterId + "/topics/foobar/partitions/"
-        + PARTITION_ID + "/reassignments")
+        + PARTITION_ID + "/reassignment")
         .accept(MediaType.APPLICATION_JSON)
         .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -100,7 +100,7 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
 
     Response response = request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME
-        + "/partitions/10/reassignments")
+        + "/partitions/10/reassignment")
         .accept(MediaType.APPLICATION_JSON)
         .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());

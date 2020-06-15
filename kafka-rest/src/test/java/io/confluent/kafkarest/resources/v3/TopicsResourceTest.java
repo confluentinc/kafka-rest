@@ -368,6 +368,10 @@ public class TopicsResourceTest {
                             .setConfigs(
                                 Resource.Relationship.create(
                                     "/v3/clusters/cluster-1/topics/topic-1/configs"))
+                            .setReassignment(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions"
+                                        + "/-/reassignment"))
                             .build(),
                         TopicData.builder()
                             .setMetadata(
@@ -385,6 +389,10 @@ public class TopicsResourceTest {
                             .setConfigs(
                                 Resource.Relationship.create(
                                     "/v3/clusters/cluster-1/topics/topic-2/configs"))
+                            .setReassignment(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-2/partitions"
+                                        + "/-/reassignment"))
                             .build(),
                         TopicData.builder()
                             .setMetadata(
@@ -402,6 +410,10 @@ public class TopicsResourceTest {
                             .setConfigs(
                                 Resource.Relationship.create(
                                     "/v3/clusters/cluster-1/topics/topic-3/configs"))
+                            .setReassignment(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-3/partitions"
+                                        + "/-/reassignment"))
                             .build()))
                 .build());
 
@@ -459,6 +471,9 @@ public class TopicsResourceTest {
                 .setConfigs(
                     Resource.Relationship.create(
                         "/v3/clusters/cluster-1/topics/topic-1/configs"))
+                .setReassignment(
+                    Resource.Relationship.create(
+                        "/v3/clusters/cluster-1/topics/topic-1/partitions/-/reassignment"))
                 .build());
 
     assertEquals(expected, response.getValue());
@@ -530,6 +545,9 @@ public class TopicsResourceTest {
                 .setConfigs(
                     Resource.Relationship.create(
                         "/v3/clusters/cluster-1/topics/topic-1/configs"))
+                .setReassignment(
+                    Resource.Relationship.create(
+                        "/v3/clusters/cluster-1/topics/topic-1/partitions/-/reassignment"))
                 .build());
 
     assertEquals(expected, response.getValue());

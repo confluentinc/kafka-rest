@@ -196,6 +196,17 @@ public final class TopicsResource {
                     "topics",
                     topic.getName(),
                     "configs")))
+        .setReassignment(
+            Resource.Relationship.create(
+                urlFactory.create(
+                    "v3",
+                    "clusters",
+                    topic.getClusterId(),
+                    "topics",
+                    topic.getName(),
+                    "partitions",
+                    "-",
+                    "reassignment")))
         .build();
   }
 }

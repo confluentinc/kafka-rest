@@ -39,7 +39,7 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
-@Path("/v3/clusters/{clusterId}/topics/{topicName}/partitions/-/reassignments")
+@Path("/v3/clusters/{clusterId}/topics/{topicName}/partitions/-/reassignment")
 public final class SearchReassignmentsByTopicAction {
 
   private final Provider<ReassignmentManager> reassignmentManager;
