@@ -78,9 +78,11 @@ public abstract class ClusterData extends Resource {
         .setMetadata(metadata)
         .setClusterId(clusterId)
         .setController(controller)
+        .setAcls(acls)
         .setBrokers(brokers)
-        .setTopics(topics)
         .setBrokerConfigs(brokerConfigs)
+        .setConsumerGroups(consumerGroups)
+        .setTopics(topics)
         .setTopicConfigs(topicConfigs)
         .build();
   }
