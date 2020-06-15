@@ -58,4 +58,12 @@ public abstract class Broker {
         node.port() != -1 ? node.port() : null,
         node.rack());
   }
+
+  public Node toNode() {
+    return new Node(
+        getBrokerId(),
+        getHost() != null ? getHost() : "",
+        getPort() != null ? getPort() : -1,
+        getRack());
+  }
 }

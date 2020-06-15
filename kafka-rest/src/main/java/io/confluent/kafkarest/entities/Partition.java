@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import org.apache.kafka.common.TopicPartition;
 
 @AutoValue
 public abstract class Partition {
@@ -73,5 +74,9 @@ public abstract class Partition {
         ImmutableList.copyOf(replicas),
         earliestOffset,
         latestOffset);
+  }
+
+  public TopicPartition toTopicPartition() {
+    return new TopicPartition(getTopicName(), getPartitionId());
   }
 }

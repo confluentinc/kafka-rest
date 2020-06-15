@@ -85,7 +85,7 @@ public final class PartitionsResource {
                                     .build())
                             .setData(
                                 partitions.stream()
-                                    .map(this::toPartitionData2)
+                                    .map(this::toPartitionData)
                                     .collect(Collectors.toList()))
                             .build()));
 
@@ -104,12 +104,17 @@ public final class PartitionsResource {
         partitionManager.get()
             .getPartition(clusterId, topicName, partitionId)
             .thenApply(partition -> partition.orElseThrow(NotFoundException::new))
-            .thenApply(partition -> GetPartitionResponse.create(toPartitionData2(partition)));
+            .thenApply(partition -> GetPartitionResponse.create(toPartitionData(partition)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
 
-  private PartitionData toPartitionData2(Partition partition) {
+  private PartitionData toPartitionData(Partition partition) {
+    return toPartitionData(crnFactory, urlFactory, partition);
+  }
+
+  static PartitionData toPartitionData(
+      CrnFactory crnFactory, UrlFactory urlFactory, Partition partition) {
     PartitionData.Builder partitionData =
         PartitionData.fromPartition(partition)
             .setMetadata(
