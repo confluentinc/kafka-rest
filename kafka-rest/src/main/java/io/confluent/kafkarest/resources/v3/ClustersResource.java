@@ -104,15 +104,21 @@ public final class ClustersResource {
                     .setSelf(urlFactory.create("v3", "clusters", cluster.getClusterId()))
                     .setResourceName(crnFactory.create("kafka", cluster.getClusterId()))
                     .build())
+            .setAcls(
+                Resource.Relationship.create(
+                    urlFactory.create("v3", "clusters", cluster.getClusterId(), "acls")))
             .setBrokers(
                 Resource.Relationship.create(
                     urlFactory.create("v3", "clusters", cluster.getClusterId(), "brokers")))
-            .setTopics(
-                Resource.Relationship.create(
-                    urlFactory.create("v3", "clusters", cluster.getClusterId(), "topics")))
             .setBrokerConfigs(
                 Resource.Relationship.create(
                     urlFactory.create("v3", "clusters", cluster.getClusterId(), "broker-configs")))
+            .setConsumerGroups(
+                Resource.Relationship.create(
+                    urlFactory.create("v3", "clusters", cluster.getClusterId(), "consumer-groups")))
+            .setTopics(
+                Resource.Relationship.create(
+                    urlFactory.create("v3", "clusters", cluster.getClusterId(), "topics")))
             .setTopicConfigs(
                 Resource.Relationship.create(
                     urlFactory.create("v3", "clusters", cluster.getClusterId(), "topic-configs")));
