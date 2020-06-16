@@ -63,15 +63,21 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
                                     baseUrl
                                         + "/v3/clusters/" + clusterId
                                         + "/brokers/" + controllerId))
+                            .setAcls(
+                                Resource.Relationship.create(
+                                    baseUrl + "/v3/clusters/" + clusterId + "/acls"))
                             .setBrokers(
                                 Resource.Relationship.create(
                                     baseUrl + "/v3/clusters/" + clusterId + "/brokers"))
-                            .setTopics(
-                                Resource.Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId + "/topics"))
                             .setBrokerConfigs(
                                 Resource.Relationship.create(
                                     baseUrl + "/v3/clusters/" + clusterId + "/broker-configs"))
+                            .setConsumerGroups(
+                                Resource.Relationship.create(
+                                    baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups"))
+                            .setTopics(
+                                Resource.Relationship.create(
+                                    baseUrl + "/v3/clusters/" + clusterId + "/topics"))
                             .setTopicConfigs(
                                 Resource.Relationship.create(
                                     baseUrl + "/v3/clusters/" + clusterId + "/topic-configs"))
@@ -103,15 +109,21 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
                 .setController(
                     Resource.Relationship.create(
                         baseUrl + "/v3/clusters/" + clusterId + "/brokers/" + controllerId))
+                .setAcls(
+                    Resource.Relationship.create(
+                        baseUrl + "/v3/clusters/" + clusterId + "/acls"))
                 .setBrokers(
                     Resource.Relationship.create(
                         baseUrl + "/v3/clusters/" + clusterId + "/brokers"))
-                .setTopics(
-                    Resource.Relationship.create(
-                        baseUrl + "/v3/clusters/" + clusterId + "/topics"))
                 .setBrokerConfigs(
                     Resource.Relationship.create(
                         baseUrl + "/v3/clusters/" + clusterId + "/broker-configs"))
+                .setConsumerGroups(
+                    Resource.Relationship.create(
+                        baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups"))
+                .setTopics(
+                    Resource.Relationship.create(
+                        baseUrl + "/v3/clusters/" + clusterId + "/topics"))
                 .setTopicConfigs(
                     Resource.Relationship.create(
                         baseUrl + "/v3/clusters/" + clusterId + "/topic-configs"))

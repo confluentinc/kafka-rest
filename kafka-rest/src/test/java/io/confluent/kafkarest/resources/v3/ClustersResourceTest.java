@@ -96,13 +96,17 @@ public class ClustersResourceTest {
                             .setClusterId("cluster-1")
                             .setController(
                                 Resource.Relationship.create("/v3/clusters/cluster-1/brokers/1"))
+                            .setAcls(Resource.Relationship.create("/v3/clusters/cluster-1/acls"))
                             .setBrokers(
                                 Resource.Relationship.create("/v3/clusters/cluster-1/brokers"))
-                            .setTopics(
-                                Resource.Relationship.create("/v3/clusters/cluster-1/topics"))
                             .setBrokerConfigs(
                                 Resource.Relationship.create(
                                     "/v3/clusters/cluster-1/broker-configs"))
+                            .setConsumerGroups(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/consumer-groups"))
+                            .setTopics(
+                                Resource.Relationship.create("/v3/clusters/cluster-1/topics"))
                             .setTopicConfigs(
                                 Resource.Relationship.create(
                                     "/v3/clusters/cluster-1/topic-configs"))
@@ -142,10 +146,13 @@ public class ClustersResourceTest {
                         .build())
                 .setClusterId("cluster-1")
                 .setController(Resource.Relationship.create("/v3/clusters/cluster-1/brokers/1"))
+                .setAcls(Resource.Relationship.create("/v3/clusters/cluster-1/acls"))
                 .setBrokers(Resource.Relationship.create("/v3/clusters/cluster-1/brokers"))
-                .setTopics(Resource.Relationship.create("/v3/clusters/cluster-1/topics"))
                 .setBrokerConfigs(
                     Resource.Relationship.create("/v3/clusters/cluster-1/broker-configs"))
+                .setConsumerGroups(
+                    Resource.Relationship.create("/v3/clusters/cluster-1/consumer-groups"))
+                .setTopics(Resource.Relationship.create("/v3/clusters/cluster-1/topics"))
                 .setTopicConfigs(
                     Resource.Relationship.create("/v3/clusters/cluster-1/topic-configs"))
                 .build());
