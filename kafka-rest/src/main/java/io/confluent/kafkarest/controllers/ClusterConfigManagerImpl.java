@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.controllers;
 
+import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.ClusterConfig;
 import java.util.List;
 import java.util.Optional;
@@ -68,5 +69,11 @@ final class ClusterConfigManagerImpl
     // currently of knowing which config names are valid to delete. So we skip the existence check.
     // If the config is not valid, it will fail silently.
     return unsafeResetConfig(clusterId, new ConfigResource(type.getAdminType(), ""), name);
+  }
+
+  @Override
+  public CompletableFuture<Void> alterClusterConfigs(
+      String clusterId, ClusterConfig.Type type, List<AlterConfigCommand> commands) {
+    return unsafeAlterConfigs(clusterId, new ConfigResource(type.getAdminType(), ""), commands);
   }
 }

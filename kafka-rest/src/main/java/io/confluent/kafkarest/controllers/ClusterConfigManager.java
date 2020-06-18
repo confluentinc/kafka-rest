@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.controllers;
 
+import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.ClusterConfig;
 import java.util.List;
 import java.util.Optional;
@@ -46,4 +47,11 @@ public interface ClusterConfigManager {
    */
   CompletableFuture<Void> deleteClusterConfig(
       String clusterId, ClusterConfig.Type type, String name);
+
+  /**
+   * Atomically alters the Kafka {@link ClusterConfig Cluster Configs} according to {@code
+   * commands}.
+   */
+  CompletableFuture<Void> alterClusterConfigs(
+      String clusterId, ClusterConfig.Type type, List<AlterConfigCommand> commands);
 }
