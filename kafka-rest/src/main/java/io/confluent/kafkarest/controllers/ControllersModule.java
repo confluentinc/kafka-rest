@@ -28,6 +28,9 @@ public final class ControllersModule extends AbstractBinder {
     bind(BrokerManagerImpl.class).to(BrokerManager.class);
     bind(ClusterConfigManagerImpl.class).to(ClusterConfigManager.class);
     bind(ClusterManagerImpl.class).to(ClusterManager.class);
+    bind(ConsumerAssignmentManagerImpl.class).to(ConsumerAssignmentManager.class);
+    bind(ConsumerGroupManagerImpl.class).to(ConsumerGroupManager.class);
+    bind(ConsumerManagerImpl.class).to(ConsumerManager.class);
     bind(PartitionManagerImpl.class).to(PartitionManager.class);
     bind(ReassignmentManagerImpl.class).to(ReassignmentManager.class);
     bind(ReplicaManagerImpl.class).to(ReplicaManager.class);

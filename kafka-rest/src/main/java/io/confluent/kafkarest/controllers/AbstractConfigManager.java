@@ -23,15 +23,16 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.AbstractConfig;
+import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.ConfigSynonym;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
-import org.apache.kafka.clients.admin.AlterConfigOp;
-import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.DescribeConfigsOptions;
 import org.apache.kafka.common.config.ConfigResource;
 
@@ -101,7 +102,9 @@ abstract class AbstractConfigManager<
                     resourceId.type(),
                     resourceId.name(),
                     clusterId))
-        .thenCompose(config -> updateConfig(resourceId, name, newValue));
+        .thenCompose(
+            config ->
+                alterConfigs(resourceId, singletonList(AlterConfigCommand.update(name, newValue))));
   }
 
   /**
@@ -112,19 +115,9 @@ abstract class AbstractConfigManager<
       String clusterId, ConfigResource resourceId, String name, String newValue) {
     return clusterManager.getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
-        .thenCompose(cluster -> updateConfig(resourceId, name, newValue));
-  }
-
-  private CompletableFuture<Void> updateConfig(
-      ConfigResource resourceId, String name, String newValue) {
-    return KafkaFutures.toCompletableFuture(
-        adminClient.incrementalAlterConfigs(
-            singletonMap(
-                resourceId,
-                singletonList(
-                    new AlterConfigOp(new ConfigEntry(name, newValue), AlterConfigOp.OpType.SET))))
-            .values()
-            .get(resourceId));
+        .thenCompose(
+            cluster ->
+                alterConfigs(resourceId, singletonList(AlterConfigCommand.update(name, newValue))));
   }
 
   /**
@@ -142,7 +135,8 @@ abstract class AbstractConfigManager<
                     resourceId.type(),
                     resourceId.name(),
                     clusterId))
-        .thenCompose(config -> resetConfig(resourceId, name));
+        .thenCompose(
+            config -> alterConfigs(resourceId, singletonList(AlterConfigCommand.delete(name))));
   }
 
   /**
@@ -153,18 +147,56 @@ abstract class AbstractConfigManager<
       String clusterId, ConfigResource resourceId, String name) {
     return clusterManager.getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
-        .thenCompose(cluster -> resetConfig(resourceId, name));
+        .thenCompose(
+            cluster -> alterConfigs(resourceId, singletonList(AlterConfigCommand.delete(name))));
   }
 
-  private CompletableFuture<Void> resetConfig(ConfigResource resourceId, String name) {
+  /**
+   * Atomically alter configs according to {@code commands}, checking if the configs exist first.
+   */
+  final CompletableFuture<Void> safeAlterConfigs(
+      String clusterId, ConfigResource resourceId, B prototype, List<AlterConfigCommand> commands) {
+    return listConfigs(clusterId, resourceId, prototype)
+        .thenApply(
+            configs -> {
+              Set<String> configNames =
+                  configs.stream().map(AbstractConfig::getName).collect(Collectors.toSet());
+              for (AlterConfigCommand command : commands) {
+                if (!configNames.contains(command.getName())) {
+                  throw new NotFoundException(
+                      String.format(
+                          "Config %s cannot be found for %s %s in cluster %s.",
+                          command.getName(),
+                          resourceId.type(),
+                          resourceId.name(),
+                          clusterId));
+                }
+              }
+              return configs;
+            })
+        .thenCompose(config -> alterConfigs(resourceId, commands));
+  }
+
+  /**
+   * Atomically alter configs according to {@code commands}, without checking if the config exist
+   * first.
+   */
+  final CompletableFuture<Void> unsafeAlterConfigs(
+      String clusterId, ConfigResource resourceId, List<AlterConfigCommand> commands) {
+    return clusterManager.getCluster(clusterId)
+        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
+        .thenCompose(cluster -> alterConfigs(resourceId, commands));
+  }
+
+  private CompletableFuture<Void> alterConfigs(
+      ConfigResource resourceId, List<AlterConfigCommand> commands) {
     return KafkaFutures.toCompletableFuture(
         adminClient.incrementalAlterConfigs(
             singletonMap(
                 resourceId,
-                singletonList(
-                    new AlterConfigOp(
-                        new ConfigEntry(name, /* value= */ null),
-                        AlterConfigOp.OpType.DELETE))))
+                commands.stream()
+                    .map(AlterConfigCommand::toAlterConfigOp)
+                    .collect(Collectors.toList())))
             .values()
             .get(resourceId));
   }

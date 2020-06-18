@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.controllers;
 
+import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.BrokerConfig;
 import java.util.List;
 import java.util.Optional;
@@ -45,4 +46,10 @@ public interface BrokerConfigManager {
    * Resets the Kafka {@link BrokerConfig} with the given {@code name} to its default value.
    */
   CompletableFuture<Void> resetBrokerConfig(String clusterId, int brokerId, String name);
+
+  /**
+   * Atomically alters the Kafka {@link BrokerConfig Broker Configs} according to {@code commands}.
+   */
+  CompletableFuture<Void> alterBrokerConfigs(
+      String clusterId, int brokerId, List<AlterConfigCommand> commands);
 }

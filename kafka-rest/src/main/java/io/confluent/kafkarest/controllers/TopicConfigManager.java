@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.controllers;
 
+import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.TopicConfig;
 import java.util.List;
 import java.util.Optional;
@@ -48,4 +49,10 @@ public interface TopicConfigManager {
    * Resets the Kafka {@link TopicConfig} with the given {@code name} to its default value.
    */
   CompletableFuture<Void> resetTopicConfig(String clusterId, String topicName, String name);
+
+  /**
+   * Atomically alters the Kafka {@link TopicConfig Topic Configs} according to {@code commands}.
+   */
+  CompletableFuture<Void> alterTopicConfigs(
+      String clusterId, String topicName, List<AlterConfigCommand> commands);
 }

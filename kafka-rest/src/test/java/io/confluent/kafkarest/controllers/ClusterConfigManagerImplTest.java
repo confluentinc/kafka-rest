@@ -30,6 +30,7 @@ import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 
 import io.confluent.kafkarest.common.KafkaFutures;
+import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.ClusterConfig;
 import io.confluent.kafkarest.entities.ConfigSource;
@@ -341,6 +342,58 @@ public class ClusterConfigManagerImplTest {
     }
 
     verify(clusterManager);
+  }
+
+  @Test
+  public void alterClusterConfigs_existingConfigs_alterConfigs() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(
+        adminClient.incrementalAlterConfigs(
+            singletonMap(
+                new ConfigResource(ConfigResource.Type.BROKER, ""),
+                Arrays.asList(
+                    new AlterConfigOp(
+                        new ConfigEntry(CONFIG_1.getName(), "new-value"),
+                        AlterConfigOp.OpType.SET),
+                    new AlterConfigOp(
+                        new ConfigEntry(CONFIG_2.getName(), /* value= */ null),
+                        AlterConfigOp.OpType.DELETE)))))
+        .andReturn(alterConfigsResult);
+    expect(alterConfigsResult.values())
+        .andReturn(
+            singletonMap(
+                new ConfigResource(ConfigResource.Type.BROKER, ""),
+                KafkaFuture.completedFuture(null)));
+    replay(clusterManager, adminClient, alterConfigsResult);
+
+    clusterConfigManager.alterClusterConfigs(
+        CLUSTER_ID,
+        ClusterConfig.Type.BROKER,
+        Arrays.asList(
+            AlterConfigCommand.update(CONFIG_1.getName(), "new-value"),
+            AlterConfigCommand.delete(CONFIG_2.getName())))
+        .get();
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void alterClusterConfigs_nonExistingCluster_throwsNotFound() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
+    replay(clusterManager);
+
+    try {
+      clusterConfigManager.alterClusterConfigs(
+          CLUSTER_ID,
+          ClusterConfig.Type.BROKER,
+          Arrays.asList(
+              AlterConfigCommand.update(CONFIG_1.getName(), "new-value"),
+              AlterConfigCommand.delete(CONFIG_2.getName())))
+          .get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(NotFoundException.class, e.getCause().getClass());
+    }
   }
 
   private static final class OpenConfigEntry extends ConfigEntry {

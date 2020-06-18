@@ -23,10 +23,16 @@ public final class V3ResourcesFeature implements Feature {
   @Override
   public boolean configure(FeatureContext configurable) {
     configurable.register(AclsResource.class);
+    configurable.register(AlterBrokerConfigBatchAction.class);
+    configurable.register(AlterClusterConfigBatchAction.class);
+    configurable.register(AlterTopicConfigBatchAction.class);
     configurable.register(BrokerConfigsResource.class);
     configurable.register(BrokersResource.class);
     configurable.register(ClusterConfigsResource.class);
     configurable.register(ClustersResource.class);
+    configurable.register(ConsumerAssignmentsResource.class);
+    configurable.register(ConsumerGroupsResource.class);
+    configurable.register(ConsumersResource.class);
     configurable.register(GetReassignmentAction.class);
     configurable.register(ListAllReassignmentsAction.class);
     configurable.register(SearchReassignmentsByTopicAction.class);

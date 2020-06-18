@@ -36,14 +36,20 @@ public abstract class ClusterData extends Resource {
   @JsonProperty("controller")
   public abstract Optional<Relationship> getController();
 
+  @JsonProperty("acls")
+  public abstract Relationship getAcls();
+
   @JsonProperty("brokers")
   public abstract Relationship getBrokers();
 
-  @JsonProperty("topics")
-  public abstract Relationship getTopics();
-
   @JsonProperty("broker_configs")
   public abstract Relationship getBrokerConfigs();
+
+  @JsonProperty("consumer_groups")
+  public abstract Relationship getConsumerGroups();
+
+  @JsonProperty("topics")
+  public abstract Relationship getTopics();
 
   @JsonProperty("topic_configs")
   public abstract Relationship getTopicConfigs();
@@ -65,20 +71,24 @@ public abstract class ClusterData extends Resource {
       @JsonProperty("metadata") Metadata metadata,
       @JsonProperty("cluster_id") String clusterId,
       @JsonProperty("controller") @Nullable Relationship controller,
+      @JsonProperty("acls") Relationship acls,
       @JsonProperty("brokers") Relationship brokers,
-      @JsonProperty("topics") Relationship topics,
       @JsonProperty("broker_configs") Relationship brokerConfigs,
-      @JsonProperty("topic_configs") Relationship topicConfigs,
-      @JsonProperty("reassignment") Relationship reassignment
+      @JsonProperty("reassignment") Relationship reassignment,
+      @JsonProperty("consumer_groups") Relationship consumerGroups,
+      @JsonProperty("topics") Relationship topics,
+      @JsonProperty("topic_configs") Relationship topicConfigs
   ) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
         .setClusterId(clusterId)
         .setController(controller)
+        .setAcls(acls)
         .setBrokers(brokers)
-        .setTopics(topics)
         .setBrokerConfigs(brokerConfigs)
+        .setConsumerGroups(consumerGroups)
+        .setTopics(topics)
         .setTopicConfigs(topicConfigs)
         .setReassignment(reassignment)
         .build();
@@ -94,11 +104,15 @@ public abstract class ClusterData extends Resource {
 
     public abstract Builder setController(@Nullable Relationship controller);
 
+    public abstract Builder setAcls(Relationship acls);
+
     public abstract Builder setBrokers(Relationship brokers);
 
-    public abstract Builder setTopics(Relationship topics);
-
     public abstract Builder setBrokerConfigs(Relationship brokerConfigs);
+
+    public abstract Builder setConsumerGroups(Relationship consumerGroups);
+
+    public abstract Builder setTopics(Relationship topics);
 
     public abstract Builder setTopicConfigs(Relationship topicConfigs);
 

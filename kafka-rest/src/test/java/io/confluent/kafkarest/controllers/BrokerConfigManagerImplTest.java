@@ -29,6 +29,7 @@ import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 
 import io.confluent.kafkarest.common.KafkaFutures;
+import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.BrokerConfig;
 import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.ConfigSource;
@@ -492,5 +493,97 @@ public class BrokerConfigManagerImplTest {
     }
 
     verify(adminClient);
+  }
+
+  @Test
+  public void alterBrokerConfigs_existingConfigs_alterConfigs() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(
+        adminClient.describeConfigs(
+            eq(singletonList(
+                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
+            anyObject(DescribeConfigsOptions.class)))
+        .andReturn(describeConfigsResult);
+    expect(describeConfigsResult.values())
+        .andReturn(
+            singletonMap(
+                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                KafkaFuture.completedFuture(CONFIG)));
+    expect(
+        adminClient.incrementalAlterConfigs(
+            singletonMap(
+                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                Arrays.asList(
+                    new AlterConfigOp(
+                        new ConfigEntry(CONFIG_1.getName(), "new-value"),
+                        AlterConfigOp.OpType.SET),
+                    new AlterConfigOp(
+                        new ConfigEntry(CONFIG_2.getName(), /* value= */ null),
+                        AlterConfigOp.OpType.DELETE)))))
+        .andReturn(alterConfigsResult);
+    expect(alterConfigsResult.values())
+        .andReturn(
+            singletonMap(
+                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                KafkaFuture.completedFuture(null)));
+    replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
+
+    brokerConfigManager.alterBrokerConfigs(
+        CLUSTER_ID,
+        BROKER_ID,
+        Arrays.asList(
+            AlterConfigCommand.update(CONFIG_1.getName(), "new-value"),
+            AlterConfigCommand.delete(CONFIG_2.getName())))
+        .get();
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void alterBrokerConfigs_nonExistingCluster_throwsNotFound() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
+    replay(clusterManager);
+
+    try {
+      brokerConfigManager.alterBrokerConfigs(
+          CLUSTER_ID,
+          BROKER_ID,
+          Arrays.asList(
+              AlterConfigCommand.update(CONFIG_1.getName(), "new-value"),
+              AlterConfigCommand.delete(CONFIG_2.getName())))
+          .get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(NotFoundException.class, e.getCause().getClass());
+    }
+  }
+
+  @Test
+  public void alterBrokerConfigs_oneNonExistingConfig_throwsNotFound() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(
+        adminClient.describeConfigs(
+            eq(singletonList(new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)))),
+            anyObject(DescribeConfigsOptions.class)))
+        .andReturn(describeConfigsResult);
+    expect(describeConfigsResult.values())
+        .andReturn(
+            singletonMap(
+                new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(BROKER_ID)),
+                KafkaFuture.completedFuture(CONFIG)));
+    replay(clusterManager, adminClient, describeConfigsResult);
+
+    try {
+      brokerConfigManager.alterBrokerConfigs(
+          CLUSTER_ID,
+          BROKER_ID,
+          Arrays.asList(
+              AlterConfigCommand.update(CONFIG_1.getName(), "new-value"),
+              AlterConfigCommand.delete("foobar")))
+          .get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(NotFoundException.class, e.getCause().getClass());
+    }
   }
 }
