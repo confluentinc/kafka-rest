@@ -49,8 +49,8 @@ public abstract class AlterConfigBatchRequestData {
     ArrayList<AlterConfigCommand> commands = new ArrayList<>();
     for (AlterEntry entry : getData()) {
       switch (entry.getOperation()) {
-        case UPDATE:
-          commands.add(AlterConfigCommand.update(entry.getName(), entry.getValue().orElse(null)));
+        case SET:
+          commands.add(AlterConfigCommand.set(entry.getName(), entry.getValue().orElse(null)));
           break;
 
         case DELETE:
@@ -78,7 +78,7 @@ public abstract class AlterConfigBatchRequestData {
 
     public static Builder builder() {
       return new AutoValue_AlterConfigBatchRequestData_AlterEntry.Builder()
-          .setOperation(AlterOperation.UPDATE);
+          .setOperation(AlterOperation.SET);
     }
 
     @JsonCreator
@@ -90,7 +90,7 @@ public abstract class AlterConfigBatchRequestData {
       return builder()
           .setName(name)
           .setValue(value)
-          .setOperation(operation != null ? operation : AlterOperation.UPDATE)
+          .setOperation(operation != null ? operation : AlterOperation.SET)
           .build();
     }
 
@@ -109,7 +109,7 @@ public abstract class AlterConfigBatchRequestData {
 
   public enum AlterOperation {
 
-    UPDATE,
+    SET,
 
     DELETE
   }

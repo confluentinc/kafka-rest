@@ -532,7 +532,7 @@ public class BrokerConfigManagerImplTest {
         CLUSTER_ID,
         BROKER_ID,
         Arrays.asList(
-            AlterConfigCommand.update(CONFIG_1.getName(), "new-value"),
+            AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
             AlterConfigCommand.delete(CONFIG_2.getName())))
         .get();
 
@@ -549,7 +549,7 @@ public class BrokerConfigManagerImplTest {
           CLUSTER_ID,
           BROKER_ID,
           Arrays.asList(
-              AlterConfigCommand.update(CONFIG_1.getName(), "new-value"),
+              AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
               AlterConfigCommand.delete(CONFIG_2.getName())))
           .get();
       fail();
@@ -578,7 +578,7 @@ public class BrokerConfigManagerImplTest {
           CLUSTER_ID,
           BROKER_ID,
           Arrays.asList(
-              AlterConfigCommand.update(CONFIG_1.getName(), "new-value"),
+              AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
               AlterConfigCommand.delete("foobar")))
           .get();
       fail();

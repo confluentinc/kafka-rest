@@ -91,7 +91,7 @@ public final class AlterClusterConfigBatchActionTest {
             CLUSTER_ID,
             ClusterConfig.Type.BROKER,
             Arrays.asList(
-                AlterConfigCommand.update(CONFIG_1.getName(), "newValue"),
+                AlterConfigCommand.set(CONFIG_1.getName(), "newValue"),
                 AlterConfigCommand.delete(CONFIG_2.getName()))))
         .andReturn(completedFuture(null));
     replay(clusterConfigManager);
@@ -125,7 +125,7 @@ public final class AlterClusterConfigBatchActionTest {
             CLUSTER_ID,
             ClusterConfig.Type.BROKER,
             Arrays.asList(
-                AlterConfigCommand.update(CONFIG_1.getName(), "newValue"),
+                AlterConfigCommand.set(CONFIG_1.getName(), "newValue"),
                 AlterConfigCommand.delete(CONFIG_2.getName()))))
         .andReturn(failedFuture(new NotFoundException()));
     replay(clusterConfigManager);
