@@ -525,7 +525,7 @@ public class TopicConfigManagerImplTest {
         CLUSTER_ID,
         TOPIC_NAME,
         Arrays.asList(
-            AlterConfigCommand.update(CONFIG_1.getName(), "new-value"),
+            AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
             AlterConfigCommand.delete(CONFIG_2.getName())))
         .get();
 
@@ -542,7 +542,7 @@ public class TopicConfigManagerImplTest {
           CLUSTER_ID,
           TOPIC_NAME,
           Arrays.asList(
-              AlterConfigCommand.update(CONFIG_1.getName(), "new-value"),
+              AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
               AlterConfigCommand.delete(CONFIG_2.getName())))
           .get();
       fail();
@@ -588,7 +588,7 @@ public class TopicConfigManagerImplTest {
           CLUSTER_ID,
           TOPIC_NAME,
           Arrays.asList(
-              AlterConfigCommand.update(CONFIG_1.getName(), "new-value"),
+              AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
               AlterConfigCommand.delete(CONFIG_2.getName())))
           .get();
       fail();
@@ -617,7 +617,7 @@ public class TopicConfigManagerImplTest {
           CLUSTER_ID,
           TOPIC_NAME,
           Arrays.asList(
-              AlterConfigCommand.update(CONFIG_1.getName(), "new-value"),
+              AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
               AlterConfigCommand.delete("foobar")))
           .get();
       fail();

@@ -26,7 +26,7 @@ public abstract class AlterConfigCommand {
   private AlterConfigCommand() {
   }
 
-  public static AlterConfigCommand update(String name, @Nullable String value) {
+  public static AlterConfigCommand set(String name, @Nullable String value) {
     return UpdateConfigCommand.create(name, value);
   }
 
