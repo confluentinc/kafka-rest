@@ -519,4 +519,119 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
             .delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
+
+  @Test
+  public void alterConfigBatch_withExistingConfig() {
+    String baseUrl = restConnect;
+    String clusterId = getClusterId();
+
+    Response updateResponse =
+        request(
+            "/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs:alter")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"data\":["
+                        + "{\"name\": \"cleanup.policy\",\"value\":\"compact\"},"
+                        + "{\"name\": \"compression.type\",\"value\":\"gzip\"}]}",
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Status.NO_CONTENT.getStatusCode(), updateResponse.getStatus());
+
+    GetTopicConfigResponse expectedAfterUpdate1 =
+        GetTopicConfigResponse.create(
+            TopicConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/topics/" + TOPIC_1
+                                + "/configs/cleanup.policy")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId
+                                + "/topic=" + TOPIC_1
+                                + "/config=cleanup.policy")
+                        .build())
+                .setClusterId(clusterId)
+                .setTopicName(TOPIC_1)
+                .setName("cleanup.policy")
+                .setValue("compact")
+                .setDefault(false)
+                .setReadOnly(false)
+                .setSensitive(false)
+                .setSource(ConfigSource.DYNAMIC_TOPIC_CONFIG)
+                .setSynonyms(
+                    Arrays.asList(
+                        ConfigSynonymData.builder()
+                            .setName("cleanup.policy")
+                            .setValue("compact")
+                            .setSource(ConfigSource.DYNAMIC_TOPIC_CONFIG)
+                            .build(),
+                        ConfigSynonymData.builder()
+                            .setName("log.cleanup.policy")
+                            .setValue("delete")
+                            .setSource(ConfigSource.DEFAULT_CONFIG)
+                            .build()))
+                .build());
+    GetTopicConfigResponse expectedAfterUpdate2 =
+        GetTopicConfigResponse.create(
+            TopicConfigData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/" + clusterId
+                                + "/topics/" + TOPIC_1
+                                + "/configs/compression.type")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId
+                                + "/topic=" + TOPIC_1
+                                + "/config=compression.type")
+                        .build())
+                .setClusterId(clusterId)
+                .setTopicName(TOPIC_1)
+                .setName("compression.type")
+                .setValue("gzip")
+                .setDefault(false)
+                .setReadOnly(false)
+                .setSensitive(false)
+                .setSource(ConfigSource.DYNAMIC_TOPIC_CONFIG)
+                .setSynonyms(
+                    Arrays.asList(
+                        ConfigSynonymData.builder()
+                            .setName("compression.type")
+                            .setValue("gzip")
+                            .setSource(ConfigSource.DYNAMIC_TOPIC_CONFIG)
+                            .build(),
+                        ConfigSynonymData.builder()
+                            .setName("compression.type")
+                            .setValue("producer")
+                            .setSource(ConfigSource.DEFAULT_CONFIG)
+                            .build()))
+                .build());
+
+    Response responseAfterUpdate1 =
+        request(
+            "/v3/clusters/" + clusterId
+                + "/topics/" + TOPIC_1
+                + "/configs/cleanup.policy")
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
+    assertEquals(Status.OK.getStatusCode(), responseAfterUpdate1.getStatus());
+    GetTopicConfigResponse actualResponseAfterUpdate1 =
+        responseAfterUpdate1.readEntity(GetTopicConfigResponse.class);
+    assertEquals(expectedAfterUpdate1, actualResponseAfterUpdate1);
+
+    Response responseAfterUpdate2 =
+        request(
+            "/v3/clusters/" + clusterId
+                + "/topics/" + TOPIC_1
+                + "/configs/compression.type")
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
+    assertEquals(Status.OK.getStatusCode(), responseAfterUpdate2.getStatus());
+    GetTopicConfigResponse actualResponseAfterUpdate2 =
+        responseAfterUpdate2.readEntity(GetTopicConfigResponse.class);
+    assertEquals(expectedAfterUpdate2, actualResponseAfterUpdate2);
+  }
 }

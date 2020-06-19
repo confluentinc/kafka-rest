@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.controllers;
 
+import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.TopicConfig;
 import java.util.List;
 import java.util.Optional;
@@ -69,5 +70,15 @@ final class TopicConfigManagerImpl
         new ConfigResource(ConfigResource.Type.TOPIC, topicName),
         TopicConfig.builder().setClusterId(clusterId).setTopicName(topicName),
         name);
+  }
+
+  @Override
+  public CompletableFuture<Void> alterTopicConfigs(
+      String clusterId, String topicName, List<AlterConfigCommand> commands) {
+    return safeAlterConfigs(
+        clusterId,
+        new ConfigResource(ConfigResource.Type.TOPIC, topicName),
+        TopicConfig.builder().setClusterId(clusterId).setTopicName(topicName),
+        commands);
   }
 }
