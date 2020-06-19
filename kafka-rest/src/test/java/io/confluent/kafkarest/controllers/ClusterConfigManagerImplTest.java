@@ -370,7 +370,7 @@ public class ClusterConfigManagerImplTest {
         CLUSTER_ID,
         ClusterConfig.Type.BROKER,
         Arrays.asList(
-            AlterConfigCommand.update(CONFIG_1.getName(), "new-value"),
+            AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
             AlterConfigCommand.delete(CONFIG_2.getName())))
         .get();
 
@@ -387,7 +387,7 @@ public class ClusterConfigManagerImplTest {
           CLUSTER_ID,
           ClusterConfig.Type.BROKER,
           Arrays.asList(
-              AlterConfigCommand.update(CONFIG_1.getName(), "new-value"),
+              AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
               AlterConfigCommand.delete(CONFIG_2.getName())))
           .get();
       fail();

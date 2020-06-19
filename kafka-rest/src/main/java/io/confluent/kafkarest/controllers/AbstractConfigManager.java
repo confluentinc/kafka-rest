@@ -104,7 +104,7 @@ abstract class AbstractConfigManager<
                     clusterId))
         .thenCompose(
             config ->
-                alterConfigs(resourceId, singletonList(AlterConfigCommand.update(name, newValue))));
+                alterConfigs(resourceId, singletonList(AlterConfigCommand.set(name, newValue))));
   }
 
   /**
@@ -117,7 +117,7 @@ abstract class AbstractConfigManager<
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenCompose(
             cluster ->
-                alterConfigs(resourceId, singletonList(AlterConfigCommand.update(name, newValue))));
+                alterConfigs(resourceId, singletonList(AlterConfigCommand.set(name, newValue))));
   }
 
   /**
