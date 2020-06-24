@@ -74,7 +74,7 @@ public abstract class ClusterData extends Resource {
       @JsonProperty("acls") Relationship acls,
       @JsonProperty("brokers") Relationship brokers,
       @JsonProperty("broker_configs") Relationship brokerConfigs,
-      @JsonProperty("reassignment") Relationship reassignment,
+      @JsonProperty("partition_reassignments") Relationship reassignment,
       @JsonProperty("consumer_groups") Relationship consumerGroups,
       @JsonProperty("topics") Relationship topics,
       @JsonProperty("topic_configs") Relationship topicConfigs

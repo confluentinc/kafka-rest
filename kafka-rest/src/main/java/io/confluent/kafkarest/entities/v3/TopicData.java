@@ -69,7 +69,7 @@ public abstract class TopicData extends Resource {
       @JsonProperty("replication_factor") int replicationFactor,
       @JsonProperty("partitions") Relationship partitions,
       @JsonProperty("configs") Relationship configs,
-      @JsonProperty("reassignment") Relationship reassignment
+      @JsonProperty("partition_reassignments") Relationship reassignment
   ) {
     return builder()
         .setKind(kind)
