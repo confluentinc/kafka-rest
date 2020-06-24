@@ -54,7 +54,7 @@ public abstract class ClusterData extends Resource {
   @JsonProperty("topic_configs")
   public abstract Relationship getTopicConfigs();
 
-  @JsonProperty("reassignment")
+  @JsonProperty("partition_reassignments")
   public abstract Relationship getReassignment();
 
   public static Builder builder() {

@@ -44,7 +44,7 @@ public abstract class TopicData extends Resource {
   @JsonProperty("configs")
   public abstract Relationship getConfigs();
 
-  @JsonProperty("reassignment")
+  @JsonProperty("partition_reassignments")
   public abstract Relationship getReassignment();
 
   public static Builder builder() {
