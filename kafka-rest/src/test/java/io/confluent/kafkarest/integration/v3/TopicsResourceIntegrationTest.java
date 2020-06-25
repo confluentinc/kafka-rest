@@ -106,7 +106,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                                         + "/v3/clusters/" + clusterId
                                         + "/topics/" + TOPIC_1
                                         + "/configs"))
-                            .setReassignment(
+                            .setPartitionReassignments(
                                 Resource.Relationship.create(
                                     baseUrl
                                         + "/v3/clusters/" + clusterId
@@ -139,7 +139,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                                         + "/v3/clusters/" + clusterId
                                         + "/topics/" + TOPIC_2
                                         + "/configs"))
-                            .setReassignment(
+                            .setPartitionReassignments(
                                 Resource.Relationship.create(
                                     baseUrl
                                     + "/v3/clusters/" + clusterId
@@ -172,7 +172,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                                         + "/v3/clusters/" + clusterId
                                         + "/topics/" + TOPIC_3
                                         + "/configs"))
-                            .setReassignment(
+                            .setPartitionReassignments(
                                 Resource.Relationship.create(
                                     baseUrl
                                         + "/v3/clusters/" + clusterId
@@ -228,7 +228,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + TOPIC_1
                             + "/configs"))
-                .setReassignment(
+                .setPartitionReassignments(
                     Resource.Relationship.create(
                         baseUrl
                             + "/v3/clusters/" + clusterId
@@ -292,7 +292,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + topicName
                             + "/configs"))
-                .setReassignment(
+                .setPartitionReassignments(
                     Resource.Relationship.create(
                         baseUrl
                             + "/v3/clusters/" + clusterId
@@ -418,7 +418,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + topicName
                             + "/configs"))
-                .setReassignment(
+                .setPartitionReassignments(
                     Resource.Relationship.create(
                         baseUrl
                             + "/v3/clusters/" + clusterId
@@ -471,7 +471,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + topicName
                             + "/configs"))
-                .setReassignment(
+                .setPartitionReassignments(
                     Resource.Relationship.create(
                         baseUrl
                             + "/v3/clusters/" + clusterId

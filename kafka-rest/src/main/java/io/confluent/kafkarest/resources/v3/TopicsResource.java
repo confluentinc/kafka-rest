@@ -196,7 +196,7 @@ public final class TopicsResource {
                     "topics",
                     topic.getName(),
                     "configs")))
-        .setReassignment(
+        .setPartitionReassignments(
             Resource.Relationship.create(
                 urlFactory.create(
                     "v3",
