@@ -94,6 +94,12 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
                                         + "/v3/clusters/" + clusterId
                                         + "/topics/" + TOPIC_NAME
                                         + "/partitions/0/replicas"))
+                            .setReassignment(
+                                Resource.Relationship.create(
+                                    baseUrl
+                                        + "/v3/clusters/" + clusterId
+                                        + "/topics/" + TOPIC_NAME
+                                        + "/partitions/0/reassignment"))
                             .build()))
                 .build());
 
@@ -160,6 +166,12 @@ public class PartitionsResourceIntegrationTest extends ClusterTestHarness {
                             + "/v3/clusters/" + clusterId
                             + "/topics/" + TOPIC_NAME
                             + "/partitions/0/replicas"))
+                .setReassignment(
+                    Resource.Relationship.create(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/topics/" + TOPIC_NAME
+                            + "/partitions/0/reassignment"))
                 .build());
 
     Response response =
