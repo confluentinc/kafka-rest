@@ -26,31 +26,24 @@ public final class KafkaRestMetricsContext {
    */
   private final RestMetricsContext metricsContext;
 
-  public static final String KAFKA_REST_RESOURCE_TYPE = "kafka.rest";
   public static final String RESOURCE_LABEL_PREFIX = "resource.";
-  public static final String RESOURCE_LABEL_COMMIT_ID = RESOURCE_LABEL_PREFIX + "commit.id";
   public static final String RESOURCE_LABEL_TYPE = RESOURCE_LABEL_PREFIX + "type";
   public static final String RESOURCE_LABEL_VERSION = RESOURCE_LABEL_PREFIX + "version";
+  public static final String RESOURCE_LABEL_COMMIT_ID = RESOURCE_LABEL_PREFIX + "commit.id";
+  public static final String RESOURCE_LABEL_CLUSTER_ID = RESOURCE_LABEL_PREFIX + "kafka.cluster.id";
+
+  public static final String KAFKA_REST_RESOURCE_TYPE = "kafka_rest";
+  public static final String KAFKA_REST_RESOURCE_CLUSTER_ID_DEFAULT = "cluster_id_unavailable";
 
   public KafkaRestMetricsContext(String namespace, Map<String, Object> config) {
     metricsContext = new RestMetricsContext(namespace, config);
 
-    setResourceLabel(RESOURCE_LABEL_COMMIT_ID, AppInfoParser.getCommitId());
     setResourceLabel(RESOURCE_LABEL_TYPE, KAFKA_REST_RESOURCE_TYPE);
+    setResourceLabel(RESOURCE_LABEL_CLUSTER_ID,
+            (String) config.getOrDefault("bootstrap.cluster.id",
+                    KAFKA_REST_RESOURCE_CLUSTER_ID_DEFAULT));
     setResourceLabel(RESOURCE_LABEL_VERSION, AppInfoParser.getVersion());
-  }
-
-
-  /**
-   * Sets a {@link RestMetricsContext} key, value pair.
-   */
-  public void setLabel(String labelKey, String labelValue) {
-    /* Remove resource label if present */
-    if (labelKey.startsWith(RESOURCE_LABEL_PREFIX)) {
-      setResourceLabel(labelKey, labelValue);
-    }
-
-    metricsContext.setLabel(labelKey, labelValue);
+    setResourceLabel(RESOURCE_LABEL_COMMIT_ID, AppInfoParser.getCommitId());
   }
 
   /**

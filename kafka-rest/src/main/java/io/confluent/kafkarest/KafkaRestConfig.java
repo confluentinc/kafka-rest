@@ -48,8 +48,9 @@ public class KafkaRestConfig extends RestConfig {
 
   private static final Logger log = LoggerFactory.getLogger(KafkaRestConfig.class);
   private final KafkaRestMetricsContext metricsContext;
-  private static final String TELEMETRY_PREFIX = "confluent.telemetry";
   private static final String METRIC_REPORTERS_PREFIX = "metric.reporters";
+
+  public static final String TELEMETRY_PREFIX = "confluent.telemetry";
 
   public static final String ID_CONFIG = "id";
   private static final String ID_CONFIG_DOC =
