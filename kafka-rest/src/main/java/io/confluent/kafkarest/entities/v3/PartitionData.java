@@ -43,6 +43,9 @@ public abstract class PartitionData extends Resource {
   @JsonProperty("replicas")
   public abstract Relationship getReplicas();
 
+  @JsonProperty("reassignment")
+  public abstract Relationship getReassignment();
+
   public static Builder builder() {
     return new AutoValue_PartitionData.Builder().setKind("KafkaPartition");
   }
@@ -62,7 +65,8 @@ public abstract class PartitionData extends Resource {
       @JsonProperty("topic_name") String topicName,
       @JsonProperty("partition_id") int partitionId,
       @JsonProperty("leader") @Nullable Relationship leader,
-      @JsonProperty("replicas") Relationship replicas
+      @JsonProperty("replicas") Relationship replicas,
+      @JsonProperty("reassignment") Relationship reassignment
   ) {
     return builder()
         .setKind(kind)
@@ -72,6 +76,7 @@ public abstract class PartitionData extends Resource {
         .setPartitionId(partitionId)
         .setLeader(leader)
         .setReplicas(replicas)
+        .setReassignment(reassignment)
         .build();
   }
 
@@ -90,6 +95,8 @@ public abstract class PartitionData extends Resource {
     public abstract Builder setLeader(@Nullable Relationship leader);
 
     public abstract Builder setReplicas(Relationship replicas);
+
+    public abstract Builder setReassignment(Relationship reassignment);
 
     public abstract PartitionData build();
   }

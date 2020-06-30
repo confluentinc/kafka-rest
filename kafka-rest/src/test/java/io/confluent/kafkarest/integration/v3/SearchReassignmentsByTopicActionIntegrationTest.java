@@ -62,7 +62,7 @@ public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTest
     alterPartitionReassignment(reassignmentMap);
 
     Response response = request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME +
-        "/partitions/-/reassignments")
+        "/partitions/-/reassignment")
         .accept(MediaType.APPLICATION_JSON)
         .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
@@ -80,7 +80,7 @@ public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTest
   public void searchReassignmentsByTopic_nonExistingCluster_returnsNotFound() throws Exception {
 
     Response response =
-        request("/v3/clusters/foobar/topics/topic-1/partitions/-/reassignments")
+        request("/v3/clusters/foobar/topics/topic-1/partitions/-/reassignment")
             .accept(MediaType.APPLICATION_JSON)
             .get();
 
@@ -92,7 +92,7 @@ public class SearchReassignmentsByTopicActionIntegrationTest extends ClusterTest
     String clusterId = getClusterId();
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/topics/foobar/partitions/-/reassignments")
+        request("/v3/clusters/" + clusterId + "/topics/foobar/partitions/-/reassignment")
             .accept(MediaType.APPLICATION_JSON)
             .get();
 

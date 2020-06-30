@@ -186,6 +186,10 @@ public class PartitionsResourceTest {
                             .setReplicas(
                                 Resource.Relationship.create(
                                     "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas"))
+                            .setReassignment(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/0"
+                                        + "/reassignment"))
                             .build(),
                         PartitionData.builder()
                             .setMetadata(
@@ -204,6 +208,10 @@ public class PartitionsResourceTest {
                             .setReplicas(
                                 Resource.Relationship.create(
                                     "/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas"))
+                            .setReassignment(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/1"
+                                        + "/reassignment"))
                             .build(),
                         PartitionData.builder()
                             .setMetadata(
@@ -222,6 +230,9 @@ public class PartitionsResourceTest {
                             .setReplicas(
                                 Resource.Relationship.create(
                                     "/v3/clusters/cluster-1/topics/topic-1/partitions/2/replicas"))
+                            .setReassignment(
+                                Resource.Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/2/reassignment"))
                             .build()))
                 .build());
 
@@ -266,6 +277,9 @@ public class PartitionsResourceTest {
                 .setReplicas(
                     Resource.Relationship.create(
                         "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas"))
+                .setReassignment(
+                    Resource.Relationship.create(
+                        "/v3/clusters/cluster-1/topics/topic-1/partitions/0/reassignment"))
                 .build());
 
     assertEquals(expected, response.getValue());

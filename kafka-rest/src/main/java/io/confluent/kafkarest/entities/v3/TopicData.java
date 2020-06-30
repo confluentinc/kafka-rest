@@ -44,6 +44,9 @@ public abstract class TopicData extends Resource {
   @JsonProperty("configs")
   public abstract Relationship getConfigs();
 
+  @JsonProperty("partition_reassignments")
+  public abstract Relationship getPartitionReassignments();
+
   public static Builder builder() {
     return new AutoValue_TopicData.Builder().setKind("KafkaTopic");
   }
@@ -65,7 +68,8 @@ public abstract class TopicData extends Resource {
       @JsonProperty("is_internal") boolean isInternal,
       @JsonProperty("replication_factor") int replicationFactor,
       @JsonProperty("partitions") Relationship partitions,
-      @JsonProperty("configs") Relationship configs
+      @JsonProperty("configs") Relationship configs,
+      @JsonProperty("partition_reassignments") Relationship partitionReassignments
   ) {
     return builder()
         .setKind(kind)
@@ -76,6 +80,7 @@ public abstract class TopicData extends Resource {
         .setReplicationFactor(replicationFactor)
         .setPartitions(partitions)
         .setConfigs(configs)
+        .setPartitionReassignments(partitionReassignments)
         .build();
   }
 
@@ -96,6 +101,8 @@ public abstract class TopicData extends Resource {
     public abstract Builder setPartitions(Relationship partitions);
 
     public abstract Builder setConfigs(Relationship configs);
+
+    public abstract Builder setPartitionReassignments(Relationship partitionReassignments);
 
     public abstract TopicData build();
   }
