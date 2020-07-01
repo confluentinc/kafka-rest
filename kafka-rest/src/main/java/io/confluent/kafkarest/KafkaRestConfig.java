@@ -48,9 +48,7 @@ public class KafkaRestConfig extends RestConfig {
 
   private static final Logger log = LoggerFactory.getLogger(KafkaRestConfig.class);
   private final KafkaRestMetricsContext metricsContext;
-  private static final String METRIC_REPORTERS_PREFIX = "metric.reporters";
-
-  public static final String TELEMETRY_PREFIX = "confluent.telemetry";
+  public static final String METRIC_REPORTERS_PREFIX = "metric.reporters.";
 
   public static final String ID_CONFIG = "id";
   private static final String ID_CONFIG_DOC =
@@ -780,8 +778,7 @@ public class KafkaRestConfig extends RestConfig {
   public void addMetricsReporterProperties(Properties props) {
     getMetricsContext().contextLabels()
             .forEach((label, value) -> props.put(METRICS_CONTEXT_PREFIX + label, value));
-    props.putAll(originalsWithPrefix(TELEMETRY_PREFIX, false));
-    props.putAll(originalsWithPrefix(METRIC_REPORTERS_PREFIX, false));
+    props.putAll(metricsReporterConfig());
   }
 
   @Override

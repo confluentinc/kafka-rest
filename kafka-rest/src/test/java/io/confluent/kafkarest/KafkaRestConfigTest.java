@@ -15,7 +15,6 @@ public class KafkaRestConfigTest {
   @Test
   public void getMetricsContext_propagateMetricsConfigs() {
     Properties properties = new Properties();
-    properties.put(telemetry_config("bootstrap.servers"), "broker1:9092");
     properties.put(context_config(RESOURCE_LABEL_CLUSTER_ID), "context_cluster_id");
 
     RestMetricsContext config = new KafkaRestConfig(properties).getMetricsContext();
@@ -53,14 +52,14 @@ public class KafkaRestConfigTest {
   @Test
   public void getProducerProperties_propagateMetricsProperties() {
     Properties properties = new Properties();
-    properties.put(telemetry_config("bootstrap.servers"), "broker1:9092");
+    properties.put(reporter_config("telemetry.bootstrap.servers"), "broker1:9092");
     properties.put(context_config(RESOURCE_LABEL_CLUSTER_ID), "producer_cluster_id");
 
     KafkaRestConfig config = new KafkaRestConfig(properties);
 
     Properties producerProperties = config.getProducerProperties();
     assertEquals("broker1:9092",
-            producerProperties.get(telemetry_config("bootstrap.servers")));
+            producerProperties.get(reporter_config("telemetry.bootstrap.servers")));
     assertEquals(AppInfoParser.getCommitId(),
             producerProperties.get(context_config(RESOURCE_LABEL_COMMIT_ID)));
     assertEquals(AppInfoParser.getVersion(),
@@ -68,7 +67,6 @@ public class KafkaRestConfigTest {
     assertEquals("producer_cluster_id",
             producerProperties.get(context_config(RESOURCE_LABEL_CLUSTER_ID)));
   }
-
 
   @Test
   public void getConsumerProperties_propagatesSchemaRegistryProperties() {
@@ -96,14 +94,14 @@ public class KafkaRestConfigTest {
   @Test
   public void getConsumerProperties_propagateMetricsProperties() {
     Properties properties = new Properties();
-    properties.put(telemetry_config("bootstrap.servers"), "broker1:9092");
+    properties.put(reporter_config("telemetry.bootstrap.servers"), "broker1:9092");
     properties.put(context_config(RESOURCE_LABEL_CLUSTER_ID), "consumer_cluster_id");
 
     KafkaRestConfig config = new KafkaRestConfig(properties);
 
     Properties consumerProperties = config.getConsumerProperties();
     assertEquals("broker1:9092",
-            consumerProperties.get(telemetry_config("bootstrap.servers")));
+            consumerProperties.get("telemetry.bootstrap.servers"));
     assertEquals(AppInfoParser.getCommitId(),
             consumerProperties.get(context_config(RESOURCE_LABEL_COMMIT_ID)));
     assertEquals(AppInfoParser.getVersion(),
@@ -127,13 +125,13 @@ public class KafkaRestConfigTest {
   @Test
   public void getAdminProperties_propagateMetricsProperties() {
     Properties properties = new Properties();
-    properties.put(telemetry_config("bootstrap.servers"), "broker1:9092");
+    properties.put(reporter_config("telemetry.bootstrap.servers"), "broker1:9092");
     properties.put(context_config(RESOURCE_LABEL_CLUSTER_ID), "admin_cluster_id");
     KafkaRestConfig config = new KafkaRestConfig(properties);
 
     Properties adminProperties = config.getAdminProperties();
     assertEquals("broker1:9092",
-            adminProperties.get(telemetry_config("bootstrap.servers")));
+            adminProperties.get("telemetry.bootstrap.servers"));
     assertEquals(AppInfoParser.getCommitId(),
             adminProperties.get(context_config(RESOURCE_LABEL_COMMIT_ID)));
     assertEquals(AppInfoParser.getVersion(),
@@ -142,12 +140,11 @@ public class KafkaRestConfigTest {
             adminProperties.get(context_config(RESOURCE_LABEL_CLUSTER_ID)));
   }
 
-  private String telemetry_config(String suffix) {
-    return KafkaRestConfig.TELEMETRY_PREFIX + suffix;
-  }
-
   private String context_config(String suffix) {
     return CommonClientConfigs.METRICS_CONTEXT_PREFIX + suffix;
   }
 
+  private String reporter_config(String suffix) {
+    return KafkaRestConfig.METRIC_REPORTERS_PREFIX + suffix;
+  }
 }
