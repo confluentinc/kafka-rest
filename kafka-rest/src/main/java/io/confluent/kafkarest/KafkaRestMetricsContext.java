@@ -40,7 +40,7 @@ public final class KafkaRestMetricsContext {
 
     setResourceLabel(RESOURCE_LABEL_TYPE, KAFKA_REST_RESOURCE_TYPE);
     setResourceLabel(RESOURCE_LABEL_CLUSTER_ID,
-            (String) config.getOrDefault("bootstrap.cluster.id",
+            (String) config.getOrDefault(RESOURCE_LABEL_CLUSTER_ID,
                     KAFKA_REST_RESOURCE_CLUSTER_ID_DEFAULT));
     setResourceLabel(RESOURCE_LABEL_VERSION, AppInfoParser.getVersion());
     setResourceLabel(RESOURCE_LABEL_COMMIT_ID, AppInfoParser.getCommitId());
