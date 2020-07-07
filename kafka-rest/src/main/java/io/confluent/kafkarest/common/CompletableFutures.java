@@ -17,6 +17,8 @@ package io.confluent.kafkarest.common;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public final class CompletableFutures {
@@ -45,5 +47,33 @@ public final class CompletableFutures {
     CompletableFuture<T> future = new CompletableFuture<>();
     future.completeExceptionally(exception);
     return future;
+  }
+
+  /**
+   * Returns a new {@link CompletableFuture} that is completed when {@code future} is complete,
+   * catching the given {@link Throwable exceptionClass}.
+   *
+   * <p>If {@code future} completes normally, then the returned future completes normally with the
+   * same value. If {@code future} completes exceptionally with an {@code exceptionClass}, the
+   * returned future completes with the result of the {@code handler}. Otherwise, the returned
+   * future will complete exceptionally with the same exception as {@code future}.
+   */
+  public static <T, E extends Throwable> CompletableFuture<T> catchingCompose(
+      CompletableFuture<T> future,
+      Class<E> exceptionClass,
+      Function<? super E, ? extends CompletableFuture<T>> handler) {
+    return future.handle(
+        (value, error) -> {
+          if (error == null) {
+            return CompletableFuture.completedFuture(value);
+          } else if (exceptionClass.isInstance(error.getCause())) {
+            return handler.apply(exceptionClass.cast(error.getCause()));
+          } else if (error instanceof CompletionException) {
+            throw (CompletionException) error;
+          } else {
+            throw new AssertionError(error); // If this happens, CompletableFuture is broken.
+          }
+        })
+        .thenCompose(wrapped -> wrapped);
   }
 }
