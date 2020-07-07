@@ -55,8 +55,8 @@ public final class CompletableFutures {
    *
    * <p>If {@code future} completes normally, then the returned future completes normally with the
    * same value. If {@code future} completes exceptionally with an {@code exceptionClass}, the
-   * returned completes with the result of the {@code handler}. Otherwise, the returned future will
-   * complete exceptionally with the same exception as {@code future}.
+   * returned future completes with the result of the {@code handler}. Otherwise, the returned
+   * future will complete exceptionally with the same exception as {@code future}.
    */
   public static <T, E extends Throwable> CompletableFuture<T> catchingCompose(
       CompletableFuture<T> future,
@@ -71,7 +71,7 @@ public final class CompletableFutures {
           } else if (error instanceof CompletionException) {
             throw (CompletionException) error;
           } else {
-            throw new AssertionError(error); // impossible
+            throw new AssertionError(error); // If this happens, CompletableFuture is broken.
           }
         })
         .thenCompose(wrapped -> wrapped);
