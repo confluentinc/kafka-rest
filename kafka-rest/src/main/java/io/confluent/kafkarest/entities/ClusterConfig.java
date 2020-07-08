@@ -78,12 +78,7 @@ public abstract class ClusterConfig extends AbstractConfig {
     /**
      * A cluster-wide dynamic default broker config.
      */
-    BROKER(ConfigResource.Type.BROKER),
-
-    /**
-     * A cluster-wide dynamic default topic config.
-     */
-    TOPIC(ConfigResource.Type.TOPIC);
+    BROKER(ConfigResource.Type.BROKER);
 
     private final ConfigResource.Type adminType;
 

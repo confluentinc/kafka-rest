@@ -107,9 +107,6 @@ public class ClustersResourceTest {
                                     "/v3/clusters/cluster-1/consumer-groups"))
                             .setTopics(
                                 Resource.Relationship.create("/v3/clusters/cluster-1/topics"))
-                            .setTopicConfigs(
-                                Resource.Relationship.create(
-                                    "/v3/clusters/cluster-1/topic-configs"))
                             .setPartitionReassignments(
                                 Resource.Relationship.create(
                                     "/v3/clusters/cluster-1/topics/-/partitions/-/reassignment"))
@@ -156,8 +153,6 @@ public class ClustersResourceTest {
                 .setConsumerGroups(
                     Resource.Relationship.create("/v3/clusters/cluster-1/consumer-groups"))
                 .setTopics(Resource.Relationship.create("/v3/clusters/cluster-1/topics"))
-                .setTopicConfigs(
-                    Resource.Relationship.create("/v3/clusters/cluster-1/topic-configs"))
                 .setPartitionReassignments(
                     Resource.Relationship.create("/v3/clusters/cluster-1/topics/-/partitions"
                         + "/-/reassignment"))
