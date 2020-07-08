@@ -30,7 +30,7 @@ public final class KafkaRestMetricsContext {
   public static final String RESOURCE_LABEL_TYPE = RESOURCE_LABEL_PREFIX + "type";
   public static final String RESOURCE_LABEL_VERSION = RESOURCE_LABEL_PREFIX + "version";
   public static final String RESOURCE_LABEL_COMMIT_ID = RESOURCE_LABEL_PREFIX + "commit.id";
-  public static final String RESOURCE_LABEL_CLUSTER_ID = RESOURCE_LABEL_PREFIX + "kafka.cluster.id";
+  public static final String RESOURCE_LABEL_CLUSTER_ID = RESOURCE_LABEL_PREFIX + "cluster.id";
 
   public static final String KAFKA_REST_RESOURCE_TYPE = "kafka_rest";
   public static final String KAFKA_REST_RESOURCE_CLUSTER_ID_DEFAULT = "cluster_id_unavailable";
