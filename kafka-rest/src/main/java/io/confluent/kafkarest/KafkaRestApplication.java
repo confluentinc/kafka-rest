@@ -114,7 +114,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new ConfigModule(appConfig));
     config.register(new ControllersModule());
     config.register(new ExceptionsModule());
-    config.register(new ResourcesFeature(context));
+    config.register(new ResourcesFeature(context, appConfig));
     config.register(new ResponseModule());
 
     config.register(KafkaRestCleanupFilter.class);
