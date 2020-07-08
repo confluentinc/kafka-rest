@@ -336,6 +336,16 @@ public class KafkaRestConfig extends RestConfig {
           + "should be delegated to. Examples: confluent.cloud, mds-01.example.com.";
   private static final String CONFLUENT_RESOURCE_NAME_AUTHORITY_DEFAULT = "";
 
+  public static final String API_V2_ENABLE_CONFIG = "api.v2.enable";
+  private static final String API_V2_ENABLE_DOC =
+      "Whether to enable REST Proxy V2 API. Default is true.";
+  private static final boolean API_V2_ENABLE_DEFAULT = true;
+
+  public static final String API_V3_ENABLE_CONFIG = "api.v3.enable";
+  private static final String API_V3_ENABLE_DOC =
+      "Whether to enable REST Proxy V3 API. Default is true.";
+  private static final boolean API_V3_ENABLE_DEFAULT = true;
+
   private static final ConfigDef config;
 
   public static final String HTTPS = "https";
@@ -648,7 +658,21 @@ public class KafkaRestConfig extends RestConfig {
         Type.STRING,
         CONFLUENT_RESOURCE_NAME_AUTHORITY_DEFAULT,
         Importance.LOW,
-        CONFLUENT_RESOURCE_NAME_AUTHORITY_DOC);
+        CONFLUENT_RESOURCE_NAME_AUTHORITY_DOC
+    )
+    .define(
+        API_V2_ENABLE_CONFIG,
+        Type.BOOLEAN,
+        API_V2_ENABLE_DEFAULT,
+        Importance.LOW,
+        API_V2_ENABLE_DOC
+    )
+    .define(
+        API_V3_ENABLE_CONFIG,
+        Type.BOOLEAN,
+        API_V3_ENABLE_DEFAULT,
+        Importance.LOW,
+        API_V3_ENABLE_DOC);
   }
 
   private Time time;
@@ -778,6 +802,14 @@ public class KafkaRestConfig extends RestConfig {
     addPropertiesWithPrefix("client.", adminProps);
     addPropertiesWithPrefix("admin.", adminProps);
     return adminProps;
+  }
+
+  public boolean isV2ApiEnabled() {
+    return getBoolean(API_V2_ENABLE_CONFIG);
+  }
+
+  public boolean isV3ApiEnabled() {
+    return getBoolean(API_V3_ENABLE_CONFIG);
   }
 
   public void addMetricsReporterProperties(Properties props) {
