@@ -665,7 +665,8 @@ public class KafkaRestConfig extends RestConfig {
         Type.BOOLEAN,
         API_V2_ENABLE_DEFAULT,
         Importance.LOW,
-        API_V2_ENABLE_DOC)
+        API_V2_ENABLE_DOC
+    )
     .define(
         API_V3_ENABLE_CONFIG,
         Type.BOOLEAN,

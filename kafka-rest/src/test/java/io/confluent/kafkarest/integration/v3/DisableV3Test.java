@@ -37,7 +37,7 @@ public class DisableV3Test extends ClusterTestHarness {
   }
 
   @Test
-  public void v2ApiIsDisabled() {
+  public void v3ApiIsDisabled() {
     Response response = request("/v3/clusters").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
