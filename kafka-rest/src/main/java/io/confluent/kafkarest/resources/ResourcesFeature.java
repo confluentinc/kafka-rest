@@ -15,24 +15,32 @@
 
 package io.confluent.kafkarest.resources;
 
+import static java.util.Objects.requireNonNull;
+
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.resources.v2.V2ResourcesFeature;
 import io.confluent.kafkarest.resources.v3.V3ResourcesFeature;
-import java.util.Objects;
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
 
 public final class ResourcesFeature implements Feature {
   private final KafkaRestContext context;
+  private final KafkaRestConfig config;
 
-  public ResourcesFeature(KafkaRestContext context) {
-    this.context = Objects.requireNonNull(context);
+  public ResourcesFeature(KafkaRestContext context, KafkaRestConfig config) {
+    this.context = requireNonNull(context);
+    this.config = requireNonNull(config);
   }
 
   @Override
   public boolean configure(FeatureContext configurable) {
-    configurable.register(new V2ResourcesFeature(context));
-    configurable.register(V3ResourcesFeature.class);
+    if (config.isV2ApiEnabled()) {
+      configurable.register(new V2ResourcesFeature(context));
+    }
+    if (config.isV3ApiEnabled()) {
+      configurable.register(V3ResourcesFeature.class);
+    }
     return true;
   }
 }
