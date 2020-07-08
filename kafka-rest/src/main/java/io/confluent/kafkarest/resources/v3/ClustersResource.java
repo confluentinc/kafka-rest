@@ -119,9 +119,6 @@ public final class ClustersResource {
             .setTopics(
                 Resource.Relationship.create(
                     urlFactory.create("v3", "clusters", cluster.getClusterId(), "topics")))
-            .setTopicConfigs(
-                Resource.Relationship.create(
-                    urlFactory.create("v3", "clusters", cluster.getClusterId(), "topic-configs")))
             .setPartitionReassignments(
                 Resource.Relationship.create(
                     urlFactory.create("v3", "clusters", cluster.getClusterId(), "topics", "-",
