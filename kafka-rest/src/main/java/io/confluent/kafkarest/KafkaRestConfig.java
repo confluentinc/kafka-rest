@@ -48,8 +48,6 @@ public class KafkaRestConfig extends RestConfig {
 
   private static final Logger log = LoggerFactory.getLogger(KafkaRestConfig.class);
   private final KafkaRestMetricsContext metricsContext;
-  public static final String METRIC_REPORTERS_PREFIX = "metric.reporters.";
-  public static final String METRICS_REPORTER_CONFIG_PREFIX = "metric.reporters.";
 
   public static final String ID_CONFIG = "id";
   private static final String ID_CONFIG_DOC =
@@ -724,10 +722,6 @@ public class KafkaRestConfig extends RestConfig {
 
   public Properties getOriginalProperties() {
     return originalProperties;
-  }
-
-  public Map<String, Object> metricsReporterConfig() {
-    return originalsWithPrefix(METRICS_REPORTER_CONFIG_PREFIX);
   }
 
   private Properties addExistingV1Properties(Properties props) {
