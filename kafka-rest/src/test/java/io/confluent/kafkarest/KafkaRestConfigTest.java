@@ -145,6 +145,6 @@ public class KafkaRestConfigTest {
   }
 
   private String reporter_config(String suffix) {
-    return KafkaRestConfig.METRIC_REPORTERS_PREFIX + suffix;
+    return KafkaRestConfig.METRICS_REPORTER_CONFIG_PREFIX + suffix;
   }
 }
