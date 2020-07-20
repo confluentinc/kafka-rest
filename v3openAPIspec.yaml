@@ -1,89 +1,277 @@
 openapi: 3.0.0
 info:
-  description: defaultDescription
-  version: 3-oas3
-  title: defaultTitle
+  description: |
+    Created from Swagger Inspector : https://inspector.swagger.io/builder
+    Created for Kakfa REST Proxy API v3 : https://docs.confluent.io/current/kafka-rest/api.html#crest-api-v3
+    Current only includes functionalities needed for kafka topic management from CLI:
+    - Get clusters
+    - Get topics of a cluster
+    - Create a topic
+    - Delete a topic
+    - Get info on a topic
+    - List configs of a topic
+    - Get a config value of a topic
+    - Set a config value of a topic
+    - Reset a config value of a topic
+
+  version: "3.0"
+  title: Kafka REST Proxy API
 paths:
   /v3/clusters:
     get:
+      summary:
+        List the clusters. Because the REST Proxy can only connect to a single Kafka cluster, this list will always return a single cluster.
       responses:
         '200':
-          description: Definition generated from Swagger Inspector
+          description: List of clusters connected to REST Proxy.
           content:
             application/vnd.api+json:
               schema:
-                type: string
-  /v3/clusters/JhXohxK5SWK_2DDLjmxPsA/topics:
+                $ref : '#/components/schemas/ClusterList'
+        # TODO: add default error response?
+        # default:
+        #   description: Error Response
+        #   content:
+        #     application/vnd.api+json:
+        #       schema:
+        #         $ref : '#/components/schemas/ErrorResponse'
+  /v3/clusters/{cluster_id}/topics:
     get:
-      responses:
-        '200':
-          description: Definition generated from Swagger Inspector
-    post:
-      responses:
-        '201':
-          description: Definition generated from Swagger Inspector
-          content:
-            application/vnd.api+json:
-              schema:
-                type: string
-      requestBody:
-        $ref: '#/components/requestBodies/Body'
-  /v3/clusters/JhXohxK5SWK_2DDLjmxPsA/topics/PAGEVIEWS_FEMALE:
-    get:
-      responses:
-        '200':
-          description: Definition generated from Swagger Inspector
-          content:
-            application/vnd.api+json:
-              schema:
-                type: string
-  /v3/clusters/JhXohxK5SWK_2DDLjmxPsA/topics/swagger-topic-1/configs:
-    get:
-      responses:
-        '200':
-          description: Definition generated from Swagger Inspector
-  /v3/clusters/JhXohxK5SWK_2DDLjmxPsA/topics/swagger-topic-1/configs/cleanup.policy:
-    get:
-      responses:
-        '200':
-          description: Definition generated from Swagger Inspector
-          content:
-            application/vnd.api+json:
-              schema:
-                type: string
-    put:
-      responses:
-        '204':
-          description: Definition generated from Swagger Inspector
-          content:
-            '*/*':
-              schema:
-                type: string
-      requestBody:
-        $ref: '#/components/requestBodies/Body'
-    delete:
-      responses:
-        '204':
-          description: Definition generated from Swagger Inspector
-          content:
-            '*/*':
-              schema:
-                type: string
-      requestBody:
-        $ref: '#/components/requestBodies/Body'
-  /v3/clusters/JhXohxK5SWK_2DDLjmxPsA/topics/swagger-topic-2:
-    delete:
-      responses:
-        '204':
-          description: Definition generated from Swagger Inspector
-          content:
-            '*/*':
-              schema:
-                type: string
-components:
-  requestBodies:
-    Body:
-      content:
-        application/vnd.api+json:
+      summary:
+        List the topics belonging to a given cluster.
+      parameters:
+        - name: cluster_id
+          in: path
+          required: true
+          description: The cluster ID of the cluster the topics belong to.
           schema:
             type: string
+          example: cluster-1
+      responses:
+        '200':
+          # TODO: delete all response and request descriptions?
+          description: Topics that belong to the cluster.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref : "#/components/schemas/TopicList"
+    post:
+      summary:
+        Create a topic.
+      parameters:
+        - name: cluster_id
+          in: path
+          required: true
+          description: The cluster ID of the cluster the topic belongs to.
+          schema:
+            type: string
+          example: cluster-1
+      responses:
+        '201':
+          description: Topic created
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TopicInfo'
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/TopicCreateRequest'
+  /v3/clusters/{cluster_id}/topics/{topic_name}:
+    get:
+      summary:
+        Get a topic.
+      parameters:
+        - name: cluster_id
+          in: path
+          required: true
+          description: The cluster ID of the cluster the topic belongs to.
+          schema:
+            type: string
+          example: cluster-1
+        - name: topic_name
+          in: path
+          required: true
+          description: The name of the topic.
+          schema:
+            type: string
+          example: topic-1
+      responses:
+        '200':
+          description: Info on the topic
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TopicInfo'
+    delete:
+      summary:
+        Delete a topic.
+      parameters:
+        - name: cluster_id
+          in: path
+          required: true
+          description: The cluster ID of the cluster the topic belongs to.
+          schema:
+            type: string
+          example: cluster-1
+        - name: topic_name
+          in: path
+          required: true
+          description: The name of the topic.
+          schema:
+            type: string
+          example: topic-1
+      responses:
+        '204':
+          description: Delete successful
+          content:
+            '*/*':
+              schema:
+                type: string
+  /v3/clusters/{cluster_id}/topics/{topic_name}/configs:
+    get:
+      summary:
+        List the configs of a given topic.
+      parameters:
+          - name: cluster_id
+            in: path
+            required: true
+            description: The cluster ID of the cluster the configs belong to.
+            schema:
+              type: string
+            example: cluster-1
+          - name: topic_name
+            in: path
+            required: true
+            description: The name of the topic the configs belong to.
+            schema:
+              type: string
+            example: topic-1
+      responses:
+        '200':
+          description: List of topic configs of topic
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ConfigList'
+  /v3/clusters/{cluster_id}/topics/{topic_name}/configs/{name}:
+    get:
+      summary:
+        Get a config.
+      parameters:
+          - name: cluster_id
+            in: path
+            required: true
+            description: The cluster ID of the cluster the config belongs to.
+            schema:
+              type: string
+            example: cluster-1
+          - name: topic_name
+            in: path
+            required: true
+            description: The name of the topic the config belongs to.
+            schema:
+              type: string
+            example: topic-1
+          - name: name
+            in: path
+            required: true
+            description: The name of the config.
+            schema:
+              type: string
+            example: cleanup.policy
+      responses:
+        '200':
+          description: List of topic configs of topic
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ConfigInfo'
+    put:
+      summary:
+        Set the value of a config.
+      parameters:
+          - name: cluster_id
+            in: path
+            required: true
+            description: The cluster ID of the cluster the config belongs to.
+            schema:
+              type: string
+            example: cluster-1
+          - name: topic_name
+            in: path
+            required: true
+            description: The name of the topic the config belongs to.
+            schema:
+              type: string
+            example: topic-1
+          - name: name
+            in: path
+            required: true
+            description: The name of the config.
+            schema:
+              type: string
+            example: cleanup.policy
+      responses:
+        '204':
+          description: Successfully updated.
+          content:
+            '*/*':
+              schema:
+                type: string
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/ConfigSetRequest'
+    delete:
+      summary:
+        Reset a config to its default value.
+      parameters:
+          - name: cluster_id
+            in: path
+            required: true
+            description: The cluster ID of the cluster the config belongs to.
+            schema:
+              type: string
+            example: cluster-1
+          - name: topic_name
+            in: path
+            required: true
+            description: The name of the topic the config belongs to.
+            schema:
+              type: string
+            example: topic-1
+          - name: name
+            in: path
+            required: true
+            description: The name of the config.
+            schema:
+              type: string
+            example: cleanup.policy
+      responses:
+        '204':
+          description: Successfully resetted
+          content:
+            '*/*':
+              schema:
+                type: string    
+
+# define the schemas for request and response bodies
+components:
+  schemas:
+    ClusterList:
+      type: string
+    TopicList:
+      type: string
+    TopicCreateRequest:
+      type: string
+    TopicInfo:
+      type: string
+    ConfigList:
+      type: string
+    ConfigInfo:
+      type: string
+    ConfigSetRequest:
+      type: string
