@@ -1,0 +1,89 @@
+openapi: 3.0.0
+info:
+  description: defaultDescription
+  version: 3-oas3
+  title: defaultTitle
+paths:
+  /v3/clusters:
+    get:
+      responses:
+        '200':
+          description: Definition generated from Swagger Inspector
+          content:
+            application/vnd.api+json:
+              schema:
+                type: string
+  /v3/clusters/JhXohxK5SWK_2DDLjmxPsA/topics:
+    get:
+      responses:
+        '200':
+          description: Definition generated from Swagger Inspector
+    post:
+      responses:
+        '201':
+          description: Definition generated from Swagger Inspector
+          content:
+            application/vnd.api+json:
+              schema:
+                type: string
+      requestBody:
+        $ref: '#/components/requestBodies/Body'
+  /v3/clusters/JhXohxK5SWK_2DDLjmxPsA/topics/PAGEVIEWS_FEMALE:
+    get:
+      responses:
+        '200':
+          description: Definition generated from Swagger Inspector
+          content:
+            application/vnd.api+json:
+              schema:
+                type: string
+  /v3/clusters/JhXohxK5SWK_2DDLjmxPsA/topics/swagger-topic-1/configs:
+    get:
+      responses:
+        '200':
+          description: Definition generated from Swagger Inspector
+  /v3/clusters/JhXohxK5SWK_2DDLjmxPsA/topics/swagger-topic-1/configs/cleanup.policy:
+    get:
+      responses:
+        '200':
+          description: Definition generated from Swagger Inspector
+          content:
+            application/vnd.api+json:
+              schema:
+                type: string
+    put:
+      responses:
+        '204':
+          description: Definition generated from Swagger Inspector
+          content:
+            '*/*':
+              schema:
+                type: string
+      requestBody:
+        $ref: '#/components/requestBodies/Body'
+    delete:
+      responses:
+        '204':
+          description: Definition generated from Swagger Inspector
+          content:
+            '*/*':
+              schema:
+                type: string
+      requestBody:
+        $ref: '#/components/requestBodies/Body'
+  /v3/clusters/JhXohxK5SWK_2DDLjmxPsA/topics/swagger-topic-2:
+    delete:
+      responses:
+        '204':
+          description: Definition generated from Swagger Inspector
+          content:
+            '*/*':
+              schema:
+                type: string
+components:
+  requestBodies:
+    Body:
+      content:
+        application/vnd.api+json:
+          schema:
+            type: string
