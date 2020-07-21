@@ -1,9 +1,9 @@
 openapi: 3.0.0
 info:
-  description: |
+  description: |-
     Created from Swagger Inspector : https://inspector.swagger.io/builder
-    Created for Kakfa REST Proxy API v3 : https://docs.confluent.io/current/kafka-rest/api.html#crest-api-v3
-    Current only includes functionalities needed for kafka topic management from CLI:
+
+    Created for Kakfa REST Proxy API v3, current only includes functionalities needed for kafka topic management from CLI:
     - Get clusters
     - Get topics of a cluster
     - Create a topic
@@ -14,7 +14,7 @@ info:
     - Set a config value of a topic
     - Reset a config value of a topic
 
-  version: "3.0"
+  version: '3.0'
   title: Kafka REST Proxy API
 paths:
   /v3/clusters:
@@ -261,8 +261,55 @@ paths:
 # define the schemas for request and response bodies
 components:
   schemas:
+    selfLink:
+        type: object
+        properties:
+          self:
+            type: string
+    relatedLinks:
+      type: object
+      properties:
+        related:
+          type: string
     ClusterList:
-      type: string
+      type: object
+      properties:
+        links:
+          $ref: '#/components/schemas/selfLink'
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              links:
+                $ref: '#/components/schemas/selfLink'
+              type:
+                type: string
+              id:
+                type: string
+              attributes:
+                type: object
+                properties:
+                  cluster_id:
+                    type: string
+              relationships:
+                type: object
+                properties:
+                  controller:
+                    type: object
+                    properties:
+                      links:
+                        $ref: '#/components/schemas/relatedLinks'
+                  brokers:
+                    type: object
+                    properties:
+                      links:
+                        $ref: '#/components/schemas/relatedLinks'
+                  topics:
+                    type: object
+                    properties:
+                      links:
+                        $ref: '#/components/schemas/relatedLinks'
     TopicList:
       type: string
     TopicCreateRequest:
@@ -274,4 +321,21 @@ components:
     ConfigInfo:
       type: string
     ConfigSetRequest:
-      type: string
+      type: object
+      properties:
+        hello:
+          type: string
+        array:
+          type: array
+          items:
+            type: string
+externalDocs:
+  url: https://docs.confluent.io/current/kafka-rest/api.html#crest-api-v3
+  description: Documentation for Kafka REST Proxy API v3
+servers:
+  - url: http://localhost:{port}
+    description: "When connecting to a locally running Kafka REST Proxy server. See: https://docs.confluent.io/current/installation/installing_cp/index.html)"
+    variables:
+      port:
+        default: "8082"
+        description: The default port that Kafka REST Proxy server runs at.
