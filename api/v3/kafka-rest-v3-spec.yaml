@@ -1,0 +1,935 @@
+openapi: 3.0.0
+
+info:
+  title: Kafka HTTP API
+  version: 3.0.0
+
+servers:
+  - url: http://localhost:9391/v3
+    description: Kafka REST Proxy
+  - url: http://localhost:9391/kafka/v3
+    description: Confluent Server
+
+paths:
+  /clusters:
+    get:
+      summary: 'List Clusters'
+      description: 'Returns the list of known Kafka clusters. Right now both Kafka and Kafka REST
+        Proxy only know about one Kafka cluster, namely the one pointed at by the
+        `bootstrap.servers` configuration. Therefore only one Kafka cluster will be returned in the
+        response. Support for multiple Kafka clusters might be added in the future.'
+      tags:
+        - Cluster
+      responses:
+        '200':
+          $ref: '#/components/responses/ListClustersResponse'
+
+  /clusters/{cluster_id}:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+
+    get:
+      summary: 'Get Cluster'
+      description: 'Returns the Kafka cluster with the given `cluster_id`.'
+      tags:
+        - Cluster
+      responses:
+        '200':
+          $ref: '#/components/responses/GetClusterResponse'
+
+  /clusters/{cluster_id}/brokers:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+
+    get:
+      summary: 'List Brokers'
+      description: 'Returns the list of brokers belonging to the given Kafka cluster.'
+      tags:
+        - Broker
+      responses:
+        '200':
+          $ref: '#/components/responses/ListBrokersResponse'
+
+  /clusters/{cluster_id}/brokers/{broker_id}:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/BrokerId'
+
+    get:
+      summary: 'Get Broker'
+      description: 'Returns the broker with the given `broker_id`.'
+      tags:
+        - Broker
+      responses:
+        '200':
+          $ref: '#/components/responses/GetBrokerResponse'
+
+  /clusters/{cluster_id}/brokers/{broker_id}/partition-replicas:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/BrokerId'
+
+    get:
+      summary: 'Search Replicas by Broker'
+      description: 'Returns the list of replicas assigned to the given broker.'
+      tags:
+        - Broker
+        - Replica
+      responses:
+        '200':
+          $ref: '#/components/responses/SearchReplicasByBrokerResponse'
+
+  /clusters/{cluster_id}/topics:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+
+    get:
+      summary: 'List Topics'
+      description: 'Returns the list of topics belonging to the given Kafka cluster.'
+      tags:
+        - Topic
+      responses:
+        '200':
+          $ref: '#/components/responses/ListTopicsResponse'
+
+    post:
+      summary: 'Create Topic'
+      description: 'Creates a topic.'
+      tags:
+        - Topic
+      requestBody:
+        $ref: '#/components/requestBodies/CreateTopicRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/CreateTopicResponse'
+
+  /clusters/{cluster_id}/topics/{topic_name}:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/TopicName'
+
+    get:
+      summary: 'Get Topic'
+      description: 'Returns the topic with the given `topic_name`.'
+      tags:
+        - Topic
+      responses:
+        '200':
+          $ref: '#/components/responses/GetTopicResponse'
+
+    delete:
+      summary: 'Delete Topic'
+      description: 'Deletes the topic with the given `topic_name`.'
+      tags:
+        - Topic
+      responses:
+        '204':
+          description: 'No Content'
+
+  /clusters/{cluster_id}/topics/{topic_name}/partitions:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/TopicName'
+
+    get:
+      summary: 'List Partitions'
+      description: 'Returns the list of partitions belonging to the given topic.'
+      tags:
+        - Partition
+      responses:
+        '200':
+          $ref: '#/components/responses/ListPartitionsResponse'
+
+  /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/TopicName'
+      - $ref: '#/components/parameters/PartitionId'
+
+    get:
+      summary: 'Get Partition'
+      description: 'Returns the partition with the given `partition_id`.'
+      tags:
+        - Partition
+      responses:
+        '200':
+          $ref: '#/components/responses/GetPartitionResponse'
+
+  /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/replicas:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/TopicName'
+      - $ref: '#/components/parameters/PartitionId'
+
+    get:
+      summary: 'List Replicas'
+      description: 'Returns the list of replicas of the given partition.'
+      tags:
+        - Replica
+      responses:
+        '200':
+          $ref: '#/components/responses/ListReplicasResponse'
+
+  /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/replicas/{broker_id}:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/TopicName'
+      - $ref: '#/components/parameters/PartitionId'
+      - $ref: '#/components/parameters/BrokerId'
+
+    get:
+      summary: 'Get Replica'
+      description: 'Returns the replica of the given partition assigned to the given broker.'
+      tags:
+        - Replica
+      responses:
+        '200':
+          $ref: '#/components/responses/GetReplicaResponse'
+
+components:
+  parameters:
+    ClusterId:
+      name: 'cluster_id'
+      description: 'The Kafka cluster ID.'
+      in: path
+      required: true
+      schema:
+        type: string
+      example: 'cluster-1'
+
+    BrokerId:
+      name: 'broker_id'
+      description: 'The broker ID.'
+      in: path
+      required: true
+      schema:
+        type: integer
+      example: 1
+
+    TopicName:
+      name: 'topic_name'
+      description: 'The topic name.'
+      in: path
+      required: true
+      schema:
+        type: string
+      example: topic-1
+
+    PartitionId:
+      name: 'partition_id'
+      description: 'The partition ID.'
+      in: path
+      required: true
+      schema:
+        type: integer
+      example: 1
+
+  schemas:
+    BrokerData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - broker_id
+            - configs
+            - partition_replicas
+          properties:
+            cluster_id:
+              type: string
+            broker_id:
+              type: integer
+            host:
+              type: string
+              nullable: true
+            port:
+              type: integer
+              nullable: true
+            rack:
+              type: string
+              nullable: true
+            configs:
+              $ref: '#/components/schemas/Relationship'
+            partition_replicas:
+              $ref: '#/components/schemas/Relationship'
+
+    BrokerDataList:
+      allOf:
+        - $ref: '#/components/schemas/ResourceCollection'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/BrokerData'
+
+    ClusterData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - acls
+            - brokers
+            - broker_configs
+            - consumer_groups
+            - topics
+            - partition_reassignments
+          properties:
+            cluster_id:
+              type: string
+            controller:
+              $ref: '#/components/schemas/Relationship'
+            acls:
+              $ref: '#/components/schemas/Relationship'
+            brokers:
+              $ref: '#/components/schemas/Relationship'
+            broker_configs:
+              $ref: '#/components/schemas/Relationship'
+            consumer_groups:
+              $ref: '#/components/schemas/Relationship'
+            topics:
+              $ref: '#/components/schemas/Relationship'
+            partition_reassignments:
+              $ref: '#/components/schemas/Relationship'
+
+    ClusterDataList:
+      allOf:
+        - $ref: '#/components/schemas/ResourceCollection'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ClusterData'
+
+    PartitionData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - topic_name
+            - partition_id
+            - replicas
+            - reassignment
+          properties:
+            cluster_id:
+              type: string
+            topic_name:
+              type: string
+            partition_id:
+              type: integer
+            leader:
+              $ref: '#/components/schemas/Relationship'
+            replicas:
+              $ref: '#/components/schemas/Relationship'
+            reassignment:
+              $ref: '#/components/schemas/Relationship'
+
+    PartitionDataList:
+      allOf:
+        - $ref: '#/components/schemas/ResourceCollection'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/PartitionData'
+
+    Relationship:
+      type: object
+      required:
+        - related
+      properties:
+        related:
+          type: string
+
+    ReplicaData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - topic_name
+            - partition_id
+            - broker_id
+            - is_leader
+            - is_in_sync
+            - broker
+          properties:
+            cluster_id:
+              type: string
+            topic_name:
+              type: string
+            partition_id:
+              type: integer
+            broker_id:
+              type: integer
+            is_leader:
+              type: boolean
+            is_in_sync:
+              type: boolean
+            broker:
+              $ref: '#/components/schemas/Relationship'
+
+    ReplicaDataList:
+      allOf:
+        - $ref: '#/components/schemas/ResourceCollection'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ReplicaData'
+
+    Resource:
+      type: object
+      required:
+        - kind
+        - metadata
+      properties:
+        kind:
+          type: string
+        metadata:
+          $ref: '#/components/schemas/ResourceMetadata'
+
+    ResourceCollection:
+      type: object
+      required:
+        - kind
+        - metadata
+      properties:
+        kind:
+          type: string
+        metadata:
+          $ref: '#/components/schemas/ResourceCollectionMetadata'
+
+    ResourceCollectionMetadata:
+      type: object
+      required:
+        - self
+      properties:
+        self:
+          type: string
+        next:
+          type: string
+          nullable: true
+
+    ResourceMetadata:
+      type: object
+      required:
+        - self
+      properties:
+        self:
+          type: string
+        resource_name:
+          type: string
+          nullable: true
+
+    TopicData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - topic_name
+            - is_internal
+            - replication_factor
+            - partitions
+            - configs
+            - partition_reassignments
+          properties:
+            cluster_id:
+              type: string
+            topic_name:
+              type: string
+            is_internal:
+              type: boolean
+            replication_factor:
+              type: integer
+            partitions:
+              $ref: '#/components/schemas/Relationship'
+            configs:
+              $ref: '#/components/schemas/Relationship'
+            partition_reassignments:
+              $ref: '#/components/schemas/Relationship'
+
+    TopicDataList:
+      allOf:
+        - $ref: '#/components/schemas/ResourceCollection'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/TopicData'
+
+  requestBodies:
+    CreateTopicRequest:
+      description: 'The topic creation request.'
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - topic_name
+              - partitions_count
+              - replication_factor
+            properties:
+              topic_name:
+                type: string
+              partitions_count:
+                type: integer
+              replication_factor:
+                type: integer
+              configs:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                      nullable: true
+          example:
+            topic_name: 'topic-X'
+            partitions_count: 64
+            replication_factor: 3
+            configs:
+              - name: 'cleanup.policy'
+                value: 'compact'
+              - name: 'compression.type'
+                value: 'gzip'
+
+  responses:
+    CreateTopicResponse:
+      description: 'The created topic.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TopicData'
+          example:
+            kind: 'KafkaTopic'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-X'
+              resource_name: 'crn:///kafka=cluster-1/topic=topic-X'
+            cluster_id: 'cluster-1'
+            topic_name: 'topic-X'
+            is_internal: false
+            replication_factor: 3
+            partitions:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-X/partitions'
+            configs:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-X/configs'
+            partition_reassignments:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-X/partitions/-/reassignments'
+
+    GetBrokerResponse:
+      description: 'The broker.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BrokerData'
+          example:
+            kind: 'KafkaBroker'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
+              resource_name: 'crn:///kafka=cluster-1/broker=1'
+            cluster_id: 'cluster-1'
+            broker_id: 1
+            host: 'localhost'
+            port: 9291
+            configs:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1/configs'
+            partition_replicas:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1/partition-replicas'
+
+    GetClusterResponse:
+      description: 'The Kafka cluster.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ClusterData'
+          example:
+            kind: 'KafkaCluster'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1'
+              resource_name: 'crn:///kafka=cluster-1'
+            cluster_id: 'cluster-1'
+            controller:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
+            acls:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/acls'
+            brokers:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/brokers'
+            broker_configs:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/broker-configs'
+            consumer_groups:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups'
+            topics:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics'
+            partition_reassignments:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/-/partitions/-/reassignment'
+
+    GetPartitionResponse:
+      description: 'The partition'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PartitionData'
+          example:
+            kind: 'KafkaPartition'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
+              resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1'
+            cluster_id: 'cluster-1'
+            topic_name: 'topic-1'
+            partition_id: 1
+            leader:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas/1'
+            replicas:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas'
+            reassignment:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/reassignment'
+
+    GetReplicaResponse:
+      description: 'The replica.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReplicaData'
+          example:
+            kind: 'KafkaReplica'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas/1'
+              resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1/replica=1'
+            cluster_id: 'cluster-1'
+            topic_name: 'topic-1'
+            partition_id: 1
+            broker_id: 1
+            is_leader: true
+            is_in_sync: true
+            broker:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
+
+    GetTopicResponse:
+      description: 'The topic.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TopicData'
+          example:
+            kind: 'KafkaTopic'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1'
+              resource_name: 'crn:///kafka=cluster-1/topic=topic-1'
+            cluster_id: 'cluster-1'
+            topic_name: 'topic-1'
+            is_internal: false
+            replication_factor: 3
+            partitions:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions'
+            configs:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/configs'
+            partition_reassignments:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/-/reassignments'
+
+    ListBrokersResponse:
+      description: 'The list of brokers.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BrokerDataList'
+          example:
+            kind: 'KafkaBrokerList'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/brokers'
+              next: null
+            data:
+              - kind: 'KafkaBroker'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
+                  resource_name: 'crn:///kafka=cluster-1/broker=1'
+                cluster_id: 'cluster-1'
+                broker_id: 1
+                host: 'localhost'
+                port: 9291
+                configs:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1/configs'
+                partition_replicas:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1/partition-replicas'
+              - kind: 'KafkaBroker'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/brokers/2'
+                  resource_name: 'crn:///kafka=cluster-1/broker=2'
+                cluster_id: 'cluster-1'
+                broker_id: 2
+                host: 'localhost'
+                port: 9292
+                configs:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/2/configs'
+                partition_replicas:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/2/partition-replicas'
+              - kind: 'KafkaBroker'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/brokers/3'
+                  resource_name: 'crn:///kafka=cluster-1/broker=3'
+                cluster_id: 'cluster-1'
+                broker_id: 3
+                host: 'localhost'
+                port: 9293
+                configs:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/3/configs'
+                partition_replicas:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/3/partition-replicas'
+
+    ListClustersResponse:
+      description: 'The list of Kafka clusters.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ClusterDataList'
+          example:
+            kind: 'KafkaClusterList'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters'
+              next: null
+            data:
+              - kind: 'KafkaCluster'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1'
+                  resource_name: 'crn:///kafka=cluster-1'
+                cluster_id: 'cluster-1'
+                controller:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
+                acls:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/acls'
+                brokers:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers'
+                broker_configs:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/broker-configs'
+                consumer_groups:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups'
+                topics:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics'
+                partition_reassignments:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/-/partitions/-/reassignment'
+
+    ListPartitionsResponse:
+      description: 'The list of partitions.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PartitionDataList'
+          example:
+            kind: 'KafkaPartitionList'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions'
+              next: null
+            data:
+              - kind: 'KafkaPartition'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-1'
+                partition_id: 1
+                leader:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas/1'
+                replicas:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas'
+                reassignment:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/reassignment'
+              - kind: 'KafkaPartition'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/2'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=2'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-1'
+                partition_id: 2
+                leader:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/2/replicas/2'
+                replicas:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/2/replicas'
+                reassignment:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/2/reassignment'
+              - kind: 'KafkaPartition'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/3'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=3'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-1'
+                partition_id: 3
+                leader:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/3/replicas/3'
+                replicas:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/3/replicas'
+                reassignment:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/3/reassignment'
+
+    ListReplicasResponse:
+      description: 'The list of replicas.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReplicaDataList'
+          example:
+            kind: 'KafkaReplicaList'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas'
+              next: null
+            data:
+              - kind: 'KafkaReplica'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas/1'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1/replica=1'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-1'
+                partition_id: 1
+                broker_id: 1
+                is_leader: true
+                is_in_sync: true
+                broker:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
+              - kind: 'KafkaReplica'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas/2'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1/replica=2'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-1'
+                partition_id: 1
+                broker_id: 2
+                is_leader: false
+                is_in_sync: true
+                broker:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/2'
+              - kind: 'KafkaReplica'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas/3'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1/replica=3'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-1'
+                partition_id: 1
+                broker_id: 3
+                is_leader: false
+                is_in_sync: false
+                broker:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/3'
+
+    ListTopicsResponse:
+      description: 'The list of topics.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TopicDataList'
+          example:
+            kind: 'KafkaTopicList'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/topics'
+              next: null
+            data:
+              - kind: 'KafkaTopic'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-1'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-1'
+                is_internal: false
+                replication_factor: 3
+                partitions:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions'
+                configs:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/configs'
+                partition_reassignments:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/-/reassignments'
+              - kind: 'KafkaTopic'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-2'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-2'
+                is_internal: true
+                replication_factor: 4
+                partitions:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions'
+                configs:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/configs'
+                partition_reassignments:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions/-/reassignments'
+              - kind: 'KafkaTopic'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-3'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-3'
+                is_internal: false
+                replication_factor: 5
+                partitions:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions'
+                configs:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/configs'
+                partition_reassignments:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/-/reassignments'
+
+    SearchReplicasByBrokerResponse:
+      description: 'The list of replicas.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReplicaDataList'
+          example:
+            kind: 'KafkaReplicaList'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1/partition-replicas'
+              next: null
+            data:
+              - kind: 'KafkaReplica'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/2/replicas/1'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=2/replica=1'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-1'
+                partition_id: 2
+                broker_id: 1
+                is_leader: true
+                is_in_sync: true
+                broker:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
+              - kind: 'KafkaReplica'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions/3/replicas/1'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-3/partition=3/replica=1'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-2'
+                partition_id: 3
+                broker_id: 1
+                is_leader: false
+                is_in_sync: true
+                broker:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
+              - kind: 'KafkaReplica'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/1/replicas/1'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-3/partition=1/replica=1'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-3'
+                partition_id: 1
+                broker_id: 1
+                is_leader: false
+                is_in_sync: false
+                broker:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
