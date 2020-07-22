@@ -37,6 +37,68 @@ paths:
         '200':
           $ref: '#/components/responses/GetClusterResponse'
 
+  /clusters/{cluster_id}/broker-configs:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+
+    get:
+      summary: 'List Cluster Configs'
+      description: 'Return the list of configs belonging to the given Kafka cluster.'
+      tags:
+        - Configs
+      responses:
+        '200':
+          $ref: '#/components/responses/ListClusterConfigsResponse'
+
+  /clusters/{cluster_id}/broker-configs:alter:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+
+    post:
+      summary: 'Batch Alter Cluster Configs'
+      description: 'Updates or deletes a set of Kafka cluster configs.'
+      tags:
+        - Configs
+      requestBody:
+        $ref: '#/components/requestBodies/AlterClusterConfigBatchRequest'
+      responses:
+        '204':
+          description: 'No Content'
+
+  /clusters/{cluster_id}/broker-configs/{name}:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/ConfigName'
+
+    get:
+      summary: 'Get Cluster Config'
+      description: 'Return the config with the given `name`.'
+      tags:
+        - Configs
+      responses:
+        '200':
+          $ref: '#/components/responses/GetClusterConfigResponse'
+
+    put:
+      summary: 'Update Cluster Config'
+      description: 'Updates the config with given `name`.'
+      tags:
+        - Configs
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateClusterConfigRequest'
+      responses:
+        '204':
+          description: 'No Content'
+
+    delete:
+      summary: 'Reset Cluster Config'
+      description: 'Resets the config with given `name` to its default value.'
+      tags:
+        - Configs
+      responses:
+        '204':
+          description: 'No Content'
+
   /clusters/{cluster_id}/brokers:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -63,6 +125,71 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/GetBrokerResponse'
+
+  /clusters/{cluster_id}/brokers/{broker_id}/configs:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/BrokerId'
+
+    get:
+      summary: 'List Broker Configs'
+      description: 'Return the list of configs belonging to the given broker.'
+      tags:
+        - Configs
+      responses:
+        '200':
+          $ref: '#/components/responses/ListBrokerConfigsResponse'
+
+  /clusters/{cluster_id}/brokers/{broker_id}/configs:alter:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/BrokerId'
+
+    post:
+      summary: 'Batch Alter Broker Configs'
+      description: 'Updates or deletes a set of broker configs.'
+      tags:
+        - Configs
+      requestBody:
+        $ref: '#/components/requestBodies/AlterBrokerConfigBatchRequest'
+      responses:
+        '204':
+          description: 'No Content'
+
+  /clusters/{cluster_id}/brokers/{broker_id}/configs/{name}:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/BrokerId'
+      - $ref: '#/components/parameters/ConfigName'
+
+    get:
+      summary: 'Get Broker Config'
+      description: 'Return the config with the given `name`.'
+      tags:
+        - Configs
+      responses:
+        '200':
+          $ref: '#/components/responses/GetBrokerConfigResponse'
+
+    put:
+      summary: 'Update Broker Config'
+      description: 'Updates the config with given `name`.'
+      tags:
+        - Configs
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateBrokerConfigRequest'
+      responses:
+        '204':
+          description: 'No Content'
+
+    delete:
+      summary: 'Reset Broker Config'
+      description: 'Resets the config with given `name` to its default value.'
+      tags:
+        - Configs
+      responses:
+        '204':
+          description: 'No Content'
 
   /clusters/{cluster_id}/brokers/{broker_id}/partition-replicas:
     parameters:
@@ -122,6 +249,71 @@ paths:
       description: 'Deletes the topic with the given `topic_name`.'
       tags:
         - Topic
+      responses:
+        '204':
+          description: 'No Content'
+
+  /clusters/{cluster_id}/topics/{topic_name}/configs:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/TopicName'
+
+    get:
+      summary: 'List Topic Configs'
+      description: 'Return the list of configs belonging to the given topic.'
+      tags:
+        - Configs
+      responses:
+        '200':
+          $ref: '#/components/responses/ListTopicConfigsResponse'
+
+  /clusters/{cluster_id}/topics/{topic_name}/configs:alter:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/TopicName'
+
+    post:
+      summary: 'Batch Alter Topic Configs'
+      description: 'Updates or deletes a set of topic configs.'
+      tags:
+        - Configs
+      requestBody:
+        $ref: '#/components/requestBodies/AlterTopicConfigBatchRequest'
+      responses:
+        '204':
+          description: 'No Content'
+
+  /clusters/{cluster_id}/topics/{topic_name}/configs/{name}:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/TopicName'
+      - $ref: '#/components/parameters/ConfigName'
+
+    get:
+      summary: 'Get Topic Config'
+      description: 'Return the config with the given `name`.'
+      tags:
+        - Configs
+      responses:
+        '200':
+          $ref: '#/components/responses/GetTopicConfigResponse'
+
+    put:
+      summary: 'Update Topic Config'
+      description: 'Updates the config with given `name`.'
+      tags:
+        - Configs
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateTopicConfigRequest'
+      responses:
+        '204':
+          description: 'No Content'
+
+    delete:
+      summary: 'Reset Topic Config'
+      description: 'Resets the config with given `name` to its default value.'
+      tags:
+        - Configs
       responses:
         '204':
           description: 'No Content'
@@ -188,6 +380,15 @@ paths:
 
 components:
   parameters:
+    BrokerId:
+      name: 'broker_id'
+      description: 'The broker ID.'
+      in: path
+      required: true
+      schema:
+        type: integer
+      example: 1
+
     ClusterId:
       name: 'cluster_id'
       description: 'The Kafka cluster ID.'
@@ -197,9 +398,18 @@ components:
         type: string
       example: 'cluster-1'
 
-    BrokerId:
-      name: 'broker_id'
-      description: 'The broker ID.'
+    ConfigName:
+      name: 'name'
+      description: 'The config name.'
+      in: path
+      required: true
+      schema:
+        type: string
+      example: 'compression.type'
+
+    PartitionId:
+      name: 'partition_id'
+      description: 'The partition ID.'
       in: path
       required: true
       schema:
@@ -215,16 +425,86 @@ components:
         type: string
       example: topic-1
 
-    PartitionId:
-      name: 'partition_id'
-      description: 'The partition ID.'
-      in: path
-      required: true
-      schema:
-        type: integer
-      example: 1
-
   schemas:
+    AbstractConfigData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - name
+            - is_default
+            - is_read_only
+            - is_sensitive
+            - source
+            - synonyms
+          properties:
+            cluster_id:
+              type: string
+            name:
+              type: string
+            value:
+              type: string
+              nullable: true
+            is_default:
+              type: boolean
+            is_read_only:
+              type: boolean
+            is_sensitive:
+              type: boolean
+            source:
+              $ref: '#/components/schemas/ConfigSource'
+            synonyms:
+              type: array
+              items:
+                $ref: '#/components/schemas/ConfigSynonymData'
+
+    AlterConfigBatchRequestData:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+            properties:
+              name:
+                type: string
+              value:
+                type: string
+                nullable: true
+              operation:
+                type: string
+                enum:
+                  - SET
+                  - DELETE
+                nullable: true
+
+    BrokerConfigData:
+      allOf:
+        - $ref: '#/components/schemas/AbstractConfigData'
+        - type: object
+          required:
+            - broker_id
+          properties:
+            broker_id:
+              type: integer
+
+    BrokerConfigDataList:
+      allOf:
+        - $ref: '#/components/schemas/ResourceCollection'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/BrokerConfigData'
+
     BrokerData:
       allOf:
         - $ref: '#/components/schemas/Resource'
@@ -264,6 +544,33 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/BrokerData'
+
+    ClusterConfigData:
+      allOf:
+        - $ref: '#/components/schemas/AbstractConfigData'
+        - type: object
+          required:
+            - config_type
+          properties:
+            config_type:
+              $ref: '#/components/schemas/ClusterConfigType'
+
+    ClusterConfigDataList:
+      allOf:
+        - $ref: '#/components/schemas/ResourceCollection'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ClusterConfigData'
+
+    ClusterConfigType:
+      type: string
+      enum:
+        - BROKER
 
     ClusterData:
       allOf:
@@ -306,6 +613,32 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/ClusterData'
+
+    ConfigSource:
+      type: string
+      enum:
+        - DYNAMIC_CLUSTER_LINK_CONFIG
+        - DYNAMIC_TOPIC_CONFIG
+        - DYNAMIC_BROKER_LOGGER_CONFIG
+        - DYNAMIC_BROKER_CONFIG
+        - DYNAMIC_DEFAULT_BROKER_CONFIG
+        - STATIC_BROKER_CONFIG
+        - DEFAULT_CONFIG
+        - UNKNOWN
+
+    ConfigSynonymData:
+      type: object
+      required:
+        - name
+        - source
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+          nullable: true
+        source:
+          $ref: '#/components/schemas/ConfigSource'
 
     PartitionData:
       allOf:
@@ -435,6 +768,28 @@ components:
           type: string
           nullable: true
 
+    TopicConfigData:
+      allOf:
+        - $ref: '#/components/schemas/AbstractConfigData'
+        - type: object
+          required:
+            - topic_name
+          properties:
+            topic_name:
+              type: string
+
+    TopicConfigDataList:
+      allOf:
+        - $ref: '#/components/schemas/ResourceCollection'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/TopicConfigData'
+
     TopicData:
       allOf:
         - $ref: '#/components/schemas/Resource'
@@ -476,6 +831,45 @@ components:
                 $ref: '#/components/schemas/TopicData'
 
   requestBodies:
+    AlterBrokerConfigBatchRequest:
+      description: 'The alter broker config batch request.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AlterConfigBatchRequestData'
+          example:
+            data:
+              - name: 'max.connections'
+                operation: 'DELETE'
+              - name: 'compression.type'
+                value: 'gzip'
+
+    AlterClusterConfigBatchRequest:
+      description: 'The alter cluster config batch request.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AlterConfigBatchRequestData'
+          example:
+            data:
+              - name: 'max.connections'
+                operation: 'DELETE'
+              - name: 'compression.type'
+                value: 'gzip'
+
+    AlterTopicConfigBatchRequest:
+      description: 'The alter topic config batch request.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AlterConfigBatchRequestData'
+          example:
+            data:
+              - name: 'cleanup.policy'
+                operation: 'DELETE'
+              - name: 'compression.type'
+                value: 'gzip'
+
     CreateTopicRequest:
       description: 'The topic creation request.'
       content:
@@ -515,6 +909,45 @@ components:
               - name: 'compression.type'
                 value: 'gzip'
 
+    UpdateBrokerConfigRequest:
+      description: 'The broker config update request.'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              value:
+                type: string
+                nullable: true
+          example:
+            value: 'gzip'
+
+    UpdateClusterConfigRequest:
+      description: 'The cluster config update request.'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              value:
+                type: string
+                nullable: true
+          example:
+            value: 'gzip'
+
+    UpdateTopicConfigRequest:
+      description: 'The topic config update request.'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              value:
+                type: string
+                nullable: true
+          example:
+            value: 'gzip'
+
   responses:
     CreateTopicResponse:
       description: 'The created topic.'
@@ -538,6 +971,33 @@ components:
             partition_reassignments:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-X/partitions/-/reassignments'
 
+    GetBrokerConfigResponse:
+      description: 'The broker config.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BrokerConfigData'
+          example:
+            kind: 'KafkaBrokerConfig'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1/configs/compression.type'
+              resource_name: 'crn:///kafka=cluster-1/broker=1/config=compression.type'
+            cluster_id: 'cluster-1'
+            broker_id: 1
+            name: 'compression.type'
+            value: 'gzip'
+            is_default: false
+            is_read_only: false
+            is_sensitive: false
+            source: 'DYNAMIC_BROKER_CONFIG'
+            synonyms:
+              - name: 'compression.type'
+                value: 'gzip'
+                source: 'DYNAMIC_BROKER_CONFIG'
+              - name: 'compression.type'
+                value: 'producer'
+                source: 'DEFAULT_CONFIG'
+
     GetBrokerResponse:
       description: 'The broker.'
       content:
@@ -557,6 +1017,33 @@ components:
               related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1/configs'
             partition_replicas:
               related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1/partition-replicas'
+
+    GetClusterConfigResponse:
+      description: 'The cluster config.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ClusterConfigData'
+          example:
+            kind: 'KafkaClusterConfig'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/broker-configs/compression.type'
+              resource_name: 'crn:///kafka=cluster-1/broker-config=compression.type'
+            cluster_id: 'cluster-1'
+            config_type: 'BROKER'
+            name: 'compression.type'
+            value: 'gzip'
+            is_default: false
+            is_read_only: false
+            is_sensitive: false
+            source: 'DYNAMIC_DEFAULT_BROKER_CONFIG'
+            synonyms:
+              - name: 'compression.type'
+                value: 'gzip'
+                source: 'DYNAMIC_DEFAULT_BROKER_CONFIG'
+              - name: 'compression.type'
+                value: 'producer'
+                source: 'DEFAULT_CONFIG'
 
     GetClusterResponse:
       description: 'The Kafka cluster.'
@@ -626,6 +1113,33 @@ components:
             broker:
               related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
 
+    GetTopicConfigResponse:
+      description: 'The topic config.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TopicConfigData'
+          example:
+            kind: 'KafkaTopicConfig'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/compression.type'
+              resource_name: 'crn:///kafka=cluster-1/topic=topic-1/config=compression.type'
+            cluster_id: 'cluster-1'
+            topic_name: 'topic-1'
+            name: 'compression.type'
+            value: 'gzip'
+            is_default: false
+            is_read_only: false
+            is_sensitive: false
+            source: 'DYNAMIC_TOPIC_CONFIG'
+            synonyms:
+              - name: 'compression.type'
+                value: 'gzip'
+                source: 'DYNAMIC_TOPIC_CONFIG'
+              - name: 'compression.type'
+                value: 'producer'
+                source: 'DEFAULT_CONFIG'
+
     GetTopicResponse:
       description: 'The topic.'
       content:
@@ -647,6 +1161,57 @@ components:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/configs'
             partition_reassignments:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/-/reassignments'
+
+    ListBrokerConfigsResponse:
+      description: 'The list of broker configs.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BrokerConfigDataList'
+          example:
+            kind: 'KafkaBrokerConfigList'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1/configs'
+              next: null
+            data:
+              - kind: 'KafkaBrokerConfig'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1/configs/max.connections'
+                  resource_name: 'crn:///kafka=cluster-1/broker=1/config=max.connections'
+                cluster_id: 'cluster-1'
+                broker_id: 1
+                name: 'max.connections'
+                value: '1000'
+                is_default: false
+                is_read_only: false
+                is_sensitive: false
+                source: 'DYNAMIC_BROKER_CONFIG'
+                synonyms:
+                  - name: 'max.connections'
+                    value: '1000'
+                    source: 'DYNAMIC_BROKER_CONFIG'
+                  - name: 'max.connections'
+                    value: '2147483647'
+                    source: 'DEFAULT_CONFIG'
+              - kind: 'KafkaBrokerConfig'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1/configs/compression.type'
+                  resource_name: 'crn:///kafka=cluster-1/broker=1/config=compression.type'
+                cluster_id: 'cluster-1'
+                broker_id: 1
+                name: 'compression.type'
+                value: 'gzip'
+                is_default: false
+                is_read_only: false
+                is_sensitive: false
+                source: 'DYNAMIC_BROKER_CONFIG'
+                synonyms:
+                  - name: 'compression.type'
+                    value: 'gzip'
+                    source: 'DYNAMIC_BROKER_CONFIG'
+                  - name: 'compression.type'
+                    value: 'producer'
+                    source: 'DEFAULT_CONFIG'
 
     ListBrokersResponse:
       description: 'The list of brokers.'
@@ -696,6 +1261,57 @@ components:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/3/configs'
                 partition_replicas:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/3/partition-replicas'
+
+    ListClusterConfigsResponse:
+      description: 'The list of cluster configs.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ClusterConfigDataList'
+          example:
+            kind: 'KafkaClusterConfigList'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/broker-configs'
+              next: null
+            data:
+              - kind: 'KafkaClusterConfig'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/broker-configs/max.connections'
+                  resource_name: 'crn:///kafka=cluster-1/broker-config=max.connections'
+                cluster_id: 'cluster-1'
+                config_type: 'BROKER'
+                name: 'max.connections'
+                value: '1000'
+                is_default: false
+                is_read_only: false
+                is_sensitive: false
+                source: 'DYNAMIC_DEFAULT_BROKER_CONFIG'
+                synonyms:
+                  - name: 'max.connections'
+                    value: '1000'
+                    source: 'DYNAMIC_DEFAULT_BROKER_CONFIG'
+                  - name: 'max.connections'
+                    value: '2147483647'
+                    source: 'DEFAULT_CONFIG'
+              - kind: 'KafkaClusterConfig'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/broker-configs/compression.type'
+                  resource_name: 'crn:///kafka=cluster-1/broker-config=compression.type'
+                cluster_id: 'cluster-1'
+                config_type: 'BROKER'
+                name: 'compression.type'
+                value: 'gzip'
+                is_default: false
+                is_read_only: false
+                is_sensitive: false
+                source: 'DYNAMIC_DEFAULT_BROKER_CONFIG'
+                synonyms:
+                  - name: 'compression.type'
+                    value: 'gzip'
+                    source: 'DYNAMIC_DEFAULT_BROKER_CONFIG'
+                  - name: 'compression.type'
+                    value: 'producer'
+                    source: 'DEFAULT_CONFIG'
 
     ListClustersResponse:
       description: 'The list of Kafka clusters.'
@@ -829,6 +1445,57 @@ components:
                 is_in_sync: false
                 broker:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/3'
+
+    ListTopicConfigsResponse:
+      description: 'The list of cluster configs.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TopicConfigDataList'
+          example:
+            kind: 'KafkaTopicConfigList'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/configs'
+              next: null
+            data:
+              - kind: 'KafkaTopicConfig'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/configs/cleanup.policy'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-1/config=cleanup.policy'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-1'
+                name: 'cleanup.policy'
+                value: 'compact'
+                is_default: false
+                is_read_only: false
+                is_sensitive: false
+                source: 'DYNAMIC_TOPIC_CONFIG'
+                synonyms:
+                  - name: 'cleanup.policy'
+                    value: 'compact'
+                    source: 'DYNAMIC_TOPIC_CONFIG'
+                  - name: 'cleanup.policy'
+                    value: 'delete'
+                    source: 'DEFAULT_CONFIG'
+              - kind: 'KafkaTopicConfig'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/configs/compression.type'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-1/config=compression.type'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-1'
+                name: 'compression.type'
+                value: 'gzip'
+                is_default: false
+                is_read_only: false
+                is_sensitive: false
+                source: 'DYNAMIC_TOPIC_CONFIG'
+                synonyms:
+                  - name: 'compression.type'
+                    value: 'gzip'
+                    source: 'DYNAMIC_TOPIC_CONFIG'
+                  - name: 'compression.type'
+                    value: 'producer'
+                    source: 'DEFAULT_CONFIG'
 
     ListTopicsResponse:
       description: 'The list of topics.'
