@@ -18,7 +18,6 @@ package io.confluent.kafkarest.exceptions.v3;
 import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 
@@ -27,15 +26,23 @@ import java.util.StringJoiner;
  */
 public final class ErrorResponse {
 
-  private final List<ErrorData> errors;
+  private final String errorCode;
 
-  public ErrorResponse(List<ErrorData> errors) {
-    this.errors = requireNonNull(errors);
+  private final String message;
+
+  public ErrorResponse(String errorCode, String message) {
+    this.errorCode = requireNonNull(errorCode);
+    this.message = requireNonNull(message);
   }
 
-  @JsonProperty("errors")
-  public List<ErrorData> getErrors() {
-    return errors;
+  @JsonProperty("error_code")
+  public String getErrorCode() {
+    return errorCode;
+  }
+
+  @JsonProperty("message")
+  public String getMessage() {
+    return message;
   }
 
   @Override
@@ -47,18 +54,20 @@ public final class ErrorResponse {
       return false;
     }
     ErrorResponse that = (ErrorResponse) o;
-    return errors.equals(that.errors);
+    return errorCode.equals(that.errorCode) && message.equals(that.message);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(errors);
+    return Objects.hash(errorCode, message);
   }
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", ErrorResponse.class.getSimpleName() + "[", "]")
-        .add("errors=" + errors)
+    return new StringJoiner(", ",
+        io.confluent.kafkarest.exceptions.v2.ErrorResponse.class.getSimpleName() + "[", "]")
+        .add("errorCode='" + errorCode + "'")
+        .add("message='" + message + "'")
         .toString();
   }
 }
