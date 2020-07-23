@@ -94,14 +94,14 @@ public class KafkaRestConfigTest {
   @Test
   public void getConsumerProperties_propagateMetricsProperties() {
     Properties properties = new Properties();
-    properties.put(reporter_config("telemetry.bootstrap.servers"), "broker1:9092");
+    properties.put(reporter_config("bootstrap.servers"), "broker1:9092");
     properties.put(context_config(RESOURCE_LABEL_CLUSTER_ID), "consumer_cluster_id");
 
     KafkaRestConfig config = new KafkaRestConfig(properties);
 
     Properties consumerProperties = config.getConsumerProperties();
     assertEquals("broker1:9092",
-            consumerProperties.get("telemetry.bootstrap.servers"));
+            consumerProperties.get("confluent.telemetry.bootstrap.servers"));
     assertEquals(AppInfoParser.getCommitId(),
             consumerProperties.get(context_config(RESOURCE_LABEL_COMMIT_ID)));
     assertEquals(AppInfoParser.getVersion(),
@@ -125,13 +125,13 @@ public class KafkaRestConfigTest {
   @Test
   public void getAdminProperties_propagateMetricsProperties() {
     Properties properties = new Properties();
-    properties.put(reporter_config("telemetry.bootstrap.servers"), "broker1:9092");
+    properties.put(reporter_config("bootstrap.servers"), "broker1:9092");
     properties.put(context_config(RESOURCE_LABEL_CLUSTER_ID), "admin_cluster_id");
     KafkaRestConfig config = new KafkaRestConfig(properties);
 
     Properties adminProperties = config.getAdminProperties();
     assertEquals("broker1:9092",
-            adminProperties.get("telemetry.bootstrap.servers"));
+            adminProperties.get("confluent.telemetry.bootstrap.servers"));
     assertEquals(AppInfoParser.getCommitId(),
             adminProperties.get(context_config(RESOURCE_LABEL_COMMIT_ID)));
     assertEquals(AppInfoParser.getVersion(),
@@ -145,6 +145,6 @@ public class KafkaRestConfigTest {
   }
 
   private String reporter_config(String suffix) {
-    return KafkaRestConfig.METRICS_REPORTER_CONFIG_PREFIX + suffix;
+    return KafkaRestConfig.TELEMETRY_PREFIX + suffix;
   }
 }
