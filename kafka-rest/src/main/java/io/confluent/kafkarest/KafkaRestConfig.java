@@ -809,9 +809,15 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   public void addTelemetryReporterProperties(Properties props) {
+    addMetricsReporters(props);
     getMetricsContext().contextLabels()
             .forEach((label, value) -> props.put(METRICS_CONTEXT_PREFIX + label, value));
     props.putAll(originalsWithPrefix(TELEMETRY_PREFIX, false));
+  }
+
+  private void addMetricsReporters(Properties props) {
+    props.put(METRICS_REPORTER_CLASSES_CONFIG,
+            this.getList(METRICS_REPORTER_CLASSES_CONFIG));
   }
 
   @Override
