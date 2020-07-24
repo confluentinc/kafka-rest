@@ -206,6 +206,94 @@ paths:
         '200':
           $ref: '#/components/responses/SearchReplicasByBrokerResponse'
 
+  /clusters/{cluster_id}/consumer-groups:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+
+    get:
+      summary: 'List Consumer Groups'
+      description: 'Returns the list of consumer groups belonging to the given Kafka cluster.'
+      tags:
+        - Consumer Group
+      responses:
+        '200':
+          $ref: '#/components/responses/ListConsumerGroupsResponse'
+
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/ConsumerGroupId'
+
+    get:
+      summary: 'Get Consumer Group'
+      description: 'Returns the consumer group with the given `consumer_group_id`.'
+      tags:
+        - Consumer Group
+      responses:
+        '200':
+          $ref: '#/components/responses/GetConsumerGroupResponse'
+
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/ConsumerGroupId'
+
+    get:
+      summary: 'List Consumers'
+      description: 'Returns the list of consumers belonging to the given consumer group.'
+      tags:
+        - Consumer Group
+      responses:
+        '200':
+          $ref: '#/components/responses/ListConsumersResponse'
+
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/ConsumerGroupId'
+      - $ref: '#/components/parameters/ConsumerId'
+
+    get:
+      summary: 'Get Consumer'
+      description: 'Returns the consumer with the given `consumer_id`.'
+      tags:
+        - Consumer Group
+      responses:
+        '200':
+          $ref: '#/components/responses/GetConsumerResponse'
+
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}/assignments:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/ConsumerGroupId'
+      - $ref: '#/components/parameters/ConsumerId'
+
+    get:
+      summary: 'List Consumer Assignments'
+      description: 'Returns the list of partition assignments for the given consumer.'
+      tags:
+        - Consumer Group
+      responses:
+        '200':
+          $ref: '#/components/responses/ListConsumerAssignmentsResponse'
+
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}/assignments/{topic_name}/partitions/{partition_id}:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/ConsumerGroupId'
+      - $ref: '#/components/parameters/ConsumerId'
+      - $ref: '#/components/parameters/TopicName'
+      - $ref: '#/components/parameters/PartitionId'
+
+    get:
+      summary: 'Get Consumer Assignment'
+      description: 'Returns information about the assignment of the given consumer to the given partition.'
+      tags:
+        - Consumer Group
+      responses:
+        '200':
+          $ref: '#/components/responses/GetConsumerAssignmentResponse'
+
   /clusters/{cluster_id}/topics:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -406,6 +494,24 @@ components:
       schema:
         type: string
       example: 'compression.type'
+
+    ConsumerGroupId:
+      name: 'consumer_group_id'
+      description: 'The consumer group ID.'
+      in: path
+      required: true
+      schema:
+        type: string
+      example: 'consumer-group-1'
+
+    ConsumerId:
+      name: 'consumer_id'
+      description: 'The consumer ID.'
+      in: path
+      required: true
+      schema:
+        type: string
+      example: 'consumer-1'
 
     PartitionId:
       name: 'partition_id'
@@ -639,6 +745,130 @@ components:
           nullable: true
         source:
           $ref: '#/components/schemas/ConfigSource'
+
+    ConsumerAssignmentData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - consumer_group_id
+            - consumer_id
+            - topic_name
+            - partition_id
+            - partition
+          properties:
+            cluster_id:
+              type: string
+            consumer_group_id:
+              type: string
+            consumer_id:
+              type: string
+            topic_name:
+              type: string
+            partition_id:
+              type: integer
+            partition:
+              $ref: '#/components/schemas/Relationship'
+
+    ConsumerAssignmentDataList:
+      allOf:
+        - $ref: '#/components/schemas/ResourceCollection'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ConsumerAssignmentData'
+
+    ConsumerData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - consumer_group_id
+            - consumer_id
+            - client_id
+            - assignments
+          properties:
+            cluster_id:
+              type: string
+            consumer_group_id:
+              type: string
+            consumer_id:
+              type: string
+            instance_id:
+              type: string
+              nullable: true
+            client_id:
+              type: string
+            assignments:
+              $ref: '#/components/schemas/Relationship'
+
+    ConsumerDataList:
+      allOf:
+        - $ref: '#/components/schemas/ResourceCollection'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ConsumerData'
+
+    ConsumerGroupData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - consumer_group_id
+            - is_simple
+            - partition_assignor
+            - state
+            - coordinator
+            - consumers
+          properties:
+            cluster_id:
+              type: string
+            consumer_group_id:
+              type: string
+            is_simple:
+              type: boolean
+            partition_assignor:
+              type: string
+            state:
+              $ref: '#/components/schemas/ConsumerGroupState'
+            coordinator:
+              $ref: '#/components/schemas/Relationship'
+            consumer:
+              $ref: '#/components/schemas/Relationship'
+
+    ConsumerGroupDataList:
+      allOf:
+        - $ref: '#/components/schemas/ResourceCollection'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ConsumerGroupData'
+
+    ConsumerGroupState:
+      type: string
+      enum:
+        - UNKNOWN
+        - PREPARING_REBALANCE
+        - COMPLETING_REBALANCE
+        - STABLE
+        - DEAD
+        - EMPTY
 
     PartitionData:
       allOf:
@@ -1072,6 +1302,65 @@ components:
             partition_reassignments:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/-/partitions/-/reassignment'
 
+    GetConsumerAssignmentResponse:
+      description: 'The consumer group assignment.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ConsumerAssignmentData'
+          example:
+            kind: 'KafkaConsumerAssignment'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1/assignments/topic-1/partitions/1'
+              resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/consumer=consumer-1/assignment=topic=1/partition=1'
+            cluster_id: 'cluster-1'
+            consumer_group_id: 'consumer-group-1'
+            consumer_id: 'consumer-1'
+            topic_name: 'topic-1'
+            partition_id: 1
+            partition:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
+
+    GetConsumerGroupResponse:
+      description: 'The consumer group.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ConsumerGroupData'
+          example:
+            kind: 'KafkaConsumerGroup'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1'
+              resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1'
+            cluster_id: 'cluster-1'
+            consumer_group_id: 'consumer-group-1'
+            is_simple: false
+            partition_assignor: 'org.apache.kafka.clients.consumer.RoundRobinAssignor'
+            state: 'STABLE'
+            coordinator:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
+            consumers:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers'
+
+    GetConsumerResponse:
+      description: 'The consumer.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ConsumerData'
+          example:
+            kind: 'KafkaConsumer'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1'
+              resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/consumer=consumer-1'
+            cluster_id: 'cluster-1'
+            consumer_group_id: 'consumer-group-1'
+            consumer_id: 'consumer-1'
+            instance_id: 'consumer-instance-1'
+            client_id: 'client-1'
+            assignments:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1/assignments'
+
     GetPartitionResponse:
       description: 'The partition'
       content:
@@ -1344,6 +1633,150 @@ components:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics'
                 partition_reassignments:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/-/partitions/-/reassignment'
+
+    ListConsumerAssignmentsResponse:
+      description: 'The list of consumer group assignments.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ConsumerAssignmentDataList'
+          example:
+            kind: 'KafkaConsumerAssignmentList'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1/assignments'
+              next: null
+            data:
+              - kind: 'KafkaConsumerAssignment'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1/assignments/topic-1/partitions/1'
+                  resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/consumer=consumer-1/assignment=topic=1/partition=1'
+                cluster_id: 'cluster-1'
+                consumer_group_id: 'consumer-group-1'
+                consumer_id: 'consumer-1'
+                topic_name: 'topic-1'
+                partition_id: 1
+                partition:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
+              - kind: 'KafkaConsumerAssignment'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1/assignments/topic-2/partitions/2'
+                  resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/consumer=consumer-1/assignment=topic=2/partition=2'
+                cluster_id: 'cluster-1'
+                consumer_group_id: 'consumer-group-1'
+                consumer_id: 'consumer-1'
+                topic_name: 'topic-2'
+                partition_id: 2
+                partition:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions/2'
+              - kind: 'KafkaConsumerAssignment'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1/assignments/topic-3/partitions/3'
+                  resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/consumer=consumer-1/assignment=topic=3/partition=3'
+                cluster_id: 'cluster-1'
+                consumer_group_id: 'consumer-group-1'
+                consumer_id: 'consumer-1'
+                topic_name: 'topic-3'
+                partition_id: 3
+                partition:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/3'
+
+    ListConsumerGroupsResponse:
+      description: 'The list of consumer groups.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ConsumerGroupDataList'
+          example:
+            kind: 'KafkaConsumerGroupList'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups'
+              next: null
+            data:
+              - kind: 'KafkaConsumerGroup'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1'
+                  resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1'
+                cluster_id: 'cluster-1'
+                consumer_group_id: 'consumer-group-1'
+                is_simple: false
+                partition_assignor: 'org.apache.kafka.clients.consumer.RoundRobinAssignor'
+                state: 'STABLE'
+                coordinator:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
+                consumers:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers'
+              - kind: 'KafkaConsumerGroup'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-2'
+                  resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-2'
+                cluster_id: 'cluster-1'
+                consumer_group_id: 'consumer-group-2'
+                is_simple: false
+                partition_assignor: 'org.apache.kafka.clients.consumer.StickyAssignor'
+                state: 'PREPARING_REBALANCE'
+                coordinator:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/2'
+                consumers:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-2/consumers'
+              - kind: 'KafkaConsumerGroup'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-3'
+                  resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-3'
+                cluster_id: 'cluster-1'
+                consumer_group_id: 'consumer-group-3'
+                is_simple: false
+                partition_assignor: 'org.apache.kafka.clients.consumer.RangeAssignor'
+                state: 'DEAD'
+                coordinator:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/3'
+                consumers:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-3/consumers'
+
+    ListConsumersResponse:
+      description: 'The list of consumers.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ConsumerDataList'
+          example:
+            kind: 'KafkaConsumerList'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers'
+              next: null
+            data:
+              - kind: 'KafkaConsumer'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1'
+                  resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/consumer=consumer-1'
+                cluster_id: 'cluster-1'
+                consumer_group_id: 'consumer-group-1'
+                consumer_id: 'consumer-1'
+                instance_id: 'consumer-instance-1'
+                client_id: 'client-1'
+                assignments:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1/assignments'
+              - kind: 'KafkaConsumer'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-2'
+                  resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/consumer=consumer-2'
+                cluster_id: 'cluster-1'
+                consumer_group_id: 'consumer-group-1'
+                consumer_id: 'consumer-2'
+                instance_id: 'consumer-instance-2'
+                client_id: 'client-2'
+                assignments:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-2/assignments'
+              - kind: 'KafkaConsumer'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-2'
+                  resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/consumer=consumer-2'
+                cluster_id: 'cluster-1'
+                consumer_group_id: 'consumer-group-1'
+                consumer_id: 'consumer-2'
+                instance_id: 'consumer-instance-2'
+                client_id: 'client-2'
+                assignments:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-2/assignments'
 
     ListPartitionsResponse:
       description: 'The list of partitions.'
