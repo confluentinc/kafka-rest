@@ -37,6 +37,55 @@ paths:
         '200':
           $ref: '#/components/responses/GetClusterResponse'
 
+  /clusters/{cluster_id}/acls:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+
+    get:
+      summary: 'Search ACLs'
+      description: 'Returns the list of ACLs that matches the search criteria.'
+      tags:
+        - ACL
+      parameters:
+        - $ref: '#/components/parameters/AclResourceType'
+        - $ref: '#/components/parameters/AclResourceName'
+        - $ref: '#/components/parameters/AclPatternType'
+        - $ref: '#/components/parameters/AclPrincipal'
+        - $ref: '#/components/parameters/AclHost'
+        - $ref: '#/components/parameters/AclOperation'
+        - $ref: '#/components/parameters/AclPermission'
+      responses:
+        '200':
+          $ref: '#/components/responses/SearchAclsResponse'
+
+    post:
+      summary: 'Create ACL'
+      description: 'Creates an ACL.'
+      tags:
+        - ACL
+      requestBody:
+        $ref: '#/components/requestBodies/CreateAclRequest'
+      responses:
+        '201':
+          description: 'No Content'
+
+    delete:
+      summary: 'Delete ACLs'
+      description: 'Deletes the list of ACLs that matches the search criteria.'
+      tags:
+        - ACL
+      parameters:
+        - $ref: '#/components/parameters/AclResourceType'
+        - $ref: '#/components/parameters/AclResourceName'
+        - $ref: '#/components/parameters/AclPatternType'
+        - $ref: '#/components/parameters/AclPrincipal'
+        - $ref: '#/components/parameters/AclHost'
+        - $ref: '#/components/parameters/AclOperation'
+        - $ref: '#/components/parameters/AclPermission'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteAclsResponse'
+
   /clusters/{cluster_id}/broker-configs:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -468,6 +517,62 @@ paths:
 
 components:
   parameters:
+    AclHost:
+      name: 'host'
+      description: 'The ACL host.'
+      in: query
+      required: false
+      schema:
+        type: string
+
+    AclOperation:
+      name: 'operation'
+      description: 'The ACL operation.'
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/AclOperation'
+
+    AclPatternType:
+      name: 'pattern_type'
+      description: 'The ACL pattern type.'
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/AclPatternType'
+
+    AclPermission:
+      name: 'permission'
+      description: 'The ACL permission.'
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/AclPermission'
+
+    AclPrincipal:
+      name: 'principal'
+      description: 'The ACL principal.'
+      in: query
+      required: false
+      schema:
+        type: string
+
+    AclResourceName:
+      name: 'resource_name'
+      description: 'The ACL resource name.'
+      in: query
+      required: false
+      schema:
+        type: string
+
+    AclResourceType:
+      name: 'resource_type'
+      description: 'The ACL resource type.'
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/AclResourceType'
+
     BrokerId:
       name: 'broker_id'
       description: 'The broker ID.'
@@ -564,6 +669,92 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/ConfigSynonymData'
+
+    AclData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - resource_type
+            - resource_name
+            - pattern_type
+            - principal
+            - host
+            - operation
+            - permission
+          properties:
+            cluster_id:
+              type: string
+            resource_type:
+              $ref: '#/components/schemas/AclResourceType'
+            pattern_type:
+              $ref: '#/components/schemas/AclPatternType'
+            principal:
+              type: string
+            host:
+              type: string
+            operation:
+              $ref: '#/components/schemas/AclOperation'
+            permission:
+              $ref: '#/components/schemas/AclPermission'
+
+    AclDataList:
+      allOf:
+        - $ref: '#/components/schemas/ResourceCollection'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/AclData'
+
+    AclOperation:
+      type: string
+      enum:
+        - UNKNOWN
+        - ANY
+        - ALL
+        - READ
+        - WRITE
+        - CREATE
+        - DELETE
+        - ALTER
+        - DESCRIBE
+        - CLUSTER_ACTION
+        - DESCRIBE_CONFIGS
+        - ALTER_CONFIGS
+        - IDEMPOTENT_WRITE
+
+    AclPatternType:
+      type: string
+      enum:
+        - UNKNOWN
+        - ANY
+        - MATCH
+        - LITERAL
+        - PREFIXED
+
+    AclPermission:
+      type: string
+      enum:
+        - UNKNOWN
+        - ANY
+        - DENY
+        - ALLOW
+
+    AclResourceType:
+      type: string
+      enum:
+        - UNKNOWN
+        - ANY
+        - TOPIC
+        - GROUP
+        - CLUSTER
+        - TRANSACTIONAL_ID
+        - DELEGATION_TOKEN
 
     AlterConfigBatchRequestData:
       type: object
@@ -1100,6 +1291,34 @@ components:
               - name: 'compression.type'
                 value: 'gzip'
 
+    CreateAclRequest:
+      description: 'The ACL creation request.'
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - resource_type
+              - resource_name
+              - pattern_type
+              - principal
+              - host
+              - operation
+              - permission
+            properties:
+              resource_type:
+                $ref: '#/components/schemas/AclResourceType'
+              pattern_type:
+                $ref: '#/components/schemas/AclPatternType'
+              principal:
+                type: string
+              host:
+                type: string
+              operation:
+                $ref: '#/components/schemas/AclOperation'
+              permission:
+                $ref: '#/components/schemas/AclPermission'
+
     CreateTopicRequest:
       description: 'The topic creation request.'
       content:
@@ -1200,6 +1419,44 @@ components:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-X/configs'
             partition_reassignments:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-X/partitions/-/reassignments'
+
+    DeleteAclsResponse:
+      description: 'The list of deleted ACLs.'
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AclData'
+          example:
+            data:
+              - kind: 'KafkaAcl'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/acls?resource_type=TOPIC&resource_name=topic-&pattern_type=PREFIXED&principal=alice&host=*&operation=ALL&permission=ALLOW'
+                cluster_id: 'cluster-1'
+                resource_type: 'TOPIC'
+                resource_name: 'topic-'
+                pattern_type: 'PREFIXED'
+                principal: 'alice'
+                host: '*'
+                operation: 'ALL'
+                permission: 'ALLOW'
+              - kind: 'KafkaAcl'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/acls?resource_type=CLUSTER&resource_name=cluster-1&pattern_type=LITERAL&principal=bob&host=*&operation=DESCRIBE&permission=DENY'
+                cluster_id: 'cluster-1'
+                resource_type: 'CLUSTER'
+                resource_name: 'cluster-2'
+                pattern_type: 'LITERAL'
+                principal: 'alice'
+                host: '*'
+                operation: 'DESCRIBE'
+                permission: 'DENY'
 
     GetBrokerConfigResponse:
       description: 'The broker config.'
@@ -1984,6 +2241,40 @@ components:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/configs'
                 partition_reassignments:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/-/reassignments'
+
+    SearchAclsResponse:
+      description: 'The list of ACLs.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AclDataList'
+          example:
+            kind: 'KafkaAclList'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/acls?principal=alice'
+            data:
+              - kind: 'KafkaAcl'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/acls?resource_type=TOPIC&resource_name=topic-&pattern_type=PREFIXED&principal=alice&host=*&operation=ALL&permission=ALLOW'
+                cluster_id: 'cluster-1'
+                resource_type: 'TOPIC'
+                resource_name: 'topic-'
+                pattern_type: 'PREFIXED'
+                principal: 'alice'
+                host: '*'
+                operation: 'ALL'
+                permission: 'ALLOW'
+              - kind: 'KafkaAcl'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/acls?resource_type=CLUSTER&resource_name=cluster-1&pattern_type=LITERAL&principal=bob&host=*&operation=DESCRIBE&permission=DENY'
+                cluster_id: 'cluster-1'
+                resource_type: 'CLUSTER'
+                resource_name: 'cluster-2'
+                pattern_type: 'LITERAL'
+                principal: 'alice'
+                host: '*'
+                operation: 'DESCRIBE'
+                permission: 'DENY'
 
     SearchReplicasByBrokerResponse:
       description: 'The list of replicas.'
