@@ -52,14 +52,14 @@ public class KafkaRestConfigTest {
   @Test
   public void getProducerProperties_propagateMetricsProperties() {
     Properties properties = new Properties();
-    properties.put(reporter_config("telemetry.bootstrap.servers"), "broker1:9092");
+    properties.put(reporter_config("api.key"), "my_api_key");
     properties.put(context_config(RESOURCE_LABEL_CLUSTER_ID), "producer_cluster_id");
 
     KafkaRestConfig config = new KafkaRestConfig(properties);
 
     Properties producerProperties = config.getProducerProperties();
-    assertEquals("broker1:9092",
-            producerProperties.get(reporter_config("telemetry.bootstrap.servers")));
+    assertEquals("my_api_key",
+            producerProperties.get(reporter_config("api.key")));
     assertEquals(AppInfoParser.getCommitId(),
             producerProperties.get(context_config(RESOURCE_LABEL_COMMIT_ID)));
     assertEquals(AppInfoParser.getVersion(),
@@ -94,14 +94,14 @@ public class KafkaRestConfigTest {
   @Test
   public void getConsumerProperties_propagateMetricsProperties() {
     Properties properties = new Properties();
-    properties.put(reporter_config("bootstrap.servers"), "broker1:9092");
+    properties.put(reporter_config("api.key"), "my_api_key");
     properties.put(context_config(RESOURCE_LABEL_CLUSTER_ID), "consumer_cluster_id");
 
     KafkaRestConfig config = new KafkaRestConfig(properties);
 
     Properties consumerProperties = config.getConsumerProperties();
-    assertEquals("broker1:9092",
-            consumerProperties.get("confluent.telemetry.bootstrap.servers"));
+    assertEquals("my_api_key",
+            consumerProperties.get("confluent.telemetry.api.key"));
     assertEquals(AppInfoParser.getCommitId(),
             consumerProperties.get(context_config(RESOURCE_LABEL_COMMIT_ID)));
     assertEquals(AppInfoParser.getVersion(),
@@ -125,13 +125,13 @@ public class KafkaRestConfigTest {
   @Test
   public void getAdminProperties_propagateMetricsProperties() {
     Properties properties = new Properties();
-    properties.put(reporter_config("bootstrap.servers"), "broker1:9092");
+    properties.put(reporter_config("api.key"), "my_api_key");
     properties.put(context_config(RESOURCE_LABEL_CLUSTER_ID), "admin_cluster_id");
     KafkaRestConfig config = new KafkaRestConfig(properties);
 
     Properties adminProperties = config.getAdminProperties();
-    assertEquals("broker1:9092",
-            adminProperties.get("confluent.telemetry.bootstrap.servers"));
+    assertEquals("my_api_key",
+            adminProperties.get("confluent.telemetry.api.key"));
     assertEquals(AppInfoParser.getCommitId(),
             adminProperties.get(context_config(RESOURCE_LABEL_COMMIT_ID)));
     assertEquals(AppInfoParser.getVersion(),
