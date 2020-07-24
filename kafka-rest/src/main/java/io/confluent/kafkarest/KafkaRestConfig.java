@@ -47,7 +47,9 @@ import static org.apache.kafka.clients.CommonClientConfigs.METRICS_CONTEXT_PREFI
 public class KafkaRestConfig extends RestConfig {
 
   private static final Logger log = LoggerFactory.getLogger(KafkaRestConfig.class);
+
   private final KafkaRestMetricsContext metricsContext;
+  public static final String TELEMETRY_PREFIX = "confluent.telemetry.";
 
   public static final String ID_CONFIG = "id";
   private static final String ID_CONFIG_DOC =
@@ -758,7 +760,7 @@ public class KafkaRestConfig extends RestConfig {
     Properties producerProps = new Properties();
     /* Propagate MetricsContext labels to managed components
     / as prefixed configuration properties. */
-    addMetricsReporterProperties(producerProps);
+    addTelemetryReporterProperties(producerProps);
     //add properties for V1 version of configuration parameters for backward compability
     //since producers need to support V1 with configuration change
     addExistingV1Properties(producerProps);
@@ -776,7 +778,7 @@ public class KafkaRestConfig extends RestConfig {
     Properties consumerProps = new Properties();
     /* Propagate MetricsContext labels to managed components
     / as prefixed configuration properties. */
-    addMetricsReporterProperties(consumerProps);
+    addTelemetryReporterProperties(consumerProps);
     //copy cover the properties with prefixes "client." and  "consumer."
     addPropertiesWithPrefix("client.", consumerProps);
     addPropertiesWithPrefix("consumer.", consumerProps);
@@ -791,7 +793,7 @@ public class KafkaRestConfig extends RestConfig {
     Properties adminProps = new Properties();
     /* Propagate MetricsContext labels to managed components
        as prefixed configuration properties. */
-    addMetricsReporterProperties(adminProps);
+    addTelemetryReporterProperties(adminProps);
     //copy cover the properties with prefixes "client." and  "admin."
     addPropertiesWithPrefix("client.", adminProps);
     addPropertiesWithPrefix("admin.", adminProps);
@@ -806,10 +808,16 @@ public class KafkaRestConfig extends RestConfig {
     return getBoolean(API_V3_ENABLE_CONFIG);
   }
 
-  public void addMetricsReporterProperties(Properties props) {
+  public void addTelemetryReporterProperties(Properties props) {
+    addMetricsReporters(props);
     getMetricsContext().contextLabels()
             .forEach((label, value) -> props.put(METRICS_CONTEXT_PREFIX + label, value));
-    props.putAll(metricsReporterConfig());
+    props.putAll(originalsWithPrefix(TELEMETRY_PREFIX, false));
+  }
+
+  private void addMetricsReporters(Properties props) {
+    props.put(METRICS_REPORTER_CLASSES_CONFIG,
+            this.getList(METRICS_REPORTER_CLASSES_CONFIG));
   }
 
   @Override
