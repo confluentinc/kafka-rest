@@ -15,9 +15,8 @@
 
 package io.confluent.kafkarest.exceptions.v3;
 
-import static java.util.Collections.singletonList;
-
 import io.confluent.kafkarest.exceptions.StatusCodeException;
+import io.confluent.kafkarest.exceptions.v2.ErrorResponse;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
@@ -28,12 +27,8 @@ public final class V3ExceptionMapper implements ExceptionMapper<StatusCodeExcept
     return Response.status(exception.getStatus())
         .entity(
             new ErrorResponse(
-                singletonList(
-                    new ErrorData(
-                        Integer.toString(exception.getStatus().getStatusCode()),
-                        exception.getCode().map(Object::toString).orElse(null),
-                        exception.getTitle(),
-                        exception.getDetail()))))
+                exception.getCode().orElse(exception.getStatus().getStatusCode()).toString(),
+                String.format("%s: %s", exception.getTitle(), exception.getDetail())))
         .build();
   }
 }
