@@ -6,7 +6,7 @@ info:
 
 servers:
   - url: "{protocol}://{address}:{port}/v3"
-    description: Kafka REST Proxy
+    description: Kafka REST Proxy (stand-alone). See https://docs.confluent.io/current/kafka-rest/index.html
     variables:
       address:
         default: localhost
@@ -21,7 +21,7 @@ servers:
           - http
           - https
   - url: "{protocol}://{address}:{port}/kafka/v3"
-    description: Confluent Server
+    description: Kafka REST Proxy as part of Confluent Server (embedded)
     variables:
       protocol:
         default: http
