@@ -5,10 +5,36 @@ info:
   version: 3.0.0
 
 servers:
-  - url: http://localhost:9391/v3
+  - url: "{protocol}://{address}:{port}/v3"
     description: Kafka REST Proxy
-  - url: http://localhost:9391/kafka/v3
+    variables:
+      address:
+        default: localhost
+        description: Address of the server
+      port:
+        default: "8082"
+        description: Port of the server
+      protocol:
+        default: http
+        description: Protocol for interacting with server
+        enum:
+          - http
+          - https
+  - url: "{protocol}://{address}:{port}/kafka/v3"
     description: Confluent Server
+    variables:
+      protocol:
+        default: http
+        enum:
+          - http
+          - https
+        description: Protocol to communicate with the server
+      address:
+        default: localhost
+        description: Address of the server
+      port:
+        default: "8082"
+        description: Port of the server
 
 paths:
   /clusters:
@@ -953,6 +979,30 @@ components:
               items:
                 $ref: '#/components/schemas/ClusterData'
 
+    CreateAclRequestData:
+      type: object
+      required:
+        - resource_type
+        - resource_name
+        - pattern_type
+        - principal
+        - host
+        - operation
+        - permission
+      properties:
+        resource_type:
+          $ref: '#/components/schemas/AclResourceType'
+        pattern_type:
+          $ref: '#/components/schemas/AclPatternType'
+        principal:
+          type: string
+        host:
+          type: string
+        operation:
+          $ref: '#/components/schemas/AclOperation'
+        permission:
+          $ref: '#/components/schemas/AclPermission'
+
     CreateTopicRequestData:
       type: object
       required:
@@ -1412,28 +1462,7 @@ components:
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - resource_type
-              - resource_name
-              - pattern_type
-              - principal
-              - host
-              - operation
-              - permission
-            properties:
-              resource_type:
-                $ref: '#/components/schemas/AclResourceType'
-              pattern_type:
-                $ref: '#/components/schemas/AclPatternType'
-              principal:
-                type: string
-              host:
-                type: string
-              operation:
-                $ref: '#/components/schemas/AclOperation'
-              permission:
-                $ref: '#/components/schemas/AclPermission'
+            $ref: '#/components/schemas/CreateAclRequestData'
 
     CreateTopicRequest:
       description: 'The topic creation request.'
