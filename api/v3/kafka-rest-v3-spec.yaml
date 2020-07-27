@@ -33,7 +33,7 @@ servers:
         default: localhost
         description: Address of the server
       port:
-        default: "8082"
+        default: "8090"
         description: Port of the server
 
 paths:
