@@ -484,6 +484,48 @@ paths:
         '200':
           $ref: '#/components/responses/GetPartitionResponse'
 
+  /clusters/{cluster_id}/topics/-/partitions/-/reassignment:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+
+    get:
+      summary: 'List All Replica Reassignments'
+      description: 'Returns the list of all ongoing replica reassignments in the given Kafka cluster.'
+      tags:
+        - Partition
+      responses:
+        '200':
+          $ref: '#/components/responses/ListAllReassignmentsResponse'
+
+  /clusters/{cluster_id}/topics/{topic_name}/partitions/-/reassignment:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/TopicName'
+
+    get:
+      summary: 'Search Replica Reassignments By Topic'
+      description: 'Returns the list of ongoing replica reassignments for the given topic.'
+      tags:
+        - Partition
+      responses:
+        '200':
+          $ref: '#/components/responses/SearchReassignmentsByTopicResponse'
+
+  /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/reassignment:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/TopicName'
+      - $ref: '#/components/parameters/PartitionId'
+
+    get:
+      summary: 'Get Replica Reassignments'
+      description: 'Returns the list of ongoing replica reassignments for the given partition.'
+      tags:
+        - Partition
+      responses:
+        '200':
+          $ref: '#/components/responses/GetReassignmentResponse'
+
   /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/replicas:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -1097,6 +1139,47 @@ components:
               items:
                 $ref: '#/components/schemas/PartitionData'
 
+    ReassignmentData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - topic_name
+            - partition_id
+            - adding_replicas
+            - removing_replicas
+            - replicas
+          properties:
+            cluster_id:
+              type: string
+            topic_name:
+              type: string
+            partition_id:
+              type: integer
+            adding_replicas:
+              type: array
+              items:
+                type: integer
+            removing_replicas:
+              type: array
+              items:
+                type: integer
+            replicas:
+              $ref: '#/components/schemas/Relationship'
+
+    ReassignmentDataList:
+      allOf:
+        - $ref: '#/components/schemas/ResourceCollection'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ReassignmentData'
+
     Relationship:
       type: object
       required:
@@ -1639,6 +1722,28 @@ components:
             reassignment:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/reassignment'
 
+    GetReassignmentResponse:
+      description: 'The ongoing replicas reassignments.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReassignmentData'
+          example:
+            kind: 'KafkaReassignment'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/reassignment'
+              resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1/reassignment'
+            cluster_id: 'cluster-1'
+            topic_name: 'topic-1'
+            partition_id: 1
+            adding_replicas:
+              - 1
+              - 2
+            removing_replicas:
+              - 3
+            replicas:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas'
+
     GetReplicaResponse:
       description: 'The replica.'
       content:
@@ -1707,6 +1812,61 @@ components:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/configs'
             partition_reassignments:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/-/reassignments'
+
+    ListAllReassignmentsResponse:
+      description: "The ongoing replicas reassignments."
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReassignmentDataList'
+          example:
+            kind: 'KafkaReassignmentList'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/topics/-/partitions/-/reassignment'
+              next: null
+            data:
+              - kind: 'KafkaReassignment'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/reassignment'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1/reassignment'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-1'
+                partition_id: 1
+                adding_replicas:
+                  - 1
+                  - 2
+                removing_replicas:
+                  - 3
+                replicas:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas'
+              - kind: 'KafkaReassignment'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions/2/reassignment'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-2/partition=2/reassignment'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-2'
+                partition_id: 2
+                adding_replicas:
+                  - 1
+                removing_replicas:
+                  - 2
+                  - 3
+                replicas:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions/2/replicas'
+              - kind: 'KafkaReassignment'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/3/reassignment'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-3/partition=3/reassignment'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-3'
+                partition_id: 3
+                adding_replicas:
+                  - 3
+                removing_replicas:
+                  - 1
+                  - 2
+                replicas:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/3/replicas'
 
     ListBrokerConfigsResponse:
       description: 'The list of broker configs.'
@@ -2275,6 +2435,61 @@ components:
                 host: '*'
                 operation: 'DESCRIBE'
                 permission: 'DENY'
+
+    SearchReassignmentsByTopicResponse:
+      description: "The ongoing replicas reassignments."
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReassignmentDataList'
+          example:
+            kind: 'KafkaReassignmentList'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/topics/-/partitions/-/reassignment'
+              next: null
+            data:
+              - kind: 'KafkaReassignment'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/reassignment'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1/reassignment'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-1'
+                partition_id: 1
+                adding_replicas:
+                  - 1
+                  - 2
+                removing_replicas:
+                  - 3
+                replicas:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas'
+              - kind: 'KafkaReassignment'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/2/reassignment'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=2/reassignment'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-1'
+                partition_id: 2
+                adding_replicas:
+                  - 1
+                removing_replicas:
+                  - 2
+                  - 3
+                replicas:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/2/replicas'
+              - kind: 'KafkaReassignment'
+                metadata:
+                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/3/reassignment'
+                  resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=3/reassignment'
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-1'
+                partition_id: 3
+                adding_replicas:
+                  - 3
+                removing_replicas:
+                  - 1
+                  - 2
+                replicas:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/3/replicas'
 
     SearchReplicasByBrokerResponse:
       description: 'The list of replicas.'
