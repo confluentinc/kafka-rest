@@ -14,10 +14,10 @@ paths:
   /clusters:
     get:
       summary: 'List Clusters'
-      description: 'Returns the list of known Kafka clusters. Right now both Kafka and Kafka REST
-        Proxy only know about one Kafka cluster, namely the one pointed at by the
-        `bootstrap.servers` configuration. Therefore only one Kafka cluster will be returned in the
-        response. Support for multiple Kafka clusters might be added in the future.'
+      description: 'Returns a list of known Kafka clusters. Currently both Kafka and Kafka REST
+        Proxy are only aware of the Kafka cluster pointed at by the
+        ``bootstrap.servers`` configuration. Therefore only one Kafka cluster will be returned in the
+        response.'
       tags:
         - Cluster
       responses:
@@ -30,7 +30,7 @@ paths:
 
     get:
       summary: 'Get Cluster'
-      description: 'Returns the Kafka cluster with the given `cluster_id`.'
+      description: 'Returns the Kafka cluster with the specified ``cluster_id``.'
       tags:
         - Cluster
       responses:
@@ -43,7 +43,7 @@ paths:
 
     get:
       summary: 'Search ACLs'
-      description: 'Returns the list of ACLs that matches the search criteria.'
+      description: 'Returns a list of ACLs that match the search criteria.'
       tags:
         - ACL
       parameters:
@@ -59,7 +59,7 @@ paths:
           $ref: '#/components/responses/SearchAclsResponse'
 
     post:
-      summary: 'Create ACL'
+      summary: 'Create ACLs'
       description: 'Creates an ACL.'
       tags:
         - ACL
@@ -92,7 +92,7 @@ paths:
 
     get:
       summary: 'List Cluster Configs'
-      description: 'Return the list of configs belonging to the given Kafka cluster.'
+      description: 'Returns a list of configuration parameters for the specified Kafka cluster.'
       tags:
         - Configs
       responses:
@@ -105,7 +105,7 @@ paths:
 
     post:
       summary: 'Batch Alter Cluster Configs'
-      description: 'Updates or deletes a set of Kafka cluster configs.'
+      description: 'Updates or deletes a set of Kafka cluster configuration parameters.'
       tags:
         - Configs
       requestBody:
@@ -121,7 +121,7 @@ paths:
 
     get:
       summary: 'Get Cluster Config'
-      description: 'Return the config with the given `name`.'
+      description: 'Returns the configuration parameter specified by ``name``.'
       tags:
         - Configs
       responses:
@@ -130,7 +130,7 @@ paths:
 
     put:
       summary: 'Update Cluster Config'
-      description: 'Updates the config with given `name`.'
+      description: 'Updates the configuration parameter specified by ``name``.'
       tags:
         - Configs
       requestBody:
@@ -141,7 +141,7 @@ paths:
 
     delete:
       summary: 'Reset Cluster Config'
-      description: 'Resets the config with given `name` to its default value.'
+      description: 'Resets the configuration parameter specified by ``name`` to its default value.'
       tags:
         - Configs
       responses:
@@ -154,7 +154,7 @@ paths:
 
     get:
       summary: 'List Brokers'
-      description: 'Returns the list of brokers belonging to the given Kafka cluster.'
+      description: 'Return a list of brokers that belong to the specified Kafka cluster.'
       tags:
         - Broker
       responses:
@@ -168,7 +168,7 @@ paths:
 
     get:
       summary: 'Get Broker'
-      description: 'Returns the broker with the given `broker_id`.'
+      description: 'Returns the broker specified by ``broker_id``.'
       tags:
         - Broker
       responses:
@@ -182,7 +182,7 @@ paths:
 
     get:
       summary: 'List Broker Configs'
-      description: 'Return the list of configs belonging to the given broker.'
+      description: 'Return the list of configuration parameters that belong to the specified Kafka broker.'
       tags:
         - Configs
       responses:
@@ -196,7 +196,7 @@ paths:
 
     post:
       summary: 'Batch Alter Broker Configs'
-      description: 'Updates or deletes a set of broker configs.'
+      description: 'Updates or deletes a set of broker configuration parameters.'
       tags:
         - Configs
       requestBody:
@@ -213,7 +213,7 @@ paths:
 
     get:
       summary: 'Get Broker Config'
-      description: 'Return the config with the given `name`.'
+      description: 'Return the configuration parameter specified by ``name``.'
       tags:
         - Configs
       responses:
@@ -222,7 +222,7 @@ paths:
 
     put:
       summary: 'Update Broker Config'
-      description: 'Updates the config with given `name`.'
+      description: 'Updates the configuration parameter specified by ``name``.'
       tags:
         - Configs
       requestBody:
@@ -233,7 +233,7 @@ paths:
 
     delete:
       summary: 'Reset Broker Config'
-      description: 'Resets the config with given `name` to its default value.'
+      description: 'Resets the configuration parameter specified by ``name`` to its default value.'
       tags:
         - Configs
       responses:
@@ -247,7 +247,7 @@ paths:
 
     get:
       summary: 'Search Replicas by Broker'
-      description: 'Returns the list of replicas assigned to the given broker.'
+      description: 'Returns the list of replicas assigned to the specified broker.'
       tags:
         - Broker
         - Replica
@@ -261,7 +261,7 @@ paths:
 
     get:
       summary: 'List Consumer Groups'
-      description: 'Returns the list of consumer groups belonging to the given Kafka cluster.'
+      description: 'Returns the list of consumer groups that belong to the specified Kafka cluster.'
       tags:
         - Consumer Group
       responses:
@@ -275,7 +275,7 @@ paths:
 
     get:
       summary: 'Get Consumer Group'
-      description: 'Returns the consumer group with the given `consumer_group_id`.'
+      description: 'Returns the consumer group specified by the ``consumer_group_id``.'
       tags:
         - Consumer Group
       responses:
@@ -289,7 +289,7 @@ paths:
 
     get:
       summary: 'List Consumers'
-      description: 'Returns the list of consumers belonging to the given consumer group.'
+      description: 'Returns a list of consumers that belong to the specified consumer group.'
       tags:
         - Consumer Group
       responses:
@@ -304,7 +304,7 @@ paths:
 
     get:
       summary: 'Get Consumer'
-      description: 'Returns the consumer with the given `consumer_id`.'
+      description: 'Returns the consumer specified by the ``consumer_id``.'
       tags:
         - Consumer Group
       responses:
@@ -319,7 +319,7 @@ paths:
 
     get:
       summary: 'List Consumer Assignments'
-      description: 'Returns the list of partition assignments for the given consumer.'
+      description: 'Returns a list of partition assignments for the specified consumer.'
       tags:
         - Consumer Group
       responses:
@@ -336,7 +336,7 @@ paths:
 
     get:
       summary: 'Get Consumer Assignment'
-      description: 'Returns information about the assignment of the given consumer to the given partition.'
+      description: 'Returns information about the assignment for the specified consumer to the specified partition.'
       tags:
         - Consumer Group
       responses:
@@ -349,7 +349,7 @@ paths:
 
     get:
       summary: 'List Topics'
-      description: 'Returns the list of topics belonging to the given Kafka cluster.'
+      description: 'Returns the list of topics that belong to the specified Kafka cluster.'
       tags:
         - Topic
       responses:
@@ -397,7 +397,7 @@ paths:
 
     get:
       summary: 'List Topic Configs'
-      description: 'Return the list of configs belonging to the given topic.'
+      description: 'Return the list of configs that belong to the specified topic.'
       tags:
         - Configs
       responses:
@@ -462,7 +462,7 @@ paths:
 
     get:
       summary: 'List Partitions'
-      description: 'Returns the list of partitions belonging to the given topic.'
+      description: 'Returns the list of partitions that belong to the specified topic.'
       tags:
         - Partition
       responses:
@@ -534,7 +534,7 @@ paths:
 
     get:
       summary: 'List Replicas'
-      description: 'Returns the list of replicas of the given partition.'
+      description: 'Returns the list of replicas for the specified partition.'
       tags:
         - Replica
       responses:
@@ -550,7 +550,7 @@ paths:
 
     get:
       summary: 'Get Replica'
-      description: 'Returns the replica of the given partition assigned to the given broker.'
+      description: 'Returns the replica for the specified partition assigned to the specified broker.'
       tags:
         - Replica
       responses:
@@ -635,7 +635,7 @@ components:
 
     ConfigName:
       name: 'name'
-      description: 'The config name.'
+      description: 'The configuration parameter name.'
       in: path
       required: true
       schema:
@@ -1336,7 +1336,7 @@ components:
 
   requestBodies:
     AlterBrokerConfigBatchRequest:
-      description: 'The alter broker config batch request.'
+      description: 'The alter broker configuration parameter batch request.'
       content:
         application/json:
           schema:
@@ -1349,7 +1349,7 @@ components:
                 value: 'gzip'
 
     AlterClusterConfigBatchRequest:
-      description: 'The alter cluster config batch request.'
+      description: 'The alter cluster configuration parameter batch request.'
       content:
         application/json:
           schema:
@@ -1362,7 +1362,7 @@ components:
                 value: 'gzip'
 
     AlterTopicConfigBatchRequest:
-      description: 'The alter topic config batch request.'
+      description: 'The alter topic configuration parameter batch request.'
       content:
         application/json:
           schema:
@@ -1442,7 +1442,7 @@ components:
                 value: 'gzip'
 
     UpdateBrokerConfigRequest:
-      description: 'The broker config update request.'
+      description: 'The broker configuration parameter update request.'
       content:
         application/json:
           schema:
@@ -1455,7 +1455,7 @@ components:
             value: 'gzip'
 
     UpdateClusterConfigRequest:
-      description: 'The cluster config update request.'
+      description: 'The cluster configuration parameter update request.'
       content:
         application/json:
           schema:
@@ -1468,7 +1468,7 @@ components:
             value: 'gzip'
 
     UpdateTopicConfigRequest:
-      description: 'The topic config update request.'
+      description: 'The topic configuration parameter update request.'
       content:
         application/json:
           schema:
@@ -1542,7 +1542,7 @@ components:
                 permission: 'DENY'
 
     GetBrokerConfigResponse:
-      description: 'The broker config.'
+      description: 'The broker configuration parameter.'
       content:
         application/json:
           schema:
@@ -1589,7 +1589,7 @@ components:
               related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1/partition-replicas'
 
     GetClusterConfigResponse:
-      description: 'The cluster config.'
+      description: 'The cluster configuration parameter.'
       content:
         application/json:
           schema:
@@ -1765,7 +1765,7 @@ components:
               related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
 
     GetTopicConfigResponse:
-      description: 'The topic config.'
+      description: 'The topic configuration parameter.'
       content:
         application/json:
           schema:
