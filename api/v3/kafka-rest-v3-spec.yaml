@@ -5,10 +5,36 @@ info:
   version: 3.0.0
 
 servers:
-  - url: http://localhost:9391/v3
-    description: Kafka REST Proxy
-  - url: http://localhost:9391/kafka/v3
-    description: Confluent Server
+  - url: "{protocol}://{address}:{port}/v3"
+    description: Kafka REST Proxy. See https://docs.confluent.io/current/kafka-rest/index.html.
+    variables:
+      address:
+        default: localhost
+        description: Address of the server
+      port:
+        default: "8082"
+        description: Port of the server
+      protocol:
+        default: http
+        description: Protocol for interacting with server
+        enum:
+          - http
+          - https
+  - url: "{protocol}://{address}:{port}/kafka/v3"
+    description: Kafka REST Proxy as part of Confluent Server.
+    variables:
+      protocol:
+        default: http
+        enum:
+          - http
+          - https
+        description: Protocol to communicate with the server
+      address:
+        default: localhost
+        description: Address of the server
+      port:
+        default: "8090"
+        description: Port of the server
 
 paths:
   /clusters:
@@ -953,6 +979,56 @@ components:
               items:
                 $ref: '#/components/schemas/ClusterData'
 
+    CreateAclRequestData:
+      type: object
+      required:
+        - resource_type
+        - resource_name
+        - pattern_type
+        - principal
+        - host
+        - operation
+        - permission
+      properties:
+        resource_type:
+          $ref: '#/components/schemas/AclResourceType'
+        pattern_type:
+          $ref: '#/components/schemas/AclPatternType'
+        principal:
+          type: string
+        host:
+          type: string
+        operation:
+          $ref: '#/components/schemas/AclOperation'
+        permission:
+          $ref: '#/components/schemas/AclPermission'
+
+    CreateTopicRequestData:
+      type: object
+      required:
+        - topic_name
+        - partitions_count
+        - replication_factor
+      properties:
+        topic_name:
+          type: string
+        partitions_count:
+          type: integer
+        replication_factor:
+          type: integer
+        configs:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+            properties:
+              name:
+                type: string
+              value:
+                type: string
+                nullable: true
+
     ConfigSource:
       type: string
       enum:
@@ -1333,6 +1409,13 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/TopicData'
+                
+    UpdateConfigRequestData:
+      type: object
+      properties:
+        value:
+          type: string
+          nullable: true
 
   requestBodies:
     AlterBrokerConfigBatchRequest:
@@ -1379,58 +1462,14 @@ components:
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - resource_type
-              - resource_name
-              - pattern_type
-              - principal
-              - host
-              - operation
-              - permission
-            properties:
-              resource_type:
-                $ref: '#/components/schemas/AclResourceType'
-              pattern_type:
-                $ref: '#/components/schemas/AclPatternType'
-              principal:
-                type: string
-              host:
-                type: string
-              operation:
-                $ref: '#/components/schemas/AclOperation'
-              permission:
-                $ref: '#/components/schemas/AclPermission'
+            $ref: '#/components/schemas/CreateAclRequestData'
 
     CreateTopicRequest:
       description: 'The topic creation request.'
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - topic_name
-              - partitions_count
-              - replication_factor
-            properties:
-              topic_name:
-                type: string
-              partitions_count:
-                type: integer
-              replication_factor:
-                type: integer
-              configs:
-                type: array
-                items:
-                  type: object
-                  required:
-                    - name
-                  properties:
-                    name:
-                      type: string
-                    value:
-                      type: string
-                      nullable: true
+            $ref: '#/components/schemas/CreateTopicRequestData'
           example:
             topic_name: 'topic-X'
             partitions_count: 64
@@ -1446,11 +1485,7 @@ components:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              value:
-                type: string
-                nullable: true
+            $ref: "#/components/schemas/UpdateConfigRequestData"
           example:
             value: 'gzip'
 
@@ -1459,11 +1494,7 @@ components:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              value:
-                type: string
-                nullable: true
+            $ref: "#/components/schemas/UpdateConfigRequestData"
           example:
             value: 'gzip'
 
@@ -1472,11 +1503,7 @@ components:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              value:
-                type: string
-                nullable: true
+            $ref: "#/components/schemas/UpdateConfigRequestData"
           example:
             value: 'gzip'
 
