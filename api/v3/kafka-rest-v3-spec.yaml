@@ -1507,45 +1507,6 @@ components:
           example:
             value: 'gzip'
 
-    UpdateBrokerConfigRequest:
-      description: 'The broker config update request.'
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              value:
-                type: string
-                nullable: true
-          example:
-            value: 'gzip'
-
-    UpdateClusterConfigRequest:
-      description: 'The cluster config update request.'
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              value:
-                type: string
-                nullable: true
-          example:
-            value: 'gzip'
-
-    UpdateTopicConfigRequest:
-      description: 'The topic config update request.'
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              value:
-                type: string
-                nullable: true
-          example:
-            value: 'gzip'
-
   responses:
     CreateTopicResponse:
       description: 'The created topic.'
