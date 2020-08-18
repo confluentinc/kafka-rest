@@ -73,7 +73,7 @@ install: build
 	mkdir -p $(DESTDIR)$(PREFIX)
 	mkdir -p $(DESTDIR)$(BINPATH)
 	for libpath in $(LIBPATHS) ; do \
-		mkdir -p $(DESTDIR)$(libpath) ; \
+		mkdir -p $(DESTDIR)$$libpath ; \
 	done
 	mkdir -p $(DESTDIR)$(LIBPATH)
 	mkdir -p $(DESTDIR)$(SYSCONFDIR)
