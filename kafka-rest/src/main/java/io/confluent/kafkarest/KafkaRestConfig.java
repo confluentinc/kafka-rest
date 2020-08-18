@@ -87,25 +87,6 @@ public class KafkaRestConfig extends RestConfig {
       + " The value of -1 denotes unbounded thread creation";
   public static final String CONSUMER_MAX_THREADS_DEFAULT = "50";
 
-  public static final String ZOOKEEPER_CONNECT_CONFIG = "zookeeper.connect";
-  private static final String ZOOKEEPER_CONNECT_DOC =
-      "NOTE: Only required when using v1 Consumer API's. Specifies the ZooKeeper connection "
-      + "string in the form "
-      + "hostname:port where host and port are the host and port of a ZooKeeper server. To allow "
-      + "connecting "
-      + "through other ZooKeeper nodes when that ZooKeeper machine is down you can also specify "
-      + "multiple hosts "
-      + "in the form hostname1:port1,hostname2:port2,hostname3:port3.\n"
-      + "\n"
-      + "The server may also have a ZooKeeper chroot path as part of it's ZooKeeper connection "
-      + "string which puts "
-      + "its data under some path in the global ZooKeeper namespace. If so the consumer should "
-      + "use the same "
-      + "chroot path in its connection string. For example to give a chroot path of /chroot/path "
-      + "you would give "
-      + "the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path. ";
-  public static final String ZOOKEEPER_CONNECT_DEFAULT = "";
-
   public static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
   private static final String BOOTSTRAP_SERVERS_DOC =
       "A list of host/port pairs to use for establishing the initial connection to the Kafka "
@@ -202,18 +183,12 @@ public class KafkaRestConfig extends RestConfig {
 
   private static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka.rest";
 
-  /**
-   * <code>client.zk.session.timeout.ms</code>
-   */
-  public static final String KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG
-      = "client.zk.session.timeout.ms";
   public static final String KAFKACLIENT_TIMEOUT_CONFIG = "client.timeout.ms";
   /**
    * <code>client.init.timeout.ms</code>
    */
   public static final String KAFKACLIENT_INIT_TIMEOUT_CONFIG = "client.init.timeout.ms";
 
-  public static final String ZOOKEEPER_SET_ACL_CONFIG = "zookeeper.set.acl";
   public static final String KAFKACLIENT_SECURITY_PROTOCOL_CONFIG =
       "client.security.protocol";
   public static final String KAFKACLIENT_SSL_TRUSTSTORE_LOCATION_CONFIG =
@@ -258,19 +233,11 @@ public class KafkaRestConfig extends RestConfig {
       "client.sasl.kerberos.ticket.renew.window.factor";
   public static final String KAFKA_REST_RESOURCE_EXTENSION_CONFIG =
       "kafka.rest.resource.extension.class";
-  protected static final String KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_DOC =
-      "Zookeeper session timeout";
   protected static final String KAFKACLIENT_INIT_TIMEOUT_DOC =
       "The timeout for initialization of the Kafka store, including creation of the Kafka topic "
       + "that stores schema data.";
   protected static final String KAFKACLIENT_TIMEOUT_DOC =
       "The timeout for an operation on the Kafka store";
-  protected static final String
-      ZOOKEEPER_SET_ACL_DOC =
-      "Whether or not to set an ACL in ZooKeeper when znodes are created and ZooKeeper SASL "
-      + "authentication is "
-      + "configured. IMPORTANT: if set to `true`, the SASL principal must be the same as the "
-      + "Kafka brokers.";
   protected static final String KAFKACLIENT_SECURITY_PROTOCOL_DOC =
       "The security protocol to use when connecting with Kafka, the underlying persistent storage. "
       + "Values can be `PLAINTEXT`, `SSL`, `SASL_PLAINTEXT`, or `SASL_SSL`.";
@@ -327,8 +294,6 @@ public class KafkaRestConfig extends RestConfig {
       + " <code>RestResourceExtension</code> allows you to inject user defined resources "
       + " like filters to Rest Proxy. Typically used to add custom capability like logging, "
       + " security, etc.";
-  private static final boolean ZOOKEEPER_SET_ACL_DEFAULT = false;
-
   public static final String CRN_AUTHORITY_CONFIG =
       "confluent.resource.name.authority";
   private static final String CONFLUENT_RESOURCE_NAME_AUTHORITY_DOC =
@@ -389,13 +354,6 @@ public class KafkaRestConfig extends RestConfig {
         CONSUMER_MAX_THREADS_DEFAULT,
         Importance.MEDIUM,
         CONSUMER_MAX_THREADS_DOC
-    )
-    .define(
-        ZOOKEEPER_CONNECT_CONFIG,
-        Type.STRING,
-        ZOOKEEPER_CONNECT_DEFAULT,
-        Importance.HIGH,
-        ZOOKEEPER_CONNECT_DOC
     )
     .define(
         BOOTSTRAP_SERVERS_CONFIG,
@@ -474,14 +432,6 @@ public class KafkaRestConfig extends RestConfig {
         SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT,
         Importance.LOW,
         SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC
-    )
-    .define(
-        KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG,
-        Type.INT,
-        30000,
-        Range.atLeast(0),
-        Importance.LOW,
-        KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_DOC
     )
     .define(
         KAFKACLIENT_INIT_TIMEOUT_CONFIG,
