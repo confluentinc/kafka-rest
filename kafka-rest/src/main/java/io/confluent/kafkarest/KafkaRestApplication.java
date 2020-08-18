@@ -93,7 +93,6 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
       ProducerPool producerPool,
       KafkaConsumerManager kafkaConsumerManager
   ) {
-    /* TODO: Update EmbeddedServerTestHarness to allow required BOOTSTRAP_SERVERS_CONFIG */
     if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))) {
       throw new RuntimeException(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG + " must be configured");
     }
