@@ -16,7 +16,7 @@ version: "3.7"
 
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:latest
+    image: 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-zookeeper:6.0.x-latest
     hostname: zookeeper
     container_name: minimal-zookeeper
     environment:
@@ -26,52 +26,52 @@ services:
       - "9091:9091"
 
   kafka-1:
-    image: confluentinc/cp-server:latest
+    image: 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-server:6.0.x-latest
     hostname: kafka-1
     container_name: minimal-kafka-1
     depends_on:
       - zookeeper
     environment:
-      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka-1:9191,EXTERNAL://localhost:9291"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-1:9191,EXTERNAL://localhost:9291"
       KAFKA_BROKER_ID: 1
       KAFKA_DELETE_TOPIC_ENABLE: "true"
-      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
-      KAFKA_LISTENERS: "INTERNAL://0.0.0.0:9191,EXTERNAL://0.0.0.0:9291"
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9191,EXTERNAL://0.0.0.0:9291"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT"
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:9091"
     ports:
       - "9291:9291"
 
   kafka-2:
-    image: confluentinc/cp-server:latest
+    image: 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-server:6.0.x-latest
     hostname: kafka-2
     container_name: minimal-kafka-2
     depends_on:
       - zookeeper
     environment:
-      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka-2:9192,EXTERNAL://localhost:9292"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-2:9192,EXTERNAL://localhost:9292"
       KAFKA_BROKER_ID: 2
       KAFKA_DELETE_TOPIC_ENABLE: "true"
-      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
-      KAFKA_LISTENERS: "INTERNAL://0.0.0.0:9192,EXTERNAL://0.0.0.0:9292"
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9192,EXTERNAL://0.0.0.0:9292"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT"
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:9091"
     ports:
       - "9292:9292"
 
   kafka-3:
-    image: confluentinc/cp-server:latest
+    image: 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-server:6.0.x-latest
     hostname: kafka-3
     container_name: minimal-kafka-3
     depends_on:
       - zookeeper
     environment:
-      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka-3:9193,EXTERNAL://localhost:9293"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-3:9193,EXTERNAL://localhost:9293"
       KAFKA_BROKER_ID: 3
       KAFKA_DELETE_TOPIC_ENABLE: "true"
-      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
-      KAFKA_LISTENERS: "INTERNAL://0.0.0.0:9193,EXTERNAL://0.0.0.0:9293"
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9193,EXTERNAL://0.0.0.0:9293"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT"
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:9091"
     ports:
       - "9293:9293"
@@ -89,6 +89,7 @@ services:
       KAFKA_REST_ADVERTISED_LISTENERS: "http://localhost:9391"
       KAFKA_REST_BOOTSTRAP_SERVERS: "kafka-1:9191"
       KAFKA_REST_LISTENERS: "http://0.0.0.0:9391"
+      KAFKA_REST_HOST_NAME: "localhost"
       KAFKA_REST_ZOOKEEPER_CONNECT: "zookeeper:9091"
     ports:
       - "9391:9391"
