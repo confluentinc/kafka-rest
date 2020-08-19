@@ -41,16 +41,6 @@
     </fileSets>
     <dependencySets>
         <dependencySet>
-            <!-- TODO: Remove this dependency set after kafka-run-class script is updated. -->
-            <outputDirectory>share/java/kafka-rest</outputDirectory>
-            <useProjectArtifact>true</useProjectArtifact>
-            <useTransitiveFiltering>true</useTransitiveFiltering>
-            <excludes>
-                <exclude>io.confluent:rest-utils</exclude>
-                <exclude>org.slf4j:slf4j-log4j12</exclude>
-            </excludes>
-        </dependencySet>
-        <dependencySet>
             <outputDirectory>share/java/kafka-rest-lib</outputDirectory>
             <useProjectArtifact>true</useProjectArtifact>
             <useTransitiveFiltering>true</useTransitiveFiltering>
