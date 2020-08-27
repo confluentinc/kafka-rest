@@ -28,6 +28,7 @@ import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -58,6 +59,7 @@ public final class ReplicasResource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.replicas.list")
   public void listReplicas(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -96,6 +98,7 @@ public final class ReplicasResource {
   @GET
   @Path("/{brokerId}")
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.replicas.get")
   public void getReplica(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

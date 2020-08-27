@@ -20,6 +20,7 @@ import static java.util.Objects.requireNonNull;
 import io.confluent.kafkarest.controllers.BrokerConfigManager;
 import io.confluent.kafkarest.entities.v3.AlterBrokerConfigBatchRequest;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -48,6 +49,7 @@ public final class AlterBrokerConfigBatchAction {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.brokers.configs.alter")
   public void alterBrokerConfigBatch(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

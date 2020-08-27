@@ -25,6 +25,7 @@ import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -56,6 +57,7 @@ public final class GetReassignmentAction {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.topics.partitions.reassignment.get")
   public void getReassignment(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

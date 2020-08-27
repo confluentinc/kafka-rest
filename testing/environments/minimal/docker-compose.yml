@@ -91,5 +91,7 @@ services:
       KAFKA_REST_LISTENERS: "http://0.0.0.0:9391"
       KAFKA_REST_HOST_NAME: "localhost"
       KAFKA_REST_ZOOKEEPER_CONNECT: "zookeeper:9091"
+      JMX_PORT: 9392
     ports:
       - "9391:9391"
+      - "9392:9392"
