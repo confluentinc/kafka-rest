@@ -33,6 +33,7 @@ import io.confluent.kafkarest.entities.v3.SearchAclsResponse;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.UrlFactory;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.net.URI;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
@@ -70,6 +71,7 @@ public final class AclsResource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.acls.list")
   public void searchAcls(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -146,6 +148,7 @@ public final class AclsResource {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.acls.create")
   public void createAcl(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -205,6 +208,7 @@ public final class AclsResource {
 
   @DELETE
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.acls.delete")
   public void deleteAcls(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

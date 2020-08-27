@@ -30,6 +30,7 @@ import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -70,6 +71,7 @@ public final class ClusterConfigsResource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.clusters.configs.list")
   public void listClusterConfigs(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -106,6 +108,7 @@ public final class ClusterConfigsResource {
   @GET
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.clusters.configs.get")
   public void getClusterConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -125,6 +128,7 @@ public final class ClusterConfigsResource {
   @Path("/{name}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.clusters.configs.update")
   public void upsertClusterConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -145,6 +149,7 @@ public final class ClusterConfigsResource {
   @DELETE
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.clusters.configs.delete")
   public void deleteClusterConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

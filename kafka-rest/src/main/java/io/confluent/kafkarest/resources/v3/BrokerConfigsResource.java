@@ -30,6 +30,7 @@ import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -70,6 +71,7 @@ public final class BrokerConfigsResource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.brokers.configs.list")
   public void listBrokerConfigs(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -105,6 +107,7 @@ public final class BrokerConfigsResource {
   @GET
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.brokers.configs.get")
   public void getBrokerConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -124,6 +127,7 @@ public final class BrokerConfigsResource {
   @Path("/{name}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.brokers.configs.update")
   public void updateBrokerConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -144,6 +148,7 @@ public final class BrokerConfigsResource {
   @DELETE
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.brokers.configs.delete")
   public void resetBrokerConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

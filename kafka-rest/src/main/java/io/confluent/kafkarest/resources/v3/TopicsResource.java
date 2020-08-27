@@ -32,6 +32,7 @@ import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.net.URI;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -75,6 +76,7 @@ public final class TopicsResource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.topics.list")
   public void listTopics(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<ListTopicsResponse> response =
@@ -102,6 +104,7 @@ public final class TopicsResource {
   @GET
   @Path("/{topicName}")
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.topics.get")
   public void getTopic(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -119,6 +122,7 @@ public final class TopicsResource {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.topics.create")
   public void createTopic(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -156,6 +160,7 @@ public final class TopicsResource {
   @DELETE
   @Path("/{topicName}")
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.topics.delete")
   public void deleteTopic(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

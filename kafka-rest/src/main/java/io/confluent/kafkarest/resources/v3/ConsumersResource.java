@@ -29,6 +29,7 @@ import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -60,6 +61,7 @@ public final class ConsumersResource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.consumers.list")
   public void listConsumers(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -96,6 +98,7 @@ public final class ConsumersResource {
   @GET
   @Path("/{consumerId}")
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.consumers.get")
   public void getConsumer(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

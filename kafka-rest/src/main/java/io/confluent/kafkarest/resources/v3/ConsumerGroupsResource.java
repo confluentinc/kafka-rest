@@ -29,6 +29,7 @@ import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -61,6 +62,7 @@ public final class ConsumerGroupsResource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.consumer-groups.list")
   public void listConsumerGroups(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<ListConsumerGroupsResponse> response =
@@ -90,6 +92,7 @@ public final class ConsumerGroupsResource {
   @GET
   @Path("/{consumerGroupId}")
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.consumer-groups.get")
   public void getConsumerGroup(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
