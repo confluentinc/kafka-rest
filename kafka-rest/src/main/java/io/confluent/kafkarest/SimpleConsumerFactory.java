@@ -35,7 +35,7 @@ public class SimpleConsumerFactory {
     this.config = config;
 
     clientIdCounter = new AtomicInteger(0);
-    simpleConsumerConfig = new SimpleConsumerConfig(config.getOriginalProperties());
+    simpleConsumerConfig = new SimpleConsumerConfig(config.getConsumerProperties());
   }
 
   public SimpleConsumerConfig getSimpleConsumerConfig() {
