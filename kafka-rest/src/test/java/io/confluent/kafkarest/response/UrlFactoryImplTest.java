@@ -41,7 +41,8 @@ public class UrlFactoryImplTest {
 
   @Test
   public void create_withHostNameAndPortConfig_returnsUrlRelativeToHostNameAndPortConfig() {
-    expect(requestUriInfo.getAbsolutePath()).andReturn(URI.create("http://1.2.3.4:1000/xxx/yyy"));
+    expect(requestUriInfo.getAbsolutePath())
+        .andStubReturn(URI.create("http://1.2.3.4:1000/xxx/yyy"));
     expect(requestUriInfo.getBaseUri()).andReturn(URI.create("http://1.2.3.4:1000/"));
     replay(requestUriInfo);
 
@@ -174,5 +175,85 @@ public class UrlFactoryImplTest {
     String url = urlFactory.create("foo", "bar");
 
     assertEquals("http://1.2.3.4:1000/xxx/foo/bar", url);
+  }
+
+  @Test
+  public void testCreateHostAndAdvertisedListenerReturnsRelativeToAdvertisedListener() {
+    expect(requestUriInfo.getAbsolutePath())
+        .andStubReturn(URI.create("http://1.2.3.4:1000/xxx/yyy"));
+    expect(requestUriInfo.getBaseUri()).andReturn(URI.create("http://1.2.3.4:1000/"));
+    replay(requestUriInfo);
+
+    UrlFactory urlFactory =
+        new UrlFactoryImpl(
+            "hostname",
+            2000,
+            singletonList("http://advertised.listener:2000"),
+            emptyList(),
+            requestUriInfo);
+
+    String url = urlFactory.create("foo", "bar");
+
+    assertEquals("http://advertised.listener:2000/foo/bar", url);
+  }
+
+  @Test
+  public void testCreateHostAndListenerReturnsRelativeToListener() {
+    expect(requestUriInfo.getAbsolutePath())
+        .andStubReturn(URI.create("http://1.2.3.4:1000/xxx/yyy"));
+    expect(requestUriInfo.getBaseUri()).andReturn(URI.create("http://1.2.3.4:1000/"));
+    replay(requestUriInfo);
+
+    UrlFactory urlFactory =
+        new UrlFactoryImpl(
+            "hostname",
+            2000,
+            emptyList(),
+            singletonList("http://listener:2000"),
+            requestUriInfo);
+
+    String url = urlFactory.create("foo", "bar");
+
+    assertEquals("http://listener:2000/foo/bar", url);
+  }
+
+  @Test
+  public void testCreateAdvertisedListenerAndListenerReturnsRelativeToAdvertisedListener() {
+    expect(requestUriInfo.getAbsolutePath())
+        .andStubReturn(URI.create("http://1.2.3.4:1000/xxx/yyy"));
+    expect(requestUriInfo.getBaseUri()).andReturn(URI.create("http://1.2.3.4:1000/"));
+    replay(requestUriInfo);
+
+    UrlFactory urlFactory =
+        new UrlFactoryImpl(
+            "",
+            0,
+            singletonList("http://advertised.listener:2000"),
+            singletonList("http://listener:2000"),
+            requestUriInfo);
+
+    String url = urlFactory.create("foo", "bar");
+
+    assertEquals("http://advertised.listener:2000/foo/bar", url);
+  }
+
+  @Test
+  public void testCreateHostAdvertisedListenerAndListenerReturnsRelativeToAdvertisedListener() {
+    expect(requestUriInfo.getAbsolutePath())
+        .andStubReturn(URI.create("http://1.2.3.4:1000/xxx/yyy"));
+    expect(requestUriInfo.getBaseUri()).andReturn(URI.create("http://1.2.3.4:1000/"));
+    replay(requestUriInfo);
+
+    UrlFactory urlFactory =
+        new UrlFactoryImpl(
+            "hostname",
+            2000,
+            singletonList("http://advertised.listener:2000"),
+            singletonList("http://listener:2000"),
+            requestUriInfo);
+
+    String url = urlFactory.create("foo", "bar");
+
+    assertEquals("http://advertised.listener:2000/foo/bar", url);
   }
 }
