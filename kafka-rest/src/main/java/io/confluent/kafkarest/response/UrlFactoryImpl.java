@@ -93,15 +93,12 @@ final class UrlFactoryImpl implements UrlFactory {
       List<String> listenersConfig,
       UriInfo requestUriInfo) {
     // Preferences are, in order:
-    // 1. hostNameConfig:portConfig
-    // 2. listener.authority, where listener in advertisedListenersConfig and
+    // 1. listener.authority, where listener in advertisedListenersConfig and
     //                        listener.scheme = request.scheme
-    // 3. listener.authority, where listener in listenersConfig and
+    // 2. listener.authority, where listener in listenersConfig and
     //                        listener.scheme = request.scheme
+    // 3. hostNameConfig:portConfig
     // 4. request.authority
-    if (!hostNameConfig.isEmpty()) {
-      return String.format("%s:%s", hostNameConfig, portConfig);
-    }
     String requestScheme = requestUriInfo.getAbsolutePath().getScheme();
     for (String listener : Iterables.concat(advertisedListenersConfig, listenersConfig)) {
       int protocolSeparator = listener.indexOf("://");
@@ -109,6 +106,9 @@ final class UrlFactoryImpl implements UrlFactory {
       if (requestScheme.equals(listenerScheme)) {
         return listener.substring(protocolSeparator + 3);
       }
+    }
+    if (hostNameConfig != null && !hostNameConfig.isEmpty() && portConfig != null) {
+      return String.format("%s:%s", hostNameConfig, portConfig);
     }
     return requestUriInfo.getAbsolutePath().getAuthority();
   }
