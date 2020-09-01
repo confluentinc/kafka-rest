@@ -89,7 +89,5 @@ services:
       KAFKA_REST_ADVERTISED_LISTENERS: "http://localhost:9391"
       KAFKA_REST_BOOTSTRAP_SERVERS: "kafka-1:9191"
       KAFKA_REST_LISTENERS: "http://0.0.0.0:9391"
-      KAFKA_REST_HOST_NAME: "localhost"
-      KAFKA_REST_ZOOKEEPER_CONNECT: "zookeeper:9091"
     ports:
       - "9391:9391"

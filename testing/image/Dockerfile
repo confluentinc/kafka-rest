@@ -18,3 +18,5 @@ COPY bin /usr/bin/
 
 COPY kafka-rest/target/kafka-rest-*-package/share/java/kafka-rest-bin /usr/share/java/kafka-rest-bin/
 COPY kafka-rest/target/kafka-rest-*-package/share/java/kafka-rest-lib /usr/share/java/kafka-rest-lib/
+
+COPY testing/image/configure /etc/confluent/docker/
