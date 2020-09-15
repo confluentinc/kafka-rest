@@ -56,10 +56,10 @@ public class AuthorizationErrorTest
 
   // Produce to topic inputs & results
   private final List<BinaryTopicProduceRecord> topicRecords = Arrays.asList(
-      new BinaryTopicProduceRecord("key", "value", null),
-      new BinaryTopicProduceRecord("key", "value2", null),
-      new BinaryTopicProduceRecord("key", "value3", null),
-      new BinaryTopicProduceRecord("key", "value4", null)
+      new BinaryTopicProduceRecord("key", "value", null, null),
+      new BinaryTopicProduceRecord("key", "value2", null, null),
+      new BinaryTopicProduceRecord("key", "value3", null, null),
+      new BinaryTopicProduceRecord("key", "value4", null, null)
   );
 
   private final List<PartitionOffset> produceOffsets = Arrays.asList(

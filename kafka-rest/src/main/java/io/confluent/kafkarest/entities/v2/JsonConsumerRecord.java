@@ -18,6 +18,9 @@ package io.confluent.kafkarest.entities.v2;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.ForwardHeader;
+
+import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 import javax.annotation.Nullable;
@@ -36,6 +39,9 @@ public final class JsonConsumerRecord {
   @Nullable
   private final Object value;
 
+  @Nullable
+  private final List<ForwardHeader> headers;
+
   @PositiveOrZero
   @Nullable
   private final Integer partition;
@@ -50,12 +56,14 @@ public final class JsonConsumerRecord {
       @JsonProperty("key") @Nullable Object key,
       @JsonProperty("value") @Nullable Object value,
       @JsonProperty("partition") @Nullable Integer partition,
-      @JsonProperty("offset") @Nullable Long offset) {
+      @JsonProperty("offset") @Nullable Long offset,
+      @JsonProperty("headers") @Nullable List<ForwardHeader> headers) {
     this.topic = topic;
     this.key = key;
     this.value = value;
     this.partition = partition;
     this.offset = offset;
+    this.headers = headers;
   }
 
   @JsonProperty
@@ -84,6 +92,12 @@ public final class JsonConsumerRecord {
 
   @JsonProperty
   @Nullable
+  public List<ForwardHeader> getHeaders() {
+    return headers;
+  }
+
+  @JsonProperty
+  @Nullable
   public Long getOffset() {
     return offset;
   }
@@ -100,7 +114,8 @@ public final class JsonConsumerRecord {
         record.getKey(),
         record.getValue(),
         record.getPartition(),
-        record.getOffset());
+        record.getOffset(),
+            record.getHeaders());
   }
 
   public ConsumerRecord<Object, Object> toConsumerRecord() {
@@ -113,7 +128,7 @@ public final class JsonConsumerRecord {
     if (offset == null || offset < 0) {
       throw new IllegalStateException();
     }
-    return ConsumerRecord.create(topic, key, value, partition, offset);
+    return ConsumerRecord.create(topic, key, value, partition, offset, headers);
   }
 
   @Override

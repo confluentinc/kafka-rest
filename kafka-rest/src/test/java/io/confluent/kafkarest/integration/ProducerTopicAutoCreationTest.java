@@ -15,13 +15,14 @@
 
 package io.confluent.kafkarest.integration;
 
+import io.confluent.kafkarest.entities.ForwardHeader;
 import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest;
 import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
+
+import java.util.*;
+
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.Test;
 
@@ -29,12 +30,13 @@ public class ProducerTopicAutoCreationTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
 
   private static final String topicName = "nonexistant";
+  private static final List<ForwardHeader> headers = Collections.emptyList();
 
   private final List<BinaryTopicProduceRecord> topicRecords = Arrays.asList(
-      new BinaryTopicProduceRecord("key", "value", null),
-      new BinaryTopicProduceRecord("key", "value2", null),
-      new BinaryTopicProduceRecord("key", "value3", null),
-      new BinaryTopicProduceRecord("key", "value4", null)
+      new BinaryTopicProduceRecord("key", "value", null, headers),
+      new BinaryTopicProduceRecord("key", "value2", null, headers),
+      new BinaryTopicProduceRecord("key", "value3", null, headers),
+      new BinaryTopicProduceRecord("key", "value4", null, headers)
   );
   private final List<PartitionOffset> partitionOffsets = Arrays.asList(
       new PartitionOffset(0, 0L, null, null),

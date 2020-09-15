@@ -26,17 +26,11 @@ import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.SystemTime;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.ConsumerRecord;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.kafkarest.entities.*;
 import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -73,6 +67,7 @@ public class KafkaConsumerManagerTest {
 
     private static final String groupName = "testgroup";
     private static final String topicName = "testtopic";
+    private static final List<ForwardHeader> headers = Collections.emptyList();
 
     // Setup holding vars for results from callback
     private boolean sawCallback = false;
@@ -526,9 +521,12 @@ public class KafkaConsumerManagerTest {
     private List<ConsumerRecord<ByteString, ByteString>> bootstrapConsumer(final MockConsumer<byte[], byte[]> consumer, boolean toExpectCreate) {
         List<ConsumerRecord<ByteString, ByteString>> referenceRecords =
             Arrays.asList(
-                ConsumerRecord.create(topicName, ByteString.copyFromUtf8("k1"), ByteString.copyFromUtf8("v1"), 0, 0),
-                ConsumerRecord.create(topicName, ByteString.copyFromUtf8("k2"), ByteString.copyFromUtf8("v2"), 0, 1),
-                ConsumerRecord.create(topicName, ByteString.copyFromUtf8("k3"), ByteString.copyFromUtf8("v3"), 0, 2));
+                ConsumerRecord.create(topicName, ByteString.copyFromUtf8("k1"),
+                        ByteString.copyFromUtf8("v1"), 0, 0, headers),
+                ConsumerRecord.create(topicName, ByteString.copyFromUtf8("k2"),
+                        ByteString.copyFromUtf8("v2"), 0, 1, headers),
+                ConsumerRecord.create(topicName, ByteString.copyFromUtf8("k3"),
+                        ByteString.copyFromUtf8("v3"), 0, 2, headers));
 
         if (toExpectCreate)
             expectCreate(consumer);
@@ -591,7 +589,8 @@ public class KafkaConsumerManagerTest {
                 ByteString.copyFromUtf8(String.format("k%d", offset)),
                 ByteString.copyFromUtf8(String.format("v%d", offset)),
                 0,
-                offset
+                offset,
+                headers
         );
     }
 

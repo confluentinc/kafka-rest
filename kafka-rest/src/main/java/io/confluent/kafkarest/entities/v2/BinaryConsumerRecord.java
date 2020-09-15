@@ -20,8 +20,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EntityUtils;
-import java.util.Arrays;
+import io.confluent.kafkarest.entities.ForwardHeader;
+
+import java.util.List;
 import java.util.Objects;
+import java.util.Arrays;
 import java.util.StringJoiner;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -39,6 +42,9 @@ public final class BinaryConsumerRecord {
   @Nullable
   private final byte[] value;
 
+  @Nullable
+  private final List<ForwardHeader> headers;
+
   @PositiveOrZero
   @Nullable
   private final Integer partition;
@@ -53,12 +59,14 @@ public final class BinaryConsumerRecord {
       @JsonProperty("key") @Nullable byte[] key,
       @JsonProperty("value") @Nullable byte[] value,
       @JsonProperty("partition") @Nullable Integer partition,
-      @JsonProperty("offset") @Nullable Long offset) {
+      @JsonProperty("offset") @Nullable Long offset,
+      @JsonProperty("headers") @Nullable List<ForwardHeader> headers) {
     this.topic = topic;
     this.key = key;
     this.value = value;
     this.partition = partition;
     this.offset = offset;
+    this.headers = headers;
   }
 
   @JsonProperty
@@ -77,6 +85,12 @@ public final class BinaryConsumerRecord {
   @Nullable
   public String getValue() {
     return value != null ? EntityUtils.encodeBase64Binary(value) : null;
+  }
+
+  @JsonProperty
+  @Nullable
+  public List<ForwardHeader> getHeaders() {
+    return headers;
   }
 
   @JsonProperty
@@ -104,7 +118,8 @@ public final class BinaryConsumerRecord {
         record.getKey() != null ? record.getKey().toByteArray() : null,
         record.getValue() != null ? record.getValue().toByteArray() : null,
         record.getPartition(),
-        record.getOffset());
+        record.getOffset(),
+            record.getHeaders());
   }
 
   public ConsumerRecord<ByteString, ByteString> toConsumerRecord() {
@@ -122,7 +137,7 @@ public final class BinaryConsumerRecord {
         key != null ? ByteString.copyFrom(key) : null,
         value != null ? ByteString.copyFrom(value) : null,
         partition,
-        offset);
+        offset, headers);
   }
 
   @Override

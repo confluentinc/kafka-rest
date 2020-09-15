@@ -76,10 +76,10 @@ public class AvroProducerTest extends ClusterTestHarness {
   // Produce to topic inputs & results
 
   protected final List<SchemaTopicProduceRecord> topicRecordsWithPartitionsAndKeys = Arrays.asList(
-      new SchemaTopicProduceRecord(testKeys[0], testValues[0], 0),
-      new SchemaTopicProduceRecord(testKeys[1], testValues[1], 1),
-      new SchemaTopicProduceRecord(testKeys[2], testValues[2], 1),
-      new SchemaTopicProduceRecord(testKeys[3], testValues[3], 2)
+      new SchemaTopicProduceRecord(testKeys[0], testValues[0], 0, null),
+      new SchemaTopicProduceRecord(testKeys[1], testValues[1], 1, null),
+      new SchemaTopicProduceRecord(testKeys[2], testValues[2], 1, null),
+      new SchemaTopicProduceRecord(testKeys[3], testValues[3], 2, null)
   );
   protected final List<PartitionOffset> partitionOffsetsWithPartitionsAndKeys = Arrays.asList(
       new PartitionOffset(0, 0L, null, null),
@@ -90,10 +90,10 @@ public class AvroProducerTest extends ClusterTestHarness {
 
   // Produce to partition inputs & results
   protected final List<SchemaPartitionProduceRecord> partitionRecordsOnlyValues = Arrays.asList(
-      new SchemaPartitionProduceRecord(null, testValues[0]),
-      new SchemaPartitionProduceRecord(null, testValues[1]),
-      new SchemaPartitionProduceRecord(null, testValues[2]),
-      new SchemaPartitionProduceRecord(null, testValues[3])
+      new SchemaPartitionProduceRecord(null, testValues[0], null),
+      new SchemaPartitionProduceRecord(null, testValues[1], null),
+      new SchemaPartitionProduceRecord(null, testValues[2], null),
+      new SchemaPartitionProduceRecord(null, testValues[3], null)
   );
   protected final List<PartitionOffset> producePartitionOffsetOnlyValues = Arrays.asList(
       new PartitionOffset(0, 0L, null, null),

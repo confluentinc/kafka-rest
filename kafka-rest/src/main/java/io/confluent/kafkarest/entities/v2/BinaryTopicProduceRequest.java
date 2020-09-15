@@ -18,13 +18,15 @@ package io.confluent.kafkarest.entities.v2;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.kafkarest.entities.EntityUtils;
+import io.confluent.kafkarest.entities.ForwardHeader;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceRequest;
 import io.confluent.rest.validation.ConstraintViolations;
-import java.util.Arrays;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotEmpty;
@@ -71,7 +73,8 @@ public final class BinaryTopicProduceRequest {
     }
     return ProduceRequest.create(
         records.stream()
-            .map(record -> ProduceRecord.create(record.key, record.value, record.partition))
+            .map(record -> ProduceRecord.create(
+                    record.key, record.value, record.partition, record.headers))
             .collect(Collectors.toList()),
         /* keySchema= */ null,
         /* keySchemaId= */ null,
@@ -116,11 +119,15 @@ public final class BinaryTopicProduceRequest {
     @Nullable
     private final Integer partition;
 
+    @Nullable
+    private final List<ForwardHeader> headers;
+
     @JsonCreator
     public BinaryTopicProduceRecord(
         @JsonProperty("key") @Nullable String key,
         @JsonProperty("value") @Nullable String value,
-        @JsonProperty("partition") @Nullable Integer partition
+        @JsonProperty("partition") @Nullable Integer partition,
+        @JsonProperty("headers") @Nullable List<ForwardHeader> headers
     ) {
       try {
         this.key = (key != null) ? EntityUtils.parseBase64Binary(key) : null;
@@ -133,6 +140,7 @@ public final class BinaryTopicProduceRequest {
         throw ConstraintViolations.simpleException("Record value contains invalid base64 encoding");
       }
       this.partition = partition;
+      this.headers = headers;
     }
 
     @JsonProperty("key")
@@ -151,6 +159,12 @@ public final class BinaryTopicProduceRequest {
     @Nullable
     public Integer getPartition() {
       return partition;
+    }
+
+    @JsonProperty
+    @Nullable
+    public List<ForwardHeader> getHeaders() {
+      return headers;
     }
 
     @Override

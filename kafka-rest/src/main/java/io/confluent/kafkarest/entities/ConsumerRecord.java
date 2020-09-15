@@ -16,7 +16,9 @@
 package io.confluent.kafkarest.entities;
 
 import com.google.auto.value.AutoValue;
+
 import javax.annotation.Nullable;
+import java.util.List;
 
 @AutoValue
 public abstract class ConsumerRecord<K, V> {
@@ -36,8 +38,12 @@ public abstract class ConsumerRecord<K, V> {
 
   public abstract long getOffset();
 
+  public abstract List<ForwardHeader> getHeaders();
+
   public static <K, V> ConsumerRecord<K, V> create(
-      String topic, @Nullable K key, @Nullable V value, int partition, long offset) {
-    return new AutoValue_ConsumerRecord<>(topic, key, value, partition, offset);
+          String topic,
+          @Nullable K key, @Nullable V value, int partition, long offset,
+          @Nullable List<ForwardHeader> headers) {
+    return new AutoValue_ConsumerRecord<>(topic, key, value, partition, offset, headers);
   }
 }

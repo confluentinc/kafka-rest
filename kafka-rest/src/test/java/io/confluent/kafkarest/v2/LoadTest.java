@@ -27,14 +27,10 @@ import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.SystemTime;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.ForwardHeader;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -58,6 +54,8 @@ public class LoadTest {
     private KafkaConsumerManager consumerManager;
 
     private static final String topicName = "testtopic";
+
+    private static final List<ForwardHeader> headers = Collections.emptyList();
 
     private Capture<Properties> capturedConsumerConfig;
 
@@ -146,11 +144,14 @@ public class LoadTest {
         private List<ConsumerRecord<ByteString, ByteString>> referenceRecords() {
             return Arrays.asList(
                 ConsumerRecord.create(
-                    topicName, ByteString.copyFromUtf8("k1"), ByteString.copyFromUtf8("v1"), 0, latestOffset - 3),
+                    topicName, ByteString.copyFromUtf8("k1"), ByteString.copyFromUtf8("v1"), 0,
+                        latestOffset - 3, headers),
                 ConsumerRecord.create(
-                    topicName, ByteString.copyFromUtf8("k2"), ByteString.copyFromUtf8("v2"), 0, latestOffset - 2),
+                    topicName, ByteString.copyFromUtf8("k2"), ByteString.copyFromUtf8("v2"), 0,
+                        latestOffset - 2, headers),
                 ConsumerRecord.create(
-                    topicName, ByteString.copyFromUtf8("k3"), ByteString.copyFromUtf8("v3"), 0, latestOffset - 1));
+                    topicName, ByteString.copyFromUtf8("k3"), ByteString.copyFromUtf8("v3"), 0,
+                        latestOffset - 1, headers));
         }
 
         private void schedulePoll() {

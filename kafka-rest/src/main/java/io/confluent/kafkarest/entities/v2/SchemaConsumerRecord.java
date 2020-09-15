@@ -19,6 +19,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.confluent.kafkarest.entities.ConsumerRecord;
+import io.confluent.kafkarest.entities.ForwardHeader;
+
+import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 import javax.annotation.Nullable;
@@ -37,6 +40,9 @@ public final class SchemaConsumerRecord {
   @Nullable
   private final JsonNode value;
 
+  @Nullable
+  private final List<ForwardHeader> headers;
+
   @PositiveOrZero
   @Nullable
   private final Integer partition;
@@ -51,12 +57,14 @@ public final class SchemaConsumerRecord {
       @JsonProperty("key") @Nullable JsonNode key,
       @JsonProperty("value") @Nullable JsonNode value,
       @JsonProperty("partition") @Nullable Integer partition,
-      @JsonProperty("offset") @Nullable Long offset) {
+      @JsonProperty("offset") @Nullable Long offset,
+      @JsonProperty("headers") @Nullable List<ForwardHeader> headers) {
     this.topic = topic;
     this.key = key;
     this.value = value;
     this.partition = partition;
     this.offset = offset;
+    this.headers = headers;
   }
 
   @JsonProperty
@@ -75,6 +83,12 @@ public final class SchemaConsumerRecord {
   @Nullable
   public JsonNode getValue() {
     return value;
+  }
+
+  @JsonProperty
+  @Nullable
+  public List<ForwardHeader> getHeaders() {
+    return headers;
   }
 
   @JsonProperty
@@ -101,7 +115,7 @@ public final class SchemaConsumerRecord {
         record.getKey(),
         record.getValue(),
         record.getPartition(),
-        record.getOffset());
+        record.getOffset(), record.getHeaders());
   }
 
   public ConsumerRecord<JsonNode, JsonNode> toConsumerRecord() {
@@ -114,7 +128,7 @@ public final class SchemaConsumerRecord {
     if (offset == null || offset < 0) {
       throw new IllegalStateException();
     }
-    return ConsumerRecord.create(topic, key, value, partition, offset);
+    return ConsumerRecord.create(topic, key, value, partition, offset, headers);
   }
 
   @Override

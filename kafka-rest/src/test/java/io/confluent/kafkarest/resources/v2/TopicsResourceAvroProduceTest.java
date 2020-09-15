@@ -100,8 +100,8 @@ public class TopicsResourceAvroProduceTest
     addResource(new ProduceToTopicAction(ctx));
 
     produceRecordsWithPartitionsAndKeys = Arrays.asList(
-        new SchemaTopicProduceRecord(testKeys[0], testValues[0], 0),
-        new SchemaTopicProduceRecord(testKeys[1], testValues[1], 0)
+        new SchemaTopicProduceRecord(testKeys[0], testValues[0], 0, null),
+        new SchemaTopicProduceRecord(testKeys[1], testValues[1], 0, null)
     );
   }
 

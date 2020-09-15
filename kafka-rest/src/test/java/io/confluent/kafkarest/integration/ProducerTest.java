@@ -23,15 +23,14 @@ import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.RecordMetadataOrException;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.ForwardHeader;
 import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest.BinaryPartitionProduceRecord;
 import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest;
 import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+
+import java.util.*;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -45,57 +44,58 @@ public class ProducerTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
 
   private static final String topicName = "topic1";
+  private static final List<ForwardHeader> headers = Collections.emptyList();
 
   // Produce to topic inputs & results
 
   private final List<BinaryTopicProduceRecord> topicRecordsWithKeys = Arrays.asList(
-      new BinaryTopicProduceRecord("key", "value", null),
-      new BinaryTopicProduceRecord("key", "value2", null),
-      new BinaryTopicProduceRecord("key", "value3", null),
-      new BinaryTopicProduceRecord("key", "value4", null)
+      new BinaryTopicProduceRecord("key", "value", null, headers),
+      new BinaryTopicProduceRecord("key", "value2", null, headers),
+      new BinaryTopicProduceRecord("key", "value3", null, headers),
+      new BinaryTopicProduceRecord("key", "value4", null, headers)
   );
 
   private final List<BinaryTopicProduceRecord> topicRecordsWithPartitions = Arrays.asList(
-      new BinaryTopicProduceRecord(null, "value", 0),
-      new BinaryTopicProduceRecord(null, "value2", 1),
-      new BinaryTopicProduceRecord(null, "value3", 1),
-      new BinaryTopicProduceRecord(null, "value4", 2)
+      new BinaryTopicProduceRecord(null, "value", 0, headers),
+      new BinaryTopicProduceRecord(null, "value2", 1, headers),
+      new BinaryTopicProduceRecord(null, "value3", 1, headers),
+      new BinaryTopicProduceRecord(null, "value4", 2, headers)
   );
 
   private final List<BinaryTopicProduceRecord> topicRecordsWithPartitionsAndKeys = Arrays.asList(
-      new BinaryTopicProduceRecord("key", "value", 0),
-      new BinaryTopicProduceRecord("key2", "value2", 1),
-      new BinaryTopicProduceRecord("key3", "value3", 1),
-      new BinaryTopicProduceRecord("key4", "value4", 2)
+      new BinaryTopicProduceRecord("key", "value", 0, headers),
+      new BinaryTopicProduceRecord("key2", "value2", 1, headers),
+      new BinaryTopicProduceRecord("key3", "value3", 1, headers),
+      new BinaryTopicProduceRecord("key4", "value4", 2, headers)
   );
 
   private final List<BinaryTopicProduceRecord> topicRecordsWithNullValues = Arrays.asList(
-      new BinaryTopicProduceRecord("key", null, null),
-      new BinaryTopicProduceRecord("key", null, null),
-      new BinaryTopicProduceRecord("key", null, null),
-      new BinaryTopicProduceRecord("key", null, null)
+      new BinaryTopicProduceRecord("key", null, null, headers),
+      new BinaryTopicProduceRecord("key", null, null, headers),
+      new BinaryTopicProduceRecord("key", null, null, headers),
+      new BinaryTopicProduceRecord("key", null, null, headers)
   );
 
   // Produce to partition inputs & results
   private final List<BinaryPartitionProduceRecord> partitionRecordsOnlyValues = Arrays.asList(
-      new BinaryPartitionProduceRecord(null, "value"),
-      new BinaryPartitionProduceRecord(null, "value2"),
-      new BinaryPartitionProduceRecord(null, "value3"),
-      new BinaryPartitionProduceRecord(null, "value4")
+      new BinaryPartitionProduceRecord(null, "value", headers),
+      new BinaryPartitionProduceRecord(null, "value2", headers),
+      new BinaryPartitionProduceRecord(null, "value3", headers),
+      new BinaryPartitionProduceRecord(null, "value4", headers)
   );
 
   private final List<BinaryPartitionProduceRecord> partitionRecordsWithKeys = Arrays.asList(
-      new BinaryPartitionProduceRecord("key", "value"),
-      new BinaryPartitionProduceRecord("key", "value2"),
-      new BinaryPartitionProduceRecord("key", "value3"),
-      new BinaryPartitionProduceRecord("key", "value4")
+      new BinaryPartitionProduceRecord("key", "value", headers),
+      new BinaryPartitionProduceRecord("key", "value2", headers),
+      new BinaryPartitionProduceRecord("key", "value3", headers),
+      new BinaryPartitionProduceRecord("key", "value4", headers)
   );
 
   private final List<BinaryPartitionProduceRecord> partitionRecordsWithNullValues = Arrays.asList(
-      new BinaryPartitionProduceRecord("key1", null),
-      new BinaryPartitionProduceRecord("key2", null),
-      new BinaryPartitionProduceRecord("key3", null),
-      new BinaryPartitionProduceRecord("key4", null)
+      new BinaryPartitionProduceRecord("key1", null, headers),
+      new BinaryPartitionProduceRecord("key2", null, headers),
+      new BinaryPartitionProduceRecord("key3", null, headers),
+      new BinaryPartitionProduceRecord("key4", null, headers)
   );
 
   private final List<PartitionOffset> produceOffsets = Arrays.asList(
@@ -147,7 +147,7 @@ public class ProducerTest
 
     BinaryPartitionProduceRequest request =
         BinaryPartitionProduceRequest.create(
-            Collections.singletonList(new BinaryPartitionProduceRecord(null, "data")));
+            Collections.singletonList(new BinaryPartitionProduceRecord(null, "data", headers)));
 
     sawCallback = false;
     pool.produce(
