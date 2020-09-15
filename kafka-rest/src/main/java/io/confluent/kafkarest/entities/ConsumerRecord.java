@@ -38,6 +38,7 @@ public abstract class ConsumerRecord<K, V> {
 
   public abstract long getOffset();
 
+  @Nullable
   public abstract List<ForwardHeader> getHeaders();
 
   public static <K, V> ConsumerRecord<K, V> create(
