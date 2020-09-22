@@ -32,7 +32,10 @@ public final class ControllersModule extends AbstractBinder {
     bind(ConsumerGroupManagerImpl.class).to(ConsumerGroupManager.class);
     bind(ConsumerManagerImpl.class).to(ConsumerManager.class);
     bind(PartitionManagerImpl.class).to(PartitionManager.class);
+    bind(ProduceControllerImpl.class).to(ProduceController.class);
     bind(ReassignmentManagerImpl.class).to(ReassignmentManager.class);
+    bind(RecordSerializerFacadeImpl.class).to(RecordSerializerFacade.class);
+    bind(SchemaManagerImpl.class).to(SchemaManager.class);
     bind(ReplicaManagerImpl.class).to(ReplicaManager.class);
     bind(TopicConfigManagerImpl.class).to(TopicConfigManager.class);
     bind(TopicManagerImpl.class).to(TopicManager.class);

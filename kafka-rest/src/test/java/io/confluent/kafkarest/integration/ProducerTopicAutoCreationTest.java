@@ -15,27 +15,34 @@
 
 package io.confluent.kafkarest.integration;
 
-import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
-import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest;
-import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
+import com.fasterxml.jackson.databind.node.TextNode;
+import com.google.common.io.BaseEncoding;
+import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.ProduceRequest;
+import io.confluent.kafkarest.entities.v2.ProduceRequest.ProduceRecord;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.Test;
 
-public class ProducerTopicAutoCreationTest
-    extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
+public class ProducerTopicAutoCreationTest extends AbstractProducerTest {
 
   private static final String topicName = "nonexistant";
 
-  private final List<BinaryTopicProduceRecord> topicRecords = Arrays.asList(
-      new BinaryTopicProduceRecord("key", "value", null),
-      new BinaryTopicProduceRecord("key", "value2", null),
-      new BinaryTopicProduceRecord("key", "value3", null),
-      new BinaryTopicProduceRecord("key", "value4", null)
-  );
+  private static TextNode base64Encode(String value) {
+    return TextNode.valueOf(BaseEncoding.base64().encode(value.getBytes(StandardCharsets.UTF_8)));
+  }
+
+  
+  private final List<ProduceRecord> topicRecords =
+      Arrays.asList(
+          ProduceRecord.create(base64Encode("key"), base64Encode("value")),
+          ProduceRecord.create(base64Encode("key"), base64Encode("value2")),
+          ProduceRecord.create(base64Encode("key"), base64Encode("value3")),
+          ProduceRecord.create(base64Encode("key"), base64Encode("value4")));
+
   private final List<PartitionOffset> partitionOffsets = Arrays.asList(
       new PartitionOffset(0, 0L, null, null),
       new PartitionOffset(0, 1L, null, null),
@@ -51,15 +58,19 @@ public class ProducerTopicAutoCreationTest
 
   @Test
   public void testProduceToMissingTopic() {
-    BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(topicRecords);
+    ProduceRequest request = ProduceRequest.create(topicRecords);
     // Should create topic
     testProduceToTopic(
         topicName,
         request,
-        ByteArrayDeserializer.class.getName(),
-        ByteArrayDeserializer.class.getName(),
+        record ->
+            record.getValue()
+                .map(value -> ByteString.copyFrom(BaseEncoding.base64().decode(value.asText())))
+                .orElse(null),
+        (topic, data) -> ByteString.copyFrom(data),
+        (topic, data) -> ByteString.copyFrom(data),
         partitionOffsets,
         false,
-        request.toProduceRequest().getRecords());
+        request.getRecords());
   }
 }

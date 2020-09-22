@@ -46,6 +46,7 @@ import java.util.TimeZone;
 import javax.ws.rs.core.Configurable;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.StringUtil;
+import org.glassfish.jersey.server.ServerProperties;
 
 
 /**
@@ -98,13 +99,12 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
       ProducerPool producerPool,
       KafkaConsumerManager kafkaConsumerManager
   ) {
-    if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))
-        && StringUtil.isBlank(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG))) {
-      throw new RuntimeException("Atleast one of " + KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG + " "
-                                 + "or "
-                                    + KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG
-                                    + " needs to be configured");
+    if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))) {
+      throw new RuntimeException(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG + " must be configured");
     }
+
+    config.property(ServerProperties.OUTBOUND_CONTENT_LENGTH_BUFFER, 0);
+
     KafkaRestContextProvider.initialize(config, appConfig, producerPool,
         kafkaConsumerManager);
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();

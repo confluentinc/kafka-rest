@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Confluent Inc.
+ * Copyright 2020 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -13,26 +13,15 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest;
+package io.confluent.kafkarest.controllers;
 
+import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.RegisteredSchema;
 
-import org.apache.kafka.clients.producer.RecordMetadata;
+public interface SchemaManager {
 
-public class RecordMetadataOrException {
+  RegisteredSchema getSchemaById(EmbeddedFormat format, int schemaId, boolean isKey);
 
-  private final RecordMetadata recordMetadata;
-  private final Exception exception;
-
-  public RecordMetadataOrException(RecordMetadata recordMetadata, Exception exception) {
-    this.recordMetadata = recordMetadata;
-    this.exception = exception;
-  }
-
-  public RecordMetadata getRecordMetadata() {
-    return recordMetadata;
-  }
-
-  public Exception getException() {
-    return exception;
-  }
+  RegisteredSchema parseSchema(
+      EmbeddedFormat format, String topicName, String rawSchema, boolean isKey);
 }

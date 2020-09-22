@@ -16,10 +16,12 @@
 package io.confluent.kafkarest.tools;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.TextNode;
 import io.confluent.common.utils.AbstractPerformanceTest;
 import io.confluent.common.utils.PerformanceStats;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.ProduceRequest;
+import io.confluent.kafkarest.entities.v2.ProduceRequest.ProduceRecord;
 import io.confluent.rest.entities.ErrorMessage;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -82,12 +84,10 @@ public class ProducerPerformance extends AbstractPerformanceTest {
 
     /* setup perf test */
     targetUrl = baseUrl + "/topics/" + topic;
-    BinaryTopicProduceRequest.BinaryTopicProduceRecord record =
-            new BinaryTopicProduceRequest.BinaryTopicProduceRecord(null, "payload", null);
-    BinaryTopicProduceRequest.BinaryTopicProduceRecord[] records =
-            new BinaryTopicProduceRequest.BinaryTopicProduceRecord[recordsPerIteration];
+    ProduceRecord record = ProduceRecord.create(/* key= */ null, TextNode.valueOf("payload"));
+    ProduceRecord[] records = new ProduceRecord[recordsPerIteration];
     Arrays.fill(records, record);
-    BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(Arrays.asList(records));
+    ProduceRequest request = ProduceRequest.create(Arrays.asList(records));
     requestEntity = new ObjectMapper().writeValueAsBytes(request);
     requestEntityLength = Integer.toString(requestEntity.length);
     buffer = new byte[1024 * 1024];

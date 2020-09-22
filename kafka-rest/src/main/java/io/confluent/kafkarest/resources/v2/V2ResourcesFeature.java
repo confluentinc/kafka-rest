@@ -32,8 +32,8 @@ public final class V2ResourcesFeature implements Feature {
     configurable.register(BrokersResource.class);
     configurable.register(new ConsumersResource(context));
     configurable.register(PartitionsResource.class);
-    configurable.register(new ProduceToPartitionAction(context));
-    configurable.register(new ProduceToTopicAction(context));
+    configurable.register(ProduceToPartitionAction.class);
+    configurable.register(ProduceToTopicAction.class);
     configurable.register(RootResource.class);
     configurable.register(TopicsResource.class);
     return true;

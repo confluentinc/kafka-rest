@@ -19,33 +19,41 @@ import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.ProduceRequest;
+import io.confluent.kafkarest.entities.v2.ProduceRequest.ProduceRecord;
 import io.confluent.kafkarest.entities.v2.ProduceResponse;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
+import org.apache.kafka.common.serialization.Deserializer;
 
-public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends ClusterTestHarness {
+public class AbstractProducerTest extends ClusterTestHarness {
+
+
 
   protected <K, V> void testProduceToTopic(
       String topicName,
-      TopicRequestT request,
-      String keyDeserializerClassName,
-      String valueDeserializerClassName,
+      ProduceRequest request,
+      Function<ProduceRecord, V> valueSerializer,
+      Deserializer<K> keyDeserializer,
+      Deserializer<V> valueDeserializer,
       List<PartitionOffset> offsetResponses,
       boolean matchPartitions,
-      List<ProduceRecord<K, V>> expected
+      List<ProduceRecord> expected
   ) {
     testProduceToTopic(topicName,
         request,
-        keyDeserializerClassName,
-        valueDeserializerClassName,
+        valueSerializer,
+        keyDeserializer,
+        valueDeserializer,
         offsetResponses,
         matchPartitions,
         Collections.emptyMap(),
@@ -54,13 +62,14 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
 
   protected <K, V> void testProduceToTopic(
       String topicName,
-      TopicRequestT request,
-      String keyDeserializerClassName,
-      String valueDeserializerClassName,
+      ProduceRequest request,
+      Function<ProduceRecord, V> valueSerializer,
+      Deserializer<K> keyDeserializer,
+      Deserializer<V> valueDeserializer,
       List<PartitionOffset> offsetResponses,
       boolean matchPartitions,
       Map<String, String> queryParams,
-      List<ProduceRecord<K, V>> expected
+      List<ProduceRecord> expected
   ) {
     Response response = request("/topics/" + topicName, queryParams)
         .post(Entity.entity(request, getEmbeddedContentType()));
@@ -71,33 +80,49 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
       TestUtils.assertPartitionsEqual(offsetResponses, produceResponse.getOffsets());
     }
     TestUtils.assertPartitionOffsetsEqual(offsetResponses, produceResponse.getOffsets());
-    TestUtils.assertTopicContains(plaintextBrokerList, topicName,
-        expected, null,
-        keyDeserializerClassName, valueDeserializerClassName, true);
+    TestUtils.assertTopicContains(
+        plaintextBrokerList,
+        topicName,
+        null,
+        expected,
+        valueSerializer,
+        keyDeserializer,
+        valueDeserializer,
+        true);
   }
 
   protected <K, V> void testProduceToPartition(
       String topicName,
       int partition,
-      PartitionRequestT request,
-      String keySerializerClassName,
-      String valueSerializerClassName,
+      ProduceRequest request,
+      Function<ProduceRecord, V> valueSerializer,
+      Deserializer<K> keyDeserializer,
+      Deserializer<V> valueDeserializer,
       List<PartitionOffset> offsetResponse,
-      List<ProduceRecord<K, V>> expected
+      List<ProduceRequest.ProduceRecord> expected
   ) {
-    testProduceToPartition(topicName, partition, request, keySerializerClassName,
-        valueSerializerClassName, offsetResponse, Collections.emptyMap(), expected);
+    testProduceToPartition(
+        topicName,
+        partition,
+        request,
+        valueSerializer,
+        keyDeserializer,
+        valueDeserializer,
+        offsetResponse,
+        Collections.emptyMap(),
+        expected);
   }
 
   protected <K, V> void testProduceToPartition(
       String topicName,
       int partition,
-      PartitionRequestT request,
-      String keySerializerClassName,
-      String valueSerializerClassName,
+      ProduceRequest request,
+      Function<ProduceRecord, V> valueSerializer,
+      Deserializer<K> keyDeserializer,
+      Deserializer<V> valueDeserializer,
       List<PartitionOffset> offsetResponse,
       Map<String, String> queryParams,
-      List<ProduceRecord<K, V>> expected
+      List<ProduceRecord> expected
   ) {
     Response response = request("/topics/" + topicName + "/partitions/0", queryParams)
         .post(Entity.entity(request, getEmbeddedContentType()));
@@ -105,18 +130,23 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
     final ProduceResponse poffsetResponse
         = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
     assertEquals(offsetResponse, poffsetResponse.getOffsets());
-    TestUtils.assertTopicContains(plaintextBrokerList, topicName,
-        expected, partition,
-        keySerializerClassName, valueSerializerClassName, true);
+    TestUtils.assertTopicContains(
+        plaintextBrokerList,
+        topicName,
+        partition,
+        expected,
+        valueSerializer,
+        keyDeserializer,
+        valueDeserializer, true);
   }
 
-  protected void testProduceToTopicFails(String topicName, TopicRequestT request) {
+  protected void testProduceToTopicFails(String topicName, ProduceRequest request) {
     testProduceToTopicFails(topicName, request, Collections.emptyMap());
   }
 
   protected void testProduceToTopicFails(
       String topicName,
-      TopicRequestT request,
+      ProduceRequest request,
       Map<String, String> queryParams
   ) {
     Response response = request("/topics/" + topicName, queryParams)
@@ -129,13 +159,13 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
     }
   }
 
-  protected void testProduceToAuthorizationError(String topicName, TopicRequestT request) {
+  protected void testProduceToAuthorizationError(String topicName, ProduceRequest request) {
     testProduceToAuthorizationError(topicName, request, Collections.emptyMap());
   }
 
   protected void testProduceToAuthorizationError(
       String topicName,
-      TopicRequestT request,
+      ProduceRequest request,
       Map<String, String> queryParams
   ) {
     Response response = request("/topics/" + topicName, queryParams)

@@ -15,14 +15,20 @@
 
 package io.confluent.kafkarest.resources.v2;
 
-import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.controllers.ProduceController;
+import io.confluent.kafkarest.controllers.RecordSerializerFacade;
+import io.confluent.kafkarest.controllers.SchemaManager;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest;
-import io.confluent.kafkarest.entities.v2.JsonTopicProduceRequest;
-import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.ProduceRequest;
+import io.confluent.kafkarest.entities.v2.ProduceResponse;
 import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
+import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.rest.annotations.PerformanceMetric;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -32,6 +38,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Response;
 
 @Path("/topics")
 @Consumes({
@@ -45,8 +52,12 @@ import javax.ws.rs.container.Suspended;
 @ResourceName("api.v2.produce-to-topic.*")
 public final class ProduceToTopicAction extends AbstractProduceAction {
 
-  public ProduceToTopicAction(KafkaRestContext ctx) {
-    super(ctx);
+  @Inject
+  public ProduceToTopicAction(
+      Provider<SchemaManager> schemaManager,
+      Provider<RecordSerializerFacade> recordSerializer,
+      Provider<ProduceController> produceController) {
+    super(schemaManager, recordSerializer, produceController);
   }
 
   @POST
@@ -57,14 +68,15 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
   public void produceBinary(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid @NotNull BinaryTopicProduceRequest request
+      @Valid @NotNull ProduceRequest request
   ) {
-    produce(
-        asyncResponse,
-        topicName,
-        /* partition= */ null,
-        EmbeddedFormat.BINARY,
-        request.toProduceRequest());
+    CompletableFuture<ProduceResponse> response =
+        produce(EmbeddedFormat.BINARY, topicName, Optional.empty(), request);
+
+    AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
+        .entity(response)
+        .status(ProduceResponse::getRequestStatus)
+        .asyncResume(asyncResponse);
   }
 
   @POST
@@ -75,14 +87,15 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
   public void produceJson(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid @NotNull JsonTopicProduceRequest request
+      @Valid @NotNull ProduceRequest request
   ) {
-    produce(
-        asyncResponse,
-        topicName,
-        /* partition= */ null,
-        EmbeddedFormat.JSON,
-        request.toProduceRequest());
+    CompletableFuture<ProduceResponse> response =
+        produce(EmbeddedFormat.JSON, topicName, Optional.empty(), request);
+
+    AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
+        .entity(response)
+        .status(ProduceResponse::getRequestStatus)
+        .asyncResume(asyncResponse);
   }
 
   @POST
@@ -93,14 +106,15 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
   public void produceAvro(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid @NotNull SchemaTopicProduceRequest request
+      @Valid @NotNull ProduceRequest request
   ) {
-    produceSchema(
-        asyncResponse,
-        topicName,
-        /* partition= */ null,
-        request.toProduceRequest(),
-        EmbeddedFormat.AVRO);
+    CompletableFuture<ProduceResponse> response =
+        produceWithSchema(EmbeddedFormat.AVRO, topicName, Optional.empty(), request);
+
+    AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
+        .entity(response)
+        .status(ProduceResponse::getRequestStatus)
+        .asyncResume(asyncResponse);
   }
 
   @POST
@@ -111,14 +125,15 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
   public void produceJsonSchema(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid @NotNull SchemaTopicProduceRequest request
+      @Valid @NotNull ProduceRequest request
   ) {
-    produceSchema(
-        asyncResponse,
-        topicName,
-        /* partition= */ null,
-        request.toProduceRequest(),
-        EmbeddedFormat.JSONSCHEMA);
+    CompletableFuture<ProduceResponse> response =
+        produceWithSchema(EmbeddedFormat.JSONSCHEMA, topicName, Optional.empty(), request);
+
+    AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
+        .entity(response)
+        .status(ProduceResponse::getRequestStatus)
+        .asyncResume(asyncResponse);
   }
 
   @POST
@@ -129,13 +144,14 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
   public void produceProtobuf(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid @NotNull SchemaTopicProduceRequest request
+      @Valid @NotNull ProduceRequest request
   ) {
-    produceSchema(
-        asyncResponse,
-        topicName,
-        /* partition= */ null,
-        request.toProduceRequest(),
-        EmbeddedFormat.PROTOBUF);
+    CompletableFuture<ProduceResponse> response =
+        produceWithSchema(EmbeddedFormat.PROTOBUF, topicName, Optional.empty(), request);
+
+    AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
+        .entity(response)
+        .status(ProduceResponse::getRequestStatus)
+        .asyncResume(asyncResponse);
   }
 }

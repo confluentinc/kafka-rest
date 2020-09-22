@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Confluent Inc.
+ * Copyright 2020 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -16,25 +16,23 @@
 package io.confluent.kafkarest.entities;
 
 import com.google.auto.value.AutoValue;
-import javax.annotation.Nullable;
+import org.apache.kafka.clients.producer.RecordMetadata;
 
 @AutoValue
-public abstract class ProduceRecord<K, V> {
+public abstract class ProduceResult {
 
-  ProduceRecord() {
+  ProduceResult() {
   }
 
-  @Nullable
-  public abstract K getKey();
+  public abstract int getPartitionId();
 
-  @Nullable
-  public abstract V getValue();
+  public abstract long getOffset();
 
-  @Nullable
-  public abstract Integer getPartition();
+  public static ProduceResult create(int partitionId, long offset) {
+    return new AutoValue_ProduceResult(partitionId, offset);
+  }
 
-  public static <K, V> ProduceRecord<K, V> create(
-      @Nullable K key, @Nullable V value, @Nullable Integer partition) {
-    return new AutoValue_ProduceRecord<>(key, value, partition);
+  public static ProduceResult fromRecordMetadata(RecordMetadata metadata) {
+    return create(metadata.partition(), metadata.offset());
   }
 }

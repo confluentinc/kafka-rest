@@ -6,15 +6,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.NullNode;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
+import io.confluent.kafkarest.entities.v2.ProduceRequest;
+import io.confluent.kafkarest.entities.v2.ProduceRequest.ProduceRecord;
 import io.confluent.kafkarest.entities.v2.SchemaConsumerRecord;
-import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
-import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,7 +46,7 @@ public abstract class SchemaProduceConsumeTest extends ClusterTestHarness {
 
   protected abstract ParsedSchema getValueSchema();
 
-  protected abstract List<SchemaTopicProduceRecord> getProduceRecords();
+  protected abstract List<ProduceRecord> getProduceRecords();
 
   @Test
   public void produceThenConsume_returnsExactlyProduced() {
@@ -92,13 +93,13 @@ public abstract class SchemaProduceConsumeTest extends ClusterTestHarness {
         .accept(getContentType())
         .get();
 
-    SchemaTopicProduceRequest produceRequest =
-        new SchemaTopicProduceRequest(
+    ProduceRequest produceRequest =
+        ProduceRequest.create(
             getProduceRecords(),
+            /* keySchemaId= */ null,
             getKeySchema().canonicalString(),
-            null,
-            getValueSchema().canonicalString(),
-            null);
+            /* valueSchemaId= */ null,
+            getValueSchema().canonicalString());
 
     Response produceResponse =
         request(String.format("/topics/%s", TOPIC))
@@ -124,11 +125,12 @@ public abstract class SchemaProduceConsumeTest extends ClusterTestHarness {
     assertMapEquals(producedToMap(getProduceRecords()), consumedToMap(readRecords));
   }
 
-  private static final Map<JsonNode, JsonNode> producedToMap(
-      List<SchemaTopicProduceRecord> records) {
+  private static Map<JsonNode, JsonNode> producedToMap(List<ProduceRecord> records) {
     HashMap<JsonNode, JsonNode> map = new HashMap<>();
-    for (SchemaTopicProduceRecord record : records) {
-      map.put(record.getKey(), record.getValue());
+    for (ProduceRecord record : records) {
+      map.put(
+          record.getKey().orElse(NullNode.getInstance()),
+          record.getValue().orElse(NullNode.getInstance()));
     }
     return unmodifiableMap(map);
   }

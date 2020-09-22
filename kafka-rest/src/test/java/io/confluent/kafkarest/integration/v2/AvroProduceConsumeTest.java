@@ -6,7 +6,7 @@ import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.converters.AvroConverter;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
+import io.confluent.kafkarest.entities.v2.ProduceRequest.ProduceRecord;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.avro.Schema;
@@ -34,23 +34,23 @@ public final class AvroProduceConsumeTest extends SchemaProduceConsumeTest {
           + "  }]"
           + "}");
 
-  private static final List<SchemaTopicProduceRecord> PRODUCE_RECORDS =
+  private static final List<ProduceRecord> PRODUCE_RECORDS =
       Arrays.asList(
-          new SchemaTopicProduceRecord(
+          ProduceRecord.create(
+              /* partition= */ 0,
               new IntNode(1),
               AVRO_CONVERTER.toJson(
-                  new GenericRecordBuilder(VALUE_SCHEMA).set("value", 11).build()).getJson(),
-              /* partition= */ 0),
-          new SchemaTopicProduceRecord(
+                  new GenericRecordBuilder(VALUE_SCHEMA).set("value", 11).build()).getJson()),
+          ProduceRecord.create(
+              /* partition= */ 0,
               new IntNode(2),
               AVRO_CONVERTER.toJson(
-                  new GenericRecordBuilder(VALUE_SCHEMA).set("value", 12).build()).getJson(),
-              /* partition= */ 0),
-          new SchemaTopicProduceRecord(
+                  new GenericRecordBuilder(VALUE_SCHEMA).set("value", 12).build()).getJson()),
+          ProduceRecord.create(
+              /* partition= */ 0,
               new IntNode(3),
               AVRO_CONVERTER.toJson(
-                  new GenericRecordBuilder(VALUE_SCHEMA).set("value", 13).build()).getJson(),
-              /* partition= */ 0));
+                  new GenericRecordBuilder(VALUE_SCHEMA).set("value", 13).build()).getJson()));
 
   public AvroProduceConsumeTest() {
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ true);
@@ -77,7 +77,7 @@ public final class AvroProduceConsumeTest extends SchemaProduceConsumeTest {
   }
 
   @Override
-  protected List<SchemaTopicProduceRecord> getProduceRecords() {
+  protected List<ProduceRecord> getProduceRecords() {
     return PRODUCE_RECORDS;
   }
 }

@@ -16,14 +16,11 @@
 package io.confluent.kafkarest.converters;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.confluent.kafka.schemaregistry.ParsedSchema;
 
 /**
  * Provides conversion of JSON to/from an object for a specific schema type.
  */
 public interface SchemaConverter {
-
-  Object toObject(JsonNode value, ParsedSchema schema);
 
   /**
    * Converts data (including primitive types) to their equivalent JsonNode representation.

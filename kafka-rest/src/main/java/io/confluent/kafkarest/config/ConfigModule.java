@@ -24,6 +24,8 @@ import java.lang.annotation.Target;
 import java.util.HashSet;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.Set;
@@ -38,6 +40,7 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
  * <p>In addition to {@link KafkaRestConfig}, which contains all configuration, individual
  * configuration properties are also exposed, on a need-to-know basis.</p>
  */
+// CHECKSTYLE:OFF:ClassDataAbstractionCoupling
 public final class ConfigModule extends AbstractBinder {
 
   private final KafkaRestConfig config;
@@ -80,6 +83,14 @@ public final class ConfigModule extends AbstractBinder {
     bind(config.getInt(RestConfig.PORT_CONFIG))
         .qualifiedBy(new PortConfigImpl())
         .to(Integer.class);
+
+    bind(
+        config.getProducerProperties()
+            .entrySet()
+            .stream()
+            .collect(Collectors.toMap(entry -> entry.getKey().toString(), Entry::getValue)))
+        .qualifiedBy(new ProducerConfigsImpl())
+        .to(new TypeLiteral<Map<String, Object>>() { });
   }
 
   @Qualifier
@@ -144,4 +155,15 @@ public final class ConfigModule extends AbstractBinder {
   private static final class PortConfigImpl
       extends AnnotationLiteral<PortConfig> implements PortConfig {
   }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER })
+  public @interface ProducerConfigs {
+  }
+
+  private static final class ProducerConfigsImpl
+      extends AnnotationLiteral<ProducerConfigs> implements ProducerConfigs {
+  }
 }
+// CHECKSTYLE:ON:ClassDataAbstractionCoupling
