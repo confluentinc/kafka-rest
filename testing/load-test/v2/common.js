@@ -7,6 +7,7 @@ const baseUrl = 'http://localhost:9391';
 let produceBinaryToTopicRequestLatency = new Trend('ProduceBinaryToTopicRequestLatency', true);
 let produceBinaryToTopicRequestCount = new Counter('ProduceBinaryToTopicRequestCount');
 let produceBinaryToTopicMessageCount = new Counter('ProduceBinaryToTopicMessageCount');
+let produceBinaryToTopicByteCount = new Counter('ProduceBinaryToTopicByteCount');
 export let produceBinaryToTopic = function (topicName, records) {
     const url = `${baseUrl}/topics/${topicName}`;
     const body = {records};
@@ -21,6 +22,8 @@ export let produceBinaryToTopic = function (topicName, records) {
     produceBinaryToTopicRequestCount.add(1);
     if (response.status === 200) {
         produceBinaryToTopicMessageCount.add(records.length);
+        produceBinaryToTopicByteCount.add(
+            records.reduce((total, record) => total + record.key.length + record.value.length));
     }
     return response;
 }
@@ -28,6 +31,7 @@ export let produceBinaryToTopic = function (topicName, records) {
 let produceJsonToTopicRequestLatency = new Trend('ProduceJsonToTopicRequestLatency', true);
 let produceJsonToTopicRequestCount = new Counter('ProduceJsonToTopicRequestCount');
 let produceJsonToTopicMessageCount = new Counter('ProduceJsonToTopicMessageCount');
+let produceJsonToTopicByteCount = new Counter('ProduceJsonToTopicByteCount');
 export let produceJsonToTopic = function (topicName, records) {
     const url = `${baseUrl}/topics/${topicName}`;
     const body = {records};
@@ -42,6 +46,12 @@ export let produceJsonToTopic = function (topicName, records) {
     produceJsonToTopicRequestCount.add(1);
     if (response.status === 200) {
         produceJsonToTopicMessageCount.add(records.length);
+        produceJsonToTopicByteCount.add(
+            records.reduce(
+                (total, record) =>
+                    total
+                    + JSON.stringify(record.key).length
+                    + JSON.stringify(record.value).length));
     }
     return response;
 }
@@ -49,6 +59,7 @@ export let produceJsonToTopic = function (topicName, records) {
 let produceBinaryToPartitionRequestLatency = new Trend('ProduceBinaryToPartitionRequestLatency', true);
 let produceBinaryToPartitionRequestCount = new Counter('ProduceBinaryToPartitionRequestCount');
 let produceBinaryToPartitionMessageCount = new Counter('ProduceBinaryToPartitionMessageCount');
+let produceBinaryToPartitionByteCount = new Counter('ProduceBinaryToPartitionByteCount');
 export let produceBinaryToPartition = function (topicName, partitionId, records) {
     const url = `${baseUrl}/topics/${topicName}/partitions/${partitionId}`;
     const body = {records};
@@ -63,6 +74,8 @@ export let produceBinaryToPartition = function (topicName, partitionId, records)
     produceBinaryToPartitionRequestCount.add(1);
     if (response.status === 200) {
         produceBinaryToPartitionMessageCount.add(records.length);
+        produceBinaryToPartitionByteCount.add(
+            records.reduce((total, record) => total + record.key.length + record.value.length));
     }
     return response;
 }
@@ -70,6 +83,7 @@ export let produceBinaryToPartition = function (topicName, partitionId, records)
 let produceJsonToPartitionRequestLatency = new Trend('ProduceJsonToPartitionRequestLatency', true);
 let produceJsonToPartitionRequestCount = new Counter('ProduceJsonToPartitionRequestCount');
 let produceJsonToPartitionMessageCount = new Counter('ProduceJsonToPartitionMessageCount');
+let produceJsonToPartitionByteCount = new Counter('ProduceJsonToPartitionByteCount');
 export let produceJsonToPartition = function (topicName, partitionId, records) {
     const url = `${baseUrl}/topics/${topicName}/partitions/${partitionId}`;
     const body = {records};
@@ -84,6 +98,12 @@ export let produceJsonToPartition = function (topicName, partitionId, records) {
     produceJsonToPartitionRequestCount.add(1);
     if (response.status === 200) {
         produceJsonToPartitionMessageCount.add(records.length);
+        produceJsonToPartitionByteCount.add(
+            records.reduce(
+                (total, record) =>
+                    total
+                    + JSON.stringify(record.key).length
+                    + JSON.stringify(record.value).length));
     }
     return response;
 }
@@ -153,7 +173,8 @@ export let listSubscribedTopics = function (consumerGroupId, consumerId) {
 
 let consumeBinaryRequestLatency = new Trend('ConsumeBinaryRequestLatency', true);
 let consumeBinaryRequestCount = new Counter('ConsumeBinaryRequestCount');
-let consumedMessagesCount = new Counter('ConsumedMessagesCount');
+let consumeBinaryMessagesCount = new Counter('ConsumeBinaryMessagesCount');
+let consumeBinaryByteCount = new Counter('ConsumeBinaryByteCount');
 export let consumeBinary = function (consumerGroupId, consumerId) {
     const url = `${baseUrl}/consumers/${consumerGroupId}/instances/${consumerId}/records`;
     const headers = {'Accept': 'application/vnd.kafka.binary.v2+json'};
@@ -163,13 +184,18 @@ export let consumeBinary = function (consumerGroupId, consumerId) {
     consumeBinaryRequestLatency.add(response.timings.duration);
     consumeBinaryRequestCount.add(1);
     if (response.status === 200) {
-        consumedMessagesCount.add(response.json().length);
+        consumeBinaryMessagesCount.add(response.json().length);
+        consumeBinaryByteCount.add(
+            response.json()
+            .reduce((total, record) => total + record.key.length + record.value.length))
     }
     return response;
 }
 
 let consumeJsonRequestLatency = new Trend('ConsumeJsonRequestLatency', true);
 let consumeJsonRequestCount = new Counter('ConsumeJsonRequestCount');
+let consumeJsonMessagesCount = new Counter('ConsumeJsonMessagesCount');
+let consumeJsonByteCount = new Counter('ConsumeJsonByteCount');
 export let consumeJson = function (consumerGroupId, consumerId) {
     const url = `${baseUrl}/consumers/${consumerGroupId}/instances/${consumerId}/records`;
     const headers = {'Accept': 'application/vnd.kafka.json.v2+json'};
@@ -178,5 +204,15 @@ export let consumeJson = function (consumerGroupId, consumerId) {
     check(response, {'ConsumeJson: Status is 200': response => response.status === 200});
     consumeJsonRequestLatency.add(response.timings.duration);
     consumeJsonRequestCount.add(1);
+    if (response.status === 200) {
+        consumeJsonMessagesCount.add(response.json().length);
+        consumeJsonByteCount.add(
+            response.json()
+            .reduce(
+                (total, record) =>
+                    total
+                    + JSON.stringify(record.key).length
+                    + JSON.stringify(record.value).length))
+    }
     return response;
 }
