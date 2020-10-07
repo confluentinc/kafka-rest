@@ -30,6 +30,7 @@ import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -69,6 +70,7 @@ public final class TopicConfigsResource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.topics.configs.list")
   public void listTopicConfigs(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -105,6 +107,7 @@ public final class TopicConfigsResource {
   @GET
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.topics.configs.get")
   public void getTopicConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -124,6 +127,7 @@ public final class TopicConfigsResource {
   @Path("/{name}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.topics.configs.update")
   public void updateTopicConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -144,6 +148,7 @@ public final class TopicConfigsResource {
   @DELETE
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.topics.configs.delete")
   public void resetTopicConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

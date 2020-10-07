@@ -28,6 +28,7 @@ import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -61,6 +62,7 @@ public final class ClustersResource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.clusters.list")
   public void listClusters(@Suspended AsyncResponse asyncResponse) {
     CompletableFuture<ListClustersResponse> response =
         clusterManager.get()
@@ -85,6 +87,7 @@ public final class ClustersResource {
   @GET
   @Path("/{clusterId}")
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.clusters.get")
   public void getCluster(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<GetClusterResponse> response =

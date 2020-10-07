@@ -21,6 +21,7 @@ import io.confluent.kafkarest.controllers.ClusterConfigManager;
 import io.confluent.kafkarest.entities.ClusterConfig;
 import io.confluent.kafkarest.entities.v3.AlterClusterConfigBatchRequest;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -49,6 +50,7 @@ public final class AlterClusterConfigBatchAction {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.clusters.configs.alter")
   public void alterClusterConfigBatch(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
