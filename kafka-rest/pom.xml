@@ -90,18 +90,16 @@
             <artifactId>rest-utils-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!--
-            This is a workaround for IntelliJ which seems to have a problem including junit + hamcrest
-            as transitive dependencies of rest-utils-test. mvn properly resolves these, so it may have
-            something to do with special junit handling and test scopes since rest-utils-test is not in
-            <scope>test</scope>.
-        -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- End workaround -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka_${kafka.scala.version}</artifactId>
