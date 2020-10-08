@@ -85,8 +85,8 @@ public final class AclsResource {
   private static final String API_V3_ACLS_DELETE_ENABLE_DOC =
       "Whether to enable the DELETE /v3/clusters/{clusterId}/acls APIs.";
 
-  static ConfigDef defineConfigs(ConfigDef baseConfigDef) {
-    return baseConfigDef
+  static void defineConfigs(ConfigDef baseConfigDef) {
+    baseConfigDef
         .define(
             API_V3_ACLS_ENABLE_CONFIG,
             Type.BOOLEAN,

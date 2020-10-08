@@ -7,9 +7,7 @@ public final class V3ResourcesConfig {
   private V3ResourcesConfig() {
   }
 
-  public static ConfigDef defineConfigs(ConfigDef baseConfigDef) {
-    ConfigDef configs = baseConfigDef;
-    configs = AclsResource.defineConfigs(baseConfigDef);
-    return configs;
+  public static void defineConfigs(ConfigDef baseConfigDef) {
+    AclsResource.defineConfigs(baseConfigDef);
   }
 }

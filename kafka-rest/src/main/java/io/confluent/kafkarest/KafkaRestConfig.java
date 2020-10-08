@@ -353,9 +353,8 @@ public class KafkaRestConfig extends RestConfig {
   public static final String HTTP = "http";
 
   static {
-    ConfigDef configs = baseKafkaRestConfigDef();
-    configs = ResourcesConfig.defineConfigs(configs);
-    config  = configs;
+    config = baseKafkaRestConfigDef();
+    ResourcesConfig.defineConfigs(config);
   }
 
   protected static ConfigDef baseKafkaRestConfigDef() {
