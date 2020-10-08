@@ -21,6 +21,7 @@ import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.controllers.AclManager;
 import io.confluent.kafkarest.entities.Acl;
 import io.confluent.kafkarest.entities.v3.AclData;
@@ -78,7 +79,7 @@ public class AclsResourceTest {
 
   @Before
   public void setUp() {
-    aclsResource = new AclsResource(() -> aclManager, new FakeUrlFactory());
+    aclsResource = new AclsResource(() -> aclManager, new FakeUrlFactory(), new KafkaRestConfig());
   }
 
   @Test

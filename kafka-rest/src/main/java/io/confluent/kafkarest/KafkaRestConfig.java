@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.kafkarest.resources.ResourcesConfig;
 import io.confluent.rest.metrics.RestMetricsContext;
 import javax.ws.rs.core.MediaType;
 import org.apache.kafka.common.config.ConfigDef;
@@ -352,7 +353,9 @@ public class KafkaRestConfig extends RestConfig {
   public static final String HTTP = "http";
 
   static {
-    config = baseKafkaRestConfigDef();
+    ConfigDef configs = baseKafkaRestConfigDef();
+    configs = ResourcesConfig.defineConfigs(configs);
+    config  = configs;
   }
 
   protected static ConfigDef baseKafkaRestConfigDef() {
