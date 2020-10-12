@@ -17,7 +17,6 @@ package io.confluent.kafkarest.resources.v3;
 
 import static java.util.Objects.requireNonNull;
 
-import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.controllers.AclManager;
 import io.confluent.kafkarest.entities.Acl;
 import io.confluent.kafkarest.entities.Acl.Operation;
@@ -31,7 +30,7 @@ import io.confluent.kafkarest.entities.v3.DeleteAclsResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.SearchAclsResponse;
-import io.confluent.kafkarest.exceptions.DisabledOperationException;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -58,92 +57,24 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.apache.kafka.common.config.ConfigDef;
-import org.apache.kafka.common.config.ConfigDef.Importance;
-import org.apache.kafka.common.config.ConfigDef.Type;
 
 @Path("/v3/clusters/{clusterId}/acls")
+@ResourceName("api.v3.acls.*")
 public final class AclsResource {
-
-  private static final String API_V3_ACLS_ENABLE_CONFIG = "api.v3.acls.enable";
-  private static final boolean API_V3_ACLS_ENABLE_DEFAULT = true;
-  private static final String API_V3_ACLS_ENABLE_DOC =
-      "Whether to enable the /v3/clusters/{clusterId}/acls APIs.";
-
-  private static final String API_V3_ACLS_LIST_ENABLE_CONFIG = "api.v3.acls.search.enable";
-  private static final boolean API_V3_ACLS_LIST_ENABLE_DEFAULT = true;
-  private static final String API_V3_ACLS_LIST_ENABLE_DOC =
-      "Whether to enable the GET /v3/clusters/{clusterId}/acls APIs.";
-
-  private static final String API_V3_ACLS_CREATE_ENABLE_CONFIG = "api.v3.acls.create.enable";
-  private static final boolean API_V3_ACLS_CREATE_ENABLE_DEFAULT = true;
-  private static final String API_V3_ACLS_CREATE_ENABLE_DOC =
-      "Whether to enable the POST /v3/clusters/{clusterId}/acls APIs.";
-
-  private static final String API_V3_ACLS_DELETE_ENABLE_CONFIG = "api.v3.acls.delete.enable";
-  private static final boolean API_V3_ACLS_DELETE_ENABLE_DEFAULT = true;
-  private static final String API_V3_ACLS_DELETE_ENABLE_DOC =
-      "Whether to enable the DELETE /v3/clusters/{clusterId}/acls APIs.";
-
-  static void defineConfigs(ConfigDef baseConfigDef) {
-    baseConfigDef
-        .define(
-            API_V3_ACLS_ENABLE_CONFIG,
-            Type.BOOLEAN,
-            API_V3_ACLS_ENABLE_DEFAULT,
-            Importance.LOW,
-            API_V3_ACLS_ENABLE_DOC)
-        .define(
-            API_V3_ACLS_LIST_ENABLE_CONFIG,
-            Type.BOOLEAN,
-            API_V3_ACLS_LIST_ENABLE_DEFAULT,
-            Importance.LOW,
-            API_V3_ACLS_LIST_ENABLE_DOC)
-        .define(
-            API_V3_ACLS_CREATE_ENABLE_CONFIG,
-            Type.BOOLEAN,
-            API_V3_ACLS_CREATE_ENABLE_DEFAULT,
-            Importance.LOW,
-            API_V3_ACLS_CREATE_ENABLE_DOC)
-        .define(
-            API_V3_ACLS_DELETE_ENABLE_CONFIG,
-            Type.BOOLEAN,
-            API_V3_ACLS_DELETE_ENABLE_DEFAULT,
-            Importance.LOW,
-            API_V3_ACLS_DELETE_ENABLE_DOC);
-  }
-
-  private boolean isApiV3AclsEnabled() {
-    return configs.getBoolean(API_V3_ACLS_ENABLE_CONFIG);
-  }
-
-  private boolean isApiV3AclsListEnabled() {
-    return configs.getBoolean(API_V3_ACLS_LIST_ENABLE_CONFIG);
-  }
-
-  private boolean isApiV3AclsCreateEnabled() {
-    return configs.getBoolean(API_V3_ACLS_CREATE_ENABLE_CONFIG);
-  }
-
-  private boolean isApiV3AclsDeleteEnabled() {
-    return configs.getBoolean(API_V3_ACLS_DELETE_ENABLE_CONFIG);
-  }
 
   private final Provider<AclManager> aclManager;
   private final UrlFactory urlFactory;
-  private final KafkaRestConfig configs;
 
   @Inject
-  public AclsResource(
-      Provider<AclManager> aclManager, UrlFactory urlFactory, KafkaRestConfig configs) {
+  public AclsResource(Provider<AclManager> aclManager, UrlFactory urlFactory) {
     this.aclManager = requireNonNull(aclManager);
     this.urlFactory = requireNonNull(urlFactory);
-    this.configs = requireNonNull(configs);
   }
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.acls.list")
+  @ResourceName("api.v3.acls.list")
   public void searchAcls(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -155,10 +86,6 @@ public final class AclsResource {
       @QueryParam("operation") @DefaultValue("any") Operation operation,
       @QueryParam("permission") @DefaultValue("any") Permission permission
   ) {
-    if (!isApiV3AclsEnabled() || !isApiV3AclsListEnabled()) {
-      throw new DisabledOperationException();
-    }
-
     if (resourceType == Acl.ResourceType.UNKNOWN) {
       throw new BadRequestException("resource_type cannot be ANY");
     }
@@ -225,15 +152,12 @@ public final class AclsResource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.acls.create")
+  @ResourceName("api.v3.acls.create")
   public void createAcl(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @Valid CreateAclRequest request
   ) {
-    if (!isApiV3AclsEnabled() || !isApiV3AclsCreateEnabled()) {
-      throw new DisabledOperationException();
-    }
-
     if (request.getResourceType() == Acl.ResourceType.ANY
         || request.getResourceType() == Acl.ResourceType.UNKNOWN) {
       throw new BadRequestException("resource_type cannot be ANY");
@@ -289,6 +213,7 @@ public final class AclsResource {
   @DELETE
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.acls.delete")
+  @ResourceName("api.v3.acls.delete")
   public void deleteAcls(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -300,10 +225,6 @@ public final class AclsResource {
       @QueryParam("operation") @DefaultValue("any") Operation operation,
       @QueryParam("permission") @DefaultValue("any") Permission permission
   ) {
-    if (!isApiV3AclsEnabled() || !isApiV3AclsDeleteEnabled()) {
-      throw new DisabledOperationException();
-    }
-
     if (resourceType == Acl.ResourceType.UNKNOWN) {
       throw new BadRequestException("resource_type cannot be ANY");
     }

@@ -15,8 +15,8 @@
 
 package io.confluent.kafkarest;
 
-import io.confluent.kafkarest.resources.ResourcesConfig;
 import io.confluent.rest.metrics.RestMetricsContext;
+import java.util.List;
 import javax.ws.rs.core.MediaType;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
@@ -40,6 +40,7 @@ import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 
+import static java.util.Collections.emptyList;
 import static org.apache.kafka.clients.CommonClientConfigs.METRICS_CONTEXT_PREFIX;
 
 /**
@@ -337,6 +338,10 @@ public class KafkaRestConfig extends RestConfig {
           + "should be delegated to. Examples: confluent.cloud, mds-01.example.com.";
   private static final String CONFLUENT_RESOURCE_NAME_AUTHORITY_DEFAULT = "";
 
+  public static final String API_ENDPOINTS_BLOCKLIST_CONFIG = "api.endpoints.blocklist";
+  public static final String API_ENDPOINTS_BLOCKLIST_DOC = "List of endpoints to ";
+  public static final List<String> API_ENDPOINTS_BLOCKLIST_DEFAULT = emptyList();
+
   public static final String API_V2_ENABLE_CONFIG = "api.v2.enable";
   private static final String API_V2_ENABLE_DOC =
       "Whether to enable REST Proxy V2 API. Default is true.";
@@ -354,7 +359,6 @@ public class KafkaRestConfig extends RestConfig {
 
   static {
     config = baseKafkaRestConfigDef();
-    ResourcesConfig.defineConfigs(config);
   }
 
   protected static ConfigDef baseKafkaRestConfigDef() {
@@ -661,6 +665,13 @@ public class KafkaRestConfig extends RestConfig {
         CONFLUENT_RESOURCE_NAME_AUTHORITY_DEFAULT,
         Importance.LOW,
         CONFLUENT_RESOURCE_NAME_AUTHORITY_DOC
+    )
+    .define(
+        API_ENDPOINTS_BLOCKLIST_CONFIG,
+        Type.LIST,
+        API_ENDPOINTS_BLOCKLIST_DEFAULT,
+        Importance.LOW,
+        API_ENDPOINTS_BLOCKLIST_DOC
     )
     .define(
         API_V2_ENABLE_CONFIG,

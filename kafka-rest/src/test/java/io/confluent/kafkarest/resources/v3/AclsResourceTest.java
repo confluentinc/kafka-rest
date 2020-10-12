@@ -79,7 +79,7 @@ public class AclsResourceTest {
 
   @Before
   public void setUp() {
-    aclsResource = new AclsResource(() -> aclManager, new FakeUrlFactory(), new KafkaRestConfig());
+    aclsResource = new AclsResource(() -> aclManager, new FakeUrlFactory());
   }
 
   @Test
