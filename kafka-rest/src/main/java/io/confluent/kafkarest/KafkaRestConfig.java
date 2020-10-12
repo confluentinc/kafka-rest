@@ -339,7 +339,9 @@ public class KafkaRestConfig extends RestConfig {
   private static final String CONFLUENT_RESOURCE_NAME_AUTHORITY_DEFAULT = "";
 
   public static final String API_ENDPOINTS_BLOCKLIST_CONFIG = "api.endpoints.blocklist";
-  public static final String API_ENDPOINTS_BLOCKLIST_DOC = "List of endpoints to ";
+  public static final String API_ENDPOINTS_BLOCKLIST_DOC =
+      "List of endpoints to disable in this server. For example: \"api.v3.acls.*\" or "
+          + "\"api.v3.acls.create,api.v3.acls.delete\".";
   public static final List<String> API_ENDPOINTS_BLOCKLIST_DEFAULT = emptyList();
 
   public static final String API_V2_ENABLE_CONFIG = "api.v2.enable";
