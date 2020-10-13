@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.resources.v2;
 
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,23 +30,25 @@ import javax.ws.rs.Produces;
 @Path("/")
 @Produces({Versions.KAFKA_V2_JSON_WEIGHTED})
 @Consumes({Versions.KAFKA_V2_JSON})
+@ResourceName("api.v2.root.*")
 public final class RootResource {
 
   @GET
   @PerformanceMetric("root.get+v2")
+  @ResourceName("api.v2.root.get")
   public Map<String, String> get() {
     // Currently this just provides an endpoint that's a nop and can be used to check for liveness
     // and can be used for tests that need to test the server setup rather than the functionality
     // of a specific resource. Some APIs provide a listing of endpoints as their root resource; it
     // might be nice to provide that.
-    return new HashMap<String, String>();
+    return new HashMap<>();
   }
 
   @POST
   @PerformanceMetric("root.post+v2")
+  @ResourceName("api.v2.root.post")
   public Map<String, String> post(@Valid Map<String, String> request) {
     // This version allows testing with posted entities
-    return new HashMap<String, String>();
+    return new HashMap<>();
   }
-
 }

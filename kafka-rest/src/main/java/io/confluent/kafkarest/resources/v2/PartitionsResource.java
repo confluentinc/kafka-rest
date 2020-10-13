@@ -22,6 +22,7 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.PartitionManager;
 import io.confluent.kafkarest.entities.v2.GetPartitionResponse;
 import io.confluent.kafkarest.entities.v2.TopicPartitionOffsetResponse;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.List;
@@ -40,6 +41,7 @@ import javax.ws.rs.container.Suspended;
 @Path("/topics/{topic}/partitions")
 @Consumes({Versions.KAFKA_V2_JSON})
 @Produces({Versions.KAFKA_V2_JSON})
+@ResourceName("api.v2.partitions.*")
 public final class PartitionsResource {
 
   private final Provider<PartitionManager> partitionManager;
@@ -51,6 +53,7 @@ public final class PartitionsResource {
 
   @GET
   @PerformanceMetric("partitions.list+v2")
+  @ResourceName("api.v2.partitions.list")
   public void list(@Suspended AsyncResponse asyncResponse, @PathParam("topic") String topic) {
     CompletableFuture<List<GetPartitionResponse>> response =
         partitionManager.get()
@@ -67,6 +70,7 @@ public final class PartitionsResource {
   @GET
   @Path("/{partition}")
   @PerformanceMetric("partition.get+v2")
+  @ResourceName("api.v2.partitions.get")
   public void getPartition(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topic,
@@ -90,6 +94,7 @@ public final class PartitionsResource {
    */
   @GET
   @Path("/{partition}/offsets")
+  @ResourceName("api.v2.partitions.get-offsets")
   public void getOffsets(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topic,
