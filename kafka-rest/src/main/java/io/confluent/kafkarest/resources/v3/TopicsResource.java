@@ -28,6 +28,7 @@ import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.TopicData;
 import io.confluent.kafkarest.entities.v3.TopicDataList;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.CrnFactory;
@@ -57,6 +58,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 @Path("/v3/clusters/{clusterId}/topics")
+@ResourceName("api.v3.topics.*")
 public final class TopicsResource {
 
   private final Provider<TopicManager> topicManager;
@@ -77,6 +79,7 @@ public final class TopicsResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.topics.list")
+  @ResourceName("api.v3.topics.list")
   public void listTopics(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<ListTopicsResponse> response =
@@ -105,6 +108,7 @@ public final class TopicsResource {
   @Path("/{topicName}")
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.topics.get")
+  @ResourceName("api.v3.topics.get")
   public void getTopic(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -123,6 +127,7 @@ public final class TopicsResource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.topics.create")
+  @ResourceName("api.v3.topics.create")
   public void createTopic(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -161,6 +166,7 @@ public final class TopicsResource {
   @Path("/{topicName}")
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.topics.delete")
+  @ResourceName("api.v3.topics.delete")
   public void deleteTopic(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

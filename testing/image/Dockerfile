@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-kafka-rest:6.0.x-latest
+FROM 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-kafka-rest:master-latest
 
 COPY bin /usr/bin/
 

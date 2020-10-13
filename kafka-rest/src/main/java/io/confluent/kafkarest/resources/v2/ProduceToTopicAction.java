@@ -21,6 +21,7 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest;
 import io.confluent.kafkarest.entities.v2.JsonTopicProduceRequest;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.rest.annotations.PerformanceMetric;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -41,6 +42,7 @@ import javax.ws.rs.container.Suspended;
     Versions.KAFKA_V2_JSON_JSON_SCHEMA
 })
 @Produces({Versions.KAFKA_V2_JSON})
+@ResourceName("api.v2.produce-to-topic.*")
 public final class ProduceToTopicAction extends AbstractProduceAction {
 
   public ProduceToTopicAction(KafkaRestContext ctx) {
@@ -51,6 +53,7 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
   @Path("/{topic}")
   @PerformanceMetric("topic.produce-binary+v2")
   @Consumes({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED})
+  @ResourceName("api.v2.produce-to-topic.binary")
   public void produceBinary(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
@@ -68,6 +71,7 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
   @Path("/{topic}")
   @PerformanceMetric("topic.produce-json+v2")
   @Consumes({Versions.KAFKA_V2_JSON_JSON_WEIGHTED_LOW})
+  @ResourceName("api.v2.produce-to-topic.json")
   public void produceJson(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
@@ -85,6 +89,7 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
   @Path("/{topic}")
   @PerformanceMetric("topic.produce-avro+v2")
   @Consumes({Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW})
+  @ResourceName("api.v2.produce-to-topic.avro")
   public void produceAvro(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
@@ -102,6 +107,7 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
   @Path("/{topic}")
   @PerformanceMetric("topic.produce-jsonschema+v2")
   @Consumes({Versions.KAFKA_V2_JSON_JSON_SCHEMA_WEIGHTED_LOW})
+  @ResourceName("api.v2.produce-to-topic.json-schema")
   public void produceJsonSchema(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
@@ -119,6 +125,7 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
   @Path("/{topic}")
   @PerformanceMetric("topic.produce-protobuf+v2")
   @Consumes({Versions.KAFKA_V2_JSON_PROTOBUF_WEIGHTED_LOW})
+  @ResourceName("api.v2.produce-to-topic.protobuf")
   public void produceProtobuf(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,

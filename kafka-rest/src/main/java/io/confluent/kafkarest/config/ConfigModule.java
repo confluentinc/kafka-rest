@@ -21,8 +21,10 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import javax.inject.Qualifier;
 import org.glassfish.hk2.api.AnnotationLiteral;
 import org.glassfish.hk2.api.TypeLiteral;
@@ -51,6 +53,10 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new AdvertisedListenersConfigImpl())
         .to(new TypeLiteral<List<String>>() { });
 
+    bind(new HashSet<>(config.getList(KafkaRestConfig.API_ENDPOINTS_BLOCKLIST_CONFIG)))
+        .qualifiedBy(new ApiEndpointsBlocklistConfigImpl())
+        .to(new TypeLiteral<Set<String>>() { });
+
     bind(config.getString(KafkaRestConfig.CRN_AUTHORITY_CONFIG))
         .qualifiedBy(new CrnAuthorityConfigImpl())
         .to(String.class);
@@ -76,6 +82,17 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class AdvertisedListenersConfigImpl
       extends AnnotationLiteral<AdvertisedListenersConfig> implements AdvertisedListenersConfig {
+  }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ApiEndpointsBlocklistConfig {
+  }
+
+  private static final class ApiEndpointsBlocklistConfigImpl
+      extends AnnotationLiteral<ApiEndpointsBlocklistConfig>
+      implements ApiEndpointsBlocklistConfig {
   }
 
   @Qualifier

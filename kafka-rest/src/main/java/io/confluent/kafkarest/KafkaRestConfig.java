@@ -336,6 +336,12 @@ public class KafkaRestConfig extends RestConfig {
           + "should be delegated to. Examples: confluent.cloud, mds-01.example.com.";
   private static final String CONFLUENT_RESOURCE_NAME_AUTHORITY_DEFAULT = "";
 
+  public static final String API_ENDPOINTS_BLOCKLIST_CONFIG = "api.endpoints.blocklist";
+  public static final String API_ENDPOINTS_BLOCKLIST_DOC =
+      "List of endpoints to disable in this server. For example: \"api.v3.acls.*\" or "
+          + "\"api.v3.acls.create,api.v3.acls.delete\".";
+  public static final String API_ENDPOINTS_BLOCKLIST_DEFAULT = "";
+
   public static final String API_V2_ENABLE_CONFIG = "api.v2.enable";
   private static final String API_V2_ENABLE_DOC =
       "Whether to enable REST Proxy V2 API. Default is true.";
@@ -659,6 +665,13 @@ public class KafkaRestConfig extends RestConfig {
         CONFLUENT_RESOURCE_NAME_AUTHORITY_DEFAULT,
         Importance.LOW,
         CONFLUENT_RESOURCE_NAME_AUTHORITY_DOC
+    )
+    .define(
+        API_ENDPOINTS_BLOCKLIST_CONFIG,
+        Type.LIST,
+        API_ENDPOINTS_BLOCKLIST_DEFAULT,
+        Importance.LOW,
+        API_ENDPOINTS_BLOCKLIST_DOC
     )
     .define(
         API_V2_ENABLE_CONFIG,

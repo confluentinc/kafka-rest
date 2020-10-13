@@ -23,6 +23,7 @@ import io.confluent.kafkarest.controllers.TopicConfigManager;
 import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.v2.GetTopicResponse;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.List;
@@ -41,6 +42,7 @@ import javax.ws.rs.container.Suspended;
 @Path("/topics")
 @Consumes({Versions.KAFKA_V2_JSON})
 @Produces({Versions.KAFKA_V2_JSON})
+@ResourceName("api.v2.topics.*")
 public final class TopicsResource {
 
   private final Provider<TopicManager> topicManagerProvider;
@@ -56,6 +58,7 @@ public final class TopicsResource {
 
   @GET
   @PerformanceMetric("topics.list+v2")
+  @ResourceName("api.v2.topics.list")
   public void list(@Suspended AsyncResponse asyncResponse) {
     TopicManager topicManager = topicManagerProvider.get();
 
@@ -69,6 +72,7 @@ public final class TopicsResource {
   @GET
   @Path("/{topic}")
   @PerformanceMetric("topic.get+v2")
+  @ResourceName("api.v2.topics.get")
   public void getTopic(
       @Suspended AsyncResponse asyncResponse, @PathParam("topic") String topicName) {
     TopicManager topicManager = topicManagerProvider.get();

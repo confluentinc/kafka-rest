@@ -26,6 +26,7 @@ import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.TopicConfigData;
 import io.confluent.kafkarest.entities.v3.TopicConfigDataList;
 import io.confluent.kafkarest.entities.v3.UpdateTopicConfigRequest;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.CrnFactory;
@@ -52,6 +53,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/configs")
+@ResourceName("api.v3.topic-configs.*")
 public final class TopicConfigsResource {
 
   private final Provider<TopicConfigManager> topicConfigManager;
@@ -71,6 +73,7 @@ public final class TopicConfigsResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.topics.configs.list")
+  @ResourceName("api.v3.topic-configs.list")
   public void listTopicConfigs(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -108,6 +111,7 @@ public final class TopicConfigsResource {
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.topics.configs.get")
+  @ResourceName("api.v3.topic-configs.get")
   public void getTopicConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -128,6 +132,7 @@ public final class TopicConfigsResource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.topics.configs.update")
+  @ResourceName("api.v3.topic-configs.update")
   public void updateTopicConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -149,6 +154,7 @@ public final class TopicConfigsResource {
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.topics.configs.delete")
+  @ResourceName("api.v3.topic-configs.delete")
   public void resetTopicConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

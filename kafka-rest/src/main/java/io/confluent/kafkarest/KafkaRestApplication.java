@@ -27,6 +27,7 @@ import io.confluent.kafkarest.extension.ContextInvocationHandler;
 import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.kafkarest.extension.KafkaRestCleanupFilter;
 import io.confluent.kafkarest.extension.KafkaRestContextProvider;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature;
 import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.kafkarest.resources.ResourcesFeature;
 import io.confluent.kafkarest.response.ResponseModule;
@@ -117,6 +118,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new ResourcesFeature(context, appConfig));
     config.register(new ResponseModule());
 
+    config.register(ResourceBlocklistFeature.class);
     config.register(KafkaRestCleanupFilter.class);
 
     config.register(EnumConverterProvider.class);
