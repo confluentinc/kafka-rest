@@ -91,7 +91,10 @@ public class TopicManagerImplTest {
               new TopicPartitionInfo(
                   1, NODE_2, Arrays.asList(NODE_1, NODE_2, NODE_3), singletonList(NODE_2)),
               new TopicPartitionInfo(
-                  2, NODE_3, Arrays.asList(NODE_1, NODE_2, NODE_3), singletonList(NODE_3))),
+                  2,
+                  /* leader= */ null,
+                  Arrays.asList(NODE_1, NODE_2, NODE_3),
+                  singletonList(NODE_3))),
           /* authorizedOperations= */ new HashSet<>());
 
   private static final TopicDescription TOPIC_DESCRIPTION_2 =
@@ -180,7 +183,7 @@ public class TopicManagerImplTest {
               Partition.create(
                   CLUSTER_ID,
                   "topic-1",
-                  /* partitionId= */2,
+                  /* partitionId= */ 2,
                   Arrays.asList(
                       PartitionReplica.create(
                           CLUSTER_ID,
@@ -201,7 +204,7 @@ public class TopicManagerImplTest {
                           "topic-1",
                           /* partitionId= */ 2,
                           /* brokerId= */ 3,
-                          /* isLeader= */ true,
+                          /* isLeader= */ false,
                           /* isInSync= */ true)))),
           /* replicationFactor= */ (short) 3,
           /* isInternal= */ true);
