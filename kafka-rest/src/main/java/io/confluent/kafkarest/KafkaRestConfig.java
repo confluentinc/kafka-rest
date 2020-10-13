@@ -16,7 +16,6 @@
 package io.confluent.kafkarest;
 
 import io.confluent.rest.metrics.RestMetricsContext;
-import java.util.List;
 import javax.ws.rs.core.MediaType;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
@@ -40,7 +39,6 @@ import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.exceptions.RestServerErrorException;
 
-import static java.util.Collections.emptyList;
 import static org.apache.kafka.clients.CommonClientConfigs.METRICS_CONTEXT_PREFIX;
 
 /**
@@ -342,7 +340,7 @@ public class KafkaRestConfig extends RestConfig {
   public static final String API_ENDPOINTS_BLOCKLIST_DOC =
       "List of endpoints to disable in this server. For example: \"api.v3.acls.*\" or "
           + "\"api.v3.acls.create,api.v3.acls.delete\".";
-  public static final List<String> API_ENDPOINTS_BLOCKLIST_DEFAULT = emptyList();
+  public static final String API_ENDPOINTS_BLOCKLIST_DEFAULT = "";
 
   public static final String API_V2_ENABLE_CONFIG = "api.v2.enable";
   private static final String API_V2_ENABLE_DOC =

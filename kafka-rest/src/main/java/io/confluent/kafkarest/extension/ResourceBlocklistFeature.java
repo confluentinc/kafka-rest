@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.confluent.kafkarest.extension;
 
 import static java.util.Objects.requireNonNull;
@@ -10,7 +25,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.ws.rs.GET;
+import javax.ws.rs.HttpMethod;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.DynamicFeature;
@@ -18,6 +33,16 @@ import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.FeatureContext;
 import javax.ws.rs.core.Response.Status;
 
+/**
+ * A feature that disables endpoints based on the {@link ResourceName} annotation.
+ *
+ * <p>If an endpoint's method or class is annotated with {@code ResourceName}, and its {@link
+ * ResourceName#value() name} is present in the endpoints blacklist, then the endpoint will be
+ * disabled.
+ *
+ * <p>A disabled endpoint returns HTTP 404 Not Found for GET requests, and HTTP 405 Method Not
+ * Allowed for everything else.
+ */
 public final class ResourceBlocklistFeature implements DynamicFeature {
 
   private final Set<String> apiEndpointsBlocklistConfig;
@@ -45,33 +70,33 @@ public final class ResourceBlocklistFeature implements DynamicFeature {
       blocked = true;
     }
 
-    if (!blocked) {
-      return;
-    }
-
-    if (resourceInfo.getResourceMethod().getAnnotation(GET.class) != null) {
-      context.register(new ThrowingFilter(Status.NOT_FOUND));
-    } else {
-      context.register(new ThrowingFilter(Status.METHOD_NOT_ALLOWED));
+    if (blocked) {
+      context.register(ThrowingFilter.class);
     }
   }
 
+  /**
+   * A name by which a resource class/method can be referenced.
+   */
   @Target({ElementType.METHOD, ElementType.TYPE})
   @Retention(RetentionPolicy.RUNTIME)
   public @interface ResourceName {
+
+    /**
+     * The resource class/method name.
+     */
     String value();
   }
 
   private static final class ThrowingFilter implements ContainerRequestFilter {
-    private final Status status;
-
-    private ThrowingFilter(Status status) {
-      this.status = requireNonNull(status);
-    }
 
     @Override
     public void filter(ContainerRequestContext context) {
-      throw new DisabledOperationException(status);
+      if (HttpMethod.GET.equals(context.getMethod())) {
+        throw new DisabledOperationException(Status.NOT_FOUND);
+      } else {
+        throw new DisabledOperationException(Status.METHOD_NOT_ALLOWED);
+      }
     }
   }
 }
