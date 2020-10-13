@@ -160,7 +160,7 @@ final class TopicManagerImpl implements TopicManager {
               topicName,
               partitionInfo.partition(),
               replica.id(),
-              partitionInfo.leader().equals(replica),
+              replica.equals(partitionInfo.leader()),
               inSyncReplicas.contains(replica)));
     }
     return Partition.create(clusterId, topicName, partitionInfo.partition(), replicas);
