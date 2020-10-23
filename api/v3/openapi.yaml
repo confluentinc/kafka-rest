@@ -1263,7 +1263,7 @@ components:
               items:
                 $ref: '#/components/schemas/ConsumerLagData'
 
-    MaxConsumerLagData:
+    ConsumerLagSummaryData:
       allOf:
         - $ref: '#/components/schemas/Resource'
         - type: object
