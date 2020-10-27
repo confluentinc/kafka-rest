@@ -39,7 +39,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
 
   private static final Logger log = LoggerFactory.getLogger(KafkaConsumerReadTask.class);
 
-  private KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> parent;
+  private final KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> parent;
   private final long requestTimeoutMs;
   // the minimum bytes the task should accumulate
   // before returning a response (or hitting the timeout)
@@ -138,11 +138,18 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
    */
   private void addRecords() {
     while (!exceededMinResponseBytes && !exceededMaxResponseBytes && parent.hasNext()) {
-      maybeAddRecord();
+      synchronized (parent) {
+        if (parent.hasNext()) {
+          maybeAddRecord();
+        }
+      }
     }
     while (!exceededMaxResponseBytes && parent.hasNextCached()) {
-      // will not call poll() anymore. Continue draining loaded records
-      maybeAddRecord();
+      synchronized (parent) {
+        if (parent.hasNextCached()) {
+          maybeAddRecord();
+        }
+      }
     }
   }
 
