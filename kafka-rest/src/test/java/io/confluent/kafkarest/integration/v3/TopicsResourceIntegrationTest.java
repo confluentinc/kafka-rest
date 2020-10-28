@@ -47,7 +47,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   private static final String TOPIC_3 = "topic-3";
 
   public TopicsResourceIntegrationTest() {
-    super(/* numBrokers= */ 1, /* withSchemaRegistry= */ false);
+    super(/* numBrokers= */ 3, /* withSchemaRegistry= */ false);
   }
 
   @Before
@@ -63,6 +63,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   @Override
   public Properties overrideBrokerProperties(int i, Properties props) {
     props.put("delete.topic.enable", true);
+    props.put("default.replication.factor", 2);
     return props;
   }
 
@@ -405,7 +406,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setClusterId(clusterId)
                 .setTopicName(topicName)
                 .setInternal(false)
-                .setReplicationFactor(1)
+                .setReplicationFactor(0)
                 .setPartitions(
                     Resource.Relationship.create(
                         baseUrl
@@ -432,8 +433,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             .post(
                 Entity.entity(
                     "{\"topic_name\":\"" + topicName + "\",\"partitions_count\":1," +
-                        "\"replication_factor\":1,\"configs\":[{\"name\":\"cleanup.policy\"," +
-                        "\"value\":\"compact\"}]}",
+                        "\"configs\":[{\"name\":\"cleanup.policy\",\"value\":\"compact\"}]}",
                     MediaType.APPLICATION_JSON));
     assertEquals(Status.CREATED.getStatusCode(), createTopicResponse.getStatus());
 
@@ -458,7 +458,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setClusterId(clusterId)
                 .setTopicName(topicName)
                 .setInternal(false)
-                .setReplicationFactor(1)
+                .setReplicationFactor(2)
                 .setPartitions(
                     Resource.Relationship.create(
                         baseUrl
