@@ -509,9 +509,9 @@ public class TopicsResourceTest {
         topicManager.createTopic(
             CLUSTER_ID,
             TOPIC_1.getName(),
-            TOPIC_1.getPartitions().size(),
-            TOPIC_1.getReplicationFactor(),
-            singletonMap("cleanup.policy", "compact")))
+            Optional.of(TOPIC_1.getPartitions().size()),
+            Optional.of(TOPIC_1.getReplicationFactor()),
+            singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(completedFuture(null));
     replay(topicManager);
 
@@ -553,6 +553,103 @@ public class TopicsResourceTest {
     assertEquals(expected, response.getValue());
   }
 
+  @Test
+  public void createTopic_nonExistingTopic_defaultPartitionsCount_createsTopic() {
+    expect(
+        topicManager.createTopic(
+            CLUSTER_ID,
+            TOPIC_1.getName(),
+            /* partitionsCount= */ Optional.empty(),
+            Optional.of(TOPIC_1.getReplicationFactor()),
+            singletonMap("cleanup.policy", Optional.of("compact"))))
+        .andReturn(completedFuture(null));
+    replay(topicManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    topicsResource.createTopic(
+        response,
+        TOPIC_1.getClusterId(),
+        CreateTopicRequest.builder()
+            .setTopicName(TOPIC_1.getName())
+            .setReplicationFactor(TOPIC_1.getReplicationFactor())
+            .setConfigs(
+                singletonList(CreateTopicRequest.ConfigEntry.create("cleanup.policy", "compact")))
+            .build());
+
+    CreateTopicResponse expected =
+        CreateTopicResponse.create(
+            TopicData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf("/v3/clusters/cluster-1/topics/topic-1")
+                        .setResourceName("crn:///kafka=cluster-1/topic=topic-1")
+                        .build())
+                .setClusterId("cluster-1")
+                .setTopicName("topic-1")
+                .setInternal(false)
+                .setReplicationFactor(3)
+                .setPartitions(
+                    Resource.Relationship.create(
+                        "/v3/clusters/cluster-1/topics/topic-1/partitions"))
+                .setConfigs(
+                    Resource.Relationship.create(
+                        "/v3/clusters/cluster-1/topics/topic-1/configs"))
+                .setPartitionReassignments(
+                    Resource.Relationship.create(
+                        "/v3/clusters/cluster-1/topics/topic-1/partitions/-/reassignment"))
+                .build());
+
+    assertEquals(expected, response.getValue());
+  }
+
+  @Test
+  public void createTopic_nonExistingTopic_defaultReplicationFactor_createsTopic() {
+    expect(
+        topicManager.createTopic(
+            CLUSTER_ID,
+            TOPIC_1.getName(),
+            Optional.of(TOPIC_1.getPartitions().size()),
+            /* replicationFactor= */ Optional.empty(),
+            singletonMap("cleanup.policy", Optional.of("compact"))))
+        .andReturn(completedFuture(null));
+    replay(topicManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    topicsResource.createTopic(
+        response,
+        TOPIC_1.getClusterId(),
+        CreateTopicRequest.builder()
+            .setTopicName(TOPIC_1.getName())
+            .setPartitionsCount(TOPIC_1.getPartitions().size())
+            .setConfigs(
+                singletonList(CreateTopicRequest.ConfigEntry.create("cleanup.policy", "compact")))
+            .build());
+
+    CreateTopicResponse expected =
+        CreateTopicResponse.create(
+            TopicData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf("/v3/clusters/cluster-1/topics/topic-1")
+                        .setResourceName("crn:///kafka=cluster-1/topic=topic-1")
+                        .build())
+                .setClusterId("cluster-1")
+                .setTopicName("topic-1")
+                .setInternal(false)
+                .setReplicationFactor(0)
+                .setPartitions(
+                    Resource.Relationship.create(
+                        "/v3/clusters/cluster-1/topics/topic-1/partitions"))
+                .setConfigs(
+                    Resource.Relationship.create(
+                        "/v3/clusters/cluster-1/topics/topic-1/configs"))
+                .setPartitionReassignments(
+                    Resource.Relationship.create(
+                        "/v3/clusters/cluster-1/topics/topic-1/partitions/-/reassignment"))
+                .build());
+
+    assertEquals(expected, response.getValue());
+  }
 
   @Test
   public void createTopic_existingTopic_throwsTopicExists() {
@@ -560,9 +657,9 @@ public class TopicsResourceTest {
         topicManager.createTopic(
             CLUSTER_ID,
             TOPIC_1.getName(),
-            TOPIC_1.getPartitions().size(),
-            TOPIC_1.getReplicationFactor(),
-            singletonMap("cleanup.policy", "compact")))
+            Optional.of(TOPIC_1.getPartitions().size()),
+            Optional.of(TOPIC_1.getReplicationFactor()),
+            singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(failedFuture(new TopicExistsException("")));
     replay(topicManager);
 
@@ -587,9 +684,9 @@ public class TopicsResourceTest {
         topicManager.createTopic(
             CLUSTER_ID,
             TOPIC_1.getName(),
-            TOPIC_1.getPartitions().size(),
-            TOPIC_1.getReplicationFactor(),
-            singletonMap("cleanup.policy", "compact")))
+            Optional.of(TOPIC_1.getPartitions().size()),
+            Optional.of(TOPIC_1.getReplicationFactor()),
+            singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);
 

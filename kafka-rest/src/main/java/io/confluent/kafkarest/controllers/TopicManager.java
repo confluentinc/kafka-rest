@@ -56,9 +56,9 @@ public interface TopicManager {
   CompletableFuture<Void> createTopic(
       String clusterId,
       String topicName,
-      int partitionsCount,
-      short replicationFactor,
-      Map<String, String> configs);
+      Optional<Integer> partitionsCount,
+      Optional<Short> replicationFactor,
+      Map<String, Optional<String>> configs);
 
   /**
    * Deletes the Kafka {@link Topic} with the given {@code topicName}.
