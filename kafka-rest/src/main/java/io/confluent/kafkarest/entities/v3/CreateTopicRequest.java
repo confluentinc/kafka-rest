@@ -33,10 +33,10 @@ public abstract class CreateTopicRequest {
   public abstract String getTopicName();
 
   @JsonProperty("partitions_count")
-  public abstract int getPartitionsCount();
+  public abstract Optional<Integer> getPartitionsCount();
 
   @JsonProperty("replication_factor")
-  public abstract short getReplicationFactor();
+  public abstract Optional<Short> getReplicationFactor();
 
   @JsonProperty("configs")
   public abstract ImmutableList<ConfigEntry> getConfigs();
@@ -48,8 +48,8 @@ public abstract class CreateTopicRequest {
   @JsonCreator
   static CreateTopicRequest fromJson(
       @JsonProperty("topic_name") String topicName,
-      @JsonProperty("partitions_count") int partitionsCount,
-      @JsonProperty("replication_factor") short replicationFactor,
+      @JsonProperty("partitions_count") @Nullable  Integer partitionsCount,
+      @JsonProperty("replication_factor") @Nullable Short replicationFactor,
       @JsonProperty("configs") @Nullable List<ConfigEntry> configs
   ) {
     return builder()
@@ -68,9 +68,9 @@ public abstract class CreateTopicRequest {
 
     public abstract Builder setTopicName(String topicName);
 
-    public abstract Builder setPartitionsCount(int partitionsCount);
+    public abstract Builder setPartitionsCount(@Nullable Integer partitionsCount);
 
-    public abstract Builder setReplicationFactor(short replicationFactor);
+    public abstract Builder setReplicationFactor(@Nullable Short replicationFactor);
 
     public abstract Builder setConfigs(List<ConfigEntry> configs);
 

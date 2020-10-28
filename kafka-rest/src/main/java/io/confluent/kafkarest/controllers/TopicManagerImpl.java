@@ -25,6 +25,7 @@ import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -170,13 +171,16 @@ final class TopicManagerImpl implements TopicManager {
   public CompletableFuture<Void> createTopic(
       String clusterId,
       String topicName,
-      int partitionsCount,
-      short replicationFactor,
-      Map<String, String> configs) {
+      Optional<Integer> partitionsCount,
+      Optional<Short> replicationFactor,
+      Map<String, Optional<String>> configs) {
     requireNonNull(topicName);
 
+    Map<String, String> nullableConfigs = new HashMap<>();
+    configs.forEach((key, value) -> nullableConfigs.put(key, value.orElse(null)));
+
     NewTopic createTopicRequest =
-        new NewTopic(topicName, partitionsCount, replicationFactor).configs(configs);
+        new NewTopic(topicName, partitionsCount, replicationFactor).configs(nullableConfigs);
 
     return clusterManager.getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))

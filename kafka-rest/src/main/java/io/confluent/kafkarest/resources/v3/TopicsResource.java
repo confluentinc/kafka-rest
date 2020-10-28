@@ -21,6 +21,7 @@ import static java.util.Objects.requireNonNull;
 import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.v3.CreateTopicRequest;
+import io.confluent.kafkarest.entities.v3.CreateTopicRequest.ConfigEntry;
 import io.confluent.kafkarest.entities.v3.CreateTopicResponse;
 import io.confluent.kafkarest.entities.v3.GetTopicResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicsResponse;
@@ -36,8 +37,8 @@ import io.confluent.kafkarest.response.UrlFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.net.URI;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -134,13 +135,12 @@ public final class TopicsResource {
       @Valid CreateTopicRequest request
   ) {
     String topicName = request.getTopicName();
-    int partitionsCount = request.getPartitionsCount();
-    short replicationFactor = request.getReplicationFactor();
-
-    // TODO: Change to Map<String, Optional<String>>
-    Map<String, String> configs = new HashMap<>();
-    request.getConfigs()
-        .forEach(entry -> configs.put(entry.getName(), entry.getValue().orElse(null)));
+    Optional<Integer> partitionsCount = request.getPartitionsCount();
+    Optional<Short> replicationFactor = request.getReplicationFactor();
+    Map<String, Optional<String>> configs =
+        request.getConfigs()
+            .stream()
+            .collect(Collectors.toMap(ConfigEntry::getName, ConfigEntry::getValue));
 
     TopicData topicData =
         toTopicData(
@@ -148,7 +148,8 @@ public final class TopicsResource {
                 clusterId,
                 topicName,
                 /* partitions= */ emptyList(),
-                replicationFactor,
+                // We have no way of knowing the default replication factor in the Kafka broker.
+                replicationFactor.orElse((short) 0),
                 /* isInternal= */ false));
 
     CompletableFuture<CreateTopicResponse> response =
