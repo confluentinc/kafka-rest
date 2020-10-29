@@ -107,8 +107,8 @@ public final class ConsumersResource {
     }
     String instanceId =
         ctx.getKafkaConsumerManager().createConsumer(group, config.toConsumerInstanceConfig());
-    String instanceBaseUri = UriUtils.absoluteUriBuilder(ctx.getConfig(), uriInfo)
-        .path("instances").path(instanceId).build().toString();
+    String instanceBaseUri =
+        UriUtils.absoluteUri(ctx.getConfig(), uriInfo, "consumers", group, "instances", instanceId);
     return new CreateConsumerInstanceResponse(instanceId, instanceBaseUri);
   }
 
