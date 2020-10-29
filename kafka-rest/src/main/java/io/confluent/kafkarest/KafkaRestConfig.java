@@ -74,6 +74,12 @@ public class KafkaRestConfig extends RestConfig {
       + " hostname is used";
   public static final String HOST_NAME_DEFAULT = "";
 
+  public static final String HOST_PORT_CONFIG = "host.port";
+  private static final String HOST_PORT_DOC =
+      "The host port used to generate absolute URLs in responses. If empty, the default canonical"
+          + " port is used";
+  public static final String HOST_PORT_DEFAULT = "-1";
+
   public static final String ADVERTISED_LISTENERS_CONFIG = "advertised.listeners";
   protected static final String ADVERTISED_LISTENERS_DOC =
       "List of advertised listeners. Used when generating absolute URLs in responses. Protocols"
@@ -381,6 +387,12 @@ public class KafkaRestConfig extends RestConfig {
         Type.STRING,
         HOST_NAME_DEFAULT,
         Importance.MEDIUM, HOST_NAME_DOC
+    )
+    .define(
+        HOST_PORT_CONFIG,
+        Type.INT,
+        HOST_PORT_DEFAULT,
+        Importance.MEDIUM, HOST_PORT_DOC
     )
     .define(
         ADVERTISED_LISTENERS_CONFIG,
