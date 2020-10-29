@@ -27,8 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -68,11 +66,12 @@ public class KafkaRestConfig extends RestConfig {
   // ensures poll is frequently needed and called
   public static final String MAX_POLL_RECORDS_VALUE = "30";
 
+  @Deprecated
   public static final String HOST_NAME_CONFIG = "host.name";
   private static final String HOST_NAME_DOC =
       "The host name used to generate absolute URLs in responses. If empty, the default canonical"
       + " hostname is used";
-  public static final String HOST_NAME_DEFAULT = "";
+  private static final String HOST_NAME_DEFAULT = "";
 
   public static final String ADVERTISED_LISTENERS_CONFIG = "advertised.listeners";
   protected static final String ADVERTISED_LISTENERS_DOC =
@@ -836,18 +835,6 @@ public class KafkaRestConfig extends RestConfig {
   @Override
   public RestMetricsContext getMetricsContext() {
     return metricsContext.metricsContext();
-  }
-
-  public int consumerPort(String scheme) throws URISyntaxException {
-    if (!getList(LISTENERS_CONFIG).isEmpty() && !getList(LISTENERS_CONFIG).get(0).isEmpty()) {
-      for (String listener : getList(LISTENERS_CONFIG)) {
-        URI uri = new URI(listener);
-        if (uri.getScheme().equals(scheme)) {
-          return uri.getPort();
-        }
-      }
-    }
-    return getInt(PORT_CONFIG);
   }
 
   public static KafkaRestConfig newConsumerConfig(KafkaRestConfig config,
