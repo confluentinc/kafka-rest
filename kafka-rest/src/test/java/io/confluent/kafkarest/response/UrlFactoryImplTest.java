@@ -66,8 +66,8 @@ public class UrlFactoryImplTest {
         new UrlFactoryImpl(
             /* hostNameConfig= */ "",
             /* portConfig= */ 0,
-            singletonList("http://advertised.listener:2000"),
-            singletonList("http://listener:3000"),
+            singletonList(URI.create("http://advertised.listener:2000")),
+            singletonList(URI.create("http://listener:3000")),
             requestUriInfo);
 
     String url = urlFactory.create("foo", "bar");
@@ -88,8 +88,8 @@ public class UrlFactoryImplTest {
         new UrlFactoryImpl(
             /* hostNameConfig= */ "",
             /* portConfig= */ 0,
-            singletonList("https://advertised.listener:2000"),
-            singletonList("http://listener:3000"),
+            singletonList(URI.create("https://advertised.listener:2000")),
+            singletonList(URI.create("http://listener:3000")),
             requestUriInfo);
 
     String url = urlFactory.create("foo", "bar");
@@ -109,7 +109,7 @@ public class UrlFactoryImplTest {
             /* hostNameConfig= */ "",
             /* portConfig= */ 0,
             /* advertisedListeners= */ emptyList(),
-            singletonList("http://listener:2000"),
+            singletonList(URI.create("http://listener:2000")),
             requestUriInfo);
 
     String url = urlFactory.create("foo", "bar");
@@ -129,7 +129,7 @@ public class UrlFactoryImplTest {
             /* hostNameConfig= */ "",
             /* portConfig= */ 0,
             /* advertisedListeners= */ emptyList(),
-            singletonList("https://listener:2000"),
+            singletonList(URI.create("https://listener:2000")),
             requestUriInfo);
 
     String url = urlFactory.create("foo", "bar");
@@ -188,7 +188,7 @@ public class UrlFactoryImplTest {
         new UrlFactoryImpl(
             "hostname",
             2000,
-            singletonList("http://advertised.listener:2000"),
+            singletonList(URI.create("http://advertised.listener:2000")),
             emptyList(),
             requestUriInfo);
 
@@ -209,12 +209,12 @@ public class UrlFactoryImplTest {
             "hostname",
             2000,
             emptyList(),
-            singletonList("http://listener:2000"),
+            singletonList(URI.create("http://listener:2000")),
             requestUriInfo);
 
     String url = urlFactory.create("foo", "bar");
 
-    assertEquals("http://listener:2000/foo/bar", url);
+    assertEquals("http://hostname:2000/foo/bar", url);
   }
 
   @Test
@@ -228,8 +228,8 @@ public class UrlFactoryImplTest {
         new UrlFactoryImpl(
             "",
             0,
-            singletonList("http://advertised.listener:2000"),
-            singletonList("http://listener:2000"),
+            singletonList(URI.create("http://advertised.listener:2000")),
+            singletonList(URI.create("http://listener:2000")),
             requestUriInfo);
 
     String url = urlFactory.create("foo", "bar");
@@ -248,8 +248,8 @@ public class UrlFactoryImplTest {
         new UrlFactoryImpl(
             "hostname",
             2000,
-            singletonList("http://advertised.listener:2000"),
-            singletonList("http://listener:2000"),
+            singletonList(URI.create("http://advertised.listener:2000")),
+            singletonList(URI.create("http://listener:2000")),
             requestUriInfo);
 
     String url = urlFactory.create("foo", "bar");

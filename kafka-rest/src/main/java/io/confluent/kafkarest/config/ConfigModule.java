@@ -22,8 +22,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.HashSet;
+import java.net.URI;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.Set;
 import javax.inject.Qualifier;
 import org.glassfish.hk2.api.AnnotationLiteral;
@@ -49,9 +51,12 @@ public final class ConfigModule extends AbstractBinder {
     bind(config).to(KafkaRestConfig.class);
 
     // Keep this list alphabetically sorted.
-    bind(config.getList(KafkaRestConfig.ADVERTISED_LISTENERS_CONFIG))
+    bind(
+        config.getList(KafkaRestConfig.ADVERTISED_LISTENERS_CONFIG).stream()
+            .map(URI::create)
+            .collect(Collectors.toList()))
         .qualifiedBy(new AdvertisedListenersConfigImpl())
-        .to(new TypeLiteral<List<String>>() { });
+        .to(new TypeLiteral<List<URI>>() { });
 
     bind(new HashSet<>(config.getList(KafkaRestConfig.API_ENDPOINTS_BLOCKLIST_CONFIG)))
         .qualifiedBy(new ApiEndpointsBlocklistConfigImpl())
@@ -65,9 +70,12 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new HostNameConfigImpl())
         .to(String.class);
 
-    bind(config.getList(RestConfig.LISTENERS_CONFIG))
+    bind(
+        config.getList(RestConfig.LISTENERS_CONFIG).stream()
+            .map(URI::create)
+            .collect(Collectors.toList()))
         .qualifiedBy(new ListenersConfigImpl())
-        .to(new TypeLiteral<List<String>>() { });
+        .to(new TypeLiteral<List<URI>>() { });
 
     bind(config.getInt(RestConfig.PORT_CONFIG))
         .qualifiedBy(new PortConfigImpl())
