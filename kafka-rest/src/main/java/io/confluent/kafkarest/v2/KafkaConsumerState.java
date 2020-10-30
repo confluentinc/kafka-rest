@@ -25,7 +25,7 @@ import io.confluent.kafkarest.entities.v2.ConsumerAssignmentRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerCommittedRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerCommittedResponse;
 import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
-import io.confluent.kafkarest.entities.v2.ConsumerSeekToOffsetRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerSeekRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSeekToRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
@@ -41,6 +41,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Vector;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.ws.rs.InternalServerErrorException;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
@@ -162,13 +163,39 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   /**
    * Overrides the fetch offsets that the consumer will use on the next poll(timeout).
    */
-  public synchronized void seekToOffset(ConsumerSeekToOffsetRequest seekToOffsetRequest) {
-    if (seekToOffsetRequest != null) {
-      for (TopicPartitionOffsetMetadata t : seekToOffsetRequest.getOffsets()) {
-        TopicPartition topicPartition = new TopicPartition(t.getTopic(), t.getPartition());
-        consumer.seek(topicPartition, t.getOffset());
-      }
+  public synchronized void seek(ConsumerSeekRequest request) {
+    if (request == null) {
+      return;
+    }
 
+    for (ConsumerSeekRequest.PartitionOffset partition : request.getOffsets()) {
+      consumer.seek(
+          new TopicPartition(partition.getTopic(), partition.getPartition()),
+          new OffsetAndMetadata(partition.getOffset(), partition.getMetadata().orElse("")));
+    }
+
+    Map<TopicPartition, Optional<String>> metadata =
+        request.getTimestamps().stream()
+            .collect(
+                Collectors.toMap(
+                    partition ->
+                        new TopicPartition(partition.getTopic(), partition.getPartition()),
+                    ConsumerSeekRequest.PartitionTimestamp::getMetadata));
+
+    Map<TopicPartition, OffsetAndTimestamp> offsets =
+        consumer.offsetsForTimes(
+            request.getTimestamps().stream()
+                .collect(
+                    Collectors.toMap(
+                        partition ->
+                            new TopicPartition(partition.getTopic(), partition.getPartition()),
+                        partition -> partition.getTimestamp().toEpochMilli())));
+
+    for (Map.Entry<TopicPartition, OffsetAndTimestamp> offset : offsets.entrySet()) {
+      consumer.seek(
+          offset.getKey(),
+          new OffsetAndMetadata(
+              offset.getValue().offset(), metadata.get(offset.getKey()).orElse("")));
     }
   }
 
