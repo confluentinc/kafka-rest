@@ -29,7 +29,7 @@ import io.confluent.kafkarest.entities.v2.ConsumerAssignmentResponse;
 import io.confluent.kafkarest.entities.v2.ConsumerCommittedRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerCommittedResponse;
 import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
-import io.confluent.kafkarest.entities.v2.ConsumerSeekToOffsetRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerSeekRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSeekToRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionResponse;
@@ -365,10 +365,10 @@ public final class ConsumersResource {
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @Valid @NotNull ConsumerSeekToOffsetRequest seekToOffsetRequest
+      @Valid @NotNull ConsumerSeekRequest request
   ) {
     try {
-      ctx.getKafkaConsumerManager().seekToOffset(group, instance, seekToOffsetRequest);
+      ctx.getKafkaConsumerManager().seek(group, instance, request);
     } catch (java.lang.IllegalStateException e) {
       throw Errors.illegalStateException(e);
     }
