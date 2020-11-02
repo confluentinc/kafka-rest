@@ -97,8 +97,7 @@ public final class UrlFactoryImpl implements UrlFactory {
     return Stream.of(
         computeAuthorityFromAdvertisedListeners(advertisedListenersConfig, requestUriInfo),
         computeAuthorityFromHostNameAndPort(
-            hostNameConfig, portConfig, listenersConfig, requestUriInfo),
-        computeAuthorityFromListeners(listenersConfig, requestUriInfo))
+            hostNameConfig, portConfig, listenersConfig, requestUriInfo))
         .filter(Optional::isPresent)
         .map(Optional::get)
         .findFirst()
@@ -138,17 +137,6 @@ public final class UrlFactoryImpl implements UrlFactory {
     }
 
     return Optional.of(String.format("%s%s", hostNameConfig, port != -1 ? ":" + port : ""));
-  }
-
-  private static Optional<String> computeAuthorityFromListeners(
-      List<URI> listenersConfig, UriInfo requestUriInfo) {
-    String requestScheme = requestUriInfo.getAbsolutePath().getScheme();
-    for (URI listener : listenersConfig) {
-      if (requestScheme.equals(listener.getScheme())) {
-        return Optional.of(listener.getAuthority());
-      }
-    }
-    return Optional.empty();
   }
 
   private static String computeBasePath(UriInfo requestUriInfo) {

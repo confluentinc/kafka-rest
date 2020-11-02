@@ -77,7 +77,7 @@ public class UrlFactoryImplTest {
 
   @Test
   public void
-  create_withAdvertisedListenerDifferentSchemeAndListenerSameScheme_returnsUrlRelativeToListenerSameScheme
+  create_withAdvertisedListenerDifferentSchemeAndListenerSameScheme_returnsUrlRelativeToRequestUri
       () {
     expect(requestUriInfo.getAbsolutePath())
         .andStubReturn(URI.create("http://1.2.3.4:1000/xxx/yyy"));
@@ -94,11 +94,11 @@ public class UrlFactoryImplTest {
 
     String url = urlFactory.create("foo", "bar");
 
-    assertEquals("http://listener:3000/foo/bar", url);
+    assertEquals("http://1.2.3.4:1000/foo/bar", url);
   }
 
   @Test
-  public void create_withListenerSameScheme_returnsUrlRelativeToListenerSameScheme() {
+  public void create_withListenerSameScheme_returnsUrlRelativeToRequestUri() {
     expect(requestUriInfo.getAbsolutePath())
         .andStubReturn(URI.create("http://1.2.3.4:1000/xxx/yyy"));
     expect(requestUriInfo.getBaseUri()).andReturn(URI.create("http://1.2.3.4:1000/"));
@@ -114,7 +114,7 @@ public class UrlFactoryImplTest {
 
     String url = urlFactory.create("foo", "bar");
 
-    assertEquals("http://listener:2000/foo/bar", url);
+    assertEquals("http://1.2.3.4:1000/foo/bar", url);
   }
 
   @Test
