@@ -58,7 +58,7 @@ public abstract class ConsumerSeekRequest {
     @JsonProperty("partition")
     public abstract int getPartition();
 
-    @JsonProperty("timestamp")
+    @JsonProperty("offset")
     public abstract long getOffset();
 
     @JsonProperty("metadata")
