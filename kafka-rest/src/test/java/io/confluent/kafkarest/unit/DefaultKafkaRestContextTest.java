@@ -3,7 +3,7 @@ package io.confluent.kafkarest.unit;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.rest.RestConfigException;
+import org.junit.Before;
 import org.junit.Test;
 import java.util.HashSet;
 import java.util.Properties;
@@ -11,50 +11,36 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import static org.junit.Assert.assertEquals;
 
+@RunWith(JUnit4.class)
 public class DefaultKafkaRestContextTest {
-    KafkaRestConfig restConfig;
 
-    public DefaultKafkaRestContextTest() throws RestConfigException {
+    private KafkaRestContext context;
+
+    @Before
+    public void setUp() {
         Properties props = new Properties();
         // Required to satisfy config definition
         props.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:5234");
-        restConfig = new KafkaRestConfig(props);
-    }
+        KafkaRestConfig restConfig = new KafkaRestConfig(props);
 
-    private KafkaRestContext newContext(KafkaRestConfig restConfig) {
-        return new DefaultKafkaRestContext(restConfig, null, null, null, null);
+        context =
+            new DefaultKafkaRestContext(
+                restConfig, /* producerPool= */ null, /* kafkaConsumerManager= */ null);
     }
 
     @Test
     public void testGetProducerPoolThreadSafety() throws InterruptedException {
         Set<Object> refs = new HashSet<>();
-        KafkaRestContext ctx = newContext(restConfig);
 
         ExecutorService executor = Executors.newFixedThreadPool(100);
         // Captures reference as it's invoked.
-        for( int i = 0; i < 100; i++) {
-            executor.submit(() ->
-                    refs.add(ctx.getProducerPool()));
-        }
-        executor.shutdown();
-        executor.awaitTermination(60, TimeUnit.SECONDS);
-
-        assertEquals(1, refs.size());
-    }
-
-    @Test
-    public void testGetAdminClientWrapperThreadSafety() throws InterruptedException {
-        Set<Object> refs = new HashSet<>();
-        KafkaRestContext ctx = newContext(restConfig);
-
-        ExecutorService executor = Executors.newFixedThreadPool(100);
-        // Captures reference as it's invoked.
-        for( int i = 0; i < 100; i++) {
-            executor.submit(() ->
-                    refs.add(ctx.getAdminClientWrapper()));
+        for (int i = 0; i < 100; i++) {
+            executor.submit(() -> refs.add(context.getProducerPool()));
         }
         executor.shutdown();
         executor.awaitTermination(60, TimeUnit.SECONDS);
@@ -65,13 +51,11 @@ public class DefaultKafkaRestContextTest {
     @Test
     public void testGetKafkaConsumerManagerThreadSafety() throws InterruptedException {
         Set<Object> refs = new HashSet<>();
-        KafkaRestContext ctx = newContext(restConfig);
 
         ExecutorService executor = Executors.newFixedThreadPool(100);
         // Captures reference as it's invoked.
-        for( int i = 0; i < 100; i++) {
-            executor.submit(() ->
-                    refs.add(ctx.getKafkaConsumerManager()));
+        for (int i = 0; i < 100; i++) {
+            executor.submit(() -> refs.add(context.getKafkaConsumerManager()));
         }
         executor.shutdown();
         executor.awaitTermination(60, TimeUnit.SECONDS);
@@ -82,13 +66,11 @@ public class DefaultKafkaRestContextTest {
     @Test
     public void testGetAdminThreadSafety() throws InterruptedException {
         Set<Object> refs = new HashSet<>();
-        KafkaRestContext ctx = newContext(restConfig);
 
         ExecutorService executor = Executors.newFixedThreadPool(100);
         // Captures reference as it's invoked.
-        for( int i = 0; i < 100; i++) {
-            executor.submit(() ->
-                    refs.add(ctx.getAdmin()));
+        for (int i = 0; i < 100; i++) {
+            executor.submit(() -> refs.add(context.getAdmin()));
         }
         executor.shutdown();
         executor.awaitTermination(60, TimeUnit.SECONDS);
