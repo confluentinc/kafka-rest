@@ -42,7 +42,6 @@
 
     <modules>
         <module>kafka-rest</module>
-        <module>kafka-rest-console-scripts</module>
     </modules>
 
     <properties>
