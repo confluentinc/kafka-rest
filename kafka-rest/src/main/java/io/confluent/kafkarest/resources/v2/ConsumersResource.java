@@ -44,6 +44,7 @@ import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.kafkarest.v2.KafkaConsumerState;
 import io.confluent.kafkarest.v2.SchemaKafkaConsumerState;
 import io.confluent.rest.annotations.PerformanceMetric;
+import java.time.Duration;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -182,7 +183,7 @@ public final class ConsumersResource {
         asyncResponse,
         group,
         instance,
-        timeout,
+        Duration.ofMillis(timeout),
         maxBytes,
         BinaryKafkaConsumerState.class,
         BinaryConsumerRecord::fromConsumerRecord);
@@ -204,7 +205,7 @@ public final class ConsumersResource {
         asyncResponse,
         group,
         instance,
-        timeout,
+        Duration.ofMillis(timeout),
         maxBytes,
         JsonKafkaConsumerState.class,
         JsonConsumerRecord::fromConsumerRecord);
@@ -226,7 +227,7 @@ public final class ConsumersResource {
         asyncResponse,
         group,
         instance,
-        timeout,
+        Duration.ofMillis(timeout),
         maxBytes,
         SchemaKafkaConsumerState.class,
         SchemaConsumerRecord::fromConsumerRecord);
@@ -248,7 +249,7 @@ public final class ConsumersResource {
         asyncResponse,
         group,
         instance,
-        timeout,
+        Duration.ofMillis(timeout),
         maxBytes,
         SchemaKafkaConsumerState.class,
         SchemaConsumerRecord::fromConsumerRecord);
@@ -270,7 +271,7 @@ public final class ConsumersResource {
         asyncResponse,
         group,
         instance,
-        timeout,
+        Duration.ofMillis(timeout),
         maxBytes,
         SchemaKafkaConsumerState.class,
         SchemaConsumerRecord::fromConsumerRecord);
@@ -407,7 +408,7 @@ public final class ConsumersResource {
       final @Suspended AsyncResponse asyncResponse,
       String group,
       String instance,
-      long timeout,
+      Duration timeout,
       long maxBytes,
       Class<? extends KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>>
           consumerStateType,
