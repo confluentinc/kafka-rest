@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Pattern;
 import javax.ws.rs.InternalServerErrorException;
@@ -168,7 +169,6 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
         TopicPartition topicPartition = new TopicPartition(t.getTopic(), t.getPartition());
         consumer.seek(topicPartition, t.getOffset());
       }
-
     }
   }
 
@@ -190,7 +190,6 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   /**
    * Close the consumer,
    */
-
   public synchronized void close() {
     if (consumer != null) {
       consumer.close();
@@ -198,7 +197,6 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     // Marks this state entry as no longer valid because the consumer group is being destroyed.
     consumer = null;
   }
-
 
   /**
    * Subscribe to the given list of topics to get dynamically assigned partitions.
@@ -231,8 +229,8 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   /**
    * Get the current list of topics subscribed.
    */
-  public synchronized java.util.Set<String> subscription() {
-    java.util.Set<String> currSubscription = null;
+  public synchronized Set<String> subscription() {
+    Set<String> currSubscription = null;
     if (consumer != null) {
       currSubscription = consumer.subscription();
     }
@@ -242,14 +240,13 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   /**
    * Get the set of partitions currently assigned to this consumer.
    */
-  public synchronized java.util.Set<TopicPartition> assignment() {
-    java.util.Set<TopicPartition> currAssignment = null;
+  public synchronized Set<TopicPartition> assignment() {
+    Set<TopicPartition> currAssignment = null;
     if (consumer != null) {
       currAssignment = consumer.assignment();
     }
     return currAssignment;
   }
-
 
   /**
    * Get the last committed offset for the given partition (whether the commit happened by
@@ -355,7 +352,6 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     this.config = config;
   }
 
-
   synchronized ConsumerRecord<KafkaKeyT, KafkaValueT> peek() {
     return consumerRecords.peek();
   }
@@ -403,6 +399,5 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
     }
   }
-
 }
 
