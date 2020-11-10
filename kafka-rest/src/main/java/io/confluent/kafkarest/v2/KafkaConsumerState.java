@@ -39,8 +39,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.Set;
 import java.util.Vector;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 import javax.ws.rs.InternalServerErrorException;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -66,7 +66,6 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   private Queue<ConsumerRecord<KafkaKeyT, KafkaValueT>> consumerRecords = new ArrayDeque<>();
 
   volatile long expiration;
-  private ReentrantLock lock;
 
   KafkaConsumerState(
       KafkaRestConfig config,
@@ -78,7 +77,6 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     this.consumer = consumer;
     this.expiration = config.getTime().milliseconds()
                       + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
-    this.lock = new ReentrantLock();
   }
 
   public ConsumerInstanceId getId() {
@@ -98,191 +96,143 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   /**
    * Commit the given list of offsets
    */
-  public List<TopicPartitionOffset> commitOffsets(
+  public synchronized List<TopicPartitionOffset> commitOffsets(
       String async,
       ConsumerOffsetCommitRequest offsetCommitRequest
   ) {
-    lock.lock();
-    try {
-      // If no offsets are given, then commit all the records read so far
-      if (offsetCommitRequest == null) {
-        if (async == null) {
-          consumer.commitSync();
-        } else {
-          consumer.commitAsync();
-        }
+    // If no offsets are given, then commit all the records read so far
+    if (offsetCommitRequest == null) {
+      if (async == null) {
+        consumer.commitSync();
       } else {
-        Map<TopicPartition, OffsetAndMetadata> offsetMap =
-            new HashMap<TopicPartition, OffsetAndMetadata>();
-
-        //commit each given offset
-        for (TopicPartitionOffsetMetadata t : offsetCommitRequest.getOffsets()) {
-          if (t.getMetadata() == null) {
-            offsetMap.put(
-                new TopicPartition(t.getTopic(), t.getPartition()),
-                new OffsetAndMetadata(t.getOffset() + 1)
-            );
-          } else {
-            offsetMap.put(
-                new TopicPartition(t.getTopic(), t.getPartition()),
-                new OffsetAndMetadata(t.getOffset() + 1, t.getMetadata())
-            );
-          }
-
-        }
-        consumer.commitSync(offsetMap);
+        consumer.commitAsync();
       }
-      List<TopicPartitionOffset> result = new Vector<TopicPartitionOffset>();
-      return result;
-    } finally {
-      lock.unlock();
+    } else {
+      Map<TopicPartition, OffsetAndMetadata> offsetMap =
+          new HashMap<TopicPartition, OffsetAndMetadata>();
+
+      //commit each given offset
+      for (TopicPartitionOffsetMetadata t : offsetCommitRequest.getOffsets()) {
+        if (t.getMetadata() == null) {
+          offsetMap.put(
+              new TopicPartition(t.getTopic(), t.getPartition()),
+              new OffsetAndMetadata(t.getOffset() + 1)
+          );
+        } else {
+          offsetMap.put(
+              new TopicPartition(t.getTopic(), t.getPartition()),
+              new OffsetAndMetadata(t.getOffset() + 1, t.getMetadata())
+          );
+        }
+
+      }
+      consumer.commitSync(offsetMap);
     }
+    List<TopicPartitionOffset> result = new Vector<TopicPartitionOffset>();
+    return result;
   }
 
   /**
    * Seek to the first offset for each of the given partitions.
    */
-  public void seekToBeginning(ConsumerSeekToRequest seekToRequest) {
-    lock.lock();
-    try {
-      if (seekToRequest != null) {
-        Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
+  public synchronized void seekToBeginning(ConsumerSeekToRequest seekToRequest) {
+    if (seekToRequest != null) {
+      Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
 
-        for (io.confluent.kafkarest.entities.v2.TopicPartition t : seekToRequest.getPartitions()) {
-          topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
-        }
-        consumer.seekToBeginning(topicPartitions);
+      for (io.confluent.kafkarest.entities.v2.TopicPartition t : seekToRequest.getPartitions()) {
+        topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
       }
-    } finally {
-      lock.unlock();
+      consumer.seekToBeginning(topicPartitions);
     }
   }
 
   /**
    * Seek to the last offset for each of the given partitions.
    */
-  public void seekToEnd(ConsumerSeekToRequest seekToRequest) {
-    lock.lock();
-    try {
-      if (seekToRequest != null) {
-        Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
+  public synchronized void seekToEnd(ConsumerSeekToRequest seekToRequest) {
+    if (seekToRequest != null) {
+      Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
 
-        for (io.confluent.kafkarest.entities.v2.TopicPartition t : seekToRequest.getPartitions()) {
-          topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
-        }
-        consumer.seekToEnd(topicPartitions);
+      for (io.confluent.kafkarest.entities.v2.TopicPartition t : seekToRequest.getPartitions()) {
+        topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
       }
-    } finally {
-      lock.unlock();
+      consumer.seekToEnd(topicPartitions);
     }
   }
 
   /**
    * Overrides the fetch offsets that the consumer will use on the next poll(timeout).
    */
-  public void seekToOffset(ConsumerSeekToOffsetRequest seekToOffsetRequest) {
-    lock.lock();
-    try {
-      if (seekToOffsetRequest != null) {
-        for (TopicPartitionOffsetMetadata t : seekToOffsetRequest.getOffsets()) {
-          TopicPartition topicPartition = new TopicPartition(t.getTopic(), t.getPartition());
-          consumer.seek(topicPartition, t.getOffset());
-        }
-
+  public synchronized void seekToOffset(ConsumerSeekToOffsetRequest seekToOffsetRequest) {
+    if (seekToOffsetRequest != null) {
+      for (TopicPartitionOffsetMetadata t : seekToOffsetRequest.getOffsets()) {
+        TopicPartition topicPartition = new TopicPartition(t.getTopic(), t.getPartition());
+        consumer.seek(topicPartition, t.getOffset());
       }
-    } finally {
-      lock.unlock();
     }
   }
 
   /**
    * Manually assign a list of partitions to this consumer.
    */
-  public void assign(ConsumerAssignmentRequest assignmentRequest) {
-    lock.lock();
-    try {
-      if (assignmentRequest != null) {
-        Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
+  public synchronized void assign(ConsumerAssignmentRequest assignmentRequest) {
+    if (assignmentRequest != null) {
+      Vector<TopicPartition> topicPartitions = new Vector<TopicPartition>();
 
-        for (io.confluent.kafkarest.entities.v2.TopicPartition t
+      for (io.confluent.kafkarest.entities.v2.TopicPartition t
             : assignmentRequest.getPartitions()) {
-          topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
-        }
-        consumer.assign(topicPartitions);
+        topicPartitions.add(new TopicPartition(t.getTopic(), t.getPartition()));
       }
-    } finally {
-      lock.unlock();
+      consumer.assign(topicPartitions);
     }
   }
 
   /**
    * Close the consumer,
    */
-
-  public void close() {
-    lock.lock();
-    try {
-      if (consumer != null) {
-        consumer.close();
-      }
-      // Marks this state entry as no longer valid because the consumer group is being destroyed.
-      consumer = null;
-    } finally {
-      lock.unlock();
+  public synchronized void close() {
+    if (consumer != null) {
+      consumer.close();
     }
+    // Marks this state entry as no longer valid because the consumer group is being destroyed.
+    consumer = null;
   }
-
 
   /**
    * Subscribe to the given list of topics to get dynamically assigned partitions.
    */
-  public void subscribe(ConsumerSubscriptionRecord subscription) {
+  public synchronized void subscribe(ConsumerSubscriptionRecord subscription) {
     if (subscription == null) {
       return;
     }
 
-    lock.lock();
-    try {
-      if (consumer != null) {
-        if (subscription.getTopics() != null) {
-          consumer.subscribe(subscription.getTopics());
-        } else if (subscription.getTopicPattern() != null) {
-          Pattern topicPattern = Pattern.compile(subscription.getTopicPattern());
-          NoOpOnRebalance noOpOnRebalance = new NoOpOnRebalance();
-          consumer.subscribe(topicPattern, noOpOnRebalance);
-        }
+    if (consumer != null) {
+      if (subscription.getTopics() != null) {
+        consumer.subscribe(subscription.getTopics());
+      } else if (subscription.getTopicPattern() != null) {
+        Pattern topicPattern = Pattern.compile(subscription.getTopicPattern());
+        NoOpOnRebalance noOpOnRebalance = new NoOpOnRebalance();
+        consumer.subscribe(topicPattern, noOpOnRebalance);
       }
-    } finally {
-      lock.unlock();
     }
   }
 
   /**
    * Unsubscribe from topics currently subscribed with subscribe(Collection).
    */
-  public void unsubscribe() {
-    lock.lock();
-    try {
-      if (consumer != null) {
-        consumer.unsubscribe();
-      }
-    } finally {
-      lock.unlock();
+  public synchronized void unsubscribe() {
+    if (consumer != null) {
+      consumer.unsubscribe();
     }
   }
 
   /**
    * Get the current list of topics subscribed.
    */
-  public java.util.Set<String> subscription() {
-    java.util.Set<String> currSubscription = null;
-    lock.lock();
-    try {
-      if (consumer != null) {
-        currSubscription = consumer.subscription();
-      }
-    } finally {
-      lock.unlock();
+  public synchronized Set<String> subscription() {
+    Set<String> currSubscription = null;
+    if (consumer != null) {
+      currSubscription = consumer.subscription();
     }
     return currSubscription;
   }
@@ -290,169 +240,137 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   /**
    * Get the set of partitions currently assigned to this consumer.
    */
-  public java.util.Set<TopicPartition> assignment() {
-    java.util.Set<TopicPartition> currAssignment = null;
-    lock.lock();
-    try {
-      if (consumer != null) {
-        currAssignment = consumer.assignment();
-      }
-    } finally {
-      lock.unlock();
+  public synchronized Set<TopicPartition> assignment() {
+    Set<TopicPartition> currAssignment = null;
+    if (consumer != null) {
+      currAssignment = consumer.assignment();
     }
     return currAssignment;
   }
-
 
   /**
    * Get the last committed offset for the given partition (whether the commit happened by
    * this process or another).
    */
-  public ConsumerCommittedResponse committed(ConsumerCommittedRequest request) {
-    lock.lock();
-    try {
-      Vector<TopicPartitionOffsetMetadata> offsets = new Vector<>();
-      if (consumer != null) {
-        for (io.confluent.kafkarest.entities.v2.TopicPartition t : request.getPartitions()) {
-          TopicPartition partition = new TopicPartition(t.getTopic(), t.getPartition());
-          OffsetAndMetadata offsetMetadata = consumer.committed(partition);
-          if (offsetMetadata != null) {
-            offsets.add(
-                new TopicPartitionOffsetMetadata(
-                    partition.topic(),
-                    partition.partition(),
-                    offsetMetadata.offset(),
-                    offsetMetadata.metadata()
-                )
-            );
-          }
+  public synchronized ConsumerCommittedResponse committed(ConsumerCommittedRequest request) {
+    Vector<TopicPartitionOffsetMetadata> offsets = new Vector<>();
+    if (consumer != null) {
+      for (io.confluent.kafkarest.entities.v2.TopicPartition t : request.getPartitions()) {
+        TopicPartition partition = new TopicPartition(t.getTopic(), t.getPartition());
+        OffsetAndMetadata offsetMetadata = consumer.committed(partition);
+        if (offsetMetadata != null) {
+          offsets.add(
+              new TopicPartitionOffsetMetadata(
+                  partition.topic(),
+                  partition.partition(),
+                  offsetMetadata.offset(),
+                  offsetMetadata.metadata()
+              )
+          );
         }
       }
-      return new ConsumerCommittedResponse(offsets);
-    } finally {
-      lock.unlock();
     }
+    return new ConsumerCommittedResponse(offsets);
   }
 
   /**
    * Returns the beginning offset of the {@code topic} {@code partition}.
    */
-  long getBeginningOffset(String topic, int partition) {
-    lock.lock();
-    try {
-      if (consumer == null) {
-        throw new IllegalStateException("KafkaConsumerState has been closed.");
-      }
-
-      Map<TopicPartition, Long> response =
-          consumer.beginningOffsets(singletonList(new TopicPartition(topic, partition)));
-
-      if (response.size() != 1) {
-        throw new InternalServerErrorException(
-            String.format("Expected one offset, but got %d instead.", response.size()));
-      }
-
-      return response.values().stream().findAny().get();
-    } finally {
-      lock.unlock();
+  synchronized long getBeginningOffset(String topic, int partition) {
+    if (consumer == null) {
+      throw new IllegalStateException("KafkaConsumerState has been closed.");
     }
+
+    Map<TopicPartition, Long> response =
+        consumer.beginningOffsets(singletonList(new TopicPartition(topic, partition)));
+
+    if (response.size() != 1) {
+      throw new InternalServerErrorException(
+          String.format("Expected one offset, but got %d instead.", response.size()));
+    }
+
+    return response.values().stream().findAny().get();
   }
 
   /**
    * Returns the end offset of the {@code topic} {@code partition}.
    */
-  long getEndOffset(String topic, int partition) {
-    lock.lock();
-    try {
-      if (consumer == null) {
-        throw new IllegalStateException("KafkaConsumerState has been closed.");
-      }
-
-      Map<TopicPartition, Long> response =
-          consumer.endOffsets(singletonList(new TopicPartition(topic, partition)));
-
-      if (response.size() != 1) {
-        throw new InternalServerErrorException(
-            String.format("Expected one offset, but got %d instead.", response.size()));
-      }
-
-      return response.values().stream().findAny().get();
-    } finally {
-      lock.unlock();
+  synchronized long getEndOffset(String topic, int partition) {
+    if (consumer == null) {
+      throw new IllegalStateException("KafkaConsumerState has been closed.");
     }
+
+    Map<TopicPartition, Long> response =
+        consumer.endOffsets(singletonList(new TopicPartition(topic, partition)));
+
+    if (response.size() != 1) {
+      throw new InternalServerErrorException(
+          String.format("Expected one offset, but got %d instead.", response.size()));
+    }
+
+    return response.values().stream().findAny().get();
   }
 
   /**
    * Returns the earliest offset whose timestamp is greater than or equal to the given {@code
    * timestamp} in the {@code topic} {@code partition}, or empty if such offset does not exist.
    */
-  Optional<Long> getOffsetForTime(String topic, int partition, Instant timestamp) {
-    lock.lock();
-    try {
-      if (consumer == null) {
-        throw new IllegalStateException("KafkaConsumerState has been closed.");
-      }
-
-      Map<TopicPartition, OffsetAndTimestamp> response =
-          consumer.offsetsForTimes(
-              singletonMap(new TopicPartition(topic, partition), timestamp.toEpochMilli()));
-
-      if (response.size() != 1) {
-        throw new InternalServerErrorException(
-            String.format("Expected one offset, but got %d instead.", response.size()));
-      }
-
-      return response.values().stream()
-          .filter(Objects::nonNull)
-          .findAny()
-          .map(OffsetAndTimestamp::offset);
-    } finally {
-      lock.unlock();
+  synchronized Optional<Long> getOffsetForTime(String topic, int partition, Instant timestamp) {
+    if (consumer == null) {
+      throw new IllegalStateException("KafkaConsumerState has been closed.");
     }
+
+    Map<TopicPartition, OffsetAndTimestamp> response =
+        consumer.offsetsForTimes(
+            singletonMap(new TopicPartition(topic, partition), timestamp.toEpochMilli()));
+
+    if (response.size() != 1) {
+      throw new InternalServerErrorException(
+          String.format("Expected one offset, but got %d instead.", response.size()));
+    }
+
+    return response.values().stream()
+        .filter(Objects::nonNull)
+        .findAny()
+        .map(OffsetAndTimestamp::offset);
   }
 
-  public boolean expired(long nowMs) {
+  public synchronized boolean expired(long nowMs) {
     return expiration <= nowMs;
   }
 
-  public void updateExpiration() {
+  public synchronized void updateExpiration() {
     this.expiration = config.getTime().milliseconds()
                       + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
   }
 
-  public KafkaRestConfig getConfig() {
+  public synchronized KafkaRestConfig getConfig() {
     return config;
   }
 
-  public void setConfig(KafkaRestConfig config) {
+  public synchronized void setConfig(KafkaRestConfig config) {
     this.config = config;
   }
 
-
-  ConsumerRecord<KafkaKeyT, KafkaValueT> peek() {
+  synchronized ConsumerRecord<KafkaKeyT, KafkaValueT> peek() {
     return consumerRecords.peek();
   }
 
-  boolean hasNext() {
-    lock.lock();
-    try {
-      if (hasNextCached()) {
-        return true;
-      }
-      // If none are available, try checking for any records already fetched by the consumer.
-      getOrCreateConsumerRecords();
-
-      return hasNextCached();
-    } finally {
-      lock.unlock();
+  synchronized boolean hasNext() {
+    if (hasNextCached()) {
+      return true;
     }
+    // If none are available, try checking for any records already fetched by the consumer.
+    getOrCreateConsumerRecords();
+
+    return hasNextCached();
   }
 
-  boolean hasNextCached() {
+  synchronized boolean hasNextCached() {
     return !consumerRecords.isEmpty();
   }
 
-  ConsumerRecord<KafkaKeyT, KafkaValueT> next() {
+  synchronized ConsumerRecord<KafkaKeyT, KafkaValueT> next() {
     return consumerRecords.poll();
   }
 
@@ -462,7 +380,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * consumer records if the records have not been fully consumed by client yet. Must be
    * invoked with the lock held, i.e. after startRead().
    */
-  private void getOrCreateConsumerRecords() {
+  private synchronized void getOrCreateConsumerRecords() {
     consumerRecords = new ArrayDeque<>();
     ConsumerRecords<KafkaKeyT, KafkaValueT> polledRecords = consumer.poll(0);
     //drain the iterator and buffer to list
@@ -482,6 +400,5 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
     }
   }
-
 }
 
