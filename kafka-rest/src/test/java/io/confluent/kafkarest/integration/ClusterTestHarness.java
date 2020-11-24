@@ -40,7 +40,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -60,7 +59,6 @@ import kafka.zk.KafkaZkClient;
 import kafka.zookeeper.ZooKeeperClient;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.AlterPartitionReassignmentsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.NewPartitionReassignment;
@@ -239,6 +237,7 @@ public abstract class ClusterTestHarness {
   private void startBrokersConcurrently(int numBrokers, Duration timeout) throws Exception {
     List<Future<KafkaServer>> serverFutures = new ArrayList<>(numBrokers);
     configs = new Vector<>();
+    servers = new Vector<>();
     ExecutorService executorService = Executors.newFixedThreadPool(numBrokers);
     try {
       for (int i = 0; i < numBrokers; i++) {
