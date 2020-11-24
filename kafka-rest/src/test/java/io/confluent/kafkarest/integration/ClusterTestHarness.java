@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,6 +40,12 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
@@ -46,6 +53,7 @@ import javax.ws.rs.client.WebTarget;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.CoreUtils;
+import kafka.utils.MockTime;
 import kafka.utils.TestUtils;
 import kafka.zk.EmbeddedZookeeper;
 import kafka.zk.KafkaZkClient;
@@ -175,19 +183,8 @@ public abstract class ClusterTestHarness {
         JaasUtils.isZkSaslEnabled(),
         time);
 
-    configs = new Vector<>();
-    servers = new Vector<>();
-    for (int i = 0; i < numBrokers; i++) {
-      Properties props = getBrokerProperties(i);
-
-      props = overrideBrokerProperties(i, props);
-
-      KafkaConfig config = KafkaConfig.fromProps(props);
-      configs.add(config);
-
-      KafkaServer server = TestUtils.createServer(config, time);
-      servers.add(server);
-    }
+    // start brokers concurrently
+    startBrokersConcurrently(numBrokers, Duration.ofSeconds(60));
 
     brokerList =
         TestUtils.getBrokerListStrFromServers(JavaConverters.asScalaBuffer(servers),
@@ -237,6 +234,40 @@ public abstract class ClusterTestHarness {
             restConfig, getProducerPool(restConfig), /* kafkaConsumerManager= */ null);
     restServer = restApp.createServer();
     restServer.start();
+  }
+
+  private void startBrokersConcurrently(int numBrokers, Duration timeout) throws Exception {
+    List<Future<KafkaServer>> serverFutures = new ArrayList<>(numBrokers);
+    configs = new Vector<>();
+    ExecutorService executorService = Executors.newFixedThreadPool(numBrokers);
+    try {
+      for (int i = 0; i < numBrokers; i++) {
+        Properties props = getBrokerProperties(i);
+        serverFutures.add(executorService.submit(() -> {
+          KafkaConfig config = KafkaConfig.fromProps(props);
+          configs.add(config);
+          return TestUtils.createServer(config, new MockTime(System.currentTimeMillis(), System.nanoTime()));
+        }));
+      }
+
+      // Store the first server startup failure and throw the exception after going over all the
+      // kafka servers.
+      AtomicReference<Exception> serverStartupFailure = new AtomicReference<>();
+      for (Future<KafkaServer> futureServer : serverFutures) {
+        try {
+          KafkaServer server = futureServer.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+          servers.add(server);
+        } catch (Exception e) {
+          serverStartupFailure.compareAndSet(null, e);
+        }
+      }
+      if (serverStartupFailure.get() != null) {
+        throw serverStartupFailure.get();
+      }
+    } finally {
+      executorService.shutdownNow();
+      executorService.awaitTermination(30, TimeUnit.SECONDS);
+    }
   }
 
   protected void setupAcls() {
