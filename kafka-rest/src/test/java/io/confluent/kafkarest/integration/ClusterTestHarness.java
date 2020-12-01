@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,14 +39,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Vector;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -240,7 +233,8 @@ public abstract class ClusterTestHarness {
   private void startBrokersConcurrently(int numBrokers) {
     configs =
         IntStream.range(0, numBrokers)
-            .mapToObj(brokerId -> KafkaConfig.fromProps(getBrokerProperties(brokerId)))
+            .mapToObj(brokerId -> KafkaConfig.fromProps(
+                overrideBrokerProperties(brokerId, getBrokerProperties(brokerId))))
             .collect(toList());
     servers =
         CompletableFutures.allAsList(
@@ -252,8 +246,8 @@ public abstract class ClusterTestHarness {
                                 config,
                                 new MockTime(System.currentTimeMillis(),
                                     System.nanoTime()))))
-                            .collect(toList()))
-                .join();
+                .collect(toList()))
+            .join();
   }
 
   protected void setupAcls() {
