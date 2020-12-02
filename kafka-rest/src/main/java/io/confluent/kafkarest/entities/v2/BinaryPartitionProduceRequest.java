@@ -18,9 +18,11 @@ package io.confluent.kafkarest.entities.v2;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.confluent.kafkarest.entities.EntityUtils;
+import io.confluent.kafkarest.entities.ForwardHeader;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceRequest;
 import io.confluent.rest.validation.ConstraintViolations;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -70,7 +72,7 @@ public final class BinaryPartitionProduceRequest {
     }
     return ProduceRequest.create(
         records.stream()
-            .map(record -> ProduceRecord.create(record.key, record.value, null))
+            .map(record -> ProduceRecord.create(record.key, record.value, null, record.headers))
             .collect(Collectors.toList()),
         /* keySchema= */ null,
         /* keySchemaId= */ null,
@@ -111,10 +113,14 @@ public final class BinaryPartitionProduceRequest {
     @Nullable
     private final byte[] value;
 
+    @Nullable
+    private final List<ForwardHeader> headers;
+
     @JsonCreator
     public BinaryPartitionProduceRecord(
         @JsonProperty("key") @Nullable String key,
-        @JsonProperty("value") @Nullable String value
+        @JsonProperty("value") @Nullable String value,
+        @JsonProperty("headers") @Nullable List<ForwardHeader> headers
     ) {
       try {
         this.key = (key != null) ? EntityUtils.parseBase64Binary(key) : null;
@@ -126,6 +132,7 @@ public final class BinaryPartitionProduceRequest {
       } catch (IllegalArgumentException e) {
         throw ConstraintViolations.simpleException("Record value contains invalid base64 encoding");
       }
+      this.headers = headers;
     }
 
     @JsonProperty("key")
@@ -138,6 +145,12 @@ public final class BinaryPartitionProduceRequest {
     @Nullable
     public String getValue() {
       return (value == null ? null : EntityUtils.encodeBase64Binary(value));
+    }
+
+    @JsonProperty
+    @Nullable
+    public List<ForwardHeader> getHeaders() {
+      return headers;
     }
 
     @Override

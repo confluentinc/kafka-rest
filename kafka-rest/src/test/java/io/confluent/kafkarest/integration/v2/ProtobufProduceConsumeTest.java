@@ -28,15 +28,15 @@ public final class ProtobufProduceConsumeTest extends SchemaProduceConsumeTest {
           new SchemaTopicProduceRecord(
               PROOTBUF_CONVERTER.toJson(getMessage(KEY_SCHEMA, "key", 1)).getJson(),
               PROOTBUF_CONVERTER.toJson(getMessage(VALUE_SCHEMA, "value", 11)).getJson(),
-              /* partition= */ 0),
+              /* partition= */ 0, null),
           new SchemaTopicProduceRecord(
               PROOTBUF_CONVERTER.toJson(getMessage(KEY_SCHEMA, "key", 2)).getJson(),
               PROOTBUF_CONVERTER.toJson(getMessage(VALUE_SCHEMA, "value", 12)).getJson(),
-              /* partition= */ 0),
+              /* partition= */ 0, null),
           new SchemaTopicProduceRecord(
               PROOTBUF_CONVERTER.toJson(getMessage(KEY_SCHEMA, "key", 3)).getJson(),
               PROOTBUF_CONVERTER.toJson(getMessage(VALUE_SCHEMA, "value", 13)).getJson(),
-              /* partition= */ 0));
+              /* partition= */ 0, null));
 
   private static Message getMessage(ProtobufSchema schema, String fieldName, int value) {
     DynamicMessage.Builder messageBuilder = schema.newMessageBuilder();

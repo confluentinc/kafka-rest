@@ -17,6 +17,7 @@ package io.confluent.kafkarest.entities;
 
 import com.google.auto.value.AutoValue;
 import javax.annotation.Nullable;
+import java.util.List;
 
 @AutoValue
 public abstract class ProduceRecord<K, V> {
@@ -33,8 +34,12 @@ public abstract class ProduceRecord<K, V> {
   @Nullable
   public abstract Integer getPartition();
 
+  @Nullable
+  public abstract List<ForwardHeader> getHeaders();
+
   public static <K, V> ProduceRecord<K, V> create(
-      @Nullable K key, @Nullable V value, @Nullable Integer partition) {
-    return new AutoValue_ProduceRecord<>(key, value, partition);
+      @Nullable K key, @Nullable V value, @Nullable Integer partition,
+      @Nullable List<ForwardHeader> headers) {
+    return new AutoValue_ProduceRecord<>(key, value, partition, headers);
   }
 }

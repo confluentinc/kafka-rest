@@ -20,8 +20,12 @@ import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.converters.SchemaConverter;
+import io.confluent.kafkarest.entities.ForwardHeader;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Schema-specific implementation of KafkaConsumerState, which decodes
@@ -45,13 +49,15 @@ public final class SchemaKafkaConsumerState
       ConsumerRecord<Object, Object> record) {
     SchemaConverter.JsonNodeAndSize keyNode = schemaConverter.toJson(record.key());
     SchemaConverter.JsonNodeAndSize valueNode = schemaConverter.toJson(record.value());
+    List<ForwardHeader> headers = new ArrayList<>();
+    record.headers().forEach(header -> headers.add(new ForwardHeader(header)));
     return new ConsumerRecordAndSize<>(
         io.confluent.kafkarest.entities.ConsumerRecord.create(
             record.topic(),
             keyNode.getJson(),
             valueNode.getJson(),
             record.partition(),
-            record.offset()),
+            record.offset(), headers),
         keyNode.getSize() + valueNode.getSize());
   }
 }

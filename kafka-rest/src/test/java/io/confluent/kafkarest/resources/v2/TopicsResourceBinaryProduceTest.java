@@ -89,24 +89,24 @@ public class TopicsResourceBinaryProduceTest
     addResource(new ProduceToTopicAction(ctx));
 
     produceRecordsOnlyValues = Arrays.asList(
-        new BinaryTopicProduceRecord(null, "value", null),
-        new BinaryTopicProduceRecord(null, "value2", null)
+        new BinaryTopicProduceRecord(null, "value", null, null),
+        new BinaryTopicProduceRecord(null, "value2", null, null)
     );
     produceRecordsWithKeys = Arrays.asList(
-        new BinaryTopicProduceRecord("key", "value", null),
-        new BinaryTopicProduceRecord("key2", "value2", null)
+        new BinaryTopicProduceRecord("key", "value", null, null),
+        new BinaryTopicProduceRecord("key2", "value2", null, null)
     );
     produceRecordsWithPartitions = Arrays.asList(
-        new BinaryTopicProduceRecord(null, "value", 0),
-        new BinaryTopicProduceRecord(null, "value2", 0)
+        new BinaryTopicProduceRecord(null, "value", 0, null),
+        new BinaryTopicProduceRecord(null, "value2", 0, null)
     );
     produceRecordsWithPartitionsAndKeys = Arrays.asList(
-        new BinaryTopicProduceRecord("key", "value", 0),
-        new BinaryTopicProduceRecord("key2", "value2", 0)
+        new BinaryTopicProduceRecord("key", "value", 0, null),
+        new BinaryTopicProduceRecord("key2", "value2", 0, null)
     );
     produceRecordsWithNullValues = Arrays.asList(
-        new BinaryTopicProduceRecord("key", null, null),
-        new BinaryTopicProduceRecord("key2", null, null)
+        new BinaryTopicProduceRecord("key", null, null, null),
+        new BinaryTopicProduceRecord("key2", null, null, null)
     );
 
     TopicPartition tp0 = new TopicPartition(topicName, 0);
@@ -121,7 +121,7 @@ public class TopicsResourceBinaryProduceTest
     );
 
     produceExceptionData = Arrays.asList(
-        new BinaryTopicProduceRecord(null, null, null)
+        new BinaryTopicProduceRecord(null, null, null, null)
     );
 
     produceGenericExceptionResults = Arrays.asList(

@@ -29,15 +29,15 @@ public final class JsonSchemaProduceConsumeTest extends SchemaProduceConsumeTest
           new SchemaTopicProduceRecord(
               new IntNode(1),
               JSON_SCHEMA_CONVERTER.toJson(getMessage(11)).getJson(),
-              /* partition= */ 0),
+              /* partition= */ 0, null),
           new SchemaTopicProduceRecord(
               new IntNode(2),
               JSON_SCHEMA_CONVERTER.toJson(getMessage(12)).getJson(),
-              /* partition= */ 0),
+              /* partition= */ 0, null),
           new SchemaTopicProduceRecord(
               new IntNode(3),
               JSON_SCHEMA_CONVERTER.toJson(getMessage(13)).getJson(),
-              /* partition= */ 0));
+              /* partition= */ 0, null));
 
   private static JsonNode getMessage(int value) {
     ObjectMapper objectMapper = new ObjectMapper();

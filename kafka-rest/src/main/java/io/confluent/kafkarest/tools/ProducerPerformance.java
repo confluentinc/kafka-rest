@@ -83,7 +83,7 @@ public class ProducerPerformance extends AbstractPerformanceTest {
     /* setup perf test */
     targetUrl = baseUrl + "/topics/" + topic;
     BinaryTopicProduceRequest.BinaryTopicProduceRecord record =
-            new BinaryTopicProduceRequest.BinaryTopicProduceRecord(null, "payload", null);
+            new BinaryTopicProduceRequest.BinaryTopicProduceRecord(null, "payload", null, null);
     BinaryTopicProduceRequest.BinaryTopicProduceRecord[] records =
             new BinaryTopicProduceRequest.BinaryTopicProduceRecord[recordsPerIteration];
     Arrays.fill(records, record);

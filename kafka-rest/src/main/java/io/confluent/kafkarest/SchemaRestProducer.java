@@ -22,17 +22,22 @@ import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientExcept
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDe;
 import io.confluent.kafkarest.converters.ConversionException;
 import io.confluent.kafkarest.converters.SchemaConverter;
+import io.confluent.kafkarest.entities.ForwardHeader;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceRequest;
 import io.confluent.rest.exceptions.RestException;
 import java.io.IOException;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.Header;
 
 public class SchemaRestProducer implements RestProducer<JsonNode, JsonNode> {
 
@@ -131,7 +136,16 @@ public class SchemaRestProducer implements RestProducer<JsonNode, JsonNode> {
         if (recordPartition == null) {
           recordPartition = record.getPartition();
         }
-        kafkaRecords.add(new ProducerRecord(topic, recordPartition, key, value));
+        List<Header> headers = null;
+        if (record.getHeaders() != null && record.getHeaders().size() > 0) {
+          headers = record
+              .getHeaders()
+              .stream()
+              .filter(m -> m.value != null && m.value.length > 0)
+              .map(ForwardHeader::toHeader)
+              .collect(Collectors.toList());
+        }
+        kafkaRecords.add(new ProducerRecord(topic, recordPartition, key, value, headers));
       }
     } catch (ConversionException e) {
       throw Errors.jsonConversionException(e);

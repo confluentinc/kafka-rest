@@ -40,17 +40,17 @@ public final class AvroProduceConsumeTest extends SchemaProduceConsumeTest {
               new IntNode(1),
               AVRO_CONVERTER.toJson(
                   new GenericRecordBuilder(VALUE_SCHEMA).set("value", 11).build()).getJson(),
-              /* partition= */ 0),
+              /* partition= */ 0, null),
           new SchemaTopicProduceRecord(
               new IntNode(2),
               AVRO_CONVERTER.toJson(
                   new GenericRecordBuilder(VALUE_SCHEMA).set("value", 12).build()).getJson(),
-              /* partition= */ 0),
+              /* partition= */ 0, null),
           new SchemaTopicProduceRecord(
               new IntNode(3),
               AVRO_CONVERTER.toJson(
                   new GenericRecordBuilder(VALUE_SCHEMA).set("value", 13).build()).getJson(),
-              /* partition= */ 0));
+              /* partition= */ 0, null));
 
   public AvroProduceConsumeTest() {
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ true);

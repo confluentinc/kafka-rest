@@ -19,8 +19,12 @@ import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.entities.ForwardHeader;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -41,14 +45,15 @@ public class BinaryKafkaConsumerState
       ConsumerRecord<byte[], byte[]> record) {
     long approxSize = (record.key() != null ? record.key().length : 0)
         + (record.value() != null ? record.value().length : 0);
-
+    List<ForwardHeader> headers = new ArrayList<>();
+    record.headers().forEach(header -> headers.add(new ForwardHeader(header)));
     return new ConsumerRecordAndSize<>(
         io.confluent.kafkarest.entities.ConsumerRecord.create(
             record.topic(),
             record.key() != null ? ByteString.copyFrom(record.key()) : null,
             record.value() != null ? ByteString.copyFrom(record.value()) : null,
             record.partition(),
-            record.offset()),
+            record.offset(), headers),
         approxSize);
   }
 }

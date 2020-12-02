@@ -18,8 +18,10 @@ package io.confluent.kafkarest.entities.v2;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.confluent.kafkarest.entities.ForwardHeader;
 import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.ProduceRequest;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -110,7 +112,8 @@ public final class SchemaTopicProduceRequest {
     }
     return ProduceRequest.create(
         records.stream()
-            .map(record -> ProduceRecord.create(record.key, record.value, record.partition))
+            .map(record -> ProduceRecord.create(
+                    record.key, record.value, record.partition, record.headers))
             .collect(Collectors.toList()),
         keySchema,
         keySchemaId,
@@ -163,16 +166,21 @@ public final class SchemaTopicProduceRequest {
     @Nullable
     private final Integer partition;
 
+    @Nullable
+    private final List<ForwardHeader> headers;
+
     @JsonCreator
     public SchemaTopicProduceRecord(
         @JsonProperty("key") @Nullable JsonNode key,
         @JsonProperty("value") @Nullable JsonNode value,
-        @JsonProperty("partition") @Nullable Integer partition
+        @JsonProperty("partition") @Nullable Integer partition,
+        @JsonProperty("headers") @Nullable List<ForwardHeader> headers
 
     ) {
       this.key = key;
       this.value = value;
       this.partition = partition;
+      this.headers = headers;
     }
 
     @JsonProperty("key")
@@ -191,6 +199,12 @@ public final class SchemaTopicProduceRequest {
     @Nullable
     public Integer getPartition() {
       return partition;
+    }
+
+    @JsonProperty
+    @Nullable
+    public List<ForwardHeader> getHeaders() {
+      return headers;
     }
 
     @Override

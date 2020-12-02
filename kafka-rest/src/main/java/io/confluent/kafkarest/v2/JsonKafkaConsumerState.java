@@ -19,9 +19,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.entities.ForwardHeader;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.errors.SerializationException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class JsonKafkaConsumerState extends KafkaConsumerState<byte[], byte[], Object, Object> {
 
@@ -45,19 +49,23 @@ public class JsonKafkaConsumerState extends KafkaConsumerState<byte[], byte[], O
     // and just use the raw bytes, but that risks returning invalid data to the user
     // if their data is not actually JSON encoded.
 
-    if (record.key() != null) {
+    if (record.key() != null && record.key().length > 0) {
       approxSize += record.key().length;
       key = deserialize(record.key());
     }
 
-    if (record.value() != null) {
+    if (record.value() != null && record.value().length > 0) {
       approxSize += record.value().length;
       value = deserialize(record.value());
     }
 
+    List<ForwardHeader> headers = new ArrayList<>();
+    record.headers().forEach(header -> headers.add(new ForwardHeader(header)));
+
     return new ConsumerRecordAndSize<>(
         io.confluent.kafkarest.entities.ConsumerRecord.create(
-            record.topic(), key, value, record.partition(), record.offset()), approxSize);
+            record.topic(), key, value, record.partition(),
+            record.offset(), headers), approxSize);
   }
 
   private Object deserialize(byte[] data) {
