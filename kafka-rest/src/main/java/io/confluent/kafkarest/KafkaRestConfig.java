@@ -699,6 +699,16 @@ public class KafkaRestConfig extends RestConfig {
             getString(METRICS_JMX_PREFIX_CONFIG), originalsWithPrefix(METRICS_CONTEXT_PREFIX));
   }
 
+  public KafkaRestConfig(ConfigDef configDef, Properties props, Time time) {
+    this(configDef, props);
+  }
+
+  public Properties getOriginalProperties() {
+    Properties properties = new Properties();
+    properties.putAll(originals());
+    return properties;
+  }
+
   public Properties getProducerProperties() {
     Properties producerProps = new Properties();
 
