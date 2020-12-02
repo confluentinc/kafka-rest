@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Serializer;
 import org.slf4j.Logger;
@@ -57,52 +56,32 @@ public class ProducerPool {
       KafkaRestConfig appConfig,
       Properties producerConfigOverrides
   ) {
-    this(appConfig, RestConfigUtils.bootstrapBrokers(appConfig), producerConfigOverrides);
-  }
 
-  public ProducerPool(
-      KafkaRestConfig appConfig,
-      String bootstrapBrokers,
-      Properties producerConfigOverrides
-  ) {
-
-    Map<String, Object> binaryProps =
-        buildStandardConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
+    Map<String, Object> binaryProps = buildStandardConfig(appConfig, producerConfigOverrides);
     producers.put(EmbeddedFormat.BINARY, buildBinaryProducer(binaryProps));
 
-    Map<String, Object> jsonProps =
-        buildStandardConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
+    Map<String, Object> jsonProps = buildStandardConfig(appConfig, producerConfigOverrides);
     producers.put(EmbeddedFormat.JSON, buildJsonProducer(jsonProps));
 
-    Map<String, Object> avroProps =
-        buildSchemaConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
+    Map<String, Object> avroProps = buildSchemaConfig(appConfig, producerConfigOverrides);
     producers.put(EmbeddedFormat.AVRO, buildAvroProducer(avroProps));
 
-    Map<String, Object> jsonSchemaProps =
-        buildSchemaConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
+    Map<String, Object> jsonSchemaProps = buildSchemaConfig(appConfig, producerConfigOverrides);
     producers.put(EmbeddedFormat.JSONSCHEMA, buildJsonSchemaProducer(jsonSchemaProps));
 
-    Map<String, Object> protobufProps =
-        buildSchemaConfig(appConfig, bootstrapBrokers, producerConfigOverrides);
+    Map<String, Object> protobufProps = buildSchemaConfig(appConfig, producerConfigOverrides);
     producers.put(EmbeddedFormat.PROTOBUF, buildProtobufProducer(protobufProps));
   }
 
   private Map<String, Object> buildStandardConfig(
-      KafkaRestConfig appConfig,
-      String bootstrapBrokers,
-      Properties producerConfigOverrides
-  ) {
+      KafkaRestConfig appConfig, Properties producerConfigOverrides) {
     Map<String, Object> props = new HashMap<String, Object>();
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
-
-    Properties producerProps = (Properties) appConfig.getProducerProperties();
+    Properties producerProps = appConfig.getProducerProperties();
     return buildConfig(props, producerProps, producerConfigOverrides);
   }
 
   private NoSchemaRestProducer<byte[], byte[]> buildBinaryProducer(
-      Map<String, Object>
-          binaryProps
-  ) {
+      Map<String, Object> binaryProps) {
     return buildNoSchemaProducer(binaryProps, new ByteArraySerializer(), new ByteArraySerializer());
   }
 
@@ -123,18 +102,9 @@ public class ProducerPool {
   }
 
   private Map<String, Object> buildSchemaConfig(
-      KafkaRestConfig appConfig,
-      String bootstrapBrokers,
-      Properties producerConfigOverrides
-  ) {
+      KafkaRestConfig appConfig, Properties producerConfigOverrides) {
     Map<String, Object> schemaDefaults = new HashMap<String, Object>();
-    schemaDefaults.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapBrokers);
-    schemaDefaults.put(
-        "schema.registry.url",
-        appConfig.getString(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG)
-    );
-
-    Properties producerProps = (Properties) appConfig.getProducerProperties();
+    Properties producerProps = appConfig.getProducerProperties();
     return buildConfig(schemaDefaults, producerProps, producerConfigOverrides);
   }
 
@@ -172,10 +142,7 @@ public class ProducerPool {
   }
 
   private Map<String, Object> buildConfig(
-      Map<String, Object> defaults,
-      Properties userProps,
-      Properties overrides
-  ) {
+      Map<String, Object> defaults, Properties userProps, Properties overrides) {
     // Note careful ordering: built-in values we look up automatically first, then configs
     // specified by user with initial KafkaRestConfig, and finally explicit overrides passed to
     // this method (only used for tests)

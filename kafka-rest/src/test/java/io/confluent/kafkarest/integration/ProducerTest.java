@@ -143,7 +143,7 @@ public class ProducerTest
     overrides.setProperty("buffer.memory", "1");
     // Note separate ProducerPool since the override should only be for this test, so
     // getProducerPool doesn't work here
-    ProducerPool pool = new ProducerPool(this.restConfig, this.brokerList, overrides);
+    ProducerPool pool = new ProducerPool(this.restConfig, overrides);
 
     BinaryPartitionProduceRequest request =
         BinaryPartitionProduceRequest.create(

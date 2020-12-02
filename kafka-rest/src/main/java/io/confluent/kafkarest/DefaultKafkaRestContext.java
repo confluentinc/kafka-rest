@@ -16,7 +16,6 @@
 package io.confluent.kafkarest;
 
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
-import java.util.Properties;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AdminClient;
 
@@ -67,18 +66,9 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   @Override
   public synchronized Admin getAdmin() {
     if (adminClient == null) {
-      adminClient = AdminClient.create(adminProperties(config));
+      adminClient = AdminClient.create(config.getAdminProperties());
     }
     return adminClient;
-  }
-
-  public static Properties adminProperties(KafkaRestConfig kafkaRestConfig) {
-    Properties properties = new Properties();
-    properties.putAll(kafkaRestConfig.getAdminProperties());
-    properties.put(
-        KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG,
-        RestConfigUtils.bootstrapBrokers(kafkaRestConfig));
-    return properties;
   }
 
   @Override
