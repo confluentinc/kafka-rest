@@ -122,12 +122,19 @@ public class KafkaConsumerManager {
             new RejectedExecutionHandler() {
             @Override
             public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-              log.debug("The runnable {} was rejected execution. "
-                  + "The thread pool must be satured or shutiing down", r);
               if (r instanceof ReadFutureTask) {
                 RunnableReadTask readTask = ((ReadFutureTask)r).readTask;
-                readTask.delayFor(Duration.ofMillis(ThreadLocalRandom.current().nextInt(25, 76)));
+                Duration retry = Duration.ofMillis(ThreadLocalRandom.current().nextInt(25, 76));
+                log.debug(
+                    "The runnable {} was rejected execution because the thread pool is saturated. "
+                        + "Delaying execution for {}ms.",
+                    r, retry.toMillis());
+                readTask.delayFor(retry);
               } else {
+                log.debug(
+                    "The runnable {} was rejected execution because the thread pool is saturated. "
+                        + "Executing on calling thread.",
+                    r);
                 // run commitOffset and consumer close tasks from the caller thread
                 if (!executor.isShutdown()) {
                   r.run();

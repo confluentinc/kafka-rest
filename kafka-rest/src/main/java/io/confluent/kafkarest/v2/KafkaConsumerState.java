@@ -375,8 +375,8 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
         .map(OffsetAndTimestamp::offset);
   }
 
-  public synchronized boolean expired(Instant nowMs) {
-    return !expiration.isAfter(nowMs);
+  public synchronized boolean expired(Instant now) {
+    return !expiration.isAfter(now);
   }
 
   public synchronized void updateExpiration() {

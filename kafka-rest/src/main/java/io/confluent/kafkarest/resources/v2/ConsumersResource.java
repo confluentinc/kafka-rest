@@ -176,14 +176,14 @@ public final class ConsumersResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @QueryParam("timeout") @DefaultValue("-1") long timeout,
+      @QueryParam("timeout") @DefaultValue("-1") long timeoutMs,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
     readRecords(
         asyncResponse,
         group,
         instance,
-        Duration.ofMillis(timeout),
+        Duration.ofMillis(timeoutMs),
         maxBytes,
         BinaryKafkaConsumerState.class,
         BinaryConsumerRecord::fromConsumerRecord);
@@ -198,14 +198,14 @@ public final class ConsumersResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @QueryParam("timeout") @DefaultValue("-1") long timeout,
+      @QueryParam("timeout") @DefaultValue("-1") long timeoutMs,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
     readRecords(
         asyncResponse,
         group,
         instance,
-        Duration.ofMillis(timeout),
+        Duration.ofMillis(timeoutMs),
         maxBytes,
         JsonKafkaConsumerState.class,
         JsonConsumerRecord::fromConsumerRecord);
@@ -220,14 +220,14 @@ public final class ConsumersResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @QueryParam("timeout") @DefaultValue("-1") long timeout,
+      @QueryParam("timeout") @DefaultValue("-1") long timeoutMs,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
     readRecords(
         asyncResponse,
         group,
         instance,
-        Duration.ofMillis(timeout),
+        Duration.ofMillis(timeoutMs),
         maxBytes,
         SchemaKafkaConsumerState.class,
         SchemaConsumerRecord::fromConsumerRecord);
@@ -242,14 +242,14 @@ public final class ConsumersResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @QueryParam("timeout") @DefaultValue("-1") long timeout,
+      @QueryParam("timeout") @DefaultValue("-1") long timeoutMs,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
     readRecords(
         asyncResponse,
         group,
         instance,
-        Duration.ofMillis(timeout),
+        Duration.ofMillis(timeoutMs),
         maxBytes,
         SchemaKafkaConsumerState.class,
         SchemaConsumerRecord::fromConsumerRecord);
@@ -264,14 +264,14 @@ public final class ConsumersResource {
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @QueryParam("timeout") @DefaultValue("-1") long timeout,
+      @QueryParam("timeout") @DefaultValue("-1") long timeoutMs,
       @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
   ) {
     readRecords(
         asyncResponse,
         group,
         instance,
-        Duration.ofMillis(timeout),
+        Duration.ofMillis(timeoutMs),
         maxBytes,
         SchemaKafkaConsumerState.class,
         SchemaConsumerRecord::fromConsumerRecord);

@@ -123,9 +123,12 @@ public class KafkaRestConfig extends RestConfig {
   public static final ConfigDef.Range PROXY_FETCH_MIN_BYTES_VALIDATOR =
           ConfigDef.Range.between(-1, PROXY_FETCH_MIN_BYTES_MAX);
 
+  @Deprecated
   public static final String PRODUCER_THREADS_CONFIG = "producer.threads";
+  @Deprecated
   private static final String PRODUCER_THREADS_DOC =
-      "Number of threads to run produce requests on.";
+      "Number of threads to run produce requests on. Deprecated: This config has no effect.";
+  @Deprecated
   public static final String PRODUCER_THREADS_DEFAULT = "5";
 
   public static final String CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG = "consumer.iterator.timeout.ms";
