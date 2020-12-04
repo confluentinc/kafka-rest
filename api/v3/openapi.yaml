@@ -343,7 +343,7 @@ paths:
 
       get:
         summary: 'Get Consumer Lag'
-        description: 'Returns lag of the specified consumer.'
+        description: 'Returns partition lags for the specified consumer.'
         tags:
           - Consumer Group
         responses:
@@ -1883,10 +1883,23 @@ components:
             consumer_id: 'consumer-1'
             instance_id: 'consumer-instance-1'
             client_id: 'client-1'
-            topic_name: 'topic-1'
-            partition_id: 1
-            partition:
-              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
+            partition_lag:
+              - kind: 'PartitionLag'
+                current_offset: 1
+                log_end_offset: 101
+                lag: 100
+                topic_name: 'topic-1'
+                partition_id: 1
+                partition:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
+              - kind: 'PartitionLag'
+                current_offset: 1
+                log_end_offset: 10
+                lag: 10
+                topic_name: 'topic-1'
+                partition_id: 2
+                partition:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/2'
 
     GetConsumerResponse:
       description: 'The consumer.'

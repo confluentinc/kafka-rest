@@ -18,26 +18,26 @@ package io.confluent.kafkarest.entities.v3;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
-import io.confluent.kafkarest.entities.ConsumerLagSummary;
+import io.confluent.kafkarest.entities.ConsumerGroupLag;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
 @AutoValue
-public abstract class ConsumerLagSummaryData extends Resource {
+public abstract class ConsumerGroupLagData extends Resource {
 
-  ConsumerLagSummaryData() {
+  ConsumerGroupLagData() {
   }
-  @JsonProperty("max_lag")
-  public abstract Integer getMaxLag();
-
-  @JsonProperty("total_lag")
-  public abstract Integer getTotalLag();
-
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
 
   @JsonProperty("consumer_group_id")
   public abstract String getConsumerGroupId();
+
+  @JsonProperty("max_lag")
+  public abstract Integer getMaxLag();
+
+  @JsonProperty("total_lag")
+  public abstract Integer getTotalLag();
 
   @JsonProperty("max_lag_consumer_id")
   public abstract String getMaxLagConsumerId();
@@ -58,31 +58,31 @@ public abstract class ConsumerLagSummaryData extends Resource {
   public abstract Relationship getMaxLagPartition();
 
   public static Builder builder() {
-    return new AutoValue_ConsumerLagSummaryData.Builder().setKind("KafkaConsumerLagSummary");
+    return new AutoValue_ConsumerGroupLagData.Builder().setKind("KafkaConsumerGroupLag");
   }
 
-  // what ConsumerLagSummary get methods are appropriate?
-  public static Builder fromConsumerLagSummary(ConsumerLagSummary consumerLagSummary) {
+  // what ConsumerGroupLag get methods are appropriate?
+  public static Builder fromConsumerGroupLag(ConsumerGroupLag consumerGroupLag) {
     return builder()
-        .setMaxLag(consumerLagSummary.getMaxLag())
-        .setTotalLag(consumerLagSummary.getTotalLag())
-        .setClusterId(consumerLagSummary.getClusterId())
-        .setConsumerGroupId(consumerLagSummary.getConsumerGroupId())
-        .setMaxLagConsumerId(consumerLagSummary.getMaxLagConsumerId())
-        .setMaxLagClientId(consumerLagSummary.getMaxLagClientId())
-        .setMaxLagInstanceId(consumerLagSummary.getMaxLagInstanceId().orElse(null))
-        .setMaxLagTopicName(consumerLagSummary.getMaxLagTopicName())
-        .setMaxLagPartitionId(consumerLagSummary.getMaxLagPartitionId());
+        .setClusterId(consumerGroupLag.getClusterId())
+        .setConsumerGroupId(consumerGroupLag.getConsumerGroupId())
+        .setMaxLag(consumerGroupLag.getMaxLag())
+        .setTotalLag(consumerGroupLag.getTotalLag())
+        .setMaxLagConsumerId(consumerGroupLag.getMaxLagConsumerId())
+        .setMaxLagClientId(consumerGroupLag.getMaxLagClientId())
+        .setMaxLagInstanceId(consumerGroupLag.getMaxLagInstanceId().orElse(null))
+        .setMaxLagTopicName(consumerGroupLag.getMaxLagTopicName())
+        .setMaxLagPartitionId(consumerGroupLag.getMaxLagPartitionId());
   }
 
   @JsonCreator
-  static ConsumerData fromJson(
+  static ConsumerGroupLagData fromJson(
       @JsonProperty("kind") String kind,
       @JsonProperty("metadata") Metadata metadata,
-      @JsonProperty("max_lag") Integer maxLag,
-      @JsonProperty("total_lag") Integer totalLag,
       @JsonProperty("cluster_id") String clusterId,
       @JsonProperty("consumer_group_id") String consumerGroupId,
+      @JsonProperty("max_lag") Integer maxLag,
+      @JsonProperty("total_lag") Integer totalLag,
       @JsonProperty("max_lag_consumer_id") String maxLagConsumerId,
       @JsonProperty("max_lag_client_id") String maxLagClientId,
       @JsonProperty("max_lag_instance_id") @Nullable String maxLagInstanceId,
@@ -93,10 +93,10 @@ public abstract class ConsumerLagSummaryData extends Resource {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
-        .setMaxLag(maxLag)
-        .setTotalLag(totalLag)
         .setClusterId(clusterId)
         .setConsumerGroupId(consumerGroupId)
+        .setMaxLag(maxLag)
+        .setTotalLag(totalLag)
         .setMaxLagConsumerId(maxLagConsumerId)
         .setMaxLagClientId(maxLagClientId)
         .setMaxLagInstanceId(maxLagInstanceId)
@@ -112,13 +112,13 @@ public abstract class ConsumerLagSummaryData extends Resource {
     Builder() {
     }
 
-    public abstract Builder setMaxLag(Integer maxLag);
-
-    public abstract Builder setTotalLag(Integer totalLag);
-
     public abstract Builder setClusterId(String clusterId);
 
     public abstract Builder setConsumerGroupId(String consumerGroupId);
+
+    public abstract Builder setMaxLag(Integer maxLag);
+
+    public abstract Builder setTotalLag(Integer totalLag);
 
     public abstract Builder setMaxLagConsumerId(String maxLagConsumerId);
 
@@ -132,6 +132,6 @@ public abstract class ConsumerLagSummaryData extends Resource {
 
     public abstract Builder setMaxLagPartition(Relationship maxLagPartition);
 
-    public abstract ConsumerData build();
+    public abstract ConsumerGroupLagData build();
   }
 }

@@ -15,21 +15,18 @@
 
 package io.confluent.kafkarest.controllers;
 
-import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
-
-import io.confluent.kafkarest.entities.ConsumerLagSummary;
-import java.util.List;
+import io.confluent.kafkarest.entities.ConsumerGroupLag;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * A service to manage Kafka {@link ConsumerLagSummary ConsumerLagSummaries}.
+ * A service to manage Kafka {@link ConsumerGroupLag ConsumerGroupLags}.
  */
-public interface ConsumerLagSummaryManager {
+public interface ConsumerGroupLagManager {
 
   /**
-   * Returns the Kafka {@link ConsumerLagSummary} with the given {@code consumerGroupId}.
+   * Returns the Kafka {@link ConsumerGroupLag} with the given {@code consumerGroupId}.
    */
-  CompletableFuture<Optional<ConsumerLagSummary>> getConsumerLagSummary(
+  CompletableFuture<Optional<ConsumerGroupLag>> getConsumerGroupLag(
       String clusterId, String consumerGroupId);
 }
