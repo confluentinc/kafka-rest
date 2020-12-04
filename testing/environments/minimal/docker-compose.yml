@@ -94,15 +94,18 @@ services:
     depends_on:
       - zookeeper
       - kafka-1
+    cpu_count: 2
+    mem_limit: 512m
+    mem_reservation: 512m
     environment:
       KAFKA_REST_ADVERTISED_LISTENERS: "http://localhost:9391"
       # You can't have ACLs without a Kafka authorizer.
       KAFKA_REST_API_ENDPOINTS_BLOCKLIST: "api.v3.acls.*"
       KAFKA_REST_BOOTSTRAP_SERVERS: "kafka-1:9191"
       KAFKA_REST_LISTENERS: "http://0.0.0.0:9391"
-      KAFKAREST_HEAP_OPTS: "-Xms1g -Xmx1g -XX:MetaspaceSize=96m -XX:+UseG1GC \
-      -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:G1HeapRegionSize=16M \
-      -XX:MinMetaspaceFreeRatio=50 -XX:MaxMetaspaceFreeRatio=80"
+      #KAFKAREST_HEAP_OPTS: "-Xms1g -Xmx1g -XX:MetaspaceSize=96m -XX:+UseG1GC \
+      #-XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:G1HeapRegionSize=16M \
+      #-XX:MinMetaspaceFreeRatio=50 -XX:MaxMetaspaceFreeRatio=80"
       JMX_PORT: 9392
     ports:
       - "9391:9391"
