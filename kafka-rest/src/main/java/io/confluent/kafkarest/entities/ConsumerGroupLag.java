@@ -15,14 +15,17 @@
 
 package io.confluent.kafkarest.entities;
 
+import static java.lang.Math.toIntExact;
+
 import com.google.auto.value.AutoValue;
+import io.confluent.kafkarest.resources.ConsumerGroupOffsets;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
 @AutoValue
-public abstract class ConsumerLagSummary {
+public abstract class ConsumerGroupLag {
 
-  ConsumerLagSummary() {
+  ConsumerGroupLag() {
   }
 
   public abstract Integer getMaxLag();
@@ -44,7 +47,25 @@ public abstract class ConsumerLagSummary {
   public abstract Integer getMaxLagPartitionId();
 
   public static Builder builder() {
-    return new AutoValue_ConsumerLagSummary.Builder();
+    return new AutoValue_ConsumerGroupLag.Builder();
+  }
+
+  // something similar to ConsumerGroup's fromConsumerGroupDescription(String clusterId, ConsumerGroupDescription description)
+  // that can build and return a ConsumerGroupLag object
+  // for instance, instead of return builder()...setPartitionAssignor(description.partitionAssignor())
+  // we need to pull information like maxLag and totalLag from a ConsumerGroupLagDescription object to set on our builder
+  public static ConsumerGroupLag fromConsumerGroupOffsets(
+      String clusterId, ConsumerGroupOffsets cgo) {
+    return builder()
+        .setClusterId(clusterId)
+        .setConsumerGroupId(cgo.getConsumerGroupId())
+        .setMaxLag(42)
+        .setTotalLag(toIntExact(cgo.getTotalLag()))
+        .setMaxLagConsumerId("todo")
+        .setMaxLagClientId("todo")
+        .setMaxLagInstanceId("todo")
+        .setMaxLagTopicName("todo")
+        .build();
   }
 
   @AutoValue.Builder
@@ -53,13 +74,13 @@ public abstract class ConsumerLagSummary {
     Builder() {
     }
 
-    public abstract Builder setMaxLag(Integer maxLag);
-
-    public abstract Builder setTotalLag(Integer totalLag);
-
     public abstract Builder setClusterId(String clusterId);
 
     public abstract Builder setConsumerGroupId(String consumerGroupId);
+
+    public abstract Builder setMaxLag(Integer maxLag);
+
+    public abstract Builder setTotalLag(Integer totalLag);
 
     public abstract Builder setMaxLagConsumerId(String maxLagConsumerId);
 
@@ -73,6 +94,6 @@ public abstract class ConsumerLagSummary {
 
 //    public abstract Builder setMaxLagPartition(Partition maxLagPartition);
 //
-    public abstract ConsumerLagSummary build();
+    public abstract ConsumerGroupLag build();
   }
 }
