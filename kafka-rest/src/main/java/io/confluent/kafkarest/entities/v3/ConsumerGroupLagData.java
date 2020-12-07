@@ -34,10 +34,10 @@ public abstract class ConsumerGroupLagData extends Resource {
   public abstract String getConsumerGroupId();
 
   @JsonProperty("max_lag")
-  public abstract Integer getMaxLag();
+  public abstract Long getMaxLag();
 
   @JsonProperty("total_lag")
-  public abstract Integer getTotalLag();
+  public abstract Long getTotalLag();
 
   @JsonProperty("max_lag_consumer_id")
   public abstract String getMaxLagConsumerId();
@@ -81,8 +81,8 @@ public abstract class ConsumerGroupLagData extends Resource {
       @JsonProperty("metadata") Metadata metadata,
       @JsonProperty("cluster_id") String clusterId,
       @JsonProperty("consumer_group_id") String consumerGroupId,
-      @JsonProperty("max_lag") Integer maxLag,
-      @JsonProperty("total_lag") Integer totalLag,
+      @JsonProperty("max_lag") Long maxLag,
+      @JsonProperty("total_lag") Long totalLag,
       @JsonProperty("max_lag_consumer_id") String maxLagConsumerId,
       @JsonProperty("max_lag_client_id") String maxLagClientId,
       @JsonProperty("max_lag_instance_id") @Nullable String maxLagInstanceId,
@@ -116,9 +116,9 @@ public abstract class ConsumerGroupLagData extends Resource {
 
     public abstract Builder setConsumerGroupId(String consumerGroupId);
 
-    public abstract Builder setMaxLag(Integer maxLag);
+    public abstract Builder setMaxLag(Long maxLag);
 
-    public abstract Builder setTotalLag(Integer totalLag);
+    public abstract Builder setTotalLag(Long totalLag);
 
     public abstract Builder setMaxLagConsumerId(String maxLagConsumerId);
 

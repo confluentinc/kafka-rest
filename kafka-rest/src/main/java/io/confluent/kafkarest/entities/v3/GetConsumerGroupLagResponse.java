@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.auto.value.AutoValue;
 
+@AutoValue
 public abstract class GetConsumerGroupLagResponse {
 
   GetConsumerGroupLagResponse() {

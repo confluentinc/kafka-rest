@@ -15,10 +15,8 @@
 
 package io.confluent.kafkarest.entities;
 
-import static java.lang.Math.toIntExact;
-
 import com.google.auto.value.AutoValue;
-import io.confluent.kafkarest.resources.ConsumerGroupOffsets;
+import io.confluent.kafkarest.controllers.ConsumerGroupOffsets;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -28,17 +26,17 @@ public abstract class ConsumerGroupLag {
   ConsumerGroupLag() {
   }
 
-  public abstract Integer getMaxLag();
+  public abstract Long getMaxLag();
 
-  public abstract Integer getTotalLag();
+  public abstract Long getTotalLag();
 
   public abstract String getClusterId();
 
   public abstract String getConsumerGroupId();
 
-  public abstract String getMaxLagConsumerId();
-
   public abstract String getMaxLagClientId();
+
+  public abstract String getMaxLagConsumerId();
 
   public abstract Optional<String> getMaxLagInstanceId();
 
@@ -59,12 +57,13 @@ public abstract class ConsumerGroupLag {
     return builder()
         .setClusterId(clusterId)
         .setConsumerGroupId(cgo.getConsumerGroupId())
-        .setMaxLag(42)
-        .setTotalLag(toIntExact(cgo.getTotalLag()))
-        .setMaxLagConsumerId("todo")
-        .setMaxLagClientId("todo")
+        .setMaxLag(cgo.getMaxLag())
+        .setTotalLag(cgo.getTotalLag())
+        .setMaxLagClientId(cgo.getMaxLagClientId())
+        .setMaxLagConsumerId(cgo.getMaxLagConsumerId())
         .setMaxLagInstanceId("todo")
-        .setMaxLagTopicName("todo")
+        .setMaxLagTopicName(cgo.getMaxLagTopicName())
+        .setMaxLagPartitionId(cgo.getMaxLagPartitionId())
         .build();
   }
 
@@ -78,13 +77,13 @@ public abstract class ConsumerGroupLag {
 
     public abstract Builder setConsumerGroupId(String consumerGroupId);
 
-    public abstract Builder setMaxLag(Integer maxLag);
+    public abstract Builder setMaxLag(Long maxLag);
 
-    public abstract Builder setTotalLag(Integer totalLag);
-
-    public abstract Builder setMaxLagConsumerId(String maxLagConsumerId);
+    public abstract Builder setTotalLag(Long totalLag);
 
     public abstract Builder setMaxLagClientId(String maxLagClientId);
+
+    public abstract Builder setMaxLagConsumerId(String maxLagConsumerId);
 
     public abstract Builder setMaxLagInstanceId(@Nullable String maxLagInstanceId);
 

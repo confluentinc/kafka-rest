@@ -80,6 +80,8 @@ public final class ConfigModule extends AbstractBinder {
     bind(config.getInt(RestConfig.PORT_CONFIG))
         .qualifiedBy(new PortConfigImpl())
         .to(Integer.class);
+
+    // todo: add binding
   }
 
   @Qualifier
@@ -143,5 +145,16 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class PortConfigImpl
       extends AnnotationLiteral<PortConfig> implements PortConfig {
+  }
+
+  // ConsumerMetadataTimeout in blueway
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER })
+  public @interface OffsetsTimeoutConfig {
+  }
+
+  private static final class OffsetsTimeoutConfigImpl
+      extends AnnotationLiteral<OffsetsTimeoutConfig> implements OffsetsTimeoutConfig {
   }
 }
