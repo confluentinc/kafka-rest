@@ -183,6 +183,13 @@ public class KafkaRestConfig extends RestConfig {
       + " Use 0 for no timeout";
   public static final String SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT = "1000";
 
+  public static final String OFFSETS_TIMEOUT_MS_CONFIG =
+      "offsets.timeout.ms";
+  private static final String OFFSETS_TIMEOUT_MS_DOC =
+      "Timeout for consumer group metadata requests when listing consumer group information "
+          + "for ConsumerOffsetsDao operations.";
+  public static final String OFFSETS_TIMEOUT_MS_DEFAULT = "15000";
+
   // TODO: change this to "http://0.0.0.0:8082" when PORT_CONFIG is deleted.
   private static final String KAFKAREST_LISTENERS_DEFAULT = "";
   @Deprecated
@@ -457,6 +464,13 @@ public class KafkaRestConfig extends RestConfig {
         SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT,
         Importance.LOW,
         SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC
+    )
+    .define(
+        OFFSETS_TIMEOUT_MS_CONFIG,
+        Type.INT,
+        OFFSETS_TIMEOUT_MS_DEFAULT,
+        Importance.MEDIUM,
+        OFFSETS_TIMEOUT_MS_DOC
     )
     .define(
         KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG,

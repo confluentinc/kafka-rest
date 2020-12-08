@@ -77,11 +77,13 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new ListenersConfigImpl())
         .to(new TypeLiteral<List<URI>>() { });
 
+    bind(config.getInt(KafkaRestConfig.OFFSETS_TIMEOUT_MS_CONFIG))
+        .qualifiedBy(new OffsetsTimeoutMsConfigImpl())
+        .to(Integer.class);
+
     bind(config.getInt(RestConfig.PORT_CONFIG))
         .qualifiedBy(new PortConfigImpl())
         .to(Integer.class);
-
-    // todo: add binding
   }
 
   @Qualifier
@@ -151,10 +153,10 @@ public final class ConfigModule extends AbstractBinder {
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER })
-  public @interface OffsetsTimeoutConfig {
+  public @interface OffsetsTimeoutMsConfig {
   }
 
-  private static final class OffsetsTimeoutConfigImpl
-      extends AnnotationLiteral<OffsetsTimeoutConfig> implements OffsetsTimeoutConfig {
+  private static final class OffsetsTimeoutMsConfigImpl
+      extends AnnotationLiteral<OffsetsTimeoutMsConfig> implements OffsetsTimeoutMsConfig {
   }
 }
