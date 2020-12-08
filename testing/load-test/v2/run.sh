@@ -43,7 +43,7 @@ mkdir "${target_dir}"
 for test_file in "${test_dir}"/*-test.js; do
   test_name="${test_file%.js}"
   test_name="${test_name##*/}"
-  "${envs_dir}"/sasl_plain/run.sh -d
+  "${envs_dir}"/minimal/run.sh -d
 
   wait_for_server_with_timeout http://localhost:9391 180s
 

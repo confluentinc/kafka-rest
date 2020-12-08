@@ -14,12 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import argparse
-import datetime
-import json
-import xlsxwriter
+
+# This script aggregates all the input k6 JSON test summaries into a single spreadsheet.
+# Usage: python collect-results.py test1.out test2.out test3.out summary.xlsx
+
+
+from builtins import (dict, float, int, len, list, max, open, range, sorted, str)
 
 from collections import defaultdict
+
+import argparse
+import json
+import xlsxwriter
 
 
 parser = argparse.ArgumentParser()
@@ -67,7 +73,7 @@ for column_name in sorted(columns.keys()):
     worksheet.set_column(
             col,
             col + len(columns[column_name]) - 1,
-            max(5, int(len(column_name) / len(columns[column_name]))))
+            max(8, int(len(column_name) / len(columns[column_name]))))
 
     for i in range(col, col + len(columns[column_name])):
         worksheet.write_string(row + 1, i, columns[column_name][i - col], header_format)
@@ -103,7 +109,7 @@ for test_name in table.keys():
             if not value:
                 parsed_value = None
             elif column_name.endswith('Latency') or column_name in common_latency_metrics:
-                parsed_value = datetime.timedelta(milliseconds=float(value))
+                parsed_value = float(value)
             elif column_name.endswith('Count') or column_name in common_count_metrics:
                 parsed_value = float(value)
             else:

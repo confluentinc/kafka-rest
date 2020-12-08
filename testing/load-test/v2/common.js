@@ -2,6 +2,17 @@ import {check} from 'k6';
 import http from 'k6/http';
 import {Counter, Trend} from 'k6/metrics';
 
+import {randomIntBetween} from "https://jslib.k6.io/k6-utils/1.0.0/index.js";
+
+export let randomByteString = function (size) {
+    let str = '';
+    for (let i = 0; i < size; i++) {
+        // First 128 chars (US-ASCII) take 1 byte to UTF-8 encode.
+        str += String.fromCharCode(randomIntBetween(0, 128));
+    }
+    return str;
+}
+
 const baseUrl = 'http://localhost:9391';
 
 let produceBinaryToTopicRequestLatency = new Trend('ProduceBinaryToTopicRequestLatency', true);
