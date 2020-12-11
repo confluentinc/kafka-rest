@@ -27,6 +27,7 @@ public abstract class ConsumerGroupLagData extends Resource {
 
   ConsumerGroupLagData() {
   }
+
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
 
