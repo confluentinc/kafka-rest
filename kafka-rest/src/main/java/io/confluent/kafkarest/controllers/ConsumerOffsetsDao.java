@@ -44,22 +44,22 @@ public class ConsumerOffsetsDao {
     this.consumerMetadataTimeout = consumerMetadataTimeout;
   }
 
-//  public Map<String, ConsumerGroupOffsets> getAllConsumerGroupOffsets()
-//      throws InterruptedException, ExecutionException, TimeoutException {
-//
-//    final Set<String> consumerGroupIds = getConsumerGroups();
-//    final Map<String, ConsumerGroupDescription> fetchedConsumerGroupDesc =
-//        getAllConsumerGroupDescriptions(consumerGroupIds);
-//    final Map<String, ConsumerGroupOffsets> cgOffsetsMap = new HashMap<>();
-//
-//    // all consumer groups for this cluster
-//    for (ConsumerGroupDescription desc : fetchedConsumerGroupDesc.values()) {
-//      ConsumerGroupOffsets cgOffsets = getConsumerGroupOffsets(desc, IsolationLevel.READ_COMMITTED);
-//      cgOffsetsMap.put(desc.groupId(), cgOffsets);
-//    }
-//
-//    return cgOffsetsMap;
-//  }
+  // public Map<String, ConsumerGroupOffsets> getAllConsumerGroupOffsets()
+  //     throws InterruptedException, ExecutionException, TimeoutException {
+
+  //   final Set<String> consumerGroupIds = getConsumerGroups();
+  //   final Map<String, ConsumerGroupDescription> fetchedConsumerGroupDesc =
+  //       getAllConsumerGroupDescriptions(consumerGroupIds);
+  //   final Map<String, ConsumerGroupOffsets> cgOffsetsMap = new HashMap<>();
+
+  //   // all consumer groups for this cluster
+  //   for (ConsumerGroupDescription desc : fetchedConsumerGroupDesc.values()) {
+  //     ConsumerGroupOffsets cgOffsets = getConsumerGroupOffsets(desc, IsolationLevel.READ_COMMITTED);
+  //     cgOffsetsMap.put(desc.groupId(), cgOffsets);
+  //   }
+
+  //   return cgOffsetsMap;
+  // }
 
   ConsumerGroupOffsets getConsumerGroupOffsets(
       ConsumerGroupDescription cgDesc,
@@ -89,11 +89,11 @@ public class ConsumerOffsetsDao {
       long latestOffset = getOffset(latestOffsets, tp);
       long earliestOffset = getOffset(earliestOffsets, tp);
       if (currentOffset < 0 || latestOffset < 0) {
-//        log.debug("invalid offsets for topic={} consumerId={} current={} latest={}",
-//            tp.topic(),
-//            consumerId,
-//            currentOffset,
-//            latestOffset);
+        // log.debug("invalid offsets for topic={} consumerId={} current={} latest={}",
+        //     tp.topic(),
+        //     consumerId,
+        //     currentOffset,
+        //     latestOffset);
         continue;
       }
       cgOffsets.addOffset(
@@ -189,8 +189,8 @@ public class ConsumerOffsetsDao {
               return entry.getValue().whenComplete(
                   (cgDesc, throwable) -> {
                     if (throwable != null) {
-//                      log.warn("failed fetching description for consumerGroup={}", cgId,
-//                          throwable);
+                      // log.warn("failed fetching description for consumerGroup={}", cgId,
+                      //     throwable);
                     } else if (cgDesc != null) {
                       ret.put(cgId, cgDesc);
                     }
@@ -236,8 +236,8 @@ public class ConsumerOffsetsDao {
     return offsetInfo.offset();
   }
 
-//  @Override
-//  public void close() {
-//    kafkaAdminClient.close();
-//  }
+  // @Override
+  // public void close() {
+  //   kafkaAdminClient.close();
+  // }
 }
