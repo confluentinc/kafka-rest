@@ -16,6 +16,7 @@
 package io.confluent.kafkarest;
 
 import io.confluent.rest.metrics.RestMetricsContext;
+import java.time.Duration;
 import javax.ws.rs.core.MediaType;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
@@ -195,12 +196,12 @@ public class KafkaRestConfig extends RestConfig {
       + " Use 0 for no timeout";
   public static final String SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT = "1000";
 
-  public static final String OFFSETS_TIMEOUT_MS_CONFIG =
-      "offsets.timeout.ms";
-  private static final String OFFSETS_TIMEOUT_MS_DOC =
+  public static final String OFFSETS_TIMEOUT_CONFIG =
+      "offsets.timeout";
+  private static final String OFFSETS_TIMEOUT_DOC =
       "Timeout for consumer group metadata requests when listing consumer group information "
           + "for ConsumerOffsetsDao operations.";
-  public static final String OFFSETS_TIMEOUT_MS_DEFAULT = "15000";
+  public static final Duration OFFSETS_TIMEOUT_DEFAULT = Duration.ofSeconds(15);
 
   // TODO: change this to "http://0.0.0.0:8082" when PORT_CONFIG is deleted.
   private static final String KAFKAREST_LISTENERS_DEFAULT = "";
@@ -483,11 +484,11 @@ public class KafkaRestConfig extends RestConfig {
         SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC
     )
     .define(
-        OFFSETS_TIMEOUT_MS_CONFIG,
-        Type.INT,
-        OFFSETS_TIMEOUT_MS_DEFAULT,
+        OFFSETS_TIMEOUT_CONFIG,
+        Type.LONG,
+        OFFSETS_TIMEOUT_DEFAULT.toMillis(),
         Importance.MEDIUM,
-        OFFSETS_TIMEOUT_MS_DOC
+        OFFSETS_TIMEOUT_DOC
     )
     .define(
         KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG,
@@ -866,6 +867,10 @@ public class KafkaRestConfig extends RestConfig {
               e
       );
     }
+  }
+
+  public Duration getDuration(String key) {
+    return (Duration)this.get(key);
   }
 
   public static void main(String[] args) {

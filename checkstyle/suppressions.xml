@@ -41,6 +41,6 @@
     />
     <suppress
             checks="(ParameterNumber)"
-            files="(ClusterData).java"
+            files="(ClusterData|ConsumerGroupLagData).java"
     />
 </suppressions>

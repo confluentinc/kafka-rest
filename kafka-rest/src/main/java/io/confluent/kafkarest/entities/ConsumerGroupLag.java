@@ -48,10 +48,6 @@ public abstract class ConsumerGroupLag {
     return new AutoValue_ConsumerGroupLag.Builder();
   }
 
-  // something similar to ConsumerGroup's fromConsumerGroupDescription(String clusterId, ConsumerGroupDescription description)
-  // that can build and return a ConsumerGroupLag object
-  // for instance, instead of return builder()...setPartitionAssignor(description.partitionAssignor())
-  // we need to pull information like maxLag and totalLag from a ConsumerGroupLagDescription object to set on our builder
   public static ConsumerGroupLag fromConsumerGroupOffsets(
       String clusterId, ConsumerGroupOffsets cgo) {
     return builder()
@@ -91,8 +87,6 @@ public abstract class ConsumerGroupLag {
 
     public abstract Builder setMaxLagPartitionId(Integer maxLagPartitionId);
 
-//    public abstract Builder setMaxLagPartition(Partition maxLagPartition);
-//
     public abstract ConsumerGroupLag build();
   }
 }
