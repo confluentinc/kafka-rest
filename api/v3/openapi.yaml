@@ -336,12 +336,12 @@ paths:
         '200':
           $ref: '#/components/responses/GetConsumerGroupLagResponse'
 
-  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/topics/{topic_name}/partitions/{partition_id}/lag:
+  /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/lags/{consumer_group_id}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
-      - $ref: '#/components/parameters/ConsumerGroupId'
       - $ref: '#/components/parameters/TopicName'
       - $ref: '#/components/parameters/PartitionId'
+      - $ref: '#/components/parameters/ConsumerGroupId'
 
     get:
       summary: 'Get Consumer Lag'
@@ -352,7 +352,7 @@ paths:
         '200':
           $ref: '#/components/responses/GetConsumerLagResponse'
 
-  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/topics/-/partitions/-/lag:
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags:
       parameters:
         - $ref: '#/components/parameters/ClusterId'
         - $ref: '#/components/parameters/ConsumerGroupId'
@@ -1239,7 +1239,6 @@ components:
             - consumer_group_id
             - topic_name
             - partition_id
-            - partition
             - current_offset
             - log_end_offset
             - lag
@@ -1254,8 +1253,6 @@ components:
               type: string
             partition_id:
               type: integer
-            partition:
-              $ref: '#/components/schemas/Relationship'
             current_offset:
               type: integer
             log_end_offset:
@@ -1828,7 +1825,7 @@ components:
             partition:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
             lag:
-              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/consumer-groups/1/lag'
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1'
 
     GetConsumerGroupResponse:
       description: 'The consumer group.'
@@ -1883,14 +1880,12 @@ components:
           example:
             kind: 'KafkaConsumerLag'
             metadata:
-              self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/1/topics/topic-1/partitions/1/lag'
-              resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/topic=topic-1/partition=1/lag'
+              self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1'
+              resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1/lags/consumer-group=consumer-group-1'
             cluster_id: 'cluster-1'
             consumer_group_id: 'consumer-group-1'
             topic_name: 'topic-1'
             partition_id: 1
-            partition:
-              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
             consumer_id: 'consumer-1'
             instance_id: 'consumer-instance-1'
             client_id: 'client-1'
@@ -2291,7 +2286,7 @@ components:
                 partition:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
                 lag:
-                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/consumer-groups/1/lag'
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1'
               - kind: 'KafkaConsumerAssignment'
                 metadata:
                   self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1/assignments/topic-2/partitions/2'
@@ -2304,7 +2299,7 @@ components:
                 partition:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions/2'
                 lag:
-                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions/2/consumer-groups/1/lag'
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions/2/lags/consumer-groups-1'
               - kind: 'KafkaConsumerAssignment'
                 metadata:
                   self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1/assignments/topic-3/partitions/3'
@@ -2317,7 +2312,7 @@ components:
                 partition:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/3'
                 lag:
-                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/3/consumer-groups/1/lag'
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/3/lags/consumer-groups-1'
 
     ListConsumerGroupsResponse:
       description: 'The list of consumer groups.'
@@ -2380,19 +2375,17 @@ components:
          example:
            kind: 'KafkaConsumerLagList'
            metadata:
-             self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/topics/-/partitions/-/lag'
+             self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags'
              next: null
            data:
              - kind: 'KafkaConsumerLag'
                metadata:
-                 self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/topics/topic-1/partitions/1/lag'
-                 resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/topic=topic-1/partition=1/lag'
+                 self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-groups/consumer-group-1'
+                 resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1/lags/consumer-group=consumer-group-1'
                cluster_id: 'cluster-1'
                consumer_group_id: 'consumer-group-1'
                topic_name: 'topic-1'
                partition_id: 1
-               partition:
-                 related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
                consumer_id: 'consumer-1'
                instance_id: 'consumer-instance-1'
                client_id: 'client-1'
@@ -2401,14 +2394,12 @@ components:
                lag: 100
              - kind: 'KafkaConsumerLag'
                metadata:
-                 self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/topics/topic-1/partitions/2/lag'
-                 resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/topic=topic-1/partition=2/lag'
+                 self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/2/lags/consumer-groups/consumer-group-1'
+                 resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=2/lags/consumer-group=consumer-group-1'
                cluster_id: 'cluster-1'
                consumer_group_id: 'consumer-group-1'
                topic_name: 'topic-1'
                partition_id: 2
-               partition:
-                 related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/2'
                consumer_id: 'consumer-2'
                instance_id: 'consumer-instance-2'
                client_id: 'client-2'
@@ -2417,14 +2408,12 @@ components:
                lag: 10
              - kind: 'KafkaConsumerLag'
                metadata:
-                 self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/topic-1/partitions/3/lag'
-                 resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/topic=topic-1/partition=3/lag'
+                 self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/3/lags/consumer-groups/consumer-group-1'
+                 resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=3/lags/consumer-group=consumer-group-1'
                cluster_id: 'cluster-1'
                consumer_group_id: 'consumer-group-1'
                topic_name: 'topic-1'
                partition_id: 3
-               partition:
-                 related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/3'
                consumer_id: 'consumer-3'
                instance_id: 'consumer-instance-3'
                client_id: 'client-3'
