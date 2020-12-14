@@ -23,6 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.HashSet;
 import java.net.URI;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -77,9 +78,9 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new ListenersConfigImpl())
         .to(new TypeLiteral<List<URI>>() { });
 
-    bind(config.getInt(KafkaRestConfig.OFFSETS_TIMEOUT_MS_CONFIG))
-        .qualifiedBy(new OffsetsTimeoutMsConfigImpl())
-        .to(Integer.class);
+    bind(config.getDuration(KafkaRestConfig.OFFSETS_TIMEOUT_CONFIG))
+        .qualifiedBy(new OffsetsTimeoutConfigImpl())
+        .to(new TypeLiteral<Duration>() { });
 
     bind(config.getInt(RestConfig.PORT_CONFIG))
         .qualifiedBy(new PortConfigImpl())
@@ -153,10 +154,10 @@ public final class ConfigModule extends AbstractBinder {
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER })
-  public @interface OffsetsTimeoutMsConfig {
+  public @interface OffsetsTimeoutConfig {
   }
 
-  private static final class OffsetsTimeoutMsConfigImpl
-      extends AnnotationLiteral<OffsetsTimeoutMsConfig> implements OffsetsTimeoutMsConfig {
+  private static final class OffsetsTimeoutConfigImpl
+      extends AnnotationLiteral<OffsetsTimeoutConfig> implements OffsetsTimeoutConfig {
   }
 }

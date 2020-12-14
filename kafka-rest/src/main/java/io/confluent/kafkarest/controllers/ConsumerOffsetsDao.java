@@ -3,7 +3,8 @@ package io.confluent.kafkarest.controllers;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import io.confluent.kafkarest.config.ConfigModule.OffsetsTimeoutMsConfig;
+import io.confluent.kafkarest.config.ConfigModule.OffsetsTimeoutConfig;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,18 +31,19 @@ import org.apache.kafka.common.IsolationLevel;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.TopicPartition;
 
-public class ConsumerOffsetsDao {
+final class ConsumerOffsetsDao {
 
   private final Admin kafkaAdminClient;
   private final int consumerMetadataTimeout;
 
   @Inject
-  public ConsumerOffsetsDao(
+  ConsumerOffsetsDao(
       Admin kafkaAdminClient,
-      @OffsetsTimeoutMsConfig int consumerMetadataTimeout
+      @OffsetsTimeoutConfig Duration consumerMetadataTimeout
   ) {
     this.kafkaAdminClient = kafkaAdminClient;
-    this.consumerMetadataTimeout = consumerMetadataTimeout;
+    // ahu todo: figure out how to safely cast to int (required by AbstractOptions.timeoutMs())
+    this.consumerMetadataTimeout = (int) consumerMetadataTimeout.toMillis();
   }
 
   // public Map<String, ConsumerGroupOffsets> getAllConsumerGroupOffsets()
