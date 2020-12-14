@@ -1881,7 +1881,7 @@ components:
             kind: 'KafkaConsumerLag'
             metadata:
               self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1'
-              resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1/lags/consumer-group=consumer-group-1'
+              resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1/lags=consumer-group-1'
             cluster_id: 'cluster-1'
             consumer_group_id: 'consumer-group-1'
             topic_name: 'topic-1'
@@ -2381,7 +2381,7 @@ components:
              - kind: 'KafkaConsumerLag'
                metadata:
                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-groups/consumer-group-1'
-                 resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1/lags/consumer-group=consumer-group-1'
+                 resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=1/lags=consumer-group-1'
                cluster_id: 'cluster-1'
                consumer_group_id: 'consumer-group-1'
                topic_name: 'topic-1'
@@ -2395,7 +2395,7 @@ components:
              - kind: 'KafkaConsumerLag'
                metadata:
                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/2/lags/consumer-groups/consumer-group-1'
-                 resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=2/lags/consumer-group=consumer-group-1'
+                 resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=2/lags=consumer-group-1'
                cluster_id: 'cluster-1'
                consumer_group_id: 'consumer-group-1'
                topic_name: 'topic-1'
@@ -2409,7 +2409,7 @@ components:
              - kind: 'KafkaConsumerLag'
                metadata:
                  self: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/3/lags/consumer-groups/consumer-group-1'
-                 resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=3/lags/consumer-group=consumer-group-1'
+                 resource_name: 'crn:///kafka=cluster-1/topic=topic-1/partition=3/lags=consumer-group-1'
                cluster_id: 'cluster-1'
                consumer_group_id: 'consumer-group-1'
                topic_name: 'topic-1'
