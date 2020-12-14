@@ -40,12 +40,12 @@ final class ConsumerLagManagerImpl implements ConsumerLagManager {
         .thenApply(
             consumerGroup ->
                 checkEntityExists(consumerGroup, "Consumer group %s does not exist.",
-                consumerGroupId))
+                    consumerGroupId))
         .thenApply(
             consumerGroup ->
-                consumerGroup.get
-        )
+                null);
   }
+
   @Override
   public CompletableFuture<Optional<ConsumerLag>> getConsumerLag(
       String clusterId, String consumerGroupId, String consumerId) {

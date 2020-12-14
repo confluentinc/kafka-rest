@@ -25,13 +25,13 @@ import static org.junit.Assert.fail;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.SystemTime;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
@@ -91,7 +91,7 @@ public class KafkaConsumerManagerTest {
     }
 
     private void setUpConsumer(Properties properties) {
-        config = new KafkaRestConfig(properties, new SystemTime());
+        config = new KafkaRestConfig(properties);
         consumerManager = new KafkaConsumerManager(config, consumerFactory);
         consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST, groupName);
     }
@@ -384,16 +384,21 @@ public class KafkaConsumerManagerTest {
     @Test
     public void testBackoffMsControlsPollCalls() throws Exception {
         bootstrapConsumer(consumer);
-        consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
-                new ConsumerReadCallback<ByteString, ByteString>() {
-                    @Override
-                    public void onCompletion(
-                        List<ConsumerRecord<ByteString, ByteString>> records, Exception e) {
-                        actualException = e;
-                        actualRecords = records;
-                        sawCallback = true;
-                    }
-                });
+        consumerManager.readRecords(
+            groupName,
+            consumer.cid(),
+            BinaryKafkaConsumerState.class,
+            Duration.ofMillis(-1),
+            Long.MAX_VALUE,
+            new ConsumerReadCallback<ByteString, ByteString>() {
+                @Override
+                public void onCompletion(
+                    List<ConsumerRecord<ByteString, ByteString>> records, Exception e) {
+                    actualException = e;
+                    actualRecords = records;
+                    sawCallback = true;
+                }
+            });
 
         // backoff is 250
         Thread.sleep(100);
@@ -407,20 +412,25 @@ public class KafkaConsumerManagerTest {
     public void testBackoffMsUpdatesReadTaskExpiry() throws Exception {
         Properties props = setUpProperties();
         props.put(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, "1000");
-        config = new KafkaRestConfig(props, new SystemTime());
+        config = new KafkaRestConfig(props);
         consumerManager = new KafkaConsumerManager(config, consumerFactory);
         consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST, groupName);
         bootstrapConsumer(consumer);
-        consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
-                new ConsumerReadCallback<ByteString, ByteString>() {
-                    @Override
-                    public void onCompletion(
-                        List<ConsumerRecord<ByteString, ByteString>> records, Exception e) {
-                        actualException = e;
-                        actualRecords = records;
-                        sawCallback = true;
-                    }
-                });
+        consumerManager.readRecords(
+            groupName,
+            consumer.cid(),
+            BinaryKafkaConsumerState.class,
+            Duration.ofMillis(-1),
+            Long.MAX_VALUE,
+            new ConsumerReadCallback<ByteString, ByteString>() {
+                @Override
+                public void onCompletion(
+                    List<ConsumerRecord<ByteString, ByteString>> records, Exception e) {
+                    actualException = e;
+                    actualRecords = records;
+                    sawCallback = true;
+                }
+            });
 
         Thread.sleep(100);
         KafkaConsumerManager.RunnableReadTask readTask = consumerManager.delayedReadTasks.peek();
@@ -436,23 +446,27 @@ public class KafkaConsumerManagerTest {
     public void testConsumerExpirationIsUpdated() throws Exception {
         bootstrapConsumer(consumer);
         KafkaConsumerState state = consumerManager.getConsumerInstance(groupName, consumer.cid());
-        long initialExpiration = state.expiration;
-        consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
-                new ConsumerReadCallback<ByteString, ByteString>() {
-                    @Override
-                    public void onCompletion(
-                        List<ConsumerRecord<ByteString, ByteString>> records, Exception e) {
-                        actualException = e;
-                        actualRecords = records;
-                        sawCallback = true;
-                    }
-                });
+        Instant initialExpiration = state.expiration;
+        consumerManager.readRecords(
+            groupName,
+            consumer.cid(),
+            BinaryKafkaConsumerState.class,
+            Duration.ofMillis(-1), Long.MAX_VALUE,
+            new ConsumerReadCallback<ByteString, ByteString>() {
+                @Override
+                public void onCompletion(
+                    List<ConsumerRecord<ByteString, ByteString>> records, Exception e) {
+                    actualException = e;
+                    actualRecords = records;
+                    sawCallback = true;
+                }
+            });
         Thread.sleep(100);
-        assertTrue(state.expiration > initialExpiration);
+        assertTrue(state.expiration.isAfter(initialExpiration));
         initialExpiration = state.expiration;
         awaitRead();
         assertTrue("Callback failed to fire", sawCallback);
-        assertTrue(state.expiration > initialExpiration);
+        assertTrue(state.expiration.isAfter(initialExpiration));
         initialExpiration = state.expiration;
 
         consumerManager.commitOffsets(groupName, consumer.cid(), null, null, new KafkaConsumerManager.CommitCallback() {
@@ -464,7 +478,7 @@ public class KafkaConsumerManagerTest {
                 actualOffsets = offsets;
             }
         }).get();
-        assertTrue(state.expiration > initialExpiration);
+        assertTrue(state.expiration.isAfter(initialExpiration));
     }
 
     private void awaitRead() throws InterruptedException {
@@ -476,7 +490,7 @@ public class KafkaConsumerManagerTest {
     public void testReadRecordsPopulatesDelayedReadTaskWhenExecutorFull() throws Exception {
         Properties props = setUpProperties();
         props.setProperty(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, "1");
-        config = new KafkaRestConfig(props, new SystemTime());
+        config = new KafkaRestConfig(props);
         consumerManager = new KafkaConsumerManager(config, consumerFactory);
         MockConsumer consumer1 = new MockConsumer<>(OffsetResetStrategy.EARLIEST, "a");
         MockConsumer consumer2 = new MockConsumer<>(OffsetResetStrategy.EARLIEST, "b");
@@ -497,9 +511,21 @@ public class KafkaConsumerManagerTest {
                 sawCallback = true;
             }
         };
-        consumerManager.readRecords("a", consumer1.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE, callback);
+        consumerManager.readRecords(
+            "a",
+            consumer1.cid(),
+            BinaryKafkaConsumerState.class,
+            Duration.ofMillis(-1),
+            Long.MAX_VALUE,
+            callback);
         // should go over the consumer.threads threshold and be rejected. Rejected tasks are delayed between 25-75ms
-        consumerManager.readRecords("a", consumer2.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE, callback);
+        consumerManager.readRecords(
+            "a",
+            consumer2.cid(),
+            BinaryKafkaConsumerState.class,
+            Duration.ofMillis(-1),
+            Long.MAX_VALUE,
+            callback);
         Thread.sleep(10000);
         for (Object a : consumerManager.delayedReadTasks) {
             long delayMs = ((KafkaConsumerManager.RunnableReadTask) a).getDelay(TimeUnit.MILLISECONDS);
@@ -507,7 +533,13 @@ public class KafkaConsumerManagerTest {
             assertTrue(delayMs < 75);
         }
         assertEquals(1, consumerManager.delayedReadTasks.size());
-        consumerManager.readRecords("c", consumer3.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE, callback);
+        consumerManager.readRecords(
+            "c",
+            consumer3.cid(),
+            BinaryKafkaConsumerState.class,
+            Duration.ofMillis(-1),
+            Long.MAX_VALUE,
+            callback);
         assertEquals(2, consumerManager.delayedReadTasks.size());
         for (Object a : consumerManager.delayedReadTasks) {
             long delayMs = ((KafkaConsumerManager.RunnableReadTask) a).getDelay(TimeUnit.MILLISECONDS);
@@ -553,15 +585,20 @@ public class KafkaConsumerManagerTest {
     }
 
     private void readFromDefault(String cid) throws InterruptedException, ExecutionException {
-        consumerManager.readRecords(groupName, cid, BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
+        consumerManager.readRecords(
+            groupName,
+            cid,
+            BinaryKafkaConsumerState.class,
+            Duration.ofMillis(-1),
+            Long.MAX_VALUE,
             new ConsumerReadCallback<ByteString, ByteString>() {
-              @Override
-              public void onCompletion(
-                  List<ConsumerRecord<ByteString, ByteString>> records, Exception e) {
-                actualException = e;
-                actualRecords = records;
-                sawCallback = true;
-              }
+                @Override
+                public void onCompletion(
+                    List<ConsumerRecord<ByteString, ByteString>> records, Exception e) {
+                    actualException = e;
+                    actualRecords = records;
+                    sawCallback = true;
+                }
             });
     }
 

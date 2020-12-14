@@ -73,8 +73,7 @@ public abstract class ConsumerLagData extends Resource {
       @JsonProperty("instance_id") @Nullable String instanceId,
       @JsonProperty("client_id") String clientId,
       @JsonProperty("topic_name") String topicName,
-      @JsonProperty("partition_id") int partitionId,
-
+      @JsonProperty("partition_id") int partitionId
   ) {
     return builder()
         .setKind(kind)
@@ -111,6 +110,5 @@ public abstract class ConsumerLagData extends Resource {
 
     public abstract ConsumerLagData build();
   }
-
-
 }
+

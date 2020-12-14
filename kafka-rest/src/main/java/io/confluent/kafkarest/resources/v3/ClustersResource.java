@@ -25,6 +25,7 @@ import io.confluent.kafkarest.entities.v3.GetClusterResponse;
 import io.confluent.kafkarest.entities.v3.ListClustersResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -43,6 +44,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
 @Path("/v3/clusters")
+@ResourceName("api.v3.clusters.*")
 public final class ClustersResource {
 
   private final Provider<ClusterManager> clusterManager;
@@ -63,6 +65,7 @@ public final class ClustersResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.clusters.list")
+  @ResourceName("api.v3.clusters.list")
   public void listClusters(@Suspended AsyncResponse asyncResponse) {
     CompletableFuture<ListClustersResponse> response =
         clusterManager.get()
@@ -88,6 +91,7 @@ public final class ClustersResource {
   @Path("/{clusterId}")
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.clusters.get")
+  @ResourceName("api.v3.clusters.get")
   public void getCluster(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<GetClusterResponse> response =

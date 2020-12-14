@@ -66,8 +66,8 @@ public class UrlFactoryImplTest {
         new UrlFactoryImpl(
             /* hostNameConfig= */ "",
             /* portConfig= */ 0,
-            singletonList("http://advertised.listener:2000"),
-            singletonList("http://listener:3000"),
+            singletonList(URI.create("http://advertised.listener:2000")),
+            singletonList(URI.create("http://listener:3000")),
             requestUriInfo);
 
     String url = urlFactory.create("foo", "bar");
@@ -77,7 +77,7 @@ public class UrlFactoryImplTest {
 
   @Test
   public void
-  create_withAdvertisedListenerDifferentSchemeAndListenerSameScheme_returnsUrlRelativeToListenerSameScheme
+  create_withAdvertisedListenerDifferentSchemeAndListenerSameScheme_returnsUrlRelativeToRequestUri
       () {
     expect(requestUriInfo.getAbsolutePath())
         .andStubReturn(URI.create("http://1.2.3.4:1000/xxx/yyy"));
@@ -88,17 +88,17 @@ public class UrlFactoryImplTest {
         new UrlFactoryImpl(
             /* hostNameConfig= */ "",
             /* portConfig= */ 0,
-            singletonList("https://advertised.listener:2000"),
-            singletonList("http://listener:3000"),
+            singletonList(URI.create("https://advertised.listener:2000")),
+            singletonList(URI.create("http://listener:3000")),
             requestUriInfo);
 
     String url = urlFactory.create("foo", "bar");
 
-    assertEquals("http://listener:3000/foo/bar", url);
+    assertEquals("http://1.2.3.4:1000/foo/bar", url);
   }
 
   @Test
-  public void create_withListenerSameScheme_returnsUrlRelativeToListenerSameScheme() {
+  public void create_withListenerSameScheme_returnsUrlRelativeToRequestUri() {
     expect(requestUriInfo.getAbsolutePath())
         .andStubReturn(URI.create("http://1.2.3.4:1000/xxx/yyy"));
     expect(requestUriInfo.getBaseUri()).andReturn(URI.create("http://1.2.3.4:1000/"));
@@ -109,12 +109,12 @@ public class UrlFactoryImplTest {
             /* hostNameConfig= */ "",
             /* portConfig= */ 0,
             /* advertisedListeners= */ emptyList(),
-            singletonList("http://listener:2000"),
+            singletonList(URI.create("http://listener:2000")),
             requestUriInfo);
 
     String url = urlFactory.create("foo", "bar");
 
-    assertEquals("http://listener:2000/foo/bar", url);
+    assertEquals("http://1.2.3.4:1000/foo/bar", url);
   }
 
   @Test
@@ -129,7 +129,7 @@ public class UrlFactoryImplTest {
             /* hostNameConfig= */ "",
             /* portConfig= */ 0,
             /* advertisedListeners= */ emptyList(),
-            singletonList("https://listener:2000"),
+            singletonList(URI.create("https://listener:2000")),
             requestUriInfo);
 
     String url = urlFactory.create("foo", "bar");
@@ -188,7 +188,7 @@ public class UrlFactoryImplTest {
         new UrlFactoryImpl(
             "hostname",
             2000,
-            singletonList("http://advertised.listener:2000"),
+            singletonList(URI.create("http://advertised.listener:2000")),
             emptyList(),
             requestUriInfo);
 
@@ -209,12 +209,12 @@ public class UrlFactoryImplTest {
             "hostname",
             2000,
             emptyList(),
-            singletonList("http://listener:2000"),
+            singletonList(URI.create("http://listener:2000")),
             requestUriInfo);
 
     String url = urlFactory.create("foo", "bar");
 
-    assertEquals("http://listener:2000/foo/bar", url);
+    assertEquals("http://hostname:2000/foo/bar", url);
   }
 
   @Test
@@ -228,8 +228,8 @@ public class UrlFactoryImplTest {
         new UrlFactoryImpl(
             "",
             0,
-            singletonList("http://advertised.listener:2000"),
-            singletonList("http://listener:2000"),
+            singletonList(URI.create("http://advertised.listener:2000")),
+            singletonList(URI.create("http://listener:2000")),
             requestUriInfo);
 
     String url = urlFactory.create("foo", "bar");
@@ -248,8 +248,8 @@ public class UrlFactoryImplTest {
         new UrlFactoryImpl(
             "hostname",
             2000,
-            singletonList("http://advertised.listener:2000"),
-            singletonList("http://listener:2000"),
+            singletonList(URI.create("http://advertised.listener:2000")),
+            singletonList(URI.create("http://listener:2000")),
             requestUriInfo);
 
     String url = urlFactory.create("foo", "bar");

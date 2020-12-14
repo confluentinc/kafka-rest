@@ -800,6 +800,8 @@ components:
               type: string
             resource_type:
               $ref: '#/components/schemas/AclResourceType'
+            resource_name:
+              type: string
             pattern_type:
               $ref: '#/components/schemas/AclPatternType'
             principal:
@@ -1036,6 +1038,8 @@ components:
       properties:
         resource_type:
           $ref: '#/components/schemas/AclResourceType'
+        resource_name:
+          type: string
         pattern_type:
           $ref: '#/components/schemas/AclPatternType'
         principal:

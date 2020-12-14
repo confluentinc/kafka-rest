@@ -43,8 +43,8 @@ final class ConsumerGroupLagManagerImpl implements ConsumerGroupLagManager {
       String consumerGroupId
   ) {
     try {
-      ConsumerGroupOffsets cgo = consumerOffsetsDao.getConsumerGroupOffsets(consumerGroupId, IsolationLevel.READ_COMMITTED);
-      return CompletableFuture.completedFuture(Optional.ofNullable(ConsumerGroupLag.fromConsumerGroupOffsets(clusterId, cgo)));
+      ConsumerGroupLag cgo = consumerOffsetsDao.getConsumerGroupOffsets(consumerGroupId, IsolationLevel.READ_COMMITTED);
+      return CompletableFuture.completedFuture(Optional.ofNullable(cgo));
     } catch (ArithmeticException e) {
       // log.warn("lag exceeds Integer.MAX_VALUE", e);
     } catch (Exception e) {

@@ -14,6 +14,7 @@
  */
 package io.confluent.kafkarest.integration;
 
+import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.fail;
 
 import io.confluent.common.utils.IntegrationTest;
@@ -24,6 +25,7 @@ import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.common.CompletableFutures;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -37,8 +39,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Vector;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.IntStream;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
@@ -46,13 +49,13 @@ import javax.ws.rs.client.WebTarget;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.CoreUtils;
+import kafka.utils.MockTime;
 import kafka.utils.TestUtils;
 import kafka.zk.EmbeddedZookeeper;
 import kafka.zk.KafkaZkClient;
 import kafka.zookeeper.ZooKeeperClient;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.AlterPartitionReassignmentsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.NewPartitionReassignment;
@@ -115,7 +118,6 @@ public abstract class ClusterTestHarness {
 
   private int numBrokers;
   private boolean withSchemaRegistry;
-
   // ZK Config
   protected String zkConnect;
   protected EmbeddedZookeeper zookeeper;
@@ -175,19 +177,8 @@ public abstract class ClusterTestHarness {
         JaasUtils.isZkSaslEnabled(),
         time);
 
-    configs = new Vector<>();
-    servers = new Vector<>();
-    for (int i = 0; i < numBrokers; i++) {
-      Properties props = getBrokerProperties(i);
-
-      props = overrideBrokerProperties(i, props);
-
-      KafkaConfig config = KafkaConfig.fromProps(props);
-      configs.add(config);
-
-      KafkaServer server = TestUtils.createServer(config, time);
-      servers.add(server);
-    }
+    // start brokers concurrently
+    startBrokersConcurrently(numBrokers);
 
     brokerList =
         TestUtils.getBrokerListStrFromServers(JavaConverters.asScalaBuffer(servers),
@@ -237,6 +228,26 @@ public abstract class ClusterTestHarness {
             restConfig, getProducerPool(restConfig), /* kafkaConsumerManager= */ null);
     restServer = restApp.createServer();
     restServer.start();
+  }
+
+  private void startBrokersConcurrently(int numBrokers) {
+    configs =
+        IntStream.range(0, numBrokers)
+            .mapToObj(brokerId -> KafkaConfig.fromProps(
+                overrideBrokerProperties(brokerId, getBrokerProperties(brokerId))))
+            .collect(toList());
+    servers =
+        CompletableFutures.allAsList(
+            configs.stream()
+                .map(
+                    config ->
+                        CompletableFuture.supplyAsync(
+                            () -> TestUtils.createServer(
+                                config,
+                                new MockTime(System.currentTimeMillis(),
+                                    System.nanoTime()))))
+                .collect(toList()))
+            .join();
   }
 
   protected void setupAcls() {

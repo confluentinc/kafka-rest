@@ -1,5 +1,7 @@
 #!/usr/bin/env groovy
 common {
   slackChannel = '#rest-proxy-eng'
-  upstreamProjects = 'confluentinc/schema-registry'
+  downStreamRepos = ["confluent-security-plugins", "ce-kafka-rest",
+    "confluent-cloud-plugins"]
+  nanoVersion = true
 }

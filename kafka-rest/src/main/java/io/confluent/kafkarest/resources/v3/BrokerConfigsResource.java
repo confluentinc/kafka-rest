@@ -26,6 +26,7 @@ import io.confluent.kafkarest.entities.v3.ListBrokerConfigsResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.UpdateBrokerConfigRequest;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.CrnFactory;
@@ -52,6 +53,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 @Path("/v3/clusters/{clusterId}/brokers/{brokerId}/configs")
+@ResourceName("api.v3.broker-configs.*")
 public final class BrokerConfigsResource {
 
   private final Provider<BrokerConfigManager> brokerConfigManager;
@@ -72,6 +74,7 @@ public final class BrokerConfigsResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.brokers.configs.list")
+  @ResourceName("api.v3.broker-configs.list")
   public void listBrokerConfigs(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -108,6 +111,7 @@ public final class BrokerConfigsResource {
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.brokers.configs.get")
+  @ResourceName("api.v3.broker-configs.get")
   public void getBrokerConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -128,6 +132,7 @@ public final class BrokerConfigsResource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.brokers.configs.update")
+  @ResourceName("api.v3.broker-configs.update")
   public void updateBrokerConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -149,6 +154,7 @@ public final class BrokerConfigsResource {
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.brokers.configs.delete")
+  @ResourceName("api.v3.broker-configs.delete")
   public void resetBrokerConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

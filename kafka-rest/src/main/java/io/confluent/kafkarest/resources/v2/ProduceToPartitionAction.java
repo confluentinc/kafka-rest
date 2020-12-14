@@ -21,6 +21,7 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v2.JsonPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v2.SchemaPartitionProduceRequest;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.rest.annotations.PerformanceMetric;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -41,6 +42,7 @@ import javax.ws.rs.container.Suspended;
     Versions.KAFKA_V2_JSON_PROTOBUF
 })
 @Produces({Versions.KAFKA_V2_JSON})
+@ResourceName("api.v2.produce-to-partition.*")
 public final class ProduceToPartitionAction extends AbstractProduceAction {
 
   public ProduceToPartitionAction(KafkaRestContext ctx) {
@@ -51,6 +53,7 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
   @Path("/{partition}")
   @PerformanceMetric("partition.produce-binary+v2")
   @Consumes({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED})
+  @ResourceName("api.v2.produce-to-partition.binary")
   public void produceBinary(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topic,
@@ -69,6 +72,7 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
   @Path("/{partition}")
   @PerformanceMetric("partition.produce-json+v2")
   @Consumes({Versions.KAFKA_V2_JSON_JSON_WEIGHTED_LOW})
+  @ResourceName("api.v2.produce-to-partition.json")
   public void produceJson(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topic,
@@ -87,6 +91,7 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
   @Path("/{partition}")
   @PerformanceMetric("partition.produce-avro+v2")
   @Consumes({Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW})
+  @ResourceName("api.v2.produce-to-partition.avro")
   public void produceAvro(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topic,
@@ -105,6 +110,7 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
   @Path("/{partition}")
   @PerformanceMetric("partition.produce-jsonschema+v2")
   @Consumes({Versions.KAFKA_V2_JSON_JSON_SCHEMA_WEIGHTED_LOW})
+  @ResourceName("api.v2.produce-to-partition.json-schema")
   public void produceJsonSchema(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topic,
@@ -123,6 +129,7 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
   @Path("/{partition}")
   @PerformanceMetric("partition.produce-protobuf+v2")
   @Consumes({Versions.KAFKA_V2_JSON_PROTOBUF_WEIGHTED_LOW})
+  @ResourceName("api.v2.produce-to-partition.protobuf")
   public void produceProtobuf(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topic,

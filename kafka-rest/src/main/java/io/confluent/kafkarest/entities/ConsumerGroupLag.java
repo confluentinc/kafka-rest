@@ -15,9 +15,15 @@
 
 package io.confluent.kafkarest.entities;
 
+import static java.util.Objects.requireNonNull;
+
 import com.google.auto.value.AutoValue;
 import io.confluent.kafkarest.controllers.ConsumerGroupOffsets;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 @AutoValue
@@ -63,10 +69,146 @@ public abstract class ConsumerGroupLag {
         .build();
   }
 
+  private static final class TopicOffsets {
+    private final String topicName;
+
+    private long maxLag = 0L;
+    private final Set<Offset> topicOffsets = new HashSet<>();
+
+    private TopicOffsets(String topicName) {
+      this.topicName = requireNonNull(topicName);
+    }
+
+    private void addOffset(Offset offset) {
+      if (topicOffsets.contains(offset)) {
+        return;
+      }
+      topicOffsets.add(offset);
+      maxLag = Math.max(maxLag, offset.getLag());
+    }
+
+    private Set<Offset> getTopicOffsets() {
+      return topicOffsets;
+    }
+
+    private long getMaxLag() {
+      return maxLag;
+    }
+  }
+
+  @AutoValue
+  abstract static class Offset {
+
+    abstract String getTopicName();
+
+    abstract String getConsumerId();
+
+    abstract String getClientId();
+
+    abstract int getPartitionId();
+
+    abstract long getCurrentOffset();
+
+    abstract long getBeginningOffset();
+
+    abstract long getEndOffset();
+
+    private long getLag() {
+      return getEndOffset() - getCurrentOffset();
+    }
+
+    private long getLead() {
+      return getCurrentOffset() - getBeginningOffset();
+    }
+
+    private String getKey() {
+      return getTopicName() + "-" + getConsumerId() + "-" + getPartitionId();
+    }
+
+    private static Builder builder() {
+      return new AutoValue_ConsumerGroupLag_Offset.Builder();
+    }
+
+    @AutoValue.Builder
+    abstract static class Builder {
+
+      abstract Builder setTopicName(String topicName);
+
+      abstract Builder setConsumerId(String consumerId);
+
+      abstract Builder setClientId(String clientId);
+
+      abstract Builder setPartitionId(int partitionId);
+
+      abstract Builder setCurrentOffset(long currentOffset);
+
+      abstract Builder setBeginningOffset(long beginningOffset);
+
+      abstract Builder setEndOffset(long endOffset);
+
+      abstract Offset build();
+    }
+  }
+
   @AutoValue.Builder
   public abstract static class Builder {
 
+    private long sumCurrentOffset = 0;
+    private long sumEndOffset = 0;
+    private long maxLag = 0;
+    private long totalLag = 0;
+    private long totalLead = 0;
+
+    private final Map<String, TopicOffsets> consumerGroupOffsets = new HashMap<>();
+    private final Set<String> consumers = new HashSet<>();
+
     Builder() {
+    }
+
+    public void addOffset(
+        String topicName,
+        String consumerId,
+        String clientId,
+        int partitionId,
+        long currentOffset,
+        long beginningOffset,
+        long endOffset
+    ) {
+      TopicOffsets topicOffsets =
+          consumerGroupOffsets.computeIfAbsent(topicName, unused -> new TopicOffsets(topicName));
+
+      Offset offset =
+          Offset.builder()
+              .setTopicName(topicName)
+              .setConsumerId(consumerId)
+              .setClientId(clientId)
+              .setPartitionId(partitionId)
+              .setCurrentOffset(currentOffset)
+              .setBeginningOffset(beginningOffset)
+              .setEndOffset(endOffset)
+              .build();
+
+      topicOffsets.addOffset(offset);
+
+      if (maxLag < offset.getLag()) {
+        maxLag = offset.getLag();
+        setMaxLagClientId(clientId);
+        setMaxLagConsumerId(consumerId);
+        setMaxLagTopicName(topicName);
+        setMaxLagPartitionId(partitionId);
+      }
+
+      totalLag += offset.getLag();
+      totalLead += offset.getLead();
+      sumCurrentOffset += offset.getCurrentOffset();
+      sumEndOffset += offset.getEndOffset();
+
+      // MMA-3352: not adding consumers that are empty. this likely happens when a consumer group
+      //           has no active members. however we are calling addOffset to fix the issue of
+      //           lag data not showing up for groups w/o members like in the case of replicator
+      if (consumerId != null && !consumerId.isEmpty()) {
+        consumers.add(consumerId);
+      }
     }
 
     public abstract Builder setClusterId(String clusterId);
