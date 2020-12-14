@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import io.confluent.kafkarest.config.ConfigModule.OffsetsTimeoutConfig;
+import io.confluent.kafkarest.entities.ConsumerGroupLag;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
@@ -63,13 +64,14 @@ final class ConsumerOffsetsDao {
   //   return cgOffsetsMap;
   // }
 
-  ConsumerGroupOffsets getConsumerGroupOffsets(
+  ConsumerGroupLag getConsumerGroupOffsets(
       ConsumerGroupDescription cgDesc,
       Map<TopicPartition, OffsetAndMetadata> fetchedCurrentOffsets,
       Map<TopicPartition, ListOffsetsResultInfo> earliestOffsets,
       Map<TopicPartition, ListOffsetsResultInfo> latestOffsets
   ) {
-    ConsumerGroupOffsets cgOffsets = new ConsumerGroupOffsets(cgDesc.groupId());
+    ConsumerGroupLag.Builder cgOffsets =
+        ConsumerGroupLag.builder().setConsumerGroupId(cgDesc.groupId());
 
     // build map of topic partition -> consumer id
     Map<TopicPartition, String> tpConsumerIds = new HashMap<>();
@@ -108,10 +110,10 @@ final class ConsumerOffsetsDao {
           latestOffset
       );
     }
-    return cgOffsets;
+    return cgOffsets.build();
   }
 
-  public ConsumerGroupOffsets getConsumerGroupOffsets(
+  public ConsumerGroupLag getConsumerGroupOffsets(
       String consumerGroupId,
       IsolationLevel isolationLevel
   ) throws InterruptedException, ExecutionException, TimeoutException {
@@ -119,7 +121,7 @@ final class ConsumerOffsetsDao {
     return getConsumerGroupOffsets(cgDesc, isolationLevel);
   }
 
-  private ConsumerGroupOffsets getConsumerGroupOffsets(
+  private ConsumerGroupLag getConsumerGroupOffsets(
       ConsumerGroupDescription desc,
       IsolationLevel isolationLevel
   ) throws InterruptedException, ExecutionException, TimeoutException {
