@@ -22,6 +22,7 @@ import io.confluent.kafkarest.entities.ConsumerLag;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
+@AutoValue
 public abstract class ConsumerLagData extends Resource {
 
   ConsumerLagData() {

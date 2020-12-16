@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import io.confluent.kafkarest.entities.ConsumerGroupLag;
 import java.time.Duration;
 import java.util.Optional;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -38,6 +39,7 @@ public class ConsumerOffsetsDaoTest {
 
   private static final Duration DEFAULT_METADATA_TIMEOUT = Duration.ofSeconds(15);
   private AdminClient adminClient;
+  private String clusterId = "cluster1";
 
   @Before
   public void setup() {
@@ -117,27 +119,23 @@ public class ConsumerOffsetsDaoTest {
         new TopicPartition("topic3", 1), new OffsetAndMetadata(100, null),
         new TopicPartition("topic99", 1), new OffsetAndMetadata(99, null)
     );
-    Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> beginningOffsets = ImmutableMap.of(
-        new TopicPartition("topic1", 1), listOffsetResult(0L),
-        new TopicPartition("topic1", 2), listOffsetResult(0L),
-        new TopicPartition("topic3", 1), listOffsetResult(0L)
-    );
 
     Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> endOffsets = ImmutableMap.of(
         new TopicPartition("topic1", 1), listOffsetResult(75L),
         new TopicPartition("topic1", 2), listOffsetResult(25L),
-        new TopicPartition("topic3", 1), listOffsetResult(99L)
+        new TopicPartition("topic3", 1), listOffsetResult(200L)
     );
 
-    ConsumerGroupOffsets offsets = dao.getConsumerGroupOffsets(
-        cgDesc, currentOffsets, beginningOffsets, endOffsets
-    );
-    assertEquals("cg1", offsets.getConsumerGroupId());
-    assertEquals(150, offsets.getSumCurrentOffset());
-    assertEquals(199, offsets.getSumEndOffset());
-    assertEquals(49, offsets.getTotalLag());
-    assertEquals(2, offsets.getNumConsumers());
-    assertEquals(2, offsets.consumerGroupOffsets.size());
+    ConsumerGroupLag lag= dao.getConsumerGroupOffsets(
+        cgDesc, currentOffsets, endOffsets).setClusterId(clusterId).build();
+    assertEquals("cluster1", lag.getClusterId());
+    assertEquals("cg1", lag.getConsumerGroupId());
+    assertEquals(100, (long) lag.getMaxLag());
+    assertEquals(150, (long) lag.getTotalLag());
+    assertEquals("consumer2", lag.getMaxLagConsumerId());
+    assertEquals("client2", lag.getMaxLagClientId());
+    assertEquals("topic3", lag.getMaxLagTopicName());
+    assertEquals(1, (long) lag.getMaxLagPartitionId());
 
     ConsumerGroupDescription cgDesc2 = new ConsumerGroupDescription("cg2", true, null, "something",
         ConsumerGroupState.STABLE, Node.noNode());
@@ -155,13 +153,16 @@ public class ConsumerOffsetsDaoTest {
         new TopicPartition("topic3", 1), listOffsetResult(99L)
     );
 
-    ConsumerGroupOffsets offsets2 = dao.getConsumerGroupOffsets(cgDesc2, currentOffsets2, beginningOffsets, endOffsets2);
-    assertEquals("cg2", offsets2.getConsumerGroupId());
-    assertEquals(150, offsets2.getSumCurrentOffset());
-    assertEquals(199, offsets2.getSumEndOffset());
-    assertEquals(49, offsets2.getTotalLag());
-    assertEquals(0, offsets2.getNumConsumers());
-    assertEquals(2, offsets2.consumerGroupOffsets.size());
+    ConsumerGroupLag lag2 = dao.getConsumerGroupOffsets(
+        cgDesc2, currentOffsets2, endOffsets2).setClusterId(clusterId).build();
+    assertEquals("cluster1", lag2.getClusterId());
+    assertEquals("cg2", lag2.getConsumerGroupId());
+    assertEquals(25, (long) lag2.getMaxLag());
+    assertEquals(49, (long) lag2.getTotalLag());
+    assertEquals("", lag2.getMaxLagConsumerId());
+    assertEquals("", lag2.getMaxLagClientId());
+    assertEquals("topic1", lag2.getMaxLagTopicName());
+    assertEquals(1, (long) lag2.getMaxLagPartitionId());
   }
 
   private List<MemberDescription> getMemberDescriptions() {

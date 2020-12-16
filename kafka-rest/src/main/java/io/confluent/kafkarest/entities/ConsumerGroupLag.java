@@ -18,7 +18,6 @@ package io.confluent.kafkarest.entities;
 import static java.util.Objects.requireNonNull;
 
 import com.google.auto.value.AutoValue;
-import io.confluent.kafkarest.controllers.ConsumerGroupOffsets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -54,42 +53,27 @@ public abstract class ConsumerGroupLag {
     return new AutoValue_ConsumerGroupLag.Builder();
   }
 
-  public static ConsumerGroupLag fromConsumerGroupOffsets(
-      String clusterId, ConsumerGroupOffsets cgo) {
-    return builder()
-        .setClusterId(clusterId)
-        .setConsumerGroupId(cgo.getConsumerGroupId())
-        .setMaxLag(cgo.getMaxLag())
-        .setTotalLag(cgo.getTotalLag())
-        .setMaxLagClientId(cgo.getMaxLagClientId())
-        .setMaxLagConsumerId(cgo.getMaxLagConsumerId())
-        .setMaxLagInstanceId("todo")
-        .setMaxLagTopicName(cgo.getMaxLagTopicName())
-        .setMaxLagPartitionId(cgo.getMaxLagPartitionId())
-        .build();
-  }
-
   private static final class TopicOffsets {
     private final String topicName;
 
     private long maxLag = 0L;
-    private final Set<Offset> topicOffsets = new HashSet<>();
+    // private final Set<Offset> topicOffsets = new HashSet<>();
 
     private TopicOffsets(String topicName) {
       this.topicName = requireNonNull(topicName);
     }
 
     private void addOffset(Offset offset) {
-      if (topicOffsets.contains(offset)) {
-        return;
-      }
-      topicOffsets.add(offset);
+      // if (topicOffsets.contains(offset)) {
+      //   return;
+      // }
+      // topicOffsets.add(offset);
       maxLag = Math.max(maxLag, offset.getLag());
     }
 
-    private Set<Offset> getTopicOffsets() {
-      return topicOffsets;
-    }
+    // private Set<Offset> getTopicOffsets() {
+    //   return topicOffsets;
+    // }
 
     private long getMaxLag() {
       return maxLag;
@@ -109,20 +93,10 @@ public abstract class ConsumerGroupLag {
 
     abstract long getCurrentOffset();
 
-    abstract long getBeginningOffset();
-
     abstract long getEndOffset();
 
     private long getLag() {
       return getEndOffset() - getCurrentOffset();
-    }
-
-    private long getLead() {
-      return getCurrentOffset() - getBeginningOffset();
-    }
-
-    private String getKey() {
-      return getTopicName() + "-" + getConsumerId() + "-" + getPartitionId();
     }
 
     private static Builder builder() {
@@ -142,8 +116,6 @@ public abstract class ConsumerGroupLag {
 
       abstract Builder setCurrentOffset(long currentOffset);
 
-      abstract Builder setBeginningOffset(long beginningOffset);
-
       abstract Builder setEndOffset(long endOffset);
 
       abstract Offset build();
@@ -153,11 +125,8 @@ public abstract class ConsumerGroupLag {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    private long sumCurrentOffset = 0;
-    private long sumEndOffset = 0;
     private long maxLag = 0;
     private long totalLag = 0;
-    private long totalLead = 0;
 
     private final Map<String, TopicOffsets> consumerGroupOffsets = new HashMap<>();
     private final Set<String> consumers = new HashSet<>();
@@ -171,7 +140,6 @@ public abstract class ConsumerGroupLag {
         String clientId,
         int partitionId,
         long currentOffset,
-        long beginningOffset,
         long endOffset
     ) {
       TopicOffsets topicOffsets =
@@ -184,7 +152,6 @@ public abstract class ConsumerGroupLag {
               .setClientId(clientId)
               .setPartitionId(partitionId)
               .setCurrentOffset(currentOffset)
-              .setBeginningOffset(beginningOffset)
               .setEndOffset(endOffset)
               .build();
 
@@ -192,6 +159,7 @@ public abstract class ConsumerGroupLag {
 
       if (maxLag < offset.getLag()) {
         maxLag = offset.getLag();
+        setMaxLag(maxLag);
         setMaxLagClientId(clientId);
         setMaxLagConsumerId(consumerId);
         setMaxLagTopicName(topicName);
@@ -199,9 +167,7 @@ public abstract class ConsumerGroupLag {
       }
 
       totalLag += offset.getLag();
-      totalLead += offset.getLead();
-      sumCurrentOffset += offset.getCurrentOffset();
-      sumEndOffset += offset.getEndOffset();
+      setTotalLag(totalLag);
 
       // MMA-3352: not adding consumers that are empty. this likely happens when a consumer group
       //           has no active members. however we are calling addOffset to fix the issue of

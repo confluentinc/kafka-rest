@@ -63,7 +63,7 @@ public abstract class ConsumerLag {
 
     public abstract Builder setPartitionId(int partitionId);
 
-    public abstract ConsumerAssignment build();
+    public abstract ConsumerLag build();
   }
 
 }

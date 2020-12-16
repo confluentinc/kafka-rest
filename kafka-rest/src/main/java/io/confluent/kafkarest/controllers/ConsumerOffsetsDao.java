@@ -64,10 +64,9 @@ final class ConsumerOffsetsDao {
   //   return cgOffsetsMap;
   // }
 
-  ConsumerGroupLag getConsumerGroupOffsets(
+  ConsumerGroupLag.Builder getConsumerGroupOffsets(
       ConsumerGroupDescription cgDesc,
       Map<TopicPartition, OffsetAndMetadata> fetchedCurrentOffsets,
-      Map<TopicPartition, ListOffsetsResultInfo> earliestOffsets,
       Map<TopicPartition, ListOffsetsResultInfo> latestOffsets
   ) {
     ConsumerGroupLag.Builder cgOffsets =
@@ -91,7 +90,6 @@ final class ConsumerOffsetsDao {
 
       long currentOffset = getCurrentOffset(fetchedCurrentOffsets, tp);
       long latestOffset = getOffset(latestOffsets, tp);
-      long earliestOffset = getOffset(earliestOffsets, tp);
       if (currentOffset < 0 || latestOffset < 0) {
         // log.debug("invalid offsets for topic={} consumerId={} current={} latest={}",
         //     tp.topic(),
@@ -106,22 +104,23 @@ final class ConsumerOffsetsDao {
           clientId,
           tp.partition(),
           currentOffset,
-          earliestOffset,
           latestOffset
       );
     }
-    return cgOffsets.build();
+    // ahu todo: instanceId
+    return cgOffsets;
   }
 
   public ConsumerGroupLag getConsumerGroupOffsets(
+      String clusterId,
       String consumerGroupId,
       IsolationLevel isolationLevel
   ) throws InterruptedException, ExecutionException, TimeoutException {
     final ConsumerGroupDescription cgDesc = getConsumerGroupDescription(consumerGroupId);
-    return getConsumerGroupOffsets(cgDesc, isolationLevel);
+    return getConsumerGroupOffsets(cgDesc, isolationLevel).setClusterId(clusterId).build();
   }
 
-  private ConsumerGroupLag getConsumerGroupOffsets(
+  private ConsumerGroupLag.Builder getConsumerGroupOffsets(
       ConsumerGroupDescription desc,
       IsolationLevel isolationLevel
   ) throws InterruptedException, ExecutionException, TimeoutException {
@@ -133,22 +132,15 @@ final class ConsumerOffsetsDao {
 
     Map<TopicPartition, OffsetSpec> latestOffsetSpecs = fetchedCurrentOffsets.keySet().stream()
         .collect(Collectors.toMap(Function.identity(), tp -> OffsetSpec.latest()));
-    Map<TopicPartition, OffsetSpec> earliestOffsetSpecs = fetchedCurrentOffsets.keySet().stream()
-        .collect(Collectors.toMap(Function.identity(), tp -> OffsetSpec.earliest()));
 
     ListOffsetsResult latestOffsetResult = kafkaAdminClient.listOffsets(
         latestOffsetSpecs, listOffsetsOptions);
-    ListOffsetsResult earliestOffsetResult = kafkaAdminClient.listOffsets(
-        earliestOffsetSpecs, listOffsetsOptions);
     Map<TopicPartition, ListOffsetsResultInfo> latestOffsets = latestOffsetResult.all()
-        .get(consumerMetadataTimeout, TimeUnit.MILLISECONDS);
-    Map<TopicPartition, ListOffsetsResultInfo> earliestOffsets = earliestOffsetResult.all()
         .get(consumerMetadataTimeout, TimeUnit.MILLISECONDS);
 
     return getConsumerGroupOffsets(
         desc,
         fetchedCurrentOffsets,
-        earliestOffsets,
         latestOffsets
     );
   }
@@ -239,9 +231,4 @@ final class ConsumerOffsetsDao {
 
     return offsetInfo.offset();
   }
-
-  // @Override
-  // public void close() {
-  //   kafkaAdminClient.close();
-  // }
 }
