@@ -18,8 +18,10 @@ package io.confluent.kafkarest.controllers;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import io.confluent.kafkarest.entities.ConsumerGroupLag;
+import java.util.Optional;
 import org.apache.kafka.common.IsolationLevel;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
@@ -71,5 +73,18 @@ public class ConsumerGroupLagManagerImplTest {
     ConsumerGroupLag consumerGroupLag =
         consumerGroupLagManager.getConsumerGroupLag(CLUSTER_ID, CONSUMER_GROUP_ID).get().get();
     assertEquals(CONSUMER_GROUP_LAG, consumerGroupLag);
+  }
+
+  @Test
+  public void getConsumerGroupLag_nonExistingConsumerGroupLag_returnsEmpty() throws Exception {
+    expect(consumerOffsetsDao.getConsumerGroupOffsets(
+        CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
+        .andReturn(null);
+    replay(consumerOffsetsDao);
+
+    Optional<ConsumerGroupLag> consumerGroupLag = consumerGroupLagManager.getConsumerGroupLag(
+        CLUSTER_ID, CONSUMER_GROUP_ID).get();
+
+    assertFalse(consumerGroupLag.isPresent());
   }
 }

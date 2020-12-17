@@ -25,4 +25,6 @@ public interface ConsumerOffsetsDao {
   ConsumerGroupLag getConsumerGroupOffsets(
       String clusterId, String consumerGroupId, IsolationLevel isolationLevel)
       throws InterruptedException, ExecutionException, TimeoutException;
+
+
 }

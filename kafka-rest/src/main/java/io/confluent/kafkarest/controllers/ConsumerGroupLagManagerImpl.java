@@ -46,8 +46,6 @@ final class ConsumerGroupLagManagerImpl implements ConsumerGroupLagManager {
       ConsumerGroupLag lag = consumerOffsetsDao
           .getConsumerGroupOffsets(clusterId, consumerGroupId, IsolationLevel.READ_COMMITTED);
       return CompletableFuture.completedFuture(Optional.ofNullable(lag));
-    } catch (ArithmeticException e) {
-      // log.warn("lag exceeds Integer.MAX_VALUE", e);
     } catch (Exception e) {
       // log.warn("unable to fetch offsets for consumer group", e);
     }
