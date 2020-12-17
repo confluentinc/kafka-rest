@@ -48,7 +48,7 @@ final class ConsumerGroupLagManagerImpl implements ConsumerGroupLagManager {
       return CompletableFuture.completedFuture(Optional.ofNullable(lag));
     } catch (Exception e) {
       // log.warn("unable to fetch offsets for consumer group", e);
+      return CompletableFuture.completedFuture(Optional.empty());
     }
-    return CompletableFuture.completedFuture(Optional.empty());
   }
 }

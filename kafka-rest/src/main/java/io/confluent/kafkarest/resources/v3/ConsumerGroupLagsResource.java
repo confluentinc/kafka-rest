@@ -23,6 +23,7 @@ import io.confluent.kafkarest.entities.v3.ConsumerGroupLagData;
 import io.confluent.kafkarest.entities.v3.GetConsumerGroupLagResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.Resource.Relationship;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -38,9 +39,8 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
-@Path(
-    "/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lag"
-)
+@Path("/v3/clusters/{clusterId}/consumer-groups/{consumerGroupId}/lag")
+@ResourceName("api.v3.consumer-group-lag.*")
 public final class ConsumerGroupLagsResource {
 
   private final Provider<ConsumerGroupLagManager> consumerGroupLagManager;
@@ -61,6 +61,7 @@ public final class ConsumerGroupLagsResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   // @PerformanceMetric("v3.consumer-group-lag.get")
+  @ResourceName("api.v3.consumer-group-lag.get")
   public void getConsumerGroupLag(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

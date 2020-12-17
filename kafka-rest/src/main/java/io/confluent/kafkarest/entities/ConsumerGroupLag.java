@@ -56,7 +56,7 @@ public abstract class ConsumerGroupLag {
   private static final class TopicOffsets {
     private final String topicName;
 
-    private long maxLag = 0L;
+    private Long maxLag;
     // private final Set<Offset> topicOffsets = new HashSet<>();
 
     private TopicOffsets(String topicName) {
@@ -68,7 +68,7 @@ public abstract class ConsumerGroupLag {
       //   return;
       // }
       // topicOffsets.add(offset);
-      maxLag = Math.max(maxLag, offset.getLag());
+      maxLag = ((maxLag == null) ? offset.getLag() : Math.max(maxLag, offset.getLag()));
     }
 
     // private Set<Offset> getTopicOffsets() {
@@ -125,7 +125,7 @@ public abstract class ConsumerGroupLag {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    private long maxLag = 0;
+    private Long maxLag;
     private long totalLag = 0;
 
     private final Map<String, TopicOffsets> consumerGroupOffsets = new HashMap<>();
@@ -157,7 +157,7 @@ public abstract class ConsumerGroupLag {
 
       topicOffsets.addOffset(offset);
 
-      if (maxLag < offset.getLag()) {
+      if (maxLag == null || maxLag < offset.getLag()) {
         maxLag = offset.getLag();
         setMaxLag(maxLag);
         setMaxLagClientId(clientId);
