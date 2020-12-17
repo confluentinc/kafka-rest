@@ -40,11 +40,11 @@ final class ConsumerOffsetsDaoImpl implements ConsumerOffsetsDao {
   @Inject
   ConsumerOffsetsDaoImpl(
       Admin kafkaAdminClient,
-      @OffsetsTimeoutConfig Duration consumerMetadataTimeout
+      @OffsetsTimeoutConfig Long consumerMetadataTimeout
   ) {
     this.kafkaAdminClient = kafkaAdminClient;
     // ahu todo: figure out how to safely cast to int (required by AbstractOptions.timeoutMs())
-    this.consumerMetadataTimeout = (int) consumerMetadataTimeout.toMillis();
+    this.consumerMetadataTimeout = Math.toIntExact(consumerMetadataTimeout);
   }
 
   // public Map<String, ConsumerGroupOffsets> getAllConsumerGroupOffsets()
