@@ -22,6 +22,7 @@ import org.apache.kafka.clients.admin.MemberAssignment;
 import org.apache.kafka.clients.admin.MemberDescription;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.ConsumerGroupState;
+import org.apache.kafka.common.IsolationLevel;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
@@ -39,7 +40,7 @@ public class ConsumerOffsetsDaoImplTest {
 
   private static final Duration DEFAULT_METADATA_TIMEOUT = Duration.ofSeconds(15);
   private AdminClient adminClient;
-  private String clusterId = "cluster1";
+  private String CLUSTER_ID = "cluster-1";
 
   @Before
   public void setup() {
@@ -62,12 +63,12 @@ public class ConsumerOffsetsDaoImplTest {
   @Test
   public void testGetAllConsumerGroupDescriptions() throws Throwable {
 
-    Collection<String> consumerGroupIds = ImmutableList.of("cg1", "cg2");
+    Collection<String> consumerGroupIds = ImmutableList.of("cg1", "cg2", "cg3");
     ConsumerGroupDescription desc1 = new ConsumerGroupDescription("cg1", true, getMemberDescriptions(), "something",
         ConsumerGroupState.EMPTY, Node.noNode());
     ConsumerGroupDescription desc2 = new ConsumerGroupDescription("cg2", true, getMemberDescriptions(), "something",
         ConsumerGroupState.STABLE, Node.noNode());
-    ConsumerGroupDescription desc3 = new ConsumerGroupDescription("cg2", true, null, "something",
+    ConsumerGroupDescription desc3 = new ConsumerGroupDescription("cg3", true, null, "something",
         ConsumerGroupState.STABLE, Node.noNode());
 
     DescribeConsumerGroupsResult dcgr = mock(DescribeConsumerGroupsResult.class);
@@ -107,7 +108,7 @@ public class ConsumerOffsetsDaoImplTest {
   }
 
   @Test
-  public void testGetConsumerGroupOffsets() throws Throwable {
+  public void getConsumerGroupOffsets_returnsCorrectLagSummary() throws Throwable {
     ConsumerOffsetsDaoImpl dao = new ConsumerOffsetsDaoImpl(adminClient, DEFAULT_METADATA_TIMEOUT);
 
     ConsumerGroupDescription cgDesc = new ConsumerGroupDescription("cg1", true, getMemberDescriptions(), "something",
@@ -127,8 +128,8 @@ public class ConsumerOffsetsDaoImplTest {
     );
 
     ConsumerGroupLag lag= dao.getConsumerGroupOffsets(
-        cgDesc, currentOffsets, endOffsets).setClusterId(clusterId).build();
-    assertEquals("cluster1", lag.getClusterId());
+        cgDesc, currentOffsets, endOffsets).setClusterId(CLUSTER_ID).build();
+    assertEquals("cluster-1", lag.getClusterId());
     assertEquals("cg1", lag.getConsumerGroupId());
     assertEquals(100, (long) lag.getMaxLag());
     assertEquals(150, (long) lag.getTotalLag());
@@ -154,8 +155,8 @@ public class ConsumerOffsetsDaoImplTest {
     );
 
     ConsumerGroupLag lag2 = dao.getConsumerGroupOffsets(
-        cgDesc2, currentOffsets2, endOffsets2).setClusterId(clusterId).build();
-    assertEquals("cluster1", lag2.getClusterId());
+        cgDesc2, currentOffsets2, endOffsets2).setClusterId(CLUSTER_ID).build();
+    assertEquals("cluster-1", lag2.getClusterId());
     assertEquals("cg2", lag2.getConsumerGroupId());
     assertEquals(25, (long) lag2.getMaxLag());
     assertEquals(49, (long) lag2.getTotalLag());
