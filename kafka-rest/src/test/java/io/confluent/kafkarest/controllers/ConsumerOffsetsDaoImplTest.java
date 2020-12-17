@@ -35,7 +35,7 @@ import java.util.Map;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
-public class ConsumerOffsetsDaoTest {
+public class ConsumerOffsetsDaoImplTest {
 
   private static final Duration DEFAULT_METADATA_TIMEOUT = Duration.ofSeconds(15);
   private AdminClient adminClient;
@@ -54,7 +54,7 @@ public class ConsumerOffsetsDaoTest {
     expect(lcgr.all()).andReturn(KafkaFuture.completedFuture(consumerGroups));
     expectLastCall().once();
     replay(adminClient, lcgr);
-    ConsumerOffsetsDao dao = new ConsumerOffsetsDao(adminClient, DEFAULT_METADATA_TIMEOUT);
+    ConsumerOffsetsDaoImpl dao = new ConsumerOffsetsDaoImpl(adminClient, DEFAULT_METADATA_TIMEOUT);
     dao.getConsumerGroups();
     verify(adminClient, lcgr);
   }
@@ -81,7 +81,7 @@ public class ConsumerOffsetsDaoTest {
     expectLastCall().once();
 
     replay(adminClient, dcgr);
-    ConsumerOffsetsDao dao = new ConsumerOffsetsDao(adminClient, DEFAULT_METADATA_TIMEOUT);
+    ConsumerOffsetsDaoImpl dao = new ConsumerOffsetsDaoImpl(adminClient, DEFAULT_METADATA_TIMEOUT);
     assertEquals(ImmutableMap.of("cg1", desc1, "cg2", desc2, "cg3", desc3), dao.getAllConsumerGroupDescriptions(consumerGroupIds));
     verify(adminClient, dcgr);
   }
@@ -97,7 +97,7 @@ public class ConsumerOffsetsDaoTest {
     expectLastCall().once();
 
     replay(adminClient, lcgor);
-    ConsumerOffsetsDao dao = new ConsumerOffsetsDao(adminClient, DEFAULT_METADATA_TIMEOUT);
+    ConsumerOffsetsDaoImpl dao = new ConsumerOffsetsDaoImpl(adminClient, DEFAULT_METADATA_TIMEOUT);
     dao.getCurrentOffsets(consumerGroupId);
     verify(adminClient, lcgor);
   }
@@ -108,7 +108,7 @@ public class ConsumerOffsetsDaoTest {
 
   @Test
   public void testGetConsumerGroupOffsets() throws Throwable {
-    ConsumerOffsetsDao dao = new ConsumerOffsetsDao(adminClient, DEFAULT_METADATA_TIMEOUT);
+    ConsumerOffsetsDaoImpl dao = new ConsumerOffsetsDaoImpl(adminClient, DEFAULT_METADATA_TIMEOUT);
 
     ConsumerGroupDescription cgDesc = new ConsumerGroupDescription("cg1", true, getMemberDescriptions(), "something",
         ConsumerGroupState.STABLE, Node.noNode());
