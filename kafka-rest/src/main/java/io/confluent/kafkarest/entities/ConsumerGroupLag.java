@@ -75,6 +75,9 @@ public abstract class ConsumerGroupLag {
       if (topicMaxLag == null || topicMaxLag < offset.getLag()) {
         topicMaxLag = offset.getLag();
         topicMaxLagClientId = offset.getClientId();
+        topicMaxLagConsumerId = offset.getConsumerId();
+        topicMaxLagTopicName = offset.getTopicName();
+        topicMaxLagPartitionId = offset.getPartitionId();
       }
     }
 
