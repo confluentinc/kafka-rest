@@ -15,25 +15,17 @@
 
 package io.confluent.kafkarest.integration.v3;
 
-import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.assertEquals;
 
-import io.confluent.kafka.serializers.KafkaJsonDeserializer;
-import io.confluent.kafkarest.NoSchemaRestProducer;
-import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.BinaryConsumerRecord;
 import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest.BinaryPartitionProduceRecord;
-import io.confluent.kafkarest.entities.v2.JsonPartitionProduceRequest;
-import io.confluent.kafkarest.entities.v2.JsonPartitionProduceRequest.JsonPartitionProduceRecord;
 import io.confluent.kafkarest.entities.v3.ConsumerGroupLagData;
 import io.confluent.kafkarest.entities.v3.GetConsumerGroupLagResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.Resource.Relationship;
 import io.confluent.kafkarest.integration.AbstractConsumerTest;
-import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
@@ -94,7 +86,9 @@ public class ConsumerGroupLagsResourceIntegrationTest extends AbstractConsumerTe
 
   @Test
   public void getConsumerGroupLag_returnsMaxLagPartition() {
-    String instanceUri = startConsumeMessages(group1, topic1, null, Versions.KAFKA_V2_JSON_BINARY);
+    KafkaConsumer<?, ?> consumer1 = createConsumer(group1, "client-1");
+    consumer1.subscribe(Arrays.asList(topic1, topic2));
+    // String instanceUri = startConsumeMessages(group1, Arrays.asList(topic1, topic2), null, Versions.KAFKA_V2_JSON_BINARY);
 
     // produce to topic1 partition0, topic2 partition1
     BinaryPartitionProduceRequest request = BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
@@ -102,9 +96,9 @@ public class ConsumerGroupLagsResourceIntegrationTest extends AbstractConsumerTe
     produce(topic2, 1, request);
 
     // consume
-    Response consumeResponse = request(instanceUri + "/records")
-        .accept(Versions.KAFKA_V2_JSON_BINARY).get();
-    commitOffsets(instanceUri);
+    consumer1.poll(Duration.ofSeconds(10));
+    // request(instanceUri + "/records").accept(Versions.KAFKA_V2_JSON_BINARY).get();
+    // commitOffsets(instanceUri);
 
     // group lag request returns maxLag=0, totalLag=0
     Response response =
@@ -144,8 +138,8 @@ public class ConsumerGroupLagsResourceIntegrationTest extends AbstractConsumerTe
                 .setConsumerGroupId(group1)
                 .setMaxLag(6L)
                 .setTotalLag(9L)
-                .setMaxLagConsumerId("consumer-consumer-group-1-1-" + clusterId)
-                .setMaxLagClientId("consumer-consumer-group-1-1")
+                .setMaxLagConsumerId(consumer1.groupMetadata().memberId())
+                .setMaxLagClientId("client-1")
                 .setMaxLagTopicName(topic2)
                 .setMaxLagPartitionId(1)
                 .setMaxLagPartition(
