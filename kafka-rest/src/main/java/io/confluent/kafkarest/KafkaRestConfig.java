@@ -789,7 +789,4 @@ public class KafkaRestConfig extends RestConfig {
     return metricsContext.metricsContext();
   }
 
-  public Duration getDuration(String key) {
-    return (Duration)this.get(key);
-  }
 }

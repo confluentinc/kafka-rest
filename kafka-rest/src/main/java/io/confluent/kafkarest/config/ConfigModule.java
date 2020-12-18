@@ -78,14 +78,9 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new ListenersConfigImpl())
         .to(new TypeLiteral<List<URI>>() { });
 
-     bind(config.getDuration(KafkaRestConfig.OFFSETS_TIMEOUT_CONFIG))
-         .qualifiedBy(new OffsetsTimeoutConfigImpl())
-         .to(new TypeLiteral<Duration>() { });
-
-    // ahu todo: figure out what is correct here
-//    bind(config.getLong(KafkaRestConfig.OFFSETS_TIMEOUT_CONFIG))
-//        .qualifiedBy(new OffsetsTimeoutConfigImpl())
-//        .to(Long.class);
+    bind(Duration.ofMillis(config.getLong(KafkaRestConfig.OFFSETS_TIMEOUT_CONFIG)))
+        .qualifiedBy(new OffsetsTimeoutConfigImpl())
+        .to(new TypeLiteral<Duration>() { });
 
     bind(config.getInt(RestConfig.PORT_CONFIG))
         .qualifiedBy(new PortConfigImpl())
