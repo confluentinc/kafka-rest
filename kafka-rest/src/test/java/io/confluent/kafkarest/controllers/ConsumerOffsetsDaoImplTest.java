@@ -37,7 +37,7 @@ import static org.junit.Assert.assertEquals;
 
 public class ConsumerOffsetsDaoImplTest {
 
-  private static final Long DEFAULT_METADATA_TIMEOUT = 15000L;
+  private static final Duration DEFAULT_METADATA_TIMEOUT = Duration.ofSeconds(15);
   private AdminClient adminClient;
   private String CLUSTER_ID = "cluster-1";
 
