@@ -53,55 +53,6 @@ public abstract class ConsumerGroupLag {
     return new AutoValue_ConsumerGroupLag.Builder();
   }
 
-  private static final class TopicOffsets {
-    private final String topicName;
-
-    private Long topicMaxLag;
-    private String topicMaxLagClientId;
-    private String topicMaxLagConsumerId;
-    private String topicMaxLagTopicName;
-    private Integer topicMaxLagPartitionId;
-    // private final Set<Offset> topicOffsets = new HashSet<>();
-
-    private TopicOffsets(String topicName) {
-      this.topicName = requireNonNull(topicName);
-    }
-
-    private void addOffset(Offset offset) {
-      // if (topicOffsets.contains(offset)) {
-      //   return;
-      // }
-      // topicOffsets.add(offset);
-      if (topicMaxLag == null || topicMaxLag < offset.getLag()) {
-        topicMaxLag = offset.getLag();
-        topicMaxLagClientId = offset.getClientId();
-        topicMaxLagConsumerId = offset.getConsumerId();
-        topicMaxLagTopicName = offset.getTopicName();
-        topicMaxLagPartitionId = offset.getPartitionId();
-      }
-    }
-
-    // private Set<Offset> getTopicOffsets() {
-    //   return topicOffsets;
-    // }
-
-    private long getTopicMaxLag() {
-      return topicMaxLag;
-    }
-    private String getTopicMaxLagClientId() {
-      return topicMaxLagClientId;
-    }
-    private String getTopicMaxLagConsumerId() {
-      return topicMaxLagConsumerId;
-    }
-    private String getTopicMaxLagTopicName() {
-      return topicMaxLagTopicName;
-    }
-    private Integer getTopicMaxLagPartitionId() {
-      return topicMaxLagPartitionId;
-    }
-  }
-
   @AutoValue
   abstract static class Offset {
 
@@ -150,7 +101,6 @@ public abstract class ConsumerGroupLag {
     private Long maxLag;
     private long totalLag = 0;
 
-    private final Map<String, TopicOffsets> consumerGroupOffsets = new HashMap<>();
     private final Set<String> consumers = new HashSet<>();
 
     Builder() {
@@ -164,8 +114,6 @@ public abstract class ConsumerGroupLag {
         long currentOffset,
         long endOffset
     ) {
-      TopicOffsets topicOffsets =
-          consumerGroupOffsets.computeIfAbsent(topicName, unused -> new TopicOffsets(topicName));
 
       Offset offset =
           Offset.builder()
@@ -177,11 +125,8 @@ public abstract class ConsumerGroupLag {
               .setEndOffset(endOffset)
               .build();
 
-      topicOffsets.addOffset(offset);
-
       if (maxLag == null || maxLag < offset.getLag()) {
         maxLag = offset.getLag();
-        // maxLag = topicOffsets.getMaxLag();
         setMaxLag(maxLag);
         setMaxLagClientId(clientId);
         setMaxLagConsumerId(consumerId);
