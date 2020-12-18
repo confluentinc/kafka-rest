@@ -56,7 +56,11 @@ public abstract class ConsumerGroupLag {
   private static final class TopicOffsets {
     private final String topicName;
 
-    private Long maxLag;
+    private Long topicMaxLag;
+    private String topicMaxLagClientId;
+    private String topicMaxLagConsumerId;
+    private String topicMaxLagTopicName;
+    private Integer topicMaxLagPartitionId;
     // private final Set<Offset> topicOffsets = new HashSet<>();
 
     private TopicOffsets(String topicName) {
@@ -68,15 +72,30 @@ public abstract class ConsumerGroupLag {
       //   return;
       // }
       // topicOffsets.add(offset);
-      maxLag = ((maxLag == null) ? offset.getLag() : Math.max(maxLag, offset.getLag()));
+      if (topicMaxLag == null || topicMaxLag < offset.getLag()) {
+        topicMaxLag = offset.getLag();
+        topicMaxLagClientId = offset.getClientId();
+      }
     }
 
     // private Set<Offset> getTopicOffsets() {
     //   return topicOffsets;
     // }
 
-    private long getMaxLag() {
-      return maxLag;
+    private long getTopicMaxLag() {
+      return topicMaxLag;
+    }
+    private String getTopicMaxLagClientId() {
+      return topicMaxLagClientId;
+    }
+    private String getTopicMaxLagConsumerId() {
+      return topicMaxLagConsumerId;
+    }
+    private String getTopicMaxLagTopicName() {
+      return topicMaxLagTopicName;
+    }
+    private Integer getTopicMaxLagPartitionId() {
+      return topicMaxLagPartitionId;
     }
   }
 
@@ -159,6 +178,7 @@ public abstract class ConsumerGroupLag {
 
       if (maxLag == null || maxLag < offset.getLag()) {
         maxLag = offset.getLag();
+        // maxLag = topicOffsets.getMaxLag();
         setMaxLag(maxLag);
         setMaxLagClientId(clientId);
         setMaxLagConsumerId(consumerId);
