@@ -16,6 +16,8 @@
 package io.confluent.kafkarest.controllers;
 
 import io.confluent.kafkarest.entities.ConsumerGroupLag;
+import io.confluent.kafkarest.entities.ConsumerLag;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import org.apache.kafka.common.IsolationLevel;
@@ -26,5 +28,8 @@ public interface ConsumerOffsetsDao {
       String clusterId, String consumerGroupId, IsolationLevel isolationLevel)
       throws InterruptedException, ExecutionException, TimeoutException;
 
+  List<ConsumerLag> getConsumerLags(
+      String clusterId, String consumerGroupId, IsolationLevel isolationLevel)
+      throws InterruptedException, ExecutionException, TimeoutException;
 
 }

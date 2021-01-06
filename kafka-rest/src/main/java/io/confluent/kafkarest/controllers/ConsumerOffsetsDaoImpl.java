@@ -1,14 +1,19 @@
 package io.confluent.kafkarest.controllers;
 
+import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import io.confluent.kafkarest.config.ConfigModule.OffsetsTimeoutConfig;
 import io.confluent.kafkarest.entities.ConsumerGroupLag;
+import io.confluent.kafkarest.entities.ConsumerLag;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -16,6 +21,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import okio.Timeout;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericData.Array;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
@@ -43,8 +51,10 @@ final class ConsumerOffsetsDaoImpl implements ConsumerOffsetsDao {
       @OffsetsTimeoutConfig Duration consumerMetadataTimeout
   ) {
     this.kafkaAdminClient = kafkaAdminClient;
-    // ahu todo: figure out how to safely cast to int (required by AbstractOptions.timeoutMs())
-    this.consumerMetadataTimeout = Math.toIntExact(consumerMetadataTimeout.toMillis());
+    // ahu todo: figure out best way to safely cast to int (required by AbstractOptions.timeoutMs())
+    // this.consumerMetadataTimeout = Math.toIntExact(Long.MAX_VALUE);
+    this.consumerMetadataTimeout = Math.toIntExact(
+        Math.min(consumerMetadataTimeout.toMillis(), Integer.MAX_VALUE));
   }
 
   // public Map<String, ConsumerGroupOffsets> getAllConsumerGroupOffsets()
@@ -64,6 +74,102 @@ final class ConsumerOffsetsDaoImpl implements ConsumerOffsetsDao {
   //   return cgOffsetsMap;
   // }
 
+  @AutoValue
+  abstract static class MemberId {
+
+    abstract String getConsumerId();
+
+    abstract String getClientId();
+
+    abstract Optional<String> getInstanceId();
+
+    private static Builder builder() { return new AutoValue_ConsumerOffsetsDaoImpl_MemberId.Builder();}
+
+    @AutoValue.Builder
+    abstract static class Builder {
+
+      abstract Builder setConsumerId(String consumerId);
+
+      abstract Builder setClientId(String clientId);
+
+      abstract Builder setInstanceId(Optional<String> instanceId);
+
+      abstract MemberId build();
+    }
+  }
+
+  public List<ConsumerLag> getConsumerLags(
+      String clusterId,
+      String consumerGroupId,
+      IsolationLevel isolationLevel
+  ) throws InterruptedException, ExecutionException, TimeoutException {
+    List<ConsumerLag> consumerLags = new ArrayList<>();
+    final ConsumerGroupDescription cgDesc = getConsumerGroupDescription(consumerGroupId);
+
+    final Map<TopicPartition, OffsetAndMetadata> fetchedCurrentOffsets =
+        getCurrentOffsets(cgDesc.groupId());
+
+    ListOffsetsOptions listOffsetsOptions = new ListOffsetsOptions(isolationLevel)
+        .timeoutMs(consumerMetadataTimeout);
+
+    Map<TopicPartition, OffsetSpec> latestOffsetSpecs = fetchedCurrentOffsets.keySet().stream()
+        .collect(Collectors.toMap(Function.identity(), tp -> OffsetSpec.latest()));
+
+    ListOffsetsResult latestOffsetResult = kafkaAdminClient.listOffsets(
+        latestOffsetSpecs, listOffsetsOptions);
+    Map<TopicPartition, ListOffsetsResultInfo> latestOffsets = latestOffsetResult.all()
+        .get(consumerMetadataTimeout, TimeUnit.MILLISECONDS);
+
+    Map<TopicPartition, MemberId> tpMemberIds = new HashMap<>();
+
+    for (MemberDescription memberDesc : cgDesc.members()) {
+      for (TopicPartition tp : memberDesc.assignment().topicPartitions()) {
+        MemberId memberId =
+            MemberId.builder()
+                .setConsumerId(memberDesc.consumerId())
+                .setClientId(memberDesc.clientId())
+                .setInstanceId(memberDesc.groupInstanceId())
+                .build();
+        tpMemberIds.put(tp, memberId);
+      }
+    }
+
+    for (TopicPartition tp : fetchedCurrentOffsets.keySet()) {
+      // look up consumer id from map if not part of a simple consumer group
+      MemberId memberId = tpMemberIds.getOrDefault(
+          tp, MemberId.builder()
+              .setConsumerId("")
+              .setClientId("")
+              .setInstanceId(Optional.empty())
+              .build());
+
+      long currentOffset = getCurrentOffset(fetchedCurrentOffsets, tp);
+      long latestOffset = getOffset(latestOffsets, tp);
+      if (currentOffset < 0 || latestOffset < 0) {
+        // log.debug("invalid offsets for topic={} consumerId={} current={} latest={}",
+        //     tp.topic(),
+        //     consumerId,
+        //     currentOffset,
+        //     latestOffset);
+        continue;
+      }
+      ConsumerLag consumerLag =
+          ConsumerLag.builder()
+              .setClusterId(clusterId)
+              .setConsumerGroupId(consumerGroupId)
+              .setTopicName(tp.topic())
+              .setPartitionId(tp.partition())
+              .setConsumerId(memberId.getConsumerId())
+              .setInstanceId(memberId.getInstanceId().orElse(null))
+              .setClientId(memberId.getClientId())
+              .setCurrentOffset(currentOffset)
+              .setLogEndOffset(latestOffset)
+              .build();
+      consumerLags.add(consumerLag);
+    }
+    return consumerLags;
+  }
+
   ConsumerGroupLag.Builder getConsumerGroupOffsets(
       ConsumerGroupDescription cgDesc,
       Map<TopicPartition, OffsetAndMetadata> fetchedCurrentOffsets,
@@ -72,21 +178,38 @@ final class ConsumerOffsetsDaoImpl implements ConsumerOffsetsDao {
     ConsumerGroupLag.Builder cgOffsets =
         ConsumerGroupLag.builder().setConsumerGroupId(cgDesc.groupId());
 
-    // build map of topic partition -> consumer id
-    Map<TopicPartition, String> tpConsumerIds = new HashMap<>();
-    Map<TopicPartition, String> tpClientIds = new HashMap<>();
+    // build map of topic partition -> consumer, client, instance ids
+    // Map<TopicPartition, String> tpConsumerIds = new HashMap<>();
+    // Map<TopicPartition, String> tpClientIds = new HashMap<>();
+    // Map<TopicPartition, Optional<String>> tpInstanceIds = new HashMap<>();
+    Map<TopicPartition, MemberId> tpMemberIds = new HashMap<>();
 
     for (MemberDescription memberDesc : cgDesc.members()) {
       for (TopicPartition tp : memberDesc.assignment().topicPartitions()) {
-        tpConsumerIds.put(tp, memberDesc.consumerId());
-        tpClientIds.put(tp, memberDesc.clientId());
+        // tpConsumerIds.put(tp, memberDesc.consumerId());
+        // tpClientIds.put(tp, memberDesc.clientId());
+        // tpInstanceIds.put(tp, memberDesc.groupInstanceId());
+        MemberId memberId =
+            MemberId.builder()
+                .setConsumerId(memberDesc.consumerId())
+                .setClientId(memberDesc.clientId())
+                .setInstanceId(memberDesc.groupInstanceId())
+                .build();
+        tpMemberIds.put(tp, memberId);
       }
     }
 
     for (TopicPartition tp : fetchedCurrentOffsets.keySet()) {
       // look up consumer id from map if not part of a simple consumer group
-      String consumerId = tpConsumerIds.getOrDefault(tp, "");
-      String clientId = tpClientIds.getOrDefault(tp, "");
+      // String consumerId = tpConsumerIds.getOrDefault(tp, "");
+      // String clientId = tpClientIds.getOrDefault(tp, "");
+      // Optional<String> instanceId = tpInstanceIds.getOrDefault(tp, Optional.empty());
+      MemberId memberId = tpMemberIds.getOrDefault(
+          tp, MemberId.builder()
+              .setConsumerId("")
+              .setClientId("")
+              .setInstanceId(Optional.empty())
+              .build());
 
       long currentOffset = getCurrentOffset(fetchedCurrentOffsets, tp);
       long latestOffset = getOffset(latestOffsets, tp);
@@ -100,14 +223,14 @@ final class ConsumerOffsetsDaoImpl implements ConsumerOffsetsDao {
       }
       cgOffsets.addOffset(
           tp.topic(),
-          consumerId,
-          clientId,
+          memberId.getConsumerId(),
+          memberId.getClientId(),
+          memberId.getInstanceId(),
           tp.partition(),
           currentOffset,
           latestOffset
       );
     }
-    // ahu todo: instanceId
     return cgOffsets;
   }
 

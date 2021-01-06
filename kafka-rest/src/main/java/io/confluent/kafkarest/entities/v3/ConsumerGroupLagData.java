@@ -62,7 +62,6 @@ public abstract class ConsumerGroupLagData extends Resource {
     return new AutoValue_ConsumerGroupLagData.Builder().setKind("KafkaConsumerGroupLag");
   }
 
-  // what ConsumerGroupLag get methods are appropriate?
   public static Builder fromConsumerGroupLag(ConsumerGroupLag consumerGroupLag) {
     return builder()
         .setClusterId(consumerGroupLag.getClusterId())

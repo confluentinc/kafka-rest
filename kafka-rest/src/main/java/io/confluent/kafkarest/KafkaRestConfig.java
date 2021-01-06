@@ -187,9 +187,9 @@ public class KafkaRestConfig extends RestConfig {
   public static final String OFFSETS_TIMEOUT_CONFIG =
       "offsets.timeout";
   private static final String OFFSETS_TIMEOUT_DOC =
-      "Timeout for consumer group metadata requests when listing consumer group information "
-          + "for ConsumerOffsetsDao operations.";
-  public static final Duration OFFSETS_TIMEOUT_DEFAULT = Duration.ofSeconds(15);
+      "Timeout for consumer group metadata requests for lag calculations. "
+          + "Can not exceed Integer.MAX_VALUE";
+  public static final Duration OFFSETS_TIMEOUT_DEFAULT = Duration.ofSeconds(30);
 
   // TODO: change this to "http://0.0.0.0:8082" when PORT_CONFIG is deleted.
   private static final String KAFKAREST_LISTENERS_DEFAULT = "";

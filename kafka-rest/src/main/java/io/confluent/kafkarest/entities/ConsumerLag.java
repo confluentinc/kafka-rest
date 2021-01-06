@@ -29,15 +29,21 @@ public abstract class ConsumerLag {
 
   public abstract String getConsumerGroupId();
 
+  public abstract String getTopicName();
+
+  public abstract int getPartitionId();
+
   public abstract String getConsumerId();
 
   public abstract Optional<String> getInstanceId();
 
   public abstract String getClientId();
 
-  public abstract String getTopicName();
+  public abstract Long getCurrentOffset();
 
-  public abstract int getPartitionId();
+  public abstract Long getLogEndOffset();
+
+  public Long getLag() { return getLogEndOffset() - getCurrentOffset(); }
 
   public static Builder builder() {
     return new AutoValue_ConsumerLag.Builder();
@@ -53,15 +59,19 @@ public abstract class ConsumerLag {
 
     public abstract Builder setConsumerGroupId(String consumerGroupId);
 
+    public abstract Builder setTopicName(String topicName);
+
+    public abstract Builder setPartitionId(int partitionId);
+
     public abstract Builder setConsumerId(String consumerId);
 
     public abstract Builder setInstanceId(@Nullable String instanceId);
 
     public abstract Builder setClientId(String clientId);
 
-    public abstract Builder setTopicName(String topicName);
+    public abstract Builder setCurrentOffset(Long currentOffset);
 
-    public abstract Builder setPartitionId(int partitionId);
+    public abstract Builder setLogEndOffset(Long logEndOffset);
 
     public abstract ConsumerLag build();
   }

@@ -15,45 +15,46 @@
 
 package io.confluent.kafkarest.controllers;
 
-import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.entities.ConsumerLag;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
+import org.apache.kafka.common.IsolationLevel;
 
 final class ConsumerLagManagerImpl implements ConsumerLagManager {
 
-  private final ConsumerGroupManager consumerGroupManager;
+  private final ConsumerOffsetsDao consumerOffsetsDao;
 
   @Inject
-  ConsumerLagManagerImpl(ConsumerGroupManager consumerGroupManager) {
-    this.consumerGroupManager = requireNonNull(consumerGroupManager);
+  ConsumerLagManagerImpl(ConsumerOffsetsDao consumerOffsetsDao) {
+    this.consumerOffsetsDao = requireNonNull(consumerOffsetsDao);
   }
 
   @Override
   public CompletableFuture<List<ConsumerLag>> listConsumerLags(
       String clusterId, String consumerGroupId) {
-    return consumerGroupManager.getConsumerGroup(clusterId, consumerGroupId)
-        .thenApply(
-            consumerGroup ->
-                checkEntityExists(consumerGroup, "Consumer group %s does not exist.",
-                    consumerGroupId))
-        .thenApply(
-            consumerGroup ->
-                null);
+    try {
+      return CompletableFuture.completedFuture(
+          consumerOffsetsDao.getConsumerLags(clusterId, consumerGroupId, IsolationLevel.READ_COMMITTED));
+    } catch (Exception e) {
+      return CompletableFuture.completedFuture(new ArrayList<>());
+    }
   }
 
   @Override
   public CompletableFuture<Optional<ConsumerLag>> getConsumerLag(
-      String clusterId, String consumerGroupId, String consumerId) {
+      String clusterId, String topicName, Integer partitionId, String consumerGroupId) {
     return listConsumerLags(clusterId, consumerGroupId)
         .thenApply(
             lags ->
                 lags.stream()
-                    .filter(lag -> lag.getConsumerId().equals(consumerId))
+                    .filter(lag -> lag.getTopicName().equals(topicName))
+                    .filter(lag -> lag.getPartitionId() == partitionId)
+                    .filter(lag -> lag.getConsumerGroupId().equals(consumerGroupId))
                     .findAny());
   }
 }

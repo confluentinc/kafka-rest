@@ -15,12 +15,8 @@
 
 package io.confluent.kafkarest.entities;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.auto.value.AutoValue;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -62,6 +58,8 @@ public abstract class ConsumerGroupLag {
 
     abstract String getClientId();
 
+    abstract Optional<String> getInstanceId();
+
     abstract int getPartitionId();
 
     abstract long getCurrentOffset();
@@ -84,6 +82,8 @@ public abstract class ConsumerGroupLag {
       abstract Builder setConsumerId(String consumerId);
 
       abstract Builder setClientId(String clientId);
+
+      abstract Builder setInstanceId(Optional<String> instanceId);
 
       abstract Builder setPartitionId(int partitionId);
 
@@ -110,6 +110,7 @@ public abstract class ConsumerGroupLag {
         String topicName,
         String consumerId,
         String clientId,
+        Optional<String> instanceId,
         int partitionId,
         long currentOffset,
         long endOffset
@@ -120,6 +121,7 @@ public abstract class ConsumerGroupLag {
               .setTopicName(topicName)
               .setConsumerId(consumerId)
               .setClientId(clientId)
+              .setInstanceId(instanceId)
               .setPartitionId(partitionId)
               .setCurrentOffset(currentOffset)
               .setEndOffset(endOffset)
@@ -130,6 +132,7 @@ public abstract class ConsumerGroupLag {
         setMaxLag(maxLag);
         setMaxLagClientId(clientId);
         setMaxLagConsumerId(consumerId);
+        setMaxLagInstanceId(instanceId.orElse(null));
         setMaxLagTopicName(topicName);
         setMaxLagPartitionId(partitionId);
       }

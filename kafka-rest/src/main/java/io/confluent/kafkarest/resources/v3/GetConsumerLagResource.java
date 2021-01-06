@@ -64,12 +64,13 @@ public final class GetConsumerLagResource {
   public void getConsumerLag(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @PathParam("consumerGroupId") String consumerGroupId,
-      @PathParam("consumerId") String consumerId
+      @PathParam("topicName") String topicName,
+      @PathParam("partitionId") Integer partitionId,
+      @PathParam("consumerGroupId") String consumerGroupId
   ) {
     CompletableFuture<GetConsumerLagResponse> response =
         consumerLagManager.get()
-            .getConsumerLag(clusterId, consumerGroupId, consumerId)
+            .getConsumerLag(clusterId, topicName, partitionId, consumerGroupId)
             .thenApply(lag -> lag.orElseThrow(NotFoundException::new))
             .thenApply(
                 lag ->
