@@ -69,7 +69,6 @@ public class ConsumerGroupLagManagerImplTest {
         .andReturn(CONSUMER_GROUP_LAG);
     replay(consumerOffsetsDao);
 
-
     ConsumerGroupLag consumerGroupLag =
         consumerGroupLagManager.getConsumerGroupLag(CLUSTER_ID, CONSUMER_GROUP_ID).get().get();
     assertEquals(CONSUMER_GROUP_LAG, consumerGroupLag);
