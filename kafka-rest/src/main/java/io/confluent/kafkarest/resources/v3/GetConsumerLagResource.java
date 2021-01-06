@@ -22,6 +22,7 @@ import io.confluent.kafkarest.entities.ConsumerLag;
 import io.confluent.kafkarest.entities.v3.ConsumerLagData;
 import io.confluent.kafkarest.entities.v3.GetConsumerLagResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -41,6 +42,7 @@ import javax.ws.rs.core.MediaType;
 @Path(
     "/v3/clusters/{clusterId}/topics/{topicName}/partitions/{partitionId}/lags/{consumerGroupId}"
 )
+@ResourceName("api.v3.consumer-lags.get")
 public final class GetConsumerLagResource {
 
   private final Provider<ConsumerLagManager> consumerLagManager;

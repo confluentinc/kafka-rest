@@ -21,6 +21,7 @@ import io.confluent.kafkarest.controllers.ConsumerLagManager;
 import io.confluent.kafkarest.entities.v3.ConsumerLagDataList;
 import io.confluent.kafkarest.entities.v3.ListConsumerLagsResponse;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -38,9 +39,8 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
 
-@Path(
-    "/v3/clusters/{clusterId}/consumer-groups/{consumerGroupId}/lags"
-)
+@Path("/v3/clusters/{clusterId}/consumer-groups/{consumerGroupId}/lags")
+@ResourceName("api.v3.consumer-lags.list")
 public class ListConsumerLagsResource {
 
   private final Provider<ConsumerLagManager> consumerLagManager;

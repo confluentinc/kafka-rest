@@ -1,14 +1,31 @@
+/*
+ * Copyright 2020 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.confluent.kafkarest.controllers;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import io.confluent.kafkarest.entities.ConsumerLag;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import org.apache.kafka.common.IsolationLevel;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
@@ -61,18 +78,9 @@ public class ConsumerLagManagerImplTest {
 
   private ConsumerLagManagerImpl consumerLagManager;
 
-  private List<ConsumerLag> consumerLagList;
-
-  private ConsumerLag consumerLag2;
-
   @Before
   public void setUp() {
     consumerLagManager = new ConsumerLagManagerImpl(consumerOffsetsDao);
-    consumerLag2 = createMock(ConsumerLag.class);
-    consumerLagList = Arrays.asList(
-        createMock(ConsumerLag.class),
-        consumerLag2
-    );
   }
 
   @Test
@@ -91,30 +99,30 @@ public class ConsumerLagManagerImplTest {
   public void getConsumerLag_returnsConsumerLag() throws Exception {
     expect(consumerOffsetsDao.getConsumerLags(
         CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
-        .andReturn(consumerLagList);
+        .andReturn(CONSUMER_LAG_LIST);
     replay(consumerOffsetsDao);
-
-    for (int i = 0; i < CONSUMER_LAG_LIST.size(); i++) {
-      expect(consumerLagList.get(i).getTopicName()).andReturn(CONSUMER_LAG_LIST.get(i).getTopicName());
-      expect(consumerLagList.get(i).getPartitionId()).andReturn(CONSUMER_LAG_LIST.get(i).getPartitionId());
-      expect(consumerLagList.get(i).getConsumerGroupId()).andReturn(CONSUMER_GROUP_ID);
-      replay(consumerLagList.get(i));
-    }
-
-    expect(consumerLag2.getClusterId()).andReturn(CLUSTER_ID);
-    expect(consumerLag2.getConsumerGroupId()).andReturn(CONSUMER_GROUP_ID);
-    expect(consumerLag2.getTopicName()).andReturn(CONSUMER_LAG_2.getTopicName());
-    expect(consumerLag2.getPartitionId()).andReturn(CONSUMER_LAG_2.getPartitionId());
-    expect(consumerLag2.getConsumerId()).andReturn(CONSUMER_LAG_2.getConsumerId());
-    expect(consumerLag2.getInstanceId()).andReturn(CONSUMER_LAG_2.getInstanceId());
-    expect(consumerLag2.getClientId()).andReturn(CONSUMER_LAG_2.getClientId());
-    expect(consumerLag2.getCurrentOffset()).andReturn(CONSUMER_LAG_2.getCurrentOffset());
-    expect(consumerLag2.getCurrentOffset()).andReturn(CONSUMER_LAG_2.getLogEndOffset());
-    replay(consumerLag2);
 
     ConsumerLag consumerLag =
         consumerLagManager.getConsumerLag(
-            CLUSTER_ID, "topic-1", 2, CONSUMER_GROUP_ID).get().get();
+            CLUSTER_ID, "topic-1", 2, CONSUMER_GROUP_ID)
+            .get()
+            .get();
+
     assertEquals(CONSUMER_LAG_2, consumerLag);
+  }
+
+  @Test
+  public void getConsumerLag_nonExistingConsumerLag_returnsEmpty() throws Exception {
+    expect(consumerOffsetsDao.getConsumerLags(
+       CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
+        .andReturn(new ArrayList<>());
+    replay(consumerOffsetsDao);
+
+    Optional<ConsumerLag> consumerLag =
+        consumerLagManager.getConsumerLag(
+            CLUSTER_ID, "topic-1", 2, CONSUMER_GROUP_ID)
+            .get();
+
+    assertFalse(consumerLag.isPresent());
   }
 }

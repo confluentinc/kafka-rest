@@ -64,10 +64,6 @@ public class ConsumerGroupLagsResourceIntegrationTest extends AbstractConsumerTe
       new BinaryPartitionProduceRecord(null, "value3")
   );
 
-//  public ConsumerGroupLagsResourceIntegrationTest() {
-//    super(/* numBrokers= */1, /*withSchemaRegistry= */ false);
-//  }
-
   private static final GenericType<List<BinaryConsumerRecord>> binaryConsumerRecordType
       = new GenericType<List<BinaryConsumerRecord>>() {
   };

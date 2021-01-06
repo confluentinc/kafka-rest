@@ -34,6 +34,12 @@ public abstract class ConsumerLagData extends Resource {
   @JsonProperty("consumer_group_id")
   public abstract String getConsumerGroupId();
 
+  @JsonProperty("topic_name")
+  public abstract String getTopicName();
+
+  @JsonProperty("partition_id")
+  public abstract int getPartitionId();
+
   @JsonProperty("consumer_id")
   public abstract String getConsumerId();
 
@@ -43,11 +49,14 @@ public abstract class ConsumerLagData extends Resource {
   @JsonProperty("client_id")
   public abstract String getClientId();
 
-  @JsonProperty("topic_name")
-  public abstract String getTopicName();
+  @JsonProperty("current_offset")
+  public abstract Long getCurrentOffset();
 
-  @JsonProperty("partition_id")
-  public abstract int getPartitionId();
+  @JsonProperty("log_end_offset")
+  public abstract Long getLogEndOffset();
+
+  @JsonProperty("lag")
+  public Long getLag() { return getLogEndOffset() - getCurrentOffset(); }
 
   public static Builder builder() {
     return new AutoValue_ConsumerLagData.Builder().setKind("KafkaConsumerLag");
@@ -57,11 +66,13 @@ public abstract class ConsumerLagData extends Resource {
     return builder()
         .setClusterId(consumerLag.getClusterId())
         .setConsumerGroupId(consumerLag.getConsumerGroupId())
+        .setTopicName(consumerLag.getTopicName())
+        .setPartitionId(consumerLag.getPartitionId())
         .setConsumerId(consumerLag.getConsumerId())
         .setInstanceId(consumerLag.getInstanceId().orElse(null))
         .setClientId(consumerLag.getClientId())
-        .setTopicName(consumerLag.getTopicName())
-        .setPartitionId(consumerLag.getPartitionId());
+        .setCurrentOffset(consumerLag.getCurrentOffset())
+        .setLogEndOffset(consumerLag.getLogEndOffset());
   }
 
   @JsonCreator
@@ -70,27 +81,31 @@ public abstract class ConsumerLagData extends Resource {
       @JsonProperty("metadata") Metadata metadata,
       @JsonProperty("cluster_id") String clusterId,
       @JsonProperty("consumer_group_id") String consumerGroupId,
+      @JsonProperty("topic_name") String topicName,
+      @JsonProperty("partition_id") int partitionId,
       @JsonProperty("consumer_id") String consumerId,
       @JsonProperty("instance_id") @Nullable String instanceId,
       @JsonProperty("client_id") String clientId,
-      @JsonProperty("topic_name") String topicName,
-      @JsonProperty("partition_id") int partitionId
+      @JsonProperty("current_offset") Long currentOffset,
+      @JsonProperty("log_end_offset") Long logEndOffset
   ) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
         .setClusterId(clusterId)
         .setConsumerGroupId(consumerGroupId)
+        .setTopicName(topicName)
+        .setPartitionId(partitionId)
         .setConsumerId(consumerId)
         .setInstanceId(instanceId)
         .setClientId(clientId)
-        .setTopicName(topicName)
-        .setPartitionId(partitionId)
+        .setCurrentOffset(currentOffset)
+        .setLogEndOffset(logEndOffset)
         .build();
   }
 
   @AutoValue.Builder
-  public abstract static class Builder extends Resource.Builder<ConsumerLagData.Builder> {
+  public abstract static class Builder extends Resource.Builder<Builder> {
 
     Builder() {
     }
@@ -99,15 +114,19 @@ public abstract class ConsumerLagData extends Resource {
 
     public abstract Builder setConsumerGroupId(String consumerGroupId);
 
+    public abstract Builder setTopicName(String topicName);
+
+    public abstract Builder setPartitionId(int partitionId);
+
     public abstract Builder setConsumerId(String consumerId);
 
     public abstract Builder setInstanceId(@Nullable String instanceId);
 
     public abstract Builder setClientId(String clientId);
 
-    public abstract Builder setTopicName(String topicName);
+    public abstract Builder setCurrentOffset(Long currentOffset);
 
-    public abstract Builder setPartitionId(int partitionId);
+    public abstract Builder setLogEndOffset(Long logEndOffset);
 
     public abstract ConsumerLagData build();
   }
