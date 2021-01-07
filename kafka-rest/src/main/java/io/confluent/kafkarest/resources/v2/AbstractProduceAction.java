@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -63,12 +63,13 @@ abstract class AbstractProduceAction {
     this.produceController = requireNonNull(produceController);
   }
 
-  final CompletableFuture<ProduceResponse> produce(
+  final CompletableFuture<ProduceResponse> produceWithoutSchema(
       EmbeddedFormat format,
       String topicName,
       Optional<Integer> partition,
       ProduceRequest request) {
-    List<SerializedKeyAndValue> serialized = serialize(format, partition, request.getRecords());
+    List<SerializedKeyAndValue> serialized =
+        serializeWithoutSchema(format, topicName, partition, request.getRecords());
 
     List<CompletableFuture<ProduceResult>> resultFutures = doProduce(topicName, serialized);
 
@@ -76,8 +77,9 @@ abstract class AbstractProduceAction {
         /* keySchema= */ Optional.empty(), /* valueSchema= */ Optional.empty(), resultFutures);
   }
 
-  private List<SerializedKeyAndValue> serialize(
+  private List<SerializedKeyAndValue> serializeWithoutSchema(
       EmbeddedFormat format,
+      String topicName,
       Optional<Integer> partition,
       List<ProduceRecord> records) {
     return records.stream()
@@ -86,15 +88,15 @@ abstract class AbstractProduceAction {
                 SerializedKeyAndValue.create(
                     record.getPartition().map(Optional::of).orElse(partition),
                     recordSerializer.get()
-                        .serialize(
+                        .serializeWithoutSchema(
                             format,
-                            record.getKey().orElse(NullNode.getInstance()),
-                            /* isKey= */ true),
+                            topicName, true, record.getKey().orElse(NullNode.getInstance())
+                            /* isKey= */),
                     recordSerializer.get()
-                        .serialize(
+                        .serializeWithoutSchema(
                             format,
-                            record.getValue().orElse(NullNode.getInstance()),
-                            /* isKey= */ false)))
+                            topicName, false, record.getValue().orElse(NullNode.getInstance())
+                            /* isKey= */)))
         .collect(Collectors.toList());
   }
 

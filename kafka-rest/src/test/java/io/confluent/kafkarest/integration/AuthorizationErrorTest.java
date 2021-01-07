@@ -13,6 +13,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
+
 package io.confluent.kafkarest.integration;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
@@ -20,19 +21,16 @@ import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.fasterxml.jackson.databind.node.TextNode;
-import com.google.common.io.BaseEncoding;
-import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
-import io.confluent.kafkarest.entities.v2.ProduceRequest;
-import io.confluent.kafkarest.entities.v2.ProduceRequest.ProduceRecord;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -42,29 +40,27 @@ import kafka.security.auth.SimpleAclAuthorizer;
 import kafka.server.KafkaConfig;
 import org.apache.kafka.common.security.auth.KafkaPrincipal;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import scala.Option;
 import scala.collection.JavaConverters;
 
-public class AuthorizationErrorTest extends AbstractProducerTest {
+public class AuthorizationErrorTest
+    extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
 
   private static final String TOPIC_NAME = "topic1";
   private static final String CONSUMER_GROUP = "app1-consumer-group";
   private static final String USERNAME = "alice";
 
-  private static TextNode base64Encode(String data) {
-    return TextNode.valueOf(BaseEncoding.base64().encode(data.getBytes(StandardCharsets.UTF_8)));
-  }
-
   // Produce to topic inputs & results
-  private final List<ProduceRecord> topicRecords =
-      Arrays.asList(
-          ProduceRecord.create(base64Encode("key"), base64Encode("value")),
-          ProduceRecord.create(base64Encode("key"), base64Encode("value2")),
-          ProduceRecord.create(base64Encode("key"), base64Encode("value3")),
-          ProduceRecord.create(base64Encode("key"), base64Encode("value4")));
+  private final List<BinaryTopicProduceRecord> topicRecords = Arrays.asList(
+      new BinaryTopicProduceRecord("key", "value", null),
+      new BinaryTopicProduceRecord("key", "value2", null),
+      new BinaryTopicProduceRecord("key", "value3", null),
+      new BinaryTopicProduceRecord("key", "value4", null)
+  );
 
   private final List<PartitionOffset> produceOffsets = Arrays.asList(
       new PartitionOffset(0, 0L, null, null),
@@ -130,7 +126,7 @@ public class AuthorizationErrorTest extends AbstractProducerTest {
 
   @Test
   public void testProducerAuthorization() {
-    ProduceRequest request = ProduceRequest.create(topicRecords);
+    BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(topicRecords);
     // test without any acls
     testProduceToAuthorizationError(TOPIC_NAME, request);
     //add acls
@@ -138,15 +134,11 @@ public class AuthorizationErrorTest extends AbstractProducerTest {
     testProduceToTopic(
         TOPIC_NAME,
         request,
-        record ->
-            record.getValue()
-                .map(value -> ByteString.copyFrom(BaseEncoding.base64().decode(value.asText())))
-                .orElse(null),
-        (topic, data) -> ByteString.copyFrom(data),
-        (topic, data) -> ByteString.copyFrom(data),
+        ByteArrayDeserializer.class.getName(),
+        ByteArrayDeserializer.class.getName(),
         produceOffsets,
         false,
-        request.getRecords());
+        request.toProduceRequest().getRecords());
   }
 
   private void verifySubscribeToTopic(boolean expectFailure) {

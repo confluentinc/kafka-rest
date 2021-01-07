@@ -17,7 +17,6 @@ package io.confluent.kafkarest.resources.v2;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
-import static java.util.Collections.emptyMap;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;
@@ -176,16 +175,16 @@ public class TopicsResourceBinaryProduceTest
               .map(value -> ByteString.copyFromUtf8(String.valueOf(record.getValue())));
 
       expect(
-          recordSerializerFacade.serialize(
+          recordSerializerFacade.serializeWithoutSchema(
               EmbeddedFormat.BINARY,
-              record.getKey().orElse(NullNode.getInstance()),
-              /* isKey= */ true))
+              TOPIC_NAME, true, record.getKey().orElse(NullNode.getInstance())
+              /* isKey= */))
           .andReturn(serializedKey);
       expect(
-          recordSerializerFacade.serialize(
+          recordSerializerFacade.serializeWithoutSchema(
               EmbeddedFormat.BINARY,
-              record.getValue().orElse(NullNode.getInstance()),
-              /* isKey= */ false))
+              TOPIC_NAME, false, record.getValue().orElse(NullNode.getInstance())
+              /* isKey= */))
           .andReturn(serializedValue);
 
       expect(

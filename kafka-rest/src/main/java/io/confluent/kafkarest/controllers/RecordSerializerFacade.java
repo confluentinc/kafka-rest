@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -21,10 +21,28 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.util.Optional;
 
+/**
+ * A facade to serializers for all supported {@link EmbeddedFormat formats}.
+ */
 public interface RecordSerializerFacade {
 
-  Optional<ByteString> serialize(EmbeddedFormat format, JsonNode data, boolean isKey);
+  /**
+   * Serializes the given schemaless {@code data} into a {@link ByteString}.
+   *
+   * <p>The {@code format} argument must be one of {@link EmbeddedFormat#BINARY} or
+   * {@link EmbeddedFormat#JSON}. Returns {@link Optional#empty()} if {@code data} {@link
+   * JsonNode#isNull() is null}.
+   */
+  Optional<ByteString> serializeWithoutSchema(
+      EmbeddedFormat format, String topicName, boolean isKey, JsonNode data);
 
+  /**
+   * Serializes the given schema-ed {@code data} into a {@link ByteString}.
+   *
+   * <p>The {@code format} argument must be one of {@link EmbeddedFormat#AVRO}, {@link
+   * EmbeddedFormat#JSONSCHEMA} or {@link EmbeddedFormat#JSON}. Returns {@link Optional#empty()} if
+   * {@code data} {@link JsonNode#isNull() is null}.
+   */
   Optional<ByteString> serializeWithSchema(
       EmbeddedFormat format,
       String topicName,

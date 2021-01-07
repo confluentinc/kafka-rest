@@ -22,7 +22,10 @@ import io.confluent.rest.RestConfigException;
 import io.confluent.rest.metrics.RestMetricsContext;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.MediaType;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
@@ -721,6 +724,12 @@ public class KafkaRestConfig extends RestConfig {
     producerProps.putAll(originalsWithPrefix("schema.registry", /* strip= */ false));
 
     return producerProps;
+  }
+
+  public Map<String, Object> getProducerConfigs() {
+    return getProducerProperties().entrySet()
+        .stream()
+        .collect(Collectors.toMap(entry -> entry.getKey().toString(), Entry::getValue));
   }
 
   public Properties getConsumerProperties() {

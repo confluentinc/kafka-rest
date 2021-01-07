@@ -62,6 +62,7 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class RecordSerializerFacadeTest {
+  private static final String TOPIC_NAME = "topic-1";
   private static final String SCHEMA_REGISTRY_SCOPE = "sr";
   private static final Map<String, Object> PRODUCER_CONFIGS =
       singletonMap("schema.registry.url", "mock://" + SCHEMA_REGISTRY_SCOPE);
@@ -85,11 +86,11 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeBinaryKey_returnsSerialized() {
     ByteString serialized =
-        recordSerializer.serialize(
+        recordSerializer.serializeWithoutSchema(
             EmbeddedFormat.BINARY,
-            TextNode.valueOf(
-                BaseEncoding.base64().encode("foobar".getBytes(StandardCharsets.UTF_8))),
-            /* isKey= */ true).get();
+            TOPIC_NAME, true, TextNode.valueOf(
+                BaseEncoding.base64().encode("foobar".getBytes(StandardCharsets.UTF_8)))
+            /* isKey= */).get();
 
     assertEquals("foobar", serialized.toStringUtf8());
   }
@@ -97,11 +98,11 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeBinaryValue_returnsSerialized() {
     ByteString serialized =
-        recordSerializer.serialize(
+        recordSerializer.serializeWithoutSchema(
             EmbeddedFormat.BINARY,
-            TextNode.valueOf(
-                BaseEncoding.base64().encode("foobar".getBytes(StandardCharsets.UTF_8))),
-            /* isKey= */ false).get();
+            TOPIC_NAME, false, TextNode.valueOf(
+                BaseEncoding.base64().encode("foobar".getBytes(StandardCharsets.UTF_8)))
+            /* isKey= */).get();
 
     assertEquals("foobar", serialized.toStringUtf8());
   }
@@ -109,8 +110,8 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeNullBinaryKey_returnsEmpty() {
     Optional<ByteString> serialized =
-        recordSerializer.serialize(
-            EmbeddedFormat.BINARY, NullNode.getInstance(), /* isKey= */ true);
+        recordSerializer.serializeWithoutSchema(
+            EmbeddedFormat.BINARY, TOPIC_NAME, true, NullNode.getInstance() /* isKey= */);
 
     assertFalse(serialized.isPresent());
   }
@@ -118,29 +119,29 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeNullBinaryValue_returnsEmpty() {
     Optional<ByteString> serialized =
-        recordSerializer.serialize(
-            EmbeddedFormat.BINARY, NullNode.getInstance(), /* isKey= */ false);
+        recordSerializer.serializeWithoutSchema(
+            EmbeddedFormat.BINARY, TOPIC_NAME, false, NullNode.getInstance() /* isKey= */);
 
     assertFalse(serialized.isPresent());
   }
 
   @Test(expected = SerializationException.class)
   public void serializeInvalidBinaryKey_throwsSerializationException() {
-    recordSerializer.serialize(
-        EmbeddedFormat.BINARY, TextNode.valueOf("fooba"), /* isKey= */ true);
+    recordSerializer.serializeWithoutSchema(
+        EmbeddedFormat.BINARY, TOPIC_NAME, true, TextNode.valueOf("fooba") /* isKey= */);
   }
 
   @Test(expected = SerializationException.class)
   public void serializeInvalidBinaryValue_throwsSerializationException() {
-    recordSerializer.serialize(
-        EmbeddedFormat.BINARY, TextNode.valueOf("fooba"), /* isKey= */ false);
+    recordSerializer.serializeWithoutSchema(
+        EmbeddedFormat.BINARY, TOPIC_NAME, false, TextNode.valueOf("fooba") /* isKey= */);
   }
 
   @Test
   public void serializeStringJsonKey_returnsSerialized() {
     ByteString serialized =
-        recordSerializer.serialize(
-            EmbeddedFormat.JSON, TextNode.valueOf("foobar"), /* isKey= */ true).get();
+        recordSerializer.serializeWithoutSchema(
+            EmbeddedFormat.JSON, TOPIC_NAME, true, TextNode.valueOf("foobar") /* isKey= */).get();
 
     assertEquals("\"foobar\"", serialized.toStringUtf8());
   }
@@ -148,8 +149,8 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeIntJsonKey_returnsSerialized() {
     ByteString serialized =
-        recordSerializer.serialize(
-            EmbeddedFormat.JSON, IntNode.valueOf(123), /* isKey= */ true).get();
+        recordSerializer.serializeWithoutSchema(
+            EmbeddedFormat.JSON, TOPIC_NAME, true, IntNode.valueOf(123) /* isKey= */).get();
 
     assertEquals("123", serialized.toStringUtf8());
   }
@@ -157,8 +158,8 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeFloatJsonKey_returnsSerialized() {
     ByteString serialized =
-        recordSerializer.serialize(
-            EmbeddedFormat.JSON, FloatNode.valueOf(123.456F), /* isKey= */ true).get();
+        recordSerializer.serializeWithoutSchema(
+            EmbeddedFormat.JSON, TOPIC_NAME, true, FloatNode.valueOf(123.456F) /* isKey= */).get();
 
     assertEquals("123.456", serialized.toStringUtf8());
   }
@@ -166,8 +167,8 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeBooleanJsonKey_returnsSerialized() {
     ByteString serialized =
-        recordSerializer.serialize(
-            EmbeddedFormat.JSON, BooleanNode.valueOf(true), /* isKey= */ true).get();
+        recordSerializer.serializeWithoutSchema(
+            EmbeddedFormat.JSON, TOPIC_NAME, true, BooleanNode.valueOf(true) /* isKey= */).get();
 
     assertEquals("true", serialized.toStringUtf8());
   }
@@ -179,7 +180,7 @@ public class RecordSerializerFacadeTest {
     node.put("bar", false);
 
     ByteString serialized =
-        recordSerializer.serialize(EmbeddedFormat.JSON, node, /* isKey= */ true).get();
+        recordSerializer.serializeWithoutSchema(EmbeddedFormat.JSON, TOPIC_NAME, true, node /* isKey= */).get();
 
     assertEquals("{\"foo\":1,\"bar\":false}", serialized.toStringUtf8());
   }
@@ -191,7 +192,7 @@ public class RecordSerializerFacadeTest {
     node.add(NullNode.getInstance());
 
     ByteString serialized =
-        recordSerializer.serialize(EmbeddedFormat.JSON, node, /* isKey= */ true).get();
+        recordSerializer.serializeWithoutSchema(EmbeddedFormat.JSON, TOPIC_NAME, true, node /* isKey= */).get();
 
     assertEquals("[123.456,null]", serialized.toStringUtf8());
   }
@@ -199,7 +200,7 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeNullJsonKey_returnsEmpty() {
     Optional<ByteString> serialized =
-        recordSerializer.serialize(EmbeddedFormat.JSON, NullNode.getInstance(), /* isKey= */ true);
+        recordSerializer.serializeWithoutSchema(EmbeddedFormat.JSON, TOPIC_NAME, true, NullNode.getInstance() /* isKey= */);
 
     assertFalse(serialized.isPresent());
   }
@@ -207,8 +208,8 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeStringJsonValue_returnsSerialized() {
     ByteString serialized =
-        recordSerializer.serialize(
-            EmbeddedFormat.JSON, TextNode.valueOf("foobar"), /* isKey= */ false).get();
+        recordSerializer.serializeWithoutSchema(
+            EmbeddedFormat.JSON, TOPIC_NAME, false, TextNode.valueOf("foobar") /* isKey= */).get();
 
     assertEquals("\"foobar\"", serialized.toStringUtf8());
   }
@@ -216,8 +217,8 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeIntJsonValue_returnsSerialized() {
     ByteString serialized =
-        recordSerializer.serialize(
-            EmbeddedFormat.JSON, IntNode.valueOf(123), /* isKey= */ false).get();
+        recordSerializer.serializeWithoutSchema(
+            EmbeddedFormat.JSON, TOPIC_NAME, false, IntNode.valueOf(123) /* isKey= */).get();
 
     assertEquals("123", serialized.toStringUtf8());
   }
@@ -225,8 +226,8 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeFloatJsonValue_returnsSerialized() {
     ByteString serialized =
-        recordSerializer.serialize(
-            EmbeddedFormat.JSON, FloatNode.valueOf(123.456F), /* isKey= */ false).get();
+        recordSerializer.serializeWithoutSchema(
+            EmbeddedFormat.JSON, TOPIC_NAME, false, FloatNode.valueOf(123.456F) /* isKey= */).get();
 
     assertEquals("123.456", serialized.toStringUtf8());
   }
@@ -234,8 +235,8 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeBooleanJsonValue_returnsSerialized() {
     ByteString serialized =
-        recordSerializer.serialize(
-            EmbeddedFormat.JSON, BooleanNode.valueOf(true), /* isKey= */ false).get();
+        recordSerializer.serializeWithoutSchema(
+            EmbeddedFormat.JSON, TOPIC_NAME, false, BooleanNode.valueOf(true) /* isKey= */).get();
 
     assertEquals("true", serialized.toStringUtf8());
   }
@@ -247,7 +248,7 @@ public class RecordSerializerFacadeTest {
     node.put("bar", false);
 
     ByteString serialized =
-        recordSerializer.serialize(EmbeddedFormat.JSON, node, /* isKey= */ false).get();
+        recordSerializer.serializeWithoutSchema(EmbeddedFormat.JSON, TOPIC_NAME, false, node /* isKey= */).get();
 
     assertEquals("{\"foo\":1,\"bar\":false}", serialized.toStringUtf8());
   }
@@ -259,7 +260,7 @@ public class RecordSerializerFacadeTest {
     node.add(NullNode.getInstance());
 
     ByteString serialized =
-        recordSerializer.serialize(EmbeddedFormat.JSON, node, /* isKey= */ false).get();
+        recordSerializer.serializeWithoutSchema(EmbeddedFormat.JSON, TOPIC_NAME, false, node /* isKey= */).get();
 
     assertEquals("[123.456,null]", serialized.toStringUtf8());
   }
@@ -267,7 +268,7 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeNullJsonValue_returnsEmpty() {
     Optional<ByteString> serialized =
-        recordSerializer.serialize(EmbeddedFormat.JSON, NullNode.getInstance(), /* isKey= */ false);
+        recordSerializer.serializeWithoutSchema(EmbeddedFormat.JSON, TOPIC_NAME, false, NullNode.getInstance() /* isKey= */);
 
     assertFalse(serialized.isPresent());
   }

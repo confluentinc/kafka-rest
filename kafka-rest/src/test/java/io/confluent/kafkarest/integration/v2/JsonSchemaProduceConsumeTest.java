@@ -9,7 +9,8 @@ import io.confluent.kafka.schemaregistry.json.JsonSchema;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.converters.JsonSchemaConverter;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.v2.ProduceRequest.ProduceRecord;
+import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -23,20 +24,20 @@ public final class JsonSchemaProduceConsumeTest extends SchemaProduceConsumeTest
   private static final JsonSchema VALUE_SCHEMA =
       new JsonSchema("{\"type\":\"object\",\"properties\":{\"value\":{\"type\":\"number\"}}}");
 
-  private static final List<ProduceRecord> PRODUCE_RECORDS =
+  private static final List<SchemaTopicProduceRecord> PRODUCE_RECORDS =
       Arrays.asList(
-          ProduceRecord.create(
-              /* partition= */ 0,
+          new SchemaTopicProduceRecord(
               new IntNode(1),
-              JSON_SCHEMA_CONVERTER.toJson(getMessage(11)).getJson()),
-          ProduceRecord.create(
-              /* partition= */ 0,
+              JSON_SCHEMA_CONVERTER.toJson(getMessage(11)).getJson(),
+              /* partition= */ 0),
+          new SchemaTopicProduceRecord(
               new IntNode(2),
-              JSON_SCHEMA_CONVERTER.toJson(getMessage(12)).getJson()),
-          ProduceRecord.create(
-              /* partition= */ 0,
+              JSON_SCHEMA_CONVERTER.toJson(getMessage(12)).getJson(),
+              /* partition= */ 0),
+          new SchemaTopicProduceRecord(
               new IntNode(3),
-              JSON_SCHEMA_CONVERTER.toJson(getMessage(13)).getJson()));
+              JSON_SCHEMA_CONVERTER.toJson(getMessage(13)).getJson(),
+              /* partition= */ 0));
 
   private static JsonNode getMessage(int value) {
     ObjectMapper objectMapper = new ObjectMapper();
@@ -70,7 +71,7 @@ public final class JsonSchemaProduceConsumeTest extends SchemaProduceConsumeTest
   }
 
   @Override
-  protected List<ProduceRecord> getProduceRecords() {
+  protected List<SchemaTopicProduceRecord> getProduceRecords() {
     return PRODUCE_RECORDS;
   }
 }

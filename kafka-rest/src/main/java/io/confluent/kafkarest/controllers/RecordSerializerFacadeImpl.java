@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -38,7 +38,6 @@ import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -156,27 +155,28 @@ final class RecordSerializerFacadeImpl implements RecordSerializerFacade {
   }
 
   @Override
-  public Optional<ByteString> serialize(EmbeddedFormat format, JsonNode data, boolean isKey) {
+  public Optional<ByteString> serializeWithoutSchema(
+      EmbeddedFormat format, String topicName, boolean isKey, JsonNode data) {
     switch (format) {
       case BINARY:
-        return serializeBinary(data, isKey);
+        return serializeBinary(topicName, data, isKey);
 
       case JSON:
-        return serializeJson(data, isKey);
+        return serializeJson(topicName, data, isKey);
 
       default:
         throw new IllegalArgumentException(String.format("Format %s not supported.", format));
     }
   }
 
-  private Optional<ByteString> serializeBinary(JsonNode data, boolean isKey) {
+  private Optional<ByteString> serializeBinary(String topicName, JsonNode data, boolean isKey) {
     return binaryRecordSerializer.serialize(
-        /* topicName= */ null, /* schema= */ Optional.empty(), data, isKey);
+        topicName, /* schema= */ Optional.empty(), data, isKey);
   }
 
-  private Optional<ByteString> serializeJson(JsonNode data, boolean isKey) {
+  private Optional<ByteString> serializeJson(String topicName, JsonNode data, boolean isKey) {
     return jsonRecordSerializer.serialize(
-        /* topicName= */ null, /* schema= */ Optional.empty(), data, isKey);
+        topicName, /* schema= */ Optional.empty(), data, isKey);
   }
 
   @Override
@@ -235,10 +235,7 @@ final class RecordSerializerFacadeImpl implements RecordSerializerFacade {
     }
 
     private Optional<ByteString> serialize(
-        @Nullable String topicName,
-        Optional<RegisteredSchema> schema,
-        JsonNode data,
-        boolean isKey) {
+        String topicName, Optional<RegisteredSchema> schema, JsonNode data, boolean isKey) {
       if (isKey) {
         return serializeKey(topicName, schema, data);
       } else {
@@ -247,12 +244,12 @@ final class RecordSerializerFacadeImpl implements RecordSerializerFacade {
     }
 
     private Optional<ByteString> serializeKey(
-        @Nullable String topicName, Optional<RegisteredSchema> schema, JsonNode data) {
+        String topicName, Optional<RegisteredSchema> schema, JsonNode data) {
       return keyRecordSerializer.serialize(topicName, schema, data);
     }
 
     private Optional<ByteString> serializeValue(
-        @Nullable String topicName, Optional<RegisteredSchema> schema, JsonNode data) {
+        String topicName, Optional<RegisteredSchema> schema, JsonNode data) {
       return valueRecordSerializer.serialize(topicName, schema, data);
     }
   }
@@ -260,7 +257,7 @@ final class RecordSerializerFacadeImpl implements RecordSerializerFacade {
   private interface RecordSerializer {
 
     Optional<ByteString> serialize(
-        @Nullable String topicName, Optional<RegisteredSchema> schema, JsonNode data);
+        String topicName, Optional<RegisteredSchema> schema, JsonNode data);
   }
 
   private static final class RecordSerializerImpl<I> implements RecordSerializer {
@@ -275,7 +272,7 @@ final class RecordSerializerFacadeImpl implements RecordSerializerFacade {
 
     @Override
     public Optional<ByteString> serialize(
-        @Nullable String topicName, Optional<RegisteredSchema> schema, JsonNode data) {
+        String topicName, Optional<RegisteredSchema> schema, JsonNode data) {
       if (data.isNull()) {
         return Optional.empty();
       }
@@ -306,7 +303,7 @@ final class RecordSerializerFacadeImpl implements RecordSerializerFacade {
 
     @Override
     public Optional<ByteString> serialize(
-        @Nullable String topicName, Optional<RegisteredSchema> schema, JsonNode data) {
+        String topicName, Optional<RegisteredSchema> schema, JsonNode data) {
       throw throwableSupplier.get();
     }
   }

@@ -13,29 +13,28 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest;
+package io.confluent.kafkarest.entities;
 
-import io.confluent.kafkarest.v2.KafkaConsumerManager;
-import org.apache.kafka.clients.admin.Admin;
-import org.apache.kafka.clients.producer.Producer;
+import com.google.auto.value.AutoValue;
+import javax.annotation.Nullable;
 
-public interface KafkaRestContext {
+@AutoValue
+public abstract class ProduceRecord<K, V> {
 
-  KafkaRestConfig getConfig();
-
-  /**
-   * @deprecated Use {@link #getProducer()} instead.
-   */
-  @Deprecated
-  ProducerPool getProducerPool();
-
-  KafkaConsumerManager getKafkaConsumerManager();
-
-  Admin getAdmin();
-
-  default Producer<byte[], byte[]> getProducer() {
-    return getProducerPool().getProducer();
+  ProduceRecord() {
   }
 
-  void shutdown();
+  @Nullable
+  public abstract K getKey();
+
+  @Nullable
+  public abstract V getValue();
+
+  @Nullable
+  public abstract Integer getPartition();
+
+  public static <K, V> ProduceRecord<K, V> create(
+      @Nullable K key, @Nullable V value, @Nullable Integer partition) {
+    return new AutoValue_ProduceRecord<>(key, value, partition);
+  }
 }

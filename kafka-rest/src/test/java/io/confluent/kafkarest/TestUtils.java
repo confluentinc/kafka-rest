@@ -21,8 +21,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.entities.EntityUtils;
+import io.confluent.kafkarest.entities.ProduceRecord;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
-import io.confluent.kafkarest.entities.v2.ProduceRequest.ProduceRecord;
 import io.confluent.rest.entities.ErrorMessage;
 import java.time.Duration;
 import java.util.Collection;
@@ -32,8 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import org.apache.avro.generic.IndexedRecord;
@@ -42,7 +40,6 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.Deserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,8 +113,20 @@ public class TestUtils {
   public static void assertErrorResponse(Response.StatusType status, Response rawResponse,
                                          String mediatype) {
     assertErrorResponse(status, rawResponse, status.getStatusCode(), status.getReasonPhrase(),
-        mediatype);
+                        mediatype);
   }
+
+  public static class RequestMediaType {
+
+    public final String header;
+    public final String expected;
+
+    public RequestMediaType(String header, String expected) {
+      this.header = header;
+      this.expected = expected;
+    }
+  }
+
 
   /**
    * Parses the given JSON string into Jackson's generic JsonNode structure. Useful for generation
@@ -167,7 +176,7 @@ public class TestUtils {
     } else if (k instanceof IndexedRecord) {
       return k;
     } else if (k instanceof Number || k instanceof Boolean || k instanceof Character
-        || k instanceof String) {
+               || k instanceof String) {
       // Primitive types + strings are all safe for comparison
       return k;
     } else if (k instanceof Collection || k instanceof Map) {
@@ -181,33 +190,23 @@ public class TestUtils {
    * Consumes messages from Kafka to verify they match the inputs. Optionally add a partition to
    * only examine that partition.
    */
-  public static <K, V> void assertTopicContains(
-      String bootstrapServers,
-      String topicName,
-      Integer partitionId,
-      List<ProduceRecord> records,
-      Function<ProduceRecord, V> valueSerializer,
-      Deserializer<K> keyDeserializer,
-      Deserializer<V> valueDeserializer,
-      Properties consumerProperties,
-      boolean validateContents) {
+  public static <K, V> void assertTopicContains(String bootstrapServers, String topicName,
+                                                List<? extends ProduceRecord<K, V>> records,
+                                                Integer partition,
+                                                String keyDeserializerClassName,
+                                                String valueDeserializerClassName,
+                                                Properties deserializerProps,
+                                                boolean validateContents) {
 
-    KafkaConsumer<K, V> consumer =
-        createConsumer(
-            bootstrapServers,
-            "testgroup",
-            "consumer0",
-            20000L,
-            keyDeserializer,
-            valueDeserializer,
-            consumerProperties);
+    KafkaConsumer<K, V> consumer = createConsumer(bootstrapServers, "testgroup", "consumer0",
+        20000L, keyDeserializerClassName, valueDeserializerClassName, deserializerProps);
 
-    Map<V, Integer> msgCounts = TestUtils.topicCounts(consumer, topicName, records, partitionId);
+    Map<Object, Integer> msgCounts = TestUtils.topicCounts(consumer, topicName, records, partition);
 
     Map<Object, Integer> refMsgCounts = new HashMap<>();
     for (ProduceRecord rec : records) {
-      refMsgCounts.compute(
-          valueSerializer.apply(rec), (key, value) -> value == null ? 1 : value + 1);
+      Object msg = TestUtils.encodeComparable(rec.getValue());
+      refMsgCounts.put(msg, (refMsgCounts.get(msg) == null ? 0 : refMsgCounts.get(msg)) + 1);
     }
 
     // We can't always easily get the data on both ends to be easily comparable, e.g. when the
@@ -218,13 +217,13 @@ public class TestUtils {
     if (validateContents) {
       assertEquals(msgCounts, refMsgCounts);
     } else {
-      Map<Integer, Integer> refCountCounts = new HashMap<>();
+      Map<Integer, Integer> refCountCounts = new HashMap<Integer, Integer>();
       for (Map.Entry<Object, Integer> entry : refMsgCounts.entrySet()) {
         Integer count = refCountCounts.get(entry.getValue());
         refCountCounts.put(entry.getValue(), (count == null ? 0 : count) + 1);
       }
-      Map<Integer, Integer> msgCountCounts = new HashMap<>();
-      for (Map.Entry<V, Integer> entry : msgCounts.entrySet()) {
+      Map<Integer, Integer> msgCountCounts = new HashMap<Integer, Integer>();
+      for (Map.Entry<Object, Integer> entry : msgCounts.entrySet()) {
         Integer count = msgCountCounts.get(entry.getValue());
         msgCountCounts.put(entry.getValue(), (count == null ? 0 : count) + 1);
       }
@@ -232,42 +231,32 @@ public class TestUtils {
     }
   }
 
-  public static <K, V> void assertTopicContains(
-      String bootstrapServers,
-      String topicName,
-      Integer partitionId,
-      List<ProduceRecord> records,
-      Function<ProduceRecord, V> valueSerializer,
-      Deserializer<K> keyDeserializer,
-      Deserializer<V> valueDeserializer,
-      boolean validateContents) {
-    assertTopicContains(
-        bootstrapServers,
-        topicName,
-        partitionId,
-        records,
-        valueSerializer,
-        keyDeserializer,
-        valueDeserializer,
-        new Properties(),
-        validateContents);
+  public static <K, V> void assertTopicContains(String bootstrapServers, String topicName,
+                                                List<? extends ProduceRecord<K, V>> records,
+                                                Integer partition,
+                                                String keyDeserializerClassName,
+                                                String valueDeserializerClassName,
+                                                boolean validateContents) {
+    assertTopicContains(bootstrapServers, topicName, records, partition, keyDeserializerClassName,
+        valueDeserializerClassName, new Properties(), validateContents);
   }
 
-  private static <V> Map<V, Integer> topicCounts(final KafkaConsumer<?, V> consumer,
-                                                 final String topicName,
-                                                 final List<ProduceRecord> records,
-                                                 final Integer partition) {
-    Map<V, Integer> msgCounts = new HashMap<>();
+  private static <V, K> Map<Object, Integer> topicCounts(final KafkaConsumer<K, V> consumer,
+                                                         final String topicName,
+                                                         final List<? extends ProduceRecord<K,V>> records,
+                                                         final Integer partition) {
+    Map<Object, Integer> msgCounts = new HashMap<Object, Integer>();
     consumer.subscribe(Collections.singleton(topicName));
 
     try {
       AtomicInteger counter = new AtomicInteger(0);
       org.apache.kafka.test.TestUtils.waitForCondition(() -> {
-        ConsumerRecords<?, V> consumerRecords = consumer.poll(Duration.ofMillis(100));
+        ConsumerRecords<K, V> consumerRecords = consumer.poll(Duration.ofMillis(100));
 
-        for (ConsumerRecord<?, V> record : consumerRecords) {
+        for (ConsumerRecord<K, V> record: consumerRecords) {
           if (partition == null || record.partition() == partition) {
-            msgCounts.compute(record.value(), (key, value) -> value == null ? 1 : value + 1);
+            Object msg = encodeComparable(record.value());
+            msgCounts.put(msg, (msgCounts.get(msg) == null ? 0 : msgCounts.get(msg)) + 1);
             if (counter.incrementAndGet() == records.size())
               return true;
           }
@@ -285,10 +274,10 @@ public class TestUtils {
 
 
   private static <K, V> KafkaConsumer<K, V> createConsumer(String bootstrapServers, String groupId,
-                                                           String consumerId, Long consumerTimeout,
-                                                           Deserializer<K> keyDeserializer,
-                                                           Deserializer<V> valueDeserializer,
-                                                           Properties deserializerProps) {
+                                                          String consumerId, Long consumerTimeout,
+                                                          String keyDeserializerClassName,
+                                                          String valueDeserializerClassName,
+                                                          Properties deserializerProps) {
     Properties consumerConfig = new Properties();
     consumerConfig.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     consumerConfig.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
@@ -296,14 +285,9 @@ public class TestUtils {
     consumerConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     consumerConfig.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "100");
     consumerConfig.put(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, consumerTimeout.toString());
+    consumerConfig.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, keyDeserializerClassName);
+    consumerConfig.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializerClassName);
     consumerConfig.putAll(deserializerProps);
-    Map<String, Object> deserializerPropsMap =
-        deserializerProps.entrySet()
-            .stream()
-            .collect(
-                Collectors.toMap(value -> value.getKey().toString(), value -> value.getValue()));
-    keyDeserializer.configure(deserializerPropsMap, true);
-    valueDeserializer.configure(deserializerPropsMap, false);
-    return new KafkaConsumer<>(consumerConfig, keyDeserializer, valueDeserializer);
+    return new KafkaConsumer<>(consumerConfig);
   }
 }

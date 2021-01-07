@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.Set;
@@ -84,11 +83,7 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new PortConfigImpl())
         .to(Integer.class);
 
-    bind(
-        config.getProducerProperties()
-            .entrySet()
-            .stream()
-            .collect(Collectors.toMap(entry -> entry.getKey().toString(), Entry::getValue)))
+    bind(config.getProducerConfigs())
         .qualifiedBy(new ProducerConfigsImpl())
         .to(new TypeLiteral<Map<String, Object>>() { });
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -72,7 +72,7 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
       @Valid @NotNull ProduceRequest request
   ) {
     CompletableFuture<ProduceResponse> response =
-        produce(EmbeddedFormat.BINARY, topicName, Optional.of(partitionId), request);
+        produceWithoutSchema(EmbeddedFormat.BINARY, topicName, Optional.of(partitionId), request);
 
     AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
         .entity(response)
@@ -92,7 +92,7 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
       @Valid @NotNull ProduceRequest request
   ) {
     CompletableFuture<ProduceResponse> response =
-        produce(EmbeddedFormat.JSON, topicName, Optional.of(partitionId), request);
+        produceWithoutSchema(EmbeddedFormat.JSON, topicName, Optional.of(partitionId), request);
 
     AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
         .entity(response)

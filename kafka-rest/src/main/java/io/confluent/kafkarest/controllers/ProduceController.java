@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -21,8 +21,15 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * A Kafka {@link org.apache.kafka.clients.producer.Producer} specialization that produces raw
+ * bytes.
+ */
 public interface ProduceController {
 
+  /**
+   * Produce the given record to Kafka.
+   */
   CompletableFuture<ProduceResult> produce(
       String clusterId,
       String topicName,

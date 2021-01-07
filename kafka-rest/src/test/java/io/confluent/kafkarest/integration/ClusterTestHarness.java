@@ -23,8 +23,8 @@ import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafka.serializers.KafkaJsonSerializer;
+import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.common.CompletableFutures;
 import java.io.File;
 import java.io.IOException;
@@ -141,7 +141,7 @@ public abstract class ClusterTestHarness {
 
   protected Properties restProperties = null;
   protected KafkaRestConfig restConfig = null;
-  protected TestKafkaRestApplication restApp = null;
+  protected KafkaRestApplication restApp = null;
   protected Server restServer = null;
   protected String restConnect = null;
 
@@ -222,10 +222,12 @@ public abstract class ClusterTestHarness {
     restConnect = getRestConnectString(restPort);
     restProperties.put("listeners", restConnect);
 
+    // Reduce the metadata fetch timeout so requests for topics that don't exist timeout much
+    // faster than the default
+    restProperties .put(ProducerConfig.MAX_BLOCK_MS_CONFIG, "5000");
+
     restConfig = new KafkaRestConfig(restProperties);
-    restApp =
-        new TestKafkaRestApplication(
-            restConfig, getProducerPool(restConfig), /* kafkaConsumerManager= */ null);
+    restApp = new KafkaRestApplication(restConfig);
     restServer = restApp.createServer();
     restServer.start();
   }
@@ -279,10 +281,6 @@ public abstract class ClusterTestHarness {
     // that it always uses for ZK
     props.setProperty("zookeeper.connect", this.zkConnect);
     return props;
-  }
-
-  protected ProducerPool getProducerPool(KafkaRestConfig appConfig) {
-    return null;
   }
 
   @After

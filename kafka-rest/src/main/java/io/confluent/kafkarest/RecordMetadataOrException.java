@@ -15,27 +15,24 @@
 
 package io.confluent.kafkarest;
 
-import io.confluent.kafkarest.v2.KafkaConsumerManager;
-import org.apache.kafka.clients.admin.Admin;
-import org.apache.kafka.clients.producer.Producer;
 
-public interface KafkaRestContext {
+import org.apache.kafka.clients.producer.RecordMetadata;
 
-  KafkaRestConfig getConfig();
+public class RecordMetadataOrException {
 
-  /**
-   * @deprecated Use {@link #getProducer()} instead.
-   */
-  @Deprecated
-  ProducerPool getProducerPool();
+  private final RecordMetadata recordMetadata;
+  private final Exception exception;
 
-  KafkaConsumerManager getKafkaConsumerManager();
-
-  Admin getAdmin();
-
-  default Producer<byte[], byte[]> getProducer() {
-    return getProducerPool().getProducer();
+  public RecordMetadataOrException(RecordMetadata recordMetadata, Exception exception) {
+    this.recordMetadata = recordMetadata;
+    this.exception = exception;
   }
 
-  void shutdown();
+  public RecordMetadata getRecordMetadata() {
+    return recordMetadata;
+  }
+
+  public Exception getException() {
+    return exception;
+  }
 }

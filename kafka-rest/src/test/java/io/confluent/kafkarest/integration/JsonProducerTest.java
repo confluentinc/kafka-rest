@@ -14,21 +14,13 @@
  */
 package io.confluent.kafkarest.integration;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.DoubleNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import io.confluent.kafka.serializers.KafkaJsonDeserializer;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.entities.v2.JsonPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v2.JsonPartitionProduceRequest.JsonPartitionProduceRecord;
+import io.confluent.kafkarest.entities.v2.JsonTopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.JsonTopicProduceRequest.JsonTopicProduceRecord;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
-import io.confluent.kafkarest.entities.v2.ProduceRequest;
-import io.confluent.kafkarest.entities.v2.ProduceRequest.ProduceRecord;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -39,9 +31,8 @@ import org.junit.Before;
 import org.junit.Test;
 import scala.collection.JavaConverters;
 
-public class JsonProducerTest extends AbstractProducerTest {
-
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+public class JsonProducerTest
+    extends AbstractProducerTest<JsonTopicProduceRequest, JsonPartitionProduceRequest> {
 
   private String topicName = "topic1";
 
@@ -61,59 +52,59 @@ public class JsonProducerTest extends AbstractProducerTest {
     return Versions.KAFKA_V2_JSON_JSON;
   }
 
-  private ObjectNode exampleMapValue() {
-    Map<String, JsonNode> res = new HashMap<>();
-    res.put("foo", TextNode.valueOf("bar"));
-    res.put("bar", NullNode.getInstance());
-    res.put("baz", DoubleNode.valueOf(53.4));
-    res.put("taz", IntNode.valueOf(45));
-    return new ObjectNode(JsonNodeFactory.instance, res);
+  private Map<String, Object> exampleMapValue() {
+    Map<String, Object> res = new HashMap<String, Object>();
+    res.put("foo", "bar");
+    res.put("bar", null);
+    res.put("baz", 53.4);
+    res.put("taz", 45);
+    return res;
   }
 
-  private ArrayNode exampleListValue() {
-    List<JsonNode> res = new ArrayList<>();
-    res.add(TextNode.valueOf("foo"));
-    res.add(NullNode.getInstance());
-    res.add(DoubleNode.valueOf(53.4));
-    res.add(IntNode.valueOf(45));
+  private List<Object> exampleListValue() {
+    List<Object> res = new ArrayList<Object>();
+    res.add("foo");
+    res.add(null);
+    res.add(53.4);
+    res.add(45);
     res.add(exampleMapValue());
-    return new ArrayNode(JsonNodeFactory.instance, res);
+    return res;
   }
 
-  private final List<ProduceRecord> topicRecordsWithKeys =
-      Arrays.asList(
-          ProduceRecord.create(/* partition= */ 0, TextNode.valueOf("key"), TextNode.valueOf("value")),
-          ProduceRecord.create(/* partition= */ 0, TextNode.valueOf("key"), null),
-          ProduceRecord.create(/* partition= */ 0, TextNode.valueOf("key"), DoubleNode.valueOf(53.4)),
-          ProduceRecord.create(/* partition= */ 0, TextNode.valueOf("key"), IntNode.valueOf(45)),
-          ProduceRecord.create(/* partition= */ 0, TextNode.valueOf("key"), exampleMapValue()),
-          ProduceRecord.create(/* partition= */ 0, TextNode.valueOf("key"), exampleListValue()));
-
-  private final List<ProduceRecord> topicRecordsWithoutKeys = Arrays.asList(
-      ProduceRecord.create(/* partition= */ 0, /* key= */ null, TextNode.valueOf("value")),
-      ProduceRecord.create(/* partition= */ 0, /* key= */ null, /* value= */ null),
-      ProduceRecord.create(/* partition= */ 0, /* key= */ null, DoubleNode.valueOf(53.4)),
-      ProduceRecord.create(/* partition= */ 0, /* key= */ null, IntNode.valueOf(45)),
-      ProduceRecord.create(/* partition= */ 0, /* key= */ null, exampleMapValue()),
-      ProduceRecord.create(/* partition= */ 0, /* key= */ null, exampleListValue())
+  private final List<JsonTopicProduceRecord> topicRecordsWithKeys = Arrays.asList(
+      new JsonTopicProduceRecord("key", "value", 0),
+      new JsonTopicProduceRecord("key", null, 0),
+      new JsonTopicProduceRecord("key", 53.4, 0),
+      new JsonTopicProduceRecord("key", 45, 0),
+      new JsonTopicProduceRecord("key", exampleMapValue(), 0),
+      new JsonTopicProduceRecord("key", exampleListValue(), 0)
   );
 
-  private final List<ProduceRecord> partitionRecordsWithKeys = Arrays.asList(
-      ProduceRecord.create(TextNode.valueOf("key"), TextNode.valueOf("value")),
-      ProduceRecord.create(TextNode.valueOf("key"), /* value= */ null),
-      ProduceRecord.create(TextNode.valueOf("key"), DoubleNode.valueOf(53.4)),
-      ProduceRecord.create(TextNode.valueOf("key"), IntNode.valueOf(45)),
-      ProduceRecord.create(TextNode.valueOf("key"), exampleMapValue()),
-      ProduceRecord.create(TextNode.valueOf("key"), exampleListValue())
+  private final List<JsonTopicProduceRecord> topicRecordsWithoutKeys = Arrays.asList(
+      new JsonTopicProduceRecord(null, "value", 0),
+      new JsonTopicProduceRecord(null, null, 0),
+      new JsonTopicProduceRecord(null, 53.4, 0),
+      new JsonTopicProduceRecord(null, 45, 0),
+      new JsonTopicProduceRecord(null, exampleMapValue(), 0),
+      new JsonTopicProduceRecord(null, exampleListValue(), 0)
   );
 
-  private final List<ProduceRecord> partitionRecordsWithoutKeys = Arrays.asList(
-      ProduceRecord.create(/* key= */ null, TextNode.valueOf("value")),
-      ProduceRecord.create(/* key= */ null, /* value= */ null),
-      ProduceRecord.create(/* key= */ null, DoubleNode.valueOf(53.4)),
-      ProduceRecord.create(/* key= */ null, IntNode.valueOf(45)),
-      ProduceRecord.create(/* key= */ null, exampleMapValue()),
-      ProduceRecord.create(/* key= */ null, exampleListValue())
+  private final List<JsonPartitionProduceRecord> partitionRecordsWithKeys = Arrays.asList(
+      new JsonPartitionProduceRecord("key", "value"),
+      new JsonPartitionProduceRecord("key", null),
+      new JsonPartitionProduceRecord("key", 53.4),
+      new JsonPartitionProduceRecord("key", 45),
+      new JsonPartitionProduceRecord("key", exampleMapValue()),
+      new JsonPartitionProduceRecord("key", exampleListValue())
+  );
+
+  private final List<JsonPartitionProduceRecord> partitionRecordsWithoutKeys = Arrays.asList(
+      new JsonPartitionProduceRecord(null, "value"),
+      new JsonPartitionProduceRecord(null, null),
+      new JsonPartitionProduceRecord(null, 53.4),
+      new JsonPartitionProduceRecord(null, 45),
+      new JsonPartitionProduceRecord(null, exampleMapValue()),
+      new JsonPartitionProduceRecord(null, exampleListValue())
   );
 
   private final List<PartitionOffset> produceOffsets = Arrays.asList(
@@ -127,65 +118,56 @@ public class JsonProducerTest extends AbstractProducerTest {
 
   @Test
   public void testProduceToTopicKeyAndValue() {
-    ProduceRequest request = ProduceRequest.create(topicRecordsWithKeys);
+    JsonTopicProduceRequest request = JsonTopicProduceRequest.create(topicRecordsWithKeys);
     testProduceToTopic(
         topicName,
         request,
-        record -> record.getValue().map(JsonProducerTest::treeToValue).orElse(null),
-        new KafkaJsonDeserializer<>(),
-        new KafkaJsonDeserializer<>(),
+        KafkaJsonDeserializer.class.getName(),
+        KafkaJsonDeserializer.class.getName(),
         produceOffsets,
         true,
-        request.getRecords());
+        request.toProduceRequest().getRecords());
   }
 
   @Test
   public void testProduceToTopicNoKey() {
-    ProduceRequest request = ProduceRequest.create(topicRecordsWithoutKeys);
+    JsonTopicProduceRequest request = JsonTopicProduceRequest.create(topicRecordsWithoutKeys);
     testProduceToTopic(
         topicName,
         request,
-        record -> record.getValue().map(JsonProducerTest::treeToValue).orElse(null),
-        new KafkaJsonDeserializer<>(),
-        new KafkaJsonDeserializer<>(),
+        KafkaJsonDeserializer.class.getName(),
+        KafkaJsonDeserializer.class.getName(),
         produceOffsets,
         true,
-        request.getRecords());
+        request.toProduceRequest().getRecords());
   }
 
   @Test
   public void testProduceToPartitionKeyAndValue() {
-    ProduceRequest request = ProduceRequest.create(partitionRecordsWithKeys);
+    JsonPartitionProduceRequest request =
+        JsonPartitionProduceRequest.create(partitionRecordsWithKeys);
     testProduceToPartition(
         topicName,
         0,
         request,
-        record -> record.getValue().map(JsonProducerTest::treeToValue).orElse(null),
-        new KafkaJsonDeserializer<>(),
-        new KafkaJsonDeserializer<>(),
+        KafkaJsonDeserializer.class.getName(),
+        KafkaJsonDeserializer.class.getName(),
         produceOffsets,
-        request.getRecords());
+        request.toProduceRequest().getRecords());
   }
 
   @Test
   public void testProduceToPartitionNoKey() {
-    ProduceRequest request = ProduceRequest.create(partitionRecordsWithoutKeys);
+    JsonPartitionProduceRequest request =
+        JsonPartitionProduceRequest.create(partitionRecordsWithoutKeys);
     testProduceToPartition(
         topicName,
         0,
         request,
-        record -> record.getValue().map(JsonProducerTest::treeToValue).orElse(null),
-        new KafkaJsonDeserializer<>(),
-        new KafkaJsonDeserializer<>(),
+        KafkaJsonDeserializer.class.getName(),
+        KafkaJsonDeserializer.class.getName(),
         produceOffsets,
-        request.getRecords());
+        request.toProduceRequest().getRecords());
   }
 
-  private static Object treeToValue(JsonNode node) {
-    try {
-      return OBJECT_MAPPER.treeToValue(node, Object.class);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
-    }
-  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -71,7 +71,8 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
       @Valid @NotNull ProduceRequest request
   ) {
     CompletableFuture<ProduceResponse> response =
-        produce(EmbeddedFormat.BINARY, topicName, Optional.empty(), request);
+        produceWithoutSchema(
+            EmbeddedFormat.BINARY, topicName, /* partitionId= */ Optional.empty(), request);
 
     AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
         .entity(response)
@@ -90,7 +91,8 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
       @Valid @NotNull ProduceRequest request
   ) {
     CompletableFuture<ProduceResponse> response =
-        produce(EmbeddedFormat.JSON, topicName, Optional.empty(), request);
+        produceWithoutSchema(
+            EmbeddedFormat.JSON, topicName, /* partitionId= */ Optional.empty(), request);
 
     AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
         .entity(response)
@@ -109,7 +111,8 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
       @Valid @NotNull ProduceRequest request
   ) {
     CompletableFuture<ProduceResponse> response =
-        produceWithSchema(EmbeddedFormat.AVRO, topicName, Optional.empty(), request);
+        produceWithSchema(
+            EmbeddedFormat.AVRO, topicName, /* partitionId= */ Optional.empty(), request);
 
     AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
         .entity(response)
@@ -128,7 +131,8 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
       @Valid @NotNull ProduceRequest request
   ) {
     CompletableFuture<ProduceResponse> response =
-        produceWithSchema(EmbeddedFormat.JSONSCHEMA, topicName, Optional.empty(), request);
+        produceWithSchema(
+            EmbeddedFormat.JSONSCHEMA, /* partitionId= */ topicName, Optional.empty(), request);
 
     AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
         .entity(response)
@@ -147,7 +151,8 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
       @Valid @NotNull ProduceRequest request
   ) {
     CompletableFuture<ProduceResponse> response =
-        produceWithSchema(EmbeddedFormat.PROTOBUF, topicName, Optional.empty(), request);
+        produceWithSchema(
+            EmbeddedFormat.PROTOBUF, topicName, /* partitionId= */ Optional.empty(), request);
 
     AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
         .entity(response)
