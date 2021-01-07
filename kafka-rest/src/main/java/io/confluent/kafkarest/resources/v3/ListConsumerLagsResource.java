@@ -18,8 +18,11 @@ package io.confluent.kafkarest.resources.v3;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.controllers.ConsumerLagManager;
+import io.confluent.kafkarest.entities.ConsumerLag;
+import io.confluent.kafkarest.entities.v3.ConsumerLagData;
 import io.confluent.kafkarest.entities.v3.ConsumerLagDataList;
 import io.confluent.kafkarest.entities.v3.ListConsumerLagsResponse;
+import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
@@ -40,7 +43,7 @@ import javax.ws.rs.core.MediaType;
 
 
 @Path("/v3/clusters/{clusterId}/consumer-groups/{consumerGroupId}/lags")
-@ResourceName("api.v3.consumer-lags.list")
+@ResourceName("api.v3.consumer-lags.*")
 public class ListConsumerLagsResource {
 
   private final Provider<ConsumerLagManager> consumerLagManager;
@@ -62,6 +65,7 @@ public class ListConsumerLagsResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.consumer-lags.list")
+  @ResourceName("api.v3.consumer-lags.list")
   public void listConsumerLags(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -87,11 +91,41 @@ public class ListConsumerLagsResource {
                                     .build())
                             .setData(
                                 lags.stream()
-                                    .map(lag -> GetConsumerLagResource.toConsumerLagData(
-                                            lag, urlFactory, crnFactory))
+                                    .map(this::toConsumerLagData)
                                     .collect(Collectors.toList()))
                             .build()));
 
     AsyncResponses.asyncResume(asyncResponse, response);
+  }
+
+  // .map(lag -> GetConsumerLagResource.toConsumerLagData(lag, urlFactory, crnFactory))
+
+  private ConsumerLagData toConsumerLagData(ConsumerLag lag) {
+    return ConsumerLagData.fromConsumerLag(lag)
+        .setMetadata(
+            Resource.Metadata.builder()
+                .setSelf(
+                    urlFactory.create(
+                        "v3",
+                        "clusters",
+                        lag.getClusterId(),
+                        "topics",
+                        lag.getTopicName(),
+                        "partitions",
+                        Integer.toString(lag.getPartitionId()),
+                        "lags",
+                        lag.getConsumerGroupId()))
+                .setResourceName(
+                    crnFactory.create(
+                        "kafka",
+                        lag.getClusterId(),
+                        "topic",
+                        lag.getTopicName(),
+                        "partition",
+                        Integer.toString(lag.getPartitionId()),
+                        "lag",
+                        lag.getConsumerGroupId()))
+                .build())
+        .build();
   }
 }

@@ -42,7 +42,7 @@ import javax.ws.rs.core.MediaType;
 @Path(
     "/v3/clusters/{clusterId}/topics/{topicName}/partitions/{partitionId}/lags/{consumerGroupId}"
 )
-@ResourceName("api.v3.consumer-lags.get")
+@ResourceName("api.v3.consumer-lags.*")
 public final class GetConsumerLagResource {
 
   private final Provider<ConsumerLagManager> consumerLagManager;
@@ -63,6 +63,7 @@ public final class GetConsumerLagResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.consumer-lags.get")
+  @ResourceName("api.v3.consumer-lags.get")
   public void getConsumerLag(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -76,13 +77,42 @@ public final class GetConsumerLagResource {
             .thenApply(lag -> lag.orElseThrow(NotFoundException::new))
             .thenApply(
                 lag ->
-                    GetConsumerLagResponse.create(toConsumerLagData(lag, urlFactory, crnFactory)));
+                    GetConsumerLagResponse.create(toConsumerLagData(lag)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
 
-  static ConsumerLagData toConsumerLagData(
-      ConsumerLag lag, UrlFactory urlFactory, CrnFactory crnFactory) {
+//   static ConsumerLagData toConsumerLagData(
+//       ConsumerLag lag, UrlFactory urlFactory, CrnFactory crnFactory) {
+//     return ConsumerLagData.fromConsumerLag(lag)
+//         .setMetadata(
+//             Resource.Metadata.builder()
+//                 .setSelf(
+//                     urlFactory.create(
+//                         "v3",
+//                         "clusters",
+//                         lag.getClusterId(),
+//                         "topics",
+//                         lag.getTopicName(),
+//                         "partitions",
+//                         Integer.toString(lag.getPartitionId()),
+//                         "lags",
+//                         lag.getConsumerGroupId()))
+//                 .setResourceName(
+//                     crnFactory.create(
+//                         "kafka",
+//                         lag.getClusterId(),
+//                         "topic",
+//                         lag.getTopicName(),
+//                         "partition",
+//                         Integer.toString(lag.getPartitionId()),
+//                         "lag",
+//                         lag.getConsumerGroupId()))
+//                 .build())
+//         .build();
+//   }
+
+  private ConsumerLagData toConsumerLagData(ConsumerLag lag) {
     return ConsumerLagData.fromConsumerLag(lag)
         .setMetadata(
             Resource.Metadata.builder()
@@ -105,7 +135,7 @@ public final class GetConsumerLagResource {
                         lag.getTopicName(),
                         "partition",
                         Integer.toString(lag.getPartitionId()),
-                        "lags",
+                        "lag",
                         lag.getConsumerGroupId()))
                 .build())
         .build();

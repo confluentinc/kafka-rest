@@ -91,7 +91,7 @@ public class GetConsumerLagResourceTest {
                 .setMetadata(
                     Resource.Metadata.builder()
                         .setSelf("/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1")
-                        .setResourceName("crn:///kafka=cluster-1/topic=topic-1/partition=1/lags=consumer-group-1")
+                        .setResourceName("crn:///kafka=cluster-1/topic=topic-1/partition=1/lag=consumer-group-1")
                         .build())
                 .build());
 

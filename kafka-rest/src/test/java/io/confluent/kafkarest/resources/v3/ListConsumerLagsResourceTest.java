@@ -99,7 +99,7 @@ public class ListConsumerLagsResourceTest {
                                     .setSelf(
                                         "/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1")
                                     .setResourceName(
-                                        "crn:///kafka=cluster-1/topic=topic-1/partition=1/lags=consumer-group-1")
+                                        "crn:///kafka=cluster-1/topic=topic-1/partition=1/lag=consumer-group-1")
                                     .build())
                             .build(),
                         ConsumerLagData.fromConsumerLag(CONSUMER_LAG_2)
@@ -108,7 +108,7 @@ public class ListConsumerLagsResourceTest {
                                     .setSelf(
                                         "/v3/clusters/cluster-1/topics/topic-1/partitions/2/lags/consumer-group-1")
                                     .setResourceName(
-                                        "crn:///kafka=cluster-1/topic=topic-1/partition=2/lags=consumer-group-1")
+                                        "crn:///kafka=cluster-1/topic=topic-1/partition=2/lag=consumer-group-1")
                                     .build())
                             .build()))
             .build());
