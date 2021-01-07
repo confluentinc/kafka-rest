@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.config;
 
+import com.google.common.cache.CacheBuilderSpec;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.rest.RestConfig;
 import java.lang.annotation.ElementType;
@@ -86,6 +87,10 @@ public final class ConfigModule extends AbstractBinder {
     bind(config.getProducerConfigs())
         .qualifiedBy(new ProducerConfigsImpl())
         .to(new TypeLiteral<Map<String, Object>>() { });
+
+    bind(CacheBuilderSpec.parse(config.getString(KafkaRestConfig.SCHEMA_CACHE_SPEC_CONFIG)))
+        .qualifiedBy(new SchemaCacheSpecConfigImpl())
+        .to(CacheBuilderSpec.class);
   }
 
   @Qualifier
@@ -159,6 +164,16 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class ProducerConfigsImpl
       extends AnnotationLiteral<ProducerConfigs> implements ProducerConfigs {
+  }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER })
+  public @interface SchemaCacheSpecConfig {
+  }
+
+  private static final class SchemaCacheSpecConfigImpl
+      extends AnnotationLiteral<SchemaCacheSpecConfig> implements SchemaCacheSpecConfig {
   }
 }
 // CHECKSTYLE:ON:ClassDataAbstractionCoupling

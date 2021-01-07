@@ -17,9 +17,12 @@ package io.confluent.kafkarest.controllers;
 
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
+import static org.glassfish.jersey.internal.guava.Preconditions.checkArgument;
 
+import com.google.auto.value.AutoOneOf;
 import com.google.auto.value.AutoValue;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheBuilderSpec;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.UncheckedExecutionException;
@@ -37,10 +40,11 @@ import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializer;
 import io.confluent.kafkarest.config.ConfigModule.ProducerConfigs;
+import io.confluent.kafkarest.config.ConfigModule.SchemaCacheSpecConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.io.IOException;
-import java.time.Duration;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -51,60 +55,64 @@ import org.apache.kafka.common.serialization.Serializer;
 
 final class SchemaManagerImpl implements SchemaManager {
 
+  private static final EnumSet<EmbeddedFormat> VALID_FORMATS =
+      EnumSet.of(EmbeddedFormat.AVRO, EmbeddedFormat.JSONSCHEMA, EmbeddedFormat.PROTOBUF);
+
   private static final Function<String, String> KEY_SUBJECT_FUNCTION =
       topicName -> topicName + "-key";
   private static final Function<String, String> VALUE_SUBJECT_FUNCTION =
       topicName -> topicName + "-value";
 
-  private final KeyValueSchemaManager avroSchemaManager;
-  private final KeyValueSchemaManager jsonschemaSchemaManager;
-  private final KeyValueSchemaManager protobufSchemaManager;
+  private final LoadingCache<GetSchemaParams, RegisteredSchema> schemaCache;
 
   @Inject
-  SchemaManagerImpl(@ProducerConfigs Map<String, Object> producerConfigs) {
-    this.avroSchemaManager =
-        new KeyValueSchemaManager(
-            new SchemaManagerInternal(
-                AvroSchema.TYPE,
-                createSerializer(KafkaAvroSerializer::new, producerConfigs, /* isKey= */ true),
-                createSchemaProvider(AvroSchemaProvider::new, producerConfigs),
-                KEY_SUBJECT_FUNCTION),
-            new SchemaManagerInternal(
-                AvroSchema.TYPE,
-                createSerializer(KafkaAvroSerializer::new, producerConfigs, /* isKey= */ false),
-                createSchemaProvider(AvroSchemaProvider::new, producerConfigs),
-                VALUE_SUBJECT_FUNCTION));
-    this.jsonschemaSchemaManager =
-        new KeyValueSchemaManager(
-            new SchemaManagerInternal(
-                JsonSchema.TYPE,
-                createSerializer(
-                    KafkaJsonSchemaSerializer::new, producerConfigs, /* isKey= */ true),
-                createSchemaProvider(JsonSchemaProvider::new, producerConfigs),
-                KEY_SUBJECT_FUNCTION),
-            new SchemaManagerInternal(
-                JsonSchema.TYPE,
-                createSerializer(
-                    KafkaJsonSchemaSerializer::new, producerConfigs, /* isKey= */ false),
-                createSchemaProvider(JsonSchemaProvider::new, producerConfigs),
-                VALUE_SUBJECT_FUNCTION));
-    this.protobufSchemaManager =
-        new KeyValueSchemaManager(
-            new SchemaManagerInternal(
-                ProtobufSchema.TYPE,
-                createSerializer(
-                    KafkaProtobufSerializer::new, producerConfigs, /* isKey= */ true),
-                createSchemaProvider(ProtobufSchemaProvider::new, producerConfigs),
-                KEY_SUBJECT_FUNCTION),
-            new SchemaManagerInternal(
-                ProtobufSchema.TYPE,
-                createSerializer(
-                    KafkaProtobufSerializer::new, producerConfigs, /* isKey= */ false),
-                createSchemaProvider(ProtobufSchemaProvider::new, producerConfigs),
-                VALUE_SUBJECT_FUNCTION));
+  SchemaManagerImpl(
+      @ProducerConfigs Map<String, Object> producerConfigs,
+      @SchemaCacheSpecConfig CacheBuilderSpec schemaCacheSpecConfig) {
+    FormatSchemaCacheLoader cacheLoader =
+        new FormatSchemaCacheLoader(
+            new KeyValueSchemaCacheLoader(
+                new SchemaCacheLoader(
+                    AvroSchema.TYPE,
+                    createSerializer(KafkaAvroSerializer::new, producerConfigs, /* isKey= */ true),
+                    createSchemaProvider(AvroSchemaProvider::new, producerConfigs),
+                    KEY_SUBJECT_FUNCTION),
+                new SchemaCacheLoader(
+                    AvroSchema.TYPE,
+                    createSerializer(KafkaAvroSerializer::new, producerConfigs, /* isKey= */ false),
+                    createSchemaProvider(AvroSchemaProvider::new, producerConfigs),
+                    VALUE_SUBJECT_FUNCTION)),
+            new KeyValueSchemaCacheLoader(
+                new SchemaCacheLoader(
+                    JsonSchema.TYPE,
+                    createSerializer(
+                        KafkaJsonSchemaSerializer::new, producerConfigs, /* isKey= */ true),
+                    createSchemaProvider(JsonSchemaProvider::new, producerConfigs),
+                    KEY_SUBJECT_FUNCTION),
+                new SchemaCacheLoader(
+                    JsonSchema.TYPE,
+                    createSerializer(
+                        KafkaJsonSchemaSerializer::new, producerConfigs, /* isKey= */ false),
+                    createSchemaProvider(JsonSchemaProvider::new, producerConfigs),
+                    VALUE_SUBJECT_FUNCTION)),
+            new KeyValueSchemaCacheLoader(
+                new SchemaCacheLoader(
+                    ProtobufSchema.TYPE,
+                    createSerializer(
+                        KafkaProtobufSerializer::new, producerConfigs, /* isKey= */ true),
+                    createSchemaProvider(ProtobufSchemaProvider::new, producerConfigs),
+                    KEY_SUBJECT_FUNCTION),
+                new SchemaCacheLoader(
+                    ProtobufSchema.TYPE,
+                    createSerializer(
+                        KafkaProtobufSerializer::new, producerConfigs, /* isKey= */ false),
+                    createSchemaProvider(ProtobufSchemaProvider::new, producerConfigs),
+                    VALUE_SUBJECT_FUNCTION)));
+
+    schemaCache = CacheBuilder.from(schemaCacheSpecConfig).build(cacheLoader);
   }
 
-  private static <T, S extends AbstractKafkaSchemaSerDe & Serializer<T>> S createSerializer(
+  private static <S extends Serializer<?>> S createSerializer(
       Supplier<S> ctor, Map<String, ?> configs, boolean isKey) {
     S serializer = ctor.get();
     serializer.configure(configs, isKey);
@@ -120,124 +128,113 @@ final class SchemaManagerImpl implements SchemaManager {
 
   @Override
   public RegisteredSchema getSchemaById(EmbeddedFormat format, int schemaId, boolean isKey) {
-    switch (format) {
-      case AVRO:
-        return getAvroSchemaById(schemaId, isKey);
-
-      case JSONSCHEMA:
-        return getJsonschemaSchemaById(schemaId, isKey);
-
-      case PROTOBUF:
-        return getProtobufSchemaById(schemaId, isKey);
-
-      default:
-        throw new IllegalArgumentException(String.format("Format %s not supported.", format));
+    try {
+      return schemaCache.get(GetSchemaParams.getSchemaByIdParams(format, schemaId, isKey));
+    } catch (ExecutionException | UncheckedExecutionException e) {
+      throw new SerializationException("Error when loading schema from cache.", e);
     }
-  }
-
-  private RegisteredSchema getAvroSchemaById(int schemaId, boolean isKey) {
-    return avroSchemaManager.getSchemaById(schemaId, isKey);
-  }
-
-  private RegisteredSchema getJsonschemaSchemaById(int schemaId, boolean isKey) {
-    return jsonschemaSchemaManager.getSchemaById(schemaId, isKey);
-  }
-
-  private RegisteredSchema getProtobufSchemaById(int schemaId, boolean isKey) {
-    return protobufSchemaManager.getSchemaById(schemaId, isKey);
   }
 
   @Override
   public RegisteredSchema parseSchema(
       EmbeddedFormat format, String topicName, String rawSchema, boolean isKey) {
-    switch (format) {
-      case AVRO:
-        return parseAvroSchema(topicName, rawSchema, isKey);
-
-      case JSONSCHEMA:
-        return parseJsonschemaSchema(topicName, rawSchema, isKey);
-
-      case PROTOBUF:
-        return parseProtobufSchema(topicName, rawSchema, isKey);
-
-      default:
-        throw new IllegalArgumentException(String.format("Format %s not supported.", format));
+    try {
+      return schemaCache.get(
+          GetSchemaParams.parseSchemaParams(format, topicName, rawSchema, isKey));
+    } catch (ExecutionException | UncheckedExecutionException e) {
+      throw new SerializationException("Error when loading schema from cache.", e);
     }
   }
 
-  private RegisteredSchema parseAvroSchema(String topicName, String rawSchema, boolean isKey) {
-    return avroSchemaManager.parseSchema(topicName, rawSchema, isKey);
-  }
+  private static final class FormatSchemaCacheLoader
+      extends CacheLoader<GetSchemaParams, RegisteredSchema> {
+    private final KeyValueSchemaCacheLoader avroCacheLoader;
+    private final KeyValueSchemaCacheLoader jsonschemaCacheLoader;
+    private final KeyValueSchemaCacheLoader protobufCacheLoader;
 
-  private RegisteredSchema parseJsonschemaSchema(
-      String topicName, String rawSchema, boolean isKey) {
-    return jsonschemaSchemaManager.parseSchema(topicName, rawSchema, isKey);
-  }
-
-  private RegisteredSchema parseProtobufSchema(String topicName, String rawSchema, boolean isKey) {
-    return protobufSchemaManager.parseSchema(topicName, rawSchema, isKey);
-  }
-
-  private static final class KeyValueSchemaManager {
-    private final SchemaManagerInternal keySchemaManager;
-    private final SchemaManagerInternal valueSchemaManager;
-
-    private KeyValueSchemaManager(
-        SchemaManagerInternal keySchemaManager, SchemaManagerInternal valueSchemaManager) {
-      this.keySchemaManager = requireNonNull(keySchemaManager);
-      this.valueSchemaManager = requireNonNull(valueSchemaManager);
+    private FormatSchemaCacheLoader(
+        KeyValueSchemaCacheLoader avroCacheLoader,
+        KeyValueSchemaCacheLoader jsonschemaCacheLoader,
+        KeyValueSchemaCacheLoader protobufCacheLoader
+    ) {
+      this.avroCacheLoader = requireNonNull(avroCacheLoader);
+      this.jsonschemaCacheLoader = requireNonNull(jsonschemaCacheLoader);
+      this.protobufCacheLoader = requireNonNull(protobufCacheLoader);
     }
 
-    private RegisteredSchema getSchemaById(int schemaId, boolean isKey) {
-      if (isKey) {
-        return getKeySchemaById(schemaId);
-      } else {
-        return getValueSchemaById(schemaId);
+    @Override
+    public RegisteredSchema load(GetSchemaParams params) throws Exception {
+      switch (params.getFormat()) {
+        case AVRO:
+          return avroCacheLoader.load(params);
+
+        case JSONSCHEMA:
+          return jsonschemaCacheLoader.load(params);
+
+        case PROTOBUF:
+          return protobufCacheLoader.load(params);
+
+        default:
+          throw new IllegalArgumentException(
+              String.format("Unexpected enum constant: %s", params.getFormat()));
       }
     }
+  }
 
-    private RegisteredSchema getKeySchemaById(int schemaId) {
-      return keySchemaManager.getSchemaById(schemaId);
+  private static final class KeyValueSchemaCacheLoader
+      extends CacheLoader<GetSchemaParams, RegisteredSchema> {
+    private final SchemaCacheLoader keyCacheLoader;
+    private final SchemaCacheLoader valueCacheLoader;
+
+    private KeyValueSchemaCacheLoader(
+        SchemaCacheLoader keyCacheLoader, SchemaCacheLoader valueCacheLoader) {
+      this.keyCacheLoader = requireNonNull(keyCacheLoader);
+      this.valueCacheLoader = requireNonNull(valueCacheLoader);
     }
 
-    private RegisteredSchema getValueSchemaById(int schemaId) {
-      return valueSchemaManager.getSchemaById(schemaId);
-    }
-
-    private RegisteredSchema parseSchema(String topicName, String rawSchema, boolean isKey) {
-      if (isKey) {
-        return parseKeySchema(topicName, rawSchema);
+    @Override
+    public RegisteredSchema load(GetSchemaParams params) throws Exception {
+      if (params.isKey()) {
+        return keyCacheLoader.load(params);
       } else {
-        return parseValueSchema(topicName, rawSchema);
+        return valueCacheLoader.load(params);
       }
-    }
-
-    private RegisteredSchema parseKeySchema(String topicName, String rawSchema) {
-      return keySchemaManager.parseSchema(topicName, rawSchema);
-    }
-
-    private RegisteredSchema parseValueSchema(String topicName, String rawSchema) {
-      return valueSchemaManager.parseSchema(topicName, rawSchema);
     }
   }
 
-  private static final class SchemaManagerInternal {
+  private static final class SchemaCacheLoader
+      extends CacheLoader<GetSchemaParams, RegisteredSchema> {
     private final String schemaType;
     private final AbstractKafkaSchemaSerDe serializer;
-    private final LoadingCache<ParseSchemaParams, RegisteredSchema> schemaCache;
+    private final SchemaProvider schemaProvider;
+    private final Function<String, String> subjectFunction;
 
-    private SchemaManagerInternal(
+    private SchemaCacheLoader(
         String schemaType,
         AbstractKafkaSchemaSerDe serializer,
         SchemaProvider schemaProvider,
         Function<String, String> subjectFunction) {
       this.schemaType = requireNonNull(schemaType);
       this.serializer = requireNonNull(serializer);
-      schemaCache =
-          CacheBuilder.newBuilder()
-              .maximumSize(1000)
-              .expireAfterAccess(Duration.ofMinutes(10))
-              .build(new SchemaCacheLoader(serializer, schemaProvider, subjectFunction));
+      this.schemaProvider = requireNonNull(schemaProvider);
+      this.subjectFunction = requireNonNull(subjectFunction);
+    }
+
+    @Override
+    public RegisteredSchema load(GetSchemaParams params) throws Exception {
+      switch (params.getParams().getOperation()) {
+        case SCHEMA_ID:
+          return getSchemaById(params.getParams().getSchemaId().getSchemaId());
+
+        case RAW_SCHEMA:
+          return parseSchema(
+              params.getParams().getRawSchema().getTopicName(),
+              params.getParams().getRawSchema().getRawSchema());
+
+        default:
+          throw new AssertionError(
+              String.format("Unexpected enum constant: %s", params.getParams().getOperation()));
+      }
     }
 
     private RegisteredSchema getSchemaById(int schemaId) {
@@ -257,52 +254,95 @@ final class SchemaManagerImpl implements SchemaManager {
       return RegisteredSchema.create(schemaId, schema);
     }
 
-    private RegisteredSchema parseSchema(String topicName, String rawSchema) {
-      try {
-        return schemaCache.get(ParseSchemaParams.create(topicName, rawSchema));
-      } catch (ExecutionException | UncheckedExecutionException e) {
-        throw new SerializationException("Error when loading schema from cache.", e);
-      }
-    }
-  }
-
-  private static final class SchemaCacheLoader
-      extends CacheLoader<ParseSchemaParams, RegisteredSchema> {
-    private final AbstractKafkaSchemaSerDe serializer;
-    private final SchemaProvider schemaProvider;
-    private final Function<String, String> subjectFunction;
-
-    private SchemaCacheLoader(
-        AbstractKafkaSchemaSerDe serializer,
-        SchemaProvider schemaProvider,
-        Function<String, String> subjectFunction) {
-      this.serializer = requireNonNull(serializer);
-      this.schemaProvider = requireNonNull(schemaProvider);
-      this.subjectFunction = requireNonNull(subjectFunction);
-    }
-
-    @Override
-    public RegisteredSchema load(ParseSchemaParams params) throws Exception {
-      ParsedSchema schema =
-          schemaProvider.parseSchema(params.getRawSchema(), emptyList())
-              .orElseThrow(() -> new SerializationException("Error when parsing raw schema."));
-      int schemaId = serializer.register(subjectFunction.apply(params.getTopicName()), schema);
+    private RegisteredSchema parseSchema(String topicName, String rawSchema)
+        throws RestClientException, IOException {
+      ParsedSchema schema = schemaProvider.parseSchema(rawSchema, emptyList())
+          .orElseThrow(() -> new SerializationException("Error when parsing raw schema."));
+      int schemaId = serializer.register(subjectFunction.apply(topicName), schema);
       return RegisteredSchema.create(schemaId, schema);
     }
   }
 
   @AutoValue
-  abstract static class ParseSchemaParams {
+  abstract static class GetSchemaParams {
 
-    ParseSchemaParams() {
+    GetSchemaParams() {
+    }
+
+    abstract EmbeddedFormat getFormat();
+
+    abstract SchemaIdOrRawSchema getParams();
+
+    abstract boolean isKey();
+
+    private static GetSchemaParams getSchemaByIdParams(
+        EmbeddedFormat format, int schemaId, boolean isKey) {
+      checkArgument(VALID_FORMATS.contains(format), "Invalid format: %s", format);
+      return new AutoValue_SchemaManagerImpl_GetSchemaParams(
+          format, SchemaIdOrRawSchema.schemaId(schemaId), isKey);
+    }
+
+    private static GetSchemaParams parseSchemaParams(
+        EmbeddedFormat format, String topicName, String rawSchema, boolean isKey) {
+      checkArgument(VALID_FORMATS.contains(format), "Invalid format: %s", format);
+      return new AutoValue_SchemaManagerImpl_GetSchemaParams(
+          format, SchemaIdOrRawSchema.rawSchema(topicName, rawSchema), isKey);
+    }
+  }
+
+  @AutoOneOf(SchemaIdOrRawSchema.Operation.class)
+  abstract static class SchemaIdOrRawSchema {
+
+    enum Operation {
+      SCHEMA_ID,
+      RAW_SCHEMA
+    }
+
+    SchemaIdOrRawSchema() {
+    }
+
+    abstract Operation getOperation();
+
+    abstract SchemaId getSchemaId();
+
+    abstract RawSchema getRawSchema();
+
+    private static SchemaIdOrRawSchema schemaId(int schemaId) {
+      return AutoOneOf_SchemaManagerImpl_SchemaIdOrRawSchema.schemaId(
+          SchemaId.create(schemaId));
+    }
+
+    private static SchemaIdOrRawSchema rawSchema(String topicName, String rawSchema) {
+      return AutoOneOf_SchemaManagerImpl_SchemaIdOrRawSchema.rawSchema(
+          RawSchema.create(topicName, rawSchema));
+    }
+  }
+
+  @AutoValue
+  abstract static class SchemaId {
+
+    SchemaId() {
+    }
+
+    abstract int getSchemaId();
+
+    private static SchemaId create(int schemaId) {
+      return new AutoValue_SchemaManagerImpl_SchemaId(schemaId);
+    }
+  }
+
+  @AutoValue
+  abstract static class RawSchema {
+
+    RawSchema() {
     }
 
     abstract String getTopicName();
 
     abstract String getRawSchema();
 
-    private static ParseSchemaParams create(String topicName, String rawSchema) {
-      return new AutoValue_SchemaManagerImpl_ParseSchemaParams(topicName, rawSchema);
+    private static RawSchema create(String topicName, String rawSchema) {
+      return new AutoValue_SchemaManagerImpl_RawSchema(topicName, rawSchema);
     }
   }
 }

@@ -19,13 +19,11 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import java.util.Map;
-import java.util.function.Supplier;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
-import org.apache.kafka.common.serialization.Serializer;
 
 /**
  * Shared, global state for the REST proxy server, including configuration and connection pools.
@@ -88,17 +86,14 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
       producer =
           new KafkaProducer<>(
               config.getProducerConfigs(),
-              createSerializer(
-                  ByteArraySerializer::new, config.getProducerConfigs(), /* isKey= */ true),
-              createSerializer(
-                  ByteArraySerializer::new, config.getProducerConfigs(), /* isKey= */ false));
+              createSerializer(config.getProducerConfigs(), /* isKey= */ true),
+              createSerializer(config.getProducerConfigs(), /* isKey= */ false));
     }
     return producer;
   }
 
-  private static <T, S extends Serializer<T>> S createSerializer(
-      Supplier<S> ctor, Map<String, ?> configs, boolean isKey) {
-    S serializer = ctor.get();
+  private static ByteArraySerializer createSerializer(Map<String, ?> configs, boolean isKey) {
+    ByteArraySerializer serializer = new ByteArraySerializer();
     serializer.configure(configs, isKey);
     return serializer;
   }

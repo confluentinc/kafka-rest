@@ -40,8 +40,8 @@ public interface RecordSerializerFacade {
    * Serializes the given schema-ed {@code data} into a {@link ByteString}.
    *
    * <p>The {@code format} argument must be one of {@link EmbeddedFormat#AVRO}, {@link
-   * EmbeddedFormat#JSONSCHEMA} or {@link EmbeddedFormat#JSON}. Returns {@link Optional#empty()} if
-   * {@code data} {@link JsonNode#isNull() is null}.
+   * EmbeddedFormat#JSONSCHEMA} or {@link EmbeddedFormat#PROTOBUF}. Returns {@link Optional#empty()}
+   * if {@code data} {@link JsonNode#isNull() is null}.
    */
   Optional<ByteString> serializeWithSchema(
       EmbeddedFormat format,

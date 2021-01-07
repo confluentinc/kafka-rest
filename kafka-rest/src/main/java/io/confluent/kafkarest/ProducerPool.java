@@ -20,10 +20,9 @@ import static java.util.Objects.requireNonNull;
 import org.apache.kafka.clients.producer.Producer;
 
 /**
- * @deprecated This class only exists to satisfy the {@link KafkaRestContext interface}. It is soon
+ * @deprecated This class only exists to satisfy the {@link KafkaRestContext} interface. It is soon
  *             to be deleted. Access the producer directly, either via {@link
- *             KafkaRestContext#getProducer()} or via injection of
- *             <pre>{@code Producer<byte[], byte[]>}</pre>.
+ *             KafkaRestContext#getProducer()} or via injection of {@code Producer<byte[], byte[]>}.
  */
 @Deprecated
 public final class ProducerPool {

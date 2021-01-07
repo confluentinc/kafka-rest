@@ -335,6 +335,12 @@ public class KafkaRestConfig extends RestConfig {
       "Whether to enable REST Proxy V3 API. Default is true.";
   private static final boolean API_V3_ENABLE_DEFAULT = true;
 
+  public static final String SCHEMA_CACHE_SPEC_CONFIG = "schema.cache.spec";
+  private static final String SCHEMA_CACHE_SPEC_DOC =
+      "Guava CacheBuilderSpec string for the schema cache. Default is"
+          + "'maximumSize=10000,expireAfterAccess=10m'";
+  private static final String SCHEMA_CACHE_SPEC_DEFAULT = "maximumSize=10000,expireAfterAccess=10m";
+
   private static final ConfigDef config;
 
   static {
@@ -665,7 +671,13 @@ public class KafkaRestConfig extends RestConfig {
         Type.BOOLEAN,
         API_V3_ENABLE_DEFAULT,
         Importance.LOW,
-        API_V3_ENABLE_DOC);
+        API_V3_ENABLE_DOC)
+    .define(
+        SCHEMA_CACHE_SPEC_CONFIG,
+        Type.STRING,
+        SCHEMA_CACHE_SPEC_DEFAULT,
+        Importance.LOW,
+        SCHEMA_CACHE_SPEC_DOC);
   }
 
   private static Properties getPropsFromFile(String propsFile) throws RestConfigException {

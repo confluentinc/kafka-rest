@@ -18,6 +18,7 @@ package io.confluent.kafkarest.controllers;
 import static java.util.Collections.singletonMap;
 import static org.junit.Assert.assertEquals;
 
+import com.google.common.cache.CacheBuilderSpec;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
@@ -43,6 +44,8 @@ public class SchemaManagerImplTest {
   private static final String SCHEMA_REGISTRY_SCOPE = "sr";
   private static final Map<String, Object> PRODUCER_CONFIGS =
       singletonMap("schema.registry.url", "mock://" + SCHEMA_REGISTRY_SCOPE);
+  private static final CacheBuilderSpec SCHEMA_CACHE_SPEC =
+      CacheBuilderSpec.parse("maximumSize=10000,expireAfterAccess=10m");
 
   private MockSchemaRegistryClient schemaRegistryClient;
   private SchemaManager schemaManager;
@@ -58,7 +61,7 @@ public class SchemaManagerImplTest {
                     new JsonSchemaProvider(),
                     new ProtobufSchemaProvider()));
 
-    schemaManager = new SchemaManagerImpl(PRODUCER_CONFIGS);
+    schemaManager = new SchemaManagerImpl(PRODUCER_CONFIGS, SCHEMA_CACHE_SPEC);
   }
 
   @After

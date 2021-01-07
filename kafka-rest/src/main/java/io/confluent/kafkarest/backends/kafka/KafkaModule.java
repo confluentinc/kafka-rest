@@ -96,7 +96,7 @@ public final class KafkaModule extends AbstractBinder {
 
     @Override
     public Producer<byte[], byte[]> provide() {
-      return context.get().getProducerPool().getProducer();
+      return context.get().getProducer();
     }
 
     @Override

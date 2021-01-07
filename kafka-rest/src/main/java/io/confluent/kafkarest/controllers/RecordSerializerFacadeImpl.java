@@ -147,7 +147,7 @@ final class RecordSerializerFacadeImpl implements RecordSerializerFacade {
                 KafkaProtobufSerializer::new, configs, /* isKey= */ false)));
   }
 
-  private static <T, S extends Serializer<T>> S createSerializer(
+  private static <S extends Serializer<?>> S createSerializer(
       Supplier<S> ctor, Map<String, ?> configs, boolean isKey) {
     S serializer = ctor.get();
     serializer.configure(configs, isKey);
