@@ -18,11 +18,8 @@ package io.confluent.kafkarest.resources.v3;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.controllers.ConsumerLagManager;
-import io.confluent.kafkarest.entities.ConsumerLag;
-import io.confluent.kafkarest.entities.v3.ConsumerLagData;
 import io.confluent.kafkarest.entities.v3.ConsumerLagDataList;
 import io.confluent.kafkarest.entities.v3.ListConsumerLagsResponse;
-import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
@@ -100,7 +97,4 @@ public class ListConsumerLagsResource {
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
-
-// ListConsumerLagsResource currently calls GetConsumerLagResource's toConsumerLagData to avoid
-// having a duplicate of the function here
 }

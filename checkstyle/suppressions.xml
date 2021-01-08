@@ -18,7 +18,7 @@
 
     <suppress
             checks="(ClassDataAbstractionCoupling)"
-            files="(AvroConverter|ConsumerManager|KafkaConsumerManager|KafkaRestApplication|SimpleConsumerManager|KafkaRestContextProvider|KafkaConsumerState|ProducerPool|TopicsResource).java"
+            files="(AvroConverter|ConfigModule|ConsumerManager|KafkaConsumerManager|KafkaRestApplication|SimpleConsumerManager|KafkaRestContextProvider|KafkaConsumerState|ProducerPool|TopicsResource).java"
     />
 
     <suppress
@@ -41,6 +41,6 @@
     />
     <suppress
             checks="(ParameterNumber)"
-            files="(ClusterData|ConsumerGroupLagData).java"
+            files="(ClusterData|ConsumerGroupLagData|ConsumerLagData).java"
     />
 </suppressions>

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.confluent.kafkarest.controllers;
 
 import com.google.auto.value.AutoValue;
@@ -21,9 +36,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import okio.Timeout;
-import org.apache.avro.generic.GenericData;
-import org.apache.avro.generic.GenericData.Array;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
@@ -57,23 +69,6 @@ final class ConsumerOffsetsDaoImpl implements ConsumerOffsetsDao {
         Math.min(consumerMetadataTimeout.toMillis(), Integer.MAX_VALUE));
   }
 
-  // public Map<String, ConsumerGroupOffsets> getAllConsumerGroupOffsets()
-  //     throws InterruptedException, ExecutionException, TimeoutException {
-
-  //   final Set<String> consumerGroupIds = getConsumerGroups();
-  //   final Map<String, ConsumerGroupDescription> fetchedConsumerGroupDesc =
-  //       getAllConsumerGroupDescriptions(consumerGroupIds);
-  //   final Map<String, ConsumerGroupOffsets> cgOffsetsMap = new HashMap<>();
-
-  //   // all consumer groups for this cluster
-  //   for (ConsumerGroupDescription desc : fetchedConsumerGroupDesc.values()) {
-  //     ConsumerGroupOffsets cgOffsets = getConsumerGroupOffsets(desc, IsolationLevel.READ_COMMITTED);
-  //     cgOffsetsMap.put(desc.groupId(), cgOffsets);
-  //   }
-
-  //   return cgOffsetsMap;
-  // }
-
   @AutoValue
   abstract static class MemberId {
 
@@ -83,7 +78,9 @@ final class ConsumerOffsetsDaoImpl implements ConsumerOffsetsDao {
 
     abstract Optional<String> getInstanceId();
 
-    private static Builder builder() { return new AutoValue_ConsumerOffsetsDaoImpl_MemberId.Builder();}
+    private static Builder builder() {
+      return new AutoValue_ConsumerOffsetsDaoImpl_MemberId.Builder();
+    }
 
     @AutoValue.Builder
     abstract static class Builder {

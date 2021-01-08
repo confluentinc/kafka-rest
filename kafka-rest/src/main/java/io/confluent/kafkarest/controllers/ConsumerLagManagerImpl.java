@@ -39,7 +39,8 @@ final class ConsumerLagManagerImpl implements ConsumerLagManager {
       String clusterId, String consumerGroupId) {
     try {
       return CompletableFuture.completedFuture(
-          consumerOffsetsDao.getConsumerLags(clusterId, consumerGroupId, IsolationLevel.READ_COMMITTED));
+          consumerOffsetsDao.getConsumerLags(
+              clusterId, consumerGroupId, IsolationLevel.READ_COMMITTED));
     } catch (Exception e) {
       return CompletableFuture.completedFuture(new ArrayList<>());
     }

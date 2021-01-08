@@ -43,7 +43,9 @@ public abstract class ConsumerLag {
 
   public abstract Long getLogEndOffset();
 
-  public Long getLag() { return getLogEndOffset() - getCurrentOffset(); }
+  public Long getLag() {
+    return getLogEndOffset() - getCurrentOffset();
+  }
 
   public static Builder builder() {
     return new AutoValue_ConsumerLag.Builder();
