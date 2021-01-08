@@ -91,41 +91,16 @@ public class ListConsumerLagsResource {
                                     .build())
                             .setData(
                                 lags.stream()
-                                    .map(this::toConsumerLagData)
+                                    .map(
+                                        lag ->
+                                            GetConsumerLagResource.toConsumerLagData(
+                                                lag, urlFactory, crnFactory))
                                     .collect(Collectors.toList()))
                             .build()));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
 
-  // .map(lag -> GetConsumerLagResource.toConsumerLagData(lag, urlFactory, crnFactory))
-
-  private ConsumerLagData toConsumerLagData(ConsumerLag lag) {
-    return ConsumerLagData.fromConsumerLag(lag)
-        .setMetadata(
-            Resource.Metadata.builder()
-                .setSelf(
-                    urlFactory.create(
-                        "v3",
-                        "clusters",
-                        lag.getClusterId(),
-                        "topics",
-                        lag.getTopicName(),
-                        "partitions",
-                        Integer.toString(lag.getPartitionId()),
-                        "lags",
-                        lag.getConsumerGroupId()))
-                .setResourceName(
-                    crnFactory.create(
-                        "kafka",
-                        lag.getClusterId(),
-                        "topic",
-                        lag.getTopicName(),
-                        "partition",
-                        Integer.toString(lag.getPartitionId()),
-                        "lag",
-                        lag.getConsumerGroupId()))
-                .build())
-        .build();
-  }
+// ListConsumerLagsResource currently calls GetConsumerLagResource's toConsumerLagData to avoid
+// having a duplicate of the function here
 }

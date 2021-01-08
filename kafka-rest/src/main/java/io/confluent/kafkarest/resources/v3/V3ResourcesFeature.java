@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import io.confluent.kafkarest.entities.v3.ListConsumerLagsResponse;
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
 
@@ -34,6 +35,8 @@ public final class V3ResourcesFeature implements Feature {
     configurable.register(ConsumerGroupLagsResource.class);
     configurable.register(ConsumerGroupsResource.class);
     configurable.register(ConsumersResource.class);
+    configurable.register(GetConsumerLagResource.class);
+    configurable.register(ListConsumerLagsResponse.class);
     configurable.register(GetReassignmentAction.class);
     configurable.register(ListAllReassignmentsAction.class);
     configurable.register(SearchReassignmentsByTopicAction.class);

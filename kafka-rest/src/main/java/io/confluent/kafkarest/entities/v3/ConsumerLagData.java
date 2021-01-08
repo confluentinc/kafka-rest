@@ -56,7 +56,7 @@ public abstract class ConsumerLagData extends Resource {
   public abstract Long getLogEndOffset();
 
   @JsonProperty("lag")
-  public Long getLag() { return getLogEndOffset() - getCurrentOffset(); }
+  public abstract Long getLag();
 
   public static Builder builder() {
     return new AutoValue_ConsumerLagData.Builder().setKind("KafkaConsumerLag");
@@ -72,7 +72,8 @@ public abstract class ConsumerLagData extends Resource {
         .setInstanceId(consumerLag.getInstanceId().orElse(null))
         .setClientId(consumerLag.getClientId())
         .setCurrentOffset(consumerLag.getCurrentOffset())
-        .setLogEndOffset(consumerLag.getLogEndOffset());
+        .setLogEndOffset(consumerLag.getLogEndOffset())
+        .setLag(consumerLag.getLag());
   }
 
   @JsonCreator
@@ -87,7 +88,8 @@ public abstract class ConsumerLagData extends Resource {
       @JsonProperty("instance_id") @Nullable String instanceId,
       @JsonProperty("client_id") String clientId,
       @JsonProperty("current_offset") Long currentOffset,
-      @JsonProperty("log_end_offset") Long logEndOffset
+      @JsonProperty("log_end_offset") Long logEndOffset,
+      @JsonProperty("lag") Long lag
   ) {
     return builder()
         .setKind(kind)
@@ -101,6 +103,7 @@ public abstract class ConsumerLagData extends Resource {
         .setClientId(clientId)
         .setCurrentOffset(currentOffset)
         .setLogEndOffset(logEndOffset)
+        .setLag(lag)
         .build();
   }
 
@@ -127,6 +130,8 @@ public abstract class ConsumerLagData extends Resource {
     public abstract Builder setCurrentOffset(Long currentOffset);
 
     public abstract Builder setLogEndOffset(Long logEndOffset);
+
+    public abstract Builder setLag(Long lag);
 
     public abstract ConsumerLagData build();
   }

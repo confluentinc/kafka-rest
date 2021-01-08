@@ -39,9 +39,7 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
-@Path(
-    "/v3/clusters/{clusterId}/topics/{topicName}/partitions/{partitionId}/lags/{consumerGroupId}"
-)
+@Path("/v3/clusters/{clusterId}/topics/{topicName}/partitions/{partitionId}/lags/{consumerGroupId}")
 @ResourceName("api.v3.consumer-lags.*")
 public final class GetConsumerLagResource {
 
@@ -77,67 +75,68 @@ public final class GetConsumerLagResource {
             .thenApply(lag -> lag.orElseThrow(NotFoundException::new))
             .thenApply(
                 lag ->
-                    GetConsumerLagResponse.create(toConsumerLagData(lag)));
+                    GetConsumerLagResponse.create(toConsumerLagData(lag, urlFactory, crnFactory)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
 
-//   static ConsumerLagData toConsumerLagData(
-//       ConsumerLag lag, UrlFactory urlFactory, CrnFactory crnFactory) {
-//     return ConsumerLagData.fromConsumerLag(lag)
-//         .setMetadata(
-//             Resource.Metadata.builder()
-//                 .setSelf(
-//                     urlFactory.create(
-//                         "v3",
-//                         "clusters",
-//                         lag.getClusterId(),
-//                         "topics",
-//                         lag.getTopicName(),
-//                         "partitions",
-//                         Integer.toString(lag.getPartitionId()),
-//                         "lags",
-//                         lag.getConsumerGroupId()))
-//                 .setResourceName(
-//                     crnFactory.create(
-//                         "kafka",
-//                         lag.getClusterId(),
-//                         "topic",
-//                         lag.getTopicName(),
-//                         "partition",
-//                         Integer.toString(lag.getPartitionId()),
-//                         "lag",
-//                         lag.getConsumerGroupId()))
-//                 .build())
-//         .build();
-//   }
+  // static and accepts UrlFactory and CrnFactory so that ListConsumerLagResource can also use it
+   static ConsumerLagData toConsumerLagData(
+       ConsumerLag lag, UrlFactory urlFactory, CrnFactory crnFactory) {
+     return ConsumerLagData.fromConsumerLag(lag)
+         .setMetadata(
+             Resource.Metadata.builder()
+                 .setSelf(
+                     urlFactory.create(
+                         "v3",
+                         "clusters",
+                         lag.getClusterId(),
+                         "topics",
+                         lag.getTopicName(),
+                         "partitions",
+                         Integer.toString(lag.getPartitionId()),
+                         "lags",
+                         lag.getConsumerGroupId()))
+                 .setResourceName(
+                     crnFactory.create(
+                         "kafka",
+                         lag.getClusterId(),
+                         "topic",
+                         lag.getTopicName(),
+                         "partition",
+                         Integer.toString(lag.getPartitionId()),
+                         "lag",
+                         lag.getConsumerGroupId()))
+                 .build())
+         .build();
+   }
 
-  private ConsumerLagData toConsumerLagData(ConsumerLag lag) {
-    return ConsumerLagData.fromConsumerLag(lag)
-        .setMetadata(
-            Resource.Metadata.builder()
-                .setSelf(
-                    urlFactory.create(
-                        "v3",
-                        "clusters",
-                        lag.getClusterId(),
-                        "topics",
-                        lag.getTopicName(),
-                        "partitions",
-                        Integer.toString(lag.getPartitionId()),
-                        "lags",
-                        lag.getConsumerGroupId()))
-                .setResourceName(
-                    crnFactory.create(
-                        "kafka",
-                        lag.getClusterId(),
-                        "topic",
-                        lag.getTopicName(),
-                        "partition",
-                        Integer.toString(lag.getPartitionId()),
-                        "lag",
-                        lag.getConsumerGroupId()))
-                .build())
-        .build();
-  }
+//  private ConsumerLagData toConsumerLagData(ConsumerLag lag) {
+//    return ConsumerLagData.fromConsumerLag(lag)
+//        .setMetadata(
+//            Resource.Metadata.builder()
+//                .setSelf(
+//                    urlFactory.create(
+//                        "v3",
+//                        "clusters",
+//                        lag.getClusterId(),
+//                        "topics",
+//                        lag.getTopicName(),
+//                        "partitions",
+//                        Integer.toString(lag.getPartitionId()),
+//                        "lags",
+//                        lag.getConsumerGroupId()))
+//                .setResourceName(
+//                    crnFactory.create(
+//                        "kafka",
+//                        lag.getClusterId(),
+//                        "topic",
+//                        lag.getTopicName(),
+//                        "partition",
+//                        Integer.toString(lag.getPartitionId()),
+//                        "lag",
+//                        lag.getConsumerGroupId()))
+//                .build())
+//        .build();
+//  }
 }
