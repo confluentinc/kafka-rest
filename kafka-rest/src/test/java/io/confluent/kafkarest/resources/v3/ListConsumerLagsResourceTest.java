@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.confluent.kafkarest.resources.v3;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -15,16 +30,17 @@ import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import javax.ws.rs.NotFoundException;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+@RunWith(JUnit4.class)
 public class ListConsumerLagsResourceTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -93,15 +109,6 @@ public class ListConsumerLagsResourceTest {
                         .build())
                 .setData(
                     Arrays.asList(
-                        ConsumerLagData.fromConsumerLag(CONSUMER_LAG_1)
-                            .setMetadata(
-                                Resource.Metadata.builder()
-                                    .setSelf(
-                                        "/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1")
-                                    .setResourceName(
-                                        "crn:///kafka=cluster-1/topic=topic-1/partition=1/lag=consumer-group-1")
-                                    .build())
-                            .build(),
                         ConsumerLagData.fromConsumerLag(CONSUMER_LAG_2)
                             .setMetadata(
                                 Resource.Metadata.builder()
@@ -110,22 +117,18 @@ public class ListConsumerLagsResourceTest {
                                     .setResourceName(
                                         "crn:///kafka=cluster-1/topic=topic-1/partition=2/lag=consumer-group-1")
                                     .build())
+                            .build(),
+                        ConsumerLagData.fromConsumerLag(CONSUMER_LAG_1)
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/partition=1/lag=consumer-group-1")
+                                    .build())
                             .build()))
             .build());
 
     assertEquals(expected, response.getValue());
   }
-//
-//  @Test
-//  public void listConsumerLags_nonExistingConsumerGroupLags_throwsNotFound() {
-//    expect(consumerLagManager.listConsumerLags(CLUSTER_ID, CONSUMER_GROUP_ID))
-//        .andReturn(completedFuture(new ArrayList<>()));
-//    replay(consumerLagManager);
-//
-//    FakeAsyncResponse response = new FakeAsyncResponse();
-//    consumerLagResource.listConsumerLags(response, CLUSTER_ID, CONSUMER_GROUP_ID);
-//
-//    assertEquals(NotFoundException.class, response.getException().getClass());
-//
-//  }
 }

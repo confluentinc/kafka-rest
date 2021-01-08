@@ -25,15 +25,11 @@ import org.apache.kafka.common.IsolationLevel;
 
 final class ConsumerGroupLagManagerImpl implements ConsumerGroupLagManager {
 
-  // private final Admin adminClient;
-  // private final ConsumerGroupManager consumerGroupManager;
   private final ConsumerOffsetsDao consumerOffsetsDao;
 
   @Inject
   ConsumerGroupLagManagerImpl(
       ConsumerOffsetsDao consumerOffsetsDao) {
-    // this.adminClient = requireNonNull(adminClient);
-    // this.consumerGroupManager = requireNonNull(consumerGroupManager);
     this.consumerOffsetsDao = requireNonNull(consumerOffsetsDao);
   }
 

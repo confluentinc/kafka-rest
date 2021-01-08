@@ -18,6 +18,7 @@ package io.confluent.kafkarest.resources.v3;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.controllers.ConsumerLagManager;
+import io.confluent.kafkarest.entities.v3.ConsumerLagData;
 import io.confluent.kafkarest.entities.v3.ConsumerLagDataList;
 import io.confluent.kafkarest.entities.v3.ListConsumerLagsResponse;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
@@ -26,11 +27,13 @@ import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
+import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -72,6 +75,12 @@ public class ListConsumerLagsResource {
         consumerLagManager.get()
             .listConsumerLags(clusterId, consumerGroupId)
             .thenApply(
+                lags -> {
+                  if (lags.isEmpty()) {
+                    throw new NotFoundException("Consumer lags not found.");
+                  }
+                  return lags; })
+            .thenApply(
                 lags ->
                     ListConsumerLagsResponse.create(
                         ConsumerLagDataList.builder()
@@ -92,6 +101,10 @@ public class ListConsumerLagsResource {
                                         lag ->
                                             GetConsumerLagResource.toConsumerLagData(
                                                 lag, urlFactory, crnFactory))
+                                    .sorted(
+                                        Comparator.comparing(ConsumerLagData::getLag).reversed()
+                                            .thenComparing(ConsumerLagData::getTopicName)
+                                            .thenComparing(ConsumerLagData::getPartitionId))
                                     .collect(Collectors.toList()))
                             .build()));
 

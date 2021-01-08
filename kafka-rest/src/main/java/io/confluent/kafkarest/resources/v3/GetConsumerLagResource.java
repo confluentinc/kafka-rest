@@ -80,8 +80,7 @@ public final class GetConsumerLagResource {
     AsyncResponses.asyncResume(asyncResponse, response);
   }
 
-  // static and accepts UrlFactory and CrnFactory so that ListConsumerLagResource can also use it
-
+  // static and requires UrlFactory, CrnFactory so that ListConsumerLagResource can also call this
   static ConsumerLagData toConsumerLagData(
       ConsumerLag lag, UrlFactory urlFactory, CrnFactory crnFactory) {
     return ConsumerLagData.fromConsumerLag(lag)
@@ -111,33 +110,4 @@ public final class GetConsumerLagResource {
                 .build())
         .build();
   }
-
-  //  private ConsumerLagData toConsumerLagData(ConsumerLag lag) {
-  //    return ConsumerLagData.fromConsumerLag(lag)
-  //        .setMetadata(
-  //            Resource.Metadata.builder()
-  //                .setSelf(
-  //                    urlFactory.create(
-  //                        "v3",
-  //                        "clusters",
-  //                        lag.getClusterId(),
-  //                        "topics",
-  //                        lag.getTopicName(),
-  //                        "partitions",
-  //                        Integer.toString(lag.getPartitionId()),
-  //                        "lags",
-  //                        lag.getConsumerGroupId()))
-  //                .setResourceName(
-  //                    crnFactory.create(
-  //                        "kafka",
-  //                        lag.getClusterId(),
-  //                        "topic",
-  //                        lag.getTopicName(),
-  //                        "partition",
-  //                        Integer.toString(lag.getPartitionId()),
-  //                        "lag",
-  //                        lag.getConsumerGroupId()))
-  //                .build())
-  //        .build();
-  //  }
 }

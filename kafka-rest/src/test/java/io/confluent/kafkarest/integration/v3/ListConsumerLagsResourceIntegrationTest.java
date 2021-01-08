@@ -21,8 +21,11 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest.BinaryPartitionProduceRecord;
 import io.confluent.kafkarest.entities.v3.ConsumerLagData;
+import io.confluent.kafkarest.entities.v3.ConsumerLagDataList;
 import io.confluent.kafkarest.entities.v3.GetConsumerLagResponse;
+import io.confluent.kafkarest.entities.v3.ListConsumerLagsResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.time.Duration;
 import java.util.Arrays;
@@ -42,14 +45,14 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class GetConsumerLagResourceIntegrationTest extends ClusterTestHarness {
+public class ListConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
 
   private static final String topic1 = "topic-1";
   private static final String topic2 = "topic-2";
   private static final String[] topics = new String[]{topic1, topic2};
   private static final String group1 = "consumer-group-1";
   private static final int numTopics = 2;
-  private static final int numPartitions = 3;
+  private static final int numPartitions = 2;
   private String baseUrl;
   private String clusterId;
 
@@ -71,36 +74,48 @@ public class GetConsumerLagResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void getConsumerLag_returnsConsumerLag() {
+  public void listConsumerLags_returnsConsumerLags() {
     KafkaConsumer<?, ?> consumer1 = createConsumer(group1, "client-1");
     consumer1.subscribe(Arrays.asList(topic1, topic2));
 
-    // produce to topic1 partition0 and topic2 partition2
+    // produce to topic1 partition0 and topic2 partition1
     BinaryPartitionProduceRequest request1 = BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
     produce(topic1, 0, request1);
-    produce(topic2, 2, request1);
+    produce(topic2, 1, request1);
 
     // consume from subscribed topics (zero lag)
     consumer1.poll(Duration.ofSeconds(10));
 
     // stores expected currentOffsets and logEndOffsets for each topic partition after sending
     // 3 records to topic1 partition0 and topic2 partition2
-    long[][] expectedOffsets = new long[2][3];
+    long[][] expectedOffsets = new long[2][2];
     expectedOffsets[0][0] = 3;
-    expectedOffsets[1][2] = 3;
+    expectedOffsets[1][1] = 3;
     // all other values default to 0L
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/consumer-groups/" + group1 + "/lags")
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
+
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    ConsumerLagDataList consumerLagDataList =
+        response.readEntity(ListConsumerLagsResponse.class).getValue();
 
     for (int t = 0; t < numTopics; t++) {
       for (int p = 0; p < numPartitions; p++) {
-        Response response =
-            request("/v3/clusters/" + clusterId + "/topics/" + topics[t] +
-                "/partitions/" + p + "/lags/" + group1)
-                .accept(MediaType.APPLICATION_JSON)
+        final int finalT = t;
+        final int finalP = p;
+        ConsumerLagData consumerLagData =
+            consumerLagDataList.getData()
+                .stream()
+                .filter(lagData ->
+                    lagData.getTopicName().equals(topics[finalT]))
+                .filter(lagData ->
+                    lagData.getPartitionId() == finalP)
+                .findAny()
                 .get();
 
-        assertEquals(Status.OK.getStatusCode(), response.getStatus());
-        ConsumerLagData consumerLagData =
-            response.readEntity(GetConsumerLagResponse.class).getValue();
         assertEquals(expectedOffsets[t][p], (long) consumerLagData.getCurrentOffset());
         assertEquals(expectedOffsets[t][p], (long) consumerLagData.getLogEndOffset());
         assertEquals(0, (long) consumerLagData.getLag());
@@ -109,52 +124,58 @@ public class GetConsumerLagResourceIntegrationTest extends ClusterTestHarness {
 
     // produce again to topic2 partition1
     BinaryPartitionProduceRequest request2 = BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
-    produce(topic2, 2, request2);
+    produce(topic2, 1, request2);
 
     Response response2 =
-        request("/v3/clusters/" + clusterId + "/topics/" + topic2 +
-            "/partitions/" + 2 + "/lags/" + group1)
+        request("/v3/clusters/" + clusterId + "/consumer-groups/" + group1 + "/lags")
             .accept(MediaType.APPLICATION_JSON)
             .get();
 
-    GetConsumerLagResponse expectedConsumerLagResponse =
-        GetConsumerLagResponse.create(
-            ConsumerLagData.builder()
+
+    ListConsumerLagsResponse expected =
+        ListConsumerLagsResponse.create(
+            ConsumerLagDataList.builder()
                 .setMetadata(
-                    Resource.Metadata.builder()
-                        .setSelf(
-                            baseUrl + "/v3/clusters/" + clusterId + "/topics/" + topic2 +
-                                "/partitions/" + 2 + "/lags/" + group1)
-                        .setResourceName(
-                            "crn:///kafka=" + clusterId + "/topic=" + topic2 +
-                                "/partition=" + 2 + "/lag=" + group1)
+                    ResourceCollection.Metadata.builder()
+                        .setSelf(baseUrl + "/v3/clusters/" + clusterId +
+                            "/consumer-groups/" + group1 + "/lags")
                         .build())
-                .setClusterId(clusterId)
-                .setConsumerGroupId(group1)
-                .setTopicName(topic2)
-                .setPartitionId(2)
-                .setConsumerId(consumer1.groupMetadata().memberId())
-                .setClientId("client-1")
-                .setCurrentOffset(3L)
-                .setLogEndOffset(6L)
-                .setLag(3L)
+                .setData(Arrays.asList(
+                    expectedConsumerLagData(
+                        /* topicName= */ topic2,
+                        /* partitionId=*/ 1,
+                        /* consumerId= */ consumer1.groupMetadata().memberId(),
+                        /* clientId= */ "client-1",
+                        /* currentOffset= */ 3,
+                        /* logEndOffset= */ 6),
+                    expectedConsumerLagData(
+                        topic1,
+                        0,
+                        consumer1.groupMetadata().memberId(),
+                        "client-1",
+                        3,
+                        3),
+                    expectedConsumerLagData(
+                        topic1,
+                        1,
+                        consumer1.groupMetadata().memberId(),
+                        "client-1",
+                        0,
+                        0),
+                    expectedConsumerLagData(
+                        topic2,
+                        0,
+                        consumer1.groupMetadata().memberId(),
+                        "client-1",
+                        0,
+                        0)))
                 .build());
 
-    assertEquals(expectedConsumerLagResponse, response2.readEntity(GetConsumerLagResponse.class));
+    assertEquals(expected, response2.readEntity(ListConsumerLagsResponse.class));
   }
 
   @Test
-  public void getConsumerLag_nonExistingOffsets_returnsNotFound() {
-    Response response =
-        request("/v3/clusters/" + clusterId + "/topics/" + topic1 +
-            "/partitions/" + 0 + "/lags/" + group1)
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
-    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
-  }
-
-  @Test
-  public void getConsumerLag_nonExistingConsumerGroup_returnsNotFound() {
+  public void listConsumerLags_nonExistingConsumerGroup_returnsNotFound() {
     KafkaConsumer<?, ?> consumer1 = createConsumer(group1, "client-1");
     consumer1.subscribe(Collections.singletonList(topic1));
     BinaryPartitionProduceRequest request1 = BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
@@ -162,27 +183,39 @@ public class GetConsumerLagResourceIntegrationTest extends ClusterTestHarness {
     consumer1.poll(Duration.ofSeconds(1));
 
     Response response =
-        request("/v3/clusters/" + clusterId + "/topics/" + topic1 +
-            "/partitions/" + 0 + "/lags/" + "foo")
+        request("/v3/clusters/" + clusterId + "/consumer-groups/" + "foo" + "/lags")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
-  @Test
-  public void getConsumerLag_nonExistingCluster_returnsNotFound() {
-    KafkaConsumer<?, ?> consumer1 = createConsumer(group1, "client-1");
-    consumer1.subscribe(Collections.singletonList(topic1));
-    BinaryPartitionProduceRequest request1 = BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
-    produce(topic1, 0, request1);
-    consumer1.poll(Duration.ofSeconds(1));
-
-    Response response =
-        request("/v3/clusters/" + "foo" + "/topics/" + topic1 +
-            "/partitions/" + 0 + "/lags/" + group1)
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
-    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  private ConsumerLagData expectedConsumerLagData(
+      String topicName,
+      int partitionId,
+      String consumerId,
+      String clientId,
+      long currentOffset,
+      long logEndOffset) {
+    return ConsumerLagData.builder()
+        .setMetadata(
+            Resource.Metadata.builder()
+                .setSelf(
+                    baseUrl + "/v3/clusters/" + clusterId + "/topics/" + topicName +
+                        "/partitions/" + partitionId + "/lags/" + group1)
+                .setResourceName(
+                    "crn:///kafka=" + clusterId + "/topic=" + topicName +
+                        "/partition=" + partitionId + "/lag=" + group1)
+                .build())
+        .setClusterId(clusterId)
+        .setConsumerGroupId(group1)
+        .setTopicName(topicName)
+        .setPartitionId(partitionId)
+        .setConsumerId(consumerId)
+        .setClientId(clientId)
+        .setCurrentOffset(currentOffset)
+        .setLogEndOffset(logEndOffset)
+        .setLag(logEndOffset - currentOffset)
+        .build();
   }
 
   private KafkaConsumer<?, ?> createConsumer(String consumerGroup, String clientId) {

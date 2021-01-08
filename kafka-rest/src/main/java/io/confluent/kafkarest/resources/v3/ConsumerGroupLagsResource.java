@@ -27,6 +27,7 @@ import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -60,7 +61,7 @@ public final class ConsumerGroupLagsResource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  // @PerformanceMetric("v3.consumer-group-lag.get")
+  @PerformanceMetric("v3.consumer-group-lag.get")
   @ResourceName("api.v3.consumer-group-lag.get")
   public void getConsumerGroupLag(
       @Suspended AsyncResponse asyncResponse,
