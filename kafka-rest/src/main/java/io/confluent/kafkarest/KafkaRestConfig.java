@@ -788,5 +788,4 @@ public class KafkaRestConfig extends RestConfig {
   public RestMetricsContext getMetricsContext() {
     return metricsContext.metricsContext();
   }
-
 }

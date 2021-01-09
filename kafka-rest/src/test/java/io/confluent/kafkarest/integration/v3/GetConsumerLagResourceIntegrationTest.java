@@ -193,7 +193,6 @@ public class GetConsumerLagResourceIntegrationTest extends ClusterTestHarness {
     return new KafkaConsumer<>(properties, new BytesDeserializer(), new BytesDeserializer());
   }
 
-  // produces request to topicName and partitionId
   private void produce(String topicName, int partitionId, BinaryPartitionProduceRequest request) {
     request("topics/" + topicName + "/partitions/" + partitionId, Collections.emptyMap())
         .post(Entity.entity(request, Versions.KAFKA_V2_JSON_BINARY));

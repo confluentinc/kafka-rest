@@ -15,7 +15,6 @@
 
 package io.confluent.kafkarest.resources.v3;
 
-import io.confluent.kafkarest.entities.v3.ListConsumerLagsResponse;
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
 

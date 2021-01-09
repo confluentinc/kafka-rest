@@ -87,7 +87,7 @@ public class ListConsumerLagsResourceIntegrationTest extends ClusterTestHarness 
     consumer1.poll(Duration.ofSeconds(10));
 
     // stores expected currentOffsets and logEndOffsets for each topic partition after sending
-    // 3 records to topic1 partition0 and topic2 partition2
+    // 3 records to topic1 partition0 and topic2 partition1
     long[][] expectedOffsets = new long[2][2];
     expectedOffsets[0][0] = 3;
     expectedOffsets[1][1] = 3;
@@ -149,26 +149,26 @@ public class ListConsumerLagsResourceIntegrationTest extends ClusterTestHarness 
                         /* currentOffset= */ 3,
                         /* logEndOffset= */ 6),
                     expectedConsumerLagData(
-                        topic1,
-                        0,
-                        consumer1.groupMetadata().memberId(),
-                        "client-1",
-                        3,
-                        3),
+                        /* topicName= */ topic1,
+                        /* partitionId=*/ 0,
+                        /* consumerId= */ consumer1.groupMetadata().memberId(),
+                        /* clientId= */ "client-1",
+                        /* currentOffset= */ 3,
+                        /* logEndOffset= */ 3),
                     expectedConsumerLagData(
-                        topic1,
-                        1,
-                        consumer1.groupMetadata().memberId(),
-                        "client-1",
-                        0,
-                        0),
+                        /* topicName= */ topic1,
+                        /* partitionId=*/ 1,
+                        /* consumerId= */ consumer1.groupMetadata().memberId(),
+                        /* clientId= */ "client-1",
+                        /* currentOffset= */ 0,
+                        /* logEndOffset= */ 0),
                     expectedConsumerLagData(
-                        topic2,
-                        0,
-                        consumer1.groupMetadata().memberId(),
-                        "client-1",
-                        0,
-                        0)))
+                        /* topicName= */ topic2,
+                        /* partitionId=*/ 0,
+                        /* consumerId= */  consumer1.groupMetadata().memberId(),
+                        /* clientId= */ "client-1",
+                        /* currentOffset= */ 0,
+                        /* logEndOffset= */ 0)))
                 .build());
 
     assertEquals(expected, response2.readEntity(ListConsumerLagsResponse.class));
@@ -226,7 +226,6 @@ public class ListConsumerLagsResourceIntegrationTest extends ClusterTestHarness 
     return new KafkaConsumer<>(properties, new BytesDeserializer(), new BytesDeserializer());
   }
 
-  // produces request to topicName and partitionId
   private void produce(String topicName, int partitionId, BinaryPartitionProduceRequest request) {
     request("topics/" + topicName + "/partitions/" + partitionId, Collections.emptyMap())
         .post(Entity.entity(request, Versions.KAFKA_V2_JSON_BINARY));
