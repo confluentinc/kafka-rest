@@ -26,7 +26,7 @@ public interface SchemaManager {
   /**
    * Returns the {@link RegisteredSchema schema} registered with the given {@code schemaId}.
    */
-  RegisteredSchema getSchemaById(EmbeddedFormat format, int schemaId, boolean isKey);
+  RegisteredSchema getSchemaById(EmbeddedFormat format, int schemaId);
 
   /**
    * Parses and returns the potentially newly registered {@link RegisteredSchema schema}

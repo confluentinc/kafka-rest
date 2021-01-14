@@ -134,9 +134,9 @@ public class TopicsResourceAvroProduceTest
         schemaManager.parseSchema(
             EmbeddedFormat.AVRO, TOPIC_NAME, RAW_VALUE_SCHEMA, /* isKey= */ false))
         .andStubReturn(registeredValueSchema);
-    expect(schemaManager.getSchemaById(EmbeddedFormat.AVRO, 1, /* isKey= */ true))
+    expect(schemaManager.getSchemaById(EmbeddedFormat.AVRO, 1))
         .andStubReturn(registeredKeySchema);
-    expect(schemaManager.getSchemaById(EmbeddedFormat.AVRO, 2, /* isKey= */ false))
+    expect(schemaManager.getSchemaById(EmbeddedFormat.AVRO, 2))
         .andStubReturn(registeredValueSchema);
 
     for (int i = 0; i < request.getRecords().size(); i++) {

@@ -15,7 +15,9 @@
 
 package io.confluent.kafkarest.config;
 
-import com.google.common.cache.CacheBuilderSpec;
+import static java.util.Objects.requireNonNull;
+
+import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.rest.RestConfig;
 import java.lang.annotation.ElementType;
@@ -26,11 +28,13 @@ import java.util.HashSet;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Qualifier;
 import org.glassfish.hk2.api.AnnotationLiteral;
+import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
@@ -46,7 +50,7 @@ public final class ConfigModule extends AbstractBinder {
   private final KafkaRestConfig config;
 
   public ConfigModule(KafkaRestConfig config) {
-    this.config = Objects.requireNonNull(config);
+    this.config = requireNonNull(config);
   }
 
   @Override
@@ -80,17 +84,126 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new ListenersConfigImpl())
         .to(new TypeLiteral<List<URI>>() { });
 
+    bindFactory(MaxSchemasPerSubjectFactory.class)
+        .qualifiedBy(new MaxSchemasPerSubjectConfigImpl())
+        .to(Integer.class);
+
     bind(config.getInt(RestConfig.PORT_CONFIG))
         .qualifiedBy(new PortConfigImpl())
         .to(Integer.class);
+
+    bindFactory(SchemaRegistryConfigFactory.class).to(SchemaRegistryConfig.class);
 
     bind(config.getProducerConfigs())
         .qualifiedBy(new ProducerConfigsImpl())
         .to(new TypeLiteral<Map<String, Object>>() { });
 
-    bind(CacheBuilderSpec.parse(config.getString(KafkaRestConfig.SCHEMA_CACHE_SPEC_CONFIG)))
-        .qualifiedBy(new SchemaCacheSpecConfigImpl())
-        .to(CacheBuilderSpec.class);
+    bind(config.getSchemaRegistryConfigs())
+        .qualifiedBy(new SchemaRegistryConfigsImpl())
+        .to(new TypeLiteral<Map<String, Object>>() { });
+
+    bindFactory(SchemaRegistryRequestHeadersFactory.class)
+        .qualifiedBy(new SchemaRegistryRequestHeadersConfigImpl())
+        .to(new TypeLiteral<Map<String, String>>() { });
+
+    bindFactory(SchemaRegistryUrlsFactory.class)
+        .qualifiedBy(new SchemaRegistryUrlsConfigImpl())
+        .to(new TypeLiteral<List<URI>>() { });
+
+    bindFactory(SubjectNameStrategyFactory.class).to(SubjectNameStrategy.class);
+  }
+
+  private static final class MaxSchemasPerSubjectFactory implements Factory<Integer> {
+    private final Provider<SchemaRegistryConfig> config;
+
+    @Inject
+    private MaxSchemasPerSubjectFactory(Provider<SchemaRegistryConfig> config) {
+      this.config = requireNonNull(config);
+    }
+
+    @Override
+    public Integer provide() {
+      return config.get().getMaxSchemasPerSubject();
+    }
+
+    @Override
+    public void dispose(Integer unused) {
+    }
+  }
+
+  private static final class SchemaRegistryConfigFactory implements Factory<SchemaRegistryConfig> {
+    private final Map<String, Object> configs;
+
+    @Inject
+    private SchemaRegistryConfigFactory(@SchemaRegistryConfigs Map<String, Object> configs) {
+      this.configs = requireNonNull(configs);
+    }
+
+    @Override
+    public SchemaRegistryConfig provide() {
+      return new SchemaRegistryConfig(configs);
+    }
+
+    @Override
+    public void dispose(SchemaRegistryConfig unused) {
+    }
+  }
+
+  private static final class SchemaRegistryRequestHeadersFactory
+      implements Factory<Map<String, String>> {
+    private final Provider<SchemaRegistryConfig> config;
+
+    @Inject
+    private SchemaRegistryRequestHeadersFactory(Provider<SchemaRegistryConfig> config) {
+      this.config = requireNonNull(config);
+    }
+
+    @Override
+    public Map<String, String> provide() {
+      return config.get().requestHeaders();
+    }
+
+    @Override
+    public void dispose(Map<String, String> unused) {
+    }
+  }
+
+  private static final class SchemaRegistryUrlsFactory implements Factory<List<URI>> {
+    private final Provider<SchemaRegistryConfig> config;
+
+    @Inject
+    private SchemaRegistryUrlsFactory(Provider<SchemaRegistryConfig> config) {
+      this.config = requireNonNull(config);
+    }
+
+    @Override
+    public List<URI> provide() {
+      return config.get().getSchemaRegistryUrls().stream()
+          .map(URI::create)
+          .collect(Collectors.toList());
+    }
+
+    @Override
+    public void dispose(List<URI> unused) {
+    }
+  }
+
+  private static final class SubjectNameStrategyFactory implements Factory<SubjectNameStrategy> {
+    private final Provider<SchemaRegistryConfig> config;
+
+    @Inject
+    private SubjectNameStrategyFactory(Provider<SchemaRegistryConfig> config) {
+      this.config = requireNonNull(config);
+    }
+
+    @Override
+    public SubjectNameStrategy provide() {
+      return config.get().getSubjectNameStrategy();
+    }
+
+    @Override
+    public void dispose(SubjectNameStrategy unused) {
+    }
   }
 
   @Qualifier
@@ -147,6 +260,16 @@ public final class ConfigModule extends AbstractBinder {
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface MaxSchemasPerSubjectConfig {
+  }
+
+  private static final class MaxSchemasPerSubjectConfigImpl
+      extends AnnotationLiteral<MaxSchemasPerSubjectConfig> implements MaxSchemasPerSubjectConfig {
+  }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
   @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER })
   @Deprecated
   public @interface PortConfig {
@@ -168,12 +291,33 @@ public final class ConfigModule extends AbstractBinder {
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
-  @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER })
-  public @interface SchemaCacheSpecConfig {
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface SchemaRegistryConfigs {
   }
 
-  private static final class SchemaCacheSpecConfigImpl
-      extends AnnotationLiteral<SchemaCacheSpecConfig> implements SchemaCacheSpecConfig {
+  private static final class SchemaRegistryConfigsImpl
+      extends AnnotationLiteral<SchemaRegistryConfigs> implements SchemaRegistryConfigs {
+  }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface SchemaRegistryRequestHeadersConfig {
+  }
+
+  private static final class SchemaRegistryRequestHeadersConfigImpl
+      extends AnnotationLiteral<SchemaRegistryRequestHeadersConfig>
+      implements SchemaRegistryRequestHeadersConfig {
+  }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface SchemaRegistryUrlsConfig {
+  }
+
+  private static final class SchemaRegistryUrlsConfigImpl
+      extends AnnotationLiteral<SchemaRegistryUrlsConfig> implements SchemaRegistryUrlsConfig {
   }
 }
 // CHECKSTYLE:ON:ClassDataAbstractionCoupling

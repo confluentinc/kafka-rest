@@ -142,7 +142,7 @@ abstract class AbstractProduceAction {
       Optional<String> schema,
       boolean isKey) {
     if (schemaId.isPresent()) {
-      return Optional.of(schemaManager.get().getSchemaById(format, schemaId.get(), isKey));
+      return Optional.of(schemaManager.get().getSchemaById(format, schemaId.get()));
     } else if (schema.isPresent()) {
       return Optional.of(schemaManager.get().parseSchema(format, topicName, schema.get(), isKey));
     } else {

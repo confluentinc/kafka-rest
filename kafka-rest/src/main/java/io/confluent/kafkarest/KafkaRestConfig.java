@@ -15,13 +15,18 @@
 
 package io.confluent.kafkarest;
 
+import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.AUTO_REGISTER_SCHEMAS;
+import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.USE_LATEST_VERSION;
 import static org.apache.kafka.clients.CommonClientConfigs.METRICS_CONTEXT_PREFIX;
 
+import com.google.common.collect.Maps;
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.metrics.RestMetricsContext;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -724,6 +729,24 @@ public class KafkaRestConfig extends RestConfig {
     return properties;
   }
 
+  public final Map<String, Object> getSchemaRegistryConfigs() {
+    HashMap<String, Object> possibleConfigs = new HashMap<>();
+    possibleConfigs.putAll(originals());
+    possibleConfigs.putAll(originalsWithPrefix("schema.registry.", /* strip= */ true));
+    possibleConfigs.putAll(originalsWithPrefix("client.", /* strip= */ true));
+    possibleConfigs.putAll(originalsWithPrefix("producer.", /* strip= */ true));
+    possibleConfigs.putAll(originalsWithPrefix("consumer.", /* strip= */ true));
+
+    // Disable auto-registration of schemas. Schema registration is handled by SchemaManager.
+    possibleConfigs.put(AUTO_REGISTER_SCHEMAS, false);
+    // Disable latest-version fetching of schemas.
+    possibleConfigs.put(USE_LATEST_VERSION, false);
+
+    return Maps.filterKeys(
+        possibleConfigs,
+        key -> AbstractKafkaSchemaSerDeConfig.baseConfigDef().names().contains(key));
+  }
+
   public Properties getProducerProperties() {
     Properties producerProps = new Properties();
 
@@ -733,7 +756,7 @@ public class KafkaRestConfig extends RestConfig {
     addTelemetryReporterProperties(producerProps);
     producerProps.putAll(originalsWithPrefix("client.", /* strip= */ true));
     producerProps.putAll(originalsWithPrefix("producer.", /* strip= */ true));
-    producerProps.putAll(originalsWithPrefix("schema.registry", /* strip= */ false));
+    producerProps.putAll(getSchemaRegistryConfigs());
 
     return producerProps;
   }
@@ -754,7 +777,7 @@ public class KafkaRestConfig extends RestConfig {
     addTelemetryReporterProperties(consumerProps);
     consumerProps.putAll(originalsWithPrefix("client.", /* strip= */ true));
     consumerProps.putAll(originalsWithPrefix("consumer.", /* strip= */ true));
-    consumerProps.putAll(originalsWithPrefix("schema.registry", /* strip= */ false));
+    consumerProps.putAll(getSchemaRegistryConfigs());
 
     return consumerProps;
   }
