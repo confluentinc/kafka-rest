@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.controllers;
 
+import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 
@@ -26,12 +27,30 @@ public interface SchemaManager {
   /**
    * Returns the {@link RegisteredSchema schema} registered with the given {@code schemaId}.
    */
-  RegisteredSchema getSchemaById(EmbeddedFormat format, int schemaId);
+  RegisteredSchema getSchemaById(String subject, int schemaId);
+
+  RegisteredSchema getSchemaById(
+      SubjectNameStrategy subjectNameStrategy, String topicName, boolean isKey, int schemaId);
 
   /**
-   * Parses and returns the potentially newly registered {@link RegisteredSchema schema}
-   * corresponding to {@code rawSchema}.
+   * Returns the {@link RegisteredSchema schema} registered with the given {@code schemaVersion}.
    */
+  RegisteredSchema getSchemaByVersion(String subject, int schemaVersion);
+
+  /**
+   * Parses and returns {@code rawSchema}.
+   *
+   * <p>If the subject does not contain a registered schema equals to the parsed {@code rawSchema},
+   * one will be registered.
+   */
+  RegisteredSchema parseSchema(EmbeddedFormat format, String subject, String rawSchema);
+
   RegisteredSchema parseSchema(
-      EmbeddedFormat format, String topicName, String rawSchema, boolean isKey);
+      EmbeddedFormat format,
+      SubjectNameStrategy subjectNameStrategy,
+      String topicName,
+      boolean isKey,
+      String rawSchema);
+
+  RegisteredSchema getLatestSchema(String subject);
 }

@@ -16,7 +16,6 @@
 package io.confluent.kafkarest.exceptions.v3;
 
 import io.confluent.kafkarest.exceptions.StatusCodeException;
-import io.confluent.kafkarest.exceptions.v2.ErrorResponse;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 

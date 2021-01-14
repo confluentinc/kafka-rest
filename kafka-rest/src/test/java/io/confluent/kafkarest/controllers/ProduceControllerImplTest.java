@@ -128,9 +128,10 @@ public class ProduceControllerImplTest {
     producer.completeNext();
     producer.completeNext();
 
-    assertEquals(ProduceResult.create(1, 0), result1.join());
-    assertEquals(ProduceResult.create(1, 1), result2.join());
-    assertEquals(ProduceResult.create(1, 2), result3.join());
+    // MockProducer does not set timestamp, serializedKeySize, and serializedValueSize.
+    assertEquals(ProduceResult.create(1, 0, null, 0, 0), result1.join());
+    assertEquals(ProduceResult.create(1, 1, null, 0, 0), result2.join());
+    assertEquals(ProduceResult.create(1, 2, null, 0, 0), result3.join());
 
     assertProducerRecordsEquals(
         Arrays.asList(
@@ -189,9 +190,10 @@ public class ProduceControllerImplTest {
     producer.completeNext();
     producer.completeNext();
 
-    assertEquals(ProduceResult.create(0, 0), result1.join());
-    assertEquals(ProduceResult.create(1, 0), result2.join());
-    assertEquals(ProduceResult.create(2, 0), result3.join());
+    // MockProducer does not set timestamp, serializedKeySize, and serializedValueSize.
+    assertEquals(ProduceResult.create(0, 0, null, 0, 0), result1.join());
+    assertEquals(ProduceResult.create(1, 0, null, 0, 0), result2.join());
+    assertEquals(ProduceResult.create(2, 0, null, 0, 0), result3.join());
 
     assertProducerRecordsEquals(
         Arrays.asList(
@@ -250,9 +252,10 @@ public class ProduceControllerImplTest {
     producer.completeNext();
     producer.completeNext();
 
-    assertEquals(ProduceResult.create(1, 0), result1.join());
-    assertEquals(ProduceResult.create(1, 1), result2.join());
-    assertEquals(ProduceResult.create(1, 2), result3.join());
+    // MockProducer does not set timestamp, serializedKeySize, and serializedValueSize.
+    assertEquals(ProduceResult.create(1, 0, null, 0, 0), result1.join());
+    assertEquals(ProduceResult.create(1, 1, null, 0, 0), result2.join());
+    assertEquals(ProduceResult.create(1, 2, null, 0, 0), result3.join());
 
     assertProducerRecordsEquals(
         Arrays.asList(
@@ -311,9 +314,10 @@ public class ProduceControllerImplTest {
     producer.completeNext();
     producer.completeNext();
 
-    assertEquals(ProduceResult.create(1, 0), result1.join());
-    assertEquals(ProduceResult.create(1, 1), result2.join());
-    assertEquals(ProduceResult.create(1, 2), result3.join());
+    // MockProducer does not set timestamp, serializedKeySize, and serializedValueSize.
+    assertEquals(ProduceResult.create(1, 0, null, 0, 0), result1.join());
+    assertEquals(ProduceResult.create(1, 1, null, 0, 0), result2.join());
+    assertEquals(ProduceResult.create(1, 2, null, 0, 0), result3.join());
 
     assertProducerRecordsEquals(
         Arrays.asList(

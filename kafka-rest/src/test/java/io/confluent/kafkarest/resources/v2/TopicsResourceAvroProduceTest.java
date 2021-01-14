@@ -27,6 +27,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.protobuf.ByteString;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
+import io.confluent.kafka.serializers.subject.TopicNameStrategy;
+import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.TestUtils;
@@ -118,24 +120,43 @@ public class TopicsResourceAvroProduceTest
   public TopicsResourceAvroProduceTest() throws RestConfigException {
     addResource(
         new ProduceToTopicAction(
-            () -> schemaManager, () -> recordSerializer, () -> produceController));
+            () -> schemaManager,
+            () -> recordSerializer,
+            () -> produceController,
+            new TopicNameStrategy()));
   }
 
   private Response produceToTopic(ProduceRequest request, List<RecordMetadata> results) {
-    RegisteredSchema registeredKeySchema = RegisteredSchema.create(1, KEY_SCHEMA);
-    RegisteredSchema registeredValueSchema = RegisteredSchema.create(2, VALUE_SCHEMA);
+    RegisteredSchema registeredKeySchema =
+        RegisteredSchema.create(
+            TOPIC_NAME + "key", /* schemaId= */ 1, /* schemaVersion= */ 1, KEY_SCHEMA);
+    RegisteredSchema registeredValueSchema =
+        RegisteredSchema.create(
+            TOPIC_NAME + "value", /* schemaId= */ 2, /* schemaVersion= */ 1, VALUE_SCHEMA);
 
     expect(
         schemaManager.parseSchema(
-            EmbeddedFormat.AVRO, TOPIC_NAME, RAW_KEY_SCHEMA, /* isKey= */ true))
+            eq(EmbeddedFormat.AVRO),
+            isA(SubjectNameStrategy.class),
+            eq(TOPIC_NAME),
+            /* isKey= */ eq(true),
+            eq(RAW_KEY_SCHEMA)))
         .andStubReturn(registeredKeySchema);
     expect(
         schemaManager.parseSchema(
-            EmbeddedFormat.AVRO, TOPIC_NAME, RAW_VALUE_SCHEMA, /* isKey= */ false))
+            eq(EmbeddedFormat.AVRO),
+            isA(SubjectNameStrategy.class),
+            eq(TOPIC_NAME),
+            /* isKey= */ eq(false),
+            eq(RAW_VALUE_SCHEMA)))
         .andStubReturn(registeredValueSchema);
-    expect(schemaManager.getSchemaById(EmbeddedFormat.AVRO, 1))
+    expect(
+        schemaManager.getSchemaById(
+            isA(SubjectNameStrategy.class), eq(TOPIC_NAME), /* isKey= */ eq(true), eq(1)))
         .andStubReturn(registeredKeySchema);
-    expect(schemaManager.getSchemaById(EmbeddedFormat.AVRO, 2))
+    expect(
+        schemaManager.getSchemaById(
+            isA(SubjectNameStrategy.class), eq(TOPIC_NAME), /* isKey= */ eq(false), eq(2)))
         .andStubReturn(registeredValueSchema);
 
     for (int i = 0; i < request.getRecords().size(); i++) {

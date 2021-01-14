@@ -21,6 +21,7 @@ import static java.util.Objects.requireNonNull;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.auto.value.AutoValue;
 import com.google.protobuf.ByteString;
+import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.common.CompletableFutures;
 import io.confluent.kafkarest.controllers.ProduceController;
@@ -53,14 +54,17 @@ abstract class AbstractProduceAction {
   private final Provider<SchemaManager> schemaManager;
   private final Provider<RecordSerializer> recordSerializer;
   private final Provider<ProduceController> produceController;
+  private final SubjectNameStrategy subjectNameStrategy;
 
   AbstractProduceAction(
       Provider<SchemaManager> schemaManager,
       Provider<RecordSerializer> recordSerializer,
-      Provider<ProduceController> produceController) {
+      Provider<ProduceController> produceController,
+      SubjectNameStrategy subjectNameStrategy) {
     this.schemaManager = requireNonNull(schemaManager);
     this.recordSerializer = requireNonNull(recordSerializer);
     this.produceController = requireNonNull(produceController);
+    this.subjectNameStrategy = requireNonNull(subjectNameStrategy);
   }
 
   final CompletableFuture<ProduceResponse> produceWithoutSchema(
@@ -124,9 +128,12 @@ abstract class AbstractProduceAction {
       Optional<String> schema,
       boolean isKey) {
     if (schemaId.isPresent()) {
-      return Optional.of(schemaManager.get().getSchemaById(format, schemaId.get()));
+      return Optional.of(
+          schemaManager.get().getSchemaById(subjectNameStrategy, topicName, isKey, schemaId.get()));
     } else if (schema.isPresent()) {
-      return Optional.of(schemaManager.get().parseSchema(format, topicName, schema.get(), isKey));
+      return Optional.of(
+          schemaManager.get()
+              .parseSchema(format, subjectNameStrategy, topicName, isKey, schema.get()));
     } else {
       return Optional.empty();
     }

@@ -26,7 +26,6 @@ import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.confluent.kafka.schemaregistry.testutil.MockSchemaRegistry;
-import io.confluent.kafka.serializers.subject.TopicNameStrategy;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.util.Arrays;
@@ -55,7 +54,7 @@ public class SchemaManagerImplTest {
                     new JsonSchemaProvider(),
                     new ProtobufSchemaProvider()));
 
-    schemaManager = new SchemaManagerImpl(schemaRegistryClient, new TopicNameStrategy());
+    schemaManager = new SchemaManagerImpl(schemaRegistryClient);
   }
 
   @After
@@ -68,8 +67,7 @@ public class SchemaManagerImplTest {
     ParsedSchema schema = new AvroSchema("{\"type\": \"int\"}");
     int schemaId = schemaRegistryClient.register("topic-1-key", schema);
 
-    RegisteredSchema result =
-        schemaManager.getSchemaById(EmbeddedFormat.AVRO, schemaId);
+    RegisteredSchema result = schemaManager.getSchemaById("topic-1-key", schemaId);
 
     assertEquals(schema, result.getSchema());
     assertEquals(schemaId, result.getSchemaId());
@@ -80,8 +78,7 @@ public class SchemaManagerImplTest {
     ParsedSchema schema = new JsonSchema("{\"type\":\"number\"}");
     int schemaId = schemaRegistryClient.register("topic-1-key", schema);
 
-    RegisteredSchema result =
-        schemaManager.getSchemaById(EmbeddedFormat.JSONSCHEMA, schemaId);
+    RegisteredSchema result = schemaManager.getSchemaById("topic-1-key", schemaId);
 
     assertEquals(schema, result.getSchema());
     assertEquals(schemaId, result.getSchemaId());
@@ -93,8 +90,7 @@ public class SchemaManagerImplTest {
         new ProtobufSchema("syntax = \"proto3\"; message KeyRecord { int32 key = 1; }");
     int schemaId = schemaRegistryClient.register("topic-1-key", schema);
 
-    RegisteredSchema result =
-        schemaManager.getSchemaById(EmbeddedFormat.PROTOBUF, schemaId);
+    RegisteredSchema result = schemaManager.getSchemaById("topic-1-key", schemaId);
 
     assertEquals(schema, result.getSchema());
     assertEquals(schemaId, result.getSchemaId());
@@ -106,7 +102,7 @@ public class SchemaManagerImplTest {
     ParsedSchema schema = new AvroSchema(rawSchema);
 
     RegisteredSchema result =
-        schemaManager.parseSchema(EmbeddedFormat.AVRO, "topic-1", rawSchema, /* isKey= */ true);
+        schemaManager.parseSchema(EmbeddedFormat.AVRO, "topic-1-key", rawSchema);
 
     assertEquals(schema, result.getSchema());
   }
@@ -117,7 +113,7 @@ public class SchemaManagerImplTest {
     ParsedSchema schema = new AvroSchema(rawSchema);
 
     RegisteredSchema result =
-        schemaManager.parseSchema(EmbeddedFormat.AVRO, "topic-1", rawSchema, /* isKey= */ false);
+        schemaManager.parseSchema(EmbeddedFormat.AVRO, "topic-1-key", rawSchema);
 
     assertEquals(schema, result.getSchema());
   }
@@ -128,8 +124,7 @@ public class SchemaManagerImplTest {
     ParsedSchema schema = new JsonSchema(rawSchema);
 
     RegisteredSchema result =
-        schemaManager.parseSchema(
-            EmbeddedFormat.JSONSCHEMA, "topic-1", rawSchema, /* isKey= */ true);
+        schemaManager.parseSchema(EmbeddedFormat.JSONSCHEMA, "topic-1-key", rawSchema);
 
     assertEquals(schema, result.getSchema());
   }
@@ -140,8 +135,7 @@ public class SchemaManagerImplTest {
     ParsedSchema schema = new JsonSchema(rawSchema);
 
     RegisteredSchema result =
-        schemaManager.parseSchema(
-            EmbeddedFormat.JSONSCHEMA, "topic-1", rawSchema, /* isKey= */ false);
+        schemaManager.parseSchema(EmbeddedFormat.JSONSCHEMA, "topic-1-key", rawSchema);
 
     assertEquals(schema, result.getSchema());
   }
@@ -152,7 +146,7 @@ public class SchemaManagerImplTest {
     ParsedSchema schema = new ProtobufSchema(rawSchema);
 
     RegisteredSchema result =
-        schemaManager.parseSchema(EmbeddedFormat.PROTOBUF, "topic-1", rawSchema, /* isKey= */ true);
+        schemaManager.parseSchema(EmbeddedFormat.PROTOBUF, "topic-1-key", rawSchema);
 
     assertEquals(schema, result.getSchema());
   }
@@ -163,8 +157,7 @@ public class SchemaManagerImplTest {
     ParsedSchema schema = new ProtobufSchema(rawSchema);
 
     RegisteredSchema result =
-        schemaManager.parseSchema(
-            EmbeddedFormat.PROTOBUF, "topic-1", rawSchema, /* isKey= */ false);
+        schemaManager.parseSchema(EmbeddedFormat.PROTOBUF, "topic-1-key", rawSchema);
 
     assertEquals(schema, result.getSchema());
   }
@@ -174,11 +167,10 @@ public class SchemaManagerImplTest {
     String rawSchema = "{\"type\": \"int\"}";
 
     RegisteredSchema parseSchemaResult =
-        schemaManager.parseSchema(EmbeddedFormat.AVRO, "topic-1", rawSchema, /* isKey= */ true);
+        schemaManager.parseSchema(EmbeddedFormat.AVRO, "topic-1-key", rawSchema);
 
     RegisteredSchema getSchemaResult =
-        schemaManager.getSchemaById(
-            EmbeddedFormat.AVRO, parseSchemaResult.getSchemaId());
+        schemaManager.getSchemaById("topic-1-key", parseSchemaResult.getSchemaId());
 
     assertEquals(parseSchemaResult.getSchema(), getSchemaResult.getSchema());
     assertEquals(parseSchemaResult.getSchemaId(), getSchemaResult.getSchemaId());
@@ -189,51 +181,33 @@ public class SchemaManagerImplTest {
     String rawSchema = "{\"type\": \"int\"}";
 
     RegisteredSchema parseSchemaResult1 =
-        schemaManager.parseSchema(EmbeddedFormat.AVRO, "topic-1", rawSchema, /* isKey= */ true);
+        schemaManager.parseSchema(EmbeddedFormat.AVRO, "topic-1-key", rawSchema);
 
     RegisteredSchema parseSchemaResult2 =
-        schemaManager.parseSchema(EmbeddedFormat.AVRO, "topic-1", rawSchema, /* isKey= */ true);
+        schemaManager.parseSchema(EmbeddedFormat.AVRO, "topic-1-key", rawSchema);
 
     assertEquals(parseSchemaResult1.getSchema(), parseSchemaResult2.getSchema());
     assertEquals(parseSchemaResult1.getSchemaId(), parseSchemaResult2.getSchemaId());
   }
 
   @Test(expected = SerializationException.class)
-  public void getSchemaById_wrongFormat_throwsSerializationException() throws Exception {
-    ParsedSchema schema = new AvroSchema("{\"type\": \"int\"}");
-    int schemaId = schemaRegistryClient.register("topic-1-key", schema);
-
-    schemaManager.getSchemaById(EmbeddedFormat.JSONSCHEMA, schemaId);
-  }
-
-  @Test(expected = SerializationException.class)
   public void parseSchema_wrongFormat_throwsSerializationException() {
     String rawSchema = "{\"type\": \"int\"}";
 
-    schemaManager.parseSchema(EmbeddedFormat.PROTOBUF, "topic-1", rawSchema, /* isKey= */ true);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void getSchemaById_binary_throwsIllegalArgumentException() {
-    schemaManager.getSchemaById(EmbeddedFormat.BINARY, 1);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void getSchemaById_json_throwsIllegalArgumentException() {
-    schemaManager.getSchemaById(EmbeddedFormat.JSON, 1);
+    schemaManager.parseSchema(EmbeddedFormat.PROTOBUF, "topic-1=key", rawSchema);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void parseSchema_binary_throwsIllegalArgumentException() {
     String rawSchema = "{\"type\": \"int\"}";
 
-    schemaManager.parseSchema(EmbeddedFormat.BINARY, "topic-1", rawSchema, /* isKey= */ true);
+    schemaManager.parseSchema(EmbeddedFormat.BINARY, "topic-1-key", rawSchema);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void parseSchema_json_throwsIllegalArgumentException() {
     String rawSchema = "{\"type\": \"int\"}";
 
-    schemaManager.parseSchema(EmbeddedFormat.JSON, "topic-1", rawSchema, /* isKey= */ true);
+    schemaManager.parseSchema(EmbeddedFormat.JSON, "topic-1-key", rawSchema);
   }
 }

@@ -20,7 +20,9 @@ import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafka.schemaregistry.ParsedSchema;
+import io.confluent.kafka.schemaregistry.client.SchemaMetadata;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
@@ -31,19 +33,34 @@ import org.apache.kafka.common.errors.SerializationException;
 
 final class SchemaManagerImpl implements SchemaManager {
   private final SchemaRegistryClient schemaRegistryClient;
-  private final SubjectNameStrategy subjectNameStrategy;
 
   @Inject
-  SchemaManagerImpl(
-      SchemaRegistryClient schemaRegistryClient, SubjectNameStrategy subjectNameStrategy) {
+  SchemaManagerImpl(SchemaRegistryClient schemaRegistryClient) {
     this.schemaRegistryClient = requireNonNull(schemaRegistryClient);
-    this.subjectNameStrategy = requireNonNull(subjectNameStrategy);
   }
 
   @Override
-  public RegisteredSchema getSchemaById(EmbeddedFormat format, int schemaId) {
-    checkArgument(format.requiresSchema(), "%s does not support schemas.", format);
+  public RegisteredSchema getSchemaById(String subject, int schemaId) {
+    ParsedSchema schema;
+    try {
+      schema = schemaRegistryClient.getSchemaBySubjectAndId(subject, schemaId);
+    } catch (IOException | RestClientException e) {
+      throw new SerializationException("Error when fetching schema by id.", e);
+    }
 
+    int schemaVersion;
+    try {
+      schemaVersion = schemaRegistryClient.getVersion(subject, schema);
+    } catch (IOException | RestClientException e) {
+      throw new SerializationException("Error when fetching schema version.", e);
+    }
+
+    return RegisteredSchema.create(subject, schemaId, schemaVersion, schema);
+  }
+
+  @Override
+  public RegisteredSchema getSchemaById(
+      SubjectNameStrategy subjectNameStrategy, String topicName, boolean isKey, int schemaId) {
     ParsedSchema schema;
     try {
       schema = schemaRegistryClient.getSchemaById(schemaId);
@@ -51,27 +68,65 @@ final class SchemaManagerImpl implements SchemaManager {
       throw new SerializationException("Error when fetching schema by id.", e);
     }
 
-    if (!format.getSchemaProvider().schemaType().equals(schema.schemaType())) {
-      throw new SerializationException(
-          String.format(
-              "Fetched schema has the wrong type. Expected `%s' but got `%s'.",
-              format.getSchemaProvider().schemaType(), schema.schemaType()));
+    String subject = subjectNameStrategy.subjectName(topicName, isKey, schema);
+
+    int schemaVersion;
+    try {
+      schemaVersion = schemaRegistryClient.getVersion(subject, schema);
+    } catch (IOException | RestClientException e) {
+      throw new SerializationException("Error when fetching schema version.", e);
     }
 
-    return RegisteredSchema.create(schemaId, schema);
+    return RegisteredSchema.create(subject, schemaId, schemaVersion, schema);
+  }
+
+  @Override
+  public RegisteredSchema getSchemaByVersion(String subject, int schemaVersion) {
+    Schema schema =
+        schemaRegistryClient.getByVersion(subject, schemaVersion, /* lookupDeletedSchema= */ false);
+
+    ParsedSchema parsedSchema =
+        EmbeddedFormat.forSchemaType(schema.getSchemaType())
+            .getSchemaProvider()
+            .parseSchema(schema.getSchema(), schema.getReferences(), /* isNew= */ false)
+            .orElseThrow(
+                () -> new SerializationException("Error when fetching schema by version."));
+
+    return RegisteredSchema.create(
+        schema.getSubject(), schema.getId(), schemaVersion, parsedSchema);
+  }
+
+  public RegisteredSchema parseSchema(EmbeddedFormat format, String subject, String rawSchema) {
+    checkArgument(format.requiresSchema(), "%s does not support schemas.", format);
+
+    ParsedSchema schema =
+        format.getSchemaProvider()
+            .parseSchema(rawSchema, /* references= */ emptyList(), /* isNew= */ true)
+            .orElseThrow(() -> new SerializationException("Error when parsing raw schema."));
+
+    return parseSchema(subject, schema);
   }
 
   @Override
   public RegisteredSchema parseSchema(
-      EmbeddedFormat format, String topicName, String rawSchema, boolean isKey) {
+      EmbeddedFormat format,
+      SubjectNameStrategy schemaSubjectStrategy,
+      String topicName,
+      boolean isKey,
+      String rawSchema) {
     checkArgument(format.requiresSchema(), "%s does not support schemas.", format);
 
     ParsedSchema schema =
-        format.getSchemaProvider().parseSchema(rawSchema, /* references= */ emptyList())
+        format.getSchemaProvider()
+            .parseSchema(rawSchema, /* references= */ emptyList(), /* isNew= */ true)
             .orElseThrow(() -> new SerializationException("Error when parsing raw schema."));
 
-    String subject = subjectNameStrategy.subjectName(topicName, isKey, schema);
+    String subject = schemaSubjectStrategy.subjectName(topicName, isKey, schema);
 
+    return parseSchema(subject, schema);
+  }
+
+  private RegisteredSchema parseSchema(String subject, ParsedSchema schema) {
     int schemaId;
     try {
       try {
@@ -85,6 +140,31 @@ final class SchemaManagerImpl implements SchemaManager {
       throw new SerializationException(e);
     }
 
-    return RegisteredSchema.create(schemaId, schema);
+    int schemaVersion;
+    try {
+      schemaVersion = schemaRegistryClient.getVersion(subject, schema);
+    } catch (IOException | RestClientException e) {
+      throw new SerializationException("Error when fetching schema version.", e);
+    }
+
+    return RegisteredSchema.create(subject, schemaId, schemaVersion, schema);
+  }
+
+  @Override
+  public RegisteredSchema getLatestSchema(String subject) {
+    SchemaMetadata metadata;
+    try {
+      metadata = schemaRegistryClient.getLatestSchemaMetadata(subject);
+    } catch (IOException | RestClientException e) {
+      throw new SerializationException("Error when fetching latest schema version.", e);
+    }
+
+    ParsedSchema schema =
+        EmbeddedFormat.forSchemaType(metadata.getSchemaType())
+            .getSchemaProvider()
+            .parseSchema(metadata.getSchema(), metadata.getReferences(), /* isNew= */ false)
+            .orElseThrow(() -> new SerializationException("Error when parsing raw schema."));
+
+    return RegisteredSchema.create(subject, metadata.getId(), metadata.getVersion(), schema);
   }
 }

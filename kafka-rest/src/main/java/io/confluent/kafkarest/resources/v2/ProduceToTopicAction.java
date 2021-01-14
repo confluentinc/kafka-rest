@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.resources.v2;
 
+import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
@@ -56,8 +57,9 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
   public ProduceToTopicAction(
       Provider<SchemaManager> schemaManager,
       Provider<RecordSerializer> recordSerializer,
-      Provider<ProduceController> produceController) {
-    super(schemaManager, recordSerializer, produceController);
+      Provider<ProduceController> produceController,
+      SubjectNameStrategy subjectNameStrategy) {
+    super(schemaManager, recordSerializer, produceController, subjectNameStrategy);
   }
 
   @POST

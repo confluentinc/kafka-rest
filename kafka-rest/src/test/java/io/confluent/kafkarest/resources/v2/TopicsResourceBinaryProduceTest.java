@@ -28,6 +28,7 @@ import static org.junit.Assert.assertNull;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.protobuf.ByteString;
+import io.confluent.kafka.serializers.subject.TopicNameStrategy;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -159,7 +160,10 @@ public class TopicsResourceBinaryProduceTest
   public TopicsResourceBinaryProduceTest() throws RestConfigException {
     addResource(
         new ProduceToTopicAction(
-            () -> schemaManager, () -> recordSerializer, () -> produceController));
+            () -> schemaManager,
+            () -> recordSerializer,
+            () -> produceController,
+            new TopicNameStrategy()));
   }
 
   private Response produceToTopic(
