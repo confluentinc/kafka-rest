@@ -29,7 +29,6 @@ import java.util.Optional;
 import javax.inject.Inject;
 import org.apache.kafka.common.errors.SerializationException;
 
-
 final class NoSchemaRecordSerializer {
 
   private final JsonSerializer jsonSerializer;
@@ -69,13 +68,17 @@ final class NoSchemaRecordSerializer {
   }
 
   private ByteString serializeJson(JsonNode data) {
-    return ByteString.copyFrom(jsonSerializer.serialize(/* topic= */ "", data));
+    return ByteString.copyFrom(jsonSerializer.serialize(data));
   }
 
   private static final class JsonSerializer extends KafkaJsonSerializer<JsonNode> {
 
     private JsonSerializer(Map<String, Object> configs) {
       configure(new KafkaJsonSerializerConfig(configs));
+    }
+
+    private byte[] serialize(JsonNode data) {
+      return serialize(/* topic= */ "", data);
     }
   }
 }
