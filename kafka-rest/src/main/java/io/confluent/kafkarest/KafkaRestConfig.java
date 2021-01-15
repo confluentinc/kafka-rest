@@ -17,10 +17,16 @@ package io.confluent.kafkarest;
 
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.AUTO_REGISTER_SCHEMAS;
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.USE_LATEST_VERSION;
+import static java.util.Collections.singleton;
 import static org.apache.kafka.clients.CommonClientConfigs.METRICS_CONTEXT_PREFIX;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
+import io.confluent.kafka.serializers.KafkaJsonSerializerConfig;
+import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializerConfig;
+import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializerConfig;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.metrics.RestMetricsContext;
@@ -30,8 +36,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.MediaType;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Range;
@@ -719,6 +727,10 @@ public class KafkaRestConfig extends RestConfig {
 
   public final Map<String, Object> getSchemaRegistryConfigs() {
     HashMap<String, Object> possibleConfigs = new HashMap<>();
+
+    // Use a default schema.registry.url, if not specified.
+    possibleConfigs.put(SCHEMA_REGISTRY_URL_CONFIG, SCHEMA_REGISTRY_URL_DEFAULT);
+
     possibleConfigs.putAll(originals());
     possibleConfigs.putAll(originalsWithPrefix("schema.registry.", /* strip= */ true));
     possibleConfigs.putAll(originalsWithPrefix("client.", /* strip= */ true));
@@ -731,22 +743,75 @@ public class KafkaRestConfig extends RestConfig {
     possibleConfigs.put(USE_LATEST_VERSION, false);
 
     return Maps.filterKeys(
-        possibleConfigs,
-        key -> AbstractKafkaSchemaSerDeConfig.baseConfigDef().names().contains(key));
+        possibleConfigs, AbstractKafkaSchemaSerDeConfig.baseConfigDef().names()::contains);
+  }
+
+  public final Map<String, Object> getJsonSerializerConfigs() {
+    HashMap<String, Object> serializerConfigs = new HashMap<>();
+    serializerConfigs.putAll(originalsWithPrefix("client.", /* strip= */ true));
+    serializerConfigs.putAll(originalsWithPrefix("producer.", /* strip= */ true));
+
+    Set<String> names = new KafkaJsonSerializerConfig(serializerConfigs).values().keySet();
+
+    return Maps.filterKeys(serializerConfigs, names::contains);
+  }
+
+  public final Map<String, Object> getAvroSerializerConfigs() {
+    HashMap<String, Object> serializerConfigs = new HashMap<>();
+    serializerConfigs.putAll(originalsWithPrefix("client.", /* strip= */ true));
+    serializerConfigs.putAll(originalsWithPrefix("producer.", /* strip= */ true));
+    serializerConfigs.putAll(getSchemaRegistryConfigs());
+
+    Set<String> names = AbstractKafkaSchemaSerDeConfig.baseConfigDef().names();
+
+    return Maps.filterKeys(serializerConfigs, names::contains);
+  }
+
+  public final Map<String, Object> getJsonschemaSerializerConfigs() {
+    HashMap<String, Object> serializerConfigs = new HashMap<>();
+    serializerConfigs.putAll(originalsWithPrefix("client.", /* strip= */ true));
+    serializerConfigs.putAll(originalsWithPrefix("producer.", /* strip= */ true));
+    serializerConfigs.putAll(getSchemaRegistryConfigs());
+
+    Set<String> names =
+        Sets.union(
+            AbstractKafkaSchemaSerDeConfig.baseConfigDef().names(),
+            ImmutableSet.of(
+                KafkaJsonSchemaSerializerConfig.FAIL_INVALID_SCHEMA,
+                KafkaJsonSchemaSerializerConfig.SCHEMA_SPEC_VERSION,
+                KafkaJsonSchemaSerializerConfig.ONEOF_FOR_NULLABLES,
+                KafkaJsonSchemaSerializerConfig.JSON_INDENT_OUTPUT));
+
+    return Maps.filterKeys(serializerConfigs, names::contains);
+  }
+
+  public final Map<String, Object> getProtobufSerializerConfigs() {
+    HashMap<String, Object> serializerConfigs = new HashMap<>();
+    serializerConfigs.putAll(originalsWithPrefix("client.", /* strip= */ true));
+    serializerConfigs.putAll(originalsWithPrefix("producer.", /* strip= */ true));
+    serializerConfigs.putAll(getSchemaRegistryConfigs());
+
+    Set<String> names =
+        Sets.union(
+            AbstractKafkaSchemaSerDeConfig.baseConfigDef().names(),
+            singleton(KafkaProtobufSerializerConfig.REFERENCE_SUBJECT_NAME_STRATEGY_CONFIG));
+
+    return Maps.filterKeys(serializerConfigs, names::contains);
   }
 
   public Properties getProducerProperties() {
-    Properties producerProps = new Properties();
+    HashMap<String, Object> producerConfigs = new HashMap<>();
 
-    producerProps.put(BOOTSTRAP_SERVERS_CONFIG, getString(BOOTSTRAP_SERVERS_CONFIG));
-    producerProps.put(SCHEMA_REGISTRY_URL_CONFIG, SCHEMA_REGISTRY_URL_DEFAULT);
+    producerConfigs.put(BOOTSTRAP_SERVERS_CONFIG, getString(BOOTSTRAP_SERVERS_CONFIG));
+    producerConfigs.putAll(originalsWithPrefix("client.", /* strip= */ true));
+    producerConfigs.putAll(originalsWithPrefix("producer.", /* strip= */ true));
 
-    addTelemetryReporterProperties(producerProps);
-    producerProps.putAll(originalsWithPrefix("client.", /* strip= */ true));
-    producerProps.putAll(originalsWithPrefix("producer.", /* strip= */ true));
-    producerProps.putAll(getSchemaRegistryConfigs());
+    Properties producerProperties = new Properties();
+    producerProperties.putAll(
+        Maps.filterKeys(producerConfigs, ProducerConfig.configNames()::contains));
+    addTelemetryReporterProperties(producerProperties);
 
-    return producerProps;
+    return producerProperties;
   }
 
   public Map<String, Object> getProducerConfigs() {
@@ -759,7 +824,6 @@ public class KafkaRestConfig extends RestConfig {
     Properties consumerProps = new Properties();
 
     consumerProps.setProperty(BOOTSTRAP_SERVERS_CONFIG, getString(BOOTSTRAP_SERVERS_CONFIG));
-    consumerProps.setProperty(SCHEMA_REGISTRY_URL_CONFIG, getString(SCHEMA_REGISTRY_URL_CONFIG));
     consumerProps.setProperty(MAX_POLL_RECORDS_CONFIG, MAX_POLL_RECORDS_VALUE);
 
     addTelemetryReporterProperties(consumerProps);

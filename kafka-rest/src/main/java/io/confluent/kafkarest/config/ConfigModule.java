@@ -15,8 +15,6 @@
 
 package io.confluent.kafkarest.config;
 
-import static java.util.Objects.requireNonNull;
-
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.rest.RestConfig;
@@ -30,10 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.Set;
-import javax.inject.Inject;
 import javax.inject.Qualifier;
 import org.glassfish.hk2.api.AnnotationLiteral;
-import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
@@ -47,9 +43,11 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 public final class ConfigModule extends AbstractBinder {
 
   private final KafkaRestConfig config;
+  private final SchemaRegistryConfig schemaRegistryConfig;
 
   public ConfigModule(KafkaRestConfig config) {
-    this.config = requireNonNull(config);
+    this.config = config;
+    schemaRegistryConfig = new SchemaRegistryConfig(config.getSchemaRegistryConfigs());
   }
 
   @Override
@@ -68,6 +66,10 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new ApiEndpointsBlocklistConfigImpl())
         .to(new TypeLiteral<Set<String>>() { });
 
+    bind(config.getAvroSerializerConfigs())
+        .qualifiedBy(new AvroSerializerConfigsImpl())
+        .to(new TypeLiteral<Map<String, Object>>() { });
+
     bind(config.getString(KafkaRestConfig.CRN_AUTHORITY_CONFIG))
         .qualifiedBy(new CrnAuthorityConfigImpl())
         .to(String.class);
@@ -76,6 +78,14 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new HostNameConfigImpl())
         .to(String.class);
 
+    bind(config.getJsonSerializerConfigs())
+        .qualifiedBy(new JsonSerializerConfigsImpl())
+        .to(new TypeLiteral<Map<String, Object>>() { });
+
+    bind(config.getJsonschemaSerializerConfigs())
+        .qualifiedBy(new JsonschemaSerializerConfigsImpl())
+        .to(new TypeLiteral<Map<String, Object>>() { });
+
     bind(
         config.getList(RestConfig.LISTENERS_CONFIG).stream()
             .map(URI::create)
@@ -83,7 +93,7 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new ListenersConfigImpl())
         .to(new TypeLiteral<List<URI>>() { });
 
-    bindFactory(MaxSchemasPerSubjectFactory.class)
+    bind(schemaRegistryConfig.getMaxSchemasPerSubject())
         .qualifiedBy(new MaxSchemasPerSubjectConfigImpl())
         .to(Integer.class);
 
@@ -91,118 +101,31 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new PortConfigImpl())
         .to(Integer.class);
 
-    bindFactory(SchemaRegistryConfigFactory.class).to(SchemaRegistryConfig.class);
-
     bind(config.getProducerConfigs())
         .qualifiedBy(new ProducerConfigsImpl())
+        .to(new TypeLiteral<Map<String, Object>>() { });
+
+    bind(config.getProtobufSerializerConfigs())
+        .qualifiedBy(new ProtobufSerializerConfigsImpl())
         .to(new TypeLiteral<Map<String, Object>>() { });
 
     bind(config.getSchemaRegistryConfigs())
         .qualifiedBy(new SchemaRegistryConfigsImpl())
         .to(new TypeLiteral<Map<String, Object>>() { });
 
-    bindFactory(SchemaRegistryRequestHeadersFactory.class)
+    bind(schemaRegistryConfig.requestHeaders())
         .qualifiedBy(new SchemaRegistryRequestHeadersConfigImpl())
         .to(new TypeLiteral<Map<String, String>>() { });
 
-    bindFactory(SchemaRegistryUrlsFactory.class)
+    bind(
+        schemaRegistryConfig.getSchemaRegistryUrls()
+            .stream()
+            .map(URI::create)
+            .collect(Collectors.toList()))
         .qualifiedBy(new SchemaRegistryUrlsConfigImpl())
         .to(new TypeLiteral<List<URI>>() { });
 
-    bindFactory(SubjectNameStrategyFactory.class).to(SubjectNameStrategy.class);
-  }
-
-  private static final class MaxSchemasPerSubjectFactory implements Factory<Integer> {
-    private final SchemaRegistryConfig config;
-
-    @Inject
-    private MaxSchemasPerSubjectFactory(SchemaRegistryConfig config) {
-      this.config = requireNonNull(config);
-    }
-
-    @Override
-    public Integer provide() {
-      return config.getMaxSchemasPerSubject();
-    }
-
-    @Override
-    public void dispose(Integer unused) {
-    }
-  }
-
-  private static final class SchemaRegistryConfigFactory implements Factory<SchemaRegistryConfig> {
-    private final Map<String, Object> configs;
-
-    @Inject
-    private SchemaRegistryConfigFactory(@SchemaRegistryConfigs Map<String, Object> configs) {
-      this.configs = requireNonNull(configs);
-    }
-
-    @Override
-    public SchemaRegistryConfig provide() {
-      return new SchemaRegistryConfig(configs);
-    }
-
-    @Override
-    public void dispose(SchemaRegistryConfig unused) {
-    }
-  }
-
-  private static final class SchemaRegistryRequestHeadersFactory
-      implements Factory<Map<String, String>> {
-    private final SchemaRegistryConfig config;
-
-    @Inject
-    private SchemaRegistryRequestHeadersFactory(SchemaRegistryConfig config) {
-      this.config = requireNonNull(config);
-    }
-
-    @Override
-    public Map<String, String> provide() {
-      return config.requestHeaders();
-    }
-
-    @Override
-    public void dispose(Map<String, String> unused) {
-    }
-  }
-
-  private static final class SchemaRegistryUrlsFactory implements Factory<List<URI>> {
-    private final SchemaRegistryConfig config;
-
-    @Inject
-    private SchemaRegistryUrlsFactory(SchemaRegistryConfig config) {
-      this.config = requireNonNull(config);
-    }
-
-    @Override
-    public List<URI> provide() {
-      return config.getSchemaRegistryUrls().stream()
-          .map(URI::create)
-          .collect(Collectors.toList());
-    }
-
-    @Override
-    public void dispose(List<URI> unused) {
-    }
-  }
-
-  private static final class SubjectNameStrategyFactory implements Factory<SubjectNameStrategy> {
-    private final SchemaRegistryConfig config;
-
-    @Inject
-    private SubjectNameStrategyFactory(SchemaRegistryConfig config) {
-      this.config = requireNonNull(config);
-    }
-
-    @Override
-    public SubjectNameStrategy provide() {
-      return config.getSubjectNameStrategy();
-    }
-
-    @Override
-    public void dispose(SubjectNameStrategy unused) {
-    }
+    bind(schemaRegistryConfig.getSubjectNameStrategy()).to(SubjectNameStrategy.class);
   }
 
   @Qualifier
@@ -228,6 +151,16 @@ public final class ConfigModule extends AbstractBinder {
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface AvroSerializerConfigs {
+  }
+
+  private static final class AvroSerializerConfigsImpl
+      extends AnnotationLiteral<AvroSerializerConfigs> implements AvroSerializerConfigs {
+  }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
   @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER })
   public @interface CrnAuthorityConfig {
   }
@@ -245,6 +178,27 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class HostNameConfigImpl
       extends AnnotationLiteral<HostNameConfig> implements HostNameConfig {
+  }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface JsonSerializerConfigs {
+  }
+
+  private static final class JsonSerializerConfigsImpl
+      extends AnnotationLiteral<JsonSerializerConfigs> implements JsonSerializerConfigs {
+  }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface JsonschemaSerializerConfigs {
+  }
+
+  private static final class JsonschemaSerializerConfigsImpl
+      extends AnnotationLiteral<JsonschemaSerializerConfigs>
+      implements JsonschemaSerializerConfigs {
   }
 
   @Qualifier
@@ -286,6 +240,16 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class ProducerConfigsImpl
       extends AnnotationLiteral<ProducerConfigs> implements ProducerConfigs {
+  }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProtobufSerializerConfigs {
+  }
+
+  private static final class ProtobufSerializerConfigsImpl
+      extends AnnotationLiteral<ProtobufSerializerConfigs> implements ProtobufSerializerConfigs {
   }
 
   @Qualifier

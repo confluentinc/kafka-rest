@@ -69,7 +69,7 @@ import org.junit.runners.JUnit4;
 public class RecordSerializerFacadeTest {
   private static final String TOPIC_NAME = "topic-1";
   private static final String SCHEMA_REGISTRY_SCOPE = "sr";
-  private static final Map<String, Object> PRODUCER_CONFIGS =
+  private static final Map<String, Object> SCHEMA_SERIALIZER_CONFIGS =
       ImmutableMap.of(
           SCHEMA_REGISTRY_URL_CONFIG, "mock://" + SCHEMA_REGISTRY_SCOPE,
           AUTO_REGISTER_SCHEMAS, false,
@@ -91,10 +91,13 @@ public class RecordSerializerFacadeTest {
                     new ProtobufSchemaProvider()));
     recordSerializer =
         new RecordSerializerFacade(
-            new NoSchemaRecordSerializer(PRODUCER_CONFIGS),
-            () ->
-                new SchemaRecordSerializer(
-                    schemaRegistryClient, SUBJECT_NAME_STRATEGY, PRODUCER_CONFIGS));
+            new NoSchemaRecordSerializer(SCHEMA_SERIALIZER_CONFIGS),
+            new SchemaRecordSerializer(
+                schemaRegistryClient,
+                SUBJECT_NAME_STRATEGY,
+                SCHEMA_SERIALIZER_CONFIGS,
+                SCHEMA_SERIALIZER_CONFIGS,
+                SCHEMA_SERIALIZER_CONFIGS));
   }
 
   @Test
@@ -385,7 +388,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ true).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ true);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     assertEquals("foobar", deserialized);
@@ -407,7 +410,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ true).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ true);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     assertEquals(123, deserialized);
@@ -429,7 +432,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ true).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ true);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     assertEquals(123.456F, deserialized);
@@ -451,7 +454,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ true).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ true);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     assertEquals(true, deserialized);
@@ -473,7 +476,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ true).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ true);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     assertEquals(
@@ -508,7 +511,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ true).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ true);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     GenericRecord expected = new GenericData.Record(schema.rawSchema());
@@ -538,7 +541,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ true).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ true);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     assertEquals(new GenericData.EnumSymbol(schema.rawSchema(), "foo"), deserialized);
@@ -564,7 +567,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ true).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ true);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     assertEquals(new GenericData.Array<>(schema.rawSchema(), Arrays.asList(1, 2, 3)), deserialized);
@@ -589,7 +592,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ true).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ true);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     HashMap<Utf8, Integer> expected = new HashMap<>();
@@ -670,7 +673,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ false).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ false);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     assertEquals("foobar", deserialized);
@@ -692,7 +695,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ false).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ false);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     assertEquals(123, deserialized);
@@ -714,7 +717,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ false).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ false);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     assertEquals(123.456F, deserialized);
@@ -736,7 +739,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ false).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ false);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     assertEquals(true, deserialized);
@@ -758,7 +761,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ false).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ false);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     assertEquals(
@@ -793,7 +796,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ false).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ false);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     GenericRecord expected = new GenericData.Record(schema.rawSchema());
@@ -823,7 +826,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ false).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ false);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     assertEquals(new GenericData.EnumSymbol(schema.rawSchema(), "foo"), deserialized);
@@ -849,7 +852,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ false).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ false);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     assertEquals(new GenericData.Array<>(schema.rawSchema(), Arrays.asList(1, 2, 3)), deserialized);
@@ -874,7 +877,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ false).get();
 
     KafkaAvroDeserializer deserializer = new KafkaAvroDeserializer();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ false);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Object deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray(), schema.rawSchema());
     HashMap<Utf8, Integer> expected = new HashMap<>();
@@ -955,7 +958,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ true).get();
 
     KafkaJsonSchemaDeserializer<String> deserializer = new KafkaJsonSchemaDeserializer<>();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ true);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Object deserialized = deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
     assertEquals("foobar", deserialized);
   }
@@ -976,7 +979,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ true).get();
 
     KafkaJsonSchemaDeserializer<Integer> deserializer = new KafkaJsonSchemaDeserializer<>();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ true);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Object deserialized = deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
     assertEquals(123, deserialized);
   }
@@ -997,7 +1000,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ true).get();
 
     KafkaJsonSchemaDeserializer<BigDecimal> deserializer = new KafkaJsonSchemaDeserializer<>();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ true);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Object deserialized = deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
     assertEquals(new BigDecimal("123.456"), deserialized);
   }
@@ -1018,7 +1021,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ true).get();
 
     KafkaJsonSchemaDeserializer<Boolean> deserializer = new KafkaJsonSchemaDeserializer<>();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ true);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Object deserialized = deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
     assertEquals(true, deserialized);
   }
@@ -1050,7 +1053,7 @@ public class RecordSerializerFacadeTest {
 
     KafkaJsonSchemaDeserializer<Map<String, Object>> deserializer =
         new KafkaJsonSchemaDeserializer<>();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ true);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Map<String, Object> deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
     HashMap<String, Object> expected = new HashMap<>();
@@ -1082,7 +1085,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ true).get();
 
     KafkaJsonSchemaDeserializer<List<Integer>> deserializer = new KafkaJsonSchemaDeserializer<>();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ true);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     List<Integer> deserialized = deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
     assertEquals(Arrays.asList(1, 2), deserialized);
   }
@@ -1159,7 +1162,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ false).get();
 
     KafkaJsonSchemaDeserializer<String> deserializer = new KafkaJsonSchemaDeserializer<>();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ false);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Object deserialized = deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
     assertEquals("foobar", deserialized);
   }
@@ -1180,7 +1183,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ false).get();
 
     KafkaJsonSchemaDeserializer<Integer> deserializer = new KafkaJsonSchemaDeserializer<>();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ false);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Object deserialized = deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
     assertEquals(123, deserialized);
   }
@@ -1201,7 +1204,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ false).get();
 
     KafkaJsonSchemaDeserializer<BigDecimal> deserializer = new KafkaJsonSchemaDeserializer<>();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ false);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Object deserialized = deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
     assertEquals(new BigDecimal("123.456"), deserialized);
   }
@@ -1222,7 +1225,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ false).get();
 
     KafkaJsonSchemaDeserializer<Boolean> deserializer = new KafkaJsonSchemaDeserializer<>();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ false);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Object deserialized = deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
     assertEquals(true, deserialized);
   }
@@ -1253,7 +1256,7 @@ public class RecordSerializerFacadeTest {
 
     KafkaJsonSchemaDeserializer<Map<String, Object>> deserializer =
         new KafkaJsonSchemaDeserializer<>();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ false);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Map<String, Object> deserialized =
         deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
     HashMap<String, Object> expected = new HashMap<>();
@@ -1285,7 +1288,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ false).get();
 
     KafkaJsonSchemaDeserializer<List<Integer>> deserializer = new KafkaJsonSchemaDeserializer<>();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ false);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     List<Integer> deserialized = deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
     assertEquals(Arrays.asList(1, 2), deserialized);
   }
@@ -1367,7 +1370,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ true).get();
 
     KafkaProtobufDeserializer<Message> deserializer = new KafkaProtobufDeserializer<>();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ true);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ true);
     Message deserialized = deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
     DynamicMessage.Builder expected = DynamicMessage.newBuilder(schema.toDescriptor());
     expected.setField(schema.toDescriptor().findFieldByName("foo"), 1);
@@ -1462,7 +1465,7 @@ public class RecordSerializerFacadeTest {
             /* isKey= */ false).get();
 
     KafkaProtobufDeserializer<Message> deserializer = new KafkaProtobufDeserializer<>();
-    deserializer.configure(PRODUCER_CONFIGS, /* isKey= */ false);
+    deserializer.configure(SCHEMA_SERIALIZER_CONFIGS, /* isKey= */ false);
     Message deserialized = deserializer.deserialize(TOPIC_NAME, serialized.toByteArray());
     DynamicMessage.Builder expected = DynamicMessage.newBuilder(schema.toDescriptor());
     expected.setField(schema.toDescriptor().findFieldByName("foo"), 1);

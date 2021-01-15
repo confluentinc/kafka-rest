@@ -32,6 +32,9 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerializer;
 import io.confluent.kafka.serializers.json.AbstractKafkaJsonSchemaSerializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializer;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
+import io.confluent.kafkarest.config.ConfigModule.AvroSerializerConfigs;
+import io.confluent.kafkarest.config.ConfigModule.JsonschemaSerializerConfigs;
+import io.confluent.kafkarest.config.ConfigModule.ProtobufSerializerConfigs;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.io.IOException;
@@ -53,10 +56,13 @@ final class SchemaRecordSerializer {
   SchemaRecordSerializer(
       SchemaRegistryClient schemaRegistryClient,
       SubjectNameStrategy subjectNameStrategy,
-      Map<String, Object> producerConfigs) {
-    avroSerializer = new AvroSerializer(schemaRegistryClient, producerConfigs);
-    jsonschemaSerializer = new JsonSchemaSerializer(schemaRegistryClient, producerConfigs);
-    protobufSerializer = new ProtobufSerializer(schemaRegistryClient, producerConfigs);
+      @AvroSerializerConfigs Map<String, Object> avroSerializerConfigs,
+      @JsonschemaSerializerConfigs Map<String, Object> jsonschemaSerializerConfigs,
+      @ProtobufSerializerConfigs Map<String, Object> protobufSerializerConfigs) {
+    avroSerializer = new AvroSerializer(schemaRegistryClient, avroSerializerConfigs);
+    jsonschemaSerializer =
+        new JsonSchemaSerializer(schemaRegistryClient, jsonschemaSerializerConfigs);
+    protobufSerializer = new ProtobufSerializer(schemaRegistryClient, protobufSerializerConfigs);
     this.subjectNameStrategy = requireNonNull(subjectNameStrategy);
   }
 

@@ -22,7 +22,7 @@ import com.google.common.io.BaseEncoding;
 import com.google.protobuf.ByteString;
 import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafka.serializers.KafkaJsonSerializerConfig;
-import io.confluent.kafkarest.config.ConfigModule.ProducerConfigs;
+import io.confluent.kafkarest.config.ConfigModule.JsonSerializerConfigs;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import java.util.Map;
 import java.util.Optional;
@@ -34,8 +34,8 @@ final class NoSchemaRecordSerializer {
   private final JsonSerializer jsonSerializer;
 
   @Inject
-  NoSchemaRecordSerializer(@ProducerConfigs Map<String, Object> producerConfigs) {
-    jsonSerializer = new JsonSerializer(producerConfigs);
+  NoSchemaRecordSerializer(@JsonSerializerConfigs Map<String, Object> jsonSerializerConfigs) {
+    jsonSerializer = new JsonSerializer(jsonSerializerConfigs);
   }
 
   Optional<ByteString> serialize(EmbeddedFormat format, JsonNode data) {
