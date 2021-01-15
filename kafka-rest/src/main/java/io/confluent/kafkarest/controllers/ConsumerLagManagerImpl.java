@@ -17,20 +17,33 @@ package io.confluent.kafkarest.controllers;
 
 import static java.util.Objects.requireNonNull;
 
+import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.ConsumerLag;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
+import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions;
+import org.apache.kafka.clients.admin.ListOffsetsOptions;
+import org.apache.kafka.clients.admin.OffsetSpec;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.IsolationLevel;
+import org.apache.kafka.common.TopicPartition;
 
 final class ConsumerLagManagerImpl implements ConsumerLagManager {
 
+  private final Admin adminClient;
   private final ConsumerOffsetsDao consumerOffsetsDao;
+  private final IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
 
   @Inject
-  ConsumerLagManagerImpl(ConsumerOffsetsDao consumerOffsetsDao) {
+  ConsumerLagManagerImpl(Admin adminClient, ConsumerOffsetsDao consumerOffsetsDao) {
+    this.adminClient = requireNonNull(adminClient);
     this.consumerOffsetsDao = requireNonNull(consumerOffsetsDao);
   }
 
@@ -49,13 +62,34 @@ final class ConsumerLagManagerImpl implements ConsumerLagManager {
   @Override
   public CompletableFuture<Optional<ConsumerLag>> getConsumerLag(
       String clusterId, String topicName, Integer partitionId, String consumerGroupId) {
-    return listConsumerLags(clusterId, consumerGroupId)
-        .thenApply(
-            lags ->
-                lags.stream()
-                    .filter(lag -> lag.getTopicName().equals(topicName))
-                    .filter(lag -> lag.getPartitionId() == partitionId)
-                    .filter(lag -> lag.getConsumerGroupId().equals(consumerGroupId))
-                    .findAny());
+    CompletableFuture<Map<TopicPartition, OffsetAndMetadata>> fetchedCurrentOffsets =
+        CompletableFuture.supplyAsync(
+            ListConsumerGroupOffsetsOptions::new)
+            .thenApply(
+                options ->
+                    adminClient.listConsumerGroupOffsets(consumerGroupId, options))
+            .thenCompose(
+                offsets ->
+                    KafkaFutures.toCompletableFuture(offsets.partitionsToOffsetAndMetadata()));
+    CompletableFuture<ListOffsetsOptions> listOffsetsOptions =
+        CompletableFuture.supplyAsync(
+            () -> new ListOffsetsOptions(isolationLevel));
+    CompletableFuture<Map<TopicPartition, OffsetSpec>> latestOffsetSpecs = fetchedCurrentOffsets
+        .thenApply(map ->
+            map.keySet().stream()
+                .collect(Collectors.toMap(Function.identity(), tp -> OffsetSpec.latest())));
   }
+
+//  @Override
+//  public CompletableFuture<Optional<ConsumerLag>> getConsumerLag(
+//      String clusterId, String topicName, Integer partitionId, String consumerGroupId) {
+//    return listConsumerLags(clusterId, consumerGroupId)
+//        .thenApply(
+//            lags ->
+//                lags.stream()
+//                    .filter(lag -> lag.getTopicName().equals(topicName))
+//                    .filter(lag -> lag.getPartitionId() == partitionId)
+//                    .filter(lag -> lag.getConsumerGroupId().equals(consumerGroupId))
+//                    .findAny());
+//  }
 }
