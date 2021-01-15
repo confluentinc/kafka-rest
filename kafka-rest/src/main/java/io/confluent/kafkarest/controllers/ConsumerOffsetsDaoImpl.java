@@ -19,6 +19,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.config.ConfigModule.OffsetsTimeoutConfig;
 import io.confluent.kafkarest.entities.ConsumerGroupLag;
 import io.confluent.kafkarest.entities.ConsumerLag;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -104,7 +106,7 @@ final class ConsumerOffsetsDaoImpl implements ConsumerOffsetsDao {
     final ConsumerGroupDescription cgDesc = getConsumerGroupDescription(consumerGroupId);
 
     final Map<TopicPartition, OffsetAndMetadata> fetchedCurrentOffsets =
-        getCurrentOffsets(cgDesc.groupId());
+        getCurrentOffsets(consumerGroupId);
 
     ListOffsetsOptions listOffsetsOptions = new ListOffsetsOptions(isolationLevel)
         .timeoutMs(consumerMetadataTimeout);
@@ -114,6 +116,10 @@ final class ConsumerOffsetsDaoImpl implements ConsumerOffsetsDao {
 
     ListOffsetsResult latestOffsetResult = kafkaAdminClient.listOffsets(
         latestOffsetSpecs, listOffsetsOptions);
+    // wrap this in a future
+    // make sure there are no gets in a future, will block until future is complete
+    // look into kafka limits
+    // follow up on thread w/ ismael
     Map<TopicPartition, ListOffsetsResultInfo> latestOffsets = latestOffsetResult.all()
         .get(consumerMetadataTimeout, TimeUnit.MILLISECONDS);
 
@@ -265,17 +271,19 @@ final class ConsumerOffsetsDaoImpl implements ConsumerOffsetsDao {
     );
   }
 
-  public Set<String> getConsumerGroups()
-      throws InterruptedException, ExecutionException, TimeoutException {
-    return Sets.newLinkedHashSet(
-        Iterables.transform(kafkaAdminClient
-                .listConsumerGroups(new ListConsumerGroupsOptions()
-                    .timeoutMs(consumerMetadataTimeout))
-                .all()
-                .get(consumerMetadataTimeout, TimeUnit.MILLISECONDS),
-            ConsumerGroupListing::groupId));
-  }
+//  public Set<String> getConsumerGroups()
+//      throws InterruptedException, ExecutionException, TimeoutException {
+//    return Sets.newLinkedHashSet(
+//        Iterables.transform(kafkaAdminClient
+//                .listConsumerGroups(new ListConsumerGroupsOptions()
+//                    .timeoutMs(consumerMetadataTimeout))
+//                .all()
+//                .get(consumerMetadataTimeout, TimeUnit.MILLISECONDS),
+//            ConsumerGroupListing::groupId));
+//  }
 
+  // have consumeroffsetsdaoimpl just have the shared functions, everythign else in lagmanager
+  // shared by get and list
   public ConsumerGroupDescription getConsumerGroupDescription(
       String consumerGroupId
   ) throws InterruptedException, ExecutionException, TimeoutException {
