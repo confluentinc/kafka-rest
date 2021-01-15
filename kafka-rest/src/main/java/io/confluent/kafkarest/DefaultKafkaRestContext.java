@@ -18,7 +18,6 @@ package io.confluent.kafkarest;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
-import java.util.Map;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -85,17 +84,9 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
     if (producer == null) {
       producer =
           new KafkaProducer<>(
-              config.getProducerConfigs(),
-              createSerializer(config.getProducerConfigs(), /* isKey= */ true),
-              createSerializer(config.getProducerConfigs(), /* isKey= */ false));
+              config.getProducerConfigs(), new ByteArraySerializer(), new ByteArraySerializer());
     }
     return producer;
-  }
-
-  private static ByteArraySerializer createSerializer(Map<String, ?> configs, boolean isKey) {
-    ByteArraySerializer serializer = new ByteArraySerializer();
-    serializer.configure(configs, isKey);
-    return serializer;
   }
 
   @Override
