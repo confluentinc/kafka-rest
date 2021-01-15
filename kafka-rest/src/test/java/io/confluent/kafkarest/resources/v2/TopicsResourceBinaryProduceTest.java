@@ -35,7 +35,7 @@ import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.common.CompletableFutures;
 import io.confluent.kafkarest.controllers.ProduceController;
-import io.confluent.kafkarest.controllers.RecordSerializerFacade;
+import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.ProduceResult;
@@ -151,7 +151,7 @@ public class TopicsResourceBinaryProduceTest
   private SchemaManager schemaManager;
 
   @Mock
-  private RecordSerializerFacade recordSerializerFacade;
+  private RecordSerializer recordSerializer;
 
   @Mock
   private ProduceController produceController;
@@ -159,7 +159,7 @@ public class TopicsResourceBinaryProduceTest
   public TopicsResourceBinaryProduceTest() throws RestConfigException {
     addResource(
         new ProduceToTopicAction(
-            () -> schemaManager, () -> recordSerializerFacade, () -> produceController));
+            () -> schemaManager, () -> recordSerializer, () -> produceController));
   }
 
   private Response produceToTopic(
@@ -175,16 +175,20 @@ public class TopicsResourceBinaryProduceTest
               .map(value -> ByteString.copyFromUtf8(String.valueOf(record.getValue())));
 
       expect(
-          recordSerializerFacade.serializeWithoutSchema(
+          recordSerializer.serialize(
               EmbeddedFormat.BINARY,
-              TOPIC_NAME, true, record.getKey().orElse(NullNode.getInstance())
-              /* isKey= */))
+              TOPIC_NAME,
+              /* schema= */ Optional.empty(),
+              record.getKey().orElse(NullNode.getInstance()),
+              /* isKey= */ true))
           .andReturn(serializedKey);
       expect(
-          recordSerializerFacade.serializeWithoutSchema(
+          recordSerializer.serialize(
               EmbeddedFormat.BINARY,
-              TOPIC_NAME, false, record.getValue().orElse(NullNode.getInstance())
-              /* isKey= */))
+              TOPIC_NAME,
+              /* schema= */ Optional.empty(),
+              record.getValue().orElse(NullNode.getInstance()),
+              /* isKey= */ false))
           .andReturn(serializedValue);
 
       expect(
@@ -198,12 +202,12 @@ public class TopicsResourceBinaryProduceTest
           .andReturn(results.get(i).thenApply(ProduceResult::fromRecordMetadata));
     }
 
-    replay(schemaManager, recordSerializerFacade, produceController);
+    replay(schemaManager, recordSerializer, produceController);
 
     Response response = request("/topics/" + TOPIC_NAME, Versions.KAFKA_V2_JSON)
         .post(Entity.entity(request, Versions.KAFKA_V2_JSON_BINARY));
 
-    verify(schemaManager, recordSerializerFacade, produceController);
+    verify(schemaManager, recordSerializer, produceController);
 
     return response;
   }

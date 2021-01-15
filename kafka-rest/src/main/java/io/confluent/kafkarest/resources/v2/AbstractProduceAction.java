@@ -24,7 +24,7 @@ import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.common.CompletableFutures;
 import io.confluent.kafkarest.controllers.ProduceController;
-import io.confluent.kafkarest.controllers.RecordSerializerFacade;
+import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.ProduceResult;
@@ -51,12 +51,12 @@ abstract class AbstractProduceAction {
       "Unexpected non-Kafka exception returned by Kafka";
 
   private final Provider<SchemaManager> schemaManager;
-  private final Provider<RecordSerializerFacade> recordSerializer;
+  private final Provider<RecordSerializer> recordSerializer;
   private final Provider<ProduceController> produceController;
 
   AbstractProduceAction(
       Provider<SchemaManager> schemaManager,
-      Provider<RecordSerializerFacade> recordSerializer,
+      Provider<RecordSerializer> recordSerializer,
       Provider<ProduceController> produceController) {
     this.schemaManager = requireNonNull(schemaManager);
     this.recordSerializer = requireNonNull(recordSerializer);
@@ -69,7 +69,13 @@ abstract class AbstractProduceAction {
       Optional<Integer> partition,
       ProduceRequest request) {
     List<SerializedKeyAndValue> serialized =
-        serializeWithoutSchema(format, topicName, partition, request.getRecords());
+        serialize(
+            format,
+            topicName,
+            partition,
+            /* keySchema= */ Optional.empty(),
+            /* valueSchema= */ Optional.empty(),
+            request.getRecords());
 
     List<CompletableFuture<ProduceResult>> resultFutures = doProduce(topicName, serialized);
 
@@ -77,34 +83,10 @@ abstract class AbstractProduceAction {
         /* keySchema= */ Optional.empty(), /* valueSchema= */ Optional.empty(), resultFutures);
   }
 
-  private List<SerializedKeyAndValue> serializeWithoutSchema(
-      EmbeddedFormat format,
-      String topicName,
-      Optional<Integer> partition,
-      List<ProduceRecord> records) {
-    return records.stream()
-        .map(
-            record ->
-                SerializedKeyAndValue.create(
-                    record.getPartition().map(Optional::of).orElse(partition),
-                    recordSerializer.get()
-                        .serializeWithoutSchema(
-                            format,
-                            topicName, true, record.getKey().orElse(NullNode.getInstance())
-                            /* isKey= */),
-                    recordSerializer.get()
-                        .serializeWithoutSchema(
-                            format,
-                            topicName, false, record.getValue().orElse(NullNode.getInstance())
-                            /* isKey= */)))
-        .collect(Collectors.toList());
-  }
-
   final CompletableFuture<ProduceResponse> produceWithSchema(
       EmbeddedFormat format,
       String topicName,
-      Optional<Integer
-          > partition,
+      Optional<Integer> partition,
       ProduceRequest request) {
     Optional<RegisteredSchema> keySchema =
         getSchema(
@@ -122,7 +104,7 @@ abstract class AbstractProduceAction {
             /* isKey= */ false);
 
     List<SerializedKeyAndValue> serialized =
-        serializeWithSchema(
+        serialize(
             format,
             topicName,
             partition,
@@ -150,7 +132,7 @@ abstract class AbstractProduceAction {
     }
   }
 
-  private List<SerializedKeyAndValue> serializeWithSchema(
+  private List<SerializedKeyAndValue> serialize(
       EmbeddedFormat format,
       String topicName,
       Optional<Integer> partition,
@@ -163,14 +145,14 @@ abstract class AbstractProduceAction {
                 SerializedKeyAndValue.create(
                     record.getPartition().map(Optional::of).orElse(partition),
                     recordSerializer.get()
-                        .serializeWithSchema(
+                        .serialize(
                             format,
                             topicName,
                             keySchema,
                             record.getKey().orElse(NullNode.getInstance()),
                             /* isKey= */ true),
                     recordSerializer.get()
-                        .serializeWithSchema(
+                        .serialize(
                             format,
                             topicName,
                             valueSchema,

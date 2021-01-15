@@ -17,7 +17,7 @@ package io.confluent.kafkarest.resources.v2;
 
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.ProduceController;
-import io.confluent.kafkarest.controllers.RecordSerializerFacade;
+import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.ProduceRequest;
@@ -55,7 +55,7 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
   @Inject
   public ProduceToPartitionAction(
       Provider<SchemaManager> schemaManager,
-      Provider<RecordSerializerFacade> recordSerializer,
+      Provider<RecordSerializer> recordSerializer,
       Provider<ProduceController> produceController) {
     super(schemaManager, recordSerializer, produceController);
   }

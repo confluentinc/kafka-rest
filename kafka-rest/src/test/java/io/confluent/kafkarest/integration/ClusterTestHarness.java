@@ -224,7 +224,7 @@ public abstract class ClusterTestHarness {
 
     // Reduce the metadata fetch timeout so requests for topics that don't exist timeout much
     // faster than the default
-    restProperties .put(ProducerConfig.MAX_BLOCK_MS_CONFIG, "5000");
+    restProperties.put("producer." + ProducerConfig.MAX_BLOCK_MS_CONFIG, "5000");
 
     restConfig = new KafkaRestConfig(restProperties);
     restApp = new KafkaRestApplication(restConfig);

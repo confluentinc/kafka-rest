@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Qualifier;
 import org.glassfish.hk2.api.AnnotationLiteral;
 import org.glassfish.hk2.api.Factory;
@@ -114,16 +113,16 @@ public final class ConfigModule extends AbstractBinder {
   }
 
   private static final class MaxSchemasPerSubjectFactory implements Factory<Integer> {
-    private final Provider<SchemaRegistryConfig> config;
+    private final SchemaRegistryConfig config;
 
     @Inject
-    private MaxSchemasPerSubjectFactory(Provider<SchemaRegistryConfig> config) {
+    private MaxSchemasPerSubjectFactory(SchemaRegistryConfig config) {
       this.config = requireNonNull(config);
     }
 
     @Override
     public Integer provide() {
-      return config.get().getMaxSchemasPerSubject();
+      return config.getMaxSchemasPerSubject();
     }
 
     @Override
@@ -151,16 +150,16 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class SchemaRegistryRequestHeadersFactory
       implements Factory<Map<String, String>> {
-    private final Provider<SchemaRegistryConfig> config;
+    private final SchemaRegistryConfig config;
 
     @Inject
-    private SchemaRegistryRequestHeadersFactory(Provider<SchemaRegistryConfig> config) {
+    private SchemaRegistryRequestHeadersFactory(SchemaRegistryConfig config) {
       this.config = requireNonNull(config);
     }
 
     @Override
     public Map<String, String> provide() {
-      return config.get().requestHeaders();
+      return config.requestHeaders();
     }
 
     @Override
@@ -169,16 +168,16 @@ public final class ConfigModule extends AbstractBinder {
   }
 
   private static final class SchemaRegistryUrlsFactory implements Factory<List<URI>> {
-    private final Provider<SchemaRegistryConfig> config;
+    private final SchemaRegistryConfig config;
 
     @Inject
-    private SchemaRegistryUrlsFactory(Provider<SchemaRegistryConfig> config) {
+    private SchemaRegistryUrlsFactory(SchemaRegistryConfig config) {
       this.config = requireNonNull(config);
     }
 
     @Override
     public List<URI> provide() {
-      return config.get().getSchemaRegistryUrls().stream()
+      return config.getSchemaRegistryUrls().stream()
           .map(URI::create)
           .collect(Collectors.toList());
     }
@@ -189,16 +188,16 @@ public final class ConfigModule extends AbstractBinder {
   }
 
   private static final class SubjectNameStrategyFactory implements Factory<SubjectNameStrategy> {
-    private final Provider<SchemaRegistryConfig> config;
+    private final SchemaRegistryConfig config;
 
     @Inject
-    private SubjectNameStrategyFactory(Provider<SchemaRegistryConfig> config) {
+    private SubjectNameStrategyFactory(SchemaRegistryConfig config) {
       this.config = requireNonNull(config);
     }
 
     @Override
     public SubjectNameStrategy provide() {
-      return config.get().getSubjectNameStrategy();
+      return config.getSubjectNameStrategy();
     }
 
     @Override

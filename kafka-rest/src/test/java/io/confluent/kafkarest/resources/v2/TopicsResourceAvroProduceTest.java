@@ -16,7 +16,6 @@
 package io.confluent.kafkarest.resources.v2;
 
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
-import static java.util.Collections.emptyMap;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;
@@ -33,7 +32,7 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.ProduceController;
-import io.confluent.kafkarest.controllers.RecordSerializerFacade;
+import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.ProduceResult;
@@ -111,7 +110,7 @@ public class TopicsResourceAvroProduceTest
   private SchemaManager schemaManager;
 
   @Mock
-  private RecordSerializerFacade recordSerializerFacade;
+  private RecordSerializer recordSerializer;
 
   @Mock
   private ProduceController produceController;
@@ -119,7 +118,7 @@ public class TopicsResourceAvroProduceTest
   public TopicsResourceAvroProduceTest() throws RestConfigException {
     addResource(
         new ProduceToTopicAction(
-            () -> schemaManager, () -> recordSerializerFacade, () -> produceController));
+            () -> schemaManager, () -> recordSerializer, () -> produceController));
   }
 
   private Response produceToTopic(ProduceRequest request, List<RecordMetadata> results) {
@@ -145,7 +144,7 @@ public class TopicsResourceAvroProduceTest
       ByteString serializedValue = ByteString.copyFromUtf8(String.valueOf(record.getValue()));
 
       expect(
-          recordSerializerFacade.serializeWithSchema(
+          recordSerializer.serialize(
               EmbeddedFormat.AVRO,
               TopicsResourceAvroProduceTest.TOPIC_NAME,
               Optional.of(registeredKeySchema),
@@ -153,7 +152,7 @@ public class TopicsResourceAvroProduceTest
               /* isKey= */ true))
           .andReturn(Optional.of(serializedKey));
       expect(
-          recordSerializerFacade.serializeWithSchema(
+          recordSerializer.serialize(
               EmbeddedFormat.AVRO,
               TopicsResourceAvroProduceTest.TOPIC_NAME,
               Optional.of(registeredValueSchema),
@@ -173,12 +172,12 @@ public class TopicsResourceAvroProduceTest
               CompletableFuture.completedFuture(ProduceResult.fromRecordMetadata(results.get(i))));
     }
 
-    replay(schemaManager, recordSerializerFacade, produceController);
+    replay(schemaManager, recordSerializer, produceController);
 
     Response response = request("/topics/" + TOPIC_NAME, Versions.KAFKA_V2_JSON)
         .post(Entity.entity(request, Versions.KAFKA_V2_JSON_AVRO));
 
-    verify(schemaManager, recordSerializerFacade, produceController);
+    verify(schemaManager, recordSerializer, produceController);
 
     return response;
   }
@@ -204,7 +203,7 @@ public class TopicsResourceAvroProduceTest
     assertEquals((Integer) 1, response.getKeySchemaId());
     assertEquals((Integer) 2, response.getValueSchemaId());
 
-    EasyMock.reset(schemaManager, recordSerializerFacade, produceController);
+    EasyMock.reset(schemaManager, recordSerializer, produceController);
 
     // Test using schema IDs
     ProduceRequest request2 =

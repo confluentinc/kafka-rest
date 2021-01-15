@@ -15,40 +15,26 @@
 
 package io.confluent.kafkarest.controllers;
 
-import static java.util.Objects.requireNonNull;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
-final class RecordSerializerFacade implements RecordSerializer {
+/**
+ * A facade covering serializers of all supported {@link EmbeddedFormat formats}.
+ */
+public interface RecordSerializer {
 
-  private final NoSchemaRecordSerializer noSchemaRecordSerializer;
-  private final Provider<SchemaRecordSerializer> schemaRecordSerializer;
-
-  @Inject
-  RecordSerializerFacade(
-      NoSchemaRecordSerializer noSchemaRecordSerializer,
-      Provider<SchemaRecordSerializer> schemaRecordSerializer) {
-    this.noSchemaRecordSerializer = requireNonNull(noSchemaRecordSerializer);
-    this.schemaRecordSerializer = requireNonNull(schemaRecordSerializer);
-  }
-
-  @Override
-  public Optional<ByteString> serialize(
+  /**
+   * Serializes the given {@code data} into a {@link ByteString}.
+   *
+   * <p>Returns {@link Optional#empty()} if {@code data} {@link JsonNode#isNull() is null}.
+   */
+  Optional<ByteString> serialize(
       EmbeddedFormat format,
       String topicName,
       Optional<RegisteredSchema> schema,
       JsonNode data,
-      boolean isKey) {
-    if (format.requiresSchema()) {
-      return schemaRecordSerializer.get().serialize(format, topicName, schema, data, isKey);
-    } else {
-      return noSchemaRecordSerializer.serialize(format, data);
-    }
-  }
+      boolean isKey);
 }
