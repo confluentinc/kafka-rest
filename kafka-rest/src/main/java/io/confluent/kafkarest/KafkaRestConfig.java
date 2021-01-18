@@ -18,9 +18,13 @@ package io.confluent.kafkarest;
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.AUTO_REGISTER_SCHEMAS;
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.USE_LATEST_VERSION;
 import static java.util.Collections.singleton;
+import static java.util.Objects.requireNonNull;
 import static org.apache.kafka.clients.CommonClientConfigs.METRICS_CONTEXT_PREFIX;
 
+import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.MapDifference.ValueDifference;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
@@ -44,11 +48,15 @@ import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Range;
 import org.apache.kafka.common.config.ConfigDef.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Settings for the REST proxy server.
  */
 public class KafkaRestConfig extends RestConfig {
+
+   private static final Logger log = LoggerFactory.getLogger(KafkaRestConfig.class);
 
   private final KafkaRestMetricsContext metricsContext;
   public static final String TELEMETRY_PREFIX = "confluent.telemetry.";
@@ -726,54 +734,64 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   public final Map<String, Object> getSchemaRegistryConfigs() {
-    HashMap<String, Object> possibleConfigs = new HashMap<>();
+    Set<String> mask = AbstractKafkaSchemaSerDeConfig.baseConfigDef().names();
+    Map<String, Object> configs =
+        new HashMap<>(
+            new ConfigsBuilder(mask)
+                .addConfigs("schema.registry.", /* strip= */ false)
+                .addConfigs("schema.registry.", /* strip= */ true)
+                .addConfigs("client.", /* strip= */ true)
+                .addConfigs("producer.", /* strip= */ true)
+                .addConfigs("consumer.", /* strip= */ true)
+                .build());
 
-    // Use a default schema.registry.url, if not specified.
-    possibleConfigs.put(SCHEMA_REGISTRY_URL_CONFIG, SCHEMA_REGISTRY_URL_DEFAULT);
+    if (!configs.containsKey(SCHEMA_REGISTRY_URL_CONFIG)) {
+      configs.put(SCHEMA_REGISTRY_URL_CONFIG, SCHEMA_REGISTRY_URL_DEFAULT);
+    }
 
-    possibleConfigs.putAll(originals());
-    possibleConfigs.putAll(originalsWithPrefix("schema.registry.", /* strip= */ true));
-    possibleConfigs.putAll(originalsWithPrefix("client.", /* strip= */ true));
-    possibleConfigs.putAll(originalsWithPrefix("producer.", /* strip= */ true));
-    possibleConfigs.putAll(originalsWithPrefix("consumer.", /* strip= */ true));
+    // Disable auto-registration of schemas.
+    if (configs.containsKey(AUTO_REGISTER_SCHEMAS)) {
+      log.warn(
+          "Config {} is not support in REST Proxy and will be ignored. Please, remove this config. "
+              + "Configuration will fail in a future release for such cases.",
+          AUTO_REGISTER_SCHEMAS);
+    }
+    configs.put(AUTO_REGISTER_SCHEMAS, false);
 
-    // Disable auto-registration of schemas. Schema registration is handled by SchemaManager.
-    possibleConfigs.put(AUTO_REGISTER_SCHEMAS, false);
     // Disable latest-version fetching of schemas.
-    possibleConfigs.put(USE_LATEST_VERSION, false);
+    if (configs.containsKey(USE_LATEST_VERSION)) {
+      log.warn(
+          "Config {} is not support in REST Proxy and will be ignored. Please, remove this config. "
+              + "Configuration will fail in a future release for such cases.",
+          USE_LATEST_VERSION);
+    }
+    configs.put(USE_LATEST_VERSION, false);
 
-    return Maps.filterKeys(
-        possibleConfigs, AbstractKafkaSchemaSerDeConfig.baseConfigDef().names()::contains);
+    return configs;
   }
 
   public final Map<String, Object> getJsonSerializerConfigs() {
-    HashMap<String, Object> serializerConfigs = new HashMap<>();
-    serializerConfigs.putAll(originalsWithPrefix("client.", /* strip= */ true));
-    serializerConfigs.putAll(originalsWithPrefix("producer.", /* strip= */ true));
-
-    Set<String> names = new KafkaJsonSerializerConfig(serializerConfigs).values().keySet();
-
-    return Maps.filterKeys(serializerConfigs, names::contains);
+    Set<String> mask = singleton(KafkaJsonSerializerConfig.JSON_INDENT_OUTPUT);
+    return new ConfigsBuilder(mask)
+        .addConfigs("client.", /* strip= */ true)
+        .addConfigs("producer.", /* strip= */ true)
+        .build();
   }
 
   public final Map<String, Object> getAvroSerializerConfigs() {
-    HashMap<String, Object> serializerConfigs = new HashMap<>();
-    serializerConfigs.putAll(originalsWithPrefix("client.", /* strip= */ true));
-    serializerConfigs.putAll(originalsWithPrefix("producer.", /* strip= */ true));
-    serializerConfigs.putAll(getSchemaRegistryConfigs());
-
-    Set<String> names = AbstractKafkaSchemaSerDeConfig.baseConfigDef().names();
-
-    return Maps.filterKeys(serializerConfigs, names::contains);
+    Set<String> mask = AbstractKafkaSchemaSerDeConfig.baseConfigDef().names();
+    HashMap<String, Object> configs =
+        new HashMap<>(
+            new ConfigsBuilder(mask)
+                .addConfigs("client.", /* strip= */ true)
+                .addConfigs("producer.", /* strip= */ true)
+                .build());
+    configs.putAll(getSchemaRegistryConfigs());
+    return configs;
   }
 
   public final Map<String, Object> getJsonschemaSerializerConfigs() {
-    HashMap<String, Object> serializerConfigs = new HashMap<>();
-    serializerConfigs.putAll(originalsWithPrefix("client.", /* strip= */ true));
-    serializerConfigs.putAll(originalsWithPrefix("producer.", /* strip= */ true));
-    serializerConfigs.putAll(getSchemaRegistryConfigs());
-
-    Set<String> names =
+    Set<String> mask =
         Sets.union(
             AbstractKafkaSchemaSerDeConfig.baseConfigDef().names(),
             ImmutableSet.of(
@@ -781,22 +799,30 @@ public class KafkaRestConfig extends RestConfig {
                 KafkaJsonSchemaSerializerConfig.SCHEMA_SPEC_VERSION,
                 KafkaJsonSchemaSerializerConfig.ONEOF_FOR_NULLABLES,
                 KafkaJsonSchemaSerializerConfig.JSON_INDENT_OUTPUT));
-
-    return Maps.filterKeys(serializerConfigs, names::contains);
+    HashMap<String, Object> configs =
+        new HashMap<>(
+            new ConfigsBuilder(mask)
+                .addConfigs("client.", /* strip= */ true)
+                .addConfigs("producer.", /* strip= */ true)
+                .build());
+    configs.putAll(getSchemaRegistryConfigs());
+    return configs;
   }
 
   public final Map<String, Object> getProtobufSerializerConfigs() {
-    HashMap<String, Object> serializerConfigs = new HashMap<>();
-    serializerConfigs.putAll(originalsWithPrefix("client.", /* strip= */ true));
-    serializerConfigs.putAll(originalsWithPrefix("producer.", /* strip= */ true));
-    serializerConfigs.putAll(getSchemaRegistryConfigs());
-
-    Set<String> names =
+    Set<String> mask =
         Sets.union(
             AbstractKafkaSchemaSerDeConfig.baseConfigDef().names(),
-            singleton(KafkaProtobufSerializerConfig.REFERENCE_SUBJECT_NAME_STRATEGY_CONFIG));
-
-    return Maps.filterKeys(serializerConfigs, names::contains);
+            singleton(
+                KafkaProtobufSerializerConfig.REFERENCE_SUBJECT_NAME_STRATEGY_CONFIG));
+    HashMap<String, Object> configs =
+        new HashMap<>(
+            new ConfigsBuilder(mask)
+                .addConfigs("client.", /* strip= */ true)
+                .addConfigs("producer.", /* strip= */ true)
+                .build());
+    configs.putAll(getSchemaRegistryConfigs());
+    return configs;
   }
 
   public Properties getProducerProperties() {
@@ -868,5 +894,71 @@ public class KafkaRestConfig extends RestConfig {
   @Override
   public RestMetricsContext getMetricsContext() {
     return metricsContext.metricsContext();
+  }
+
+  private final class ConfigsBuilder {
+    private final Set<String> mask ;
+    private final Map<String, ConfigValue> configs = new HashMap<>();
+
+    private ConfigsBuilder(Set<String> mask) {
+      this.mask = requireNonNull(mask);
+    }
+
+    private ConfigsBuilder addConfigs(String prefix, boolean strip) {
+      Map<String, ConfigValue> toAdd =
+          Maps.filterKeys(originalsWithPrefix(prefix, strip), mask::contains)
+              .entrySet()
+              .stream()
+              .collect(
+                  Collectors.toMap(
+                      Entry::getKey,
+                      entry ->
+                          ConfigValue.create(
+                              (strip ? prefix : "") + entry.getKey(), entry.getValue())));
+
+      MapDifference<String, ConfigValue> difference = Maps.difference(configs, toAdd);
+
+      for (ValueDifference<ConfigValue> different : difference.entriesDiffering().values()) {
+        log.warn(
+            "Specifying multiple synonyms for the same config: {} and {}. Using {} = {}. Please, "
+                + "specify only one of them. Configuration will fail in a future release for such "
+                + "cases.",
+            different.leftValue().getOrigin(),
+            different.rightValue().getOrigin(),
+            different.rightValue().getOrigin(),
+            different.rightValue().getValue());
+      }
+
+      configs.putAll(difference.entriesOnlyOnLeft());
+      configs.putAll(difference.entriesOnlyOnRight());
+      configs.putAll(difference.entriesInCommon());
+      configs.putAll(
+          difference.entriesDiffering()
+              .entrySet()
+              .stream()
+              .collect(
+                  Collectors.toMap(
+                      entry -> entry.getKey(), entry -> entry.getValue().rightValue())));
+
+      return this;
+    }
+
+    private Map<String, Object> build() {
+      return configs.entrySet()
+          .stream()
+          .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue().getValue()));
+    }
+  }
+
+  @AutoValue
+  abstract static class ConfigValue {
+
+    abstract String getOrigin();
+
+    abstract Object getValue();
+
+    private static ConfigValue create(String origin, Object value) {
+      return new AutoValue_KafkaRestConfig_ConfigValue(origin, value);
+    }
   }
 }

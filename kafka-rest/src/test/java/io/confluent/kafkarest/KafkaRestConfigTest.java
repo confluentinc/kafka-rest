@@ -252,6 +252,7 @@ public class KafkaRestConfigTest {
   public void getJsonschemaSerializerConfigs() {
     Properties properties = new Properties();
     properties.put("schema.registry.url", "foobar");
+    properties.put("client.json.fail.invalid.schema", true);
     properties.put("producer.acks", 1);
     properties.put("producer.json.fail.invalid.schema", true);
     KafkaRestConfig config = new KafkaRestConfig(properties);
