@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory;
  */
 public class KafkaRestConfig extends RestConfig {
 
-   private static final Logger log = LoggerFactory.getLogger(KafkaRestConfig.class);
+  private static final Logger log = LoggerFactory.getLogger(KafkaRestConfig.class);
 
   private final KafkaRestMetricsContext metricsContext;
   public static final String TELEMETRY_PREFIX = "confluent.telemetry.";
