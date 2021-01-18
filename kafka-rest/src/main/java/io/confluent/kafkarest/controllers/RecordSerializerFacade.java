@@ -23,16 +23,17 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 final class RecordSerializerFacade implements RecordSerializer {
 
   private final NoSchemaRecordSerializer noSchemaRecordSerializer;
-  private final SchemaRecordSerializer schemaRecordSerializer;
+  private final Provider<SchemaRecordSerializer> schemaRecordSerializer;
 
   @Inject
   RecordSerializerFacade(
       NoSchemaRecordSerializer noSchemaRecordSerializer,
-      SchemaRecordSerializer schemaRecordSerializer) {
+      Provider<SchemaRecordSerializer> schemaRecordSerializer) {
     this.noSchemaRecordSerializer = requireNonNull(noSchemaRecordSerializer);
     this.schemaRecordSerializer = requireNonNull(schemaRecordSerializer);
   }
@@ -45,7 +46,7 @@ final class RecordSerializerFacade implements RecordSerializer {
       JsonNode data,
       boolean isKey) {
     if (format.requiresSchema()) {
-      return schemaRecordSerializer.serialize(format, topicName, schema, data, isKey);
+      return schemaRecordSerializer.get().serialize(format, topicName, schema, data, isKey);
     } else {
       return noSchemaRecordSerializer.serialize(format, data);
     }

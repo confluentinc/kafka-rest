@@ -92,12 +92,13 @@ public class RecordSerializerFacadeTest {
     recordSerializer =
         new RecordSerializerFacade(
             new NoSchemaRecordSerializer(SCHEMA_SERIALIZER_CONFIGS),
-            new SchemaRecordSerializer(
-                schemaRegistryClient,
-                SUBJECT_NAME_STRATEGY,
-                SCHEMA_SERIALIZER_CONFIGS,
-                SCHEMA_SERIALIZER_CONFIGS,
-                SCHEMA_SERIALIZER_CONFIGS));
+            () ->
+                new SchemaRecordSerializer(
+                    schemaRegistryClient,
+                    SUBJECT_NAME_STRATEGY,
+                    SCHEMA_SERIALIZER_CONFIGS,
+                    SCHEMA_SERIALIZER_CONFIGS,
+                    SCHEMA_SERIALIZER_CONFIGS));
   }
 
   @Test
