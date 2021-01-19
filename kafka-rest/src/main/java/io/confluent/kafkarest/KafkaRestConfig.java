@@ -17,7 +17,9 @@ package io.confluent.kafkarest;
 
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.AUTO_REGISTER_SCHEMAS;
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.USE_LATEST_VERSION;
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonMap;
 import static java.util.Objects.requireNonNull;
 import static org.apache.kafka.clients.CommonClientConfigs.METRICS_CONTEXT_PREFIX;
 
@@ -739,11 +741,11 @@ public class KafkaRestConfig extends RestConfig {
         new HashMap<>(
             new ConfigsBuilder(mask)
                 // Make sure we include schema.registry.url unstripped.
-                .addConfigs("schema.registry.url", /* strip= */ false)
-                .addConfigs("schema.registry.", /* strip= */ true)
-                .addConfigs("client.", /* strip= */ true)
-                .addConfigs("producer.", /* strip= */ true)
-                .addConfigs("consumer.", /* strip= */ true)
+                .addConfig("schema.registry.url")
+                .addConfigs("schema.registry.")
+                .addConfigs("client.")
+                .addConfigs("producer.")
+                .addConfigs("consumer.")
                 .build());
 
     if (!configs.containsKey(SCHEMA_REGISTRY_URL_CONFIG)) {
@@ -774,8 +776,8 @@ public class KafkaRestConfig extends RestConfig {
   public final Map<String, Object> getJsonSerializerConfigs() {
     Set<String> mask = singleton(KafkaJsonSerializerConfig.JSON_INDENT_OUTPUT);
     return new ConfigsBuilder(mask)
-        .addConfigs("client.", /* strip= */ true)
-        .addConfigs("producer.", /* strip= */ true)
+        .addConfigs("client.")
+        .addConfigs("producer.")
         .build();
   }
 
@@ -784,8 +786,8 @@ public class KafkaRestConfig extends RestConfig {
     HashMap<String, Object> configs =
         new HashMap<>(
             new ConfigsBuilder(mask)
-                .addConfigs("client.", /* strip= */ true)
-                .addConfigs("producer.", /* strip= */ true)
+                .addConfigs("client.")
+                .addConfigs("producer.")
                 .build());
     configs.putAll(getSchemaRegistryConfigs());
     return configs;
@@ -803,8 +805,8 @@ public class KafkaRestConfig extends RestConfig {
     HashMap<String, Object> configs =
         new HashMap<>(
             new ConfigsBuilder(mask)
-                .addConfigs("client.", /* strip= */ true)
-                .addConfigs("producer.", /* strip= */ true)
+                .addConfigs("client.")
+                .addConfigs("producer.")
                 .build());
     configs.putAll(getSchemaRegistryConfigs());
     return configs;
@@ -819,8 +821,8 @@ public class KafkaRestConfig extends RestConfig {
     HashMap<String, Object> configs =
         new HashMap<>(
             new ConfigsBuilder(mask)
-                .addConfigs("client.", /* strip= */ true)
-                .addConfigs("producer.", /* strip= */ true)
+                .addConfigs("client.")
+                .addConfigs("producer.")
                 .build());
     configs.putAll(getSchemaRegistryConfigs());
     return configs;
@@ -905,25 +907,29 @@ public class KafkaRestConfig extends RestConfig {
       this.mask = requireNonNull(mask);
     }
 
-    private ConfigsBuilder addConfigs(String prefix, boolean strip) {
+    private ConfigsBuilder addConfig(String name) {
       Map<String, ConfigValue> toAdd =
-          new HashMap<>(
-              Maps.filterKeys(originalsWithPrefix(prefix, strip), mask::contains)
-                  .entrySet()
-                  .stream()
-                  .collect(
-                      Collectors.toMap(
-                          Entry::getKey,
-                          entry ->
-                              ConfigValue.create(
-                                  (strip ? prefix : "") + entry.getKey(), entry.getValue()))));
+          originals().containsKey(name)
+              ? singletonMap(name, ConfigValue.create(name, originals().get(name)))
+              : emptyMap();
+      addConfigs(toAdd);
+      return this;
+    }
 
-      // originalsWithPrefix does not include the config named "${prefix}", so we add it here
-      // manually.
-      if (!strip && originals().containsKey(prefix)) {
-        toAdd.put(prefix, ConfigValue.create(prefix, originals().get(prefix)));
-      }
+    private ConfigsBuilder addConfigs(String prefix) {
+      Map<String, ConfigValue> toAdd =
+          Maps.filterKeys(originalsWithPrefix(prefix, /* strip= */ true), mask::contains)
+              .entrySet()
+              .stream()
+              .collect(
+                  Collectors.toMap(
+                      Entry::getKey,
+                      entry -> ConfigValue.create(prefix + entry.getKey(), entry.getValue())));
+      addConfigs(toAdd);
+      return this;
+    }
 
+    private void addConfigs(Map<String, ConfigValue> toAdd) {
       MapDifference<String, ConfigValue> difference = Maps.difference(configs, toAdd);
 
       for (ValueDifference<ConfigValue> different : difference.entriesDiffering().values()) {
@@ -944,11 +950,7 @@ public class KafkaRestConfig extends RestConfig {
           difference.entriesDiffering()
               .entrySet()
               .stream()
-              .collect(
-                  Collectors.toMap(
-                      entry -> entry.getKey(), entry -> entry.getValue().rightValue())));
-
-      return this;
+              .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue().rightValue())));
     }
 
     private Map<String, Object> build() {
