@@ -33,7 +33,6 @@ import io.confluent.kafkarest.extension.ResourceBlocklistFeature;
 import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.kafkarest.resources.ResourcesFeature;
 import io.confluent.kafkarest.response.ResponseModule;
-import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import io.confluent.rest.Application;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
@@ -46,7 +45,6 @@ import java.util.TimeZone;
 import javax.ws.rs.core.Configurable;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.StringUtil;
-
 
 /**
  * Utilities for configuring and running an embedded Kafka server.
@@ -85,19 +83,6 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-    setupInjectedResources(
-        config, appConfig, /* producerPool= */ null, /* kafkaConsumerManager= */ null);
-  }
-
-  /**
-   * Helper that does normal setup, but uses injected components so their configs or implementations
-   * can be customized for testing. This only exists to support TestKafkaRestApplication
-   */
-  protected void setupInjectedResources(
-      Configurable<?> config, KafkaRestConfig appConfig,
-      ProducerPool producerPool,
-      KafkaConsumerManager kafkaConsumerManager
-  ) {
     if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))
         && StringUtil.isBlank(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG))) {
       throw new RuntimeException("Atleast one of " + KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG + " "
@@ -105,8 +90,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
                                     + KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG
                                     + " needs to be configured");
     }
-    KafkaRestContextProvider.initialize(config, appConfig, producerPool,
-        kafkaConsumerManager);
+    KafkaRestContextProvider.initialize(appConfig);
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
     KafkaRestContext context =
         (KafkaRestContext) Proxy.newProxyInstance(

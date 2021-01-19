@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -31,9 +31,14 @@ public final class ControllersModule extends AbstractBinder {
     bind(ConsumerAssignmentManagerImpl.class).to(ConsumerAssignmentManager.class);
     bind(ConsumerGroupManagerImpl.class).to(ConsumerGroupManager.class);
     bind(ConsumerManagerImpl.class).to(ConsumerManager.class);
+    bindAsContract(NoSchemaRecordSerializer.class);
     bind(PartitionManagerImpl.class).to(PartitionManager.class);
+    bind(ProduceControllerImpl.class).to(ProduceController.class);
     bind(ReassignmentManagerImpl.class).to(ReassignmentManager.class);
+    bind(RecordSerializerFacade.class).to(RecordSerializer.class);
     bind(ReplicaManagerImpl.class).to(ReplicaManager.class);
+    bind(SchemaManagerImpl.class).to(SchemaManager.class);
+    bindAsContract(SchemaRecordSerializer.class);
     bind(TopicConfigManagerImpl.class).to(TopicConfigManager.class);
     bind(TopicManagerImpl.class).to(TopicManager.class);
   }

@@ -28,19 +28,17 @@ public class DefaultKafkaRestContextTest {
         props.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:5234");
         KafkaRestConfig restConfig = new KafkaRestConfig(props);
 
-        context =
-            new DefaultKafkaRestContext(
-                restConfig, /* producerPool= */ null, /* kafkaConsumerManager= */ null);
+        context = new DefaultKafkaRestContext(restConfig);
     }
 
     @Test
-    public void testGetProducerPoolThreadSafety() throws InterruptedException {
+    public void testGetProducerThreadSafety() throws InterruptedException {
         Set<Object> refs = new HashSet<>();
 
         ExecutorService executor = Executors.newFixedThreadPool(100);
         // Captures reference as it's invoked.
         for (int i = 0; i < 100; i++) {
-            executor.submit(() -> refs.add(context.getProducerPool()));
+            executor.submit(() -> refs.add(context.getProducer()));
         }
         executor.shutdown();
         executor.awaitTermination(60, TimeUnit.SECONDS);

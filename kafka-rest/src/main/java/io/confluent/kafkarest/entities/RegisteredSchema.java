@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -13,20 +13,22 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.backends;
+package io.confluent.kafkarest.entities;
 
-import io.confluent.kafkarest.backends.kafka.KafkaModule;
-import io.confluent.kafkarest.backends.schemaregistry.SchemaRegistryModule;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import com.google.auto.value.AutoValue;
+import io.confluent.kafka.schemaregistry.ParsedSchema;
 
-/**
- * A module to configure access to external dependencies.
- */
-public final class BackendsModule extends AbstractBinder {
+@AutoValue
+public abstract class RegisteredSchema {
 
-  @Override
-  protected void configure() {
-    install(new KafkaModule());
-    install(new SchemaRegistryModule());
+  RegisteredSchema() {
+  }
+
+  public abstract int getSchemaId();
+
+  public abstract ParsedSchema getSchema();
+
+  public static RegisteredSchema create(int schemaId, ParsedSchema schema) {
+    return new AutoValue_RegisteredSchema(schemaId, schema);
   }
 }
