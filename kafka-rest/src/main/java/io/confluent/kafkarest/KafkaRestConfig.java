@@ -829,15 +829,16 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   public Properties getProducerProperties() {
-    HashMap<String, Object> producerConfigs = new HashMap<>();
-
-    producerConfigs.put(BOOTSTRAP_SERVERS_CONFIG, getString(BOOTSTRAP_SERVERS_CONFIG));
-    producerConfigs.putAll(originalsWithPrefix("client.", /* strip= */ true));
-    producerConfigs.putAll(originalsWithPrefix("producer.", /* strip= */ true));
+    Set<String> mask = ProducerConfig.configNames();
+    Map<String, Object> producerConfigs =
+        new ConfigsBuilder(mask)
+            .addConfig(BOOTSTRAP_SERVERS_CONFIG)
+            .addConfigs("client.")
+            .addConfigs("producer.")
+            .build();
 
     Properties producerProperties = new Properties();
-    producerProperties.putAll(
-        Maps.filterKeys(producerConfigs, ProducerConfig.configNames()::contains));
+    producerProperties.putAll(producerConfigs);
     addTelemetryReporterProperties(producerProperties);
 
     return producerProperties;
