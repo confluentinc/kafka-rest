@@ -28,7 +28,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.MapDifference.ValueDifference;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.serializers.KafkaJsonSerializerConfig;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializerConfig;
@@ -749,6 +748,15 @@ public class KafkaRestConfig extends RestConfig {
                 .build());
 
     if (!configs.containsKey(SCHEMA_REGISTRY_URL_CONFIG)) {
+      log.warn(
+          "Using default value {} for config {}. In a future release this config won't have a"
+              + "default value anymore. If you are using Schema Registry, please, specify {}"
+              + "explicitly. Requests will fail in a future release if you try to use Schema "
+              + "Registry but have not specified a value for {}.",
+          SCHEMA_REGISTRY_URL_DEFAULT,
+          SCHEMA_REGISTRY_URL_CONFIG,
+          SCHEMA_REGISTRY_URL_CONFIG,
+          SCHEMA_REGISTRY_URL_CONFIG);
       configs.put(SCHEMA_REGISTRY_URL_CONFIG, SCHEMA_REGISTRY_URL_DEFAULT);
     }
 
@@ -795,13 +803,11 @@ public class KafkaRestConfig extends RestConfig {
 
   public final Map<String, Object> getJsonschemaSerializerConfigs() {
     Set<String> mask =
-        Sets.union(
-            AbstractKafkaSchemaSerDeConfig.baseConfigDef().names(),
-            ImmutableSet.of(
-                KafkaJsonSchemaSerializerConfig.FAIL_INVALID_SCHEMA,
-                KafkaJsonSchemaSerializerConfig.SCHEMA_SPEC_VERSION,
-                KafkaJsonSchemaSerializerConfig.ONEOF_FOR_NULLABLES,
-                KafkaJsonSchemaSerializerConfig.JSON_INDENT_OUTPUT));
+        ImmutableSet.of(
+            KafkaJsonSchemaSerializerConfig.JSON_INDENT_OUTPUT,
+            KafkaJsonSchemaSerializerConfig.FAIL_INVALID_SCHEMA,
+            KafkaJsonSchemaSerializerConfig.ONEOF_FOR_NULLABLES,
+            KafkaJsonSchemaSerializerConfig.SCHEMA_SPEC_VERSION);
     HashMap<String, Object> configs =
         new HashMap<>(
             new ConfigsBuilder(mask)
@@ -814,10 +820,7 @@ public class KafkaRestConfig extends RestConfig {
 
   public final Map<String, Object> getProtobufSerializerConfigs() {
     Set<String> mask =
-        Sets.union(
-            AbstractKafkaSchemaSerDeConfig.baseConfigDef().names(),
-            singleton(
-                KafkaProtobufSerializerConfig.REFERENCE_SUBJECT_NAME_STRATEGY_CONFIG));
+        singleton(KafkaProtobufSerializerConfig.REFERENCE_SUBJECT_NAME_STRATEGY_CONFIG);
     HashMap<String, Object> configs =
         new HashMap<>(
             new ConfigsBuilder(mask)
