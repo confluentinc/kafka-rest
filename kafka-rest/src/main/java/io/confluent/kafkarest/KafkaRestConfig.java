@@ -738,7 +738,8 @@ public class KafkaRestConfig extends RestConfig {
     Map<String, Object> configs =
         new HashMap<>(
             new ConfigsBuilder(mask)
-                .addConfigs("schema.registry.", /* strip= */ false)
+                // Make sure we include schema.registry.url unstripped.
+                .addConfigs("schema.registry.url", /* strip= */ false)
                 .addConfigs("schema.registry.", /* strip= */ true)
                 .addConfigs("client.", /* strip= */ true)
                 .addConfigs("producer.", /* strip= */ true)
@@ -906,15 +907,22 @@ public class KafkaRestConfig extends RestConfig {
 
     private ConfigsBuilder addConfigs(String prefix, boolean strip) {
       Map<String, ConfigValue> toAdd =
-          Maps.filterKeys(originalsWithPrefix(prefix, strip), mask::contains)
-              .entrySet()
-              .stream()
-              .collect(
-                  Collectors.toMap(
-                      Entry::getKey,
-                      entry ->
-                          ConfigValue.create(
-                              (strip ? prefix : "") + entry.getKey(), entry.getValue())));
+          new HashMap<>(
+              Maps.filterKeys(originalsWithPrefix(prefix, strip), mask::contains)
+                  .entrySet()
+                  .stream()
+                  .collect(
+                      Collectors.toMap(
+                          Entry::getKey,
+                          entry ->
+                              ConfigValue.create(
+                                  (strip ? prefix : "") + entry.getKey(), entry.getValue()))));
+
+      // originalsWithPrefix does not include the config named "${prefix}", so we add it here
+      // manually.
+      if (!strip && originals().containsKey(prefix)) {
+        toAdd.put(prefix, ConfigValue.create(prefix, originals().get(prefix)));
+      }
 
       MapDifference<String, ConfigValue> difference = Maps.difference(configs, toAdd);
 

@@ -159,7 +159,7 @@ public class KafkaRestConfigTest {
 
     Properties producerProperties = config.getConsumerProperties();
     assertEquals("foobar", producerProperties.get("schema.registry.url"));
-    assertEquals("fozbaz", producerProperties.get("schema.registry.basic.auth.user.info"));
+    assertEquals("fozbaz", producerProperties.get("basic.auth.user.info"));
   }
 
   @Test
