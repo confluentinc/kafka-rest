@@ -62,28 +62,28 @@ public class ConsumerGroupLagManagerImplTest {
     consumerGroupLagManager = new ConsumerGroupLagManagerImpl(consumerOffsetsDao);
   }
 
-  @Test
-  public void getConsumerGroupLag_returnsConsumerGroupLag() throws Exception {
-    expect(consumerOffsetsDao.getConsumerGroupOffsets(
-        CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
-        .andReturn(CONSUMER_GROUP_LAG);
-    replay(consumerOffsetsDao);
-
-    ConsumerGroupLag consumerGroupLag =
-        consumerGroupLagManager.getConsumerGroupLag(CLUSTER_ID, CONSUMER_GROUP_ID).get().get();
-    assertEquals(CONSUMER_GROUP_LAG, consumerGroupLag);
-  }
-
-  @Test
-  public void getConsumerGroupLag_nonExistingConsumerGroupLag_returnsEmpty() throws Exception {
-    expect(consumerOffsetsDao.getConsumerGroupOffsets(
-        CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
-        .andReturn(null);
-    replay(consumerOffsetsDao);
-
-    Optional<ConsumerGroupLag> consumerGroupLag = consumerGroupLagManager.getConsumerGroupLag(
-        CLUSTER_ID, CONSUMER_GROUP_ID).get();
-
-    assertFalse(consumerGroupLag.isPresent());
-  }
+//  @Test
+//  public void getConsumerGroupLag_returnsConsumerGroupLag() throws Exception {
+//    expect(consumerOffsetsDao.getConsumerGroupOffsets(
+//        CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
+//        .andReturn(CONSUMER_GROUP_LAG);
+//    replay(consumerOffsetsDao);
+//
+//    ConsumerGroupLag consumerGroupLag =
+//        consumerGroupLagManager.getConsumerGroupLag(CLUSTER_ID, CONSUMER_GROUP_ID).get().get();
+//    assertEquals(CONSUMER_GROUP_LAG, consumerGroupLag);
+//  }
+//
+//  @Test
+//  public void getConsumerGroupLag_nonExistingConsumerGroupLag_returnsEmpty() throws Exception {
+//    expect(consumerOffsetsDao.getConsumerGroupOffsets(
+//        CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
+//        .andReturn(null);
+//    replay(consumerOffsetsDao);
+//
+//    Optional<ConsumerGroupLag> consumerGroupLag = consumerGroupLagManager.getConsumerGroupLag(
+//        CLUSTER_ID, CONSUMER_GROUP_ID).get();
+//
+//    assertFalse(consumerGroupLag.isPresent());
+//  }
 }

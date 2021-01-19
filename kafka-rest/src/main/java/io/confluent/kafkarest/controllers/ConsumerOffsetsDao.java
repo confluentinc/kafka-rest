@@ -32,13 +32,13 @@ import org.apache.kafka.common.TopicPartition;
 
 public interface ConsumerOffsetsDao {
 
-  ConsumerGroupLag getConsumerGroupOffsets(
-      String clusterId, String consumerGroupId, IsolationLevel isolationLevel)
-      throws InterruptedException, ExecutionException, TimeoutException;
-
-  List<ConsumerLag> getConsumerLags(
-      String clusterId, String consumerGroupId, IsolationLevel isolationLevel)
-      throws InterruptedException, ExecutionException, TimeoutException;
+//  ConsumerGroupLag getConsumerGroupOffsets(
+//      String clusterId, String consumerGroupId, IsolationLevel isolationLevel)
+//      throws InterruptedException, ExecutionException, TimeoutException;
+//
+//  List<ConsumerLag> getConsumerLags(
+//      String clusterId, String consumerGroupId, IsolationLevel isolationLevel)
+//      throws InterruptedException, ExecutionException, TimeoutException;
 
   CompletableFuture<ConsumerGroupDescription> getConsumerGroupDescription(
       String consumerGroupId);
@@ -52,6 +52,10 @@ public interface ConsumerOffsetsDao {
 
   CompletableFuture<Map<TopicPartition, MemberId>> getMemberIds(
       CompletableFuture<ConsumerGroupDescription> cgDesc);
+
+  long getCurrentOffset(Map<TopicPartition, OffsetAndMetadata> map, TopicPartition tp);
+
+  long getOffset(Map<TopicPartition, ListOffsetsResultInfo> map, TopicPartition tp);
 
   Admin getKafkaAdminClient();
 }

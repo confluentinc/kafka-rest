@@ -87,46 +87,46 @@ public class ConsumerLagManagerImplTest {
     consumerLagManager = new ConsumerLagManagerImpl(consumerOffsetsDao);
   }
 
-  @Test
-  public void listConsumerLags_returnsConsumerLags() throws Exception {
-    expect(consumerOffsetsDao.getConsumerLags(
-        CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
-        .andReturn(CONSUMER_LAG_LIST);
-    replay(consumerOffsetsDao);
-
-    List<ConsumerLag> consumerLagList =
-        consumerLagManager.listConsumerLags(CLUSTER_ID, CONSUMER_GROUP_ID).get();
-    assertEquals(CONSUMER_LAG_LIST, consumerLagList);
-  }
-
-  @Test
-  public void getConsumerLag_returnsConsumerLag() throws Exception {
-    expect(consumerOffsetsDao.getConsumerLags(
-        CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
-        .andReturn(CONSUMER_LAG_LIST);
-    replay(consumerOffsetsDao);
-
-    ConsumerLag consumerLag =
-        consumerLagManager.getConsumerLag(
-            CLUSTER_ID, "topic-1", 2, CONSUMER_GROUP_ID)
-            .get()
-            .get();
-
-    assertEquals(CONSUMER_LAG_2, consumerLag);
-  }
-
-  @Test
-  public void getConsumerLag_nonExistingConsumerLag_returnsEmpty() throws Exception {
-    expect(consumerOffsetsDao.getConsumerLags(
-       CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
-        .andReturn(new ArrayList<>());
-    replay(consumerOffsetsDao);
-
-    Optional<ConsumerLag> consumerLag =
-        consumerLagManager.getConsumerLag(
-            CLUSTER_ID, "topic-1", 2, CONSUMER_GROUP_ID)
-            .get();
-
-    assertFalse(consumerLag.isPresent());
-  }
+//  @Test
+//  public void listConsumerLags_returnsConsumerLags() throws Exception {
+//    expect(consumerOffsetsDao.getConsumerLags(
+//        CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
+//        .andReturn(CONSUMER_LAG_LIST);
+//    replay(consumerOffsetsDao);
+//
+//    List<ConsumerLag> consumerLagList =
+//        consumerLagManager.listConsumerLags(CLUSTER_ID, CONSUMER_GROUP_ID).get();
+//    assertEquals(CONSUMER_LAG_LIST, consumerLagList);
+//  }
+//
+//  @Test
+//  public void getConsumerLag_returnsConsumerLag() throws Exception {
+//    expect(consumerOffsetsDao.getConsumerLags(
+//        CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
+//        .andReturn(CONSUMER_LAG_LIST);
+//    replay(consumerOffsetsDao);
+//
+//    ConsumerLag consumerLag =
+//        consumerLagManager.getConsumerLag(
+//            CLUSTER_ID, "topic-1", 2, CONSUMER_GROUP_ID)
+//            .get()
+//            .get();
+//
+//    assertEquals(CONSUMER_LAG_2, consumerLag);
+//  }
+//
+//  @Test
+//  public void getConsumerLag_nonExistingConsumerLag_returnsEmpty() throws Exception {
+//    expect(consumerOffsetsDao.getConsumerLags(
+//       CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
+//        .andReturn(new ArrayList<>());
+//    replay(consumerOffsetsDao);
+//
+//    Optional<ConsumerLag> consumerLag =
+//        consumerLagManager.getConsumerLag(
+//            CLUSTER_ID, "topic-1", 2, CONSUMER_GROUP_ID)
+//            .get();
+//
+//    assertFalse(consumerLag.isPresent());
+//  }
 }

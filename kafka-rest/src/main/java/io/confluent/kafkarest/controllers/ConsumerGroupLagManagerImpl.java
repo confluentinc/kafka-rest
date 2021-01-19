@@ -53,6 +53,43 @@ final class ConsumerGroupLagManagerImpl implements ConsumerGroupLagManager {
         consumerOffsetsDao.getLatestOffsets(isolationLevel, fetchedCurrentOffsets);
     CompletableFuture<Map<TopicPartition, MemberId>> tpMemberIds =
         consumerOffsetsDao.getMemberIds(cgDesc);
+    CompletableFuture<ConsumerGroupLag.Builder> cgOffsets =
+        CompletableFuture.supplyAsync(() ->
+            ConsumerGroupLag.builder()
+                .setClusterId(clusterId)
+                .setConsumerGroupId(consumerGroupId));
+    return CompletableFuture.allOf(
+        fetchedCurrentOffsets, latestOffsets, tpMemberIds, cgOffsets
+    ).thenApply(x -> {
+      final Map<TopicPartition, OffsetAndMetadata> fetchedCurrentOffsetsJoined = fetchedCurrentOffsets
+          .join();
+      final Map<TopicPartition, ListOffsetsResultInfo> latestOffsetsJoined = latestOffsets.join();
+      ConsumerGroupLag.Builder cgOffsetsJoined = cgOffsets.join();
+      fetchedCurrentOffsetsJoined.keySet().stream()
+          .forEach(
+              tp -> {
+                MemberId memberId = tpMemberIds.join().getOrDefault(
+                    tp, MemberId.builder()
+                        .setConsumerId("")
+                        .setClientId("")
+                        .setInstanceId(Optional.empty())
+                        .build());
+                long currentOffset = consumerOffsetsDao
+                    .getCurrentOffset(fetchedCurrentOffsetsJoined, tp);
+                long latestOffset = consumerOffsetsDao.getOffset(latestOffsetsJoined, tp);
+                // ahu todo: ask about log.debug
+                cgOffsetsJoined.addOffset(
+                    tp.topic(),
+                    memberId.getConsumerId(),
+                    memberId.getClientId(),
+                    memberId.getInstanceId(),
+                    tp.partition(),
+                    currentOffset,
+                    latestOffset
+                );
+              });
+      return Optional.of(cgOffsetsJoined.build());
+    });
   }
 
 //  @Override
