@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.common.IsolationLevel;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
@@ -72,6 +73,9 @@ public class ConsumerLagManagerImplTest {
 
   @Rule
   public final EasyMockRule mocks = new EasyMockRule(this);
+
+  @Mock
+  private Admin adminClient;
 
   @Mock
   private ConsumerOffsetsDao consumerOffsetsDao;

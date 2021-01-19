@@ -17,15 +17,22 @@ package io.confluent.kafkarest.controllers;
 
 import static java.util.Objects.requireNonNull;
 
+import io.confluent.kafkarest.controllers.ConsumerOffsetsDaoImpl.MemberId;
 import io.confluent.kafkarest.entities.ConsumerGroupLag;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
+import org.apache.kafka.clients.admin.ConsumerGroupDescription;
+import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.IsolationLevel;
+import org.apache.kafka.common.TopicPartition;
 
 final class ConsumerGroupLagManagerImpl implements ConsumerGroupLagManager {
 
   private final ConsumerOffsetsDao consumerOffsetsDao;
+  private final IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
 
   @Inject
   ConsumerGroupLagManagerImpl(
@@ -38,13 +45,28 @@ final class ConsumerGroupLagManagerImpl implements ConsumerGroupLagManager {
       String clusterId,
       String consumerGroupId
   ) {
-    try {
-      ConsumerGroupLag lag = consumerOffsetsDao
-          .getConsumerGroupOffsets(clusterId, consumerGroupId, IsolationLevel.READ_COMMITTED);
-      return CompletableFuture.completedFuture(Optional.ofNullable(lag));
-    } catch (Exception e) {
-      // log.warn("unable to fetch offsets for consumer group", e);
-      return CompletableFuture.completedFuture(Optional.empty());
-    }
+    CompletableFuture<ConsumerGroupDescription> cgDesc =
+        consumerOffsetsDao.getConsumerGroupDescription(consumerGroupId);
+    CompletableFuture<Map<TopicPartition, OffsetAndMetadata>> fetchedCurrentOffsets =
+        consumerOffsetsDao.getCurrentOffsets(consumerGroupId);
+    CompletableFuture<Map<TopicPartition, ListOffsetsResultInfo>> latestOffsets =
+        consumerOffsetsDao.getLatestOffsets(isolationLevel, fetchedCurrentOffsets);
+    CompletableFuture<Map<TopicPartition, MemberId>> tpMemberIds =
+        consumerOffsetsDao.getMemberIds(cgDesc);
   }
+
+//  @Override
+//  public CompletableFuture<Optional<ConsumerGroupLag>> getConsumerGroupLag(
+//      String clusterId,
+//      String consumerGroupId
+//  ) {
+//    try {
+//      ConsumerGroupLag lag = consumerOffsetsDao
+//          .getConsumerGroupOffsets(clusterId, consumerGroupId, IsolationLevel.READ_COMMITTED);
+//      return CompletableFuture.completedFuture(Optional.ofNullable(lag));
+//    } catch (Exception e) {
+//      // log.warn("unable to fetch offsets for consumer group", e);
+//      return CompletableFuture.completedFuture(Optional.empty());
+//    }
+//  }
 }

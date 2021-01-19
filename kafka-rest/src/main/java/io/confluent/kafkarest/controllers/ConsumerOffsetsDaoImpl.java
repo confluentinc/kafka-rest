@@ -26,6 +26,7 @@ import io.confluent.kafkarest.entities.ConsumerLag;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
@@ -50,6 +52,7 @@ import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.clients.admin.MemberDescription;
 import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.IsolationLevel;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.TopicPartition;
@@ -80,7 +83,7 @@ final class ConsumerOffsetsDaoImpl implements ConsumerOffsetsDao {
 
     abstract Optional<String> getInstanceId();
 
-    private static Builder builder() {
+    public static Builder builder() {
       return new AutoValue_ConsumerOffsetsDaoImpl_MemberId.Builder();
     }
 
@@ -95,6 +98,11 @@ final class ConsumerOffsetsDaoImpl implements ConsumerOffsetsDao {
 
       abstract MemberId build();
     }
+  }
+
+  @Override
+  public Admin getKafkaAdminClient() {
+    return kafkaAdminClient;
   }
 
   public List<ConsumerLag> getConsumerLags(
@@ -237,6 +245,31 @@ final class ConsumerOffsetsDaoImpl implements ConsumerOffsetsDao {
     return cgOffsets;
   }
 
+  @Override
+  public CompletableFuture<Map<TopicPartition, MemberId>> getMemberIds(
+      CompletableFuture<ConsumerGroupDescription> cgDesc
+  ) {
+    CompletableFuture<Map<TopicPartition, MemberId>> tpMemberIds =
+        CompletableFuture.supplyAsync(HashMap::new);
+    cgDesc.thenCombine(
+        tpMemberIds, (desc, memberIds) -> {
+          desc.members().stream()
+              .forEach(
+                  memberDesc ->
+                      memberDesc.assignment().topicPartitions()
+                          .stream()
+                          .forEach(
+                              tp ->
+                                  memberIds.put(
+                                      tp, MemberId.builder()
+                                          .setConsumerId(memberDesc.consumerId())
+                                          .setClientId(memberDesc.clientId())
+                                          .setInstanceId(memberDesc.groupInstanceId())
+                                          .build())));
+          return null; });
+    return tpMemberIds;
+  }
+
   public ConsumerGroupLag getConsumerGroupOffsets(
       String clusterId,
       String consumerGroupId,
@@ -244,6 +277,33 @@ final class ConsumerOffsetsDaoImpl implements ConsumerOffsetsDao {
   ) throws InterruptedException, ExecutionException, TimeoutException {
     final ConsumerGroupDescription cgDesc = getConsumerGroupDescription(consumerGroupId);
     return getConsumerGroupOffsets(cgDesc, isolationLevel).setClusterId(clusterId).build();
+  }
+
+  @Override
+  public CompletableFuture<Map<TopicPartition, OffsetAndMetadata>> getCurrentOffsets(
+      String consumerGroupId
+  ) {
+    return KafkaFutures.toCompletableFuture(
+        kafkaAdminClient.listConsumerGroupOffsets(
+            consumerGroupId, new ListConsumerGroupOffsetsOptions())
+            .partitionsToOffsetAndMetadata());
+  }
+
+  @Override
+  public CompletableFuture<Map<TopicPartition, ListOffsetsResultInfo>> getLatestOffsets(
+      IsolationLevel isolationLevel,
+      CompletableFuture<Map<TopicPartition, OffsetAndMetadata>> currentOffsets
+  ) {
+    return currentOffsets
+        .thenApply(
+            map ->
+                map.keySet().stream()
+                    .collect(Collectors.toMap(Function.identity(), tp -> OffsetSpec.latest())))
+        .thenApply(
+            specs ->
+                kafkaAdminClient.listOffsets(specs, new ListOffsetsOptions(isolationLevel)))
+        .thenCompose(result ->
+            KafkaFutures.toCompletableFuture(result.all()));
   }
 
   private ConsumerGroupLag.Builder getConsumerGroupOffsets(
@@ -284,12 +344,33 @@ final class ConsumerOffsetsDaoImpl implements ConsumerOffsetsDao {
 
   // have consumeroffsetsdaoimpl just have the shared functions, everythign else in lagmanager
   // shared by get and list
-  public ConsumerGroupDescription getConsumerGroupDescription(
-      String consumerGroupId
-  ) throws InterruptedException, ExecutionException, TimeoutException {
-    Map<String, ConsumerGroupDescription> allCgDesc =
-        getAllConsumerGroupDescriptions(ImmutableSet.of(consumerGroupId));
-    return allCgDesc.get(consumerGroupId);
+//  public ConsumerGroupDescription getConsumerGroupDescription(
+//      String consumerGroupId
+//  ) throws InterruptedException, ExecutionException, TimeoutException {
+//    Map<String, ConsumerGroupDescription> allCgDesc =
+//        getAllConsumerGroupDescriptions(ImmutableSet.of(consumerGroupId));
+//    return allCgDesc.get(consumerGroupId);
+//  }
+
+  @Override
+  public CompletableFuture<ConsumerGroupDescription> getConsumerGroupDescription(
+      String consumerGroupId) {
+    return KafkaFutures.toCompletableFuture(
+        kafkaAdminClient.describeConsumerGroups(Collections.singletonList(consumerGroupId)).all())
+        .thenApply(
+            descriptions ->
+                descriptions.values()
+                    .stream()
+                    .filter(
+                        // When describing a consumer-group that does not exist, AdminClient returns
+                        // a dummy consumer-group with simple=true and state=DEAD.
+                        // TODO: Investigate a better way of detecting non-existent consumer-group.
+                        description -> !description.isSimpleConsumerGroup()
+                            || description.state() != ConsumerGroupState.DEAD)
+                    .findAny()
+                    .orElseThrow(
+                        () -> new NotFoundException("Consumer group " +
+                            consumerGroupId + " could not be found.")));  // not useful currently
   }
 
   public Map<String, ConsumerGroupDescription> getAllConsumerGroupDescriptions(
@@ -327,14 +408,14 @@ final class ConsumerOffsetsDaoImpl implements ConsumerOffsetsDao {
     return ret;
   }
 
-  public Map<TopicPartition, OffsetAndMetadata> getCurrentOffsets(
-      String consumerGroupId
-  ) throws InterruptedException, ExecutionException, TimeoutException {
-    return kafkaAdminClient
-        .listConsumerGroupOffsets(consumerGroupId,
-            new ListConsumerGroupOffsetsOptions().timeoutMs(consumerMetadataTimeout))
-        .partitionsToOffsetAndMetadata().get(consumerMetadataTimeout, TimeUnit.MILLISECONDS);
-  }
+//  public Map<TopicPartition, OffsetAndMetadata> getCurrentOffsets(
+//      String consumerGroupId
+//  ) throws InterruptedException, ExecutionException, TimeoutException {
+//    return kafkaAdminClient
+//        .listConsumerGroupOffsets(consumerGroupId,
+//            new ListConsumerGroupOffsetsOptions().timeoutMs(consumerMetadataTimeout))
+//        .partitionsToOffsetAndMetadata().get(consumerMetadataTimeout, TimeUnit.MILLISECONDS);
+//  }
 
   private long getCurrentOffset(Map<TopicPartition, OffsetAndMetadata> map, TopicPartition tp) {
     if (map == null) {

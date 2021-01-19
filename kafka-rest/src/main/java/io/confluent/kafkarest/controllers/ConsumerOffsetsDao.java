@@ -15,12 +15,20 @@
 
 package io.confluent.kafkarest.controllers;
 
+import io.confluent.kafkarest.controllers.ConsumerOffsetsDaoImpl.MemberId;
 import io.confluent.kafkarest.entities.ConsumerGroupLag;
 import io.confluent.kafkarest.entities.ConsumerLag;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.ConsumerGroupDescription;
+import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.IsolationLevel;
+import org.apache.kafka.common.TopicPartition;
 
 public interface ConsumerOffsetsDao {
 
@@ -32,4 +40,18 @@ public interface ConsumerOffsetsDao {
       String clusterId, String consumerGroupId, IsolationLevel isolationLevel)
       throws InterruptedException, ExecutionException, TimeoutException;
 
+  CompletableFuture<ConsumerGroupDescription> getConsumerGroupDescription(
+      String consumerGroupId);
+
+  CompletableFuture<Map<TopicPartition, OffsetAndMetadata>> getCurrentOffsets(
+      String consumerGroupId);
+
+  CompletableFuture<Map<TopicPartition, ListOffsetsResultInfo>> getLatestOffsets(
+      IsolationLevel isolationLevel,
+      CompletableFuture<Map<TopicPartition, OffsetAndMetadata>> currentOffsets);
+
+  CompletableFuture<Map<TopicPartition, MemberId>> getMemberIds(
+      CompletableFuture<ConsumerGroupDescription> cgDesc);
+
+  Admin getKafkaAdminClient();
 }

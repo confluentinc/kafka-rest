@@ -46,18 +46,18 @@ public class ConsumerOffsetsDaoImplTest {
     adminClient =  createMock(AdminClient.class);
   }
 
-  @Test
-  public void testGetConsumerGroups() throws Throwable {
-    ListConsumerGroupsResult lcgr = mock(ListConsumerGroupsResult.class);
-    expect(adminClient.listConsumerGroups(anyObject(ListConsumerGroupsOptions.class))).andReturn(lcgr).once();
-    Collection<ConsumerGroupListing> consumerGroups = Lists.newArrayList();
-    expect(lcgr.all()).andReturn(KafkaFuture.completedFuture(consumerGroups));
-    expectLastCall().once();
-    replay(adminClient, lcgr);
-    ConsumerOffsetsDaoImpl dao = new ConsumerOffsetsDaoImpl(adminClient, DEFAULT_METADATA_TIMEOUT);
-    dao.getConsumerGroups();
-    verify(adminClient, lcgr);
-  }
+//  @Test
+//  public void testGetConsumerGroups() throws Throwable {
+//    ListConsumerGroupsResult lcgr = mock(ListConsumerGroupsResult.class);
+//    expect(adminClient.listConsumerGroups(anyObject(ListConsumerGroupsOptions.class))).andReturn(lcgr).once();
+//    Collection<ConsumerGroupListing> consumerGroups = Lists.newArrayList();
+//    expect(lcgr.all()).andReturn(KafkaFuture.completedFuture(consumerGroups));
+//    expectLastCall().once();
+//    replay(adminClient, lcgr);
+//    ConsumerOffsetsDaoImpl dao = new ConsumerOffsetsDaoImpl(adminClient, DEFAULT_METADATA_TIMEOUT);
+//    dao.getConsumerGroups();
+//    verify(adminClient, lcgr);
+//  }
 
   @Test
   public void testGetAllConsumerGroupDescriptions() throws Throwable {
