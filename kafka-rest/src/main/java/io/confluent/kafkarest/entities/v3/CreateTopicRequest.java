@@ -19,9 +19,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 @AutoValue
@@ -40,14 +42,14 @@ public abstract class CreateTopicRequest {
   public abstract Optional<Short> getReplicationFactor();
 
   @JsonProperty("replicas_assignments")
-  @Nullable
   public abstract Map<Integer, List<Integer>> getReplicasAssignments();
 
   @JsonProperty("configs")
   public abstract ImmutableList<ConfigEntry> getConfigs();
 
   public static Builder builder() {
-    return new AutoValue_CreateTopicRequest.Builder();
+    return new AutoValue_CreateTopicRequest.Builder()
+        .setReplicasAssignments(Collections.emptyMap());
   }
 
   @JsonCreator
@@ -55,15 +57,16 @@ public abstract class CreateTopicRequest {
       @JsonProperty("topic_name") String topicName,
       @JsonProperty("partitions_count") @Nullable Integer partitionsCount,
       @JsonProperty("replication_factor") @Nullable Short replicationFactor,
-      @SuppressWarnings("checkstyle:LineLength")
-      @JsonProperty("replicas_assignments") @Nullable Map<Integer, List<Integer>> replicasAssignments,
+      @JsonProperty("replicas_assignments") @Nullable
+          Map<Integer, List<Integer>> replicasAssignments,
       @JsonProperty("configs") @Nullable List<ConfigEntry> configs
   ) {
     return builder()
         .setTopicName(topicName)
         .setPartitionsCount(partitionsCount)
         .setReplicationFactor(replicationFactor)
-        .setReplicasAssignments(replicasAssignments)
+        .setReplicasAssignments(
+            replicasAssignments != null ? replicasAssignments : Collections.emptyMap())
         .setConfigs(configs != null ? configs : ImmutableList.of())
         .build();
   }
@@ -80,8 +83,8 @@ public abstract class CreateTopicRequest {
 
     public abstract Builder setReplicationFactor(@Nullable Short replicationFactor);
 
-    @SuppressWarnings("checkstyle:LineLength")
-    public abstract Builder setReplicasAssignments(@Nullable Map<Integer, List<Integer>> replicasAssignments);
+    public abstract Builder setReplicasAssignments(
+        @Nonnull Map<Integer, List<Integer>> replicasAssignments);
 
     public abstract Builder setConfigs(List<ConfigEntry> configs);
 

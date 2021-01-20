@@ -1023,12 +1023,12 @@ components:
           items:
             type: object
             required:
-              - partition
-              - replicas
+              - partition_id
+              - broker_ids
             properties:
-              partition:
+              partition_id:
                 type: integer
-              replicas:
+              broker_ids:
                 type: array
                 items:
                   type: integer

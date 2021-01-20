@@ -44,6 +44,7 @@ import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -463,7 +464,7 @@ public class TopicsResourceTest {
             TOPIC_1.getName(),
             Optional.of(TOPIC_1.getPartitions().size()),
             Optional.of(TOPIC_1.getReplicationFactor()),
-            /* replicasAssignments= */ null,
+            /* replicasAssignments= */ Collections.emptyMap(),
             singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(completedFuture(null));
     replay(topicManager);
@@ -494,7 +495,7 @@ public class TopicsResourceTest {
             TOPIC_1.getName(),
             /* partitionsCount= */ Optional.empty(),
             Optional.of(TOPIC_1.getReplicationFactor()),
-            /* replicasAssignments= */ null,
+            /* replicasAssignments= */ Collections.emptyMap(),
             singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(completedFuture(null));
     replay(topicManager);
@@ -524,7 +525,7 @@ public class TopicsResourceTest {
             TOPIC_1.getName(),
             Optional.of(TOPIC_1.getPartitions().size()),
             /* replicationFactor= */ Optional.empty(),
-            /* replicasAssignments= */ null,
+            /* replicasAssignments= */ Collections.emptyMap(),
             singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(completedFuture(null));
     replay(topicManager);
@@ -597,7 +598,7 @@ public class TopicsResourceTest {
             TOPIC_1.getName(),
             Optional.of(TOPIC_1.getPartitions().size()),
             Optional.of(TOPIC_1.getReplicationFactor()),
-            /* replicasAssignments= */ null,
+            /* replicasAssignments= */ Collections.emptyMap(),
             singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(failedFuture(new TopicExistsException("")));
     replay(topicManager);
@@ -625,7 +626,7 @@ public class TopicsResourceTest {
             TOPIC_1.getName(),
             Optional.of(TOPIC_1.getPartitions().size()),
             Optional.of(TOPIC_1.getReplicationFactor()),
-            /* replicasAssignments= */ null,
+            /* replicasAssignments= */ Collections.emptyMap(),
             singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);

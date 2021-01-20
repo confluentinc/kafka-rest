@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import javax.annotation.Nullable;
 
 /**
  * A service to manage Kafka {@link Topic Topics}.
@@ -60,7 +59,7 @@ public interface TopicManager {
       String topicName,
       Optional<Integer> partitionsCount,
       Optional<Short> replicationFactor,
-      @Nullable Map<Integer, List<Integer>> replicasAssignments,
+      Map<Integer, List<Integer>> replicasAssignments,
       Map<String, Optional<String>> configs);
 
   /**

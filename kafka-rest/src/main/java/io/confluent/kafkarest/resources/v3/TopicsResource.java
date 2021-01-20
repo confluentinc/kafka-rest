@@ -144,20 +144,21 @@ public final class TopicsResource {
             .stream()
             .collect(Collectors.toMap(ConfigEntry::getName, ConfigEntry::getValue));
 
-    // We have no way of knowing the default replication factor in the Kafka broker.
-    short rf = replicationFactor.orElse((short) 0);
-    if (replicasAssignments != null) {
-      // In case of explicitly specified partition-to-replicas assignments, all partitions should
-      // have the same number of replicas.
-      rf = (short) replicasAssignments.values().iterator().next().size();
-    }
+    // We have no way of knowing the default replication factor in the Kafka broker. Also in case
+    // of explicitly specified partition-to-replicas assignments, all partitions should have the
+    // same number of replicas.
+    final short assumedReplicationFactor = replicationFactor.orElse(
+        replicasAssignments.isEmpty()
+            ? 0
+            : (short) replicasAssignments.values().iterator().next().size());
+
     TopicData topicData =
         toTopicData(
             Topic.create(
                 clusterId,
                 topicName,
                 /* partitions= */ emptyList(),
-                rf,
+                assumedReplicationFactor,
                 /* isInternal= */ false));
 
     CompletableFuture<CreateTopicResponse> response =

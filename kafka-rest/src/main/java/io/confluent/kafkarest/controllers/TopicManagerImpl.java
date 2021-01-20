@@ -33,7 +33,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -174,7 +173,7 @@ final class TopicManagerImpl implements TopicManager {
       String topicName,
       Optional<Integer> partitionsCount,
       Optional<Short> replicationFactor,
-      @Nullable Map<Integer, List<Integer>> replicasAssignments,
+      Map<Integer, List<Integer>> replicasAssignments,
       Map<String, Optional<String>> configs) {
     requireNonNull(topicName);
 
@@ -183,7 +182,7 @@ final class TopicManagerImpl implements TopicManager {
 
     // A new topic can be created with either uniform replication according to the given partitions
     // count and replication factor, or explicitly specified partition-to-replicas assignments.
-    NewTopic createTopicRequest = replicasAssignments == null
+    NewTopic createTopicRequest = replicasAssignments.isEmpty()
         ? new NewTopic(topicName, partitionsCount, replicationFactor).configs(nullableConfigs)
         : new NewTopic(topicName, replicasAssignments).configs(nullableConfigs);
 
