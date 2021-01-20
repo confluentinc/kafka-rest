@@ -577,12 +577,14 @@ public class TopicsResourceTest {
         TOPIC_1.getClusterId(),
         CreateTopicRequest.builder()
             .setTopicName(TOPIC_1.getName())
+            .setReplicasAssignments(replicasAssignments)
             .setConfigs(
                 singletonList(CreateTopicRequest.ConfigEntry.create("cleanup.policy", "compact")))
             .build());
 
+    short expectedRf = (short) (TOPIC_1.getReplicationFactor() - 1);
     CreateTopicResponse expected =
-        CreateTopicResponse.create(newTopicData("topic-1", false, 0));
+        CreateTopicResponse.create(newTopicData("topic-1", false, expectedRf));
 
     assertEquals(expected, response.getValue());
   }

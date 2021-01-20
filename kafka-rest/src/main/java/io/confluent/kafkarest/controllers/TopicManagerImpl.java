@@ -181,8 +181,11 @@ final class TopicManagerImpl implements TopicManager {
     Map<String, String> nullableConfigs = new HashMap<>();
     configs.forEach((key, value) -> nullableConfigs.put(key, value.orElse(null)));
 
-    NewTopic createTopicRequest =
-        new NewTopic(topicName, partitionsCount, replicationFactor).configs(nullableConfigs);
+    // A new topic can be created with either uniform replication according to the given partitions
+    // count and replication factor, or explicitly specified partition-to-replicas assignments.
+    NewTopic createTopicRequest = replicasAssignments == null
+        ? new NewTopic(topicName, partitionsCount, replicationFactor).configs(nullableConfigs)
+        : new NewTopic(topicName, replicasAssignments).configs(nullableConfigs);
 
     return clusterManager.getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))

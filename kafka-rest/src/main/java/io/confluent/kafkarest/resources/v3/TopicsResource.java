@@ -37,6 +37,7 @@ import io.confluent.kafkarest.response.UrlFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.net.URI;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -137,24 +138,37 @@ public final class TopicsResource {
     String topicName = request.getTopicName();
     Optional<Integer> partitionsCount = request.getPartitionsCount();
     Optional<Short> replicationFactor = request.getReplicationFactor();
+    Map<Integer, List<Integer>> replicasAssignments = request.getReplicasAssignments();
     Map<String, Optional<String>> configs =
         request.getConfigs()
             .stream()
             .collect(Collectors.toMap(ConfigEntry::getName, ConfigEntry::getValue));
 
+    // We have no way of knowing the default replication factor in the Kafka broker.
+    short rf = replicationFactor.orElse((short) 0);
+    if (replicasAssignments != null) {
+      // In case of explicitly specified partition-to-replicas assignments, all partitions should
+      // have the same number of replicas.
+      rf = (short) replicasAssignments.values().iterator().next().size();
+    }
     TopicData topicData =
         toTopicData(
             Topic.create(
                 clusterId,
                 topicName,
                 /* partitions= */ emptyList(),
-                // We have no way of knowing the default replication factor in the Kafka broker.
-                replicationFactor.orElse((short) 0),
+                rf,
                 /* isInternal= */ false));
 
     CompletableFuture<CreateTopicResponse> response =
         topicManager.get()
-            .createTopic(clusterId, topicName, partitionsCount, replicationFactor, null, configs)
+            .createTopic(
+                clusterId,
+                topicName,
+                partitionsCount,
+                replicationFactor,
+                replicasAssignments,
+                configs)
             .thenApply(none -> CreateTopicResponse.create(topicData));
 
     AsyncResponseBuilder.from(
