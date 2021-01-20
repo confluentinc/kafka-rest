@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import javax.annotation.Nullable;
 
 /**
  * A service to manage Kafka {@link Topic Topics}.
@@ -51,13 +52,15 @@ public interface TopicManager {
   CompletableFuture<Optional<Topic>> getLocalTopic(String topicName);
 
   /**
-   * Creates a new Kafka {@link Topic}.
+   * Creates a new Kafka {@link Topic} with either partitions count and replication factor
+   * or explicitly specified partition-to-replicas assignments.
    */
   CompletableFuture<Void> createTopic(
       String clusterId,
       String topicName,
       Optional<Integer> partitionsCount,
       Optional<Short> replicationFactor,
+      @Nullable Map<Integer, List<Integer>> replicasAssignments,
       Map<String, Optional<String>> configs);
 
   /**

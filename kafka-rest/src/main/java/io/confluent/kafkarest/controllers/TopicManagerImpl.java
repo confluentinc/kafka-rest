@@ -33,6 +33,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -173,6 +174,7 @@ final class TopicManagerImpl implements TopicManager {
       String topicName,
       Optional<Integer> partitionsCount,
       Optional<Short> replicationFactor,
+      @Nullable Map<Integer, List<Integer>> replicasAssignments,
       Map<String, Optional<String>> configs) {
     requireNonNull(topicName);
 

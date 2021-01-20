@@ -154,7 +154,7 @@ public final class TopicsResource {
 
     CompletableFuture<CreateTopicResponse> response =
         topicManager.get()
-            .createTopic(clusterId, topicName, partitionsCount, replicationFactor, configs)
+            .createTopic(clusterId, topicName, partitionsCount, replicationFactor, null, configs)
             .thenApply(none -> CreateTopicResponse.create(topicData));
 
     AsyncResponseBuilder.from(
