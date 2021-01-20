@@ -80,11 +80,14 @@ public class ConsumerLagManagerImplTest {
   @Mock
   private ConsumerOffsetsDao consumerOffsetsDao;
 
+  @Mock
+  private ClusterManager clusterManager;
+
   private ConsumerLagManagerImpl consumerLagManager;
 
   @Before
   public void setUp() {
-    consumerLagManager = new ConsumerLagManagerImpl(consumerOffsetsDao);
+    consumerLagManager = new ConsumerLagManagerImpl(consumerOffsetsDao, clusterManager);
   }
 
 //  @Test

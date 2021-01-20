@@ -22,16 +22,11 @@ import io.confluent.kafkarest.controllers.ConsumerOffsetsDaoImpl.MemberId;
 import io.confluent.kafkarest.entities.ConsumerLag;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
-import org.apache.kafka.clients.admin.ConsumerGroupDescription;
-import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.IsolationLevel;
-import org.apache.kafka.common.TopicPartition;
 
 final class ConsumerLagManagerImpl implements ConsumerLagManager {
 

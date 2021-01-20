@@ -53,13 +53,16 @@ public class ConsumerGroupLagManagerImplTest {
   public final EasyMockRule mocks = new EasyMockRule(this);
 
   @Mock
+  private ClusterManager clusterManager;
+
+  @Mock
   private ConsumerOffsetsDao consumerOffsetsDao;
 
   private ConsumerGroupLagManagerImpl consumerGroupLagManager;
 
   @Before
   public void setUp() {
-    consumerGroupLagManager = new ConsumerGroupLagManagerImpl(consumerOffsetsDao);
+    consumerGroupLagManager = new ConsumerGroupLagManagerImpl(consumerOffsetsDao, clusterManager);
   }
 
 //  @Test
