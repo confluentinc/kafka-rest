@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.controllers;
 
+import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.controllers.ConsumerOffsetsDaoImpl.MemberId;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -32,12 +34,15 @@ import org.apache.kafka.common.TopicPartition;
 final class ConsumerGroupLagManagerImpl implements ConsumerGroupLagManager {
 
   private final ConsumerOffsetsDao consumerOffsetsDao;
+  private final ClusterManager clusterManager;
   private final IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
 
   @Inject
   ConsumerGroupLagManagerImpl(
-      ConsumerOffsetsDao consumerOffsetsDao) {
+      ConsumerOffsetsDao consumerOffsetsDao,
+      ClusterManager clusterManager) {
     this.consumerOffsetsDao = requireNonNull(consumerOffsetsDao);
+    this.clusterManager = requireNonNull(clusterManager);
   }
 
   @Override
@@ -45,65 +50,58 @@ final class ConsumerGroupLagManagerImpl implements ConsumerGroupLagManager {
       String clusterId,
       String consumerGroupId
   ) {
-    CompletableFuture<ConsumerGroupDescription> cgDesc =
-        consumerOffsetsDao.getConsumerGroupDescription(consumerGroupId);
-    CompletableFuture<Map<TopicPartition, OffsetAndMetadata>> fetchedCurrentOffsets =
-        consumerOffsetsDao.getCurrentOffsets(consumerGroupId);
-    CompletableFuture<Map<TopicPartition, ListOffsetsResultInfo>> latestOffsets =
-        consumerOffsetsDao.getLatestOffsets(isolationLevel, fetchedCurrentOffsets);
-    CompletableFuture<Map<TopicPartition, MemberId>> tpMemberIds =
-        consumerOffsetsDao.getMemberIds(cgDesc);
-    CompletableFuture<ConsumerGroupLag.Builder> cgOffsets =
-        CompletableFuture.supplyAsync(() ->
-            ConsumerGroupLag.builder()
-                .setClusterId(clusterId)
-                .setConsumerGroupId(consumerGroupId));
-    return CompletableFuture.allOf(
-        fetchedCurrentOffsets, latestOffsets, tpMemberIds, cgOffsets
-    ).thenApply(x -> {
-      final Map<TopicPartition, OffsetAndMetadata> fetchedCurrentOffsetsJoined = fetchedCurrentOffsets
-          .join();
-      final Map<TopicPartition, ListOffsetsResultInfo> latestOffsetsJoined = latestOffsets.join();
-      ConsumerGroupLag.Builder cgOffsetsJoined = cgOffsets.join();
-      fetchedCurrentOffsetsJoined.keySet().stream()
-          .forEach(
-              tp -> {
-                MemberId memberId = tpMemberIds.join().getOrDefault(
-                    tp, MemberId.builder()
-                        .setConsumerId("")
-                        .setClientId("")
-                        .setInstanceId(Optional.empty())
-                        .build());
-                long currentOffset = consumerOffsetsDao
-                    .getCurrentOffset(fetchedCurrentOffsetsJoined, tp);
-                long latestOffset = consumerOffsetsDao.getOffset(latestOffsetsJoined, tp);
-                // ahu todo: ask about log.debug
-                cgOffsetsJoined.addOffset(
-                    tp.topic(),
-                    memberId.getConsumerId(),
-                    memberId.getClientId(),
-                    memberId.getInstanceId(),
-                    tp.partition(),
-                    currentOffset,
-                    latestOffset
-                );
-              });
-      return Optional.of(cgOffsetsJoined.build());
-    });
+    return clusterManager.getCluster(clusterId)
+        .thenApply(
+            cluster ->
+                checkEntityExists(cluster, "Cluster %s could not be found.", clusterId))
+        .thenCompose(
+            cluster ->
+                consumerOffsetsDao.getConsumerGroupDescription(consumerGroupId))
+        .thenApply(
+            cgDesc ->
+                cgDesc
+                    .orElseThrow(
+                        () -> new NotFoundException("Consumer group " +
+                            consumerGroupId + " could not be found.")))
+        .thenCompose(
+            cgDesc ->
+                consumerOffsetsDao.getCurrentOffsets(consumerGroupId)
+                    .thenCompose(
+                        fetchedCurrentOffsets ->
+                            consumerOffsetsDao.getLatestOffsets(isolationLevel, fetchedCurrentOffsets)
+                                .thenCompose(
+                                    latestOffsets ->
+                                        consumerOffsetsDao.getMemberIds(cgDesc)
+                                            .thenCompose(
+                                                tpMemberIds ->
+                                                    CompletableFuture.supplyAsync(() ->
+                                                        ConsumerGroupLag.builder()
+                                                            .setClusterId(clusterId)
+                                                            .setConsumerGroupId(consumerGroupId))
+                                                        .thenApply(
+                                                            cgOffsets -> {
+                                                              fetchedCurrentOffsets.keySet().stream().forEach(
+                                                                  tp -> {
+                                                                    MemberId memberId = tpMemberIds.getOrDefault(
+                                                                        tp, MemberId.builder()
+                                                                            .setConsumerId("")
+                                                                            .setClientId("")
+                                                                            .setInstanceId(Optional.empty())
+                                                                            .build());
+                                                                    long currentOffset = consumerOffsetsDao
+                                                                        .getCurrentOffset(fetchedCurrentOffsets, tp);
+                                                                    long latestOffset = consumerOffsetsDao
+                                                                        .getOffset(latestOffsets, tp);
+                                                                    // ahu todo: ask about log.debug
+                                                                    cgOffsets.addOffset(
+                                                                        tp.topic(),
+                                                                        memberId.getConsumerId(),
+                                                                        memberId.getClientId(),
+                                                                        memberId.getInstanceId(),
+                                                                        tp.partition(),
+                                                                        currentOffset,
+                                                                        latestOffset);
+                                                                  });
+                                                              return Optional.of(cgOffsets.build());})))));
   }
-
-//  @Override
-//  public CompletableFuture<Optional<ConsumerGroupLag>> getConsumerGroupLag(
-//      String clusterId,
-//      String consumerGroupId
-//  ) {
-//    try {
-//      ConsumerGroupLag lag = consumerOffsetsDao
-//          .getConsumerGroupOffsets(clusterId, consumerGroupId, IsolationLevel.READ_COMMITTED);
-//      return CompletableFuture.completedFuture(Optional.ofNullable(lag));
-//    } catch (Exception e) {
-//      // log.warn("unable to fetch offsets for consumer group", e);
-//      return CompletableFuture.completedFuture(Optional.empty());
-//    }
-//  }
 }
