@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 @AutoValue
@@ -83,8 +82,7 @@ public abstract class CreateTopicRequest {
 
     public abstract Builder setReplicationFactor(@Nullable Short replicationFactor);
 
-    public abstract Builder setReplicasAssignments(
-        @Nonnull Map<Integer, List<Integer>> replicasAssignments);
+    public abstract Builder setReplicasAssignments(Map<Integer, List<Integer>> replicasAssignments);
 
     public abstract Builder setConfigs(List<ConfigEntry> configs);
 

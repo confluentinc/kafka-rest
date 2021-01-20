@@ -147,7 +147,7 @@ public final class TopicsResource {
     // We have no way of knowing the default replication factor in the Kafka broker. Also in case
     // of explicitly specified partition-to-replicas assignments, all partitions should have the
     // same number of replicas.
-    final short assumedReplicationFactor = replicationFactor.orElse(
+    short assumedReplicationFactor = replicationFactor.orElse(
         replicasAssignments.isEmpty()
             ? 0
             : (short) replicasAssignments.values().iterator().next().size());

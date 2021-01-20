@@ -1501,16 +1501,16 @@ components:
               value:
                 topic_name: 'topic-Y'
                 replicas_assignments:
-                  - partition: 0
-                    replicas:
+                  - partition_id: 0
+                    broker_ids:
                       - 1
                       - 2
-                  - partition: 1
-                    replicas:
+                  - partition_id: 1
+                    broker_ids:
                       - 2
                       - 3
-                  - partition: 2
-                    replicas:
+                  - partition_id: 2
+                    broker_ids:
                       - 3
                       - 1
                 configs:
