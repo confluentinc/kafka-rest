@@ -72,36 +72,35 @@ final class ConsumerGroupLagManagerImpl implements ConsumerGroupLagManager {
                                 .thenCompose(
                                     latestOffsets ->
                                         consumerOffsetsDao.getMemberIds(cgDesc)
-                                            .thenCompose(
-                                                tpMemberIds ->
-                                                    CompletableFuture.supplyAsync(() ->
-                                                        ConsumerGroupLag.builder()
-                                                            .setClusterId(clusterId)
-                                                            .setConsumerGroupId(consumerGroupId))
-                                                        .thenApply(
-                                                            cgOffsets -> {
-                                                              fetchedCurrentOffsets.keySet().stream().forEach(
-                                                                  tp -> {
-                                                                    MemberId memberId = tpMemberIds.getOrDefault(
-                                                                        tp, MemberId.builder()
-                                                                            .setConsumerId("")
-                                                                            .setClientId("")
-                                                                            .setInstanceId(Optional.empty())
-                                                                            .build());
-                                                                    long currentOffset = consumerOffsetsDao
-                                                                        .getCurrentOffset(fetchedCurrentOffsets, tp);
-                                                                    long latestOffset = consumerOffsetsDao
-                                                                        .getOffset(latestOffsets, tp);
-                                                                    // ahu todo: ask about log.debug
-                                                                    cgOffsets.addOffset(
-                                                                        tp.topic(),
-                                                                        memberId.getConsumerId(),
-                                                                        memberId.getClientId(),
-                                                                        memberId.getInstanceId(),
-                                                                        tp.partition(),
-                                                                        currentOffset,
-                                                                        latestOffset);
-                                                                  });
-                                                              return Optional.of(cgOffsets.build());})))));
+                                            .thenApply(
+                                                tpMemberIds -> {
+                                                  ConsumerGroupLag.Builder cgOffsets =
+                                                      ConsumerGroupLag.builder()
+                                                          .setClusterId(clusterId)
+                                                          .setConsumerGroupId(consumerGroupId);
+                                                  fetchedCurrentOffsets.keySet().stream().forEach(
+                                                      tp -> {
+                                                        MemberId memberId = tpMemberIds.getOrDefault(
+                                                            tp, MemberId.builder()
+                                                                .setConsumerId("")
+                                                                .setClientId("")
+                                                                .setInstanceId(Optional.empty())
+                                                                .build());
+                                                        long currentOffset = consumerOffsetsDao
+                                                            .getCurrentOffset(fetchedCurrentOffsets, tp);
+                                                        long latestOffset = consumerOffsetsDao
+                                                            .getOffset(latestOffsets, tp);
+                                                        // ahu todo: ask about log.debug
+                                                        cgOffsets.addOffset(
+                                                            tp.topic(),
+                                                            memberId.getConsumerId(),
+                                                            memberId.getClientId(),
+                                                            memberId.getInstanceId(),
+                                                            tp.partition(),
+                                                            currentOffset,
+                                                            latestOffset);
+                                                      });
+                                                  return Optional.of(cgOffsets.build());
+                                                }))));
   }
 }
