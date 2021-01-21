@@ -45,7 +45,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class ListConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
+public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
 
   private static final String topic1 = "topic-1";
   private static final String topic2 = "topic-2";

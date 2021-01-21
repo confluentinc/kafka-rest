@@ -18,26 +18,30 @@ package io.confluent.kafkarest.controllers;
 import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
 import static java.util.Objects.requireNonNull;
 
-import io.confluent.kafkarest.controllers.ConsumerOffsetsDaoImpl.MemberId;
+import io.confluent.kafkarest.entities.ConsumerGroup;
 import io.confluent.kafkarest.entities.ConsumerGroupLag;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
-import javax.ws.rs.NotFoundException;
-import org.apache.kafka.common.IsolationLevel;
+import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.TopicPartition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-final class ConsumerGroupLagManagerImpl implements ConsumerGroupLagManager {
+final class ConsumerGroupLagManagerImpl extends AbstractConsumerLagManager implements ConsumerGroupLagManager {
 
-  private final ConsumerOffsetsDao consumerOffsetsDao;
-  private final ClusterManager clusterManager;
-  private final IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
+  private final ConsumerGroupManager consumerGroupManager;
+  private static final Logger log = LoggerFactory.getLogger(ConsumerGroupLagManagerImpl.class);
 
   @Inject
   ConsumerGroupLagManagerImpl(
-      ConsumerOffsetsDao consumerOffsetsDao,
-      ClusterManager clusterManager) {
-    this.consumerOffsetsDao = requireNonNull(consumerOffsetsDao);
-    this.clusterManager = requireNonNull(clusterManager);
+      Admin kafkaAdminClient,
+      ConsumerGroupManager consumerGroupManager) {
+    super(kafkaAdminClient);
+    this.consumerGroupManager = requireNonNull(consumerGroupManager);
   }
 
   @Override
@@ -45,57 +49,66 @@ final class ConsumerGroupLagManagerImpl implements ConsumerGroupLagManager {
       String clusterId,
       String consumerGroupId
   ) {
-    return clusterManager.getCluster(clusterId)
+    return consumerGroupManager.getConsumerGroup(clusterId, consumerGroupId)
         .thenApply(
-            cluster ->
-                checkEntityExists(cluster, "Cluster %s could not be found.", clusterId))
+            consumerGroup ->
+                checkEntityExists(consumerGroup, "Consumer Group %s could not be found.", consumerGroupId))
         .thenCompose(
-            cluster ->
-                consumerOffsetsDao.getConsumerGroupDescription(consumerGroupId))
-        .thenApply(
-            cgDesc ->
-                cgDesc
-                    .orElseThrow(
-                        () -> new NotFoundException("Consumer group " +
-                            consumerGroupId + " could not be found.")))
-        .thenCompose(
-            cgDesc ->
-                consumerOffsetsDao.getCurrentOffsets(consumerGroupId)
+            consumerGroup ->
+                getCurrentOffsets(consumerGroupId)
                     .thenCompose(
                         fetchedCurrentOffsets ->
-                            consumerOffsetsDao.getLatestOffsets(isolationLevel, fetchedCurrentOffsets)
-                                .thenCompose(
+                            getLatestOffsets(fetchedCurrentOffsets)
+                                .thenApply(
                                     latestOffsets ->
-                                        consumerOffsetsDao.getMemberIds(cgDesc)
-                                            .thenApply(
-                                                tpMemberIds -> {
-                                                  ConsumerGroupLag.Builder cgOffsets =
-                                                      ConsumerGroupLag.builder()
-                                                          .setClusterId(clusterId)
-                                                          .setConsumerGroupId(consumerGroupId);
-                                                  fetchedCurrentOffsets.keySet().stream().forEach(
-                                                      tp -> {
-                                                        MemberId memberId = tpMemberIds.getOrDefault(
-                                                            tp, MemberId.builder()
-                                                                .setConsumerId("")
-                                                                .setClientId("")
-                                                                .setInstanceId(Optional.empty())
-                                                                .build());
-                                                        long currentOffset = consumerOffsetsDao
-                                                            .getCurrentOffset(fetchedCurrentOffsets, tp);
-                                                        long latestOffset = consumerOffsetsDao
-                                                            .getOffset(latestOffsets, tp);
-                                                        // ahu todo: ask about log.debug
-                                                        cgOffsets.addOffset(
-                                                            tp.topic(),
-                                                            memberId.getConsumerId(),
-                                                            memberId.getClientId(),
-                                                            memberId.getInstanceId(),
-                                                            tp.partition(),
-                                                            currentOffset,
-                                                            latestOffset);
-                                                      });
-                                                  return Optional.of(cgOffsets.build());
-                                                }))));
+                                       createConsumerGroupLag(
+                                           clusterId,
+                                           consumerGroup,
+                                           fetchedCurrentOffsets,
+                                           latestOffsets))));
+  }
+
+  Optional<ConsumerGroupLag> createConsumerGroupLag(
+      String clusterId,
+      ConsumerGroup consumerGroup,
+      Map<TopicPartition, OffsetAndMetadata> fetchedCurrentOffsets,
+      Map<TopicPartition, ListOffsetsResultInfo> latestOffsets) {
+    Map<TopicPartition, MemberId> tpMemberIds =
+        getMemberIds(consumerGroup);
+    ConsumerGroupLag.Builder consumerGroupLag =
+        ConsumerGroupLag.builder()
+            .setClusterId(clusterId)
+            .setConsumerGroupId(consumerGroup.getConsumerGroupId());
+    fetchedCurrentOffsets.keySet().stream().forEach(
+        topicPartition -> {
+          MemberId memberId = tpMemberIds.getOrDefault(
+              topicPartition, MemberId.builder()
+                  .setConsumerId("")
+                  .setClientId("")
+                  .setInstanceId("")
+                  .build());
+          long currentOffset =
+              getCurrentOffset(fetchedCurrentOffsets, topicPartition);
+          long latestOffset =
+              getOffset(latestOffsets, topicPartition);
+          if (currentOffset < 0 || latestOffset < 0) {
+            log.debug("invalid offsets for topic={} partition={} consumerId={} current={} latest={}",
+                topicPartition.topic(),
+                topicPartition.partition(),
+                memberId.getConsumerId(),
+                currentOffset,
+                latestOffset);
+          } else {
+            consumerGroupLag.addOffset(
+                topicPartition.topic(),
+                memberId.getConsumerId(),
+                memberId.getClientId(),
+                memberId.getInstanceId().orElseGet(null),
+                topicPartition.partition(),
+                currentOffset,
+                latestOffset);
+          }
+        });
+    return Optional.of(consumerGroupLag.build());
   }
 }

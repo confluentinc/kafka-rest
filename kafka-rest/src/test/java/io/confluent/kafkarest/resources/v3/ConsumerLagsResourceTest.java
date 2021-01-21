@@ -24,6 +24,7 @@ import io.confluent.kafkarest.controllers.ConsumerLagManager;
 import io.confluent.kafkarest.entities.ConsumerLag;
 import io.confluent.kafkarest.entities.v3.ConsumerLagData;
 import io.confluent.kafkarest.entities.v3.ConsumerLagDataList;
+import io.confluent.kafkarest.entities.v3.GetConsumerLagResponse;
 import io.confluent.kafkarest.entities.v3.ListConsumerLagsResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
@@ -32,6 +33,8 @@ import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import javax.ws.rs.NotFoundException;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
 import org.junit.Before;
@@ -41,16 +44,17 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class ListConsumerLagsResourceTest {
+public class ConsumerLagsResourceTest {
 
   private static final String CLUSTER_ID = "cluster-1";
   private static final String CONSUMER_GROUP_ID = "consumer-group-1";
+  private static final String TOPIC = "topic-1";
 
   private static final ConsumerLag CONSUMER_LAG_1 =
       ConsumerLag.builder()
           .setClusterId(CLUSTER_ID)
           .setConsumerGroupId(CONSUMER_GROUP_ID)
-          .setTopicName("topic-1")
+          .setTopicName(TOPIC)
           .setPartitionId(1)
           .setConsumerId("consumer-1")
           .setInstanceId("instance-1")
@@ -63,7 +67,7 @@ public class ListConsumerLagsResourceTest {
       ConsumerLag.builder()
           .setClusterId(CLUSTER_ID)
           .setConsumerGroupId(CONSUMER_GROUP_ID)
-          .setTopicName("topic-1")
+          .setTopicName(TOPIC)
           .setPartitionId(2)
           .setConsumerId("consumer-2")
           .setInstanceId("instance-2")
@@ -81,12 +85,12 @@ public class ListConsumerLagsResourceTest {
   @Mock
   private ConsumerLagManager consumerLagManager;
 
-  private ListConsumerLagsResource consumerLagResource;
+  private ConsumerLagsResource consumerLagsResource;
 
   @Before
   public void setUp() {
-    consumerLagResource =
-        new ListConsumerLagsResource(
+    consumerLagsResource =
+        new ConsumerLagsResource(
             () -> consumerLagManager, new CrnFactoryImpl(""), new FakeUrlFactory());
   }
 
@@ -97,7 +101,7 @@ public class ListConsumerLagsResourceTest {
     replay(consumerLagManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    consumerLagResource.listConsumerLags(response, CLUSTER_ID, CONSUMER_GROUP_ID);
+    consumerLagsResource.listConsumerLags(response, CLUSTER_ID, CONSUMER_GROUP_ID);
 
     ListConsumerLagsResponse expected =
         ListConsumerLagsResponse.create(
@@ -130,5 +134,40 @@ public class ListConsumerLagsResourceTest {
             .build());
 
     assertEquals(expected, response.getValue());
+  }
+
+  @Test
+  public void getConsumerLag_returnsConsumerLag() {
+    expect(consumerLagManager.getConsumerLag(CLUSTER_ID, CONSUMER_GROUP_ID, TOPIC, 1))
+        .andReturn(completedFuture(Optional.of(CONSUMER_LAG_1)));
+    replay(consumerLagManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    consumerLagsResource.getConsumerLag(response, CLUSTER_ID, CONSUMER_GROUP_ID, TOPIC, 1);
+
+    GetConsumerLagResponse expected =
+        GetConsumerLagResponse.create(
+            ConsumerLagData.fromConsumerLag(CONSUMER_LAG_1)
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf("/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1")
+                        .setResourceName("crn:///kafka=cluster-1/topic=topic-1/partition=1/lag=consumer-group-1")
+                        .build())
+                .build());
+
+    assertEquals(expected, response.getValue());
+  }
+
+  @Test
+  public void getConsumerLag_nonExistingConsumerLag_throwsNotFound() {
+    expect(consumerLagManager.getConsumerLag(
+        CLUSTER_ID, TOPIC, CONSUMER_GROUP_ID, 1))
+        .andReturn(completedFuture(Optional.empty()));
+    replay(consumerLagManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    consumerLagsResource.getConsumerLag(response, CLUSTER_ID, CONSUMER_GROUP_ID, TOPIC, 1);
+
+    assertEquals(NotFoundException.class, response.getException().getClass());
   }
 }

@@ -78,16 +78,16 @@ public class ConsumerLagManagerImplTest {
   private Admin adminClient;
 
   @Mock
-  private ConsumerOffsetsDao consumerOffsetsDao;
+  private Admin kafkaAdminClient;
 
   @Mock
-  private ClusterManager clusterManager;
+  private ConsumerGroupManager consumerGroupManager;
 
   private ConsumerLagManagerImpl consumerLagManager;
 
   @Before
   public void setUp() {
-    consumerLagManager = new ConsumerLagManagerImpl(consumerOffsetsDao, clusterManager);
+    consumerLagManager = new ConsumerLagManagerImpl(kafkaAdminClient, consumerGroupManager);
   }
 
 //  @Test

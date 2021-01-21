@@ -22,6 +22,7 @@ import static org.junit.Assert.assertFalse;
 
 import io.confluent.kafkarest.entities.ConsumerGroupLag;
 import java.util.Optional;
+import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.common.IsolationLevel;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
@@ -53,16 +54,16 @@ public class ConsumerGroupLagManagerImplTest {
   public final EasyMockRule mocks = new EasyMockRule(this);
 
   @Mock
-  private ClusterManager clusterManager;
+  private ConsumerGroupManager consumerGroupManager;
 
   @Mock
-  private ConsumerOffsetsDao consumerOffsetsDao;
+  private Admin kafkaAdminClient;
 
   private ConsumerGroupLagManagerImpl consumerGroupLagManager;
 
   @Before
   public void setUp() {
-    consumerGroupLagManager = new ConsumerGroupLagManagerImpl(consumerOffsetsDao, clusterManager);
+    consumerGroupLagManager = new ConsumerGroupLagManagerImpl(kafkaAdminClient, consumerGroupManager);
   }
 
 //  @Test

@@ -36,5 +36,5 @@ public interface ConsumerLagManager {
    * Returns the Kafka {@link ConsumerLag} with the given {@code consumerId}.
    */
   CompletableFuture<Optional<ConsumerLag>> getConsumerLag(
-      String clusterId, String topicName, Integer partitionId, String consumerGroupId);
+      String clusterId, String consumerGroupId, String topicName, Integer partitionId);
 }

@@ -35,7 +35,7 @@ import java.util.Map;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
-public class ConsumerOffsetsDaoImplTest {
+public class AbstractConsumerLagManagerTest {
 
   private static final Duration DEFAULT_METADATA_TIMEOUT = Duration.ofSeconds(15);
   private AdminClient adminClient;
@@ -48,58 +48,58 @@ public class ConsumerOffsetsDaoImplTest {
 
 //  @Test
 //  public void testGetConsumerGroups() throws Throwable {
-//    ListConsumerGroupsResult lcgr = mock(ListConsumerGroupsResult.class);
-//    expect(adminClient.listConsumerGroups(anyObject(ListConsumerGroupsOptions.class))).andReturn(lcgr).once();
+//    ListConsumerGroupsResult listConsumerGroupsResult = mock(ListConsumerGroupsResult.class);
+//    expect(adminClient.listConsumerGroups(anyObject(ListConsumerGroupsOptions.class))).andReturn(listConsumerGroupsResult).once();
 //    Collection<ConsumerGroupListing> consumerGroups = Lists.newArrayList();
-//    expect(lcgr.all()).andReturn(KafkaFuture.completedFuture(consumerGroups));
+//    expect(listConsumerGroupsResult.all()).andReturn(KafkaFuture.completedFuture(consumerGroups));
 //    expectLastCall().once();
-//    replay(adminClient, lcgr);
-//    ConsumerOffsetsDaoImpl dao = new ConsumerOffsetsDaoImpl(adminClient, DEFAULT_METADATA_TIMEOUT);
+//    replay(adminClient, listConsumerGroupsResult);
+//    AbstractConsumerLagManager dao = new AbstractConsumerLagManager(adminClient, DEFAULT_METADATA_TIMEOUT);
 //    dao.getConsumerGroups();
-//    verify(adminClient, lcgr);
+//    verify(adminClient, listConsumerGroupsResult);
 //  }
 
 //  @Test
 //  public void testGetAllConsumerGroupDescriptions() throws Throwable {
 //
-//    Collection<String> consumerGroupIds = ImmutableList.of("cg1", "cg2", "cg3");
-//    ConsumerGroupDescription desc1 = new ConsumerGroupDescription("cg1", true, getMemberDescriptions(), "something",
+//    Collection<String> consumerGroupIds = ImmutableList.of("consumerGroup1", "consumerGroup2", "consumerGroup3");
+//    ConsumerGroupDescription desc1 = new ConsumerGroupDescription("consumerGroup1", true, getMemberDescriptions(), "something",
 //        ConsumerGroupState.EMPTY, Node.noNode());
-//    ConsumerGroupDescription desc2 = new ConsumerGroupDescription("cg2", true, getMemberDescriptions(), "something",
+//    ConsumerGroupDescription desc2 = new ConsumerGroupDescription("consumerGroup2", true, getMemberDescriptions(), "something",
 //        ConsumerGroupState.STABLE, Node.noNode());
-//    ConsumerGroupDescription desc3 = new ConsumerGroupDescription("cg3", true, null, "something",
+//    ConsumerGroupDescription desc3 = new ConsumerGroupDescription("consumerGroup3", true, null, "something",
 //        ConsumerGroupState.STABLE, Node.noNode());
 //
-//    DescribeConsumerGroupsResult dcgr = mock(DescribeConsumerGroupsResult.class);
-//    expect(adminClient.describeConsumerGroups(eq(consumerGroupIds), anyObject(DescribeConsumerGroupsOptions.class))).andReturn(dcgr).once();
+//    DescribeConsumerGroupsResult describeConsumerGroupsResult = mock(DescribeConsumerGroupsResult.class);
+//    expect(adminClient.describeConsumerGroups(eq(consumerGroupIds), anyObject(DescribeConsumerGroupsOptions.class))).andReturn(describeConsumerGroupsResult).once();
 //    Map<String, KafkaFuture<ConsumerGroupDescription>> futuresMap = ImmutableMap.of(
-//        "cg1", KafkaFuture.completedFuture(desc1),
-//        "cg2", KafkaFuture.completedFuture(desc2),
-//        "cg3", KafkaFuture.completedFuture(desc3)
+//        "consumerGroup1", KafkaFuture.completedFuture(desc1),
+//        "consumerGroup2", KafkaFuture.completedFuture(desc2),
+//        "consumerGroup3", KafkaFuture.completedFuture(desc3)
 //    );
-//    expect(dcgr.describedGroups()).andReturn(futuresMap);
+//    expect(describeConsumerGroupsResult.describedGroups()).andReturn(futuresMap);
 //    expectLastCall().once();
 //
-//    replay(adminClient, dcgr);
-//    ConsumerOffsetsDaoImpl dao = new ConsumerOffsetsDaoImpl(adminClient, DEFAULT_METADATA_TIMEOUT);
-//    assertEquals(ImmutableMap.of("cg1", desc1, "cg2", desc2, "cg3", desc3), dao.getAllConsumerGroupDescriptions(consumerGroupIds));
-//    verify(adminClient, dcgr);
+//    replay(adminClient, describeConsumerGroupsResult);
+//    AbstractConsumerLagManager dao = new AbstractConsumerLagManager(adminClient, DEFAULT_METADATA_TIMEOUT);
+//    assertEquals(ImmutableMap.of("consumerGroup1", desc1, "consumerGroup2", desc2, "consumerGroup3", desc3), dao.getAllConsumerGroupDescriptions(consumerGroupIds));
+//    verify(adminClient, describeConsumerGroupsResult);
 //  }
 
 //  @Test
 //  public void testGetCurrentOffsets() throws Throwable {
 //
-//    final String consumerGroupId = "cg1";
-//    ListConsumerGroupOffsetsResult lcgor = mock(ListConsumerGroupOffsetsResult.class);
-//    expect(adminClient.listConsumerGroupOffsets(eq(consumerGroupId), anyObject(ListConsumerGroupOffsetsOptions.class))).andReturn(lcgor).once();
+//    final String consumerGroupId = "consumerGroup1";
+//    ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult = mock(ListConsumerGroupOffsetsResult.class);
+//    expect(adminClient.listConsumerGroupOffsets(eq(consumerGroupId), anyObject(ListConsumerGroupOffsetsOptions.class))).andReturn(listConsumerGroupOffsetsResult).once();
 //    Map<TopicPartition, OffsetAndMetadata> tpMetaData = Maps.newHashMap();
-//    expect(lcgor.partitionsToOffsetAndMetadata()).andReturn(KafkaFuture.completedFuture(tpMetaData));
+//    expect(listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata()).andReturn(KafkaFuture.completedFuture(tpMetaData));
 //    expectLastCall().once();
 //
-//    replay(adminClient, lcgor);
-//    ConsumerOffsetsDaoImpl dao = new ConsumerOffsetsDaoImpl(adminClient, DEFAULT_METADATA_TIMEOUT);
+//    replay(adminClient, listConsumerGroupOffsetsResult);
+//    AbstractConsumerLagManager dao = new AbstractConsumerLagManager(adminClient, DEFAULT_METADATA_TIMEOUT);
 //    dao.getCurrentOffsets(consumerGroupId);
-//    verify(adminClient, lcgor);
+//    verify(adminClient, listConsumerGroupOffsetsResult);
 //  }
 
   private ListOffsetsResult.ListOffsetsResultInfo listOffsetResult(long offset) {
@@ -108,9 +108,9 @@ public class ConsumerOffsetsDaoImplTest {
 
 //  @Test
 //  public void getConsumerGroupOffsets_returnsCorrectLagSummary() throws Throwable {
-//    ConsumerOffsetsDaoImpl dao = new ConsumerOffsetsDaoImpl(adminClient, DEFAULT_METADATA_TIMEOUT);
+//    AbstractConsumerLagManager dao = new AbstractConsumerLagManager(adminClient, DEFAULT_METADATA_TIMEOUT);
 //
-//    ConsumerGroupDescription cgDesc = new ConsumerGroupDescription("cg1", true, getMemberDescriptions(), "something",
+//    ConsumerGroupDescription consumerGroupDescription = new ConsumerGroupDescription("consumerGroup1", true, getMemberDescriptions(), "something",
 //        ConsumerGroupState.STABLE, Node.noNode());
 //
 //    Map<TopicPartition, OffsetAndMetadata> currentOffsets = ImmutableMap.of(
@@ -127,9 +127,9 @@ public class ConsumerOffsetsDaoImplTest {
 //    );
 //
 //    ConsumerGroupLag lag= dao.getConsumerGroupOffsets(
-//        cgDesc, currentOffsets, endOffsets).setClusterId(CLUSTER_ID).build();
+//        consumerGroupDescription, currentOffsets, endOffsets).setClusterId(CLUSTER_ID).build();
 //    assertEquals("cluster-1", lag.getClusterId());
-//    assertEquals("cg1", lag.getConsumerGroupId());
+//    assertEquals("consumerGroup1", lag.getConsumerGroupId());
 //    assertEquals(100, (long) lag.getMaxLag());
 //    assertEquals(150, (long) lag.getTotalLag());
 //    assertEquals("consumer2", lag.getMaxLagConsumerId());
@@ -137,7 +137,7 @@ public class ConsumerOffsetsDaoImplTest {
 //    assertEquals("topic3", lag.getMaxLagTopicName());
 //    assertEquals(1, (long) lag.getMaxLagPartitionId());
 //
-//    ConsumerGroupDescription cgDesc2 = new ConsumerGroupDescription("cg2", true, null, "something",
+//    ConsumerGroupDescription consumerGroupDescription2 = new ConsumerGroupDescription("consumerGroup2", true, null, "something",
 //        ConsumerGroupState.STABLE, Node.noNode());
 //
 //    Map<TopicPartition, OffsetAndMetadata> currentOffsets2 = ImmutableMap.of(
@@ -154,9 +154,9 @@ public class ConsumerOffsetsDaoImplTest {
 //    );
 //
 //    ConsumerGroupLag lag2 = dao.getConsumerGroupOffsets(
-//        cgDesc2, currentOffsets2, endOffsets2).setClusterId(CLUSTER_ID).build();
+//        consumerGroupDescription2, currentOffsets2, endOffsets2).setClusterId(CLUSTER_ID).build();
 //    assertEquals("cluster-1", lag2.getClusterId());
-//    assertEquals("cg2", lag2.getConsumerGroupId());
+//    assertEquals("consumerGroup2", lag2.getConsumerGroupId());
 //    assertEquals(25, (long) lag2.getMaxLag());
 //    assertEquals(49, (long) lag2.getTotalLag());
 //    assertEquals("", lag2.getMaxLagConsumerId());
