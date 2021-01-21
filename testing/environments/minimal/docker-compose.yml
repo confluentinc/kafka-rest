@@ -96,7 +96,6 @@ services:
     hostname: kafka-rest
     container_name: minimal-kafka-rest
     depends_on:
-      - zookeeper
       - kafka-1
       - schema-registry
     environment:
