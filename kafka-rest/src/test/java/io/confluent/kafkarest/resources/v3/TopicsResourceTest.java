@@ -25,6 +25,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
@@ -40,7 +42,11 @@ import io.confluent.kafkarest.entities.v3.TopicDataList;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import javax.ws.rs.NotFoundException;
@@ -325,6 +331,33 @@ public class TopicsResourceTest {
 
   private TopicsResource topicsResource;
 
+  private static TopicData newTopicData(
+      String topicName,
+      boolean isInternal,
+      int replicationFactor) {
+    return TopicData.builder()
+        .setMetadata(
+            Resource.Metadata.builder()
+                .setSelf(String.format("/v3/clusters/cluster-1/topics/%s", topicName))
+                .setResourceName(String.format("crn:///kafka=cluster-1/topic=%s", topicName))
+                .build())
+        .setClusterId("cluster-1")
+        .setTopicName(topicName)
+        .setInternal(isInternal)
+        .setReplicationFactor(replicationFactor)
+        .setPartitions(
+            Resource.Relationship.create(
+                String.format("/v3/clusters/cluster-1/topics/%s/partitions", topicName)))
+        .setConfigs(
+            Resource.Relationship.create(
+                String.format("/v3/clusters/cluster-1/topics/%s/configs", topicName)))
+        .setPartitionReassignments(
+            Resource.Relationship.create(
+                String.format("/v3/clusters/cluster-1/topics/%s/partitions/-/reassignment",
+                    topicName)))
+        .build();
+  }
+
   @Before
   public void setUp() {
     topicsResource =
@@ -352,69 +385,9 @@ public class TopicsResourceTest {
                         .build())
                 .setData(
                     Arrays.asList(
-                        TopicData.builder()
-                            .setMetadata(
-                                Resource.Metadata.builder()
-                                    .setSelf("/v3/clusters/cluster-1/topics/topic-1")
-                                    .setResourceName("crn:///kafka=cluster-1/topic=topic-1")
-                                    .build())
-                            .setClusterId("cluster-1")
-                            .setTopicName("topic-1")
-                            .setInternal(true)
-                            .setReplicationFactor(3)
-                            .setPartitions(
-                                Resource.Relationship.create(
-                                    "/v3/clusters/cluster-1/topics/topic-1/partitions"))
-                            .setConfigs(
-                                Resource.Relationship.create(
-                                    "/v3/clusters/cluster-1/topics/topic-1/configs"))
-                            .setPartitionReassignments(
-                                Resource.Relationship.create(
-                                    "/v3/clusters/cluster-1/topics/topic-1/partitions"
-                                        + "/-/reassignment"))
-                            .build(),
-                        TopicData.builder()
-                            .setMetadata(
-                                Resource.Metadata.builder()
-                                    .setSelf("/v3/clusters/cluster-1/topics/topic-2")
-                                    .setResourceName("crn:///kafka=cluster-1/topic=topic-2")
-                                    .build())
-                            .setClusterId("cluster-1")
-                            .setTopicName("topic-2")
-                            .setInternal(true)
-                            .setReplicationFactor(3)
-                            .setPartitions(
-                                Resource.Relationship.create(
-                                    "/v3/clusters/cluster-1/topics/topic-2/partitions"))
-                            .setConfigs(
-                                Resource.Relationship.create(
-                                    "/v3/clusters/cluster-1/topics/topic-2/configs"))
-                            .setPartitionReassignments(
-                                Resource.Relationship.create(
-                                    "/v3/clusters/cluster-1/topics/topic-2/partitions"
-                                        + "/-/reassignment"))
-                            .build(),
-                        TopicData.builder()
-                            .setMetadata(
-                                Resource.Metadata.builder()
-                                    .setSelf("/v3/clusters/cluster-1/topics/topic-3")
-                                    .setResourceName("crn:///kafka=cluster-1/topic=topic-3")
-                                    .build())
-                            .setClusterId("cluster-1")
-                            .setTopicName("topic-3")
-                            .setInternal(false)
-                            .setReplicationFactor(3)
-                            .setPartitions(
-                                Resource.Relationship.create(
-                                    "/v3/clusters/cluster-1/topics/topic-3/partitions"))
-                            .setConfigs(
-                                Resource.Relationship.create(
-                                    "/v3/clusters/cluster-1/topics/topic-3/configs"))
-                            .setPartitionReassignments(
-                                Resource.Relationship.create(
-                                    "/v3/clusters/cluster-1/topics/topic-3/partitions"
-                                        + "/-/reassignment"))
-                            .build()))
+                        newTopicData("topic-1", true, 3),
+                        newTopicData("topic-2", true, 3),
+                        newTopicData("topic-3", false, 3)))
                 .build());
 
     assertEquals(expected, response.getValue());
@@ -454,27 +427,7 @@ public class TopicsResourceTest {
     topicsResource.getTopic(response, TOPIC_1.getClusterId(), TOPIC_1.getName());
 
     GetTopicResponse expected =
-        GetTopicResponse.create(
-            TopicData.builder()
-                .setMetadata(
-                    Resource.Metadata.builder()
-                        .setSelf("/v3/clusters/cluster-1/topics/topic-1")
-                        .setResourceName("crn:///kafka=cluster-1/topic=topic-1")
-                        .build())
-                .setClusterId("cluster-1")
-                .setTopicName("topic-1")
-                .setInternal(true)
-                .setReplicationFactor(3)
-                .setPartitions(
-                    Resource.Relationship.create(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions"))
-                .setConfigs(
-                    Resource.Relationship.create(
-                        "/v3/clusters/cluster-1/topics/topic-1/configs"))
-                .setPartitionReassignments(
-                    Resource.Relationship.create(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/-/reassignment"))
-                .build());
+        GetTopicResponse.create(newTopicData("topic-1", true, 3));
 
     assertEquals(expected, response.getValue());
   }
@@ -511,6 +464,7 @@ public class TopicsResourceTest {
             TOPIC_1.getName(),
             Optional.of(TOPIC_1.getPartitions().size()),
             Optional.of(TOPIC_1.getReplicationFactor()),
+            /* replicasAssignments= */ Collections.emptyMap(),
             singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(completedFuture(null));
     replay(topicManager);
@@ -528,27 +482,7 @@ public class TopicsResourceTest {
             .build());
 
     CreateTopicResponse expected =
-        CreateTopicResponse.create(
-            TopicData.builder()
-                .setMetadata(
-                    Resource.Metadata.builder()
-                        .setSelf("/v3/clusters/cluster-1/topics/topic-1")
-                        .setResourceName("crn:///kafka=cluster-1/topic=topic-1")
-                        .build())
-                .setClusterId("cluster-1")
-                .setTopicName("topic-1")
-                .setInternal(false)
-                .setReplicationFactor(3)
-                .setPartitions(
-                    Resource.Relationship.create(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions"))
-                .setConfigs(
-                    Resource.Relationship.create(
-                        "/v3/clusters/cluster-1/topics/topic-1/configs"))
-                .setPartitionReassignments(
-                    Resource.Relationship.create(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/-/reassignment"))
-                .build());
+        CreateTopicResponse.create(newTopicData("topic-1", false, 3));
 
     assertEquals(expected, response.getValue());
   }
@@ -561,6 +495,7 @@ public class TopicsResourceTest {
             TOPIC_1.getName(),
             /* partitionsCount= */ Optional.empty(),
             Optional.of(TOPIC_1.getReplicationFactor()),
+            /* replicasAssignments= */ Collections.emptyMap(),
             singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(completedFuture(null));
     replay(topicManager);
@@ -577,27 +512,7 @@ public class TopicsResourceTest {
             .build());
 
     CreateTopicResponse expected =
-        CreateTopicResponse.create(
-            TopicData.builder()
-                .setMetadata(
-                    Resource.Metadata.builder()
-                        .setSelf("/v3/clusters/cluster-1/topics/topic-1")
-                        .setResourceName("crn:///kafka=cluster-1/topic=topic-1")
-                        .build())
-                .setClusterId("cluster-1")
-                .setTopicName("topic-1")
-                .setInternal(false)
-                .setReplicationFactor(3)
-                .setPartitions(
-                    Resource.Relationship.create(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions"))
-                .setConfigs(
-                    Resource.Relationship.create(
-                        "/v3/clusters/cluster-1/topics/topic-1/configs"))
-                .setPartitionReassignments(
-                    Resource.Relationship.create(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/-/reassignment"))
-                .build());
+        CreateTopicResponse.create(newTopicData("topic-1", false, 3));
 
     assertEquals(expected, response.getValue());
   }
@@ -610,6 +525,7 @@ public class TopicsResourceTest {
             TOPIC_1.getName(),
             Optional.of(TOPIC_1.getPartitions().size()),
             /* replicationFactor= */ Optional.empty(),
+            /* replicasAssignments= */ Collections.emptyMap(),
             singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(completedFuture(null));
     replay(topicManager);
@@ -626,27 +542,50 @@ public class TopicsResourceTest {
             .build());
 
     CreateTopicResponse expected =
-        CreateTopicResponse.create(
-            TopicData.builder()
-                .setMetadata(
-                    Resource.Metadata.builder()
-                        .setSelf("/v3/clusters/cluster-1/topics/topic-1")
-                        .setResourceName("crn:///kafka=cluster-1/topic=topic-1")
-                        .build())
-                .setClusterId("cluster-1")
-                .setTopicName("topic-1")
-                .setInternal(false)
-                .setReplicationFactor(0)
-                .setPartitions(
-                    Resource.Relationship.create(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions"))
-                .setConfigs(
-                    Resource.Relationship.create(
-                        "/v3/clusters/cluster-1/topics/topic-1/configs"))
-                .setPartitionReassignments(
-                    Resource.Relationship.create(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/-/reassignment"))
-                .build());
+        CreateTopicResponse.create(newTopicData("topic-1", false, 0));
+
+    assertEquals(expected, response.getValue());
+  }
+
+  @Test
+  public void createTopic_nonExistingTopic_customReplicasAssignments_createsTopic() {
+    List<Integer> allReplicas = new ArrayList<>();
+    for (int replicaId = 1; replicaId <= TOPIC_1.getReplicationFactor(); replicaId++) {
+      allReplicas.add(replicaId);
+    }
+    ImmutableMap.Builder<Integer, List<Integer>> builder = new Builder<>();
+    for (int partitionId = 0; partitionId < TOPIC_1.getPartitions().size(); partitionId++) {
+      List<Integer> replicas = new ArrayList<>(allReplicas);
+      replicas.remove(partitionId % replicas.size());
+      builder.put(partitionId, replicas);
+    }
+    Map<Integer, List<Integer>> replicasAssignments = builder.build();
+
+    expect(
+        topicManager.createTopic(
+            CLUSTER_ID,
+            TOPIC_1.getName(),
+            /* partitionsCount= */ Optional.empty(),
+            /* replicationFactor= */ Optional.empty(),
+            replicasAssignments,
+            singletonMap("cleanup.policy", Optional.of("compact"))))
+        .andReturn(completedFuture(null));
+    replay(topicManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    topicsResource.createTopic(
+        response,
+        TOPIC_1.getClusterId(),
+        CreateTopicRequest.builder()
+            .setTopicName(TOPIC_1.getName())
+            .setReplicasAssignments(replicasAssignments)
+            .setConfigs(
+                singletonList(CreateTopicRequest.ConfigEntry.create("cleanup.policy", "compact")))
+            .build());
+
+    short expectedReplicationFactor = (short) (TOPIC_1.getReplicationFactor() - 1);
+    CreateTopicResponse expected = CreateTopicResponse.create(
+        newTopicData("topic-1", false, expectedReplicationFactor));
 
     assertEquals(expected, response.getValue());
   }
@@ -659,6 +598,7 @@ public class TopicsResourceTest {
             TOPIC_1.getName(),
             Optional.of(TOPIC_1.getPartitions().size()),
             Optional.of(TOPIC_1.getReplicationFactor()),
+            /* replicasAssignments= */ Collections.emptyMap(),
             singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(failedFuture(new TopicExistsException("")));
     replay(topicManager);
@@ -686,6 +626,7 @@ public class TopicsResourceTest {
             TOPIC_1.getName(),
             Optional.of(TOPIC_1.getPartitions().size()),
             Optional.of(TOPIC_1.getReplicationFactor()),
+            /* replicasAssignments= */ Collections.emptyMap(),
             singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);

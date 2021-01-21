@@ -1011,8 +1011,6 @@ components:
       type: object
       required:
         - topic_name
-        - partitions_count
-        - replication_factor
       properties:
         topic_name:
           type: string
@@ -1020,6 +1018,20 @@ components:
           type: integer
         replication_factor:
           type: integer
+        replicas_assignments:
+          type: array
+          items:
+            type: object
+            required:
+              - partition_id
+              - broker_ids
+            properties:
+              partition_id:
+                type: integer
+              broker_ids:
+                type: array
+                items:
+                  type: integer
         configs:
           type: array
           items:
@@ -1474,15 +1486,38 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreateTopicRequestData'
-          example:
-            topic_name: 'topic-X'
-            partitions_count: 64
-            replication_factor: 3
-            configs:
-              - name: 'cleanup.policy'
-                value: 'compact'
-              - name: 'compression.type'
-                value: 'gzip'
+          examples:
+            uniform_replication:
+              value:
+                topic_name: 'topic-X'
+                partitions_count: 64
+                replication_factor: 3
+                configs:
+                  - name: 'cleanup.policy'
+                    value: 'compact'
+                  - name: 'compression.type'
+                    value: 'gzip'
+            explicit_replicas_assignments:
+              value:
+                topic_name: 'topic-Y'
+                replicas_assignments:
+                  - partition_id: 0
+                    broker_ids:
+                      - 1
+                      - 2
+                  - partition_id: 1
+                    broker_ids:
+                      - 2
+                      - 3
+                  - partition_id: 2
+                    broker_ids:
+                      - 3
+                      - 1
+                configs:
+                  - name: 'cleanup.policy'
+                    value: 'compact'
+                  - name: 'compression.type'
+                    value: 'gzip'
 
     UpdateBrokerConfigRequest:
       description: 'The broker configuration parameter update request.'

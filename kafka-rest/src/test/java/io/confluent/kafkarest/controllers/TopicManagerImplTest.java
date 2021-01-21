@@ -27,12 +27,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -557,6 +561,7 @@ public class TopicManagerImplTest {
         TOPIC_1.getName(),
         Optional.of(TOPIC_1.getPartitions().size()),
         Optional.of(TOPIC_1.getReplicationFactor()),
+        /* replicasAssignments= */ Collections.emptyMap(),
         singletonMap("cleanup.policy", Optional.of("compact"))).get();
 
     verify(adminClient);
@@ -582,6 +587,7 @@ public class TopicManagerImplTest {
         TOPIC_1.getName(),
         /* partitionsCount= */ Optional.empty(),
         Optional.of(TOPIC_1.getReplicationFactor()),
+        /* replicasAssignments= */ Collections.emptyMap(),
         singletonMap("cleanup.policy", Optional.of("compact"))).get();
 
     verify(adminClient);
@@ -608,6 +614,43 @@ public class TopicManagerImplTest {
         TOPIC_1.getName(),
         Optional.of(TOPIC_1.getPartitions().size()),
         /* replicationFactor= */ Optional.empty(),
+        /* replicasAssignments= */ Collections.emptyMap(),
+        singletonMap("cleanup.policy", Optional.of("compact"))).get();
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void createTopic_nonExistingTopic_customReplicasAssignments_createsTopic()
+      throws Exception {
+    List<Integer> allReplicas = new ArrayList<>();
+    for (int replicaId = 1; replicaId <= TOPIC_1.getReplicationFactor(); replicaId++) {
+      allReplicas.add(replicaId);
+    }
+    ImmutableMap.Builder<Integer, List<Integer>> builder = new Builder<>();
+    for (int partitionId = 0; partitionId < TOPIC_1.getPartitions().size(); partitionId++) {
+      List<Integer> replicas = new ArrayList<>(allReplicas);
+      replicas.remove(partitionId % replicas.size());
+      builder.put(partitionId, replicas);
+    }
+    Map<Integer, List<Integer>> replicasAssignments = builder.build();
+
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(
+        adminClient.createTopics(
+            singletonList(
+                new NewTopic(TOPIC_1.getName(), replicasAssignments)
+                    .configs(singletonMap("cleanup.policy", "compact")))))
+        .andReturn(createTopicsResult);
+    expect(createTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
+    replay(clusterManager, adminClient, createTopicsResult);
+
+    topicManager.createTopic(
+        CLUSTER_ID,
+        TOPIC_1.getName(),
+        /* partitionsCount= */ Optional.empty(),
+        /* replicationFactor= */ Optional.empty(),
+        replicasAssignments,
         singletonMap("cleanup.policy", Optional.of("compact"))).get();
 
     verify(adminClient);
@@ -634,6 +677,7 @@ public class TopicManagerImplTest {
           TOPIC_1.getName(),
           Optional.of(TOPIC_1.getPartitions().size()),
           Optional.of(TOPIC_1.getReplicationFactor()),
+          /* replicasAssignments= */ Collections.emptyMap(),
           singletonMap("cleanup.policy", Optional.of("compact"))).get();
       fail();
     } catch (ExecutionException e) {
@@ -654,6 +698,7 @@ public class TopicManagerImplTest {
           TOPIC_1.getName(),
           Optional.of(TOPIC_1.getPartitions().size()),
           Optional.of(TOPIC_1.getReplicationFactor()),
+          /* replicasAssignments= */ Collections.emptyMap(),
           singletonMap("cleanup.policy", Optional.of("compact"))).get();
       fail();
     } catch (ExecutionException e) {
