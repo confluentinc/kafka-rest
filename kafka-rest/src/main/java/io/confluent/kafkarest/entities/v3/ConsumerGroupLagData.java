@@ -43,6 +43,9 @@ public abstract class ConsumerGroupLagData extends Resource {
   @JsonProperty("max_lag_consumer_id")
   public abstract String getMaxLagConsumerId();
 
+  @JsonProperty("max_lag_consumer")
+  public abstract Relationship getMaxLagConsumer();
+
   @JsonProperty("max_lag_client_id")
   public abstract String getMaxLagClientId();
 
@@ -84,6 +87,7 @@ public abstract class ConsumerGroupLagData extends Resource {
       @JsonProperty("max_lag") Long maxLag,
       @JsonProperty("total_lag") Long totalLag,
       @JsonProperty("max_lag_consumer_id") String maxLagConsumerId,
+      @JsonProperty("max_lag_consumer") Relationship maxLagConsumer,
       @JsonProperty("max_lag_client_id") String maxLagClientId,
       @JsonProperty("max_lag_instance_id") @Nullable String maxLagInstanceId,
       @JsonProperty("max_lag_topic_name") String maxLagTopicName,
@@ -98,6 +102,7 @@ public abstract class ConsumerGroupLagData extends Resource {
         .setMaxLag(maxLag)
         .setTotalLag(totalLag)
         .setMaxLagConsumerId(maxLagConsumerId)
+        .setMaxLagConsumer(maxLagConsumer)
         .setMaxLagClientId(maxLagClientId)
         .setMaxLagInstanceId(maxLagInstanceId)
         .setMaxLagTopicName(maxLagTopicName)
@@ -121,6 +126,8 @@ public abstract class ConsumerGroupLagData extends Resource {
     public abstract Builder setTotalLag(Long totalLag);
 
     public abstract Builder setMaxLagConsumerId(String maxLagConsumerId);
+
+    public abstract Builder setMaxLagConsumer(Relationship maxLagConsumer);
 
     public abstract Builder setMaxLagClientId(String maxLagClientId);
 

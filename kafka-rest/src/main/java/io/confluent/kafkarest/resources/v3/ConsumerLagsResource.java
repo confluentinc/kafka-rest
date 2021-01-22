@@ -114,7 +114,7 @@ public class ConsumerLagsResource {
   }
 
   @GET
-  @Path("/topics/{topicName}/partitions/{partitionId}")
+  @Path("/{topicName}/partitions/{partitionId}")
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.consumer-lags.get")
   @ResourceName("api.v3.consumer-lags.get")
@@ -145,22 +145,22 @@ public class ConsumerLagsResource {
                         "v3",
                         "clusters",
                         lag.getClusterId(),
-                        "topics",
+                        "consumer-groups",
+                        lag.getConsumerGroupId(),
+                        "lags",
                         lag.getTopicName(),
                         "partitions",
-                        Integer.toString(lag.getPartitionId()),
-                        "lags",
-                        lag.getConsumerGroupId()))
+                        Integer.toString(lag.getPartitionId())))
                 .setResourceName(
                     crnFactory.create(
                         "kafka",
                         lag.getClusterId(),
-                        "topic",
+                        "consumer-group",
+                        lag.getConsumerGroupId(),
+                        "lag",
                         lag.getTopicName(),
                         "partition",
-                        Integer.toString(lag.getPartitionId()),
-                        "lag",
-                        lag.getConsumerGroupId()))
+                        Integer.toString(lag.getPartitionId())))
                 .build())
         .build();
   }

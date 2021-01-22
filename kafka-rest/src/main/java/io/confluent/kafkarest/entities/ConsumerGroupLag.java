@@ -25,13 +25,13 @@ public abstract class ConsumerGroupLag {
   ConsumerGroupLag() {
   }
 
-  public abstract Long getMaxLag();
-
-  public abstract Long getTotalLag();
-
   public abstract String getClusterId();
 
   public abstract String getConsumerGroupId();
+
+  public abstract Long getMaxLag();
+
+  public abstract Long getTotalLag();
 
   public abstract String getMaxLagClientId();
 

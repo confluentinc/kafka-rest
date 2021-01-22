@@ -31,6 +31,7 @@ import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.management.relation.Relation;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
@@ -100,6 +101,16 @@ public final class ConsumerGroupLagsResource {
                         "lag",
                         null))
                 .build())
+        .setMaxLagConsumer(
+            Relationship.create(
+                urlFactory.create(
+                    "v3",
+                    "clusters",
+                    groupLag.getClusterId(),
+                    "consumer-groups",
+                    groupLag.getConsumerGroupId(),
+                    "consumers",
+                    groupLag.getMaxLagConsumerId())))
         .setMaxLagPartition(
             Relationship.create(
                 urlFactory.create(

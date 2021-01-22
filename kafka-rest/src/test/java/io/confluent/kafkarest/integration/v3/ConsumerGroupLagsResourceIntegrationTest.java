@@ -121,6 +121,10 @@ public class ConsumerGroupLagsResourceIntegrationTest extends ClusterTestHarness
                 .setMaxLag(6L)
                 .setTotalLag(9L)
                 .setMaxLagConsumerId(consumer1.groupMetadata().memberId())
+                .setMaxLagConsumer(
+                    Relationship
+                        .create(baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups/" +
+                            group1 + "/consumers/" + consumer1.groupMetadata().memberId()))
                 .setMaxLagClientId("client-1")
                 .setMaxLagTopicName(topic2)
                 .setMaxLagPartitionId(1)
