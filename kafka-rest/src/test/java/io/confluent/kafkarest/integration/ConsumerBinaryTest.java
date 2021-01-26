@@ -15,6 +15,7 @@
 package io.confluent.kafkarest.integration;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
+import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
@@ -26,7 +27,9 @@ import java.util.Arrays;
 import java.util.List;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.Before;
 import org.junit.Test;

@@ -17,12 +17,13 @@ package io.confluent.kafkarest.controllers;
 
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.createMockBuilder;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.newCapture;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 import io.confluent.kafkarest.controllers.AbstractConsumerLagManager.MemberId;
 import io.confluent.kafkarest.entities.Broker;
@@ -31,24 +32,26 @@ import io.confluent.kafkarest.entities.ConsumerGroup;
 import io.confluent.kafkarest.entities.ConsumerGroup.State;
 import io.confluent.kafkarest.entities.ConsumerGroupLag;
 import io.confluent.kafkarest.entities.Partition;
-import io.confluent.kafkarest.entities.Topic;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
+import org.apache.kafka.clients.admin.ListOffsetsOptions;
+import org.apache.kafka.clients.admin.ListOffsetsResult;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
+import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.IsolationLevel;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.TopicPartition;
+import org.easymock.Capture;
 import org.easymock.EasyMockRule;
-import org.easymock.IMockBuilder;
 import org.easymock.Mock;
 import org.junit.Before;
 import org.junit.Rule;
@@ -60,18 +63,19 @@ import org.junit.runners.JUnit4;
 public class ConsumerGroupLagManagerImplTest {
 
   private static final String CLUSTER_ID = "cluster-1";
-  private static final String CONSUMER_GROUP_ID = "consumer_group_1";
+  private static final String CONSUMER_GROUP_ID = "consumer-group-1";
 
   private static final ConsumerGroupLag CONSUMER_GROUP_LAG =
       ConsumerGroupLag.builder()
       .setClusterId(CLUSTER_ID)
       .setConsumerGroupId(CONSUMER_GROUP_ID)
-      .setMaxLag(100L)
-      .setTotalLag(90L)
       .setMaxLagConsumerId("consumer-1")
       .setMaxLagClientId("client-1")
+      .setMaxLagInstanceId("instance-1")
       .setMaxLagTopicName("topic-1")
       .setMaxLagPartitionId(1)
+      .setMaxLag(100L)
+      .setTotalLag(100L) // negative lag is ignored
       .build();
 
   private static final Broker BROKER_1 =
@@ -138,15 +142,18 @@ public class ConsumerGroupLagManagerImplTest {
     OFFSET_AND_METADATA_MAP.put(TOPIC_PARTITION_3, new OffsetAndMetadata(110));
   }
 
-//  private static final ListConsumerGroupOffsetsResult CURRENT_OFFSETS =
-//      new ListConsumerGroupOffsetsResult(KafkaFuture.completedFuture(OFFSET_AND_METADATA_MAP));
-
-  private static final Map<TopicPartition, ListOffsetsResultInfo> LATEST_OFFSETS;
+  private static final Map<TopicPartition, KafkaFuture<ListOffsetsResultInfo>> LATEST_OFFSETS_MAP;
   static {
-    LATEST_OFFSETS = new HashMap<>();
-    LATEST_OFFSETS.put(TOPIC_PARTITION_1, new ListOffsetsResultInfo(100L, 0L, null));
-    LATEST_OFFSETS.put(TOPIC_PARTITION_2, new ListOffsetsResultInfo(100L, 0L, null));
-    LATEST_OFFSETS.put(TOPIC_PARTITION_3, new ListOffsetsResultInfo(100L, 0L, null));
+    LATEST_OFFSETS_MAP = new HashMap<>();
+    LATEST_OFFSETS_MAP.put(
+        TOPIC_PARTITION_1,
+        KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
+    LATEST_OFFSETS_MAP.put(
+        TOPIC_PARTITION_2,
+        KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
+    LATEST_OFFSETS_MAP.put(
+        TOPIC_PARTITION_3,
+        KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
   }
 
   private static final Map<TopicPartition, MemberId> MEMBER_ID_MAP;
@@ -197,49 +204,54 @@ public class ConsumerGroupLagManagerImplTest {
 
   private ConsumerGroupLagManagerImpl consumerGroupLagManager;
 
+  @Mock
+  private ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult;
+
   @Before
   public void setUp() {
-//    consumerGroupLagManager =
-//        new ConsumerGroupLagManagerImpl(kafkaAdminClient, consumerGroupManager);
     consumerGroupLagManager =
-        createMockBuilder(ConsumerGroupLagManagerImpl.class)
-            .addMockedMethod("getMemberIds")
-            .addMockedMethod("getCurrentOffsets")
-            .addMockedMethod("getLatestOffsets")
-            .addMockedMethod("getCurrentOffset")
-            .addMockedMethod("getOffset")
-            .createMock();
+        new ConsumerGroupLagManagerImpl(kafkaAdminClient, consumerGroupManager);
   }
 
   @Test
   public void getConsumerGroupLag_returnsConsumerGroupLag() throws Exception {
     expect(consumerGroupManager.getConsumerGroup(CLUSTER_ID, CONSUMER_GROUP_ID))
         .andReturn(completedFuture(Optional.of(CONSUMER_GROUP)));
-//    expect(kafkaAdminClient.listConsumerGroupOffsets(CONSUMER_GROUP_ID, new ListConsumerGroupOffsetsOptions()))
-//        .andReturn(CURRENT_OFFSETS);
-    expect(consumerGroupLagManager.getCurrentOffsets(CONSUMER_GROUP_ID))
-        .andReturn(CompletableFuture.completedFuture(OFFSET_AND_METADATA_MAP));
-    expect(consumerGroupLagManager.getLatestOffsets(OFFSET_AND_METADATA_MAP))
-        .andReturn(CompletableFuture.completedFuture(LATEST_OFFSETS));
-    expect(consumerGroupLagManager.getMemberIds(CONSUMER_GROUP))
-        .andReturn(MEMBER_ID_MAP);
-    replay(consumerGroupManager, consumerGroupLagManager);
-
+    final Capture<String> capturedConsumerGroupId = newCapture();
+    expect(kafkaAdminClient.listConsumerGroupOffsets(
+        capture(capturedConsumerGroupId),
+        anyObject(ListConsumerGroupOffsetsOptions.class)))
+        .andReturn(listConsumerGroupOffsetsResult);
+    expect(listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata())
+        .andReturn(KafkaFuture.completedFuture(OFFSET_AND_METADATA_MAP));
+    final Capture<Map<TopicPartition, OffsetSpec>> capturedOffsetSpec = newCapture();
+    final Capture<ListOffsetsOptions> capturedListOffsetsOptions = newCapture();
+    expect(kafkaAdminClient.listOffsets(
+        capture(capturedOffsetSpec),
+        capture(capturedListOffsetsOptions)))
+        .andReturn(new ListOffsetsResult(LATEST_OFFSETS_MAP));
+    replay(consumerGroupManager, kafkaAdminClient, listConsumerGroupOffsetsResult);
     ConsumerGroupLag consumerGroupLag =
         consumerGroupLagManager.getConsumerGroupLag(CLUSTER_ID, CONSUMER_GROUP_ID).get().get();
+    assertEquals(capturedConsumerGroupId.getValue(), CONSUMER_GROUP_ID);
+    assertEquals(capturedOffsetSpec.getValue().keySet(), OFFSET_AND_METADATA_MAP.keySet());
+    assertEquals(
+        capturedListOffsetsOptions.getValue().isolationLevel(),
+        IsolationLevel.READ_COMMITTED);
     assertEquals(CONSUMER_GROUP_LAG, consumerGroupLag);
   }
-//
-//  @Test
-//  public void getConsumerGroupLag_nonExistingConsumerGroupLag_returnsEmpty() throws Exception {
-//    expect(consumerOffsetsDao.getConsumerGroupOffsets(
-//        CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
-//        .andReturn(null);
-//    replay(consumerOffsetsDao);
-//
-//    Optional<ConsumerGroupLag> consumerGroupLag = consumerGroupLagManager.getConsumerGroupLag(
-//        CLUSTER_ID, CONSUMER_GROUP_ID).get();
-//
-//    assertFalse(consumerGroupLag.isPresent());
-//  }
+
+  @Test
+  public void getConsumerGroupLag_nonExistingConsumerGroup_returnsEmpty() throws Exception {
+    expect(consumerGroupManager.getConsumerGroup(CLUSTER_ID, CONSUMER_GROUP_ID))
+        .andReturn(completedFuture(Optional.empty()));
+    replay(consumerGroupManager);
+
+    try {
+      consumerGroupLagManager.getConsumerGroupLag(CLUSTER_ID, CONSUMER_GROUP_ID).get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(NotFoundException.class, e.getCause().getClass());
+    }
+  }
 }

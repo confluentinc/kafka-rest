@@ -29,10 +29,6 @@ public abstract class ConsumerGroupLag {
 
   public abstract String getConsumerGroupId();
 
-  public abstract Long getMaxLag();
-
-  public abstract Long getTotalLag();
-
   public abstract String getMaxLagClientId();
 
   public abstract String getMaxLagConsumerId();
@@ -43,6 +39,10 @@ public abstract class ConsumerGroupLag {
 
   public abstract Integer getMaxLagPartitionId();
 
+  public abstract Long getMaxLag();
+
+  public abstract Long getTotalLag();
+
   public static Builder builder() {
     return new AutoValue_ConsumerGroupLag.Builder();
   }
@@ -50,7 +50,7 @@ public abstract class ConsumerGroupLag {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    private Long maxLag;
+    private long maxLag = -1;
     private long totalLag = 0;
 
     Builder() {
@@ -65,8 +65,9 @@ public abstract class ConsumerGroupLag {
         long currentOffset,
         long endOffset
     ) {
-      long lag = endOffset - currentOffset;
-      if (maxLag == null || maxLag < lag) {
+      // We don't report negative lag
+      long lag = Math.max(0, endOffset - currentOffset);
+      if (maxLag < lag) {
         maxLag = lag;
         setMaxLag(maxLag);
         setMaxLagClientId(clientId);
@@ -83,11 +84,7 @@ public abstract class ConsumerGroupLag {
 
     public abstract Builder setConsumerGroupId(String consumerGroupId);
 
-    public abstract Builder setMaxLag(Long maxLag);
-
-    public abstract Builder setTotalLag(Long totalLag);
-
-    public abstract Builder setMaxLagClientId(String maxLagClientId);
+   public abstract Builder setMaxLagClientId(String maxLagClientId);
 
     public abstract Builder setMaxLagConsumerId(String maxLagConsumerId);
 
@@ -96,6 +93,10 @@ public abstract class ConsumerGroupLag {
     public abstract Builder setMaxLagTopicName(String maxLagTopicName);
 
     public abstract Builder setMaxLagPartitionId(Integer maxLagPartitionId);
+
+    public abstract Builder setMaxLag(Long maxLag);
+
+    public abstract Builder setTotalLag(Long totalLag);
 
     public abstract ConsumerGroupLag build();
   }

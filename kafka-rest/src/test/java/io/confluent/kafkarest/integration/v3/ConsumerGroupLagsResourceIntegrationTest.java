@@ -69,6 +69,7 @@ public class ConsumerGroupLagsResourceIntegrationTest extends ClusterTestHarness
     createTopic(topic2, numPartitions, (short) replicationFactor);
   }
 
+  // ahu todo: see if it's possible to test multiple consumers
   @Test
   public void getConsumerGroupLag_returnsConsumerGroupLag() {
     KafkaConsumer<?, ?> consumer1 = createConsumer(group1, "client-1");
@@ -118,16 +119,16 @@ public class ConsumerGroupLagsResourceIntegrationTest extends ClusterTestHarness
                         .build())
                 .setClusterId(clusterId)
                 .setConsumerGroupId(group1)
+                .setMaxLagConsumerId(consumer1.groupMetadata().memberId())
+                .setMaxLagClientId("client-1")
+                .setMaxLagTopicName(topic2)
+                .setMaxLagPartitionId(1)
                 .setMaxLag(6L)
                 .setTotalLag(9L)
-                .setMaxLagConsumerId(consumer1.groupMetadata().memberId())
                 .setMaxLagConsumer(
                     Relationship
                         .create(baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups/" +
                             group1 + "/consumers/" + consumer1.groupMetadata().memberId()))
-                .setMaxLagClientId("client-1")
-                .setMaxLagTopicName(topic2)
-                .setMaxLagPartitionId(1)
                 .setMaxLagPartition(
                     Relationship
                         .create(baseUrl + "/v3/clusters/" + clusterId
@@ -139,6 +140,14 @@ public class ConsumerGroupLagsResourceIntegrationTest extends ClusterTestHarness
 
   @Test
   public void getConsumerGroupLag_nonExistingOffsets_returnsNotFound() {
+    KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
+    consumer.subscribe(Arrays.asList(topic1, topic2));
+    consumer.poll(Duration.ofSeconds(1));
+
+    BinaryPartitionProduceRequest request = BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
+    produce(topic1, 0, request);
+    produce(topic2, 1, request);
+
     Response response =
         request("/v3/clusters/" + getClusterId() + "/consumer-groups/" + group1 + "/lag")
             .accept(MediaType.APPLICATION_JSON)
@@ -148,11 +157,11 @@ public class ConsumerGroupLagsResourceIntegrationTest extends ClusterTestHarness
 
   @Test
   public void getConsumerGroupLag_nonExistingConsumerGroup_returnsNotFound() {
-    KafkaConsumer<?, ?> consumer1 = createConsumer(group1, "client-1");
-    consumer1.subscribe(Arrays.asList(topic1));
-    BinaryPartitionProduceRequest request1 = BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
-    produce(topic1, 0, request1);
-    consumer1.poll(Duration.ofSeconds(1));
+    KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
+    consumer.subscribe(Arrays.asList(topic1));
+    BinaryPartitionProduceRequest request = BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
+    produce(topic1, 0, request);
+    consumer.poll(Duration.ofSeconds(1));
 
     Response response =
         request("/v3/clusters/" + getClusterId() + "/consumer-groups/foo/lag")
@@ -163,11 +172,11 @@ public class ConsumerGroupLagsResourceIntegrationTest extends ClusterTestHarness
 
   @Test
   public void getConsumerGroupLag_nonExistingCluster_returnsNotFound() {
-    KafkaConsumer<?, ?> consumer1 = createConsumer(group1, "client-1");
-    consumer1.subscribe(Arrays.asList(topic1));
-    BinaryPartitionProduceRequest request1 = BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
-    produce(topic1, 0, request1);
-    consumer1.poll(Duration.ofSeconds(1));
+    KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
+    consumer.subscribe(Arrays.asList(topic1));
+    BinaryPartitionProduceRequest request = BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
+    produce(topic1, 0, request);
+    consumer.poll(Duration.ofSeconds(1));
 
     Response response =
         request("/v3/clusters/foo/consumer-groups/" + group1 + "/lag")

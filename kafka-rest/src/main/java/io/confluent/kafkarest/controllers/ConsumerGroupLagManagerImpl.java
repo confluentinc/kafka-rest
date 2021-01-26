@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -56,6 +57,9 @@ final class ConsumerGroupLagManagerImpl extends AbstractConsumerLagManager imple
         .thenCompose(
             consumerGroup ->
                 getCurrentOffsets(consumerGroupId)
+                    .thenApply(
+                        fetchedCurrentOffsets ->
+                            checkOffsetsExist(fetchedCurrentOffsets, "Consumer group offsets could not be found."))
                     .thenCompose(
                         fetchedCurrentOffsets ->
                             getLatestOffsets(fetchedCurrentOffsets)

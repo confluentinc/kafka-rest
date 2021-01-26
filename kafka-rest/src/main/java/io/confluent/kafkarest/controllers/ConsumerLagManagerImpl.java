@@ -55,16 +55,20 @@ final class ConsumerLagManagerImpl extends AbstractConsumerLagManager implements
                 checkEntityExists(consumerGroup, "Consumer Group %s could not be found.", consumerGroupId))
         .thenCompose(
             consumerGroup ->
-                getCurrentOffsets(consumerGroupId).thenCompose(
-                    fetchedCurrentOffsets ->
-                        getLatestOffsets(fetchedCurrentOffsets)
-                            .thenApply(
-                                latestOffsets ->
-                                createConsumerLagList(
-                                    clusterId,
-                                    consumerGroup,
-                                    fetchedCurrentOffsets,
-                                    latestOffsets))));
+                getCurrentOffsets(consumerGroupId)
+                    .thenApply(
+                        fetchedCurrentOffsets ->
+                            checkOffsetsExist(fetchedCurrentOffsets, "Consumer group offsets could not be found."))
+                    .thenCompose(
+                        fetchedCurrentOffsets ->
+                            getLatestOffsets(fetchedCurrentOffsets)
+                                .thenApply(
+                                    latestOffsets ->
+                                        createConsumerLagList(
+                                            clusterId,
+                                            consumerGroup,
+                                            fetchedCurrentOffsets,
+                                            latestOffsets))));
   }
 
   @Override

@@ -101,8 +101,7 @@ public class ConsumerLagsResource {
                             .setData(
                                 lags.stream()
                                     .map(
-                                        lag ->
-                                            toConsumerLagData(lag))
+                                        this::toConsumerLagData)
                                     .sorted(
                                         Comparator.comparing(ConsumerLagData::getLag).reversed()
                                             .thenComparing(ConsumerLagData::getTopicName)

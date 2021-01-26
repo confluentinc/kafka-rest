@@ -29,15 +29,15 @@ public abstract class ConsumerLag {
 
   public abstract String getConsumerGroupId();
 
-  public abstract String getTopicName();
-
-  public abstract int getPartitionId();
-
   public abstract String getConsumerId();
 
   public abstract Optional<String> getInstanceId();
 
   public abstract String getClientId();
+
+  public abstract String getTopicName();
+
+  public abstract int getPartitionId();
 
   public abstract Long getCurrentOffset();
 
@@ -61,15 +61,15 @@ public abstract class ConsumerLag {
 
     public abstract Builder setConsumerGroupId(String consumerGroupId);
 
-    public abstract Builder setTopicName(String topicName);
-
-    public abstract Builder setPartitionId(int partitionId);
-
     public abstract Builder setConsumerId(String consumerId);
 
     public abstract Builder setInstanceId(@Nullable String instanceId);
 
     public abstract Builder setClientId(String clientId);
+
+    public abstract Builder setTopicName(String topicName);
+
+    public abstract Builder setPartitionId(int partitionId);
 
     public abstract Builder setCurrentOffset(Long currentOffset);
 

@@ -1286,27 +1286,21 @@ components:
           required:
             - cluster_id
             - consumer_group_id
-            - max_lag
-            - total_lag
             - max_lag_consumer_id
-            - max_lag_consumer
             - max_lag_client_id
             - max_lag_topic_name
             - max_lag_partition_id
+            - max_lag
+            - total_lag
+            - max_lag_consumer
             - max_lag_partition
           properties:
             cluster_id:
               type: string
             consumer_group_id:
               type: string
-            max_lag:
-              type: integer
-            total_lag:
-              type: integer
             max_lag_consumer_id:
               type: string
-            max_lag_consumer:
-              $ref: '#/components/schemas/Relationship'
             max_lag_instance_id:
               type: string
               nullable: true
@@ -1316,6 +1310,12 @@ components:
               type: string
             max_lag_partition_id:
               type: integer
+            max_lag:
+              type: integer
+            total_lag:
+              type: integer
+            max_lag_consumer:
+              $ref: '#/components/schemas/Relationship'
             max_lag_partition:
               $ref: '#/components/schemas/Relationship'
 
@@ -1864,15 +1864,15 @@ components:
               resource_name: 'crn:///kafka=cluster-1/consumer-groups=consumer-group-1/lag'
             cluster_id: 'cluster-1'
             consumer_group_id: 'consumer-group-1'
-            max_lag: 100
-            total_lag: 110
             max_lag_consumer_id: 'consumer-1'
-            max_lag_consumer:
-              related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1'
             max_lag_instance_id: 'consumer-instance-1'
             max_lag_client_id: 'client-1'
             max_lag_topic_name: 'topic-1'
             max_lag_partition_id: 1
+            max_lag: 100
+            total_lag: 110
+            max_lag_consumer:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1'
             max_lag_partition:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
 
