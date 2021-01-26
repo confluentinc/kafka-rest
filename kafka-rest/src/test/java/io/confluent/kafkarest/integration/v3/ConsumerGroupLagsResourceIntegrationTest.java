@@ -73,15 +73,26 @@ public class ConsumerGroupLagsResourceIntegrationTest extends ClusterTestHarness
   @Test
   public void getConsumerGroupLag_returnsConsumerGroupLag() {
     KafkaConsumer<?, ?> consumer1 = createConsumer(group1, "client-1");
-    consumer1.subscribe(Arrays.asList(topic1, topic2));
+    KafkaConsumer<?, ?> consumer2 = createConsumer(group1, "client-2");
+    consumer1.subscribe(Collections.singletonList(topic1));
+    consumer2.subscribe(Collections.singletonList(topic2));
+    consumer1.poll(Duration.ofSeconds(1));
+    consumer2.poll(Duration.ofSeconds(1));
+    // After polling once, only one of the consumers will be member of the group, so we poll again
+    // to force the other 2 consumers to join the group.
+    consumer1.poll(Duration.ofSeconds(1));
+    consumer2.poll(Duration.ofSeconds(1));
 
     // produce to topic1 partition0, topic2 partition1
     BinaryPartitionProduceRequest request = BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
     produce(topic1, 0, request);
     produce(topic2, 1, request);
 
-    // consume
-    consumer1.poll(Duration.ofSeconds(10));
+    // consume from subscribed topics
+    consumer1.poll(Duration.ofSeconds(5));
+    consumer2.poll(Duration.ofSeconds(5));
+    consumer1.poll(Duration.ofSeconds(5));
+    consumer2.poll(Duration.ofSeconds(5));
 
     // group lag request returns maxLag=0, totalLag=0
     Response response =
@@ -119,8 +130,8 @@ public class ConsumerGroupLagsResourceIntegrationTest extends ClusterTestHarness
                         .build())
                 .setClusterId(clusterId)
                 .setConsumerGroupId(group1)
-                .setMaxLagConsumerId(consumer1.groupMetadata().memberId())
-                .setMaxLagClientId("client-1")
+                .setMaxLagConsumerId(consumer2.groupMetadata().memberId())
+                .setMaxLagClientId("client-2")
                 .setMaxLagTopicName(topic2)
                 .setMaxLagPartitionId(1)
                 .setMaxLag(6L)
@@ -128,7 +139,7 @@ public class ConsumerGroupLagsResourceIntegrationTest extends ClusterTestHarness
                 .setMaxLagConsumer(
                     Relationship
                         .create(baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups/" +
-                            group1 + "/consumers/" + consumer1.groupMetadata().memberId()))
+                            group1 + "/consumers/" + consumer2.groupMetadata().memberId()))
                 .setMaxLagPartition(
                     Relationship
                         .create(baseUrl + "/v3/clusters/" + clusterId

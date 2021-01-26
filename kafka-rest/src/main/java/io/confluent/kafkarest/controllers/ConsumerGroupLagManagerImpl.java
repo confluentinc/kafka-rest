@@ -107,7 +107,7 @@ final class ConsumerGroupLagManagerImpl extends AbstractConsumerLagManager imple
                 topicPartition.topic(),
                 memberId.getConsumerId(),
                 memberId.getClientId(),
-                memberId.getInstanceId().orElseGet(null),
+                memberId.getInstanceId().orElse(null),
                 topicPartition.partition(),
                 currentOffset,
                 latestOffset);

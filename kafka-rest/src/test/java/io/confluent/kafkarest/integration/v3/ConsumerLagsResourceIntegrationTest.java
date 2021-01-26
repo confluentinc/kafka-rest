@@ -92,7 +92,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     produce(topic1, 0, request1);
     produce(topic2, 1, request1);
 
-    // consume from subscribed topics (zero lag)
+    // consume from subscribed topics
     consumer1.poll(Duration.ofSeconds(5));
     consumer2.poll(Duration.ofSeconds(5));
     consumer1.poll(Duration.ofSeconds(5));
