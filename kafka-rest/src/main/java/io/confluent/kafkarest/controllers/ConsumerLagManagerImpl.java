@@ -104,7 +104,7 @@ final class ConsumerLagManagerImpl
           Optional<Long> currentOffset =
               getCurrentOffset(fetchedCurrentOffsets, topicPartition);
           Optional<Long> latestOffset =
-              getOffset(latestOffsets, topicPartition);
+              getLatestOffset(latestOffsets, topicPartition);
           if (currentOffset.isPresent() && latestOffset.isPresent()) {
             consumerLags.add(
                 ConsumerLag.builder()

@@ -21,7 +21,6 @@ import static java.util.Objects.requireNonNull;
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
 import io.confluent.kafkarest.entities.ConsumerGroupLag;
-import io.confluent.kafkarest.entities.Partition;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -94,7 +93,7 @@ final class ConsumerGroupLagManagerImpl
           Optional<Long> currentOffset =
               getCurrentOffset(fetchedCurrentOffsets, topicPartition);
           Optional<Long> latestOffset =
-              getOffset(latestOffsets, topicPartition);
+              getLatestOffset(latestOffsets, topicPartition);
           if (currentOffset.isPresent() && latestOffset.isPresent()) {
             consumerGroupLag.addOffset(
                 topicPartition.topic(),

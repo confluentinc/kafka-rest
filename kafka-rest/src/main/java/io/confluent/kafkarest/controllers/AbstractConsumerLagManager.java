@@ -108,21 +108,21 @@ abstract class AbstractConsumerLagManager {
 //  }
 
   protected static final Optional<Long> getCurrentOffset(
-      Map<TopicPartition, OffsetAndMetadata> map,
+      Map<TopicPartition, OffsetAndMetadata> currentOffsets,
       TopicPartition topicPartition
   ) {
-    OffsetAndMetadata offsetAndMetadata = map.get(topicPartition);
+    OffsetAndMetadata offsetAndMetadata = currentOffsets.get(topicPartition);
     if (offsetAndMetadata == null) {
       return Optional.empty();
     }
     return Optional.of(offsetAndMetadata.offset());
   }
 
-  protected static final Optional<Long> getOffset(
-      Map<TopicPartition, ListOffsetsResultInfo> map,
+  protected static final Optional<Long> getLatestOffset(
+      Map<TopicPartition, ListOffsetsResultInfo> latestOffsets,
       TopicPartition topicPartition
   ) {
-    ListOffsetsResultInfo offsetInfo = map.get(topicPartition);
+    ListOffsetsResultInfo offsetInfo = latestOffsets.get(topicPartition);
     if (offsetInfo == null) {
       return Optional.empty();
     }
@@ -140,35 +140,35 @@ abstract class AbstractConsumerLagManager {
     return offsets;
   }
 
-  @AutoValue
-  protected abstract static class MemberId {
-
-    protected MemberId() {
-    }
-
-    protected abstract String getConsumerId();
-
-    protected abstract Optional<String> getInstanceId();
-
-    protected abstract String getClientId();
-
-    protected static Builder builder() {
-      return new AutoValue_AbstractConsumerLagManager_MemberId.Builder();
-    }
-
-    @AutoValue.Builder
-    protected abstract static class Builder {
-
-      protected Builder() {
-      }
-
-      protected abstract Builder setConsumerId(String consumerId);
-
-      protected abstract Builder setInstanceId(@Nullable String instanceId);
-
-      protected abstract Builder setClientId(String clientId);
-
-      protected abstract MemberId build();
-    }
-  }
+//  @AutoValue
+//  protected abstract static class MemberId {
+//
+//    protected MemberId() {
+//    }
+//
+//    protected abstract String getConsumerId();
+//
+//    protected abstract Optional<String> getInstanceId();
+//
+//    protected abstract String getClientId();
+//
+//    protected static Builder builder() {
+//      return new AutoValue_AbstractConsumerLagManager_MemberId.Builder();
+//    }
+//
+//    @AutoValue.Builder
+//    protected abstract static class Builder {
+//
+//      protected Builder() {
+//      }
+//
+//      protected abstract Builder setConsumerId(String consumerId);
+//
+//      protected abstract Builder setInstanceId(@Nullable String instanceId);
+//
+//      protected abstract Builder setClientId(String clientId);
+//
+//      protected abstract MemberId build();
+//    }
+//  }
 }
