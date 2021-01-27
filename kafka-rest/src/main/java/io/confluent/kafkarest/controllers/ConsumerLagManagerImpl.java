@@ -97,18 +97,18 @@ final class ConsumerLagManagerImpl extends AbstractConsumerLagManager implements
           MemberId memberId = tpMemberIds.getOrDefault(
               topicPartition, MemberId.builder()
                   .setConsumerId("")
-                  .setClientId("")
                   .setInstanceId("")
+                  .setClientId("")
                   .build());
           long currentOffset =
               getCurrentOffset(fetchedCurrentOffsets, topicPartition);
           long latestOffset =
               getOffset(latestOffsets, topicPartition);
           if (currentOffset < 0 || latestOffset < 0) {
-            log.debug("invalid offsets for topic={} partition={} consumerId={} current={} latest={}",
+            log.debug("invalid offsets for consumerId={} topic={} partition={} current={} latest={}",
+                memberId.getConsumerId(),
                 topicPartition.topic(),
                 topicPartition.partition(),
-                memberId.getConsumerId(),
                 currentOffset,
                 latestOffset);
           } else {

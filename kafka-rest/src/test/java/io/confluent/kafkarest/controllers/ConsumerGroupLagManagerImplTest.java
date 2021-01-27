@@ -19,6 +19,7 @@ import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.newCapture;
 import static org.easymock.EasyMock.replay;
@@ -63,20 +64,6 @@ import org.junit.runners.JUnit4;
 public class ConsumerGroupLagManagerImplTest {
 
   private static final String CLUSTER_ID = "cluster-1";
-  private static final String CONSUMER_GROUP_ID = "consumer-group-1";
-
-  private static final ConsumerGroupLag CONSUMER_GROUP_LAG =
-      ConsumerGroupLag.builder()
-      .setClusterId(CLUSTER_ID)
-      .setConsumerGroupId(CONSUMER_GROUP_ID)
-      .setMaxLagConsumerId("consumer-1")
-      .setMaxLagClientId("client-1")
-      .setMaxLagInstanceId("instance-1")
-      .setMaxLagTopicName("topic-1")
-      .setMaxLagPartitionId(1)
-      .setMaxLag(100L)
-      .setTotalLag(100L) // negative lag is ignored
-      .build();
 
   private static final Broker BROKER_1 =
       Broker.create(
@@ -86,22 +73,15 @@ public class ConsumerGroupLagManagerImplTest {
           /* port= */ 1000,
           /* rack= */ null);
 
-  private static final TopicPartition TOPIC_PARTITION_1 =
-      new TopicPartition("topic-1", 1);
-
-  private static final TopicPartition TOPIC_PARTITION_2 =
-      new TopicPartition("topic-2", 2);
-
-  private static final TopicPartition TOPIC_PARTITION_3 =
-      new TopicPartition("topic-3", 3);
+  private static final String CONSUMER_GROUP_ID = "consumer-group-1";
 
   private static final Consumer CONSUMER_1 =
       Consumer.builder()
           .setClusterId(CLUSTER_ID)
-          .setConsumerGroupId("consumer-group-1")
+          .setConsumerGroupId(CONSUMER_GROUP_ID)
           .setConsumerId("consumer-1")
-          .setClientId("client-1")
           .setInstanceId("instance-1")
+          .setClientId("client-1")
           .setHost("11.12.12.14")
           .setAssignedPartitions(
               Arrays.asList(
@@ -120,10 +100,10 @@ public class ConsumerGroupLagManagerImplTest {
   private static final Consumer CONSUMER_2 =
       Consumer.builder()
           .setClusterId(CLUSTER_ID)
-          .setConsumerGroupId("consumer-group-1")
+          .setConsumerGroupId(CONSUMER_GROUP_ID)
           .setConsumerId("consumer-2")
-          .setClientId("client-2")
           .setInstanceId("instance-2")
+          .setClientId("client-2")
           .setHost("11.12.12.14")
           .setAssignedPartitions(
               Collections.singletonList(
@@ -133,6 +113,26 @@ public class ConsumerGroupLagManagerImplTest {
                       /* partitionId= */ 2,
                       /* replicas= */ emptyList())))
           .build();
+
+  private static final ConsumerGroup CONSUMER_GROUP =
+      ConsumerGroup.builder()
+          .setClusterId(CLUSTER_ID)
+          .setConsumerGroupId(CONSUMER_GROUP_ID)
+          .setSimple(true)
+          .setPartitionAssignor("org.apache.kafka.clients.consumer.RangeAssignor")
+          .setState(State.STABLE)
+          .setCoordinator(BROKER_1)
+          .setConsumers(Arrays.asList(CONSUMER_1, CONSUMER_2))
+          .build();
+
+  private static final TopicPartition TOPIC_PARTITION_1 =
+      new TopicPartition("topic-1", 1);
+
+  private static final TopicPartition TOPIC_PARTITION_2 =
+      new TopicPartition("topic-2", 2);
+
+  private static final TopicPartition TOPIC_PARTITION_3 =
+      new TopicPartition("topic-3", 3);
 
   private static final Map<TopicPartition, OffsetAndMetadata> OFFSET_AND_METADATA_MAP;
   static {
@@ -182,16 +182,19 @@ public class ConsumerGroupLagManagerImplTest {
             .build());
   }
 
-  private static final ConsumerGroup CONSUMER_GROUP =
-      ConsumerGroup.builder()
+  private static final ConsumerGroupLag CONSUMER_GROUP_LAG =
+      ConsumerGroupLag.builder()
           .setClusterId(CLUSTER_ID)
-          .setConsumerGroupId("consumer-group-1")
-          .setSimple(true)
-          .setPartitionAssignor("org.apache.kafka.clients.consumer.RangeAssignor")
-          .setState(State.STABLE)
-          .setCoordinator(BROKER_1)
-          .setConsumers(Arrays.asList(CONSUMER_1, CONSUMER_2))
+          .setConsumerGroupId(CONSUMER_GROUP_ID)
+          .setMaxLagConsumerId("consumer-1")
+          .setMaxLagClientId("client-1")
+          .setMaxLagInstanceId("instance-1")
+          .setMaxLagTopicName("topic-1")
+          .setMaxLagPartitionId(1)
+          .setMaxLag(100L)
+          .setTotalLag(100L) // negative lag is ignored
           .build();
+
 
   @Rule
   public final EasyMockRule mocks = new EasyMockRule(this);
@@ -217,9 +220,8 @@ public class ConsumerGroupLagManagerImplTest {
   public void getConsumerGroupLag_returnsConsumerGroupLag() throws Exception {
     expect(consumerGroupManager.getConsumerGroup(CLUSTER_ID, CONSUMER_GROUP_ID))
         .andReturn(completedFuture(Optional.of(CONSUMER_GROUP)));
-    final Capture<String> capturedConsumerGroupId = newCapture();
     expect(kafkaAdminClient.listConsumerGroupOffsets(
-        capture(capturedConsumerGroupId),
+        eq(CONSUMER_GROUP_ID),
         anyObject(ListConsumerGroupOffsetsOptions.class)))
         .andReturn(listConsumerGroupOffsetsResult);
     expect(listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata())
@@ -233,16 +235,15 @@ public class ConsumerGroupLagManagerImplTest {
     replay(consumerGroupManager, kafkaAdminClient, listConsumerGroupOffsetsResult);
     ConsumerGroupLag consumerGroupLag =
         consumerGroupLagManager.getConsumerGroupLag(CLUSTER_ID, CONSUMER_GROUP_ID).get().get();
-    assertEquals(capturedConsumerGroupId.getValue(), CONSUMER_GROUP_ID);
-    assertEquals(capturedOffsetSpec.getValue().keySet(), OFFSET_AND_METADATA_MAP.keySet());
+    assertEquals(OFFSET_AND_METADATA_MAP.keySet(), capturedOffsetSpec.getValue().keySet());
     assertEquals(
-        capturedListOffsetsOptions.getValue().isolationLevel(),
-        IsolationLevel.READ_COMMITTED);
+        IsolationLevel.READ_COMMITTED,
+        capturedListOffsetsOptions.getValue().isolationLevel());
     assertEquals(CONSUMER_GROUP_LAG, consumerGroupLag);
   }
 
   @Test
-  public void getConsumerGroupLag_nonExistingConsumerGroup_returnsEmpty() throws Exception {
+  public void getConsumerGroupLag_nonExistingConsumerGroup_throwsNotFound() throws Exception {
     expect(consumerGroupManager.getConsumerGroup(CLUSTER_ID, CONSUMER_GROUP_ID))
         .andReturn(completedFuture(Optional.empty()));
     replay(consumerGroupManager);

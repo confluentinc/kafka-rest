@@ -49,26 +49,6 @@ abstract class AbstractConsumerLagManager {
     this.kafkaAdminClient = kafkaAdminClient;
   }
 
-  protected final Map<TopicPartition, MemberId> getMemberIds(
-      ConsumerGroup consumerGroup
-  ) {
-    Map<TopicPartition, MemberId> tpMemberIds = new HashMap<>();
-    for (Consumer consumer: consumerGroup.getConsumers()) {
-      for (Partition partition : consumer.getAssignedPartitions()) {
-        MemberId memberId =
-            MemberId.builder()
-                .setConsumerId(consumer.getConsumerId())
-                .setClientId(consumer.getClientId())
-                .setInstanceId(consumer.getInstanceId().orElse(null))
-                .build();
-        TopicPartition topicPartition =
-            new TopicPartition(partition.getTopicName(), partition.getPartitionId());
-        tpMemberIds.put(topicPartition, memberId);
-      }
-    }
-    return tpMemberIds;
-  }
-
   protected final CompletableFuture<Map<TopicPartition, OffsetAndMetadata>> getCurrentOffsets(
       String consumerGroupId
   ) {
@@ -91,6 +71,26 @@ abstract class AbstractConsumerLagManager {
         kafkaAdminClient.listOffsets(
             latestOffsetSpecs,
             new ListOffsetsOptions(isolationLevel)).all());
+  }
+
+  protected final Map<TopicPartition, MemberId> getMemberIds(
+      ConsumerGroup consumerGroup
+  ) {
+    Map<TopicPartition, MemberId> tpMemberIds = new HashMap<>();
+    for (Consumer consumer: consumerGroup.getConsumers()) {
+      for (Partition partition : consumer.getAssignedPartitions()) {
+        MemberId memberId =
+            MemberId.builder()
+                .setConsumerId(consumer.getConsumerId())
+                .setInstanceId(consumer.getInstanceId().orElse(null))
+                .setClientId(consumer.getClientId())
+                .build();
+        TopicPartition topicPartition =
+            new TopicPartition(partition.getTopicName(), partition.getPartitionId());
+        tpMemberIds.put(topicPartition, memberId);
+      }
+    }
+    return tpMemberIds;
   }
 
   protected final long getCurrentOffset(Map<TopicPartition, OffsetAndMetadata> map, TopicPartition topicPartition) {
@@ -132,9 +132,9 @@ abstract class AbstractConsumerLagManager {
 
     protected abstract String getConsumerId();
 
-    protected abstract String getClientId();
-
     protected abstract Optional<String> getInstanceId();
+
+    protected abstract String getClientId();
 
     protected static Builder builder() {
       return new AutoValue_AbstractConsumerLagManager_MemberId.Builder();
@@ -148,9 +148,9 @@ abstract class AbstractConsumerLagManager {
 
       protected abstract Builder setConsumerId(String consumerId);
 
-      protected abstract Builder setClientId(String clientId);
-
       protected abstract Builder setInstanceId(@Nullable String instanceId);
+
+      protected abstract Builder setClientId(String clientId);
 
       protected abstract MemberId build();
     }

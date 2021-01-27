@@ -69,12 +69,12 @@ public abstract class ConsumerGroupLag {
       long lag = Math.max(0, endOffset - currentOffset);
       if (maxLag < lag) {
         maxLag = lag;
-        setMaxLag(maxLag);
-        setMaxLagClientId(clientId);
         setMaxLagConsumerId(consumerId);
         setMaxLagInstanceId(instanceId);
+        setMaxLagClientId(clientId);
         setMaxLagTopicName(topicName);
         setMaxLagPartitionId(partitionId);
+        setMaxLag(maxLag);
       }
       totalLag += lag;
       setTotalLag(totalLag);

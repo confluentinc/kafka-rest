@@ -5,9 +5,23 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import io.confluent.kafkarest.controllers.AbstractConsumerLagManager.MemberId;
+import io.confluent.kafkarest.entities.Broker;
+import io.confluent.kafkarest.entities.Consumer;
+import io.confluent.kafkarest.entities.ConsumerGroup;
+import io.confluent.kafkarest.entities.ConsumerGroup.State;
 import io.confluent.kafkarest.entities.ConsumerGroupLag;
+import io.confluent.kafkarest.entities.Partition;
+import java.lang.reflect.Member;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import javax.annotation.Nullable;
+import javax.validation.constraints.Null;
+import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
@@ -17,172 +31,270 @@ import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupsOptions;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions;
 import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
+import org.apache.kafka.clients.admin.ListOffsetsOptions;
 import org.apache.kafka.clients.admin.ListOffsetsResult;
+import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.clients.admin.MemberAssignment;
 import org.apache.kafka.clients.admin.MemberDescription;
+import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.ConsumerGroupState;
+import org.apache.kafka.common.IsolationLevel;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
+import org.easymock.Capture;
+import org.easymock.EasyMockRule;
+import org.easymock.Mock;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Collections.emptyList;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
 public class AbstractConsumerLagManagerTest {
 
-  private static final Duration DEFAULT_METADATA_TIMEOUT = Duration.ofSeconds(15);
-  private AdminClient adminClient;
-  private String CLUSTER_ID = "cluster-1";
+  private static final String CLUSTER_ID = "cluster-1";
+
+  private static final Broker BROKER_1 =
+      Broker.create(
+          CLUSTER_ID,
+          /* brokerId= */ 1,
+          /* host= */ "1.2.3.4",
+          /* port= */ 1000,
+          /* rack= */ null);
+
+  private static final String CONSUMER_GROUP_ID = "consumer-group-1";
+
+  private static final Consumer CONSUMER_1 =
+      Consumer.builder()
+          .setClusterId(CLUSTER_ID)
+          .setConsumerGroupId(CONSUMER_GROUP_ID)
+          .setConsumerId("consumer-1")
+          .setClientId("client-1")
+          .setInstanceId("instance-1")
+          .setHost("11.12.12.14")
+          .setAssignedPartitions(
+              Arrays.asList(
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-1",
+                      /* partitionId= */ 1,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-3",
+                      /* partitionId= */ 3,
+                      /* replicas= */ emptyList())))
+          .build();
+
+  private static final Consumer CONSUMER_2 =
+      Consumer.builder()
+          .setClusterId(CLUSTER_ID)
+          .setConsumerGroupId(CONSUMER_GROUP_ID)
+          .setConsumerId("consumer-2")
+          .setInstanceId("instance-2")
+          .setClientId("client-2")
+          .setHost("11.12.12.14")
+          .setAssignedPartitions(
+              Collections.singletonList(
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-2",
+                      /* partitionId= */ 2,
+                      /* replicas= */ emptyList())))
+          .build();
+
+  private static final TopicPartition TOPIC_PARTITION_1 =
+      new TopicPartition("topic-1", 1);
+
+  private static final TopicPartition TOPIC_PARTITION_2 =
+      new TopicPartition("topic-2", 2);
+
+  private static final TopicPartition TOPIC_PARTITION_3 =
+      new TopicPartition("topic-3", 3);
+
+  private static final Map<TopicPartition, OffsetAndMetadata> OFFSET_AND_METADATA_MAP;
+  static {
+    OFFSET_AND_METADATA_MAP = new HashMap<>();
+    OFFSET_AND_METADATA_MAP.put(TOPIC_PARTITION_1, new OffsetAndMetadata(0));
+    OFFSET_AND_METADATA_MAP.put(TOPIC_PARTITION_2, new OffsetAndMetadata(100));
+    OFFSET_AND_METADATA_MAP.put(TOPIC_PARTITION_3, new OffsetAndMetadata(110));
+  }
+
+  private static final Map<TopicPartition, KafkaFuture<ListOffsetsResultInfo>> LATEST_OFFSETS_MAP =
+      new HashMap<>();
+
+  @Rule
+  public final EasyMockRule mocks = new EasyMockRule(this);
+
+  @Mock
+  private Admin kafkaAdminClient;
+
+  @Mock
+  private ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult;
+
+  private class TestAbstractConsumerLagManager extends AbstractConsumerLagManager {
+
+    TestAbstractConsumerLagManager(final Admin kafkaAdminClient) {
+      super(kafkaAdminClient);
+    }
+  }
+
+  private TestAbstractConsumerLagManager testAbstractConsumerLagManager;
 
   @Before
   public void setup() {
-    adminClient =  createMock(AdminClient.class);
+    testAbstractConsumerLagManager = new TestAbstractConsumerLagManager(kafkaAdminClient);
   }
 
-//  @Test
-//  public void testGetConsumerGroups() throws Throwable {
-//    ListConsumerGroupsResult listConsumerGroupsResult = mock(ListConsumerGroupsResult.class);
-//    expect(adminClient.listConsumerGroups(anyObject(ListConsumerGroupsOptions.class))).andReturn(listConsumerGroupsResult).once();
-//    Collection<ConsumerGroupListing> consumerGroups = Lists.newArrayList();
-//    expect(listConsumerGroupsResult.all()).andReturn(KafkaFuture.completedFuture(consumerGroups));
-//    expectLastCall().once();
-//    replay(adminClient, listConsumerGroupsResult);
-//    AbstractConsumerLagManager dao = new AbstractConsumerLagManager(adminClient, DEFAULT_METADATA_TIMEOUT);
-//    dao.getConsumerGroups();
-//    verify(adminClient, listConsumerGroupsResult);
-//  }
+  @Test
+  public void testGetCurrentOffsets() {
+    expect(kafkaAdminClient.listConsumerGroupOffsets(eq(CONSUMER_GROUP_ID), anyObject(ListConsumerGroupOffsetsOptions.class)))
+        .andReturn(listConsumerGroupOffsetsResult)
+        .once();
+    expect(listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata())
+        .andReturn(KafkaFuture.completedFuture(OFFSET_AND_METADATA_MAP));
+    expectLastCall().once();
 
-//  @Test
-//  public void testGetAllConsumerGroupDescriptions() throws Throwable {
-//
-//    Collection<String> consumerGroupIds = ImmutableList.of("consumerGroup1", "consumerGroup2", "consumerGroup3");
-//    ConsumerGroupDescription desc1 = new ConsumerGroupDescription("consumerGroup1", true, getMemberDescriptions(), "something",
-//        ConsumerGroupState.EMPTY, Node.noNode());
-//    ConsumerGroupDescription desc2 = new ConsumerGroupDescription("consumerGroup2", true, getMemberDescriptions(), "something",
-//        ConsumerGroupState.STABLE, Node.noNode());
-//    ConsumerGroupDescription desc3 = new ConsumerGroupDescription("consumerGroup3", true, null, "something",
-//        ConsumerGroupState.STABLE, Node.noNode());
-//
-//    DescribeConsumerGroupsResult describeConsumerGroupsResult = mock(DescribeConsumerGroupsResult.class);
-//    expect(adminClient.describeConsumerGroups(eq(consumerGroupIds), anyObject(DescribeConsumerGroupsOptions.class))).andReturn(describeConsumerGroupsResult).once();
-//    Map<String, KafkaFuture<ConsumerGroupDescription>> futuresMap = ImmutableMap.of(
-//        "consumerGroup1", KafkaFuture.completedFuture(desc1),
-//        "consumerGroup2", KafkaFuture.completedFuture(desc2),
-//        "consumerGroup3", KafkaFuture.completedFuture(desc3)
-//    );
-//    expect(describeConsumerGroupsResult.describedGroups()).andReturn(futuresMap);
-//    expectLastCall().once();
-//
-//    replay(adminClient, describeConsumerGroupsResult);
-//    AbstractConsumerLagManager dao = new AbstractConsumerLagManager(adminClient, DEFAULT_METADATA_TIMEOUT);
-//    assertEquals(ImmutableMap.of("consumerGroup1", desc1, "consumerGroup2", desc2, "consumerGroup3", desc3), dao.getAllConsumerGroupDescriptions(consumerGroupIds));
-//    verify(adminClient, describeConsumerGroupsResult);
-//  }
-
-//  @Test
-//  public void testGetCurrentOffsets() throws Throwable {
-//
-//    final String consumerGroupId = "consumerGroup1";
-//    ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult = mock(ListConsumerGroupOffsetsResult.class);
-//    expect(adminClient.listConsumerGroupOffsets(eq(consumerGroupId), anyObject(ListConsumerGroupOffsetsOptions.class))).andReturn(listConsumerGroupOffsetsResult).once();
-//    Map<TopicPartition, OffsetAndMetadata> tpMetaData = Maps.newHashMap();
-//    expect(listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata()).andReturn(KafkaFuture.completedFuture(tpMetaData));
-//    expectLastCall().once();
-//
-//    replay(adminClient, listConsumerGroupOffsetsResult);
-//    AbstractConsumerLagManager dao = new AbstractConsumerLagManager(adminClient, DEFAULT_METADATA_TIMEOUT);
-//    dao.getCurrentOffsets(consumerGroupId);
-//    verify(adminClient, listConsumerGroupOffsetsResult);
-//  }
-
-  private ListOffsetsResult.ListOffsetsResultInfo listOffsetResult(long offset) {
-    return new ListOffsetsResult.ListOffsetsResultInfo(offset, 0, Optional.empty());
+    replay(kafkaAdminClient, listConsumerGroupOffsetsResult);
+    testAbstractConsumerLagManager.getCurrentOffsets(CONSUMER_GROUP_ID);
+    verify(kafkaAdminClient, listConsumerGroupOffsetsResult);
   }
 
-//  @Test
-//  public void getConsumerGroupOffsets_returnsCorrectLagSummary() throws Throwable {
-//    AbstractConsumerLagManager dao = new AbstractConsumerLagManager(adminClient, DEFAULT_METADATA_TIMEOUT);
-//
-//    ConsumerGroupDescription consumerGroupDescription = new ConsumerGroupDescription("consumerGroup1", true, getMemberDescriptions(), "something",
-//        ConsumerGroupState.STABLE, Node.noNode());
-//
-//    Map<TopicPartition, OffsetAndMetadata> currentOffsets = ImmutableMap.of(
-//        new TopicPartition("topic1", 1), new OffsetAndMetadata(50, null),
-//        new TopicPartition("topic1", 2), new OffsetAndMetadata(0, null),
-//        new TopicPartition("topic3", 1), new OffsetAndMetadata(100, null),
-//        new TopicPartition("topic99", 1), new OffsetAndMetadata(99, null)
-//    );
-//
-//    Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> endOffsets = ImmutableMap.of(
-//        new TopicPartition("topic1", 1), listOffsetResult(75L),
-//        new TopicPartition("topic1", 2), listOffsetResult(25L),
-//        new TopicPartition("topic3", 1), listOffsetResult(200L)
-//    );
-//
-//    ConsumerGroupLag lag= dao.getConsumerGroupOffsets(
-//        consumerGroupDescription, currentOffsets, endOffsets).setClusterId(CLUSTER_ID).build();
-//    assertEquals("cluster-1", lag.getClusterId());
-//    assertEquals("consumerGroup1", lag.getConsumerGroupId());
-//    assertEquals(100, (long) lag.getMaxLag());
-//    assertEquals(150, (long) lag.getTotalLag());
-//    assertEquals("consumer2", lag.getMaxLagConsumerId());
-//    assertEquals("client2", lag.getMaxLagClientId());
-//    assertEquals("topic3", lag.getMaxLagTopicName());
-//    assertEquals(1, (long) lag.getMaxLagPartitionId());
-//
-//    ConsumerGroupDescription consumerGroupDescription2 = new ConsumerGroupDescription("consumerGroup2", true, null, "something",
-//        ConsumerGroupState.STABLE, Node.noNode());
-//
-//    Map<TopicPartition, OffsetAndMetadata> currentOffsets2 = ImmutableMap.of(
-//        new TopicPartition("topic1", 1), new OffsetAndMetadata(50, null),
-//        new TopicPartition("topic1", 2), new OffsetAndMetadata(0, null),
-//        new TopicPartition("topic3", 1), new OffsetAndMetadata(100, null),
-//        new TopicPartition("topic99", 1), new OffsetAndMetadata(99, null)
-//    );
-//
-//    Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> endOffsets2 = ImmutableMap.of(
-//        new TopicPartition("topic1", 1), listOffsetResult(75L),
-//        new TopicPartition("topic1", 2), listOffsetResult(25L),
-//        new TopicPartition("topic3", 1), listOffsetResult(99L)
-//    );
-//
-//    ConsumerGroupLag lag2 = dao.getConsumerGroupOffsets(
-//        consumerGroupDescription2, currentOffsets2, endOffsets2).setClusterId(CLUSTER_ID).build();
-//    assertEquals("cluster-1", lag2.getClusterId());
-//    assertEquals("consumerGroup2", lag2.getConsumerGroupId());
-//    assertEquals(25, (long) lag2.getMaxLag());
-//    assertEquals(49, (long) lag2.getTotalLag());
-//    assertEquals("", lag2.getMaxLagConsumerId());
-//    assertEquals("", lag2.getMaxLagClientId());
-//    assertEquals("topic1", lag2.getMaxLagTopicName());
-//    assertEquals(1, (long) lag2.getMaxLagPartitionId());
-//  }
+  @Test
+  public void testLatestOffsets() {
+    final Capture<Map<TopicPartition, OffsetSpec>> capturedOffsetSpec = newCapture();
+    final Capture<ListOffsetsOptions> capturedListOffsetsOptions = newCapture();
+    expect(kafkaAdminClient.listOffsets(
+        capture(capturedOffsetSpec),
+        capture(capturedListOffsetsOptions)))
+        .andReturn(new ListOffsetsResult(LATEST_OFFSETS_MAP))
+        .once();
 
-  private List<MemberDescription> getMemberDescriptions() {
-    MemberAssignment assignment1 = new MemberAssignment(ImmutableSet.of(
-        new TopicPartition("topic1", 1),
-        new TopicPartition("topic1", 2),
-        new TopicPartition("topic2", 1),
-        new TopicPartition("topic3", 0)
-    ));
+    replay(kafkaAdminClient);
+    testAbstractConsumerLagManager.getLatestOffsets(OFFSET_AND_METADATA_MAP);
 
-    MemberAssignment assignment2 = new MemberAssignment(ImmutableSet.of(
-        new TopicPartition("topic1", 0),
-        new TopicPartition("topic2", 1),
-        new TopicPartition("topic3", 1),
-        new TopicPartition("topic4", 0)
-    ));
+    verify(kafkaAdminClient);
+    assertEquals(OFFSET_AND_METADATA_MAP.keySet(), capturedOffsetSpec.getValue().keySet());
+    assertEquals(
+        IsolationLevel.READ_COMMITTED,
+        capturedListOffsetsOptions.getValue().isolationLevel());
+  }
 
-    return ImmutableList.of(
-        new MemberDescription("consumer1", "client1", "host1", assignment1),
-        new MemberDescription("consumer2", "client2", "host1", assignment2)
-    );
+  @Test
+  public void testGetMemberIds() {
+    final Consumer CONSUMER_1 =
+        Consumer.builder()
+            .setClusterId(CLUSTER_ID)
+            .setConsumerGroupId(CONSUMER_GROUP_ID)
+            .setConsumerId("consumer-1")
+            .setInstanceId("instance-1")
+            .setClientId("client-1")
+            .setHost("11.12.12.14")
+            .setAssignedPartitions(
+                Arrays.asList(
+                    Partition.create(
+                        CLUSTER_ID,
+                        /* topicName= */ "topic-1",
+                        /* partitionId= */ 1,
+                        /* replicas= */ emptyList()),
+                    Partition.create(
+                        CLUSTER_ID,
+                        /* topicName= */ "topic-3",
+                        /* partitionId= */ 3,
+                        /* replicas= */ emptyList())))
+            .build();
+
+    final Consumer CONSUMER_2 =
+        Consumer.builder()
+            .setClusterId(CLUSTER_ID)
+            .setConsumerGroupId(CONSUMER_GROUP_ID)
+            .setConsumerId("consumer-2")
+            .setInstanceId("instance-2")
+            .setClientId("client-2")
+            .setHost("11.12.12.14")
+            .setAssignedPartitions(
+                Collections.singletonList(
+                    Partition.create(
+                        CLUSTER_ID,
+                        /* topicName= */ "topic-2",
+                        /* partitionId= */ 2,
+                        /* replicas= */ emptyList())))
+            .build();
+
+    final ConsumerGroup CONSUMER_GROUP =
+        ConsumerGroup.builder()
+            .setClusterId(CLUSTER_ID)
+            .setConsumerGroupId(CONSUMER_GROUP_ID)
+            .setSimple(true)
+            .setPartitionAssignor("org.apache.kafka.clients.consumer.RoundRobinAssignor")
+            .setState(State.STABLE)
+            .setCoordinator(BROKER_1)
+            .setConsumers(Arrays.asList(CONSUMER_1, CONSUMER_2))
+            .build();
+
+    // using round robin partition assignor
+    Map<TopicPartition, MemberId> expectedTpMemberIds = new HashMap<>();
+    expectedTpMemberIds.put(TOPIC_PARTITION_1, createMemberId("consumer-1", "instance-1", "client-1"));
+    expectedTpMemberIds.put(TOPIC_PARTITION_2, createMemberId("consumer-2", "instance-2", "client-2"));
+    expectedTpMemberIds.put(TOPIC_PARTITION_3, createMemberId("consumer-1", "instance-1", "client-1"));
+
+    assertEquals(expectedTpMemberIds, testAbstractConsumerLagManager.getMemberIds(CONSUMER_GROUP));
+  }
+
+  @Test
+  public void testGetMemberIds_nullInstances_returnsMemberIds() {
+    final Consumer CONSUMER_1 =
+        Consumer.builder()
+            .setClusterId(CLUSTER_ID)
+            .setConsumerGroupId(CONSUMER_GROUP_ID)
+            .setConsumerId("consumer-1")
+            .setInstanceId(null)
+            .setClientId("client-1")
+            .setHost("11.12.12.14")
+            .setAssignedPartitions(
+                Arrays.asList(
+                    Partition.create(
+                        CLUSTER_ID,
+                        /* topicName= */ "topic-1",
+                        /* partitionId= */ 1,
+                        /* replicas= */ emptyList()),
+                    Partition.create(
+                        CLUSTER_ID,
+                        /* topicName= */ "topic-3",
+                        /* partitionId= */ 3,
+                        /* replicas= */ emptyList())))
+            .build();
+
+    final ConsumerGroup CONSUMER_GROUP =
+        ConsumerGroup.builder()
+            .setClusterId(CLUSTER_ID)
+            .setConsumerGroupId(CONSUMER_GROUP_ID)
+            .setSimple(true)
+            .setPartitionAssignor("org.apache.kafka.clients.consumer.RoundRobinAssignor")
+            .setState(State.STABLE)
+            .setCoordinator(BROKER_1)
+            .setConsumers(Collections.singletonList(CONSUMER_1))
+            .build();
+
+    Map<TopicPartition, MemberId> expectedTpMemberIds = new HashMap<>();
+    expectedTpMemberIds.put(TOPIC_PARTITION_1, createMemberId("consumer-1", null, "client-1"));
+    expectedTpMemberIds.put(TOPIC_PARTITION_3, createMemberId("consumer-1", null, "client-1"));
+    assertEquals(expectedTpMemberIds, testAbstractConsumerLagManager.getMemberIds(CONSUMER_GROUP));
+  }
+
+  private MemberId createMemberId(String consumer, @Nullable String instance, String client) {
+    return MemberId.builder()
+        .setConsumerId(consumer)
+        .setInstanceId(instance)
+        .setClientId(client)
+        .build();
   }
 }
