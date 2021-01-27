@@ -18,8 +18,10 @@ package io.confluent.kafkarest.controllers;
 import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
 import static java.util.Objects.requireNonNull;
 
+import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
 import io.confluent.kafkarest.entities.ConsumerGroupLag;
+import io.confluent.kafkarest.entities.Partition;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -80,15 +82,15 @@ final class ConsumerGroupLagManagerImpl
       ConsumerGroup consumerGroup,
       Map<TopicPartition, OffsetAndMetadata> fetchedCurrentOffsets,
       Map<TopicPartition, ListOffsetsResultInfo> latestOffsets) {
-    Map<TopicPartition, MemberId> tpMemberIds =
-        getMemberIds(consumerGroup);
+    Map<TopicPartition, Consumer> partitionAssignment =
+        getPartitionAssignment(consumerGroup);
     ConsumerGroupLag.Builder consumerGroupLag =
         ConsumerGroupLag.builder()
             .setClusterId(clusterId)
             .setConsumerGroupId(consumerGroup.getConsumerGroupId());
     fetchedCurrentOffsets.keySet().stream().forEach(
         topicPartition -> {
-          Optional<MemberId> memberId = Optional.ofNullable(tpMemberIds.get(topicPartition));
+          Optional<Consumer> consumer = Optional.ofNullable(partitionAssignment.get(topicPartition));
           Optional<Long> currentOffset =
               getCurrentOffset(fetchedCurrentOffsets, topicPartition);
           Optional<Long> latestOffset =
@@ -96,16 +98,16 @@ final class ConsumerGroupLagManagerImpl
           if (currentOffset.isPresent() && latestOffset.isPresent()) {
             consumerGroupLag.addOffset(
                 topicPartition.topic(),
-                memberId.map(MemberId::getConsumerId).orElse(""),
-                memberId.flatMap(MemberId::getInstanceId),
-                memberId.map(MemberId::getClientId).orElse(""),
+                consumer.map(Consumer::getConsumerId).orElse(""),
+                consumer.flatMap(Consumer::getInstanceId),
+                consumer.map(Consumer::getClientId).orElse(""),
                 topicPartition.partition(),
                 currentOffset.get(),
                 latestOffset.get());
           } else {
             log.debug("missing offset for consumerId={} topic={} partition={} "
                     + "current={} latest={}",
-                memberId.map(MemberId::getConsumerId).orElse(""),
+                consumer.map(Consumer::getConsumerId).orElse(""),
                 topicPartition.topic(),
                 topicPartition.partition(),
                 currentOffset.orElse(null),

@@ -63,7 +63,7 @@ public abstract class ConsumerLag {
 
     public abstract Builder setConsumerId(String consumerId);
 
-    public abstract Builder setInstanceId(@Nullable String instanceId);
+    public abstract Builder setInstanceId(Optional<String> instanceId);
 
     public abstract Builder setClientId(String clientId);
 

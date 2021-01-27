@@ -73,25 +73,39 @@ abstract class AbstractConsumerLagManager {
             new ListOffsetsOptions(ISOLATION_LEVEL)).all());
   }
 
-  protected static final Map<TopicPartition, MemberId> getMemberIds(
+  protected static final Map<TopicPartition, Consumer> getPartitionAssignment(
       ConsumerGroup consumerGroup
   ) {
-    Map<TopicPartition, MemberId> tpMemberIds = new HashMap<>();
-    for (Consumer consumer: consumerGroup.getConsumers()) {
+    Map<TopicPartition, Consumer> partitionAssignment = new HashMap<>();
+    for (Consumer consumer : consumerGroup.getConsumers()) {
       for (Partition partition : consumer.getAssignedPartitions()) {
-        MemberId memberId =
-            MemberId.builder()
-                .setConsumerId(consumer.getConsumerId())
-                .setInstanceId(consumer.getInstanceId().orElse(null))
-                .setClientId(consumer.getClientId())
-                .build();
-        TopicPartition topicPartition =
-            new TopicPartition(partition.getTopicName(), partition.getPartitionId());
-        tpMemberIds.put(topicPartition, memberId);
+        partitionAssignment.put(
+            new TopicPartition(partition.getTopicName(), partition.getPartitionId()),
+            consumer);
       }
     }
-    return tpMemberIds;
+    return partitionAssignment;
   }
+
+//  protected static final Map<TopicPartition, MemberId> getMemberIds(
+//      ConsumerGroup consumerGroup
+//  ) {
+//    Map<TopicPartition, MemberId> tpMemberIds = new HashMap<>();
+//    for (Consumer consumer: consumerGroup.getConsumers()) {
+//      for (Partition partition : consumer.getAssignedPartitions()) {
+//        MemberId memberId =
+//            MemberId.builder()
+//                .setConsumerId(consumer.getConsumerId())
+//                .setInstanceId(consumer.getInstanceId().orElse(null))
+//                .setClientId(consumer.getClientId())
+//                .build();
+//        TopicPartition topicPartition =
+//            new TopicPartition(partition.getTopicName(), partition.getPartitionId());
+//        tpMemberIds.put(topicPartition, memberId);
+//      }
+//    }
+//    return tpMemberIds;
+//  }
 
   protected static final Optional<Long> getCurrentOffset(
       Map<TopicPartition, OffsetAndMetadata> map,
