@@ -31,7 +31,6 @@ import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.management.relation.Relation;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;

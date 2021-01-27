@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
-import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -32,7 +31,8 @@ import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class ConsumerGroupLagManagerImpl extends AbstractConsumerLagManager implements ConsumerGroupLagManager {
+final class ConsumerGroupLagManagerImpl
+    extends AbstractConsumerLagManager implements ConsumerGroupLagManager {
 
   private final ConsumerGroupManager consumerGroupManager;
   private static final Logger log = LoggerFactory.getLogger(ConsumerGroupLagManagerImpl.class);
@@ -53,13 +53,16 @@ final class ConsumerGroupLagManagerImpl extends AbstractConsumerLagManager imple
     return consumerGroupManager.getConsumerGroup(clusterId, consumerGroupId)
         .thenApply(
             consumerGroup ->
-                checkEntityExists(consumerGroup, "Consumer Group %s could not be found.", consumerGroupId))
+                checkEntityExists(consumerGroup,
+                    "Consumer Group %s could not be found.", consumerGroupId))
         .thenCompose(
             consumerGroup ->
                 getCurrentOffsets(consumerGroupId)
                     .thenApply(
                         fetchedCurrentOffsets ->
-                            checkOffsetsExist(fetchedCurrentOffsets, "Consumer group offsets could not be found."))
+                            checkOffsetsExist(
+                                fetchedCurrentOffsets,
+                                "Consumer group offsets could not be found."))
                     .thenCompose(
                         fetchedCurrentOffsets ->
                             getLatestOffsets(fetchedCurrentOffsets)
@@ -96,7 +99,8 @@ final class ConsumerGroupLagManagerImpl extends AbstractConsumerLagManager imple
           long latestOffset =
               getOffset(latestOffsets, topicPartition);
           if (currentOffset < 0 || latestOffset < 0) {
-            log.debug("invalid offsets for consumerId={} topic={} partition={} current={} latest={}",
+            log.debug("invalid offsets for consumerId={} topic={} partition={} "
+                    + "current={} latest={}",
                 memberId.getConsumerId(),
                 topicPartition.topic(),
                 topicPartition.partition(),

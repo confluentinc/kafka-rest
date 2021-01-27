@@ -33,7 +33,8 @@ import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class ConsumerLagManagerImpl extends AbstractConsumerLagManager implements ConsumerLagManager {
+final class ConsumerLagManagerImpl
+    extends AbstractConsumerLagManager implements ConsumerLagManager {
 
   private final ConsumerGroupManager consumerGroupManager;
   private static final Logger log = LoggerFactory.getLogger(ConsumerLagManagerImpl.class);
@@ -52,13 +53,17 @@ final class ConsumerLagManagerImpl extends AbstractConsumerLagManager implements
     return consumerGroupManager.getConsumerGroup(clusterId, consumerGroupId)
         .thenApply(
             consumerGroup ->
-                checkEntityExists(consumerGroup, "Consumer Group %s could not be found.", consumerGroupId))
+                checkEntityExists(
+                    consumerGroup,
+                    "Consumer Group %s could not be found.", consumerGroupId))
         .thenCompose(
             consumerGroup ->
                 getCurrentOffsets(consumerGroupId)
                     .thenApply(
                         fetchedCurrentOffsets ->
-                            checkOffsetsExist(fetchedCurrentOffsets, "Consumer group offsets could not be found."))
+                            checkOffsetsExist(
+                                fetchedCurrentOffsets,
+                                "Consumer group offsets could not be found."))
                     .thenCompose(
                         fetchedCurrentOffsets ->
                             getLatestOffsets(fetchedCurrentOffsets)
@@ -105,7 +110,8 @@ final class ConsumerLagManagerImpl extends AbstractConsumerLagManager implements
           long latestOffset =
               getOffset(latestOffsets, topicPartition);
           if (currentOffset < 0 || latestOffset < 0) {
-            log.debug("invalid offsets for consumerId={} topic={} partition={} current={} latest={}",
+            log.debug("invalid offsets for consumerId={} topic={} partition={} "
+                    + "current={} latest={}",
                 memberId.getConsumerId(),
                 topicPartition.topic(),
                 topicPartition.partition(),

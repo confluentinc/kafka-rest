@@ -23,7 +23,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.HashSet;
 import java.net.URI;
-import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -144,16 +143,5 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class PortConfigImpl
       extends AnnotationLiteral<PortConfig> implements PortConfig {
-  }
-
-  // ConsumerMetadataTimeout in blueway
-  @Qualifier
-  @Retention(RetentionPolicy.RUNTIME)
-  @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER })
-  public @interface OffsetsTimeoutConfig {
-  }
-
-  private static final class OffsetsTimeoutConfigImpl
-      extends AnnotationLiteral<OffsetsTimeoutConfig> implements OffsetsTimeoutConfig {
   }
 }

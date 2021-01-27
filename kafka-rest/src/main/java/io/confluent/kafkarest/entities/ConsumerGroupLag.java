@@ -59,8 +59,8 @@ public abstract class ConsumerGroupLag {
     public void addOffset(
         String topicName,
         String consumerId,
-        String clientId,
         @Nullable String instanceId,
+        String clientId,
         int partitionId,
         long currentOffset,
         long endOffset
@@ -84,7 +84,7 @@ public abstract class ConsumerGroupLag {
 
     public abstract Builder setConsumerGroupId(String consumerGroupId);
 
-   public abstract Builder setMaxLagClientId(String maxLagClientId);
+    public abstract Builder setMaxLagClientId(String maxLagClientId);
 
     public abstract Builder setMaxLagConsumerId(String maxLagConsumerId);
 

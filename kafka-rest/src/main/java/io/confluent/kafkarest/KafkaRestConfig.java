@@ -23,7 +23,6 @@ import io.confluent.rest.metrics.RestMetricsContext;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
-import java.time.Duration;
 import javax.ws.rs.core.MediaType;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;

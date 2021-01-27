@@ -93,7 +93,10 @@ abstract class AbstractConsumerLagManager {
     return tpMemberIds;
   }
 
-  protected final long getCurrentOffset(Map<TopicPartition, OffsetAndMetadata> map, TopicPartition topicPartition) {
+  protected final long getCurrentOffset(
+      Map<TopicPartition, OffsetAndMetadata> map,
+      TopicPartition topicPartition
+  ) {
     if (map == null) {
       return -1;
     }
@@ -104,7 +107,10 @@ abstract class AbstractConsumerLagManager {
     return oam.offset();
   }
 
-  protected final long getOffset(Map<TopicPartition, ListOffsetsResultInfo> map, TopicPartition topicPartition) {
+  protected final long getOffset(
+      Map<TopicPartition, ListOffsetsResultInfo> map,
+      TopicPartition topicPartition
+  ) {
     if (map == null) {
       return -1;
     }
