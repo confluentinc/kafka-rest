@@ -1,13 +1,6 @@
 package io.confluent.kafkarest.controllers;
 
-import io.confluent.kafkarest.controllers.AbstractConsumerLagManager.MemberId;
 import io.confluent.kafkarest.entities.Broker;
-import io.confluent.kafkarest.entities.Consumer;
-import io.confluent.kafkarest.entities.ConsumerGroup;
-import io.confluent.kafkarest.entities.ConsumerGroup.State;
-import io.confluent.kafkarest.entities.Partition;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import javax.annotation.Nullable;
 import org.apache.kafka.clients.admin.Admin;
@@ -30,7 +23,6 @@ import org.junit.Test;
 
 import java.util.Map;
 
-import static java.util.Collections.emptyList;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
@@ -227,11 +219,11 @@ public class AbstractConsumerLagManagerTest {
 //    assertEquals(expectedTpMemberIds, testAbstractConsumerLagManager.getMemberIds(CONSUMER_GROUP));
 //  }
 
-  private MemberId createMemberId(String consumer, @Nullable String instance, String client) {
-    return MemberId.builder()
-        .setConsumerId(consumer)
-        .setInstanceId(instance)
-        .setClientId(client)
-        .build();
-  }
+//  private MemberId createMemberId(String consumer, @Nullable String instance, String client) {
+//    return MemberId.builder()
+//        .setConsumerId(consumer)
+//        .setInstanceId(instance)
+//        .setClientId(client)
+//        .build();
+//  }
 }

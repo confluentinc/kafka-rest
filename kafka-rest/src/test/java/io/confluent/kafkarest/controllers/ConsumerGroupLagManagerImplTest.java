@@ -26,7 +26,6 @@ import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import io.confluent.kafkarest.controllers.AbstractConsumerLagManager.MemberId;
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
@@ -154,32 +153,6 @@ public class ConsumerGroupLagManagerImplTest {
     LATEST_OFFSETS_MAP.put(
         TOPIC_PARTITION_3,
         KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
-  }
-
-  private static final Map<TopicPartition, MemberId> MEMBER_ID_MAP;
-  static {
-    MEMBER_ID_MAP = new HashMap<>();
-    MEMBER_ID_MAP.put(
-        TOPIC_PARTITION_1,
-        MemberId.builder()
-            .setConsumerId("consumer-1")
-            .setClientId("client-1")
-            .setInstanceId("instance-1")
-            .build());
-    MEMBER_ID_MAP.put(
-        TOPIC_PARTITION_2,
-        MemberId.builder()
-            .setConsumerId("consumer-2")
-            .setClientId("client-2")
-            .setInstanceId("instance-2")
-            .build());
-    MEMBER_ID_MAP.put(
-        TOPIC_PARTITION_3,
-        MemberId.builder()
-            .setConsumerId("consumer-1")
-            .setClientId("client-1")
-            .setInstanceId("instance-1")
-            .build());
   }
 
   private static final ConsumerGroupLag CONSUMER_GROUP_LAG =

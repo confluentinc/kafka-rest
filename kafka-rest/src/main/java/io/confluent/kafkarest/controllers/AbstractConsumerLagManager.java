@@ -50,7 +50,7 @@ abstract class AbstractConsumerLagManager {
     this.kafkaAdminClient = kafkaAdminClient;
   }
 
-  protected final CompletableFuture<Map<TopicPartition, OffsetAndMetadata>> getCurrentOffsets(
+  final CompletableFuture<Map<TopicPartition, OffsetAndMetadata>> getCurrentOffsets(
       String consumerGroupId
   ) {
     return KafkaFutures.toCompletableFuture(
@@ -59,7 +59,7 @@ abstract class AbstractConsumerLagManager {
             .partitionsToOffsetAndMetadata());
   }
 
-  protected final CompletableFuture<Map<TopicPartition, ListOffsetsResultInfo>> getLatestOffsets(
+  final CompletableFuture<Map<TopicPartition, ListOffsetsResultInfo>> getLatestOffsets(
       Map<TopicPartition, OffsetAndMetadata> currentOffsets
   ) {
     Map<TopicPartition, OffsetSpec> latestOffsetSpecs =
@@ -73,7 +73,7 @@ abstract class AbstractConsumerLagManager {
             new ListOffsetsOptions(ISOLATION_LEVEL)).all());
   }
 
-  protected static final Map<TopicPartition, Consumer> getPartitionAssignment(
+  static final Map<TopicPartition, Consumer> getPartitionAssignment(
       ConsumerGroup consumerGroup
   ) {
     Map<TopicPartition, Consumer> partitionAssignment = new HashMap<>();
@@ -87,7 +87,7 @@ abstract class AbstractConsumerLagManager {
     return partitionAssignment;
   }
 
-//  protected static final Map<TopicPartition, MemberId> getMemberIds(
+//  static final Map<TopicPartition, MemberId> getMemberIds(
 //      ConsumerGroup consumerGroup
 //  ) {
 //    Map<TopicPartition, MemberId> tpMemberIds = new HashMap<>();
@@ -107,7 +107,7 @@ abstract class AbstractConsumerLagManager {
 //    return tpMemberIds;
 //  }
 
-  protected static final Optional<Long> getCurrentOffset(
+  static final Optional<Long> getCurrentOffset(
       Map<TopicPartition, OffsetAndMetadata> currentOffsets,
       TopicPartition topicPartition
   ) {
@@ -118,7 +118,7 @@ abstract class AbstractConsumerLagManager {
     return Optional.of(offsetAndMetadata.offset());
   }
 
-  protected static final Optional<Long> getLatestOffset(
+  static final Optional<Long> getLatestOffset(
       Map<TopicPartition, ListOffsetsResultInfo> latestOffsets,
       TopicPartition topicPartition
   ) {
@@ -129,7 +129,7 @@ abstract class AbstractConsumerLagManager {
     return Optional.of(offsetInfo.offset());
   }
 
-  protected static final <T extends Map<?, ?>> T checkOffsetsExist(
+  static final <T extends Map<?, ?>> T checkOffsetsExist(
       T offsets,
       String message,
       Object... args
@@ -141,34 +141,34 @@ abstract class AbstractConsumerLagManager {
   }
 
 //  @AutoValue
-//  protected abstract static class MemberId {
+//  abstract static class MemberId {
 //
-//    protected MemberId() {
+//    MemberId() {
 //    }
 //
-//    protected abstract String getConsumerId();
+//    abstract String getConsumerId();
 //
-//    protected abstract Optional<String> getInstanceId();
+//    abstract Optional<String> getInstanceId();
 //
-//    protected abstract String getClientId();
+//    abstract String getClientId();
 //
-//    protected static Builder builder() {
+//    static Builder builder() {
 //      return new AutoValue_AbstractConsumerLagManager_MemberId.Builder();
 //    }
 //
 //    @AutoValue.Builder
-//    protected abstract static class Builder {
+//    abstract static class Builder {
 //
-//      protected Builder() {
+//      Builder() {
 //      }
 //
-//      protected abstract Builder setConsumerId(String consumerId);
+//      abstract Builder setConsumerId(String consumerId);
 //
-//      protected abstract Builder setInstanceId(@Nullable String instanceId);
+//      abstract Builder setInstanceId(@Nullable String instanceId);
 //
-//      protected abstract Builder setClientId(String clientId);
+//      abstract Builder setClientId(String clientId);
 //
-//      protected abstract MemberId build();
+//      abstract MemberId build();
 //    }
 //  }
 }
