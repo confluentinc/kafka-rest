@@ -68,14 +68,14 @@ final class ConsumerGroupLagManagerImpl
                             getLatestOffsets(fetchedCurrentOffsets)
                                 .thenApply(
                                     latestOffsets ->
-                                       createConsumerGroupLag(
+                                       Optional.of(createConsumerGroupLag(
                                            clusterId,
                                            consumerGroup,
                                            fetchedCurrentOffsets,
-                                           latestOffsets))));
+                                           latestOffsets)))));
   }
 
-  Optional<ConsumerGroupLag> createConsumerGroupLag(
+  private static ConsumerGroupLag createConsumerGroupLag(
       String clusterId,
       ConsumerGroup consumerGroup,
       Map<TopicPartition, OffsetAndMetadata> fetchedCurrentOffsets,
@@ -88,35 +88,30 @@ final class ConsumerGroupLagManagerImpl
             .setConsumerGroupId(consumerGroup.getConsumerGroupId());
     fetchedCurrentOffsets.keySet().stream().forEach(
         topicPartition -> {
-          MemberId memberId = tpMemberIds.getOrDefault(
-              topicPartition, MemberId.builder()
-                  .setConsumerId("")
-                  .setInstanceId("")
-                  .setClientId("")
-                  .build());
-          long currentOffset =
+          Optional<MemberId> memberId = Optional.ofNullable(tpMemberIds.get(topicPartition));
+          Optional<Long> currentOffset =
               getCurrentOffset(fetchedCurrentOffsets, topicPartition);
-          long latestOffset =
+          Optional<Long> latestOffset =
               getOffset(latestOffsets, topicPartition);
-          if (currentOffset < 0 || latestOffset < 0) {
-            log.debug("invalid offsets for consumerId={} topic={} partition={} "
-                    + "current={} latest={}",
-                memberId.getConsumerId(),
-                topicPartition.topic(),
-                topicPartition.partition(),
-                currentOffset,
-                latestOffset);
-          } else {
+          if (currentOffset.isPresent() && latestOffset.isPresent()) {
             consumerGroupLag.addOffset(
                 topicPartition.topic(),
-                memberId.getConsumerId(),
-                memberId.getInstanceId().orElse(null),
-                memberId.getClientId(),
+                memberId.map(MemberId::getConsumerId).orElse(""),
+                memberId.flatMap(MemberId::getInstanceId),
+                memberId.map(MemberId::getClientId).orElse(""),
                 topicPartition.partition(),
-                currentOffset,
-                latestOffset);
+                currentOffset.get(),
+                latestOffset.get());
+          } else {
+            log.debug("missing offset for consumerId={} topic={} partition={} "
+                    + "current={} latest={}",
+                memberId.map(MemberId::getConsumerId).orElse(""),
+                topicPartition.topic(),
+                topicPartition.partition(),
+                currentOffset.orElse(null),
+                latestOffset.orElse(null));
           }
         });
-    return Optional.of(consumerGroupLag.build());
+    return consumerGroupLag.build();
   }
 }

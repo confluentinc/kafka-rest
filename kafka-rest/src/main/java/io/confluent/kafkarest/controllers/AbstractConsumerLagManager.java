@@ -41,6 +41,7 @@ import org.apache.kafka.common.TopicPartition;
 abstract class AbstractConsumerLagManager {
 
   private final Admin kafkaAdminClient;
+  private final static IsolationLevel ISOLATION_LEVEL = IsolationLevel.READ_COMMITTED;
 
   @Inject
   AbstractConsumerLagManager(
@@ -61,7 +62,6 @@ abstract class AbstractConsumerLagManager {
   protected final CompletableFuture<Map<TopicPartition, ListOffsetsResultInfo>> getLatestOffsets(
       Map<TopicPartition, OffsetAndMetadata> currentOffsets
   ) {
-    IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
     Map<TopicPartition, OffsetSpec> latestOffsetSpecs =
         currentOffsets.keySet()
             .stream()
@@ -70,10 +70,10 @@ abstract class AbstractConsumerLagManager {
     return KafkaFutures.toCompletableFuture(
         kafkaAdminClient.listOffsets(
             latestOffsetSpecs,
-            new ListOffsetsOptions(isolationLevel)).all());
+            new ListOffsetsOptions(ISOLATION_LEVEL)).all());
   }
 
-  protected final Map<TopicPartition, MemberId> getMemberIds(
+  protected static final Map<TopicPartition, MemberId> getMemberIds(
       ConsumerGroup consumerGroup
   ) {
     Map<TopicPartition, MemberId> tpMemberIds = new HashMap<>();
@@ -93,37 +93,33 @@ abstract class AbstractConsumerLagManager {
     return tpMemberIds;
   }
 
-  protected final long getCurrentOffset(
+  protected static final Optional<Long> getCurrentOffset(
       Map<TopicPartition, OffsetAndMetadata> map,
       TopicPartition topicPartition
   ) {
-    if (map == null) {
-      return -1;
+    OffsetAndMetadata offsetAndMetadata = map.get(topicPartition);
+    if (offsetAndMetadata == null) {
+      return Optional.empty();
     }
-    OffsetAndMetadata oam = map.get(topicPartition);
-    if (oam == null) {
-      return -1;
-    }
-    return oam.offset();
+    return Optional.of(offsetAndMetadata.offset());
   }
 
-  protected final long getOffset(
+  protected static final Optional<Long> getOffset(
       Map<TopicPartition, ListOffsetsResultInfo> map,
       TopicPartition topicPartition
   ) {
-    if (map == null) {
-      return -1;
-    }
-
     ListOffsetsResultInfo offsetInfo = map.get(topicPartition);
     if (offsetInfo == null) {
-      return -1;
+      return Optional.empty();
     }
-
-    return offsetInfo.offset();
+    return Optional.of(offsetInfo.offset());
   }
 
-  protected final <T extends Map> T checkOffsetsExist(T offsets, String message, Object... args) {
+  protected static final <T extends Map<?, ?>> T checkOffsetsExist(
+      T offsets,
+      String message,
+      Object... args
+  ) {
     if (offsets.isEmpty()) {
       throw new NotFoundException(String.format(message, args));
     }

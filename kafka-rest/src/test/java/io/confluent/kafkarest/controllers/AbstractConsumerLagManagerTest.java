@@ -1,47 +1,25 @@
 package io.confluent.kafkarest.controllers;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import io.confluent.kafkarest.controllers.AbstractConsumerLagManager.MemberId;
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
 import io.confluent.kafkarest.entities.ConsumerGroup.State;
-import io.confluent.kafkarest.entities.ConsumerGroupLag;
 import io.confluent.kafkarest.entities.Partition;
-import java.lang.reflect.Member;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
-import javax.validation.constraints.Null;
 import org.apache.kafka.clients.admin.Admin;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.ConsumerGroupDescription;
-import org.apache.kafka.clients.admin.ConsumerGroupListing;
-import org.apache.kafka.clients.admin.DescribeConsumerGroupsOptions;
-import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
-import org.apache.kafka.clients.admin.ListConsumerGroupsOptions;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions;
-import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
 import org.apache.kafka.clients.admin.ListOffsetsOptions;
 import org.apache.kafka.clients.admin.ListOffsetsResult;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
-import org.apache.kafka.clients.admin.MemberAssignment;
-import org.apache.kafka.clients.admin.MemberDescription;
 import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
-import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.IsolationLevel;
 import org.apache.kafka.common.KafkaFuture;
-import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
 import org.easymock.Capture;
 import org.easymock.EasyMockRule;
@@ -50,8 +28,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 import static java.util.Collections.emptyList;
@@ -71,45 +47,6 @@ public class AbstractConsumerLagManagerTest {
           /* rack= */ null);
 
   private static final String CONSUMER_GROUP_ID = "consumer-group-1";
-
-  private static final Consumer CONSUMER_1 =
-      Consumer.builder()
-          .setClusterId(CLUSTER_ID)
-          .setConsumerGroupId(CONSUMER_GROUP_ID)
-          .setConsumerId("consumer-1")
-          .setClientId("client-1")
-          .setInstanceId("instance-1")
-          .setHost("11.12.12.14")
-          .setAssignedPartitions(
-              Arrays.asList(
-                  Partition.create(
-                      CLUSTER_ID,
-                      /* topicName= */ "topic-1",
-                      /* partitionId= */ 1,
-                      /* replicas= */ emptyList()),
-                  Partition.create(
-                      CLUSTER_ID,
-                      /* topicName= */ "topic-3",
-                      /* partitionId= */ 3,
-                      /* replicas= */ emptyList())))
-          .build();
-
-  private static final Consumer CONSUMER_2 =
-      Consumer.builder()
-          .setClusterId(CLUSTER_ID)
-          .setConsumerGroupId(CONSUMER_GROUP_ID)
-          .setConsumerId("consumer-2")
-          .setInstanceId("instance-2")
-          .setClientId("client-2")
-          .setHost("11.12.12.14")
-          .setAssignedPartitions(
-              Collections.singletonList(
-                  Partition.create(
-                      CLUSTER_ID,
-                      /* topicName= */ "topic-2",
-                      /* partitionId= */ 2,
-                      /* replicas= */ emptyList())))
-          .build();
 
   private static final TopicPartition TOPIC_PARTITION_1 =
       new TopicPartition("topic-1", 1);

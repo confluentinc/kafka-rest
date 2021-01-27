@@ -105,19 +105,11 @@ final class ConsumerLagManagerImpl
                   .setInstanceId("")
                   .setClientId("")
                   .build());
-          long currentOffset =
+          Optional<Long> currentOffset =
               getCurrentOffset(fetchedCurrentOffsets, topicPartition);
-          long latestOffset =
+          Optional<Long> latestOffset =
               getOffset(latestOffsets, topicPartition);
-          if (currentOffset < 0 || latestOffset < 0) {
-            log.debug("invalid offsets for consumerId={} topic={} partition={} "
-                    + "current={} latest={}",
-                memberId.getConsumerId(),
-                topicPartition.topic(),
-                topicPartition.partition(),
-                currentOffset,
-                latestOffset);
-          } else {
+          if (currentOffset.isPresent() && latestOffset.isPresent()) {
             consumerLags.add(
                 ConsumerLag.builder()
                     .setClusterId(clusterId)
@@ -127,9 +119,17 @@ final class ConsumerLagManagerImpl
                     .setConsumerId(memberId.getConsumerId())
                     .setInstanceId(memberId.getInstanceId().orElse(null))
                     .setClientId(memberId.getClientId())
-                    .setCurrentOffset(currentOffset)
-                    .setLogEndOffset(latestOffset)
+                    .setCurrentOffset(currentOffset.get())
+                    .setLogEndOffset(latestOffset.get())
                     .build());
+          } else {
+            log.debug("missing offset for consumerId={} topic={} partition={} "
+                    + "current={} latest={}",
+                memberId.getConsumerId(),
+                topicPartition.topic(),
+                topicPartition.partition(),
+                currentOffset.orElse(null),
+                latestOffset.orElse(null));
           }
         });
     return consumerLags;

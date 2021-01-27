@@ -188,7 +188,7 @@ public class ConsumerGroupLagManagerImplTest {
           .setConsumerGroupId(CONSUMER_GROUP_ID)
           .setMaxLagConsumerId("consumer-1")
           .setMaxLagClientId("client-1")
-          .setMaxLagInstanceId("instance-1")
+          .setMaxLagInstanceId(Optional.of("instance-1"))
           .setMaxLagTopicName("topic-1")
           .setMaxLagPartitionId(1)
           .setMaxLag(100L)
