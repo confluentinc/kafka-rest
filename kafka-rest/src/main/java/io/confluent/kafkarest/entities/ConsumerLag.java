@@ -15,9 +15,10 @@
 
 package io.confluent.kafkarest.entities;
 
+import static java.lang.Math.max;
+
 import com.google.auto.value.AutoValue;
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 @AutoValue
 public abstract class ConsumerLag {
@@ -44,7 +45,7 @@ public abstract class ConsumerLag {
   public abstract Long getLogEndOffset();
 
   public Long getLag() {
-    return getLogEndOffset() - getCurrentOffset();
+    return max(0, getLogEndOffset() - getCurrentOffset());
   }
 
   public static Builder builder() {

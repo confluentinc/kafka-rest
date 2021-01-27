@@ -98,9 +98,10 @@ final class ConsumerLagManagerImpl
     Map<TopicPartition, Consumer> partitionAssignment =
         getPartitionAssignment(consumerGroup);
     List<ConsumerLag> consumerLags = new ArrayList<>();
-    fetchedCurrentOffsets.keySet().stream().forEach(
+    fetchedCurrentOffsets.keySet().forEach(
         topicPartition -> {
-          Optional<Consumer> consumer = Optional.ofNullable(partitionAssignment.get(topicPartition));
+          Optional<Consumer> consumer =
+              Optional.ofNullable(partitionAssignment.get(topicPartition));
           Optional<Long> currentOffset =
               getCurrentOffset(fetchedCurrentOffsets, topicPartition);
           Optional<Long> latestOffset =

@@ -87,9 +87,10 @@ final class ConsumerGroupLagManagerImpl
         ConsumerGroupLag.builder()
             .setClusterId(clusterId)
             .setConsumerGroupId(consumerGroup.getConsumerGroupId());
-    fetchedCurrentOffsets.keySet().stream().forEach(
+    fetchedCurrentOffsets.keySet().forEach(
         topicPartition -> {
-          Optional<Consumer> consumer = Optional.ofNullable(partitionAssignment.get(topicPartition));
+          Optional<Consumer> consumer =
+              Optional.ofNullable(partitionAssignment.get(topicPartition));
           Optional<Long> currentOffset =
               getCurrentOffset(fetchedCurrentOffsets, topicPartition);
           Optional<Long> latestOffset =

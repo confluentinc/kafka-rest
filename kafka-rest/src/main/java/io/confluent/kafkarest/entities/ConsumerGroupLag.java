@@ -17,7 +17,6 @@ package io.confluent.kafkarest.entities;
 
 import com.google.auto.value.AutoValue;
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 @AutoValue
 public abstract class ConsumerGroupLag {

@@ -15,7 +15,6 @@
 
 package io.confluent.kafkarest.controllers;
 
-import com.google.auto.value.AutoValue;
 import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
@@ -26,7 +25,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
@@ -41,7 +39,7 @@ import org.apache.kafka.common.TopicPartition;
 abstract class AbstractConsumerLagManager {
 
   private final Admin kafkaAdminClient;
-  private final static IsolationLevel ISOLATION_LEVEL = IsolationLevel.READ_COMMITTED;
+  private static final IsolationLevel ISOLATION_LEVEL = IsolationLevel.READ_COMMITTED;
 
   @Inject
   AbstractConsumerLagManager(
@@ -87,26 +85,6 @@ abstract class AbstractConsumerLagManager {
     return partitionAssignment;
   }
 
-//  static final Map<TopicPartition, MemberId> getMemberIds(
-//      ConsumerGroup consumerGroup
-//  ) {
-//    Map<TopicPartition, MemberId> tpMemberIds = new HashMap<>();
-//    for (Consumer consumer: consumerGroup.getConsumers()) {
-//      for (Partition partition : consumer.getAssignedPartitions()) {
-//        MemberId memberId =
-//            MemberId.builder()
-//                .setConsumerId(consumer.getConsumerId())
-//                .setInstanceId(consumer.getInstanceId().orElse(null))
-//                .setClientId(consumer.getClientId())
-//                .build();
-//        TopicPartition topicPartition =
-//            new TopicPartition(partition.getTopicName(), partition.getPartitionId());
-//        tpMemberIds.put(topicPartition, memberId);
-//      }
-//    }
-//    return tpMemberIds;
-//  }
-
   static final Optional<Long> getCurrentOffset(
       Map<TopicPartition, OffsetAndMetadata> currentOffsets,
       TopicPartition topicPartition
@@ -139,36 +117,4 @@ abstract class AbstractConsumerLagManager {
     }
     return offsets;
   }
-
-//  @AutoValue
-//  abstract static class MemberId {
-//
-//    MemberId() {
-//    }
-//
-//    abstract String getConsumerId();
-//
-//    abstract Optional<String> getInstanceId();
-//
-//    abstract String getClientId();
-//
-//    static Builder builder() {
-//      return new AutoValue_AbstractConsumerLagManager_MemberId.Builder();
-//    }
-//
-//    @AutoValue.Builder
-//    abstract static class Builder {
-//
-//      Builder() {
-//      }
-//
-//      abstract Builder setConsumerId(String consumerId);
-//
-//      abstract Builder setInstanceId(@Nullable String instanceId);
-//
-//      abstract Builder setClientId(String clientId);
-//
-//      abstract MemberId build();
-//    }
-//  }
 }

@@ -86,7 +86,6 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     consumer1.poll(Duration.ofSeconds(1));
     consumer2.poll(Duration.ofSeconds(1));
 
-
     // produce to topic1 partition0 and topic2 partition1
     BinaryPartitionProduceRequest request1 = BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
     produce(topic1, 0, request1);
