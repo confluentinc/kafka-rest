@@ -53,7 +53,7 @@ public class TestUtils {
   private static final ObjectMapper jsonParser = new ObjectMapper();
 
   private static final int DEFAULT_EXP_BACKOFF_RETRIES = 3;
-  private static final long DEFAULT_INITIAL_BACKOFF_MS = 200;
+  private static final Duration DEFAULT_INITIAL_BACKOFF = Duration.ofMillis(200L);
 
   /**
    * Try to read the entity. If parsing fails, errors are rethrown, but the raw entity is also logged for debugging.
@@ -251,30 +251,28 @@ public class TestUtils {
         testCondition,
         errorMessage,
         DEFAULT_EXP_BACKOFF_RETRIES,
-        DEFAULT_INITIAL_BACKOFF_MS,
-        TimeUnit.MILLISECONDS);
+        DEFAULT_INITIAL_BACKOFF);
   }
 
   public static <T> void testWithRetry(
       Supplier<Boolean> testCondition,
       String errorMessage,
       int numRetries,
-      long initialBackoff,
-      TimeUnit backoffTimeUnit) {
-    long backoffInNs = backoffTimeUnit.toNanos(initialBackoff);
+      Duration initialBackoff) {
+    Duration backoff = initialBackoff;
     for (int i = 0; i <= numRetries; i++) {
       if (testCondition.get()) {
         return;
       }
-      LockSupport.parkNanos(backoffInNs);
-      backoffInNs *= 2;
+      LockSupport.parkNanos(backoff.toNanos());
+      backoff = backoff.multipliedBy(2L);
     }
     Assert.fail(
         String.format(
             "%s. Failed after %d exponential backoff retries with %d ms initial backoff",
             errorMessage,
             numRetries,
-            backoffTimeUnit.toMillis(initialBackoff)));
+            initialBackoff.toMillis()));
   }
 
   private static <V, K> Map<Object, Integer> topicCounts(final KafkaConsumer<K, V> consumer,
