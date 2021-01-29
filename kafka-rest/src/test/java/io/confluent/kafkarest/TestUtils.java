@@ -31,7 +31,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
+import java.util.function.Supplier;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import org.apache.avro.generic.IndexedRecord;
@@ -40,6 +43,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +51,9 @@ public class TestUtils {
 
   private static final Logger log = LoggerFactory.getLogger(TestUtils.class);
   private static final ObjectMapper jsonParser = new ObjectMapper();
+
+  private static final int DEFAULT_EXP_BACKOFF_RETRIES = 3;
+  private static final Duration DEFAULT_INITIAL_BACKOFF = Duration.ofMillis(200L);
 
   /**
    * Try to read the entity. If parsing fails, errors are rethrown, but the raw entity is also logged for debugging.
@@ -70,7 +77,6 @@ public class TestUtils {
       throw t;
     }
   }
-
 
   /**
    * Asserts that the response received an HTTP 200 status code, as well as some optional
@@ -126,7 +132,6 @@ public class TestUtils {
       this.expected = expected;
     }
   }
-
 
   /**
    * Parses the given JSON string into Jackson's generic JsonNode structure. Useful for generation
@@ -241,6 +246,35 @@ public class TestUtils {
         valueDeserializerClassName, new Properties(), validateContents);
   }
 
+  public static <T> void testWithRetry(Supplier<Boolean> testCondition, String errorMessage) {
+    testWithRetry(
+        testCondition,
+        errorMessage,
+        DEFAULT_EXP_BACKOFF_RETRIES,
+        DEFAULT_INITIAL_BACKOFF);
+  }
+
+  public static <T> void testWithRetry(
+      Supplier<Boolean> testCondition,
+      String errorMessage,
+      int numRetries,
+      Duration initialBackoff) {
+    Duration backoff = initialBackoff;
+    for (int i = 0; i <= numRetries; i++) {
+      if (testCondition.get()) {
+        return;
+      }
+      LockSupport.parkNanos(backoff.toNanos());
+      backoff = backoff.multipliedBy(2L);
+    }
+    Assert.fail(
+        String.format(
+            "%s. Failed after %d exponential backoff retries with %d ms initial backoff",
+            errorMessage,
+            numRetries,
+            initialBackoff.toMillis()));
+  }
+
   private static <V, K> Map<Object, Integer> topicCounts(final KafkaConsumer<K, V> consumer,
                                                          final String topicName,
                                                          final List<? extends ProduceRecord<K,V>> records,
@@ -271,7 +305,6 @@ public class TestUtils {
     consumer.close();
     return msgCounts;
   }
-
 
   private static <K, V> KafkaConsumer<K, V> createConsumer(String bootstrapServers, String groupId,
                                                           String consumerId, Long consumerTimeout,
