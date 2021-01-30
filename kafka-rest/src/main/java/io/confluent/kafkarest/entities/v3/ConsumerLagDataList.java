@@ -21,15 +21,13 @@ import com.google.auto.value.AutoValue;
 import java.util.List;
 
 @AutoValue
-public abstract class ConsumerLagDataList
-    extends ResourceCollection<ConsumerLagData> {
+public abstract class ConsumerLagDataList extends ResourceCollection<ConsumerLagData> {
 
   ConsumerLagDataList() {
   }
 
   public static Builder builder() {
-    return new AutoValue_ConsumerLagDataList.Builder()
-        .setKind("KafkaConsumerLagList");
+    return new AutoValue_ConsumerLagDataList.Builder().setKind("KafkaConsumerLagList");
   }
 
   @JsonCreator
@@ -47,8 +45,7 @@ public abstract class ConsumerLagDataList
 
   @AutoValue.Builder
   public abstract static class Builder
-      extends ResourceCollection.Builder<
-      ConsumerLagData, ConsumerLagDataList, Builder> {
+      extends ResourceCollection.Builder<ConsumerLagData, ConsumerLagDataList, Builder> {
 
     Builder() {
     }

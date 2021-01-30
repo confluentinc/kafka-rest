@@ -41,7 +41,6 @@ abstract class AbstractConsumerLagManager {
   private final Admin kafkaAdminClient;
   private static final IsolationLevel ISOLATION_LEVEL = IsolationLevel.READ_COMMITTED;
 
-  @Inject
   AbstractConsumerLagManager(
       Admin kafkaAdminClient
   ) {
