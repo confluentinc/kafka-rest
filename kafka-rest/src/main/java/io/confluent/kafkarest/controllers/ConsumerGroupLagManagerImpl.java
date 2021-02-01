@@ -16,11 +16,13 @@
 package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
+import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
 import io.confluent.kafkarest.entities.ConsumerGroupLag;
+import io.confluent.kafkarest.entities.Partition;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -81,8 +83,7 @@ final class ConsumerGroupLagManagerImpl
       ConsumerGroup consumerGroup,
       Map<TopicPartition, OffsetAndMetadata> fetchedCurrentOffsets,
       Map<TopicPartition, ListOffsetsResultInfo> latestOffsets) {
-    Map<TopicPartition, Consumer> partitionAssignment =
-        getPartitionAssignment(consumerGroup);
+    Map<Partition, Consumer> partitionAssignment = consumerGroup.getPartitionAssignment();
     ConsumerGroupLag.Builder consumerGroupLag =
         ConsumerGroupLag.builder()
             .setClusterId(clusterId)
@@ -90,7 +91,12 @@ final class ConsumerGroupLagManagerImpl
     fetchedCurrentOffsets.keySet().forEach(
         topicPartition -> {
           Optional<Consumer> consumer =
-              Optional.ofNullable(partitionAssignment.get(topicPartition));
+              Optional.ofNullable(partitionAssignment.get(
+                  Partition.create(
+                      clusterId,
+                      topicPartition.topic(),
+                      topicPartition.partition(),
+                      emptyList())));
           Optional<Long> currentOffset =
               getCurrentOffset(fetchedCurrentOffsets, topicPartition);
           Optional<Long> latestOffset =

@@ -16,11 +16,13 @@
 package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
+import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
 import io.confluent.kafkarest.entities.ConsumerLag;
+import io.confluent.kafkarest.entities.Partition;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -95,13 +97,17 @@ final class ConsumerLagManagerImpl
       ConsumerGroup consumerGroup,
       Map<TopicPartition, OffsetAndMetadata> fetchedCurrentOffsets,
       Map<TopicPartition, ListOffsetsResultInfo> latestOffsets) {
-    Map<TopicPartition, Consumer> partitionAssignment =
-        getPartitionAssignment(consumerGroup);
+    Map<Partition, Consumer> partitionAssignment = consumerGroup.getPartitionAssignment();
     List<ConsumerLag> consumerLags = new ArrayList<>();
     fetchedCurrentOffsets.keySet().forEach(
         topicPartition -> {
           Optional<Consumer> consumer =
-              Optional.ofNullable(partitionAssignment.get(topicPartition));
+              Optional.ofNullable(partitionAssignment.get(
+                  Partition.create(
+                      clusterId,
+                      topicPartition.topic(),
+                      topicPartition.partition(),
+                      emptyList())));
           Optional<Long> currentOffset =
               getCurrentOffset(fetchedCurrentOffsets, topicPartition);
           Optional<Long> latestOffset =

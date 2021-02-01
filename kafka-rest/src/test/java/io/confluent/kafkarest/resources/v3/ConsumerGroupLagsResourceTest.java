@@ -93,7 +93,8 @@ public class ConsumerGroupLagsResourceTest {
                             "crn:///kafka=cluster-1/consumer-group=consumer-group-1/lag")
                         .build())
                 .setMaxLagConsumer(
-                    Relationship.create("/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1"))
+                    Relationship.create("/v3/clusters/cluster-1/consumer-groups/consumer-group-1/"
+                        + "consumers/consumer-1"))
                 .setMaxLagPartition(
                     Relationship.create("/v3/clusters/cluster-1/topics/topic-1/partitions/1"))
                 .build());

@@ -117,18 +117,22 @@ public class ConsumerLagsResourceTest {
                             .setMetadata(
                                 Resource.Metadata.builder()
                                     .setSelf(
-                                        "/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags/topic-1/partitions/2")
+                                        "/v3/clusters/cluster-1/consumer-groups/consumer-group-1/"
+                                            + "lags/topic-1/partitions/2")
                                     .setResourceName(
-                                        "crn:///kafka=cluster-1/consumer-group=consumer-group-1/lag=topic-1/partition=2")
+                                        "crn:///kafka=cluster-1/consumer-group=consumer-group-1/"
+                                            + "lag=topic-1/partition=2")
                                     .build())
                             .build(),
                         ConsumerLagData.fromConsumerLag(CONSUMER_LAG_1)
                             .setMetadata(
                                 Resource.Metadata.builder()
                                     .setSelf(
-                                        "/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags/topic-1/partitions/1")
+                                        "/v3/clusters/cluster-1/consumer-groups/consumer-group-1/"
+                                            + "lags/topic-1/partitions/1")
                                     .setResourceName(
-                                        "crn:///kafka=cluster-1/consumer-group=consumer-group-1/lag=topic-1/partition=1")
+                                        "crn:///kafka=cluster-1/consumer-group=consumer-group-1/"
+                                            + "lag=topic-1/partition=1")
                                     .build())
                             .build()))
             .build());
@@ -150,8 +154,10 @@ public class ConsumerLagsResourceTest {
             ConsumerLagData.fromConsumerLag(CONSUMER_LAG_1)
                 .setMetadata(
                     Resource.Metadata.builder()
-                        .setSelf("/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags/topic-1/partitions/1")
-                        .setResourceName("crn:///kafka=cluster-1/consumer-group=consumer-group-1/lag=topic-1/partition=1")
+                        .setSelf("/v3/clusters/cluster-1/consumer-groups/consumer-group-1/"
+                            + "lags/topic-1/partitions/1")
+                        .setResourceName("crn:///kafka=cluster-1/consumer-group=consumer-group-1/"
+                            + "lag=topic-1/partition=1")
                         .build())
                 .build());
 

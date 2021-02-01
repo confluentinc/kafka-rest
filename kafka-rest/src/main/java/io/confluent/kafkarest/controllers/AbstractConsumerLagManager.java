@@ -16,16 +16,11 @@
 package io.confluent.kafkarest.controllers;
 
 import io.confluent.kafkarest.common.KafkaFutures;
-import io.confluent.kafkarest.entities.Consumer;
-import io.confluent.kafkarest.entities.ConsumerGroup;
-import io.confluent.kafkarest.entities.Partition;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions;
@@ -68,20 +63,6 @@ abstract class AbstractConsumerLagManager {
         kafkaAdminClient.listOffsets(
             latestOffsetSpecs,
             new ListOffsetsOptions(ISOLATION_LEVEL)).all());
-  }
-
-  static final Map<TopicPartition, Consumer> getPartitionAssignment(
-      ConsumerGroup consumerGroup
-  ) {
-    Map<TopicPartition, Consumer> partitionAssignment = new HashMap<>();
-    for (Consumer consumer : consumerGroup.getConsumers()) {
-      for (Partition partition : consumer.getAssignedPartitions()) {
-        partitionAssignment.put(
-            new TopicPartition(partition.getTopicName(), partition.getPartitionId()),
-            consumer);
-      }
-    }
-    return partitionAssignment;
   }
 
   static final Optional<Long> getCurrentOffset(

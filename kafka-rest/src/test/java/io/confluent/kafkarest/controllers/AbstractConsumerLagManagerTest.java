@@ -1,12 +1,5 @@
 package io.confluent.kafkarest.controllers;
 
-import io.confluent.kafkarest.entities.Broker;
-import io.confluent.kafkarest.entities.Consumer;
-import io.confluent.kafkarest.entities.ConsumerGroup;
-import io.confluent.kafkarest.entities.ConsumerGroup.State;
-import io.confluent.kafkarest.entities.Partition;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
@@ -28,21 +21,10 @@ import org.junit.Test;
 
 import java.util.Map;
 
-import static java.util.Collections.emptyList;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
 public class AbstractConsumerLagManagerTest {
-
-  private static final String CLUSTER_ID = "cluster-1";
-
-  private static final Broker BROKER_1 =
-      Broker.create(
-          CLUSTER_ID,
-          /* brokerId= */ 1,
-          /* host= */ "1.2.3.4",
-          /* port= */ 1000,
-          /* rack= */ null);
 
   private static final String CONSUMER_GROUP_ID = "consumer-group-1";
 
@@ -91,7 +73,8 @@ public class AbstractConsumerLagManagerTest {
 
   @Test
   public void testGetCurrentOffsets() {
-    expect(kafkaAdminClient.listConsumerGroupOffsets(eq(CONSUMER_GROUP_ID), anyObject(ListConsumerGroupOffsetsOptions.class)))
+    expect(kafkaAdminClient.listConsumerGroupOffsets(
+        eq(CONSUMER_GROUP_ID), anyObject(ListConsumerGroupOffsetsOptions.class)))
         .andReturn(listConsumerGroupOffsetsResult)
         .once();
     expect(listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata())
@@ -108,8 +91,7 @@ public class AbstractConsumerLagManagerTest {
     final Capture<Map<TopicPartition, OffsetSpec>> capturedOffsetSpec = newCapture();
     final Capture<ListOffsetsOptions> capturedListOffsetsOptions = newCapture();
     expect(kafkaAdminClient.listOffsets(
-        capture(capturedOffsetSpec),
-        capture(capturedListOffsetsOptions)))
+        capture(capturedOffsetSpec), capture(capturedListOffsetsOptions)))
         .andReturn(new ListOffsetsResult(LATEST_OFFSETS_MAP))
         .once();
 
@@ -121,110 +103,5 @@ public class AbstractConsumerLagManagerTest {
     assertEquals(
         IsolationLevel.READ_COMMITTED,
         capturedListOffsetsOptions.getValue().isolationLevel());
-  }
-
-  @Test
-  public void testGetPartitionAssignment() {
-    final Consumer CONSUMER_1 =
-        Consumer.builder()
-            .setClusterId(CLUSTER_ID)
-            .setConsumerGroupId(CONSUMER_GROUP_ID)
-            .setConsumerId("consumer-1")
-            .setInstanceId("instance-1")
-            .setClientId("client-1")
-            .setHost("11.12.12.14")
-            .setAssignedPartitions(
-                Arrays.asList(
-                    Partition.create(
-                        CLUSTER_ID,
-                        /* topicName= */ "topic-1",
-                        /* partitionId= */ 1,
-                        /* replicas= */ emptyList()),
-                    Partition.create(
-                        CLUSTER_ID,
-                        /* topicName= */ "topic-3",
-                        /* partitionId= */ 3,
-                        /* replicas= */ emptyList())))
-            .build();
-
-    final Consumer CONSUMER_2 =
-        Consumer.builder()
-            .setClusterId(CLUSTER_ID)
-            .setConsumerGroupId(CONSUMER_GROUP_ID)
-            .setConsumerId("consumer-2")
-            .setInstanceId("instance-2")
-            .setClientId("client-2")
-            .setHost("11.12.12.14")
-            .setAssignedPartitions(
-                Collections.singletonList(
-                    Partition.create(
-                        CLUSTER_ID,
-                        /* topicName= */ "topic-2",
-                        /* partitionId= */ 2,
-                        /* replicas= */ emptyList())))
-            .build();
-
-    final ConsumerGroup CONSUMER_GROUP =
-        ConsumerGroup.builder()
-            .setClusterId(CLUSTER_ID)
-            .setConsumerGroupId(CONSUMER_GROUP_ID)
-            .setSimple(true)
-            .setPartitionAssignor("org.apache.kafka.clients.consumer.RoundRobinAssignor")
-            .setState(State.STABLE)
-            .setCoordinator(BROKER_1)
-            .setConsumers(Arrays.asList(CONSUMER_1, CONSUMER_2))
-            .build();
-
-    // using round robin partition assignor
-    Map<TopicPartition, Consumer> expectedTpMemberIds = new HashMap<>();
-    expectedTpMemberIds.put(TOPIC_PARTITION_1, CONSUMER_1);
-    expectedTpMemberIds.put(TOPIC_PARTITION_2, CONSUMER_2);
-    expectedTpMemberIds.put(TOPIC_PARTITION_3, CONSUMER_1);
-    assertEquals(
-        expectedTpMemberIds,
-        AbstractConsumerLagManager.getPartitionAssignment(CONSUMER_GROUP));
-  }
-
-  @Test
-  public void testGetPartitionAssignment_nullInstances_returnsPartitionAssignments() {
-    final Consumer CONSUMER_1 =
-        Consumer.builder()
-            .setClusterId(CLUSTER_ID)
-            .setConsumerGroupId(CONSUMER_GROUP_ID)
-            .setConsumerId("consumer-1")
-            .setInstanceId(null)
-            .setClientId("client-1")
-            .setHost("11.12.12.14")
-            .setAssignedPartitions(
-                Arrays.asList(
-                    Partition.create(
-                        CLUSTER_ID,
-                        /* topicName= */ "topic-1",
-                        /* partitionId= */ 1,
-                        /* replicas= */ emptyList()),
-                    Partition.create(
-                        CLUSTER_ID,
-                        /* topicName= */ "topic-3",
-                        /* partitionId= */ 3,
-                        /* replicas= */ emptyList())))
-            .build();
-
-    final ConsumerGroup CONSUMER_GROUP =
-        ConsumerGroup.builder()
-            .setClusterId(CLUSTER_ID)
-            .setConsumerGroupId(CONSUMER_GROUP_ID)
-            .setSimple(true)
-            .setPartitionAssignor("org.apache.kafka.clients.consumer.RoundRobinAssignor")
-            .setState(State.STABLE)
-            .setCoordinator(BROKER_1)
-            .setConsumers(Collections.singletonList(CONSUMER_1))
-            .build();
-
-    Map<TopicPartition, Consumer> expectedTpMemberIds = new HashMap<>();
-    expectedTpMemberIds.put(TOPIC_PARTITION_1, CONSUMER_1);
-    expectedTpMemberIds.put(TOPIC_PARTITION_3, CONSUMER_1);
-    assertEquals(
-        expectedTpMemberIds,
-        AbstractConsumerLagManager.getPartitionAssignment(CONSUMER_GROUP));
   }
 }
