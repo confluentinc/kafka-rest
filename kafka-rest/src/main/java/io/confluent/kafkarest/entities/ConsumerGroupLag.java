@@ -55,7 +55,7 @@ public abstract class ConsumerGroupLag {
     Builder() {
     }
 
-    public void addOffset(
+    public final void addOffset(
         String topicName,
         String consumerId,
         Optional<String> instanceId,

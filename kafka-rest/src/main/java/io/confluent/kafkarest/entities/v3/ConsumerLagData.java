@@ -76,6 +76,7 @@ public abstract class ConsumerLagData extends Resource {
         .setLag(consumerLag.getLag());
   }
 
+  // CHECKSTYLE:OFF:ParameterNumber
   @JsonCreator
   static ConsumerLagData fromJson(
       @JsonProperty("kind") String kind,
@@ -106,6 +107,7 @@ public abstract class ConsumerLagData extends Resource {
         .setLag(lag)
         .build();
   }
+  // CHECKSTYLE:ON:ParameterNumber
 
   @AutoValue.Builder
   public abstract static class Builder extends Resource.Builder<Builder> {

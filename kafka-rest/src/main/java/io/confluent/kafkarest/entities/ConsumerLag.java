@@ -44,7 +44,7 @@ public abstract class ConsumerLag {
 
   public abstract Long getLogEndOffset();
 
-  public Long getLag() {
+  public final Long getLag() {
     return max(0, getLogEndOffset() - getCurrentOffset());
   }
 

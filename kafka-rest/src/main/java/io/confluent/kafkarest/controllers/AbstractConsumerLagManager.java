@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest.controllers;
 
+import static java.util.Objects.requireNonNull;
+
 import io.confluent.kafkarest.common.KafkaFutures;
 import java.util.Map;
 import java.util.Optional;
@@ -36,10 +38,8 @@ abstract class AbstractConsumerLagManager {
   private final Admin kafkaAdminClient;
   private static final IsolationLevel ISOLATION_LEVEL = IsolationLevel.READ_COMMITTED;
 
-  AbstractConsumerLagManager(
-      Admin kafkaAdminClient
-  ) {
-    this.kafkaAdminClient = kafkaAdminClient;
+  AbstractConsumerLagManager(Admin kafkaAdminClient) {
+    this.kafkaAdminClient = requireNonNull(kafkaAdminClient);
   }
 
   final CompletableFuture<Map<TopicPartition, OffsetAndMetadata>> getCurrentOffsets(

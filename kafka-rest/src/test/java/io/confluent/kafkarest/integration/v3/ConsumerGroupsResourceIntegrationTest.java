@@ -96,6 +96,10 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
                                 Relationship.create(
                                     baseUrl + "/v3/clusters/" + clusterId
                                         + "/consumer-groups/consumer-group-1/consumers"))
+                            .setLag(
+                                Relationship.create(
+                                    baseUrl + "/v3/clusters/" + clusterId
+                                        + "/consumer-groups/consumer-group-1/lag"))
                             .build()))
                 .build());
 
@@ -171,6 +175,10 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
                     Relationship.create(
                         baseUrl + "/v3/clusters/" + clusterId
                             + "/consumer-groups/consumer-group-1/consumers"))
+                .setLag(
+                    Relationship.create(
+                        baseUrl + "/v3/clusters/" + clusterId
+                            + "/consumer-groups/consumer-group-1/lag"))
                 .build());
 
     Response response =

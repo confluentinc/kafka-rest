@@ -336,6 +336,20 @@ paths:
         '200':
           $ref: '#/components/responses/GetConsumerGroupLagResponse'
 
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/ConsumerGroupId'
+
+    get:
+      summary: 'List Consumer Lags'
+      description: 'Returns a list of consumer lags of the consumers belonging to the specified consumer group.'
+      tags:
+        - Consumer Group
+      responses:
+        '200':
+          $ref: '#/components/responses/ListConsumerLagsResponse'
+
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags/{topic_name}/partitions/{partition_id}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -351,20 +365,6 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/GetConsumerLagResponse'
-
-  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags:
-      parameters:
-        - $ref: '#/components/parameters/ClusterId'
-        - $ref: '#/components/parameters/ConsumerGroupId'
-
-      get:
-        summary: 'List Consumer Lags'
-        description: 'Returns a list of consumer lags of the consumers belonging to the specified consumer group.'
-        tags:
-          - Consumer Group
-        responses:
-          '200':
-            $ref: '#/components/responses/ListConsumerLagsResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}:
     parameters:
@@ -1192,6 +1192,7 @@ components:
             - state
             - coordinator
             - consumers
+            - lag
           properties:
             cluster_id:
               type: string
@@ -1206,6 +1207,8 @@ components:
             coordinator:
               $ref: '#/components/schemas/Relationship'
             consumer:
+              $ref: '#/components/schemas/Relationship'
+            lag:
               $ref: '#/components/schemas/Relationship'
 
     ConsumerGroupDataList:

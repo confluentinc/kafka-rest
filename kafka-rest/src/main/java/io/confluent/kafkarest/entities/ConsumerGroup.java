@@ -18,9 +18,7 @@ package io.confluent.kafkarest.entities;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.common.ConsumerGroupState;
@@ -46,13 +44,13 @@ public abstract class ConsumerGroup {
   public abstract ImmutableList<Consumer> getConsumers();
 
   public final ImmutableMap<Partition, Consumer> getPartitionAssignment() {
-    Map<Partition, Consumer> partitionAssignment = new HashMap<>();
+    ImmutableMap.Builder<Partition, Consumer> partitionAssignment = ImmutableMap.builder();
     for (Consumer consumer : getConsumers()) {
       for (Partition partition : consumer.getAssignedPartitions()) {
         partitionAssignment.put(partition, consumer);
       }
     }
-    return ImmutableMap.copyOf(partitionAssignment);
+    return partitionAssignment.build();
   }
 
   public static Builder builder() {

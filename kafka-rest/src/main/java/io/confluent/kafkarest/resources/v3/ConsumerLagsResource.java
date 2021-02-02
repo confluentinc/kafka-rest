@@ -44,10 +44,9 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
-
 @Path("/v3/clusters/{clusterId}/consumer-groups/{consumerGroupId}/lags")
 @ResourceName("api.v3.consumer-lags.*")
-public class ConsumerLagsResource {
+public final class ConsumerLagsResource {
 
   private final Provider<ConsumerLagManager> consumerLagManager;
   private final CrnFactory crnFactory;
@@ -63,7 +62,6 @@ public class ConsumerLagsResource {
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
   }
-
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)

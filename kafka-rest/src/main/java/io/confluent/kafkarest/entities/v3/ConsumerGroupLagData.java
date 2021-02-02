@@ -78,6 +78,7 @@ public abstract class ConsumerGroupLagData extends Resource {
         .setMaxLagPartitionId(consumerGroupLag.getMaxLagPartitionId());
   }
 
+  // CHECKSTYLE:OFF:ParameterNumber
   @JsonCreator
   static ConsumerGroupLagData fromJson(
       @JsonProperty("kind") String kind,
@@ -110,6 +111,7 @@ public abstract class ConsumerGroupLagData extends Resource {
         .setMaxLagPartition(maxLagPartition)
         .build();
   }
+  // CHECKSTYLE:ON:ParameterNumber
 
   @AutoValue.Builder
   public abstract static class Builder extends Resource.Builder<Builder> {
