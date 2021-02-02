@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.confluent.kafkarest.testing;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -25,6 +40,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 public final class KafkaRestEnvironment implements BeforeEachCallback, AfterEachCallback {
 
   private final KafkaClusterEnvironment kafkaCluster;
+  @Nullable private final SchemaRegistryEnvironment schemaRegistry;
   private final HashMap<String, String> configs;
 
   @Nullable
@@ -35,8 +51,11 @@ public final class KafkaRestEnvironment implements BeforeEachCallback, AfterEach
   private Server server;
 
   private KafkaRestEnvironment(
-      KafkaClusterEnvironment kafkaCluster, HashMap<String, String> configs) {
+      KafkaClusterEnvironment kafkaCluster,
+      @Nullable SchemaRegistryEnvironment schemaRegistry,
+      HashMap<String, String> configs) {
     this.kafkaCluster = requireNonNull(kafkaCluster);
+    this.schemaRegistry = schemaRegistry;
     this.configs = requireNonNull(configs);
   }
 
@@ -44,16 +63,20 @@ public final class KafkaRestEnvironment implements BeforeEachCallback, AfterEach
   public void beforeEach(ExtensionContext context) throws Exception {
     checkState(server == null);
     baseUri = URI.create(String.format("http://localhost:%d", findUnusedPort()));
-    application = new KafkaRestApplication(createConfigs(baseUri.toString()));
+    application = new KafkaRestApplication(createConfigs(baseUri));
     server = application.createServer();
     server.start();
   }
 
-  private KafkaRestConfig createConfigs(String baseUrl) {
+  private KafkaRestConfig createConfigs(URI baseUri) {
     Properties properties = new Properties();
-    properties.put(RestConfig.LISTENERS_CONFIG, baseUrl);
+    properties.put(RestConfig.LISTENERS_CONFIG, baseUri.toString());
     properties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaCluster.getBootstrapServers());
     properties.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, "5000");
+    if (schemaRegistry != null) {
+      properties.put(
+          KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistry.getBaseUri().toString());
+    }
     for (Map.Entry<String, String> config : configs.entrySet()) {
       properties.put(config.getKey(), config.getValue());
     }
@@ -95,7 +118,8 @@ public final class KafkaRestEnvironment implements BeforeEachCallback, AfterEach
 
   public static final class Builder {
     private final HashMap<String, String> configs = new HashMap<>();
-    private KafkaClusterEnvironment kafkaCluster;
+    @Nullable private KafkaClusterEnvironment kafkaCluster;
+    @Nullable private SchemaRegistryEnvironment schemaRegistry;
 
     private Builder() {
     }
@@ -110,8 +134,13 @@ public final class KafkaRestEnvironment implements BeforeEachCallback, AfterEach
       return this;
     }
 
+    public Builder setSchemaRegistry(SchemaRegistryEnvironment schemaRegistry) {
+      this.schemaRegistry = requireNonNull(schemaRegistry);
+      return this;
+    }
+
     public KafkaRestEnvironment build() {
-      return new KafkaRestEnvironment(kafkaCluster, configs);
+      return new KafkaRestEnvironment(kafkaCluster, schemaRegistry, configs);
     }
   }
 }

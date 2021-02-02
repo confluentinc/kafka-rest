@@ -1,11 +1,30 @@
+/*
+ * Copyright 2021 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.confluent.kafkarest.testing;
 
+import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.glassfish.jersey.internal.guava.Preconditions.checkArgument;
 import static org.glassfish.jersey.internal.guava.Preconditions.checkState;
+import static org.junit.jupiter.api.Assertions.fail;
 
+import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.common.CompletableFutures;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +40,14 @@ import kafka.utils.MockTime;
 import kafka.utils.TestUtils;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -128,6 +154,15 @@ public final class KafkaClusterEnvironment implements BeforeEachCallback, AfterE
     return AdminClient.create(properties);
   }
 
+  public KafkaConsumer<ByteString, ByteString> createConsumer() {
+    Properties properties = new Properties();
+    properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, getBootstrapServers());
+    return new KafkaConsumer<>(
+        properties,
+        (topic, data) -> ByteString.copyFrom(data),
+        (topic, data) -> ByteString.copyFrom(data));
+  }
+
   public String getClusterId() {
     try {
       return createAdminClient().describeCluster().clusterId().get();
@@ -142,6 +177,26 @@ public final class KafkaClusterEnvironment implements BeforeEachCallback, AfterE
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public void createTopic(String topicName, int numPartitions, short replicationFactor) {
+    try {
+      createAdminClient()
+          .createTopics(singletonList(new NewTopic(topicName, numPartitions, replicationFactor)))
+          .all()
+          .get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public ConsumerRecord<ByteString, ByteString> getRecord(String topicName, int partitionId, long offset) {
+    KafkaConsumer<ByteString, ByteString> consumer = createConsumer();
+    consumer.assign(singletonList(new TopicPartition(topicName, partitionId)));
+    consumer.seek(new TopicPartition(topicName, partitionId), offset);
+    List<ConsumerRecord<ByteString, ByteString>> records =
+        consumer.poll(Duration.ofSeconds(1)).records(new TopicPartition(topicName, partitionId));
+    return records.get(0);
   }
 
   public static Builder builder() {
