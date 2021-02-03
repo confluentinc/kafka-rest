@@ -192,6 +192,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
   public void listConsumerLags_nonExistingConsumerGroup_returnsNotFound() {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Collections.singletonList(topic1));
+    consumer.poll(Duration.ofSeconds(1));
     BinaryPartitionProduceRequest request =
         BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
     produce(topic1, 0, request);
@@ -208,6 +209,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
   public void getConsumerLag_returnsConsumerLag() {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Arrays.asList(topic1, topic2));
+    consumer.poll(Duration.ofSeconds(1));
 
     // produce to topic1 partition0 and topic2 partition1
     BinaryPartitionProduceRequest request1 =
@@ -319,6 +321,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
   public void getConsumerLag_nonExistingCluster_returnsNotFound() {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Collections.singletonList(topic1));
+    consumer.poll(Duration.ofSeconds(1));
     BinaryPartitionProduceRequest request =
         BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
     produce(topic1, 0, request);
