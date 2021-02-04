@@ -79,7 +79,7 @@ public class ConsumerGroupLagsResourceIntegrationTest extends ClusterTestHarness
     consumer1.poll(Duration.ofSeconds(1));
     consumer2.poll(Duration.ofSeconds(1));
     // After polling once, only one of the consumers will be member of the group, so we poll again
-    // to force the other 2 consumers to join the group.
+    // to force the other consumer to join the group.
     consumer1.poll(Duration.ofSeconds(1));
     consumer2.poll(Duration.ofSeconds(1));
 
@@ -172,7 +172,6 @@ public class ConsumerGroupLagsResourceIntegrationTest extends ClusterTestHarness
   public void getConsumerGroupLag_nonExistingConsumerGroup_returnsNotFound() {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Arrays.asList(topic1));
-    consumer.poll(Duration.ofSeconds(1));
     BinaryPartitionProduceRequest request =
         BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
     produce(topic1, 0, request);
@@ -189,7 +188,6 @@ public class ConsumerGroupLagsResourceIntegrationTest extends ClusterTestHarness
   public void getConsumerGroupLag_nonExistingCluster_returnsNotFound() {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Arrays.asList(topic1));
-    consumer.poll(Duration.ofSeconds(1));
     BinaryPartitionProduceRequest request =
         BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
     produce(topic1, 0, request);
