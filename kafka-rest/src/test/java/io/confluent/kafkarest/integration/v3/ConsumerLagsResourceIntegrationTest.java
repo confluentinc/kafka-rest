@@ -216,7 +216,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     produce(topic2, 1, request1);
 
     // consume from subscribed topics (zero lag)
-    consumer.poll(Duration.ofSeconds(10));
+    consumer.poll(Duration.ofSeconds(15));
 
     // stores expected currentOffsets and logEndOffsets for each topic partition after sending
     // 3 records to topic1 partition0 and topic2 partition1
