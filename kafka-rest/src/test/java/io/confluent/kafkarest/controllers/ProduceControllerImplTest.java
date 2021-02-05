@@ -20,6 +20,7 @@ import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.entities.ProduceResult;
 import java.nio.charset.StandardCharsets;
@@ -36,6 +37,7 @@ import org.apache.kafka.clients.producer.RoundRobinPartitioner;
 import org.apache.kafka.common.Cluster;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.PartitionInfo;
+import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.junit.Before;
 import org.junit.Test;
@@ -104,6 +106,7 @@ public class ProduceControllerImplTest {
             "cluster-1",
             "topic-1",
             /* partitionId= */ Optional.of(1),
+            /* headers= */ ImmutableMultimap.of(),
             Optional.of(ByteString.copyFromUtf8("key-1")),
             Optional.of(ByteString.copyFromUtf8("value-1")),
             Instant.ofEpochMilli(1000));
@@ -112,6 +115,7 @@ public class ProduceControllerImplTest {
             "cluster-1",
             "topic-1",
             /* partitionId= */ Optional.of(1),
+            /* headers= */ ImmutableMultimap.of(),
             Optional.of(ByteString.copyFromUtf8("key-2")),
             Optional.of(ByteString.copyFromUtf8("value-2")),
             Instant.ofEpochMilli(2000));
@@ -120,6 +124,7 @@ public class ProduceControllerImplTest {
             "cluster-1",
             "topic-1",
             /* partitionId= */ Optional.of(1),
+            /* headers= */ ImmutableMultimap.of(),
             Optional.of(ByteString.copyFromUtf8("key-3")),
             Optional.of(ByteString.copyFromUtf8("value-3")),
             Instant.ofEpochMilli(3000));
@@ -166,6 +171,7 @@ public class ProduceControllerImplTest {
             "cluster-1",
             "topic-1",
             /* partitionId= */ Optional.empty(),
+            /* headers= */ ImmutableMultimap.of(),
             Optional.of(ByteString.copyFromUtf8("key-1")),
             Optional.of(ByteString.copyFromUtf8("value-1")),
             Instant.ofEpochMilli(1000));
@@ -174,6 +180,7 @@ public class ProduceControllerImplTest {
             "cluster-1",
             "topic-1",
             /* partitionId= */ Optional.empty(),
+            /* headers= */ ImmutableMultimap.of(),
             Optional.of(ByteString.copyFromUtf8("key-2")),
             Optional.of(ByteString.copyFromUtf8("value-2")),
             Instant.ofEpochMilli(2000));
@@ -182,6 +189,7 @@ public class ProduceControllerImplTest {
             "cluster-1",
             "topic-1",
             /* partitionId= */ Optional.empty(),
+            /* headers= */ ImmutableMultimap.of(),
             Optional.of(ByteString.copyFromUtf8("key-3")),
             Optional.of(ByteString.copyFromUtf8("value-3")),
             Instant.ofEpochMilli(3000));
@@ -228,6 +236,7 @@ public class ProduceControllerImplTest {
             "cluster-1",
             "topic-1",
             /* partitionId= */ Optional.of(1),
+            /* headers= */ ImmutableMultimap.of(),
             /* key= */ Optional.empty(),
             Optional.of(ByteString.copyFromUtf8("value-1")),
             Instant.ofEpochMilli(1000));
@@ -236,6 +245,7 @@ public class ProduceControllerImplTest {
             "cluster-1",
             "topic-1",
             /* partitionId= */ Optional.of(1),
+            /* headers= */ ImmutableMultimap.of(),
             /* key= */ Optional.empty(),
             Optional.of(ByteString.copyFromUtf8("value-2")),
             Instant.ofEpochMilli(2000));
@@ -244,6 +254,7 @@ public class ProduceControllerImplTest {
             "cluster-1",
             "topic-1",
             /* partitionId= */ Optional.of(1),
+            /* headers= */ ImmutableMultimap.of(),
             /* key= */ Optional.empty(),
             Optional.of(ByteString.copyFromUtf8("value-3")),
             Instant.ofEpochMilli(3000));
@@ -290,6 +301,7 @@ public class ProduceControllerImplTest {
             "cluster-1",
             "topic-1",
             /* partitionId= */ Optional.of(1),
+            /* headers= */ ImmutableMultimap.of(),
             Optional.of(ByteString.copyFromUtf8("key-1")),
             /* value= */ Optional.empty(),
             Instant.ofEpochMilli(1000));
@@ -298,6 +310,7 @@ public class ProduceControllerImplTest {
             "cluster-1",
             "topic-1",
             /* partitionId= */ Optional.of(1),
+            /* headers= */ ImmutableMultimap.of(),
             Optional.of(ByteString.copyFromUtf8("key-2")),
             /* value= */ Optional.empty(),
             Instant.ofEpochMilli(2000));
@@ -306,6 +319,7 @@ public class ProduceControllerImplTest {
             "cluster-1",
             "topic-1",
             /* partitionId= */ Optional.of(1),
+            /* headers= */ ImmutableMultimap.of(),
             Optional.of(ByteString.copyFromUtf8("key-3")),
             /* value= */ Optional.empty(),
             Instant.ofEpochMilli(3000));
@@ -342,6 +356,71 @@ public class ProduceControllerImplTest {
                 "key-3".getBytes(StandardCharsets.UTF_8),
                 /* value= */ null,
                 /* headers= */ emptyList())),
+        producer.history());
+  }
+
+  @Test
+  public void produceWithKeyAndValueAndHeaders_produces() {
+    CompletableFuture<ProduceResult> result1 =
+        produceController.produce(
+            "cluster-1",
+            "topic-1",
+            /* partitionId= */ Optional.empty(),
+            ImmutableMultimap.of("X", Optional.of(ByteString.copyFromUtf8("X"))),
+            Optional.of(ByteString.copyFromUtf8("key-1")),
+            Optional.of(ByteString.copyFromUtf8("value-1")),
+            Instant.ofEpochMilli(1000));
+    CompletableFuture<ProduceResult> result2 =
+        produceController.produce(
+            "cluster-1",
+            "topic-1",
+            /* partitionId= */ Optional.empty(),
+            ImmutableMultimap.of("Y", Optional.of(ByteString.copyFromUtf8("Y"))),
+            Optional.of(ByteString.copyFromUtf8("key-2")),
+            Optional.of(ByteString.copyFromUtf8("value-2")),
+            Instant.ofEpochMilli(2000));
+    CompletableFuture<ProduceResult> result3 =
+        produceController.produce(
+            "cluster-1",
+            "topic-1",
+            /* partitionId= */ Optional.empty(),
+            ImmutableMultimap.of("Z", Optional.of(ByteString.copyFromUtf8("Z"))),
+            Optional.of(ByteString.copyFromUtf8("key-3")),
+            Optional.of(ByteString.copyFromUtf8("value-3")),
+            Instant.ofEpochMilli(3000));
+
+    producer.completeNext();
+    producer.completeNext();
+    producer.completeNext();
+
+    // MockProducer does not set timestamp, serializedKeySize, and serializedValueSize.
+    assertEquals(ProduceResult.create(0, 0, null, 0, 0), result1.join());
+    assertEquals(ProduceResult.create(1, 0, null, 0, 0), result2.join());
+    assertEquals(ProduceResult.create(2, 0, null, 0, 0), result3.join());
+
+    assertProducerRecordsEquals(
+        Arrays.asList(
+            new ProducerRecord<>(
+                "topic-1",
+                /* partition= */ null,
+                1000L,
+                "key-1".getBytes(StandardCharsets.UTF_8),
+                "value-1".getBytes(StandardCharsets.UTF_8),
+                singletonList(new RecordHeader("X", ByteString.copyFromUtf8("X").toByteArray()))),
+            new ProducerRecord<>(
+                "topic-1",
+                /* partition= */ null,
+                2000L,
+                "key-2".getBytes(StandardCharsets.UTF_8),
+                "value-2".getBytes(StandardCharsets.UTF_8),
+                singletonList(new RecordHeader("Y", ByteString.copyFromUtf8("Y").toByteArray()))),
+            new ProducerRecord<>(
+                "topic-1",
+                /* partition= */ null,
+                3000L,
+                "key-3".getBytes(StandardCharsets.UTF_8),
+                "value-3".getBytes(StandardCharsets.UTF_8),
+                singletonList(new RecordHeader("Z", ByteString.copyFromUtf8("Z").toByteArray())))),
         producer.history());
   }
 

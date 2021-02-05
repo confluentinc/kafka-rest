@@ -36,6 +36,7 @@ import io.confluent.kafkarest.config.ConfigModule.JsonschemaSerializerConfigs;
 import io.confluent.kafkarest.config.ConfigModule.ProtobufSerializerConfigs;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
+import io.confluent.kafkarest.exceptions.BadRequestException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
@@ -101,7 +102,7 @@ final class SchemaRecordSerializer {
     try {
       record = AvroSchemaUtils.toObject(data, avroSchema);
     } catch (AvroTypeException | IOException e) {
-      throw new SerializationException(e);
+      throw new BadRequestException(e.getMessage(), e);
     }
     return ByteString.copyFrom(avroSerializer.serialize(subject, avroSchema, record));
   }
@@ -112,7 +113,7 @@ final class SchemaRecordSerializer {
     try {
       record = JsonSchemaUtils.toObject(data, jsonSchema);
     } catch (IOException | ValidationException e) {
-      throw new SerializationException(e);
+      throw new BadRequestException(e.getMessage(), e);
     }
     return ByteString.copyFrom(jsonschemaSerializer.serialize(subject, jsonSchema, record));
   }
@@ -124,7 +125,7 @@ final class SchemaRecordSerializer {
     try {
       record = (Message) ProtobufSchemaUtils.toObject(data, protobufSchema);
     } catch (IOException e) {
-      throw new SerializationException(e);
+      throw new BadRequestException(e.getMessage(), e);
     }
     return ByteString.copyFrom(
         protobufSerializer.serialize(subject, topicName, protobufSchema, record, isKey));

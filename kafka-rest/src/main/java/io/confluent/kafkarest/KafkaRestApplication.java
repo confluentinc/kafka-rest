@@ -122,7 +122,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   }
 
   @Override
-  protected ObjectMapper getJsonMapper() {
+  public ObjectMapper getJsonMapper() {
     return super.getJsonMapper()
         .registerModule(new GuavaModule())
         .registerModule(new Jdk8Module())

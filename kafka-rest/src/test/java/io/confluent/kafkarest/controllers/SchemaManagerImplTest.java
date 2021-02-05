@@ -26,6 +26,7 @@ import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.confluent.kafka.schemaregistry.testutil.MockSchemaRegistry;
+import io.confluent.kafka.serializers.subject.TopicNameStrategy;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.util.Arrays;
@@ -63,7 +64,7 @@ public class SchemaManagerImplTest {
   }
 
   @Test
-  public void getAvroSchemaById_returnsSchema() throws Exception {
+  public void getAvroSchemaByIdAndSubject_returnsSchema() throws Exception {
     ParsedSchema schema = new AvroSchema("{\"type\": \"int\"}");
     int schemaId = schemaRegistryClient.register("topic-1-key", schema);
 
@@ -74,7 +75,7 @@ public class SchemaManagerImplTest {
   }
 
   @Test
-  public void getJsonschemaSchemaById_returnsSchema() throws Exception {
+  public void getJsonschemaSchemaByIdAndSubject_returnsSchema() throws Exception {
     ParsedSchema schema = new JsonSchema("{\"type\":\"number\"}");
     int schemaId = schemaRegistryClient.register("topic-1-key", schema);
 
@@ -85,7 +86,7 @@ public class SchemaManagerImplTest {
   }
 
   @Test
-  public void getProtobufSchemaById_returnsSchema() throws Exception {
+  public void getProtobufSchemaByIdAndSubject_returnsSchema() throws Exception {
     ParsedSchema schema =
         new ProtobufSchema("syntax = \"proto3\"; message KeyRecord { int32 key = 1; }");
     int schemaId = schemaRegistryClient.register("topic-1-key", schema);
@@ -97,7 +98,84 @@ public class SchemaManagerImplTest {
   }
 
   @Test
-  public void parseAvroKeySchema_returnsSchema() {
+  public void getAvroSchemaByIdAndStrategy_returnsSchema() throws Exception {
+    ParsedSchema schema = new AvroSchema("{\"type\": \"int\"}");
+    int schemaId = schemaRegistryClient.register("topic-1-key", schema);
+
+    RegisteredSchema result =
+        schemaManager.getSchemaById(
+            new TopicNameStrategy(), "topic-1", /* isKey= */ true, schemaId);
+
+    assertEquals(schema, result.getSchema());
+    assertEquals(schemaId, result.getSchemaId());
+  }
+
+  @Test
+  public void getJsonschemaSchemaByIdAndStrategy_returnsSchema() throws Exception {
+    ParsedSchema schema = new JsonSchema("{\"type\":\"number\"}");
+    int schemaId = schemaRegistryClient.register("topic-1-key", schema);
+
+    RegisteredSchema result =
+        schemaManager.getSchemaById(
+            new TopicNameStrategy(), "topic-1", /* isKey= */ true, schemaId);
+
+    assertEquals(schema, result.getSchema());
+    assertEquals(schemaId, result.getSchemaId());
+  }
+
+  @Test
+  public void getProtobufSchemaByIdAndStrategy_returnsSchema() throws Exception {
+    ParsedSchema schema =
+        new ProtobufSchema("syntax = \"proto3\"; message KeyRecord { int32 key = 1; }");
+    int schemaId = schemaRegistryClient.register("topic-1-key", schema);
+
+    RegisteredSchema result =
+        schemaManager.getSchemaById(
+            new TopicNameStrategy(), "topic-1", /* isKey= */ true, schemaId);
+
+    assertEquals(schema, result.getSchema());
+    assertEquals(schemaId, result.getSchemaId());
+  }
+
+  @Test
+  public void getAvroSchemaByVersion_returnsSchema() throws Exception {
+    ParsedSchema schema = new AvroSchema("{\"type\": \"int\"}");
+    int schemaId = schemaRegistryClient.register("topic-1-key", schema);
+    int schemaVersion = schemaRegistryClient.getVersion("topic-1-key", schema);
+
+    RegisteredSchema result = schemaManager.getSchemaByVersion("topic-1-key", schemaVersion);
+
+    assertEquals(schema, result.getSchema());
+    assertEquals(schemaId, result.getSchemaId());
+  }
+
+  @Test
+  public void getJsonschemaSchemaByVersion_returnsSchema() throws Exception {
+    ParsedSchema schema = new JsonSchema("{\"type\":\"number\"}");
+    int schemaId = schemaRegistryClient.register("topic-1-key", schema);
+    int schemaVersion = schemaRegistryClient.getVersion("topic-1-key", schema);
+
+    RegisteredSchema result = schemaManager.getSchemaByVersion("topic-1-key", schemaVersion);
+
+    assertEquals(schema, result.getSchema());
+    assertEquals(schemaId, result.getSchemaId());
+  }
+
+  @Test
+  public void getProtobufSchemaByVersion_returnsSchema() throws Exception {
+    ParsedSchema schema =
+        new ProtobufSchema("syntax = \"proto3\"; message KeyRecord { int32 key = 1; }");
+    int schemaId = schemaRegistryClient.register("topic-1-key", schema);
+    int schemaVersion = schemaRegistryClient.getVersion("topic-1-key", schema);
+
+    RegisteredSchema result = schemaManager.getSchemaByVersion("topic-1-key", schemaVersion);
+
+    assertEquals(schema, result.getSchema());
+    assertEquals(schemaId, result.getSchemaId());
+  }
+
+  @Test
+  public void parseAvroSchemaWithSubject_returnsSchema() {
     String rawSchema = "{\"name\":\"int\",\"type\": \"int\"}";
     ParsedSchema schema = new AvroSchema(rawSchema);
 
@@ -108,58 +186,103 @@ public class SchemaManagerImplTest {
   }
 
   @Test
-  public void parseAvroValueSchema_returnsSchema() {
+  public void parseJsonschemaSchemaWithSubject_returnsSchema() {
+    String rawSchema = "{\"type\":\"number\"}";
+    ParsedSchema schema = new JsonSchema(rawSchema);
+
+    RegisteredSchema result =
+        schemaManager.parseSchema(EmbeddedFormat.JSONSCHEMA, "topic-1-key", rawSchema);
+
+    assertEquals(schema, result.getSchema());
+  }
+
+  @Test
+  public void parseProtobufSchemaWithSubject_returnsSchema() {
+    String rawSchema = "syntax = \"proto3\"; message KeyRecord { int32 key = 1; }";
+    ParsedSchema schema = new ProtobufSchema(rawSchema);
+
+    RegisteredSchema result =
+        schemaManager.parseSchema(EmbeddedFormat.PROTOBUF, "topic-1-key", rawSchema);
+
+    assertEquals(schema, result.getSchema());
+  }
+
+  @Test
+  public void parseAvroSchemaWithStrategy_returnsSchema() {
     String rawSchema = "{\"name\":\"int\",\"type\": \"int\"}";
     ParsedSchema schema = new AvroSchema(rawSchema);
 
     RegisteredSchema result =
-        schemaManager.parseSchema(EmbeddedFormat.AVRO, "topic-1-key", rawSchema);
+        schemaManager.parseSchema(
+            EmbeddedFormat.AVRO, new TopicNameStrategy(), "topic-1", /* isKey= */ true, rawSchema);
 
     assertEquals(schema, result.getSchema());
   }
 
   @Test
-  public void parseJsonschemaKeySchema_returnsSchema() {
+  public void parseJsonschemaSchemaWithStrategy_returnsSchema() {
     String rawSchema = "{\"type\":\"number\"}";
     ParsedSchema schema = new JsonSchema(rawSchema);
 
     RegisteredSchema result =
-        schemaManager.parseSchema(EmbeddedFormat.JSONSCHEMA, "topic-1-key", rawSchema);
+        schemaManager.parseSchema(
+            EmbeddedFormat.JSONSCHEMA,
+            new TopicNameStrategy(),
+            "topic-1",
+            /* isKey= */ true,
+            rawSchema);
 
     assertEquals(schema, result.getSchema());
   }
 
   @Test
-  public void parseJsonschemaValueSchema_returnsSchema() {
-    String rawSchema = "{\"type\":\"number\"}";
-    ParsedSchema schema = new JsonSchema(rawSchema);
-
-    RegisteredSchema result =
-        schemaManager.parseSchema(EmbeddedFormat.JSONSCHEMA, "topic-1-key", rawSchema);
-
-    assertEquals(schema, result.getSchema());
-  }
-
-  @Test
-  public void parseProtobufKeySchema_returnsSchema() {
+  public void parseProtobufSchemaWithStrategy_returnsSchema() {
     String rawSchema = "syntax = \"proto3\"; message KeyRecord { int32 key = 1; }";
     ParsedSchema schema = new ProtobufSchema(rawSchema);
 
     RegisteredSchema result =
-        schemaManager.parseSchema(EmbeddedFormat.PROTOBUF, "topic-1-key", rawSchema);
+        schemaManager.parseSchema(
+            EmbeddedFormat.PROTOBUF,
+            new TopicNameStrategy(),
+            "topic-1",
+            /* isKey= */ true,
+            rawSchema);
 
     assertEquals(schema, result.getSchema());
   }
 
   @Test
-  public void parseProtobufValueSchema_returnsSchema() {
-    String rawSchema = "syntax = \"proto3\"; message KeyRecord { int32 key = 1; }";
-    ParsedSchema schema = new ProtobufSchema(rawSchema);
+  public void getAvroLatestSchema_returnsSchema() throws Exception {
+    ParsedSchema schema = new AvroSchema("{\"type\": \"int\"}");
+    int schemaId = schemaRegistryClient.register("topic-1-key", schema);
 
-    RegisteredSchema result =
-        schemaManager.parseSchema(EmbeddedFormat.PROTOBUF, "topic-1-key", rawSchema);
+    RegisteredSchema result = schemaManager.getLatestSchema("topic-1-key");
 
     assertEquals(schema, result.getSchema());
+    assertEquals(schemaId, result.getSchemaId());
+  }
+
+  @Test
+  public void getJsonschemaLatestSchema_returnsSchema() throws Exception {
+    ParsedSchema schema = new JsonSchema("{\"type\":\"number\"}");
+    int schemaId = schemaRegistryClient.register("topic-1-key", schema);
+
+    RegisteredSchema result = schemaManager.getLatestSchema("topic-1-key");
+
+    assertEquals(schema, result.getSchema());
+    assertEquals(schemaId, result.getSchemaId());
+  }
+
+  @Test
+  public void getProtobufLatestSchema_returnsSchema() throws Exception {
+    ParsedSchema schema =
+        new ProtobufSchema("syntax = \"proto3\"; message KeyRecord { int32 key = 1; }");
+    int schemaId = schemaRegistryClient.register("topic-1-key", schema);
+
+    RegisteredSchema result = schemaManager.getLatestSchema("topic-1-key");
+
+    assertEquals(schema, result.getSchema());
+    assertEquals(schemaId, result.getSchemaId());
   }
 
   @Test

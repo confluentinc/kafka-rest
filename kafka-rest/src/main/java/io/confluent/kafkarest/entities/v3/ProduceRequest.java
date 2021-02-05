@@ -16,10 +16,13 @@
 package io.confluent.kafkarest.entities.v3;
 
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BinaryNode;
@@ -45,18 +48,23 @@ public abstract class ProduceRequest {
   }
 
   @JsonProperty("partition_id")
+  @JsonInclude(Include.NON_ABSENT)
   public abstract Optional<Integer> getPartitionId();
 
   @JsonProperty("headers")
+  @JsonInclude(Include.NON_EMPTY)
   public abstract ImmutableList<ProduceRequestHeader> getHeaders();
 
   @JsonProperty("key")
+  @JsonInclude(Include.NON_ABSENT)
   public abstract Optional<ProduceRequestData> getKey();
 
   @JsonProperty("value")
+  @JsonInclude(Include.NON_ABSENT)
   public abstract Optional<ProduceRequestData> getValue();
 
   @JsonProperty("timestamp")
+  @JsonInclude(Include.NON_ABSENT)
   public abstract Optional<Instant> getTimestamp();
 
   @JsonCreator
@@ -76,7 +84,7 @@ public abstract class ProduceRequest {
   }
 
   public static Builder builder() {
-    return new AutoValue_ProduceRequest.Builder();
+    return new AutoValue_ProduceRequest.Builder().setHeaders(emptyList());
   }
 
   @AutoValue.Builder
@@ -108,6 +116,7 @@ public abstract class ProduceRequest {
     public abstract Optional<ByteString> getValue();
 
     @JsonProperty("value")
+    @JsonInclude(Include.NON_ABSENT)
     final Optional<BinaryNode> getSerializedValue() {
       return getValue().map(value -> BinaryNode.valueOf(value.toByteArray()));
     }
@@ -118,9 +127,8 @@ public abstract class ProduceRequest {
 
     @JsonCreator
     static ProduceRequestHeader fromJson(
-        @JsonProperty("name") String name,
-        @JsonProperty("value") @Nullable BinaryNode value) {
-      return create(name, value != null ? ByteString.copyFrom(value.binaryValue()) : null);
+        @JsonProperty("name") String name, @JsonProperty("value") @Nullable byte[] value) {
+      return create(name, value != null ? ByteString.copyFrom(value) : null);
     }
   }
 
@@ -131,21 +139,27 @@ public abstract class ProduceRequest {
     }
 
     @JsonProperty("type")
+    @JsonInclude(Include.NON_ABSENT)
     public abstract Optional<EmbeddedFormat> getFormat();
 
     @JsonProperty("schema_subject")
+    @JsonInclude(Include.NON_ABSENT)
     public abstract Optional<String> getSchemaSubject();
 
     @JsonProperty("schema_subject_strategy")
+    @JsonInclude(Include.NON_ABSENT)
     public abstract Optional<SchemaSubjectStrategy> getSchemaSubjectStrategy();
 
     @JsonProperty("schema_id")
+    @JsonInclude(Include.NON_ABSENT)
     public abstract Optional<Integer> getSchemaId();
 
     @JsonProperty("schema_version")
+    @JsonInclude(Include.NON_ABSENT)
     public abstract Optional<Integer> getSchemaVersion();
 
     @JsonProperty("schema")
+    @JsonInclude(Include.NON_ABSENT)
     public abstract Optional<String> getRawSchema();
 
     @JsonProperty("data")

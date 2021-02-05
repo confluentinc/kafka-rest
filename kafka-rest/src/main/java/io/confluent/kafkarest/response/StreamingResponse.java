@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.jaxrs.base.JsonMappingExceptionMapper;
 import com.fasterxml.jackson.jaxrs.base.JsonParseExceptionMapper;
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.common.CompletableFutures;
 import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
@@ -31,23 +32,56 @@ import io.confluent.kafkarest.exceptions.v3.V3ExceptionMapper;
 import io.confluent.rest.entities.ErrorMessage;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import javax.annotation.Nullable;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.ext.ExceptionMapper;
 import org.glassfish.jersey.server.ChunkedOutput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * Helper class to allow transforming a stream of requests into a stream of responses online.
+ *
+ * <p>Usage:
+ *
+ * <pre>{@code
+ * StreamingResponse.from(myStreamOfRequests) // e.g. a MappingIterator request body
+ *     .compose(request -> computeResponse(request))
+ *     .resume(asyncResponse);
+ * }</pre>
+ */
 // CHECKSTYLE:OFF:ClassDataAbstractionCoupling
 public abstract class StreamingResponse<T> {
 
-  private static final JsonMappingExceptionMapper JSON_MAPPING_EXCEPTION_MAPPER =
-      new JsonMappingExceptionMapper();
-  private static final JsonParseExceptionMapper JSON_PARSE_EXCEPTION_MAPPER =
-      new JsonParseExceptionMapper();
-  private static final V3ExceptionMapper STATUS_EXCEPTION_MAPPER = new V3ExceptionMapper();
-  private static final KafkaExceptionMapper KAFKA_EXCEPTION_MAPPER =
-      new KafkaExceptionMapper(/* restConfig= */ null);
+  private static final Logger log = LoggerFactory.getLogger(StreamingResponse.class);
+
+  private static final CompositeErrorMapper EXCEPTION_MAPPER =
+      new CompositeErrorMapper.Builder()
+          .putMapper(
+              JsonMappingException.class,
+              new JsonMappingExceptionMapper(),
+              response -> Status.BAD_REQUEST.getStatusCode(),
+              response -> (String) response.getEntity())
+          .putMapper(
+              JsonParseException.class,
+              new JsonParseExceptionMapper(),
+              response -> Status.BAD_REQUEST.getStatusCode(),
+              response -> (String) response.getEntity())
+          .putMapper(
+              StatusCodeException.class,
+              new V3ExceptionMapper(),
+              response -> ((ErrorResponse) response.getEntity()).getErrorCode(),
+              response -> ((ErrorResponse) response.getEntity()).getMessage())
+          .setDefaultMapper(
+              new KafkaExceptionMapper(/* restConfig= */ null),
+              response -> ((ErrorMessage) response.getEntity()).getErrorCode(),
+              response -> ((ErrorMessage) response.getEntity()).getMessage())
+          .build();
 
   StreamingResponse() {
   }
@@ -61,6 +95,12 @@ public abstract class StreamingResponse<T> {
     return new ComposingStreamingResponse<>(this, transform);
   }
 
+  /**
+   * Stream requests in and start transforming them into responses.
+   *
+   * <p>This method will block until all requests are read in. The responses are computed and
+   * written to {@code asyncResponse} asynchronously.
+   */
   public final void resume(AsyncResponse asyncResponse) {
     AsyncResponseQueue responseQueue = new AsyncResponseQueue();
     responseQueue.asyncResume(asyncResponse);
@@ -70,33 +110,12 @@ public abstract class StreamingResponse<T> {
     responseQueue.close();
   }
 
-  private ResultOrError handleNext(T result, Throwable error) {
+  private ResultOrError handleNext(T result, @Nullable Throwable error) {
     if (error == null) {
       return ResultOrError.result(result);
-    } else if (error.getCause() instanceof JsonMappingException) {
-      Response response =
-          JSON_MAPPING_EXCEPTION_MAPPER.toResponse((JsonMappingException) error.getCause());
-      return ResultOrError.error(
-          new ErrorResponse(
-              String.valueOf(Status.BAD_REQUEST.getStatusCode()),
-              (String) response.getEntity()));
-    } else if (error.getCause() instanceof JsonParseException) {
-      Response response =
-          JSON_PARSE_EXCEPTION_MAPPER.toResponse((JsonParseException) error.getCause());
-      return ResultOrError.error(
-          new ErrorResponse(
-              String.valueOf(Status.BAD_REQUEST.getStatusCode()),
-              (String) response.getEntity()));
-    } else if (error.getCause() instanceof StatusCodeException) {
-      Response response =
-          STATUS_EXCEPTION_MAPPER.toResponse((StatusCodeException) error.getCause());
-      return ResultOrError.error((ErrorResponse) response.getEntity());
     } else {
-      Response response = KAFKA_EXCEPTION_MAPPER.toResponse(error.getCause());
-      ErrorMessage errorMessage = (ErrorMessage) response.getEntity();
-      return ResultOrError.error(
-          new ErrorResponse(
-              String.valueOf(errorMessage.getErrorCode()), errorMessage.getMessage()));
+      log.debug("Error processing streaming operation.", error);
+      return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(error.getCause()));
     }
   }
 
@@ -151,6 +170,18 @@ public abstract class StreamingResponse<T> {
     private static final String CHUNK_SEPARATOR = "\r\n";
 
     private final ChunkedOutput<ResultOrError> sink;
+
+    // tail is the end of a linked list of completable futures. The futures are tied together by
+    // allOf completion handles. For example, let's say we push 3 futures into the queue:
+    //
+    // 1. tail = (null) // empty queue
+    // 2. tail = then(allOf((null), f_1), write(f_1)) // -> f_1
+    // 3. tail = then(allOf(then(allOf((null), f_1), write(f_1)), f_2), write(f_2)) // -> f_1 -> f_2
+    //
+    // The chaining of the futures guarantees that the write(f) callbacks are called in the order
+    // that the futures got pushed into the queue. Also, due to the way allOf is implemented, it
+    // makes sure that, as soon as f_0..i is completed, the whole
+    // then(allOf((f_i-1), f_i), write(f_i)) monad is made available for garbage collection.
     private CompletableFuture<Void> tail;
 
     private AsyncResponseQueue() {
@@ -170,8 +201,7 @@ public abstract class StreamingResponse<T> {
                     try {
                       sink.write(result.join());
                     } catch (IOException e) {
-                      // There's not much else we can do if we fail write the response back.
-                      e.printStackTrace();
+                      log.error("Error when writing streaming result to response channel.", e);
                     }
                     return null;
                   });
@@ -183,8 +213,7 @@ public abstract class StreamingResponse<T> {
             try {
               sink.close();
             } catch (IOException e) {
-              // There's not much else we can do if we fail to close the response channel.
-              e.printStackTrace();
+              log.error("Error when closing response channel.", e);
             }
           });
     }
@@ -219,6 +248,84 @@ public abstract class StreamingResponse<T> {
 
     @JsonValue
     abstract ErrorResponse getError();
+  }
+
+  private static final class ErrorMapper<T extends Throwable> {
+    private final Class<T> errorClass;
+    private final ExceptionMapper<T> mapper;
+    private final Function<Response, Integer> errorCode;
+    private final Function<Response, String> message;
+
+    private ErrorMapper(
+        Class<T> errorClass,
+        ExceptionMapper<T> mapper,
+        Function<Response, Integer> errorCode,
+        Function<Response, String> message) {
+      this.errorClass = requireNonNull(errorClass);
+      this.mapper = requireNonNull(mapper);
+      this.errorCode = requireNonNull(errorCode);
+      this.message = requireNonNull(message);
+    }
+
+    private boolean handles(Throwable error) {
+      return errorClass.isInstance(error);
+    }
+
+    @SuppressWarnings("unchecked")
+    private ErrorResponse toErrorResponse(Throwable error) {
+      Response response = mapper.toResponse((T) error);
+      return ErrorResponse.create(errorCode.apply(response), message.apply(response));
+    }
+  }
+
+  private static final class CompositeErrorMapper {
+    private final List<ErrorMapper<?>> mappers;
+    private final ErrorMapper<Throwable> defaultMapper;
+
+    private CompositeErrorMapper(
+        List<ErrorMapper<?>> mappers,
+        ErrorMapper<Throwable> defaultMapper) {
+      this.mappers = requireNonNull(mappers);
+      this.defaultMapper = requireNonNull(defaultMapper);
+    }
+
+    public ErrorResponse toErrorResponse(Throwable exception) {
+      for (ErrorMapper<?> mapper : mappers) {
+        if (mapper.handles(exception)) {
+          return mapper.toErrorResponse(exception);
+        }
+      }
+      return defaultMapper.toErrorResponse(exception);
+    }
+
+    private static final class Builder {
+      private final ImmutableList.Builder<ErrorMapper<?>> mappers = ImmutableList.builder();
+      private ErrorMapper<Throwable> defaultMapper;
+
+      private Builder() {
+      }
+
+      private <T extends Throwable> Builder putMapper(
+          Class<T> mappedType,
+          ExceptionMapper<T> mapper,
+          Function<Response, Integer> errorCode,
+          Function<Response, String> message) {
+        mappers.add(new ErrorMapper<>(mappedType, mapper, errorCode, message));
+        return this;
+      }
+
+      private Builder setDefaultMapper(
+          ExceptionMapper<Throwable> mapper,
+          Function<Response, Integer> errorCode,
+          Function<Response, String> message) {
+        defaultMapper = new ErrorMapper<>(Throwable.class, mapper, errorCode, message);
+        return this;
+      }
+
+      public CompositeErrorMapper build() {
+        return new CompositeErrorMapper(mappers.build(), defaultMapper);
+      }
+    }
   }
 }
 // CHECKSTYLE:ON:ClassDataAbstractionCoupling

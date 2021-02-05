@@ -16,6 +16,8 @@
 package io.confluent.kafkarest.entities.v3;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
@@ -42,12 +44,15 @@ public abstract class ProduceResponse {
   public abstract long getOffset();
 
   @JsonProperty("timestamp")
+  @JsonInclude(Include.NON_ABSENT)
   public abstract Optional<Instant> getTimestamp();
 
   @JsonProperty("key")
+  @JsonInclude(Include.NON_ABSENT)
   public abstract Optional<ProduceResponseData> getKey();
 
   @JsonProperty("value")
+  @JsonInclude(Include.NON_ABSENT)
   public abstract Optional<ProduceResponseData> getValue();
 
   @JsonCreator
@@ -110,15 +115,19 @@ public abstract class ProduceResponse {
     }
 
     @JsonProperty("type")
+    @JsonInclude(Include.NON_ABSENT)
     public abstract Optional<EmbeddedFormat> getType();
 
     @JsonProperty("schema_subject")
+    @JsonInclude(Include.NON_ABSENT)
     public abstract Optional<String> getSchemaSubject();
 
     @JsonProperty("schema_id")
+    @JsonInclude(Include.NON_ABSENT)
     public abstract Optional<Integer> getSchemaId();
 
     @JsonProperty("schema_version")
+    @JsonInclude(Include.NON_ABSENT)
     public abstract Optional<Integer> getSchemaVersion();
 
     @JsonProperty("size")

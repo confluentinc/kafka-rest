@@ -49,6 +49,7 @@ import io.confluent.kafka.serializers.subject.TopicNameStrategy;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
+import io.confluent.kafkarest.exceptions.BadRequestException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -155,8 +156,8 @@ public class RecordSerializerFacadeTest {
     assertFalse(serialized.isPresent());
   }
 
-  @Test(expected = SerializationException.class)
-  public void serializeInvalidBinaryKey_throwsSerializationException() {
+  @Test(expected = BadRequestException.class)
+  public void serializeInvalidBinaryKey_throwsBadRequestException() {
     recordSerializer.serialize(
         EmbeddedFormat.BINARY,
         TOPIC_NAME,
@@ -165,8 +166,8 @@ public class RecordSerializerFacadeTest {
         /* isKey= */ true);
   }
 
-  @Test(expected = SerializationException.class)
-  public void serializeInvalidBinaryValue_throwsSerializationException() {
+  @Test(expected = BadRequestException.class)
+  public void serializeInvalidBinaryValue_throwsBadRequestException() {
     recordSerializer.serialize(
         EmbeddedFormat.BINARY,
         TOPIC_NAME,
@@ -633,8 +634,8 @@ public class RecordSerializerFacadeTest {
         /* isKey= */ true);
   }
 
-  @Test(expected = SerializationException.class)
-  public void serializeInvalidAvroKey_throwsSerializationException() throws Exception {
+  @Test(expected = BadRequestException.class)
+  public void serializeInvalidAvroKey_throwsBadRequestException() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"int\"}");
     String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
     int schemaId = schemaRegistryClient.register(subject, schema);
@@ -907,8 +908,8 @@ public class RecordSerializerFacadeTest {
         /* isKey= */ false);
   }
 
-  @Test(expected = SerializationException.class)
-  public void serializeInvalidAvroValue_throwsSerializationException() throws Exception {
+  @Test(expected = BadRequestException.class)
+  public void serializeInvalidAvroValue_throwsBadRequestException() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"int\"}");
     String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
     int schemaId = schemaRegistryClient.register(subject, schema);
@@ -1103,8 +1104,8 @@ public class RecordSerializerFacadeTest {
         /* isKey= */ true);
   }
 
-  @Test(expected = SerializationException.class)
-  public void serializeInvalidJsonschemaKey_throwsSerializationException() throws Exception {
+  @Test(expected = BadRequestException.class)
+  public void serializeInvalidJsonschemaKey_throwsBadRequestException() throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"integer\"}");
     String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
     int schemaId = schemaRegistryClient.register(subject, schema);
@@ -1298,8 +1299,8 @@ public class RecordSerializerFacadeTest {
         /* isKey= */ false);
   }
 
-  @Test(expected = SerializationException.class)
-  public void serializeInvalidJsonschemaValue_throwsSerializationException() throws Exception {
+  @Test(expected = BadRequestException.class)
+  public void serializeInvalidJsonschemaValue_throwsBadRequestException() throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"integer\"}");
     String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
     int schemaId = schemaRegistryClient.register(subject, schema);
@@ -1386,8 +1387,8 @@ public class RecordSerializerFacadeTest {
         /* isKey= */ true);
   }
 
-  @Test(expected = SerializationException.class)
-  public void serializeInvalidProtobufKey_throwsSerializationException() throws Exception {
+  @Test(expected = BadRequestException.class)
+  public void serializeInvalidProtobufKey_throwsBadRequestException() throws Exception {
     ProtobufSchema schema =
         new ProtobufSchema(
             "syntax = \"proto3\"; message InvalidKey { int32 foo = 1; bool bar = 2; }");
@@ -1478,8 +1479,8 @@ public class RecordSerializerFacadeTest {
         /* isKey= */ false);
   }
 
-  @Test(expected = SerializationException.class)
-  public void serializeInvalidProtobufValue_throwsSerializationException() throws Exception {
+  @Test(expected = BadRequestException.class)
+  public void serializeInvalidProtobufValue_throwsBadRequestException() throws Exception {
     ProtobufSchema schema =
         new ProtobufSchema(
             "syntax = \"proto3\"; message InvalidValue { int32 foo = 1; bool bar = 2; }");

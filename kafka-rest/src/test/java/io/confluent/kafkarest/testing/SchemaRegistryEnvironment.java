@@ -16,12 +16,27 @@
 package io.confluent.kafkarest.testing;
 
 import static com.google.common.base.Preconditions.checkState;
+import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.MAX_SCHEMAS_PER_SUBJECT_DEFAULT;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 
+import com.google.auto.value.AutoValue;
+import com.google.protobuf.Message;
+import io.confluent.kafka.schemaregistry.ParsedSchema;
+import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
+import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
+import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
+import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
+import io.confluent.kafka.serializers.KafkaAvroDeserializer;
+import io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer;
+import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
 import java.net.ServerSocket;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Properties;
 import javax.annotation.Nullable;
 import org.eclipse.jetty.server.Server;
@@ -37,6 +52,8 @@ public final class SchemaRegistryEnvironment implements BeforeEachCallback, Afte
   private URI baseUri;
   @Nullable
   private Server server;
+  @Nullable
+  private SchemaRegistryClient client;
 
   private SchemaRegistryEnvironment(KafkaClusterEnvironment kafkaCluster) {
     this.kafkaCluster = requireNonNull(kafkaCluster);
@@ -48,6 +65,13 @@ public final class SchemaRegistryEnvironment implements BeforeEachCallback, Afte
     baseUri = URI.create(String.format("http://localhost:%d", findUnusedPort()));
     server = new SchemaRegistryRestApplication(createConfigs(baseUri)).createServer();
     server.start();
+    client =
+        new CachedSchemaRegistryClient(
+            singletonList(baseUri.toString()),
+            MAX_SCHEMAS_PER_SUBJECT_DEFAULT,
+            Arrays.asList(
+                new AvroSchemaProvider(), new JsonSchemaProvider(), new ProtobufSchemaProvider()),
+            emptyMap());
   }
 
   private SchemaRegistryConfig createConfigs(URI baseUri) throws Exception {
@@ -78,6 +102,29 @@ public final class SchemaRegistryEnvironment implements BeforeEachCallback, Afte
     return baseUri;
   }
 
+  public SchemaRegistryClient getClient() {
+    checkState(client != null);
+    return client;
+  }
+
+  public SchemaKey createSchema(String subject, ParsedSchema schema) throws Exception {
+    int schemaId = getClient().register(subject, schema);
+    int schemaVersion = getClient().getVersion(subject, schema);
+    return SchemaKey.create(subject, schemaId, schemaVersion);
+  }
+
+  public KafkaAvroDeserializer createAvroDeserializer() {
+    return new KafkaAvroDeserializer(client);
+  }
+
+  public KafkaJsonSchemaDeserializer<Object> createJsonSchemaDeserializer() {
+    return new KafkaJsonSchemaDeserializer<>(client);
+  }
+
+  public KafkaProtobufDeserializer<Message> createProtobufDeserializer() {
+    return new KafkaProtobufDeserializer<>(client);
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -95,6 +142,23 @@ public final class SchemaRegistryEnvironment implements BeforeEachCallback, Afte
 
     public SchemaRegistryEnvironment build() {
       return new SchemaRegistryEnvironment(kafkaCluster);
+    }
+  }
+
+  @AutoValue
+  public abstract static class SchemaKey {
+
+    SchemaKey() {
+    }
+
+    public abstract String getSubject();
+
+    public abstract int getSchemaId();
+
+    public abstract int getSchemaVersion();
+
+    public static SchemaKey create(String subject, int schemaId, int schemaVersion) {
+      return new AutoValue_SchemaRegistryEnvironment_SchemaKey(subject, schemaId, schemaVersion);
     }
   }
 }

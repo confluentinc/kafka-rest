@@ -20,6 +20,7 @@ import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.Errors;
@@ -178,6 +179,7 @@ abstract class AbstractProduceAction {
                         /* clusterId= */ "",
                         topicName,
                         record.getPartitionId(),
+                        /* headers= */ ImmutableMultimap.of(),
                         record.getKey(),
                         record.getValue(),
                         /* timestamp= */ Instant.now()))

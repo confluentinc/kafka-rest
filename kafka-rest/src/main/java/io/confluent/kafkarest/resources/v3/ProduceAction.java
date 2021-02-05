@@ -19,6 +19,7 @@ import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.controllers.ProduceController;
@@ -29,12 +30,15 @@ import io.confluent.kafkarest.entities.ProduceResult;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
+import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestHeader;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.entities.v3.ProduceResponse.ProduceResponseData;
+import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.response.StreamingResponse;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collector;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.Consumes;
@@ -45,10 +49,20 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
-import org.apache.kafka.common.errors.SerializationException;
+import javax.ws.rs.core.Response.Status;
 
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/records")
 public final class ProduceAction {
+
+  private static final Collector<
+      ProduceRequestHeader,
+      ImmutableMultimap.Builder<String, Optional<ByteString>>,
+      ImmutableMultimap<String, Optional<ByteString>>> PRODUCE_REQUEST_HEADER_COLLECTOR =
+      Collector.of(
+          ImmutableMultimap::builder,
+          (builder, header) -> builder.put(header.getName(), header.getValue()),
+          (left, right) -> left.putAll(right.build()),
+          ImmutableMultimap.Builder::build);
 
   private final Provider<SchemaManager> schemaManager;
   private final Provider<RecordSerializer> recordSerializer;
@@ -103,6 +117,7 @@ public final class ProduceAction {
             clusterId,
             topicName,
             request.getPartitionId(),
+            request.getHeaders().stream().collect(PRODUCE_REQUEST_HEADER_COLLECTOR),
             serializedKey,
             serializedValue,
             request.getTimestamp().orElse(Instant.now()));
@@ -268,14 +283,30 @@ public final class ProduceAction {
       subjectNameStrategy = defaultSubjectNameStrategy;
     }
 
-    String subject;
+    String subject = null;
+    Exception cause = null;
     try {
       subject = subjectNameStrategy.subjectName(topicName, isKey, /* schema= */ null);
     } catch (Exception e) {
-      throw new SerializationException(e);
+      cause = e;
     }
 
-    return requireNonNull(subject);
+    if (subject == null) {
+      StatusCodeException error =
+          StatusCodeException.create(
+              Status.BAD_REQUEST,
+              "Bad Request",
+              String.format(
+                  "Cannot use%s schema_subject_strategy%s without schema_id or schema.",
+                  data.getSchemaSubjectStrategy().map(strategy -> "").orElse(" default"),
+                  data.getSchemaSubjectStrategy().map(strategy -> "=" + strategy).orElse("")));
+      if (cause != null) {
+        error.initCause(cause);
+      }
+      throw error;
+    }
+
+    return subject;
   }
 
   private Optional<ByteString> serialize(

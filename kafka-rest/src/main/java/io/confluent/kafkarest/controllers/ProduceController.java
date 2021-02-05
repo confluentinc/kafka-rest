@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.controllers;
 
+import com.google.common.collect.Multimap;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.entities.ProduceResult;
 import java.time.Instant;
@@ -34,6 +35,7 @@ public interface ProduceController {
       String clusterId,
       String topicName,
       Optional<Integer> partitionId,
+      Multimap<String, Optional<ByteString>> headers,
       Optional<ByteString> key,
       Optional<ByteString> value,
       Instant timestamp);

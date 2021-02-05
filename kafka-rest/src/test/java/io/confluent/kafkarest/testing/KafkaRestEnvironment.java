@@ -18,6 +18,7 @@ package io.confluent.kafkarest.testing;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.requireNonNull;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.rest.RestConfig;
@@ -101,12 +102,17 @@ public final class KafkaRestEnvironment implements BeforeEachCallback, AfterEach
   }
 
   public URI getBaseUri() {
-    checkState(server != null);
+    checkState(baseUri != null);
     return baseUri;
   }
 
+  public ObjectMapper getObjectMapper() {
+    checkState(application != null);
+    return application.getJsonMapper();
+  }
+
   public Invocation.Builder request(String path) {
-    checkState(server != null);
+    checkState(application != null);
     Client client = ClientBuilder.newClient();
     application.configureBaseApplication(client);
     return client.target(baseUri).path(path).request();

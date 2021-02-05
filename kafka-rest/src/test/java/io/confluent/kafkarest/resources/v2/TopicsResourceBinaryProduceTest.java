@@ -27,6 +27,7 @@ import static org.junit.Assert.assertNull;
 
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
 import io.confluent.kafka.serializers.subject.TopicNameStrategy;
 import io.confluent.kafkarest.Errors;
@@ -200,6 +201,7 @@ public class TopicsResourceBinaryProduceTest
               /* clusterId= */ eq(""),
               eq(TOPIC_NAME),
               eq(record.getPartition()),
+              /* headers= */ eq(ImmutableMultimap.of()),
               eq(serializedKey),
               eq(serializedValue),
               /* timestamp= */ isA(Instant.class)))

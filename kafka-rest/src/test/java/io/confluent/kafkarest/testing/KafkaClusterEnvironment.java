@@ -16,13 +16,12 @@
 package io.confluent.kafkarest.testing;
 
 import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.glassfish.jersey.internal.guava.Preconditions.checkArgument;
 import static org.glassfish.jersey.internal.guava.Preconditions.checkState;
-import static org.junit.jupiter.api.Assertions.fail;
 
-import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.common.CompletableFutures;
 import java.time.Duration;
 import java.util.HashMap;
@@ -30,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import kafka.server.KafkaConfig;
@@ -43,11 +41,10 @@ import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.common.serialization.Deserializer;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -63,8 +60,8 @@ public final class KafkaClusterEnvironment implements BeforeEachCallback, AfterE
   private final int numBrokers;
   private final HashMap<String, String> configs;
 
-  @Nullable
-  private List<KafkaServer> brokers;
+  @Nullable private List<KafkaServer> brokers;
+  @Nullable private AdminClient adminClient;
 
   public KafkaClusterEnvironment(
       ZookeeperEnvironment zookeeper, int numBrokers, HashMap<String, String> configs) {
@@ -75,7 +72,7 @@ public final class KafkaClusterEnvironment implements BeforeEachCallback, AfterE
 
   @Override
   public void beforeEach(ExtensionContext extensionContext) {
-    checkState(brokers == null, "Starting environment that already started.");
+    checkState(adminClient == null && brokers == null);
 
     brokers =
         CompletableFutures.allAsList(
@@ -87,6 +84,10 @@ public final class KafkaClusterEnvironment implements BeforeEachCallback, AfterE
                             () -> TestUtils.createServer(properties, MOCK_TIME)))
                 .collect(toList()))
             .join();
+
+    adminClient =
+        AdminClient.create(
+            singletonMap(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getBootstrapServers()));
   }
 
   private Properties createBrokerConfigs(int brokerId) {
@@ -125,8 +126,9 @@ public final class KafkaClusterEnvironment implements BeforeEachCallback, AfterE
 
   @Override
   public void afterEach(ExtensionContext extensionContext) {
-    checkState(brokers != null, "Stopping environment that never started.");
+    checkState(adminClient != null && brokers != null);
 
+    adminClient.close();
     CompletableFutures.allAsList(
         brokers.stream()
             .map(
@@ -140,63 +142,55 @@ public final class KafkaClusterEnvironment implements BeforeEachCallback, AfterE
             .collect(toList()))
         .join();
 
+    adminClient = null;
     brokers = null;
   }
 
   public String getBootstrapServers() {
+    checkState(brokers != null);
     return TestUtils.getBrokerListStrFromServers(
         CollectionConverters.asScala(brokers), SecurityProtocol.PLAINTEXT);
   }
 
-  public AdminClient createAdminClient() {
-    Properties properties = new Properties();
-    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getBootstrapServers());
-    return AdminClient.create(properties);
+  public AdminClient getAdminClient() {
+    checkState(adminClient != null);
+    return adminClient;
   }
 
-  public KafkaConsumer<ByteString, ByteString> createConsumer() {
+  public <K, V> KafkaConsumer<K, V> createConsumer(
+      Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
     Properties properties = new Properties();
     properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, getBootstrapServers());
-    return new KafkaConsumer<>(
-        properties,
-        (topic, data) -> ByteString.copyFrom(data),
-        (topic, data) -> ByteString.copyFrom(data));
+    return new KafkaConsumer<>(properties, keyDeserializer, valueDeserializer);
   }
 
-  public String getClusterId() {
-    try {
-      return createAdminClient().describeCluster().clusterId().get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
+  public String getClusterId() throws Exception{
+    return getAdminClient().describeCluster().clusterId().get();
   }
 
-  public int getControllerID() {
-    try {
-      return createAdminClient().describeCluster().controller().get().id();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
+  public void createTopic(String topicName, int numPartitions, short replicationFactor)
+      throws Exception {
+    getAdminClient()
+        .createTopics(singletonList(new NewTopic(topicName, numPartitions, replicationFactor)))
+        .all()
+        .get();
   }
 
-  public void createTopic(String topicName, int numPartitions, short replicationFactor) {
-    try {
-      createAdminClient()
-          .createTopics(singletonList(new NewTopic(topicName, numPartitions, replicationFactor)))
-          .all()
-          .get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public ConsumerRecord<ByteString, ByteString> getRecord(String topicName, int partitionId, long offset) {
-    KafkaConsumer<ByteString, ByteString> consumer = createConsumer();
+  public <K, V> ConsumerRecord<K, V> getRecord(
+      String topicName,
+      int partitionId,
+      long offset,
+      Deserializer<K> keyDeserializer,
+      Deserializer<V> valueDeserializer) {
+    KafkaConsumer<K, V> consumer = createConsumer(keyDeserializer, valueDeserializer);
     consumer.assign(singletonList(new TopicPartition(topicName, partitionId)));
     consumer.seek(new TopicPartition(topicName, partitionId), offset);
-    List<ConsumerRecord<ByteString, ByteString>> records =
-        consumer.poll(Duration.ofSeconds(1)).records(new TopicPartition(topicName, partitionId));
-    return records.get(0);
+    List<ConsumerRecord<K, V>> records =
+        consumer.poll(Duration.ofSeconds(1))
+            .records(new TopicPartition(topicName, partitionId));
+    ConsumerRecord<K, V> record = records.iterator().next();
+    consumer.close();
+    return record;
   }
 
   public static Builder builder() {

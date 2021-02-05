@@ -25,6 +25,7 @@ import static org.junit.Assert.assertEquals;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.serializers.subject.TopicNameStrategy;
@@ -186,6 +187,7 @@ public class TopicsResourceAvroProduceTest
               /* clusterId= */ eq(""),
               eq(TopicsResourceAvroProduceTest.TOPIC_NAME),
               eq(record.getPartition()),
+              /* headers= */ eq(ImmutableMultimap.of()),
               eq(Optional.of(serializedKey)),
               eq(Optional.of(serializedValue)),
               /* timestamp= */ isA(Instant.class)))
