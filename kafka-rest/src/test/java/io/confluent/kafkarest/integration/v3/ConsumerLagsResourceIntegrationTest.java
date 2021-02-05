@@ -38,6 +38,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.BytesDeserializer;
 import org.junit.Before;
 import org.junit.Test;
@@ -216,7 +217,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     produce(topic2, 1, request1);
 
     // consume from subscribed topics (zero lag)
-    consumer.poll(Duration.ofSeconds(20));
+    consumer.poll(Duration.ofSeconds(10));
 
     // stores expected currentOffsets and logEndOffsets for each topic partition after sending
     // 3 records to topic1 partition0 and topic2 partition1
@@ -227,6 +228,8 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
 
     for (int t = 0; t < numTopics; t++) {
       for (int p = 0; p < numPartitions; p++) {
+        consumer.seekToEnd(Collections.singletonList(new TopicPartition(topics[t], p)));
+//        consumer.seek(new TopicPartition(topics[t], p), expectedOffsets[t][p]);
         Response response =
             request("/v3/clusters/" + clusterId + "/consumer-groups/" + group1 +
                 "/lags/" + topics[t] + "/partitions/" + p)
