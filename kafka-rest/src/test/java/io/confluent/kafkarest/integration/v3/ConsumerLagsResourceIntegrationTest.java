@@ -216,7 +216,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     produce(topic2, 1, request1);
 
     // consume from subscribed topics (zero lag)
-    consumer.poll(Duration.ofSeconds(15));
+    consumer.poll(Duration.ofSeconds(20));
 
     // stores expected currentOffsets and logEndOffsets for each topic partition after sending
     // 3 records to topic1 partition0 and topic2 partition1
@@ -283,7 +283,6 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
   public void getConsumerLag_nonExistingOffsets_returnsNotFound() {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Collections.singletonList(topic1));
-    consumer.poll(Duration.ofSeconds(1));
 
     BinaryPartitionProduceRequest request =
         BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);

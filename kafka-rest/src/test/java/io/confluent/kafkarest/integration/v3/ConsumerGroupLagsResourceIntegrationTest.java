@@ -154,7 +154,6 @@ public class ConsumerGroupLagsResourceIntegrationTest extends ClusterTestHarness
   public void getConsumerGroupLag_nonExistingOffsets_returnsNotFound() {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Arrays.asList(topic1, topic2));
-    consumer.poll(Duration.ofSeconds(1));
 
     BinaryPartitionProduceRequest request =
         BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
