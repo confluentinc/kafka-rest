@@ -209,7 +209,6 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
   public void getConsumerLag_returnsConsumerLag() {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Arrays.asList(topic1, topic2));
-
     // produce to topic1 partition0 and topic2 partition1
     BinaryPartitionProduceRequest request1 =
         BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
@@ -217,7 +216,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     produce(topic2, 1, request1);
 
     // consume from subscribed topics (zero lag)
-    consumer.poll(Duration.ofSeconds(10));
+    consumer.poll(Duration.ofSeconds(5));
 
     // stores expected currentOffsets and logEndOffsets for each topic partition after sending
     // 3 records to topic1 partition0 and topic2 partition1
@@ -339,6 +338,8 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     properties.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroup);
     properties.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
+    properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
+    properties.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, 1000);
     return new KafkaConsumer<>(properties, new BytesDeserializer(), new BytesDeserializer());
   }
 
