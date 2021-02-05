@@ -29,6 +29,9 @@ public interface SchemaManager {
    */
   RegisteredSchema getSchemaById(String subject, int schemaId);
 
+  /**
+   * Returns the {@link RegisteredSchema schema} registered with the given {@code schemaId}.
+   */
   RegisteredSchema getSchemaById(
       SubjectNameStrategy subjectNameStrategy, String topicName, boolean isKey, int schemaId);
 
@@ -45,6 +48,12 @@ public interface SchemaManager {
    */
   RegisteredSchema parseSchema(EmbeddedFormat format, String subject, String rawSchema);
 
+  /**
+   * Parses and returns {@code rawSchema}.
+   *
+   * <p>If the subject does not contain a registered schema equals to the parsed {@code rawSchema},
+   * one will be registered.
+   */
   RegisteredSchema parseSchema(
       EmbeddedFormat format,
       SubjectNameStrategy subjectNameStrategy,
@@ -52,5 +61,8 @@ public interface SchemaManager {
       boolean isKey,
       String rawSchema);
 
+  /**
+   * Returns the {@link RegisteredSchema schema} registered with the latest version.
+   */
   RegisteredSchema getLatestSchema(String subject);
 }

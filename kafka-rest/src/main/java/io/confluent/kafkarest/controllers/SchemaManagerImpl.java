@@ -96,6 +96,7 @@ final class SchemaManagerImpl implements SchemaManager {
         schema.getSubject(), schema.getId(), schemaVersion, parsedSchema);
   }
 
+  @Override
   public RegisteredSchema parseSchema(EmbeddedFormat format, String subject, String rawSchema) {
     checkArgument(format.requiresSchema(), "%s does not support schemas.", format);
 
