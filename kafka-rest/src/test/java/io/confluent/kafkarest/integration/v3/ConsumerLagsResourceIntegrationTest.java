@@ -97,8 +97,8 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     // consume from subscribed topics
     consumer1.poll(Duration.ofSeconds(5));
     consumer2.poll(Duration.ofSeconds(5));
-    consumer1.poll(Duration.ofSeconds(5));
-    consumer2.poll(Duration.ofSeconds(5));
+    consumer1.commitSync();
+    consumer2.commitSync();
 
     // stores expected currentOffsets and logEndOffsets for each topic partition after sending
     // 3 records to topic1 partition0 and topic2 partition1
@@ -197,6 +197,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
         BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
     produce(topic1, 0, request);
     consumer.poll(Duration.ofSeconds(1));
+    consumer.commitSync();
 
     Response response =
         request("/v3/clusters/" + clusterId + "/consumer-groups/" + "foo" + "/lags")
@@ -217,6 +218,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
 
     // consume from subscribed topics (zero lag)
     consumer.poll(Duration.ofSeconds(5));
+    consumer.commitSync();
 
     // stores expected currentOffsets and logEndOffsets for each topic partition after sending
     // 3 records to topic1 partition0 and topic2 partition1
@@ -307,6 +309,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
         BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
     produce(topic1, 0, request);
     consumer.poll(Duration.ofSeconds(1));
+    consumer.commitSync();
 
     Response response =
         request("/v3/clusters/" + clusterId + "/consumer-groups/" + "foo" +
@@ -324,6 +327,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
         BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
     produce(topic1, 0, request);
     consumer.poll(Duration.ofSeconds(1));
+    consumer.commitSync();
 
     Response response =
         request("/v3/clusters/" + "foo" + "/consumer-groups/" + group1 +
@@ -338,8 +342,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     properties.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroup);
     properties.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
-    properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
-    properties.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, 1000);
+    properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
     return new KafkaConsumer<>(properties, new BytesDeserializer(), new BytesDeserializer());
   }
 
