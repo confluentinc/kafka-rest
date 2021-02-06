@@ -87,6 +87,8 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     // to force the other consumer to join the group.
     consumer1.poll(Duration.ofSeconds(1));
     consumer2.poll(Duration.ofSeconds(1));
+//    consumer1.commitSync();
+//    consumer2.commitSync();
 
     // produce to topic1 partition0 and topic2 partition1
     BinaryPartitionProduceRequest request1 =
@@ -95,8 +97,8 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     produce(topic2, 1, request1);
 
     // consume from subscribed topics
-    consumer1.poll(Duration.ofSeconds(5));
-    consumer2.poll(Duration.ofSeconds(5));
+    consumer1.poll(Duration.ofSeconds(1));
+    consumer2.poll(Duration.ofSeconds(1));
     consumer1.commitSync();
     consumer2.commitSync();
 
@@ -217,7 +219,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     produce(topic2, 1, request1);
 
     // consume from subscribed topics (zero lag)
-    consumer.poll(Duration.ofSeconds(5));
+    consumer.poll(Duration.ofSeconds(1));
     consumer.commitSync();
 
     // stores expected currentOffsets and logEndOffsets for each topic partition after sending
