@@ -246,33 +246,29 @@ public class TestUtils {
         valueDeserializerClassName, new Properties(), validateContents);
   }
 
-  public static <T> void testWithRetry(Supplier<Boolean> testCondition, String errorMessage) {
-    testWithRetry(
-        testCondition,
-        errorMessage,
-        DEFAULT_EXP_BACKOFF_RETRIES,
-        DEFAULT_INITIAL_BACKOFF);
+  public static void testWithRetry(Runnable assertions) {
+    testWithRetry(assertions, DEFAULT_EXP_BACKOFF_RETRIES, DEFAULT_INITIAL_BACKOFF);
   }
 
-  public static <T> void testWithRetry(
-      Supplier<Boolean> testCondition,
-      String errorMessage,
-      int numRetries,
-      Duration initialBackoff) {
+  public static void testWithRetry(Runnable assertions, int numRetries, Duration initialBackoff) {
     Duration backoff = initialBackoff;
-    for (int i = 0; i <= numRetries; i++) {
-      if (testCondition.get()) {
+    for (int i = 0;; i++) {
+      try {
+        assertions.run();
         return;
+      } catch (Throwable t) {
+        if (i == numRetries) {
+          throw new AssertionError(
+              String.format(
+                  "Failed after %d exponential backoff retries with %d ms initial backoff.",
+                  numRetries,
+                  initialBackoff.toMillis()),
+              t);
+        }
       }
       LockSupport.parkNanos(backoff.toNanos());
       backoff = backoff.multipliedBy(2L);
     }
-    Assert.fail(
-        String.format(
-            "%s. Failed after %d exponential backoff retries with %d ms initial backoff",
-            errorMessage,
-            numRetries,
-            initialBackoff.toMillis()));
   }
 
   private static <V, K> Map<Object, Integer> topicCounts(final KafkaConsumer<K, V> consumer,
