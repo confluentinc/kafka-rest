@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -182,12 +183,18 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             .build()))
                 .build());
 
-    Response response =
-        request("/v3/clusters/" + clusterId + "/topics").accept(MediaType.APPLICATION_JSON).get();
-    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    testWithRetry(
+        () -> {
+          Response response =
+              request("/v3/clusters/" + clusterId + "/topics")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
 
-    ListTopicsResponse actual = response.readEntity(ListTopicsResponse.class);
-    assertEquals(expected, actual);
+          assertEquals(Status.OK.getStatusCode(), response.getStatus());
+
+          ListTopicsResponse actual = response.readEntity(ListTopicsResponse.class);
+          assertEquals(expected, actual);
+        });
   }
 
   @Test
@@ -314,7 +321,69 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
     CreateTopicResponse actual = response.readEntity(CreateTopicResponse.class);
     assertEquals(expected, actual);
 
-    assertTrue(getTopicNames().contains(topicName));
+    testWithRetry(
+        () ->
+            assertTrue(
+                String.format("Topic names should contain %s after its creation", topicName),
+                getTopicNames().contains(topicName)));
+  }
+
+  @Test
+  public void createTopic_nonExistingTopic_customReplicasAssignments_returnsCreatedTopic() {
+    String baseUrl = restConnect;
+    String clusterId = getClusterId();
+    String topicName = "topic-4";
+
+    CreateTopicResponse expected =
+        CreateTopicResponse.create(
+            TopicData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(baseUrl + "/v3/clusters/" + clusterId + "/topics/" + topicName)
+                        .setResourceName("crn:///kafka=" + clusterId + "/topic=" + topicName)
+                        .build())
+                .setClusterId(clusterId)
+                .setTopicName(topicName)
+                .setInternal(false)
+                .setReplicationFactor(2) // As determined by the actual replicas asignments below.
+                .setPartitions(
+                    Resource.Relationship.create(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/topics/" + topicName
+                            + "/partitions"))
+                .setConfigs(
+                    Resource.Relationship.create(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/topics/" + topicName
+                            + "/configs"))
+                .setPartitionReassignments(
+                    Resource.Relationship.create(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/topics/" + topicName
+                            + "/partitions/-/reassignment"))
+                .build());
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"topic_name\":\"" + topicName
+                        + "\",\"replicas_assignments\":{\"0\":[1,2], \"1\":[2,3], \"2\":[3,1]}}",
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
+
+    CreateTopicResponse actual = response.readEntity(CreateTopicResponse.class);
+    assertEquals(expected, actual);
+
+    testWithRetry(
+        () ->
+            assertTrue(
+                String.format("Topic names should contain %s after its creation", topicName),
+                getTopicNames().contains(topicName)));
   }
 
   @Test
@@ -354,7 +423,11 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             .delete();
     assertEquals(Status.NO_CONTENT.getStatusCode(), response.getStatus());
     assertTrue(response.readEntity(String.class).isEmpty());
-    assertFalse(getTopicNames().contains(TOPIC_1));
+    testWithRetry(
+        () ->
+            assertFalse(
+                String.format("Topic names should not contain %s after its deletion", TOPIC_1),
+                getTopicNames().contains(TOPIC_1)));
   }
 
   @Test
@@ -441,7 +514,11 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
         createTopicResponse.readEntity(CreateTopicResponse.class);
 
     assertEquals(expectedCreateTopicResponse, actualCreateTopicResponse);
-    assertTrue(getTopicNames().contains(topicName));
+    testWithRetry(
+        () ->
+            assertTrue(
+                String.format("Topic names should contain %s after its creation", topicName),
+                getTopicNames().contains(topicName)));
 
     GetTopicResponse expectedExistingGetTopicResponse =
         GetTopicResponse.create(
@@ -479,15 +556,18 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             + "/partitions/-/reassignment"))
                 .build());
 
-    Response existingTopicResponse =
-        request("/v3/clusters/" + clusterId + "/topics/" + topicName)
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
-    assertEquals(Status.OK.getStatusCode(), existingTopicResponse.getStatus());
+    testWithRetry(
+        () -> {
+          Response existingTopicResponse =
+              request("/v3/clusters/" + clusterId + "/topics/" + topicName)
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), existingTopicResponse.getStatus());
 
-    GetTopicResponse actualExistingGetTopicResponse =
-        existingTopicResponse.readEntity(GetTopicResponse.class);
-    assertEquals(expectedExistingGetTopicResponse, actualExistingGetTopicResponse);
+          GetTopicResponse actualExistingGetTopicResponse =
+              existingTopicResponse.readEntity(GetTopicResponse.class);
+          assertEquals(expectedExistingGetTopicResponse, actualExistingGetTopicResponse);
+        });
 
     GetTopicConfigResponse expectedExistingGetTopicConfigResponse =
         GetTopicConfigResponse.create(
@@ -546,7 +626,11 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             .delete();
     assertEquals(Status.NO_CONTENT.getStatusCode(), deleteTopicResponse.getStatus());
     assertTrue(deleteTopicResponse.readEntity(String.class).isEmpty());
-    assertFalse(getTopicNames().contains(topicName));
+    testWithRetry(
+        () ->
+            assertFalse(
+                String.format("Topic names should not contain %s after its deletion", topicName),
+                getTopicNames().contains(topicName)));
 
     Response deletedGetTopicResponse =
         request("/v3/clusters/" + clusterId + "/topics/" + topicName)

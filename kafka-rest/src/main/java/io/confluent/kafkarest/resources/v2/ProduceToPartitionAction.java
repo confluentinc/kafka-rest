@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -15,14 +15,20 @@
 
 package io.confluent.kafkarest.resources.v2;
 
-import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.controllers.ProduceController;
+import io.confluent.kafkarest.controllers.RecordSerializer;
+import io.confluent.kafkarest.controllers.SchemaManager;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
-import io.confluent.kafkarest.entities.v2.JsonPartitionProduceRequest;
-import io.confluent.kafkarest.entities.v2.SchemaPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v2.ProduceRequest;
+import io.confluent.kafkarest.entities.v2.ProduceResponse;
 import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
+import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.rest.annotations.PerformanceMetric;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -32,6 +38,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Response;
 
 @Path("/topics/{topic}/partitions")
 @Consumes({
@@ -45,8 +52,12 @@ import javax.ws.rs.container.Suspended;
 @ResourceName("api.v2.produce-to-partition.*")
 public final class ProduceToPartitionAction extends AbstractProduceAction {
 
-  public ProduceToPartitionAction(KafkaRestContext ctx) {
-    super(ctx);
+  @Inject
+  public ProduceToPartitionAction(
+      Provider<SchemaManager> schemaManager,
+      Provider<RecordSerializer> recordSerializer,
+      Provider<ProduceController> produceController) {
+    super(schemaManager, recordSerializer, produceController);
   }
 
   @POST
@@ -56,16 +67,17 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
   @ResourceName("api.v2.produce-to-partition.binary")
   public void produceBinary(
       @Suspended AsyncResponse asyncResponse,
-      @PathParam("topic") String topic,
-      @PathParam("partition") int partition,
-      @Valid @NotNull BinaryPartitionProduceRequest request
+      @PathParam("topic") String topicName,
+      @PathParam("partition") int partitionId,
+      @Valid @NotNull ProduceRequest request
   ) {
-    produce(
-        asyncResponse,
-        topic,
-        partition,
-        EmbeddedFormat.BINARY,
-        request.toProduceRequest());
+    CompletableFuture<ProduceResponse> response =
+        produceWithoutSchema(EmbeddedFormat.BINARY, topicName, Optional.of(partitionId), request);
+
+    AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
+        .entity(response)
+        .status(ProduceResponse::getRequestStatus)
+        .asyncResume(asyncResponse);
   }
 
   @POST
@@ -75,16 +87,17 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
   @ResourceName("api.v2.produce-to-partition.json")
   public void produceJson(
       @Suspended AsyncResponse asyncResponse,
-      @PathParam("topic") String topic,
-      @PathParam("partition") int partition,
-      @Valid @NotNull JsonPartitionProduceRequest request
+      @PathParam("topic") String topicName,
+      @PathParam("partition") int partitionId,
+      @Valid @NotNull ProduceRequest request
   ) {
-    produce(
-        asyncResponse,
-        topic,
-        partition,
-        EmbeddedFormat.JSON,
-        request.toProduceRequest());
+    CompletableFuture<ProduceResponse> response =
+        produceWithoutSchema(EmbeddedFormat.JSON, topicName, Optional.of(partitionId), request);
+
+    AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
+        .entity(response)
+        .status(ProduceResponse::getRequestStatus)
+        .asyncResume(asyncResponse);
   }
 
   @POST
@@ -94,16 +107,17 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
   @ResourceName("api.v2.produce-to-partition.avro")
   public void produceAvro(
       @Suspended AsyncResponse asyncResponse,
-      @PathParam("topic") String topic,
-      @PathParam("partition") int partition,
-      @Valid @NotNull SchemaPartitionProduceRequest request
+      @PathParam("topic") String topicName,
+      @PathParam("partition") int partitionId,
+      @Valid @NotNull ProduceRequest request
   ) {
-    produceSchema(
-        asyncResponse,
-        topic,
-        partition,
-        request.toProduceRequest(),
-        EmbeddedFormat.AVRO);
+    CompletableFuture<ProduceResponse> response =
+        produceWithSchema(EmbeddedFormat.AVRO, topicName, Optional.of(partitionId), request);
+
+    AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
+        .entity(response)
+        .status(ProduceResponse::getRequestStatus)
+        .asyncResume(asyncResponse);
   }
 
   @POST
@@ -113,16 +127,17 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
   @ResourceName("api.v2.produce-to-partition.json-schema")
   public void produceJsonSchema(
       @Suspended AsyncResponse asyncResponse,
-      @PathParam("topic") String topic,
-      @PathParam("partition") int partition,
-      @Valid @NotNull SchemaPartitionProduceRequest request
+      @PathParam("topic") String topicName,
+      @PathParam("partition") int partitionId,
+      @Valid @NotNull ProduceRequest request
   ) {
-    produceSchema(
-        asyncResponse,
-        topic,
-        partition,
-        request.toProduceRequest(),
-        EmbeddedFormat.JSONSCHEMA);
+    CompletableFuture<ProduceResponse> response =
+        produceWithSchema(EmbeddedFormat.JSONSCHEMA, topicName, Optional.of(partitionId), request);
+
+    AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
+        .entity(response)
+        .status(ProduceResponse::getRequestStatus)
+        .asyncResume(asyncResponse);
   }
 
   @POST
@@ -132,15 +147,16 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
   @ResourceName("api.v2.produce-to-partition.protobuf")
   public void produceProtobuf(
       @Suspended AsyncResponse asyncResponse,
-      @PathParam("topic") String topic,
-      @PathParam("partition") int partition,
-      @Valid @NotNull SchemaPartitionProduceRequest request
+      @PathParam("topic") String topicName,
+      @PathParam("partition") int partitionId,
+      @Valid @NotNull ProduceRequest request
   ) {
-    produceSchema(
-        asyncResponse,
-        topic,
-        partition,
-        request.toProduceRequest(),
-        EmbeddedFormat.PROTOBUF);
+    CompletableFuture<ProduceResponse> response =
+        produceWithSchema(EmbeddedFormat.PROTOBUF, topicName, Optional.of(partitionId), request);
+
+    AsyncResponseBuilder.<ProduceResponse>from(Response.ok())
+        .entity(response)
+        .status(ProduceResponse::getRequestStatus)
+        .asyncResume(asyncResponse);
   }
 }
