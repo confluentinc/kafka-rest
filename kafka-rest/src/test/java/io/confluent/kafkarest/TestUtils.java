@@ -256,14 +256,14 @@ public class TestUtils {
       try {
         assertions.run();
         return;
-      } catch (Throwable e) {
+      } catch (Throwable t) {
         if (i == numRetries) {
           throw new AssertionError(
               String.format(
                   "Failed after %d exponential backoff retries with %d ms initial backoff.",
                   numRetries,
                   initialBackoff.toMillis()),
-              e);
+              t);
         }
       }
       LockSupport.parkNanos(backoff.toNanos());
