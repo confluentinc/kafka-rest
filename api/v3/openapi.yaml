@@ -322,6 +322,50 @@ paths:
         '200':
           $ref: '#/components/responses/ListConsumersResponse'
 
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lag:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/ConsumerGroupId'
+
+    get:
+      summary: 'Get Consumer Group Lag.'
+      description: 'Returns the max and total lag of the consumers belonging to the specified consumer group.'
+      tags:
+        - Consumer Group
+      responses:
+        '200':
+          $ref: '#/components/responses/GetConsumerGroupLagResponse'
+
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/ConsumerGroupId'
+
+    get:
+      summary: 'List Consumer Lags'
+      description: 'Returns a list of consumer lags of the consumers belonging to the specified consumer group.'
+      tags:
+        - Consumer Group
+      responses:
+        '200':
+          $ref: '#/components/responses/ListConsumerLagsResponse'
+
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags/{topic_name}/partitions/{partition_id}:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/ConsumerGroupId'
+      - $ref: '#/components/parameters/TopicName'
+      - $ref: '#/components/parameters/PartitionId'
+
+    get:
+      summary: 'Get Consumer Lag'
+      description: 'Returns the consumer lag on a partition with the given `partition_id`.'
+      tags:
+        - Partition
+      responses:
+        '200':
+          $ref: '#/components/responses/GetConsumerLagResponse'
+
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -1082,6 +1126,7 @@ components:
             - topic_name
             - partition_id
             - partition
+            - lag
           properties:
             cluster_id:
               type: string
@@ -1094,6 +1139,8 @@ components:
             partition_id:
               type: integer
             partition:
+              $ref: '#/components/schemas/Relationship'
+            lag:
               $ref: '#/components/schemas/Relationship'
 
     ConsumerAssignmentDataList:
@@ -1157,6 +1204,7 @@ components:
             - state
             - coordinator
             - consumers
+            - lag
           properties:
             cluster_id:
               type: string
@@ -1171,6 +1219,8 @@ components:
             coordinator:
               $ref: '#/components/schemas/Relationship'
             consumer:
+              $ref: '#/components/schemas/Relationship'
+            lag:
               $ref: '#/components/schemas/Relationship'
 
     ConsumerGroupDataList:
@@ -1194,6 +1244,95 @@ components:
         - STABLE
         - DEAD
         - EMPTY
+
+    ConsumerLagData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - consumer_group_id
+            - topic_name
+            - partition_id
+            - current_offset
+            - log_end_offset
+            - lag
+            - consumer_id
+            - client_id
+          properties:
+            cluster_id:
+              type: string
+            consumer_group_id:
+              type: string
+            topic_name:
+              type: string
+            partition_id:
+              type: integer
+            current_offset:
+              type: integer
+            log_end_offset:
+              type: integer
+            lag:
+              type: integer
+            consumer_id:
+              type: string
+            instance_id:
+              type: string
+              nullable: true
+            client_id:
+              type: string
+
+    ConsumerLagDataList:
+      allOf:
+        - $ref: '#/components/schemas/ResourceCollection'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ConsumerLagData'
+
+    ConsumerGroupLagData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - consumer_group_id
+            - max_lag_consumer_id
+            - max_lag_client_id
+            - max_lag_topic_name
+            - max_lag_partition_id
+            - max_lag
+            - total_lag
+            - max_lag_consumer
+            - max_lag_partition
+          properties:
+            cluster_id:
+              type: string
+            consumer_group_id:
+              type: string
+            max_lag_consumer_id:
+              type: string
+            max_lag_instance_id:
+              type: string
+              nullable: true
+            max_lag_client_id:
+              type: string
+            max_lag_topic_name:
+              type: string
+            max_lag_partition_id:
+              type: integer
+            max_lag:
+              type: integer
+            total_lag:
+              type: integer
+            max_lag_consumer:
+              $ref: '#/components/schemas/Relationship'
+            max_lag_partition:
+              $ref: '#/components/schemas/Relationship'
 
     PartitionData:
       allOf:
@@ -1425,7 +1564,7 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/TopicData'
-                
+
     UpdateConfigRequestData:
       type: object
       properties:
@@ -1726,6 +1865,8 @@ components:
             partition_id: 1
             partition:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
+            lag:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1'
 
     GetConsumerGroupResponse:
       description: 'The consumer group.'
@@ -1747,6 +1888,53 @@ components:
               related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
             consumers:
               related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers'
+
+    GetConsumerGroupLagResponse:
+      description: 'The max and total consumer lag in a consumer group.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ConsumerGroupLagData'
+          example:
+            kind: 'KafkaConsumerGroupLag'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lag'
+              resource_name: 'crn:///kafka=cluster-1/consumer-groups=consumer-group-1/lag'
+            cluster_id: 'cluster-1'
+            consumer_group_id: 'consumer-group-1'
+            max_lag_consumer_id: 'consumer-1'
+            max_lag_instance_id: 'consumer-instance-1'
+            max_lag_client_id: 'client-1'
+            max_lag_topic_name: 'topic-1'
+            max_lag_partition_id: 1
+            max_lag: 100
+            total_lag: 110
+            max_lag_consumer:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1'
+            max_lag_partition:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
+
+    GetConsumerLagResponse:
+      description: 'The consumer lag.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ConsumerLagData'
+          example:
+            kind: 'KafkaConsumerLag'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags/topic-1/partitions/1'
+              resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/lag=topic-1/partition=1'
+            cluster_id: 'cluster-1'
+            consumer_group_id: 'consumer-group-1'
+            topic_name: 'topic-1'
+            partition_id: 1
+            consumer_id: 'consumer-1'
+            instance_id: 'consumer-instance-1'
+            client_id: 'client-1'
+            current_offset: 1
+            log_end_offset: 101
+            lag: 100
 
     GetConsumerResponse:
       description: 'The consumer.'
@@ -2140,6 +2328,8 @@ components:
                 partition_id: 1
                 partition:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
+                lag:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1'
               - kind: 'KafkaConsumerAssignment'
                 metadata:
                   self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1/assignments/topic-2/partitions/2'
@@ -2151,6 +2341,8 @@ components:
                 partition_id: 2
                 partition:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions/2'
+                lag:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions/2/lags/consumer-groups-1'
               - kind: 'KafkaConsumerAssignment'
                 metadata:
                   self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1/assignments/topic-3/partitions/3'
@@ -2162,6 +2354,8 @@ components:
                 partition_id: 3
                 partition:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/3'
+                lag:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/3/lags/consumer-groups-1'
 
     ListConsumerGroupsResponse:
       description: 'The list of consumer groups.'
@@ -2214,6 +2408,61 @@ components:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/3'
                 consumers:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-3/consumers'
+
+    ListConsumerLagsResponse:
+     description: 'The list of consumer lags.'
+     content:
+       application/json:
+         schema:
+           $ref: '#/components/schemas/ConsumerLagDataList'
+         example:
+           kind: 'KafkaConsumerLagList'
+           metadata:
+             self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags'
+             next: null
+           data:
+             - kind: 'KafkaConsumerLag'
+               metadata:
+                 self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags/topic-1/partitions/1'
+                 resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/lag=topic-1/partition=1'
+               cluster_id: 'cluster-1'
+               consumer_group_id: 'consumer-group-1'
+               topic_name: 'topic-1'
+               partition_id: 1
+               consumer_id: 'consumer-1'
+               instance_id: 'consumer-instance-1'
+               client_id: 'client-1'
+               current_offset: 1
+               log_end_offset: 101
+               lag: 100
+             - kind: 'KafkaConsumerLag'
+               metadata:
+                 self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags/topic-1/partitions/2'
+                 resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/lag=topic-1/partition=2'
+               cluster_id: 'cluster-1'
+               consumer_group_id: 'consumer-group-1'
+               topic_name: 'topic-1'
+               partition_id: 2
+               consumer_id: 'consumer-2'
+               instance_id: 'consumer-instance-2'
+               client_id: 'client-2'
+               current_offset: 1
+               log_end_offset: 11
+               lag: 10
+             - kind: 'KafkaConsumerLag'
+               metadata:
+                 self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags/topic-1/partitions/3'
+                 resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/lag=topic-1/partition=3'
+               cluster_id: 'cluster-1'
+               consumer_group_id: 'consumer-group-1'
+               topic_name: 'topic-1'
+               partition_id: 3
+               consumer_id: 'consumer-3'
+               instance_id: 'consumer-instance-3'
+               client_id: 'client-3'
+               current_offset: 1
+               log_end_offset: 1
+               lag: 0
 
     ListConsumersResponse:
       description: 'The list of consumers.'

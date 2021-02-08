@@ -96,6 +96,10 @@ public class AbstractConsumerTest extends ClusterTestHarness {
    * @return the new consumer instance's base URI
    */
   protected String startConsumeMessages(String groupName, String topic, EmbeddedFormat format,
+      String expectedMediatype) {
+    return startConsumeMessages(groupName, Collections.singletonList(topic), format, expectedMediatype);
+  }
+  protected String startConsumeMessages(String groupName, List<String> topics, EmbeddedFormat format,
                                         String expectedMediatype) {
     Response createResponse = createConsumerInstance(groupName, null, null, format);
     assertOKResponse(createResponse, Versions.KAFKA_V2_JSON);
@@ -108,7 +112,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
                instanceResponse.getBaseUri().contains(instanceResponse.getInstanceId()));
 
     ConsumerSubscriptionRecord subscribeRequest =
-        new ConsumerSubscriptionRecord(Collections.singletonList(topic), /* topicPattern= */ null);
+        new ConsumerSubscriptionRecord(topics, /* topicPattern= */ null);
     Response subscribeResponse =
         request(instanceResponse.getBaseUri() + "/subscription")
             .accept(Versions.KAFKA_V2_JSON)
