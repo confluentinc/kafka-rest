@@ -1,5 +1,6 @@
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static java.util.Collections.singletonList;
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -358,18 +359,21 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                             .build()))
                 .build());
 
-    Response responseAfterUpdate =
-        request(
-            "/v3/clusters/" + clusterId
-                + "/brokers/" + brokerId
-                + "/configs/compression.type")
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
-    assertEquals(Status.OK.getStatusCode(), responseAfterUpdate.getStatus());
+    testWithRetry(
+        () -> {
+          Response responseAfterUpdate =
+              request(
+                  "/v3/clusters/" + clusterId
+                      + "/brokers/" + brokerId
+                      + "/configs/compression.type")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), responseAfterUpdate.getStatus());
 
-    GetBrokerConfigResponse actualAfterUpdate =
-        responseAfterUpdate.readEntity(GetBrokerConfigResponse.class);
-    assertEquals(expectedAfterUpdate, actualAfterUpdate);
+          GetBrokerConfigResponse actualAfterUpdate =
+              responseAfterUpdate.readEntity(GetBrokerConfigResponse.class);
+          assertEquals(expectedAfterUpdate, actualAfterUpdate);
+        });
 
     Response resetResponse =
         request(
@@ -410,18 +414,21 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                             .build()))
                 .build());
 
-    Response responseAfterReset =
-        request(
-            "/v3/clusters/" + clusterId
-                + "/brokers/" + brokerId
-                + "/configs/compression.type")
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
-    assertEquals(Status.OK.getStatusCode(), responseAfterReset.getStatus());
+    testWithRetry(
+        () -> {
+          Response responseAfterReset =
+              request(
+                  "/v3/clusters/" + clusterId
+                      + "/brokers/" + brokerId
+                      + "/configs/compression.type")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), responseAfterReset.getStatus());
 
-    GetBrokerConfigResponse actualAfterReset =
-        responseAfterReset.readEntity(GetBrokerConfigResponse.class);
-    assertEquals(expectedAfterReset, actualAfterReset);
+          GetBrokerConfigResponse actualAfterReset =
+              responseAfterReset.readEntity(GetBrokerConfigResponse.class);
+          assertEquals(expectedAfterReset, actualAfterReset);
+        });
   }
 
   @Test
@@ -605,28 +612,34 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                             .build()))
                 .build());
 
-    Response responseAfterUpdate1 =
-        request(
-            "/v3/clusters/" + clusterId
-                + "/brokers/" + brokerId
-                + "/configs/max.connections")
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
-    assertEquals(Status.OK.getStatusCode(), responseAfterUpdate1.getStatus());
-    GetBrokerConfigResponse actualResponseAfterUpdate1 =
-        responseAfterUpdate1.readEntity(GetBrokerConfigResponse.class);
-    assertEquals(expectedAfterUpdate1, actualResponseAfterUpdate1);
+    testWithRetry(
+        () -> {
+          Response responseAfterUpdate1 =
+              request(
+                  "/v3/clusters/" + clusterId
+                      + "/brokers/" + brokerId
+                      + "/configs/max.connections")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), responseAfterUpdate1.getStatus());
+          GetBrokerConfigResponse actualResponseAfterUpdate1 =
+              responseAfterUpdate1.readEntity(GetBrokerConfigResponse.class);
+          assertEquals(expectedAfterUpdate1, actualResponseAfterUpdate1);
+        });
 
-    Response responseAfterUpdate2 =
-        request(
-            "/v3/clusters/" + clusterId
-                + "/brokers/" + brokerId
-                + "/configs/compression.type")
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
-    assertEquals(Status.OK.getStatusCode(), responseAfterUpdate2.getStatus());
-    GetBrokerConfigResponse actualResponseAfterUpdate2 =
-        responseAfterUpdate2.readEntity(GetBrokerConfigResponse.class);
-    assertEquals(expectedAfterUpdate2, actualResponseAfterUpdate2);
+    testWithRetry(
+        () -> {
+          Response responseAfterUpdate2 =
+              request(
+                  "/v3/clusters/" + clusterId
+                      + "/brokers/" + brokerId
+                      + "/configs/compression.type")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), responseAfterUpdate2.getStatus());
+          GetBrokerConfigResponse actualResponseAfterUpdate2 =
+              responseAfterUpdate2.readEntity(GetBrokerConfigResponse.class);
+          assertEquals(expectedAfterUpdate2, actualResponseAfterUpdate2);
+        });
   }
 }
