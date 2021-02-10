@@ -74,12 +74,15 @@ public final class ConsumerGroupLagSummariesResource {
             .thenApply(groupLagSummary -> groupLagSummary.orElseThrow(NotFoundException::new))
             .thenApply(
                 groupLagSummary ->
-                    GetConsumerGroupLagSummaryResponse.create(toConsumerGroupLagSummaryData(groupLagSummary)));
+                    GetConsumerGroupLagSummaryResponse.create(
+                        toConsumerGroupLagSummaryData(groupLagSummary)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
 
-  private ConsumerGroupLagSummaryData toConsumerGroupLagSummaryData(ConsumerGroupLagSummary groupLagSummary) {
+  private ConsumerGroupLagSummaryData toConsumerGroupLagSummaryData(
+      ConsumerGroupLagSummary groupLagSummary
+  ) {
     return ConsumerGroupLagSummaryData.fromConsumerGroupLagSummary(groupLagSummary)
         .setMetadata(
             Resource.Metadata.builder()

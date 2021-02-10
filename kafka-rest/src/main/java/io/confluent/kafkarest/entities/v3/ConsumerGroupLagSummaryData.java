@@ -62,10 +62,13 @@ public abstract class ConsumerGroupLagSummaryData extends Resource {
   public abstract Relationship getMaxLagPartition();
 
   public static Builder builder() {
-    return new AutoValue_ConsumerGroupLagSummaryData.Builder().setKind("KafkaConsumerGroupLagSummary");
+    return new AutoValue_ConsumerGroupLagSummaryData.Builder()
+        .setKind("KafkaConsumerGroupLagSummary");
   }
 
-  public static Builder fromConsumerGroupLagSummary(ConsumerGroupLagSummary consumerGroupLagSummary) {
+  public static Builder fromConsumerGroupLagSummary(
+      ConsumerGroupLagSummary consumerGroupLagSummary
+  ) {
     return builder()
         .setClusterId(consumerGroupLagSummary.getClusterId())
         .setConsumerGroupId(consumerGroupLagSummary.getConsumerGroupId())

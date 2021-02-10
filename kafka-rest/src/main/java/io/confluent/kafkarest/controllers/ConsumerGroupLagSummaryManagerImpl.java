@@ -38,7 +38,8 @@ final class ConsumerGroupLagSummaryManagerImpl
     extends AbstractConsumerLagManager implements ConsumerGroupLagSummaryManager {
 
   private final ConsumerGroupManager consumerGroupManager;
-  private static final Logger log = LoggerFactory.getLogger(ConsumerGroupLagSummaryManagerImpl.class);
+  private static final Logger log =
+      LoggerFactory.getLogger(ConsumerGroupLagSummaryManagerImpl.class);
 
   @Inject
   ConsumerGroupLagSummaryManagerImpl(
