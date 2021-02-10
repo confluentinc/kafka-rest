@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -375,18 +376,21 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                             .build()))
                 .build());
 
-    Response responseAfterUpdate =
-        request(
-            "/v3/clusters/" + clusterId
-                + "/topics/" + TOPIC_1
-                + "/configs/cleanup.policy")
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
-    assertEquals(Status.OK.getStatusCode(), responseAfterUpdate.getStatus());
+    testWithRetry(
+        () -> {
+          Response responseAfterUpdate =
+              request(
+                  "/v3/clusters/" + clusterId
+                      + "/topics/" + TOPIC_1
+                      + "/configs/cleanup.policy")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), responseAfterUpdate.getStatus());
 
-    GetTopicConfigResponse actualResponseAfterUpdate =
-        responseAfterUpdate.readEntity(GetTopicConfigResponse.class);
-    assertEquals(expectedAfterUpdate, actualResponseAfterUpdate);
+          GetTopicConfigResponse actualResponseAfterUpdate =
+              responseAfterUpdate.readEntity(GetTopicConfigResponse.class);
+          assertEquals(expectedAfterUpdate, actualResponseAfterUpdate);
+        });
 
     Response resetResponse =
         request(
@@ -428,18 +432,21 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                             .build()))
                 .build());
 
-    Response responseAfterReset =
-        request(
-            "/v3/clusters/" + clusterId
-                + "/topics/" + TOPIC_1
-                + "/configs/cleanup.policy")
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
-    assertEquals(Status.OK.getStatusCode(), responseAfterReset.getStatus());
+    testWithRetry(
+        () -> {
+          Response responseAfterReset =
+              request(
+                  "/v3/clusters/" + clusterId
+                      + "/topics/" + TOPIC_1
+                      + "/configs/cleanup.policy")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), responseAfterReset.getStatus());
 
-    GetTopicConfigResponse actualResponseAfterReset =
-        responseAfterReset.readEntity(GetTopicConfigResponse.class);
-    assertEquals(expectedAfterReset, actualResponseAfterReset);
+          GetTopicConfigResponse actualResponseAfterReset =
+              responseAfterReset.readEntity(GetTopicConfigResponse.class);
+          assertEquals(expectedAfterReset, actualResponseAfterReset);
+        });
   }
 
   @Test
@@ -610,28 +617,34 @@ public class TopicConfigsResourceIntegrationTest extends ClusterTestHarness {
                             .build()))
                 .build());
 
-    Response responseAfterUpdate1 =
-        request(
-            "/v3/clusters/" + clusterId
-                + "/topics/" + TOPIC_1
-                + "/configs/cleanup.policy")
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
-    assertEquals(Status.OK.getStatusCode(), responseAfterUpdate1.getStatus());
-    GetTopicConfigResponse actualResponseAfterUpdate1 =
-        responseAfterUpdate1.readEntity(GetTopicConfigResponse.class);
-    assertEquals(expectedAfterUpdate1, actualResponseAfterUpdate1);
+    testWithRetry(
+        () -> {
+          Response responseAfterUpdate1 =
+              request(
+                  "/v3/clusters/" + clusterId
+                      + "/topics/" + TOPIC_1
+                      + "/configs/cleanup.policy")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), responseAfterUpdate1.getStatus());
+          GetTopicConfigResponse actualResponseAfterUpdate1 =
+              responseAfterUpdate1.readEntity(GetTopicConfigResponse.class);
+          assertEquals(expectedAfterUpdate1, actualResponseAfterUpdate1);
+        });
 
-    Response responseAfterUpdate2 =
-        request(
-            "/v3/clusters/" + clusterId
-                + "/topics/" + TOPIC_1
-                + "/configs/compression.type")
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
-    assertEquals(Status.OK.getStatusCode(), responseAfterUpdate2.getStatus());
-    GetTopicConfigResponse actualResponseAfterUpdate2 =
-        responseAfterUpdate2.readEntity(GetTopicConfigResponse.class);
-    assertEquals(expectedAfterUpdate2, actualResponseAfterUpdate2);
+    testWithRetry(
+        () -> {
+          Response responseAfterUpdate2 =
+              request(
+                  "/v3/clusters/" + clusterId
+                      + "/topics/" + TOPIC_1
+                      + "/configs/compression.type")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), responseAfterUpdate2.getStatus());
+          GetTopicConfigResponse actualResponseAfterUpdate2 =
+              responseAfterUpdate2.readEntity(GetTopicConfigResponse.class);
+          assertEquals(expectedAfterUpdate2, actualResponseAfterUpdate2);
+        });
   }
 }

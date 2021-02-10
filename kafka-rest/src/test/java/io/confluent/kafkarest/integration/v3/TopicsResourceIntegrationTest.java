@@ -17,6 +17,7 @@ package io.confluent.kafkarest.integration.v3;
 
 import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import io.confluent.kafkarest.entities.ConfigSource;
@@ -182,12 +183,18 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             .build()))
                 .build());
 
-    Response response =
-        request("/v3/clusters/" + clusterId + "/topics").accept(MediaType.APPLICATION_JSON).get();
-    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    testWithRetry(
+        () -> {
+          Response response =
+              request("/v3/clusters/" + clusterId + "/topics")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
 
-    ListTopicsResponse actual = response.readEntity(ListTopicsResponse.class);
-    assertEquals(expected, actual);
+          assertEquals(Status.OK.getStatusCode(), response.getStatus());
+
+          ListTopicsResponse actual = response.readEntity(ListTopicsResponse.class);
+          assertEquals(expected, actual);
+        });
   }
 
   @Test
@@ -315,8 +322,10 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(expected, actual);
 
     testWithRetry(
-        () -> getTopicNames().contains(topicName),
-        String.format("Topic names should contain %s after its creation", topicName));
+        () ->
+            assertTrue(
+                String.format("Topic names should contain %s after its creation", topicName),
+                getTopicNames().contains(topicName)));
   }
 
   @Test
@@ -357,8 +366,10 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NO_CONTENT.getStatusCode(), response.getStatus());
     assertTrue(response.readEntity(String.class).isEmpty());
     testWithRetry(
-        () -> !getTopicNames().contains(TOPIC_1),
-        String.format("Topic names should not contain %s after its deletion", TOPIC_1));
+        () ->
+            assertFalse(
+                String.format("Topic names should not contain %s after its deletion", TOPIC_1),
+                getTopicNames().contains(TOPIC_1)));
   }
 
   @Test
@@ -446,8 +457,10 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
     assertEquals(expectedCreateTopicResponse, actualCreateTopicResponse);
     testWithRetry(
-        () -> getTopicNames().contains(topicName),
-        String.format("Topic names should contain %s after its creation", topicName));
+        () ->
+            assertTrue(
+                String.format("Topic names should contain %s after its creation", topicName),
+                getTopicNames().contains(topicName)));
 
     GetTopicResponse expectedExistingGetTopicResponse =
         GetTopicResponse.create(
@@ -485,15 +498,18 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             + "/partitions/-/reassignment"))
                 .build());
 
-    Response existingTopicResponse =
-        request("/v3/clusters/" + clusterId + "/topics/" + topicName)
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
-    assertEquals(Status.OK.getStatusCode(), existingTopicResponse.getStatus());
+    testWithRetry(
+        () -> {
+          Response existingTopicResponse =
+              request("/v3/clusters/" + clusterId + "/topics/" + topicName)
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), existingTopicResponse.getStatus());
 
-    GetTopicResponse actualExistingGetTopicResponse =
-        existingTopicResponse.readEntity(GetTopicResponse.class);
-    assertEquals(expectedExistingGetTopicResponse, actualExistingGetTopicResponse);
+          GetTopicResponse actualExistingGetTopicResponse =
+              existingTopicResponse.readEntity(GetTopicResponse.class);
+          assertEquals(expectedExistingGetTopicResponse, actualExistingGetTopicResponse);
+        });
 
     GetTopicConfigResponse expectedExistingGetTopicConfigResponse =
         GetTopicConfigResponse.create(
@@ -553,8 +569,10 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(Status.NO_CONTENT.getStatusCode(), deleteTopicResponse.getStatus());
     assertTrue(deleteTopicResponse.readEntity(String.class).isEmpty());
     testWithRetry(
-        () -> !getTopicNames().contains(topicName),
-        String.format("Topic names should not contain %s after its deletion", topicName));
+        () ->
+            assertFalse(
+                String.format("Topic names should not contain %s after its deletion", topicName),
+                getTopicNames().contains(topicName)));
 
     Response deletedGetTopicResponse =
         request("/v3/clusters/" + clusterId + "/topics/" + topicName)
