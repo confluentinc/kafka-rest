@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
-import static io.confluent.kafkarest.TestUtils.testWithRetries;
+import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
