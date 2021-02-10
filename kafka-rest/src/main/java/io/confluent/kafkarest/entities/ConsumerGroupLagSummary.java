@@ -19,9 +19,9 @@ import com.google.auto.value.AutoValue;
 import java.util.Optional;
 
 @AutoValue
-public abstract class ConsumerGroupLag {
+public abstract class ConsumerGroupLagSummary {
 
-  ConsumerGroupLag() {
+  ConsumerGroupLagSummary() {
   }
 
   public abstract String getClusterId();
@@ -43,7 +43,7 @@ public abstract class ConsumerGroupLag {
   public abstract Long getTotalLag();
 
   public static Builder builder() {
-    return new AutoValue_ConsumerGroupLag.Builder();
+    return new AutoValue_ConsumerGroupLagSummary.Builder();
   }
 
   @AutoValue.Builder
@@ -97,6 +97,6 @@ public abstract class ConsumerGroupLag {
 
     public abstract Builder setTotalLag(Long totalLag);
 
-    public abstract ConsumerGroupLag build();
+    public abstract ConsumerGroupLagSummary build();
   }
 }

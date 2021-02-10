@@ -30,7 +30,7 @@ import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
 import io.confluent.kafkarest.entities.ConsumerGroup.State;
-import io.confluent.kafkarest.entities.ConsumerGroupLag;
+import io.confluent.kafkarest.entities.ConsumerGroupLagSummary;
 import io.confluent.kafkarest.entities.Partition;
 import java.util.Arrays;
 import java.util.Collections;
@@ -60,7 +60,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class ConsumerGroupLagManagerImplTest {
+public class ConsumerGroupLagSummaryManagerImplTest {
 
   private static final String CLUSTER_ID = "cluster-1";
 
@@ -155,8 +155,8 @@ public class ConsumerGroupLagManagerImplTest {
         KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
   }
 
-  private static final ConsumerGroupLag CONSUMER_GROUP_LAG =
-      ConsumerGroupLag.builder()
+  private static final ConsumerGroupLagSummary CONSUMER_GROUP_LAG_SUMMARY =
+      ConsumerGroupLagSummary.builder()
           .setClusterId(CLUSTER_ID)
           .setConsumerGroupId(CONSUMER_GROUP_ID)
           .setMaxLagConsumerId("consumer-1")
@@ -178,19 +178,19 @@ public class ConsumerGroupLagManagerImplTest {
   @Mock
   private Admin kafkaAdminClient;
 
-  private ConsumerGroupLagManagerImpl consumerGroupLagManager;
+  private ConsumerGroupLagSummaryManagerImpl consumerGroupLagSummaryManager;
 
   @Mock
   private ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult;
 
   @Before
   public void setUp() {
-    consumerGroupLagManager =
-        new ConsumerGroupLagManagerImpl(kafkaAdminClient, consumerGroupManager);
+    consumerGroupLagSummaryManager =
+        new ConsumerGroupLagSummaryManagerImpl(kafkaAdminClient, consumerGroupManager);
   }
 
   @Test
-  public void getConsumerGroupLag_returnsConsumerGroupLag() throws Exception {
+  public void getConsumerGroupLagSummary_returnsConsumerGroupLagSummary() throws Exception {
     expect(consumerGroupManager.getConsumerGroup(CLUSTER_ID, CONSUMER_GROUP_ID))
         .andReturn(completedFuture(Optional.of(CONSUMER_GROUP)));
     expect(kafkaAdminClient.listConsumerGroupOffsets(
@@ -206,23 +206,23 @@ public class ConsumerGroupLagManagerImplTest {
         capture(capturedListOffsetsOptions)))
         .andReturn(new ListOffsetsResult(LATEST_OFFSETS_MAP));
     replay(consumerGroupManager, kafkaAdminClient, listConsumerGroupOffsetsResult);
-    ConsumerGroupLag consumerGroupLag =
-        consumerGroupLagManager.getConsumerGroupLag(CLUSTER_ID, CONSUMER_GROUP_ID).get().get();
+    ConsumerGroupLagSummary consumerGroupLagSummary =
+        consumerGroupLagSummaryManager.getConsumerGroupLagSummary(CLUSTER_ID, CONSUMER_GROUP_ID).get().get();
     assertEquals(OFFSET_AND_METADATA_MAP.keySet(), capturedOffsetSpec.getValue().keySet());
     assertEquals(
         IsolationLevel.READ_COMMITTED,
         capturedListOffsetsOptions.getValue().isolationLevel());
-    assertEquals(CONSUMER_GROUP_LAG, consumerGroupLag);
+    assertEquals(CONSUMER_GROUP_LAG_SUMMARY, consumerGroupLagSummary);
   }
 
   @Test
-  public void getConsumerGroupLag_nonExistingConsumerGroup_throwsNotFound() throws Exception {
+  public void getConsumerGroupLagSummary_nonExistingConsumerGroup_throwsNotFound() throws Exception {
     expect(consumerGroupManager.getConsumerGroup(CLUSTER_ID, CONSUMER_GROUP_ID))
         .andReturn(completedFuture(Optional.empty()));
     replay(consumerGroupManager);
 
     try {
-      consumerGroupLagManager.getConsumerGroupLag(CLUSTER_ID, CONSUMER_GROUP_ID).get();
+      consumerGroupLagSummaryManager.getConsumerGroupLagSummary(CLUSTER_ID, CONSUMER_GROUP_ID).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());

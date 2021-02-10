@@ -18,14 +18,14 @@ package io.confluent.kafkarest.entities.v3;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
-import io.confluent.kafkarest.entities.ConsumerGroupLag;
+import io.confluent.kafkarest.entities.ConsumerGroupLagSummary;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
 @AutoValue
-public abstract class ConsumerGroupLagData extends Resource {
+public abstract class ConsumerGroupLagSummaryData extends Resource {
 
-  ConsumerGroupLagData() {
+  ConsumerGroupLagSummaryData() {
   }
 
   @JsonProperty("cluster_id")
@@ -62,25 +62,25 @@ public abstract class ConsumerGroupLagData extends Resource {
   public abstract Relationship getMaxLagPartition();
 
   public static Builder builder() {
-    return new AutoValue_ConsumerGroupLagData.Builder().setKind("KafkaConsumerGroupLag");
+    return new AutoValue_ConsumerGroupLagSummaryData.Builder().setKind("KafkaConsumerGroupLagSummary");
   }
 
-  public static Builder fromConsumerGroupLag(ConsumerGroupLag consumerGroupLag) {
+  public static Builder fromConsumerGroupLagSummary(ConsumerGroupLagSummary consumerGroupLagSummary) {
     return builder()
-        .setClusterId(consumerGroupLag.getClusterId())
-        .setConsumerGroupId(consumerGroupLag.getConsumerGroupId())
-        .setMaxLag(consumerGroupLag.getMaxLag())
-        .setTotalLag(consumerGroupLag.getTotalLag())
-        .setMaxLagConsumerId(consumerGroupLag.getMaxLagConsumerId())
-        .setMaxLagClientId(consumerGroupLag.getMaxLagClientId())
-        .setMaxLagInstanceId(consumerGroupLag.getMaxLagInstanceId().orElse(null))
-        .setMaxLagTopicName(consumerGroupLag.getMaxLagTopicName())
-        .setMaxLagPartitionId(consumerGroupLag.getMaxLagPartitionId());
+        .setClusterId(consumerGroupLagSummary.getClusterId())
+        .setConsumerGroupId(consumerGroupLagSummary.getConsumerGroupId())
+        .setMaxLag(consumerGroupLagSummary.getMaxLag())
+        .setTotalLag(consumerGroupLagSummary.getTotalLag())
+        .setMaxLagConsumerId(consumerGroupLagSummary.getMaxLagConsumerId())
+        .setMaxLagClientId(consumerGroupLagSummary.getMaxLagClientId())
+        .setMaxLagInstanceId(consumerGroupLagSummary.getMaxLagInstanceId().orElse(null))
+        .setMaxLagTopicName(consumerGroupLagSummary.getMaxLagTopicName())
+        .setMaxLagPartitionId(consumerGroupLagSummary.getMaxLagPartitionId());
   }
 
   // CHECKSTYLE:OFF:ParameterNumber
   @JsonCreator
-  static ConsumerGroupLagData fromJson(
+  static ConsumerGroupLagSummaryData fromJson(
       @JsonProperty("kind") String kind,
       @JsonProperty("metadata") Metadata metadata,
       @JsonProperty("cluster_id") String clusterId,
@@ -141,6 +141,6 @@ public abstract class ConsumerGroupLagData extends Resource {
 
     public abstract Builder setMaxLagPartition(Relationship maxLagPartition);
 
-    public abstract ConsumerGroupLagData build();
+    public abstract ConsumerGroupLagSummaryData build();
   }
 }

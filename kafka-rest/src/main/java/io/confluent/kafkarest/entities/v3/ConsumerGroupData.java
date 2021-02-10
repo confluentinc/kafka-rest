@@ -48,8 +48,8 @@ public abstract class ConsumerGroupData extends Resource {
   @JsonProperty("consumers")
   public abstract Relationship getConsumers();
 
-  @JsonProperty("lag")
-  public abstract Relationship getLag();
+  @JsonProperty("lag_summary")
+  public abstract Relationship getLagSummary();
 
   public static Builder builder() {
     return new AutoValue_ConsumerGroupData.Builder().setKind("KafkaConsumerGroup");
@@ -75,7 +75,7 @@ public abstract class ConsumerGroupData extends Resource {
       @JsonProperty("state") State state,
       @JsonProperty("coordinator") Relationship coordinator,
       @JsonProperty("consumers") Relationship consumers,
-      @JsonProperty("lag") Relationship lag
+      @JsonProperty("lag_summary") Relationship lagSummary
   ) {
     return builder()
         .setKind(kind)
@@ -87,7 +87,7 @@ public abstract class ConsumerGroupData extends Resource {
         .setState(state)
         .setCoordinator(coordinator)
         .setConsumers(consumers)
-        .setLag(lag)
+        .setLagSummary(lagSummary)
         .build();
   }
 
@@ -111,7 +111,7 @@ public abstract class ConsumerGroupData extends Resource {
 
     public abstract Builder setConsumers(Relationship consumers);
 
-    public abstract Builder setLag(Relationship lag);
+    public abstract Builder setLagSummary(Relationship lagSummary);
 
     public abstract ConsumerGroupData build();
   }
