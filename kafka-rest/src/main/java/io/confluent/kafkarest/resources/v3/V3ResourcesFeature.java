@@ -31,7 +31,7 @@ public final class V3ResourcesFeature implements Feature {
     configurable.register(ClusterConfigsResource.class);
     configurable.register(ClustersResource.class);
     configurable.register(ConsumerAssignmentsResource.class);
-    configurable.register(ConsumerGroupLagsResource.class);
+    configurable.register(ConsumerGroupLagSummariesResource.class);
     configurable.register(ConsumerGroupsResource.class);
     configurable.register(ConsumersResource.class);
     configurable.register(ConsumerLagsResource.class);

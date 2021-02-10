@@ -145,7 +145,7 @@ public final class ConsumerGroupsResource {
                     "consumer-groups",
                     consumerGroup.getConsumerGroupId(),
                     "consumers")))
-        .setLag(
+        .setLagSummary(
             Relationship.create(
                 urlFactory.create(
                     "v3",
@@ -153,7 +153,7 @@ public final class ConsumerGroupsResource {
                     clusterId,
                     "consumer-groups",
                     consumerGroup.getConsumerGroupId(),
-                    "lag")))
+                    "lag-summary")))
         .build();
   }
 }

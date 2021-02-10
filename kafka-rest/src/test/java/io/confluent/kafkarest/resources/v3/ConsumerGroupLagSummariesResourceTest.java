@@ -20,10 +20,10 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
 
-import io.confluent.kafkarest.controllers.ConsumerGroupLagManager;
-import io.confluent.kafkarest.entities.ConsumerGroupLag;
-import io.confluent.kafkarest.entities.v3.ConsumerGroupLagData;
-import io.confluent.kafkarest.entities.v3.GetConsumerGroupLagResponse;
+import io.confluent.kafkarest.controllers.ConsumerGroupLagSummaryManager;
+import io.confluent.kafkarest.entities.ConsumerGroupLagSummary;
+import io.confluent.kafkarest.entities.v3.ConsumerGroupLagSummaryData;
+import io.confluent.kafkarest.entities.v3.GetConsumerGroupLagSummaryResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.Resource.Relationship;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
@@ -40,15 +40,15 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class ConsumerGroupLagsResourceTest {
+public class ConsumerGroupLagSummariesResourceTest {
 
   private static final String CLUSTER_ID = "cluster-1";
   private static final String CONSUMER_GROUP_ID = "consumer-group-1";
   private static final String CONSUMER_ID = "consumer-1";
   private static final String CLIENT_ID = "client-1";
 
-  private static final ConsumerGroupLag CONSUMER_GROUP_LAG_1 =
-      ConsumerGroupLag.builder()
+  private static final ConsumerGroupLagSummary CONSUMER_GROUP_LAG_1 =
+      ConsumerGroupLagSummary.builder()
           .setClusterId(CLUSTER_ID)
           .setConsumerGroupId(CONSUMER_GROUP_ID)
           .setMaxLag(100L)
@@ -63,34 +63,34 @@ public class ConsumerGroupLagsResourceTest {
   public final EasyMockRule mocks = new EasyMockRule(this);
 
   @Mock
-  private ConsumerGroupLagManager consumerGroupLagManager;
+  private ConsumerGroupLagSummaryManager consumerGroupLagSummaryManager;
 
-  private ConsumerGroupLagsResource consumerGroupLagsResource;
+  private ConsumerGroupLagSummariesResource consumerGroupLagSummariesResource;
 
   @Before
   public void setUp() {
-    consumerGroupLagsResource =
-        new ConsumerGroupLagsResource(
-            () -> consumerGroupLagManager, new CrnFactoryImpl(""), new FakeUrlFactory());
+    consumerGroupLagSummariesResource =
+        new ConsumerGroupLagSummariesResource(
+            () -> consumerGroupLagSummaryManager, new CrnFactoryImpl(""), new FakeUrlFactory());
   }
 
   @Test
-  public void getConsumerGroupLag_returnsConsumerGroupLag() {
-    expect(consumerGroupLagManager.getConsumerGroupLag(CLUSTER_ID, CONSUMER_GROUP_ID))
+  public void getConsumerGroupLagSummary_returnsConsumerGroupLagSummary() {
+    expect(consumerGroupLagSummaryManager.getConsumerGroupLagSummary(CLUSTER_ID, CONSUMER_GROUP_ID))
         .andReturn(completedFuture(Optional.of(CONSUMER_GROUP_LAG_1)));
-    replay(consumerGroupLagManager);
+    replay(consumerGroupLagSummaryManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    consumerGroupLagsResource.getConsumerGroupLag(response, CLUSTER_ID, CONSUMER_GROUP_ID);
+    consumerGroupLagSummariesResource.getConsumerGroupLagSummary(response, CLUSTER_ID, CONSUMER_GROUP_ID);
 
-    GetConsumerGroupLagResponse expected =
-        GetConsumerGroupLagResponse.create(
-            ConsumerGroupLagData.fromConsumerGroupLag(CONSUMER_GROUP_LAG_1)
+    GetConsumerGroupLagSummaryResponse expected =
+        GetConsumerGroupLagSummaryResponse.create(
+            ConsumerGroupLagSummaryData.fromConsumerGroupLagSummary(CONSUMER_GROUP_LAG_1)
                 .setMetadata(
                     Resource.Metadata.builder()
-                        .setSelf("/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lag")
+                        .setSelf("/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lag-summary")
                         .setResourceName(
-                            "crn:///kafka=cluster-1/consumer-group=consumer-group-1/lag")
+                            "crn:///kafka=cluster-1/consumer-group=consumer-group-1/lag-summary")
                         .build())
                 .setMaxLagConsumer(
                     Relationship.create("/v3/clusters/cluster-1/consumer-groups/consumer-group-1/"
@@ -103,13 +103,13 @@ public class ConsumerGroupLagsResourceTest {
   }
 
   @Test
-  public void getConsumerGroupLag_nonExistingConsumerGroupLag_throwsNotFound() {
-    expect(consumerGroupLagManager.getConsumerGroupLag(CLUSTER_ID, CONSUMER_GROUP_ID))
+  public void getConsumerGroupLagSummary_nonExistingConsumerGroupLagSummary_throwsNotFound() {
+    expect(consumerGroupLagSummaryManager.getConsumerGroupLagSummary(CLUSTER_ID, CONSUMER_GROUP_ID))
         .andReturn(completedFuture(Optional.empty()));
-    replay(consumerGroupLagManager);
+    replay(consumerGroupLagSummaryManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    consumerGroupLagsResource.getConsumerGroupLag(response, CLUSTER_ID, CONSUMER_GROUP_ID);
+    consumerGroupLagSummariesResource.getConsumerGroupLagSummary(response, CLUSTER_ID, CONSUMER_GROUP_ID);
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }
