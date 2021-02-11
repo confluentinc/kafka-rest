@@ -21,7 +21,7 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.entities.Consumer;
 import io.confluent.kafkarest.entities.ConsumerGroup;
-import io.confluent.kafkarest.entities.ConsumerGroupLag;
+import io.confluent.kafkarest.entities.ConsumerGroupLagSummary;
 import io.confluent.kafkarest.entities.Partition;
 import java.util.Map;
 import java.util.Optional;
@@ -34,14 +34,15 @@ import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class ConsumerGroupLagManagerImpl
-    extends AbstractConsumerLagManager implements ConsumerGroupLagManager {
+final class ConsumerGroupLagSummaryManagerImpl
+    extends AbstractConsumerLagManager implements ConsumerGroupLagSummaryManager {
 
   private final ConsumerGroupManager consumerGroupManager;
-  private static final Logger log = LoggerFactory.getLogger(ConsumerGroupLagManagerImpl.class);
+  private static final Logger log =
+      LoggerFactory.getLogger(ConsumerGroupLagSummaryManagerImpl.class);
 
   @Inject
-  ConsumerGroupLagManagerImpl(
+  ConsumerGroupLagSummaryManagerImpl(
       Admin kafkaAdminClient,
       ConsumerGroupManager consumerGroupManager) {
     super(kafkaAdminClient);
@@ -49,7 +50,7 @@ final class ConsumerGroupLagManagerImpl
   }
 
   @Override
-  public CompletableFuture<Optional<ConsumerGroupLag>> getConsumerGroupLag(
+  public CompletableFuture<Optional<ConsumerGroupLagSummary>> getConsumerGroupLagSummary(
       String clusterId,
       String consumerGroupId
   ) {
@@ -71,21 +72,21 @@ final class ConsumerGroupLagManagerImpl
                             getLatestOffsets(fetchedCurrentOffsets)
                                 .thenApply(
                                     latestOffsets ->
-                                       Optional.of(createConsumerGroupLag(
+                                       Optional.of(createConsumerGroupLagSummary(
                                            clusterId,
                                            consumerGroup,
                                            fetchedCurrentOffsets,
                                            latestOffsets)))));
   }
 
-  private static ConsumerGroupLag createConsumerGroupLag(
+  private static ConsumerGroupLagSummary createConsumerGroupLagSummary(
       String clusterId,
       ConsumerGroup consumerGroup,
       Map<TopicPartition, OffsetAndMetadata> fetchedCurrentOffsets,
       Map<TopicPartition, ListOffsetsResultInfo> latestOffsets) {
     Map<Partition, Consumer> partitionAssignment = consumerGroup.getPartitionAssignment();
-    ConsumerGroupLag.Builder consumerGroupLag =
-        ConsumerGroupLag.builder()
+    ConsumerGroupLagSummary.Builder consumerGroupLagSummary =
+        ConsumerGroupLagSummary.builder()
             .setClusterId(clusterId)
             .setConsumerGroupId(consumerGroup.getConsumerGroupId());
     fetchedCurrentOffsets.keySet().forEach(
@@ -102,7 +103,7 @@ final class ConsumerGroupLagManagerImpl
           Optional<Long> latestOffset =
               getLatestOffset(latestOffsets, topicPartition);
           if (currentOffset.isPresent() && latestOffset.isPresent()) {
-            consumerGroupLag.addOffset(
+            consumerGroupLagSummary.addOffset(
                 topicPartition.topic(),
                 consumer.map(Consumer::getConsumerId).orElse(""),
                 consumer.flatMap(Consumer::getInstanceId),
@@ -120,6 +121,6 @@ final class ConsumerGroupLagManagerImpl
                 latestOffset.orElse(null));
           }
         });
-    return consumerGroupLag.build();
+    return consumerGroupLagSummary.build();
   }
 }

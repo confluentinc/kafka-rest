@@ -20,20 +20,20 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.auto.value.AutoValue;
 
 @AutoValue
-public abstract class GetConsumerGroupLagResponse {
+public abstract class GetConsumerGroupLagSummaryResponse {
 
-  GetConsumerGroupLagResponse() {
+  GetConsumerGroupLagSummaryResponse() {
   }
 
   @JsonValue
-  public abstract ConsumerGroupLagData getValue();
+  public abstract ConsumerGroupLagSummaryData getValue();
 
-  public static GetConsumerGroupLagResponse create(ConsumerGroupLagData value) {
-    return new AutoValue_GetConsumerGroupLagResponse(value);
+  public static GetConsumerGroupLagSummaryResponse create(ConsumerGroupLagSummaryData value) {
+    return new AutoValue_GetConsumerGroupLagSummaryResponse(value);
   }
 
   @JsonCreator
-  static GetConsumerGroupLagResponse fromJson(ConsumerGroupLagData value) {
+  static GetConsumerGroupLagSummaryResponse fromJson(ConsumerGroupLagSummaryData value) {
     return create(value);
   }
 }

@@ -17,10 +17,10 @@ package io.confluent.kafkarest.resources.v3;
 
 import static java.util.Objects.requireNonNull;
 
-import io.confluent.kafkarest.controllers.ConsumerGroupLagManager;
-import io.confluent.kafkarest.entities.ConsumerGroupLag;
-import io.confluent.kafkarest.entities.v3.ConsumerGroupLagData;
-import io.confluent.kafkarest.entities.v3.GetConsumerGroupLagResponse;
+import io.confluent.kafkarest.controllers.ConsumerGroupLagSummaryManager;
+import io.confluent.kafkarest.entities.ConsumerGroupLagSummary;
+import io.confluent.kafkarest.entities.v3.ConsumerGroupLagSummaryData;
+import io.confluent.kafkarest.entities.v3.GetConsumerGroupLagSummaryResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.Resource.Relationship;
 import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
@@ -40,64 +40,67 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
-@Path("/v3/clusters/{clusterId}/consumer-groups/{consumerGroupId}/lag")
-@ResourceName("api.v3.consumer-group-lag.*")
-public final class ConsumerGroupLagsResource {
+@Path("/v3/clusters/{clusterId}/consumer-groups/{consumerGroupId}/lag-summary")
+@ResourceName("api.v3.consumer-group-lag-summary.*")
+public final class ConsumerGroupLagSummariesResource {
 
-  private final Provider<ConsumerGroupLagManager> consumerGroupLagManager;
+  private final Provider<ConsumerGroupLagSummaryManager> consumerGroupLagSummaryManager;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
-  public ConsumerGroupLagsResource(
-      Provider<ConsumerGroupLagManager> consumerGroupLagManager,
+  public ConsumerGroupLagSummariesResource(
+      Provider<ConsumerGroupLagSummaryManager> consumerGroupLagSummaryManager,
       CrnFactory crnFactory,
       UrlFactory urlFactory
   ) {
-    this.consumerGroupLagManager = requireNonNull(consumerGroupLagManager);
+    this.consumerGroupLagSummaryManager = requireNonNull(consumerGroupLagSummaryManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
   }
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  @PerformanceMetric("v3.consumer-group-lag.get")
-  @ResourceName("api.v3.consumer-group-lag.get")
-  public void getConsumerGroupLag(
+  @PerformanceMetric("v3.consumer-group-lag-summary.get")
+  @ResourceName("api.v3.consumer-group-lag-summary.get")
+  public void getConsumerGroupLagSummary(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("consumerGroupId") String consumerGroupId
   ) {
-    CompletableFuture<GetConsumerGroupLagResponse> response =
-        consumerGroupLagManager.get()
-            .getConsumerGroupLag(clusterId, consumerGroupId)
-            .thenApply(groupLag -> groupLag.orElseThrow(NotFoundException::new))
+    CompletableFuture<GetConsumerGroupLagSummaryResponse> response =
+        consumerGroupLagSummaryManager.get()
+            .getConsumerGroupLagSummary(clusterId, consumerGroupId)
+            .thenApply(groupLagSummary -> groupLagSummary.orElseThrow(NotFoundException::new))
             .thenApply(
-                groupLag ->
-                    GetConsumerGroupLagResponse.create(toConsumerGroupLagData(groupLag)));
+                groupLagSummary ->
+                    GetConsumerGroupLagSummaryResponse.create(
+                        toConsumerGroupLagSummaryData(groupLagSummary)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
 
-  private ConsumerGroupLagData toConsumerGroupLagData(ConsumerGroupLag groupLag) {
-    return ConsumerGroupLagData.fromConsumerGroupLag(groupLag)
+  private ConsumerGroupLagSummaryData toConsumerGroupLagSummaryData(
+      ConsumerGroupLagSummary groupLagSummary
+  ) {
+    return ConsumerGroupLagSummaryData.fromConsumerGroupLagSummary(groupLagSummary)
         .setMetadata(
             Resource.Metadata.builder()
                 .setSelf(
                     urlFactory.create(
                         "v3",
                         "clusters",
-                        groupLag.getClusterId(),
+                        groupLagSummary.getClusterId(),
                         "consumer-groups",
-                        groupLag.getConsumerGroupId(),
-                        "lag"))
+                        groupLagSummary.getConsumerGroupId(),
+                        "lag-summary"))
                 .setResourceName(
                     crnFactory.create(
                         "kafka",
-                        groupLag.getClusterId(),
+                        groupLagSummary.getClusterId(),
                         "consumer-group",
-                        groupLag.getConsumerGroupId(),
-                        "lag",
+                        groupLagSummary.getConsumerGroupId(),
+                        "lag-summary",
                         null))
                 .build())
         .setMaxLagConsumer(
@@ -105,21 +108,21 @@ public final class ConsumerGroupLagsResource {
                 urlFactory.create(
                     "v3",
                     "clusters",
-                    groupLag.getClusterId(),
+                    groupLagSummary.getClusterId(),
                     "consumer-groups",
-                    groupLag.getConsumerGroupId(),
+                    groupLagSummary.getConsumerGroupId(),
                     "consumers",
-                    groupLag.getMaxLagConsumerId())))
+                    groupLagSummary.getMaxLagConsumerId())))
         .setMaxLagPartition(
             Relationship.create(
                 urlFactory.create(
                     "v3",
                     "clusters",
-                    groupLag.getClusterId(),
+                    groupLagSummary.getClusterId(),
                     "topics",
-                    groupLag.getMaxLagTopicName(),
+                    groupLagSummary.getMaxLagTopicName(),
                     "partitions",
-                    Integer.toString(groupLag.getMaxLagPartitionId()))))
+                    Integer.toString(groupLagSummary.getMaxLagPartitionId()))))
         .build();
   }
 }

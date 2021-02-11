@@ -322,19 +322,19 @@ paths:
         '200':
           $ref: '#/components/responses/ListConsumersResponse'
 
-  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lag:
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lag-summary:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
 
     get:
-      summary: 'Get Consumer Group Lag.'
+      summary: 'Get Consumer Group Lag Summary.'
       description: 'Returns the max and total lag of the consumers belonging to the specified consumer group.'
       tags:
         - Consumer Group
       responses:
         '200':
-          $ref: '#/components/responses/GetConsumerGroupLagResponse'
+          $ref: '#/components/responses/GetConsumerGroupLagSummaryResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags:
     parameters:
@@ -1204,7 +1204,7 @@ components:
             - state
             - coordinator
             - consumers
-            - lag
+            - lag_summary
           properties:
             cluster_id:
               type: string
@@ -1220,7 +1220,7 @@ components:
               $ref: '#/components/schemas/Relationship'
             consumer:
               $ref: '#/components/schemas/Relationship'
-            lag:
+            lag_summary:
               $ref: '#/components/schemas/Relationship'
 
     ConsumerGroupDataList:
@@ -1294,7 +1294,7 @@ components:
               items:
                 $ref: '#/components/schemas/ConsumerLagData'
 
-    ConsumerGroupLagData:
+    ConsumerGroupLagSummaryData:
       allOf:
         - $ref: '#/components/schemas/Resource'
         - type: object
@@ -1888,18 +1888,20 @@ components:
               related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
             consumers:
               related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers'
+            lag_summary:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lag-summary'
 
-    GetConsumerGroupLagResponse:
+    GetConsumerGroupLagSummaryResponse:
       description: 'The max and total consumer lag in a consumer group.'
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ConsumerGroupLagData'
+            $ref: '#/components/schemas/ConsumerGroupLagSummaryData'
           example:
-            kind: 'KafkaConsumerGroupLag'
+            kind: 'KafkaConsumerGroupLagSummary'
             metadata:
-              self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lag'
-              resource_name: 'crn:///kafka=cluster-1/consumer-groups=consumer-group-1/lag'
+              self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lag-summary'
+              resource_name: 'crn:///kafka=cluster-1/consumer-groups=consumer-group-1/lag-summary'
             cluster_id: 'cluster-1'
             consumer_group_id: 'consumer-group-1'
             max_lag_consumer_id: 'consumer-1'
@@ -2382,6 +2384,8 @@ components:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
                 consumers:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers'
+                lag_summary:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lag-summary'
               - kind: 'KafkaConsumerGroup'
                 metadata:
                   self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-2'
@@ -2395,6 +2399,8 @@ components:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/2'
                 consumers:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-2/consumers'
+                lag_summary:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-2/lag-summary'
               - kind: 'KafkaConsumerGroup'
                 metadata:
                   self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-3'
@@ -2408,6 +2414,8 @@ components:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/3'
                 consumers:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-3/consumers'
+                lag_summary:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-3/lag-summary'
 
     ListConsumerLagsResponse:
      description: 'The list of consumer lags.'
