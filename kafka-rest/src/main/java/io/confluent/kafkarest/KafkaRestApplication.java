@@ -20,6 +20,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.jaxrs.base.JsonMappingExceptionMapper;
+import com.fasterxml.jackson.jaxrs.base.JsonParseExceptionMapper;
 import io.confluent.kafkarest.backends.BackendsModule;
 import io.confluent.kafkarest.config.ConfigModule;
 import io.confluent.kafkarest.controllers.ControllersModule;
@@ -130,6 +132,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   @Override
   protected void registerExceptionMappers(Configurable<?> config, KafkaRestConfig restConfig) {
+    config.register(JsonParseExceptionMapper.class);
+    config.register(JsonMappingExceptionMapper.class);
     config.register(ConstraintViolationExceptionMapper.class);
     config.register(new WebApplicationExceptionMapper(restConfig));
     config.register(new KafkaExceptionMapper(restConfig));
