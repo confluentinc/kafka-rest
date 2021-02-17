@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.Versions;
@@ -87,8 +88,6 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     // to force the other consumer to join the group.
     consumer1.poll(Duration.ofSeconds(1));
     consumer2.poll(Duration.ofSeconds(1));
-//    consumer1.commitSync();
-//    consumer2.commitSync();
 
     // produce to topic1 partition0 and topic2 partition1
     BinaryPartitionProduceRequest request1 =
@@ -96,48 +95,51 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     produce(topic1, 0, request1);
     produce(topic2, 1, request1);
 
-    // consume from subscribed topics
-    consumer1.poll(Duration.ofSeconds(1));
-    consumer2.poll(Duration.ofSeconds(1));
-    consumer1.commitSync();
-    consumer2.commitSync();
+    testWithRetry(
+        () -> {
+          // consume from subscribed topics
+          consumer1.poll(Duration.ofSeconds(1));
+          consumer2.poll(Duration.ofSeconds(1));
+          consumer1.commitSync();
+          consumer2.commitSync();
 
-    // stores expected currentOffsets and logEndOffsets for each topic partition after sending
-    // 3 records to topic1 partition0 and topic2 partition1
-    long[][] expectedOffsets = new long[numTopics][numPartitions];
-    expectedOffsets[0][0] = 3;
-    expectedOffsets[1][1] = 3;
-    // all other values default to 0L
+          // stores expected currentOffsets and logEndOffsets for each topic partition after sending
+          // 3 records to topic1 partition0 and topic2 partition1
+          long[][] expectedOffsets = new long[numTopics][numPartitions];
+          expectedOffsets[0][0] = 3;
+          expectedOffsets[1][1] = 3;
+          // all other values default to 0L
 
-    Response response =
-        request("/v3/clusters/" + clusterId + "/consumer-groups/" + group1 + "/lags")
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
+          Response response =
+              request("/v3/clusters/" + clusterId + "/consumer-groups/" + group1 + "/lags")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
 
-    assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    ConsumerLagDataList consumerLagDataList =
-        response.readEntity(ListConsumerLagsResponse.class).getValue();
+          assertEquals(Status.OK.getStatusCode(), response.getStatus());
+          ConsumerLagDataList consumerLagDataList =
+              response.readEntity(ListConsumerLagsResponse.class).getValue();
 
-    // checks offsets and lag match what is expected for each topic partition
-    for (int t = 0; t < numTopics; t++) {
-      for (int p = 0; p < numPartitions; p++) {
-        final int finalT = t;
-        final int finalP = p;
-        ConsumerLagData consumerLagData =
-            consumerLagDataList.getData()
-                .stream()
-                .filter(lagData ->
-                    lagData.getTopicName().equals(topics[finalT]))
-                .filter(lagData ->
-                    lagData.getPartitionId() == finalP)
-                .findAny()
-                .get();
+          // checks offsets and lag match what is expected for each topic partition
+          for (int t = 0; t < numTopics; t++) {
+            for (int p = 0; p < numPartitions; p++) {
+              final int finalT = t;
+              final int finalP = p;
+              ConsumerLagData consumerLagData =
+                  consumerLagDataList.getData()
+                      .stream()
+                      .filter(lagData ->
+                          lagData.getTopicName().equals(topics[finalT]))
+                      .filter(lagData ->
+                          lagData.getPartitionId() == finalP)
+                      .findAny()
+                      .get();
 
-        assertEquals(expectedOffsets[t][p], (long) consumerLagData.getCurrentOffset());
-        assertEquals(expectedOffsets[t][p], (long) consumerLagData.getLogEndOffset());
-        assertEquals(0, (long) consumerLagData.getLag());
-      }
-    }
+              assertEquals(expectedOffsets[t][p], (long) consumerLagData.getCurrentOffset());
+              assertEquals(expectedOffsets[t][p], (long) consumerLagData.getLogEndOffset());
+              assertEquals(0, (long) consumerLagData.getLag());
+            }
+          }
+        });
 
     // produce again to topic2 partition1
     BinaryPartitionProduceRequest request2 =
