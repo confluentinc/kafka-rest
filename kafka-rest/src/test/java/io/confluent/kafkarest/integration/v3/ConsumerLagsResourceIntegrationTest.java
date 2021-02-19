@@ -84,6 +84,13 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     produce(topic1, 0, request1);
     produce(topic2, 1, request1);
 
+    // stores expected currentOffsets and logEndOffsets for each topic partition after sending
+    // 3 records to topic1 partition0 and topic2 partition1
+    long[][] expectedOffsets = new long[numTopics][numPartitions];
+    expectedOffsets[0][0] = 3;
+    expectedOffsets[1][1] = 3;
+    // all other values default to 0L
+
     KafkaConsumer<?, ?> consumer1 = createConsumer(group1, "client-1");
     KafkaConsumer<?, ?> consumer2 = createConsumer(group1, "client-2");
 
@@ -100,13 +107,6 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
           // commit offsets from consuming from subscribed topics
           consumer1.commitSync();
           consumer2.commitSync();
-
-          // stores expected currentOffsets and logEndOffsets for each topic partition after sending
-          // 3 records to topic1 partition0 and topic2 partition1
-          long[][] expectedOffsets = new long[numTopics][numPartitions];
-          expectedOffsets[0][0] = 3;
-          expectedOffsets[1][1] = 3;
-          // all other values default to 0L
 
           Response response =
               request("/v3/clusters/" + clusterId + "/consumer-groups/" + group1 + "/lags")
@@ -216,6 +216,13 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     produce(topic1, 0, request1);
     produce(topic2, 1, request1);
 
+    // stores expected currentOffsets and logEndOffsets for each topic partition after sending
+    // 3 records to topic1 partition0 and topic2 partition1
+    long[][] expectedOffsets = new long[numTopics][numPartitions];
+    expectedOffsets[0][0] = 3;
+    expectedOffsets[1][1] = 3;
+    // all other values default to 0L
+
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     testWithRetry(
         () -> {
@@ -223,13 +230,6 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
           // consume from subscribed topics (zero lag)
           consumer.poll(Duration.ofSeconds(1));
           consumer.commitSync();
-
-          // stores expected currentOffsets and logEndOffsets for each topic partition after sending
-          // 3 records to topic1 partition0 and topic2 partition1
-          long[][] expectedOffsets = new long[numTopics][numPartitions];
-          expectedOffsets[0][0] = 3;
-          expectedOffsets[1][1] = 3;
-          // all other values default to 0L
 
           for (int t = 0; t < numTopics; t++) {
             for (int p = 0; p < numPartitions; p++) {
