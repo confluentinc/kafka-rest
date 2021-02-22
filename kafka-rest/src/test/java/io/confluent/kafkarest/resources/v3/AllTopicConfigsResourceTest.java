@@ -17,8 +17,15 @@ package io.confluent.kafkarest.resources.v3;
 
 import io.confluent.kafkarest.controllers.TopicConfigManager;
 import io.confluent.kafkarest.controllers.TopicManager;
-import io.confluent.kafkarest.entities.*;
-import io.confluent.kafkarest.entities.v3.*;
+import io.confluent.kafkarest.entities.ConfigSource;
+import io.confluent.kafkarest.entities.Topic;
+import io.confluent.kafkarest.entities.TopicConfig;
+import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
+import io.confluent.kafkarest.entities.v3.ListTopicConfigsResponse;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
+import io.confluent.kafkarest.entities.v3.TopicConfigData;
+import io.confluent.kafkarest.entities.v3.TopicConfigDataList;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
@@ -31,7 +38,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import javax.ws.rs.NotFoundException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;

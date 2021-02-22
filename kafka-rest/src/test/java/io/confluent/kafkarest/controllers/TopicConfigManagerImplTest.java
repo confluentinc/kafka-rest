@@ -34,7 +34,12 @@ import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.TopicConfig;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;

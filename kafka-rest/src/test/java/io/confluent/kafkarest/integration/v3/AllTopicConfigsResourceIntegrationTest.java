@@ -16,7 +16,11 @@
 package io.confluent.kafkarest.integration.v3;
 
 import io.confluent.kafkarest.entities.ConfigSource;
-import io.confluent.kafkarest.entities.v3.*;
+import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
+import io.confluent.kafkarest.entities.v3.ListTopicConfigsResponse;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
+import io.confluent.kafkarest.entities.v3.TopicConfigData;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,7 +31,6 @@ import javax.ws.rs.core.Response.Status;
 
 import java.util.Arrays;
 
-import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
