@@ -549,10 +549,10 @@ paths:
       summary: 'Get Partition'
       description: 'Returns the partition with the given `partition_id`.'
       tags:
-        - Configs
+        - Partition
       responses:
         '200':
-          $ref: '#/components/responses/GetTopicConfigResponse'
+          $ref: '#/components/responses/GetPartitionResponse'
 
   /clusters/{cluster_id}/topics/-/partitions/-/reassignment:
     parameters:
@@ -635,10 +635,10 @@ paths:
       summary: 'Get All topic configs'
       description: 'Returns all topic configurations for topics hosted by the specified cluster.'
       tags:
-        - Replica
+        - Configs
       responses:
         '200':
-          $ref: '#/components/responses/GetReplicaResponse'
+          $ref: '#/components/responses/ListTopicConfigsResponse'
 
 components:
   parameters:
