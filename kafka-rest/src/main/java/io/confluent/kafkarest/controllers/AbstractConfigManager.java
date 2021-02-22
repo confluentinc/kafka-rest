@@ -27,6 +27,7 @@ import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.ConfigSynonym;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -50,41 +51,45 @@ abstract class AbstractConfigManager<
     this.clusterManager = requireNonNull(clusterManager);
   }
 
-  final CompletableFuture<List<T>> listConfigs(
-      String clusterId, ConfigResource resourceId, B prototype) {
+  final CompletableFuture<Map<ConfigResource,List<T>>> listConfigs(
+      String clusterId, List<ConfigResource> resourceIds, B prototype) {
     return clusterManager.getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenCompose(
             cluster ->
                 KafkaFutures.toCompletableFuture(
                     adminClient.describeConfigs(
-                        singletonList(resourceId),
+                        resourceIds,
                         new DescribeConfigsOptions().includeSynonyms(true))
-                        .values()
-                        .get(resourceId)))
+                        .all()
+                ))
         .thenApply(
-            response ->
-                response.entries().stream()
-                    .map(
-                        entry ->
-                            prototype.setName(entry.name())
-                                .setValue(entry.value())
-                                .setDefault(entry.isDefault())
-                                .setReadOnly(entry.isReadOnly())
-                                .setSensitive(entry.isSensitive())
-                                .setSource(ConfigSource.fromAdminConfigSource(entry.source()))
-                                .setSynonyms(
-                                    entry.synonyms().stream()
-                                        .map(ConfigSynonym::fromAdminConfigSynonym)
-                                        .collect(Collectors.toList()))
-                                .build())
-                    .collect(Collectors.toList()));
+            configsMap -> configsMap.entrySet().stream()
+                .collect(
+                    Collectors.toMap(
+                        e -> e.getKey(),
+                        e -> e.getValue().entries().stream()
+                          .map(
+                            entry ->
+                                prototype.setName(entry.name())
+                                    .setValue(entry.value())
+                                    .setDefault(entry.isDefault())
+                                    .setReadOnly(entry.isReadOnly())
+                                    .setSensitive(entry.isSensitive())
+                                    .setSource(ConfigSource.fromAdminConfigSource(entry.source()))
+                                    .setSynonyms(
+                                        entry.synonyms().stream()
+                                            .map(ConfigSynonym::fromAdminConfigSynonym)
+                                            .collect(Collectors.toList()))
+                                    .build())
+                            .collect(Collectors.toList()))));
   }
 
   final CompletableFuture<Optional<T>> getConfig(
       String clusterId, ConfigResource resourceId, B prototype, String name) {
-    return listConfigs(clusterId, resourceId, prototype)
-        .thenApply(configs -> findEntityByKey(configs, AbstractConfig::getName, name));
+    return listConfigs(clusterId, singletonList(resourceId), prototype)
+        .thenApply(configs -> findEntityByKey(configs.get(resourceId),
+            AbstractConfig::getName, name));
   }
 
   /**
@@ -156,11 +161,12 @@ abstract class AbstractConfigManager<
    */
   final CompletableFuture<Void> safeAlterConfigs(
       String clusterId, ConfigResource resourceId, B prototype, List<AlterConfigCommand> commands) {
-    return listConfigs(clusterId, resourceId, prototype)
+    return listConfigs(clusterId, singletonList(resourceId), prototype)
         .thenApply(
             configs -> {
               Set<String> configNames =
-                  configs.stream().map(AbstractConfig::getName).collect(Collectors.toSet());
+                  configs.get(resourceId).stream().map(AbstractConfig::getName)
+                      .collect(Collectors.toSet());
               for (AlterConfigCommand command : commands) {
                 if (!configNames.contains(command.getName())) {
                   throw new NotFoundException(

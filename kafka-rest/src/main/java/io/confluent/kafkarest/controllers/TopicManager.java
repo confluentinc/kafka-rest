@@ -60,7 +60,8 @@ public interface TopicManager {
       Optional<Integer> partitionsCount,
       Optional<Short> replicationFactor,
       Map<Integer, List<Integer>> replicasAssignments,
-      Map<String, Optional<String>> configs);
+      Map<String, Optional<String>> configs,
+      Boolean validateOnly);
 
   /**
    * Deletes the Kafka {@link Topic} with the given {@code topicName}.

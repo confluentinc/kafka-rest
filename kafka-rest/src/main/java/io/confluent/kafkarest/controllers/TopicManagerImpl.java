@@ -34,7 +34,9 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+
 import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.CreateTopicsOptions;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.admin.TopicListing;
@@ -174,7 +176,8 @@ final class TopicManagerImpl implements TopicManager {
       Optional<Integer> partitionsCount,
       Optional<Short> replicationFactor,
       Map<Integer, List<Integer>> replicasAssignments,
-      Map<String, Optional<String>> configs) {
+      Map<String, Optional<String>> configs,
+      Boolean validateOnly) {
     requireNonNull(topicName);
 
     Map<String, String> nullableConfigs = new HashMap<>();
@@ -191,7 +194,10 @@ final class TopicManagerImpl implements TopicManager {
         .thenCompose(
             cluster ->
                 KafkaFutures.toCompletableFuture(
-                    adminClient.createTopics(singletonList(createTopicRequest)).all()));
+                    validateOnly ? adminClient.createTopics(singletonList(createTopicRequest),
+                        new CreateTopicsOptions().validateOnly(true)).all()
+                        : adminClient.createTopics(singletonList(createTopicRequest)).all()
+                    ));
   }
 
   @Override

@@ -465,7 +465,8 @@ public class TopicsResourceTest {
             Optional.of(TOPIC_1.getPartitions().size()),
             Optional.of(TOPIC_1.getReplicationFactor()),
             /* replicasAssignments= */ Collections.emptyMap(),
-            singletonMap("cleanup.policy", Optional.of("compact"))))
+            singletonMap("cleanup.policy", Optional.of("compact")),
+            false))
         .andReturn(completedFuture(null));
     replay(topicManager);
 
@@ -488,6 +489,39 @@ public class TopicsResourceTest {
   }
 
   @Test
+  public void createTopic_validateOnly_doesntCreateTopic() {
+    expect(
+        topicManager.createTopic(
+            CLUSTER_ID,
+            TOPIC_1.getName(),
+            Optional.of(TOPIC_1.getPartitions().size()),
+            Optional.of(TOPIC_1.getReplicationFactor()),
+            /* replicasAssignments= */ Collections.emptyMap(),
+            singletonMap("cleanup.policy", Optional.of("compact")),
+            true))
+        .andReturn(completedFuture(null));
+    replay(topicManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    topicsResource.createTopic(
+        response,
+        TOPIC_1.getClusterId(),
+        CreateTopicRequest.builder()
+            .setTopicName(TOPIC_1.getName())
+            .setPartitionsCount(TOPIC_1.getPartitions().size())
+            .setReplicationFactor(TOPIC_1.getReplicationFactor())
+            .setConfigs(
+                singletonList(CreateTopicRequest.ConfigEntry.create("cleanup.policy", "compact")))
+            .setValidateOnly(true)
+            .build());
+
+    CreateTopicResponse expected =
+        CreateTopicResponse.create(newTopicData("topic-1", false, 3));
+
+    assertEquals(expected, response.getValue());
+  }
+
+  @Test
   public void createTopic_nonExistingTopic_defaultPartitionsCount_createsTopic() {
     expect(
         topicManager.createTopic(
@@ -496,7 +530,8 @@ public class TopicsResourceTest {
             /* partitionsCount= */ Optional.empty(),
             Optional.of(TOPIC_1.getReplicationFactor()),
             /* replicasAssignments= */ Collections.emptyMap(),
-            singletonMap("cleanup.policy", Optional.of("compact"))))
+            singletonMap("cleanup.policy", Optional.of("compact")),
+            false))
         .andReturn(completedFuture(null));
     replay(topicManager);
 
@@ -526,7 +561,8 @@ public class TopicsResourceTest {
             Optional.of(TOPIC_1.getPartitions().size()),
             /* replicationFactor= */ Optional.empty(),
             /* replicasAssignments= */ Collections.emptyMap(),
-            singletonMap("cleanup.policy", Optional.of("compact"))))
+            singletonMap("cleanup.policy", Optional.of("compact")),
+            false))
         .andReturn(completedFuture(null));
     replay(topicManager);
 
@@ -568,7 +604,8 @@ public class TopicsResourceTest {
             /* partitionsCount= */ Optional.empty(),
             /* replicationFactor= */ Optional.empty(),
             replicasAssignments,
-            singletonMap("cleanup.policy", Optional.of("compact"))))
+            singletonMap("cleanup.policy", Optional.of("compact")),
+            false))
         .andReturn(completedFuture(null));
     replay(topicManager);
 
@@ -599,7 +636,8 @@ public class TopicsResourceTest {
             Optional.of(TOPIC_1.getPartitions().size()),
             Optional.of(TOPIC_1.getReplicationFactor()),
             /* replicasAssignments= */ Collections.emptyMap(),
-            singletonMap("cleanup.policy", Optional.of("compact"))))
+            singletonMap("cleanup.policy", Optional.of("compact")),
+            false))
         .andReturn(failedFuture(new TopicExistsException("")));
     replay(topicManager);
 
@@ -627,7 +665,8 @@ public class TopicsResourceTest {
             Optional.of(TOPIC_1.getPartitions().size()),
             Optional.of(TOPIC_1.getReplicationFactor()),
             /* replicasAssignments= */ Collections.emptyMap(),
-            singletonMap("cleanup.policy", Optional.of("compact"))))
+            singletonMap("cleanup.policy", Optional.of("compact")),
+            false))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);
 

@@ -17,9 +17,13 @@ package io.confluent.kafkarest.controllers;
 
 import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.TopicConfig;
+
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.common.config.ConfigResource;
@@ -35,10 +39,39 @@ final class TopicConfigManagerImpl
   @Override
   public CompletableFuture<List<TopicConfig>> listTopicConfigs(
       String clusterId, String topicName) {
+    ConfigResource topicResource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
     return listConfigs(
-        clusterId,
-        new ConfigResource(ConfigResource.Type.TOPIC, topicName),
-        TopicConfig.builder().setClusterId(clusterId).setTopicName(topicName));
+          clusterId,
+          Collections.singletonList(topicResource),
+          TopicConfig.builder().setClusterId(clusterId).setTopicName(topicName))
+        .thenApply(configs -> configs.get(topicResource));
+  }
+
+  @Override
+  public CompletableFuture<Map<String, List<TopicConfig>>> listTopicConfigs(
+      String clusterId, List<String> topicNames) {
+    List<ConfigResource> topicResources = topicNames.stream()
+        .map(topicName -> new ConfigResource(ConfigResource.Type.TOPIC, topicName))
+        .collect(Collectors.toList());
+    return listConfigs(
+          clusterId,
+          topicResources,
+          TopicConfig.builder().setClusterId(clusterId).setTopicName(""))
+        .thenApply(configs -> configs.entrySet().stream().collect(Collectors.toMap(
+            e -> e.getKey().name(),
+            e -> e.getValue().stream().map(config -> TopicConfig.create(
+                config.getClusterId(),
+                e.getKey().name(),
+                config.getName(),
+                config.getValue(),
+                config.isDefault(),
+                config.isReadOnly(),
+                config.isSensitive(),
+                config.getSource(),
+                config.getSynonyms()
+                )).collect(Collectors.toList())
+            )
+        ));
   }
 
   @Override

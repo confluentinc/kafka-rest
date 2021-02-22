@@ -43,6 +43,7 @@ public final class V3ResourcesFeature implements Feature {
     configurable.register(SearchReplicasByBrokerAction.class);
     configurable.register(TopicConfigsResource.class);
     configurable.register(TopicsResource.class);
+    configurable.register(AllTopicConfigsResource.class);
     return true;
   }
 }

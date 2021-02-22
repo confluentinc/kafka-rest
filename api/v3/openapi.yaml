@@ -549,10 +549,10 @@ paths:
       summary: 'Get Partition'
       description: 'Returns the partition with the given `partition_id`.'
       tags:
-        - Partition
+        - Configs
       responses:
         '200':
-          $ref: '#/components/responses/GetPartitionResponse'
+          $ref: '#/components/responses/GetTopicConfigResponse'
 
   /clusters/{cluster_id}/topics/-/partitions/-/reassignment:
     parameters:
@@ -621,6 +621,19 @@ paths:
     get:
       summary: 'Get Replica'
       description: 'Returns the replica for the specified partition assigned to the specified broker.'
+      tags:
+        - Replica
+      responses:
+        '200':
+          $ref: '#/components/responses/GetReplicaResponse'
+
+  /clusters/{cluster_id}/topics-configs:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+
+    get:
+      summary: 'Get All topic configs'
+      description: 'Returns all topic configurations for topics hosted by the specified cluster.'
       tags:
         - Replica
       responses:
@@ -1088,6 +1101,8 @@ components:
               value:
                 type: string
                 nullable: true
+        validate_only:
+          type: boolean
 
     ConfigSource:
       type: string

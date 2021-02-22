@@ -169,7 +169,8 @@ public final class TopicsResource {
                 partitionsCount,
                 replicationFactor,
                 replicasAssignments,
-                configs)
+                configs,
+                request.getValidateOnly().orElse(false))
             .thenApply(none -> CreateTopicResponse.create(topicData));
 
     AsyncResponseBuilder.from(

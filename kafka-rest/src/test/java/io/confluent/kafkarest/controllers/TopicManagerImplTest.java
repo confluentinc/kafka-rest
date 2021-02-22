@@ -19,10 +19,7 @@ import static io.confluent.kafkarest.common.KafkaFutures.failedFuture;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.easymock.EasyMock.anyObject;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
@@ -44,21 +41,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.NotFoundException;
-import org.apache.kafka.clients.admin.Admin;
-import org.apache.kafka.clients.admin.CreateTopicsResult;
-import org.apache.kafka.clients.admin.DeleteTopicsResult;
-import org.apache.kafka.clients.admin.DescribeTopicsResult;
-import org.apache.kafka.clients.admin.ListTopicsResult;
-import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.clients.admin.TopicDescription;
-import org.apache.kafka.clients.admin.TopicListing;
+
+import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.errors.TimeoutException;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
+import org.easymock.EasyMock;
 import org.easymock.EasyMockRule;
+import org.easymock.IArgumentMatcher;
 import org.easymock.Mock;
 import org.junit.Before;
 import org.junit.Rule;
@@ -542,6 +535,34 @@ public class TopicManagerImplTest {
   }
 
   @Test
+  public void createTopic_validateOnly_doesntCreateTopic() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(
+        adminClient.createTopics(
+            eq(singletonList(
+                new NewTopic(
+                    TOPIC_1.getName(),
+                    TOPIC_1.getPartitions().size(),
+                    TOPIC_1.getReplicationFactor())
+                    .configs(singletonMap("cleanup.policy", "compact")))),
+            isValidateOnly()))
+        .andReturn(createTopicsResult);
+    expect(createTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
+    replay(clusterManager, adminClient, createTopicsResult);
+
+    topicManager.createTopic(
+        CLUSTER_ID,
+        TOPIC_1.getName(),
+        Optional.of(TOPIC_1.getPartitions().size()),
+        Optional.of(TOPIC_1.getReplicationFactor()),
+        /* replicasAssignments= */ Collections.emptyMap(),
+        singletonMap("cleanup.policy", Optional.of("compact")),
+        true).get();
+
+    verify(adminClient);
+  }
+
+  @Test
   public void createTopic_nonExistingTopic_createsTopic() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
@@ -562,7 +583,8 @@ public class TopicManagerImplTest {
         Optional.of(TOPIC_1.getPartitions().size()),
         Optional.of(TOPIC_1.getReplicationFactor()),
         /* replicasAssignments= */ Collections.emptyMap(),
-        singletonMap("cleanup.policy", Optional.of("compact"))).get();
+        singletonMap("cleanup.policy", Optional.of("compact")),
+        false).get();
 
     verify(adminClient);
   }
@@ -588,7 +610,8 @@ public class TopicManagerImplTest {
         /* partitionsCount= */ Optional.empty(),
         Optional.of(TOPIC_1.getReplicationFactor()),
         /* replicasAssignments= */ Collections.emptyMap(),
-        singletonMap("cleanup.policy", Optional.of("compact"))).get();
+        singletonMap("cleanup.policy", Optional.of("compact")),
+        false).get();
 
     verify(adminClient);
   }
@@ -615,7 +638,8 @@ public class TopicManagerImplTest {
         Optional.of(TOPIC_1.getPartitions().size()),
         /* replicationFactor= */ Optional.empty(),
         /* replicasAssignments= */ Collections.emptyMap(),
-        singletonMap("cleanup.policy", Optional.of("compact"))).get();
+        singletonMap("cleanup.policy", Optional.of("compact")),
+        false).get();
 
     verify(adminClient);
   }
@@ -651,7 +675,8 @@ public class TopicManagerImplTest {
         /* partitionsCount= */ Optional.empty(),
         /* replicationFactor= */ Optional.empty(),
         replicasAssignments,
-        singletonMap("cleanup.policy", Optional.of("compact"))).get();
+        singletonMap("cleanup.policy", Optional.of("compact")),
+        false).get();
 
     verify(adminClient);
   }
@@ -678,7 +703,8 @@ public class TopicManagerImplTest {
           Optional.of(TOPIC_1.getPartitions().size()),
           Optional.of(TOPIC_1.getReplicationFactor()),
           /* replicasAssignments= */ Collections.emptyMap(),
-          singletonMap("cleanup.policy", Optional.of("compact"))).get();
+          singletonMap("cleanup.policy", Optional.of("compact")),
+          false).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(TopicExistsException.class, e.getCause().getClass());
@@ -699,7 +725,8 @@ public class TopicManagerImplTest {
           Optional.of(TOPIC_1.getPartitions().size()),
           Optional.of(TOPIC_1.getReplicationFactor()),
           /* replicasAssignments= */ Collections.emptyMap(),
-          singletonMap("cleanup.policy", Optional.of("compact"))).get();
+          singletonMap("cleanup.policy", Optional.of("compact")),
+          false).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -759,4 +786,21 @@ public class TopicManagerImplTest {
     }
     return topicDescriptionMap;
   }
+
+  private static CreateTopicsOptions isValidateOnly(){
+    EasyMock.reportMatcher(new IArgumentMatcher() {
+      @Override
+      public boolean matches(Object argument) {
+        return argument instanceof CreateTopicsOptions
+            && ((CreateTopicsOptions) argument).shouldValidateOnly();
+      }
+
+      @Override
+      public void appendTo(StringBuffer buffer) {
+        // pass
+      }
+    });
+    return null;
+  }
+
 }
