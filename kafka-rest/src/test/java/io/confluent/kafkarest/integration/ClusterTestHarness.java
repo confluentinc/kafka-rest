@@ -14,6 +14,8 @@
  */
 package io.confluent.kafkarest.integration;
 
+import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.fail;
 
@@ -46,6 +48,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.CoreUtils;
@@ -56,6 +59,9 @@ import kafka.zk.KafkaZkClient;
 import kafka.zookeeper.ZooKeeperClient;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.AlterConfigOp;
+import org.apache.kafka.clients.admin.AlterConfigsResult;
+import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.NewPartitionReassignment;
@@ -66,6 +72,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -319,7 +326,7 @@ public abstract class ClusterTestHarness {
   }
 
   protected Invocation.Builder request(String path, String templateName, Object templateValue,
-      Map<String, String> queryParams) {
+    Map<String, String> queryParams) {
 
     Client client = getClient();
     // Only configure base application here because as a client we shouldn't need the resources
@@ -416,6 +423,23 @@ public abstract class ClusterTestHarness {
       result.all().get();
     } catch (InterruptedException | ExecutionException e) {
       Assert.fail(String.format("Failed to create topic: %s", e.getMessage()));
+    }
+  }
+
+  protected final void setTopicConfig(String topicName, String configName, String value) {
+    Properties properties = restConfig.getAdminProperties();
+    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    AdminClient adminClient = AdminClient.create(properties);
+
+    AlterConfigsResult result =
+        adminClient.incrementalAlterConfigs(
+            singletonMap(
+                new ConfigResource(ConfigResource.Type.TOPIC,topicName),
+                singletonList(new AlterConfigOp(new ConfigEntry(configName,value), AlterConfigOp.OpType.SET))));
+    try {
+      result.all().get();
+    } catch (InterruptedException | ExecutionException e) {
+      Assert.fail(String.format("Failed to alter topic config: %s", e.getMessage()));
     }
   }
 

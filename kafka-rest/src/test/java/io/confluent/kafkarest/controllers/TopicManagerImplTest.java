@@ -20,6 +20,7 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
@@ -44,7 +45,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.NotFoundException;
+
 import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.CreateTopicsOptions;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
@@ -58,7 +61,9 @@ import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.errors.TimeoutException;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
+import org.easymock.EasyMock;
 import org.easymock.EasyMockRule;
+import org.easymock.IArgumentMatcher;
 import org.easymock.Mock;
 import org.junit.Before;
 import org.junit.Rule;
@@ -551,7 +556,7 @@ public class TopicManagerImplTest {
                     TOPIC_1.getName(),
                     TOPIC_1.getPartitions().size(),
                     TOPIC_1.getReplicationFactor())
-            .configs(singletonMap("cleanup.policy", "compact")))))
+                    .configs(singletonMap("cleanup.policy", "compact")))))
         .andReturn(createTopicsResult);
     expect(createTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
     replay(clusterManager, adminClient, createTopicsResult);
@@ -666,7 +671,7 @@ public class TopicManagerImplTest {
                     TOPIC_1.getName(),
                     TOPIC_1.getPartitions().size(),
                     TOPIC_1.getReplicationFactor())
-            .configs(singletonMap("cleanup.policy", "compact")))))
+                    .configs(singletonMap("cleanup.policy", "compact")))))
         .andReturn(createTopicsResult);
     expect(createTopicsResult.all()).andReturn(failedFuture(new TopicExistsException("")));
     replay(clusterManager, adminClient, createTopicsResult);
@@ -759,4 +764,5 @@ public class TopicManagerImplTest {
     }
     return topicDescriptionMap;
   }
+
 }

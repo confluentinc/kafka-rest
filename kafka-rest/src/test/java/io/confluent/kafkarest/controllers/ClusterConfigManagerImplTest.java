@@ -154,11 +154,11 @@ public class ClusterConfigManagerImplTest {
             eq(singletonList(new ConfigResource(ConfigResource.Type.BROKER, ""))),
             anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
-    expect(describeConfigsResult.values())
+    expect(describeConfigsResult.all())
         .andReturn(
-            singletonMap(
+            KafkaFuture.completedFuture(singletonMap(
                 new ConfigResource(ConfigResource.Type.BROKER, ""),
-                KafkaFuture.completedFuture(CONFIG)));
+                CONFIG)));
     replay(adminClient, clusterManager, describeConfigsResult);
 
     List<ClusterConfig> configs =
@@ -176,11 +176,9 @@ public class ClusterConfigManagerImplTest {
             eq(singletonList(new ConfigResource(ConfigResource.Type.BROKER, ""))),
             anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
-    expect(describeConfigsResult.values())
+    expect(describeConfigsResult.all())
         .andReturn(
-            singletonMap(
-                new ConfigResource(ConfigResource.Type.BROKER, ""),
-                KafkaFutures.failedFuture(new NotFoundException("Cluster not found."))));
+            KafkaFutures.failedFuture(new NotFoundException("Cluster not found.")));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
@@ -198,11 +196,11 @@ public class ClusterConfigManagerImplTest {
         eq(singletonList(new ConfigResource(ConfigResource.Type.BROKER, ""))),
         anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
-    expect(describeConfigsResult.values())
+    expect(describeConfigsResult.all())
         .andReturn(
-            singletonMap(
+            KafkaFuture.completedFuture(singletonMap(
                 new ConfigResource(ConfigResource.Type.BROKER, ""),
-                KafkaFuture.completedFuture(CONFIG)));
+                CONFIG)));
     replay(adminClient, clusterManager, describeConfigsResult);
 
     ClusterConfig config =
@@ -223,11 +221,11 @@ public class ClusterConfigManagerImplTest {
                 new ConfigResource(ConfigResource.Type.BROKER, ""))),
             anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
-    expect(describeConfigsResult.values())
+    expect(describeConfigsResult.all())
         .andReturn(
-            singletonMap(
+            KafkaFuture.completedFuture(singletonMap(
                 new ConfigResource(ConfigResource.Type.BROKER, ""),
-                KafkaFuture.completedFuture(CONFIG)));
+                CONFIG)));
     replay(adminClient, clusterManager, describeConfigsResult);
 
     Optional<ClusterConfig> config =
@@ -246,11 +244,9 @@ public class ClusterConfigManagerImplTest {
                 new ConfigResource(ConfigResource.Type.BROKER, ""))),
             anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
-    expect(describeConfigsResult.values())
+    expect(describeConfigsResult.all())
         .andReturn(
-            singletonMap(
-                new ConfigResource(ConfigResource.Type.BROKER, ""),
-                KafkaFutures.failedFuture(new NotFoundException("Cluster not found."))));
+            KafkaFutures.failedFuture(new NotFoundException("Cluster not found.")));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {

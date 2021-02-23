@@ -627,6 +627,19 @@ paths:
         '200':
           $ref: '#/components/responses/GetReplicaResponse'
 
+  /clusters/{cluster_id}/topics-configs:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+
+    get:
+      summary: 'Get All topic configs'
+      description: 'Returns all topic configurations for topics hosted by the specified cluster.'
+      tags:
+        - Configs
+      responses:
+        '200':
+          $ref: '#/components/responses/ListTopicConfigsResponse'
+
 components:
   parameters:
     AclHost:
