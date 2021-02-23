@@ -764,5 +764,4 @@ public class TopicManagerImplTest {
     }
     return topicDescriptionMap;
   }
-
 }
