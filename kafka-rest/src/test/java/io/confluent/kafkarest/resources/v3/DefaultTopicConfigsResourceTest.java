@@ -1,0 +1,203 @@
+/*
+ * Copyright 2020 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
+package io.confluent.kafkarest.resources.v3;
+
+import io.confluent.kafkarest.controllers.DefaultTopicConfigManager;
+import io.confluent.kafkarest.entities.ConfigSource;
+import io.confluent.kafkarest.entities.TopicConfig;
+import io.confluent.kafkarest.entities.v3.*;
+import io.confluent.kafkarest.response.CrnFactoryImpl;
+import io.confluent.kafkarest.response.FakeAsyncResponse;
+import io.confluent.kafkarest.response.FakeUrlFactory;
+import org.apache.kafka.common.errors.TopicExistsException;
+import org.easymock.EasyMockRule;
+import org.easymock.Mock;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
+import static java.util.Collections.emptyList;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.*;
+
+@RunWith(JUnit4.class)
+public class DefaultTopicConfigsResourceTest {
+
+  private static final String CLUSTER_ID = "cluster-1";
+  private static final String TOPIC_NAME = "topic-1";
+
+  private static final TopicConfig CONFIG_1 =
+      TopicConfig.create(
+          CLUSTER_ID,
+          TOPIC_NAME,
+          "config-1",
+          "value-1",
+          /* isDefault= */ true,
+          /* isReadOnly= */ false,
+          /* isSensitive= */ false,
+          ConfigSource.DEFAULT_CONFIG,
+          /* synonyms= */ emptyList());
+  private static final TopicConfig CONFIG_2 =
+      TopicConfig.create(
+          CLUSTER_ID,
+          TOPIC_NAME,
+          "config-2",
+          "value-2",
+          /* isDefault= */ false,
+          /* isReadOnly= */ true,
+          /* isSensitive= */ false,
+          ConfigSource.DYNAMIC_TOPIC_CONFIG,
+          /* synonyms= */ emptyList());
+  private static final TopicConfig CONFIG_3 =
+      TopicConfig.create(
+          CLUSTER_ID,
+          TOPIC_NAME,
+          "config-3",
+          null,
+          /* isDefault= */ false,
+          /* isReadOnly= */ false,
+          /* isSensitive= */ true,
+          ConfigSource.DYNAMIC_TOPIC_CONFIG,
+          /* synonyms= */ emptyList());
+
+  @Rule
+  public final EasyMockRule mocks = new EasyMockRule(this);
+
+  @Mock
+  private DefaultTopicConfigManager defaultTopicConfigManager;
+
+  private DefaultTopicConfigsResource defaultTopicConfigsResource;
+
+  @Before
+  public void setUp() {
+    defaultTopicConfigsResource =
+        new DefaultTopicConfigsResource(
+            () -> defaultTopicConfigManager,
+            new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
+            new FakeUrlFactory());
+  }
+
+  @Test
+  public void listDefaultTopicConfigs_nonExistingTopic_returnsConfig() {
+    expect(defaultTopicConfigManager.listDefaultTopicConfigs(CLUSTER_ID, TOPIC_NAME))
+        .andReturn(
+            completedFuture(Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3)));
+    replay(defaultTopicConfigManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    defaultTopicConfigsResource.listDefaultTopicConfigs(response, CLUSTER_ID, TOPIC_NAME);
+
+    ListTopicConfigsResponse expected =
+        ListTopicConfigsResponse.create(
+            TopicConfigDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder()
+                        .setSelf(
+                            "/v3/clusters/cluster-1/topics/topic-1/default-configs")
+                        .build())
+                .setData(
+                    Arrays.asList(
+                        TopicConfigData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/topic-1/configs/config-1")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/config=config-1")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_NAME)
+                            .setName(CONFIG_1.getName())
+                            .setValue(CONFIG_1.getValue())
+                            .setDefault(CONFIG_1.isDefault())
+                            .setReadOnly(CONFIG_1.isReadOnly())
+                            .setSensitive(CONFIG_1.isSensitive())
+                            .setSource(CONFIG_1.getSource())
+                            .setSynonyms(
+                                CONFIG_1.getSynonyms().stream()
+                                    .map(ConfigSynonymData::fromConfigSynonym)
+                                    .collect(Collectors.toList()))
+                            .build(),
+                        TopicConfigData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/topic-1/configs/config-2")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/config=config-2")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_NAME)
+                            .setName(CONFIG_2.getName())
+                            .setValue(CONFIG_2.getValue())
+                            .setDefault(CONFIG_2.isDefault())
+                            .setReadOnly(CONFIG_2.isReadOnly())
+                            .setSensitive(CONFIG_2.isSensitive())
+                            .setSource(CONFIG_2.getSource())
+                            .setSynonyms(
+                                CONFIG_2.getSynonyms().stream()
+                                    .map(ConfigSynonymData::fromConfigSynonym)
+                                    .collect(Collectors.toList()))
+                            .build(),
+                        TopicConfigData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/topic-1/configs/config-3")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/config=config-3")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_NAME)
+                            .setName(CONFIG_3.getName())
+                            .setValue(CONFIG_3.getValue())
+                            .setDefault(CONFIG_3.isDefault())
+                            .setReadOnly(CONFIG_3.isReadOnly())
+                            .setSensitive(CONFIG_3.isSensitive())
+                            .setSource(CONFIG_3.getSource())
+                            .setSynonyms(
+                                CONFIG_3.getSynonyms().stream()
+                                    .map(ConfigSynonymData::fromConfigSynonym)
+                                    .collect(Collectors.toList()))
+                            .build()))
+                .build());
+
+    assertEquals(expected, response.getValue());
+  }
+
+  @Test
+  public void listTopicConfigs_nonExistingCluster_throwsNotFound() {
+    expect(defaultTopicConfigManager.listDefaultTopicConfigs(CLUSTER_ID, TOPIC_NAME))
+        .andReturn(failedFuture(new NotFoundException()));
+    replay(defaultTopicConfigManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    defaultTopicConfigsResource.listDefaultTopicConfigs(response, CLUSTER_ID, TOPIC_NAME);
+
+    assertEquals(NotFoundException.class, response.getException().getClass());
+  }
+}

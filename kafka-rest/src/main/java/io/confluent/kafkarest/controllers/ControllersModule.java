@@ -43,5 +43,6 @@ public final class ControllersModule extends AbstractBinder {
     bindAsContract(SchemaRecordSerializer.class);
     bind(TopicConfigManagerImpl.class).to(TopicConfigManager.class);
     bind(TopicManagerImpl.class).to(TopicManager.class);
+    bind(DefaultTopicConfigManagerImpl.class).to(DefaultTopicConfigManager.class);
   }
 }
