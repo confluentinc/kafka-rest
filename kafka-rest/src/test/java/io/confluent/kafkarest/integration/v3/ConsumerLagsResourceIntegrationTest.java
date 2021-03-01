@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.Versions;
@@ -77,30 +78,11 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
 
   @Test
   public void listConsumerLags_returnsConsumerLags() {
-    KafkaConsumer<?, ?> consumer1 = createConsumer(group1, "client-1");
-    KafkaConsumer<?, ?> consumer2 = createConsumer(group1, "client-2");
-    consumer1.subscribe(Collections.singletonList(topic1));
-    consumer2.subscribe(Collections.singletonList(topic2));
-    consumer1.poll(Duration.ofSeconds(1));
-    consumer2.poll(Duration.ofSeconds(1));
-    // After polling once, only one of the consumers will be member of the group, so we poll again
-    // to force the other consumer to join the group.
-    consumer1.poll(Duration.ofSeconds(1));
-    consumer2.poll(Duration.ofSeconds(1));
-//    consumer1.commitSync();
-//    consumer2.commitSync();
-
     // produce to topic1 partition0 and topic2 partition1
     BinaryPartitionProduceRequest request1 =
         BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
     produce(topic1, 0, request1);
     produce(topic2, 1, request1);
-
-    // consume from subscribed topics
-    consumer1.poll(Duration.ofSeconds(1));
-    consumer2.poll(Duration.ofSeconds(1));
-    consumer1.commitSync();
-    consumer2.commitSync();
 
     // stores expected currentOffsets and logEndOffsets for each topic partition after sending
     // 3 records to topic1 partition0 and topic2 partition1
@@ -109,35 +91,53 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     expectedOffsets[1][1] = 3;
     // all other values default to 0L
 
-    Response response =
-        request("/v3/clusters/" + clusterId + "/consumer-groups/" + group1 + "/lags")
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
+    KafkaConsumer<?, ?> consumer1 = createConsumer(group1, "client-1");
+    KafkaConsumer<?, ?> consumer2 = createConsumer(group1, "client-2");
 
-    assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    ConsumerLagDataList consumerLagDataList =
-        response.readEntity(ListConsumerLagsResponse.class).getValue();
+    consumer1.subscribe(Collections.singletonList(topic1));
+    consumer2.subscribe(Collections.singletonList(topic2));
+    consumer1.poll(Duration.ofSeconds(5));
+    consumer2.poll(Duration.ofSeconds(5));
+    // After polling once, only one of the consumers will be member of the group, so we poll again
+    // to force the other consumer to join the group.
+    consumer1.poll(Duration.ofSeconds(5));
+    consumer2.poll(Duration.ofSeconds(5));
+    // commit offsets from consuming from subscribed topics
+    consumer1.commitSync();
+    consumer2.commitSync();
 
-    // checks offsets and lag match what is expected for each topic partition
-    for (int t = 0; t < numTopics; t++) {
-      for (int p = 0; p < numPartitions; p++) {
-        final int finalT = t;
-        final int finalP = p;
-        ConsumerLagData consumerLagData =
-            consumerLagDataList.getData()
-                .stream()
-                .filter(lagData ->
-                    lagData.getTopicName().equals(topics[finalT]))
-                .filter(lagData ->
-                    lagData.getPartitionId() == finalP)
-                .findAny()
-                .get();
+    testWithRetry(
+        () -> {
+          Response response =
+              request("/v3/clusters/" + clusterId + "/consumer-groups/" + group1 + "/lags")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
 
-        assertEquals(expectedOffsets[t][p], (long) consumerLagData.getCurrentOffset());
-        assertEquals(expectedOffsets[t][p], (long) consumerLagData.getLogEndOffset());
-        assertEquals(0, (long) consumerLagData.getLag());
-      }
-    }
+          assertEquals(Status.OK.getStatusCode(), response.getStatus());
+          ConsumerLagDataList consumerLagDataList =
+              response.readEntity(ListConsumerLagsResponse.class).getValue();
+
+          // checks offsets and lag match what is expected for each topic partition
+          for (int t = 0; t < numTopics; t++) {
+            for (int p = 0; p < numPartitions; p++) {
+              final int finalT = t;
+              final int finalP = p;
+              ConsumerLagData consumerLagData =
+                  consumerLagDataList.getData()
+                      .stream()
+                      .filter(lagData ->
+                          lagData.getTopicName().equals(topics[finalT]))
+                      .filter(lagData ->
+                          lagData.getPartitionId() == finalP)
+                      .findAny()
+                      .get();
+
+              assertEquals(expectedOffsets[t][p], (long) consumerLagData.getCurrentOffset());
+              assertEquals(expectedOffsets[t][p], (long) consumerLagData.getLogEndOffset());
+              assertEquals(0, (long) consumerLagData.getLag());
+            }
+          }
+        });
 
     // produce again to topic2 partition1
     BinaryPartitionProduceRequest request2 =
@@ -210,17 +210,11 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
 
   @Test
   public void getConsumerLag_returnsConsumerLag() {
-    KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
-    consumer.subscribe(Arrays.asList(topic1, topic2));
     // produce to topic1 partition0 and topic2 partition1
     BinaryPartitionProduceRequest request1 =
         BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
     produce(topic1, 0, request1);
     produce(topic2, 1, request1);
-
-    // consume from subscribed topics (zero lag)
-    consumer.poll(Duration.ofSeconds(1));
-    consumer.commitSync();
 
     // stores expected currentOffsets and logEndOffsets for each topic partition after sending
     // 3 records to topic1 partition0 and topic2 partition1
@@ -229,22 +223,32 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     expectedOffsets[1][1] = 3;
     // all other values default to 0L
 
+    KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
+    consumer.subscribe(Arrays.asList(topic1, topic2));
+    // consume from subscribed topics (zero lag)
+    consumer.poll(Duration.ofSeconds(1));
+    consumer.commitSync();
+
     for (int t = 0; t < numTopics; t++) {
       for (int p = 0; p < numPartitions; p++) {
-        consumer.seekToEnd(Collections.singletonList(new TopicPartition(topics[t], p)));
-//        consumer.seek(new TopicPartition(topics[t], p), expectedOffsets[t][p]);
-        Response response =
-            request("/v3/clusters/" + clusterId + "/consumer-groups/" + group1 +
-                "/lags/" + topics[t] + "/partitions/" + p)
-                .accept(MediaType.APPLICATION_JSON)
-                .get();
+        final int finalP = p;
+        final int finalT = t;
+        testWithRetry(
+            () -> {
+              Response response =
+                  request("/v3/clusters/" + clusterId + "/consumer-groups/" + group1 +
+                      "/lags/" + topics[finalT] + "/partitions/" + finalP)
+                      .accept(MediaType.APPLICATION_JSON)
+                      .get();
 
-        assertEquals(Status.OK.getStatusCode(), response.getStatus());
-        ConsumerLagData consumerLagData =
-            response.readEntity(GetConsumerLagResponse.class).getValue();
-        assertEquals(expectedOffsets[t][p], (long) consumerLagData.getCurrentOffset());
-        assertEquals(expectedOffsets[t][p], (long) consumerLagData.getLogEndOffset());
-        assertEquals(0, (long) consumerLagData.getLag());
+              assertEquals(Status.OK.getStatusCode(), response.getStatus());
+              ConsumerLagData consumerLagData =
+                  response.readEntity(GetConsumerLagResponse.class).getValue();
+              assertEquals(expectedOffsets[finalT][finalP], (long) consumerLagData.getCurrentOffset());
+              assertEquals(expectedOffsets[finalT][finalP], (long) consumerLagData.getLogEndOffset());
+              assertEquals(0, (long) consumerLagData.getLag());
+            }
+        );
       }
     }
 
