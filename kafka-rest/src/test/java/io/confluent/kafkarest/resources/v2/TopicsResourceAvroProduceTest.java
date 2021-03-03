@@ -28,8 +28,6 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
-import io.confluent.kafka.serializers.subject.TopicNameStrategy;
-import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.TestUtils;
@@ -123,8 +121,7 @@ public class TopicsResourceAvroProduceTest
         new ProduceToTopicAction(
             () -> schemaManager,
             () -> recordSerializer,
-            () -> produceController,
-            new TopicNameStrategy()));
+            () -> produceController));
   }
 
   private Response produceToTopic(ProduceRequest request, List<RecordMetadata> results) {
@@ -136,28 +133,48 @@ public class TopicsResourceAvroProduceTest
             TOPIC_NAME + "value", /* schemaId= */ 2, /* schemaVersion= */ 1, VALUE_SCHEMA);
 
     expect(
-        schemaManager.parseSchema(
-            eq(EmbeddedFormat.AVRO),
-            isA(SubjectNameStrategy.class),
-            eq(TOPIC_NAME),
-            /* isKey= */ eq(true),
-            eq(RAW_KEY_SCHEMA)))
+        schemaManager.getSchema(
+            /* topicName= */ TOPIC_NAME,
+            /* format= */ Optional.of(EmbeddedFormat.AVRO),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.of(RAW_KEY_SCHEMA),
+            /* isKey= */ true))
         .andStubReturn(registeredKeySchema);
     expect(
-        schemaManager.parseSchema(
-            eq(EmbeddedFormat.AVRO),
-            isA(SubjectNameStrategy.class),
-            eq(TOPIC_NAME),
-            /* isKey= */ eq(false),
-            eq(RAW_VALUE_SCHEMA)))
+        schemaManager.getSchema(
+            /* topicName= */ TOPIC_NAME,
+            /* format= */ Optional.of(EmbeddedFormat.AVRO),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.of(RAW_VALUE_SCHEMA),
+            /* isKey= */ false))
         .andStubReturn(registeredValueSchema);
     expect(
-        schemaManager.getSchemaById(
-            isA(SubjectNameStrategy.class), eq(TOPIC_NAME), /* isKey= */ eq(true), eq(1)))
+        schemaManager.getSchema(
+            /* topicName= */ TOPIC_NAME,
+            /* format= */ Optional.empty(),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.of(1),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.empty(),
+            /* isKey= */ true))
         .andStubReturn(registeredKeySchema);
     expect(
-        schemaManager.getSchemaById(
-            isA(SubjectNameStrategy.class), eq(TOPIC_NAME), /* isKey= */ eq(false), eq(2)))
+        schemaManager.getSchema(
+            /* topicName= */ TOPIC_NAME,
+            /* format= */ Optional.empty(),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.of(2),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.empty(),
+            /* isKey= */ false))
         .andStubReturn(registeredValueSchema);
 
     for (int i = 0; i < request.getRecords().size(); i++) {

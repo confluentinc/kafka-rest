@@ -41,9 +41,9 @@ import io.confluent.kafka.serializers.subject.RecordNameStrategy;
 import io.confluent.kafka.serializers.subject.TopicNameStrategy;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v3.ProduceRequest;
+import io.confluent.kafkarest.entities.v3.ProduceRequest.EnumSubjectNameStrategy;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestHeader;
-import io.confluent.kafkarest.entities.v3.ProduceRequest.SchemaSubjectStrategy;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.testing.KafkaClusterEnvironment;
@@ -524,14 +524,14 @@ public class ProduceActionIntegrationTest {
             .setKey(
                 ProduceRequestData.builder()
                     .setFormat(EmbeddedFormat.AVRO)
-                    .setSchemaSubject("my-key-subject")
+                    .setSubject("my-key-subject")
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(TextNode.valueOf(key))
                     .build())
             .setValue(
                 ProduceRequestData.builder()
                     .setFormat(EmbeddedFormat.AVRO)
-                    .setSchemaSubject("my-value-subject")
+                    .setSubject("my-value-subject")
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(TextNode.valueOf(value))
                     .build())
@@ -570,13 +570,13 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(
                 ProduceRequestData.builder()
-                    .setSchemaSubject("my-key-subject")
+                    .setSubject("my-key-subject")
                     .setSchemaId(keySchema.getSchemaId())
                     .setData(TextNode.valueOf(key))
                     .build())
             .setValue(
                 ProduceRequestData.builder()
-                    .setSchemaSubject("my-value-subject")
+                    .setSubject("my-value-subject")
                     .setSchemaId(valueSchema.getSchemaId())
                     .setData(TextNode.valueOf(value))
                     .build())
@@ -615,13 +615,13 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(
                 ProduceRequestData.builder()
-                    .setSchemaSubject("my-key-subject")
+                    .setSubject("my-key-subject")
                     .setSchemaVersion(keySchema.getSchemaVersion())
                     .setData(TextNode.valueOf(key))
                     .build())
             .setValue(
                 ProduceRequestData.builder()
-                    .setSchemaSubject("my-value-subject")
+                    .setSubject("my-value-subject")
                     .setSchemaVersion(valueSchema.getSchemaVersion())
                     .setData(TextNode.valueOf(value))
                     .build())
@@ -658,12 +658,12 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(
                 ProduceRequestData.builder()
-                    .setSchemaSubject("my-key-subject")
+                    .setSubject("my-key-subject")
                     .setData(TextNode.valueOf(key))
                     .build())
             .setValue(
                 ProduceRequestData.builder()
-                    .setSchemaSubject("my-value-subject")
+                    .setSubject("my-value-subject")
                     .setData(TextNode.valueOf(value))
                     .build())
             .build();
@@ -704,14 +704,14 @@ public class ProduceActionIntegrationTest {
             .setKey(
                 ProduceRequestData.builder()
                     .setFormat(EmbeddedFormat.AVRO)
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.RECORD_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.RECORD_NAME)
                     .setRawSchema(keyRawSchema)
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
                     .setFormat(EmbeddedFormat.AVRO)
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.RECORD_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.RECORD_NAME)
                     .setRawSchema(valueRawSchema)
                     .setData(value)
                     .build())
@@ -765,13 +765,13 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(
                 ProduceRequestData.builder()
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.RECORD_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.RECORD_NAME)
                     .setSchemaId(keySchemaKey.getSchemaId())
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.RECORD_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.RECORD_NAME)
                     .setSchemaId(valueSchemaKey.getSchemaId())
                     .setData(value)
                     .build())
@@ -824,13 +824,13 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(
                 ProduceRequestData.builder()
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.TOPIC_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.TOPIC_NAME)
                     .setSchemaVersion(keySchemaKey.getSchemaVersion())
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.TOPIC_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.TOPIC_NAME)
                     .setSchemaVersion(valueSchemaKey.getSchemaVersion())
                     .setData(value)
                     .build())
@@ -883,12 +883,12 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(
                 ProduceRequestData.builder()
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.TOPIC_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.TOPIC_NAME)
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.TOPIC_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.TOPIC_NAME)
                     .setData(value)
                     .build())
             .build();
@@ -1155,14 +1155,14 @@ public class ProduceActionIntegrationTest {
             .setKey(
                 ProduceRequestData.builder()
                     .setFormat(EmbeddedFormat.JSONSCHEMA)
-                    .setSchemaSubject("my-key-subject")
+                    .setSubject("my-key-subject")
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
                     .setFormat(EmbeddedFormat.JSONSCHEMA)
-                    .setSchemaSubject("my-value-subject")
+                    .setSubject("my-value-subject")
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(value)
                     .build())
@@ -1201,13 +1201,13 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(
                 ProduceRequestData.builder()
-                    .setSchemaSubject("my-key-subject")
+                    .setSubject("my-key-subject")
                     .setSchemaId(keySchema.getSchemaId())
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
-                    .setSchemaSubject("my-value-subject")
+                    .setSubject("my-value-subject")
                     .setSchemaId(valueSchema.getSchemaId())
                     .setData(value)
                     .build())
@@ -1246,13 +1246,13 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(
                 ProduceRequestData.builder()
-                    .setSchemaSubject("my-key-subject")
+                    .setSubject("my-key-subject")
                     .setSchemaVersion(keySchema.getSchemaVersion())
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
-                    .setSchemaSubject("my-value-subject")
+                    .setSubject("my-value-subject")
                     .setSchemaVersion(valueSchema.getSchemaVersion())
                     .setData(value)
                     .build())
@@ -1289,12 +1289,12 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(
                 ProduceRequestData.builder()
-                    .setSchemaSubject("my-key-subject")
+                    .setSubject("my-key-subject")
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
-                    .setSchemaSubject("my-value-subject")
+                    .setSubject("my-value-subject")
                     .setData(value)
                     .build())
             .build();
@@ -1335,14 +1335,14 @@ public class ProduceActionIntegrationTest {
             .setKey(
                 ProduceRequestData.builder()
                     .setFormat(EmbeddedFormat.JSONSCHEMA)
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.RECORD_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.RECORD_NAME)
                     .setRawSchema(keyRawSchema)
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
                     .setFormat(EmbeddedFormat.JSONSCHEMA)
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.RECORD_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.RECORD_NAME)
                     .setRawSchema(valueRawSchema)
                     .setData(value)
                     .build())
@@ -1391,13 +1391,13 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(
                 ProduceRequestData.builder()
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.RECORD_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.RECORD_NAME)
                     .setSchemaId(keySchemaKey.getSchemaId())
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.RECORD_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.RECORD_NAME)
                     .setSchemaId(valueSchemaKey.getSchemaId())
                     .setData(value)
                     .build())
@@ -1446,13 +1446,13 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(
                 ProduceRequestData.builder()
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.TOPIC_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.TOPIC_NAME)
                     .setSchemaVersion(keySchemaKey.getSchemaVersion())
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.TOPIC_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.TOPIC_NAME)
                     .setSchemaVersion(valueSchemaKey.getSchemaVersion())
                     .setData(value)
                     .build())
@@ -1501,12 +1501,12 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(
                 ProduceRequestData.builder()
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.TOPIC_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.TOPIC_NAME)
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.TOPIC_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.TOPIC_NAME)
                     .setData(value)
                     .build())
             .build();
@@ -1813,14 +1813,14 @@ public class ProduceActionIntegrationTest {
             .setKey(
                 ProduceRequestData.builder()
                     .setFormat(EmbeddedFormat.PROTOBUF)
-                    .setSchemaSubject("my-key-subject")
+                    .setSubject("my-key-subject")
                     .setRawSchema(keySchema.canonicalString())
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
                     .setFormat(EmbeddedFormat.PROTOBUF)
-                    .setSchemaSubject("my-value-subject")
+                    .setSubject("my-value-subject")
                     .setRawSchema(valueSchema.canonicalString())
                     .setData(value)
                     .build())
@@ -1867,13 +1867,13 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(
                 ProduceRequestData.builder()
-                    .setSchemaSubject(keySubject)
+                    .setSubject(keySubject)
                     .setSchemaId(keySchemaKey.getSchemaId())
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
-                    .setSchemaSubject(valueSubject)
+                    .setSubject(valueSubject)
                     .setSchemaId(valueSchemaKey.getSchemaId())
                     .setData(value)
                     .build())
@@ -1920,13 +1920,13 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(
                 ProduceRequestData.builder()
-                    .setSchemaSubject(keySubject)
+                    .setSubject(keySubject)
                     .setSchemaVersion(keySchemaKey.getSchemaVersion())
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
-                    .setSchemaSubject(valueSubject)
+                    .setSubject(valueSubject)
                     .setSchemaVersion(valueSchemaKey.getSchemaVersion())
                     .setData(value)
                     .build())
@@ -1973,12 +1973,12 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(
                 ProduceRequestData.builder()
-                    .setSchemaSubject(keySubject)
+                    .setSubject(keySubject)
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
-                    .setSchemaSubject(valueSubject)
+                    .setSubject(valueSubject)
                     .setData(value)
                     .build())
             .build();
@@ -2021,14 +2021,14 @@ public class ProduceActionIntegrationTest {
             .setKey(
                 ProduceRequestData.builder()
                     .setFormat(EmbeddedFormat.PROTOBUF)
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.RECORD_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.RECORD_NAME)
                     .setRawSchema(keySchema.canonicalString())
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
                     .setFormat(EmbeddedFormat.PROTOBUF)
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.RECORD_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.RECORD_NAME)
                     .setRawSchema(valueSchema.canonicalString())
                     .setData(value)
                     .build())
@@ -2077,13 +2077,13 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(
                 ProduceRequestData.builder()
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.RECORD_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.RECORD_NAME)
                     .setSchemaId(keySchemaKey.getSchemaId())
                     .setData(key)
                     .build())
             .setValue(
                 ProduceRequestData.builder()
-                    .setSchemaSubjectStrategy(SchemaSubjectStrategy.RECORD_NAME)
+                    .setSubjectNameStrategy(EnumSubjectNameStrategy.RECORD_NAME)
                     .setSchemaId(valueSchemaKey.getSchemaId())
                     .setData(value)
                     .build())
@@ -2467,7 +2467,7 @@ public class ProduceActionIntegrationTest {
   public void produceBinaryWithSchemaSubject_returnsBadRequest() throws Exception {
     String clusterId = kafkaCluster.getClusterId();
     String request =
-        "{ \"key\": { \"type\": \"BINARY\", \"schema_subject\": \"foobar\" } }";
+        "{ \"key\": { \"type\": \"BINARY\", \"subject\": \"foobar\" } }";
 
     Response response =
         kafkaRest.request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
@@ -2483,7 +2483,7 @@ public class ProduceActionIntegrationTest {
   public void produceBinaryWithSchemaSubjectStrategy_returnsBadRequest() throws Exception {
     String clusterId = kafkaCluster.getClusterId();
     String request =
-        "{ \"key\": { \"type\": \"BINARY\", \"schema_subject_strategy\": \"TOPIC\" } }";
+        "{ \"key\": { \"type\": \"BINARY\", \"subject_name_strategy\": \"TOPIC\" } }";
 
     Response response =
         kafkaRest.request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
@@ -2593,7 +2593,7 @@ public class ProduceActionIntegrationTest {
       throws Exception {
     String clusterId = kafkaCluster.getClusterId();
     String request =
-        "{ \"key\": { \"schema_subject\": \"foobar\", \"schema_subject_strategy\": \"TOPIC\" } }";
+        "{ \"key\": { \"subject\": \"foobar\", \"subject_name_strategy\": \"TOPIC\" } }";
 
     Response response =
         kafkaRest.request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
@@ -2660,7 +2660,7 @@ public class ProduceActionIntegrationTest {
       throws Exception {
     String clusterId = kafkaCluster.getClusterId();
     String request =
-        "{ \"key\": { \"schema_subject_strategy\": \"RECORD_NAME\", \"schema_version\": 1 } }";
+        "{ \"key\": { \"subject_name_strategy\": \"RECORD_NAME\", \"schema_version\": 1 } }";
 
     Response response =
         kafkaRest.request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
@@ -2676,7 +2676,7 @@ public class ProduceActionIntegrationTest {
   public void produceAvroWithRecordSchemaSubjectStrategyAndLatestVersion_returnsBadRequest()
       throws Exception {
     String clusterId = kafkaCluster.getClusterId();
-    String request = "{ \"key\": { \"schema_subject_strategy\": \"RECORD_NAME\" } }";
+    String request = "{ \"key\": { \"subject_name_strategy\": \"RECORD_NAME\" } }";
 
     Response response =
         kafkaRest.request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")

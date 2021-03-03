@@ -29,7 +29,6 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
-import io.confluent.kafka.serializers.subject.TopicNameStrategy;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -163,8 +162,7 @@ public class TopicsResourceBinaryProduceTest
         new ProduceToTopicAction(
             () -> schemaManager,
             () -> recordSerializer,
-            () -> produceController,
-            new TopicNameStrategy()));
+            () -> produceController));
   }
 
   private Response produceToTopic(

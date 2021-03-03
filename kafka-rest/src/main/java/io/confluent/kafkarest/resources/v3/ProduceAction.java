@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
-import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
@@ -38,6 +37,7 @@ import io.confluent.kafkarest.response.StreamingResponse;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collector;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -67,18 +67,15 @@ public final class ProduceAction {
   private final Provider<SchemaManager> schemaManager;
   private final Provider<RecordSerializer> recordSerializer;
   private final Provider<ProduceController> produceController;
-  private final SubjectNameStrategy defaultSubjectNameStrategy;
 
   @Inject
   public ProduceAction(
       Provider<SchemaManager> schemaManager,
       Provider<RecordSerializer> recordSerializer,
-      Provider<ProduceController> produceController,
-      SubjectNameStrategy defaultSubjectNameStrategy) {
+      Provider<ProduceController> produceController) {
     this.schemaManager = requireNonNull(schemaManager);
     this.recordSerializer = requireNonNull(recordSerializer);
     this.produceController = requireNonNull(produceController);
-    this.defaultSubjectNameStrategy = requireNonNull(defaultSubjectNameStrategy);
   }
 
   @POST
@@ -130,183 +127,24 @@ public final class ProduceAction {
 
   private Optional<RegisteredSchema> getSchema(
       String topicName, boolean isKey, ProduceRequestData data) {
-    // format
-    if (data.getFormat().isPresent() && !data.getRawSchema().isPresent()) {
-      // If format != null and schema = null, then this is a schemaless format.
+    if (data.getFormat().isPresent() && !data.getFormat().get().requiresSchema()) {
       return Optional.empty();
     }
 
-    // format, (schema_subject|schema_subject_strategy)?, schema
-    if (data.getFormat().isPresent() && data.getRawSchema().isPresent()) {
-      return Optional.of(
-          getSchemaFromRawSchema(
-              topicName,
-              isKey,
-              data,
-              data.getFormat().get(),
-              data.getRawSchema().get()));
-    }
-
-    // (schema_subject|schema_subject_strategy)?, schema_id
-    if (data.getSchemaId().isPresent()) {
-      return Optional.of(
-          getSchemaFromSchemaId(
-              topicName,
-              isKey,
-              data,
-              data.getSchemaId().get()));
-    }
-
-    // (schema_subject|schema_subject_strategy)?, schema_version
-    if (data.getSchemaVersion().isPresent()) {
-      return Optional.of(
-          getSchemaFromSchemaVersion(
-              topicName,
-              isKey,
-              data,
-              data.getSchemaVersion().get()));
-    }
-
-    // (schema_subject|schema_subject_strategy)?
-    return Optional.of(getLatestSchema(topicName, isKey, data));
-  }
-
-  private RegisteredSchema getSchemaFromRawSchema(
-      String topicName,
-      boolean isKey,
-      ProduceRequestData data,
-      EmbeddedFormat format,
-      String rawSchema) {
-    // format, schema_subject, schema
-    if (data.getSchemaSubject().isPresent()) {
-      return schemaManager.get().parseSchema(
-          format,
-          data.getSchemaSubject().get(),
-          rawSchema);
-    }
-
-    // format, schema_subject_strategy, schema
-    if (data.getSchemaSubjectStrategy().isPresent()) {
-      return schemaManager.get().parseSchema(
-          format,
-          data.getSchemaSubjectStrategy().get(),
-          topicName,
-          isKey,
-          rawSchema);
-    }
-
-    // format, schema
-    return schemaManager.get().parseSchema(
-        format,
-        defaultSubjectNameStrategy,
-        topicName,
-        isKey,
-        rawSchema);
-  }
-
-  private RegisteredSchema getSchemaFromSchemaId(
-      String topicName,
-      boolean isKey,
-      ProduceRequestData data,
-      int schemaId) {
-    // schema_subject, schema_id
-    if (data.getSchemaSubject().isPresent()) {
-      return schemaManager.get().getSchemaById(
-          data.getSchemaSubject().get(),
-          schemaId);
-    }
-
-    // schema_subject_strategy, schema_id
-    if (data.getSchemaSubjectStrategy().isPresent()) {
-      return schemaManager.get().getSchemaById(
-          data.getSchemaSubjectStrategy().get(),
-          topicName,
-          isKey,
-          schemaId);
-    }
-
-    // schema_id
-    return schemaManager.get().getSchemaById(
-        defaultSubjectNameStrategy,
-        topicName,
-        isKey,
-        schemaId);
-  }
-
-  private RegisteredSchema getSchemaFromSchemaVersion(
-      String topicName,
-      boolean isKey,
-      ProduceRequestData data,
-      int schemaVersion) {
-    // schema_subject, schema_version
-    if (data.getSchemaSubject().isPresent()) {
-      return schemaManager.get().getSchemaByVersion(
-          data.getSchemaSubject().get(),
-          schemaVersion);
-    }
-
-    // schema_subject_strategy?, schema_version
-    return schemaManager.get().getSchemaByVersion(
-        getSchemaSubjectUnsafe(topicName, isKey, data),
-        schemaVersion);
-  }
-
-  private RegisteredSchema getLatestSchema(
-      String topicName,
-      boolean isKey,
-      ProduceRequestData data) {
-    // schema_subject
-    if (data.getSchemaSubject().isPresent()) {
-      return schemaManager.get().getLatestSchema(data.getSchemaSubject().get());
-    }
-
-    // schema_subject_strategy?
-    return schemaManager.get().getLatestSchema(getSchemaSubjectUnsafe(topicName, isKey, data));
-  }
-
-  /**
-   * Tries to get the schema subject from only schema_subject_strategy, {@code topicName} and {@code
-   * isKey}.
-   *
-   * <p>This operation  is only really supported if schema_subject_strategy does not depend on the
-   * parsed schema to generate the subject name, as we need the subject name to fetch the schema
-   * by version. That's the case, for example, of TopicNameStrategy
-   * (schema_subject_strategy=TOPIC_NAME). Since TopicNameStrategy is so popular, instead of
-   * requiring users to always specify schema_subject if using schema_version?, we try using the
-   * strategy to generate the subject name, and fail if that does not work out.
-   */
-  private String getSchemaSubjectUnsafe(String topicName, boolean isKey, ProduceRequestData data) {
-    SubjectNameStrategy subjectNameStrategy;
-    if (data.getSchemaSubjectStrategy().isPresent()) {
-      subjectNameStrategy = data.getSchemaSubjectStrategy().get();
-    } else {
-      subjectNameStrategy = defaultSubjectNameStrategy;
-    }
-
-    String subject = null;
-    Exception cause = null;
     try {
-      subject = subjectNameStrategy.subjectName(topicName, isKey, /* schema= */ null);
-    } catch (Exception e) {
-      cause = e;
+      return Optional.of(
+          schemaManager.get().getSchema(
+              topicName,
+              data.getFormat(),
+              data.getSubject(),
+              data.getSubjectNameStrategy().map(Function.identity()),
+              data.getSchemaId(),
+              data.getSchemaVersion(),
+              data.getRawSchema(),
+              isKey));
+    } catch (IllegalArgumentException e) {
+      throw StatusCodeException.create(Status.BAD_REQUEST, "Bad Request", e.getMessage(), e);
     }
-
-    if (subject == null) {
-      StatusCodeException error =
-          StatusCodeException.create(
-              Status.BAD_REQUEST,
-              "Bad Request",
-              String.format(
-                  "Cannot use%s schema_subject_strategy%s without schema_id or schema.",
-                  data.getSchemaSubjectStrategy().map(strategy -> "").orElse(" default"),
-                  data.getSchemaSubjectStrategy().map(strategy -> "=" + strategy).orElse("")));
-      if (cause != null) {
-        error.initCause(cause);
-      }
-      throw error;
-    }
-
-    return subject;
   }
 
   private Optional<ByteString> serialize(

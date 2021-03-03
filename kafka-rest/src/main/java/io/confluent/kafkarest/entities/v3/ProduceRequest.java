@@ -142,13 +142,13 @@ public abstract class ProduceRequest {
     @JsonInclude(Include.NON_ABSENT)
     public abstract Optional<EmbeddedFormat> getFormat();
 
-    @JsonProperty("schema_subject")
+    @JsonProperty("subject")
     @JsonInclude(Include.NON_ABSENT)
-    public abstract Optional<String> getSchemaSubject();
+    public abstract Optional<String> getSubject();
 
-    @JsonProperty("schema_subject_strategy")
+    @JsonProperty("subject_name_strategy")
     @JsonInclude(Include.NON_ABSENT)
-    public abstract Optional<SchemaSubjectStrategy> getSchemaSubjectStrategy();
+    public abstract Optional<EnumSubjectNameStrategy> getSubjectNameStrategy();
 
     @JsonProperty("schema_id")
     @JsonInclude(Include.NON_ABSENT)
@@ -171,18 +171,18 @@ public abstract class ProduceRequest {
 
     @JsonCreator
     static ProduceRequestData fromJson(
-        @JsonProperty("schema_subject_strategy") @Nullable
-            SchemaSubjectStrategy schemaSubjectStrategy,
         @JsonProperty("type") @Nullable EmbeddedFormat format,
-        @JsonProperty("schema_subject") @Nullable String schemaSubject,
+        @JsonProperty("subject") @Nullable String subject,
+        @JsonProperty("subject_name_strategy") @Nullable
+            EnumSubjectNameStrategy subjectNameStrategy,
         @JsonProperty("schema_id") @Nullable Integer schemaId,
         @JsonProperty("schema_version") @Nullable Integer schemaVersion,
         @JsonProperty("schema") @Nullable String rawSchema,
         @JsonProperty("data") JsonNode data) {
       return builder()
           .setFormat(format)
-          .setSchemaSubjectStrategy(schemaSubjectStrategy)
-          .setSchemaSubject(schemaSubject)
+          .setSubjectNameStrategy(subjectNameStrategy)
+          .setSubject(subject)
           .setSchemaId(schemaId)
           .setSchemaVersion(schemaVersion)
           .setRawSchema(rawSchema)
@@ -198,10 +198,10 @@ public abstract class ProduceRequest {
 
       public abstract Builder setFormat(@Nullable EmbeddedFormat format);
 
-      public abstract Builder setSchemaSubjectStrategy(
-          @Nullable SchemaSubjectStrategy schemaSubjectStrategy);
+      public abstract Builder setSubject(@Nullable String schemaSubject);
 
-      public abstract Builder setSchemaSubject(@Nullable String schemaSubject);
+      public abstract Builder setSubjectNameStrategy(
+          @Nullable EnumSubjectNameStrategy subjectNameStrategy);
 
       public abstract Builder setSchemaId(@Nullable Integer getSchemaId);
 
@@ -217,9 +217,9 @@ public abstract class ProduceRequest {
         ProduceRequestData request = autoBuild();
 
         checkState(
-            !request.getSchemaSubjectStrategy().isPresent()
-                || !request.getSchemaSubject().isPresent(),
-            "Only one of 'schema_subject_strategy' or 'schema_subject' can be used.");
+            !request.getSubjectNameStrategy().isPresent()
+                || !request.getSubject().isPresent(),
+            "Only one of 'subject_name_strategy' or 'subject' can be used.");
 
         checkState(
             request.getSchemaId().isPresent()
@@ -242,25 +242,25 @@ public abstract class ProduceRequest {
                 "'schema_version=latest' cannot be used with 'serializer'.");
           } else {
             checkState(
-                !request.getSchemaSubjectStrategy().isPresent(),
-                "'serializer=%s' cannot be used with 'schema_subject_strategy'.",
-                request.getFormat().orElse(null));
+                !request.getSubjectNameStrategy().isPresent(),
+                "'type=%s' cannot be used with 'subject_strategy'.",
+                request.getFormat().get());
             checkState(
-                !request.getSchemaSubject().isPresent(),
-                "'serializer=%s' cannot be used with 'schema_subject'.",
-                request.getFormat().orElse(null));
+                !request.getSubject().isPresent(),
+                "'type=%s' cannot be used with 'subject'.",
+                request.getFormat().get());
             checkState(
                 !request.getSchemaId().isPresent(),
-                "'serializer=%s' cannot be used with 'schema_id'.",
-                request.getFormat().orElse(null));
+                "'type=%s' cannot be used with 'schema_id'.",
+                request.getFormat().get());
             checkState(
                 !request.getSchemaVersion().isPresent(),
-                "'serializer=%s' cannot be used with 'schema_version'.",
-                request.getFormat().orElse(null));
+                "'type=%s' cannot be used with 'schema_version'.",
+                request.getFormat().get());
             checkState(
                 !request.getRawSchema().isPresent(),
-                "'serializer=%s' cannot be used with 'schema'.",
-                request.getFormat().orElse(null));
+                "'type=%s' cannot be used with 'schema'.",
+                request.getFormat().get());
           }
         }
 
@@ -269,7 +269,7 @@ public abstract class ProduceRequest {
     }
   }
 
-  public enum SchemaSubjectStrategy implements SubjectNameStrategy {
+  public enum EnumSubjectNameStrategy implements SubjectNameStrategy {
 
     /**
      * See {@link TopicNameStrategy}.
@@ -288,7 +288,7 @@ public abstract class ProduceRequest {
 
     private final SubjectNameStrategy delegate;
 
-    SchemaSubjectStrategy(SubjectNameStrategy delegate) {
+    EnumSubjectNameStrategy(SubjectNameStrategy delegate) {
       this.delegate = requireNonNull(delegate);
     }
 

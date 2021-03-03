@@ -18,51 +18,53 @@ package io.confluent.kafkarest.controllers;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
+import java.util.Optional;
 
 /**
- * A manager for Schema Registry {@link io.confluent.kafka.schemaregistry.ParsedSchema schemas}.
+ * A manager for Schema Registry {@link RegisteredSchema schemas}.
  */
 public interface SchemaManager {
 
   /**
-   * Returns the {@link RegisteredSchema schema} registered with the given {@code schemaId}.
-   */
-  RegisteredSchema getSchemaById(String subject, int schemaId);
-
-  /**
-   * Returns the {@link RegisteredSchema schema} registered with the given {@code schemaId}.
-   */
-  RegisteredSchema getSchemaById(
-      SubjectNameStrategy subjectNameStrategy, String topicName, boolean isKey, int schemaId);
-
-  /**
-   * Returns the {@link RegisteredSchema schema} registered with the given {@code schemaVersion}.
-   */
-  RegisteredSchema getSchemaByVersion(String subject, int schemaVersion);
-
-  /**
-   * Parses and returns {@code rawSchema}.
+   * Returns a {@link RegisteredSchema schema} matching the parameter options.
    *
-   * <p>If the subject does not contain a registered schema equals to the parsed {@code rawSchema},
-   * one will be registered.
-   */
-  RegisteredSchema parseSchema(EmbeddedFormat format, String subject, String rawSchema);
-
-  /**
-   * Parses and returns {@code rawSchema}.
+   * <p>There are two pieces of information required to get an schema: the subject to which the
+   * schema is/should be registered, and a schema identifier (or schema itself).
    *
-   * <p>If the subject does not contain a registered schema equals to the parsed {@code rawSchema},
-   * one will be registered.
+   * <p>The first bit is handled by {@code subject} and {@code subjectNameStrategy}, which are
+   * mutually exclusive. If {@code subject} is passed, that's the subject used. If {@code
+   * subjectNameStrategy} is passed instead, then it will be used to generate the subject. All
+   * strategies (TOPIC_NAME, RECORD_NAME and TOPIC_RECORD_NAME) are valid if using {@code schemaId}
+   * or {@code rawSchema}, but only TOPIC_NAME is valid for everything else. If neither {@code
+   * subject} or {@code subjectNameStrategy} are passed, a default strategy is used based off the
+   * configs {@code schema.registry.key.subject.name.strategy} and {@code
+   * schema.registry.value.subject.name.strategy}. The same considerations above apply for which
+   * default strategies are valid.
+   *
+   * <p>The second bit is handled by {@code schemaId}, {@code schemaVersion} and {@code rawSchema},
+   * which are mutually exclusive. If {@code schemaId} is passed, that schema is going to be used,
+   * but only if the subject (see previous paragraph) contains a version mapped to that schema ID.
+   * If {@code schemaVersion} is used, then that version of subject is going to be used. If {@code
+   * rawSchema} is used, a new version with that schema is going to be registered in the subject,
+   * unless the subject already has a version with exactly the same schema, in which case no new
+   * version is registered and that version is used instead. If neither {@code schemaId}, {@code
+   * schemaVersion} or {@code rawSchema} are passed, the latest version of the subject is used.
+   *
+   * <p>If passing {@code rawSchema}, {@code format} is mandatory. {@code format} is otherwise
+   * illegal to be passed.
+   *
+   * <p>Schema Registry is not very descriptive as for error causes, so non-existing subject, schema
+   * ID or schema version will result in {@link
+   * org.apache.kafka.common.errors.SerializationException}, as it will any other Schema Registry
+   * related error. Invalid combination of options will result in {@link IllegalArgumentException}.
    */
-  RegisteredSchema parseSchema(
-      EmbeddedFormat format,
-      SubjectNameStrategy subjectNameStrategy,
+  RegisteredSchema getSchema(
       String topicName,
-      boolean isKey,
-      String rawSchema);
-
-  /**
-   * Returns the {@link RegisteredSchema schema} registered with the latest version.
-   */
-  RegisteredSchema getLatestSchema(String subject);
+      Optional<EmbeddedFormat> format,
+      Optional<String> subject,
+      Optional<SubjectNameStrategy> subjectNameStrategy,
+      Optional<Integer> schemaId,
+      Optional<Integer> schemaVersion,
+      Optional<String> rawSchema,
+      boolean isKey);
 }
