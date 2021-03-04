@@ -32,6 +32,7 @@ import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestHeader;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.entities.v3.ProduceResponse.ProduceResponseData;
+import io.confluent.kafkarest.exceptions.BadRequestException;
 import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.response.StreamingResponse;
 import java.time.Instant;
@@ -143,7 +144,7 @@ public final class ProduceAction {
               data.getRawSchema(),
               isKey));
     } catch (IllegalArgumentException e) {
-      throw StatusCodeException.create(Status.BAD_REQUEST, "Bad Request", e.getMessage(), e);
+      throw new BadRequestException(e.getMessage(), e);
     }
   }
 

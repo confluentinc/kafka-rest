@@ -27,27 +27,11 @@ public class BadRequestException extends StatusCodeException {
     this("Bad Request", detail, cause);
   }
 
-  public BadRequestException(Integer code, String detail) {
-    this(code, "Bad Request", detail);
-  }
-
-  public BadRequestException(int code, String detail, Throwable cause) {
-    this(code, "Bad Request", detail, cause);
-  }
-
   public BadRequestException(String title, String detail) {
     super(Status.BAD_REQUEST, title, detail);
   }
 
   public BadRequestException(String title, String detail, Throwable cause) {
     super(Status.BAD_REQUEST, title, detail, cause);
-  }
-
-  public BadRequestException(Integer code, String title, String detail) {
-    super(Status.BAD_REQUEST, code, title, detail);
-  }
-
-  public BadRequestException(int code, String title, String detail, Throwable cause) {
-    super(Status.BAD_REQUEST, code, title, detail, cause);
   }
 }
