@@ -27,6 +27,7 @@ import static org.junit.Assert.assertNull;
 
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestApplication;
@@ -159,7 +160,9 @@ public class TopicsResourceBinaryProduceTest
   public TopicsResourceBinaryProduceTest() throws RestConfigException {
     addResource(
         new ProduceToTopicAction(
-            () -> schemaManager, () -> recordSerializer, () -> produceController));
+            () -> schemaManager,
+            () -> recordSerializer,
+            () -> produceController));
   }
 
   private Response produceToTopic(
@@ -196,6 +199,7 @@ public class TopicsResourceBinaryProduceTest
               /* clusterId= */ eq(""),
               eq(TOPIC_NAME),
               eq(record.getPartition()),
+              /* headers= */ eq(ImmutableMultimap.of()),
               eq(serializedKey),
               eq(serializedValue),
               /* timestamp= */ isA(Instant.class)))

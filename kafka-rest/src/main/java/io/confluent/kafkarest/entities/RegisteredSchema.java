@@ -24,11 +24,20 @@ public abstract class RegisteredSchema {
   RegisteredSchema() {
   }
 
+  public abstract String getSubject();
+
   public abstract int getSchemaId();
+
+  public abstract int getSchemaVersion();
 
   public abstract ParsedSchema getSchema();
 
-  public static RegisteredSchema create(int schemaId, ParsedSchema schema) {
-    return new AutoValue_RegisteredSchema(schemaId, schema);
+  public final EmbeddedFormat getFormat() {
+    return EmbeddedFormat.forSchemaType(getSchema().schemaType());
+  }
+
+  public static RegisteredSchema create(
+      String subject, int schemaId, int schemaVersion, ParsedSchema schema) {
+    return new AutoValue_RegisteredSchema(subject, schemaId, schemaVersion, schema);
   }
 }

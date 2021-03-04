@@ -47,6 +47,7 @@ import java.util.TimeZone;
 import javax.ws.rs.core.Configurable;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.StringUtil;
+import org.glassfish.jersey.server.ServerProperties;
 
 /**
  * Utilities for configuring and running an embedded Kafka server.
@@ -101,6 +102,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
             contextInvocationHandler
         );
 
+    config.property(ServerProperties.OUTBOUND_CONTENT_LENGTH_BUFFER, 0);
     config.register(new BackendsModule());
     config.register(new ConfigModule(appConfig));
     config.register(new ControllersModule());
@@ -120,7 +122,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   }
 
   @Override
-  protected ObjectMapper getJsonMapper() {
+  public ObjectMapper getJsonMapper() {
     return super.getJsonMapper()
         .registerModule(new GuavaModule())
         .registerModule(new Jdk8Module())

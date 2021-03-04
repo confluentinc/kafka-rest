@@ -16,6 +16,9 @@
 package io.confluent.kafkarest.entities;
 
 import com.google.auto.value.AutoValue;
+import java.time.Instant;
+import java.util.Optional;
+import javax.annotation.Nullable;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 @AutoValue
@@ -28,11 +31,32 @@ public abstract class ProduceResult {
 
   public abstract long getOffset();
 
-  public static ProduceResult create(int partitionId, long offset) {
-    return new AutoValue_ProduceResult(partitionId, offset);
+  public abstract Optional<Instant> getTimestamp();
+
+  public abstract int getSerializedKeySize();
+
+  public abstract int getSerializedValueSize();
+
+  public static ProduceResult create(
+      int partitionId,
+      long offset,
+      @Nullable Instant timestamp,
+      int serializedKeySize,
+      int serializedValueSize) {
+    return new AutoValue_ProduceResult(
+        partitionId,
+        offset,
+        Optional.ofNullable(timestamp),
+        serializedKeySize,
+        serializedValueSize);
   }
 
   public static ProduceResult fromRecordMetadata(RecordMetadata metadata) {
-    return create(metadata.partition(), metadata.offset());
+    return create(
+        metadata.partition(),
+        metadata.offset(),
+        metadata.hasTimestamp() ? Instant.ofEpochMilli(metadata.timestamp()) : null,
+        metadata.serializedKeySize(),
+        metadata.serializedValueSize());
   }
 }

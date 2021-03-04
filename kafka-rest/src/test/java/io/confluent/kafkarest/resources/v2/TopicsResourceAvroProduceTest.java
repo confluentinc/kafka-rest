@@ -25,6 +25,7 @@ import static org.junit.Assert.assertEquals;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafkarest.KafkaRestApplication;
@@ -118,24 +119,62 @@ public class TopicsResourceAvroProduceTest
   public TopicsResourceAvroProduceTest() throws RestConfigException {
     addResource(
         new ProduceToTopicAction(
-            () -> schemaManager, () -> recordSerializer, () -> produceController));
+            () -> schemaManager,
+            () -> recordSerializer,
+            () -> produceController));
   }
 
   private Response produceToTopic(ProduceRequest request, List<RecordMetadata> results) {
-    RegisteredSchema registeredKeySchema = RegisteredSchema.create(1, KEY_SCHEMA);
-    RegisteredSchema registeredValueSchema = RegisteredSchema.create(2, VALUE_SCHEMA);
+    RegisteredSchema registeredKeySchema =
+        RegisteredSchema.create(
+            TOPIC_NAME + "key", /* schemaId= */ 1, /* schemaVersion= */ 1, KEY_SCHEMA);
+    RegisteredSchema registeredValueSchema =
+        RegisteredSchema.create(
+            TOPIC_NAME + "value", /* schemaId= */ 2, /* schemaVersion= */ 1, VALUE_SCHEMA);
 
     expect(
-        schemaManager.parseSchema(
-            EmbeddedFormat.AVRO, TOPIC_NAME, RAW_KEY_SCHEMA, /* isKey= */ true))
+        schemaManager.getSchema(
+            /* topicName= */ TOPIC_NAME,
+            /* format= */ Optional.of(EmbeddedFormat.AVRO),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.of(RAW_KEY_SCHEMA),
+            /* isKey= */ true))
         .andStubReturn(registeredKeySchema);
     expect(
-        schemaManager.parseSchema(
-            EmbeddedFormat.AVRO, TOPIC_NAME, RAW_VALUE_SCHEMA, /* isKey= */ false))
+        schemaManager.getSchema(
+            /* topicName= */ TOPIC_NAME,
+            /* format= */ Optional.of(EmbeddedFormat.AVRO),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.of(RAW_VALUE_SCHEMA),
+            /* isKey= */ false))
         .andStubReturn(registeredValueSchema);
-    expect(schemaManager.getSchemaById(EmbeddedFormat.AVRO, 1))
+    expect(
+        schemaManager.getSchema(
+            /* topicName= */ TOPIC_NAME,
+            /* format= */ Optional.empty(),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.of(1),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.empty(),
+            /* isKey= */ true))
         .andStubReturn(registeredKeySchema);
-    expect(schemaManager.getSchemaById(EmbeddedFormat.AVRO, 2))
+    expect(
+        schemaManager.getSchema(
+            /* topicName= */ TOPIC_NAME,
+            /* format= */ Optional.empty(),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.of(2),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.empty(),
+            /* isKey= */ false))
         .andStubReturn(registeredValueSchema);
 
     for (int i = 0; i < request.getRecords().size(); i++) {
@@ -165,6 +204,7 @@ public class TopicsResourceAvroProduceTest
               /* clusterId= */ eq(""),
               eq(TopicsResourceAvroProduceTest.TOPIC_NAME),
               eq(record.getPartition()),
+              /* headers= */ eq(ImmutableMultimap.of()),
               eq(Optional.of(serializedKey)),
               eq(Optional.of(serializedValue)),
               /* timestamp= */ isA(Instant.class)))
