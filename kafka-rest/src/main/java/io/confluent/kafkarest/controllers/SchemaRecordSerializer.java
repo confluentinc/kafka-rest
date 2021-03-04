@@ -31,12 +31,12 @@ import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaUtils;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerializer;
 import io.confluent.kafka.serializers.json.AbstractKafkaJsonSchemaSerializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializer;
-import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.config.ConfigModule.AvroSerializerConfigs;
 import io.confluent.kafkarest.config.ConfigModule.JsonschemaSerializerConfigs;
 import io.confluent.kafkarest.config.ConfigModule.ProtobufSerializerConfigs;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
+import io.confluent.kafkarest.exceptions.BadRequestException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
@@ -50,12 +50,10 @@ final class SchemaRecordSerializer {
   private final AvroSerializer avroSerializer;
   private final JsonSchemaSerializer jsonschemaSerializer;
   private final ProtobufSerializer protobufSerializer;
-  private final SubjectNameStrategy subjectNameStrategy;
 
   @Inject
   SchemaRecordSerializer(
       SchemaRegistryClient schemaRegistryClient,
-      SubjectNameStrategy subjectNameStrategy,
       @AvroSerializerConfigs Map<String, Object> avroSerializerConfigs,
       @JsonschemaSerializerConfigs Map<String, Object> jsonschemaSerializerConfigs,
       @ProtobufSerializerConfigs Map<String, Object> protobufSerializerConfigs) {
@@ -63,7 +61,6 @@ final class SchemaRecordSerializer {
     jsonschemaSerializer =
         new JsonSchemaSerializer(schemaRegistryClient, jsonschemaSerializerConfigs);
     protobufSerializer = new ProtobufSerializer(schemaRegistryClient, protobufSerializerConfigs);
-    this.subjectNameStrategy = requireNonNull(subjectNameStrategy);
   }
 
   Optional<ByteString> serialize(
@@ -83,17 +80,16 @@ final class SchemaRecordSerializer {
               isKey ? "key" : "value", isKey ? "key" : "value"));
     }
 
-    String subject = subjectNameStrategy.subjectName(topicName, isKey, schema.get().getSchema());
-
     switch (format) {
       case AVRO:
-        return Optional.of(serializeAvro(subject, schema.get(), data));
+        return Optional.of(serializeAvro(schema.get().getSubject(), schema.get(), data));
 
       case JSONSCHEMA:
-        return Optional.of(serializeJsonschema(subject, schema.get(), data));
+        return Optional.of(serializeJsonschema(schema.get().getSubject(), schema.get(), data));
 
       case PROTOBUF:
-        return Optional.of(serializeProtobuf(subject, topicName, schema.get(), data, isKey));
+        return Optional.of(
+            serializeProtobuf(schema.get().getSubject(), topicName, schema.get(), data, isKey));
 
       default:
         throw new AssertionError(String.format("Unexpected enum constant: %s", format));
@@ -106,7 +102,7 @@ final class SchemaRecordSerializer {
     try {
       record = AvroSchemaUtils.toObject(data, avroSchema);
     } catch (AvroTypeException | IOException e) {
-      throw new SerializationException(e);
+      throw new BadRequestException(e.getMessage(), e);
     }
     return ByteString.copyFrom(avroSerializer.serialize(subject, avroSchema, record));
   }
@@ -117,7 +113,7 @@ final class SchemaRecordSerializer {
     try {
       record = JsonSchemaUtils.toObject(data, jsonSchema);
     } catch (IOException | ValidationException e) {
-      throw new SerializationException(e);
+      throw new BadRequestException(e.getMessage(), e);
     }
     return ByteString.copyFrom(jsonschemaSerializer.serialize(subject, jsonSchema, record));
   }
@@ -129,7 +125,7 @@ final class SchemaRecordSerializer {
     try {
       record = (Message) ProtobufSchemaUtils.toObject(data, protobufSchema);
     } catch (IOException e) {
-      throw new SerializationException(e);
+      throw new BadRequestException(e.getMessage(), e);
     }
     return ByteString.copyFrom(
         protobufSerializer.serialize(subject, topicName, protobufSchema, record, isKey));

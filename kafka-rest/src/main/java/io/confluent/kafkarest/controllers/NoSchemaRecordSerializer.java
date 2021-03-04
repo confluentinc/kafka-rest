@@ -24,10 +24,10 @@ import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafka.serializers.KafkaJsonSerializerConfig;
 import io.confluent.kafkarest.config.ConfigModule.JsonSerializerConfigs;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.exceptions.BadRequestException;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
-import org.apache.kafka.common.errors.SerializationException;
 
 final class NoSchemaRecordSerializer {
 
@@ -58,11 +58,15 @@ final class NoSchemaRecordSerializer {
   }
 
   private static ByteString serializeBinary(JsonNode data) {
+    if (!data.isTextual()) {
+      throw new BadRequestException(String.format("data=%s is not a base64 string.", data));
+    }
     byte[] serialized;
     try {
       serialized = BaseEncoding.base64().decode(data.asText());
     } catch (IllegalArgumentException e) {
-      throw new SerializationException(e);
+      throw new BadRequestException(
+          String.format("data=%s is not a valid base64 string.", data), e);
     }
     return ByteString.copyFrom(serialized);
   }

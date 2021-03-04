@@ -15,17 +15,19 @@
 
 package io.confluent.kafkarest.controllers;
 
-import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
+import com.google.common.collect.Multimap;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.entities.ProduceResult;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.internals.RecordHeader;
 
 final class ProduceControllerImpl implements ProduceController {
 
@@ -41,6 +43,7 @@ final class ProduceControllerImpl implements ProduceController {
       String clusterId,
       String topicName,
       Optional<Integer> partitionId,
+      Multimap<String, Optional<ByteString>> headers,
       Optional<ByteString> key,
       Optional<ByteString> value,
       Instant timestamp
@@ -53,7 +56,13 @@ final class ProduceControllerImpl implements ProduceController {
             timestamp.toEpochMilli(),
             key.map(ByteString::toByteArray).orElse(null),
             value.map(ByteString::toByteArray).orElse(null),
-            /* headers= */ emptyList()),
+            headers.entries().stream()
+                .map(
+                    header ->
+                        new RecordHeader(
+                            header.getKey(),
+                            header.getValue().map(ByteString::toByteArray).orElse(null)))
+                .collect(Collectors.toList())),
         (metadata, exception) -> {
           if (exception != null) {
             result.completeExceptionally(exception);
