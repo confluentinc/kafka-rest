@@ -118,9 +118,9 @@ public abstract class ProduceResponse {
     @JsonInclude(Include.NON_ABSENT)
     public abstract Optional<EmbeddedFormat> getType();
 
-    @JsonProperty("schema_subject")
+    @JsonProperty("subject")
     @JsonInclude(Include.NON_ABSENT)
-    public abstract Optional<String> getSchemaSubject();
+    public abstract Optional<String> getSubject();
 
     @JsonProperty("schema_id")
     @JsonInclude(Include.NON_ABSENT)
@@ -136,13 +136,13 @@ public abstract class ProduceResponse {
     @JsonCreator
     static ProduceResponseData fromJson(
         @JsonProperty("type") @Nullable EmbeddedFormat type,
-        @JsonProperty("schema_subject") @Nullable String schemaSubject,
+        @JsonProperty("subject") @Nullable String subject,
         @JsonProperty("schema_id") @Nullable Integer schemaId,
         @JsonProperty("schema_version") @Nullable Integer schemaVersion,
         @JsonProperty("size") int size) {
       return builder()
           .setType(type)
-          .setSchemaSubject(schemaSubject)
+          .setSubject(subject)
           .setSchemaId(schemaId)
           .setSchemaVersion(schemaVersion)
           .setSize(size)
@@ -163,9 +163,9 @@ public abstract class ProduceResponse {
 
       public abstract Builder setType(@Nullable EmbeddedFormat type);
 
-      public abstract Builder setSchemaSubject(Optional<String> schemaSubject);
+      public abstract Builder setSubject(Optional<String> subject);
 
-      public abstract Builder setSchemaSubject(@Nullable String schemaSubject);
+      public abstract Builder setSubject(@Nullable String subject);
 
       public abstract Builder setSchemaId(Optional<Integer> schemaId);
 

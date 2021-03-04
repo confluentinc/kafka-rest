@@ -181,7 +181,7 @@ public final class ProduceAction {
                 format ->
                     ProduceResponseData.builder()
                         .setType(keyFormat)
-                        .setSchemaSubject(keySchema.map(RegisteredSchema::getSubject))
+                        .setSubject(keySchema.map(RegisteredSchema::getSubject))
                         .setSchemaId(keySchema.map(RegisteredSchema::getSchemaId))
                         .setSchemaVersion(keySchema.map(RegisteredSchema::getSchemaVersion))
                         .setSize(result.getSerializedKeySize())
@@ -191,7 +191,7 @@ public final class ProduceAction {
                 format ->
                     ProduceResponseData.builder()
                         .setType(valueFormat)
-                        .setSchemaSubject(valueSchema.map(RegisteredSchema::getSubject))
+                        .setSubject(valueSchema.map(RegisteredSchema::getSubject))
                         .setSchemaId(valueSchema.map(RegisteredSchema::getSchemaId))
                         .setSchemaVersion(valueSchema.map(RegisteredSchema::getSchemaVersion))
                         .setSize(result.getSerializedValueSize())
