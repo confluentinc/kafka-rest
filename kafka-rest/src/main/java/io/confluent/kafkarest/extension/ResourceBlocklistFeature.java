@@ -28,7 +28,6 @@ import javax.inject.Inject;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotFoundException;
-import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.DynamicFeature;
@@ -92,7 +91,7 @@ public final class ResourceBlocklistFeature implements DynamicFeature {
     String value();
   }
 
-  @Priority(Priorities.AUTHENTICATION - 1)
+  @Priority(MorePriorities.PRE_AUTHENTICATION)
   private static final class ThrowingFilter implements ContainerRequestFilter {
 
     @Override
