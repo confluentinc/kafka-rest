@@ -30,7 +30,7 @@ certificate.
 $ curl --cacert testing/secrets/kafka-ca.crt \
     --key testing/secrets/alice.key \
     --cert testing/secrets/alice.crt \
-    https://127.0.0.1:9193/kafka/v3/clusters
+    https://127.0.0.1:9391/v3/clusters
 ```
 
 ## Configuration
