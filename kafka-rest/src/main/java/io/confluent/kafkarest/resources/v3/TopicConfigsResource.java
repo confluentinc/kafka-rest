@@ -173,8 +173,10 @@ public final class TopicConfigsResource {
         .asyncResume(asyncResponse);
   }
 
-  public static TopicConfigData toTopicConfigData(TopicConfig topicConfig, CrnFactory crnFactory,
-                                            UrlFactory urlFactory) {
+  public static TopicConfigData toTopicConfigData(
+      TopicConfig topicConfig,
+      CrnFactory crnFactory,
+      UrlFactory urlFactory) {
     return TopicConfigData.fromTopicConfig(topicConfig)
         .setMetadata(
             Resource.Metadata.builder()
