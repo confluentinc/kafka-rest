@@ -26,7 +26,6 @@ import io.confluent.kafkarest.entities.AbstractConfig;
 import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.ConfigSynonym;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
