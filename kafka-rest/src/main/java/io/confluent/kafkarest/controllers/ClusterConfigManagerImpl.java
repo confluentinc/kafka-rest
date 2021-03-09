@@ -37,10 +37,9 @@ final class ClusterConfigManagerImpl
   @Override
   public CompletableFuture<List<ClusterConfig>> listClusterConfigs(
       String clusterId, ClusterConfig.Type type) {
-    ConfigResource clusterResource = new ConfigResource(type.getAdminType(), "");
     return listConfigs(
         clusterId,
-        clusterResource,
+        new ConfigResource(type.getAdminType(), ""),
         ClusterConfig.builder().setClusterId(clusterId).setType(type));
   }
 

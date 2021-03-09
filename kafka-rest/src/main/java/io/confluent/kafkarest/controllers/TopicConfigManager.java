@@ -29,16 +29,16 @@ public interface TopicConfigManager {
 
   /**
    * Returns the list of Kafka {@link TopicConfig TopicConfigs} belonging to the
-   * {@link io.confluent.kafkarest.entities.Topic} with the given {@code topicName}.
+   * {@link io.confluent.kafkarest.entities.Topic Topic} with the given {@code topicName}.
    */
   CompletableFuture<List<TopicConfig>> listTopicConfigs(String clusterId, String topicName);
 
   /**
    * Returns a map of topic name -> Kafka {@link TopicConfig TopicConfigs} belonging to the
-   * {@link io.confluent.kafkarest.entities.Topic} with the given {@code topicNames}.
+   * {@link io.confluent.kafkarest.entities.Topic Topics} with the given {@code topicNames}.
    */
-  CompletableFuture<Map<String,List<TopicConfig>>> listTopicConfigs(String clusterId,
-                                                                    List<String> topicNames);
+  CompletableFuture<Map<String,List<TopicConfig>>> listTopicConfigs(
+      String clusterId, List<String> topicNames);
 
   /**
    * Returns the Kafka {@link TopicConfig} with the given {@code name}.

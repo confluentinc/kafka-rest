@@ -37,11 +37,9 @@ final class BrokerConfigManagerImpl
   @Override
   public CompletableFuture<List<BrokerConfig>> listBrokerConfigs(
       String clusterId, int brokerId) {
-    ConfigResource brokerResource = new ConfigResource(ConfigResource.Type.BROKER,
-        String.valueOf(brokerId));
     return listConfigs(
         clusterId,
-        brokerResource,
+        new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(brokerId)),
         BrokerConfig.builder().setClusterId(clusterId).setBrokerId(brokerId));
   }
 

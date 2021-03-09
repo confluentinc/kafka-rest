@@ -38,10 +38,9 @@ final class TopicConfigManagerImpl
   @Override
   public CompletableFuture<List<TopicConfig>> listTopicConfigs(
       String clusterId, String topicName) {
-    ConfigResource topicResource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
     return listConfigs(
         clusterId,
-        topicResource,
+        new ConfigResource(ConfigResource.Type.TOPIC, topicName),
         TopicConfig.builder().setClusterId(clusterId).setTopicName(topicName));
   }
 

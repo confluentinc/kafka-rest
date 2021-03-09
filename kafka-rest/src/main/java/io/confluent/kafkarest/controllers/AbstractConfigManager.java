@@ -96,8 +96,8 @@ abstract class AbstractConfigManager<
 
   final CompletableFuture<Optional<T>> getConfig(
       String clusterId, ConfigResource resourceId, B prototype, String name) {
-    return listConfigs(clusterId, singletonList(resourceId), prototype)
-        .thenApply(configs -> findEntityByKey(configs.get(resourceId),
+    return listConfigs(clusterId, resourceId, prototype)
+        .thenApply(configs -> findEntityByKey(configs,
             AbstractConfig::getName, name));
   }
 
@@ -174,8 +174,7 @@ abstract class AbstractConfigManager<
         .thenApply(
             configs -> {
               Set<String> configNames =
-                  configs.stream().map(AbstractConfig::getName)
-                      .collect(Collectors.toSet());
+                  configs.stream().map(AbstractConfig::getName).collect(Collectors.toSet());
               for (AlterConfigCommand command : commands) {
                 if (!configNames.contains(command.getName())) {
                   throw new NotFoundException(
