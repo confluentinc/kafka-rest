@@ -325,8 +325,10 @@ public abstract class ClusterTestHarness {
     return request(path, templateName, templateValue, null);
   }
 
-  protected Invocation.Builder request(String path, String templateName, Object templateValue,
-    Map<String, String> queryParams) {
+  protected Invocation.Builder request(String path,
+                                       String templateName,
+                                       Object templateValue,
+                                       Map<String, String> queryParams) {
 
     Client client = getClient();
     // Only configure base application here because as a client we shouldn't need the resources
@@ -434,12 +436,12 @@ public abstract class ClusterTestHarness {
     AlterConfigsResult result =
         adminClient.incrementalAlterConfigs(
             singletonMap(
-                new ConfigResource(ConfigResource.Type.TOPIC,topicName),
-                singletonList(new AlterConfigOp(new ConfigEntry(configName,value), AlterConfigOp.OpType.SET))));
+                new ConfigResource(ConfigResource.Type.TOPIC, topicName),
+                singletonList(new AlterConfigOp(new ConfigEntry(configName, value), AlterConfigOp.OpType.SET))));
     try {
       result.all().get();
     } catch (InterruptedException | ExecutionException e) {
-      Assert.fail(String.format("Failed to alter topic config: %s", e.getMessage()));
+      Assert.fail(String.format("Failed to alter config %s for topic %s: %s", configName, topicName, e.getMessage()));
     }
   }
 

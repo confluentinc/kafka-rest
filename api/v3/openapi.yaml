@@ -627,12 +627,12 @@ paths:
         '200':
           $ref: '#/components/responses/GetReplicaResponse'
 
-  /clusters/{cluster_id}/topics-configs:
+  /clusters/{cluster_id}/topics/-/configs:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
     get:
-      summary: 'Get All topic configs'
+      summary: 'Get All Topic Configs'
       description: 'Returns all topic configurations for topics hosted by the specified cluster.'
       tags:
         - Configs

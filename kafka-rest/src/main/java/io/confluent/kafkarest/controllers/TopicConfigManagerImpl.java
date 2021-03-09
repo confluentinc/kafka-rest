@@ -18,7 +18,6 @@ package io.confluent.kafkarest.controllers;
 import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.TopicConfig;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -42,9 +41,8 @@ final class TopicConfigManagerImpl
     ConfigResource topicResource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
     return listConfigs(
         clusterId,
-        Collections.singletonList(topicResource),
-        TopicConfig.builder().setClusterId(clusterId).setTopicName(topicName))
-        .thenApply(configs -> configs.get(topicResource));
+        topicResource,
+        TopicConfig.builder().setClusterId(clusterId).setTopicName(topicName));
   }
 
   @Override

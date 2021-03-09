@@ -103,7 +103,7 @@ public class TopicConfigManagerImplTest {
           /* isSensitive= */ true,
           ConfigSource.UNKNOWN,
           /* synonyms= */ emptyList());
-  private static final TopicConfig ALT_TOPIC_CONFIG_1 =
+  private static final TopicConfig ALT_CONFIG_1 =
       TopicConfig.create(
           CLUSTER_ID,
           ALT_TOPIC_NAME,
@@ -114,7 +114,7 @@ public class TopicConfigManagerImplTest {
           /* isSensitive= */ false,
           ConfigSource.DEFAULT_CONFIG,
           /* synonyms= */ emptyList());
-  private static final TopicConfig ALT_TOPIC_CONFIG_2 =
+  private static final TopicConfig ALT_CONFIG_2 =
       TopicConfig.create(
           CLUSTER_ID,
           ALT_TOPIC_NAME,
@@ -125,7 +125,7 @@ public class TopicConfigManagerImplTest {
           /* isSensitive= */ false,
           ConfigSource.UNKNOWN,
           /* synonyms= */ emptyList());
-  private static final TopicConfig ALT_TOPIC_CONFIG_3 =
+  private static final TopicConfig ALT_CONFIG_3 =
       TopicConfig.create(
           CLUSTER_ID,
           ALT_TOPIC_NAME,
@@ -250,8 +250,8 @@ public class TopicConfigManagerImplTest {
     expect(describeConfigsResult.all())
         .andReturn(
             KafkaFuture.completedFuture(new HashMap<ConfigResource, Config>() {{
-              put(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),CONFIG);
-              put(new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME),CONFIG);
+              put(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG);
+              put(new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME), CONFIG);
             }}));
     replay(adminClient, clusterManager, describeConfigsResult);
 
@@ -261,7 +261,7 @@ public class TopicConfigManagerImplTest {
     assertEquals(
         new HashSet<>(Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3)), new HashSet<>(configs.get(TOPIC_NAME)));
     assertEquals(
-        new HashSet<>(Arrays.asList(ALT_TOPIC_CONFIG_1, ALT_TOPIC_CONFIG_2, ALT_TOPIC_CONFIG_3)),
+        new HashSet<>(Arrays.asList(ALT_CONFIG_1, ALT_CONFIG_2, ALT_CONFIG_3)),
         new HashSet<>(configs.get(ALT_TOPIC_NAME)));
   }
 
@@ -348,7 +348,7 @@ public class TopicConfigManagerImplTest {
   }
 
   @Test
-  public void getTopicConfig_nonExistingTopic_throwsNotFound() throws Exception {
+  public void getTopicConfig_nonExistingTopic_throwsUnknownTopicOrPartition() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
@@ -445,7 +445,7 @@ public class TopicConfigManagerImplTest {
   }
 
   @Test
-  public void updateTopicConfig_nonExistingTopic_throwsNotFound() throws Exception {
+  public void updateTopicConfig_nonExistingTopic_throwsUnknownTopicOrPartition() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(
@@ -545,7 +545,7 @@ public class TopicConfigManagerImplTest {
   }
 
   @Test
-  public void resetTopicConfig_nonExistingTopic_throwsNotFound() throws Exception {
+  public void resetTopicConfig_nonExistingTopic_throwsUnknownTopicOrPartition() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
         adminClient.describeConfigs(

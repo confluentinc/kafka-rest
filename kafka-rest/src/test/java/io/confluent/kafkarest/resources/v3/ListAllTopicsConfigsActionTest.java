@@ -52,7 +52,7 @@ import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.*;
 
 @RunWith(JUnit4.class)
-public class AllTopicsConfigsResourceTest {
+public class ListAllTopicsConfigsActionTest {
 
   private static final String CLUSTER_ID = "cluster-1";
   private static final String TOPIC_NAME = "topic-1";
@@ -100,12 +100,12 @@ public class AllTopicsConfigsResourceTest {
   @Mock
   private TopicManager topicManager;
 
-  private AllTopicsConfigsResource allTopicConfigsResource;
+  private ListAllTopicsConfigsAction allTopicConfigsResource;
 
   @Before
   public void setUp() {
     allTopicConfigsResource =
-        new AllTopicsConfigsResource(
+        new ListAllTopicsConfigsAction(
             () -> topicManager,
             () -> topicConfigManager,
             new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),

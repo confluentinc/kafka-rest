@@ -26,6 +26,8 @@ import io.confluent.kafkarest.entities.AbstractConfig;
 import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.ConfigSynonym;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -49,6 +51,12 @@ abstract class AbstractConfigManager<
   AbstractConfigManager(Admin adminClient, ClusterManager clusterManager) {
     this.adminClient = requireNonNull(adminClient);
     this.clusterManager = requireNonNull(clusterManager);
+  }
+
+  final CompletableFuture<List<T>> listConfigs(
+      String clusterId, ConfigResource resourceId, B prototype) {
+    return listConfigs(clusterId, Collections.singletonList(resourceId), prototype)
+        .thenApply(result -> result.get(resourceId));
   }
 
   final CompletableFuture<Map<ConfigResource,List<T>>> listConfigs(
@@ -162,11 +170,11 @@ abstract class AbstractConfigManager<
    */
   final CompletableFuture<Void> safeAlterConfigs(
       String clusterId, ConfigResource resourceId, B prototype, List<AlterConfigCommand> commands) {
-    return listConfigs(clusterId, singletonList(resourceId), prototype)
+    return listConfigs(clusterId, resourceId, prototype)
         .thenApply(
             configs -> {
               Set<String> configNames =
-                  configs.get(resourceId).stream().map(AbstractConfig::getName)
+                  configs.stream().map(AbstractConfig::getName)
                       .collect(Collectors.toSet());
               for (AlterConfigCommand command : commands) {
                 if (!configNames.contains(command.getName())) {

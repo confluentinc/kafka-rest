@@ -18,7 +18,6 @@ package io.confluent.kafkarest.controllers;
 import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.BrokerConfig;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -42,9 +41,8 @@ final class BrokerConfigManagerImpl
         String.valueOf(brokerId));
     return listConfigs(
         clusterId,
-        Collections.singletonList(brokerResource),
-        BrokerConfig.builder().setClusterId(clusterId).setBrokerId(brokerId))
-        .thenApply(configs -> configs.get(brokerResource));
+        brokerResource,
+        BrokerConfig.builder().setClusterId(clusterId).setBrokerId(brokerId));
   }
 
   @Override

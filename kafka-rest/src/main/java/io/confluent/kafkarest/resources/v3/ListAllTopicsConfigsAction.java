@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -19,9 +19,7 @@ import io.confluent.kafkarest.controllers.TopicConfigManager;
 import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.TopicConfig;
 import io.confluent.kafkarest.entities.v3.ListTopicConfigsResponse;
-import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
-import io.confluent.kafkarest.entities.v3.TopicConfigData;
 import io.confluent.kafkarest.entities.v3.TopicConfigDataList;
 import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
@@ -44,9 +42,9 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
-@Path("/v3/clusters/{clusterId}/topics-configs")
+@Path("/v3/clusters/{clusterId}/topics/-/configs")
 @ResourceName("api.v3.topic-configs.*")
-public final class AllTopicsConfigsResource {
+public final class ListAllTopicsConfigsAction {
 
   private final Provider<TopicManager> topicManager;
   private final Provider<TopicConfigManager> topicConfigManager;
@@ -54,7 +52,7 @@ public final class AllTopicsConfigsResource {
   private final UrlFactory urlFactory;
 
   @Inject
-  public AllTopicsConfigsResource(
+  public ListAllTopicsConfigsAction(
       Provider<TopicManager> topicManager,
       Provider<TopicConfigManager> topicConfigManager,
       CrnFactory crnFactory,
@@ -100,35 +98,15 @@ public final class AllTopicsConfigsResource {
                                         configs.values().stream()
                                             .flatMap(topicConfigs -> topicConfigs.stream()
                                                 .sorted(Comparator.comparing(TopicConfig::getName)))
-                                            .map(this::toTopicConfigData)
+                                            .map(topicConfig -> TopicConfigsResource
+                                                .toTopicConfigData(
+                                                    topicConfig,
+                                                    crnFactory,
+                                                    urlFactory))
                                             .collect(Collectors.toList()))
                                     .build())));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
 
-  private TopicConfigData toTopicConfigData(TopicConfig topicConfig) {
-    return TopicConfigData.fromTopicConfig(topicConfig)
-        .setMetadata(
-            Resource.Metadata.builder()
-                .setSelf(
-                    urlFactory.create(
-                        "v3",
-                        "clusters",
-                        topicConfig.getClusterId(),
-                        "topics",
-                        topicConfig.getTopicName(),
-                        "configs",
-                        topicConfig.getName()))
-                .setResourceName(
-                    crnFactory.create(
-                        "kafka",
-                        topicConfig.getClusterId(),
-                        "topic",
-                        topicConfig.getTopicName(),
-                        "config",
-                        topicConfig.getName()))
-                .build())
-        .build();
-  }
 }
