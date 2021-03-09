@@ -17,7 +17,6 @@ package io.confluent.kafkarest.controllers;
 
 import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.BrokerConfig;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;

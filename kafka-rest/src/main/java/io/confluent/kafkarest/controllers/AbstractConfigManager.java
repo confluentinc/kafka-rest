@@ -97,8 +97,7 @@ abstract class AbstractConfigManager<
   final CompletableFuture<Optional<T>> getConfig(
       String clusterId, ConfigResource resourceId, B prototype, String name) {
     return listConfigs(clusterId, resourceId, prototype)
-        .thenApply(configs -> findEntityByKey(configs,
-            AbstractConfig::getName, name));
+        .thenApply(configs -> findEntityByKey(configs, AbstractConfig::getName, name));
   }
 
   /**

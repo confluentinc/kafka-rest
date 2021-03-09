@@ -44,7 +44,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.NotFoundException;
-
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
@@ -552,7 +551,7 @@ public class TopicManagerImplTest {
                     TOPIC_1.getName(),
                     TOPIC_1.getPartitions().size(),
                     TOPIC_1.getReplicationFactor())
-                    .configs(singletonMap("cleanup.policy", "compact")))))
+            .configs(singletonMap("cleanup.policy", "compact")))))
         .andReturn(createTopicsResult);
     expect(createTopicsResult.all()).andReturn(KafkaFuture.completedFuture(null));
     replay(clusterManager, adminClient, createTopicsResult);
@@ -667,7 +666,7 @@ public class TopicManagerImplTest {
                     TOPIC_1.getName(),
                     TOPIC_1.getPartitions().size(),
                     TOPIC_1.getReplicationFactor())
-                    .configs(singletonMap("cleanup.policy", "compact")))))
+            .configs(singletonMap("cleanup.policy", "compact")))))
         .andReturn(createTopicsResult);
     expect(createTopicsResult.all()).andReturn(failedFuture(new TopicExistsException("")));
     replay(clusterManager, adminClient, createTopicsResult);
