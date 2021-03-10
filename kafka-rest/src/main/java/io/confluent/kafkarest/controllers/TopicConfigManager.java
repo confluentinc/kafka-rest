@@ -18,6 +18,7 @@ package io.confluent.kafkarest.controllers;
 import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.TopicConfig;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -28,9 +29,16 @@ public interface TopicConfigManager {
 
   /**
    * Returns the list of Kafka {@link TopicConfig TopicConfigs} belonging to the
-   * {@link io.confluent.kafkarest.entities.Topic} with the given {@code topicName}.
+   * {@link io.confluent.kafkarest.entities.Topic Topic} with the given {@code topicName}.
    */
   CompletableFuture<List<TopicConfig>> listTopicConfigs(String clusterId, String topicName);
+
+  /**
+   * Returns a map of topic name -> Kafka {@link TopicConfig TopicConfigs} belonging to the
+   * {@link io.confluent.kafkarest.entities.Topic Topics} with the given {@code topicNames}.
+   */
+  CompletableFuture<Map<String,List<TopicConfig>>> listTopicConfigs(
+      String clusterId, List<String> topicNames);
 
   /**
    * Returns the Kafka {@link TopicConfig} with the given {@code name}.
