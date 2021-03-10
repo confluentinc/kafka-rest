@@ -43,7 +43,7 @@ docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-zookeep
 docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-server:master-latest
 
 # Make sure kafka-rest is packaged.
-mvn -f "$base_dir"/kafka-rest/pom.xml -Dmaven.test.skip=true clean package
+mvn -f "$base_dir"/kafka-rest/pom.xml -DskipTests=true clean package
 
 # Generate certificates
 "$env_dir"/../../secrets/configure.sh
