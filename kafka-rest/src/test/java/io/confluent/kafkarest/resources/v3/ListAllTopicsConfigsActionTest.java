@@ -15,10 +15,17 @@
 
 package io.confluent.kafkarest.resources.v3;
 
-import io.confluent.kafkarest.controllers.DefaultTopicConfigManager;
+import io.confluent.kafkarest.controllers.TopicConfigManager;
+import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.ConfigSource;
+import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.TopicConfig;
-import io.confluent.kafkarest.entities.v3.*;
+import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
+import io.confluent.kafkarest.entities.v3.ListTopicConfigsResponse;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
+import io.confluent.kafkarest.entities.v3.TopicConfigData;
+import io.confluent.kafkarest.entities.v3.TopicConfigDataList;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
@@ -31,7 +38,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import javax.ws.rs.NotFoundException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
@@ -42,7 +52,7 @@ import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.*;
 
 @RunWith(JUnit4.class)
-public class DefaultTopicConfigsResourceTest {
+public class ListAllTopicsConfigsActionTest {
 
   private static final String CLUSTER_ID = "cluster-1";
   private static final String TOPIC_NAME = "topic-1";
@@ -85,28 +95,45 @@ public class DefaultTopicConfigsResourceTest {
   public final EasyMockRule mocks = new EasyMockRule(this);
 
   @Mock
-  private DefaultTopicConfigManager defaultTopicConfigManager;
+  private TopicConfigManager topicConfigManager;
 
-  private DefaultTopicConfigsResource defaultTopicConfigsResource;
+  @Mock
+  private TopicManager topicManager;
+
+  private ListAllTopicsConfigsAction allTopicConfigsResource;
 
   @Before
   public void setUp() {
-    defaultTopicConfigsResource =
-        new DefaultTopicConfigsResource(
-            () -> defaultTopicConfigManager,
+    allTopicConfigsResource =
+        new ListAllTopicsConfigsAction(
+            () -> topicManager,
+            () -> topicConfigManager,
             new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
             new FakeUrlFactory());
   }
 
   @Test
-  public void listDefaultTopicConfigs_nonExistingTopic_returnsConfig() {
-    expect(defaultTopicConfigManager.listDefaultTopicConfigs(CLUSTER_ID, TOPIC_NAME))
+  public void listTopicConfigs_existingTopic_returnsConfigs() {
+    expect(topicManager.listTopics(CLUSTER_ID))
         .andReturn(
-            completedFuture(Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3)));
-    replay(defaultTopicConfigManager);
+            completedFuture(Arrays.asList(Topic.create(
+                CLUSTER_ID,
+                TOPIC_NAME,
+                new ArrayList<>(),
+                (short) 1,
+                false
+            )))
+        );
+
+    expect(topicConfigManager.listTopicConfigs(CLUSTER_ID, Arrays.asList(TOPIC_NAME)))
+        .andReturn(
+            completedFuture(new HashMap<String, List<TopicConfig>>() {{
+              put(TOPIC_NAME, Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3));
+            }}));
+    replay(topicManager, topicConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    defaultTopicConfigsResource.listDefaultTopicConfigs(response, CLUSTER_ID, TOPIC_NAME);
+    allTopicConfigsResource.listTopicConfigs(response, CLUSTER_ID);
 
     ListTopicConfigsResponse expected =
         ListTopicConfigsResponse.create(
@@ -114,7 +141,7 @@ public class DefaultTopicConfigsResourceTest {
                 .setMetadata(
                     ResourceCollection.Metadata.builder()
                         .setSelf(
-                            "/v3/clusters/cluster-1/topics/topic-1/default-configs")
+                            "/v3/clusters/cluster-1/topics-configs")
                         .build())
                 .setData(
                     Arrays.asList(
@@ -187,14 +214,44 @@ public class DefaultTopicConfigsResourceTest {
   }
 
   @Test
-  public void listTopicConfigs_nonExistingCluster_throwsNotFound() {
-    expect(defaultTopicConfigManager.listDefaultTopicConfigs(CLUSTER_ID, TOPIC_NAME))
-        .andReturn(failedFuture(new NotFoundException()));
-    replay(defaultTopicConfigManager);
+  public void listTopicConfigs_noTopics_returnsEmptyConfigs() {
+    expect(topicManager.listTopics(CLUSTER_ID))
+        .andReturn(
+            completedFuture(new ArrayList<>())
+        );
+
+    expect(topicConfigManager.listTopicConfigs(CLUSTER_ID, new ArrayList<>()))
+        .andReturn(
+            completedFuture(new HashMap<String, List<TopicConfig>>()));
+    replay(topicManager, topicConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    defaultTopicConfigsResource.listDefaultTopicConfigs(response, CLUSTER_ID, TOPIC_NAME);
+    allTopicConfigsResource.listTopicConfigs(response, CLUSTER_ID);
+
+    ListTopicConfigsResponse expected =
+        ListTopicConfigsResponse.create(
+            TopicConfigDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder()
+                        .setSelf(
+                            "/v3/clusters/cluster-1/topics-configs")
+                        .build())
+                .setData(new ArrayList<>())
+                .build());
+
+    assertEquals(expected, response.getValue());
+  }
+
+  @Test
+  public void listTopicConfigs_nonExistingCluster_throwsNotFound() {
+    expect(topicManager.listTopics(CLUSTER_ID))
+        .andReturn(failedFuture(new NotFoundException()));
+    replay(topicManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    allTopicConfigsResource.listTopicConfigs(response, CLUSTER_ID);
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }
+
 }

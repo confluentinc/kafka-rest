@@ -42,14 +42,11 @@ docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-zookeep
 # Download latest cp-server image.
 docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-server:master-latest
 
-# Download latest cp-schema-registry image.
-docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-schema-registry:master-latest
-
-# Download latest cp-kafka-rest image.
-docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-kafka-rest:master-latest
-
 # Make sure kafka-rest is packaged.
-mvn -f "$base_dir"/kafka-rest/pom.xml -DskipTests=true clean package
+mvn -f "$base_dir"/kafka-rest/pom.xml -Dmaven.test.skip=true clean package
+
+# Generate certificates
+"$env_dir"/../../secrets/configure.sh
 
 # For some reason `up --build --force-recreate` is not enough. Make sure everything is clean.
 docker-compose -f "$env_dir"/docker-compose.yml rm -fsv

@@ -20,6 +20,7 @@ import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.common.CompletableFutures;
@@ -123,10 +124,17 @@ abstract class AbstractProduceAction {
       Optional<Integer> schemaId,
       Optional<String> schema,
       boolean isKey) {
-    if (schemaId.isPresent()) {
-      return Optional.of(schemaManager.get().getSchemaById(format, schemaId.get()));
-    } else if (schema.isPresent()) {
-      return Optional.of(schemaManager.get().parseSchema(format, topicName, schema.get(), isKey));
+    if (format.requiresSchema() && (schemaId.isPresent() || schema.isPresent())) {
+      return Optional.of(
+          schemaManager.get().getSchema(
+              /* topicName= */ topicName,
+              /* format= */ schema.map(unused -> format),
+              /* subject= */ Optional.empty(),
+              /* subjectNameStrategy= */ Optional.empty(),
+              /* schemaId= */ schemaId,
+              /* schemaVersion= */ Optional.empty(),
+              /* rawSchema= */ schema,
+              /* isKey= */ isKey));
     } else {
       return Optional.empty();
     }
@@ -171,6 +179,7 @@ abstract class AbstractProduceAction {
                         /* clusterId= */ "",
                         topicName,
                         record.getPartitionId(),
+                        /* headers= */ ImmutableMultimap.of(),
                         record.getKey(),
                         record.getValue(),
                         /* timestamp= */ Instant.now()))

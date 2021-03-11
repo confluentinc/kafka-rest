@@ -100,4 +100,16 @@ public enum EmbeddedFormat {
   public abstract boolean requiresSchema();
 
   public abstract SchemaProvider getSchemaProvider();
+
+  public static EmbeddedFormat forSchemaType(String schemaType) {
+    if (schemaType.equals(AVRO.getSchemaProvider().schemaType())) {
+      return AVRO;
+    } else if (schemaType.equals(JSONSCHEMA.getSchemaProvider().schemaType())) {
+      return JSONSCHEMA;
+    } else if (schemaType.equals(PROTOBUF.getSchemaProvider().schemaType())) {
+      return PROTOBUF;
+    } else {
+      throw new IllegalArgumentException(String.format("Illegal schema type: %s", schemaType));
+    }
+  }
 }

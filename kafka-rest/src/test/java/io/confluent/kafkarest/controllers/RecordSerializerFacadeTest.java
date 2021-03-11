@@ -49,6 +49,7 @@ import io.confluent.kafka.serializers.subject.TopicNameStrategy;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
+import io.confluent.kafkarest.exceptions.BadRequestException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -75,6 +76,7 @@ public class RecordSerializerFacadeTest {
           AUTO_REGISTER_SCHEMAS, false,
           USE_LATEST_VERSION, false);
   private static final SubjectNameStrategy SUBJECT_NAME_STRATEGY = new TopicNameStrategy();
+  public static final int SCHEMA_VERSION = 1;
 
   private MockSchemaRegistryClient schemaRegistryClient;
   private RecordSerializer recordSerializer;
@@ -95,7 +97,6 @@ public class RecordSerializerFacadeTest {
             () ->
                 new SchemaRecordSerializer(
                     schemaRegistryClient,
-                    SUBJECT_NAME_STRATEGY,
                     SCHEMA_SERIALIZER_CONFIGS,
                     SCHEMA_SERIALIZER_CONFIGS,
                     SCHEMA_SERIALIZER_CONFIGS));
@@ -155,8 +156,8 @@ public class RecordSerializerFacadeTest {
     assertFalse(serialized.isPresent());
   }
 
-  @Test(expected = SerializationException.class)
-  public void serializeInvalidBinaryKey_throwsSerializationException() {
+  @Test(expected = BadRequestException.class)
+  public void serializeInvalidBinaryKey_throwsBadRequestException() {
     recordSerializer.serialize(
         EmbeddedFormat.BINARY,
         TOPIC_NAME,
@@ -165,8 +166,8 @@ public class RecordSerializerFacadeTest {
         /* isKey= */ true);
   }
 
-  @Test(expected = SerializationException.class)
-  public void serializeInvalidBinaryValue_throwsSerializationException() {
+  @Test(expected = BadRequestException.class)
+  public void serializeInvalidBinaryValue_throwsBadRequestException() {
     recordSerializer.serialize(
         EmbeddedFormat.BINARY,
         TOPIC_NAME,
@@ -376,15 +377,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeStringAvroKey_returnsSerialized() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"string\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             TextNode.valueOf("foobar"),
             /* isKey= */ true).get();
 
@@ -398,15 +398,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeIntAvroKey_returnsSerialized() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"int\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             IntNode.valueOf(123),
             /* isKey= */ true).get();
 
@@ -420,15 +419,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeFloatAvroKey_returnsSerialized() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"float\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             FloatNode.valueOf(123.456F),
             /* isKey= */ true).get();
 
@@ -442,15 +440,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeBooleanAvroKey_returnsSerialized() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"boolean\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             BooleanNode.valueOf(true),
             /* isKey= */ true).get();
 
@@ -464,15 +461,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeBytesAvroKey_returnsSerialized() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"bytes\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             TextNode.valueOf("foobar"),
             /* isKey= */ true).get();
 
@@ -496,9 +492,8 @@ public class RecordSerializerFacadeTest {
             + "        {\"name\": \"bar\", \"type\": \"boolean\"}"
             + "    ]"
             + "}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
     ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
     node.put("foo", 1);
     node.put("bar", false);
@@ -507,7 +502,7 @@ public class RecordSerializerFacadeTest {
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             node,
             /* isKey= */ true).get();
 
@@ -529,15 +524,14 @@ public class RecordSerializerFacadeTest {
             + "    \"type\": \"enum\","
             + "    \"symbols\": [\"foo\", \"bar\"]"
             + "}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             TextNode.valueOf("foo"),
             /* isKey= */ true).get();
 
@@ -551,9 +545,8 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeArrayAvroKey_returnsSerialized() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"array\", \"items\": \"int\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
     ArrayNode node = new ArrayNode(JsonNodeFactory.instance);
     node.add(1);
     node.add(2);
@@ -563,7 +556,7 @@ public class RecordSerializerFacadeTest {
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             node,
             /* isKey= */ true).get();
 
@@ -577,9 +570,8 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeMapAvroKey_returnsSerialized() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"map\", \"values\": \"int\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
     ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
     node.put("foo", 1);
     node.put("bar", 2);
@@ -588,7 +580,7 @@ public class RecordSerializerFacadeTest {
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             node,
             /* isKey= */ true).get();
 
@@ -618,15 +610,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeNullAvroKeyNonNullableSchema_returnsEmpty() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"int\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     Optional<ByteString> serialized =
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             NullNode.getInstance(),
             /* isKey= */ true);
 
@@ -643,17 +634,16 @@ public class RecordSerializerFacadeTest {
         /* isKey= */ true);
   }
 
-  @Test(expected = SerializationException.class)
-  public void serializeInvalidAvroKey_throwsSerializationException() throws Exception {
+  @Test(expected = BadRequestException.class)
+  public void serializeInvalidAvroKey_throwsBadRequestException() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"int\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     recordSerializer.serialize(
         EmbeddedFormat.AVRO,
         TOPIC_NAME,
-        Optional.of(RegisteredSchema.create(schemaId, schema)),
+        Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
         TextNode.valueOf("foobar"),
         /* isKey= */ true);
   }
@@ -661,15 +651,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeStringAvroValue_returnsSerialized() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"string\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             TextNode.valueOf("foobar"),
             /* isKey= */ false).get();
 
@@ -683,15 +672,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeIntAvroValue_returnsSerialized() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"int\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             IntNode.valueOf(123),
             /* isKey= */ false).get();
 
@@ -705,15 +693,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeFloatAvroValue_returnsSerialized() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"float\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             FloatNode.valueOf(123.456F),
             /* isKey= */ false).get();
 
@@ -727,15 +714,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeBooleanAvroValue_returnsSerialized() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"boolean\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             BooleanNode.valueOf(true),
             /* isKey= */ false).get();
 
@@ -749,15 +735,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeBytesAvroValue_returnsSerialized() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"bytes\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             TextNode.valueOf("foobar"),
             /* isKey= */ false).get();
 
@@ -781,9 +766,8 @@ public class RecordSerializerFacadeTest {
             + "        {\"name\": \"bar\", \"type\": \"boolean\"}"
             + "    ]"
             + "}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
     ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
     node.put("foo", 1);
     node.put("bar", false);
@@ -792,7 +776,7 @@ public class RecordSerializerFacadeTest {
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             node,
             /* isKey= */ false).get();
 
@@ -814,15 +798,14 @@ public class RecordSerializerFacadeTest {
             + "    \"type\": \"enum\","
             + "    \"symbols\": [\"foo\", \"bar\"]"
             + "}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             TextNode.valueOf("foo"),
             /* isKey= */ false).get();
 
@@ -836,9 +819,8 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeArrayAvroValue_returnsSerialized() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"array\", \"items\": \"int\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
     ArrayNode node = new ArrayNode(JsonNodeFactory.instance);
     node.add(1);
     node.add(2);
@@ -848,7 +830,7 @@ public class RecordSerializerFacadeTest {
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             node,
             /* isKey= */ false).get();
 
@@ -862,9 +844,8 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeMapAvroValue_returnsSerialized() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"map\", \"values\": \"int\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
     ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
     node.put("foo", 1);
     node.put("bar", 2);
@@ -873,7 +854,7 @@ public class RecordSerializerFacadeTest {
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             node,
             /* isKey= */ false).get();
 
@@ -903,15 +884,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeNullAvroValueNonNullableSchema_returnsEmpty() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"int\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     Optional<ByteString> serialized =
         recordSerializer.serialize(
             EmbeddedFormat.AVRO,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             NullNode.getInstance(),
             /* isKey= */ false);
 
@@ -928,17 +908,16 @@ public class RecordSerializerFacadeTest {
         /* isKey= */ false);
   }
 
-  @Test(expected = SerializationException.class)
-  public void serializeInvalidAvroValue_throwsSerializationException() throws Exception {
+  @Test(expected = BadRequestException.class)
+  public void serializeInvalidAvroValue_throwsBadRequestException() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"int\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     recordSerializer.serialize(
         EmbeddedFormat.AVRO,
         TOPIC_NAME,
-        Optional.of(RegisteredSchema.create(schemaId, schema)),
+        Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
         TextNode.valueOf("foobar"),
         /* isKey= */ false);
   }
@@ -946,15 +925,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeStringJsonschemaKey_returnsSerialized() throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"string\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.JSONSCHEMA,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             TextNode.valueOf("foobar"),
             /* isKey= */ true).get();
 
@@ -967,15 +945,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeIntJsonschemaKey_returnsSerialized() throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"integer\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.JSONSCHEMA,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             IntNode.valueOf(123),
             /* isKey= */ true).get();
 
@@ -988,15 +965,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeFloatJsonschemaKey_returnsSerialized() throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"number\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.JSONSCHEMA,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             FloatNode.valueOf(123.456F),
             /* isKey= */ true).get();
 
@@ -1009,15 +985,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeBooleanJsonschemaKey_returnsSerialized() throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"boolean\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.JSONSCHEMA,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             BooleanNode.valueOf(true),
             /* isKey= */ true).get();
 
@@ -1037,9 +1012,8 @@ public class RecordSerializerFacadeTest {
             + "        \"bar\": {\"type\": \"boolean\"}"
             + "    }"
             + "}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
     ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
     node.put("foo", 1);
     node.put("bar", true);
@@ -1048,7 +1022,7 @@ public class RecordSerializerFacadeTest {
         recordSerializer.serialize(
             EmbeddedFormat.JSONSCHEMA,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             node,
             /* isKey= */ true).get();
 
@@ -1070,9 +1044,8 @@ public class RecordSerializerFacadeTest {
             + "    \"type\": \"array\","
             + "    \"items\": {\"type\": \"integer\"}"
             + "}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
     ArrayNode node = new ArrayNode(JsonNodeFactory.instance);
     node.add(1);
     node.add(2);
@@ -1081,7 +1054,7 @@ public class RecordSerializerFacadeTest {
         recordSerializer.serialize(
             EmbeddedFormat.JSONSCHEMA,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             node,
             /* isKey= */ true).get();
 
@@ -1107,15 +1080,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeNullJsonschemaKeyNonNullableSchema_returnsEmpty() throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"integer\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     Optional<ByteString> serialized =
         recordSerializer.serialize(
             EmbeddedFormat.JSONSCHEMA,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             NullNode.getInstance(),
             /* isKey= */ true);
 
@@ -1132,17 +1104,16 @@ public class RecordSerializerFacadeTest {
         /* isKey= */ true);
   }
 
-  @Test(expected = SerializationException.class)
-  public void serializeInvalidJsonschemaKey_throwsSerializationException() throws Exception {
+  @Test(expected = BadRequestException.class)
+  public void serializeInvalidJsonschemaKey_throwsBadRequestException() throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"integer\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     recordSerializer.serialize(
         EmbeddedFormat.JSONSCHEMA,
         TOPIC_NAME,
-        Optional.of(RegisteredSchema.create(schemaId, schema)),
+        Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
         TextNode.valueOf("foobar"),
         /* isKey= */ true);
   }
@@ -1150,15 +1121,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeStringJsonschemaValue_returnsSerialized() throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"string\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.JSONSCHEMA,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             TextNode.valueOf("foobar"),
             /* isKey= */ false).get();
 
@@ -1171,15 +1141,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeIntJsonschemaValue_returnsSerialized() throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"integer\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.JSONSCHEMA,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             IntNode.valueOf(123),
             /* isKey= */ false).get();
 
@@ -1192,15 +1161,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeFloatJsonschemaValue_returnsSerialized() throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"number\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.JSONSCHEMA,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             FloatNode.valueOf(123.456F),
             /* isKey= */ false).get();
 
@@ -1213,15 +1181,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeBooleanJsonschemaValue_returnsSerialized() throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"boolean\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     ByteString serialized =
         recordSerializer.serialize(
             EmbeddedFormat.JSONSCHEMA,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             BooleanNode.valueOf(true),
             /* isKey= */ false).get();
 
@@ -1241,9 +1208,8 @@ public class RecordSerializerFacadeTest {
             + "        \"bar\": {\"type\": \"boolean\"}"
             + "    }"
             + "}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
     ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
     node.put("foo", 1);
     node.put("bar", true);
@@ -1252,7 +1218,7 @@ public class RecordSerializerFacadeTest {
         recordSerializer.serialize(
             EmbeddedFormat.JSONSCHEMA,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)), node,
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)), node,
             /* isKey= */ false).get();
 
     KafkaJsonSchemaDeserializer<Map<String, Object>> deserializer =
@@ -1273,9 +1239,8 @@ public class RecordSerializerFacadeTest {
             + "    \"type\": \"array\","
             + "    \"items\": {\"type\": \"integer\"}"
             + "}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
     ArrayNode node = new ArrayNode(JsonNodeFactory.instance);
     node.add(1);
     node.add(2);
@@ -1284,7 +1249,7 @@ public class RecordSerializerFacadeTest {
         recordSerializer.serialize(
             EmbeddedFormat.JSONSCHEMA,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             node,
             /* isKey= */ false).get();
 
@@ -1310,15 +1275,14 @@ public class RecordSerializerFacadeTest {
   @Test
   public void serializeNullJsonschemaValueNonNullableSchema_returnsEmpty() throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"integer\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     Optional<ByteString> serialized =
         recordSerializer.serialize(
             EmbeddedFormat.JSONSCHEMA,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             NullNode.getInstance(),
             /* isKey= */ false);
 
@@ -1335,17 +1299,16 @@ public class RecordSerializerFacadeTest {
         /* isKey= */ false);
   }
 
-  @Test(expected = SerializationException.class)
-  public void serializeInvalidJsonschemaValue_throwsSerializationException() throws Exception {
+  @Test(expected = BadRequestException.class)
+  public void serializeInvalidJsonschemaValue_throwsBadRequestException() throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"integer\"}");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     recordSerializer.serialize(
         EmbeddedFormat.JSONSCHEMA,
         TOPIC_NAME,
-        Optional.of(RegisteredSchema.create(schemaId, schema)),
+        Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
         TextNode.valueOf("foobar"),
         /* isKey= */ false);
   }
@@ -1355,9 +1318,8 @@ public class RecordSerializerFacadeTest {
     ProtobufSchema schema =
         new ProtobufSchema(
             "syntax = \"proto3\"; message ObjectKey { int32 foo = 1; bool bar = 2; }");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
     ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
     node.put("foo", 1);
     node.put("bar", true);
@@ -1366,7 +1328,7 @@ public class RecordSerializerFacadeTest {
         recordSerializer.serialize(
             EmbeddedFormat.PROTOBUF,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             node,
             /* isKey= */ true).get();
 
@@ -1397,15 +1359,14 @@ public class RecordSerializerFacadeTest {
     ProtobufSchema schema =
         new ProtobufSchema(
             "syntax = \"proto3\"; message NullKey { int32 foo = 1; bool bar = 2; }");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     Optional<ByteString> serialized =
         recordSerializer.serialize(
             EmbeddedFormat.PROTOBUF,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             NullNode.getInstance(),
             /* isKey= */ true);
 
@@ -1426,21 +1387,20 @@ public class RecordSerializerFacadeTest {
         /* isKey= */ true);
   }
 
-  @Test(expected = SerializationException.class)
-  public void serializeInvalidProtobufKey_throwsSerializationException() throws Exception {
+  @Test(expected = BadRequestException.class)
+  public void serializeInvalidProtobufKey_throwsBadRequestException() throws Exception {
     ProtobufSchema schema =
         new ProtobufSchema(
             "syntax = \"proto3\"; message InvalidKey { int32 foo = 1; bool bar = 2; }");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
     ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
     node.put("foo", "bar");
 
     recordSerializer.serialize(
         EmbeddedFormat.PROTOBUF,
         TOPIC_NAME,
-        Optional.of(RegisteredSchema.create(schemaId, schema)),
+        Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
         node,
         /* isKey= */ true);
   }
@@ -1450,9 +1410,8 @@ public class RecordSerializerFacadeTest {
     ProtobufSchema schema =
         new ProtobufSchema(
             "syntax = \"proto3\"; message ObjectValueKey { int32 foo = 1; bool bar = 2; }");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
     ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
     node.put("foo", 1);
     node.put("bar", true);
@@ -1461,7 +1420,7 @@ public class RecordSerializerFacadeTest {
         recordSerializer.serialize(
             EmbeddedFormat.PROTOBUF,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             node,
             /* isKey= */ false).get();
 
@@ -1492,15 +1451,14 @@ public class RecordSerializerFacadeTest {
     ProtobufSchema schema =
         new ProtobufSchema(
             "syntax = \"proto3\"; message NullValue { int32 foo = 1; bool bar = 2; }");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
 
     Optional<ByteString> serialized =
         recordSerializer.serialize(
             EmbeddedFormat.PROTOBUF,
             TOPIC_NAME,
-            Optional.of(RegisteredSchema.create(schemaId, schema)),
+            Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
             NullNode.getInstance(),
             /* isKey= */ false);
 
@@ -1521,21 +1479,20 @@ public class RecordSerializerFacadeTest {
         /* isKey= */ false);
   }
 
-  @Test(expected = SerializationException.class)
-  public void serializeInvalidProtobufValue_throwsSerializationException() throws Exception {
+  @Test(expected = BadRequestException.class)
+  public void serializeInvalidProtobufValue_throwsBadRequestException() throws Exception {
     ProtobufSchema schema =
         new ProtobufSchema(
             "syntax = \"proto3\"; message InvalidValue { int32 foo = 1; bool bar = 2; }");
-    int schemaId =
-        schemaRegistryClient.register(
-            SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema), schema);
+    String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
+    int schemaId = schemaRegistryClient.register(subject, schema);
     ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
     node.put("foo", "bar");
 
     recordSerializer.serialize(
         EmbeddedFormat.PROTOBUF,
         TOPIC_NAME,
-        Optional.of(RegisteredSchema.create(schemaId, schema)),
+        Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
         node,
         /* isKey= */ false);
   }

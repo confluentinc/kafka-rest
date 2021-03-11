@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -17,12 +17,21 @@ package io.confluent.kafkarest.exceptions;
 
 import javax.ws.rs.core.Response.Status;
 
-public final class DisabledOperationException extends StatusCodeException {
+public class BadRequestException extends StatusCodeException {
 
-  public DisabledOperationException(Status status) {
-    super(
-        status,
-        "Operation not supported",
-        "The operation attempted is not supported by this server.");
+  public BadRequestException(String detail) {
+    this("Bad Request", detail);
+  }
+
+  public BadRequestException(String detail, Throwable cause) {
+    this("Bad Request", detail, cause);
+  }
+
+  public BadRequestException(String title, String detail) {
+    super(Status.BAD_REQUEST, title, detail);
+  }
+
+  public BadRequestException(String title, String detail, Throwable cause) {
+    super(Status.BAD_REQUEST, title, detail, cause);
   }
 }

@@ -474,6 +474,20 @@ paths:
         '200':
           $ref: '#/components/responses/ListTopicConfigsResponse'
 
+  /clusters/{cluster_id}/topics/{topic_name}/default-configs:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/TopicName'
+
+    get:
+      summary: 'List Default Topic Configs'
+      description: 'Return the list of default configs that would be used should the specified topic be created.'
+      tags:
+        - Configs
+      responses:
+        '200':
+          $ref: '#/components/responses/ListTopicConfigsResponse'
+
   /clusters/{cluster_id}/topics/{topic_name}/configs:alter:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -626,6 +640,19 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/GetReplicaResponse'
+
+  /clusters/{cluster_id}/topics/-/configs:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+
+    get:
+      summary: 'Get All Topic Configs'
+      description: 'Returns all topic configurations for topics hosted by the specified cluster.'
+      tags:
+        - Configs
+      responses:
+        '200':
+          $ref: '#/components/responses/ListTopicConfigsResponse'
 
 components:
   parameters:
@@ -1618,6 +1645,17 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreateAclRequestData'
+          example:
+            kind: 'KafkaAcl'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/acls?resource_type=CLUSTER&resource_name=cluster-1&pattern_type=LITERAL&principal=bob&host=*&operation=DESCRIBE&permission=DENY'
+            resource_type: 'CLUSTER'
+            resource_name: 'cluster-1'
+            pattern_type: 'LITERAL'
+            principal: 'alice'
+            host: '*'
+            operation: 'DESCRIBE'
+            permission: 'DENY'
 
     CreateTopicRequest:
       description: 'The topic creation request.'

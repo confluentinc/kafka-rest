@@ -100,7 +100,10 @@ public final class TopicConfigsResource {
                             .setData(
                                 configs.stream()
                                     .sorted(Comparator.comparing(TopicConfig::getName))
-                                    .map(this::toTopicConfigData)
+                                    .map(topicConfig -> toTopicConfigData(
+                                        topicConfig,
+                                        crnFactory,
+                                        urlFactory))
                                     .collect(Collectors.toList()))
                             .build()));
 
@@ -122,7 +125,8 @@ public final class TopicConfigsResource {
         topicConfigManager.get()
             .getTopicConfig(clusterId, topicName, name)
             .thenApply(topic -> topic.orElseThrow(NotFoundException::new))
-            .thenApply(topic -> GetTopicConfigResponse.create(toTopicConfigData(topic)));
+            .thenApply(topic -> GetTopicConfigResponse.create(
+                toTopicConfigData(topic,crnFactory,urlFactory)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
@@ -169,7 +173,10 @@ public final class TopicConfigsResource {
         .asyncResume(asyncResponse);
   }
 
-  private TopicConfigData toTopicConfigData(TopicConfig topicConfig) {
+  public static TopicConfigData toTopicConfigData(
+      TopicConfig topicConfig,
+      CrnFactory crnFactory,
+      UrlFactory urlFactory) {
     return TopicConfigData.fromTopicConfig(topicConfig)
         .setMetadata(
             Resource.Metadata.builder()
