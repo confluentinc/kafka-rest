@@ -53,7 +53,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/records")
-@ResourceName("api.v3.records.create.*")
+@ResourceName("api.v3.produce.*")
 public final class ProduceAction {
 
   private static final Collector<
@@ -83,8 +83,8 @@ public final class ProduceAction {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  @PerformanceMetric("v3.records.create.produce-to-topic")
-  @ResourceName("api.v3.records.create.produce-to-topic")
+  @PerformanceMetric("v3.produce.produce-to-topic")
+  @ResourceName("api.v3.produce.produce-to-topic")
   public void produce(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
