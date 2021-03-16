@@ -33,7 +33,9 @@ import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestHeader;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.entities.v3.ProduceResponse.ProduceResponseData;
 import io.confluent.kafkarest.exceptions.BadRequestException;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.response.StreamingResponse;
+import io.confluent.rest.annotations.PerformanceMetric;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -51,6 +53,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/records")
+@ResourceName("api.v3.produce.*")
 public final class ProduceAction {
 
   private static final Collector<
@@ -80,6 +83,8 @@ public final class ProduceAction {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.produce.produce-to-topic")
+  @ResourceName("api.v3.produce.produce-to-topic")
   public void produce(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
