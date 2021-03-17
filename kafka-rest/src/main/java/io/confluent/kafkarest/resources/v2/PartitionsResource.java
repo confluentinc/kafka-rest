@@ -22,7 +22,7 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.PartitionManager;
 import io.confluent.kafkarest.entities.v2.GetPartitionResponse;
 import io.confluent.kafkarest.entities.v2.TopicPartitionOffsetResponse;
-import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
+import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.List;

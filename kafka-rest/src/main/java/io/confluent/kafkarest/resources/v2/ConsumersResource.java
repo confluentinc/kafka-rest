@@ -37,7 +37,7 @@ import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.v2.JsonConsumerRecord;
 import io.confluent.kafkarest.entities.v2.SchemaConsumerRecord;
-import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
+import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.v2.BinaryKafkaConsumerState;
 import io.confluent.kafkarest.v2.JsonKafkaConsumerState;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;

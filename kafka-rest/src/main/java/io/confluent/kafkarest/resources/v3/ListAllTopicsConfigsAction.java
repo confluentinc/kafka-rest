@@ -21,7 +21,7 @@ import io.confluent.kafkarest.entities.TopicConfig;
 import io.confluent.kafkarest.entities.v3.ListTopicConfigsResponse;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.TopicConfigDataList;
-import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
+import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;

@@ -21,7 +21,7 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.BrokerManager;
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.v2.BrokerList;
-import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
+import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.concurrent.CompletableFuture;

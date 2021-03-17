@@ -22,7 +22,7 @@ import io.confluent.kafkarest.entities.Reassignment;
 import io.confluent.kafkarest.entities.v3.GetReassignmentResponse;
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
 import io.confluent.kafkarest.entities.v3.Resource;
-import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
+import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
