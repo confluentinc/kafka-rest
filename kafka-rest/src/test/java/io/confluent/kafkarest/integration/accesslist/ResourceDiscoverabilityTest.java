@@ -13,12 +13,13 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.integration;
+package io.confluent.kafkarest.integration.accesslist;
 
 import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.extension.RestResourceExtension;
+import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Collections;
 import java.util.Properties;
 import javax.annotation.Priority;

@@ -16,7 +16,7 @@
 package io.confluent.kafkarest.resources.v2;
 
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
+import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.HashMap;
 import java.util.Map;

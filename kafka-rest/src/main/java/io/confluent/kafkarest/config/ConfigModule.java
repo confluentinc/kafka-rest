@@ -62,6 +62,10 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new AdvertisedListenersConfigImpl())
         .to(new TypeLiteral<List<URI>>() { });
 
+    bind(new HashSet<>(config.getList(KafkaRestConfig.API_ENDPOINTS_ALLOWLIST_CONFIG)))
+        .qualifiedBy(new ApiEndpointsAllowlistConfigImpl())
+        .to(new TypeLiteral<Set<String>>() { });
+
     bind(new HashSet<>(config.getList(KafkaRestConfig.API_ENDPOINTS_BLOCKLIST_CONFIG)))
         .qualifiedBy(new ApiEndpointsBlocklistConfigImpl())
         .to(new TypeLiteral<Set<String>>() { });
@@ -136,6 +140,17 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class AdvertisedListenersConfigImpl
       extends AnnotationLiteral<AdvertisedListenersConfig> implements AdvertisedListenersConfig {
+  }
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ApiEndpointsAllowlistConfig {
+  }
+
+  private static final class ApiEndpointsAllowlistConfigImpl
+      extends AnnotationLiteral<ApiEndpointsAllowlistConfig>
+      implements ApiEndpointsAllowlistConfig {
   }
 
   @Qualifier

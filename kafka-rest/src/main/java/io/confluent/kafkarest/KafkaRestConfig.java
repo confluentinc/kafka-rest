@@ -284,7 +284,7 @@ public class KafkaRestConfig extends RestConfig {
       "The location of the SSL trust store file.";
   protected static final String KAFKACLIENT_SSL_TRUSTSTORE_PASSWORD_DOC =
       "The password to access the trust store.";
-  protected static final String KAFAKSTORE_SSL_TRUSTSTORE_TYPE_DOC =
+  protected static final String KAFKASTORE_SSL_TRUSTSTORE_TYPE_DOC =
       "The file format of the trust store.";
   protected static final String KAFKACLIENT_SSL_TRUSTMANAGER_ALGORITHM_DOC =
       "The algorithm used by the trust manager factory for SSL connections.";
@@ -292,17 +292,17 @@ public class KafkaRestConfig extends RestConfig {
       "The location of the SSL keystore file.";
   protected static final String KAFKACLIENT_SSL_KEYSTORE_PASSWORD_DOC =
       "The password to access the keystore.";
-  protected static final String KAFAKSTORE_SSL_KEYSTORE_TYPE_DOC =
+  protected static final String KAFKASTORE_SSL_KEYSTORE_TYPE_DOC =
       "The file format of the keystore.";
   protected static final String KAFKACLIENT_SSL_KEYMANAGER_ALGORITHM_DOC =
       "The algorithm used by key manager factory for SSL connections.";
   protected static final String KAFKACLIENT_SSL_KEY_PASSWORD_DOC =
       "The password of the key contained in the keystore.";
-  protected static final String KAFAKSTORE_SSL_ENABLED_PROTOCOLS_DOC =
+  protected static final String KAFKASTORE_SSL_ENABLED_PROTOCOLS_DOC =
       "Protocols enabled for SSL connections.";
-  protected static final String KAFAKSTORE_SSL_PROTOCOL_DOC =
+  protected static final String KAFKASTORE_SSL_PROTOCOL_DOC =
       "The SSL protocol used.";
-  protected static final String KAFAKSTORE_SSL_PROVIDER_DOC =
+  protected static final String KAFKASTORE_SSL_PROVIDER_DOC =
       "The name of the security provider used for SSL.";
   protected static final String KAFKACLIENT_SSL_CIPHER_SUITES_DOC =
       "A list of cipher suites used for SSL.";
@@ -341,11 +341,26 @@ public class KafkaRestConfig extends RestConfig {
           + "should be delegated to. Examples: confluent.cloud, mds-01.example.com.";
   private static final String CONFLUENT_RESOURCE_NAME_AUTHORITY_DEFAULT = "";
 
+  // An empty string value will be transformed to an empty List<String> by Kafka's ConfigDef that
+  // we use for allowlist and blocklist configs.
+  private static final String CONFIG_DEF_EMPTY_LIST_VALUE = "";
+
+  public static final String API_ENDPOINTS_ALLOWLIST_CONFIG = "api.endpoints.allowlist";
+  public static final String API_ENDPOINTS_ALLOWLIST_DOC =
+      "List of endpoints to enable in this server. For example: \"api.v3.acls.*\" or "
+          + "\"api.v3.acls.create,api.v3.acls.delete\". If only an allowlist is present, only the "
+          + "endpoints in it will be accessible. If both an allowlist and a blocklist are present, "
+          + "only the endpoints in the allowlist that are not in the blocklist will be accessible.";
+  private static final String API_ENDPOINTS_ALLOWLIST_DEFAULT = CONFIG_DEF_EMPTY_LIST_VALUE;
+
   public static final String API_ENDPOINTS_BLOCKLIST_CONFIG = "api.endpoints.blocklist";
   public static final String API_ENDPOINTS_BLOCKLIST_DOC =
       "List of endpoints to disable in this server. For example: \"api.v3.acls.*\" or "
-          + "\"api.v3.acls.create,api.v3.acls.delete\".";
-  public static final String API_ENDPOINTS_BLOCKLIST_DEFAULT = "";
+          + "\"api.v3.acls.create,api.v3.acls.delete\". If only a blocklist is present, all the "
+          + "endpoints not in it will be accessible. If both an allowlist and a blocklist are "
+          + "present, only the endpoints in the allowlist that are not in the blocklist will be "
+          + "accessible.";
+  private static final String API_ENDPOINTS_BLOCKLIST_DEFAULT = CONFIG_DEF_EMPTY_LIST_VALUE;
 
   public static final String API_V2_ENABLE_CONFIG = "api.v2.enable";
   private static final String API_V2_ENABLE_DOC =
@@ -533,7 +548,7 @@ public class KafkaRestConfig extends RestConfig {
         Type.STRING,
         "JKS",
         Importance.MEDIUM,
-        KAFAKSTORE_SSL_TRUSTSTORE_TYPE_DOC
+        KAFKASTORE_SSL_TRUSTSTORE_TYPE_DOC
     )
     .define(
         KAFKACLIENT_SSL_TRUSTMANAGER_ALGORITHM_CONFIG,
@@ -561,7 +576,7 @@ public class KafkaRestConfig extends RestConfig {
         Type.STRING,
         "JKS",
         Importance.MEDIUM,
-        KAFAKSTORE_SSL_KEYSTORE_TYPE_DOC
+        KAFKASTORE_SSL_KEYSTORE_TYPE_DOC
     )
     .define(
         KAFKACLIENT_SSL_KEYMANAGER_ALGORITHM_CONFIG,
@@ -582,21 +597,21 @@ public class KafkaRestConfig extends RestConfig {
         Type.STRING,
         "TLSv1.2,TLSv1.1,TLSv1",
         Importance.MEDIUM,
-        KAFAKSTORE_SSL_ENABLED_PROTOCOLS_DOC
+        KAFKASTORE_SSL_ENABLED_PROTOCOLS_DOC
     )
     .define(
         KAFKACLIENT_SSL_PROTOCOL_CONFIG,
         Type.STRING,
         "TLS",
         Importance.MEDIUM,
-        KAFAKSTORE_SSL_PROTOCOL_DOC
+        KAFKASTORE_SSL_PROTOCOL_DOC
     )
     .define(
         KAFKACLIENT_SSL_PROVIDER_CONFIG,
         Type.STRING,
         "",
         Importance.MEDIUM,
-        KAFAKSTORE_SSL_PROVIDER_DOC
+        KAFKASTORE_SSL_PROVIDER_DOC
     )
     .define(
         KAFKACLIENT_SSL_CIPHER_SUITES_CONFIG,
@@ -667,6 +682,13 @@ public class KafkaRestConfig extends RestConfig {
         CONFLUENT_RESOURCE_NAME_AUTHORITY_DEFAULT,
         Importance.LOW,
         CONFLUENT_RESOURCE_NAME_AUTHORITY_DOC
+    )
+    .define(
+        API_ENDPOINTS_ALLOWLIST_CONFIG,
+        Type.LIST,
+        API_ENDPOINTS_ALLOWLIST_DEFAULT,
+        Importance.LOW,
+        API_ENDPOINTS_ALLOWLIST_DOC
     )
     .define(
         API_ENDPOINTS_BLOCKLIST_CONFIG,

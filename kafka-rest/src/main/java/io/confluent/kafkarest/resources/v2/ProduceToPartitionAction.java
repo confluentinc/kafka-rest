@@ -22,7 +22,7 @@ import io.confluent.kafkarest.controllers.SchemaManager;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.ProduceRequest;
 import io.confluent.kafkarest.entities.v2.ProduceResponse;
-import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
+import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.Optional;
