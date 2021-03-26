@@ -28,7 +28,7 @@ import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-public class SslFixture implements BeforeEachCallback, AfterEachCallback {
+public final class SslFixture implements BeforeEachCallback, AfterEachCallback {
   private static final String SSL_PROTOCOL = "TLSv1.2";
   private static final String SSL_ENABLED_PROTOCOLS = "TLSv1.2";
   private static final String TRUST_STORE_TYPE = "JKS";

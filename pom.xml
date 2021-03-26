@@ -105,6 +105,11 @@
                 <artifactId>bcpkix-jdk15on</artifactId>
                 <version>1.68</version>
             </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-ext-jdk15on</artifactId>
+                <version>1.66</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

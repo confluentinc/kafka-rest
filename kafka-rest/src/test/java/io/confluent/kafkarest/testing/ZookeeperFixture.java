@@ -18,14 +18,14 @@ public final class ZookeeperFixture implements BeforeEachCallback, AfterEachCall
 
   @Override
   public void beforeEach(ExtensionContext extensionContext) {
-    checkState(zookeeper == null, "Starting environment that already started.");
     zookeeper = new EmbeddedZookeeper();
   }
 
   @Override
   public void afterEach(ExtensionContext extensionContext) {
-    checkState(zookeeper != null, "Stopping environment that never started.");
-    zookeeper.shutdown();
+    if (zookeeper != null) {
+      zookeeper.shutdown();
+    }
     zookeeper = null;
   }
 
