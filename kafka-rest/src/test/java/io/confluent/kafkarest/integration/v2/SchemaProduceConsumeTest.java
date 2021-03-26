@@ -1,5 +1,6 @@
 package io.confluent.kafkarest.integration.v2;
 
+import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableMap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -120,25 +121,28 @@ public abstract class SchemaProduceConsumeTest {
 
     assertEquals(Status.OK.getStatusCode(), produceResponse.getStatus());
 
-    Response readRecordsResponse =
-        testEnv.kafkaRest()
-            .target()
-            .path(
-                String.format(
-                    "/consumers/%s/instances/%s/records",
-                    CONSUMER_GROUP,
-                    createConsumerInstance.getInstanceId()))
-            .request()
-            .accept(getContentType())
-            .get();
+    testWithRetry(
+        () -> {
+          Response readRecordsResponse =
+              testEnv.kafkaRest()
+                  .target()
+                  .path(
+                      String.format(
+                          "/consumers/%s/instances/%s/records",
+                          CONSUMER_GROUP,
+                          createConsumerInstance.getInstanceId()))
+                  .request()
+                  .accept(getContentType())
+                  .get();
 
-    assertEquals(Status.OK.getStatusCode(), readRecordsResponse.getStatus());
+          assertEquals(Status.OK.getStatusCode(), readRecordsResponse.getStatus());
 
-    List<SchemaConsumerRecord> readRecords =
-        readRecordsResponse.readEntity(new GenericType<List<SchemaConsumerRecord>>() {
+          List<SchemaConsumerRecord> readRecords =
+              readRecordsResponse.readEntity(new GenericType<List<SchemaConsumerRecord>>() {
+              });
+
+          assertMapEquals(producedToMap(getProduceRecords()), consumedToMap(readRecords));
         });
-
-    assertMapEquals(producedToMap(getProduceRecords()), consumedToMap(readRecords));
   }
 
   private static Map<JsonNode, JsonNode> producedToMap(List<SchemaTopicProduceRecord> records) {
