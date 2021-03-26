@@ -90,7 +90,6 @@ public final class KafkaRestFixture implements BeforeEachCallback, AfterEachCall
     }
     properties.putAll(getKafkaConfigs());
     properties.putAll(getSchemaRegistryConfigs());
-    //properties.put("producer.max.block.ms", "5000");
     properties.putAll(configs);
     return new KafkaRestConfig(properties);
   }

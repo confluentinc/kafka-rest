@@ -43,6 +43,7 @@ public final class DefaultKafkaRestTestEnvironment
       KafkaRestFixture.builder()
           .setCertificates(certificates, "kafka-rest")
           .setConfig("ssl.client.authentication", "REQUIRED")
+          .setConfig("producer.max.block.ms", "10000")
           .setKafkaCluster(kafkaCluster)
           .setKafkaUser("kafka-rest", "kafka-rest-pass")
           .setSchemaRegistry(schemaRegistry)
