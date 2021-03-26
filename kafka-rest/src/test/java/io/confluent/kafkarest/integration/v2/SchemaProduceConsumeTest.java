@@ -121,6 +121,8 @@ public abstract class SchemaProduceConsumeTest {
 
     assertEquals(Status.OK.getStatusCode(), produceResponse.getStatus());
 
+    System.out.println(">>>>> " + produceResponse.readEntity(String.class));
+
     testWithRetry(
         () -> {
           Response readRecordsResponse =
