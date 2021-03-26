@@ -52,7 +52,7 @@ public abstract class SchemaProduceConsumeTest {
   @Test
   public void produceThenConsume_returnsExactlyProduced() throws Exception {
     testEnv.kafkaCluster()
-        .createTopic(TOPIC, /* numPartitions= */ 1, /* replicationFactor= */ (short) 1);
+        .createTopic(TOPIC, /* numPartitions= */ 1, /* replicationFactor= */ (short) 3);
 
     Response createConsumerInstanceResponse =
         testEnv.kafkaRest()
@@ -123,28 +123,25 @@ public abstract class SchemaProduceConsumeTest {
 
     System.out.println(">>>>> " + produceResponse.readEntity(String.class));
 
-    testWithRetry(
-        () -> {
-          Response readRecordsResponse =
-              testEnv.kafkaRest()
-                  .target()
-                  .path(
-                      String.format(
-                          "/consumers/%s/instances/%s/records",
-                          CONSUMER_GROUP,
-                          createConsumerInstance.getInstanceId()))
-                  .request()
-                  .accept(getContentType())
-                  .get();
+    Response readRecordsResponse =
+        testEnv.kafkaRest()
+            .target()
+            .path(
+                String.format(
+                    "/consumers/%s/instances/%s/records",
+                    CONSUMER_GROUP,
+                    createConsumerInstance.getInstanceId()))
+            .request()
+            .accept(getContentType())
+            .get();
 
-          assertEquals(Status.OK.getStatusCode(), readRecordsResponse.getStatus());
+    assertEquals(Status.OK.getStatusCode(), readRecordsResponse.getStatus());
 
-          List<SchemaConsumerRecord> readRecords =
-              readRecordsResponse.readEntity(new GenericType<List<SchemaConsumerRecord>>() {
-              });
-
-          assertMapEquals(producedToMap(getProduceRecords()), consumedToMap(readRecords));
+    List<SchemaConsumerRecord> readRecords =
+        readRecordsResponse.readEntity(new GenericType<List<SchemaConsumerRecord>>() {
         });
+
+    assertMapEquals(producedToMap(getProduceRecords()), consumedToMap(readRecords));
   }
 
   private static Map<JsonNode, JsonNode> producedToMap(List<SchemaTopicProduceRecord> records) {
