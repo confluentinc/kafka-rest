@@ -8,22 +8,22 @@ import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-public final class ZookeeperEnvironment implements BeforeEachCallback, AfterEachCallback {
+public final class ZookeeperFixture implements BeforeEachCallback, AfterEachCallback {
 
   @Nullable
   private EmbeddedZookeeper zookeeper;
 
-  private ZookeeperEnvironment() {
+  private ZookeeperFixture() {
   }
 
   @Override
-  public void beforeEach(ExtensionContext extensionContext) throws Exception {
+  public void beforeEach(ExtensionContext extensionContext) {
     checkState(zookeeper == null, "Starting environment that already started.");
     zookeeper = new EmbeddedZookeeper();
   }
 
   @Override
-  public void afterEach(ExtensionContext extensionContext) throws Exception {
+  public void afterEach(ExtensionContext extensionContext) {
     checkState(zookeeper != null, "Stopping environment that never started.");
     zookeeper.shutdown();
     zookeeper = null;
@@ -34,7 +34,7 @@ public final class ZookeeperEnvironment implements BeforeEachCallback, AfterEach
     return String.format("localhost:%d", zookeeper.port());
   }
 
-  public static ZookeeperEnvironment create() {
-    return new ZookeeperEnvironment();
+  public static ZookeeperFixture create() {
+    return new ZookeeperFixture();
   }
 }

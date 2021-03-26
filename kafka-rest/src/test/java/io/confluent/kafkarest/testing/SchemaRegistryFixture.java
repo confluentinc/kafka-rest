@@ -15,13 +15,14 @@
 
 package io.confluent.kafkarest.testing;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.MAX_SCHEMAS_PER_SUBJECT_DEFAULT;
-import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.Message;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
@@ -34,9 +35,9 @@ import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
-import java.net.ServerSocket;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
 import org.eclipse.jetty.server.Server;
@@ -44,9 +45,14 @@ import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-public final class SchemaRegistryEnvironment implements BeforeEachCallback, AfterEachCallback {
+public final class SchemaRegistryFixture implements BeforeEachCallback, AfterEachCallback {
 
-  private final KafkaClusterEnvironment kafkaCluster;
+  @Nullable private final SslFixture certificates;
+  private final ImmutableMap<String, String> configs;
+  private final KafkaClusterFixture kafkaCluster;
+  @Nullable private final String kafkaPassword;
+  @Nullable private final String kafkaUser;
+  @Nullable private final String keyName;
 
   @Nullable
   private URI baseUri;
@@ -55,44 +61,92 @@ public final class SchemaRegistryEnvironment implements BeforeEachCallback, Afte
   @Nullable
   private SchemaRegistryClient client;
 
-  private SchemaRegistryEnvironment(KafkaClusterEnvironment kafkaCluster) {
+  private SchemaRegistryFixture(
+      @Nullable SslFixture certificates,
+      Map<String, String> configs,
+      KafkaClusterFixture kafkaCluster,
+      @Nullable String kafkaPassword,
+      @Nullable String kafkaUser,
+      @Nullable String keyName) {
+    checkArgument(kafkaUser != null ^ kafkaPassword == null);
+    checkArgument(certificates != null ^ keyName == null);
+    this.certificates = certificates;
+    this.configs = ImmutableMap.copyOf(configs);
     this.kafkaCluster = requireNonNull(kafkaCluster);
+    this.kafkaPassword = kafkaPassword;
+    this.kafkaUser = kafkaUser;
+    this.keyName = keyName;
   }
 
   @Override
   public void beforeEach(ExtensionContext context) throws Exception {
     checkState(server == null);
-    baseUri = URI.create(String.format("http://localhost:%d", findUnusedPort()));
-    server = new SchemaRegistryRestApplication(createConfigs(baseUri)).createServer();
+    server = new SchemaRegistryRestApplication(createConfigs()).createServer();
     server.start();
+    baseUri = server.getURI();
     client =
         new CachedSchemaRegistryClient(
             singletonList(baseUri.toString()),
             MAX_SCHEMAS_PER_SUBJECT_DEFAULT,
             Arrays.asList(
                 new AvroSchemaProvider(), new JsonSchemaProvider(), new ProtobufSchemaProvider()),
-            emptyMap());
+            getClientConfigs());
   }
 
-  private SchemaRegistryConfig createConfigs(URI baseUri) throws Exception {
+  private SchemaRegistryConfig createConfigs() throws Exception {
+    Properties properties = new Properties();
+    properties.put(
+        SchemaRegistryConfig.LISTENERS_CONFIG,
+        String.format("%s://localhost:0", certificates != null ? "https" : "http"));
+    properties.put(
+        SchemaRegistryConfig.INTER_INSTANCE_PROTOCOL_CONFIG,
+        certificates != null ? "https" : "http");
+    if (certificates != null) {
+      properties.putAll(certificates.getSslConfigs(keyName, ""));
+    }
+    properties.putAll(getKafkaConfigs());
+    properties.putAll(configs);
+    return new SchemaRegistryConfig(properties);
+  }
+
+  private Properties getKafkaConfigs() {
     Properties properties = new Properties();
     properties.put(
         SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG,
         kafkaCluster.getBootstrapServers());
-    properties.put(SchemaRegistryConfig.LISTENERS_CONFIG, baseUri.toString());
-    return new SchemaRegistryConfig(properties);
+    properties.put("kafkastore.security.protocol", kafkaCluster.getSecurityProtocol().name());
+    if (kafkaCluster.isSaslSecurity() && kafkaUser != null) {
+      properties.put(
+          "kafkastore.sasl.jaas.config",
+          String.format(
+              "org.apache.kafka.common.security.plain.PlainLoginModule required "
+                  + "username=\"%s\" "
+                  + "password=\"%s\";",
+              kafkaUser,
+              kafkaPassword));
+      properties.put("kafkastore.sasl.mechanism", "PLAIN");
+    }
+    if (certificates != null) {
+      properties.putAll(certificates.getSslConfigs(keyName, "kafkastore."));
+    }
+    return properties;
   }
 
-  private static int findUnusedPort() throws Exception {
-    try (ServerSocket socket = new ServerSocket(0)) {
-      return socket.getLocalPort();
+  private Map<String, String> getClientConfigs() {
+    checkState(baseUri != null);
+    ImmutableMap.Builder<String, String> configs = ImmutableMap.builder();
+    configs.put("schema.registry.url", baseUri.toString());
+    if (certificates != null) {
+      configs.putAll(certificates.getSslConfigs(keyName, "schema.registry."));
     }
+    return configs.build();
   }
 
   @Override
   public void afterEach(ExtensionContext context) throws Exception {
-    checkState(server != null);
-    server.stop();
+    if (server != null) {
+      server.stop();
+    }
     server = null;
     baseUri = null;
   }
@@ -130,18 +184,42 @@ public final class SchemaRegistryEnvironment implements BeforeEachCallback, Afte
   }
 
   public static final class Builder {
-    private KafkaClusterEnvironment kafkaCluster;
+    private SslFixture certificates = null;
+    private final ImmutableMap.Builder<String, String> configs = ImmutableMap.builder();
+    private KafkaClusterFixture kafkaCluster;
+    private String kafkaPassword = null;
+    private String kafkaUser = null;
+    private String keyName = null;
 
     private Builder() {
     }
 
-    public Builder setKafkaCluster(KafkaClusterEnvironment kafkaCluster) {
+    public Builder setCertificates(SslFixture certificates, String keyName) {
+      this.certificates = requireNonNull(certificates);
+      this.keyName = requireNonNull(keyName);
+      return this;
+    }
+
+    public Builder setConfig(String name, String value) {
+      configs.put(name, value);
+      return this;
+    }
+
+    public Builder setKafkaCluster(KafkaClusterFixture kafkaCluster) {
       this.kafkaCluster = requireNonNull(kafkaCluster);
       return this;
     }
 
-    public SchemaRegistryEnvironment build() {
-      return new SchemaRegistryEnvironment(kafkaCluster);
+    public Builder setKafkaUser(String username, String password) {
+      this.kafkaUser = requireNonNull(username);
+      this.kafkaPassword = requireNonNull(password);
+      return this;
+    }
+
+
+    public SchemaRegistryFixture build() {
+      return new SchemaRegistryFixture(
+          certificates, configs.build(), kafkaCluster, kafkaPassword, kafkaUser, keyName);
     }
   }
 
@@ -158,7 +236,7 @@ public final class SchemaRegistryEnvironment implements BeforeEachCallback, Afte
     public abstract int getSchemaVersion();
 
     public static SchemaKey create(String subject, int schemaId, int schemaVersion) {
-      return new AutoValue_SchemaRegistryEnvironment_SchemaKey(subject, schemaId, schemaVersion);
+      return new AutoValue_SchemaRegistryFixture_SchemaKey(subject, schemaId, schemaVersion);
     }
   }
 }
