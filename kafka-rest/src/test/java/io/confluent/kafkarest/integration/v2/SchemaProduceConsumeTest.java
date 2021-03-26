@@ -26,6 +26,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -133,6 +134,8 @@ public abstract class SchemaProduceConsumeTest {
     assertEquals(Status.OK.getStatusCode(), produceResponse2.getStatus());
 
     System.out.println(">>>>> " + produceResponse2.readEntity(String.class));
+
+    Assertions.fail("FOOBAR");
 
     Response readRecordsResponse =
         testEnv.kafkaRest()
