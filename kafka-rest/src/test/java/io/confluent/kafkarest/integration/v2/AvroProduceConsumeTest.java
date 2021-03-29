@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecordBuilder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 
 public final class AvroProduceConsumeTest extends SchemaProduceConsumeTest {
 
@@ -75,5 +77,15 @@ public final class AvroProduceConsumeTest extends SchemaProduceConsumeTest {
   @Override
   protected List<SchemaTopicProduceRecord> getProduceRecords() {
     return PRODUCE_RECORDS;
+  }
+
+  @BeforeAll
+  public static void setUpClass() {
+    System.out.println(">>>BEFORE");
+  }
+
+  @AfterAll
+  public static void tearDownClass() {
+    System.out.println(">>>AFTER");
   }
 }
