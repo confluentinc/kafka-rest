@@ -46,10 +46,6 @@ public final class ProtobufProduceConsumeTest extends SchemaProduceConsumeTest {
     return messageBuilder.build();
   }
 
-  public ProtobufProduceConsumeTest() {
-    super(/* numBrokers= */ 1, /* withSchemaRegistry= */ true);
-  }
-
   @Override
   protected EmbeddedFormat getFormat() {
     return EmbeddedFormat.PROTOBUF;

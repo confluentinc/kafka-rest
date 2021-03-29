@@ -742,6 +742,8 @@ public class KafkaRestConfig extends RestConfig {
                 // Make sure we include schema.registry.url unstripped.
                 .addConfig("schema.registry.url")
                 .addConfigs("schema.registry.")
+                // Schema Registry SSL configs need to be forwarded unstripped.
+                .addConfigs("schema.registry.ssl.", /* strip= */ false)
                 .addConfigs("client.")
                 .addConfigs("producer.")
                 .addConfigs("consumer.")
@@ -921,8 +923,12 @@ public class KafkaRestConfig extends RestConfig {
     }
 
     private ConfigsBuilder addConfigs(String prefix) {
+      return addConfigs(prefix, /* strip= */ true);
+    }
+
+    private ConfigsBuilder addConfigs(String prefix, boolean strip) {
       Map<String, ConfigValue> toAdd =
-          Maps.filterKeys(originalsWithPrefix(prefix, /* strip= */ true), mask::contains)
+          Maps.filterKeys(originalsWithPrefix(prefix, strip), mask::contains)
               .entrySet()
               .stream()
               .collect(
