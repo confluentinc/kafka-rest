@@ -52,12 +52,9 @@ public final class SchemaRegistryFixture extends ExternalResource {
   @Nullable private final String kafkaUser;
   @Nullable private final String keyName;
 
-  @Nullable
-  private URI baseUri;
-  @Nullable
-  private Server server;
-  @Nullable
-  private SchemaRegistryClient client;
+  @Nullable private URI baseUri;
+  @Nullable private Server server;
+  @Nullable private SchemaRegistryClient client;
 
   private SchemaRegistryFixture(
       @Nullable SslFixture certificates,

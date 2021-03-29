@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.confluent.kafkarest.testing;
 
 import org.apache.kafka.common.security.auth.SecurityProtocol;
@@ -39,8 +54,8 @@ public final class DefaultKafkaRestTestEnvironment extends ExternalResource {
   private final KafkaRestFixture kafkaRest =
       KafkaRestFixture.builder()
           .setCertificates(certificates, "kafka-rest")
+          .setConfig("producer.max.block.ms", "5000")
           .setConfig("ssl.client.authentication", "REQUIRED")
-          .setConfig("producer.max.block.ms", "10000")
           .setKafkaCluster(kafkaCluster)
           .setKafkaUser("kafka-rest", "kafka-rest-pass")
           .setSchemaRegistry(schemaRegistry)

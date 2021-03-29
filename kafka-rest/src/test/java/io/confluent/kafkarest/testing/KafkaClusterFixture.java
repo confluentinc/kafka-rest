@@ -59,11 +59,10 @@ public final class KafkaClusterFixture extends ExternalResource {
         brokers.stream()
             .map(
                 broker ->
-                    CompletableFuture.supplyAsync(
+                    CompletableFuture.runAsync(
                         () -> {
                           try {
                             broker.before();
-                            return null;
                           } catch (Exception e) {
                             throw new RuntimeException(e);
                           }
@@ -84,11 +83,10 @@ public final class KafkaClusterFixture extends ExternalResource {
         brokers.stream()
             .map(
                 broker ->
-                    CompletableFuture.supplyAsync(
+                    CompletableFuture.runAsync(
                         () -> {
                           try {
                             broker.after();
-                            return null;
                           } catch (Exception e) {
                             throw new RuntimeException(e);
                           }

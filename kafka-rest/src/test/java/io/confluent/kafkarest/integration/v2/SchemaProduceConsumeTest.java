@@ -122,7 +122,6 @@ public abstract class SchemaProduceConsumeTest {
             .post(Entity.entity(produceRequest, getContentType()))
             .readEntity(ProduceResponse.class);
     assertEquals(Status.OK, produceResponse.getRequestStatus());
-    System.out.println(">>>PRODUCE " + produceResponse);
 
     Response readRecordsResponse =
         testEnv.kafkaRest()

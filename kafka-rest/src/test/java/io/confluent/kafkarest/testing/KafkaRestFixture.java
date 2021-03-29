@@ -43,12 +43,9 @@ public final class KafkaRestFixture extends ExternalResource {
   @Nullable private final String keyName;
   @Nullable private final SchemaRegistryFixture schemaRegistry;
 
-  @Nullable
-  private URI baseUri;
-  @Nullable
-  private KafkaRestApplication application;
-  @Nullable
-  private Server server;
+  @Nullable private URI baseUri;
+  @Nullable private KafkaRestApplication application;
+  @Nullable private Server server;
 
   private KafkaRestFixture(
       @Nullable SslFixture certificates,

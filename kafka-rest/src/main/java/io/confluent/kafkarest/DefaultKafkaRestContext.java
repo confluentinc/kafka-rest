@@ -18,7 +18,6 @@ package io.confluent.kafkarest;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
-import java.util.Map;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -83,12 +82,9 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   @Override
   public synchronized Producer<byte[], byte[]> getProducer() {
     if (producer == null) {
-      Map<String, Object> configs = config.getProducerConfigs();
-      System.out.println(">>>>>>>>1 " + configs);
       producer =
           new KafkaProducer<>(
-              configs, new ByteArraySerializer(), new ByteArraySerializer());
-      System.out.println("<<<<<<<<1");
+              config.getProducerConfigs(), new ByteArraySerializer(), new ByteArraySerializer());
     }
     return producer;
   }
