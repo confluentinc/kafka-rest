@@ -1,12 +1,9 @@
 package io.confluent.kafkarest.testing;
 
 import org.apache.kafka.common.security.auth.SecurityProtocol;
-import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.BeforeEachCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.rules.ExternalResource;
 
-public final class DefaultKafkaRestTestEnvironment
-    implements BeforeEachCallback, AfterEachCallback {
+public final class DefaultKafkaRestTestEnvironment extends ExternalResource {
 
   private final SslFixture certificates =
       SslFixture.builder()
@@ -50,21 +47,21 @@ public final class DefaultKafkaRestTestEnvironment
           .build();
 
   @Override
-  public void beforeEach(ExtensionContext context) throws Exception {
-    certificates.beforeEach(context);
-    zookeeper.beforeEach(context);
-    kafkaCluster.beforeEach(context);
-    schemaRegistry.beforeEach(context);
-    kafkaRest.beforeEach(context);
+  public void before() throws Exception {
+    certificates.before();
+    zookeeper.before();
+    kafkaCluster.before();
+    schemaRegistry.before();
+    kafkaRest.before();
   }
 
   @Override
-  public void afterEach(ExtensionContext context) throws Exception {
-    kafkaRest.afterEach(context);
-    schemaRegistry.afterEach(context);
-    kafkaCluster.afterEach(context);
-    zookeeper.afterEach(context);
-    certificates.afterEach(context);
+  public void after() {
+    kafkaRest.after();
+    schemaRegistry.after();
+    kafkaCluster.after();
+    zookeeper.after();
+    certificates.after();
   }
 
   public SslFixture certificates() {

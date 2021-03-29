@@ -41,11 +41,9 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.Deserializer;
-import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.BeforeEachCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.rules.ExternalResource;
 
-public final class KafkaClusterFixture implements BeforeEachCallback, AfterEachCallback {
+public final class KafkaClusterFixture extends ExternalResource {
 
   private final ImmutableList<KafkaBrokerFixture> brokers;
 
@@ -56,7 +54,7 @@ public final class KafkaClusterFixture implements BeforeEachCallback, AfterEachC
   }
 
   @Override
-  public void beforeEach(ExtensionContext extensionContext) {
+  public void before() {
     CompletableFutures.allAsList(
         brokers.stream()
             .map(
@@ -64,7 +62,7 @@ public final class KafkaClusterFixture implements BeforeEachCallback, AfterEachC
                     CompletableFuture.supplyAsync(
                         () -> {
                           try {
-                            broker.beforeEach(extensionContext);
+                            broker.before();
                             return null;
                           } catch (Exception e) {
                             throw new RuntimeException(e);
@@ -77,7 +75,7 @@ public final class KafkaClusterFixture implements BeforeEachCallback, AfterEachC
   }
 
   @Override
-  public void afterEach(ExtensionContext extensionContext) {
+  public void after() {
     if (adminClient != null) {
       adminClient.close();
     }
@@ -89,7 +87,7 @@ public final class KafkaClusterFixture implements BeforeEachCallback, AfterEachC
                     CompletableFuture.supplyAsync(
                         () -> {
                           try {
-                            broker.afterEach(extensionContext);
+                            broker.after();
                             return null;
                           } catch (Exception e) {
                             throw new RuntimeException(e);

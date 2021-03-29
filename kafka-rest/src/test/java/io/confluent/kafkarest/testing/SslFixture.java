@@ -10,6 +10,7 @@ import static org.apache.kafka.test.TestSslUtils.generateKeyPair;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPair;
@@ -24,11 +25,9 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import org.apache.kafka.common.config.types.Password;
 import org.glassfish.jersey.SslConfigurator;
-import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.BeforeEachCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.rules.ExternalResource;
 
-public final class SslFixture implements BeforeEachCallback, AfterEachCallback {
+public final class SslFixture extends ExternalResource {
   private static final String SSL_PROTOCOL = "TLSv1.2";
   private static final String SSL_ENABLED_PROTOCOLS = "TLSv1.2";
   private static final String TRUST_STORE_TYPE = "JKS";
@@ -50,7 +49,7 @@ public final class SslFixture implements BeforeEachCallback, AfterEachCallback {
   }
 
   @Override
-  public void beforeEach(ExtensionContext context) throws Exception {
+  public void before() throws Exception {
     keys = generateKeys();
     trustStoreLocation = createTempFile("truststore", ".jks");
     trustStorePassword = "truststore-pass";
@@ -86,13 +85,21 @@ public final class SslFixture implements BeforeEachCallback, AfterEachCallback {
   }
 
   @Override
-  public void afterEach(ExtensionContext context) throws Exception {
+  public void after() {
     if (trustStoreLocation != null) {
-      Files.delete(trustStoreLocation);
+      try {
+        Files.delete(trustStoreLocation);
+      } catch (IOException e) {
+        // Do nothing.
+      }
     }
     if (keys != null) {
       for (Key key : keys.values()) {
-        Files.delete(key.getKeyStoreLocation());
+        try {
+          Files.delete(key.getKeyStoreLocation());
+        } catch (IOException e) {
+          // Do nothing.
+        }
       }
     }
     trustStoreLocation = null;

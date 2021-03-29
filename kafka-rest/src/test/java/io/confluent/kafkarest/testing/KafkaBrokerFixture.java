@@ -7,6 +7,7 @@ import static java.util.Objects.requireNonNull;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -22,11 +23,9 @@ import kafka.utils.TestUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
-import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.BeforeEachCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.rules.ExternalResource;
 
-public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCallback {
+public final class KafkaBrokerFixture extends ExternalResource {
 
   private static final ImmutableMap<String, String> CONFIG_TEMPLATE =
       ImmutableMap.<String, String>builder()
@@ -78,7 +77,7 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
   }
 
   @Override
-  public void beforeEach(ExtensionContext context) throws Exception {
+  public void before() throws Exception {
     logDir = Files.createTempDirectory(String.format("kafka-%d-", brokerId));
     broker = TestUtils.createServer(KafkaConfig.fromProps(getBrokerConfigs()), MOCK_TIME);
   }
@@ -152,12 +151,19 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
   }
 
   @Override
-  public void afterEach(ExtensionContext context) throws Exception {
+  public void after() {
     if (broker != null) {
       broker.shutdown();
     }
     if (logDir != null) {
-      Files.walk(logDir).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+      try {
+        Files.walk(logDir)
+            .sorted(Comparator.reverseOrder())
+            .map(Path::toFile)
+            .forEach(File::delete);
+      } catch (IOException e) {
+        // Do nothing.
+      }
     }
   }
 

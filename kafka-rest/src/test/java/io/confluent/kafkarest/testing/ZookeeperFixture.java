@@ -4,11 +4,9 @@ import static com.google.common.base.Preconditions.checkState;
 
 import javax.annotation.Nullable;
 import kafka.zk.EmbeddedZookeeper;
-import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.BeforeEachCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.rules.ExternalResource;
 
-public final class ZookeeperFixture implements BeforeEachCallback, AfterEachCallback {
+public final class ZookeeperFixture extends ExternalResource {
 
   @Nullable
   private EmbeddedZookeeper zookeeper;
@@ -17,12 +15,12 @@ public final class ZookeeperFixture implements BeforeEachCallback, AfterEachCall
   }
 
   @Override
-  public void beforeEach(ExtensionContext extensionContext) {
+  public void before() {
     zookeeper = new EmbeddedZookeeper();
   }
 
   @Override
-  public void afterEach(ExtensionContext extensionContext) {
+  public void after() {
     if (zookeeper != null) {
       zookeeper.shutdown();
     }
