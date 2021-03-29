@@ -26,6 +26,8 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -48,6 +50,16 @@ public abstract class SchemaProduceConsumeTest {
   protected abstract ParsedSchema getValueSchema();
 
   protected abstract List<SchemaTopicProduceRecord> getProduceRecords();
+
+  @BeforeAll
+  public void setUpClass() {
+    System.out.println(">>>BEFORE " + this.getClass().getName());
+  }
+
+  @AfterAll
+  public void tearDownClass() {
+    System.out.println(">>>AFTER " + this.getClass().getName());
+  }
 
   @Test
   public void produceThenConsume_returnsExactlyProduced() throws Exception {
@@ -120,6 +132,7 @@ public abstract class SchemaProduceConsumeTest {
             .post(Entity.entity(produceRequest, getContentType()))
             .readEntity(ProduceResponse.class);
     assertEquals(Status.OK, produceResponse.getRequestStatus());
+    System.out.println(">>>PRODUCE " + produceResponse);
 
     Response readRecordsResponse =
         testEnv.kafkaRest()
