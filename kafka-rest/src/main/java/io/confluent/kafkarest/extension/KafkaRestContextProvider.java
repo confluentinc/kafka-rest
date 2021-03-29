@@ -15,22 +15,54 @@
 
 package io.confluent.kafkarest.extension;
 
+import io.confluent.kafkarest.DefaultKafkaRestContext;
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class KafkaRestContextProvider {
 
-  private static final InheritableThreadLocal<KafkaRestContext> currentContext =
+  private static KafkaRestContext defaultContext = null;
+  private static KafkaRestConfig defaultAppConfig = null;
+  private static final InheritableThreadLocal<KafkaRestContext> restContextInheritableThreadLocal =
       new InheritableThreadLocal<>();
 
+  private static final AtomicBoolean initialized = new AtomicBoolean();
+
+  public static void initialize(KafkaRestConfig appConfig) {
+    if (initialized.compareAndSet(false, true)) {
+      defaultContext = new DefaultKafkaRestContext(appConfig);
+      defaultAppConfig = appConfig;
+    }
+  }
+
+  public static KafkaRestConfig getDefaultAppConfig() {
+    return defaultAppConfig;
+  }
+
+  public static KafkaRestContext getDefaultContext() {
+    return defaultContext;
+  }
+
   public static KafkaRestContext getCurrentContext() {
-    return currentContext.get();
+    if (restContextInheritableThreadLocal.get() != null) {
+      return restContextInheritableThreadLocal.get();
+    } else {
+      return defaultContext;
+    }
   }
 
   public static void setCurrentContext(KafkaRestContext kafkaRestContext) {
-    currentContext.set(kafkaRestContext);
+    restContextInheritableThreadLocal.set(kafkaRestContext);
   }
 
   public static void clearCurrentContext() {
-    currentContext.remove();
+    restContextInheritableThreadLocal.remove();
+  }
+
+  public static synchronized void clean() {
+    defaultContext.shutdown();
+    defaultContext = null;
+    initialized.set(false);
   }
 }

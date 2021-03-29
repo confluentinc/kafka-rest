@@ -93,7 +93,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
                                     + KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG
                                     + " needs to be configured");
     }
-    KafkaRestContextProvider.setCurrentContext(new DefaultKafkaRestContext(appConfig));
+    KafkaRestContextProvider.initialize(appConfig);
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
     KafkaRestContext context =
         (KafkaRestContext) Proxy.newProxyInstance(
@@ -143,8 +143,11 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   @Override
   public void onShutdown() {
+
     for (RestResourceExtension restResourceExtension : restResourceExtensions) {
       restResourceExtension.clean();
     }
+
+    KafkaRestContextProvider.clean();
   }
 }
