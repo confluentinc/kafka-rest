@@ -1,6 +1,5 @@
 package io.confluent.kafkarest.integration.v2;
 
-import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableMap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -13,6 +12,7 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
+import io.confluent.kafkarest.entities.v2.ProduceResponse;
 import io.confluent.kafkarest.entities.v2.SchemaConsumerRecord;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest;
 import io.confluent.kafkarest.entities.v2.SchemaTopicProduceRequest.SchemaTopicProduceRecord;
@@ -26,7 +26,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -113,29 +112,14 @@ public abstract class SchemaProduceConsumeTest {
             getValueSchema().canonicalString(),
             null);
 
-    Response produceResponse =
+    ProduceResponse produceResponse =
         testEnv.kafkaRest()
             .target()
             .path(String.format("/topics/%s", TOPIC))
             .request()
-            .post(Entity.entity(produceRequest, getContentType()));
-
-    assertEquals(Status.OK.getStatusCode(), produceResponse.getStatus());
-
-    System.out.println(">>>>> " + produceResponse.readEntity(String.class));
-
-    Response produceResponse2 =
-        testEnv.kafkaRest()
-            .target()
-            .path(String.format("/topics/%s", TOPIC))
-            .request()
-            .post(Entity.entity(produceRequest, getContentType()));
-
-    assertEquals(Status.OK.getStatusCode(), produceResponse2.getStatus());
-
-    System.out.println(">>>>> " + produceResponse2.readEntity(String.class));
-
-    Assertions.fail("FOOBAR");
+            .post(Entity.entity(produceRequest, getContentType()))
+            .readEntity(ProduceResponse.class);
+    assertEquals(Status.OK, produceResponse.getRequestStatus());
 
     Response readRecordsResponse =
         testEnv.kafkaRest()
