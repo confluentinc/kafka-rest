@@ -78,8 +78,8 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
 
   @Override
   public Properties overrideBrokerProperties(int i, Properties props) {
-    props.put(KafkaConfig.TransactionsTopicMinISRProp(),"1");
-    props.put(KafkaConfig.TransactionsTopicReplicationFactorProp(),"1");
+    props.put(KafkaConfig.TransactionsTopicMinISRProp(), "1");
+    props.put(KafkaConfig.TransactionsTopicReplicationFactorProp(), "1");
     return props;
   }
 
@@ -232,18 +232,18 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     producer.beginTransaction();
     producer.send(new ProducerRecord<>(topic3, "someKey", "someVal")).get();
 
-    executeAndVerifyOffsets(Optional.of("read_committed"),3L,3L,0L);
-    executeAndVerifyOffsets(Optional.of("read_uncommitted"),3L,4L,1L);
-    executeAndVerifyOffsets(Optional.empty(),3L,3L,0L);
+    executeAndVerifyOffsets(Optional.of("read_committed"), 3L, 3L, 0L);
+    executeAndVerifyOffsets(Optional.of("read_uncommitted"), 3L, 4L, 1L);
+    executeAndVerifyOffsets(Optional.empty(), 3L, 3L, 0L);
 
     // close the transaction
     producer.commitTransaction();
     producer.close();
 
     // verify the isolation levels are now consistent (end offset has increased because of the transaction marker)
-    executeAndVerifyOffsets(Optional.of("read_committed"),3L,5L,2L);
-    executeAndVerifyOffsets(Optional.of("read_uncommitted"),3L,5L,2L);
-    executeAndVerifyOffsets(Optional.empty(),3L,5L,2L);
+    executeAndVerifyOffsets(Optional.of("read_committed"), 3L, 5L, 2L);
+    executeAndVerifyOffsets(Optional.of("read_uncommitted"), 3L, 5L, 2L);
+    executeAndVerifyOffsets(Optional.empty(), 3L, 5L, 2L);
 
   }
 

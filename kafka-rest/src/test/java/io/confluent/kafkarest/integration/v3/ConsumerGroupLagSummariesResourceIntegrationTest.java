@@ -84,8 +84,8 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
 
   @Override
   public Properties overrideBrokerProperties(int i, Properties props) {
-    props.put(KafkaConfig.TransactionsTopicMinISRProp(),"1");
-    props.put(KafkaConfig.TransactionsTopicReplicationFactorProp(),"1");
+    props.put(KafkaConfig.TransactionsTopicMinISRProp(), "1");
+    props.put(KafkaConfig.TransactionsTopicReplicationFactorProp(), "1");
     return props;
   }
 
@@ -188,19 +188,19 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
     producer.beginTransaction();
     producer.send(new ProducerRecord<>(topic3, "someKey", "someVal")).get();
 
-    executeAndVerifyLag(Optional.of("read_committed"),0);
-    executeAndVerifyLag(Optional.of("read_uncommitted"),1);
+    executeAndVerifyLag(Optional.of("read_committed"), 0);
+    executeAndVerifyLag(Optional.of("read_uncommitted"), 1);
     // default = read committed = 0 lag
-    executeAndVerifyLag(Optional.empty(),0);
+    executeAndVerifyLag(Optional.empty(), 0);
 
     // close the transaction
     producer.commitTransaction();
     producer.close();
 
     // verify the isolation levels are now consistent (lag has increased because of the transaction marker)
-    executeAndVerifyLag(Optional.of("read_committed"),2);
-    executeAndVerifyLag(Optional.of("read_uncommitted"),2);
-    executeAndVerifyLag(Optional.empty(),2);
+    executeAndVerifyLag(Optional.of("read_committed"), 2);
+    executeAndVerifyLag(Optional.of("read_uncommitted"), 2);
+    executeAndVerifyLag(Optional.empty(), 2);
 
   }
 
