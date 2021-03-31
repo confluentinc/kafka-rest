@@ -16,6 +16,8 @@
 package io.confluent.kafkarest.controllers;
 
 import io.confluent.kafkarest.entities.ConsumerGroupLagSummary;
+import org.apache.kafka.common.IsolationLevel;
+
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -28,5 +30,5 @@ public interface ConsumerGroupLagSummaryManager {
    * Returns the Kafka {@link ConsumerGroupLagSummary} with the given {@code consumerGroupId}.
    */
   CompletableFuture<Optional<ConsumerGroupLagSummary>> getConsumerGroupLagSummary(
-      String clusterId, String consumerGroupId);
+      String clusterId, String consumerGroupId, IsolationLevel isolationLevel);
 }

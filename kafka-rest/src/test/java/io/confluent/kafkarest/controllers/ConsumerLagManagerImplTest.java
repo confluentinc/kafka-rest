@@ -249,7 +249,7 @@ public class ConsumerLagManagerImplTest {
         .andReturn(new ListOffsetsResult(LATEST_OFFSETS_MAP));
     replay(consumerGroupManager, kafkaAdminClient, listConsumerGroupOffsetsResult);
     List<ConsumerLag> consumerLagList =
-        consumerLagManager.listConsumerLags(CLUSTER_ID, CONSUMER_GROUP_ID).get();
+        consumerLagManager.listConsumerLags(CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED).get();
     assertEquals(OFFSET_AND_METADATA_MAP.keySet(), capturedOffsetSpec.getValue().keySet());
     assertEquals(
         IsolationLevel.READ_COMMITTED,
@@ -277,7 +277,7 @@ public class ConsumerLagManagerImplTest {
 
     ConsumerLag consumerLag =
         consumerLagManager.getConsumerLag(
-            CLUSTER_ID, CONSUMER_GROUP_ID, "topic-2", 2)
+            CLUSTER_ID, CONSUMER_GROUP_ID, "topic-2", 2, IsolationLevel.READ_COMMITTED)
             .get()
             .get();
 
@@ -347,7 +347,7 @@ public class ConsumerLagManagerImplTest {
 
     ConsumerLag consumerLag =
         consumerLagManager.getConsumerLag(
-            CLUSTER_ID, CONSUMER_GROUP_ID, "topic-1", 1)
+            CLUSTER_ID, CONSUMER_GROUP_ID, "topic-1", 1, IsolationLevel.READ_COMMITTED)
             .get()
             .get();
 
@@ -378,7 +378,7 @@ public class ConsumerLagManagerImplTest {
 
     Optional<ConsumerLag> consumerLag =
         consumerLagManager.getConsumerLag(
-            CLUSTER_ID, CONSUMER_GROUP_ID, "topic-1", 2)
+            CLUSTER_ID, CONSUMER_GROUP_ID, "topic-1", 2, IsolationLevel.READ_COMMITTED)
             .get();
     assertEquals(OFFSET_AND_METADATA_MAP.keySet(), capturedOffsetSpec.getValue().keySet());
     assertEquals(
@@ -394,7 +394,7 @@ public class ConsumerLagManagerImplTest {
     replay(consumerGroupManager);
 
     try {
-      consumerLagManager.getConsumerLag(CLUSTER_ID, "foo", "topic-1", 1).get();
+      consumerLagManager.getConsumerLag(CLUSTER_ID, "foo", "topic-1", 1, IsolationLevel.READ_COMMITTED).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -408,7 +408,7 @@ public class ConsumerLagManagerImplTest {
     replay(consumerGroupManager);
 
     try {
-      consumerLagManager.listConsumerLags(CLUSTER_ID, "foo").get();
+      consumerLagManager.listConsumerLags(CLUSTER_ID, "foo", IsolationLevel.READ_COMMITTED).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());

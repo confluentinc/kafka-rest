@@ -30,16 +30,20 @@ import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
+import org.apache.kafka.common.IsolationLevel;
+
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
@@ -47,6 +51,8 @@ import javax.ws.rs.core.MediaType;
 @Path("/v3/clusters/{clusterId}/consumer-groups/{consumerGroupId}/lags")
 @ResourceName("api.v3.consumer-lags.*")
 public final class ConsumerLagsResource {
+
+  public static final String DEFAULT_ISOLATION_LEVEL = "read_committed";
 
   private final Provider<ConsumerLagManager> consumerLagManager;
   private final CrnFactory crnFactory;
@@ -70,11 +76,13 @@ public final class ConsumerLagsResource {
   public void listConsumerLags(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @PathParam("consumerGroupId") String consumerGroupId
+      @PathParam("consumerGroupId") String consumerGroupId,
+      @QueryParam("isolationLevel") @DefaultValue(DEFAULT_ISOLATION_LEVEL)
+          IsolationLevel isolationLevel
   ) {
     CompletableFuture<ListConsumerLagsResponse> response =
         consumerLagManager.get()
-            .listConsumerLags(clusterId, consumerGroupId)
+            .listConsumerLags(clusterId, consumerGroupId, isolationLevel)
             .thenApply(
                 lags -> {
                   if (lags.isEmpty()) {
@@ -120,11 +128,13 @@ public final class ConsumerLagsResource {
       @PathParam("clusterId") String clusterId,
       @PathParam("consumerGroupId") String consumerGroupId,
       @PathParam("topicName") String topicName,
-      @PathParam("partitionId") Integer partitionId
+      @PathParam("partitionId") Integer partitionId,
+      @QueryParam("isolationLevel") @DefaultValue(DEFAULT_ISOLATION_LEVEL)
+          IsolationLevel isolationLevel
   ) {
     CompletableFuture<GetConsumerLagResponse> response =
         consumerLagManager.get()
-            .getConsumerLag(clusterId, consumerGroupId, topicName, partitionId)
+            .getConsumerLag(clusterId, consumerGroupId, topicName, partitionId, isolationLevel)
             .thenApply(lag -> lag.orElseThrow(NotFoundException::new))
             .thenApply(
                 lag ->

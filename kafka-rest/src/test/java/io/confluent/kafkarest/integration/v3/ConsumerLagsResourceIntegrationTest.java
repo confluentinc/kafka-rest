@@ -31,16 +31,26 @@ import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import kafka.server.KafkaConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.BytesDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,6 +61,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
 
   private static final String topic1 = "topic-1";
   private static final String topic2 = "topic-2";
+  private static final String topic3 = "topic-3";
   private static final String[] topics = new String[]{topic1, topic2};
   private static final String group1 = "consumer-group-1";
   private static final int numTopics = 2;
@@ -65,6 +76,13 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
           new BinaryPartitionProduceRecord(null, "value3")
       );
 
+  @Override
+  public Properties overrideBrokerProperties(int i, Properties props) {
+    props.put(KafkaConfig.TransactionsTopicMinISRProp(),"1");
+    props.put(KafkaConfig.TransactionsTopicReplicationFactorProp(),"1");
+    return props;
+  }
+
   @Before
   @Override
   public void setUp() throws Exception {
@@ -74,6 +92,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     final int replicationFactor = 1;
     createTopic(topic1, numPartitions, (short) replicationFactor);
     createTopic(topic2, numPartitions, (short) replicationFactor);
+    createTopic(topic3, 1, (short) replicationFactor);
   }
 
   @Test
@@ -190,6 +209,85 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
 
     assertEquals(expected, response2.readEntity(ListConsumerLagsResponse.class));
   }
+
+  @Test
+  public void listConsumerLags_isolationLevel_returnsConsumerLags() throws ExecutionException, InterruptedException {
+
+    // produce to topic1 partition0 and topic2 partition1
+    BinaryPartitionProduceRequest request1 =
+        BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
+    produce(topic3, 0, request1);
+
+    KafkaConsumer<?, ?> consumer1 = createConsumer(group1, "client-1");
+
+    consumer1.subscribe(Collections.singletonList(topic3));
+    consumer1.poll(Duration.ofSeconds(5));
+
+    // commit offsets from consuming from subscribed topics
+    consumer1.commitSync();
+
+    // produce in a new transaction (not visible to read_committed)
+    KafkaProducer<String,String> producer = createTransactionalProducer("someId");
+    producer.initTransactions();
+    producer.beginTransaction();
+    producer.send(new ProducerRecord<>(topic3, "someKey", "someVal")).get();
+
+    executeAndVerifyOffsets(Optional.of("read_committed"),3L,3L,0L);
+    executeAndVerifyOffsets(Optional.of("read_uncommitted"),3L,4L,1L);
+    executeAndVerifyOffsets(Optional.empty(),3L,3L,0L);
+
+    // close the transaction
+    producer.commitTransaction();
+    producer.close();
+
+    // verify the isolation levels are now consistent (end offset has increased because of the transaction marker)
+    executeAndVerifyOffsets(Optional.of("read_committed"),3L,5L,2L);
+    executeAndVerifyOffsets(Optional.of("read_uncommitted"),3L,5L,2L);
+    executeAndVerifyOffsets(Optional.empty(),3L,5L,2L);
+
+  }
+
+  private void executeAndVerifyOffsets(Optional<String> isolationLevel,
+                                       long expectedCurrentOffset,
+                                       long expectedEndOffset,
+                                       long expectedLag) {
+
+    Response response = null;
+    if (isolationLevel.isPresent()) {
+      Map<String,String> params = new HashMap<String,String>() {{
+        put("isolationLevel",isolationLevel.get());
+      }};
+      response =
+          request("/v3/clusters/" + clusterId + "/consumer-groups/" + group1 + "/lags",
+              params)
+              .accept(MediaType.APPLICATION_JSON)
+              .get();
+    } else {
+      response =
+          request("/v3/clusters/" + clusterId + "/consumer-groups/" + group1 + "/lags")
+              .accept(MediaType.APPLICATION_JSON)
+              .get();
+    }
+
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    ConsumerLagDataList consumerLagDataList =
+        response.readEntity(ListConsumerLagsResponse.class).getValue();
+
+    ConsumerLagData consumerLagData =
+        consumerLagDataList.getData()
+            .stream()
+            .filter(lagData ->
+                lagData.getTopicName().equals(topic3))
+            .filter(lagData ->
+                lagData.getPartitionId() == 0)
+            .findAny()
+            .get();
+
+    assertEquals(expectedCurrentOffset, (long) consumerLagData.getCurrentOffset());
+    assertEquals(expectedEndOffset, (long) consumerLagData.getLogEndOffset());
+    assertEquals(expectedLag, (long) consumerLagData.getLag());
+  }
+
 
   @Test
   public void listConsumerLags_nonExistingConsumerGroup_returnsNotFound() {
@@ -355,6 +453,16 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
   private void produce(String topicName, int partitionId, BinaryPartitionProduceRequest request) {
     request("topics/" + topicName + "/partitions/" + partitionId, Collections.emptyMap())
         .post(Entity.entity(request, Versions.KAFKA_V2_JSON_BINARY));
+  }
+
+  private KafkaProducer<String, String> createTransactionalProducer(String transactionId) {
+    Properties properties = restConfig.getProducerProperties();
+    properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    properties.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, transactionId);
+    properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    properties.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
+    return new KafkaProducer<>(properties);
   }
 
   private ConsumerLagData expectedConsumerLagData(

@@ -30,6 +30,7 @@ import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.IsolationLevel;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,8 @@ final class ConsumerGroupLagSummaryManagerImpl
   @Override
   public CompletableFuture<Optional<ConsumerGroupLagSummary>> getConsumerGroupLagSummary(
       String clusterId,
-      String consumerGroupId
+      String consumerGroupId,
+      IsolationLevel isolationLevel
   ) {
     return consumerGroupManager.getConsumerGroup(clusterId, consumerGroupId)
         .thenApply(
@@ -69,7 +71,7 @@ final class ConsumerGroupLagSummaryManagerImpl
                                 "Consumer group offsets could not be found."))
                     .thenCompose(
                         fetchedCurrentOffsets ->
-                            getLatestOffsets(fetchedCurrentOffsets)
+                            getLatestOffsets(fetchedCurrentOffsets, isolationLevel)
                                 .thenApply(
                                     latestOffsets ->
                                        Optional.of(createConsumerGroupLagSummary(

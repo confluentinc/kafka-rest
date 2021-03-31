@@ -207,7 +207,7 @@ public class ConsumerGroupLagSummaryManagerImplTest {
         .andReturn(new ListOffsetsResult(LATEST_OFFSETS_MAP));
     replay(consumerGroupManager, kafkaAdminClient, listConsumerGroupOffsetsResult);
     ConsumerGroupLagSummary consumerGroupLagSummary =
-        consumerGroupLagSummaryManager.getConsumerGroupLagSummary(CLUSTER_ID, CONSUMER_GROUP_ID).get().get();
+        consumerGroupLagSummaryManager.getConsumerGroupLagSummary(CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED).get().get();
     assertEquals(OFFSET_AND_METADATA_MAP.keySet(), capturedOffsetSpec.getValue().keySet());
     assertEquals(
         IsolationLevel.READ_COMMITTED,
@@ -222,7 +222,7 @@ public class ConsumerGroupLagSummaryManagerImplTest {
     replay(consumerGroupManager);
 
     try {
-      consumerGroupLagSummaryManager.getConsumerGroupLagSummary(CLUSTER_ID, CONSUMER_GROUP_ID).get();
+      consumerGroupLagSummaryManager.getConsumerGroupLagSummary(CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());

@@ -35,6 +35,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.NotFoundException;
+
+import org.apache.kafka.common.IsolationLevel;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
 import org.junit.Before;
@@ -96,12 +98,12 @@ public class ConsumerLagsResourceTest {
 
   @Test
   public void listConsumerLags_returnsConsumerLags() {
-    expect(consumerLagManager.listConsumerLags(CLUSTER_ID, CONSUMER_GROUP_ID))
+    expect(consumerLagManager.listConsumerLags(CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
         .andReturn(completedFuture(CONSUMER_LAG_LIST));
     replay(consumerLagManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    consumerLagsResource.listConsumerLags(response, CLUSTER_ID, CONSUMER_GROUP_ID);
+    consumerLagsResource.listConsumerLags(response, CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED);
 
     ListConsumerLagsResponse expected =
         ListConsumerLagsResponse.create(
@@ -142,12 +144,12 @@ public class ConsumerLagsResourceTest {
 
   @Test
   public void getConsumerLag_returnsConsumerLag() {
-    expect(consumerLagManager.getConsumerLag(CLUSTER_ID, CONSUMER_GROUP_ID, TOPIC, 1))
+    expect(consumerLagManager.getConsumerLag(CLUSTER_ID, CONSUMER_GROUP_ID, TOPIC, 1, IsolationLevel.READ_COMMITTED))
         .andReturn(completedFuture(Optional.of(CONSUMER_LAG_1)));
     replay(consumerLagManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    consumerLagsResource.getConsumerLag(response, CLUSTER_ID, CONSUMER_GROUP_ID, TOPIC, 1);
+    consumerLagsResource.getConsumerLag(response, CLUSTER_ID, CONSUMER_GROUP_ID, TOPIC, 1, IsolationLevel.READ_COMMITTED);
 
     GetConsumerLagResponse expected =
         GetConsumerLagResponse.create(
@@ -167,12 +169,12 @@ public class ConsumerLagsResourceTest {
   @Test
   public void getConsumerLag_nonExistingConsumerLag_throwsNotFound() {
     expect(consumerLagManager.getConsumerLag(
-        CLUSTER_ID, CONSUMER_GROUP_ID, TOPIC, 1))
+        CLUSTER_ID, CONSUMER_GROUP_ID, TOPIC, 1, IsolationLevel.READ_COMMITTED))
         .andReturn(completedFuture(Optional.empty()));
     replay(consumerLagManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    consumerLagsResource.getConsumerLag(response, CLUSTER_ID, CONSUMER_GROUP_ID, TOPIC, 1);
+    consumerLagsResource.getConsumerLag(response, CLUSTER_ID, CONSUMER_GROUP_ID, TOPIC, 1, IsolationLevel.READ_COMMITTED);
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }

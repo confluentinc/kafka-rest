@@ -36,7 +36,6 @@ import org.apache.kafka.common.TopicPartition;
 abstract class AbstractConsumerLagManager {
 
   private final Admin kafkaAdminClient;
-  private static final IsolationLevel ISOLATION_LEVEL = IsolationLevel.READ_COMMITTED;
 
   AbstractConsumerLagManager(Admin kafkaAdminClient) {
     this.kafkaAdminClient = requireNonNull(kafkaAdminClient);
@@ -52,7 +51,7 @@ abstract class AbstractConsumerLagManager {
   }
 
   final CompletableFuture<Map<TopicPartition, ListOffsetsResultInfo>> getLatestOffsets(
-      Map<TopicPartition, OffsetAndMetadata> currentOffsets
+      Map<TopicPartition, OffsetAndMetadata> currentOffsets, IsolationLevel isolationLevel
   ) {
     Map<TopicPartition, OffsetSpec> latestOffsetSpecs =
         currentOffsets.keySet()
@@ -62,7 +61,7 @@ abstract class AbstractConsumerLagManager {
     return KafkaFutures.toCompletableFuture(
         kafkaAdminClient.listOffsets(
             latestOffsetSpecs,
-            new ListOffsetsOptions(ISOLATION_LEVEL)).all());
+            new ListOffsetsOptions(isolationLevel)).all());
   }
 
   static final Optional<Long> getCurrentOffset(

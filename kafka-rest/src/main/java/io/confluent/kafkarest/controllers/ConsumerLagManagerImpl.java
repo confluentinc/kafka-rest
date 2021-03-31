@@ -32,6 +32,7 @@ import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.IsolationLevel;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,7 @@ final class ConsumerLagManagerImpl
 
   @Override
   public CompletableFuture<List<ConsumerLag>> listConsumerLags(
-      String clusterId, String consumerGroupId) {
+      String clusterId, String consumerGroupId, IsolationLevel isolationLevel) {
     return consumerGroupManager.getConsumerGroup(clusterId, consumerGroupId)
         .thenApply(
             consumerGroup ->
@@ -69,7 +70,7 @@ final class ConsumerLagManagerImpl
                                 "Consumer group offsets could not be found."))
                     .thenCompose(
                         fetchedCurrentOffsets ->
-                            getLatestOffsets(fetchedCurrentOffsets)
+                            getLatestOffsets(fetchedCurrentOffsets, isolationLevel)
                                 .thenApply(
                                     latestOffsets ->
                                         createConsumerLagList(
@@ -81,8 +82,12 @@ final class ConsumerLagManagerImpl
 
   @Override
   public CompletableFuture<Optional<ConsumerLag>> getConsumerLag(
-      String clusterId, String consumerGroupId, String topicName, Integer partitionId) {
-    return listConsumerLags(clusterId, consumerGroupId)
+      String clusterId,
+      String consumerGroupId,
+      String topicName,
+      Integer partitionId,
+      IsolationLevel isolationLevel) {
+    return listConsumerLags(clusterId, consumerGroupId, isolationLevel)
         .thenApply(
             lags ->
                 lags.stream()

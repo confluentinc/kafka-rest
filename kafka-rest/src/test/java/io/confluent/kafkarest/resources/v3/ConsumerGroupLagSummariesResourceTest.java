@@ -31,6 +31,8 @@ import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
 import java.util.Optional;
 import javax.ws.rs.NotFoundException;
+
+import org.apache.kafka.common.IsolationLevel;
 import org.easymock.EasyMockRule;
 import org.easymock.Mock;
 import org.junit.Before;
@@ -76,12 +78,12 @@ public class ConsumerGroupLagSummariesResourceTest {
 
   @Test
   public void getConsumerGroupLagSummary_returnsConsumerGroupLagSummary() {
-    expect(consumerGroupLagSummaryManager.getConsumerGroupLagSummary(CLUSTER_ID, CONSUMER_GROUP_ID))
+    expect(consumerGroupLagSummaryManager.getConsumerGroupLagSummary(CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
         .andReturn(completedFuture(Optional.of(CONSUMER_GROUP_LAG_1)));
     replay(consumerGroupLagSummaryManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    consumerGroupLagSummariesResource.getConsumerGroupLagSummary(response, CLUSTER_ID, CONSUMER_GROUP_ID);
+    consumerGroupLagSummariesResource.getConsumerGroupLagSummary(response, CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED);
 
     GetConsumerGroupLagSummaryResponse expected =
         GetConsumerGroupLagSummaryResponse.create(
@@ -104,12 +106,12 @@ public class ConsumerGroupLagSummariesResourceTest {
 
   @Test
   public void getConsumerGroupLagSummary_nonExistingConsumerGroupLagSummary_throwsNotFound() {
-    expect(consumerGroupLagSummaryManager.getConsumerGroupLagSummary(CLUSTER_ID, CONSUMER_GROUP_ID))
+    expect(consumerGroupLagSummaryManager.getConsumerGroupLagSummary(CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED))
         .andReturn(completedFuture(Optional.empty()));
     replay(consumerGroupLagSummaryManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    consumerGroupLagSummariesResource.getConsumerGroupLagSummary(response, CLUSTER_ID, CONSUMER_GROUP_ID);
+    consumerGroupLagSummariesResource.getConsumerGroupLagSummary(response, CLUSTER_ID, CONSUMER_GROUP_ID, IsolationLevel.READ_COMMITTED);
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }

@@ -28,15 +28,25 @@ import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import kafka.server.KafkaConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.BytesDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,6 +57,7 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
 
   private static final String topic1 = "topic-1";
   private static final String topic2 = "topic-2";
+  private static final String topic3 = "topic-3";
   private static final String group1 = "consumer-group-1";
   private String baseUrl;
   private String clusterId;
@@ -68,6 +79,14 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
     final int replicationFactor = 1;
     createTopic(topic1, numPartitions, (short) replicationFactor);
     createTopic(topic2, numPartitions, (short) replicationFactor);
+    createTopic(topic3, 1, (short) replicationFactor);
+  }
+
+  @Override
+  public Properties overrideBrokerProperties(int i, Properties props) {
+    props.put(KafkaConfig.TransactionsTopicMinISRProp(),"1");
+    props.put(KafkaConfig.TransactionsTopicReplicationFactorProp(),"1");
+    return props;
   }
 
   @Test
@@ -151,6 +170,65 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
   }
 
   @Test
+  public void getConsumerGroupLagSummary_isolationLevel_returnsConsumerGroupLagSummary() throws ExecutionException, InterruptedException {
+
+    // produce to topic3 partition 0
+    BinaryPartitionProduceRequest request =
+        BinaryPartitionProduceRequest.create(partitionRecordsWithoutKeys);
+    produce(topic3, 0, request);
+
+    KafkaConsumer<?, ?> consumer1 = createConsumer(group1, "client-1");
+    consumer1.subscribe(Collections.singletonList(topic3));
+    consumer1.poll(Duration.ofSeconds(1));
+    consumer1.commitSync();
+
+    // produce in a new transaction (not visible to read_committed)
+    KafkaProducer<String,String> producer = createTransactionalProducer("someId");
+    producer.initTransactions();
+    producer.beginTransaction();
+    producer.send(new ProducerRecord<>(topic3, "someKey", "someVal")).get();
+
+    executeAndVerifyLag(Optional.of("read_committed"),0);
+    executeAndVerifyLag(Optional.of("read_uncommitted"),1);
+    // default = read committed = 0 lag
+    executeAndVerifyLag(Optional.empty(),0);
+
+    // close the transaction
+    producer.commitTransaction();
+    producer.close();
+
+    // verify the isolation levels are now consistent (lag has increased because of the transaction marker)
+    executeAndVerifyLag(Optional.of("read_committed"),2);
+    executeAndVerifyLag(Optional.of("read_uncommitted"),2);
+    executeAndVerifyLag(Optional.empty(),2);
+
+  }
+
+  private void executeAndVerifyLag(Optional<String> isolationLevel, long expectedLag) {
+    Response response = null;
+    if (isolationLevel.isPresent()) {
+      Map<String, String> params = new HashMap<String, String>() {{
+        put("isolationLevel", isolationLevel.get());
+      }};
+      response =
+          request("/v3/clusters/" + getClusterId() + "/consumer-groups/" + group1 + "/lag-summary",
+              params)
+              .accept(MediaType.APPLICATION_JSON)
+              .get();
+    } else {
+      response =
+          request("/v3/clusters/" + getClusterId() + "/consumer-groups/" + group1 + "/lag-summary")
+              .accept(MediaType.APPLICATION_JSON)
+              .get();
+    }
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    ConsumerGroupLagSummaryData consumerGroupLagSummaryData =
+        response.readEntity(GetConsumerGroupLagSummaryResponse.class).getValue();
+    assertEquals(expectedLag, (long) consumerGroupLagSummaryData.getMaxLag());
+  }
+
+
+  @Test
   public void getConsumerGroupLagSummary_nonExistingOffsets_returnsNotFound() {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Arrays.asList(topic1, topic2));
@@ -210,5 +288,15 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
   private void produce(String topicName, int partitionId, BinaryPartitionProduceRequest request) {
     request("topics/" + topicName + "/partitions/" + partitionId, Collections.emptyMap())
         .post(Entity.entity(request, Versions.KAFKA_V2_JSON_BINARY));
+  }
+
+  private KafkaProducer<String, String> createTransactionalProducer(String transactionId) {
+    Properties properties = restConfig.getProducerProperties();
+    properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    properties.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, transactionId);
+    properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    properties.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
+    return new KafkaProducer<>(properties);
   }
 }

@@ -16,6 +16,8 @@
 package io.confluent.kafkarest.controllers;
 
 import io.confluent.kafkarest.entities.ConsumerLag;
+import org.apache.kafka.common.IsolationLevel;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -30,11 +32,15 @@ public interface ConsumerLagManager {
    * {@link io.confluent.kafkarest.entities.ConsumerGroup} with the given {@code consumerGroupId}.
    */
   CompletableFuture<List<ConsumerLag>> listConsumerLags(
-      String clusterId, String consumerGroupId);
+      String clusterId, String consumerGroupId, IsolationLevel isolationLevel);
 
   /**
    * Returns the Kafka {@link ConsumerLag} with the given {@code consumerId}.
    */
   CompletableFuture<Optional<ConsumerLag>> getConsumerLag(
-      String clusterId, String consumerGroupId, String topicName, Integer partitionId);
+      String clusterId,
+      String consumerGroupId,
+      String topicName,
+      Integer partitionId,
+      IsolationLevel isolationLevel);
 }
