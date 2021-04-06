@@ -44,7 +44,6 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.test.NoRetryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -262,8 +261,6 @@ public class TestUtils {
       try {
         assertions.run();
         return;
-      } catch (NoRetryException e) {
-        throw new AssertionError("No retries allowed.");
       } catch (Throwable t) {
         elapsed = System.nanoTime() - start;
         if (i == numRetries || elapsed > maxElapsed) {
