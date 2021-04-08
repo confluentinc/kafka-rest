@@ -24,7 +24,7 @@ import io.confluent.kafkarest.entities.BinaryTopicProduceRecord;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.PartitionOffset;
-import kafka.security.auth.SimpleAclAuthorizer;
+import kafka.security.authorizer.AclAuthorizer;
 import kafka.server.KafkaConfig;
 import org.apache.kafka.common.security.auth.KafkaPrincipal;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
@@ -91,7 +91,7 @@ import static org.junit.Assert.assertTrue;
         false, 1, (short) 1);
     brokerProps.put(KafkaConfig.BrokerIdProp(), Integer.toString(i));
     brokerProps.put(KafkaConfig.ZkConnectProp(), zkConnect);
-    brokerProps.setProperty("authorizer.class.name", SimpleAclAuthorizer.class.getName());
+    brokerProps.setProperty("authorizer.class.name", AclAuthorizer.class.getName());
     brokerProps.setProperty("super.users", "User:admin");
     brokerProps.setProperty("listener.name.sasl_plaintext.plain.sasl.jaas.config",
         "org.apache.kafka.common.security.plain.PlainLoginModule required "
