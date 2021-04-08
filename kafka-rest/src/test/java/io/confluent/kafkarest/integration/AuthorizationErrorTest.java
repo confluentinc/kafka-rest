@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Properties;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
-import kafka.security.auth.SimpleAclAuthorizer;
+import kafka.security.authorizer.AclAuthorizer;
 import kafka.server.KafkaConfig;
 import org.apache.kafka.common.security.auth.KafkaPrincipal;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
@@ -93,7 +93,7 @@ public class AuthorizationErrorTest
         false, 1, (short) 1);
     brokerProps.put(KafkaConfig.BrokerIdProp(), Integer.toString(i));
     brokerProps.put(KafkaConfig.ZkConnectProp(), zkConnect);
-    brokerProps.setProperty("authorizer.class.name", SimpleAclAuthorizer.class.getName());
+    brokerProps.setProperty("authorizer.class.name", AclAuthorizer.class.getName());
     brokerProps.setProperty("super.users", "User:admin");
     brokerProps.setProperty("listener.name.sasl_plaintext.plain.sasl.jaas.config",
         "org.apache.kafka.common.security.plain.PlainLoginModule required "
