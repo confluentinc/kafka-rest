@@ -110,7 +110,7 @@ public final class PartitionsResource {
     CompletableFuture<GetPartitionResponse> response =
         partitionManager.get()
             .getPartition(clusterId, topicName, partitionId)
-            .thenApply(partition -> partition.orElseThrow(NotFoundException::new))
+            .thenApply(partition -> partition.<NotFoundException>orElseThrow(() -> new NotFoundException()))
             .thenApply(partition -> GetPartitionResponse.create(toPartitionData(partition)));
 
     AsyncResponses.asyncResume(asyncResponse, response);

@@ -122,7 +122,7 @@ public final class ClusterConfigsResource {
     CompletableFuture<GetClusterConfigResponse> response =
         clusterConfigManager.get()
             .getClusterConfig(clusterId, configType, name)
-            .thenApply(config -> config.orElseThrow(NotFoundException::new))
+            .thenApply(config -> config.<NotFoundException>orElseThrow(() -> new NotFoundException()))
             .thenApply(config -> GetClusterConfigResponse.create(toClusterConfigData(config)));
 
     AsyncResponses.asyncResume(asyncResponse, response);

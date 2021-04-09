@@ -112,7 +112,7 @@ public final class ConsumersResource {
     CompletableFuture<GetConsumerResponse> response =
         consumerManager.get()
             .getConsumer(clusterId, consumerGroupId, consumerId)
-            .thenApply(consumer -> consumer.orElseThrow(NotFoundException::new))
+            .thenApply(consumer -> consumer.<NotFoundException>orElseThrow(() -> new NotFoundException()))
             .thenApply(
                 consumer -> GetConsumerResponse.create(toConsumerData(consumer)));
 
