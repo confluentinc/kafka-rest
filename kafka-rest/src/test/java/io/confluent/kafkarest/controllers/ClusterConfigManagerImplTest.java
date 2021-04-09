@@ -29,6 +29,7 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 
+import io.confluent.kafkarest.OpenConfigEntry;
 import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.Cluster;
@@ -105,22 +106,19 @@ public class ClusterConfigManagerImplTest {
               new OpenConfigEntry(
                   CONFIG_1.getName(),
                   CONFIG_1.getValue(),
-                  ConfigEntry.ConfigSource.DYNAMIC_DEFAULT_BROKER_CONFIG,
-                  CONFIG_1.isDefault(),
+                  ConfigSource.toAdminConfigSource(CONFIG_1.getSource()),
                   CONFIG_1.isSensitive(),
                   CONFIG_1.isReadOnly()),
               new OpenConfigEntry(
                   CONFIG_2.getName(),
                   CONFIG_2.getValue(),
-                  ConfigEntry.ConfigSource.DYNAMIC_DEFAULT_BROKER_CONFIG,
-                  CONFIG_2.isDefault(),
+                  ConfigSource.toAdminConfigSource(CONFIG_2.getSource()),
                   CONFIG_2.isSensitive(),
                   CONFIG_2.isReadOnly()),
               new OpenConfigEntry(
                   CONFIG_3.getName(),
                   CONFIG_3.getValue(),
-                  ConfigEntry.ConfigSource.DYNAMIC_DEFAULT_BROKER_CONFIG,
-                  CONFIG_3.isDefault(),
+                  ConfigSource.toAdminConfigSource(CONFIG_3.getSource()),
                   CONFIG_3.isSensitive(),
                   CONFIG_3.isReadOnly())));
 
@@ -389,27 +387,6 @@ public class ClusterConfigManagerImplTest {
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
-    }
-  }
-
-  private static final class OpenConfigEntry extends ConfigEntry {
-
-    private final ConfigEntry.ConfigSource source;
-
-    public OpenConfigEntry(
-        String name,
-        String value,
-        ConfigEntry.ConfigSource source,
-        boolean isDefault,
-        boolean isReadOnly,
-        boolean isSensitive) {
-      super(name, value, isDefault, isReadOnly, isSensitive);
-      this.source = requireNonNull(source);
-    }
-
-    @Override
-    public ConfigSource source() {
-      return source;
     }
   }
 }

@@ -28,6 +28,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
+import io.confluent.kafkarest.OpenConfigEntry;
 import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.Cluster;
@@ -140,22 +141,22 @@ public class TopicConfigManagerImplTest {
   private static final Config CONFIG =
       new Config(
           Arrays.asList(
-              new ConfigEntry(
+              new OpenConfigEntry(
                   CONFIG_1.getName(),
                   CONFIG_1.getValue(),
-                  CONFIG_1.isDefault(),
+                  ConfigSource.toAdminConfigSource(CONFIG_1.getSource()),
                   CONFIG_1.isSensitive(),
                   CONFIG_1.isReadOnly()),
-              new ConfigEntry(
+              new OpenConfigEntry(
                   CONFIG_2.getName(),
                   CONFIG_2.getValue(),
-                  CONFIG_2.isDefault(),
+                  ConfigSource.toAdminConfigSource(CONFIG_2.getSource()),
                   CONFIG_2.isSensitive(),
                   CONFIG_2.isReadOnly()),
-              new ConfigEntry(
+              new OpenConfigEntry(
                   CONFIG_3.getName(),
                   CONFIG_3.getValue(),
-                  CONFIG_3.isDefault(),
+                  ConfigSource.toAdminConfigSource(CONFIG_3.getSource()),
                   CONFIG_3.isSensitive(),
                   CONFIG_3.isReadOnly())));
 
