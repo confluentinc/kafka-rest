@@ -74,4 +74,12 @@ public enum ConfigSource {
       return UNKNOWN;
     }
   }
+
+  public static ConfigEntry.ConfigSource toAdminConfigSource(ConfigSource source) {
+    try {
+      return ConfigEntry.ConfigSource.valueOf(source.name());
+    } catch (IllegalArgumentException e) {
+      return ConfigEntry.ConfigSource.UNKNOWN;
+    }
+  }
 }
