@@ -75,7 +75,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
 
   @Override
   public Properties overrideBrokerProperties(int i, Properties props) {
-    props.put("authorizer.class.name", "kafka.security.auth.SimpleAclAuthorizer");
+    props.put("authorizer.class.name", "kafka.security.authorizer.AclAuthorizer");
     props.put(
         "listener.name.sasl_plaintext.plain.sasl.jaas.config",
         "org.apache.kafka.common.security.plain.PlainLoginModule required "
