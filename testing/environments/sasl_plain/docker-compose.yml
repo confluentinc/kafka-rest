@@ -38,7 +38,7 @@ services:
       - ./kafka-jaas.conf:/etc/kafka/kafka-jaas.conf
     environment:
       KAFKA_ADVERTISED_LISTENERS: "SASL_PLAINTEXT://kafka-1:9191,EXTERNAL://localhost:9291"
-      KAFKA_AUTHORIZER_CLASS_NAME: "kafka.security.auth.SimpleAclAuthorizer"
+      KAFKA_AUTHORIZER_CLASS_NAME: "kafka.security.authorizer.AclAuthorizer"
       KAFKA_BROKER_ID: 1
       KAFKA_DELETE_TOPIC_ENABLE: "true"
       KAFKA_INTER_BROKER_LISTENER_NAME: "SASL_PLAINTEXT"
@@ -62,7 +62,7 @@ services:
       - ./kafka-jaas.conf:/etc/kafka/kafka-jaas.conf
     environment:
       KAFKA_ADVERTISED_LISTENERS: "SASL_PLAINTEXT://kafka-2:9192,EXTERNAL://localhost:9292"
-      KAFKA_AUTHORIZER_CLASS_NAME: "kafka.security.auth.SimpleAclAuthorizer"
+      KAFKA_AUTHORIZER_CLASS_NAME: "kafka.security.authorizer.AclAuthorizer"
       KAFKA_BROKER_ID: 2
       KAFKA_DELETE_TOPIC_ENABLE: "true"
       KAFKA_INTER_BROKER_LISTENER_NAME: "SASL_PLAINTEXT"
@@ -86,7 +86,7 @@ services:
       - ./kafka-jaas.conf:/etc/kafka/kafka-jaas.conf
     environment:
       KAFKA_ADVERTISED_LISTENERS: "SASL_PLAINTEXT://kafka-3:9193,EXTERNAL://localhost:9293"
-      KAFKA_AUTHORIZER_CLASS_NAME: "kafka.security.auth.SimpleAclAuthorizer"
+      KAFKA_AUTHORIZER_CLASS_NAME: "kafka.security.authorizer.AclAuthorizer"
       KAFKA_BROKER_ID: 3
       KAFKA_DELETE_TOPIC_ENABLE: "true"
       KAFKA_INTER_BROKER_LISTENER_NAME: "SASL_PLAINTEXT"

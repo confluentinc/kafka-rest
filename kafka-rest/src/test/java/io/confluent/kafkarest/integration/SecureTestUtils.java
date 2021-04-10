@@ -27,7 +27,7 @@ public class SecureTestUtils {
   public static void setProduceAcls(String zkConnect, String topic, String user) {
     List<String> aclArgs = new ArrayList<>();
 
-    Collections.addAll(aclArgs, ("--authorizer kafka.security.auth.SimpleAclAuthorizer "
+    Collections.addAll(aclArgs, ("--authorizer kafka.security.authorizer.AclAuthorizer "
                                  + "--authorizer-properties  zookeeper.connect=" + zkConnect
                                  + " --topic " + topic + " --add --producer "
                                  + " --allow-principal ").split("\\s+"));
@@ -38,7 +38,7 @@ public class SecureTestUtils {
   public static void removeProduceAcls(String zkConnect, String topic, String user) {
     List<String> aclArgs = new ArrayList<>();
 
-    Collections.addAll(aclArgs, ("--authorizer kafka.security.auth.SimpleAclAuthorizer "
+    Collections.addAll(aclArgs, ("--authorizer kafka.security.authorizer.AclAuthorizer "
                                  + "--authorizer-properties  zookeeper.connect=" + zkConnect
                                  + " --topic " + topic + " --remove --producer "
                                  + " --allow-principal ").split("\\s+"));
@@ -52,7 +52,7 @@ public class SecureTestUtils {
   ) {
     List<String> aclArgs = new ArrayList<>();
 
-    Collections.addAll(aclArgs, ("--authorizer kafka.security.auth.SimpleAclAuthorizer "
+    Collections.addAll(aclArgs, ("--authorizer kafka.security.authorizer.AclAuthorizer "
                                  + "--authorizer-properties  zookeeper.connect=" + zkConnect
                                  + " --topic " + topic + " --add --consumer "
                                  + " --allow-principal ").split("\\s+"));

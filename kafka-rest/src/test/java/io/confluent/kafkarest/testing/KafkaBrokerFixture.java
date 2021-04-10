@@ -122,7 +122,7 @@ public final class KafkaBrokerFixture extends ExternalResource {
           "listener.name.internal.plain.sasl.jaas.config", getBrokerPlainSaslJaasConfig());
       properties.setProperty("sasl.enabled.mechanisms", "PLAIN");
       properties.setProperty("sasl.mechanism.inter.broker.protocol", "PLAIN");
-      properties.setProperty("authorizer.class.name", "kafka.security.auth.SimpleAclAuthorizer");
+      properties.setProperty("authorizer.class.name", "kafka.security.authorizer.AclAuthorizer");
     }
     properties.setProperty("super.users", getSuperUsers());
     return properties;
