@@ -90,13 +90,14 @@ public final class ProduceAction {
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
       MappingIterator<ProduceRequest> requests) throws Exception {
+    ProduceController controller = produceController.get();
     StreamingResponse.from(requests)
-        .compose(request -> produce(clusterId, topicName, request))
+        .compose(request -> produce(clusterId, topicName, request, controller))
         .resume(asyncResponse);
   }
 
   private CompletableFuture<ProduceResponse> produce(
-      String clusterId, String topicName, ProduceRequest request) {
+      String clusterId, String topicName, ProduceRequest request, ProduceController controller) {
     Optional<RegisteredSchema> keySchema =
         request.getKey().flatMap(key -> getSchema(topicName, /* isKey= */ true, key));
     Optional<EmbeddedFormat> keyFormat =
@@ -114,7 +115,7 @@ public final class ProduceAction {
         serialize(topicName, valueFormat, valueSchema, request.getValue(), /* isKey= */ false);
 
     CompletableFuture<ProduceResult> produceResult =
-        produceController.get().produce(
+        controller.produce(
             clusterId,
             topicName,
             request.getPartitionId(),
