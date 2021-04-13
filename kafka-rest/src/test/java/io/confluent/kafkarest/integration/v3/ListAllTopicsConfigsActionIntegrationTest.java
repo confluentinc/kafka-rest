@@ -65,7 +65,7 @@ public class ListAllTopicsConfigsActionIntegrationTest extends ClusterTestHarnes
                 .setSelf(
                     baseUrl
                         + "/v3/clusters/" + clusterId
-                        + "/topics-configs")
+                        + "/topics/-/configs")
                 .build();
 
         TopicConfigData expectedTopic1Config1 =

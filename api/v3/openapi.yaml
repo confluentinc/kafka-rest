@@ -201,6 +201,19 @@ paths:
         '200':
           $ref: '#/components/responses/GetBrokerResponse'
 
+  /clusters/{cluster_id}/brokers/-/configs:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+
+    get:
+      summary: 'List All Broker Configs'
+      description: 'Return the list of configuration parameters for all the brokers in the given Kafka cluster.'
+      tags:
+        - Configs
+      responses:
+        '200':
+          $ref: '#/components/responses/ListBrokerConfigsResponse'
+
   /clusters/{cluster_id}/brokers/{broker_id}/configs:
     parameters:
       - $ref: '#/components/parameters/ClusterId'

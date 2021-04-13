@@ -92,7 +92,9 @@ public final class ListAllTopicsConfigsAction {
                                                     "v3",
                                                     "clusters",
                                                     clusterId,
-                                                    "topics-configs"))
+                                                    "topics",
+                                                    "-",
+                                                    "configs"))
                                             .build())
                                     .setData(
                                         configs.values().stream()
