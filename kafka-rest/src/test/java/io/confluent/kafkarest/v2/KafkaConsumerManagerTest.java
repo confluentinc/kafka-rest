@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +48,7 @@ import org.apache.kafka.common.TopicPartition;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.EasyMockRunner;
+import org.easymock.EasyMockSupport;
 import org.easymock.Mock;
 import org.junit.After;
 import org.junit.Before;
@@ -384,17 +386,31 @@ public class KafkaConsumerManagerTest {
     }
 
   @Test
+  public void foo() throws Exception {
+      int failures = 0;
+      for (int i = 0; i < 1000; i++) {
+        try {
+          EasyMockSupport.injectMocks(this);
+          setUp();
+          testBackoffMsControlsPollCalls();
+          tearDown();
+        } catch (AssertionError e) {
+          failures++;
+        }
+      }
+      assertEquals(0, failures);
+  }
+
+  @Test
   public void testBackoffMsControlsPollCalls() throws Exception {
-    long timeoutMillis = 1000;
-    long backoffMillis = 100;
+    long timeoutMillis = 1000L;
+    long backoffMillis = 100L;
     Properties props = setUpProperties();
     props.put(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, String.valueOf(timeoutMillis));
     props.put(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, String.valueOf(backoffMillis));
-    config = new KafkaRestConfig(props, new SystemTime());
-    consumerManager = new KafkaConsumerManager(config, consumerFactory);
-    consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST, groupName);
+    setUpConsumer(props);
     bootstrapConsumer(consumer);
-    ArrayList<Long> pollTimestampsMillis = new ArrayList<>();
+    CopyOnWriteArrayList<Long> pollTimestampsMillis = new CopyOnWriteArrayList<>();
     consumer.schedulePollTask(
         new Runnable() {
           @Override
@@ -421,18 +437,19 @@ public class KafkaConsumerManagerTest {
     //   N. wait max(backoffMillis, remainder of timeoutMillis), poll() returns empty
     assertEquals(2 + (timeoutMillis / backoffMillis), pollTimestampsMillis.size());
 
-    // We need to verify that the interval between poll() calls in 1..N-1 above is at least
-    // backoffMillis.
+    // We need to verify that the interval between poll() calls in 1..N-1 above is between
+    // (backoffMillis - 1%) and (backoffMillis + 10%).
+    long lowerBoundMillis = backoffMillis - (backoffMillis / 100L);
+    long upperBoundMillis = backoffMillis + (backoffMillis / 10L);
     for (int i = 2; i < pollTimestampsMillis.size() - 1 ; i++) {
       long actualMillis = pollTimestampsMillis.get(i) - pollTimestampsMillis.get(i-1);
       assertTrue(
           String.format(
-              "Expected time between poll calls %d and %d to be at least %dms, but was %sms.",
-              i,
-              i-1,
-              backoffMillis,
+              "Expected time between poll calls to be between %dms and %dms, but was %dms.",
+              lowerBoundMillis,
+              upperBoundMillis,
               actualMillis),
-          actualMillis >= backoffMillis);
+          actualMillis >= lowerBoundMillis && actualMillis <= upperBoundMillis);
     }
   }
 
