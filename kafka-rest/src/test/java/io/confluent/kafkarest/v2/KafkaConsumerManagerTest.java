@@ -32,6 +32,7 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -39,12 +40,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.test.TestUtils;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.EasyMockRunner;
@@ -78,7 +79,7 @@ public class KafkaConsumerManagerTest {
     private static final String topicName = "testtopic";
 
     // Setup holding vars for results from callback
-    private boolean sawCallback;
+    private boolean sawCallback = false;
     private static Exception actualException = null;
     private static List<ConsumerRecord<ByteString, ByteString>> actualRecords = null;
     private static List<TopicPartitionOffset> actualOffsets = null;
@@ -88,11 +89,10 @@ public class KafkaConsumerManagerTest {
     private MockConsumer<byte[], byte[]> consumer;
 
 
-  @Before
-  public void setUp() {
-    sawCallback = false;
-    setUpConsumer(setUpProperties());
-  }
+    @Before
+    public void setUp() {
+      setUpConsumer(setUpProperties());
+    }
 
     private void setUpConsumer(Properties properties) {
         config = new KafkaRestConfig(properties, new SystemTime());
@@ -387,43 +387,51 @@ public class KafkaConsumerManagerTest {
 
   @Test
   public void testBackoffMsControlsPollCalls() throws Exception {
+    long timeoutMillis = 1000;
+    long backoffMillis = 100;
+    Properties props = setUpProperties();
+    props.put(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, String.valueOf(timeoutMillis));
+    props.put(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, String.valueOf(backoffMillis));
+    config = new KafkaRestConfig(props, new SystemTime());
+    consumerManager = new KafkaConsumerManager(config, consumerFactory);
+    consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST, groupName);
     bootstrapConsumer(consumer);
-    ArrayList<Instant> pollTimestamps = new ArrayList<>();
+    ArrayList<Long> pollTimestamps = new ArrayList<>();
     consumer.schedulePollTask(
         new Runnable() {
           @Override
           public void run() {
-            pollTimestamps.add(Instant.now());
+            pollTimestamps.add(System.nanoTime());
             consumer.schedulePollTask(this);
           }
         });
+    CountDownLatch latch = new CountDownLatch(1);
     consumerManager.readRecords(
         groupName,
         consumer.cid(),
         BinaryKafkaConsumerState.class,
         -1,
         Long.MAX_VALUE,
-        (records, e) -> sawCallback = true);
+        (records, e) -> latch.countDown());
 
-    TestUtils.waitForCondition(() -> sawCallback, "Consumer task finished.");
-    assertEquals(
-        "Expected (2 initial polls + (1s timeout / 50ms backoff) =) 22 consumer polls.",
-        22,
-        pollTimestamps.size());
+    latch.await();
 
     // Poll calls should look like:
     //   0. first initial poll() returns messages
     //   1. second initial poll() returns empty
-    //   2..20. wait 50ms, poll() returns empty, repeat
-    //   21. wait max(50ms, remainder of 1s timeout), poll() returns empty
-    // We need to verify that the interval between poll() in 1..20 above is at least 50ms.
-    for (int i = 2; i <= 20 ; i++) {
-      Duration delay = Duration.between(pollTimestamps.get(i-1), pollTimestamps.get(i));
-      assertFalse(
+    //   2..N-1. wait backoffMillis, poll() returns empty, repeat
+    //   N. wait max(backoffMillis, remainder of timeoutMillis), poll() returns empty
+    assertEquals(2 + (timeoutMillis / backoffMillis), pollTimestamps.size());
+
+    // We need to verify that the interval between poll() calls in 1..N-1 above is at least
+    // backoffMillis.
+    for (int i = 2; i < pollTimestamps.size() - 1 ; i++) {
+      long actualNanos = pollTimestamps.get(i) - pollTimestamps.get(i-1);
+      assertTrue(
           String.format(
               "Expected time between poll calls to be at least 50ms, but was %sms.",
-              delay.toMillis()),
-          delay.minus(Duration.ofMillis(50)).isNegative());
+              TimeUnit.NANOSECONDS.toMillis(actualNanos)),
+          actualNanos >= TimeUnit.MILLISECONDS.toNanos(backoffMillis));
     }
   }
 
@@ -544,9 +552,6 @@ public class KafkaConsumerManagerTest {
         return bootstrapConsumer(consumer, true);
     }
 
-  /**
-   * Subscribes a consumer to a topic and schedules a poll task
-   */
   private List<ConsumerRecord<ByteString, ByteString>> bootstrapConsumer(
       final MockConsumer<byte[], byte[]> consumer, boolean toExpectCreate) {
     List<ConsumerRecord<ByteString, ByteString>> referenceRecords =
@@ -573,15 +578,15 @@ public class KafkaConsumerManagerTest {
         new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
     consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
     consumer.updateBeginningOffsets(singletonMap(new TopicPartition(topicName, 0), 0L));
-    consumer.addRecord(
-        new org.apache.kafka.clients.consumer.ConsumerRecord<>(
-            topicName, 0, 0, "k1".getBytes(), "v1".getBytes()));
-    consumer.addRecord(
-        new org.apache.kafka.clients.consumer.ConsumerRecord<>(
-            topicName, 0, 1, "k2".getBytes(), "v2".getBytes()));
-    consumer.addRecord(
-        new org.apache.kafka.clients.consumer.ConsumerRecord<>(
-            topicName, 0, 2, "k3".getBytes(), "v3".getBytes()));
+    for (ConsumerRecord<ByteString, ByteString> record : referenceRecords) {
+      consumer.addRecord(
+          new org.apache.kafka.clients.consumer.ConsumerRecord<>(
+              record.getTopic(),
+              record.getPartition(),
+              record.getOffset(),
+              record.getKey().toByteArray(),
+              record.getValue().toByteArray()));
+    }
 
     return referenceRecords;
   }
