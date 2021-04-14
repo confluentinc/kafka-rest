@@ -32,8 +32,6 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
-import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -91,7 +89,7 @@ public class KafkaConsumerManagerTest {
 
     @Before
     public void setUp() {
-      setUpConsumer(setUpProperties());
+        setUpConsumer(setUpProperties());
     }
 
     private void setUpConsumer(Properties properties) {
