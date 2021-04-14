@@ -427,7 +427,8 @@ public class KafkaConsumerManagerTest {
       long actualNanos = pollTimestamps.get(i) - pollTimestamps.get(i-1);
       assertTrue(
           String.format(
-              "Expected time between poll calls to be at least 50ms, but was %sms.",
+              "Expected time between poll calls to be at least %dms, but was %sms.",
+              backoffMillis,
               TimeUnit.NANOSECONDS.toMillis(actualNanos)),
           actualNanos >= TimeUnit.MILLISECONDS.toNanos(backoffMillis));
     }
