@@ -394,12 +394,12 @@ public class KafkaConsumerManagerTest {
     consumerManager = new KafkaConsumerManager(config, consumerFactory);
     consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST, groupName);
     bootstrapConsumer(consumer);
-    ArrayList<Long> pollTimestamps = new ArrayList<>();
+    ArrayList<Long> pollTimestampsMillis = new ArrayList<>();
     consumer.schedulePollTask(
         new Runnable() {
           @Override
           public void run() {
-            pollTimestamps.add(System.nanoTime());
+            pollTimestampsMillis.add(TimeUnit.NANOSECONDS.toMillis(System.nanoTime()));
             consumer.schedulePollTask(this);
           }
         });
@@ -419,18 +419,20 @@ public class KafkaConsumerManagerTest {
     //   1. second initial poll() returns empty
     //   2..N-1. wait backoffMillis, poll() returns empty, repeat
     //   N. wait max(backoffMillis, remainder of timeoutMillis), poll() returns empty
-    assertEquals(2 + (timeoutMillis / backoffMillis), pollTimestamps.size());
+    assertEquals(2 + (timeoutMillis / backoffMillis), pollTimestampsMillis.size());
 
     // We need to verify that the interval between poll() calls in 1..N-1 above is at least
     // backoffMillis.
-    for (int i = 2; i < pollTimestamps.size() - 1 ; i++) {
-      long actualNanos = pollTimestamps.get(i) - pollTimestamps.get(i-1);
+    for (int i = 2; i < pollTimestampsMillis.size() - 1 ; i++) {
+      long actualMillis = pollTimestampsMillis.get(i) - pollTimestampsMillis.get(i-1);
       assertTrue(
           String.format(
-              "Expected time between poll calls to be at least %dms, but was %sms.",
+              "Expected time between poll calls %d and %d to be at least %dms, but was %sms.",
+              i,
+              i-1,
               backoffMillis,
-              TimeUnit.NANOSECONDS.toMillis(actualNanos)),
-          actualNanos >= TimeUnit.MILLISECONDS.toNanos(backoffMillis));
+              actualMillis),
+          actualMillis >= backoffMillis);
     }
   }
 
