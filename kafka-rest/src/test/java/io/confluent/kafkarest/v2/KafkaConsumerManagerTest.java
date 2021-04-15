@@ -385,22 +385,6 @@ public class KafkaConsumerManagerTest {
     }
 
   @Test
-  public void foo() throws Exception {
-      int failures = 0;
-      for (int i = 0; i < 1000; i++) {
-        try {
-          EasyMockSupport.injectMocks(this);
-          setUp();
-          testBackoffMsControlsPollCalls();
-          tearDown();
-        } catch (AssertionError e) {
-          failures++;
-        }
-      }
-      assertEquals(0, failures);
-  }
-
-  @Test
   public void testBackoffMsControlsPollCalls() throws Exception {
     long timeoutMillis = 1000L;
     long backoffMillis = 100L;
