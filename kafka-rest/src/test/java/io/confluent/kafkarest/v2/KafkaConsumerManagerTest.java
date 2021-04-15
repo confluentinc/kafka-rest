@@ -37,6 +37,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -45,6 +47,7 @@ import org.apache.kafka.common.TopicPartition;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.EasyMockRunner;
+import org.easymock.EasyMockSupport;
 import org.easymock.Mock;
 import org.junit.After;
 import org.junit.Before;
@@ -381,32 +384,73 @@ public class KafkaConsumerManagerTest {
         consumerManager.deleteConsumer(groupName, consumer.cid());
     }
 
-    @Test
-    public void testBackoffMsControlsPollCalls() throws Exception {
-        bootstrapConsumer(consumer);
-        consumerManager.readRecords(
-            groupName,
-            consumer.cid(),
-            BinaryKafkaConsumerState.class,
-            Duration.ofMillis(-1),
-            Long.MAX_VALUE,
-            new ConsumerReadCallback<ByteString, ByteString>() {
-                @Override
-                public void onCompletion(
-                    List<ConsumerRecord<ByteString, ByteString>> records, Exception e) {
-                    actualException = e;
-                    actualRecords = records;
-                    sawCallback = true;
-                }
-            });
+  @Test
+  public void foo() throws Exception {
+      int failures = 0;
+      for (int i = 0; i < 1000; i++) {
+        try {
+          EasyMockSupport.injectMocks(this);
+          setUp();
+          testBackoffMsControlsPollCalls();
+          tearDown();
+        } catch (AssertionError e) {
+          failures++;
+        }
+      }
+      assertEquals(0, failures);
+  }
 
-        // backoff is 250
-        Thread.sleep(100);
-        // backoff should be in place right now. the read task should be delayed and re-ran until the max.bytes or timeout is hit
-        assertEquals(1, consumerManager.delayedReadTasks.size());
-        Thread.sleep(100);
-        assertEquals(1, consumerManager.delayedReadTasks.size());
+  @Test
+  public void testBackoffMsControlsPollCalls() throws Exception {
+    long timeoutMillis = 1000L;
+    long backoffMillis = 100L;
+    Properties props = setUpProperties();
+    props.put(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, String.valueOf(timeoutMillis));
+    props.put(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, String.valueOf(backoffMillis));
+    setUpConsumer(props);
+    bootstrapConsumer(consumer);
+    CopyOnWriteArrayList<Long> pollTimestampsMillis = new CopyOnWriteArrayList<>();
+    consumer.schedulePollTask(
+        new Runnable() {
+          @Override
+          public void run() {
+            pollTimestampsMillis.add(TimeUnit.NANOSECONDS.toMillis(System.nanoTime()));
+            consumer.schedulePollTask(this);
+          }
+        });
+    CountDownLatch latch = new CountDownLatch(1);
+    consumerManager.readRecords(
+        groupName,
+        consumer.cid(),
+        BinaryKafkaConsumerState.class,
+        Duration.ofMillis(-1),
+        Long.MAX_VALUE,
+        (records, e) -> latch.countDown());
+
+    latch.await();
+
+    // Poll calls should look like:
+    //   0. first initial poll() returns messages
+    //   1. second initial poll() returns empty
+    //   2..N-1. wait backoffMillis, poll() returns empty, repeat
+    //   N. wait max(backoffMillis, remainder of timeoutMillis), poll() returns empty
+    assertEquals(2 + (timeoutMillis / backoffMillis), pollTimestampsMillis.size());
+
+    // We need to verify that the interval between poll() calls in 1..N-1 above is between
+    // (backoffMillis - 1%) and (backoffMillis + 10%).
+    long lowerBoundMillis = backoffMillis - (backoffMillis / 100L);
+    long upperBoundMillis = backoffMillis + (backoffMillis / 10L);
+    for (int i = 2; i < pollTimestampsMillis.size() - 1 ; i++) {
+      long actualMillis = pollTimestampsMillis.get(i) - pollTimestampsMillis.get(i-1);
+      assertTrue(
+          String.format(
+              "Expected time between poll calls to be between %dms and %dms, but was %dms.",
+              lowerBoundMillis,
+              upperBoundMillis,
+              actualMillis),
+          actualMillis >= lowerBoundMillis && actualMillis <= upperBoundMillis);
     }
+  }
 
     @Test
     public void testBackoffMsUpdatesReadTaskExpiry() throws Exception {
@@ -552,37 +596,44 @@ public class KafkaConsumerManagerTest {
         return bootstrapConsumer(consumer, true);
     }
 
-    /**
-     * Subscribes a consumer to a topic and schedules a poll task
-     */
-    private List<ConsumerRecord<ByteString, ByteString>> bootstrapConsumer(final MockConsumer<byte[], byte[]> consumer, boolean toExpectCreate) {
-        List<ConsumerRecord<ByteString, ByteString>> referenceRecords =
-            Arrays.asList(
-                ConsumerRecord.create(topicName, ByteString.copyFromUtf8("k1"), ByteString.copyFromUtf8("v1"), 0, 0),
-                ConsumerRecord.create(topicName, ByteString.copyFromUtf8("k2"), ByteString.copyFromUtf8("v2"), 0, 1),
-                ConsumerRecord.create(topicName, ByteString.copyFromUtf8("k3"), ByteString.copyFromUtf8("v3"), 0, 2));
+  private List<ConsumerRecord<ByteString, ByteString>> bootstrapConsumer(
+      final MockConsumer<byte[], byte[]> consumer, boolean toExpectCreate) {
+    List<ConsumerRecord<ByteString, ByteString>> referenceRecords =
+        Arrays.asList(
+            ConsumerRecord.create(
+                topicName, ByteString.copyFromUtf8("k1"), ByteString.copyFromUtf8("v1"), 0, 0),
+            ConsumerRecord.create(
+                topicName, ByteString.copyFromUtf8("k2"), ByteString.copyFromUtf8("v2"), 0, 1),
+            ConsumerRecord.create(
+                topicName, ByteString.copyFromUtf8("k3"), ByteString.copyFromUtf8("v3"), 0, 2));
 
-        if (toExpectCreate)
-            expectCreate(consumer);
-        consumer.schedulePollTask(new Runnable() {
-            @Override
-            public void run() {
-                consumer.addRecord(new org.apache.kafka.clients.consumer.ConsumerRecord<>(topicName, 0, 0, "k1".getBytes(), "v1".getBytes()));
-                consumer.addRecord(new org.apache.kafka.clients.consumer.ConsumerRecord<>(topicName, 0, 1, "k2".getBytes(), "v2".getBytes()));
-                consumer.addRecord(new org.apache.kafka.clients.consumer.ConsumerRecord<>(topicName, 0, 2, "k3".getBytes(), "v3".getBytes()));
-            }
-        });
-
-        String cid = consumerManager.createConsumer(
-                consumer.groupName, ConsumerInstanceConfig.create(EmbeddedFormat.BINARY));
-
-        consumer.cid(cid);
-        consumerManager.subscribe(consumer.groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
-        consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
-        consumer.updateBeginningOffsets(singletonMap(new TopicPartition(topicName, 0), 0L));
-
-        return referenceRecords;
+    if (toExpectCreate) {
+      expectCreate(consumer);
     }
+
+    String cid =
+        consumerManager.createConsumer(
+            consumer.groupName, ConsumerInstanceConfig.create(EmbeddedFormat.BINARY));
+
+    consumer.cid(cid);
+    consumerManager.subscribe(
+        consumer.groupName,
+        cid,
+        new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));
+    consumer.rebalance(Collections.singletonList(new TopicPartition(topicName, 0)));
+    consumer.updateBeginningOffsets(singletonMap(new TopicPartition(topicName, 0), 0L));
+    for (ConsumerRecord<ByteString, ByteString> record : referenceRecords) {
+      consumer.addRecord(
+          new org.apache.kafka.clients.consumer.ConsumerRecord<>(
+              record.getTopic(),
+              record.getPartition(),
+              record.getOffset(),
+              record.getKey().toByteArray(),
+              record.getValue().toByteArray()));
+    }
+
+    return referenceRecords;
+  }
 
     private void readFromDefault(String cid) throws InterruptedException, ExecutionException {
         consumerManager.readRecords(
