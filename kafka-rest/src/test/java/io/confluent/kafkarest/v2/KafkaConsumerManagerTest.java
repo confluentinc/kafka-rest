@@ -418,15 +418,16 @@ public class KafkaConsumerManagerTest {
             consumer.schedulePollTask(this);
           }
         });
-    CountDownLatch latch = new CountDownLatch(1);    consumerManager.readRecords(
-            groupName,
-            consumer.cid(),
-            BinaryKafkaConsumerState.class,
-            Duration.ofMillis(-1),
-            Long.MAX_VALUE,
-            (records, e) -> latch.countDown());
+    CountDownLatch latch = new CountDownLatch(1);
+    consumerManager.readRecords(
+        groupName,
+        consumer.cid(),
+        BinaryKafkaConsumerState.class,
+        Duration.ofMillis(-1),
+        Long.MAX_VALUE,
+        (records, e) -> latch.countDown());
 
-                latch.await();
+    latch.await();
 
     // Poll calls should look like:
     //   0. first initial poll() returns messages
