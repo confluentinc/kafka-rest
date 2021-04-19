@@ -83,12 +83,19 @@ the REST Proxy running using the default settings and some topics already create
 Development
 -----------
 
-To build a development version, you may need a development versions of
+To build a development version, you may need development versions of
 [common](https://github.com/confluentinc/common),
 [rest-utils](https://github.com/confluentinc/rest-utils), and
 [schema-registry](https://github.com/confluentinc/schema-registry).  After
 installing these, you can build the Kafka REST Proxy
 with Maven. All the standard lifecycle phases work.
+
+If your contribution will be a patch or feature and target the latest or earlier
+release version, you can avoid building development versions of dependencies
+by using the latest (or required) `<release>-post` branch, which will
+reference dependencies available pre-built from the
+[public repositor](http://packages.confluent.io/maven/).  For example, branch
+`5.0.0-post` can be used as a base for patches for this version.
 
 Contribute
 ----------
