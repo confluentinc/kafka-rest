@@ -80,7 +80,8 @@ public final class BrokerConfigsResource {
       @PathParam("clusterId") String clusterId,
       @PathParam("brokerId") int brokerId) {
     CompletableFuture<ListBrokerConfigsResponse> response =
-        brokerConfigManager.get()
+        brokerConfigManager
+            .get()
             .listBrokerConfigs(clusterId, brokerId)
             .thenApply(
                 configs ->
@@ -100,7 +101,10 @@ public final class BrokerConfigsResource {
                             .setData(
                                 configs.stream()
                                     .sorted(Comparator.comparing(BrokerConfig::getName))
-                                    .map(this::toBrokerConfigData)
+                                    .map(
+                                        brokerConfig ->
+                                            toBrokerConfigData(
+                                                brokerConfig, crnFactory, urlFactory))
                                     .collect(Collectors.toList()))
                             .build()));
 
@@ -119,10 +123,14 @@ public final class BrokerConfigsResource {
       @PathParam("name") String name
   ) {
     CompletableFuture<GetBrokerConfigResponse> response =
-        brokerConfigManager.get()
+        brokerConfigManager
+            .get()
             .getBrokerConfig(clusterId, brokerId, name)
             .thenApply(broker -> broker.orElseThrow(NotFoundException::new))
-            .thenApply(broker -> GetBrokerConfigResponse.create(toBrokerConfigData(broker)));
+            .thenApply(
+                broker ->
+                    GetBrokerConfigResponse.create(
+                        toBrokerConfigData(broker, crnFactory, urlFactory)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
@@ -169,7 +177,10 @@ public final class BrokerConfigsResource {
         .asyncResume(asyncResponse);
   }
 
-  private BrokerConfigData toBrokerConfigData(BrokerConfig brokerConfig) {
+  public static BrokerConfigData toBrokerConfigData(
+      BrokerConfig brokerConfig,
+      CrnFactory crnFactory,
+      UrlFactory urlFactory) {
     return BrokerConfigData.fromBrokerConfig(brokerConfig)
         .setMetadata(
             Resource.Metadata.builder()

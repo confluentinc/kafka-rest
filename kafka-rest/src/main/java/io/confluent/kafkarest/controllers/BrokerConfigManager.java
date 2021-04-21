@@ -18,6 +18,7 @@ package io.confluent.kafkarest.controllers;
 import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.BrokerConfig;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -28,6 +29,13 @@ public interface BrokerConfigManager {
    * io.confluent.kafkarest.entities.Broker} with the given {@code brokerId}.
    */
   CompletableFuture<List<BrokerConfig>> listBrokerConfigs(String clusterId, int brokerId);
+
+  /**
+   * Returns a list of Kafka {@link BrokerConfig BrokerConfigs} belonging to given the {@link
+   * io.confluent.kafkarest.entities.Broker}s in the given cluster
+   */
+  CompletableFuture<Map<Integer, List<BrokerConfig>>> listAllBrokerConfigs(
+      String clusterId, List<Integer> brokerIds);
 
   /**
    * Returns the Kafka {@link BrokerConfig} with the given {@code name}.

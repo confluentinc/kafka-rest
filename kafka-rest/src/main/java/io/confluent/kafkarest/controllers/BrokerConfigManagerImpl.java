@@ -18,11 +18,14 @@ package io.confluent.kafkarest.controllers;
 import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.BrokerConfig;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.common.config.ConfigResource;
+import org.apache.kafka.common.config.ConfigResource.Type;
 
 final class BrokerConfigManagerImpl
     extends AbstractConfigManager<BrokerConfig, BrokerConfig.Builder>
@@ -40,6 +43,33 @@ final class BrokerConfigManagerImpl
         clusterId,
         new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(brokerId)),
         BrokerConfig.builder().setClusterId(clusterId).setBrokerId(brokerId));
+  }
+
+  @Override
+  public CompletableFuture<Map<Integer, List<BrokerConfig>>> listAllBrokerConfigs(
+      String clusterId, List<Integer> brokerIds) {
+    List<ConfigResource> brokerResources = brokerIds.stream()
+            .map(brokerId -> new ConfigResource(Type.BROKER, String.valueOf(brokerId)))
+            .collect(Collectors.toList());
+    return listConfigs(
+        clusterId,
+        brokerResources,
+        BrokerConfig.builder().setClusterId(clusterId).setBrokerId(-1))
+        .thenApply(configs -> configs.entrySet().stream().collect(Collectors.toMap(
+            e -> Integer.parseInt(e.getKey().name()),
+            e -> e.getValue().stream().map(config -> BrokerConfig.create(
+                    config.getClusterId(),
+                    Integer.parseInt(e.getKey().name()),
+                    config.getName(),
+                    config.getValue(),
+                    config.isDefault(),
+                    config.isReadOnly(),
+                    config.isSensitive(),
+                    config.getSource(),
+                    config.getSynonyms()
+              )).collect(Collectors.toList())
+            )
+        ));
   }
 
   @Override
