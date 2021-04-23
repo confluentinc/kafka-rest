@@ -43,7 +43,7 @@
 
     <suppress
             checks="(ParameterNumber)"
-            files="(ClusterData).java"
+            files="(ClusterData|TopicData).java"
     />
 
 </suppressions>

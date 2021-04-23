@@ -21,6 +21,7 @@ import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.common.KafkaFutures;
+import io.confluent.kafkarest.entities.Acl;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
@@ -35,6 +36,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.DescribeTopicsOptions;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.admin.TopicListing;
@@ -130,8 +132,15 @@ final class TopicManagerImpl implements TopicManager {
             });
   }
 
-  private CompletableFuture<List<Topic>> describeTopics(String clusterId, List<String> topicNames) {
-    return KafkaFutures.toCompletableFuture(adminClient.describeTopics(topicNames).all())
+  private CompletableFuture<List<Topic>> describeTopics(
+      String clusterId, List<String> topicNames) {
+    return KafkaFutures.toCompletableFuture(
+            adminClient
+                .describeTopics(
+                    topicNames,
+                    new DescribeTopicsOptions()
+                        .includeAuthorizedOperations(true))
+                .all())
         .thenApply(
             topics ->
                 topics.values().stream()
@@ -147,7 +156,10 @@ final class TopicManagerImpl implements TopicManager {
             .map(partition -> toPartition(clusterId, topicDescription.name(), partition))
             .collect(Collectors.toList()),
         (short) topicDescription.partitions().get(0).replicas().size(),
-        topicDescription.isInternal());
+        topicDescription.isInternal(),
+        topicDescription.authorizedOperations().stream()
+            .map(Acl.Operation::fromAclOperation)
+            .collect(Collectors.toSet()));
   }
 
   private static Partition toPartition(

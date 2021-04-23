@@ -18,7 +18,10 @@ package io.confluent.kafkarest.entities.v3;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
+import io.confluent.kafkarest.entities.Acl.Operation;
 import io.confluent.kafkarest.entities.Topic;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 @AutoValue
 public abstract class TopicData extends Resource {
@@ -41,6 +44,10 @@ public abstract class TopicData extends Resource {
   @JsonProperty("partitions_count")
   public abstract int getPartitionsCount();
 
+  @Nullable
+  @JsonProperty("authorized_operations")
+  public abstract Set<Operation> getAuthorizedOperations();
+
   @JsonProperty("partitions")
   public abstract Relationship getPartitions();
 
@@ -60,7 +67,8 @@ public abstract class TopicData extends Resource {
         .setTopicName(topic.getName())
         .setInternal(topic.isInternal())
         .setReplicationFactor(topic.getReplicationFactor())
-        .setPartitionsCount(topic.getPartitions().size());
+        .setPartitionsCount(topic.getPartitions().size())
+        .setAuthorizedOperations(topic.authorizedOperations());
   }
 
   @JsonCreator
@@ -72,6 +80,7 @@ public abstract class TopicData extends Resource {
       @JsonProperty("is_internal") boolean isInternal,
       @JsonProperty("replication_factor") int replicationFactor,
       @JsonProperty("partitions_count") int partitionsCount,
+      @JsonProperty("authorized_operations") Set<Operation> authorizedOperations,
       @JsonProperty("partitions") Relationship partitions,
       @JsonProperty("configs") Relationship configs,
       @JsonProperty("partition_reassignments") Relationship partitionReassignments
@@ -84,6 +93,7 @@ public abstract class TopicData extends Resource {
         .setInternal(isInternal)
         .setReplicationFactor(replicationFactor)
         .setPartitionsCount(partitionsCount)
+        .setAuthorizedOperations(authorizedOperations)
         .setPartitions(partitions)
         .setConfigs(configs)
         .setPartitionReassignments(partitionReassignments)
@@ -105,6 +115,8 @@ public abstract class TopicData extends Resource {
     public abstract Builder setReplicationFactor(int replicationFactor);
 
     public abstract Builder setPartitionsCount(int partitionsCount);
+
+    public abstract Builder setAuthorizedOperations(Set<Operation> authorizedOperations);
 
     public abstract Builder setPartitions(Relationship partitions);
 

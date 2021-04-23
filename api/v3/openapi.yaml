@@ -1561,6 +1561,7 @@ components:
             - is_internal
             - replication_factor
             - partitions_count
+            - authorized_operations
             - partitions
             - configs
             - partition_reassignments
@@ -1574,7 +1575,11 @@ components:
             replication_factor:
               type: integer
             partitions_count:
-                type: integer
+              type: integer
+            authorized_operations:
+              type: array
+              items:
+                $ref: '#/components/schemas/AclOperation'
             partitions:
               $ref: '#/components/schemas/Relationship'
             configs:
@@ -2104,6 +2109,7 @@ components:
             is_internal: false
             replication_factor: 3
             partitions_count: 1
+            authorized_operations: [READ, WRITE]
             partitions:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions'
             configs:
@@ -2733,6 +2739,7 @@ components:
                 is_internal: false
                 replication_factor: 3
                 partitions_count: 1
+                authorized_operations: [READ, WRITE]
                 partitions:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions'
                 configs:
@@ -2748,6 +2755,7 @@ components:
                 is_internal: true
                 replication_factor: 4
                 partitions_count: 1
+                authorized_operations: [CREATE]
                 partitions:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions'
                 configs:
@@ -2763,6 +2771,7 @@ components:
                 is_internal: false
                 replication_factor: 5
                 partitions_count: 1
+                authorized_operations: [READ]
                 partitions:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions'
                 configs:
