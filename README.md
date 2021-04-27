@@ -94,7 +94,7 @@ You can avoid building development versions of dependencies
 by building on the latest (or earlier) release tag, or `<release>-post` branch,
 which will reference dependencies available pre-built from the
 [public repository](http://packages.confluent.io/maven/).  For example, branch
-`5.0.0-post` can be used as a base for patches for this version.
+`6.1.1-post` can be used as a base for patches for this version.
 
 Contribute
 ----------
