@@ -71,6 +71,7 @@ public abstract class TopicData extends Resource {
       @JsonProperty("topic_name") String topicName,
       @JsonProperty("is_internal") boolean isInternal,
       @JsonProperty("replication_factor") int replicationFactor,
+      @JsonProperty("partitions_count") int partitionsCount,
       @JsonProperty("partitions") Relationship partitions,
       @JsonProperty("configs") Relationship configs,
       @JsonProperty("partition_reassignments") Relationship partitionReassignments
@@ -82,6 +83,7 @@ public abstract class TopicData extends Resource {
         .setTopicName(topicName)
         .setInternal(isInternal)
         .setReplicationFactor(replicationFactor)
+        .setPartitionsCount(partitionsCount)
         .setPartitions(partitions)
         .setConfigs(configs)
         .setPartitionReassignments(partitionReassignments)
