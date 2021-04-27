@@ -1560,6 +1560,7 @@ components:
             - topic_name
             - is_internal
             - replication_factor
+            - partitions_count
             - partitions
             - configs
             - partition_reassignments
@@ -1572,6 +1573,8 @@ components:
               type: boolean
             replication_factor:
               type: integer
+            partitions_count:
+                type: integer
             partitions:
               $ref: '#/components/schemas/Relationship'
             configs:
@@ -1738,6 +1741,7 @@ components:
             topic_name: 'topic-X'
             is_internal: false
             replication_factor: 3
+            partitions_count: 1
             partitions:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-X/partitions'
             configs:
@@ -2099,6 +2103,7 @@ components:
             topic_name: 'topic-1'
             is_internal: false
             replication_factor: 3
+            partitions_count: 1
             partitions:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions'
             configs:
@@ -2727,6 +2732,7 @@ components:
                 topic_name: 'topic-1'
                 is_internal: false
                 replication_factor: 3
+                partitions_count: 1
                 partitions:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions'
                 configs:
@@ -2741,6 +2747,7 @@ components:
                 topic_name: 'topic-2'
                 is_internal: true
                 replication_factor: 4
+                partitions_count: 1
                 partitions:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions'
                 configs:
@@ -2755,6 +2762,7 @@ components:
                 topic_name: 'topic-3'
                 is_internal: false
                 replication_factor: 5
+                partitions_count: 1
                 partitions:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions'
                 configs:

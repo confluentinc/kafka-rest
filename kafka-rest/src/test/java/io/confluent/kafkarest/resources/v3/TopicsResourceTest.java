@@ -334,7 +334,8 @@ public class TopicsResourceTest {
   private static TopicData newTopicData(
       String topicName,
       boolean isInternal,
-      int replicationFactor) {
+      int replicationFactor,
+      int partitionsCount) {
     return TopicData.builder()
         .setMetadata(
             Resource.Metadata.builder()
@@ -355,6 +356,7 @@ public class TopicsResourceTest {
             Resource.Relationship.create(
                 String.format("/v3/clusters/cluster-1/topics/%s/partitions/-/reassignment",
                     topicName)))
+        .setPartitionsCount(partitionsCount)
         .build();
   }
 
@@ -385,9 +387,9 @@ public class TopicsResourceTest {
                         .build())
                 .setData(
                     Arrays.asList(
-                        newTopicData("topic-1", true, 3),
-                        newTopicData("topic-2", true, 3),
-                        newTopicData("topic-3", false, 3)))
+                        newTopicData("topic-1", true, 3, 3),
+                        newTopicData("topic-2", true, 3, 3),
+                        newTopicData("topic-3", false, 3, 3)))
                 .build());
 
     assertEquals(expected, response.getValue());
@@ -427,7 +429,7 @@ public class TopicsResourceTest {
     topicsResource.getTopic(response, TOPIC_1.getClusterId(), TOPIC_1.getName());
 
     GetTopicResponse expected =
-        GetTopicResponse.create(newTopicData("topic-1", true, 3));
+        GetTopicResponse.create(newTopicData("topic-1", true, 3, 3));
 
     assertEquals(expected, response.getValue());
   }
@@ -482,7 +484,7 @@ public class TopicsResourceTest {
             .build());
 
     CreateTopicResponse expected =
-        CreateTopicResponse.create(newTopicData("topic-1", false, 3));
+        CreateTopicResponse.create(newTopicData("topic-1", false, 3, 0));
 
     assertEquals(expected, response.getValue());
   }
@@ -512,7 +514,7 @@ public class TopicsResourceTest {
             .build());
 
     CreateTopicResponse expected =
-        CreateTopicResponse.create(newTopicData("topic-1", false, 3));
+        CreateTopicResponse.create(newTopicData("topic-1", false, 3, 0));
 
     assertEquals(expected, response.getValue());
   }
@@ -542,7 +544,7 @@ public class TopicsResourceTest {
             .build());
 
     CreateTopicResponse expected =
-        CreateTopicResponse.create(newTopicData("topic-1", false, 0));
+        CreateTopicResponse.create(newTopicData("topic-1", false, 0, 0));
 
     assertEquals(expected, response.getValue());
   }
@@ -585,7 +587,7 @@ public class TopicsResourceTest {
 
     short expectedReplicationFactor = (short) (TOPIC_1.getReplicationFactor() - 1);
     CreateTopicResponse expected = CreateTopicResponse.create(
-        newTopicData("topic-1", false, expectedReplicationFactor));
+        newTopicData("topic-1", false, expectedReplicationFactor, 0));
 
     assertEquals(expected, response.getValue());
   }
