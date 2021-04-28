@@ -372,6 +372,13 @@ public class KafkaRestConfig extends RestConfig {
       "Whether to enable REST Proxy V3 API. Default is true.";
   private static final boolean API_V3_ENABLE_DEFAULT = true;
 
+  // These property names should not be filtered out when determining the allowed properties for
+  // producer and consumer configs. See KREST-481 for more details.
+  private static final String MONITORING_INTERCEPTOR_TOPIC_CONFIG =
+      "confluent.monitoring.interceptor.topic";
+  private static final String MONITORING_INTERCEPTOR_PUBLISH_MS_PERIOD_CONFIG =
+      "confluent.monitoring.interceptor.publishMs";
+
   private static final ConfigDef config;
 
   static {
@@ -856,7 +863,12 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   public Properties getProducerProperties() {
-    Set<String> mask = ProducerConfig.configNames();
+    Set<String> mask =
+        ImmutableSet.<String>builder()
+            .addAll(ProducerConfig.configNames())
+            .add(MONITORING_INTERCEPTOR_TOPIC_CONFIG)
+            .add(MONITORING_INTERCEPTOR_PUBLISH_MS_PERIOD_CONFIG)
+            .build();
     Map<String, Object> producerConfigs =
         new ConfigsBuilder(mask)
             .addConfig(BOOTSTRAP_SERVERS_CONFIG)
