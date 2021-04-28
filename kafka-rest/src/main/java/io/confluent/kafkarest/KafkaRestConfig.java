@@ -840,16 +840,13 @@ public class KafkaRestConfig extends RestConfig {
     return configs;
   }
 
-  private static Set<String> getAllowedProducerConfigNames() {
-    return ImmutableSet.<String>builder()
-        .addAll(ProducerConfig.configNames())
-        .add(MONITORING_INTERCEPTOR_TOPIC_CONFIG)
-        .add(MONITORING_INTERCEPTOR_PUBLISH_MS_PERIOD_CONFIG)
-        .build();
-  }
-
   public Properties getProducerProperties() {
-    Set<String> mask = getAllowedProducerConfigNames();
+    Set<String> mask =
+        ImmutableSet.<String>builder()
+            .addAll(ProducerConfig.configNames())
+            .add(MONITORING_INTERCEPTOR_TOPIC_CONFIG)
+            .add(MONITORING_INTERCEPTOR_PUBLISH_MS_PERIOD_CONFIG)
+            .build();
     Map<String, Object> producerConfigs =
         new ConfigsBuilder(mask)
             .addConfig(BOOTSTRAP_SERVERS_CONFIG)
