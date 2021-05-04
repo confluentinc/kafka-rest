@@ -342,7 +342,7 @@ paths:
 
     get:
       summary: 'Get Consumer Group Lag Summary.'
-      description: 'Returns the max and total lag of the consumers belonging to the specified consumer group'
+      description: 'Returns the max and total lag of the consumers belonging to the specified consumer group.'
       tags:
         - Consumer Group
       responses:
