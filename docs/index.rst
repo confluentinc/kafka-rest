@@ -175,7 +175,7 @@ dependencies as well.
    quickstart
    api
    config
-   ../../cloud/connect/connect-kafka-rest-config
+   Connecting REST Proxy to Confluent Cloud <https://docs.confluent.io/cloud/current/cp-component/kafka-rest-config.html>
    operations
    security
    changelog
