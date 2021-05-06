@@ -15,25 +15,16 @@
 
 package io.confluent.kafkarest.backends.schemaregistry;
 
-import static java.util.Objects.requireNonNull;
-
-import io.confluent.kafka.schemaregistry.SchemaProvider;
-import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
-import io.confluent.kafkarest.config.ConfigModule.MaxSchemasPerSubjectConfig;
-import io.confluent.kafkarest.config.ConfigModule.SchemaRegistryConfigs;
-import io.confluent.kafkarest.config.ConfigModule.SchemaRegistryRequestHeadersConfig;
-import io.confluent.kafkarest.config.ConfigModule.SchemaRegistryUrlsConfig;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import io.confluent.kafkarest.KafkaRestContext;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.process.internal.RequestScoped;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
+
+import static java.util.Objects.requireNonNull;
 
 public final class SchemaRegistryModule extends AbstractBinder {
 
@@ -41,41 +32,21 @@ public final class SchemaRegistryModule extends AbstractBinder {
   protected void configure() {
     bindFactory(SchemaRegistryClientFactory.class)
         .to(SchemaRegistryClient.class)
-        .in(Singleton.class);
+        .in(RequestScoped.class);
   }
 
   private static final class SchemaRegistryClientFactory implements Factory<SchemaRegistryClient> {
-    private static final List<SchemaProvider> SCHEMA_PROVIDERS =
-        Arrays.asList(
-            EmbeddedFormat.AVRO.getSchemaProvider(),
-            EmbeddedFormat.JSONSCHEMA.getSchemaProvider(),
-            EmbeddedFormat.PROTOBUF.getSchemaProvider());
 
-    private final List<URI> schemaRegistryUrls;
-    private final int maxSchemasPerSubject;
-    private final Map<String, String> requestHeaders;
-    private final Map<String, Object> configs;
+    private final Provider<KafkaRestContext> context;
 
     @Inject
-    private SchemaRegistryClientFactory(
-        @SchemaRegistryUrlsConfig List<URI> schemaRegistryUrls,
-        @MaxSchemasPerSubjectConfig int maxSchemasPerSubject,
-        @SchemaRegistryRequestHeadersConfig Map<String, String> requestHeaders,
-        @SchemaRegistryConfigs Map<String, Object> configs) {
-      this.schemaRegistryUrls = requireNonNull(schemaRegistryUrls);
-      this.maxSchemasPerSubject = maxSchemasPerSubject;
-      this.requestHeaders = requireNonNull(requestHeaders);
-      this.configs = requireNonNull(configs);
+    private SchemaRegistryClientFactory(Provider<KafkaRestContext> context) {
+      this.context = requireNonNull(context);
     }
 
     @Override
     public SchemaRegistryClient provide() {
-      return new CachedSchemaRegistryClient(
-          schemaRegistryUrls.stream().map(Object::toString).collect(Collectors.toList()),
-          maxSchemasPerSubject,
-          SCHEMA_PROVIDERS,
-          configs,
-          requestHeaders);
+      return context.get().getSchemaRegistryClient();
     }
 
     @Override

@@ -741,7 +741,7 @@ public class KafkaRestConfig extends RestConfig {
     return properties;
   }
 
-  public final Map<String, Object> getSchemaRegistryConfigs() {
+  public Map<String, Object> getSchemaRegistryConfigs() {
     Set<String> mask = AbstractKafkaSchemaSerDeConfig.baseConfigDef().names();
     Map<String, Object> configs =
         new HashMap<>(
