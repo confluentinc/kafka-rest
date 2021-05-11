@@ -178,12 +178,12 @@ public final class ConsumerAssignmentsResource {
                     "v3",
                     "clusters",
                     assignment.getClusterId(),
-                    "topics",
+                    "consumer-groups",
+                    assignment.getConsumerGroupId(),
+                    "lags",
                     assignment.getTopicName(),
                     "partitions",
-                    Integer.toString(assignment.getPartitionId()),
-                    "lags",
-                    assignment.getConsumerGroupId())))
+                    Integer.toString(assignment.getPartitionId()))))
         .build();
   }
 }

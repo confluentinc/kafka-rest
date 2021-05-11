@@ -91,8 +91,9 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
                                         + "/partitions/0"))
                             .setLag(
                                 Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId + "/topics/topic-1"
-                                        + "/partitions/0" + "/lags/consumer-group-1"))
+                                    baseUrl + "/v3/clusters/" + clusterId +
+                                        "/consumer-groups/consumer-group-1" + "/lags/topic-1"
+                                        + "/partitions/0"))
                             .build(),
                         ConsumerAssignmentData.builder()
                             .setMetadata(
@@ -119,8 +120,9 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
                                         + "/partitions/1"))
                             .setLag(
                                 Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId + "/topics/topic-1"
-                                        + "/partitions/1" + "/lags/consumer-group-1"))
+                                    baseUrl + "/v3/clusters/" + clusterId +
+                                        "/consumer-groups/consumer-group-1" + "/lags/topic-1"
+                                        + "/partitions/1"))
                             .build(),
                         ConsumerAssignmentData.builder()
                             .setMetadata(
@@ -147,8 +149,9 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
                                         + "/partitions/2"))
                             .setLag(
                                 Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId + "/topics/topic-1"
-                                        + "/partitions/2" + "/lags/consumer-group-1"))
+                                    baseUrl + "/v3/clusters/" + clusterId +
+                                        "/consumer-groups/consumer-group-1" + "/lags/topic-1"
+                                        + "/partitions/2"))
                             .build()))
                 .build());
 
@@ -215,8 +218,9 @@ public class ConsumerAssignmentsResourceIntegrationTest extends ClusterTestHarne
                             + "/partitions/0"))
                 .setLag(
                     Relationship.create(
-                        baseUrl + "/v3/clusters/" + clusterId + "/topics/topic-1"
-                            + "/partitions/0" + "/lags/consumer-group-1"))
+                        baseUrl + "/v3/clusters/" + clusterId +
+                            "/consumer-groups/consumer-group-1" + "/lags/topic-1"
+                            + "/partitions/0"))
                 .build());
 
     Response response =

@@ -1296,10 +1296,13 @@ components:
               type: integer
             current_offset:
               type: integer
+              format: int64
             log_end_offset:
               type: integer
+              format: int64
             lag:
               type: integer
+              format: int64
             consumer_id:
               type: string
             instance_id:
@@ -1353,8 +1356,10 @@ components:
               type: integer
             max_lag:
               type: integer
+              format: int64
             total_lag:
               type: integer
+              format: int64
             max_lag_consumer:
               $ref: '#/components/schemas/Relationship'
             max_lag_partition:
@@ -1907,7 +1912,7 @@ components:
             partition:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
             lag:
-              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1'
+              related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags/topic-1/partitions/1'
 
     GetConsumerGroupResponse:
       description: 'The consumer group.'
@@ -2373,7 +2378,7 @@ components:
                 partition:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
                 lag:
-                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1'
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags/topic-1/partitions/1'
               - kind: 'KafkaConsumerAssignment'
                 metadata:
                   self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1/assignments/topic-2/partitions/2'
@@ -2386,7 +2391,7 @@ components:
                 partition:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions/2'
                 lag:
-                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions/2/lags/consumer-groups-1'
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags/topic-2/partitions/2'
               - kind: 'KafkaConsumerAssignment'
                 metadata:
                   self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1/assignments/topic-3/partitions/3'
@@ -2399,7 +2404,7 @@ components:
                 partition:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/3'
                 lag:
-                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/3/lags/consumer-groups-1'
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags/topic-3/partitions/3'
 
     ListConsumerGroupsResponse:
       description: 'The list of consumer groups.'
