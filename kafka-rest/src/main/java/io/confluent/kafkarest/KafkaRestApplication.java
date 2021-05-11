@@ -26,6 +26,7 @@ import io.confluent.kafkarest.backends.BackendsModule;
 import io.confluent.kafkarest.config.ConfigModule;
 import io.confluent.kafkarest.controllers.ControllersModule;
 import io.confluent.kafkarest.exceptions.ExceptionsModule;
+import io.confluent.kafkarest.exceptions.KafkaRestExceptionMapper;
 import io.confluent.kafkarest.extension.EnumConverterProvider;
 import io.confluent.kafkarest.extension.ContextInvocationHandler;
 import io.confluent.kafkarest.extension.InstantConverterProvider;
@@ -37,7 +38,6 @@ import io.confluent.kafkarest.resources.ResourcesFeature;
 import io.confluent.kafkarest.response.ResponseModule;
 import io.confluent.rest.Application;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
-import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
 import java.lang.reflect.Proxy;
 import java.text.SimpleDateFormat;
@@ -138,7 +138,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(JsonMappingExceptionMapper.class);
     config.register(ConstraintViolationExceptionMapper.class);
     config.register(new WebApplicationExceptionMapper(restConfig));
-    config.register(new KafkaExceptionMapper(restConfig));
+    config.register(new KafkaRestExceptionMapper(restConfig));
   }
 
   @Override

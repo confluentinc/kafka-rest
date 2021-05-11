@@ -33,6 +33,8 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
+import io.confluent.rest.exceptions.RestConstraintViolationException;
 import org.apache.kafka.common.errors.SerializationException;
 import org.junit.After;
 import org.junit.Before;
@@ -418,7 +420,7 @@ public class SchemaManagerImplTest {
   @Test
   public void getSchema_avro_rawSchema_invalidSchema() {
     assertThrows(
-        SerializationException.class,
+        RestConstraintViolationException.class,
         () ->
             schemaManager.getSchema(
                 TOPIC_NAME,
@@ -434,7 +436,7 @@ public class SchemaManagerImplTest {
   @Test
   public void getSchema_jsonschema_rawSchema_invalidSchema() {
     assertThrows(
-        SerializationException.class,
+        RestConstraintViolationException.class,
         () ->
             schemaManager.getSchema(
                 TOPIC_NAME,
@@ -450,7 +452,7 @@ public class SchemaManagerImplTest {
   @Test
   public void getSchema_protobuf_rawSchema_invalidSchema() {
     assertThrows(
-        SerializationException.class,
+        RestConstraintViolationException.class,
         () ->
             schemaManager.getSchema(
                 TOPIC_NAME,
