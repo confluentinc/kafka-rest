@@ -25,6 +25,7 @@ import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.io.IOException;
@@ -151,7 +152,7 @@ final class SchemaManagerImpl implements SchemaManager {
             .parseSchema(schema.getSchema(), schema.getReferences(), /* isNew= */ false)
             .orElseThrow(
                 () ->
-                    new SerializationException(
+                    Errors.invalidSchemaException(
                         String.format(
                             "Error when fetching schema by version. subject = %s, version = %d",
                             actualSubject, schemaVersion)));
@@ -174,7 +175,7 @@ final class SchemaManagerImpl implements SchemaManager {
             .parseSchema(rawSchema, /* references= */ emptyList(), /* isNew= */ true)
             .orElseThrow(
                 () ->
-                    new SerializationException(
+                    Errors.invalidSchemaException(
                         String.format(
                             "Error when parsing raw schema. format = %s, schema = %s",
                             format, rawSchema)));
@@ -229,7 +230,7 @@ final class SchemaManagerImpl implements SchemaManager {
             .parseSchema(metadata.getSchema(), metadata.getReferences(), /* isNew= */ false)
             .orElseThrow(
                 () ->
-                    new SerializationException(
+                    Errors.invalidSchemaException(
                         String.format(
                             "Error when fetching latest schema version. subject = %s",
                             actualSubject)));

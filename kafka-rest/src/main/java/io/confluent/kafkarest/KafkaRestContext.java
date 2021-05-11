@@ -38,7 +38,9 @@ public interface KafkaRestContext {
     return getProducerPool().getProducer();
   }
 
-  SchemaRegistryClient getSchemaRegistryClient();
+  default SchemaRegistryClient getSchemaRegistryClient() {
+    return null;
+  }
 
   void shutdown();
 }
