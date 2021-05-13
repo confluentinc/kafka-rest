@@ -49,6 +49,7 @@ import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Range;
 import org.apache.kafka.common.config.ConfigDef.Type;
+import org.apache.kafka.common.config.SaslConfigs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -742,7 +743,13 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   public Map<String, Object> getSchemaRegistryConfigs() {
-    Set<String> mask = AbstractKafkaSchemaSerDeConfig.baseConfigDef().names();
+    ImmutableSet<String> mask =
+        ImmutableSet.<String>builder()
+            .addAll(AbstractKafkaSchemaSerDeConfig.baseConfigDef().names())
+            // If schema.registry.basic.auth.credentials.source=SASL_INHERIT, then SR credentials
+            // come from client.sasl.jaas.config.
+            .add(SaslConfigs.SASL_JAAS_CONFIG)
+            .build();
     Map<String, Object> configs =
         new HashMap<>(
             new ConfigsBuilder(mask)

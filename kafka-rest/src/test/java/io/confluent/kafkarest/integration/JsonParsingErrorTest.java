@@ -15,25 +15,18 @@
 
 package io.confluent.kafkarest.integration;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 public class JsonParsingErrorTest extends ClusterTestHarness {
 
   public JsonParsingErrorTest() {
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ false);
-  }
-
-  @BeforeEach
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
   }
 
   @Test

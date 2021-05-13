@@ -46,6 +46,7 @@ import org.junit.rules.ExternalResource;
 public final class SchemaRegistryFixture extends ExternalResource {
 
   @Nullable private final SslFixture certificates;
+  private final ImmutableMap<String, String> clientConfigs;
   private final ImmutableMap<String, String> configs;
   private final KafkaClusterFixture kafkaCluster;
   @Nullable private final String kafkaPassword;
@@ -58,6 +59,7 @@ public final class SchemaRegistryFixture extends ExternalResource {
 
   private SchemaRegistryFixture(
       @Nullable SslFixture certificates,
+      Map<String, String> clientConfigs,
       Map<String, String> configs,
       KafkaClusterFixture kafkaCluster,
       @Nullable String kafkaPassword,
@@ -66,6 +68,7 @@ public final class SchemaRegistryFixture extends ExternalResource {
     checkArgument(kafkaUser != null ^ kafkaPassword == null);
     checkArgument(certificates != null ^ keyName == null);
     this.certificates = certificates;
+    this.clientConfigs = ImmutableMap.copyOf(clientConfigs);
     this.configs = ImmutableMap.copyOf(configs);
     this.kafkaCluster = requireNonNull(kafkaCluster);
     this.kafkaPassword = kafkaPassword;
@@ -134,6 +137,7 @@ public final class SchemaRegistryFixture extends ExternalResource {
     if (certificates != null) {
       configs.putAll(certificates.getSslConfigs(keyName, "schema.registry."));
     }
+    configs.putAll(clientConfigs);
     return configs.build();
   }
 
@@ -184,6 +188,7 @@ public final class SchemaRegistryFixture extends ExternalResource {
 
   public static final class Builder {
     private SslFixture certificates = null;
+    private final ImmutableMap.Builder<String, String> clientConfigs = ImmutableMap.builder();
     private final ImmutableMap.Builder<String, String> configs = ImmutableMap.builder();
     private KafkaClusterFixture kafkaCluster;
     private String kafkaPassword = null;
@@ -196,6 +201,11 @@ public final class SchemaRegistryFixture extends ExternalResource {
     public Builder setCertificates(SslFixture certificates, String keyName) {
       this.certificates = requireNonNull(certificates);
       this.keyName = requireNonNull(keyName);
+      return this;
+    }
+
+    public Builder setClientConfig(String name, String value) {
+      clientConfigs.put(name, value);
       return this;
     }
 
@@ -218,7 +228,13 @@ public final class SchemaRegistryFixture extends ExternalResource {
 
     public SchemaRegistryFixture build() {
       return new SchemaRegistryFixture(
-          certificates, configs.build(), kafkaCluster, kafkaPassword, kafkaUser, keyName);
+          certificates,
+          clientConfigs.build(),
+          configs.build(),
+          kafkaCluster,
+          kafkaPassword,
+          kafkaUser,
+          keyName);
     }
   }
 
