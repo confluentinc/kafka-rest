@@ -21,6 +21,11 @@ import javax.annotation.Nullable;
 import kafka.zk.EmbeddedZookeeper;
 import org.junit.rules.ExternalResource;
 
+/**
+ * An {@link ExternalResource} that runs a Zookeeper server.
+ *
+ * <p>This fixture currently does not support SSL and/or SASL.
+ */
 public final class ZookeeperFixture extends ExternalResource {
 
   @Nullable private EmbeddedZookeeper zookeeper;

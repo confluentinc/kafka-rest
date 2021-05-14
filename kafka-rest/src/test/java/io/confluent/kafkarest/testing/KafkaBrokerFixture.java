@@ -40,6 +40,9 @@ import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.junit.rules.ExternalResource;
 
+/**
+ * An {@link ExternalResource} that runs a Kafka broker.
+ */
 public final class KafkaBrokerFixture extends ExternalResource {
 
   private static final ImmutableMap<String, String> CONFIG_TEMPLATE =
@@ -239,50 +242,81 @@ public final class KafkaBrokerFixture extends ExternalResource {
     private Builder() {
     }
 
+    /**
+     * Adds a SASL PLAIN user.
+     */
     public Builder addUser(String username, String password) {
       users.put(username, password);
       return this;
     }
 
+    /**
+     * @see #addUser(String, String)
+     */
     public Builder addUsers(Map<String, String> users) {
       this.users.putAll(users);
       return this;
     }
 
+    /**
+     * Sets the given SASL PLAIN user as a super-user.
+     */
     public Builder addSuperUser(String username) {
       checkArgument(users.build().containsKey(username));
       superUsers.add(username);
       return this;
     }
 
+    /**
+     * @see #addSuperUser(String)
+     */
     public Builder addSuperUsers(Set<String> superUsers) {
       checkArgument(users.build().keySet().containsAll(superUsers));
       this.superUsers.addAll(superUsers);
       return this;
     }
 
+    /**
+     * Sets the broker ID.
+     */
     public Builder setBrokerId(int brokerId) {
       checkArgument(brokerId >= 0);
       this.brokerId = brokerId;
       return this;
     }
 
+    /**
+     * Sets the SSL certificate store, and the name of the certificate to use as the broker
+     * certificate.
+     */
     public Builder setCertificate(SslFixture certificates, String keyName) {
       this.certificates = requireNonNull(certificates);
       this.keyName = requireNonNull(keyName);
       return this;
     }
 
+    /**
+     * Sets the given broker config.
+     */
     public Builder setConfig(String name, String value) {
       configs.put(name, value);
       return this;
     }
 
+    /**
+     * @see #setConfig(String, String)
+     */
     public Builder setConfigs(Map<String, String> configs) {
       this.configs.putAll(configs);
       return this;
     }
 
+    /**
+     * Sets the broker security protocol.
+     *
+     * <p>For the {@link SecurityProtocol#SASL_PLAINTEXT} or {@link SecurityProtocol#SASL_SSL}
+     * protocols, only the PLAIN mechanism is supported.
+     */
     public Builder setSecurityProtocol(SecurityProtocol securityProtocol) {
       this.securityProtocol = requireNonNull(securityProtocol);
       return this;
