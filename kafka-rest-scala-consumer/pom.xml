@@ -43,7 +43,6 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
-            <version>${log4j.version}</version>
         </dependency>
         <!--
             This is a workaround for IntelliJ which seems to have a problem including junit + hamcrest
