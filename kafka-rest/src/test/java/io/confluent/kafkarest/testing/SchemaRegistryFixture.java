@@ -43,6 +43,9 @@ import javax.annotation.Nullable;
 import org.eclipse.jetty.server.Server;
 import org.junit.rules.ExternalResource;
 
+/**
+ * An {@link ExternalResource} that runs a Schema Registry server.
+ */
 public final class SchemaRegistryFixture extends ExternalResource {
 
   @Nullable private final SslFixture certificates;
@@ -198,17 +201,29 @@ public final class SchemaRegistryFixture extends ExternalResource {
     private Builder() {
     }
 
+    /**
+     * Sets the SSL certificate store, and the name of the certificate to use as the schema registry
+     * certificate.
+     */
     public Builder setCertificates(SslFixture certificates, String keyName) {
       this.certificates = requireNonNull(certificates);
       this.keyName = requireNonNull(keyName);
       return this;
     }
 
+    /**
+     * Sets a {@link SchemaRegistryClient client} config.
+     *
+     * @see SchemaRegistryFixture#getClient()
+     */
     public Builder setClientConfig(String name, String value) {
       clientConfigs.put(name, value);
       return this;
     }
 
+    /**
+     * Sets a Schema Registry server config.
+     */
     public Builder setConfig(String name, String value) {
       configs.put(name, value);
       return this;
@@ -219,12 +234,14 @@ public final class SchemaRegistryFixture extends ExternalResource {
       return this;
     }
 
+    /**
+     * Sets the Kafka SASL PLAIN credentials.
+     */
     public Builder setKafkaUser(String username, String password) {
       this.kafkaUser = requireNonNull(username);
       this.kafkaPassword = requireNonNull(password);
       return this;
     }
-
 
     public SchemaRegistryFixture build() {
       return new SchemaRegistryFixture(

@@ -64,9 +64,9 @@ public class SchemaRegistrySaslInheritTest {
 
   private final SchemaRegistryFixture schemaRegistry =
       SchemaRegistryFixture.builder()
-          .setConfig("authentication.method", "BASIC")
           .setClientConfig("basic.auth.credentials.source", "USER_INFO")
           .setClientConfig("basic.auth.user.info", "schema-registry:schema-registry-pass")
+          .setConfig("authentication.method", "BASIC")
           .setConfig("authentication.realm", "SchemaRegistryServer")
           .setConfig("authentication.roles", "user")
           .setKafkaCluster(kafkaCluster)

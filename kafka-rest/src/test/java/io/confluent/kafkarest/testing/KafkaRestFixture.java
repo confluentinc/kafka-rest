@@ -33,6 +33,9 @@ import javax.ws.rs.client.WebTarget;
 import org.eclipse.jetty.server.Server;
 import org.junit.rules.ExternalResource;
 
+/**
+ * An {@link ExternalResource} that runs a Kafka REST server.
+ */
 public final class KafkaRestFixture extends ExternalResource {
 
   @Nullable private final SslFixture certificates;
@@ -185,12 +188,19 @@ public final class KafkaRestFixture extends ExternalResource {
     private Builder() {
     }
 
+    /**
+     * Sets the SSL certificate store, and the name of the certificate to use as the Kafka REST
+     * certificate.
+     */
     public Builder setCertificates(SslFixture certificates, String keyName) {
       this.certificates = requireNonNull(certificates);
       this.keyName = requireNonNull(keyName);
       return this;
     }
 
+    /**
+     * Sets a Kafka REST config.
+     */
     public Builder setConfig(String name, String value) {
       configs.put(name, value);
       return this;
@@ -201,6 +211,9 @@ public final class KafkaRestFixture extends ExternalResource {
       return this;
     }
 
+    /**
+     * Sets the Kafka SASL PLAIN credentials.
+     */
     public Builder setKafkaUser(String username, String password) {
       this.kafkaUser = requireNonNull(username);
       this.kafkaPassword = requireNonNull(password);

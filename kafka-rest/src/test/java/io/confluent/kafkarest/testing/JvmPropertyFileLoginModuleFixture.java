@@ -28,10 +28,22 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import org.apache.kafka.common.security.JaasUtils;
 import org.junit.rules.ExternalResource;
 
+/**
+ * An {@link ExternalResource} that creates and sets a {@link
+ * org.eclipse.jetty.jaas.spi.PropertyFileLoginModule} as the default Java Login Module.
+ *
+ * <p>This fixture should be used only when you don't have any other option, for example, when
+ * configuring Kafka REST or Schema Registry Basic Authentication. Using it might cause unforeseen
+ * side-effects. For example, any Kafka client that does not set {@code sasl.jaas.config} will use
+ * the JAAS file created instead, and fail since it has no section named {@code KafkaClient}.
+ * Instead of using this fixture, you should use the respective {@code sasl.jaas.config} config
+ * whenever possible, for example, {@code client.sasl.jaas.config} in Kafka REST.
+ */
 public final class JvmPropertyFileLoginModuleFixture extends ExternalResource {
 
   private final String name;
@@ -100,11 +112,17 @@ public final class JvmPropertyFileLoginModuleFixture extends ExternalResource {
     private Builder() {
     }
 
+    /**
+     * Adds a {@code username: password,role1,role2,...} line in the users properties file.
+     */
     public Builder addUser(String username, String password, String... roles) {
       users.put(username, PasswordAndRoles.create(password, Arrays.asList(roles)));
       return this;
     }
 
+    /**
+     * Sets the name of the section in the JAAS file.
+     */
     public Builder setName(String name) {
       this.name = name;
       return this;
