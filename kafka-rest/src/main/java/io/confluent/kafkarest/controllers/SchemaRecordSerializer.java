@@ -31,6 +31,7 @@ import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaUtils;
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerializer;
 import io.confluent.kafka.serializers.json.AbstractKafkaJsonSchemaSerializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializer;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.config.ConfigModule.AvroSerializerConfigs;
 import io.confluent.kafkarest.config.ConfigModule.JsonschemaSerializerConfigs;
 import io.confluent.kafkarest.config.ConfigModule.ProtobufSerializerConfigs;
@@ -42,7 +43,6 @@ import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import org.apache.avro.AvroTypeException;
-import org.apache.kafka.common.errors.SerializationException;
 import org.everit.json.schema.ValidationException;
 
 final class SchemaRecordSerializer {
@@ -74,10 +74,7 @@ final class SchemaRecordSerializer {
       return Optional.empty();
     }
     if (!schema.isPresent()) {
-      throw new SerializationException(
-          String.format(
-              "Cannot serialize a non-null %s without a %s schema.",
-              isKey ? "key" : "value", isKey ? "key" : "value"));
+      throw isKey ? Errors.keySchemaMissingException() : Errors.valueSchemaMissingException();
     }
 
     switch (format) {
