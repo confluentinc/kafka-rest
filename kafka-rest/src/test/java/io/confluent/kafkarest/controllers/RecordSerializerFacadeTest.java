@@ -57,6 +57,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import io.confluent.rest.exceptions.RestConstraintViolationException;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.util.Utf8;
@@ -624,7 +626,7 @@ public class RecordSerializerFacadeTest {
     assertFalse(serialized.isPresent());
   }
 
-  @Test(expected = SerializationException.class)
+  @Test(expected = RestConstraintViolationException.class)
   public void serializeNonNullAvroKeyNullSchema_throwsSerializationException() {
     recordSerializer.serialize(
         EmbeddedFormat.AVRO,
@@ -898,7 +900,7 @@ public class RecordSerializerFacadeTest {
     assertFalse(serialized.isPresent());
   }
 
-  @Test(expected = SerializationException.class)
+  @Test(expected = RestConstraintViolationException.class)
   public void serializeNonNullAvroValueNullSchema_throwsSerializationException() {
     recordSerializer.serialize(
         EmbeddedFormat.AVRO,
@@ -1094,7 +1096,7 @@ public class RecordSerializerFacadeTest {
     assertFalse(serialized.isPresent());
   }
 
-  @Test(expected = SerializationException.class)
+  @Test(expected = RestConstraintViolationException.class)
   public void serializeNonNullJsonschemaKeyNullSchema_throwsSerializationException() {
     recordSerializer.serialize(
         EmbeddedFormat.JSONSCHEMA,
@@ -1289,7 +1291,7 @@ public class RecordSerializerFacadeTest {
     assertFalse(serialized.isPresent());
   }
 
-  @Test(expected = SerializationException.class)
+  @Test(expected = RestConstraintViolationException.class)
   public void serializeNonNullJsonschemaValueNullSchema_throwsSerializationException() {
     recordSerializer.serialize(
         EmbeddedFormat.JSONSCHEMA,
@@ -1373,7 +1375,7 @@ public class RecordSerializerFacadeTest {
     assertFalse(serialized.isPresent());
   }
 
-  @Test(expected = SerializationException.class)
+  @Test(expected = RestConstraintViolationException.class)
   public void serializeNonNullProtobufKeyNullSchema_throwsSerializationException() {
     ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
     node.put("foo", 1);
@@ -1465,7 +1467,7 @@ public class RecordSerializerFacadeTest {
     assertFalse(serialized.isPresent());
   }
 
-  @Test(expected = SerializationException.class)
+  @Test(expected = RestConstraintViolationException.class)
   public void serializeNonNullProtobufValueNullSchema_throwsSerializationException() {
     ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
     node.put("foo", 1);
