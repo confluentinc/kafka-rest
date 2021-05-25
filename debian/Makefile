@@ -9,9 +9,13 @@ ifndef VERSION
 VERSION=$(shell grep version pom.xml | head -n 1 | awk -F'>|<' '{ print $$3 }')
 endif
 
+ifndef SECURITY_SUFFIX
+SECURITY_SUFFIX=
+endif
+
 export PACKAGE_TITLE=kafka-rest
 export FULL_PACKAGE_TITLE=confluent-kafka-rest
-export PACKAGE_NAME=$(FULL_PACKAGE_TITLE)-$(VERSION)
+export PACKAGE_NAME=$(FULL_PACKAGE_TITLE)-$(VERSION)$(SECURITY_SUFFIX)
 
 # Defaults that are likely to vary by platform. These are cleanly separated so
 # it should be easy to maintain altered values on platform-specific branches
@@ -80,7 +84,7 @@ install: build
 	for svc in debian/*.service ; do \
 	    $(INSTALL) -o root -g root -D $$svc $(DESTDIR)$(SYSTEMDDIR)/$$(basename $$svc) ; \
 	done
-	pushd "kafka-rest/target/kafka-rest-$(VERSION)-package" ; \
+	pushd "kafka-rest/target/kafka-rest-$(VERSION)$(SECURITY_SUFFIX)-package" ; \
 	find bin/ -type f | grep -v README[.]rpm | xargs -I XXX $(INSTALL_X) -o root -g root XXX $(DESTDIR)$(PREFIX)/XXX ;\
 	find share/ -type f | grep -v README[.]rpm | xargs -I XXX $(INSTALL) -o root -g root XXX $(DESTDIR)$(PREFIX)/XXX ; \
 	pushd etc/kafka-rest/ ; \
