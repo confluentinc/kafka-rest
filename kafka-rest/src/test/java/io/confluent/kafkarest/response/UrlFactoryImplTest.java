@@ -256,4 +256,20 @@ public class UrlFactoryImplTest {
 
     assertEquals("http://advertised.listener:2000/foo/bar", url);
   }
+
+  @Test
+  public void urlBuilder_urlEncodesQueryParamValues() {
+    expect(requestUriInfo.getAbsolutePath())
+        .andStubReturn(URI.create("http://1.2.3.4:1000/xxx/yyy"));
+    expect(requestUriInfo.getBaseUri()).andReturn(URI.create("http://1.2.3.4:1000/"));
+    replay(requestUriInfo);
+
+    UrlFactory urlFactory =
+        new UrlFactoryImpl("hostname", 2000, emptyList(), emptyList(), requestUriInfo);
+    UrlBuilder urlBuilder = urlFactory.newUrlBuilder();
+
+    String url = urlBuilder.appendPathSegment("foobar").putQueryParameter("foo", "b a r").build();
+
+    assertEquals("http://hostname:2000/foobar?foo=b+a+r", url);
+  }
 }

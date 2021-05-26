@@ -16,6 +16,9 @@
 package io.confluent.kafkarest.response;
 
 import com.google.auto.value.AutoValue;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,10 +50,7 @@ public final class UrlBuilder {
       url.append('/').append(pathSegment);
     }
     for (int i = 0; i < queryParameters.size(); i++) {
-      url.append(i == 0 ? '?' : '&')
-          .append(queryParameters.get(i).getKey())
-          .append('=')
-          .append(queryParameters.get(i).getValue());
+      url.append(i == 0 ? '?' : '&').append(queryParameters.get(i).encode());
     }
     return url.toString();
   }
@@ -64,6 +64,14 @@ public final class UrlBuilder {
     public abstract String getKey();
 
     public abstract String getValue();
+
+    public final String encode() {
+      try {
+        return getKey() + "=" + URLEncoder.encode(getValue(), "UTF-8");
+      } catch (UnsupportedEncodingException  e) {
+        throw new RuntimeException(e);
+      }
+    }
 
     public static QueryParameter create(String key, String value) {
       return new AutoValue_UrlBuilder_QueryParameter(key, value);
