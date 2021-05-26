@@ -50,7 +50,7 @@ public final class UrlBuilder {
       url.append('/').append(pathSegment);
     }
     for (int i = 0; i < queryParameters.size(); i++) {
-      url.append(i == 0 ? '?' : '&').append(queryParameters.get(i).encode());
+      url.append(i == 0 ? '?' : '&').append(queryParameters.get(i).asStringWithEncodedValue());
     }
     return url.toString();
   }
@@ -65,10 +65,10 @@ public final class UrlBuilder {
 
     public abstract String getValue();
 
-    public final String encode() {
+    public final String asStringWithEncodedValue() {
       try {
         return getKey() + "=" + URLEncoder.encode(getValue(), "UTF-8");
-      } catch (UnsupportedEncodingException  e) {
+      } catch (UnsupportedEncodingException e) {
         throw new RuntimeException(e);
       }
     }

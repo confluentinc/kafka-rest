@@ -268,8 +268,12 @@ public class UrlFactoryImplTest {
         new UrlFactoryImpl("hostname", 2000, emptyList(), emptyList(), requestUriInfo);
     UrlBuilder urlBuilder = urlFactory.newUrlBuilder();
 
-    String url = urlBuilder.appendPathSegment("foobar").putQueryParameter("foo", "b a r").build();
+    String url =
+        urlBuilder.appendPathSegment("foobar")
+            .putQueryParameter("foo", "b a r")
+            .putQueryParameter("foz", "b!a@z")
+            .build();
 
-    assertEquals("http://hostname:2000/foobar?foo=b+a+r", url);
+    assertEquals("http://hostname:2000/foobar?foo=b+a+r&foz=b%21a%40z", url);
   }
 }
