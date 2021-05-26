@@ -112,7 +112,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
             + "?resource_type=TOPIC"
             + "&resource_name=*"
             + "&pattern_type=LITERAL"
-            + "&principal=User:alice"
+            + "&principal=User%3Aalice"
             + "&host=*"
             + "&operation=READ"
             + "&permission=ALLOW";
@@ -121,7 +121,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
             + "?resource_type=TOPIC"
             + "&resource_name=topic-"
             + "&pattern_type=PREFIXED"
-            + "&principal=User:bob"
+            + "&principal=User%3Abob"
             + "&host=1.2.3.4"
             + "&operation=WRITE"
             + "&permission=ALLOW";
