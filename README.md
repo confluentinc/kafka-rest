@@ -102,6 +102,12 @@ To build a development version, you may need development versions of
 installing these, you can build the Kafka REST Proxy
 with Maven. All the standard lifecycle phases work.
 
+You can avoid building development versions of dependencies
+by building on the latest (or earlier) release tag, or `<release>-post` branch,
+which will reference dependencies available pre-built from the
+[public repository](http://packages.confluent.io/maven/).  For example, branch
+`6.1.1-post` can be used as a base for patches for this version.
+
 Contribute
 ----------
 
