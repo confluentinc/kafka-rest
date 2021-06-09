@@ -219,4 +219,40 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>cloudPackageSmokeTest</id>
+            <activation>
+                <property>
+                    <name>KAFKA_REST_CLOUD_SMOKE_TESTS</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- skip unit tests -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration combine.self="override">
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+    
+                    <!-- run integration tests, excluding integration/v3 which are numerous and take a long time -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/integration/v3/**</exclude>
+                                <exclude>**/*$*</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>
