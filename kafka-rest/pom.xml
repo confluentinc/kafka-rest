@@ -239,13 +239,14 @@
                         </configuration>
                     </plugin>
     
-                    <!-- run integration tests, excluding integration/v3 which are numerous and take a long time -->
+                    <!-- run integration tests, excluding .../v2 and .../v3 which are numerous and take a long time -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-failsafe-plugin</artifactId>
                         <configuration>
                             <excludes>
-                                <exclude>**/integration/v3/**</exclude>
+                                <exclude>**/v2/**</exclude>
+                                <exclude>**/v3/**</exclude>
                                 <exclude>**/*$*</exclude>
                             </excludes>
                         </configuration>
