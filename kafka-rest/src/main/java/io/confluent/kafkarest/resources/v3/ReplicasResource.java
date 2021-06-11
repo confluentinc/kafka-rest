@@ -91,7 +91,9 @@ public final class ReplicasResource {
                                     .build())
                             .setData(
                                 replicas.stream()
-                                    .map(this::toReplicaData)
+                                    .map(replica -> toReplicaData(replica,
+                                        crnFactory,
+                                        urlFactory))
                                     .collect(Collectors.toList()))
                             .build()));
 
@@ -114,12 +116,17 @@ public final class ReplicasResource {
         replicaManager.get()
             .getReplica(clusterId, topicName, partitionId, brokerId)
             .thenApply(replica -> replica.orElseThrow(NotFoundException::new))
-            .thenApply(replica -> GetReplicaResponse.create(toReplicaData(replica)));
+            .thenApply(replica -> GetReplicaResponse.create(toReplicaData(
+                replica,
+                crnFactory,
+                urlFactory)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
 
-  private ReplicaData toReplicaData(PartitionReplica replica) {
+  public static ReplicaData toReplicaData(PartitionReplica replica,
+                                           CrnFactory crnFactory,
+                                           UrlFactory urlFactory) {
     return ReplicaData.fromPartitionReplica(replica)
         .setMetadata(
             Resource.Metadata.builder()
