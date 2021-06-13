@@ -57,15 +57,7 @@ import kafka.utils.TestUtils;
 import kafka.zk.EmbeddedZookeeper;
 import kafka.zk.KafkaZkClient;
 import kafka.zookeeper.ZooKeeperClient;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.AlterConfigOp;
-import org.apache.kafka.clients.admin.AlterConfigsResult;
-import org.apache.kafka.clients.admin.ConfigEntry;
-import org.apache.kafka.clients.admin.CreateTopicsResult;
-import org.apache.kafka.clients.admin.ListTopicsResult;
-import org.apache.kafka.clients.admin.NewPartitionReassignment;
-import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -408,6 +400,20 @@ public abstract class ClusterTestHarness {
       return result.names().get();
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(String.format("Failed to create topic: %s", e.getMessage()));
+    }
+  }
+
+  protected final TopicDescription describeTopic(String topicName) {
+    Properties properties = restConfig.getAdminProperties();
+    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    AdminClient adminClient = AdminClient.create(properties);
+
+    DescribeTopicsResult result = adminClient.describeTopics(singletonList(topicName));
+
+    try {
+      return result.all().get().get(topicName);
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(String.format("Failed to describe topic: %s", e.getMessage()));
     }
   }
 

@@ -76,6 +76,8 @@ public final class ListAllReplicasAction {
                                             "v3",
                                             "clusters",
                                             clusterId,
+                                            "topics",
+                                            "-",
                                             "replicas"))
                                     .build())
                             .setData(

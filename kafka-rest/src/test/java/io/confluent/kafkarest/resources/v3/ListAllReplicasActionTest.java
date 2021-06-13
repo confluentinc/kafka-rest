@@ -15,11 +15,10 @@
 
 package io.confluent.kafkarest.resources.v3;
 
-import io.confluent.kafkarest.controllers.TopicConfigManager;
 import io.confluent.kafkarest.controllers.TopicManager;
-import io.confluent.kafkarest.entities.ConfigSource;
+import io.confluent.kafkarest.entities.Partition;
+import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
-import io.confluent.kafkarest.entities.TopicConfig;
 import io.confluent.kafkarest.entities.v3.*;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
@@ -35,12 +34,8 @@ import org.junit.runners.JUnit4;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
-import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -52,36 +47,51 @@ public class ListAllReplicasActionTest {
   private static final String CLUSTER_ID = "cluster-1";
   private static final String TOPIC_NAME = "topic-1";
 
-  private static final ReplicaData REPLICA_DATA_1 =
-      ReplicaData.create(
+  private static final PartitionReplica REPLICA_1 =
+      PartitionReplica.create(
           CLUSTER_ID,
           TOPIC_NAME,
           0,
           1,
           /* isLeader= */ true,
           /* isInSync= */ true);
-  private static final TopicConfig CONFIG_2 =
-      TopicConfig.create(
-          CLUSTER_ID,
-          TOPIC_NAME,
-          "config-2",
-          "value-2",
-          /* isDefault= */ false,
-          /* isReadOnly= */ true,
-          /* isSensitive= */ false,
-          ConfigSource.DYNAMIC_TOPIC_CONFIG,
-          /* synonyms= */ emptyList());
-  private static final TopicConfig CONFIG_3 =
-      TopicConfig.create(
-          CLUSTER_ID,
-          TOPIC_NAME,
-          "config-3",
-          null,
-          /* isDefault= */ false,
-          /* isReadOnly= */ false,
-          /* isSensitive= */ true,
-          ConfigSource.DYNAMIC_TOPIC_CONFIG,
-          /* synonyms= */ emptyList());
+  private static final PartitionReplica REPLICA_2 =
+          PartitionReplica.create(
+                  CLUSTER_ID,
+                  TOPIC_NAME,
+                  0,
+                  0,
+                  /* isLeader= */ false,
+                  /* isInSync= */ true);
+  private static final PartitionReplica REPLICA_3 =
+          PartitionReplica.create(
+                  CLUSTER_ID,
+                  TOPIC_NAME,
+                  1,
+                  0,
+                  /* isLeader= */ true,
+                  /* isInSync= */ true);
+  private static final PartitionReplica REPLICA_4 =
+          PartitionReplica.create(
+                  CLUSTER_ID,
+                  TOPIC_NAME,
+                  1,
+                  1,
+                  /* isLeader= */ false,
+                  /* isInSync= */ false);
+
+  private static final Partition PARTITION_1 =
+          Partition.create(
+                  CLUSTER_ID,
+                  TOPIC_NAME,
+                  0,
+                  Arrays.asList(REPLICA_1,REPLICA_2));
+  private static final Partition PARTITION_2 =
+          Partition.create(
+                  CLUSTER_ID,
+                  TOPIC_NAME,
+                  1,
+                  Arrays.asList(REPLICA_3,REPLICA_4));
 
   @Rule
   public final EasyMockRule mocks = new EasyMockRule(this);
@@ -101,128 +111,122 @@ public class ListAllReplicasActionTest {
   }
 
   @Test
-  public void listTopicConfigs_existingTopic_returnsConfigs() {
+  public void listAllReplicas_existingTopic_returnsReplicas() {
     expect(topicManager.listTopics(CLUSTER_ID))
         .andReturn(
             completedFuture(Arrays.asList(Topic.create(
                 CLUSTER_ID,
                 TOPIC_NAME,
-                new ArrayList<>(),
+                Arrays.asList(PARTITION_1,PARTITION_2),
                 (short) 1,
                 false
             )))
         );
 
-    expect(topicConfigManager.listTopicConfigs(CLUSTER_ID, Arrays.asList(TOPIC_NAME)))
-        .andReturn(
-            completedFuture(new HashMap<String, List<TopicConfig>>() {{
-              put(TOPIC_NAME, Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3));
-            }}));
-    replay(topicManager, topicConfigManager);
+    replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    allTopicConfigsResource.listTopicConfigs(response, CLUSTER_ID);
+    allReplicasResource.listReplicas(response, CLUSTER_ID);
 
-    ListTopicConfigsResponse expected =
-        ListTopicConfigsResponse.create(
-            TopicConfigDataList.builder()
-                .setMetadata(
-                    ResourceCollection.Metadata.builder()
-                        .setSelf(
-                            "/v3/clusters/cluster-1/topics/-/configs")
-                        .build())
-                .setData(
-                    Arrays.asList(
-                        TopicConfigData.builder()
+    ListReplicasResponse expected =
+            ListReplicasResponse.create(
+                    ReplicaDataList.builder()
                             .setMetadata(
-                                Resource.Metadata.builder()
-                                    .setSelf(
-                                        "/v3/clusters/cluster-1/topics/topic-1/configs/config-1")
-                                    .setResourceName(
-                                        "crn:///kafka=cluster-1/topic=topic-1/config=config-1")
-                                    .build())
-                            .setClusterId(CLUSTER_ID)
-                            .setTopicName(TOPIC_NAME)
-                            .setName(CONFIG_1.getName())
-                            .setValue(CONFIG_1.getValue())
-                            .setDefault(CONFIG_1.isDefault())
-                            .setReadOnly(CONFIG_1.isReadOnly())
-                            .setSensitive(CONFIG_1.isSensitive())
-                            .setSource(CONFIG_1.getSource())
-                            .setSynonyms(
-                                CONFIG_1.getSynonyms().stream()
-                                    .map(ConfigSynonymData::fromConfigSynonym)
-                                    .collect(Collectors.toList()))
-                            .build(),
-                        TopicConfigData.builder()
-                            .setMetadata(
-                                Resource.Metadata.builder()
-                                    .setSelf(
-                                        "/v3/clusters/cluster-1/topics/topic-1/configs/config-2")
-                                    .setResourceName(
-                                        "crn:///kafka=cluster-1/topic=topic-1/config=config-2")
-                                    .build())
-                            .setClusterId(CLUSTER_ID)
-                            .setTopicName(TOPIC_NAME)
-                            .setName(CONFIG_2.getName())
-                            .setValue(CONFIG_2.getValue())
-                            .setDefault(CONFIG_2.isDefault())
-                            .setReadOnly(CONFIG_2.isReadOnly())
-                            .setSensitive(CONFIG_2.isSensitive())
-                            .setSource(CONFIG_2.getSource())
-                            .setSynonyms(
-                                CONFIG_2.getSynonyms().stream()
-                                    .map(ConfigSynonymData::fromConfigSynonym)
-                                    .collect(Collectors.toList()))
-                            .build(),
-                        TopicConfigData.builder()
-                            .setMetadata(
-                                Resource.Metadata.builder()
-                                    .setSelf(
-                                        "/v3/clusters/cluster-1/topics/topic-1/configs/config-3")
-                                    .setResourceName(
-                                        "crn:///kafka=cluster-1/topic=topic-1/config=config-3")
-                                    .build())
-                            .setClusterId(CLUSTER_ID)
-                            .setTopicName(TOPIC_NAME)
-                            .setName(CONFIG_3.getName())
-                            .setValue(CONFIG_3.getValue())
-                            .setDefault(CONFIG_3.isDefault())
-                            .setReadOnly(CONFIG_3.isReadOnly())
-                            .setSensitive(CONFIG_3.isSensitive())
-                            .setSource(CONFIG_3.getSource())
-                            .setSynonyms(
-                                CONFIG_3.getSynonyms().stream()
-                                    .map(ConfigSynonymData::fromConfigSynonym)
-                                    .collect(Collectors.toList()))
-                            .build()))
-                .build());
+                                    ResourceCollection.Metadata.builder()
+                                            .setSelf(
+                                                    "/v3/clusters/cluster-1/topics/-/replicas")
+                                            .build())
+                            .setData(
+                                    Arrays.asList(
+                                            ReplicaData.builder()
+                                                    .setMetadata(
+                                                            Resource.Metadata.builder()
+                                                                    .setSelf(
+                                                                            "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/1")
+                                                                    .setResourceName(
+                                                                            "crn:///kafka=cluster-1/topic=topic-1/partition=0/replica=1")
+                                                                    .build())
+                                                    .setClusterId(CLUSTER_ID)
+                                                    .setTopicName(TOPIC_NAME)
+                                                    .setBrokerId(1)
+                                                    .setPartitionId(0)
+                                                    .setInSync(true)
+                                                    .setLeader(true)
+                                                    .setBroker(Resource.Relationship.create("/v3/clusters/cluster-1/brokers/1"))
+                                                    .build(),
+                                            ReplicaData.builder()
+                                                    .setMetadata(
+                                                            Resource.Metadata.builder()
+                                                                    .setSelf(
+                                                                            "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/0")
+                                                                    .setResourceName(
+                                                                            "crn:///kafka=cluster-1/topic=topic-1/partition=0/replica=0")
+                                                                    .build())
+                                                    .setClusterId(CLUSTER_ID)
+                                                    .setTopicName(TOPIC_NAME)
+                                                    .setBrokerId(0)
+                                                    .setPartitionId(0)
+                                                    .setInSync(true)
+                                                    .setLeader(false)
+                                                    .setBroker(Resource.Relationship.create("/v3/clusters/cluster-1/brokers/0"))
+                                                    .build(),
+                                            ReplicaData.builder()
+                                                    .setMetadata(
+                                                            Resource.Metadata.builder()
+                                                                    .setSelf(
+                                                                            "/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas/0")
+                                                                    .setResourceName(
+                                                                            "crn:///kafka=cluster-1/topic=topic-1/partition=1/replica=0")
+                                                                    .build())
+                                                    .setClusterId(CLUSTER_ID)
+                                                    .setTopicName(TOPIC_NAME)
+                                                    .setBrokerId(0)
+                                                    .setPartitionId(1)
+                                                    .setInSync(true)
+                                                    .setLeader(true)
+                                                    .setBroker(Resource.Relationship.create("/v3/clusters/cluster-1/brokers/0"))
+                                                    .build(),
+                                            ReplicaData.builder()
+                                                    .setMetadata(
+                                                            Resource.Metadata.builder()
+                                                                    .setSelf(
+                                                                            "/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas/1")
+                                                                    .setResourceName(
+                                                                            "crn:///kafka=cluster-1/topic=topic-1/partition=1/replica=1")
+                                                                    .build())
+                                                    .setClusterId(CLUSTER_ID)
+                                                    .setTopicName(TOPIC_NAME)
+                                                    .setBrokerId(1)
+                                                    .setPartitionId(1)
+                                                    .setInSync(false)
+                                                    .setLeader(false)
+                                                    .setBroker(Resource.Relationship.create("/v3/clusters/cluster-1/brokers/1"))
+                                                    .build()
+                                    ))
+                            .build());
 
     assertEquals(expected, response.getValue());
   }
 
   @Test
-  public void listTopicConfigs_noTopics_returnsEmptyConfigs() {
+  public void listAllReplicas_noTopics_returnsEmptyReplicas() {
     expect(topicManager.listTopics(CLUSTER_ID))
         .andReturn(
             completedFuture(new ArrayList<>())
         );
 
-    expect(topicConfigManager.listTopicConfigs(CLUSTER_ID, new ArrayList<>()))
-        .andReturn(
-            completedFuture(new HashMap<String, List<TopicConfig>>()));
-    replay(topicManager, topicConfigManager);
+    replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    allTopicConfigsResource.listTopicConfigs(response, CLUSTER_ID);
+    allReplicasResource.listReplicas(response, CLUSTER_ID);
 
-    ListTopicConfigsResponse expected =
-        ListTopicConfigsResponse.create(
-            TopicConfigDataList.builder()
+    ListReplicasResponse expected =
+        ListReplicasResponse.create(
+            ReplicaDataList.builder()
                 .setMetadata(
                     ResourceCollection.Metadata.builder()
                         .setSelf(
-                            "/v3/clusters/cluster-1/topics/-/configs")
+                            "/v3/clusters/cluster-1/topics/-/replicas")
                         .build())
                 .setData(new ArrayList<>())
                 .build());
@@ -231,13 +235,13 @@ public class ListAllReplicasActionTest {
   }
 
   @Test
-  public void listTopicConfigs_nonExistingCluster_throwsNotFound() {
+  public void listAllReplicas_nonExistingCluster_throwsNotFound() {
     expect(topicManager.listTopics(CLUSTER_ID))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    allTopicConfigsResource.listTopicConfigs(response, CLUSTER_ID);
+    allReplicasResource.listReplicas(response, CLUSTER_ID);
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }

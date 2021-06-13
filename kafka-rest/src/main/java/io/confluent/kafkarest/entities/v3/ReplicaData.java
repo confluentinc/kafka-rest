@@ -18,13 +18,7 @@ package io.confluent.kafkarest.entities.v3;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
-import io.confluent.kafkarest.entities.ConfigSource;
-import io.confluent.kafkarest.entities.ConfigSynonym;
 import io.confluent.kafkarest.entities.PartitionReplica;
-import io.confluent.kafkarest.entities.TopicConfig;
-
-import javax.annotation.Nullable;
-import java.util.List;
 
 @AutoValue
 public abstract class ReplicaData extends Resource {
