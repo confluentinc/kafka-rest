@@ -624,6 +624,19 @@ paths:
         '200':
           $ref: '#/components/responses/ListReplicasResponse'
 
+  /clusters/{cluster_id}/topics/-/replicas:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+
+    get:
+      summary: 'List All Replicas'
+      description: 'Returns the list of replicas for all topic/partitions.'
+      tags:
+        - Replica
+      responses:
+        '200':
+          $ref: '#/components/responses/ListReplicasResponse'
+
   /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/replicas/{broker_id}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
