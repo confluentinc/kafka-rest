@@ -61,16 +61,6 @@ public abstract class ReplicaData extends Resource {
         .setInSync(replica.isInSync());
   }
 
-  public static Builder fromPartition(PartitionReplica replica) {
-    return builder()
-        .setClusterId(replica.getClusterId())
-        .setTopicName(replica.getTopicName())
-        .setPartitionId(replica.getPartitionId())
-        .setBrokerId(replica.getBrokerId())
-        .setLeader(replica.isLeader())
-        .setInSync(replica.isInSync());
-  }
-
   public static ReplicaData create(
       String clusterId,
       String topicName,
@@ -87,7 +77,6 @@ public abstract class ReplicaData extends Resource {
         .setInSync(isInSync)
         .build();
   }
-
 
   @JsonCreator
   static ReplicaData fromJson(

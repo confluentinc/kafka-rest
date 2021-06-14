@@ -85,13 +85,13 @@ public class ListAllReplicasActionTest {
                   CLUSTER_ID,
                   TOPIC_NAME,
                   0,
-                  Arrays.asList(REPLICA_1,REPLICA_2));
+                  Arrays.asList(REPLICA_1, REPLICA_2));
   private static final Partition PARTITION_2 =
           Partition.create(
                   CLUSTER_ID,
                   TOPIC_NAME,
                   1,
-                  Arrays.asList(REPLICA_3,REPLICA_4));
+                  Arrays.asList(REPLICA_3, REPLICA_4));
 
   @Rule
   public final EasyMockRule mocks = new EasyMockRule(this);
@@ -117,7 +117,7 @@ public class ListAllReplicasActionTest {
             completedFuture(Arrays.asList(Topic.create(
                 CLUSTER_ID,
                 TOPIC_NAME,
-                Arrays.asList(PARTITION_1,PARTITION_2),
+                Arrays.asList(PARTITION_1, PARTITION_2),
                 (short) 1,
                 false
             )))
