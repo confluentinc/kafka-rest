@@ -239,16 +239,13 @@
                         </configuration>
                     </plugin>
     
-                    <!-- run integration tests, excluding .../v2 and .../v3 which are numerous and take a long time -->
+                    <!-- skip integration tests because they do not include smoke tests (other components have smoke tests) -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-failsafe-plugin</artifactId>
-                        <configuration>
-                            <excludes>
-                                <exclude>**/v2/**</exclude>
-                                <exclude>**/v3/**</exclude>
-                                <exclude>**/*$*</exclude>
-                            </excludes>
+                        <configuration combine.self="override">
+                            <skip>true</skip>
+                            <skipITs>true</skipITs>
                         </configuration>
                     </plugin>
                 </plugins>
