@@ -631,19 +631,18 @@ paths:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
-      - $ref: '#/components/parameters/PartitionId'
 
     post:
       summary: 'Produce records to the given topic.'
       description: '<p>Produce records to the given topic, returning delivery reports for each
                     record produced.</p>
-                    <p>This is a streaming API. To use it in streaming mode, you need to specify the
-                    "Transfer-Encoding: chunked" header. For as long as the connection is kept open,
-                    the server will keep accepting records. For each record sent to the server, the
-                    server will asynchronously send back a delivery report, in the same order.
-                    Records are streamed to and from the server as Concatenated JSON.</p>
+                    <p>This API can be used in streaming mode by setting "Transfer-Encoding:
+                    chunked" header. For as long as the connection is kept open, the server will
+                    keep accepting records. For each record sent to the server, the server will
+                    asynchronously send back a delivery report, in the same order. Records are
+                    streamed to and from the server as Concatenated JSON.</p>
                     <p>Errors are reported per record. The HTTP status code will be HTTP 200 OK as
-                    long the connection is successfully established.</p>'
+                    long as the connection is successfully established.</p>'
       tags:
         - Records
       requestBody:
@@ -651,20 +650,6 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/ProduceResponse'
-
-
-  /clusters/{cluster_id}/topics/-/configs:
-    parameters:
-      - $ref: '#/components/parameters/ClusterId'
-
-    get:
-      summary: 'Get All Topic Configs'
-      description: 'Returns all topic configurations for topics hosted by the specified cluster.'
-      tags:
-        - Configs
-      responses:
-        '200':
-          $ref: '#/components/responses/ListTopicConfigsResponse'
 
 components:
   parameters:
@@ -1826,8 +1811,8 @@ components:
             $ref: '#/components/schemas/ProduceRequest'
           examples:
             binary_and_avro_with_subject_and_raw_schema:
-              description: 'If using type: "BINARY" or type: "JSON", or using schema, type is
-                            required.'
+              description: 'If using type: "BINARY" or type: "JSON", or using the schema field, type
+                            is required.'
               value:
                 partition_id: 1
                 headers:
