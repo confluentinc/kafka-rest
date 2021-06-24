@@ -85,6 +85,11 @@ public final class SchemaRegistryFixture extends ExternalResource {
     server = new SchemaRegistryRestApplication(createConfigs()).createServer();
     server.start();
     baseUri = server.getURI();
+    if (certificates != null && baseUri.getScheme().equals("http")) {
+      // If PROXY protocol is enabled, the base URI will come back as http because the first connection
+      // factory is not the SSL factory. If we want SSL, explicitly set the scheme here
+      baseUri = new URI(baseUri.toString().replace("http", "https"));
+    }
     client =
         new CachedSchemaRegistryClient(
             singletonList(baseUri.toString()),
