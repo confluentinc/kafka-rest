@@ -17,7 +17,6 @@ package io.confluent.kafkarest.v2;
 
 import static io.confluent.kafkarest.KafkaRestConfig.CONSUMER_MAX_THREADS_CONFIG;
 import static io.confluent.kafkarest.KafkaRestConfig.MAX_POLL_RECORDS_CONFIG;
-import static io.confluent.kafkarest.KafkaRestConfig.MAX_POLL_RECORDS_VALUE;
 
 import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerReadCallback;
@@ -201,7 +200,10 @@ public class KafkaConsumerManager {
       //Properties props = (Properties) config.getOriginalProperties().clone();
       Properties props = config.getConsumerProperties();
       props.setProperty(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServers);
-      props.setProperty(MAX_POLL_RECORDS_CONFIG, MAX_POLL_RECORDS_VALUE);
+      if (props.getProperty(MAX_POLL_RECORDS_CONFIG) == null) {
+        props.setProperty(MAX_POLL_RECORDS_CONFIG,
+                config.getInt(MAX_POLL_RECORDS_CONFIG).toString());
+      }
       props.setProperty("group.id", group);
       // This ID we pass here has to be unique, only pass a value along if the deprecated ID field
       // was passed in. This generally shouldn't be used, but is maintained for compatibility.
