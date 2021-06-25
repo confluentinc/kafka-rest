@@ -121,7 +121,7 @@ public final class TopicConfigsResource {
     CompletableFuture<GetTopicConfigResponse> response =
         topicConfigManager.get()
             .getTopicConfig(clusterId, topicName, name)
-            .thenApply(topic -> topic.orElseThrow(NotFoundException::new))
+            .thenApply(topic -> topic.<NotFoundException>orElseThrow(() -> new NotFoundException()))
             .thenApply(topic -> GetTopicConfigResponse.create(toTopicConfigData(topic)));
 
     AsyncResponses.asyncResume(asyncResponse, response);

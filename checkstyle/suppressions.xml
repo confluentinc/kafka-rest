@@ -8,39 +8,39 @@
     <!-- TODO -->
     <suppress
             checks="(BooleanExpressionComplexity)"
-            files="(KafkaRestConfig).java"
+            files="(KafkaRestConfig|GetReassignmentAction).java"
     />
 
     <suppress
             checks="(CyclomaticComplexity)"
-            files="(AvroConverter|SchemaRestProducer|ConsumerInstanceConfig|ConsumerManager|ConsumerReadTask|KafkaConsumerManager|PartitionOffset|KafkaRestContextProvider).java"
+            files="(AvroConverter|SchemaRestProducer|ConsumerInstanceConfig|ConsumerManager|ConsumerReadTask|KafkaConsumerManager|PartitionOffset|KafkaRestContextProvider|GetReassignmentAction).java"
     />
 
     <suppress
             checks="(ClassDataAbstractionCoupling)"
-            files="(AvroConverter|ConsumerManager|KafkaConsumerManager|KafkaRestApplication|SimpleConsumerManager|KafkaRestContextProvider|KafkaConsumerState|ProducerPool|TopicsResource).java"
+            files="(AvroConverter|ConsumerManager|KafkaConsumerManager|KafkaRestApplication|SimpleConsumerManager|KafkaRestContextProvider|KafkaConsumerState|ProducerPool|TopicsResource|GetReassignmentAction).java"
     />
 
     <suppress
             checks="(ClassFanOutComplexity)"
-            files="(ConsumerManager|KafkaConsumerState).java"
+            files="(ConsumerManager|KafkaConsumerState|GetReassignmentAction).java"
     />
 
     <suppress
             checks="(JavaNCSS)"
-            files="(ConsumerManager|KafkaConsumerManager).java"
+            files="(ConsumerManager|KafkaConsumerManager|GetReassignmentAction).java"
     />
 
     <suppress
             checks="(NPathComplexity)"
-            files="(SchemaRestProducer|ConsumerInstanceConfig|ConsumerManager|KafkaConsumerManager|PartitionOffset|KafkaRestContextProvider).java"
+            files="(SchemaRestProducer|ConsumerInstanceConfig|ConsumerManager|KafkaConsumerManager|PartitionOffset|KafkaRestContextProvider|GetReassignmentAction).java"
     />
     <suppress
             checks="(MethodLength)"
-            files="(KafkaRestConfig).java"
+            files="(KafkaRestConfig|GetReassignmentAction).java"
     />
     <suppress
             checks="(ParameterNumber)"
-            files="(ClusterData).java"
+            files="(ClusterData|GetReassignmentAction).java"
     />
 </suppressions>
