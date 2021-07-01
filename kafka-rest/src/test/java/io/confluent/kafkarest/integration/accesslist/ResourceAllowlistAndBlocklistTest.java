@@ -42,6 +42,7 @@ public class ResourceAllowlistAndBlocklistTest extends ResourceAccesslistTestBas
     allowlistEnablesResourceClassExceptForBlocklistedMethods();
     blocklistDisablesResourceMethod();
     nonAllowlistAndNonBlocklistResourcesDisabled();
+    optionsIsAlwaysAllowed();
   }
 
   private void allowlistEnablesResourceClassExceptForBlocklistedMethods() {
@@ -58,5 +59,10 @@ public class ResourceAllowlistAndBlocklistTest extends ResourceAccesslistTestBas
   private void nonAllowlistAndNonBlocklistResourcesDisabled() {
     assertEquals(Status.NOT_FOUND.getStatusCode(), getCluster().getStatus());
     assertEquals(Status.METHOD_NOT_ALLOWED.getStatusCode(), updateClusterConfig().getStatus());
+  }
+
+  private void optionsIsAlwaysAllowed() {
+    assertEquals(Status.OK.getStatusCode(), clustersOptions().getStatus());
+    assertEquals(Status.OK.getStatusCode(), topicsOptions().getStatus());
   }
 }
