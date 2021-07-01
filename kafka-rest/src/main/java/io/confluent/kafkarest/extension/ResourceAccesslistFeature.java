@@ -36,6 +36,7 @@ import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.FeatureContext;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import org.glassfish.jersey.server.wadl.processor.OptionsMethodProcessor;
 
 /**
  * A feature that controls access to endpoints based on allowlist and blocklist configs.
@@ -68,6 +69,13 @@ public final class ResourceAccesslistFeature implements DynamicFeature {
 
   @Override
   public void configure(ResourceInfo resourceInfo, FeatureContext context) {
+    if (isOptionsProcessor(resourceInfo)) {
+      // Always allow OPTIONS requests. We don't have a good mechanism for blocking OPTIONS requests
+      // in specific endpoints because the default OPTIONS handler handles requests for all
+      // endpoints.
+      return;
+    }
+
     boolean blocked =
         isBlockedByAccesslist(resourceInfo, apiEndpointsAllowlistConfig, true)
             || isBlockedByAccesslist(resourceInfo, apiEndpointsBlocklistConfig, false);
@@ -75,6 +83,12 @@ public final class ResourceAccesslistFeature implements DynamicFeature {
     if (blocked) {
       context.register(ThrowingFilter.class);
     }
+  }
+
+  private static boolean isOptionsProcessor(ResourceInfo resourceInfo) {
+    return resourceInfo.getResourceClass() != null
+        && resourceInfo.getResourceClass().getEnclosingClass() != null
+        && resourceInfo.getResourceClass().getEnclosingClass().equals(OptionsMethodProcessor.class);
   }
 
   private boolean isBlockedByAccesslist(
