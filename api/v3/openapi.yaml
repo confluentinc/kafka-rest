@@ -627,6 +627,28 @@ paths:
         '200':
           $ref: '#/components/responses/GetReplicaResponse'
 
+  /clusters/{cluster_id}/topics/{topic_name}/records:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/TopicName'
+
+    post:
+      summary: 'Produce records to the given topic.'
+      description: 'Produce records to the given topic, returning delivery reports for each
+                    record produced. This API can be used in streaming mode by setting "Transfer-Encoding:
+                    chunked" header. For as long as the connection is kept open, the server will
+                    keep accepting records. For each record sent to the server, the server will
+                    asynchronously send back a delivery report, in the same order. Records are
+                    streamed to and from the server as Concatenated JSON. Errors are reported per
+                    record. The HTTP status code will be HTTP 200 OK as long as the connection is successfully established.'
+      tags:
+        - Records
+      requestBody:
+        $ref: '#/components/requestBodies/ProduceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ProduceResponse'
+
 components:
   parameters:
     AclHost:
@@ -893,6 +915,9 @@ components:
                   - SET
                   - DELETE
                 nullable: true
+
+    AnyValue:
+      nullable: true
 
     BrokerConfigData:
       allOf:
@@ -1370,6 +1395,121 @@ components:
               items:
                 $ref: '#/components/schemas/PartitionData'
 
+    ProduceResponse:
+      type: object
+      required:
+        - cluster_id
+        - topic_name
+        - partition_id
+        - offset
+      properties:
+        cluster_id:
+          type: string
+        topic_name:
+          type: string
+        partition_id:
+          type: integer
+        offset:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+          nullable: true
+        key:
+          $ref: '#/components/schemas/ProduceResponseData'
+        value:
+          $ref: '#/components/schemas/ProduceResponseData'
+
+    ProduceResponseData:
+      type: object
+      required:
+        - size
+      properties:
+        type:
+          type: string
+          enum:
+            - BINARY
+            - JSON
+            - AVRO
+            - JSONSCHEMA
+            - PROTOBUF
+          nullable: true
+        subject:
+          type: string
+          nullable: true
+        schema_id:
+          type: integer
+          nullable: true
+        schema_version:
+          type: integer
+          nullable: true
+      nullable: true
+
+    ProduceRequest:
+      type: object
+      properties:
+        partition_id:
+          type: integer
+          nullable: true
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProduceRequestHeader'
+        key:
+          $ref: '#/components/schemas/ProduceRequestData'
+        value:
+          $ref: '#/components/schemas/ProduceRequestData'
+        timestamp:
+          type: string
+          format: date-time
+          nullable: true
+
+    ProduceRequestData:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - BINARY
+            - JSON
+            - AVRO
+            - JSONSCHEMA
+            - PROTOBUF
+        subject:
+          type: string
+          nullable: true
+        subject_name_strategy:
+          type: string
+          enum:
+            - TOPIC_NAME
+            - RECORD_NAME
+            - TOPIC_RECORD_NAME
+          nullable: true
+        schema_id:
+          type: integer
+          nullable: true
+        schema_version:
+          type: integer
+          nullable: true
+        raw_schema:
+          type: string
+          nullable: true
+        data:
+          $ref: '#/components/schemas/AnyValue'
+      nullable: true
+
+    ProduceRequestHeader:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+          format: byte
+          nullable: true
+
     ReassignmentData:
       allOf:
         - $ref: '#/components/schemas/Resource'
@@ -1657,6 +1797,76 @@ components:
                     value: 'compact'
                   - name: 'compression.type'
                     value: 'gzip'
+
+    ProduceRequest:
+      description: 'A single record to be produced to Kafka. To produce multiple records on the same
+                    connection, simply concatenate all the records, e.g.:
+                    {"partition_id":1}{"partition_id":2}. Delivery reports will be concatenated on
+                    the same order as the records are sent. See examples for the options available.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProduceRequest'
+          examples:
+            binary_and_avro_with_subject_and_raw_schema:
+              description: 'If using type: "BINARY" or type: "JSON", or using the schema field, type
+                            is required.'
+              value:
+                partition_id: 1
+                headers:
+                  - name: 'Header-1'
+                    value: 'SGVhZGVyLTE='
+                  - name: 'Header-2'
+                    value: 'SGVhZGVyLTI='
+                key:
+                  type: 'BINARY'
+                  data: 'Zm9vYmFy'
+                value:
+                  type: 'AVRO'
+                  subject: 'topic-1-key'
+                  schema: '{\"type\":\"string\"}'
+                  data: 'foobar'
+                timestamp: '2021-02-05T19:14:42Z'
+            schema_id_and_schema_version:
+              description: 'If not setting type, the record is assumed to use a schema. The actual
+                            schema is queried from Schema Registry based on the subject, schema_id
+                            and schema_version. You can specify the subject directly or you can use
+                            subject_name_strategy. If neither is specified, subject_name_strategy is
+                            assumed to be TOPIC_NAME. You can use either schema_id or schema_version
+                            to identify the actual schema in the subject.'
+              value:
+                key:
+                  subject_name_strategy: 'TOPIC_NAME'
+                  schema_id: 1
+                  data: 1000
+                value:
+                  schema_version: 1
+                  data:
+                    foo: 'bar'
+            latest_schema:
+              description: 'If neither schema_id or schema_version are specified, the latest schema
+                            for the subject is used. This should be the preferred way of using the
+                            API. You should register the schema with Schema Registry directly, then
+                            on Kafka REST you do not need to say anything about the schema and we
+                            will fetch the latest one for you.'
+              value:
+                key:
+                  data: 1000
+                value:
+                  data: 'foobar'
+            null_and_empty_data:
+              description: 'data can be omitted or can be null.'
+              value:
+                key:
+                  schema_id: 1
+                value:
+                  schema_version: 1
+                  data: null
+            empty_value:
+              description: 'key or value can be omitted entirely.'
+              value:
+                key:
+                  data: 1000
 
     UpdateBrokerConfigRequest:
       description: 'The broker configuration parameter update request.'
@@ -2724,6 +2934,28 @@ components:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/configs'
                 partition_reassignments:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/-/reassignments'
+
+    ProduceResponse:
+      description: ''
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProduceResponse'
+          example:
+            cluster_id: 'cluster-1'
+            topic_name: 'topic-1'
+            partition_id: 1
+            offset: 0
+            timestamp: '2021-02-05T19:14:42Z'
+            key:
+              type: BINARY
+              size: 7
+            value:
+              type: AVRO
+              subject: 'topic-1-value'
+              schema_id: 1
+              schema_version: 1
+              size: 7
 
     SearchAclsResponse:
       description: 'The list of ACLs.'
