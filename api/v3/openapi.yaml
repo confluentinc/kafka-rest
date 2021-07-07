@@ -634,15 +634,13 @@ paths:
 
     post:
       summary: 'Produce records to the given topic.'
-      description: '<p>Produce records to the given topic, returning delivery reports for each
-                    record produced.</p>
-                    <p>This API can be used in streaming mode by setting "Transfer-Encoding:
+      description: 'Produce records to the given topic, returning delivery reports for each
+                    record produced. This API can be used in streaming mode by setting "Transfer-Encoding:
                     chunked" header. For as long as the connection is kept open, the server will
                     keep accepting records. For each record sent to the server, the server will
                     asynchronously send back a delivery report, in the same order. Records are
-                    streamed to and from the server as Concatenated JSON.</p>
-                    <p>Errors are reported per record. The HTTP status code will be HTTP 200 OK as
-                    long as the connection is successfully established.</p>'
+                    streamed to and from the server as Concatenated JSON. Errors are reported per
+                    record. The HTTP status code will be HTTP 200 OK as long as the connection is successfully established.'
       tags:
         - Records
       requestBody:
