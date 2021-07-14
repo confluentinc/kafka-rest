@@ -357,6 +357,7 @@ public class TopicsResourceTest {
                 String.format("/v3/clusters/cluster-1/topics/%s/partitions/-/reassignment",
                     topicName)))
         .setPartitionsCount(partitionsCount)
+        .setAuthorizedOperations(null)
         .build();
   }
 
