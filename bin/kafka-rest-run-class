@@ -39,10 +39,16 @@ if [ "x$KAFKAREST_LOG4J_OPTS" = "x" ]; then
   fi
 fi
 
+if [ "x$LOG_DIR" = "x" ]; then
+  LOG_DIR="$base_dir/logs"
+fi
+# Log directory to use
 if [[ -n $LOG_DIR ]]; then
     [[ -d $LOG_DIR ]] || mkdir -p "$LOG_DIR"
     KAFKAREST_LOG4J_OPTS="-Dkafka-rest.log.dir=$LOG_DIR ${KAFKAREST_LOG4J_OPTS}"
 fi
+
+CONSOLE_OUTPUT_FILE=$LOG_DIR/kafka-rest.out
 
 # JMX settings
 if [ -z "$KAFKAREST_JMX_OPTS" ]; then
@@ -103,7 +109,7 @@ fi
 
 # Launch mode
 if [ "x$DAEMON_MODE" = "xtrue" ]; then
-  nohup $JAVA $KAFKAREST_HEAP_OPTS $KAFKAREST_JVM_PERFORMANCE_OPTS $KAFKAREST_JMX_OPTS $KAFKAREST_LOG4J_OPTS -cp $CLASSPATH $KAFKAREST_OPTS "$MAIN" "$@" 2>&1 < /dev/null &
+  nohup $JAVA $KAFKAREST_HEAP_OPTS $KAFKAREST_JVM_PERFORMANCE_OPTS $KAFKAREST_JMX_OPTS $KAFKAREST_LOG4J_OPTS -cp $CLASSPATH $KAFKAREST_OPTS "$MAIN" "$@" > "$CONSOLE_OUTPUT_FILE" 2>&1 < /dev/null &
 else
   exec $JAVA $KAFKAREST_HEAP_OPTS $KAFKAREST_JVM_PERFORMANCE_OPTS $KAFKAREST_JMX_OPTS $KAFKAREST_LOG4J_OPTS -cp $CLASSPATH $KAFKAREST_OPTS "$MAIN" "$@"
 fi
