@@ -380,8 +380,8 @@ public class KafkaConsumerManagerTest {
     //   N. wait max(backoffMillis, remainder of timeoutMillis), poll() returns empty
     assertTrue(
         String.format(
-            "Expected at least 3 poll calls, but got %d instead.", pollTimestampsMillis.size()),
-        pollTimestampsMillis.size() >= 3);
+            "Expected at least 2 poll calls, but got %d instead.", pollTimestampsMillis.size()),
+        pollTimestampsMillis.size() >= 2);
 
     // We need to verify that there's no window of size backoffMillis with more than 2 poll calls,
     // and no window of size 2 * backofMillis with no poll call at all.
@@ -409,6 +409,14 @@ public class KafkaConsumerManagerTest {
               pollTimestampsMillis.get(i), pollTimestampsMillis.get(i + 1)),
           pollTimestampsMillis.get(i + 1) - pollTimestampsMillis.get(i) <= 2 * backoffMillis);
     }
+
+    long lastTimestampMillis = pollTimestampsMillis.get(pollTimestampsMillis.size() - 1);
+    long timeoutTimestampMillis = pollTimestampsMillis.get(0) + timeoutMillis;
+    assertTrue(
+        String.format(
+            "Expected at least 1 poll call in window (%d, %d], but got none instead.",
+            lastTimestampMillis, timeoutTimestampMillis),
+        timeoutTimestampMillis - lastTimestampMillis < 2 * backoffMillis);
   }
 
     @Test
