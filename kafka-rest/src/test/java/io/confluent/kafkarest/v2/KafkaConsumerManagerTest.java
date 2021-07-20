@@ -385,7 +385,7 @@ public class KafkaConsumerManagerTest {
 
     // We need to verify that there's no window of size backoffMillis with more than 2 poll calls,
     // and no window of size 2 * backofMillis with no poll call at all.
-    for (int i = 2; i < pollTimestampsMillis.size() - 1; i++) {
+    for (int i = 1; i < pollTimestampsMillis.size() - 1; i++) {
       int smallWindowCount = 1;
       long lastTimestampMillis = pollTimestampsMillis.get(i);
       for (int j = i + 1; j < pollTimestampsMillis.size(); j++) {
