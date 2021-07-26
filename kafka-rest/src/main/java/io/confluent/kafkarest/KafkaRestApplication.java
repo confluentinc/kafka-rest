@@ -69,7 +69,11 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   }
 
   public KafkaRestApplication(KafkaRestConfig config, String path) {
-    super(config, path);
+    this(config, path, null);
+  }
+
+  public KafkaRestApplication(KafkaRestConfig config, String path, String listenerName) {
+    super(config, path, listenerName);
 
     restResourceExtensions = config.getConfiguredInstances(
         KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG,
