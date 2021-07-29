@@ -31,5 +31,7 @@ public final class MorePriorities {
   public static final int PRE_AUTHENTICATION = Priorities.AUTHENTICATION - 500; /* lower value ==
                                                                                   higher priority */
 
-  private MorePriorities() {}
+  private MorePriorities() {
+
+  }
 }
