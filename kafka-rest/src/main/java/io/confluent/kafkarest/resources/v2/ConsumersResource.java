@@ -65,24 +65,22 @@ import javax.ws.rs.core.UriInfo;
 @Path("/consumers")
 // We include embedded formats here so you can always use these headers when interacting with
 // a consumers resource. The few cases where it isn't safe are overridden per-method
-@Produces(
-    {
-        Versions.KAFKA_V2_JSON_BINARY_WEIGHTED_LOW,
-        Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW,
-        Versions.KAFKA_V2_JSON_JSON_WEIGHTED_LOW,
-        Versions.KAFKA_V2_JSON_JSON_SCHEMA_WEIGHTED_LOW,
-        Versions.KAFKA_V2_JSON_PROTOBUF_WEIGHTED_LOW,
-        Versions.KAFKA_V2_JSON_WEIGHTED
-    })
-@Consumes(
-    {
-        Versions.KAFKA_V2_JSON_BINARY,
-        Versions.KAFKA_V2_JSON_AVRO,
-        Versions.KAFKA_V2_JSON_JSON,
-        Versions.KAFKA_V2_JSON_JSON_SCHEMA,
-        Versions.KAFKA_V2_JSON_PROTOBUF,
-        Versions.KAFKA_V2_JSON
-    })
+@Produces({
+    Versions.KAFKA_V2_JSON_BINARY_WEIGHTED_LOW,
+    Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW,
+    Versions.KAFKA_V2_JSON_JSON_WEIGHTED_LOW,
+    Versions.KAFKA_V2_JSON_JSON_SCHEMA_WEIGHTED_LOW,
+    Versions.KAFKA_V2_JSON_PROTOBUF_WEIGHTED_LOW,
+    Versions.KAFKA_V2_JSON_WEIGHTED
+})
+@Consumes({
+    Versions.KAFKA_V2_JSON_BINARY,
+    Versions.KAFKA_V2_JSON_AVRO,
+    Versions.KAFKA_V2_JSON_JSON,
+    Versions.KAFKA_V2_JSON_JSON_SCHEMA,
+    Versions.KAFKA_V2_JSON_PROTOBUF,
+    Versions.KAFKA_V2_JSON
+})
 @ResourceName("api.v2.consumers.*")
 public final class ConsumersResource {
 
