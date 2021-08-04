@@ -61,20 +61,18 @@ import io.confluent.rest.exceptions.RestException;
 @Path("/consumers")
 // We include embedded formats here so you can always use these headers when interacting with
 // a consumers resource. The few cases where it isn't safe are overridden per-method
-@Produces(
-    {
-        Versions.KAFKA_V2_JSON_BINARY_WEIGHTED_LOW,
-        Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW,
-        Versions.KAFKA_V2_JSON_JSON_WEIGHTED_LOW,
-        Versions.KAFKA_V2_JSON_WEIGHTED
-    })
-@Consumes(
-    {
-        Versions.KAFKA_V2_JSON_BINARY,
-        Versions.KAFKA_V2_JSON_AVRO,
-        Versions.KAFKA_V2_JSON_JSON,
-        Versions.KAFKA_V2_JSON
-    })
+@Produces({
+    Versions.KAFKA_V2_JSON_BINARY_WEIGHTED_LOW,
+    Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW,
+    Versions.KAFKA_V2_JSON_JSON_WEIGHTED_LOW,
+    Versions.KAFKA_V2_JSON_WEIGHTED
+})
+@Consumes({
+    Versions.KAFKA_V2_JSON_BINARY,
+    Versions.KAFKA_V2_JSON_AVRO,
+    Versions.KAFKA_V2_JSON_JSON,
+    Versions.KAFKA_V2_JSON
+})
 public class ConsumersResource {
 
   private final KafkaRestContext ctx;
