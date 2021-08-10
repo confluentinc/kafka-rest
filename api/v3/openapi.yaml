@@ -38,6 +38,7 @@ servers:
 
 paths:
   /clusters:
+    x-audience: component-internal
     get:
       summary: 'List Clusters'
       description: 'Returns a list of known Kafka clusters. Currently both Kafka and Kafka REST
@@ -175,6 +176,7 @@ paths:
           description: 'No Content'
 
   /clusters/{cluster_id}/brokers:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -188,6 +190,7 @@ paths:
           $ref: '#/components/responses/ListBrokersResponse'
 
   /clusters/{cluster_id}/brokers/{broker_id}:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/BrokerId'
@@ -202,6 +205,7 @@ paths:
           $ref: '#/components/responses/GetBrokerResponse'
 
   /clusters/{cluster_id}/brokers/-/configs:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -215,6 +219,7 @@ paths:
           $ref: '#/components/responses/ListBrokerConfigsResponse'
 
   /clusters/{cluster_id}/brokers/{broker_id}/configs:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/BrokerId'
@@ -229,6 +234,7 @@ paths:
           $ref: '#/components/responses/ListBrokerConfigsResponse'
 
   /clusters/{cluster_id}/brokers/{broker_id}/configs:alter:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/BrokerId'
@@ -245,6 +251,7 @@ paths:
           description: 'No Content'
 
   /clusters/{cluster_id}/brokers/{broker_id}/configs/{name}:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/BrokerId'
@@ -280,6 +287,7 @@ paths:
           description: 'No Content'
 
   /clusters/{cluster_id}/brokers/{broker_id}/partition-replicas:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/BrokerId'
@@ -336,6 +344,7 @@ paths:
           $ref: '#/components/responses/ListConsumersResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lag-summary:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -350,6 +359,7 @@ paths:
           $ref: '#/components/responses/GetConsumerGroupLagSummaryResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -364,6 +374,7 @@ paths:
           $ref: '#/components/responses/ListConsumerLagsResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags/{topic_name}/partitions/{partition_id}:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -395,6 +406,7 @@ paths:
           $ref: '#/components/responses/GetConsumerResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}/assignments:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -410,6 +422,7 @@ paths:
           $ref: '#/components/responses/ListConsumerAssignmentsResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}/assignments/{topic_name}/partitions/{partition_id}:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -568,6 +581,7 @@ paths:
           $ref: '#/components/responses/GetPartitionResponse'
 
   /clusters/{cluster_id}/topics/-/partitions/-/reassignment:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -581,6 +595,7 @@ paths:
           $ref: '#/components/responses/ListAllReassignmentsResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}/partitions/-/reassignment:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -595,6 +610,7 @@ paths:
           $ref: '#/components/responses/SearchReassignmentsByTopicResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/reassignment:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -610,6 +626,7 @@ paths:
           $ref: '#/components/responses/GetReassignmentResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/replicas:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -625,6 +642,7 @@ paths:
           $ref: '#/components/responses/ListReplicasResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/replicas/{broker_id}:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -639,7 +657,7 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/GetReplicaResponse'
-
+          
   /clusters/{cluster_id}/topics/-/configs:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -654,6 +672,7 @@ paths:
           $ref: '#/components/responses/ListTopicConfigsResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}/records:
+    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
