@@ -15,22 +15,15 @@
 
 package io.confluent.kafkarest.resources.v2;
 
-import io.confluent.kafkarest.KafkaRestContext;
-import java.util.Objects;
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
 
 public final class V2ResourcesFeature implements Feature {
-  private final KafkaRestContext context;
-
-  public V2ResourcesFeature(KafkaRestContext context) {
-    this.context = Objects.requireNonNull(context);
-  }
 
   @Override
   public boolean configure(FeatureContext configurable) {
     configurable.register(BrokersResource.class);
-    configurable.register(new ConsumersResource(context));
+    configurable.register(ConsumersResource.class);
     configurable.register(PartitionsResource.class);
     configurable.register(ProduceToPartitionAction.class);
     configurable.register(ProduceToTopicAction.class);
