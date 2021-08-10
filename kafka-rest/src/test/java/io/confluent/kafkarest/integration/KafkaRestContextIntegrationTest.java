@@ -48,8 +48,6 @@ public class KafkaRestContextIntegrationTest extends ClusterTestHarness {
   /** HTTP 418 I'm a teapot */
   private static final int I_M_A_TEAPOT_STATUS_CODE = 418;
 
-  private DescribeClusterResult describeClusterResult;
-
   public KafkaRestContextIntegrationTest() {
     super(/* numBrokers= */ 3, /* withSchemaRegistry= */ false);
   }
