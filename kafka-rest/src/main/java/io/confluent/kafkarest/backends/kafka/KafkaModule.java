@@ -41,6 +41,8 @@ import org.glassfish.jersey.process.internal.RequestScoped;
  */
 public final class KafkaModule extends AbstractBinder {
 
+  public static final String KAFKA_REST_CONTEXT_PROPERTY_NAME = "io.confluent.kafkarest.context";
+
   @Override
   protected void configure() {
     bindFactory(KafkaRestContextFactory.class, Singleton.class)
