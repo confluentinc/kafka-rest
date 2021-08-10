@@ -17,10 +17,14 @@ package io.confluent.kafkarest.backends.kafka;
 
 import static java.util.Objects.requireNonNull;
 
+import io.confluent.kafkarest.DefaultKafkaRestContext;
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.extension.KafkaRestContextProvider;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.producer.Producer;
 import org.glassfish.hk2.api.Factory;
@@ -33,7 +37,7 @@ import org.glassfish.jersey.process.internal.RequestScoped;
  *
  * <p>Right now this module does little but delegate to {@link KafkaRestContext}, since access to
  * Kafka is currently being configured there. It's the author's intention to move such logic here,
- * and eliminate {@code KafkaRestContext}, once dependence injection is properly used elsewhere.</p>
+ * and eliminate {@code KafkaRestContext}, once dependence injection is properly used elsewhere.
  */
 public final class KafkaModule extends AbstractBinder {
 
@@ -41,29 +45,40 @@ public final class KafkaModule extends AbstractBinder {
 
   @Override
   protected void configure() {
-    bindFactory(KafkaRestContextFactory.class)
+    bindFactory(KafkaRestContextFactory.class, Singleton.class)
         .to(KafkaRestContext.class)
         .in(RequestScoped.class);
 
-    bindFactory(AdminFactory.class)
-        .to(Admin.class)
-        .in(RequestScoped.class);
+    bindFactory(AdminFactory.class).to(Admin.class).in(RequestScoped.class);
 
     bindFactory(ProducerFactory.class)
-        .to(new TypeLiteral<Producer<byte[], byte[]>>() { })
+        .to(new TypeLiteral<Producer<byte[], byte[]>>() {})
         .in(RequestScoped.class);
   }
 
   private static final class KafkaRestContextFactory implements Factory<KafkaRestContext> {
 
+    private final Provider<ContainerRequestContext> requestContext;
+    private final KafkaRestContext defaultContext;
+
+    @Inject
+    private KafkaRestContextFactory(
+        @Context Provider<ContainerRequestContext> requestContext, KafkaRestConfig config) {
+      this.requestContext = requireNonNull(requestContext);
+      this.defaultContext = new DefaultKafkaRestContext(config);
+    }
+
     @Override
     public KafkaRestContext provide() {
-      return KafkaRestContextProvider.getCurrentContext();
+      KafkaRestContext context =
+          (KafkaRestContext) requestContext.get().getProperty(KAFKA_REST_CONTEXT_PROPERTY_NAME);
+      return context != null ? context : defaultContext;
     }
 
     @Override
     public void dispose(KafkaRestContext instance) {
-      // Do nothing.
+      // The context is either disposed by whoever set it in the ContainerRequestContext, or it is
+      // the defaultContext, in which case it should not be disposed.
     }
   }
 
@@ -83,11 +98,11 @@ public final class KafkaModule extends AbstractBinder {
 
     @Override
     public void dispose(Admin instance) {
-      // Do nothing.
+      // AdminClient is disposed when the KafkaRestContext is disposed.
     }
   }
 
-  private static final class ProducerFactory implements Factory<Producer<?, ?>> {
+  private static final class ProducerFactory implements Factory<Producer<byte[], byte[]>> {
 
     private final Provider<KafkaRestContext> context;
 
@@ -102,8 +117,8 @@ public final class KafkaModule extends AbstractBinder {
     }
 
     @Override
-    public void dispose(Producer<?, ?> producer) {
-      // Do nothing.
+    public void dispose(Producer<byte[], byte[]> producer) {
+      // Producer is disposed when the KafkaRestContext is disposed.
     }
   }
 }
