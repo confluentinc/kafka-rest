@@ -406,7 +406,6 @@ paths:
           $ref: '#/components/responses/GetConsumerResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}/assignments:
-    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -422,7 +421,6 @@ paths:
           $ref: '#/components/responses/ListConsumerAssignmentsResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}/assignments/{topic_name}/partitions/{partition_id}:
-    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
