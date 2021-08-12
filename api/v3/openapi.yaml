@@ -344,7 +344,7 @@ paths:
           $ref: '#/components/responses/ListConsumersResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lag-summary:
-    x-audience: component-internal
+    x-lifecycle-stage: Preview
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -359,7 +359,7 @@ paths:
           $ref: '#/components/responses/GetConsumerGroupLagSummaryResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags:
-    x-audience: component-internal
+    x-lifecycle-stage: Preview
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -374,7 +374,7 @@ paths:
           $ref: '#/components/responses/ListConsumerLagsResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags/{topic_name}/partitions/{partition_id}:
-    x-audience: component-internal
+    x-lifecycle-stage: Preview
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
