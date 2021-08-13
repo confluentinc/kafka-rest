@@ -350,8 +350,12 @@ paths:
       - $ref: '#/components/parameters/ConsumerGroupId'
 
     get:
+      x-lifecycle-stage: Preview
       summary: 'Get Consumer Group Lag Summary.'
-      description: 'Returns the max and total lag of the consumers belonging to the specified consumer group.'
+      description: |-
+        [![Preview](https://img.shields.io/badge/Lifecycle%20Stage-Preview-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
+
+        Returns the max and total lag of the consumers belonging to the specified consumer group.'
       tags:
         - Consumer Group
       responses:
@@ -365,8 +369,12 @@ paths:
       - $ref: '#/components/parameters/ConsumerGroupId'
 
     get:
+      x-lifecycle-stage: Preview
       summary: 'List Consumer Lags'
-      description: 'Returns a list of consumer lags of the consumers belonging to the specified consumer group.'
+      description: |-
+        [![Preview](https://img.shields.io/badge/Lifecycle%20Stage-Preview-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
+
+        Returns a list of consumer lags of the consumers belonging to the specified consumer group.
       tags:
         - Consumer Group
       responses:
@@ -382,8 +390,12 @@ paths:
       - $ref: '#/components/parameters/PartitionId'
 
     get:
+      x-lifecycle-stage: Preview
       summary: 'Get Consumer Lag'
-      description: 'Returns the consumer lag on a partition with the given `partition_id`.'
+      description: |-
+        [![Preview](https://img.shields.io/badge/Lifecycle%20Stage-Preview-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
+      
+        Returns the consumer lag on a partition with the given `partition_id`.
       tags:
         - Partition
       responses:
@@ -1491,6 +1503,8 @@ components:
         schema_version:
           type: integer
           nullable: true
+        size:
+          type: integer
       nullable: true
 
     ProduceRequest:
