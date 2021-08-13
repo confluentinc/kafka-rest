@@ -46,7 +46,7 @@ paths:
         ``bootstrap.servers`` configuration. Therefore only one Kafka cluster will be returned in the
         response.'
       tags:
-        - Cluster
+        - Cluster (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListClustersResponse'
@@ -59,7 +59,7 @@ paths:
       summary: 'Get Cluster'
       description: 'Returns the Kafka cluster with the specified ``cluster_id``.'
       tags:
-        - Cluster
+        - Cluster (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetClusterResponse'
@@ -72,7 +72,7 @@ paths:
       summary: 'Search ACLs'
       description: 'Returns a list of ACLs that match the search criteria.'
       tags:
-        - ACL
+        - ACL (v3)
       parameters:
         - $ref: '#/components/parameters/AclResourceType'
         - $ref: '#/components/parameters/AclResourceName'
@@ -89,7 +89,7 @@ paths:
       summary: 'Create ACLs'
       description: 'Creates an ACL.'
       tags:
-        - ACL
+        - ACL (v3)
       requestBody:
         $ref: '#/components/requestBodies/CreateAclRequest'
       responses:
@@ -100,7 +100,7 @@ paths:
       summary: 'Delete ACLs'
       description: 'Deletes the list of ACLs that matches the search criteria.'
       tags:
-        - ACL
+        - ACL (v3)
       parameters:
         - $ref: '#/components/parameters/AclResourceType'
         - $ref: '#/components/parameters/AclResourceName'
@@ -121,7 +121,7 @@ paths:
       summary: 'List Cluster Configs'
       description: 'Returns a list of configuration parameters for the specified Kafka cluster.'
       tags:
-        - Configs
+        - Configs (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListClusterConfigsResponse'
@@ -134,7 +134,7 @@ paths:
       summary: 'Batch Alter Cluster Configs'
       description: 'Updates or deletes a set of Kafka cluster configuration parameters.'
       tags:
-        - Configs
+        - Configs (v3)
       requestBody:
         $ref: '#/components/requestBodies/AlterClusterConfigBatchRequest'
       responses:
@@ -150,7 +150,7 @@ paths:
       summary: 'Get Cluster Config'
       description: 'Returns the configuration parameter specified by ``name``.'
       tags:
-        - Configs
+        - Configs (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetClusterConfigResponse'
@@ -159,7 +159,7 @@ paths:
       summary: 'Update Cluster Config'
       description: 'Updates the configuration parameter specified by ``name``.'
       tags:
-        - Configs
+        - Configs (v3)
       requestBody:
         $ref: '#/components/requestBodies/UpdateClusterConfigRequest'
       responses:
@@ -170,7 +170,7 @@ paths:
       summary: 'Reset Cluster Config'
       description: 'Resets the configuration parameter specified by ``name`` to its default value.'
       tags:
-        - Configs
+        - Configs (v3)
       responses:
         '204':
           description: 'No Content'
@@ -184,7 +184,7 @@ paths:
       summary: 'List Brokers'
       description: 'Return a list of brokers that belong to the specified Kafka cluster.'
       tags:
-        - Broker
+        - Broker (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListBrokersResponse'
@@ -199,7 +199,7 @@ paths:
       summary: 'Get Broker'
       description: 'Returns the broker specified by ``broker_id``.'
       tags:
-        - Broker
+        - Broker (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetBrokerResponse'
@@ -213,7 +213,7 @@ paths:
       summary: 'List All Broker Configs'
       description: 'Return the list of configuration parameters for all the brokers in the given Kafka cluster.'
       tags:
-        - Configs
+        - Configs (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListBrokerConfigsResponse'
@@ -228,7 +228,7 @@ paths:
       summary: 'List Broker Configs'
       description: 'Return the list of configuration parameters that belong to the specified Kafka broker.'
       tags:
-        - Configs
+        - Configs (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListBrokerConfigsResponse'
@@ -243,7 +243,7 @@ paths:
       summary: 'Batch Alter Broker Configs'
       description: 'Updates or deletes a set of broker configuration parameters.'
       tags:
-        - Configs
+        - Configs (v3)
       requestBody:
         $ref: '#/components/requestBodies/AlterBrokerConfigBatchRequest'
       responses:
@@ -261,7 +261,7 @@ paths:
       summary: 'Get Broker Config'
       description: 'Return the configuration parameter specified by ``name``.'
       tags:
-        - Configs
+        - Configs (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetBrokerConfigResponse'
@@ -270,7 +270,7 @@ paths:
       summary: 'Update Broker Config'
       description: 'Updates the configuration parameter specified by ``name``.'
       tags:
-        - Configs
+        - Configs (v3)
       requestBody:
         $ref: '#/components/requestBodies/UpdateBrokerConfigRequest'
       responses:
@@ -281,7 +281,7 @@ paths:
       summary: 'Reset Broker Config'
       description: 'Resets the configuration parameter specified by ``name`` to its default value.'
       tags:
-        - Configs
+        - Configs (v3)
       responses:
         '204':
           description: 'No Content'
@@ -296,8 +296,8 @@ paths:
       summary: 'Search Replicas by Broker'
       description: 'Returns the list of replicas assigned to the specified broker.'
       tags:
-        - Broker
-        - Replica
+        - Broker (v3)
+        - Replica (v3)
       responses:
         '200':
           $ref: '#/components/responses/SearchReplicasByBrokerResponse'
@@ -310,7 +310,7 @@ paths:
       summary: 'List Consumer Groups'
       description: 'Returns the list of consumer groups that belong to the specified Kafka cluster.'
       tags:
-        - Consumer Group
+        - Consumer Group (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListConsumerGroupsResponse'
@@ -324,7 +324,7 @@ paths:
       summary: 'Get Consumer Group'
       description: 'Returns the consumer group specified by the ``consumer_group_id``.'
       tags:
-        - Consumer Group
+        - Consumer Group (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetConsumerGroupResponse'
@@ -338,7 +338,7 @@ paths:
       summary: 'List Consumers'
       description: 'Returns a list of consumers that belong to the specified consumer group.'
       tags:
-        - Consumer Group
+        - Consumer Group (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListConsumersResponse'
@@ -357,7 +357,7 @@ paths:
 
         Returns the max and total lag of the consumers belonging to the specified consumer group.'
       tags:
-        - Consumer Group
+        - Consumer Group (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetConsumerGroupLagSummaryResponse'
@@ -376,7 +376,7 @@ paths:
 
         Returns a list of consumer lags of the consumers belonging to the specified consumer group.
       tags:
-        - Consumer Group
+        - Consumer Group (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListConsumerLagsResponse'
@@ -397,7 +397,7 @@ paths:
       
         Returns the consumer lag on a partition with the given `partition_id`.
       tags:
-        - Partition
+        - Partition (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetConsumerLagResponse'
@@ -412,7 +412,7 @@ paths:
       summary: 'Get Consumer'
       description: 'Returns the consumer specified by the ``consumer_id``.'
       tags:
-        - Consumer Group
+        - Consumer Group (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetConsumerResponse'
@@ -427,7 +427,7 @@ paths:
       summary: 'List Consumer Assignments'
       description: 'Returns a list of partition assignments for the specified consumer.'
       tags:
-        - Consumer Group
+        - Consumer Group (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListConsumerAssignmentsResponse'
@@ -444,7 +444,7 @@ paths:
       summary: 'Get Consumer Assignment'
       description: 'Returns information about the assignment for the specified consumer to the specified partition.'
       tags:
-        - Consumer Group
+        - Consumer Group (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetConsumerAssignmentResponse'
@@ -457,7 +457,7 @@ paths:
       summary: 'List Topics'
       description: 'Returns the list of topics that belong to the specified Kafka cluster.'
       tags:
-        - Topic
+        - Topic (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListTopicsResponse'
@@ -466,7 +466,7 @@ paths:
       summary: 'Create Topic'
       description: 'Creates a topic.'
       tags:
-        - Topic
+        - Topic (v3)
       requestBody:
         $ref: '#/components/requestBodies/CreateTopicRequest'
       responses:
@@ -482,7 +482,7 @@ paths:
       summary: 'Get Topic'
       description: 'Returns the topic with the given `topic_name`.'
       tags:
-        - Topic
+        - Topic (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetTopicResponse'
@@ -491,7 +491,7 @@ paths:
       summary: 'Delete Topic'
       description: 'Deletes the topic with the given `topic_name`.'
       tags:
-        - Topic
+        - Topic (v3)
       responses:
         '204':
           description: 'No Content'
@@ -505,7 +505,7 @@ paths:
       summary: 'List Topic Configs'
       description: 'Return the list of configs that belong to the specified topic.'
       tags:
-        - Configs
+        - Configs (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListTopicConfigsResponse'
@@ -519,7 +519,7 @@ paths:
       summary: 'Batch Alter Topic Configs'
       description: 'Updates or deletes a set of topic configs.'
       tags:
-        - Configs
+        - Configs (v3)
       requestBody:
         $ref: '#/components/requestBodies/AlterTopicConfigBatchRequest'
       responses:
@@ -536,7 +536,7 @@ paths:
       summary: 'Get Topic Config'
       description: 'Return the config with the given `name`.'
       tags:
-        - Configs
+        - Configs (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetTopicConfigResponse'
@@ -545,7 +545,7 @@ paths:
       summary: 'Update Topic Config'
       description: 'Updates the config with given `name`.'
       tags:
-        - Configs
+        - Configs (v3)
       requestBody:
         $ref: '#/components/requestBodies/UpdateTopicConfigRequest'
       responses:
@@ -556,7 +556,7 @@ paths:
       summary: 'Reset Topic Config'
       description: 'Resets the config with given `name` to its default value.'
       tags:
-        - Configs
+        - Configs (v3)
       responses:
         '204':
           description: 'No Content'
@@ -570,7 +570,7 @@ paths:
       summary: 'List Partitions'
       description: 'Returns the list of partitions that belong to the specified topic.'
       tags:
-        - Partition
+        - Partition (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListPartitionsResponse'
@@ -585,7 +585,7 @@ paths:
       summary: 'Get Partition'
       description: 'Returns the partition with the given `partition_id`.'
       tags:
-        - Partition
+        - Partition (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetPartitionResponse'
@@ -599,7 +599,7 @@ paths:
       summary: 'List All Replica Reassignments'
       description: 'Returns the list of all ongoing replica reassignments in the given Kafka cluster.'
       tags:
-        - Partition
+        - Partition (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListAllReassignmentsResponse'
@@ -614,7 +614,7 @@ paths:
       summary: 'Search Replica Reassignments By Topic'
       description: 'Returns the list of ongoing replica reassignments for the given topic.'
       tags:
-        - Partition
+        - Partition (v3)
       responses:
         '200':
           $ref: '#/components/responses/SearchReassignmentsByTopicResponse'
@@ -630,7 +630,7 @@ paths:
       summary: 'Get Replica Reassignments'
       description: 'Returns the list of ongoing replica reassignments for the given partition.'
       tags:
-        - Partition
+        - Partition (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetReassignmentResponse'
@@ -646,7 +646,7 @@ paths:
       summary: 'List Replicas'
       description: 'Returns the list of replicas for the specified partition.'
       tags:
-        - Replica
+        - Replica (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListReplicasResponse'
@@ -663,7 +663,7 @@ paths:
       summary: 'Get Replica'
       description: 'Returns the replica for the specified partition assigned to the specified broker.'
       tags:
-        - Replica
+        - Replica (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetReplicaResponse'
@@ -676,7 +676,7 @@ paths:
       summary: 'Get All Topic Configs'
       description: 'Returns all topic configurations for topics hosted by the specified cluster.'
       tags:
-        - Configs
+        - Configs (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListTopicConfigsResponse'
@@ -697,7 +697,7 @@ paths:
                     streamed to and from the server as Concatenated JSON. Errors are reported per
                     record. The HTTP status code will be HTTP 200 OK as long as the connection is successfully established.'
       tags:
-        - Records
+        - Records (v3)
       requestBody:
         $ref: '#/components/requestBodies/ProduceRequest'
       responses:
