@@ -1,5 +1,5 @@
 #!/usr/bin/env groovy
 common {
-  slackChannel = '#rest-proxy-warn'
+  slackChannel = '#kafka-rest-warn'
   upstreamProjects = 'confluentinc/schema-registry'
 }
