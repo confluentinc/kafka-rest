@@ -53,6 +53,23 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.entities.v2.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
+import io.confluent.kafkarest.entities.TopicPartitionOffset;
+import io.confluent.rest.RestConfigException;
 import org.junit.runner.RunWith;
 
 /**
@@ -386,8 +403,8 @@ public class KafkaConsumerManagerTest {
 
   @Test
   public void testBackoffMsControlsPollCalls() throws Exception {
-    long timeoutMillis = 1000L;
-    long backoffMillis = 100L;
+    long timeoutMillis = 5000L;
+    long backoffMillis = 500L;
     Properties props = setUpProperties();
     props.put(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, String.valueOf(timeoutMillis));
     props.put(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, String.valueOf(backoffMillis));
@@ -418,22 +435,45 @@ public class KafkaConsumerManagerTest {
     //   1. second initial poll() returns empty
     //   2..N-1. wait backoffMillis, poll() returns empty, repeat
     //   N. wait max(backoffMillis, remainder of timeoutMillis), poll() returns empty
-    assertEquals(2 + (timeoutMillis / backoffMillis), pollTimestampsMillis.size());
+    assertTrue(
+        String.format(
+            "Expected at least 2 poll calls, but got %d instead.", pollTimestampsMillis.size()),
+        pollTimestampsMillis.size() >= 2);
 
-    // We need to verify that the interval between poll() calls in 1..N-1 above is between
-    // (backoffMillis - 1%) and (backoffMillis + 10%).
-    long lowerBoundMillis = backoffMillis - (backoffMillis / 100L);
-    long upperBoundMillis = backoffMillis + (backoffMillis / 10L);
-    for (int i = 2; i < pollTimestampsMillis.size() - 1 ; i++) {
-      long actualMillis = pollTimestampsMillis.get(i) - pollTimestampsMillis.get(i-1);
+    // We need to verify that there's no window of size backoffMillis with more than 2 poll calls,
+    // and no window of size 2 * backofMillis with no poll call at all.
+    for (int i = 1; i < pollTimestampsMillis.size() - 1; i++) {
+      int smallWindowCount = 1;
+      long lastTimestampMillis = pollTimestampsMillis.get(i);
+      for (int j = i + 1; j < pollTimestampsMillis.size(); j++) {
+        long delta  = pollTimestampsMillis.get(j) - pollTimestampsMillis.get(i);
+        if (delta <= backoffMillis) {
+          smallWindowCount++;
+          lastTimestampMillis = pollTimestampsMillis.get(j);
+        } else {
+          break;
+        }
+      }
       assertTrue(
           String.format(
-              "Expected time between poll calls to be between %dms and %dms, but was %dms.",
-              lowerBoundMillis,
-              upperBoundMillis,
-              actualMillis),
-          actualMillis >= lowerBoundMillis && actualMillis <= upperBoundMillis);
+              "Expected at most 2 poll calls in window [%d, %d], but got %d instead.",
+              pollTimestampsMillis.get(i), lastTimestampMillis, smallWindowCount),
+          smallWindowCount <= 2);
+
+      assertTrue(
+          String.format(
+              "Expected at least 1 poll call in window (%d, %d), but got none instead.",
+              pollTimestampsMillis.get(i), pollTimestampsMillis.get(i + 1)),
+          pollTimestampsMillis.get(i + 1) - pollTimestampsMillis.get(i) <= 2 * backoffMillis);
     }
+
+    long lastTimestampMillis = pollTimestampsMillis.get(pollTimestampsMillis.size() - 1);
+    long timeoutTimestampMillis = pollTimestampsMillis.get(0) + timeoutMillis;
+    assertTrue(
+        String.format(
+            "Expected at least 1 poll call in window (%d, %d], but got none instead.",
+            lastTimestampMillis, timeoutTimestampMillis),
+        timeoutTimestampMillis - lastTimestampMillis < 2 * backoffMillis);
   }
 
     @Test
