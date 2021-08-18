@@ -28,10 +28,7 @@ import io.confluent.kafkarest.controllers.ControllersModule;
 import io.confluent.kafkarest.exceptions.ExceptionsModule;
 import io.confluent.kafkarest.exceptions.KafkaRestExceptionMapper;
 import io.confluent.kafkarest.extension.EnumConverterProvider;
-import io.confluent.kafkarest.extension.ContextInvocationHandler;
 import io.confluent.kafkarest.extension.InstantConverterProvider;
-import io.confluent.kafkarest.extension.KafkaRestCleanupFilter;
-import io.confluent.kafkarest.extension.KafkaRestContextProvider;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature;
 import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.kafkarest.resources.ResourcesFeature;
@@ -39,7 +36,6 @@ import io.confluent.kafkarest.response.ResponseModule;
 import io.confluent.rest.Application;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
-import java.lang.reflect.Proxy;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Properties;
@@ -69,7 +65,11 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   }
 
   public KafkaRestApplication(KafkaRestConfig config, String path) {
-    super(config, path);
+    this(config, path, null);
+  }
+
+  public KafkaRestApplication(KafkaRestConfig config, String path, String listenerName) {
+    super(config, path, listenerName);
 
     restResourceExtensions = config.getConfiguredInstances(
         KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG,
@@ -93,25 +93,16 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
                                     + KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG
                                     + " needs to be configured");
     }
-    KafkaRestContextProvider.initialize(appConfig);
-    ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
-    KafkaRestContext context =
-        (KafkaRestContext) Proxy.newProxyInstance(
-            KafkaRestContext.class.getClassLoader(),
-            new Class[]{KafkaRestContext.class},
-            contextInvocationHandler
-        );
 
     config.property(ServerProperties.OUTBOUND_CONTENT_LENGTH_BUFFER, 0);
     config.register(new BackendsModule());
     config.register(new ConfigModule(appConfig));
     config.register(new ControllersModule());
     config.register(new ExceptionsModule());
-    config.register(new ResourcesFeature(context, appConfig));
+    config.register(new ResourcesFeature(appConfig));
     config.register(new ResponseModule());
 
     config.register(ResourceAccesslistFeature.class);
-    config.register(KafkaRestCleanupFilter.class);
 
     config.register(EnumConverterProvider.class);
     config.register(InstantConverterProvider.class);
@@ -143,11 +134,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   @Override
   public void onShutdown() {
-
     for (RestResourceExtension restResourceExtension : restResourceExtensions) {
       restResourceExtension.clean();
     }
-
-    KafkaRestContextProvider.clean();
   }
 }

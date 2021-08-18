@@ -17,6 +17,7 @@ package io.confluent.kafkarest.tools;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.confluent.common.utils.AbstractPerformanceTest;
 import io.confluent.common.utils.PerformanceStats;
 import io.confluent.kafkarest.Versions;
@@ -33,8 +34,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+@SuppressFBWarnings("DMI_RANDOM_USED_ONLY_ONCE") // https://github.com/spotbugs/spotbugs/issues/1539
 public class ConsumerPerformance extends AbstractPerformanceTest {
 
+  private static final Random RANDOM = new Random();
   long targetRecords;
   long recordsPerSec;
   ObjectMapper serializer = new ObjectMapper();
@@ -73,7 +76,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
     this.targetRecords = numRecords;
     this.recordsPerSec = recordsPerSec;
 
-    String groupId = "rest-perf-consumer-" + Integer.toString(new Random().nextInt(100000));
+    String groupId = "rest-perf-consumer-" + RANDOM.nextInt(100000);
 
     // Create consumer instance
     CreateConsumerInstanceRequest consumerConfig =

@@ -45,6 +45,10 @@ public class ResourceAccesslistTestBase extends ClusterTestHarness {
         .get();
   }
 
+  Response topicsOptions() {
+    return request("/v3/clusters/" + getClusterId() + "/topics").options();
+  }
+
   Response createTopic() {
     return request("/v3/clusters/" + getClusterId() + "/topics")
         .accept(MediaType.APPLICATION_JSON)
@@ -72,6 +76,10 @@ public class ResourceAccesslistTestBase extends ClusterTestHarness {
 
   Response listClusters() {
     return request("/v3/clusters").accept(MediaType.APPLICATION_JSON).get();
+  }
+
+  Response clustersOptions() {
+    return request("/v3/clusters/").options();
   }
 
   Response getCluster() {
