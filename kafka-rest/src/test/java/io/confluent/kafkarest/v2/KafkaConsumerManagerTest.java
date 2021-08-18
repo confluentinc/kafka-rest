@@ -32,10 +32,13 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -341,26 +344,80 @@ public class KafkaConsumerManagerTest {
         consumerManager.deleteConsumer(groupName, consumer.cid());
     }
 
-    @Test
-    public void testBackoffMsControlsPollCalls() throws Exception {
-        bootstrapConsumer(consumer);
-        consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
-                new ConsumerReadCallback<byte[], byte[]>() {
-                    @Override
-                    public void onCompletion(List<? extends ConsumerRecord<byte[], byte[]>> records, RestException e) {
-                        actualException = e;
-                        actualRecords = records;
-                        sawCallback = true;
-                    }
-                });
+  @Test
+  public void testBackoffMsControlsPollCalls() throws Exception {
+    long timeoutMillis = 5000L;
+    long backoffMillis = 500L;
+    Properties props = setUpProperties();
+    props.put(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, String.valueOf(timeoutMillis));
+    props.put(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, String.valueOf(backoffMillis));
+    setUpConsumer(props);
+    bootstrapConsumer(consumer);
+    CopyOnWriteArrayList<Long> pollTimestampsMillis = new CopyOnWriteArrayList<>();
+    consumer.schedulePollTask(
+        new Runnable() {
+          @Override
+          public void run() {
+            pollTimestampsMillis.add(TimeUnit.NANOSECONDS.toMillis(System.nanoTime()));
+            consumer.schedulePollTask(this);
+          }
+        });
+    CountDownLatch latch = new CountDownLatch(1);
+    consumerManager.readRecords(
+        groupName,
+        consumer.cid(),
+        BinaryKafkaConsumerState.class,
+        -1,
+        Long.MAX_VALUE,
+        (records, e) -> latch.countDown());
 
-        // backoff is 250
-        Thread.sleep(100);
-        // backoff should be in place right now. the read task should be delayed and re-ran until the max.bytes or timeout is hit
-        assertEquals(1, consumerManager.delayedReadTasks.size());
-        Thread.sleep(100);
-        assertEquals(1, consumerManager.delayedReadTasks.size());
+    latch.await();
+
+    // Poll calls should look like:
+    //   0. first initial poll() returns messages
+    //   1. second initial poll() returns empty
+    //   2..N-1. wait backoffMillis, poll() returns empty, repeat
+    //   N. wait max(backoffMillis, remainder of timeoutMillis), poll() returns empty
+    assertTrue(
+        String.format(
+            "Expected at least 2 poll calls, but got %d instead.", pollTimestampsMillis.size()),
+        pollTimestampsMillis.size() >= 2);
+
+    // We need to verify that there's no window of size backoffMillis with more than 2 poll calls,
+    // and no window of size 2 * backofMillis with no poll call at all.
+    for (int i = 1; i < pollTimestampsMillis.size() - 1; i++) {
+      int smallWindowCount = 1;
+      long lastTimestampMillis = pollTimestampsMillis.get(i);
+      for (int j = i + 1; j < pollTimestampsMillis.size(); j++) {
+        long delta  = pollTimestampsMillis.get(j) - pollTimestampsMillis.get(i);
+        if (delta <= backoffMillis) {
+          smallWindowCount++;
+          lastTimestampMillis = pollTimestampsMillis.get(j);
+        } else {
+          break;
+        }
+      }
+      assertTrue(
+          String.format(
+              "Expected at most 2 poll calls in window [%d, %d], but got %d instead.",
+              pollTimestampsMillis.get(i), lastTimestampMillis, smallWindowCount),
+          smallWindowCount <= 2);
+
+      assertTrue(
+          String.format(
+              "Expected at least 1 poll call in window (%d, %d), but got none instead.",
+              pollTimestampsMillis.get(i), pollTimestampsMillis.get(i + 1)),
+          pollTimestampsMillis.get(i + 1) - pollTimestampsMillis.get(i) <= 2 * backoffMillis);
     }
+
+    long lastTimestampMillis = pollTimestampsMillis.get(pollTimestampsMillis.size() - 1);
+    long timeoutTimestampMillis = pollTimestampsMillis.get(0) + timeoutMillis;
+    assertTrue(
+        String.format(
+            "Expected at least 1 poll call in window (%d, %d], but got none instead.",
+            lastTimestampMillis, timeoutTimestampMillis),
+        timeoutTimestampMillis - lastTimestampMillis < 2 * backoffMillis);
+  }
 
     @Test
     public void testBackoffMsUpdatesReadTaskExpiry() throws Exception {
