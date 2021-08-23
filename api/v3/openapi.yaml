@@ -47,12 +47,12 @@ servers:
         default: "8090"
         description: Port of the server
 
-  - url: https://pkc-00000.region.provider.confluent.cloud
+  - url: https://pkc-00000.region.provider.confluent.cloud/kafka/v3
     x-audience: business-unit-internal
     description: Confluent Cloud REST Endpoint. For example https://pkc-00000.region.provider.confluent.cloud 
 
 paths:
-  /kafka/v3/clusters:
+  /clusters:
     x-audience: component-internal
     get:
       summary: 'List Clusters'
@@ -69,7 +69,7 @@ paths:
         '200':
           $ref: '#/components/responses/ListClustersResponse'
 
-  /kafka/v3/clusters/{cluster_id}:
+  /clusters/{cluster_id}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -86,7 +86,7 @@ paths:
         '200':
           $ref: '#/components/responses/GetClusterResponse'
 
-  /kafka/v3/clusters/{cluster_id}/acls:
+  /clusters/{cluster_id}/acls:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -147,7 +147,7 @@ paths:
         '200':
           $ref: '#/components/responses/DeleteAclsResponse'
 
-  /kafka/v3/clusters/{cluster_id}/broker-configs:
+  /clusters/{cluster_id}/broker-configs:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -165,7 +165,7 @@ paths:
         '200':
           $ref: '#/components/responses/ListClusterConfigsResponse'
 
-  /kafka/v3/clusters/{cluster_id}/broker-configs:alter:
+  /clusters/{cluster_id}/broker-configs:alter:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -184,7 +184,7 @@ paths:
         '204':
           description: 'No Content'
 
-  /kafka/v3/clusters/{cluster_id}/broker-configs/{name}:
+  /clusters/{cluster_id}/broker-configs/{name}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConfigName'
@@ -231,7 +231,7 @@ paths:
         '204':
           description: 'No Content'
 
-  /kafka/v3/clusters/{cluster_id}/brokers:
+  /clusters/{cluster_id}/brokers:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -249,7 +249,7 @@ paths:
         '200':
           $ref: '#/components/responses/ListBrokersResponse'
 
-  /kafka/v3/clusters/{cluster_id}/brokers/{broker_id}:
+  /clusters/{cluster_id}/brokers/{broker_id}:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -267,7 +267,7 @@ paths:
         '200':
           $ref: '#/components/responses/GetBrokerResponse'
 
-  /kafka/v3/clusters/{cluster_id}/brokers/-/configs:
+  /clusters/{cluster_id}/brokers/-/configs:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -284,7 +284,7 @@ paths:
         '200':
           $ref: '#/components/responses/ListBrokerConfigsResponse'
 
-  /kafka/v3/clusters/{cluster_id}/brokers/{broker_id}/configs:
+  /clusters/{cluster_id}/brokers/{broker_id}/configs:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -302,7 +302,7 @@ paths:
         '200':
           $ref: '#/components/responses/ListBrokerConfigsResponse'
 
-  /kafka/v3/clusters/{cluster_id}/brokers/{broker_id}/configs:alter:
+  /clusters/{cluster_id}/brokers/{broker_id}/configs:alter:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -322,7 +322,7 @@ paths:
         '204':
           description: 'No Content'
 
-  /kafka/v3/clusters/{cluster_id}/brokers/{broker_id}/configs/{name}:
+  /clusters/{cluster_id}/brokers/{broker_id}/configs/{name}:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -367,7 +367,7 @@ paths:
         '204':
           description: 'No Content'
 
-  /kafka/v3/clusters/{cluster_id}/brokers/{broker_id}/partition-replicas:
+  /clusters/{cluster_id}/brokers/{broker_id}/partition-replicas:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -386,7 +386,7 @@ paths:
         '200':
           $ref: '#/components/responses/SearchReplicasByBrokerResponse'
 
-  /kafka/v3/clusters/{cluster_id}/consumer-groups:
+  /clusters/{cluster_id}/consumer-groups:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -404,7 +404,7 @@ paths:
         '200':
           $ref: '#/components/responses/ListConsumerGroupsResponse'
 
-  /kafka/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}:
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -422,7 +422,7 @@ paths:
         '200':
           $ref: '#/components/responses/GetConsumerGroupResponse'
 
-  /kafka/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers:
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -441,18 +441,20 @@ paths:
         '200':
           $ref: '#/components/responses/ListConsumersResponse'
 
-  /kafka/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lag-summary:
-    x-lifecycle-stage: Preview
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lag-summary:
+    x-lifecycle-stage: Early Access
+    x-request-access-name: Cluster Admin For Kafka v3
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
 
     get:
-      x-lifecycle-stage: Preview
+      x-lifecycle-stage: Early Access
+      x-request-access-name: Cluster Admin For Kafka v3
       summary: 'Get Consumer Group Lag Summary.'
       operationId: getKafkaV3ConsumerGroupLagSummary
       description: |-
-        [![Preview](https://img.shields.io/badge/Lifecycle%20Stage-Preview-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
+        [![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Request Access To Cluster Admin for Kafka (v3)](https://img.shields.io/badge/-Request%20Access%20To%20Cluster%20Admin%20For%20Kafka%20v3-%23bc8540)](mailto:ccloud-rest-api+consumer-lag-earlyaccess@confluent.io?subject=Request%20to%20join%20v3%20API%20Early%20Access&body=I%E2%80%99d%20like%20to%20join%20the%20Confluent%20Cluster%20Admin%20For%20Kafka%20v3%20Early%20Access%20to%20provide%20early%20feedback%20on%20consumer%20lag%20apis%21%20My%20Cloud%20Organization%20ID%20is%20%3Cretrieve%20from%20https%3A//confluent.cloud/settings/billing/payment%3E.)
 
         Returns the max and total lag of the consumers belonging to the
         specified consumer group.
@@ -462,18 +464,20 @@ paths:
         '200':
           $ref: '#/components/responses/GetConsumerGroupLagSummaryResponse'
 
-  /kafka/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags:
-    x-lifecycle-stage: Preview
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags:
+    x-lifecycle-stage: Early Access
+    x-request-access-name: Cluster Admin For Kafka v3
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
 
     get:
-      x-lifecycle-stage: Preview
+      x-lifecycle-stage: Early Access
+      x-request-access-name: Cluster Admin For Kafka v3
       operationId: listKafkaV3ConsumerLags
       summary: 'List Consumer Lags'
       description: |-
-        [![Preview](https://img.shields.io/badge/Lifecycle%20Stage-Preview-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
+        [![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Request Access To Cluster Admin for Kafka (v3)](https://img.shields.io/badge/-Request%20Access%20To%20Cluster%20Admin%20For%20Kafka%20v3-%23bc8540)](mailto:ccloud-rest-api+consumer-lag-earlyaccess@confluent.io?subject=Request%20to%20join%20v3%20API%20Early%20Access&body=I%E2%80%99d%20like%20to%20join%20the%20Confluent%20Cluster%20Admin%20For%20Kafka%20v3%20Early%20Access%20to%20provide%20early%20feedback%20on%20consumer%20lag%20apis%21%20My%20Cloud%20Organization%20ID%20is%20%3Cretrieve%20from%20https%3A//confluent.cloud/settings/billing/payment%3E.)
 
         Returns a list of consumer lags of the consumers belonging to the
         specified consumer group.
@@ -483,8 +487,9 @@ paths:
         '200':
           $ref: '#/components/responses/ListConsumerLagsResponse'
 
-  /kafka/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags/{topic_name}/partitions/{partition_id}:
-    x-lifecycle-stage: Preview
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags/{topic_name}/partitions/{partition_id}:
+    x-lifecycle-stage: Early Access
+    x-request-access-name: Cluster Admin For Kafka v3
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -492,11 +497,12 @@ paths:
       - $ref: '#/components/parameters/PartitionId'
 
     get:
-      x-lifecycle-stage: Preview
+      x-lifecycle-stage: Early Access
+      x-request-access-name: Cluster Admin For Kafka v3
       operationId: getKafkaV3ConsumerLag
       summary: 'Get Consumer Lag'      
       description: |-
-        [![Preview](https://img.shields.io/badge/Lifecycle%20Stage-Preview-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
+        [![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Request Access To Cluster Admin for Kafka (v3)](https://img.shields.io/badge/-Request%20Access%20To%20Cluster%20Admin%20For%20Kafka%20v3-%23bc8540)](mailto:ccloud-rest-api+consumer-lag-earlyaccess@confluent.io?subject=Request%20to%20join%20v3%20API%20Early%20Access&body=I%E2%80%99d%20like%20to%20join%20the%20Confluent%20Cluster%20Admin%20For%20Kafka%20v3%20Early%20Access%20to%20provide%20early%20feedback%20on%20consumer%20lag%20apis%21%20My%20Cloud%20Organization%20ID%20is%20%3Cretrieve%20from%20https%3A//confluent.cloud/settings/billing/payment%3E.)
 
         Returns the consumer lag on a partition with the given `partition_id`.
       tags:
@@ -505,7 +511,7 @@ paths:
         '200':
           $ref: '#/components/responses/GetConsumerLagResponse'
 
-  /kafka/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}:
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -515,7 +521,7 @@ paths:
       summary: 'Get Consumer'
       operationId: getKafkaV3Consumer
       description: |-
-        [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
+        [![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Request Access To Cluster Admin for Kafka (v3)](https://img.shields.io/badge/-Request%20Access%20To%20Cluster%20Admin%20For%20Kafka%20v3-%23bc8540)](mailto:ccloud-rest-api+consumer-lag-earlyaccess@confluent.io?subject=Request%20to%20join%20v3%20API%20Early%20Access&body=I%E2%80%99d%20like%20to%20join%20the%20Confluent%20Cluster%20Admin%20For%20Kafka%20v3%20Early%20Access%20to%20provide%20early%20feedback%20on%20consumer%20lag%20apis%21%20My%20Cloud%20Organization%20ID%20is%20%3Cretrieve%20from%20https%3A//confluent.cloud/settings/billing/payment%3E.)
         
         Returns the consumer specified by the ``consumer_id``.
       tags:
@@ -524,7 +530,7 @@ paths:
         '200':
           $ref: '#/components/responses/GetConsumerResponse'
 
-  /kafka/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}/assignments:
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}/assignments:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -544,7 +550,7 @@ paths:
         '200':
           $ref: '#/components/responses/ListConsumerAssignmentsResponse'
 
-  /kafka/v3/clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}/assignments/{topic_name}/partitions/{partition_id}:
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}/assignments/{topic_name}/partitions/{partition_id}:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -567,7 +573,7 @@ paths:
         '200':
           $ref: '#/components/responses/GetConsumerAssignmentResponse'
 
-  /kafka/v3/clusters/{cluster_id}/topics:
+  /clusters/{cluster_id}/topics:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -599,7 +605,7 @@ paths:
         '201':
           $ref: '#/components/responses/CreateTopicResponse'
 
-  /kafka/v3/clusters/{cluster_id}/topics/{topic_name}:
+  /clusters/{cluster_id}/topics/{topic_name}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -630,7 +636,7 @@ paths:
         '204':
           description: 'No Content'
 
-  /kafka/v3/clusters/{cluster_id}/topics/{topic_name}/configs:
+  /clusters/{cluster_id}/topics/{topic_name}/configs:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -648,7 +654,7 @@ paths:
         '200':
           $ref: '#/components/responses/ListTopicConfigsResponse'
 
-  /kafka/v3/clusters/{cluster_id}/topics/{topic_name}/configs:alter:
+  /clusters/{cluster_id}/topics/{topic_name}/configs:alter:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -668,7 +674,7 @@ paths:
         '204':
           description: 'No Content'
 
-  /kafka/v3/clusters/{cluster_id}/topics/{topic_name}/configs/{name}:
+  /clusters/{cluster_id}/topics/{topic_name}/configs/{name}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -715,7 +721,7 @@ paths:
         '204':
           description: 'No Content'
 
-  /kafka/v3/clusters/{cluster_id}/topics/{topic_name}/partitions:
+  /clusters/{cluster_id}/topics/{topic_name}/partitions:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -733,7 +739,7 @@ paths:
         '200':
           $ref: '#/components/responses/ListPartitionsResponse'
 
-  /kafka/v3/clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}:
+  /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
@@ -752,7 +758,7 @@ paths:
         '200':
           $ref: '#/components/responses/GetPartitionResponse'
 
-  /kafka/v3/clusters/{cluster_id}/topics/-/partitions/-/reassignment:
+  /clusters/{cluster_id}/topics/-/partitions/-/reassignment:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -769,7 +775,7 @@ paths:
         '200':
           $ref: '#/components/responses/ListAllReassignmentsResponse'
 
-  /kafka/v3/clusters/{cluster_id}/topics/{topic_name}/partitions/-/reassignment:
+  /clusters/{cluster_id}/topics/{topic_name}/partitions/-/reassignment:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -787,7 +793,7 @@ paths:
         '200':
           $ref: '#/components/responses/SearchReassignmentsByTopicResponse'
 
-  /kafka/v3/clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/reassignment:
+  /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/reassignment:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -806,7 +812,7 @@ paths:
         '200':
           $ref: '#/components/responses/GetReassignmentResponse'
 
-  /kafka/v3/clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/replicas:
+  /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/replicas:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -825,7 +831,7 @@ paths:
         '200':
           $ref: '#/components/responses/ListReplicasResponse'
 
-  /kafka/v3/clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/replicas/{broker_id}:
+  /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/replicas/{broker_id}:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -845,7 +851,7 @@ paths:
         '200':
           $ref: '#/components/responses/GetReplicaResponse'
           
-  /kafka/v3/clusters/{cluster_id}/topics/-/configs:
+  /clusters/{cluster_id}/topics/-/configs:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
 
@@ -863,7 +869,7 @@ paths:
         '200':
           $ref: '#/components/responses/ListTopicConfigsResponse'
 
-  /kafka/v3/clusters/{cluster_id}/topics/{topic_name}/records:
+  /clusters/{cluster_id}/topics/{topic_name}/records:
     x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
