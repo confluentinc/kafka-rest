@@ -1,6 +1,7 @@
 #!/usr/bin/env groovy
 common {
   slackChannel = '#kafka-rest-warn'
-  upstreamProjects = 'confluentinc/schema-registry'
+  downStreamRepos = ["confluent-security-plugins", "ce-kafka-rest",
+    "confluent-cloud-plugins"]
   nanoVersion = true
 }
