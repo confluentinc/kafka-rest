@@ -64,8 +64,7 @@ public final class ClusterConfigsResource {
   public ClusterConfigsResource(
       Provider<ClusterConfigManager> clusterConfigManager,
       CrnFactory crnFactory,
-      UrlFactory urlFactory
-  ) {
+      UrlFactory urlFactory) {
     this.clusterConfigManager = requireNonNull(clusterConfigManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
@@ -78,10 +77,11 @@ public final class ClusterConfigsResource {
   public void listClusterConfigs(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @PathParam("config_type") ClusterConfig.Type configType
-  ) {
+      @PathParam("config_type") ClusterConfig.Type configType) {
     CompletableFuture<ListClusterConfigsResponse> response =
-        clusterConfigManager.get().listClusterConfigs(clusterId, configType)
+        clusterConfigManager
+            .get()
+            .listClusterConfigs(clusterId, configType)
             .thenApply(
                 configs ->
                     ListClusterConfigsResponse.create(
@@ -117,10 +117,10 @@ public final class ClusterConfigsResource {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("config_type") ClusterConfig.Type configType,
-      @PathParam("name") String name
-  ) {
+      @PathParam("name") String name) {
     CompletableFuture<GetClusterConfigResponse> response =
-        clusterConfigManager.get()
+        clusterConfigManager
+            .get()
             .getClusterConfig(clusterId, configType, name)
             .thenApply(config -> config.orElseThrow(NotFoundException::new))
             .thenApply(config -> GetClusterConfigResponse.create(toClusterConfigData(config)));
@@ -139,8 +139,7 @@ public final class ClusterConfigsResource {
       @PathParam("clusterId") String clusterId,
       @PathParam("config_type") ClusterConfig.Type configType,
       @PathParam("name") String name,
-      @Valid UpdateClusterConfigRequest request
-  ) {
+      @Valid UpdateClusterConfigRequest request) {
     String newValue = request.getValue().orElse(null);
 
     CompletableFuture<Void> response =
@@ -160,8 +159,7 @@ public final class ClusterConfigsResource {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("config_type") ClusterConfig.Type configType,
-      @PathParam("name") String name
-  ) {
+      @PathParam("name") String name) {
     CompletableFuture<Void> response =
         clusterConfigManager.get().deleteClusterConfig(clusterId, configType, name);
 

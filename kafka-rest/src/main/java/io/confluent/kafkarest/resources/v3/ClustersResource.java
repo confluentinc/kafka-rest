@@ -53,10 +53,7 @@ public final class ClustersResource {
 
   @Inject
   public ClustersResource(
-      Provider<ClusterManager> clusterManager,
-      CrnFactory crnFactory,
-      UrlFactory urlFactory
-  ) {
+      Provider<ClusterManager> clusterManager, CrnFactory crnFactory, UrlFactory urlFactory) {
     this.clusterManager = requireNonNull(clusterManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
@@ -68,7 +65,8 @@ public final class ClustersResource {
   @ResourceName("api.v3.clusters.list")
   public void listClusters(@Suspended AsyncResponse asyncResponse) {
     CompletableFuture<ListClustersResponse> response =
-        clusterManager.get()
+        clusterManager
+            .get()
             .listClusters()
             .thenApply(
                 clusters ->
@@ -95,7 +93,8 @@ public final class ClustersResource {
   public void getCluster(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<GetClusterResponse> response =
-        clusterManager.get()
+        clusterManager
+            .get()
             .getCluster(clusterId)
             .thenApply(cluster -> cluster.orElseThrow(NotFoundException::new))
             .thenApply(cluster -> GetClusterResponse.create(toClusterData(cluster)));
@@ -128,8 +127,15 @@ public final class ClustersResource {
                     urlFactory.create("v3", "clusters", cluster.getClusterId(), "topics")))
             .setPartitionReassignments(
                 Resource.Relationship.create(
-                    urlFactory.create("v3", "clusters", cluster.getClusterId(), "topics", "-",
-                        "partitions", "-", "reassignment")));
+                    urlFactory.create(
+                        "v3",
+                        "clusters",
+                        cluster.getClusterId(),
+                        "topics",
+                        "-",
+                        "partitions",
+                        "-",
+                        "reassignment")));
 
     if (cluster.getController() != null) {
       clusterData.setController(

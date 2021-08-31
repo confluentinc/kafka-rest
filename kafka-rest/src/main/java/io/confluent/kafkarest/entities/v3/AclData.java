@@ -27,8 +27,7 @@ import io.confluent.kafkarest.entities.Acl.ResourceType;
 @AutoValue
 public abstract class AclData extends Resource {
 
-  AclData() {
-  }
+  AclData() {}
 
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
@@ -81,8 +80,7 @@ public abstract class AclData extends Resource {
       @JsonProperty("principal") String principal,
       @JsonProperty("host") String host,
       @JsonProperty("operation") Operation operation,
-      @JsonProperty("permission") Permission permission
-  ) {
+      @JsonProperty("permission") Permission permission) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -100,8 +98,7 @@ public abstract class AclData extends Resource {
   @AutoValue.Builder
   public abstract static class Builder extends Resource.Builder<Builder> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 

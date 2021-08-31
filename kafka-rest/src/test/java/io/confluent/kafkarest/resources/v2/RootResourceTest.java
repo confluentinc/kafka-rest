@@ -43,8 +43,8 @@ public class RootResourceTest
   public void testRootResource() {
     Response response = request("/", Versions.KAFKA_V2_JSON).get();
     assertOKResponse(response, Versions.KAFKA_V2_JSON);
-    Map<String, String> decoded = TestUtils.tryReadEntityOrLog(response, new GenericType<Map<String, String>>() {
-    });
+    Map<String, String> decoded =
+        TestUtils.tryReadEntityOrLog(response, new GenericType<Map<String, String>>() {});
   }
 
   @Test
@@ -62,16 +62,17 @@ public class RootResourceTest
   @Test
   public void testInvalidEntityContentType() {
     Response.Status UNSUPPORTED_MEDIA_TYPE = Response.Status.UNSUPPORTED_MEDIA_TYPE;
-    Response
-        response =
+    Response response =
         request("/", Versions.KAFKA_V2_JSON + ", " + Versions.GENERIC_REQUEST)
             .post(Entity.entity("", "text/plain"));
     assertErrorResponse(
-        UNSUPPORTED_MEDIA_TYPE, response,
+        UNSUPPORTED_MEDIA_TYPE,
+        response,
         UNSUPPORTED_MEDIA_TYPE.getStatusCode(),
-        "HTTP " + UNSUPPORTED_MEDIA_TYPE.getStatusCode() + " " + UNSUPPORTED_MEDIA_TYPE
-            .getReasonPhrase(),
-        Versions.KAFKA_V2_JSON
-    );
+        "HTTP "
+            + UNSUPPORTED_MEDIA_TYPE.getStatusCode()
+            + " "
+            + UNSUPPORTED_MEDIA_TYPE.getReasonPhrase(),
+        Versions.KAFKA_V2_JSON);
   }
 }

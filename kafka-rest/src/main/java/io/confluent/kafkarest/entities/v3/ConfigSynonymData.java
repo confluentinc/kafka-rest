@@ -26,8 +26,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ConfigSynonymData {
 
-  ConfigSynonymData() {
-  }
+  ConfigSynonymData() {}
 
   @JsonProperty("name")
   public abstract String getName();
@@ -54,20 +53,14 @@ public abstract class ConfigSynonymData {
   static ConfigSynonymData fromJson(
       @JsonProperty("name") String name,
       @JsonProperty("value") @Nullable String value,
-      @JsonProperty("source") ConfigSource source
-  ) {
-    return builder()
-        .setName(name)
-        .setValue(value)
-        .setSource(source)
-        .build();
+      @JsonProperty("source") ConfigSource source) {
+    return builder().setName(name).setValue(value).setSource(source).build();
   }
 
   @AutoValue.Builder
   public abstract static class Builder {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setName(String name);
 

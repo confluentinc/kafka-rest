@@ -23,8 +23,7 @@ import org.apache.kafka.common.acl.AclPermissionType;
 @AutoValue
 public abstract class Acl {
 
-  Acl() {
-  }
+  Acl() {}
 
   public abstract String getClusterId();
 
@@ -60,8 +59,7 @@ public abstract class Acl {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 
@@ -84,69 +82,43 @@ public abstract class Acl {
 
   public enum Operation {
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclOperation#UNKNOWN}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclOperation#UNKNOWN}. */
     UNKNOWN,
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclOperation#ANY}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclOperation#ANY}. */
     ANY,
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclOperation#ALL}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclOperation#ALL}. */
     ALL,
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclOperation#READ}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclOperation#READ}. */
     READ,
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclOperation#WRITE}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclOperation#WRITE}. */
     WRITE,
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclOperation#CREATE}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclOperation#CREATE}. */
     CREATE,
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclOperation#DELETE}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclOperation#DELETE}. */
     DELETE,
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclOperation#ALTER}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclOperation#ALTER}. */
     ALTER,
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclOperation#DESCRIBE}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclOperation#DESCRIBE}. */
     DESCRIBE,
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclOperation#CLUSTER_ACTION}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclOperation#CLUSTER_ACTION}. */
     CLUSTER_ACTION,
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclOperation#DESCRIBE_CONFIGS}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclOperation#DESCRIBE_CONFIGS}. */
     DESCRIBE_CONFIGS,
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclOperation#ALTER_CONFIGS}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclOperation#ALTER_CONFIGS}. */
     ALTER_CONFIGS,
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclOperation#IDEMPOTENT_WRITE}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclOperation#IDEMPOTENT_WRITE}. */
     IDEMPOTENT_WRITE;
 
     public static Operation fromAclOperation(AclOperation aclOperation) {
@@ -168,29 +140,19 @@ public abstract class Acl {
 
   public enum PatternType {
 
-    /**
-     * See {@link org.apache.kafka.common.resource.PatternType#UNKNOWN}.
-     */
+    /** See {@link org.apache.kafka.common.resource.PatternType#UNKNOWN}. */
     UNKNOWN,
 
-    /**
-     * See {@link org.apache.kafka.common.resource.PatternType#ANY}.
-     */
+    /** See {@link org.apache.kafka.common.resource.PatternType#ANY}. */
     ANY,
 
-    /**
-     * See {@link org.apache.kafka.common.resource.PatternType#MATCH}.
-     */
+    /** See {@link org.apache.kafka.common.resource.PatternType#MATCH}. */
     MATCH,
 
-    /**
-     * See {@link org.apache.kafka.common.resource.PatternType#LITERAL}.
-     */
+    /** See {@link org.apache.kafka.common.resource.PatternType#LITERAL}. */
     LITERAL,
 
-    /**
-     * See {@link org.apache.kafka.common.resource.PatternType#PREFIXED}.
-     */
+    /** See {@link org.apache.kafka.common.resource.PatternType#PREFIXED}. */
     PREFIXED;
 
     public static PatternType fromAdminPatternType(
@@ -213,24 +175,16 @@ public abstract class Acl {
 
   public enum Permission {
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclPermissionType#UNKNOWN}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclPermissionType#UNKNOWN}. */
     UNKNOWN,
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclPermissionType#ANY}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclPermissionType#ANY}. */
     ANY,
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclPermissionType#DENY}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclPermissionType#DENY}. */
     DENY,
 
-    /**
-     * See {@link org.apache.kafka.common.acl.AclPermissionType#ALLOW}.
-     */
+    /** See {@link org.apache.kafka.common.acl.AclPermissionType#ALLOW}. */
     ALLOW;
 
     public static Permission fromAclPermissionType(AclPermissionType aclPermissionType) {
@@ -252,39 +206,25 @@ public abstract class Acl {
 
   public enum ResourceType {
 
-    /**
-     * See {@link org.apache.kafka.common.resource.ResourceType#UNKNOWN}.
-     */
+    /** See {@link org.apache.kafka.common.resource.ResourceType#UNKNOWN}. */
     UNKNOWN,
 
-    /**
-     * See {@link org.apache.kafka.common.resource.ResourceType#ANY}.
-     */
+    /** See {@link org.apache.kafka.common.resource.ResourceType#ANY}. */
     ANY,
 
-    /**
-     * See {@link org.apache.kafka.common.resource.ResourceType#TOPIC}.
-     */
+    /** See {@link org.apache.kafka.common.resource.ResourceType#TOPIC}. */
     TOPIC,
 
-    /**
-     * See {@link org.apache.kafka.common.resource.ResourceType#GROUP}.
-     */
+    /** See {@link org.apache.kafka.common.resource.ResourceType#GROUP}. */
     GROUP,
 
-    /**
-     * See {@link org.apache.kafka.common.resource.ResourceType#CLUSTER}.
-     */
+    /** See {@link org.apache.kafka.common.resource.ResourceType#CLUSTER}. */
     CLUSTER,
 
-    /**
-     * See {@link org.apache.kafka.common.resource.ResourceType#TRANSACTIONAL_ID}.
-     */
+    /** See {@link org.apache.kafka.common.resource.ResourceType#TRANSACTIONAL_ID}. */
     TRANSACTIONAL_ID,
 
-    /**
-     * See {@link org.apache.kafka.common.resource.ResourceType#DELEGATION_TOKEN}.
-     */
+    /** See {@link org.apache.kafka.common.resource.ResourceType#DELEGATION_TOKEN}. */
     DELEGATION_TOKEN;
 
     public static ResourceType fromAdminResourceType(

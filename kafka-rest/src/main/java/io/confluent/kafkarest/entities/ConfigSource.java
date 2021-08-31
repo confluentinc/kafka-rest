@@ -22,34 +22,24 @@ import org.apache.kafka.clients.admin.ConfigEntry;
  *
  * @see org.apache.kafka.clients.admin.ConfigEntry.ConfigSource
  * @see <a href=
- *      https://cwiki.apache.org/confluence/display/KAFKA/KIP-226+-+Dynamic+Broker+Configuration">
- *      KIP-226 - Dynamic Broker Configuration</a>
+ *     https://cwiki.apache.org/confluence/display/KAFKA/KIP-226+-+Dynamic+Broker+Configuration">
+ *     KIP-226 - Dynamic Broker Configuration</a>
  */
 public enum ConfigSource {
 
-  /**
-   * Dynamic cluster link config that is configured for a specific link name.
-   */
+  /** Dynamic cluster link config that is configured for a specific link name. */
   DYNAMIC_CLUSTER_LINK_CONFIG,
 
-  /**
-   * Dynamic topic config that is configured for a specific topic.
-   */
+  /** Dynamic topic config that is configured for a specific topic. */
   DYNAMIC_TOPIC_CONFIG,
 
-  /**
-   * Dynamic broker logger config that is configured for a specific broker.
-   */
+  /** Dynamic broker logger config that is configured for a specific broker. */
   DYNAMIC_BROKER_LOGGER_CONFIG,
 
-  /**
-   * Dynamic broker config that is configured for a specific broker.
-   */
+  /** Dynamic broker config that is configured for a specific broker. */
   DYNAMIC_BROKER_CONFIG,
 
-  /**
-   * Dynamic broker config that is configured as default for all brokers in the cluster.
-   */
+  /** Dynamic broker config that is configured as default for all brokers in the cluster. */
   DYNAMIC_DEFAULT_BROKER_CONFIG,
 
   /**
@@ -57,14 +47,10 @@ public enum ConfigSource {
    */
   STATIC_BROKER_CONFIG,
 
-  /**
-   * Built-in default configuration for configs that have a default value.
-   */
+  /** Built-in default configuration for configs that have a default value. */
   DEFAULT_CONFIG,
 
-  /**
-   * Source unknown e.g. in the ConfigEntry used for alter requests where source is not set.
-   */
+  /** Source unknown e.g. in the ConfigEntry used for alter requests where source is not set. */
   UNKNOWN;
 
   public static ConfigSource fromAdminConfigSource(ConfigEntry.ConfigSource source) {

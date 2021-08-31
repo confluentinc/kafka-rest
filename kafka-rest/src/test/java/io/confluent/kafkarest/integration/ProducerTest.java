@@ -39,69 +39,69 @@ public class ProducerTest
 
   // Produce to topic inputs & results
 
-  private final List<BinaryTopicProduceRecord> topicRecordsWithKeys = Arrays.asList(
-      new BinaryTopicProduceRecord("key", "value", null),
-      new BinaryTopicProduceRecord("key", "value2", null),
-      new BinaryTopicProduceRecord("key", "value3", null),
-      new BinaryTopicProduceRecord("key", "value4", null)
-  );
+  private final List<BinaryTopicProduceRecord> topicRecordsWithKeys =
+      Arrays.asList(
+          new BinaryTopicProduceRecord("key", "value", null),
+          new BinaryTopicProduceRecord("key", "value2", null),
+          new BinaryTopicProduceRecord("key", "value3", null),
+          new BinaryTopicProduceRecord("key", "value4", null));
 
-  private final List<BinaryTopicProduceRecord> topicRecordsWithPartitions = Arrays.asList(
-      new BinaryTopicProduceRecord(null, "value", 0),
-      new BinaryTopicProduceRecord(null, "value2", 1),
-      new BinaryTopicProduceRecord(null, "value3", 1),
-      new BinaryTopicProduceRecord(null, "value4", 2)
-  );
+  private final List<BinaryTopicProduceRecord> topicRecordsWithPartitions =
+      Arrays.asList(
+          new BinaryTopicProduceRecord(null, "value", 0),
+          new BinaryTopicProduceRecord(null, "value2", 1),
+          new BinaryTopicProduceRecord(null, "value3", 1),
+          new BinaryTopicProduceRecord(null, "value4", 2));
 
-  private final List<BinaryTopicProduceRecord> topicRecordsWithPartitionsAndKeys = Arrays.asList(
-      new BinaryTopicProduceRecord("key", "value", 0),
-      new BinaryTopicProduceRecord("key2", "value2", 1),
-      new BinaryTopicProduceRecord("key3", "value3", 1),
-      new BinaryTopicProduceRecord("key4", "value4", 2)
-  );
+  private final List<BinaryTopicProduceRecord> topicRecordsWithPartitionsAndKeys =
+      Arrays.asList(
+          new BinaryTopicProduceRecord("key", "value", 0),
+          new BinaryTopicProduceRecord("key2", "value2", 1),
+          new BinaryTopicProduceRecord("key3", "value3", 1),
+          new BinaryTopicProduceRecord("key4", "value4", 2));
 
-  private final List<BinaryTopicProduceRecord> topicRecordsWithNullValues = Arrays.asList(
-      new BinaryTopicProduceRecord("key", null, null),
-      new BinaryTopicProduceRecord("key", null, null),
-      new BinaryTopicProduceRecord("key", null, null),
-      new BinaryTopicProduceRecord("key", null, null)
-  );
+  private final List<BinaryTopicProduceRecord> topicRecordsWithNullValues =
+      Arrays.asList(
+          new BinaryTopicProduceRecord("key", null, null),
+          new BinaryTopicProduceRecord("key", null, null),
+          new BinaryTopicProduceRecord("key", null, null),
+          new BinaryTopicProduceRecord("key", null, null));
 
   // Produce to partition inputs & results
-  private final List<BinaryPartitionProduceRecord> partitionRecordsOnlyValues = Arrays.asList(
-      new BinaryPartitionProduceRecord(null, "value"),
-      new BinaryPartitionProduceRecord(null, "value2"),
-      new BinaryPartitionProduceRecord(null, "value3"),
-      new BinaryPartitionProduceRecord(null, "value4")
-  );
+  private final List<BinaryPartitionProduceRecord> partitionRecordsOnlyValues =
+      Arrays.asList(
+          new BinaryPartitionProduceRecord(null, "value"),
+          new BinaryPartitionProduceRecord(null, "value2"),
+          new BinaryPartitionProduceRecord(null, "value3"),
+          new BinaryPartitionProduceRecord(null, "value4"));
 
-  private final List<BinaryPartitionProduceRecord> partitionRecordsWithKeys = Arrays.asList(
-      new BinaryPartitionProduceRecord("key", "value"),
-      new BinaryPartitionProduceRecord("key", "value2"),
-      new BinaryPartitionProduceRecord("key", "value3"),
-      new BinaryPartitionProduceRecord("key", "value4")
-  );
+  private final List<BinaryPartitionProduceRecord> partitionRecordsWithKeys =
+      Arrays.asList(
+          new BinaryPartitionProduceRecord("key", "value"),
+          new BinaryPartitionProduceRecord("key", "value2"),
+          new BinaryPartitionProduceRecord("key", "value3"),
+          new BinaryPartitionProduceRecord("key", "value4"));
 
-  private final List<BinaryPartitionProduceRecord> partitionRecordsWithNullValues = Arrays.asList(
-      new BinaryPartitionProduceRecord("key1", null),
-      new BinaryPartitionProduceRecord("key2", null),
-      new BinaryPartitionProduceRecord("key3", null),
-      new BinaryPartitionProduceRecord("key4", null)
-  );
+  private final List<BinaryPartitionProduceRecord> partitionRecordsWithNullValues =
+      Arrays.asList(
+          new BinaryPartitionProduceRecord("key1", null),
+          new BinaryPartitionProduceRecord("key2", null),
+          new BinaryPartitionProduceRecord("key3", null),
+          new BinaryPartitionProduceRecord("key4", null));
 
-  private final List<PartitionOffset> produceOffsets = Arrays.asList(
-      new PartitionOffset(0, 0L, null, null),
-      new PartitionOffset(0, 1L, null, null),
-      new PartitionOffset(0, 2L, null, null),
-      new PartitionOffset(0, 3L, null, null)
-  );
+  private final List<PartitionOffset> produceOffsets =
+      Arrays.asList(
+          new PartitionOffset(0, 0L, null, null),
+          new PartitionOffset(0, 1L, null, null),
+          new PartitionOffset(0, 2L, null, null),
+          new PartitionOffset(0, 3L, null, null));
 
-  private final List<PartitionOffset> producePartitionedOffsets = Arrays.asList(
-      new PartitionOffset(0, 0L, null, null),
-      new PartitionOffset(1, 0L, null, null),
-      new PartitionOffset(1, 1L, null, null),
-      new PartitionOffset(2, 0L, null, null)
-  );
+  private final List<PartitionOffset> producePartitionedOffsets =
+      Arrays.asList(
+          new PartitionOffset(0, 0L, null, null),
+          new PartitionOffset(1, 0L, null, null),
+          new PartitionOffset(1, 1L, null, null),
+          new PartitionOffset(2, 0L, null, null));
 
   @Before
   @Override
@@ -109,7 +109,11 @@ public class ProducerTest
     super.setUp();
     final int numPartitions = 3;
     final int replicationFactor = 1;
-    kafka.utils.TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
+    kafka.utils.TestUtils.createTopic(
+        zkClient,
+        topicName,
+        numPartitions,
+        replicationFactor,
         JavaConverters.asScalaBuffer(this.servers),
         new Properties());
   }
@@ -178,9 +182,8 @@ public class ProducerTest
     testProduceToTopicFails("invalid-topic", request);
   }
 
-
-  protected void testProduceToPartition(List<BinaryPartitionProduceRecord> records,
-      List<PartitionOffset> offsetResponse) {
+  protected void testProduceToPartition(
+      List<BinaryPartitionProduceRecord> records, List<PartitionOffset> offsetResponse) {
     BinaryPartitionProduceRequest request = BinaryPartitionProduceRequest.create(records);
     testProduceToPartition(
         topicName,
@@ -210,22 +213,22 @@ public class ProducerTest
   @Test
   public void testNullPayload() {
 
-    List<String> versions = Arrays.asList(
-        Versions.KAFKA_V2_JSON_AVRO, Versions.KAFKA_V2_JSON_JSON, Versions.KAFKA_V2_JSON_BINARY
-    );
+    List<String> versions =
+        Arrays.asList(
+            Versions.KAFKA_V2_JSON_AVRO,
+            Versions.KAFKA_V2_JSON_JSON,
+            Versions.KAFKA_V2_JSON_BINARY);
 
     for (String version : versions) {
-      Response response = request("/topics/" + topicName)
-          .post(Entity.entity(null, version));
-      assertEquals("Produces to topic failed using "+ version, 422, response.getStatus());
+      Response response = request("/topics/" + topicName).post(Entity.entity(null, version));
+      assertEquals("Produces to topic failed using " + version, 422, response.getStatus());
     }
 
     for (String version : versions) {
-      Response response = request("/topics/" + topicName+" /partitions/0")
-          .post(Entity.entity(null, version));
-      assertEquals("Produces to topic partition failed using "+ version,422,
-          response.getStatus());
+      Response response =
+          request("/topics/" + topicName + " /partitions/0").post(Entity.entity(null, version));
+      assertEquals(
+          "Produces to topic partition failed using " + version, 422, response.getStatus());
     }
-
   }
 }

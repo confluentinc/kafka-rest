@@ -20,9 +20,7 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.util.Optional;
 
-/**
- * A manager for Schema Registry {@link RegisteredSchema schemas}.
- */
+/** A manager for Schema Registry {@link RegisteredSchema schemas}. */
 public interface SchemaManager {
 
   /**

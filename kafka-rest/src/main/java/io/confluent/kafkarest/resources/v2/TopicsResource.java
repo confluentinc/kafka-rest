@@ -63,7 +63,8 @@ public final class TopicsResource {
     TopicManager topicManager = topicManagerProvider.get();
 
     CompletableFuture<List<String>> response =
-        topicManager.listLocalTopics()
+        topicManager
+            .listLocalTopics()
             .thenApply(topics -> topics.stream().map(Topic::getName).collect(Collectors.toList()));
 
     AsyncResponses.asyncResume(asyncResponse, response);
@@ -79,14 +80,15 @@ public final class TopicsResource {
     TopicConfigManager topicConfigManager = topicConfigManagerProvider.get();
 
     CompletableFuture<Topic> topicFuture =
-        topicManager.getLocalTopic(topicName)
+        topicManager
+            .getLocalTopic(topicName)
             .thenApply(topic -> topic.orElseThrow(Errors::topicNotFoundException));
     CompletableFuture<GetTopicResponse> response =
-        topicFuture.thenCompose(
-            topic -> topicConfigManager.listTopicConfigs(topic.getClusterId(), topicName))
+        topicFuture
+            .thenCompose(
+                topic -> topicConfigManager.listTopicConfigs(topic.getClusterId(), topicName))
             .thenCombine(
-                topicFuture,
-                (configs, topic) -> GetTopicResponse.fromTopic(topic, configs));
+                topicFuture, (configs, topic) -> GetTopicResponse.fromTopic(topic, configs));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }

@@ -15,6 +15,10 @@
 
 package io.confluent.kafkarest.unit;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.google.protobuf.ByteString;
@@ -22,74 +26,66 @@ import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.DynamicMessage;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
-import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.converters.ProtobufConverter;
 import io.confluent.kafkarest.converters.SchemaConverter;
-import org.junit.Test;
-
 import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 public class ProtobufConverterTest {
 
   private static final String recordSchemaString =
-          "syntax = \"proto3\";\n" +
-          "\n" +
-          "option java_package = \"io.confluent.kafka.serializers.protobuf.test\";\n" +
-          "option java_outer_classname = \"TestMessageProtos\";\n" +
-          "\n" +
-          "import \"google/protobuf/descriptor.proto\";\n" +
-          "\n" +
-          "message TestMessage {\n" +
-          "    string test_string = 1 [json_name = \"test_str\"];\n" +
-          "    bool test_bool = 2;\n" +
-          "    bytes test_bytes = 3;\n" +
-          "    double test_double = 4;\n" +
-          "    float test_float = 5;\n" +
-          "    fixed32 test_fixed32 = 6;\n" +
-          "    fixed64 test_fixed64 = 7;\n" +
-          "    int32 test_int32 = 8;\n" +
-          "    int64 test_int64 = 9;\n" +
-          "    sfixed32 test_sfixed32 = 10;\n" +
-          "    sfixed64 test_sfixed64 = 11;\n" +
-          "    sint32 test_sint32 = 12;\n" +
-          "    sint64 test_sint64 = 13;\n" +
-          "    uint32 test_uint32 = 14;\n" +
-          "    uint64 test_uint64 = 15;\n" +
-          "}\n";
+      "syntax = \"proto3\";\n"
+          + "\n"
+          + "option java_package = \"io.confluent.kafka.serializers.protobuf.test\";\n"
+          + "option java_outer_classname = \"TestMessageProtos\";\n"
+          + "\n"
+          + "import \"google/protobuf/descriptor.proto\";\n"
+          + "\n"
+          + "message TestMessage {\n"
+          + "    string test_string = 1 [json_name = \"test_str\"];\n"
+          + "    bool test_bool = 2;\n"
+          + "    bytes test_bytes = 3;\n"
+          + "    double test_double = 4;\n"
+          + "    float test_float = 5;\n"
+          + "    fixed32 test_fixed32 = 6;\n"
+          + "    fixed64 test_fixed64 = 7;\n"
+          + "    int32 test_int32 = 8;\n"
+          + "    int64 test_int64 = 9;\n"
+          + "    sfixed32 test_sfixed32 = 10;\n"
+          + "    sfixed64 test_sfixed64 = 11;\n"
+          + "    sint32 test_sint32 = 12;\n"
+          + "    sint64 test_sint64 = 13;\n"
+          + "    uint32 test_uint32 = 14;\n"
+          + "    uint64 test_uint64 = 15;\n"
+          + "}\n";
 
   private static final ProtobufSchema recordSchema = new ProtobufSchema(recordSchemaString);
 
   private static final String arraySchemaString =
-          "syntax = \"proto3\";\n" +
-          "\n" +
-          "option java_package = \"io.confluent.kafka.serializers.protobuf.test\";\n" +
-          "option java_outer_classname = \"TestArrayProtos\";\n" +
-          "\n" +
-          "import \"google/protobuf/descriptor.proto\";\n" +
-          "\n" +
-          "message TestArray {\n" +
-          "    repeated string test_array = 1;\n" +
-          "}\n";
+      "syntax = \"proto3\";\n"
+          + "\n"
+          + "option java_package = \"io.confluent.kafka.serializers.protobuf.test\";\n"
+          + "option java_outer_classname = \"TestArrayProtos\";\n"
+          + "\n"
+          + "import \"google/protobuf/descriptor.proto\";\n"
+          + "\n"
+          + "message TestArray {\n"
+          + "    repeated string test_array = 1;\n"
+          + "}\n";
 
   private static final ProtobufSchema arraySchema = new ProtobufSchema(arraySchemaString);
 
   private static final String mapSchemaString =
-          "syntax = \"proto3\";\n" +
-          "\n" +
-          "option java_package = \"io.confluent.kafka.serializers.protobuf.test\";\n" +
-          "option java_outer_classname = \"TestMapProtos\";\n" +
-          "\n" +
-          "import \"google/protobuf/descriptor.proto\";\n" +
-          "\n" +
-          "message TestMap {\n" +
-          "    map<string, string> test_map = 1;\n" +
-          "}\n";
+      "syntax = \"proto3\";\n"
+          + "\n"
+          + "option java_package = \"io.confluent.kafka.serializers.protobuf.test\";\n"
+          + "option java_outer_classname = \"TestMapProtos\";\n"
+          + "\n"
+          + "import \"google/protobuf/descriptor.proto\";\n"
+          + "\n"
+          + "message TestMap {\n"
+          + "    map<string, string> test_map = 1;\n"
+          + "}\n";
 
   private static final ProtobufSchema mapSchema = new ProtobufSchema(mapSchemaString);
 

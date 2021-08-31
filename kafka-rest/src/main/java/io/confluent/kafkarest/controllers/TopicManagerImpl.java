@@ -54,7 +54,8 @@ final class TopicManagerImpl implements TopicManager {
 
   @Override
   public CompletableFuture<List<Topic>> listTopics(String clusterId) {
-    return clusterManager.getCluster(clusterId)
+    return clusterManager
+        .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenCompose(
             cluster -> KafkaFutures.toCompletableFuture(adminClient.listTopics().listings()))
@@ -71,7 +72,8 @@ final class TopicManagerImpl implements TopicManager {
 
   @Override
   public CompletableFuture<List<Topic>> listLocalTopics() {
-    return clusterManager.getLocalCluster()
+    return clusterManager
+        .getLocalCluster()
         .thenCompose(
             cluster ->
                 KafkaFutures.toCompletableFuture(adminClient.listTopics().listings())
@@ -92,7 +94,8 @@ final class TopicManagerImpl implements TopicManager {
   public CompletableFuture<Optional<Topic>> getTopic(String clusterId, String topicName) {
     requireNonNull(topicName);
 
-    return clusterManager.getCluster(clusterId)
+    return clusterManager
+        .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenCompose(cluster -> describeTopics(clusterId, singletonList(topicName)))
         .thenApply(
@@ -104,8 +107,7 @@ final class TopicManagerImpl implements TopicManager {
                 throw new IllegalStateException(
                     String.format(
                         "More than one topic exists with name %s in cluster %s.",
-                        topicName,
-                        clusterId));
+                        topicName, clusterId));
               }
               return Optional.of(topics.get(0));
             });
@@ -115,7 +117,8 @@ final class TopicManagerImpl implements TopicManager {
   public CompletableFuture<Optional<Topic>> getLocalTopic(String topicName) {
     requireNonNull(topicName);
 
-    return clusterManager.getLocalCluster()
+    return clusterManager
+        .getLocalCluster()
         .thenCompose(cluster -> describeTopics(cluster.getClusterId(), singletonList(topicName)))
         .thenApply(
             topics -> {
@@ -182,11 +185,13 @@ final class TopicManagerImpl implements TopicManager {
 
     // A new topic can be created with either uniform replication according to the given partitions
     // count and replication factor, or explicitly specified partition-to-replicas assignments.
-    NewTopic createTopicRequest = replicasAssignments.isEmpty()
-        ? new NewTopic(topicName, partitionsCount, replicationFactor).configs(nullableConfigs)
-        : new NewTopic(topicName, replicasAssignments).configs(nullableConfigs);
+    NewTopic createTopicRequest =
+        replicasAssignments.isEmpty()
+            ? new NewTopic(topicName, partitionsCount, replicationFactor).configs(nullableConfigs)
+            : new NewTopic(topicName, replicasAssignments).configs(nullableConfigs);
 
-    return clusterManager.getCluster(clusterId)
+    return clusterManager
+        .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenCompose(
             cluster ->
@@ -198,7 +203,8 @@ final class TopicManagerImpl implements TopicManager {
   public CompletableFuture<Void> deleteTopic(String clusterId, String topicName) {
     requireNonNull(topicName);
 
-    return clusterManager.getCluster(clusterId)
+    return clusterManager
+        .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenCompose(
             cluster ->

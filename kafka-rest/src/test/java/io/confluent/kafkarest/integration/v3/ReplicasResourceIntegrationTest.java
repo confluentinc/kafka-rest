@@ -59,8 +59,10 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
                     ResourceCollection.Metadata.builder()
                         .setSelf(
                             baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/topics/" + TOPIC_NAME
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/topics/"
+                                + TOPIC_NAME
                                 + "/partitions/0/replicas")
                         .build())
                 .setData(
@@ -70,12 +72,16 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
                                 Resource.Metadata.builder()
                                     .setSelf(
                                         baseUrl
-                                            + "/v3/clusters/" + clusterId
-                                            + "/topics/" + TOPIC_NAME
+                                            + "/v3/clusters/"
+                                            + clusterId
+                                            + "/topics/"
+                                            + TOPIC_NAME
                                             + "/partitions/0/replicas/0")
                                     .setResourceName(
-                                        "crn:///kafka=" + clusterId
-                                            + "/topic=" + TOPIC_NAME
+                                        "crn:///kafka="
+                                            + clusterId
+                                            + "/topic="
+                                            + TOPIC_NAME
                                             + "/partition=0/replica=0")
                                     .build())
                             .setClusterId(clusterId)
@@ -143,12 +149,16 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
                     Resource.Metadata.builder()
                         .setSelf(
                             baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/topics/" + TOPIC_NAME
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/topics/"
+                                + TOPIC_NAME
                                 + "/partitions/0/replicas/0")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
-                                + "/topic=" + TOPIC_NAME
+                            "crn:///kafka="
+                                + clusterId
+                                + "/topic="
+                                + TOPIC_NAME
                                 + "/partition=0/replica=0")
                         .build())
                 .setClusterId(clusterId)
@@ -178,7 +188,11 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request(
-            "/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/0/replicas/100")
+                "/v3/clusters/"
+                    + clusterId
+                    + "/topics/"
+                    + TOPIC_NAME
+                    + "/partitions/0/replicas/100")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -190,7 +204,11 @@ public class ReplicasResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request(
-            "/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/partitions/100/replicas/0")
+                "/v3/clusters/"
+                    + clusterId
+                    + "/topics/"
+                    + TOPIC_NAME
+                    + "/partitions/100/replicas/0")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());

@@ -24,14 +24,13 @@ import org.apache.kafka.clients.admin.ConfigEntry;
  *
  * @see org.apache.kafka.clients.admin.ConfigEntry.ConfigSynonym
  * @see <a href=
- *      https://cwiki.apache.org/confluence/display/KAFKA/KIP-226+-+Dynamic+Broker+Configuration">
- *      KIP-226 - Dynamic Broker Configuration</a>
+ *     https://cwiki.apache.org/confluence/display/KAFKA/KIP-226+-+Dynamic+Broker+Configuration">
+ *     KIP-226 - Dynamic Broker Configuration</a>
  */
 @AutoValue
 public abstract class ConfigSynonym {
 
-  ConfigSynonym() {
-  }
+  ConfigSynonym() {}
 
   public abstract String getName();
 

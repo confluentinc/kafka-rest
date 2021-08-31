@@ -31,9 +31,7 @@ import javax.validation.constraints.NotEmpty;
 
 public final class BinaryPartitionProduceRequest {
 
-  @NotEmpty
-  @Nullable
-  private final List<BinaryPartitionProduceRecord> records;
+  @NotEmpty @Nullable private final List<BinaryPartitionProduceRecord> records;
 
   @JsonCreator
   private BinaryPartitionProduceRequest(
@@ -41,8 +39,7 @@ public final class BinaryPartitionProduceRequest {
       @JsonProperty("key_schema") @Nullable String keySchema,
       @JsonProperty("key_schema_id") @Nullable Integer keySchemaId,
       @JsonProperty("value_schema") @Nullable String valueSchema,
-      @JsonProperty("value_schema_id") @Nullable Integer valueSchemaId
-  ) {
+      @JsonProperty("value_schema_id") @Nullable Integer valueSchemaId) {
     this.records = records;
   }
 
@@ -97,25 +94,20 @@ public final class BinaryPartitionProduceRequest {
 
   @Override
   public String toString() {
-    return new StringJoiner(
-        ", ", BinaryPartitionProduceRequest.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", BinaryPartitionProduceRequest.class.getSimpleName() + "[", "]")
         .add("records=" + records)
         .toString();
   }
 
   public static final class BinaryPartitionProduceRecord {
 
-    @Nullable
-    private final byte[] key;
+    @Nullable private final byte[] key;
 
-    @Nullable
-    private final byte[] value;
+    @Nullable private final byte[] value;
 
     @JsonCreator
     public BinaryPartitionProduceRecord(
-        @JsonProperty("key") @Nullable String key,
-        @JsonProperty("value") @Nullable String value
-    ) {
+        @JsonProperty("key") @Nullable String key, @JsonProperty("value") @Nullable String value) {
       try {
         this.key = (key != null) ? EntityUtils.parseBase64Binary(key) : null;
       } catch (IllegalArgumentException e) {
@@ -161,8 +153,7 @@ public final class BinaryPartitionProduceRequest {
 
     @Override
     public String toString() {
-      return new StringJoiner(
-          ", ", BinaryPartitionProduceRecord.class.getSimpleName() + "[", "]")
+      return new StringJoiner(", ", BinaryPartitionProduceRecord.class.getSimpleName() + "[", "]")
           .add("key=" + Arrays.toString(key))
           .add("value=" + Arrays.toString(value))
           .toString();

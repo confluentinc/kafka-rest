@@ -24,8 +24,7 @@ import io.confluent.kafkarest.entities.ConsumerGroup.State;
 @AutoValue
 public abstract class ConsumerGroupData extends Resource {
 
-  ConsumerGroupData() {
-  }
+  ConsumerGroupData() {}
 
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
@@ -75,8 +74,7 @@ public abstract class ConsumerGroupData extends Resource {
       @JsonProperty("state") State state,
       @JsonProperty("coordinator") Relationship coordinator,
       @JsonProperty("consumers") Relationship consumers,
-      @JsonProperty("lag_summary") Relationship lagSummary
-  ) {
+      @JsonProperty("lag_summary") Relationship lagSummary) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -94,8 +92,7 @@ public abstract class ConsumerGroupData extends Resource {
   @AutoValue.Builder
   public abstract static class Builder extends Resource.Builder<Builder> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 

@@ -38,21 +38,20 @@ final class ReassignmentManagerImpl implements ReassignmentManager {
   private final ClusterManager clusterManager;
 
   @Inject
-  ReassignmentManagerImpl(Admin adminClient,
-      ClusterManager clusterManager) {
+  ReassignmentManagerImpl(Admin adminClient, ClusterManager clusterManager) {
     this.adminClient = requireNonNull(adminClient);
     this.clusterManager = requireNonNull(clusterManager);
   }
 
   @Override
-  public CompletableFuture<List<Reassignment>> listReassignments(
-      String clusterId) {
-    return clusterManager.getCluster(clusterId)
-        .thenApply(cluster -> checkEntityExists(cluster,
-            "Cluster %s cannot be found.", clusterId))
+  public CompletableFuture<List<Reassignment>> listReassignments(String clusterId) {
+    return clusterManager
+        .getCluster(clusterId)
+        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenCompose(
-            cluster -> KafkaFutures
-                .toCompletableFuture(adminClient.listPartitionReassignments().reassignments()))
+            cluster ->
+                KafkaFutures.toCompletableFuture(
+                    adminClient.listPartitionReassignments().reassignments()))
         .thenApply(
             reassignments -> {
               if (reassignments == null) {
@@ -71,26 +70,30 @@ final class ReassignmentManagerImpl implements ReassignmentManager {
   public CompletableFuture<List<Reassignment>> searchReassignmentsByTopicName(
       String clusterId, String topicName) {
     return listReassignments(clusterId)
-        .thenApply(reassignments -> reassignments.stream()
-            .filter(reassignment -> reassignment.getTopicName().equals(topicName))
-            .sorted(
-                Comparator.comparing(Reassignment::getTopicName)
-                    .thenComparing(Reassignment::getPartitionId))
-            .collect(Collectors.toList()));
+        .thenApply(
+            reassignments ->
+                reassignments.stream()
+                    .filter(reassignment -> reassignment.getTopicName().equals(topicName))
+                    .sorted(
+                        Comparator.comparing(Reassignment::getTopicName)
+                            .thenComparing(Reassignment::getPartitionId))
+                    .collect(Collectors.toList()));
   }
 
   @Override
   public CompletableFuture<Optional<Reassignment>> getReassignment(
       String clusterId, String topicName, Integer partitionId) {
     return listReassignments(clusterId)
-        .thenApply(reassignments -> reassignments.stream()
-            .filter(reassignment -> reassignment.getTopicName().equals(topicName))
-            .filter(reassignment -> reassignment.getPartitionId() == partitionId)
-            .findAny());
+        .thenApply(
+            reassignments ->
+                reassignments.stream()
+                    .filter(reassignment -> reassignment.getTopicName().equals(topicName))
+                    .filter(reassignment -> reassignment.getPartitionId() == partitionId)
+                    .findAny());
   }
 
-  private static Reassignment toReassignment(String clusterId,
-      Map.Entry<TopicPartition, PartitionReassignment> reassignment) {
+  private static Reassignment toReassignment(
+      String clusterId, Map.Entry<TopicPartition, PartitionReassignment> reassignment) {
     return Reassignment.create(
         clusterId,
         reassignment.getKey().topic(),

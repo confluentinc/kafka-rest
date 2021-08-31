@@ -23,8 +23,7 @@ import io.confluent.kafkarest.entities.PartitionReplica;
 @AutoValue
 public abstract class ReplicaData extends Resource {
 
-  ReplicaData() {
-  }
+  ReplicaData() {}
 
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
@@ -71,8 +70,7 @@ public abstract class ReplicaData extends Resource {
       @JsonProperty("broker_id") int brokerId,
       @JsonProperty("is_leader") boolean isLeader,
       @JsonProperty("is_in_sync") boolean isInSync,
-      @JsonProperty("broker") Relationship broker
-  ) {
+      @JsonProperty("broker") Relationship broker) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -89,8 +87,7 @@ public abstract class ReplicaData extends Resource {
   @AutoValue.Builder
   public abstract static class Builder extends Resource.Builder<Builder> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 

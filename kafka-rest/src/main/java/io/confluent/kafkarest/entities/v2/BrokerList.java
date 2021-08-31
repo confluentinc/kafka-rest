@@ -25,9 +25,7 @@ import javax.validation.constraints.NotNull;
 
 public final class BrokerList {
 
-  @NotNull
-  @Nullable
-  private final List<Integer> brokers;
+  @NotNull @Nullable private final List<Integer> brokers;
 
   @JsonCreator
   public BrokerList(@JsonProperty("brokers") @Nullable List<Integer> brokers) {

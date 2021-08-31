@@ -5,6 +5,8 @@
 
 <suppressions>
 
+    <suppress checks="SingleLineJavadoc" />
+
     <!-- TODO -->
     <suppress
             checks="(BooleanExpressionComplexity)"

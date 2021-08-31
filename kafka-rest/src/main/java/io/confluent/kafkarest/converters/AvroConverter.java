@@ -22,9 +22,7 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Provides conversion of JSON to/from Avro.
- */
+/** Provides conversion of JSON to/from Avro. */
 public final class AvroConverter implements SchemaConverter {
 
   private static final Logger log = LoggerFactory.getLogger(AvroConverter.class);

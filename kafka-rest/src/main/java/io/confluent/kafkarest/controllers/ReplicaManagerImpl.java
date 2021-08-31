@@ -50,12 +50,16 @@ final class ReplicaManagerImpl implements ReplicaManager {
   @Override
   public CompletableFuture<List<PartitionReplica>> listReplicas(
       String clusterId, String topicName, int partitionId) {
-    return partitionManager.getPartition(clusterId, topicName, partitionId)
-        .thenApply(partition ->
-            checkEntityExists(
-                partition,
-                "Partition %d of topic %s could not be found on cluster %s.",
-                partitionId, topicName, clusterId))
+    return partitionManager
+        .getPartition(clusterId, topicName, partitionId)
+        .thenApply(
+            partition ->
+                checkEntityExists(
+                    partition,
+                    "Partition %d of topic %s could not be found on cluster %s.",
+                    partitionId,
+                    topicName,
+                    clusterId))
         .thenApply(Partition::getReplicas);
   }
 
@@ -69,7 +73,8 @@ final class ReplicaManagerImpl implements ReplicaManager {
   @Override
   public CompletableFuture<List<PartitionReplica>> searchReplicasByBrokerId(
       String clusterId, int brokerId) {
-    return brokerManager.getBroker(clusterId, brokerId)
+    return brokerManager
+        .getBroker(clusterId, brokerId)
         .thenApply(broker -> checkEntityExists(broker, "Broker %d cannot be found.", brokerId))
         .thenCompose(
             broker -> {

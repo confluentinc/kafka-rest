@@ -83,8 +83,7 @@ public abstract class StreamingResponse<T> {
               response -> ((ErrorMessage) response.getEntity()).getMessage())
           .build();
 
-  StreamingResponse() {
-  }
+  StreamingResponse() {}
 
   public static <T> StreamingResponse<T> from(MappingIterator<T> input) {
     return new InputStreamingResponse<>(input);
@@ -233,8 +232,7 @@ public abstract class StreamingResponse<T> {
   @AutoValue
   abstract static class ResultHolder<T> extends ResultOrError {
 
-    ResultHolder() {
-    }
+    ResultHolder() {}
 
     @JsonValue
     abstract T getResult();
@@ -243,8 +241,7 @@ public abstract class StreamingResponse<T> {
   @AutoValue
   abstract static class ErrorHolder extends ResultOrError {
 
-    ErrorHolder() {
-    }
+    ErrorHolder() {}
 
     @JsonValue
     abstract ErrorResponse getError();
@@ -283,8 +280,7 @@ public abstract class StreamingResponse<T> {
     private final ErrorMapper<Throwable> defaultMapper;
 
     private CompositeErrorMapper(
-        List<ErrorMapper<?>> mappers,
-        ErrorMapper<Throwable> defaultMapper) {
+        List<ErrorMapper<?>> mappers, ErrorMapper<Throwable> defaultMapper) {
       this.mappers = requireNonNull(mappers);
       this.defaultMapper = requireNonNull(defaultMapper);
     }
@@ -302,8 +298,7 @@ public abstract class StreamingResponse<T> {
       private final ImmutableList.Builder<ErrorMapper<?>> mappers = ImmutableList.builder();
       private ErrorMapper<Throwable> defaultMapper;
 
-      private Builder() {
-      }
+      private Builder() {}
 
       private <T extends Throwable> Builder putMapper(
           Class<T> mappedType,

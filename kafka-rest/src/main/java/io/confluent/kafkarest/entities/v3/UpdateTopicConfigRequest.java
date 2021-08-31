@@ -24,8 +24,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class UpdateTopicConfigRequest {
 
-  UpdateTopicConfigRequest() {
-  }
+  UpdateTopicConfigRequest() {}
 
   @JsonProperty("value")
   public abstract Optional<String> getValue();
