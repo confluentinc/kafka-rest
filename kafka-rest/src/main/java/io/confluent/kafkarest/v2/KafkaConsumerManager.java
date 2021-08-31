@@ -173,19 +173,7 @@ public class KafkaConsumerManager {
     // local name) and the ID (consumer.id setting in the consumer). Otherwise, the 'name' field
     // only applies to the local name. When we replace with the new consumer, we may want to
     // provide an alternate app name, or just reuse the name.
-    String name = instanceConfig.getName();
-    if (instanceConfig.getId() != null) { // Explicit ID request always overrides name
-      name = instanceConfig.getId();
-    }
-    if (name == null) {
-      name = "rest-consumer-";
-      String serverId = this.config.getString(KafkaRestConfig.ID_CONFIG);
-      if (!serverId.isEmpty()) {
-        name += serverId + "-";
-      }
-      name += UUID.randomUUID().toString();
-    }
-
+    String name = getConsumerInstanceName(instanceConfig);
     ConsumerInstanceId cid = new ConsumerInstanceId(group, name);
     // Perform this check before
     synchronized (this) {
@@ -202,59 +190,7 @@ public class KafkaConsumerManager {
     try {
       log.debug("Creating consumer " + name + " in group " + group);
 
-      // Note the ordering here. We want to allow overrides, but almost all the
-      // consumer-specific settings don't make sense to override globally (e.g. group ID, consumer
-      // ID), and others we want to ensure get overridden (e.g. consumer.timeout.ms, which we
-      // intentionally name differently in our own configs).
-      // Properties props = (Properties) config.getOriginalProperties().clone();
-      Properties props = config.getConsumerProperties();
-      props.setProperty("group.id", group);
-      // This ID we pass here has to be unique, only pass a value along if the deprecated ID field
-      // was passed in. This generally shouldn't be used, but is maintained for compatibility.
-      if (instanceConfig.getId() != null) {
-        props.setProperty("consumer.id", instanceConfig.getId());
-      }
-      if (instanceConfig.getAutoCommitEnable() != null) {
-        props.setProperty("enable.auto.commit", instanceConfig.getAutoCommitEnable());
-      }
-      if (instanceConfig.getAutoOffsetReset() != null) {
-        props.setProperty("auto.offset.reset", instanceConfig.getAutoOffsetReset());
-      }
-      // override request.timeout.ms to the default
-      // the consumer.request.timeout.ms setting given by the user denotes
-      // how much time the proxy should wait before returning a response
-      // and should not be propagated to the consumer
-      props.setProperty("request.timeout.ms", "30000");
-
-      switch (instanceConfig.getFormat()) {
-        case AVRO:
-          props.put("key.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
-          props.put("value.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
-          break;
-        case JSONSCHEMA:
-          props.put(
-              "key.deserializer",
-              "io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer");
-          props.put(
-              "value.deserializer",
-              "io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer");
-          break;
-        case PROTOBUF:
-          props.put(
-              "key.deserializer",
-              "io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer");
-          props.put(
-              "value.deserializer",
-              "io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer");
-          break;
-        case JSON:
-        case BINARY:
-        default:
-          props.put(
-              "key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
-          props.put(
-              "value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
-      }
+      Properties props = getConsumerInstanceProperties(group, instanceConfig);
 
       Consumer consumer;
       try {
@@ -280,6 +216,80 @@ public class KafkaConsumerManager {
         }
       }
     }
+  }
+
+  private String getConsumerInstanceName(ConsumerInstanceConfig instanceConfig) {
+    if (instanceConfig.getId() != null) { // Explicit ID request always overrides name
+      return instanceConfig.getId();
+    }
+    if (instanceConfig.getName() != null) {
+      return instanceConfig.getName();
+    }
+    StringBuilder name = new StringBuilder("rest-consumer-");
+    String serverId = this.config.getString(KafkaRestConfig.ID_CONFIG);
+    if (!serverId.isEmpty()) {
+      name.append(serverId + "-");
+    }
+    name.append(UUID.randomUUID().toString());
+    return name.toString();
+  }
+
+  private Properties getConsumerInstanceProperties(
+      String group, ConsumerInstanceConfig instanceConfig) {
+    // Note the ordering here. We want to allow overrides, but almost all the
+    // consumer-specific settings don't make sense to override globally (e.g. group ID, consumer
+    // ID), and others we want to ensure get overridden (e.g. consumer.timeout.ms, which we
+    // intentionally name differently in our own configs).
+    // Properties props = (Properties) config.getOriginalProperties().clone();
+    Properties props = config.getConsumerProperties();
+    props.setProperty("group.id", group);
+    // This ID we pass here has to be unique, only pass a value along if the deprecated ID field
+    // was passed in. This generally shouldn't be used, but is maintained for compatibility.
+    if (instanceConfig.getId() != null) {
+      props.setProperty("consumer.id", instanceConfig.getId());
+    }
+    if (instanceConfig.getAutoCommitEnable() != null) {
+      props.setProperty("enable.auto.commit", instanceConfig.getAutoCommitEnable());
+    }
+    if (instanceConfig.getAutoOffsetReset() != null) {
+      props.setProperty("auto.offset.reset", instanceConfig.getAutoOffsetReset());
+    }
+    // override request.timeout.ms to the default
+    // the consumer.request.timeout.ms setting given by the user denotes
+    // how much time the proxy should wait before returning a response
+    // and should not be propagated to the consumer
+    props.setProperty("request.timeout.ms", "30000");
+
+    switch (instanceConfig.getFormat()) {
+      case AVRO:
+        props.put("key.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
+        props.put("value.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
+        break;
+      case JSONSCHEMA:
+        props.put(
+            "key.deserializer", "io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer");
+        props.put(
+            "value.deserializer",
+            "io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer");
+        break;
+      case PROTOBUF:
+        props.put(
+            "key.deserializer",
+            "io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer");
+        props.put(
+            "value.deserializer",
+            "io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer");
+        break;
+      case JSON:
+      case BINARY:
+      default:
+        props.put(
+            "key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
+        props.put(
+            "value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
+    }
+
+    return props;
   }
 
   private KafkaConsumerState createConsumerState(
