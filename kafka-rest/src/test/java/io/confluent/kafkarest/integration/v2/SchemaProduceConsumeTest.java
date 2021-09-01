@@ -53,11 +53,13 @@ public abstract class SchemaProduceConsumeTest {
 
   @Test
   public void produceThenConsume_returnsExactlyProduced() throws Exception {
-    testEnv.kafkaCluster()
+    testEnv
+        .kafkaCluster()
         .createTopic(TOPIC, /* numPartitions= */ 1, /* replicationFactor= */ (short) 3);
 
     Response createConsumerInstanceResponse =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path(String.format("/consumers/%s", CONSUMER_GROUP))
             .request()
@@ -79,29 +81,29 @@ public abstract class SchemaProduceConsumeTest {
         createConsumerInstanceResponse.readEntity(CreateConsumerInstanceResponse.class);
 
     Response subscribeResponse =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path(
                 String.format(
                     "/consumers/%s/instances/%s/subscription",
-                    CONSUMER_GROUP,
-                    createConsumerInstance.getInstanceId()))
+                    CONSUMER_GROUP, createConsumerInstance.getInstanceId()))
             .request()
             .post(
                 Entity.entity(
-                    new ConsumerSubscriptionRecord(
-                        singletonList(TOPIC), null), Versions.KAFKA_V2_JSON));
+                    new ConsumerSubscriptionRecord(singletonList(TOPIC), null),
+                    Versions.KAFKA_V2_JSON));
 
     assertEquals(Status.NO_CONTENT.getStatusCode(), subscribeResponse.getStatus());
 
     // Needs to consume empty once before producing.
-    testEnv.kafkaRest()
+    testEnv
+        .kafkaRest()
         .target()
         .path(
             String.format(
                 "/consumers/%s/instances/%s/records",
-                CONSUMER_GROUP,
-                createConsumerInstance.getInstanceId()))
+                CONSUMER_GROUP, createConsumerInstance.getInstanceId()))
         .request()
         .accept(getContentType())
         .get();
@@ -115,7 +117,8 @@ public abstract class SchemaProduceConsumeTest {
             null);
 
     ProduceResponse produceResponse =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path(String.format("/topics/%s", TOPIC))
             .request()
@@ -124,13 +127,13 @@ public abstract class SchemaProduceConsumeTest {
     assertEquals(Status.OK, produceResponse.getRequestStatus());
 
     Response readRecordsResponse =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path(
                 String.format(
                     "/consumers/%s/instances/%s/records",
-                    CONSUMER_GROUP,
-                    createConsumerInstance.getInstanceId()))
+                    CONSUMER_GROUP, createConsumerInstance.getInstanceId()))
             .request()
             .accept(getContentType())
             .get();
@@ -138,8 +141,7 @@ public abstract class SchemaProduceConsumeTest {
     assertEquals(Status.OK.getStatusCode(), readRecordsResponse.getStatus());
 
     List<SchemaConsumerRecord> readRecords =
-        readRecordsResponse.readEntity(new GenericType<List<SchemaConsumerRecord>>() {
-        });
+        readRecordsResponse.readEntity(new GenericType<List<SchemaConsumerRecord>>() {});
 
     assertMapEquals(producedToMap(getProduceRecords()), consumedToMap(readRecords));
   }
@@ -183,9 +185,7 @@ public abstract class SchemaProduceConsumeTest {
       fail(
           String.format(
               "Expected and actual are not equal. Extra: %s, Missing: %s, Different: %s",
-              extra,
-              missing,
-              different));
+              extra, missing, different));
     }
   }
 }

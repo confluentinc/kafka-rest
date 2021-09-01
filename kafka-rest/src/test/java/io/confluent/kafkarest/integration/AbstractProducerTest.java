@@ -40,9 +40,9 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
       String valueDeserializerClassName,
       List<PartitionOffset> offsetResponses,
       boolean matchPartitions,
-      List<ProduceRecord<K, V>> expected
-  ) {
-    testProduceToTopic(topicName,
+      List<ProduceRecord<K, V>> expected) {
+    testProduceToTopic(
+        topicName,
         request,
         keyDeserializerClassName,
         valueDeserializerClassName,
@@ -60,10 +60,10 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
       List<PartitionOffset> offsetResponses,
       boolean matchPartitions,
       Map<String, String> queryParams,
-      List<ProduceRecord<K, V>> expected
-  ) {
-    Response response = request("/topics/" + topicName, queryParams)
-        .post(Entity.entity(request, getEmbeddedContentType()));
+      List<ProduceRecord<K, V>> expected) {
+    Response response =
+        request("/topics/" + topicName, queryParams)
+            .post(Entity.entity(request, getEmbeddedContentType()));
     assertOKResponse(response, Versions.KAFKA_V2_JSON);
     final ProduceResponse produceResponse =
         TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
@@ -71,9 +71,14 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
       TestUtils.assertPartitionsEqual(offsetResponses, produceResponse.getOffsets());
     }
     TestUtils.assertPartitionOffsetsEqual(offsetResponses, produceResponse.getOffsets());
-    TestUtils.assertTopicContains(plaintextBrokerList, topicName,
-        expected, null,
-        keyDeserializerClassName, valueDeserializerClassName, true);
+    TestUtils.assertTopicContains(
+        plaintextBrokerList,
+        topicName,
+        expected,
+        null,
+        keyDeserializerClassName,
+        valueDeserializerClassName,
+        true);
   }
 
   protected <K, V> void testProduceToPartition(
@@ -83,10 +88,16 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
       String keySerializerClassName,
       String valueSerializerClassName,
       List<PartitionOffset> offsetResponse,
-      List<ProduceRecord<K, V>> expected
-  ) {
-    testProduceToPartition(topicName, partition, request, keySerializerClassName,
-        valueSerializerClassName, offsetResponse, Collections.emptyMap(), expected);
+      List<ProduceRecord<K, V>> expected) {
+    testProduceToPartition(
+        topicName,
+        partition,
+        request,
+        keySerializerClassName,
+        valueSerializerClassName,
+        offsetResponse,
+        Collections.emptyMap(),
+        expected);
   }
 
   protected <K, V> void testProduceToPartition(
@@ -97,17 +108,22 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
       String valueSerializerClassName,
       List<PartitionOffset> offsetResponse,
       Map<String, String> queryParams,
-      List<ProduceRecord<K, V>> expected
-  ) {
-    Response response = request("/topics/" + topicName + "/partitions/0", queryParams)
-        .post(Entity.entity(request, getEmbeddedContentType()));
+      List<ProduceRecord<K, V>> expected) {
+    Response response =
+        request("/topics/" + topicName + "/partitions/0", queryParams)
+            .post(Entity.entity(request, getEmbeddedContentType()));
     assertOKResponse(response, Versions.KAFKA_V2_JSON);
-    final ProduceResponse poffsetResponse
-        = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
+    final ProduceResponse poffsetResponse =
+        TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
     assertEquals(offsetResponse, poffsetResponse.getOffsets());
-    TestUtils.assertTopicContains(plaintextBrokerList, topicName,
-        expected, partition,
-        keySerializerClassName, valueSerializerClassName, true);
+    TestUtils.assertTopicContains(
+        plaintextBrokerList,
+        topicName,
+        expected,
+        partition,
+        keySerializerClassName,
+        valueSerializerClassName,
+        true);
   }
 
   protected void testProduceToTopicFails(String topicName, TopicRequestT request) {
@@ -115,12 +131,10 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
   }
 
   protected void testProduceToTopicFails(
-      String topicName,
-      TopicRequestT request,
-      Map<String, String> queryParams
-  ) {
-    Response response = request("/topics/" + topicName, queryParams)
-        .post(Entity.entity(request, Versions.KAFKA_V2_JSON_BINARY));
+      String topicName, TopicRequestT request, Map<String, String> queryParams) {
+    Response response =
+        request("/topics/" + topicName, queryParams)
+            .post(Entity.entity(request, Versions.KAFKA_V2_JSON_BINARY));
     assertOKResponse(response, Versions.KAFKA_V2_JSON);
     final ProduceResponse produceResponse =
         TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
@@ -130,8 +144,7 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
   }
 
   protected void testProduceToAuthorizationError(String topicName, TopicRequestT request) {
-    testProduceToAuthorizationError(
-        topicName, request, Versions.KAFKA_V2_JSON_BINARY);
+    testProduceToAuthorizationError(topicName, request, Versions.KAFKA_V2_JSON_BINARY);
   }
 
   protected void testProduceToAuthorizationError(
@@ -143,10 +156,9 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
       String topicName,
       TopicRequestT request,
       String contentType,
-      Map<String, String> queryParams
-  ) {
-    Response response = request("/topics/" + topicName, queryParams)
-        .post(Entity.entity(request, contentType));
+      Map<String, String> queryParams) {
+    Response response =
+        request("/topics/" + topicName, queryParams).post(Entity.entity(request, contentType));
 
     assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response.getStatus());
     final ProduceResponse produceResponse =

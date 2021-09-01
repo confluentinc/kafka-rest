@@ -48,90 +48,85 @@ public class ConsumerManagerImplTest {
 
   private static final Broker BROKER_1 =
       Broker.create(
-          CLUSTER_ID,
-          /* brokerId= */ 1,
-          /* host= */ "1.2.3.4",
-          /* port= */ 1000,
-          /* rack= */ null);
+          CLUSTER_ID, /* brokerId= */ 1, /* host= */ "1.2.3.4", /* port= */ 1000, /* rack= */ null);
 
-  private static final Consumer[] CONSUMERS =
-      {
-          Consumer.builder()
-              .setClusterId(CLUSTER_ID)
-              .setConsumerGroupId("consumer-group-1")
-              .setConsumerId("consumer-1")
-              .setClientId("client-1")
-              .setInstanceId("instance-1")
-              .setHost("11.12.12.14")
-              .setAssignedPartitions(
-                  Arrays.asList(
-                      Partition.create(
-                          CLUSTER_ID,
-                          /* topicName= */ "topic-1",
-                          /* partitionId= */ 1,
-                          /* replicas= */ emptyList()),
-                      Partition.create(
-                          CLUSTER_ID,
-                          /* topicName= */ "topic-2",
-                          /* partitionId= */ 2,
-                          /* replicas= */ emptyList()),
-                      Partition.create(
-                          CLUSTER_ID,
-                          /* topicName= */ "topic-3",
-                          /* partitionId= */ 3,
-                          /* replicas= */ emptyList())))
-              .build(),
-          Consumer.builder()
-              .setClusterId(CLUSTER_ID)
-              .setConsumerGroupId("consumer-group-1")
-              .setConsumerId("consumer-2")
-              .setClientId("client-2")
-              .setInstanceId("instance-2")
-              .setHost("21.22.23.24")
-              .setAssignedPartitions(
-                  Arrays.asList(
-                      Partition.create(
-                          CLUSTER_ID,
-                          /* topicName= */ "topic-1",
-                          /* partitionId= */ 4,
-                          /* replicas= */ emptyList()),
-                      Partition.create(
-                          CLUSTER_ID,
-                          /* topicName= */ "topic-2",
-                          /* partitionId= */ 5,
-                          /* replicas= */ emptyList()),
-                      Partition.create(
-                          CLUSTER_ID,
-                          /* topicName= */ "topic-3",
-                          /* partitionId= */ 6,
-                          /* replicas= */ emptyList())))
-              .build(),
-          Consumer.builder()
-              .setClusterId(CLUSTER_ID)
-              .setConsumerGroupId("consumer-group-1")
-              .setConsumerId("consumer-3")
-              .setClientId("client-3")
-              .setInstanceId("instance-3")
-              .setHost("31.32.33.34")
-              .setAssignedPartitions(
-                  Arrays.asList(
-                      Partition.create(
-                          CLUSTER_ID,
-                          /* topicName= */ "topic-1",
-                          /* partitionId= */ 7,
-                          /* replicas= */ emptyList()),
-                      Partition.create(
-                          CLUSTER_ID,
-                          /* topicName= */ "topic-2",
-                          /* partitionId= */ 8,
-                          /* replicas= */ emptyList()),
-                      Partition.create(
-                          CLUSTER_ID,
-                          /* topicName= */ "topic-3",
-                          /* partitionId= */ 9,
-                          /* replicas= */ emptyList())))
-              .build()
-      };
+  private static final Consumer[] CONSUMERS = {
+    Consumer.builder()
+        .setClusterId(CLUSTER_ID)
+        .setConsumerGroupId("consumer-group-1")
+        .setConsumerId("consumer-1")
+        .setClientId("client-1")
+        .setInstanceId("instance-1")
+        .setHost("11.12.12.14")
+        .setAssignedPartitions(
+            Arrays.asList(
+                Partition.create(
+                    CLUSTER_ID,
+                    /* topicName= */ "topic-1",
+                    /* partitionId= */ 1,
+                    /* replicas= */ emptyList()),
+                Partition.create(
+                    CLUSTER_ID,
+                    /* topicName= */ "topic-2",
+                    /* partitionId= */ 2,
+                    /* replicas= */ emptyList()),
+                Partition.create(
+                    CLUSTER_ID,
+                    /* topicName= */ "topic-3",
+                    /* partitionId= */ 3,
+                    /* replicas= */ emptyList())))
+        .build(),
+    Consumer.builder()
+        .setClusterId(CLUSTER_ID)
+        .setConsumerGroupId("consumer-group-1")
+        .setConsumerId("consumer-2")
+        .setClientId("client-2")
+        .setInstanceId("instance-2")
+        .setHost("21.22.23.24")
+        .setAssignedPartitions(
+            Arrays.asList(
+                Partition.create(
+                    CLUSTER_ID,
+                    /* topicName= */ "topic-1",
+                    /* partitionId= */ 4,
+                    /* replicas= */ emptyList()),
+                Partition.create(
+                    CLUSTER_ID,
+                    /* topicName= */ "topic-2",
+                    /* partitionId= */ 5,
+                    /* replicas= */ emptyList()),
+                Partition.create(
+                    CLUSTER_ID,
+                    /* topicName= */ "topic-3",
+                    /* partitionId= */ 6,
+                    /* replicas= */ emptyList())))
+        .build(),
+    Consumer.builder()
+        .setClusterId(CLUSTER_ID)
+        .setConsumerGroupId("consumer-group-1")
+        .setConsumerId("consumer-3")
+        .setClientId("client-3")
+        .setInstanceId("instance-3")
+        .setHost("31.32.33.34")
+        .setAssignedPartitions(
+            Arrays.asList(
+                Partition.create(
+                    CLUSTER_ID,
+                    /* topicName= */ "topic-1",
+                    /* partitionId= */ 7,
+                    /* replicas= */ emptyList()),
+                Partition.create(
+                    CLUSTER_ID,
+                    /* topicName= */ "topic-2",
+                    /* partitionId= */ 8,
+                    /* replicas= */ emptyList()),
+                Partition.create(
+                    CLUSTER_ID,
+                    /* topicName= */ "topic-3",
+                    /* partitionId= */ 9,
+                    /* replicas= */ emptyList())))
+        .build()
+  };
 
   private static final ConsumerGroup CONSUMER_GROUP =
       ConsumerGroup.builder()
@@ -144,11 +139,9 @@ public class ConsumerManagerImplTest {
           .setConsumers(Arrays.asList(CONSUMERS))
           .build();
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private ConsumerGroupManager consumerGroupManager;
+  @Mock private ConsumerGroupManager consumerGroupManager;
 
   private ConsumerManagerImpl consumerManager;
 
@@ -190,8 +183,9 @@ public class ConsumerManagerImplTest {
     replay(consumerGroupManager);
 
     Consumer consumer =
-        consumerManager.getConsumer(
-            CLUSTER_ID, CONSUMER_GROUP.getConsumerGroupId(), CONSUMERS[0].getConsumerId())
+        consumerManager
+            .getConsumer(
+                CLUSTER_ID, CONSUMER_GROUP.getConsumerGroupId(), CONSUMERS[0].getConsumerId())
             .get()
             .get();
 
@@ -205,8 +199,9 @@ public class ConsumerManagerImplTest {
     replay(consumerGroupManager);
 
     try {
-      consumerManager.getConsumer(
-          CLUSTER_ID, CONSUMER_GROUP.getConsumerGroupId(), CONSUMERS[0].getConsumerId())
+      consumerManager
+          .getConsumer(
+              CLUSTER_ID, CONSUMER_GROUP.getConsumerGroupId(), CONSUMERS[0].getConsumerId())
           .get();
       fail();
     } catch (ExecutionException e) {
@@ -221,7 +216,8 @@ public class ConsumerManagerImplTest {
     replay(consumerGroupManager);
 
     Optional<Consumer> consumer =
-        consumerManager.getConsumer(CLUSTER_ID, CONSUMER_GROUP.getConsumerGroupId(), "foobar")
+        consumerManager
+            .getConsumer(CLUSTER_ID, CONSUMER_GROUP.getConsumerGroupId(), "foobar")
             .get();
 
     assertFalse(consumer.isPresent());

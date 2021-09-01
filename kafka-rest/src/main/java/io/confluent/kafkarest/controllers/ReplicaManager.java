@@ -20,9 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * A service to manage Kafka {@link PartitionReplica Replicas}.
- */
+/** A service to manage Kafka {@link PartitionReplica Replicas}. */
 public interface ReplicaManager {
 
   /**
@@ -32,9 +30,7 @@ public interface ReplicaManager {
   CompletableFuture<List<PartitionReplica>> listReplicas(
       String clusterId, String topicName, int partitionId);
 
-  /**
-   * Returns the Kafka {@link PartitionReplica Replica} with the given {@code partitionId}.
-   */
+  /** Returns the Kafka {@link PartitionReplica Replica} with the given {@code partitionId}. */
   CompletableFuture<Optional<PartitionReplica>> getReplica(
       String clusterId, String topicName, int partitionId, int brokerId);
 

@@ -72,11 +72,9 @@ public class AlterTopicConfigBatchActionTest {
           ConfigSource.DYNAMIC_TOPIC_CONFIG,
           /* synonyms= */ emptyList());
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private TopicConfigManager topicConfigManager;
+  @Mock private TopicConfigManager topicConfigManager;
 
   private AlterTopicConfigBatchAction alterTopicConfigBatchAction;
 
@@ -88,12 +86,12 @@ public class AlterTopicConfigBatchActionTest {
   @Test
   public void alterTopicConfigs_existingConfig_alterConfigs() {
     expect(
-        topicConfigManager.alterTopicConfigs(
-            CLUSTER_ID,
-            TOPIC_NAME,
-            Arrays.asList(
-                AlterConfigCommand.set(CONFIG_1.getName(), "newValue"),
-                AlterConfigCommand.delete(CONFIG_2.getName()))))
+            topicConfigManager.alterTopicConfigs(
+                CLUSTER_ID,
+                TOPIC_NAME,
+                Arrays.asList(
+                    AlterConfigCommand.set(CONFIG_1.getName(), "newValue"),
+                    AlterConfigCommand.delete(CONFIG_2.getName()))))
         .andReturn(completedFuture(null));
     replay(topicConfigManager);
 
@@ -105,10 +103,7 @@ public class AlterTopicConfigBatchActionTest {
         AlterTopicConfigBatchRequest.create(
             AlterConfigBatchRequestData.create(
                 Arrays.asList(
-                    AlterEntry.builder()
-                        .setName(CONFIG_1.getName())
-                        .setValue("newValue")
-                        .build(),
+                    AlterEntry.builder().setName(CONFIG_1.getName()).setValue("newValue").build(),
                     AlterEntry.builder()
                         .setName(CONFIG_2.getName())
                         .setOperation(AlterOperation.DELETE)
@@ -122,12 +117,12 @@ public class AlterTopicConfigBatchActionTest {
   @Test
   public void alterTopicConfigs_nonExistingCluster_throwsNotFound() {
     expect(
-        topicConfigManager.alterTopicConfigs(
-            CLUSTER_ID,
-            TOPIC_NAME,
-            Arrays.asList(
-                AlterConfigCommand.set(CONFIG_1.getName(), "newValue"),
-                AlterConfigCommand.delete(CONFIG_2.getName()))))
+            topicConfigManager.alterTopicConfigs(
+                CLUSTER_ID,
+                TOPIC_NAME,
+                Arrays.asList(
+                    AlterConfigCommand.set(CONFIG_1.getName(), "newValue"),
+                    AlterConfigCommand.delete(CONFIG_2.getName()))))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicConfigManager);
 
@@ -139,10 +134,7 @@ public class AlterTopicConfigBatchActionTest {
         AlterTopicConfigBatchRequest.create(
             AlterConfigBatchRequestData.create(
                 Arrays.asList(
-                    AlterEntry.builder()
-                        .setName(CONFIG_1.getName())
-                        .setValue("newValue")
-                        .build(),
+                    AlterEntry.builder().setName(CONFIG_1.getName()).setValue("newValue").build(),
                     AlterEntry.builder()
                         .setName(CONFIG_2.getName())
                         .setOperation(AlterOperation.DELETE)

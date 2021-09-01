@@ -33,9 +33,7 @@ import javax.ws.rs.client.WebTarget;
 import org.eclipse.jetty.server.Server;
 import org.junit.rules.ExternalResource;
 
-/**
- * An {@link ExternalResource} that runs a Kafka REST server.
- */
+/** An {@link ExternalResource} that runs a Kafka REST server. */
 public final class KafkaRestFixture extends ExternalResource {
 
   @Nullable private final SslFixture certificates;
@@ -103,8 +101,7 @@ public final class KafkaRestFixture extends ExternalResource {
               "org.apache.kafka.common.security.plain.PlainLoginModule required "
                   + "username=\"%s\" "
                   + "password=\"%s\";",
-              kafkaUser,
-              kafkaPassword));
+              kafkaUser, kafkaPassword));
       properties.put("client.sasl.mechanism", "PLAIN");
     }
     if (certificates != null) {
@@ -162,8 +159,8 @@ public final class KafkaRestFixture extends ExternalResource {
   public WebTarget targetAs(String keyName) {
     checkState(application != null);
     checkState(certificates != null);
-    return target(ClientBuilder.newBuilder().sslContext(certificates.getSslContext(keyName))
-        .build());
+    return target(
+        ClientBuilder.newBuilder().sslContext(certificates.getSslContext(keyName)).build());
   }
 
   private WebTarget target(Client client) {
@@ -185,8 +182,7 @@ public final class KafkaRestFixture extends ExternalResource {
     private String keyName = null;
     private SchemaRegistryFixture schemaRegistry = null;
 
-    private Builder() {
-    }
+    private Builder() {}
 
     /**
      * Sets the SSL certificate store, and the name of the certificate to use as the Kafka REST
@@ -198,9 +194,7 @@ public final class KafkaRestFixture extends ExternalResource {
       return this;
     }
 
-    /**
-     * Sets a Kafka REST config.
-     */
+    /** Sets a Kafka REST config. */
     public Builder setConfig(String name, String value) {
       configs.put(name, value);
       return this;
@@ -211,9 +205,7 @@ public final class KafkaRestFixture extends ExternalResource {
       return this;
     }
 
-    /**
-     * Sets the Kafka SASL PLAIN credentials.
-     */
+    /** Sets the Kafka SASL PLAIN credentials. */
     public Builder setKafkaUser(String username, String password) {
       this.kafkaUser = requireNonNull(username);
       this.kafkaPassword = requireNonNull(password);

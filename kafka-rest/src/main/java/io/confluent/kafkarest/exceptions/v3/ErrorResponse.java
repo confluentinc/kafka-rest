@@ -19,14 +19,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 
-/**
- * Response returned when an exception happens in a V3 API.
- */
+/** Response returned when an exception happens in a V3 API. */
 @AutoValue
 public abstract class ErrorResponse {
 
-  ErrorResponse() {
-  }
+  ErrorResponse() {}
 
   @JsonProperty("error_code")
   public abstract int getErrorCode();
@@ -40,8 +37,7 @@ public abstract class ErrorResponse {
 
   @JsonCreator
   static ErrorResponse fromJson(
-      @JsonProperty("error_code") int errorCode,
-      @JsonProperty("message") String message) {
+      @JsonProperty("error_code") int errorCode, @JsonProperty("message") String message) {
     return create(errorCode, message);
   }
 }

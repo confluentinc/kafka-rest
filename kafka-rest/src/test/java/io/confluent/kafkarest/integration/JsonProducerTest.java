@@ -42,7 +42,11 @@ public class JsonProducerTest
     super.setUp();
     final int numPartitions = 3;
     final int replicationFactor = 1;
-    kafka.utils.TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
+    kafka.utils.TestUtils.createTopic(
+        zkClient,
+        topicName,
+        numPartitions,
+        replicationFactor,
         JavaConverters.asScalaBuffer(this.servers),
         new Properties());
   }
@@ -71,50 +75,50 @@ public class JsonProducerTest
     return res;
   }
 
-  private final List<JsonTopicProduceRecord> topicRecordsWithKeys = Arrays.asList(
-      new JsonTopicProduceRecord("key", "value", 0),
-      new JsonTopicProduceRecord("key", null, 0),
-      new JsonTopicProduceRecord("key", 53.4, 0),
-      new JsonTopicProduceRecord("key", 45, 0),
-      new JsonTopicProduceRecord("key", exampleMapValue(), 0),
-      new JsonTopicProduceRecord("key", exampleListValue(), 0)
-  );
+  private final List<JsonTopicProduceRecord> topicRecordsWithKeys =
+      Arrays.asList(
+          new JsonTopicProduceRecord("key", "value", 0),
+          new JsonTopicProduceRecord("key", null, 0),
+          new JsonTopicProduceRecord("key", 53.4, 0),
+          new JsonTopicProduceRecord("key", 45, 0),
+          new JsonTopicProduceRecord("key", exampleMapValue(), 0),
+          new JsonTopicProduceRecord("key", exampleListValue(), 0));
 
-  private final List<JsonTopicProduceRecord> topicRecordsWithoutKeys = Arrays.asList(
-      new JsonTopicProduceRecord(null, "value", 0),
-      new JsonTopicProduceRecord(null, null, 0),
-      new JsonTopicProduceRecord(null, 53.4, 0),
-      new JsonTopicProduceRecord(null, 45, 0),
-      new JsonTopicProduceRecord(null, exampleMapValue(), 0),
-      new JsonTopicProduceRecord(null, exampleListValue(), 0)
-  );
+  private final List<JsonTopicProduceRecord> topicRecordsWithoutKeys =
+      Arrays.asList(
+          new JsonTopicProduceRecord(null, "value", 0),
+          new JsonTopicProduceRecord(null, null, 0),
+          new JsonTopicProduceRecord(null, 53.4, 0),
+          new JsonTopicProduceRecord(null, 45, 0),
+          new JsonTopicProduceRecord(null, exampleMapValue(), 0),
+          new JsonTopicProduceRecord(null, exampleListValue(), 0));
 
-  private final List<JsonPartitionProduceRecord> partitionRecordsWithKeys = Arrays.asList(
-      new JsonPartitionProduceRecord("key", "value"),
-      new JsonPartitionProduceRecord("key", null),
-      new JsonPartitionProduceRecord("key", 53.4),
-      new JsonPartitionProduceRecord("key", 45),
-      new JsonPartitionProduceRecord("key", exampleMapValue()),
-      new JsonPartitionProduceRecord("key", exampleListValue())
-  );
+  private final List<JsonPartitionProduceRecord> partitionRecordsWithKeys =
+      Arrays.asList(
+          new JsonPartitionProduceRecord("key", "value"),
+          new JsonPartitionProduceRecord("key", null),
+          new JsonPartitionProduceRecord("key", 53.4),
+          new JsonPartitionProduceRecord("key", 45),
+          new JsonPartitionProduceRecord("key", exampleMapValue()),
+          new JsonPartitionProduceRecord("key", exampleListValue()));
 
-  private final List<JsonPartitionProduceRecord> partitionRecordsWithoutKeys = Arrays.asList(
-      new JsonPartitionProduceRecord(null, "value"),
-      new JsonPartitionProduceRecord(null, null),
-      new JsonPartitionProduceRecord(null, 53.4),
-      new JsonPartitionProduceRecord(null, 45),
-      new JsonPartitionProduceRecord(null, exampleMapValue()),
-      new JsonPartitionProduceRecord(null, exampleListValue())
-  );
+  private final List<JsonPartitionProduceRecord> partitionRecordsWithoutKeys =
+      Arrays.asList(
+          new JsonPartitionProduceRecord(null, "value"),
+          new JsonPartitionProduceRecord(null, null),
+          new JsonPartitionProduceRecord(null, 53.4),
+          new JsonPartitionProduceRecord(null, 45),
+          new JsonPartitionProduceRecord(null, exampleMapValue()),
+          new JsonPartitionProduceRecord(null, exampleListValue()));
 
-  private final List<PartitionOffset> produceOffsets = Arrays.asList(
-      new PartitionOffset(0, 0L, null, null),
-      new PartitionOffset(0, 1L, null, null),
-      new PartitionOffset(0, 2L, null, null),
-      new PartitionOffset(0, 3L, null, null),
-      new PartitionOffset(0, 4L, null, null),
-      new PartitionOffset(0, 5L, null, null)
-  );
+  private final List<PartitionOffset> produceOffsets =
+      Arrays.asList(
+          new PartitionOffset(0, 0L, null, null),
+          new PartitionOffset(0, 1L, null, null),
+          new PartitionOffset(0, 2L, null, null),
+          new PartitionOffset(0, 3L, null, null),
+          new PartitionOffset(0, 4L, null, null),
+          new PartitionOffset(0, 5L, null, null));
 
   @Test
   public void testProduceToTopicKeyAndValue() {
@@ -169,5 +173,4 @@ public class JsonProducerTest
         produceOffsets,
         request.toProduceRequest().getRecords());
   }
-
 }

@@ -19,14 +19,11 @@ import com.google.auto.value.AutoValue;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/**
- * A Kafka topic config.
- */
+/** A Kafka topic config. */
 @AutoValue
 public abstract class TopicConfig extends AbstractConfig {
 
-  TopicConfig() {
-  }
+  TopicConfig() {}
 
   public abstract String getTopicName();
 
@@ -57,14 +54,11 @@ public abstract class TopicConfig extends AbstractConfig {
         .build();
   }
 
-  /**
-   * A builder for {@link TopicConfig}.
-   */
+  /** A builder for {@link TopicConfig}. */
   @AutoValue.Builder
   public abstract static class Builder extends AbstractConfig.Builder<TopicConfig, Builder> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setTopicName(String topicName);
   }

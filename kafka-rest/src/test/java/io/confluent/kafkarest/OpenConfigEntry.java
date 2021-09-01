@@ -6,10 +6,10 @@ import io.confluent.kafkarest.entities.AbstractConfig;
 import org.apache.kafka.clients.admin.ConfigEntry;
 
 /**
- * A {@link ConfigEntry} that works around an unavailable public constructor for some fields that
- * we expect to be able to configure in tests. We need to be able to do that as there are accessors
- * for these fields in {@link ConfigEntry} and we use these to build {@link AbstractConfig}
- * entities. So to set up tests correctly, it's most convenient to be able to set these fields too.
+ * A {@link ConfigEntry} that works around an unavailable public constructor for some fields that we
+ * expect to be able to configure in tests. We need to be able to do that as there are accessors for
+ * these fields in {@link ConfigEntry} and we use these to build {@link AbstractConfig} entities. So
+ * to set up tests correctly, it's most convenient to be able to set these fields too.
  */
 public final class OpenConfigEntry extends ConfigEntry {
 

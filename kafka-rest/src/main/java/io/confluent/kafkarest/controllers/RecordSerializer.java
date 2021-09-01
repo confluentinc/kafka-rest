@@ -21,9 +21,7 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.util.Optional;
 
-/**
- * A facade covering serializers of all supported {@link EmbeddedFormat formats}.
- */
+/** A facade covering serializers of all supported {@link EmbeddedFormat formats}. */
 public interface RecordSerializer {
 
   /**

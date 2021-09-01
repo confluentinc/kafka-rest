@@ -24,8 +24,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 @AutoValue
 public abstract class ProduceResult {
 
-  ProduceResult() {
-  }
+  ProduceResult() {}
 
   public abstract int getPartitionId();
 

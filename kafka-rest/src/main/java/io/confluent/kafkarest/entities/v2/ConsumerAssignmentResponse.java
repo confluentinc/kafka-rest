@@ -24,8 +24,7 @@ import javax.annotation.Nullable;
 
 public final class ConsumerAssignmentResponse {
 
-  @Nullable
-  private final List<TopicPartition> partitions;
+  @Nullable private final List<TopicPartition> partitions;
 
   @JsonCreator
   public ConsumerAssignmentResponse(
@@ -58,8 +57,7 @@ public final class ConsumerAssignmentResponse {
 
   @Override
   public String toString() {
-    return new StringJoiner(
-        ", ", ConsumerAssignmentResponse.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", ConsumerAssignmentResponse.class.getSimpleName() + "[", "]")
         .add("partitions=" + partitions)
         .toString();
   }

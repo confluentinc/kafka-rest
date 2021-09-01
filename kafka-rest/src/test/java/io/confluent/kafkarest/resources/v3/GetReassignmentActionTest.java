@@ -38,30 +38,29 @@ public class GetReassignmentActionTest {
 
   private static final List<Integer> REMOVING_REPLICAS_1 = Arrays.asList(4, 5);
 
-  private static final Reassignment REASSIGNMENT_1 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_1, ADDING_REPLICAS_1, REMOVING_REPLICAS_1);
+  private static final Reassignment REASSIGNMENT_1 =
+      Reassignment.create(
+          CLUSTER_ID, TOPIC_1, PARTITION_ID_1, ADDING_REPLICAS_1, REMOVING_REPLICAS_1);
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private ReassignmentManager reassignmentManager;
+  @Mock private ReassignmentManager reassignmentManager;
 
   private GetReassignmentAction getReassignmentAction;
 
   @Before
   public void setUp() {
-    getReassignmentAction = new GetReassignmentAction(
-        () -> reassignmentManager,
-        new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
-        new FakeUrlFactory());
+    getReassignmentAction =
+        new GetReassignmentAction(
+            () -> reassignmentManager,
+            new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
+            new FakeUrlFactory());
   }
 
   @Test
   public void getReassignment_existingClusterTopicPartition_returnsReassignment() throws Exception {
     expect(reassignmentManager.getReassignment(CLUSTER_ID, TOPIC_1, PARTITION_ID_1))
-        .andReturn(
-            CompletableFuture.completedFuture(Optional.of(REASSIGNMENT_1)));
+        .andReturn(CompletableFuture.completedFuture(Optional.of(REASSIGNMENT_1)));
     replay(reassignmentManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -73,8 +72,8 @@ public class GetReassignmentActionTest {
             ReassignmentData.builder()
                 .setMetadata(
                     Resource.Metadata.builder()
-                        .setSelf("/v3/clusters/cluster-1/topics/topic-1/partitions/1"
-                            + "/reassignment")
+                        .setSelf(
+                            "/v3/clusters/cluster-1/topics/topic-1/partitions/1" + "/reassignment")
                         .setResourceName(
                             "crn:///kafka=cluster-1/topic=topic-1/partition=1/reassignment")
                         .build())
@@ -83,8 +82,9 @@ public class GetReassignmentActionTest {
                 .setPartitionId(PARTITION_ID_1)
                 .setAddingReplicas(ADDING_REPLICAS_1)
                 .setRemovingReplicas(REMOVING_REPLICAS_1)
-                .setReplicas(Resource.Relationship
-                    .create("/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas"))
+                .setReplicas(
+                    Resource.Relationship.create(
+                        "/v3/clusters/cluster-1/topics/topic-1/partitions/1/replicas"))
                 .build());
 
     assertEquals(expected, response.getValue());

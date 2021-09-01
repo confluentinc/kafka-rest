@@ -24,8 +24,7 @@ import javax.annotation.Nullable;
 
 public final class ConsumerCommittedRequest {
 
-  @Nullable
-  private final List<TopicPartition> partitions;
+  @Nullable private final List<TopicPartition> partitions;
 
   @JsonCreator
   public ConsumerCommittedRequest(

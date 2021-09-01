@@ -44,8 +44,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ProduceRequest {
 
-  ProduceRequest() {
-  }
+  ProduceRequest() {}
 
   @JsonProperty("partition_id")
   @JsonInclude(Include.NON_ABSENT)
@@ -106,8 +105,7 @@ public abstract class ProduceRequest {
   @AutoValue
   public abstract static class ProduceRequestHeader {
 
-    ProduceRequestHeader() {
-    }
+    ProduceRequestHeader() {}
 
     @JsonProperty("name")
     public abstract String getName();
@@ -135,8 +133,7 @@ public abstract class ProduceRequest {
   @AutoValue
   public abstract static class ProduceRequestData {
 
-    ProduceRequestData() {
-    }
+    ProduceRequestData() {}
 
     @JsonProperty("type")
     @JsonInclude(Include.NON_ABSENT)
@@ -193,8 +190,7 @@ public abstract class ProduceRequest {
     @AutoValue.Builder
     public abstract static class Builder {
 
-      Builder() {
-      }
+      Builder() {}
 
       public abstract Builder setFormat(@Nullable EmbeddedFormat format);
 
@@ -217,8 +213,7 @@ public abstract class ProduceRequest {
         ProduceRequestData request = autoBuild();
 
         checkState(
-            !request.getSubjectNameStrategy().isPresent()
-                || !request.getSubject().isPresent(),
+            !request.getSubjectNameStrategy().isPresent() || !request.getSubject().isPresent(),
             "Only one of 'subject_name_strategy' or 'subject' can be used.");
 
         checkState(
@@ -271,19 +266,13 @@ public abstract class ProduceRequest {
 
   public enum EnumSubjectNameStrategy implements SubjectNameStrategy {
 
-    /**
-     * See {@link TopicNameStrategy}.
-     */
+    /** See {@link TopicNameStrategy}. */
     TOPIC_NAME(new TopicNameStrategy()),
 
-    /**
-     * See {@link RecordNameStrategy}.
-     */
+    /** See {@link RecordNameStrategy}. */
     RECORD_NAME(new RecordNameStrategy()),
 
-    /**
-     * See {@link TopicRecordNameStrategy}.
-     */
+    /** See {@link TopicRecordNameStrategy}. */
     TOPIC_RECORD_NAME(new TopicRecordNameStrategy());
 
     private final SubjectNameStrategy delegate;

@@ -60,8 +60,7 @@ final class AclManagerImpl implements AclManager {
       @Nullable String principal,
       @Nullable String host,
       Acl.Operation operation,
-      Acl.Permission permission
-  ) {
+      Acl.Permission permission) {
     AclBindingFilter aclBindingFilter =
         new AclBindingFilter(
             new ResourcePatternFilter(
@@ -69,7 +68,8 @@ final class AclManagerImpl implements AclManager {
             new AccessControlEntryFilter(
                 principal, host, operation.toAclOperation(), permission.toAclPermissionType()));
 
-    return clusterManager.getCluster(clusterId)
+    return clusterManager
+        .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenApply(cluster -> adminClient.describeAcls(aclBindingFilter))
         .thenCompose(
@@ -90,8 +90,7 @@ final class AclManagerImpl implements AclManager {
       String principal,
       String host,
       Operation operation,
-      Permission permission
-  ) {
+      Permission permission) {
     AclBinding aclBinding =
         new AclBinding(
             new ResourcePattern(
@@ -99,7 +98,8 @@ final class AclManagerImpl implements AclManager {
             new AccessControlEntry(
                 principal, host, operation.toAclOperation(), permission.toAclPermissionType()));
 
-    return clusterManager.getCluster(clusterId)
+    return clusterManager
+        .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenApply(cluster -> adminClient.createAcls(singletonList(aclBinding)))
         .thenCompose(
@@ -116,8 +116,7 @@ final class AclManagerImpl implements AclManager {
       String principal,
       String host,
       Operation operation,
-      Permission permission
-  ) {
+      Permission permission) {
     AclBindingFilter aclBindingFilter =
         new AclBindingFilter(
             new ResourcePatternFilter(
@@ -125,7 +124,8 @@ final class AclManagerImpl implements AclManager {
             new AccessControlEntryFilter(
                 principal, host, operation.toAclOperation(), permission.toAclPermissionType()));
 
-    return clusterManager.getCluster(clusterId)
+    return clusterManager
+        .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenApply(cluster -> adminClient.deleteAcls(singletonList(aclBindingFilter)))
         .thenCompose(
@@ -133,8 +133,7 @@ final class AclManagerImpl implements AclManager {
                 KafkaFutures.toCompletableFuture(deleteAclsResult.values().get(aclBindingFilter)))
         .thenApply(
             filterResults ->
-                filterResults.values()
-                    .stream()
+                filterResults.values().stream()
                     .map(FilterResult::binding)
                     .filter(Objects::nonNull)
                     .map(binding -> toAcl(clusterId, binding))

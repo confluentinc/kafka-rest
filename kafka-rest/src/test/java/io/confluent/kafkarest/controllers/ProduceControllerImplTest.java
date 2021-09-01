@@ -55,34 +55,34 @@ public class ProduceControllerImplTest {
                   "topic-1",
                   0,
                   new Node(1, "localhost", 1234),
-                  new Node[]{new Node(1, "localhost", 1234)},
-                  new Node[]{new Node(1, "localhost", 1234)}),
+                  new Node[] {new Node(1, "localhost", 1234)},
+                  new Node[] {new Node(1, "localhost", 1234)}),
               new PartitionInfo(
                   "topic-1",
                   1,
                   new Node(1, "localhost", 1234),
-                  new Node[]{new Node(1, "localhost", 1234)},
-                  new Node[]{new Node(1, "localhost", 1234)}),
+                  new Node[] {new Node(1, "localhost", 1234)},
+                  new Node[] {new Node(1, "localhost", 1234)}),
               new PartitionInfo(
                   "topic-1",
                   2,
                   new Node(1, "localhost", 1234),
-                  new Node[]{new Node(1, "localhost", 1234)},
-                  new Node[]{new Node(1, "localhost", 1234)})),
+                  new Node[] {new Node(1, "localhost", 1234)},
+                  new Node[] {new Node(1, "localhost", 1234)})),
           emptySet(),
           emptySet());
 
   private static final Function<
-      ProducerRecord<byte[], byte[]>,
-      ProducerRecord<ByteString, ByteString>> BYTE_ARRAY_TO_BYTE_STRING_RECORD_FUNCTION =
-      record ->
-          new ProducerRecord<>(
-              record.topic(),
-              record.partition(),
-              record.timestamp(),
-              record.key() != null ? ByteString.copyFrom(record.key()) : null,
-              record.value() != null ? ByteString.copyFrom(record.value()) : null,
-              record.headers());
+          ProducerRecord<byte[], byte[]>, ProducerRecord<ByteString, ByteString>>
+      BYTE_ARRAY_TO_BYTE_STRING_RECORD_FUNCTION =
+          record ->
+              new ProducerRecord<>(
+                  record.topic(),
+                  record.partition(),
+                  record.timestamp(),
+                  record.key() != null ? ByteString.copyFrom(record.key()) : null,
+                  record.value() != null ? ByteString.copyFrom(record.value()) : null,
+                  record.headers());
 
   private MockProducer<byte[], byte[]> producer;
   private ProduceController produceController;

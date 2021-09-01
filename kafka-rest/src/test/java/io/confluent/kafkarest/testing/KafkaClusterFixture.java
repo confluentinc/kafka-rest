@@ -43,9 +43,7 @@ import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.junit.rules.ExternalResource;
 
-/**
- * An {@link ExternalResource} that runs a {@link KafkaBrokerFixture Kafka} cluster.
- */
+/** An {@link ExternalResource} that runs a {@link KafkaBrokerFixture Kafka} cluster. */
 public final class KafkaClusterFixture extends ExternalResource {
 
   private final ImmutableList<KafkaBrokerFixture> brokers;
@@ -59,18 +57,18 @@ public final class KafkaClusterFixture extends ExternalResource {
   @Override
   public void before() {
     CompletableFutures.allAsList(
-        brokers.stream()
-            .map(
-                broker ->
-                    CompletableFuture.runAsync(
-                        () -> {
-                          try {
-                            broker.before();
-                          } catch (Exception e) {
-                            throw new RuntimeException(e);
-                          }
-                        }))
-            .collect(Collectors.toList()))
+            brokers.stream()
+                .map(
+                    broker ->
+                        CompletableFuture.runAsync(
+                            () -> {
+                              try {
+                                broker.before();
+                              } catch (Exception e) {
+                                throw new RuntimeException(e);
+                              }
+                            }))
+                .collect(Collectors.toList()))
         .join();
 
     adminClient = AdminClient.create(getAdminConfigs());
@@ -83,18 +81,18 @@ public final class KafkaClusterFixture extends ExternalResource {
     }
 
     CompletableFutures.allAsList(
-        brokers.stream()
-            .map(
-                broker ->
-                    CompletableFuture.runAsync(
-                        () -> {
-                          try {
-                            broker.after();
-                          } catch (Exception e) {
-                            throw new RuntimeException(e);
-                          }
-                        }))
-            .collect(Collectors.toList()))
+            brokers.stream()
+                .map(
+                    broker ->
+                        CompletableFuture.runAsync(
+                            () -> {
+                              try {
+                                broker.after();
+                              } catch (Exception e) {
+                                throw new RuntimeException(e);
+                              }
+                            }))
+                .collect(Collectors.toList()))
         .join();
   }
 
@@ -153,8 +151,7 @@ public final class KafkaClusterFixture extends ExternalResource {
     consumer.assign(singletonList(new TopicPartition(topicName, partitionId)));
     consumer.seek(new TopicPartition(topicName, partitionId), offset);
     List<ConsumerRecord<K, V>> records =
-        consumer.poll(Duration.ofSeconds(1))
-            .records(new TopicPartition(topicName, partitionId));
+        consumer.poll(Duration.ofSeconds(1)).records(new TopicPartition(topicName, partitionId));
     ConsumerRecord<K, V> record = records.iterator().next();
     consumer.close();
     return record;
@@ -163,8 +160,8 @@ public final class KafkaClusterFixture extends ExternalResource {
   public void createTopic(String topicName, int numPartitions, short replicationFactor)
       throws Exception {
     checkState(adminClient != null);
-    adminClient.createTopics(
-        singletonList(new NewTopic(topicName, numPartitions, replicationFactor)))
+    adminClient
+        .createTopics(singletonList(new NewTopic(topicName, numPartitions, replicationFactor)))
         .all()
         .get();
   }
@@ -183,20 +180,15 @@ public final class KafkaClusterFixture extends ExternalResource {
     private final ImmutableSet.Builder<String> superUsers = ImmutableSet.builder();
     private ZookeeperFixture zookeeper = null;
 
-    private Builder() {
-    }
+    private Builder() {}
 
-    /**
-     * @see KafkaBrokerFixture.Builder#addUser(String, String)
-     */
+    /** @see KafkaBrokerFixture.Builder#addUser(String, String) */
     public Builder addUser(String username, String password) {
       users.put(username, password);
       return this;
     }
 
-    /**
-     * @see KafkaBrokerFixture.Builder#addSuperUser(String)
-     */
+    /** @see KafkaBrokerFixture.Builder#addSuperUser(String) */
     public Builder addSuperUser(String username) {
       checkArgument(users.build().containsKey(username));
       superUsers.add(username);
@@ -209,9 +201,7 @@ public final class KafkaClusterFixture extends ExternalResource {
       return this;
     }
 
-    /**
-     * @see KafkaBrokerFixture.Builder#setConfig(String, String)
-     */
+    /** @see KafkaBrokerFixture.Builder#setConfig(String, String) */
     public Builder setConfig(String name, String value) {
       configs.put(name, value);
       return this;
@@ -223,9 +213,7 @@ public final class KafkaClusterFixture extends ExternalResource {
       return this;
     }
 
-    /**
-     * @see KafkaBrokerFixture.Builder#setSecurityProtocol(SecurityProtocol)
-     */
+    /** @see KafkaBrokerFixture.Builder#setSecurityProtocol(SecurityProtocol) */
     public Builder setSecurityProtocol(SecurityProtocol securityProtocol) {
       this.securityProtocol = requireNonNull(securityProtocol);
       return this;

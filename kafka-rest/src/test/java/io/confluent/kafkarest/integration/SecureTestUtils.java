@@ -13,24 +13,28 @@
  * specific language governing permissions and limitations under the License.
  */
 
-
 package io.confluent.kafkarest.integration;
-
-import kafka.admin.AclCommand;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import kafka.admin.AclCommand;
 
 public class SecureTestUtils {
 
   public static void setProduceAcls(String zkConnect, String topic, String user) {
     List<String> aclArgs = new ArrayList<>();
 
-    Collections.addAll(aclArgs, ("--authorizer kafka.security.authorizer.AclAuthorizer "
-                                 + "--authorizer-properties  zookeeper.connect=" + zkConnect
-                                 + " --topic " + topic + " --add --producer "
-                                 + " --allow-principal ").split("\\s+"));
+    Collections.addAll(
+        aclArgs,
+        ("--authorizer kafka.security.authorizer.AclAuthorizer "
+                + "--authorizer-properties  zookeeper.connect="
+                + zkConnect
+                + " --topic "
+                + topic
+                + " --add --producer "
+                + " --allow-principal ")
+            .split("\\s+"));
     aclArgs.add("User:" + user);
     AclCommand.main(aclArgs.toArray(new String[0]));
   }
@@ -38,24 +42,33 @@ public class SecureTestUtils {
   public static void removeProduceAcls(String zkConnect, String topic, String user) {
     List<String> aclArgs = new ArrayList<>();
 
-    Collections.addAll(aclArgs, ("--authorizer kafka.security.authorizer.AclAuthorizer "
-                                 + "--authorizer-properties  zookeeper.connect=" + zkConnect
-                                 + " --topic " + topic + " --remove --producer "
-                                 + " --allow-principal ").split("\\s+"));
+    Collections.addAll(
+        aclArgs,
+        ("--authorizer kafka.security.authorizer.AclAuthorizer "
+                + "--authorizer-properties  zookeeper.connect="
+                + zkConnect
+                + " --topic "
+                + topic
+                + " --remove --producer "
+                + " --allow-principal ")
+            .split("\\s+"));
     aclArgs.add("User:" + user);
     AclCommand.main(aclArgs.toArray(new String[0]));
   }
 
-  public static void setConsumerAcls(
-      String zkConnect, String topic, String user,
-      String group
-  ) {
+  public static void setConsumerAcls(String zkConnect, String topic, String user, String group) {
     List<String> aclArgs = new ArrayList<>();
 
-    Collections.addAll(aclArgs, ("--authorizer kafka.security.authorizer.AclAuthorizer "
-                                 + "--authorizer-properties  zookeeper.connect=" + zkConnect
-                                 + " --topic " + topic + " --add --consumer "
-                                 + " --allow-principal ").split("\\s+"));
+    Collections.addAll(
+        aclArgs,
+        ("--authorizer kafka.security.authorizer.AclAuthorizer "
+                + "--authorizer-properties  zookeeper.connect="
+                + zkConnect
+                + " --topic "
+                + topic
+                + " --add --consumer "
+                + " --allow-principal ")
+            .split("\\s+"));
     aclArgs.add("User:" + user);
     aclArgs.add("--group");
     aclArgs.add(group);
