@@ -15,6 +15,14 @@
 
 package io.confluent.kafkarest;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.MetricNameTemplate;
 import org.apache.kafka.common.metrics.Gauge;
@@ -35,15 +43,6 @@ import org.apache.kafka.common.utils.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
-
 public class ProducerMetrics {
   public static final String JMX_PREFIX = "kafka.rest";
 
@@ -54,16 +53,14 @@ public class ProducerMetrics {
       new ConcurrentHashMap<>();
 
   public ProducerMetrics(Time time) {
-    this.metrics = new MetricsBuilder(JMX_PREFIX)
-        .withTime(time)
-        .build();
+    this.metrics = new MetricsBuilder(JMX_PREFIX).withTime(time).build();
     setupMetricBeans();
     log.info("Successfully registered kafka-rest produce metrics with JMX");
   }
 
   /**
-   * Get or create a {@link ProduceMetricMBean} with the specified name and the given tags.
-   * Each group is uniquely identified by the name and tags.
+   * Get or create a {@link ProduceMetricMBean} with the specified name and the given tags. Each
+   * group is uniquely identified by the name and tags.
    *
    * @param groupName the name of the ReplicatorMetricGroup group; may not be null
    * @param tags pairs of tag name and values
@@ -75,21 +72,16 @@ public class ProducerMetrics {
     return beansByCoordinate.get(beanCoordinate);
   }
 
-  /**
-   * Stop and unregister the metrics from any reporters.
-   */
+  /** Stop and unregister the metrics from any reporters. */
   public void stop() {
     log.info("Unregistering produce metrics with JMX");
     metrics.close();
   }
 
-  /**
-   * Sets up a {@link ProduceMetricMBean} for each sensor
-   * */
+  /** Sets up a {@link ProduceMetricMBean} for each sensor */
   private void setupMetricBeans() {
-    ProduceMetricMBean metricMBean = mbean(
-          ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap()
-    );
+    ProduceMetricMBean metricMBean =
+        mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap());
 
     // Clear out any previous metrics and sensors that might have been present
     if (metricMBean != null) {
@@ -169,14 +161,13 @@ public class ProducerMetrics {
         .withDoc(ProducerMetricsRegistry.REQUEST_LATENCY_AVG_DOC)
         .withAvg()
         .build();
-
   }
 
   private class BeanCoordinate {
     private final String beanName;
     private final Map<String, String> tags;
 
-    public BeanCoordinate(String beanName, Map<String,String> tags) {
+    public BeanCoordinate(String beanName, Map<String, String> tags) {
       this.beanName = beanName;
       this.tags = tags;
     }
@@ -208,10 +199,10 @@ public class ProducerMetrics {
   }
 
   /**
-   * A class representing a JMX MBean where each metric maps to an MBean attribute.
-   * Sensors should be added via the {@code sensor} methods on this class, rather than directly
-   * through the {@link Metrics} class, so that the sensor names are made to be unique (based on
-   * the MBean name) and so the sensors are removed when this group is {@link #close() closed}.
+   * A class representing a JMX MBean where each metric maps to an MBean attribute. Sensors should
+   * be added via the {@code sensor} methods on this class, rather than directly through the {@link
+   * Metrics} class, so that the sensor names are made to be unique (based on the MBean name) and so
+   * the sensors are removed when this group is {@link #close() closed}.
    */
   public class ProduceMetricMBean implements AutoCloseable {
     private final BeanCoordinate beanCoordinate;
@@ -220,7 +211,6 @@ public class ProducerMetrics {
      * Create a produce metrics MBean.
      *
      * @param beanCoordinate the identifier of the bean; may not be null and must be valid
-     *
      */
     ProduceMetricMBean(BeanCoordinate beanCoordinate) {
       Objects.requireNonNull(beanCoordinate);
@@ -228,20 +218,19 @@ public class ProducerMetrics {
     }
 
     public void recordMetrics(String sensorName, double value) {
-      Sensor sensor = metrics.getSensor(String.join(":",
-          JMX_PREFIX,
-          ProducerMetricsRegistry.GROUP_NAME,
-          sensorName));
+      Sensor sensor =
+          metrics.getSensor(
+              String.join(":", JMX_PREFIX, ProducerMetricsRegistry.GROUP_NAME, sensorName));
       if (sensor != null) {
         sensor.record(value);
       }
     }
 
     /**
-     * The {@link Metrics} that this MBean belongs to.
-     * Do not use this to add {@link Sensor Sensors}, since they will not be removed when this
-     * group is{@link #close() closed}. Metrics can be added directly, as long as the metric names
-     * are obtained from this group via the {@link #metricName(MetricNameTemplate)} method.
+     * The {@link Metrics} that this MBean belongs to. Do not use this to add {@link Sensor
+     * Sensors}, since they will not be removed when this group is{@link #close() closed}. Metrics
+     * can be added directly, as long as the metric names are obtained from this group via the
+     * {@link #metricName(MetricNameTemplate)} method.
      *
      * @return the metrics; never null
      */
@@ -261,8 +250,8 @@ public class ProducerMetrics {
     }
 
     /**
-     * Get or create a sensor with the given unique name and no parent sensors. This uses
-     * a default recording level of INFO.
+     * Get or create a sensor with the given unique name and no parent sensors. This uses a default
+     * recording level of INFO.
      *
      * @param name The sensor name
      * @return The sensor
@@ -276,7 +265,7 @@ public class ProducerMetrics {
      * Add to this group an indicator metric that always returns the specified value.
      *
      * @param nameTemplate the name template for the metric; may not be null
-     * @param value        the value; may not be null
+     * @param value the value; may not be null
      * @throws IllegalArgumentException if the name is not valid
      */
     <T> void addImmutableValueMetric(MetricNameTemplate nameTemplate, final T value) {
@@ -286,9 +275,7 @@ public class ProducerMetrics {
       }
     }
 
-    /**
-     * Remove all sensors and metrics associated with this group.
-     */
+    /** Remove all sensors and metrics associated with this group. */
     @Override
     public synchronized void close() {
       for (MetricName metricName : new HashSet<>(metrics.metrics().keySet())) {
@@ -348,15 +335,12 @@ public class ProducerMetrics {
     }
 
     public Sensor build() {
-      Sensor sensor = bean.sensor(String.join(":",
-          JMX_PREFIX,
-          ProducerMetricsRegistry.GROUP_NAME,
-          name));
-      MetricName metricName = bean.metricName(
-          new MetricNameTemplate(name,
-              ProducerMetricsRegistry.GROUP_NAME,
-              doc,
-              Collections.emptySet()));
+      Sensor sensor =
+          bean.sensor(String.join(":", JMX_PREFIX, ProducerMetricsRegistry.GROUP_NAME, name));
+      MetricName metricName =
+          bean.metricName(
+              new MetricNameTemplate(
+                  name, ProducerMetricsRegistry.GROUP_NAME, doc, Collections.emptySet()));
       sensor.add(metricName, measurableStat);
       return sensor;
     }
@@ -401,13 +385,12 @@ public class ProducerMetrics {
 
     public Metrics build() {
       List<MetricsReporter> reporters = Collections.singletonList(reporter);
-      MetricConfig metricConfig = new MetricConfig()
-          .samples(numSamples)
-          .timeWindow(sampleWindowMs, TimeUnit.MILLISECONDS)
-          .recordLevel(level);
+      MetricConfig metricConfig =
+          new MetricConfig()
+              .samples(numSamples)
+              .timeWindow(sampleWindowMs, TimeUnit.MILLISECONDS)
+              .recordLevel(level);
       return new Metrics(metricConfig, reporters, time, metricsContext);
     }
-
   }
-
 }

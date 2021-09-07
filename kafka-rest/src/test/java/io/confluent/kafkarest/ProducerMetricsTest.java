@@ -1,43 +1,42 @@
 package io.confluent.kafkarest;
 
-import io.confluent.kafkarest.mock.MockTime;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
-import javax.management.*;
+import io.confluent.kafkarest.mock.MockTime;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.IntStream;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import javax.management.*;
+import org.junit.Test;
 
 public class ProducerMetricsTest {
 
   public static final String METRICS_SEARCH_STRING = "kafka.rest:type=produce-api-metrics,*";
 
   @Test
-  public void testCountMetrics() throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException, AttributeNotFoundException, MBeanException, IntrospectionException {
+  public void testCountMetrics()
+      throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException,
+          AttributeNotFoundException, MBeanException, IntrospectionException {
     Time mockTime = new MockTime();
     ProducerMetrics metrics = new ProducerMetrics(mockTime);
 
     ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
 
-    String[] totalMetrics = new String[] {
-        ProducerMetricsRegistry.RESPONSE_TOTAL,
-        ProducerMetricsRegistry.RECORD_ERROR_TOTAL,
-        ProducerMetricsRegistry.REQUEST_TOTAL
-    };
+    String[] totalMetrics =
+        new String[] {
+          ProducerMetricsRegistry.RESPONSE_TOTAL,
+          ProducerMetricsRegistry.RECORD_ERROR_TOTAL,
+          ProducerMetricsRegistry.REQUEST_TOTAL
+        };
 
     for (String metric : totalMetrics) {
-      IntStream.range(0, 10).forEach(
-          n -> mbean.recordMetrics(metric, 1.0)
-      );
+      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(metric, 1.0));
     }
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
-    assertEquals(1,beanNames.size());
+    assertEquals(1, beanNames.size());
 
     for (String metric : totalMetrics) {
       assertEquals(10.0, mBeanServer.getAttribute(beanNames.iterator().next(), metric));
@@ -45,26 +44,26 @@ public class ProducerMetricsTest {
   }
 
   @Test
-  public void testSumMetrics() throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException, AttributeNotFoundException, MBeanException, IntrospectionException {
+  public void testSumMetrics()
+      throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException,
+          AttributeNotFoundException, MBeanException, IntrospectionException {
     Time mockTime = new MockTime();
     ProducerMetrics metrics = new ProducerMetrics(mockTime);
 
     ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
 
-    String[] sumMetrics = new String[] {
-        ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL,
-        ProducerMetricsRegistry.REQUEST_SIZE_TOTAL
-    };
+    String[] sumMetrics =
+        new String[] {
+          ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL, ProducerMetricsRegistry.REQUEST_SIZE_TOTAL
+        };
 
     for (String metric : sumMetrics) {
-      IntStream.range(0, 10).forEach(
-          n -> mbean.recordMetrics(metric, 10.0)
-      );
+      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(metric, 10.0));
     }
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
-    assertEquals(1,beanNames.size());
+    assertEquals(1, beanNames.size());
 
     for (String metric : sumMetrics) {
 
@@ -73,27 +72,28 @@ public class ProducerMetricsTest {
   }
 
   @Test
-  public void testAvgMetrics() throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException, AttributeNotFoundException, MBeanException, IntrospectionException {
+  public void testAvgMetrics()
+      throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException,
+          AttributeNotFoundException, MBeanException, IntrospectionException {
     Time mockTime = new MockTime();
     ProducerMetrics metrics = new ProducerMetrics(mockTime);
 
     ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
 
-    String[] avgMetrics = new String[] {
-        ProducerMetricsRegistry.REQUEST_SIZE_AVG,
-        ProducerMetricsRegistry.REQUEST_LATENCY_AVG,
-        ProducerMetricsRegistry.RESPONSE_SIZE_AVG
-    };
+    String[] avgMetrics =
+        new String[] {
+          ProducerMetricsRegistry.REQUEST_SIZE_AVG,
+          ProducerMetricsRegistry.REQUEST_LATENCY_AVG,
+          ProducerMetricsRegistry.RESPONSE_SIZE_AVG
+        };
 
     for (String metric : avgMetrics) {
-      IntStream.range(0, 10).forEach(
-          n -> mbean.recordMetrics(metric, n)
-      );
+      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(metric, n));
     }
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
-    assertEquals(1,beanNames.size());
+    assertEquals(1, beanNames.size());
 
     for (String metric : avgMetrics) {
       assertEquals(4.5, mBeanServer.getAttribute(beanNames.iterator().next(), metric));
@@ -101,27 +101,28 @@ public class ProducerMetricsTest {
   }
 
   @Test
-  public void testRateMetrics() throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException, AttributeNotFoundException, MBeanException, InterruptedException, IntrospectionException {
+  public void testRateMetrics()
+      throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException,
+          AttributeNotFoundException, MBeanException, InterruptedException, IntrospectionException {
     Time mockTime = new MockTime();
     ProducerMetrics metrics = new ProducerMetrics(mockTime);
 
     ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
 
-    String[] rateMetrics = new String[] {
-        ProducerMetricsRegistry.RECORD_ERROR_RATE,
-        ProducerMetricsRegistry.REQUEST_RATE,
-        ProducerMetricsRegistry.RESPONSE_SEND_RATE
-    };
+    String[] rateMetrics =
+        new String[] {
+          ProducerMetricsRegistry.RECORD_ERROR_RATE,
+          ProducerMetricsRegistry.REQUEST_RATE,
+          ProducerMetricsRegistry.RESPONSE_SEND_RATE
+        };
 
     for (String metric : rateMetrics) {
-      IntStream.range(0, 90).forEach(
-          n -> mbean.recordMetrics(metric, 1.0)
-      );
+      IntStream.range(0, 90).forEach(n -> mbean.recordMetrics(metric, 1.0));
     }
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
-    assertEquals(1,beanNames.size());
+    assertEquals(1, beanNames.size());
 
     // rate() uses a 90 second window here so one per second is correct
     for (String metric : rateMetrics) {
@@ -130,25 +131,23 @@ public class ProducerMetricsTest {
   }
 
   @Test
-  public void testMaxMetrics() throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException, AttributeNotFoundException, MBeanException, InterruptedException, IntrospectionException {
+  public void testMaxMetrics()
+      throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException,
+          AttributeNotFoundException, MBeanException, InterruptedException, IntrospectionException {
     Time mockTime = new MockTime();
     ProducerMetrics metrics = new ProducerMetrics(mockTime);
 
     ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
 
-    String[] maxMetrics = new String[] {
-        ProducerMetricsRegistry.REQUEST_LATENCY_MAX
-    };
+    String[] maxMetrics = new String[] {ProducerMetricsRegistry.REQUEST_LATENCY_MAX};
 
     for (String metric : maxMetrics) {
-      IntStream.range(0, 10).forEach(
-          n -> mbean.recordMetrics(metric, n)
-      );
+      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(metric, n));
     }
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
-    assertEquals(1,beanNames.size());
+    assertEquals(1, beanNames.size());
 
     for (String metric : maxMetrics) {
       assertEquals(9.0, mBeanServer.getAttribute(beanNames.iterator().next(), metric));

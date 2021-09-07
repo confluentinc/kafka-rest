@@ -21,8 +21,7 @@ public class ProducerMetricsRegistry {
 
   // request
   public static final String REQUEST_RATE = "request-send-rate";
-  public static final String REQUEST_RATE_DOC =
-      "The average number of requests sent per second.";
+  public static final String REQUEST_RATE_DOC = "The average number of requests sent per second.";
 
   public static final String REQUEST_SIZE_AVG = "request-size-avg";
   public static final String REQUEST_SIZE_AVG_DOC = "The average request size in bytes";
@@ -58,10 +57,8 @@ public class ProducerMetricsRegistry {
 
   // latency
   public static final String REQUEST_LATENCY_AVG = "request-latency-avg";
-  public static final String REQUEST_LATENCY_AVG_DOC =
-      "The average request latency";
+  public static final String REQUEST_LATENCY_AVG_DOC = "The average request latency";
 
   public static final String REQUEST_LATENCY_MAX = "request-latency-max";
-  public static final String REQUEST_LATENCY_MAX_DOC =
-      "The max request latency";
+  public static final String REQUEST_LATENCY_MAX_DOC = "The max request latency";
 }

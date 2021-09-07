@@ -38,7 +38,6 @@ import io.confluent.kafkarest.exceptions.BadRequestException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.response.StreamingResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
@@ -141,25 +140,26 @@ public final class ProduceAction {
             serializedValue,
             request.getTimestamp().orElse(Instant.now()));
 
-    return produceResult.handle((result, ex) -> {
-      if (ex != null) {
-        recordErrorMetrics();
-        throw new CompletionException(ex);
-      }
-      return result;
-    }).thenApply(
-          result -> {
-            ProduceResponse response = toProduceResponse(
-                clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
-            double responseSize = getResponseSize(
-                response.getKey(),
-                response.getValue());
-            double latency = Duration.between(
-                requestInstant,
-                result.getCompletionTimestamp()).toMillis();
-            recordResponseMetrics(responseSize, latency);
-            return response;
-          });
+    return produceResult
+        .handle(
+            (result, ex) -> {
+              if (ex != null) {
+                recordErrorMetrics();
+                throw new CompletionException(ex);
+              }
+              return result;
+            })
+        .thenApply(
+            result -> {
+              ProduceResponse response =
+                  toProduceResponse(
+                      clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
+              double responseSize = getResponseSize(response.getKey(), response.getValue());
+              double latency =
+                  Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
+              recordResponseMetrics(responseSize, latency);
+              return response;
+            });
   }
 
   private Optional<RegisteredSchema> getSchema(
@@ -239,72 +239,68 @@ public final class ProduceAction {
         .build();
   }
 
-
   private void recordResponseMetrics(double responseSize, double latency) {
-    producerMetrics.get().mbean(
-            ProducerMetricsRegistry.GROUP_NAME,
-            Collections.emptyMap())
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.RESPONSE_SIZE_AVG, responseSize);
-    producerMetrics.get().mbean(
-            ProducerMetricsRegistry.GROUP_NAME,
-            Collections.emptyMap())
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL, responseSize);
-    producerMetrics.get().mbean(
-            ProducerMetricsRegistry.GROUP_NAME,
-            Collections.emptyMap())
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.RESPONSE_SEND_RATE, 1.0);
-    producerMetrics.get().mbean(
-            ProducerMetricsRegistry.GROUP_NAME,
-            Collections.emptyMap())
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.RESPONSE_TOTAL, 1.0);
-    producerMetrics.get().mbean(
-            ProducerMetricsRegistry.GROUP_NAME,
-            Collections.emptyMap())
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.REQUEST_LATENCY_MAX, latency);
-    producerMetrics.get().mbean(
-            ProducerMetricsRegistry.GROUP_NAME,
-            Collections.emptyMap())
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.REQUEST_LATENCY_AVG, latency);
   }
 
   private void recordErrorMetrics() {
-    producerMetrics.get().mbean(
-            ProducerMetricsRegistry.GROUP_NAME,
-            Collections.emptyMap())
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.RECORD_ERROR_RATE, 1.0);
-    producerMetrics.get().mbean(
-            ProducerMetricsRegistry.GROUP_NAME,
-            Collections.emptyMap())
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.RECORD_ERROR_TOTAL, 1.0);
   }
 
   private void recordRequestMetrics(
-      Optional<ByteString> serializedKey,
-      Optional<ByteString> serializedValue) {
-    producerMetrics.get().mbean(
-            ProducerMetricsRegistry.GROUP_NAME,
-            Collections.emptyMap())
-        .recordMetrics(ProducerMetricsRegistry.REQUEST_RATE,1.0);
-    producerMetrics.get().mbean(
-            ProducerMetricsRegistry.GROUP_NAME,
-            Collections.emptyMap())
-        .recordMetrics(ProducerMetricsRegistry.REQUEST_TOTAL,1.0);
+      Optional<ByteString> serializedKey, Optional<ByteString> serializedValue) {
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
+        .recordMetrics(ProducerMetricsRegistry.REQUEST_RATE, 1.0);
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
+        .recordMetrics(ProducerMetricsRegistry.REQUEST_TOTAL, 1.0);
     // record request size
     double requestSize = getRequestSize(serializedKey, serializedValue);
-    producerMetrics.get().mbean(
-            ProducerMetricsRegistry.GROUP_NAME,
-            Collections.emptyMap())
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.REQUEST_SIZE_AVG, requestSize);
-    producerMetrics.get().mbean(
-            ProducerMetricsRegistry.GROUP_NAME,
-            Collections.emptyMap())
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.REQUEST_SIZE_TOTAL, requestSize);
   }
 
-
   private double getRequestSize(
-      Optional<ByteString> serializedKey,
-      Optional<ByteString> serializedValue) {
+      Optional<ByteString> serializedKey, Optional<ByteString> serializedValue) {
     double size = 0.0;
     size += serializedKey.orElse(ByteString.EMPTY).size();
     size += serializedValue.orElse(ByteString.EMPTY).size();
@@ -312,8 +308,7 @@ public final class ProduceAction {
   }
 
   private double getResponseSize(
-      Optional<ProduceResponseData> keyData,
-      Optional<ProduceResponseData> valueData) {
+      Optional<ProduceResponseData> keyData, Optional<ProduceResponseData> valueData) {
     double size = 0.0;
     if (keyData.isPresent()) {
       size += keyData.get().getSize();
@@ -323,6 +318,4 @@ public final class ProduceAction {
     }
     return size;
   }
-
-
 }

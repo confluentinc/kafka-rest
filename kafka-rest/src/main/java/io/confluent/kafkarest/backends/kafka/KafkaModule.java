@@ -20,13 +20,12 @@ import static java.util.Objects.requireNonNull;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
+import io.confluent.kafkarest.ProducerMetrics;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
-
-import io.confluent.kafkarest.ProducerMetrics;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.utils.Time;

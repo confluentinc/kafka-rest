@@ -213,7 +213,6 @@ public class ProduceControllerImplTest {
     assertEquals(2, result3.join().getPartitionId());
     assertEquals(expectedOffset, result3.join().getOffset());
 
-
     assertProducerRecordsEquals(
         Arrays.asList(
             new ProducerRecord<>(

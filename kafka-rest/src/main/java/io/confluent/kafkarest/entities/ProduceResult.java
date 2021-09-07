@@ -54,8 +54,8 @@ public abstract class ProduceResult {
         completionTimestamp);
   }
 
-  public static ProduceResult fromRecordMetadata(RecordMetadata metadata,
-                                                 Instant completionTimestamp) {
+  public static ProduceResult fromRecordMetadata(
+      RecordMetadata metadata, Instant completionTimestamp) {
     return create(
         metadata.partition(),
         metadata.offset(),
