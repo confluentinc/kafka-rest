@@ -46,6 +46,8 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   private Producer<byte[], byte[]> producer;
   private SchemaRegistryClient schemaRegistryClient;
 
+
+
   /**
    * @deprecated Use {@link #DefaultKafkaRestContext(KafkaRestConfig)} instead.
    */

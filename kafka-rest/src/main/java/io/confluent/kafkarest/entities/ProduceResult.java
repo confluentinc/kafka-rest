@@ -37,18 +37,33 @@ public abstract class ProduceResult {
 
   public abstract int getSerializedValueSize();
 
+  public abstract Instant getCompletionTimestamp();
+
   public static ProduceResult create(
       int partitionId,
       long offset,
       @Nullable Instant timestamp,
       int serializedKeySize,
-      int serializedValueSize) {
+      int serializedValueSize,
+      Instant completionTimestamp) {
     return new AutoValue_ProduceResult(
         partitionId,
         offset,
         Optional.ofNullable(timestamp),
         serializedKeySize,
-        serializedValueSize);
+        serializedValueSize,
+        completionTimestamp);
+  }
+
+  public static ProduceResult fromRecordMetadata(RecordMetadata metadata,
+                                                 Instant completionTimestamp) {
+    return create(
+        metadata.partition(),
+        metadata.offset(),
+        metadata.hasTimestamp() ? Instant.ofEpochMilli(metadata.timestamp()) : null,
+        metadata.serializedKeySize(),
+        metadata.serializedValueSize(),
+        completionTimestamp);
   }
 
   public static ProduceResult fromRecordMetadata(RecordMetadata metadata) {
@@ -57,6 +72,7 @@ public abstract class ProduceResult {
         metadata.offset(),
         metadata.hasTimestamp() ? Instant.ofEpochMilli(metadata.timestamp()) : null,
         metadata.serializedKeySize(),
-        metadata.serializedValueSize());
+        metadata.serializedValueSize(),
+        Instant.now());
   }
 }

@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
+import io.confluent.kafkarest.KafkaRestContext;
+import io.confluent.kafkarest.ProducerMetricsRegistry;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
@@ -36,9 +38,13 @@ import io.confluent.kafkarest.exceptions.BadRequestException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.response.StreamingResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
+
+import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import javax.inject.Inject;
@@ -98,6 +104,8 @@ public final class ProduceAction {
 
   private CompletableFuture<ProduceResponse> produce(
       String clusterId, String topicName, ProduceRequest request, ProduceController controller) {
+
+    Instant requestInstant = Instant.now();
     Optional<RegisteredSchema> keySchema =
         request.getKey().flatMap(key -> getSchema(topicName, /* isKey= */ true, key));
     Optional<EmbeddedFormat> keyFormat =
@@ -114,6 +122,8 @@ public final class ProduceAction {
     Optional<ByteString> serializedValue =
         serialize(topicName, valueFormat, valueSchema, request.getValue(), /* isKey= */ false);
 
+    recordRequestMetrics(serializedKey, serializedValue);
+
     CompletableFuture<ProduceResult> produceResult =
         controller.produce(
             clusterId,
@@ -124,10 +134,25 @@ public final class ProduceAction {
             serializedValue,
             request.getTimestamp().orElse(Instant.now()));
 
-    return produceResult.thenApply(
-        result ->
-            toProduceResponse(
-                clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result));
+    return produceResult.handle((result, ex) -> {
+      if (ex != null) {
+        recordErrorMetrics();
+        throw new CompletionException(ex);
+      }
+      return result;
+    }).thenApply(
+          result -> {
+            ProduceResponse response = toProduceResponse(
+                clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
+            double responseSize = getResponseSize(
+                response.getKey(),
+                response.getValue());
+            double latency = Duration.between(
+                requestInstant,
+                result.getCompletionTimestamp()).toMillis();
+            recordResponseMetrics(responseSize, latency);
+            return response;
+          });
   }
 
   private Optional<RegisteredSchema> getSchema(
@@ -203,4 +228,92 @@ public final class ProduceAction {
                         .build()))
         .build();
   }
+
+
+  private void recordResponseMetrics(double responseSize, double latency) {
+    KafkaRestContext.producerMetrics.mbean(
+            ProducerMetricsRegistry.GROUP_NAME,
+            Collections.emptyMap())
+        .recordMetrics(ProducerMetricsRegistry.RESPONSE_SIZE_AVG, responseSize);
+    KafkaRestContext.producerMetrics.mbean(
+            ProducerMetricsRegistry.GROUP_NAME,
+            Collections.emptyMap())
+        .recordMetrics(ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL, responseSize);
+    KafkaRestContext.producerMetrics.mbean(
+            ProducerMetricsRegistry.GROUP_NAME,
+            Collections.emptyMap())
+        .recordMetrics(ProducerMetricsRegistry.RESPONSE_SEND_RATE, 1.0);
+    KafkaRestContext.producerMetrics.mbean(
+            ProducerMetricsRegistry.GROUP_NAME,
+            Collections.emptyMap())
+        .recordMetrics(ProducerMetricsRegistry.RESPONSE_TOTAL, 1.0);
+    KafkaRestContext.producerMetrics.mbean(
+            ProducerMetricsRegistry.GROUP_NAME,
+            Collections.emptyMap())
+        .recordMetrics(ProducerMetricsRegistry.REQUEST_LATENCY_MAX, latency);
+    KafkaRestContext.producerMetrics.mbean(
+            ProducerMetricsRegistry.GROUP_NAME,
+            Collections.emptyMap())
+        .recordMetrics(ProducerMetricsRegistry.REQUEST_LATENCY_AVG, latency);
+  }
+
+  private void recordErrorMetrics() {
+    KafkaRestContext.producerMetrics.mbean(
+            ProducerMetricsRegistry.GROUP_NAME,
+            Collections.emptyMap())
+        .recordMetrics(ProducerMetricsRegistry.RECORD_ERROR_RATE, 1.0);
+    KafkaRestContext.producerMetrics.mbean(
+            ProducerMetricsRegistry.GROUP_NAME,
+            Collections.emptyMap())
+        .recordMetrics(ProducerMetricsRegistry.RECORD_ERROR_TOTAL, 1.0);
+  }
+
+  private void recordRequestMetrics(
+      Optional<ByteString> serializedKey,
+      Optional<ByteString> serializedValue) {
+    // record request rate metric
+    KafkaRestContext.producerMetrics.mbean(
+            ProducerMetricsRegistry.GROUP_NAME,
+            Collections.emptyMap())
+        .recordMetrics(ProducerMetricsRegistry.REQUEST_RATE,1.0);
+    KafkaRestContext.producerMetrics.mbean(
+            ProducerMetricsRegistry.GROUP_NAME,
+            Collections.emptyMap())
+        .recordMetrics(ProducerMetricsRegistry.REQUEST_TOTAL,1.0);
+    // record request size
+    double requestSize = getRequestSize(serializedKey, serializedValue);
+    KafkaRestContext.producerMetrics.mbean(
+            ProducerMetricsRegistry.GROUP_NAME,
+            Collections.emptyMap())
+        .recordMetrics(ProducerMetricsRegistry.REQUEST_SIZE_AVG, requestSize);
+    KafkaRestContext.producerMetrics.mbean(
+            ProducerMetricsRegistry.GROUP_NAME,
+            Collections.emptyMap())
+        .recordMetrics(ProducerMetricsRegistry.REQUEST_SIZE_TOTAL, requestSize);
+  }
+
+
+  private double getRequestSize(
+      Optional<ByteString> serializedKey,
+      Optional<ByteString> serializedValue) {
+    double size = 0.0;
+    size += serializedKey.orElse(ByteString.EMPTY).size();
+    size += serializedValue.orElse(ByteString.EMPTY).size();
+    return size;
+  }
+
+  private double getResponseSize(
+      Optional<ProduceResponseData> keyData,
+      Optional<ProduceResponseData> valueData) {
+    double size = 0.0;
+    if (keyData.isPresent()) {
+      size += keyData.get().getSize();
+    }
+    if (valueData.isPresent()) {
+      size += valueData.get().getSize();
+    }
+    return size;
+  }
+
+
 }
