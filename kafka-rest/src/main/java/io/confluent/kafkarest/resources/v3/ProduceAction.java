@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
-import io.confluent.kafkarest.KafkaRestContext;
+import io.confluent.kafkarest.ProducerMetrics;
 import io.confluent.kafkarest.ProducerMetricsRegistry;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
@@ -75,15 +75,18 @@ public final class ProduceAction {
   private final Provider<SchemaManager> schemaManager;
   private final Provider<RecordSerializer> recordSerializer;
   private final Provider<ProduceController> produceController;
+  private final Provider<ProducerMetrics> producerMetrics;
 
   @Inject
   public ProduceAction(
       Provider<SchemaManager> schemaManager,
       Provider<RecordSerializer> recordSerializer,
-      Provider<ProduceController> produceController) {
+      Provider<ProduceController> produceController,
+      Provider<ProducerMetrics> producerMetrics) {
     this.schemaManager = requireNonNull(schemaManager);
     this.recordSerializer = requireNonNull(recordSerializer);
     this.produceController = requireNonNull(produceController);
+    this.producerMetrics = requireNonNull(producerMetrics);
   }
 
   @POST
@@ -231,38 +234,38 @@ public final class ProduceAction {
 
 
   private void recordResponseMetrics(double responseSize, double latency) {
-    KafkaRestContext.producerMetrics.mbean(
+    producerMetrics.get().mbean(
             ProducerMetricsRegistry.GROUP_NAME,
             Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.RESPONSE_SIZE_AVG, responseSize);
-    KafkaRestContext.producerMetrics.mbean(
+    producerMetrics.get().mbean(
             ProducerMetricsRegistry.GROUP_NAME,
             Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL, responseSize);
-    KafkaRestContext.producerMetrics.mbean(
+    producerMetrics.get().mbean(
             ProducerMetricsRegistry.GROUP_NAME,
             Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.RESPONSE_SEND_RATE, 1.0);
-    KafkaRestContext.producerMetrics.mbean(
+    producerMetrics.get().mbean(
             ProducerMetricsRegistry.GROUP_NAME,
             Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.RESPONSE_TOTAL, 1.0);
-    KafkaRestContext.producerMetrics.mbean(
+    producerMetrics.get().mbean(
             ProducerMetricsRegistry.GROUP_NAME,
             Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.REQUEST_LATENCY_MAX, latency);
-    KafkaRestContext.producerMetrics.mbean(
+    producerMetrics.get().mbean(
             ProducerMetricsRegistry.GROUP_NAME,
             Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.REQUEST_LATENCY_AVG, latency);
   }
 
   private void recordErrorMetrics() {
-    KafkaRestContext.producerMetrics.mbean(
+    producerMetrics.get().mbean(
             ProducerMetricsRegistry.GROUP_NAME,
             Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.RECORD_ERROR_RATE, 1.0);
-    KafkaRestContext.producerMetrics.mbean(
+    producerMetrics.get().mbean(
             ProducerMetricsRegistry.GROUP_NAME,
             Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.RECORD_ERROR_TOTAL, 1.0);
@@ -271,22 +274,21 @@ public final class ProduceAction {
   private void recordRequestMetrics(
       Optional<ByteString> serializedKey,
       Optional<ByteString> serializedValue) {
-    // record request rate metric
-    KafkaRestContext.producerMetrics.mbean(
+    producerMetrics.get().mbean(
             ProducerMetricsRegistry.GROUP_NAME,
             Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.REQUEST_RATE,1.0);
-    KafkaRestContext.producerMetrics.mbean(
+    producerMetrics.get().mbean(
             ProducerMetricsRegistry.GROUP_NAME,
             Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.REQUEST_TOTAL,1.0);
     // record request size
     double requestSize = getRequestSize(serializedKey, serializedValue);
-    KafkaRestContext.producerMetrics.mbean(
+    producerMetrics.get().mbean(
             ProducerMetricsRegistry.GROUP_NAME,
             Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.REQUEST_SIZE_AVG, requestSize);
-    KafkaRestContext.producerMetrics.mbean(
+    producerMetrics.get().mbean(
             ProducerMetricsRegistry.GROUP_NAME,
             Collections.emptyMap())
         .recordMetrics(ProducerMetricsRegistry.REQUEST_SIZE_TOTAL, requestSize);

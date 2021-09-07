@@ -25,8 +25,11 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
+
+import io.confluent.kafkarest.ProducerMetrics;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.common.utils.Time;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -54,6 +57,10 @@ public final class KafkaModule extends AbstractBinder {
     bindFactory(ProducerFactory.class)
         .to(new TypeLiteral<Producer<byte[], byte[]>>() {})
         .in(RequestScoped.class);
+
+    bindFactory(ProducerMetricsFactory.class, Singleton.class)
+        .to(ProducerMetrics.class)
+        .in(Singleton.class);
   }
 
   private static final class KafkaRestContextFactory implements Factory<KafkaRestContext> {
@@ -119,6 +126,22 @@ public final class KafkaModule extends AbstractBinder {
     @Override
     public void dispose(Producer<byte[], byte[]> producer) {
       // Producer is disposed when the KafkaRestContext is disposed.
+    }
+  }
+
+  private static final class ProducerMetricsFactory implements Factory<ProducerMetrics> {
+
+    private ProducerMetrics producerMetrics;
+
+    @Override
+    public ProducerMetrics provide() {
+      producerMetrics = new ProducerMetrics(Time.SYSTEM);
+      return producerMetrics;
+    }
+
+    @Override
+    public void dispose(ProducerMetrics producerMetrics) {
+      // the JVM will close JMX
     }
   }
 }

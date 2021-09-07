@@ -17,7 +17,7 @@ package io.confluent.kafkarest;
 
 public class ProducerMetricsRegistry {
 
-  public static final String GROUP_NAME = "producer-metrics";
+  public static final String GROUP_NAME = "produce-api-metrics";
 
   // request
   public static final String REQUEST_RATE = "request-send-rate";

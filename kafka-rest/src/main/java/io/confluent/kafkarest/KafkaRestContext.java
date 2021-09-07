@@ -22,8 +22,6 @@ import org.apache.kafka.clients.producer.Producer;
 
 public interface KafkaRestContext {
 
-  ProducerMetrics producerMetrics = new ProducerMetrics(Time.SYSTEM);
-
   KafkaRestConfig getConfig();
 
   /**
