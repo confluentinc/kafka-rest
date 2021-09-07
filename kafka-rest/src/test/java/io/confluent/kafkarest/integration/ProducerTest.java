@@ -24,13 +24,11 @@ import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest.BinaryTopicP
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.Before;
 import org.junit.Test;
-import scala.collection.JavaConverters;
 
 public class ProducerTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
@@ -108,14 +106,8 @@ public class ProducerTest
   public void setUp() throws Exception {
     super.setUp();
     final int numPartitions = 3;
-    final int replicationFactor = 1;
-    kafka.utils.TestUtils.createTopic(
-        zkClient,
-        topicName,
-        numPartitions,
-        replicationFactor,
-        JavaConverters.asScalaBuffer(this.servers),
-        new Properties());
+    final short replicationFactor = 1;
+    createTopic(topicName, numPartitions, replicationFactor);
   }
 
   @Test
