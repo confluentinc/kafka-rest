@@ -87,8 +87,10 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                                 Resource.Metadata.builder()
                                     .setSelf(
                                         baseUrl
-                                            + "/v3/clusters/" + clusterId
-                                            + "/topics/" + TOPIC_1)
+                                            + "/v3/clusters/"
+                                            + clusterId
+                                            + "/topics/"
+                                            + TOPIC_1)
                                     .setResourceName(
                                         "crn:///kafka=" + clusterId + "/topic=" + TOPIC_1)
                                     .build())
@@ -100,20 +102,26 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             .setPartitions(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/topics/" + TOPIC_1
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/topics/"
+                                        + TOPIC_1
                                         + "/partitions"))
                             .setConfigs(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/topics/" + TOPIC_1
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/topics/"
+                                        + TOPIC_1
                                         + "/configs"))
                             .setPartitionReassignments(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/topics/" + TOPIC_1
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/topics/"
+                                        + TOPIC_1
                                         + "/partitions/-/reassignment"))
                             .build(),
                         TopicData.builder()
@@ -121,8 +129,10 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                                 Resource.Metadata.builder()
                                     .setSelf(
                                         baseUrl
-                                            + "/v3/clusters/" + clusterId
-                                            + "/topics/" + TOPIC_2)
+                                            + "/v3/clusters/"
+                                            + clusterId
+                                            + "/topics/"
+                                            + TOPIC_2)
                                     .setResourceName(
                                         "crn:///kafka=" + clusterId + "/topic=" + TOPIC_2)
                                     .build())
@@ -134,29 +144,37 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             .setPartitions(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/topics/" + TOPIC_2
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/topics/"
+                                        + TOPIC_2
                                         + "/partitions"))
                             .setConfigs(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/topics/" + TOPIC_2
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/topics/"
+                                        + TOPIC_2
                                         + "/configs"))
                             .setPartitionReassignments(
                                 Resource.Relationship.create(
                                     baseUrl
-                                    + "/v3/clusters/" + clusterId
-                                    + "/topics/" + TOPIC_2
-                                    + "/partitions/-/reassignment"))
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/topics/"
+                                        + TOPIC_2
+                                        + "/partitions/-/reassignment"))
                             .build(),
                         TopicData.builder()
                             .setMetadata(
                                 Resource.Metadata.builder()
                                     .setSelf(
                                         baseUrl
-                                            + "/v3/clusters/" + clusterId
-                                            + "/topics/" + TOPIC_3)
+                                            + "/v3/clusters/"
+                                            + clusterId
+                                            + "/topics/"
+                                            + TOPIC_3)
                                     .setResourceName(
                                         "crn:///kafka=" + clusterId + "/topic=" + TOPIC_3)
                                     .build())
@@ -168,20 +186,26 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             .setPartitions(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/topics/" + TOPIC_3
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/topics/"
+                                        + TOPIC_3
                                         + "/partitions"))
                             .setConfigs(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/topics/" + TOPIC_3
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/topics/"
+                                        + TOPIC_3
                                         + "/configs"))
                             .setPartitionReassignments(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/topics/" + TOPIC_3
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/topics/"
+                                        + TOPIC_3
                                         + "/partitions/-/reassignment"))
                             .build()))
                 .build());
@@ -203,8 +227,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   @Test
   public void listTopics_nonExistingCluster_returnsNotFound() {
     Response response =
-        request("/v3/clusters/foobar/topics")
-            .accept(MediaType.APPLICATION_JSON).get();
+        request("/v3/clusters/foobar/topics").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -218,9 +241,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             TopicData.builder()
                 .setMetadata(
                     Resource.Metadata.builder()
-                        .setSelf(baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + TOPIC_1)
+                        .setSelf(baseUrl + "/v3/clusters/" + clusterId + "/topics/" + TOPIC_1)
                         .setResourceName("crn:///kafka=" + clusterId + "/topic=" + TOPIC_1)
                         .build())
                 .setClusterId(clusterId)
@@ -231,26 +252,28 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setPartitions(
                     Resource.Relationship.create(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + TOPIC_1
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + TOPIC_1
                             + "/partitions"))
                 .setConfigs(
                     Resource.Relationship.create(
-                        baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + TOPIC_1
-                            + "/configs"))
+                        baseUrl + "/v3/clusters/" + clusterId + "/topics/" + TOPIC_1 + "/configs"))
                 .setPartitionReassignments(
                     Resource.Relationship.create(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + TOPIC_1
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + TOPIC_1
                             + "/partitions/-/reassignment"))
                 .build());
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_1)
-            .accept(MediaType.APPLICATION_JSON).get();
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
     GetTopicResponse actual = response.readEntity(GetTopicResponse.class);
@@ -270,7 +293,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/topics/foobar")
-            .accept(MediaType.APPLICATION_JSON).get();
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -296,20 +320,26 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setPartitions(
                     Resource.Relationship.create(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + topicName
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + topicName
                             + "/partitions"))
                 .setConfigs(
                     Resource.Relationship.create(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + topicName
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + topicName
                             + "/configs"))
                 .setPartitionReassignments(
                     Resource.Relationship.create(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + topicName
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + topicName
                             + "/partitions/-/reassignment"))
                 .build());
 
@@ -318,8 +348,10 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             .accept(MediaType.APPLICATION_JSON)
             .post(
                 Entity.entity(
-                    "{\"topic_name\":\"" + topicName + "\",\"partitions_count\":1," +
-                        "\"replication_factor\":1}",
+                    "{\"topic_name\":\""
+                        + topicName
+                        + "\",\"partitions_count\":1,"
+                        + "\"replication_factor\":1}",
                     MediaType.APPLICATION_JSON));
     assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
 
@@ -355,20 +387,26 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setPartitions(
                     Resource.Relationship.create(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + topicName
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + topicName
                             + "/partitions"))
                 .setConfigs(
                     Resource.Relationship.create(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + topicName
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + topicName
                             + "/configs"))
                 .setPartitionReassignments(
                     Resource.Relationship.create(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + topicName
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + topicName
                             + "/partitions/-/reassignment"))
                 .build());
 
@@ -377,7 +415,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             .accept(MediaType.APPLICATION_JSON)
             .post(
                 Entity.entity(
-                    "{\"topic_name\":\"" + topicName
+                    "{\"topic_name\":\""
+                        + topicName
                         + "\",\"replicas_assignments\":{\"0\":[1,2], \"1\":[2,3], \"2\":[3,1]}}",
                     MediaType.APPLICATION_JSON));
     assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
@@ -401,8 +440,10 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             .accept(MediaType.APPLICATION_JSON)
             .post(
                 Entity.entity(
-                    "{\"topic_name\":\"" + TOPIC_1 + "\",\"partitions_count\":1,\\" +
-                        "replication_factor\":1}",
+                    "{\"topic_name\":\""
+                        + TOPIC_1
+                        + "\",\"partitions_count\":1,\\"
+                        + "replication_factor\":1}",
                     MediaType.APPLICATION_JSON));
     assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
@@ -490,20 +531,26 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setPartitions(
                     Resource.Relationship.create(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + topicName
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + topicName
                             + "/partitions"))
                 .setConfigs(
                     Resource.Relationship.create(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + topicName
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + topicName
                             + "/configs"))
                 .setPartitionReassignments(
                     Resource.Relationship.create(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + topicName
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + topicName
                             + "/partitions/-/reassignment"))
                 .build());
 
@@ -512,8 +559,10 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             .accept(MediaType.APPLICATION_JSON)
             .post(
                 Entity.entity(
-                    "{\"topic_name\":\"" + topicName + "\",\"partitions_count\":1," +
-                        "\"configs\":[{\"name\":\"cleanup.policy\",\"value\":\"compact\"}]}",
+                    "{\"topic_name\":\""
+                        + topicName
+                        + "\",\"partitions_count\":1,"
+                        + "\"configs\":[{\"name\":\"cleanup.policy\",\"value\":\"compact\"}]}",
                     MediaType.APPLICATION_JSON));
     assertEquals(Status.CREATED.getStatusCode(), createTopicResponse.getStatus());
 
@@ -532,12 +581,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             TopicData.builder()
                 .setMetadata(
                     Resource.Metadata.builder()
-                        .setSelf(
-                            baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/topics/" + topicName)
-                        .setResourceName(
-                            "crn:///kafka=" + clusterId + "/topic=" + topicName)
+                        .setSelf(baseUrl + "/v3/clusters/" + clusterId + "/topics/" + topicName)
+                        .setResourceName("crn:///kafka=" + clusterId + "/topic=" + topicName)
                         .build())
                 .setClusterId(clusterId)
                 .setTopicName(topicName)
@@ -547,20 +592,26 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setPartitions(
                     Resource.Relationship.create(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + topicName
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + topicName
                             + "/partitions"))
                 .setConfigs(
                     Resource.Relationship.create(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + topicName
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + topicName
                             + "/configs"))
                 .setPartitionReassignments(
                     Resource.Relationship.create(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/topics/" + topicName
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/"
+                            + topicName
                             + "/partitions/-/reassignment"))
                 .build());
 
@@ -584,12 +635,16 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                     Resource.Metadata.builder()
                         .setSelf(
                             baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/topics/" + topicName
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/topics/"
+                                + topicName
                                 + "/configs/cleanup.policy")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
-                                + "/topic=" + topicName
+                            "crn:///kafka="
+                                + clusterId
+                                + "/topic="
+                                + topicName
                                 + "/config=cleanup.policy")
                         .build())
                 .setClusterId(clusterId)
@@ -600,33 +655,29 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setReadOnly(false)
                 .setSensitive(false)
                 .setSource(ConfigSource.DYNAMIC_TOPIC_CONFIG)
-                .setSynonyms(Arrays.asList(
-                    ConfigSynonymData.builder()
-                        .setName("cleanup.policy")
-                        .setValue("compact")
-                        .setSource(ConfigSource.DYNAMIC_TOPIC_CONFIG)
-                        .build(),
-                    ConfigSynonymData.builder()
-                        .setName("log.cleanup.policy")
-                        .setValue("delete")
-                        .setSource(ConfigSource.DEFAULT_CONFIG)
-                        .build()))
+                .setSynonyms(
+                    Arrays.asList(
+                        ConfigSynonymData.builder()
+                            .setName("cleanup.policy")
+                            .setValue("compact")
+                            .setSource(ConfigSource.DYNAMIC_TOPIC_CONFIG)
+                            .build(),
+                        ConfigSynonymData.builder()
+                            .setName("log.cleanup.policy")
+                            .setValue("delete")
+                            .setSource(ConfigSource.DEFAULT_CONFIG)
+                            .build()))
                 .build());
 
     Response existingGetTopicConfigResponse =
-        request(
-            "/v3/clusters/" + clusterId
-                + "/topics/" + topicName
-                + "/configs/cleanup.policy")
+        request("/v3/clusters/" + clusterId + "/topics/" + topicName + "/configs/cleanup.policy")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), existingGetTopicConfigResponse.getStatus());
 
     GetTopicConfigResponse actualGetTopicConfigResponse =
         existingGetTopicConfigResponse.readEntity(GetTopicConfigResponse.class);
-    assertEquals(
-        expectedExistingGetTopicConfigResponse,
-        actualGetTopicConfigResponse);
+    assertEquals(expectedExistingGetTopicConfigResponse, actualGetTopicConfigResponse);
 
     Response deleteTopicResponse =
         request("/v3/clusters/" + clusterId + "/topics/" + topicName)

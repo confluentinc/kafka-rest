@@ -29,12 +29,11 @@ import io.confluent.kafka.serializers.subject.TopicNameStrategy;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
+import io.confluent.rest.exceptions.RestConstraintViolationException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-
-import io.confluent.rest.exceptions.RestConstraintViolationException;
 import org.apache.kafka.common.errors.SerializationException;
 import org.junit.After;
 import org.junit.Before;
@@ -531,8 +530,7 @@ public class SchemaManagerImplTest {
     }
 
     @Override
-    public void configure(Map<String, ?> map) {
-    }
+    public void configure(Map<String, ?> map) {}
   }
 
   private static final class SchemaDependentSubjectNameStrategy implements SubjectNameStrategy {
@@ -543,8 +541,7 @@ public class SchemaManagerImplTest {
     }
 
     @Override
-    public void configure(Map<String, ?> map) {
-    }
+    public void configure(Map<String, ?> map) {}
   }
 
   private static final class NullReturningSubjectNameStrategy implements SubjectNameStrategy {
@@ -555,7 +552,6 @@ public class SchemaManagerImplTest {
     }
 
     @Override
-    public void configure(Map<String, ?> map) {
-    }
+    public void configure(Map<String, ?> map) {}
   }
 }

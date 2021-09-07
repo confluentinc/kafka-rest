@@ -22,8 +22,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class GetConsumerGroupResponse {
 
-  GetConsumerGroupResponse() {
-  }
+  GetConsumerGroupResponse() {}
 
   @JsonValue
   public abstract ConsumerGroupData getValue();

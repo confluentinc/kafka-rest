@@ -16,7 +16,6 @@
 package io.confluent.kafkarest;
 
 import io.confluent.kafkarest.response.UrlFactoryImpl;
-
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,11 +41,11 @@ public class UriUtils {
     }
 
     return new UrlFactoryImpl(
-        config.getString(KafkaRestConfig.HOST_NAME_CONFIG),
-        config.getInt(KafkaRestConfig.PORT_CONFIG),
-        advertisedListeners,
-        listeners,
-        uriInfo)
+            config.getString(KafkaRestConfig.HOST_NAME_CONFIG),
+            config.getInt(KafkaRestConfig.PORT_CONFIG),
+            advertisedListeners,
+            listeners,
+            uriInfo)
         .create(components);
   }
 }

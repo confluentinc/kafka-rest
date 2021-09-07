@@ -23,8 +23,7 @@ import io.confluent.kafkarest.entities.Topic;
 @AutoValue
 public abstract class TopicData extends Resource {
 
-  TopicData() {
-  }
+  TopicData() {}
 
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
@@ -74,8 +73,7 @@ public abstract class TopicData extends Resource {
       @JsonProperty("partitions_count") int partitionsCount,
       @JsonProperty("partitions") Relationship partitions,
       @JsonProperty("configs") Relationship configs,
-      @JsonProperty("partition_reassignments") Relationship partitionReassignments
-  ) {
+      @JsonProperty("partition_reassignments") Relationship partitionReassignments) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -93,8 +91,7 @@ public abstract class TopicData extends Resource {
   @AutoValue.Builder
   public abstract static class Builder extends Resource.Builder<Builder> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 

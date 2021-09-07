@@ -15,29 +15,14 @@
 
 package io.confluent.kafkarest.unit;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.NumericNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import io.confluent.kafka.schemaregistry.json.JsonSchema;
-import io.confluent.kafka.schemaregistry.json.JsonSchemaUtils;
-import io.confluent.kafkarest.TestUtils;
-import io.confluent.kafkarest.converters.ConversionException;
-import io.confluent.kafkarest.converters.JsonSchemaConverter;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import io.confluent.kafkarest.converters.JsonSchemaConverter;
+import org.junit.Test;
 
 public class JsonSchemaConverterTest {
 
@@ -59,7 +44,8 @@ public class JsonSchemaConverterTest {
     result = new JsonSchemaConverter().toJson(true);
     assertTrue(result.getJson().isBoolean());
 
-    // "Primitive" here refers to JsonSchema primitive types, which are returned as standalone objects,
+    // "Primitive" here refers to JsonSchema primitive types, which are returned as standalone
+    // objects,
     // which can't have attached schemas. This includes, for example, Strings and byte[] even
     // though they are not Java primitives
 
@@ -70,7 +56,8 @@ public class JsonSchemaConverterTest {
 
   @Test
   public void testRecordToJson() throws Exception {
-    String json = "{\n"
+    String json =
+        "{\n"
             + "    \"null\": null,\n"
             + "    \"boolean\": true,\n"
             + "    \"number\": 12,\n"

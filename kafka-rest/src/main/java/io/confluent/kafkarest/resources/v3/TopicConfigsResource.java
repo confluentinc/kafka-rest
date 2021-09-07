@@ -77,10 +77,10 @@ public final class TopicConfigsResource {
   public void listTopicConfigs(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @PathParam("topicName") String topicName
-  ) {
+      @PathParam("topicName") String topicName) {
     CompletableFuture<ListTopicConfigsResponse> response =
-        topicConfigManager.get()
+        topicConfigManager
+            .get()
             .listTopicConfigs(clusterId, topicName)
             .thenApply(
                 configs ->
@@ -100,10 +100,9 @@ public final class TopicConfigsResource {
                             .setData(
                                 configs.stream()
                                     .sorted(Comparator.comparing(TopicConfig::getName))
-                                    .map(topicConfig -> toTopicConfigData(
-                                        topicConfig,
-                                        crnFactory,
-                                        urlFactory))
+                                    .map(
+                                        topicConfig ->
+                                            toTopicConfigData(topicConfig, crnFactory, urlFactory))
                                     .collect(Collectors.toList()))
                             .build()));
 
@@ -119,14 +118,16 @@ public final class TopicConfigsResource {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
-      @PathParam("name") String name
-  ) {
+      @PathParam("name") String name) {
     CompletableFuture<GetTopicConfigResponse> response =
-        topicConfigManager.get()
+        topicConfigManager
+            .get()
             .getTopicConfig(clusterId, topicName, name)
             .thenApply(topic -> topic.orElseThrow(NotFoundException::new))
-            .thenApply(topic -> GetTopicConfigResponse.create(
-                toTopicConfigData(topic,crnFactory,urlFactory)));
+            .thenApply(
+                topic ->
+                    GetTopicConfigResponse.create(
+                        toTopicConfigData(topic, crnFactory, urlFactory)));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
@@ -142,8 +143,7 @@ public final class TopicConfigsResource {
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
       @PathParam("name") String name,
-      @Valid UpdateTopicConfigRequest request
-  ) {
+      @Valid UpdateTopicConfigRequest request) {
     String newValue = request.getValue().orElse(null);
 
     CompletableFuture<Void> response =
@@ -163,8 +163,7 @@ public final class TopicConfigsResource {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
-      @PathParam("name") String name
-  ) {
+      @PathParam("name") String name) {
     CompletableFuture<Void> response =
         topicConfigManager.get().resetTopicConfig(clusterId, topicName, name);
 
@@ -174,9 +173,7 @@ public final class TopicConfigsResource {
   }
 
   public static TopicConfigData toTopicConfigData(
-      TopicConfig topicConfig,
-      CrnFactory crnFactory,
-      UrlFactory urlFactory) {
+      TopicConfig topicConfig, CrnFactory crnFactory, UrlFactory urlFactory) {
     return TopicConfigData.fromTopicConfig(topicConfig)
         .setMetadata(
             Resource.Metadata.builder()

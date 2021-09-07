@@ -75,7 +75,10 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
                 .setMetadata(
                     ResourceCollection.Metadata.builder()
                         .setSelf(
-                            baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups"
+                            baseUrl
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/consumer-groups"
                                 + "/consumer-group-1/consumers")
                         .build())
                 .setData(
@@ -84,13 +87,17 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
                             .setMetadata(
                                 Resource.Metadata.builder()
                                     .setSelf(
-                                        baseUrl + "/v3/clusters/" + clusterId
+                                        baseUrl
+                                            + "/v3/clusters/"
+                                            + clusterId
                                             + "/consumer-groups/consumer-group-1/consumers/"
                                             + consumer1.groupMetadata().memberId())
                                     .setResourceName(
-                                        "crn:///kafka=" + clusterId
+                                        "crn:///kafka="
+                                            + clusterId
                                             + "/consumer-group=consumer-group-1"
-                                            + "/consumer=" + consumer1.groupMetadata().memberId())
+                                            + "/consumer="
+                                            + consumer1.groupMetadata().memberId())
                                     .build())
                             .setClusterId(clusterId)
                             .setConsumerGroupId("consumer-group-1")
@@ -98,7 +105,10 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
                             .setClientId("client-1")
                             .setAssignments(
                                 Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups"
+                                    baseUrl
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/consumer-groups"
                                         + "/consumer-group-1/consumers/"
                                         + consumer1.groupMetadata().memberId()
                                         + "/assignments"))
@@ -107,13 +117,17 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
                             .setMetadata(
                                 Resource.Metadata.builder()
                                     .setSelf(
-                                        baseUrl + "/v3/clusters/" + clusterId
+                                        baseUrl
+                                            + "/v3/clusters/"
+                                            + clusterId
                                             + "/consumer-groups/consumer-group-1/consumers/"
                                             + consumer2.groupMetadata().memberId())
                                     .setResourceName(
-                                        "crn:///kafka=" + clusterId
+                                        "crn:///kafka="
+                                            + clusterId
                                             + "/consumer-group=consumer-group-1"
-                                            + "/consumer=" + consumer2.groupMetadata().memberId())
+                                            + "/consumer="
+                                            + consumer2.groupMetadata().memberId())
                                     .build())
                             .setClusterId(clusterId)
                             .setConsumerGroupId("consumer-group-1")
@@ -121,7 +135,10 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
                             .setClientId("client-2")
                             .setAssignments(
                                 Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups"
+                                    baseUrl
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/consumer-groups"
                                         + "/consumer-group-1/consumers/"
                                         + consumer2.groupMetadata().memberId()
                                         + "/assignments"))
@@ -130,13 +147,17 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
                             .setMetadata(
                                 Resource.Metadata.builder()
                                     .setSelf(
-                                        baseUrl + "/v3/clusters/" + clusterId
+                                        baseUrl
+                                            + "/v3/clusters/"
+                                            + clusterId
                                             + "/consumer-groups/consumer-group-1/consumers/"
                                             + consumer3.groupMetadata().memberId())
                                     .setResourceName(
-                                        "crn:///kafka=" + clusterId
+                                        "crn:///kafka="
+                                            + clusterId
                                             + "/consumer-group=consumer-group-1"
-                                            + "/consumer=" + consumer3.groupMetadata().memberId())
+                                            + "/consumer="
+                                            + consumer3.groupMetadata().memberId())
                                     .build())
                             .setClusterId(clusterId)
                             .setConsumerGroupId("consumer-group-1")
@@ -144,7 +165,10 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
                             .setClientId("client-3")
                             .setAssignments(
                                 Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups"
+                                    baseUrl
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/consumer-groups"
                                         + "/consumer-group-1/consumers/"
                                         + consumer3.groupMetadata().memberId()
                                         + "/assignments"))
@@ -197,13 +221,17 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
                 .setMetadata(
                     Resource.Metadata.builder()
                         .setSelf(
-                            baseUrl + "/v3/clusters/" + clusterId
+                            baseUrl
+                                + "/v3/clusters/"
+                                + clusterId
                                 + "/consumer-groups/consumer-group-1/consumers/"
                                 + consumer1.groupMetadata().memberId())
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
+                            "crn:///kafka="
+                                + clusterId
                                 + "/consumer-group=consumer-group-1"
-                                + "/consumer=" + consumer1.groupMetadata().memberId())
+                                + "/consumer="
+                                + consumer1.groupMetadata().memberId())
                         .build())
                 .setClusterId(clusterId)
                 .setConsumerGroupId("consumer-group-1")
@@ -211,7 +239,10 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
                 .setClientId("client-1")
                 .setAssignments(
                     Relationship.create(
-                        baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups"
+                        baseUrl
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/consumer-groups"
                             + "/consumer-group-1/consumers/"
                             + consumer1.groupMetadata().memberId()
                             + "/assignments"))
@@ -219,8 +250,11 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request(
-            "/v3/clusters/" + clusterId + "/consumer-groups/consumer-group-1"
-                + "/consumers/" + consumer1.groupMetadata().memberId())
+                "/v3/clusters/"
+                    + clusterId
+                    + "/consumer-groups/consumer-group-1"
+                    + "/consumers/"
+                    + consumer1.groupMetadata().memberId())
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
@@ -249,8 +283,8 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request(
-            "/v3/clusters/foobar/consumer-groups/consumer-group-1/consumers/"
-                + consumer1.groupMetadata().memberId())
+                "/v3/clusters/foobar/consumer-groups/consumer-group-1/consumers/"
+                    + consumer1.groupMetadata().memberId())
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -279,8 +313,10 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request(
-            "/v3/clusters/" + clusterId + "/consumer-groups/foobar/consumers/"
-                + consumer1.groupMetadata().memberId())
+                "/v3/clusters/"
+                    + clusterId
+                    + "/consumer-groups/foobar/consumers/"
+                    + consumer1.groupMetadata().memberId())
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -308,8 +344,7 @@ public class ConsumersResourceIntegrationTest extends ClusterTestHarness {
     consumer3.poll(Duration.ofSeconds(1));
 
     Response response =
-        request(
-            "/v3/clusters/" + clusterId + "/consumer-groups/consumer-group-1/consumers/foobar")
+        request("/v3/clusters/" + clusterId + "/consumer-groups/consumer-group-1/consumers/foobar")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());

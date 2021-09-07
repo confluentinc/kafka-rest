@@ -31,17 +31,11 @@ import javax.validation.constraints.NotNull;
 
 public final class GetTopicResponse {
 
-  @NotEmpty
-  @Nullable
-  private final String name;
+  @NotEmpty @Nullable private final String name;
 
-  @NotNull
-  @Nullable
-  private final Map<String, String> configs;
+  @NotNull @Nullable private final Map<String, String> configs;
 
-  @NotEmpty
-  @Nullable
-  private final List<GetPartitionResponse> partitions;
+  @NotEmpty @Nullable private final List<GetPartitionResponse> partitions;
 
   @JsonCreator
   private GetTopicResponse(
@@ -79,8 +73,7 @@ public final class GetTopicResponse {
     return new GetTopicResponse(
         topic.getName(),
         configsMap,
-        topic.getPartitions()
-            .stream()
+        topic.getPartitions().stream()
             .map(GetPartitionResponse::fromPartition)
             .collect(Collectors.toList()));
   }

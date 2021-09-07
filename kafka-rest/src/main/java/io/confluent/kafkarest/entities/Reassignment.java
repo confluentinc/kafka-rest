@@ -22,8 +22,7 @@ import java.util.List;
 @AutoValue
 public abstract class Reassignment {
 
-  Reassignment() {
-  }
+  Reassignment() {}
 
   public abstract String getClusterId();
 
@@ -46,7 +45,6 @@ public abstract class Reassignment {
         topicName,
         partitionId,
         ImmutableList.copyOf(addingReplicas),
-        ImmutableList.copyOf(removingReplicas)
-    );
+        ImmutableList.copyOf(removingReplicas));
   }
 }

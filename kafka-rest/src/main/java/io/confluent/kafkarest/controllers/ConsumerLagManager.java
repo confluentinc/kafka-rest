@@ -20,21 +20,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * A service to manage Kafka {@link ConsumerLag Consumer Lags}.
- */
+/** A service to manage Kafka {@link ConsumerLag Consumer Lags}. */
 public interface ConsumerLagManager {
 
   /**
-   * Returns the list of Kafka {@link ConsumerLag Consumer Lags} belonging to the
-   * {@link io.confluent.kafkarest.entities.ConsumerGroup} with the given {@code consumerGroupId}.
+   * Returns the list of Kafka {@link ConsumerLag Consumer Lags} belonging to the {@link
+   * io.confluent.kafkarest.entities.ConsumerGroup} with the given {@code consumerGroupId}.
    */
-  CompletableFuture<List<ConsumerLag>> listConsumerLags(
-      String clusterId, String consumerGroupId);
+  CompletableFuture<List<ConsumerLag>> listConsumerLags(String clusterId, String consumerGroupId);
 
-  /**
-   * Returns the Kafka {@link ConsumerLag} with the given {@code consumerId}.
-   */
+  /** Returns the Kafka {@link ConsumerLag} with the given {@code consumerId}. */
   CompletableFuture<Optional<ConsumerLag>> getConsumerLag(
       String clusterId, String consumerGroupId, String topicName, Integer partitionId);
 }

@@ -68,48 +68,49 @@ public final class ListAllBrokersConfigsAction {
   @PerformanceMetric("v3.brokers.configs.list")
   @ResourceName("api.v3.brokers-configs.list")
   public void listBrokersConfigs(
-      @Suspended AsyncResponse asyncResponse,
-      @PathParam("clusterId") String clusterId
-  ) {
+      @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     BrokerConfigManager resolvedBrokerConfigManager = brokerConfigManager.get();
 
     CompletableFuture<ListBrokerConfigsResponse> response =
-        brokerManager.get().listBrokers(clusterId)
-          .thenCompose(
-              brokers -> resolvedBrokerConfigManager
-                  .listAllBrokerConfigs(clusterId, brokers.stream()
-                      .map(Broker::getBrokerId)
-                      .collect(Collectors.toList())
-                  )
-                  .thenApply(
-                      configs ->
-                          ListBrokerConfigsResponse.create(
-                              BrokerConfigDataList.builder()
-                                  .setMetadata(
-                                      ResourceCollection.Metadata.builder()
-                                          .setSelf(
-                                              urlFactory.create(
-                                                  "v3",
-                                                  "clusters",
-                                                  clusterId,
-                                                  "brokers",
-                                                  "-",
-                                                  "configs"))
-                                          .build())
-                                  .setData(
-                                      configs.values().stream()
-                                          .flatMap(brokerConfigs -> brokerConfigs.stream()
-                                              .sorted(Comparator.comparing(
-                                                        BrokerConfig::getBrokerId)))
-                                          .map(brokerConfig -> BrokerConfigsResource
-                                              .toBrokerConfigData(
-                                                  brokerConfig,
-                                                  crnFactory,
-                                                  urlFactory))
-                                          .collect(Collectors.toList()))
-                                  .build())));
+        brokerManager
+            .get()
+            .listBrokers(clusterId)
+            .thenCompose(
+                brokers ->
+                    resolvedBrokerConfigManager
+                        .listAllBrokerConfigs(
+                            clusterId,
+                            brokers.stream().map(Broker::getBrokerId).collect(Collectors.toList()))
+                        .thenApply(
+                            configs ->
+                                ListBrokerConfigsResponse.create(
+                                    BrokerConfigDataList.builder()
+                                        .setMetadata(
+                                            ResourceCollection.Metadata.builder()
+                                                .setSelf(
+                                                    urlFactory.create(
+                                                        "v3",
+                                                        "clusters",
+                                                        clusterId,
+                                                        "brokers",
+                                                        "-",
+                                                        "configs"))
+                                                .build())
+                                        .setData(
+                                            configs.values().stream()
+                                                .flatMap(
+                                                    brokerConfigs ->
+                                                        brokerConfigs.stream()
+                                                            .sorted(
+                                                                Comparator.comparing(
+                                                                    BrokerConfig::getBrokerId)))
+                                                .map(
+                                                    brokerConfig ->
+                                                        BrokerConfigsResource.toBrokerConfigData(
+                                                            brokerConfig, crnFactory, urlFactory))
+                                                .collect(Collectors.toList()))
+                                        .build())));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }
-
 }

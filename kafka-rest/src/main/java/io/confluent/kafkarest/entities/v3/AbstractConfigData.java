@@ -24,8 +24,7 @@ import javax.annotation.Nullable;
 
 public abstract class AbstractConfigData extends Resource {
 
-  AbstractConfigData() {
-  }
+  AbstractConfigData() {}
 
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
@@ -54,8 +53,7 @@ public abstract class AbstractConfigData extends Resource {
   public abstract static class Builder<BuilderT extends Builder<BuilderT>>
       extends Resource.Builder<BuilderT> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract BuilderT setClusterId(String clusterId);
 

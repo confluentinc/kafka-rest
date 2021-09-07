@@ -46,8 +46,7 @@ final class ProduceControllerImpl implements ProduceController {
       Multimap<String, Optional<ByteString>> headers,
       Optional<ByteString> key,
       Optional<ByteString> value,
-      Instant timestamp
-  ) {
+      Instant timestamp) {
     CompletableFuture<ProduceResult> result = new CompletableFuture<>();
     producer.send(
         new ProducerRecord<>(

@@ -91,11 +91,7 @@ abstract class AbstractProduceAction {
       ProduceRequest request) {
     Optional<RegisteredSchema> keySchema =
         getSchema(
-            format,
-            topicName,
-            request.getKeySchemaId(),
-            request.getKeySchema(),
-            /* isKey= */ true);
+            format, topicName, request.getKeySchemaId(), request.getKeySchema(), /* isKey= */ true);
     Optional<RegisteredSchema> valueSchema =
         getSchema(
             format,
@@ -105,13 +101,7 @@ abstract class AbstractProduceAction {
             /* isKey= */ false);
 
     List<SerializedKeyAndValue> serialized =
-        serialize(
-            format,
-            topicName,
-            partition,
-            keySchema,
-            valueSchema,
-            request.getRecords());
+        serialize(format, topicName, partition, keySchema, valueSchema, request.getRecords());
 
     List<CompletableFuture<ProduceResult>> resultFutures = doProduce(topicName, serialized);
 
@@ -126,15 +116,17 @@ abstract class AbstractProduceAction {
       boolean isKey) {
     if (format.requiresSchema() && (schemaId.isPresent() || schema.isPresent())) {
       return Optional.of(
-          schemaManager.get().getSchema(
-              /* topicName= */ topicName,
-              /* format= */ schema.map(unused -> format),
-              /* subject= */ Optional.empty(),
-              /* subjectNameStrategy= */ Optional.empty(),
-              /* schemaId= */ schemaId,
-              /* schemaVersion= */ Optional.empty(),
-              /* rawSchema= */ schema,
-              /* isKey= */ isKey));
+          schemaManager
+              .get()
+              .getSchema(
+                  /* topicName= */ topicName,
+                  /* format= */ schema.map(unused -> format),
+                  /* subject= */ Optional.empty(),
+                  /* subjectNameStrategy= */ Optional.empty(),
+                  /* schemaId= */ schemaId,
+                  /* schemaVersion= */ Optional.empty(),
+                  /* rawSchema= */ schema,
+                  /* isKey= */ isKey));
     } else {
       return Optional.empty();
     }
@@ -152,14 +144,16 @@ abstract class AbstractProduceAction {
             record ->
                 SerializedKeyAndValue.create(
                     record.getPartition().map(Optional::of).orElse(partition),
-                    recordSerializer.get()
+                    recordSerializer
+                        .get()
                         .serialize(
                             format,
                             topicName,
                             keySchema,
                             record.getKey().orElse(NullNode.getInstance()),
                             /* isKey= */ true),
-                    recordSerializer.get()
+                    recordSerializer
+                        .get()
                         .serialize(
                             format,
                             topicName,
@@ -174,7 +168,8 @@ abstract class AbstractProduceAction {
     return serialized.stream()
         .map(
             record ->
-                produceController.get()
+                produceController
+                    .get()
                     .produce(
                         /* clusterId= */ "",
                         topicName,
@@ -189,8 +184,7 @@ abstract class AbstractProduceAction {
   private static CompletableFuture<ProduceResponse> produceResultsToResponse(
       Optional<RegisteredSchema> keySchema,
       Optional<RegisteredSchema> valueSchema,
-      List<CompletableFuture<ProduceResult>> resultFutures
-  ) {
+      List<CompletableFuture<ProduceResult>> resultFutures) {
     CompletableFuture<List<PartitionOffset>> offsetsFuture =
         CompletableFutures.allAsList(
             resultFutures.stream()
@@ -237,9 +231,8 @@ abstract class AbstractProduceAction {
       // since some messages may have been produced correctly, but is the right thing to do from
       // a REST perspective since there was an internal error with the service while processing
       // the request.
-      throw new RestServerErrorException(UNEXPECTED_PRODUCER_EXCEPTION,
-          RestServerErrorException.DEFAULT_ERROR_CODE, e
-      );
+      throw new RestServerErrorException(
+          UNEXPECTED_PRODUCER_EXCEPTION, RestServerErrorException.DEFAULT_ERROR_CODE, e);
     }
   }
 

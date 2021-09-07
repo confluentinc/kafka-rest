@@ -15,9 +15,7 @@
 
 package io.confluent.kafkarest.response;
 
-/**
- * A fake {@link UrlFactory} to be used in tests.
- */
+/** A fake {@link UrlFactory} to be used in tests. */
 public final class FakeUrlFactory implements UrlFactory {
 
   private static final char SEPARATOR = '/';

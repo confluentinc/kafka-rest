@@ -26,8 +26,7 @@ import org.apache.kafka.common.ConsumerGroupState;
 @AutoValue
 public abstract class ConsumerGroup {
 
-  ConsumerGroup() {
-  }
+  ConsumerGroup() {}
 
   public abstract String getClusterId();
 
@@ -71,8 +70,7 @@ public abstract class ConsumerGroup {
         .setState(State.fromConsumerGroupState(description.state()))
         .setCoordinator(Broker.fromNode(clusterId, description.coordinator()))
         .setConsumers(
-            description.members()
-                .stream()
+            description.members().stream()
                 .map(
                     consumer ->
                         Consumer.fromMemberDescription(clusterId, description.groupId(), consumer))
@@ -83,8 +81,7 @@ public abstract class ConsumerGroup {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 
@@ -104,7 +101,6 @@ public abstract class ConsumerGroup {
   }
 
   public enum State {
-
     UNKNOWN,
 
     PREPARING_REBALANCE,

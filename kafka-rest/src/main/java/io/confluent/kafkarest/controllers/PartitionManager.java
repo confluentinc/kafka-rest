@@ -20,9 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * A service to manage Kafka {@link Partition Partitions}.
- */
+/** A service to manage Kafka {@link Partition Partitions}. */
 public interface PartitionManager {
 
   /**
@@ -38,9 +36,7 @@ public interface PartitionManager {
    */
   CompletableFuture<List<Partition>> listLocalPartitions(String topicName);
 
-  /**
-   * Returns the Kafka {@link Partition} with the given {@code partitionId}.
-   */
+  /** Returns the Kafka {@link Partition} with the given {@code partitionId}. */
   CompletableFuture<Optional<Partition>> getPartition(
       String clusterId, String topicName, int partitionId);
 

@@ -43,9 +43,7 @@ import javax.annotation.Nullable;
 import org.eclipse.jetty.server.Server;
 import org.junit.rules.ExternalResource;
 
-/**
- * An {@link ExternalResource} that runs a Schema Registry server.
- */
+/** An {@link ExternalResource} that runs a Schema Registry server. */
 public final class SchemaRegistryFixture extends ExternalResource {
 
   @Nullable private final SslFixture certificates;
@@ -123,8 +121,7 @@ public final class SchemaRegistryFixture extends ExternalResource {
               "org.apache.kafka.common.security.plain.PlainLoginModule required "
                   + "username=\"%s\" "
                   + "password=\"%s\";",
-              kafkaUser,
-              kafkaPassword));
+              kafkaUser, kafkaPassword));
       properties.put("kafkastore.sasl.mechanism", "PLAIN");
     }
     if (certificates != null) {
@@ -198,8 +195,7 @@ public final class SchemaRegistryFixture extends ExternalResource {
     private String kafkaUser = null;
     private String keyName = null;
 
-    private Builder() {
-    }
+    private Builder() {}
 
     /**
      * Sets the SSL certificate store, and the name of the certificate to use as the schema registry
@@ -221,9 +217,7 @@ public final class SchemaRegistryFixture extends ExternalResource {
       return this;
     }
 
-    /**
-     * Sets a Schema Registry server config.
-     */
+    /** Sets a Schema Registry server config. */
     public Builder setConfig(String name, String value) {
       configs.put(name, value);
       return this;
@@ -234,9 +228,7 @@ public final class SchemaRegistryFixture extends ExternalResource {
       return this;
     }
 
-    /**
-     * Sets the Kafka SASL PLAIN credentials.
-     */
+    /** Sets the Kafka SASL PLAIN credentials. */
     public Builder setKafkaUser(String username, String password) {
       this.kafkaUser = requireNonNull(username);
       this.kafkaPassword = requireNonNull(password);
@@ -258,8 +250,7 @@ public final class SchemaRegistryFixture extends ExternalResource {
   @AutoValue
   public abstract static class SchemaKey {
 
-    SchemaKey() {
-    }
+    SchemaKey() {}
 
     public abstract String getSubject();
 

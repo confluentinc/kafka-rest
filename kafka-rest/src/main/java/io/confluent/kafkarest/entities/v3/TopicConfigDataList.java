@@ -23,8 +23,7 @@ import java.util.List;
 @AutoValue
 public abstract class TopicConfigDataList extends ResourceCollection<TopicConfigData> {
 
-  TopicConfigDataList() {
-  }
+  TopicConfigDataList() {}
 
   public static Builder builder() {
     return new AutoValue_TopicConfigDataList.Builder().setKind("KafkaTopicConfigList");
@@ -34,20 +33,14 @@ public abstract class TopicConfigDataList extends ResourceCollection<TopicConfig
   static TopicConfigDataList fromJson(
       @JsonProperty("kind") String kind,
       @JsonProperty("metadata") Metadata metadata,
-      @JsonProperty("data") List<TopicConfigData> data
-  ) {
-    return builder()
-        .setKind(kind)
-        .setMetadata(metadata)
-        .setData(data)
-        .build();
+      @JsonProperty("data") List<TopicConfigData> data) {
+    return builder().setKind(kind).setMetadata(metadata).setData(data).build();
   }
 
   @AutoValue.Builder
   public abstract static class Builder
       extends ResourceCollection.Builder<TopicConfigData, TopicConfigDataList, Builder> {
 
-    Builder() {
-    }
+    Builder() {}
   }
 }

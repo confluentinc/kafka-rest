@@ -108,7 +108,10 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
     String clusterId = getClusterId();
 
     String expectedAliceUrl =
-        baseUrl + "/v3/clusters/" + clusterId + "/acls"
+        baseUrl
+            + "/v3/clusters/"
+            + clusterId
+            + "/acls"
             + "?resource_type=TOPIC"
             + "&resource_name=*"
             + "&pattern_type=LITERAL"
@@ -117,7 +120,10 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
             + "&operation=READ"
             + "&permission=ALLOW";
     String expectedBobUrl =
-        baseUrl + "/v3/clusters/" + clusterId + "/acls"
+        baseUrl
+            + "/v3/clusters/"
+            + clusterId
+            + "/acls"
             + "?resource_type=TOPIC"
             + "&resource_name=topic-"
             + "&pattern_type=PREFIXED"
@@ -126,7 +132,10 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
             + "&operation=WRITE"
             + "&permission=ALLOW";
     String expectedSearchUrl =
-        baseUrl + "/v3/clusters/" + clusterId + "/acls"
+        baseUrl
+            + "/v3/clusters/"
+            + clusterId
+            + "/acls"
             + "?resource_type=TOPIC"
             + "&resource_name=topic-1"
             + "&pattern_type=MATCH"
@@ -139,19 +148,17 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
         SearchAclsResponse.create(
             AclDataList.builder()
                 .setMetadata(
-                    ResourceCollection.Metadata.builder()
-                        .setSelf(expectedSearchUrl)
-                        .build())
+                    ResourceCollection.Metadata.builder().setSelf(expectedSearchUrl).build())
                 .setData(emptyList())
                 .build());
 
     Response actualPreCreateSearchResponse =
         request(
-            "/v3/clusters/" + clusterId + "/acls",
-            ImmutableMap.of(
-                "resource_type", "topic",
-                "resource_name", "topic-1",
-                "pattern_type", "match"))
+                "/v3/clusters/" + clusterId + "/acls",
+                ImmutableMap.of(
+                    "resource_type", "topic",
+                    "resource_name", "topic-1",
+                    "pattern_type", "match"))
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), actualPreCreateSearchResponse.getStatus());
@@ -197,32 +204,28 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
         SearchAclsResponse.create(
             AclDataList.builder()
                 .setMetadata(
-                    ResourceCollection.Metadata.builder()
-                        .setSelf(expectedSearchUrl)
-                        .build())
+                    ResourceCollection.Metadata.builder().setSelf(expectedSearchUrl).build())
                 .setData(
                     Arrays.asList(
-                        ALICE_ACL_DATA.setMetadata(
-                            Resource.Metadata.builder()
-                                .setSelf(expectedAliceUrl)
-                                .build())
+                        ALICE_ACL_DATA
+                            .setMetadata(
+                                Resource.Metadata.builder().setSelf(expectedAliceUrl).build())
                             .setClusterId(clusterId)
                             .build(),
-                        BOB_ACL_DATA.setMetadata(
-                            Resource.Metadata.builder()
-                                .setSelf(expectedBobUrl)
-                                .build())
+                        BOB_ACL_DATA
+                            .setMetadata(
+                                Resource.Metadata.builder().setSelf(expectedBobUrl).build())
                             .setClusterId(clusterId)
                             .build()))
                 .build());
 
     Response actualPostCreateSearchResponse =
         request(
-            "/v3/clusters/" + clusterId + "/acls",
-            ImmutableMap.of(
-                "resource_type", "topic",
-                "resource_name", "topic-1",
-                "pattern_type", "match"))
+                "/v3/clusters/" + clusterId + "/acls",
+                ImmutableMap.of(
+                    "resource_type", "topic",
+                    "resource_name", "topic-1",
+                    "pattern_type", "match"))
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), actualPostCreateSearchResponse.getStatus());
@@ -233,17 +236,16 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
     DeleteAclsResponse expectedDeleteAliceResponse =
         DeleteAclsResponse.create(
             singletonList(
-                ALICE_ACL_DATA.setMetadata(
-                    Resource.Metadata.builder()
-                        .setSelf(expectedAliceUrl)
-                        .build())
+                ALICE_ACL_DATA
+                    .setMetadata(Resource.Metadata.builder().setSelf(expectedAliceUrl).build())
                     .setClusterId(clusterId)
                     .build()));
 
     Client webClient = getClient();
     restApp.configureBaseApplication(webClient);
     Response actualDeleteAliceResponse =
-        webClient.target(actualCreateAliceResponse.getLocation())
+        webClient
+            .target(actualCreateAliceResponse.getLocation())
             .request()
             .accept(MediaType.APPLICATION_JSON)
             .delete();
@@ -255,40 +257,36 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
     DeleteAclsResponse expectedDeleteBobResponse =
         DeleteAclsResponse.create(
             singletonList(
-                BOB_ACL_DATA.setMetadata(
-                    Resource.Metadata.builder()
-                        .setSelf(expectedBobUrl)
-                        .build())
+                BOB_ACL_DATA
+                    .setMetadata(Resource.Metadata.builder().setSelf(expectedBobUrl).build())
                     .setClusterId(clusterId)
                     .build()));
 
     Response actualDeleteBobResponse =
-        webClient.target(actualCreateBobResponse.getLocation())
+        webClient
+            .target(actualCreateBobResponse.getLocation())
             .request()
             .accept(MediaType.APPLICATION_JSON)
             .delete();
     assertEquals(Status.OK.getStatusCode(), actualDeleteBobResponse.getStatus());
     assertEquals(
-        expectedDeleteBobResponse,
-        actualDeleteBobResponse.readEntity(DeleteAclsResponse.class));
+        expectedDeleteBobResponse, actualDeleteBobResponse.readEntity(DeleteAclsResponse.class));
 
     SearchAclsResponse expectedPostDeleteSearchResponse =
         SearchAclsResponse.create(
             AclDataList.builder()
                 .setMetadata(
-                    ResourceCollection.Metadata.builder()
-                        .setSelf(expectedSearchUrl)
-                        .build())
+                    ResourceCollection.Metadata.builder().setSelf(expectedSearchUrl).build())
                 .setData(emptyList())
                 .build());
 
     Response actualPostDeleteSearchResponse =
         request(
-            "/v3/clusters/" + clusterId + "/acls",
-            ImmutableMap.of(
-                "resource_type", "topic",
-                "resource_name", "topic-1",
-                "pattern_type", "match"))
+                "/v3/clusters/" + clusterId + "/acls",
+                ImmutableMap.of(
+                    "resource_type", "topic",
+                    "resource_name", "topic-1",
+                    "pattern_type", "match"))
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), actualPostDeleteSearchResponse.getStatus());

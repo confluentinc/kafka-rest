@@ -25,8 +25,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ConsumerLagData extends Resource {
 
-  ConsumerLagData() {
-  }
+  ConsumerLagData() {}
 
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
@@ -90,8 +89,7 @@ public abstract class ConsumerLagData extends Resource {
       @JsonProperty("client_id") String clientId,
       @JsonProperty("current_offset") Long currentOffset,
       @JsonProperty("log_end_offset") Long logEndOffset,
-      @JsonProperty("lag") Long lag
-  ) {
+      @JsonProperty("lag") Long lag) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -112,8 +110,7 @@ public abstract class ConsumerLagData extends Resource {
   @AutoValue.Builder
   public abstract static class Builder extends Resource.Builder<Builder> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 
@@ -138,4 +135,3 @@ public abstract class ConsumerLagData extends Resource {
     public abstract ConsumerLagData build();
   }
 }
-

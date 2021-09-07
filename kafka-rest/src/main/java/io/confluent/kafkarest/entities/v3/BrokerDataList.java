@@ -23,8 +23,7 @@ import java.util.List;
 @AutoValue
 public abstract class BrokerDataList extends ResourceCollection<BrokerData> {
 
-  BrokerDataList() {
-  }
+  BrokerDataList() {}
 
   public static Builder builder() {
     return new AutoValue_BrokerDataList.Builder().setKind("KafkaBrokerList");
@@ -34,20 +33,14 @@ public abstract class BrokerDataList extends ResourceCollection<BrokerData> {
   static BrokerDataList fromJson(
       @JsonProperty("kind") String kind,
       @JsonProperty("metadata") Metadata metadata,
-      @JsonProperty("data") List<BrokerData> data
-  ) {
-    return builder()
-        .setKind(kind)
-        .setMetadata(metadata)
-        .setData(data)
-        .build();
+      @JsonProperty("data") List<BrokerData> data) {
+    return builder().setKind(kind).setMetadata(metadata).setData(data).build();
   }
 
   @AutoValue.Builder
   public abstract static class Builder
       extends ResourceCollection.Builder<BrokerData, BrokerDataList, Builder> {
 
-    Builder() {
-    }
+    Builder() {}
   }
 }

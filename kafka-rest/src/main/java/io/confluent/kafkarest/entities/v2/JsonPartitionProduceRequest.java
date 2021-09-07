@@ -28,9 +28,7 @@ import javax.validation.constraints.NotEmpty;
 
 public final class JsonPartitionProduceRequest {
 
-  @NotEmpty
-  @Nullable
-  private final List<JsonPartitionProduceRecord> records;
+  @NotEmpty @Nullable private final List<JsonPartitionProduceRecord> records;
 
   @JsonCreator
   private JsonPartitionProduceRequest(
@@ -38,8 +36,7 @@ public final class JsonPartitionProduceRequest {
       @JsonProperty("key_schema") @Nullable String keySchema,
       @JsonProperty("key_schema_id") @Nullable Integer keySchemaId,
       @JsonProperty("value_schema") @Nullable String valueSchema,
-      @JsonProperty("value_schema_id") @Nullable Integer valueSchemaId
-  ) {
+      @JsonProperty("value_schema_id") @Nullable Integer valueSchemaId) {
     this.records = records;
   }
 
@@ -94,25 +91,20 @@ public final class JsonPartitionProduceRequest {
 
   @Override
   public String toString() {
-    return new StringJoiner(
-        ", ", JsonPartitionProduceRequest.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", JsonPartitionProduceRequest.class.getSimpleName() + "[", "]")
         .add("records=" + records)
         .toString();
   }
 
   public static final class JsonPartitionProduceRecord {
 
-    @Nullable
-    private final Object key;
+    @Nullable private final Object key;
 
-    @Nullable
-    private final Object value;
+    @Nullable private final Object value;
 
     @JsonCreator
     public JsonPartitionProduceRecord(
-        @JsonProperty("key") @Nullable Object key,
-        @JsonProperty("value") @Nullable Object value
-    ) {
+        @JsonProperty("key") @Nullable Object key, @JsonProperty("value") @Nullable Object value) {
       this.key = key;
       this.value = value;
     }
@@ -148,8 +140,7 @@ public final class JsonPartitionProduceRequest {
 
     @Override
     public String toString() {
-      return new StringJoiner(
-          ", ", JsonPartitionProduceRecord.class.getSimpleName() + "[", "]")
+      return new StringJoiner(", ", JsonPartitionProduceRecord.class.getSimpleName() + "[", "]")
           .add("key=" + key)
           .add("value=" + value)
           .toString();

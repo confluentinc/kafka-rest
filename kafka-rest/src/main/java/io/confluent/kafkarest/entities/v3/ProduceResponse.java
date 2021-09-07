@@ -28,8 +28,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ProduceResponse {
 
-  ProduceResponse() {
-  }
+  ProduceResponse() {}
 
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
@@ -82,8 +81,7 @@ public abstract class ProduceResponse {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 
@@ -111,8 +109,7 @@ public abstract class ProduceResponse {
   @AutoValue
   public abstract static class ProduceResponseData {
 
-    ProduceResponseData() {
-    }
+    ProduceResponseData() {}
 
     @JsonProperty("type")
     @JsonInclude(Include.NON_ABSENT)
@@ -156,8 +153,7 @@ public abstract class ProduceResponse {
     @AutoValue.Builder
     public abstract static class Builder {
 
-      Builder() {
-      }
+      Builder() {}
 
       public abstract Builder setType(Optional<EmbeddedFormat> type);
 

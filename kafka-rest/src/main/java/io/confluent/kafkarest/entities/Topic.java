@@ -22,8 +22,7 @@ import java.util.List;
 @AutoValue
 public abstract class Topic {
 
-  Topic() {
-  }
+  Topic() {}
 
   public abstract String getClusterId();
 

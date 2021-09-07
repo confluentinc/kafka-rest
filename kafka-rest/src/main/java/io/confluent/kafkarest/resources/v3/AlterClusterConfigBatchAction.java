@@ -58,10 +58,10 @@ public final class AlterClusterConfigBatchAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("config_type") ClusterConfig.Type configType,
-      @Valid AlterClusterConfigBatchRequest request
-  ) {
+      @Valid AlterClusterConfigBatchRequest request) {
     CompletableFuture<Void> response =
-        clusterConfigManager.get()
+        clusterConfigManager
+            .get()
             .alterClusterConfigs(clusterId, configType, request.getValue().toAlterConfigCommands());
 
     AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))

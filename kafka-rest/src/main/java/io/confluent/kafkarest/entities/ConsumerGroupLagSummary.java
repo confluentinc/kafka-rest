@@ -21,8 +21,7 @@ import java.util.Optional;
 @AutoValue
 public abstract class ConsumerGroupLagSummary {
 
-  ConsumerGroupLagSummary() {
-  }
+  ConsumerGroupLagSummary() {}
 
   public abstract String getClusterId();
 
@@ -52,8 +51,7 @@ public abstract class ConsumerGroupLagSummary {
     private long maxLag = -1;
     private long totalLag = 0;
 
-    Builder() {
-    }
+    Builder() {}
 
     public final void addOffset(
         String topicName,
@@ -62,8 +60,7 @@ public abstract class ConsumerGroupLagSummary {
         String clientId,
         int partitionId,
         long currentOffset,
-        long endOffset
-    ) {
+        long endOffset) {
       // We don't report negative lag
       long lag = Math.max(0, endOffset - currentOffset);
       if (maxLag < lag) {

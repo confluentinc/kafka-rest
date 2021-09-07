@@ -45,9 +45,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.StringUtil;
 import org.glassfish.jersey.server.ServerProperties;
 
-/**
- * Utilities for configuring and running an embedded Kafka server.
- */
+/** Utilities for configuring and running an embedded Kafka server. */
 public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   List<RestResourceExtension> restResourceExtensions;
@@ -71,27 +69,28 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   public KafkaRestApplication(KafkaRestConfig config, String path, String listenerName) {
     super(config, path, listenerName);
 
-    restResourceExtensions = config.getConfiguredInstances(
-        KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG,
-        RestResourceExtension.class);
+    restResourceExtensions =
+        config.getConfiguredInstances(
+            KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG, RestResourceExtension.class);
   }
 
   @Override
-  public void configurePreResourceHandling(ServletContextHandler context) {
-  }
+  public void configurePreResourceHandling(ServletContextHandler context) {}
 
   @Override
-  public void configurePostResourceHandling(ServletContextHandler context) {
-  }
+  public void configurePostResourceHandling(ServletContextHandler context) {}
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
     if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))
         && StringUtil.isBlank(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG))) {
-      throw new RuntimeException("Atleast one of " + KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG + " "
-                                 + "or "
-                                    + KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG
-                                    + " needs to be configured");
+      throw new RuntimeException(
+          "Atleast one of "
+              + KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG
+              + " "
+              + "or "
+              + KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG
+              + " needs to be configured");
     }
 
     config.property(ServerProperties.OUTBOUND_CONTENT_LENGTH_BUFFER, 0);

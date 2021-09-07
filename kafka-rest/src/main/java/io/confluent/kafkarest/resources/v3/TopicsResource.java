@@ -69,10 +69,7 @@ public final class TopicsResource {
 
   @Inject
   public TopicsResource(
-      Provider<TopicManager> topicManager,
-      CrnFactory crnFactory,
-      UrlFactory urlFactory
-  ) {
+      Provider<TopicManager> topicManager, CrnFactory crnFactory, UrlFactory urlFactory) {
     this.topicManager = requireNonNull(topicManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
@@ -85,7 +82,8 @@ public final class TopicsResource {
   public void listTopics(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<ListTopicsResponse> response =
-        topicManager.get()
+        topicManager
+            .get()
             .listTopics(clusterId)
             .thenApply(
                 topics ->
@@ -114,10 +112,10 @@ public final class TopicsResource {
   public void getTopic(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @PathParam("topicName") String topicName
-  ) {
+      @PathParam("topicName") String topicName) {
     CompletableFuture<GetTopicResponse> response =
-        topicManager.get()
+        topicManager
+            .get()
             .getTopic(clusterId, topicName)
             .thenApply(topic -> topic.orElseThrow(NotFoundException::new))
             .thenApply(topic -> GetTopicResponse.create(toTopicData(topic)));
@@ -133,24 +131,23 @@ public final class TopicsResource {
   public void createTopic(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @Valid CreateTopicRequest request
-  ) {
+      @Valid CreateTopicRequest request) {
     String topicName = request.getTopicName();
     Optional<Integer> partitionsCount = request.getPartitionsCount();
     Optional<Short> replicationFactor = request.getReplicationFactor();
     Map<Integer, List<Integer>> replicasAssignments = request.getReplicasAssignments();
     Map<String, Optional<String>> configs =
-        request.getConfigs()
-            .stream()
+        request.getConfigs().stream()
             .collect(Collectors.toMap(ConfigEntry::getName, ConfigEntry::getValue));
 
     // We have no way of knowing the default replication factor in the Kafka broker. Also in case
     // of explicitly specified partition-to-replicas assignments, all partitions should have the
     // same number of replicas.
-    short assumedReplicationFactor = replicationFactor.orElse(
-        replicasAssignments.isEmpty()
-            ? 0
-            : (short) replicasAssignments.values().iterator().next().size());
+    short assumedReplicationFactor =
+        replicationFactor.orElse(
+            replicasAssignments.isEmpty()
+                ? 0
+                : (short) replicasAssignments.values().iterator().next().size());
 
     TopicData topicData =
         toTopicData(
@@ -162,7 +159,8 @@ public final class TopicsResource {
                 /* isInternal= */ false));
 
     CompletableFuture<CreateTopicResponse> response =
-        topicManager.get()
+        topicManager
+            .get()
             .createTopic(
                 clusterId,
                 topicName,
@@ -173,7 +171,7 @@ public final class TopicsResource {
             .thenApply(none -> CreateTopicResponse.create(topicData));
 
     AsyncResponseBuilder.from(
-        Response.status(Status.CREATED).location(URI.create(topicData.getMetadata().getSelf())))
+            Response.status(Status.CREATED).location(URI.create(topicData.getMetadata().getSelf())))
         .entity(response)
         .asyncResume(asyncResponse);
   }
@@ -186,8 +184,7 @@ public final class TopicsResource {
   public void deleteTopic(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @PathParam("topicName") String topicName
-  ) {
+      @PathParam("topicName") String topicName) {
     CompletableFuture<Void> response = topicManager.get().deleteTopic(clusterId, topicName);
 
     AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
@@ -217,12 +214,7 @@ public final class TopicsResource {
         .setConfigs(
             Resource.Relationship.create(
                 urlFactory.create(
-                    "v3",
-                    "clusters",
-                    topic.getClusterId(),
-                    "topics",
-                    topic.getName(),
-                    "configs")))
+                    "v3", "clusters", topic.getClusterId(), "topics", topic.getName(), "configs")))
         .setPartitionReassignments(
             Resource.Relationship.create(
                 urlFactory.create(

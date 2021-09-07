@@ -5,45 +5,20 @@
 
 <suppressions>
 
-    <!-- TODO -->
-    <suppress
-            checks="(BooleanExpressionComplexity)"
-            files="(KafkaRestConfig).java"
-    />
+  <!-- Google Java Format prefers single line Javadocs. -->
+  <suppress checks="SingleLineJavadoc" />
 
-    <suppress
-            checks="(CyclomaticComplexity)"
-            files="(AvroConverter|SchemaRestProducer|ConsumerInstanceConfig|ConsumerManager|ConsumerReadTask|KafkaConsumerManager|PartitionOffset|KafkaRestContextProvider).java"
-    />
+  <!-- This class is a legacy from the V2 API. It currently has too many responsibilities, and needs
+       to be broken down. -->
+  <suppress checks="ClassDataAbstractionCoupling" files="KafkaConsumerManager.java" />
 
-    <suppress
-            checks="(ClassDataAbstractionCoupling)"
-            files="(AvroConverter|ConsumerManager|KafkaConsumerManager|KafkaRestApplication|SimpleConsumerManager|KafkaRestContextProvider|KafkaConsumerState|ProducerPool|TopicsResource).java"
-    />
+  <!-- This class is the main point of configuration for the Kafka REST application. It needs to
+       reference multiple parts of the codebase by nature. Maybe some of the configuration can be
+       broken out. -->
+  <suppress checks="ClassDataAbstractionCoupling" files="KafkaRestApplication.java" />
 
-    <suppress
-            checks="(ClassFanOutComplexity)"
-            files="(ConsumerManager|KafkaConsumerState).java"
-    />
-
-    <suppress
-            checks="(JavaNCSS)"
-            files="(ConsumerManager|KafkaConsumerManager).java"
-    />
-
-    <suppress
-            checks="(NPathComplexity)"
-            files="(SchemaRestProducer|ConsumerInstanceConfig|ConsumerManager|KafkaConsumerManager|PartitionOffset|KafkaRestContextProvider).java"
-    />
-
-    <suppress
-            checks="(MethodLength)"
-            files="(KafkaRestConfig).java"
-    />
-
-    <suppress
-            checks="(ParameterNumber)"
-            files="(ClusterData).java"
-    />
+  <!-- KafkaRestConfig#baseKafkaRestConfigDef contains the definition of all Kafka REST configs.
+       Maybe it can be split in multiple methods. -->
+  <suppress checks="MethodLength" files="KafkaRestConfig.java" />
 
 </suppressions>

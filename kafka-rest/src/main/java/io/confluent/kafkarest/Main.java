@@ -18,10 +18,8 @@ package io.confluent.kafkarest;
 import java.io.IOException;
 
 /**
- * @deprecated This is replaced by {@link io.confluent.kafkarest.KafkaRestMain}
- *     Keep this class in place for compatibility.
- *
- *     https://github.com/confluentinc/kafka-rest/issues/94
+ * @deprecated This is replaced by {@link io.confluent.kafkarest.KafkaRestMain} Keep this class in
+ *     place for compatibility. https://github.com/confluentinc/kafka-rest/issues/94
  */
 @Deprecated
 public class Main {
@@ -30,4 +28,3 @@ public class Main {
     KafkaRestMain.main(args);
   }
 }
-

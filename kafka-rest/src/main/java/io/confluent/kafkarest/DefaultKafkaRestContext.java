@@ -22,20 +22,19 @@ import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafkarest.config.SchemaRegistryConfig;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
+import java.net.URI;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 
-import java.net.URI;
-import java.util.List;
-import java.util.stream.Collectors;
-
 /**
  * Shared, global state for the REST proxy server, including configuration and connection pools.
- * ProducerPool, AdminClientWrapper and KafkaConsumerManager instances are initialized lazily
- * if required.
+ * ProducerPool, AdminClientWrapper and KafkaConsumerManager instances are initialized lazily if
+ * required.
  */
 public class DefaultKafkaRestContext implements KafkaRestContext {
 
@@ -46,17 +45,12 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   private Producer<byte[], byte[]> producer;
   private SchemaRegistryClient schemaRegistryClient;
 
-
-
-  /**
-   * @deprecated Use {@link #DefaultKafkaRestContext(KafkaRestConfig)} instead.
-   */
+  /** @deprecated Use {@link #DefaultKafkaRestContext(KafkaRestConfig)} instead. */
   @Deprecated
   public DefaultKafkaRestContext(
       KafkaRestConfig config,
       ProducerPool producerPool,
-      KafkaConsumerManager kafkaConsumerManager
-  ) {
+      KafkaConsumerManager kafkaConsumerManager) {
     this(config);
   }
 
@@ -105,16 +99,18 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
     if (schemaRegistryClient == null) {
       SchemaRegistryConfig schemaRegistryConfig =
           new SchemaRegistryConfig(config.getSchemaRegistryConfigs());
-      List<String> schemaRegistryUrls = schemaRegistryConfig.getSchemaRegistryUrls().stream()
-          .map(URI::create)
-          .map(Object::toString)
-          .collect(Collectors.toList());
-      schemaRegistryClient = new CachedSchemaRegistryClient(
-        schemaRegistryUrls,
-        schemaRegistryConfig.getMaxSchemasPerSubject(),
-        SCHEMA_PROVIDERS,
-        config.getSchemaRegistryConfigs(),
-        schemaRegistryConfig.requestHeaders());
+      List<String> schemaRegistryUrls =
+          schemaRegistryConfig.getSchemaRegistryUrls().stream()
+              .map(URI::create)
+              .map(Object::toString)
+              .collect(Collectors.toList());
+      schemaRegistryClient =
+          new CachedSchemaRegistryClient(
+              schemaRegistryUrls,
+              schemaRegistryConfig.getMaxSchemasPerSubject(),
+              SCHEMA_PROVIDERS,
+              config.getSchemaRegistryConfigs(),
+              schemaRegistryConfig.requestHeaders());
     }
     return schemaRegistryClient;
   }

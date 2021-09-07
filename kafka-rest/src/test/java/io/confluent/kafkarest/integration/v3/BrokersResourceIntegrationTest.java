@@ -59,12 +59,16 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                                 Resource.Metadata.builder()
                                     .setSelf(
                                         baseUrl
-                                            + "/v3/clusters/" + clusterId
-                                            + "/brokers/" + nodes.get(0).id())
+                                            + "/v3/clusters/"
+                                            + clusterId
+                                            + "/brokers/"
+                                            + nodes.get(0).id())
                                     .setResourceName(
                                         "crn://"
-                                            + "/kafka=" + clusterId
-                                            + "/broker=" + nodes.get(0).id())
+                                            + "/kafka="
+                                            + clusterId
+                                            + "/broker="
+                                            + nodes.get(0).id())
                                     .build())
                             .setClusterId(clusterId)
                             .setBrokerId(nodes.get(0).id())
@@ -74,14 +78,18 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                             .setConfigs(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/brokers/" + nodes.get(0).id()
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/brokers/"
+                                        + nodes.get(0).id()
                                         + "/configs"))
                             .setPartitionReplicas(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/brokers/" + nodes.get(0).id()
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/brokers/"
+                                        + nodes.get(0).id()
                                         + "/partition-replicas"))
                             .build(),
                         BrokerData.builder()
@@ -89,12 +97,16 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                                 Metadata.builder()
                                     .setSelf(
                                         baseUrl
-                                            + "/v3/clusters/" + clusterId
-                                            + "/brokers/" + nodes.get(1).id())
+                                            + "/v3/clusters/"
+                                            + clusterId
+                                            + "/brokers/"
+                                            + nodes.get(1).id())
                                     .setResourceName(
                                         "crn://"
-                                            + "/kafka=" + clusterId
-                                            + "/broker=" + nodes.get(1).id())
+                                            + "/kafka="
+                                            + clusterId
+                                            + "/broker="
+                                            + nodes.get(1).id())
                                     .build())
                             .setClusterId(clusterId)
                             .setBrokerId(nodes.get(1).id())
@@ -104,14 +116,18 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                             .setConfigs(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/brokers/" + nodes.get(1).id()
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/brokers/"
+                                        + nodes.get(1).id()
                                         + "/configs"))
                             .setPartitionReplicas(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/brokers/" + nodes.get(1).id()
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/brokers/"
+                                        + nodes.get(1).id()
                                         + "/partition-replicas"))
                             .build(),
                         BrokerData.builder()
@@ -119,12 +135,16 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                                 Resource.Metadata.builder()
                                     .setSelf(
                                         baseUrl
-                                            + "/v3/clusters/" + clusterId
-                                            + "/brokers/" + nodes.get(2).id())
+                                            + "/v3/clusters/"
+                                            + clusterId
+                                            + "/brokers/"
+                                            + nodes.get(2).id())
                                     .setResourceName(
                                         "crn://"
-                                            + "/kafka=" + clusterId
-                                            + "/broker=" + nodes.get(2).id())
+                                            + "/kafka="
+                                            + clusterId
+                                            + "/broker="
+                                            + nodes.get(2).id())
                                     .build())
                             .setClusterId(clusterId)
                             .setBrokerId(nodes.get(2).id())
@@ -134,14 +154,18 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                             .setConfigs(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/brokers/" + nodes.get(2).id()
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/brokers/"
+                                        + nodes.get(2).id()
                                         + "/configs"))
                             .setPartitionReplicas(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/brokers/" + nodes.get(2).id()
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/brokers/"
+                                        + nodes.get(2).id()
                                         + "/partition-replicas"))
                             .build()))
                 .build());
@@ -157,8 +181,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
   @Test
   public void listBrokers_nonExistingCluster_returnsNotFound() {
     Response response =
-        request("/v3/clusters/foobar/brokers")
-            .accept(MediaType.APPLICATION_JSON).get();
+        request("/v3/clusters/foobar/brokers").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -174,13 +197,9 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                 .setMetadata(
                     Resource.Metadata.builder()
                         .setSelf(
-                            baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/brokers/" + nodes.get(0).id())
+                            baseUrl + "/v3/clusters/" + clusterId + "/brokers/" + nodes.get(0).id())
                         .setResourceName(
-                            "crn://"
-                                + "/kafka=" + clusterId
-                                + "/broker=" + nodes.get(0).id())
+                            "crn://" + "/kafka=" + clusterId + "/broker=" + nodes.get(0).id())
                         .build())
                 .setClusterId(clusterId)
                 .setBrokerId(nodes.get(0).id())
@@ -190,15 +209,20 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
                 .setConfigs(
                     Resource.Relationship.create(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/brokers/" + nodes.get(0).id()
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/brokers/"
+                            + nodes.get(0).id()
                             + "/configs"))
                 .setPartitionReplicas(
                     Resource.Relationship.create(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/brokers/" + nodes.get(0).id()
-                            + "/partition-replicas")).build());
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/brokers/"
+                            + nodes.get(0).id()
+                            + "/partition-replicas"))
+                .build());
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/" + nodes.get(0).id())
@@ -213,8 +237,7 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
   @Test
   public void getBroker_nonExistingCluster_returnsNotFound() {
     Response response =
-        request("/v3/clusters/foobar/brokers/1")
-            .accept(MediaType.APPLICATION_JSON).get();
+        request("/v3/clusters/foobar/brokers/1").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -224,7 +247,8 @@ public class BrokersResourceIntegrationTest extends ClusterTestHarness {
 
     Response response =
         request("/v3/clusters/" + clusterId + "/brokers/100")
-            .accept(MediaType.APPLICATION_JSON).get();
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 }
