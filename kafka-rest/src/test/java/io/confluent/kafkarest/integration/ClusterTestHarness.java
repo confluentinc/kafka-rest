@@ -56,7 +56,6 @@ import kafka.utils.MockTime;
 import kafka.utils.TestUtils;
 import kafka.zk.EmbeddedZookeeper;
 import kafka.zk.KafkaZkClient;
-import kafka.zookeeper.ZooKeeperClient;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.AlterConfigOp;
@@ -73,10 +72,8 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.ConfigResource;
-import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
-import org.apache.kafka.common.utils.Time;
 import org.eclipse.jetty.server.Server;
 import org.junit.After;
 import org.junit.Assert;
@@ -128,7 +125,6 @@ public abstract class ClusterTestHarness {
   // ZK Config
   protected String zkConnect;
   protected EmbeddedZookeeper zookeeper;
-  protected KafkaZkClient zkClient;
   protected int zkConnectionTimeout = 10000;
   protected int zkSessionTimeout = 6000;
 
@@ -175,15 +171,6 @@ public abstract class ClusterTestHarness {
   @Before
   public void setUp() throws Exception {
     zookeeper = new EmbeddedZookeeper();
-    zkConnect = String.format("127.0.0.1:%d", zookeeper.port());
-    Time time = Time.SYSTEM;
-    zkClient = new KafkaZkClient(
-        new ZooKeeperClient(zkConnect, zkSessionTimeout, zkConnectionTimeout, Integer.MAX_VALUE,
-            time,
-            "testMetricGroup", "testMetricGroupType"),
-        JaasUtils.isZkSaslEnabled(),
-        time);
-
     // start brokers concurrently
     startBrokersConcurrently(numBrokers);
 
@@ -309,7 +296,6 @@ public abstract class ClusterTestHarness {
       CoreUtils.delete(server.config().logDirs());
     }
 
-    zkClient.close();
     zookeeper.shutdown();
   }
 

@@ -80,7 +80,7 @@ public class MetadataAPITest extends ClusterTestHarness {
     topic2Configs.setProperty("cleanup.policy", "delete");
   }
 
-  private static final int numReplicas = 2;
+  private static final short numReplicas = 2;
 
   public MetadataAPITest() {
     super(2, false);
@@ -90,10 +90,8 @@ public class MetadataAPITest extends ClusterTestHarness {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    kafka.utils.TestUtils.createTopic(zkClient, topic1Name, topic1Partitions.size(), numReplicas,
-        JavaConverters.asScalaBuffer(this.servers), new Properties());
-    kafka.utils.TestUtils.createTopic(zkClient, topic2Name, topic2Partitions.size(), numReplicas,
-        JavaConverters.asScalaBuffer(this.servers), topic2Configs);
+    createTopic(topic1Name, topic1Partitions.size(), numReplicas);
+    createTopic(topic2Name, topic2Partitions.size(), numReplicas);
   }
 
   @Test
