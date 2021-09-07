@@ -108,10 +108,8 @@ public class ProducerTest
   public void setUp() throws Exception {
     super.setUp();
     final int numPartitions = 3;
-    final int replicationFactor = 1;
-    kafka.utils.TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-        JavaConverters.asScalaBuffer(this.servers),
-        new Properties());
+    final short replicationFactor = 1;
+    createTopic(topicName, numPartitions, replicationFactor);
   }
 
   @Test
