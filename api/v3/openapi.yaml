@@ -49,7 +49,7 @@ servers:
 
   - url: https://pkc-00000.region.provider.confluent.cloud/kafka/v3
     x-audience: business-unit-internal
-    description: Confluent Cloud REST Endpoint. For example https://pkc-00000.region.provider.confluent.cloud 
+    description: Confluent Cloud REST Endpoint. For example https://pkc-00000.region.provider.confluent.cloud
 
 paths:
   /clusters:
@@ -58,7 +58,7 @@ paths:
       summary: 'List Clusters'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         'Returns a list of known Kafka clusters. Currently both Kafka and Kafka REST
         Proxy are only aware of the Kafka cluster pointed at by the
         ``bootstrap.servers`` configuration. Therefore only one Kafka cluster will be returned in the
@@ -68,6 +68,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/ListClustersResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}:
     parameters:
@@ -78,13 +86,21 @@ paths:
       operationId: getKafkaV3Cluster
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns the Kafka cluster with the specified ``cluster_id``.
       tags:
         - Cluster (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetClusterResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/acls:
     parameters:
@@ -95,7 +111,7 @@ paths:
       operationId: getKafkaV3Acls
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns a list of ACLs that match the search criteria.
       tags:
         - ACL (v3)
@@ -110,13 +126,21 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/SearchAclsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
     post:
       summary: 'Create ACLs'
       operationId: createKafkaV3Acls
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Creates an ACL.
       tags:
         - ACL (v3)
@@ -125,13 +149,21 @@ paths:
       responses:
         '201':
           description: 'No Content'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
     delete:
       summary: 'Delete ACLs'
       operationId: deleteKafkaV3Acls
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Deletes the list of ACLs that matches the search criteria.
       tags:
         - ACL (v3)
@@ -146,6 +178,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/DeleteAclsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/broker-configs:
     parameters:
@@ -156,7 +196,7 @@ paths:
       operationId: listKafkaV3ClusterConfigs
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns a list of configuration parameters for the specified Kafka
         cluster.
       tags:
@@ -164,6 +204,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/ListClusterConfigsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/broker-configs:alter:
     parameters:
@@ -174,7 +222,7 @@ paths:
       operationId: updateKafkaV3ClusterConfigs
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Updates or deletes a set of Kafka cluster configuration parameters.
       tags:
         - Configs (v3)
@@ -183,6 +231,14 @@ paths:
       responses:
         '204':
           description: 'No Content'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/broker-configs/{name}:
     parameters:
@@ -194,20 +250,28 @@ paths:
       operationId: getKafkaV3ClusterConfig
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns the configuration parameter specified by ``name``.
       tags:
         - Configs (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetClusterConfigResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
     put:
       summary: 'Update Cluster Config'
       operationId: updateKafkaV3ClusterConfig
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Updates the configuration parameter specified by ``name``.
       tags:
         - Configs (v3)
@@ -216,13 +280,21 @@ paths:
       responses:
         '204':
           description: 'No Content'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
     delete:
       summary: 'Reset Cluster Config'
       operationId: deleteKafkaV3ClusterConfig
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Resets the configuration parameter specified by ``name`` to its
         default value.
       tags:
@@ -230,6 +302,14 @@ paths:
       responses:
         '204':
           description: 'No Content'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/brokers:
     x-audience: component-internal
@@ -240,14 +320,22 @@ paths:
       summary: 'List Brokers'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
-        Return a list of brokers that belong to the specified 
+
+        Return a list of brokers that belong to the specified
         Kafka cluster.
       tags:
         - Broker
       responses:
         '200':
           $ref: '#/components/responses/ListBrokersResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/brokers/{broker_id}:
     x-audience: component-internal
@@ -259,13 +347,21 @@ paths:
       summary: 'Get Broker'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns the broker specified by ``broker_id``.
       tags:
         - Broker
       responses:
         '200':
           $ref: '#/components/responses/GetBrokerResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/brokers/-/configs:
     x-audience: component-internal
@@ -276,13 +372,21 @@ paths:
       summary: 'List All Broker Configs'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Return the list of configuration parameters for all the brokers in the given Kafka cluster.
       tags:
         - Configs
       responses:
         '200':
           $ref: '#/components/responses/ListBrokerConfigsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/brokers/{broker_id}/configs:
     x-audience: component-internal
@@ -294,13 +398,21 @@ paths:
       summary: 'List Broker Configs'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Return the list of configuration parameters that belong to the specified Kafka broker.
       tags:
         - Configs
       responses:
         '200':
           $ref: '#/components/responses/ListBrokerConfigsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/brokers/{broker_id}/configs:alter:
     x-audience: component-internal
@@ -312,7 +424,7 @@ paths:
       summary: 'Batch Alter Broker Configs'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Updates or deletes a set of broker configuration parameters.
       tags:
         - Configs
@@ -321,6 +433,14 @@ paths:
       responses:
         '204':
           description: 'No Content'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/brokers/{broker_id}/configs/{name}:
     x-audience: component-internal
@@ -333,19 +453,27 @@ paths:
       summary: 'Get Broker Config'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Return the configuration parameter specified by ``name``.
       tags:
         - Configs
       responses:
         '200':
           $ref: '#/components/responses/GetBrokerConfigResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
     put:
       summary: 'Update Broker Config'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Updates the configuration parameter specified by ``name``.
       tags:
         - Configs
@@ -354,18 +482,34 @@ paths:
       responses:
         '204':
           description: 'No Content'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
     delete:
       summary: 'Reset Broker Config'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Resets the configuration parameter specified by ``name`` to its default value.
       tags:
         - Configs
       responses:
         '204':
           description: 'No Content'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/brokers/{broker_id}/partition-replicas:
     x-audience: component-internal
@@ -377,7 +521,7 @@ paths:
       summary: 'Search Replicas by Broker'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns the list of replicas assigned to the specified broker.
       tags:
         - Broker
@@ -385,6 +529,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/SearchReplicasByBrokerResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/consumer-groups:
     parameters:
@@ -395,7 +547,7 @@ paths:
       operationId: listKafkaV3ConsumerGroups
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns the list of consumer groups that belong to the specified
         Kafka cluster.
       tags:
@@ -403,6 +555,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/ListConsumerGroupsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}:
     parameters:
@@ -414,13 +574,21 @@ paths:
       operationId: getKafkaV3ConsumerGroup
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns the consumer group specified by the ``consumer_group_id``.
       tags:
         - Consumer Group (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetConsumerGroupResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers:
     parameters:
@@ -432,7 +600,7 @@ paths:
       operationId: listKafkaV3Consumers
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns a list of consumers that belong to the specified consumer
         group.
       tags:
@@ -440,6 +608,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/ListConsumersResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lag-summary:
     x-lifecycle-stage: Early Access
@@ -463,6 +639,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/GetConsumerGroupLagSummaryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags:
     x-lifecycle-stage: Early Access
@@ -486,6 +670,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/ListConsumerLagsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags/{topic_name}/partitions/{partition_id}:
     x-lifecycle-stage: Early Access
@@ -500,7 +692,7 @@ paths:
       x-lifecycle-stage: Early Access
       x-request-access-name: Cluster Admin For Kafka v3
       operationId: getKafkaV3ConsumerLag
-      summary: 'Get Consumer Lag'      
+      summary: 'Get Consumer Lag'
       description: |-
         [![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Request Access To Cluster Admin for Kafka (v3)](https://img.shields.io/badge/-Request%20Access%20To%20Cluster%20Admin%20For%20Kafka%20v3-%23bc8540)](mailto:ccloud-rest-api+consumer-lag-earlyaccess@confluent.io?subject=Request%20to%20join%20v3%20API%20Early%20Access&body=I%E2%80%99d%20like%20to%20join%20the%20Confluent%20Cluster%20Admin%20For%20Kafka%20v3%20Early%20Access%20to%20provide%20early%20feedback%20on%20consumer%20lag%20apis%21%20My%20Cloud%20Organization%20ID%20is%20%3Cretrieve%20from%20https%3A//confluent.cloud/settings/billing/payment%3E.)
 
@@ -510,6 +702,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/GetConsumerLagResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}:
     parameters:
@@ -522,13 +722,21 @@ paths:
       operationId: getKafkaV3Consumer
       description: |-
         [![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Request Access To Cluster Admin for Kafka (v3)](https://img.shields.io/badge/-Request%20Access%20To%20Cluster%20Admin%20For%20Kafka%20v3-%23bc8540)](mailto:ccloud-rest-api+consumer-lag-earlyaccess@confluent.io?subject=Request%20to%20join%20v3%20API%20Early%20Access&body=I%E2%80%99d%20like%20to%20join%20the%20Confluent%20Cluster%20Admin%20For%20Kafka%20v3%20Early%20Access%20to%20provide%20early%20feedback%20on%20consumer%20lag%20apis%21%20My%20Cloud%20Organization%20ID%20is%20%3Cretrieve%20from%20https%3A//confluent.cloud/settings/billing/payment%3E.)
-        
+
         Returns the consumer specified by the ``consumer_id``.
       tags:
         - Consumer Group (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetConsumerResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}/assignments:
     x-audience: component-internal
@@ -542,13 +750,21 @@ paths:
       operationId: listKafkaV3ConsumerAssignment
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns a list of partition assignments for the specified consumer.
       tags:
         - Consumer Group (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListConsumerAssignmentsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}/assignments/{topic_name}/partitions/{partition_id}:
     x-audience: component-internal
@@ -564,7 +780,7 @@ paths:
       operationId: getKafkaV3ConsumerAssignment
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns information about the assignment for the specified consumer
         to the specified partition.
       tags:
@@ -572,6 +788,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/GetConsumerAssignmentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/topics:
     parameters:
@@ -582,20 +806,28 @@ paths:
       operationId: listKafkaV3Topics
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns the list of topics that belong to the specified Kafka cluster.
       tags:
         - Topic (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListTopicsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
     post:
       summary: 'Create Topic'
       operationId: createKafkaV3Topic
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Creates a topic.
       tags:
         - Topic (v3)
@@ -604,6 +836,14 @@ paths:
       responses:
         '201':
           $ref: '#/components/responses/CreateTopicResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}:
     parameters:
@@ -615,26 +855,46 @@ paths:
       operationId: getKafkaV3Topic
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns the topic with the given `topic_name`.
       tags:
         - Topic (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetTopicResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
     delete:
       summary: 'Delete Topic'
       operationId: deleteKafkaV3Topic
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Deletes the topic with the given `topic_name`.
       tags:
         - Topic (v3)
       responses:
         '204':
           description: 'No Content'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}/configs:
     parameters:
@@ -646,13 +906,23 @@ paths:
       operationId: listKafkaV3TopicConfigs
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Return the list of configs that belong to the specified topic.
       tags:
         - Configs (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListTopicConfigsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}/configs:alter:
     parameters:
@@ -664,7 +934,7 @@ paths:
       operationId: updateKafkaV3TopicConfigBatch
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Updates or deletes a set of topic configs.
       tags:
         - Configs (v3)
@@ -673,6 +943,16 @@ paths:
       responses:
         '204':
           description: 'No Content'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}/configs/{name}:
     parameters:
@@ -685,20 +965,30 @@ paths:
       operationId: getKafkaV3TopicConfig
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Return the config with the given `name`.
       tags:
         - Configs (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetTopicConfigResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
     put:
       summary: 'Update Topic Config'
       operationId: updateKafkaV3TopicConfig
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Updates the config with given `name`.
       tags:
         - Configs (v3)
@@ -707,19 +997,39 @@ paths:
       responses:
         '204':
           description: 'No Content'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
     delete:
       summary: 'Reset Topic Config'
       operationId: deleteKafkaV3TopicConfig
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Resets the config with given `name` to its default value.
       tags:
         - Configs (v3)
       responses:
         '204':
           description: 'No Content'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}/partitions:
     parameters:
@@ -731,13 +1041,23 @@ paths:
       operationId: listKafkaV3Partitions
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns the list of partitions that belong to the specified topic.
       tags:
         - Partition (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListPartitionsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}:
     parameters:
@@ -750,13 +1070,23 @@ paths:
       operationId: getKafkaV3Partition
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns the partition with the given `partition_id`.
       tags:
         - Partition (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetPartitionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/topics/-/partitions/-/reassignment:
     x-audience: component-internal
@@ -767,13 +1097,23 @@ paths:
       summary: 'List All Replica Reassignments'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns the list of all ongoing replica reassignments in the given Kafka cluster.
       tags:
         - Partition
       responses:
         '200':
           $ref: '#/components/responses/ListAllReassignmentsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}/partitions/-/reassignment:
     x-audience: component-internal
@@ -785,13 +1125,23 @@ paths:
       summary: 'Search Replica Reassignments By Topic'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns the list of ongoing replica reassignments for the given topic.
       tags:
         - Partition
       responses:
         '200':
           $ref: '#/components/responses/SearchReassignmentsByTopicResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/reassignment:
     x-audience: component-internal
@@ -804,13 +1154,23 @@ paths:
       summary: 'Get Replica Reassignments'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns the list of ongoing replica reassignments for the given partition.
       tags:
         - Partition
       responses:
         '200':
           $ref: '#/components/responses/GetReassignmentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/replicas:
     x-audience: component-internal
@@ -823,13 +1183,23 @@ paths:
       summary: 'List Replicas'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns the list of replicas for the specified partition.
       tags:
         - Replica
       responses:
         '200':
           $ref: '#/components/responses/ListReplicasResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}/partitions/{partition_id}/replicas/{broker_id}:
     x-audience: component-internal
@@ -843,14 +1213,24 @@ paths:
       summary: 'Get Replica'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns the replica for the specified partition assigned to the specified broker.
       tags:
         - Replica
       responses:
         '200':
           $ref: '#/components/responses/GetReplicaResponse'
-          
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
+
   /clusters/{cluster_id}/topics/-/configs:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -860,7 +1240,7 @@ paths:
       operationId: listKafkaV3AllTopicConfigs
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Returns all topic configurations for topics hosted by the specified
         cluster.
       tags:
@@ -868,6 +1248,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/ListTopicConfigsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}/records:
     x-audience: component-internal
@@ -879,7 +1267,7 @@ paths:
       summary: 'Produce records to the given topic.'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
-        
+
         Produce records to the given topic, returning delivery reports for each
                     record produced. This API can be used in streaming mode by setting "Transfer-Encoding:
                     chunked" header. For as long as the connection is kept open, the server will
@@ -894,6 +1282,17 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/ProduceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        # Apparently trying to produce to non-existing topic with auto-create enabled doesn't
+        # result in a successful message production/topic creation. Check if it throws 40403 if
+        # auto-create is disabled.
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
 
 components:
   parameters:
@@ -1609,6 +2008,19 @@ components:
               $ref: '#/components/schemas/Relationship'
             max_lag_partition:
               $ref: '#/components/schemas/Relationship'
+
+    Error:
+      type: object
+      required:
+        - error_code
+        - message
+      properties:
+        error_code:
+          type: integer
+          format: int32
+        message:
+          type: string
+          nullable: true
 
     PartitionData:
       allOf:
@@ -3366,6 +3778,136 @@ components:
                 is_in_sync: false
                 broker:
                   related: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/brokers/1'
+
+    # Error responses
+
+    BadRequestErrorResponse:
+      description: 'Indicates a bad request error. It could be caused by an unexpected request
+        body format or other forms of request validation failure. Usually serves application/json
+        content, although in some cases simple text/plain content can be returned.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            create_topic_already_exists:
+              description: "Thrown when trying to create a topic with a name already used by an existing topic."
+              value:
+                error_code: 40002
+                message: "Topic 'my-topic' already exists."
+            produce_message_badly_escaped:
+              description: "Thrown when using unescaped single quotes within a single-quote-delimited record."
+              value:
+                error_code: 400
+                message: "Unexpected character ('k' (code 107)): was expecting double-quote to start
+                  field name\n
+                  at [Source: (org.glassfish.jersey.message.internal.ReaderInterceptorExecutor$UnCloseableInputStream);
+                  line: 1, column: 3]"
+        text/plain:
+          schema:
+            type: string
+          example:
+            description: "Thrown when trying to create a topic and passing a string for the replication factor."
+            value: 'Cannot deserialize value of type `java.lang.Integer` from String "all": not a
+              valid Integer value\n
+              at [Source: (org.glassfish.jersey.message.internal.ReaderInterceptorExecutor$UnCloseableInputStream);
+              line: 1, column: 53]
+              (through reference chain: io.confluent.kafkarest.entities.v3.CreateTopicRequest["partitions_count"])'
+
+    UnauthorizedErrorResponse:
+      description: 'Indicates a client authentication error. Kafka authentication failures will contain
+        error code 40101 in the response body.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            kafka_authentication_failed:
+              description: "Thrown when using Basic authentication with wrong Kafka credentials."
+              value:
+                error_code: 40101
+                message: "Authentication failed"
+
+    NotFoundErrorResponse:
+      description: 'Indicates attempted access to an unreachable or non-existing resource like e.g. an unknown topic
+        or partition. GET requests to endpoints not allowed in the accesslists will also result in this response.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            endpoint_not_found:
+              description: "Thrown for generic HTTP 404 errors."
+              value:
+                error_code: 404
+                message: "HTTP 404 Not Found"
+            cluster_not_found:
+              description: "Thrown when using a non-existing cluster ID."
+              value:
+                error_code: 404
+                message: "Cluster my-cluster cannot be found."
+            unknown_topic_or_partition:
+              description: "Thrown when using a non-existing topic name or partition ID."
+              value:
+                error_code: 40403
+                message: "This server does not host this topic-partition."
+
+    TooManyRequestsErrorResponse:
+      description: 'Indicates that a rate limit threshold has been reached, and the client should
+        retry again later.'
+      content:
+        text/html:
+          schema:
+            type: string
+          example:
+            description: "A sample response from Jetty's DoSFilter."
+            value: '<html>
+                        <head>
+                            <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+                            <title>Error 429 Too Many Requests</title>
+                        </head>
+                        <body>
+                            <h2>HTTP ERROR 429 Too Many Requests</h2>
+                            <table>
+                                <tr>
+                                    <th>URI:</th>
+                                    <td>/v3/clusters/my-cluster</td>
+                                </tr>
+                                <tr>
+                                    <th>STATUS:</th>
+                                    <td>429</td>
+                                </tr>
+                                <tr>
+                                    <th>MESSAGE:</th>
+                                    <td>Too Many Requests</td>
+                                </tr>
+                                <tr>
+                                    <th>SERVLET:</th>
+                                    <td>default</td>
+                                </tr>
+                            </table>
+                        </body>
+                    </html>'
+
+    ServerErrorResponse:
+      description: 'A server-side problem that might not be addressable from the client side.
+        Retriable Kafka errors will contain error code 50003 in the response body.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            generic_internal_server_error:
+              description: "Thrown for generic HTTP 500 errors."
+              value:
+                error_code: 500
+                message: "Internal Server Error"
+            produce_v3_missing_schema:
+              description: "Thrown when the specified schema cannot be fetched from Schema Registry."
+              value:
+                error_code: 50002
+                message: "Error when fetching latest schema version. subject = my-topic"
+
 tags:
   - name: Cluster (v3)
     description: |-
