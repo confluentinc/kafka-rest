@@ -164,6 +164,7 @@ public abstract class ClusterTestHarness {
   @Before
   public void setUp() throws Exception {
     zookeeper = new EmbeddedZookeeper();
+    zkConnect = String.format("127.0.0.1:%d", zookeeper.port());
     // start brokers concurrently
     startBrokersConcurrently(numBrokers);
 
