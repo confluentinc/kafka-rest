@@ -13,7 +13,6 @@
  * specific language governing permissions and limitations under the License.
  */
 
-
 package io.confluent.kafkarest.integration;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
@@ -28,9 +27,9 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
 import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest;
 import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
+import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
 import io.confluent.kafkarest.entities.v2.PartitionOffset;
-import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -38,6 +37,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import kafka.security.authorizer.AclAuthorizer;
 import kafka.server.KafkaConfig;
+import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.common.security.auth.KafkaPrincipal;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
@@ -45,7 +45,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import scala.Option;
-import scala.collection.JavaConverters;
 
 public class AuthorizationErrorTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
@@ -72,7 +71,14 @@ public class AuthorizationErrorTest
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    createTopic(TOPIC_NAME, 1, (short) 1);
+    Properties properties = restConfig.getAdminProperties();
+    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    properties.put(
+        "sasl.jaas.config",
+        "org.apache.kafka.common.security.plain.PlainLoginModule required "
+            + " username=\"admin\""
+            + " password=\"admin-secret\";");
+    createTopic(TOPIC_NAME, 1, (short) 1, properties);
   }
 
   @Override
