@@ -400,6 +400,10 @@ public abstract class ClusterTestHarness {
   protected final void createTopic(String topicName, int numPartitions, short replicationFactor) {
     Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    createTopic(topicName, numPartitions, replicationFactor, properties);
+  }
+
+  protected final void createTopic(String topicName, int numPartitions, short replicationFactor, Properties properties) {
     AdminClient adminClient = AdminClient.create(properties);
 
     CreateTopicsResult result =
