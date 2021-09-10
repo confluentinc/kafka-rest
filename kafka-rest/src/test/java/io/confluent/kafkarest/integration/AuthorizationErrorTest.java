@@ -73,11 +73,7 @@ public class AuthorizationErrorTest
     super.setUp();
     Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
-    properties.put(
-        "sasl.jaas.config",
-        "org.apache.kafka.common.security.plain.PlainLoginModule required "
-            + " username=\"admin\""
-            + " password=\"admin-secret\";");
+    properties.put("sasl.jaas.config", createPlainLoginModule("admin", "admin-secret"));
     createTopic(TOPIC_NAME, 1, (short) 1, properties);
   }
 
@@ -112,11 +108,13 @@ public class AuthorizationErrorTest
     restProperties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     restProperties.put("client.security.protocol","SASL_PLAINTEXT");
     restProperties.put("client.sasl.mechanism", "PLAIN");
-    restProperties.put("client.sasl.jaas.config",
-        "org.apache.kafka.common.security.plain.PlainLoginModule required "
-            + " username=\"" + USERNAME + "\""
-            + " password=\"alice-secret\";"
-    );
+    restProperties.put("client.sasl.jaas.config", createPlainLoginModule(USERNAME, "alice-secret"));
+  }
+
+  private static String createPlainLoginModule(String username, String password) {
+    return "org.apache.kafka.common.security.plain.PlainLoginModule required "
+        + " username=\"" + username + "\""
+        + " password=\"" + password + "\";";
   }
 
   @Test
