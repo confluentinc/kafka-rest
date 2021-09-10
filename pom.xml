@@ -150,16 +150,11 @@
 		    <version>2.12.3</version>
 		    <configuration>
 	  	        <java>
-			    <googleJavaFormat />
+			    <googleJavaFormat>
+			        <version>1.7</version>
+			    </googleJavaFormat>
 		        </java>
 		    </configuration>
-		    <dependencies>
-		      <dependency>
-			<groupId>com.google.googlejavaformat</groupId>
-			<artifactId>google-java-format</artifactId>
-			<version>1.11.0</version>
-		      </dependency>
-		    </dependencies>
                     <executions>
 	                <execution>
 			    <phase>compile</phase>
