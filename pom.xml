@@ -150,7 +150,9 @@
 		    <version>2.12.3</version>
 		    <configuration>
 	  	        <java>
-			    <googleJavaFormat />
+			    <googleJavaFormat>
+			        <version>1.7</version>
+			    </googleJavaFormat>
 		        </java>
 		    </configuration>
                     <executions>

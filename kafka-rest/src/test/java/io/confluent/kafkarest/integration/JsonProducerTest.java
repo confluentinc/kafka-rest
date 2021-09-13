@@ -26,10 +26,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import org.junit.Before;
 import org.junit.Test;
-import scala.collection.JavaConverters;
 
 public class JsonProducerTest
     extends AbstractProducerTest<JsonTopicProduceRequest, JsonPartitionProduceRequest> {
@@ -41,14 +39,8 @@ public class JsonProducerTest
   public void setUp() throws Exception {
     super.setUp();
     final int numPartitions = 3;
-    final int replicationFactor = 1;
-    kafka.utils.TestUtils.createTopic(
-        zkClient,
-        topicName,
-        numPartitions,
-        replicationFactor,
-        JavaConverters.asScalaBuffer(this.servers),
-        new Properties());
+    final short replicationFactor = 1;
+    createTopic(topicName, numPartitions, replicationFactor);
   }
 
   @Override

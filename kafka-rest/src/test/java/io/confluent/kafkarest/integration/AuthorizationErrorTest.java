@@ -37,6 +37,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import kafka.security.authorizer.AclAuthorizer;
 import kafka.server.KafkaConfig;
+import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.common.security.auth.KafkaPrincipal;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
@@ -44,7 +45,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import scala.Option;
-import scala.collection.JavaConverters;
 
 public class AuthorizationErrorTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
@@ -71,8 +71,10 @@ public class AuthorizationErrorTest
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    kafka.utils.TestUtils.createTopic(
-        zkClient, TOPIC_NAME, 1, 1, JavaConverters.asScalaBuffer(this.servers), new Properties());
+    Properties properties = restConfig.getAdminProperties();
+    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    properties.put("sasl.jaas.config", createPlainLoginModule("admin", "admin-secret"));
+    createTopic(TOPIC_NAME, 1, (short) 1, properties);
   }
 
   @Override
@@ -124,13 +126,17 @@ public class AuthorizationErrorTest
     restProperties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     restProperties.put("client.security.protocol", "SASL_PLAINTEXT");
     restProperties.put("client.sasl.mechanism", "PLAIN");
-    restProperties.put(
-        "client.sasl.jaas.config",
-        "org.apache.kafka.common.security.plain.PlainLoginModule required "
-            + " username=\""
-            + USERNAME
-            + "\""
-            + " password=\"alice-secret\";");
+    restProperties.put("client.sasl.jaas.config", createPlainLoginModule(USERNAME, "alice-secret"));
+  }
+
+  private static String createPlainLoginModule(String username, String password) {
+    return "org.apache.kafka.common.security.plain.PlainLoginModule required "
+        + " username=\""
+        + username
+        + "\""
+        + " password=\""
+        + password
+        + "\";";
   }
 
   @Test

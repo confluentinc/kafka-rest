@@ -268,7 +268,7 @@ public class TestUtils {
     testWithRetry(assertions, DEFAULT_EXP_BACKOFF_RETRIES, null, DEFAULT_RETRY_INTERVAL, true);
   }
 
-  private static void testWithRetry(
+  public static void testWithRetry(
       Runnable assertions,
       int numRetries,
       Duration timeout,
