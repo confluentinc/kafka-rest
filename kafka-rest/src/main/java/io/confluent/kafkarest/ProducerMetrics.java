@@ -25,7 +25,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.MetricNameTemplate;
-import org.apache.kafka.common.metrics.Gauge;
 import org.apache.kafka.common.metrics.JmxReporter;
 import org.apache.kafka.common.metrics.KafkaMetricsContext;
 import org.apache.kafka.common.metrics.MeasurableStat;
@@ -39,6 +38,8 @@ import org.apache.kafka.common.metrics.stats.CumulativeCount;
 import org.apache.kafka.common.metrics.stats.CumulativeSum;
 import org.apache.kafka.common.metrics.stats.Max;
 import org.apache.kafka.common.metrics.stats.Rate;
+import org.apache.kafka.common.metrics.stats.WindowedCount;
+import org.apache.kafka.common.metrics.stats.WindowedSum;
 import org.apache.kafka.common.utils.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,77 +90,69 @@ public class ProducerMetrics {
     }
 
     // request metrics
-    new SensorBuilder(metricMBean)
-        .withName(ProducerMetricsRegistry.REQUEST_RATE)
-        .withDoc(ProducerMetricsRegistry.REQUEST_RATE_DOC)
-        .withRate()
+    new SensorBuilder(metricMBean, ProducerMetricsRegistry.REQUEST_SENSOR)
+        .addRate(ProducerMetricsRegistry.REQUEST_RATE, ProducerMetricsRegistry.REQUEST_RATE_DOC)
+        .addCumulativeCount(
+            ProducerMetricsRegistry.REQUEST_TOTAL, ProducerMetricsRegistry.REQUEST_TOTAL_DOC)
+        .addWindowedCount(
+            ProducerMetricsRegistry.REQUEST_TOTAL_WINDOWED,
+            ProducerMetricsRegistry.REQUEST_TOTAL_WINDOWED_DOC)
         .build();
 
-    new SensorBuilder(metricMBean)
-        .withName(ProducerMetricsRegistry.REQUEST_SIZE_AVG)
-        .withDoc(ProducerMetricsRegistry.REQUEST_SIZE_AVG_DOC)
-        .withAvg()
-        .build();
-
-    new SensorBuilder(metricMBean)
-        .withName(ProducerMetricsRegistry.REQUEST_SIZE_TOTAL)
-        .withDoc(ProducerMetricsRegistry.REQUEST_SIZE_TOTAL_DOC)
-        .withCumulativeSum()
-        .build();
-
-    new SensorBuilder(metricMBean)
-        .withName(ProducerMetricsRegistry.REQUEST_TOTAL)
-        .withDoc(ProducerMetricsRegistry.REQUEST_TOTAL_DOC)
-        .withCumulativeCount()
+    new SensorBuilder(metricMBean, ProducerMetricsRegistry.REQUEST_SIZE_SENSOR)
+        .addAvg(
+            ProducerMetricsRegistry.REQUEST_SIZE_AVG, ProducerMetricsRegistry.REQUEST_SIZE_AVG_DOC)
+        .addCumulativeSum(
+            ProducerMetricsRegistry.REQUEST_SIZE_TOTAL,
+            ProducerMetricsRegistry.REQUEST_SIZE_TOTAL_DOC)
+        .addWindowedSum(
+            ProducerMetricsRegistry.REQUEST_SIZE_TOTAL_WINDOWED,
+            ProducerMetricsRegistry.REQUEST_SIZE_TOTAL_WINDOWED_DOC)
         .build();
 
     // response metrics
-    new SensorBuilder(metricMBean)
-        .withName(ProducerMetricsRegistry.RESPONSE_SEND_RATE)
-        .withDoc(ProducerMetricsRegistry.RESPONSE_SEND_RATE_DOC)
-        .withRate()
+    new SensorBuilder(metricMBean, ProducerMetricsRegistry.RESPONSE_SENSOR)
+        .addRate(
+            ProducerMetricsRegistry.RESPONSE_SEND_RATE,
+            ProducerMetricsRegistry.RESPONSE_SEND_RATE_DOC)
+        .addCumulativeCount(
+            ProducerMetricsRegistry.RESPONSE_TOTAL, ProducerMetricsRegistry.RESPONSE_TOTAL_DOC)
+        .addWindowedCount(
+            ProducerMetricsRegistry.RESPONSE_TOTAL_WINDOWED,
+            ProducerMetricsRegistry.RESPONSE_TOTAL_WINDOWED_DOC)
         .build();
 
-    new SensorBuilder(metricMBean)
-        .withName(ProducerMetricsRegistry.RESPONSE_SIZE_AVG)
-        .withDoc(ProducerMetricsRegistry.RESPONSE_SIZE_AVG_DOC)
-        .withAvg()
+    new SensorBuilder(metricMBean, ProducerMetricsRegistry.RESPONSE_SIZE_SENSOR)
+        .addAvg(
+            ProducerMetricsRegistry.RESPONSE_SIZE_AVG,
+            ProducerMetricsRegistry.RESPONSE_SIZE_AVG_DOC)
+        .addCumulativeSum(
+            ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL,
+            ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL_DOC)
+        .addWindowedSum(
+            ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL_WINDOWED,
+            ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL_WINDOWED_DOC)
         .build();
 
-    new SensorBuilder(metricMBean)
-        .withName(ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL)
-        .withDoc(ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL_DOC)
-        .withCumulativeSum()
+    new SensorBuilder(metricMBean, ProducerMetricsRegistry.RECORD_ERROR_SENSOR)
+        .addRate(
+            ProducerMetricsRegistry.RECORD_ERROR_RATE,
+            ProducerMetricsRegistry.RECORD_ERROR_RATE_DOC)
+        .addCumulativeCount(
+            ProducerMetricsRegistry.RECORD_ERROR_TOTAL,
+            ProducerMetricsRegistry.RECORD_ERROR_TOTAL_DOC)
+        .addWindowedCount(
+            ProducerMetricsRegistry.RECORD_ERROR_TOTAL_WINDOWED,
+            ProducerMetricsRegistry.RECORD_ERROR_TOTAL_WINDOWED_DOC)
         .build();
 
-    new SensorBuilder(metricMBean)
-        .withName(ProducerMetricsRegistry.RESPONSE_TOTAL)
-        .withDoc(ProducerMetricsRegistry.RESPONSE_TOTAL_DOC)
-        .withCumulativeCount()
-        .build();
-
-    new SensorBuilder(metricMBean)
-        .withName(ProducerMetricsRegistry.RECORD_ERROR_RATE)
-        .withDoc(ProducerMetricsRegistry.RECORD_ERROR_RATE_DOC)
-        .withRate()
-        .build();
-
-    new SensorBuilder(metricMBean)
-        .withName(ProducerMetricsRegistry.RECORD_ERROR_TOTAL)
-        .withDoc(ProducerMetricsRegistry.RECORD_ERROR_TOTAL_DOC)
-        .withCumulativeCount()
-        .build();
-
-    new SensorBuilder(metricMBean)
-        .withName(ProducerMetricsRegistry.REQUEST_LATENCY_MAX)
-        .withDoc(ProducerMetricsRegistry.REQUEST_LATENCY_MAX_DOC)
-        .withMax()
-        .build();
-
-    new SensorBuilder(metricMBean)
-        .withName(ProducerMetricsRegistry.REQUEST_LATENCY_AVG)
-        .withDoc(ProducerMetricsRegistry.REQUEST_LATENCY_AVG_DOC)
-        .withAvg()
+    new SensorBuilder(metricMBean, ProducerMetricsRegistry.REQUEST_LATENCY_SENSOR)
+        .addMax(
+            ProducerMetricsRegistry.REQUEST_LATENCY_MAX,
+            ProducerMetricsRegistry.REQUEST_LATENCY_MAX_DOC)
+        .addAvg(
+            ProducerMetricsRegistry.REQUEST_LATENCY_AVG,
+            ProducerMetricsRegistry.REQUEST_LATENCY_AVG_DOC)
         .build();
   }
 
@@ -261,20 +254,6 @@ public class ProducerMetrics {
       return sensor;
     }
 
-    /**
-     * Add to this group an indicator metric that always returns the specified value.
-     *
-     * @param nameTemplate the name template for the metric; may not be null
-     * @param value the value; may not be null
-     * @throws IllegalArgumentException if the name is not valid
-     */
-    <T> void addImmutableValueMetric(MetricNameTemplate nameTemplate, final T value) {
-      MetricName metricName = metricName(nameTemplate);
-      if (metrics().metric(metricName) == null) {
-        metrics().addMetric(metricName, (Gauge<T>) (config, now) -> value);
-      }
-    }
-
     /** Remove all sensors and metrics associated with this group. */
     @Override
     public synchronized void close() {
@@ -291,58 +270,97 @@ public class ProducerMetrics {
   public static class SensorBuilder {
 
     private ProduceMetricMBean bean;
-    private String name;
-    private String doc;
-    private MeasurableStat measurableStat;
+    private Sensor sensor;
 
-    public SensorBuilder(ProduceMetricMBean bean) {
+    public SensorBuilder(ProduceMetricMBean bean, String name) {
       this.bean = bean;
+      this.sensor =
+          bean.sensor(String.join(":", JMX_PREFIX, ProducerMetricsRegistry.GROUP_NAME, name));
     }
 
-    public SensorBuilder withName(String name) {
-      this.name = name;
+    public SensorBuilder addAvg(String name, String doc) {
+      MetricName metricName = getMetricName(name, doc);
+      sensor.add(metricName, MeasuredStatSupplier.avg());
       return this;
     }
 
-    public SensorBuilder withDoc(String doc) {
-      this.doc = doc;
+    public SensorBuilder addRate(String name, String doc) {
+      MetricName metricName = getMetricName(name, doc);
+      sensor.add(metricName, MeasuredStatSupplier.rate());
       return this;
     }
 
-    public SensorBuilder withAvg() {
-      this.measurableStat = new Avg();
+    public SensorBuilder addMax(String name, String doc) {
+      MetricName metricName = getMetricName(name, doc);
+      sensor.add(metricName, MeasuredStatSupplier.max());
       return this;
     }
 
-    public SensorBuilder withRate() {
-      this.measurableStat = new Rate();
+    public SensorBuilder addCumulativeSum(String name, String doc) {
+      MetricName metricName = getMetricName(name, doc);
+      sensor.add(metricName, MeasuredStatSupplier.cumulativeSum());
       return this;
     }
 
-    public SensorBuilder withMax() {
-      this.measurableStat = new Max();
+    public SensorBuilder addCumulativeCount(String name, String doc) {
+      MetricName metricName = getMetricName(name, doc);
+      sensor.add(metricName, MeasuredStatSupplier.cumulativeCount());
       return this;
     }
 
-    public SensorBuilder withCumulativeSum() {
-      this.measurableStat = new CumulativeSum();
+    public SensorBuilder addWindowedCount(String name, String doc) {
+      MetricName metricName = getMetricName(name, doc);
+      sensor.add(metricName, MeasuredStatSupplier.windowedCount());
       return this;
     }
 
-    public SensorBuilder withCumulativeCount() {
-      this.measurableStat = new CumulativeCount();
+    public SensorBuilder addWindowedSum(String name, String doc) {
+      MetricName metricName = getMetricName(name, doc);
+      sensor.add(metricName, MeasuredStatSupplier.windowedSum());
       return this;
     }
 
     public Sensor build() {
-      Sensor sensor =
-          bean.sensor(String.join(":", JMX_PREFIX, ProducerMetricsRegistry.GROUP_NAME, name));
+      return sensor;
+    }
+
+    private MetricName getMetricName(String name, String doc) {
       MetricName metricName =
           bean.metricName(
               new MetricNameTemplate(
                   name, ProducerMetricsRegistry.GROUP_NAME, doc, Collections.emptySet()));
-      sensor.add(metricName, measurableStat);
-      return sensor;
+      return metricName;
+    }
+  }
+
+  public static class MeasuredStatSupplier {
+
+    public static MeasurableStat avg() {
+      return new Avg();
+    }
+
+    public static MeasurableStat rate() {
+      return new Rate();
+    }
+
+    public static MeasurableStat max() {
+      return new Max();
+    }
+
+    public static MeasurableStat cumulativeSum() {
+      return new CumulativeSum();
+    }
+
+    public static MeasurableStat cumulativeCount() {
+      return new CumulativeCount();
+    }
+
+    public static MeasurableStat windowedCount() {
+      return new WindowedCount();
+    }
+
+    public static MeasurableStat windowedSum() {
+      return new WindowedSum();
     }
   }
 

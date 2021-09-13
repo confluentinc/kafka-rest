@@ -23,6 +23,13 @@ public class ProducerMetricsTest {
 
     ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
 
+    String[] sensors =
+        new String[] {
+          ProducerMetricsRegistry.REQUEST_SENSOR,
+          ProducerMetricsRegistry.RECORD_ERROR_SENSOR,
+          ProducerMetricsRegistry.RESPONSE_SENSOR,
+        };
+
     String[] totalMetrics =
         new String[] {
           ProducerMetricsRegistry.RESPONSE_TOTAL,
@@ -30,8 +37,8 @@ public class ProducerMetricsTest {
           ProducerMetricsRegistry.REQUEST_TOTAL
         };
 
-    for (String metric : totalMetrics) {
-      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(metric, 1.0));
+    for (String sensor : sensors) {
+      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(sensor, 1.0));
     }
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
@@ -52,13 +59,18 @@ public class ProducerMetricsTest {
 
     ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
 
+    String[] sensors =
+        new String[] {
+          ProducerMetricsRegistry.RESPONSE_SIZE_SENSOR, ProducerMetricsRegistry.REQUEST_SIZE_SENSOR,
+        };
+
     String[] sumMetrics =
         new String[] {
           ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL, ProducerMetricsRegistry.REQUEST_SIZE_TOTAL
         };
 
-    for (String metric : sumMetrics) {
-      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(metric, 10.0));
+    for (String sensor : sensors) {
+      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(sensor, 10.0));
     }
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
@@ -80,6 +92,13 @@ public class ProducerMetricsTest {
 
     ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
 
+    String[] sensors =
+        new String[] {
+          ProducerMetricsRegistry.RESPONSE_SIZE_SENSOR,
+          ProducerMetricsRegistry.REQUEST_SIZE_SENSOR,
+          ProducerMetricsRegistry.REQUEST_LATENCY_SENSOR
+        };
+
     String[] avgMetrics =
         new String[] {
           ProducerMetricsRegistry.REQUEST_SIZE_AVG,
@@ -87,8 +106,8 @@ public class ProducerMetricsTest {
           ProducerMetricsRegistry.RESPONSE_SIZE_AVG
         };
 
-    for (String metric : avgMetrics) {
-      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(metric, n));
+    for (String sensor : sensors) {
+      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(sensor, n));
     }
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
@@ -109,6 +128,13 @@ public class ProducerMetricsTest {
 
     ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
 
+    String[] sensors =
+        new String[] {
+          ProducerMetricsRegistry.RECORD_ERROR_SENSOR,
+          ProducerMetricsRegistry.REQUEST_SENSOR,
+          ProducerMetricsRegistry.RESPONSE_SENSOR
+        };
+
     String[] rateMetrics =
         new String[] {
           ProducerMetricsRegistry.RECORD_ERROR_RATE,
@@ -116,8 +142,8 @@ public class ProducerMetricsTest {
           ProducerMetricsRegistry.RESPONSE_SEND_RATE
         };
 
-    for (String metric : rateMetrics) {
-      IntStream.range(0, 90).forEach(n -> mbean.recordMetrics(metric, 1.0));
+    for (String sensor : sensors) {
+      IntStream.range(0, 90).forEach(n -> mbean.recordMetrics(sensor, 1.0));
     }
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
@@ -139,10 +165,12 @@ public class ProducerMetricsTest {
 
     ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
 
+    String[] sensors = new String[] {ProducerMetricsRegistry.REQUEST_LATENCY_SENSOR};
+
     String[] maxMetrics = new String[] {ProducerMetricsRegistry.REQUEST_LATENCY_MAX};
 
-    for (String metric : maxMetrics) {
-      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(metric, n));
+    for (String sensor : sensors) {
+      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(sensor, n));
     }
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
@@ -151,6 +179,75 @@ public class ProducerMetricsTest {
 
     for (String metric : maxMetrics) {
       assertEquals(9.0, mBeanServer.getAttribute(beanNames.iterator().next(), metric));
+    }
+  }
+
+  @Test
+  public void testWindowedCountMetrics()
+      throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException,
+          AttributeNotFoundException, MBeanException, InterruptedException, IntrospectionException {
+    Time mockTime = new MockTime();
+    ProducerMetrics metrics = new ProducerMetrics(mockTime);
+
+    ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
+
+    String[] sensors =
+        new String[] {
+          ProducerMetricsRegistry.REQUEST_SENSOR,
+          ProducerMetricsRegistry.RESPONSE_SENSOR,
+          ProducerMetricsRegistry.RECORD_ERROR_SENSOR
+        };
+
+    String[] maxMetrics =
+        new String[] {
+          ProducerMetricsRegistry.REQUEST_TOTAL_WINDOWED,
+          ProducerMetricsRegistry.RECORD_ERROR_TOTAL_WINDOWED,
+          ProducerMetricsRegistry.RESPONSE_TOTAL_WINDOWED
+        };
+
+    for (String sensor : sensors) {
+      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(sensor, n));
+    }
+
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
+    assertEquals(1, beanNames.size());
+
+    for (String metric : maxMetrics) {
+      assertEquals(10.0, mBeanServer.getAttribute(beanNames.iterator().next(), metric));
+    }
+  }
+
+  @Test
+  public void testWindowedSumMetrics()
+      throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException,
+          AttributeNotFoundException, MBeanException, InterruptedException, IntrospectionException {
+    Time mockTime = new MockTime();
+    ProducerMetrics metrics = new ProducerMetrics(mockTime);
+
+    ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
+
+    String[] sensors =
+        new String[] {
+          ProducerMetricsRegistry.REQUEST_SIZE_SENSOR, ProducerMetricsRegistry.RESPONSE_SIZE_SENSOR
+        };
+
+    String[] maxMetrics =
+        new String[] {
+          ProducerMetricsRegistry.REQUEST_SIZE_TOTAL_WINDOWED,
+          ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL_WINDOWED
+        };
+
+    for (String sensor : sensors) {
+      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(sensor, n));
+    }
+
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
+    assertEquals(1, beanNames.size());
+
+    for (String metric : maxMetrics) {
+      assertEquals(45.0, mBeanServer.getAttribute(beanNames.iterator().next(), metric));
     }
   }
 }

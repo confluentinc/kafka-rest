@@ -19,18 +19,34 @@ public class ProducerMetricsRegistry {
 
   public static final String GROUP_NAME = "produce-api-metrics";
 
+  // sensor names
+  public static final String REQUEST_SENSOR = "request-sensor";
+  public static final String REQUEST_SIZE_SENSOR = "request-size-sensor";
+  public static final String RESPONSE_SENSOR = "response-sensor";
+  public static final String RESPONSE_SIZE_SENSOR = "response-size-sensor";
+  public static final String RECORD_ERROR_SENSOR = "record-error-sensor";
+  public static final String REQUEST_LATENCY_SENSOR = "request-latency-sensor";
+
   // request
   public static final String REQUEST_RATE = "request-send-rate";
   public static final String REQUEST_RATE_DOC = "The average number of requests sent per second.";
 
   public static final String REQUEST_SIZE_AVG = "request-size-avg";
-  public static final String REQUEST_SIZE_AVG_DOC = "The average request size in bytes";
+  public static final String REQUEST_SIZE_AVG_DOC = "The average request size in bytes.";
 
   public static final String REQUEST_SIZE_TOTAL = "request-size-total";
-  public static final String REQUEST_SIZE_TOTAL_DOC = "The total request bytes sent";
+  public static final String REQUEST_SIZE_TOTAL_DOC = "The total request bytes sent.";
+
+  public static final String REQUEST_SIZE_TOTAL_WINDOWED = "request-size-total-windowed";
+  public static final String REQUEST_SIZE_TOTAL_WINDOWED_DOC =
+      "The total request bytes sent in the given window.";
 
   public static final String REQUEST_TOTAL = "request-total";
   public static final String REQUEST_TOTAL_DOC = "The total number of requests sent.";
+
+  public static final String REQUEST_TOTAL_WINDOWED = "request-total-windowed";
+  public static final String REQUEST_TOTAL_WINDOWED_DOC =
+      "The total number of requests sent within the given window.";
 
   // response
   public static final String RESPONSE_SEND_RATE = "response-send-rate";
@@ -43,13 +59,25 @@ public class ProducerMetricsRegistry {
   public static final String RESPONSE_SIZE_TOTAL = "response-size-total";
   public static final String RESPONSE_SIZE_TOTAL_DOC = "The total response bytes sent";
 
+  public static final String RESPONSE_SIZE_TOTAL_WINDOWED = "response-size-total-windowed";
+  public static final String RESPONSE_SIZE_TOTAL_WINDOWED_DOC =
+      "The total response bytes sent in the given window.";
+
   public static final String RESPONSE_TOTAL = "response-total";
-  public static final String RESPONSE_TOTAL_DOC = "The total number of response sent.";
+  public static final String RESPONSE_TOTAL_DOC = "The total number of responses sent.";
+
+  public static final String RESPONSE_TOTAL_WINDOWED = "response-total-windowed";
+  public static final String RESPONSE_TOTAL_WINDOWED_DOC =
+      "The total number of responses sent in the given window.";
 
   // errors
   public static final String RECORD_ERROR_TOTAL = "record-error-total";
   public static final String RECORD_ERROR_TOTAL_DOC =
       "The total number of record sends that resulted in errors.";
+
+  public static final String RECORD_ERROR_TOTAL_WINDOWED = "record-error-total-windowed";
+  public static final String RECORD_ERROR_TOTAL_WINDOWED_DOC =
+      "The total number of record sends that resulted in errors in the given window.";
 
   public static final String RECORD_ERROR_RATE = "record-error-rate";
   public static final String RECORD_ERROR_RATE_DOC =

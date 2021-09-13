@@ -243,38 +243,22 @@ public final class ProduceAction {
     producerMetrics
         .get()
         .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordMetrics(ProducerMetricsRegistry.RESPONSE_SIZE_AVG, responseSize);
+        .recordMetrics(ProducerMetricsRegistry.RESPONSE_SIZE_SENSOR, responseSize);
     producerMetrics
         .get()
         .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordMetrics(ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL, responseSize);
+        .recordMetrics(ProducerMetricsRegistry.RESPONSE_SENSOR, 1.0);
     producerMetrics
         .get()
         .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordMetrics(ProducerMetricsRegistry.RESPONSE_SEND_RATE, 1.0);
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordMetrics(ProducerMetricsRegistry.RESPONSE_TOTAL, 1.0);
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordMetrics(ProducerMetricsRegistry.REQUEST_LATENCY_MAX, latency);
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordMetrics(ProducerMetricsRegistry.REQUEST_LATENCY_AVG, latency);
+        .recordMetrics(ProducerMetricsRegistry.REQUEST_LATENCY_SENSOR, latency);
   }
 
   private void recordErrorMetrics() {
     producerMetrics
         .get()
         .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordMetrics(ProducerMetricsRegistry.RECORD_ERROR_RATE, 1.0);
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordMetrics(ProducerMetricsRegistry.RECORD_ERROR_TOTAL, 1.0);
+        .recordMetrics(ProducerMetricsRegistry.RECORD_ERROR_SENSOR, 1.0);
   }
 
   private void recordRequestMetrics(
@@ -282,21 +266,13 @@ public final class ProduceAction {
     producerMetrics
         .get()
         .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordMetrics(ProducerMetricsRegistry.REQUEST_RATE, 1.0);
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordMetrics(ProducerMetricsRegistry.REQUEST_TOTAL, 1.0);
+        .recordMetrics(ProducerMetricsRegistry.REQUEST_SENSOR, 1.0);
     // record request size
     double requestSize = getRequestSize(serializedKey, serializedValue);
     producerMetrics
         .get()
         .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordMetrics(ProducerMetricsRegistry.REQUEST_SIZE_AVG, requestSize);
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordMetrics(ProducerMetricsRegistry.REQUEST_SIZE_TOTAL, requestSize);
+        .recordMetrics(ProducerMetricsRegistry.REQUEST_SIZE_SENSOR, requestSize);
   }
 
   private double getRequestSize(
