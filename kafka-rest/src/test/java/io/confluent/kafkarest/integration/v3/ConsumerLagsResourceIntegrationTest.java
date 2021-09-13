@@ -226,7 +226,8 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
     KafkaConsumer<?, ?> consumer = createConsumer(group1, "client-1");
     consumer.subscribe(Arrays.asList(topic1, topic2));
     // consume from subscribed topics (zero lag)
-    consumer.poll(Duration.ofSeconds(1));
+    consumer.poll(Duration.ofSeconds(5));
+    consumer.poll(Duration.ofSeconds(5));
     consumer.commitSync();
 
     for (int t = 0; t < numTopics; t++) {
@@ -247,11 +248,8 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
               assertEquals(expectedOffsets[finalT][finalP], (long) consumerLagData.getCurrentOffset());
               assertEquals(expectedOffsets[finalT][finalP], (long) consumerLagData.getLogEndOffset());
               assertEquals(0, (long) consumerLagData.getLag());
-            },
-            /* numRetries= */ 6,
-            /* timeout= */ null,
-            /* initialRetryInterval= */ Duration.ofMillis(200),
-            /* isExponentialBackoff= */ true);
+            }
+        );
       }
     }
 
