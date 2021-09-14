@@ -21,21 +21,20 @@ import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.SchemaProvider;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
-
+import io.confluent.kafkarest.entities.EmbeddedFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import io.confluent.kafkarest.entities.EmbeddedFormat;
 import org.apache.kafka.common.config.ConfigDef;
 
 public final class SchemaRegistryConfig extends AbstractKafkaSchemaSerDeConfig {
   public static final List<SchemaProvider> SCHEMA_PROVIDERS =
-      Collections.unmodifiableList(Arrays.asList(
-        EmbeddedFormat.AVRO.getSchemaProvider(),
-        EmbeddedFormat.JSONSCHEMA.getSchemaProvider(),
-        EmbeddedFormat.PROTOBUF.getSchemaProvider()));
+      Collections.unmodifiableList(
+          Arrays.asList(
+              EmbeddedFormat.AVRO.getSchemaProvider(),
+              EmbeddedFormat.JSONSCHEMA.getSchemaProvider(),
+              EmbeddedFormat.PROTOBUF.getSchemaProvider()));
   private static final ConfigDef CONFIG_DEF = baseConfigDef();
 
   public SchemaRegistryConfig(Map<String, Object> configs) {

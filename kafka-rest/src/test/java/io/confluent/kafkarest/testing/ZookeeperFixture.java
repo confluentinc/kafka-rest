@@ -30,8 +30,7 @@ public final class ZookeeperFixture extends ExternalResource {
 
   @Nullable private EmbeddedZookeeper zookeeper;
 
-  private ZookeeperFixture() {
-  }
+  private ZookeeperFixture() {}
 
   @Override
   public void before() {

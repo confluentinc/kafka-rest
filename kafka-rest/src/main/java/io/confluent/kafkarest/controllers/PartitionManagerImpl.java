@@ -52,7 +52,8 @@ final class PartitionManagerImpl implements PartitionManager {
 
   @Override
   public CompletableFuture<List<Partition>> listPartitions(String clusterId, String topicName) {
-    return topicManager.getTopic(clusterId, topicName)
+    return topicManager
+        .getTopic(clusterId, topicName)
         .thenApply(topic -> checkEntityExists(topic, "Topic %s cannot be found.", topic))
         .thenApply(Topic::getPartitions)
         .thenCompose(this::withOffsets);
@@ -60,7 +61,8 @@ final class PartitionManagerImpl implements PartitionManager {
 
   @Override
   public CompletableFuture<List<Partition>> listLocalPartitions(String topicName) {
-    return topicManager.getLocalTopic(topicName)
+    return topicManager
+        .getLocalTopic(topicName)
         .thenApply(topic -> checkEntityExists(topic, "Topic %s cannot be found.", topic))
         .thenApply(Topic::getPartitions)
         .thenCompose(this::withOffsets);
@@ -69,13 +71,13 @@ final class PartitionManagerImpl implements PartitionManager {
   @Override
   public CompletableFuture<Optional<Partition>> getPartition(
       String clusterId, String topicName, int partitionId) {
-    return topicManager.getTopic(clusterId, topicName)
+    return topicManager
+        .getTopic(clusterId, topicName)
         .thenApply(topic -> checkEntityExists(topic, "Topic %s cannot be found.", topic))
         .thenApply(Topic::getPartitions)
         .thenApply(
             partitions -> findEntityByKey(partitions, Partition::getPartitionId, partitionId))
-        .thenApply(
-            partition -> partition.map(Collections::singletonList).orElse(emptyList()))
+        .thenApply(partition -> partition.map(Collections::singletonList).orElse(emptyList()))
         .thenCompose(this::withOffsets)
         .thenApply(partitions -> partitions.stream().findAny());
   }
@@ -83,13 +85,13 @@ final class PartitionManagerImpl implements PartitionManager {
   @Override
   public CompletableFuture<Optional<Partition>> getLocalPartition(
       String topicName, int partitionId) {
-    return topicManager.getLocalTopic(topicName)
+    return topicManager
+        .getLocalTopic(topicName)
         .thenApply(topic -> checkEntityExists(topic, "Topic %s cannot be found.", topic))
         .thenApply(Topic::getPartitions)
         .thenApply(
             partitions -> findEntityByKey(partitions, Partition::getPartitionId, partitionId))
-        .thenApply(
-            partition -> partition.map(Collections::singletonList).orElse(emptyList()))
+        .thenApply(partition -> partition.map(Collections::singletonList).orElse(emptyList()))
         .thenCompose(this::withOffsets)
         .thenApply(partitions -> partitions.stream().findAny());
   }

@@ -15,20 +15,17 @@
 
 package io.confluent.kafkarest.unit;
 
+import static org.junit.Assert.assertEquals;
+
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.UriUtils;
+import java.net.URI;
+import java.util.Properties;
+import javax.ws.rs.core.UriInfo;
 import org.apache.kafka.common.config.ConfigException;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.net.URI;
-import java.util.Properties;
-
-import javax.ws.rs.core.UriInfo;
-
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.UriUtils;
-
-import static org.junit.Assert.assertEquals;
 
 public class UriUtilsTest {
 
@@ -40,7 +37,7 @@ public class UriUtilsTest {
   }
 
   @Test
-  public void testAbsoluteURIBuilderDefaultHost()  {
+  public void testAbsoluteURIBuilderDefaultHost() {
     KafkaRestConfig config = new KafkaRestConfig();
     EasyMock.expect(uriInfo.getAbsolutePath()).andStubReturn(URI.create("http://foo.com"));
     EasyMock.expect(uriInfo.getBaseUri()).andReturn(URI.create("http://foo.com"));
@@ -74,7 +71,7 @@ public class UriUtilsTest {
     EasyMock.verify(uriInfo);
   }
 
-  @Test(expected=ConfigException.class)
+  @Test(expected = ConfigException.class)
   public void testAbsoluteURIBuilderWithInvalidListener() {
     Properties props = new Properties();
     props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
@@ -125,7 +122,6 @@ public class UriUtilsTest {
     assertEquals("http://bar.net:9092", UriUtils.absoluteUri(config, uriInfo));
     EasyMock.verify(uriInfo);
   }
-
 
   @Test
   public void testAbsoluteURIBuilderWithTruncatedIPV6Listener() {

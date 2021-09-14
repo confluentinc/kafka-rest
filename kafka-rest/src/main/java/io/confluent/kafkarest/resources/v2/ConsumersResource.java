@@ -48,6 +48,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -67,26 +68,27 @@ import javax.ws.rs.core.UriInfo;
 // We include embedded formats here so you can always use these headers when interacting with
 // a consumers resource. The few cases where it isn't safe are overridden per-method
 @Produces({
-    Versions.KAFKA_V2_JSON_BINARY_WEIGHTED_LOW,
-    Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW,
-    Versions.KAFKA_V2_JSON_JSON_WEIGHTED_LOW,
-    Versions.KAFKA_V2_JSON_JSON_SCHEMA_WEIGHTED_LOW,
-    Versions.KAFKA_V2_JSON_PROTOBUF_WEIGHTED_LOW,
-    Versions.KAFKA_V2_JSON_WEIGHTED
+  Versions.KAFKA_V2_JSON_BINARY_WEIGHTED_LOW,
+  Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW,
+  Versions.KAFKA_V2_JSON_JSON_WEIGHTED_LOW,
+  Versions.KAFKA_V2_JSON_JSON_SCHEMA_WEIGHTED_LOW,
+  Versions.KAFKA_V2_JSON_PROTOBUF_WEIGHTED_LOW,
+  Versions.KAFKA_V2_JSON_WEIGHTED
 })
 @Consumes({
-    Versions.KAFKA_V2_JSON_BINARY,
-    Versions.KAFKA_V2_JSON_AVRO,
-    Versions.KAFKA_V2_JSON_JSON,
-    Versions.KAFKA_V2_JSON_JSON_SCHEMA,
-    Versions.KAFKA_V2_JSON_PROTOBUF,
-    Versions.KAFKA_V2_JSON
+  Versions.KAFKA_V2_JSON_BINARY,
+  Versions.KAFKA_V2_JSON_AVRO,
+  Versions.KAFKA_V2_JSON_JSON,
+  Versions.KAFKA_V2_JSON_JSON_SCHEMA,
+  Versions.KAFKA_V2_JSON_PROTOBUF,
+  Versions.KAFKA_V2_JSON
 })
 @ResourceName("api.v2.consumers.*")
 public final class ConsumersResource {
 
   private final KafkaRestContext ctx;
 
+  @Inject
   public ConsumersResource(KafkaRestContext ctx) {
     this.ctx = ctx;
   }
@@ -99,8 +101,7 @@ public final class ConsumersResource {
   public CreateConsumerInstanceResponse createGroup(
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
-      @Valid CreateConsumerInstanceRequest config
-  ) {
+      @Valid CreateConsumerInstanceRequest config) {
     if (config == null) {
       config = CreateConsumerInstanceRequest.PROTOTYPE;
     }
@@ -116,9 +117,7 @@ public final class ConsumersResource {
   @PerformanceMetric("consumer.delete+v2")
   @ResourceName("api.v2.consumers.delete")
   public void deleteGroup(
-      final @PathParam("group") String group,
-      final @PathParam("instance") String instance
-  ) {
+      final @PathParam("group") String group, final @PathParam("instance") String instance) {
     ctx.getKafkaConsumerManager().deleteConsumer(group, instance);
   }
 
@@ -130,14 +129,12 @@ public final class ConsumersResource {
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @Valid @NotNull ConsumerSubscriptionRecord subscription
-  ) {
+      @Valid @NotNull ConsumerSubscriptionRecord subscription) {
     try {
       ctx.getKafkaConsumerManager().subscribe(group, instance, subscription);
     } catch (java.lang.IllegalStateException e) {
       throw Errors.illegalStateException(e);
     }
-
   }
 
   @GET
@@ -147,8 +144,7 @@ public final class ConsumersResource {
   public ConsumerSubscriptionResponse subscription(
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
-      final @PathParam("instance") String instance
-  ) {
+      final @PathParam("instance") String instance) {
     return ctx.getKafkaConsumerManager().subscription(group, instance);
   }
 
@@ -159,24 +155,21 @@ public final class ConsumersResource {
   public void unsubscribe(
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
-      final @PathParam("instance") String instance
-  ) {
+      final @PathParam("instance") String instance) {
     ctx.getKafkaConsumerManager().unsubscribe(group, instance);
   }
 
   @GET
   @Path("/{group}/instances/{instance}/records")
   @PerformanceMetric("consumer.records.read-binary+v2")
-  @Produces({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED,
-      Versions.KAFKA_V2_JSON_WEIGHTED})
+  @Produces({Versions.KAFKA_V2_JSON_BINARY_WEIGHTED, Versions.KAFKA_V2_JSON_WEIGHTED})
   @ResourceName("api.v2.consumers.consume-binary")
   public void readRecordBinary(
       final @Suspended AsyncResponse asyncResponse,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
       @QueryParam("timeout") @DefaultValue("-1") long timeoutMs,
-      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
-  ) {
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
     readRecords(
         asyncResponse,
         group,
@@ -197,8 +190,7 @@ public final class ConsumersResource {
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
       @QueryParam("timeout") @DefaultValue("-1") long timeoutMs,
-      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
-  ) {
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
     readRecords(
         asyncResponse,
         group,
@@ -219,8 +211,7 @@ public final class ConsumersResource {
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
       @QueryParam("timeout") @DefaultValue("-1") long timeoutMs,
-      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
-  ) {
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
     readRecords(
         asyncResponse,
         group,
@@ -241,8 +232,7 @@ public final class ConsumersResource {
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
       @QueryParam("timeout") @DefaultValue("-1") long timeoutMs,
-      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
-  ) {
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
     readRecords(
         asyncResponse,
         group,
@@ -263,8 +253,7 @@ public final class ConsumersResource {
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
       @QueryParam("timeout") @DefaultValue("-1") long timeoutMs,
-      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes
-  ) {
+      @QueryParam("max_bytes") @DefaultValue("-1") long maxBytes) {
     readRecords(
         asyncResponse,
         group,
@@ -284,27 +273,23 @@ public final class ConsumersResource {
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
       @QueryParam("async") @DefaultValue("false") String async,
-      @Valid ConsumerOffsetCommitRequest offsetCommitRequest
-  ) {
-    ctx.getKafkaConsumerManager().commitOffsets(
-        group,
-        instance,
-        async,
-        offsetCommitRequest,
-        new KafkaConsumerManager.CommitCallback() {
-          @Override
-          public void onCompletion(
-              List<TopicPartitionOffset> offsets,
-              Exception e
-          ) {
-            if (e != null) {
-              asyncResponse.resume(e);
-            } else {
-              asyncResponse.resume(CommitOffsetsResponse.fromOffsets(offsets));
-            }
-          }
-        }
-    );
+      @Valid ConsumerOffsetCommitRequest offsetCommitRequest) {
+    ctx.getKafkaConsumerManager()
+        .commitOffsets(
+            group,
+            instance,
+            async,
+            offsetCommitRequest,
+            new KafkaConsumerManager.CommitCallback() {
+              @Override
+              public void onCompletion(List<TopicPartitionOffset> offsets, Exception e) {
+                if (e != null) {
+                  asyncResponse.resume(e);
+                } else {
+                  asyncResponse.resume(CommitOffsetsResponse.fromOffsets(offsets));
+                }
+              }
+            });
   }
 
   @GET
@@ -314,8 +299,7 @@ public final class ConsumersResource {
   public ConsumerCommittedResponse committedOffsets(
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @Valid ConsumerCommittedRequest request
-  ) {
+      @Valid ConsumerCommittedRequest request) {
     if (request == null) {
       throw Errors.partitionNotFoundException();
     }
@@ -330,8 +314,7 @@ public final class ConsumersResource {
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @Valid @NotNull ConsumerSeekToRequest seekToRequest
-  ) {
+      @Valid @NotNull ConsumerSeekToRequest seekToRequest) {
     try {
       ctx.getKafkaConsumerManager().seekToBeginning(group, instance, seekToRequest);
     } catch (java.lang.IllegalStateException e) {
@@ -347,8 +330,7 @@ public final class ConsumersResource {
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @Valid @NotNull ConsumerSeekToRequest seekToRequest
-  ) {
+      @Valid @NotNull ConsumerSeekToRequest seekToRequest) {
     try {
       ctx.getKafkaConsumerManager().seekToEnd(group, instance, seekToRequest);
     } catch (java.lang.IllegalStateException e) {
@@ -364,8 +346,7 @@ public final class ConsumersResource {
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @Valid @NotNull ConsumerSeekRequest request
-  ) {
+      @Valid @NotNull ConsumerSeekRequest request) {
     try {
       ctx.getKafkaConsumerManager().seek(group, instance, request);
     } catch (java.lang.IllegalStateException e) {
@@ -381,8 +362,7 @@ public final class ConsumersResource {
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance,
-      @Valid @NotNull ConsumerAssignmentRequest assignmentRequest
-  ) {
+      @Valid @NotNull ConsumerAssignmentRequest assignmentRequest) {
     try {
       ctx.getKafkaConsumerManager().assign(group, instance, assignmentRequest);
     } catch (java.lang.IllegalStateException e) {
@@ -397,8 +377,7 @@ public final class ConsumersResource {
   public ConsumerAssignmentResponse assignment(
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
-      final @PathParam("instance") String instance
-  ) {
+      final @PathParam("instance") String instance) {
     return ctx.getKafkaConsumerManager().assignment(group, instance);
   }
 
@@ -410,25 +389,27 @@ public final class ConsumersResource {
       long maxBytes,
       Class<? extends KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>>
           consumerStateType,
-      Function<ConsumerRecord<ClientKeyT, ClientValueT>, ?> toJsonWrapper
-  ) {
+      Function<ConsumerRecord<ClientKeyT, ClientValueT>, ?> toJsonWrapper) {
     maxBytes = (maxBytes <= 0) ? Long.MAX_VALUE : maxBytes;
 
-    ctx.getKafkaConsumerManager().readRecords(
-        group, instance, consumerStateType, timeout, maxBytes,
-        new ConsumerReadCallback<ClientKeyT, ClientValueT>() {
-          @Override
-          public void onCompletion(
-              List<ConsumerRecord<ClientKeyT, ClientValueT>> records, Exception e
-          ) {
-            if (e != null) {
-              asyncResponse.resume(e);
-            } else {
-              asyncResponse.resume(
-                  records.stream().map(toJsonWrapper).collect(Collectors.toList()));
-            }
-          }
-        }
-    );
+    ctx.getKafkaConsumerManager()
+        .readRecords(
+            group,
+            instance,
+            consumerStateType,
+            timeout,
+            maxBytes,
+            new ConsumerReadCallback<ClientKeyT, ClientValueT>() {
+              @Override
+              public void onCompletion(
+                  List<ConsumerRecord<ClientKeyT, ClientValueT>> records, Exception e) {
+                if (e != null) {
+                  asyncResponse.resume(e);
+                } else {
+                  asyncResponse.resume(
+                      records.stream().map(toJsonWrapper).collect(Collectors.toList()));
+                }
+              }
+            });
   }
 }

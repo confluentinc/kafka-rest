@@ -17,9 +17,7 @@ package io.confluent.kafkarest.controllers;
 
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
-/**
- * A module to install the various controllers required by the application.
- */
+/** A module to install the various controllers required by the application. */
 public final class ControllersModule extends AbstractBinder {
 
   protected void configure() {

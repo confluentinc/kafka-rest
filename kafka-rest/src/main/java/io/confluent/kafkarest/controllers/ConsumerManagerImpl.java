@@ -36,7 +36,8 @@ final class ConsumerManagerImpl implements ConsumerManager {
 
   @Override
   public CompletableFuture<List<Consumer>> listConsumers(String clusterId, String consumerGroupId) {
-    return consumerGroupManager.getConsumerGroup(clusterId, consumerGroupId)
+    return consumerGroupManager
+        .getConsumerGroup(clusterId, consumerGroupId)
         .thenApply(
             consumerGroup ->
                 checkEntityExists(
@@ -48,7 +49,6 @@ final class ConsumerManagerImpl implements ConsumerManager {
   public CompletableFuture<Optional<Consumer>> getConsumer(
       String clusterId, String consumerGroupId, String consumerId) {
     return listConsumers(clusterId, consumerGroupId)
-        .thenApply(
-            consumers -> findEntityByKey(consumers, Consumer::getConsumerId, consumerId));
+        .thenApply(consumers -> findEntityByKey(consumers, Consumer::getConsumerId, consumerId));
   }
 }

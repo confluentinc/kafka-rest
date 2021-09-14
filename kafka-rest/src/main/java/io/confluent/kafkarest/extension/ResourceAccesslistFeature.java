@@ -42,14 +42,17 @@ import org.glassfish.jersey.server.wadl.processor.OptionsMethodProcessor;
  * A feature that controls access to endpoints based on allowlist and blocklist configs.
  *
  * <p>Endpoints are identified using the {@link ResourceName} annotation that can be applied to an
- * endpoint's class and methods - the corresponding {@link ResourceName#value() annotation value}
- * is the identifier that can be populated in allowlists and blocklists.
+ * endpoint's class and methods - the corresponding {@link ResourceName#value() annotation value} is
+ * the identifier that can be populated in allowlists and blocklists.
  *
  * <p>If an allowlist has been configured and an endpoint's identifier <b>is not present</b> in the
  * allowlist, then the endpoint will be disabled. Similarly if a blocklist has been configured and
  * an endpoint's identifier <b>is present</b> in the blocklist, then the endpoint will be disabled.
  * Both an allowlist and a blocklist can be present at the same time.
- * <ul><li><i>Disabling an endpoint by class also disables all its method endpoints.</i></li></ul>
+ *
+ * <ul>
+ *   <li><i>Disabling an endpoint by class also disables all its method endpoints.</i>
+ * </ul>
  *
  * <p>A disabled endpoint returns HTTP 404 Not Found for GET requests, and HTTP 405 Method Not
  * Allowed for everything else.
@@ -92,9 +95,7 @@ public final class ResourceAccesslistFeature implements DynamicFeature {
   }
 
   private boolean isBlockedByAccesslist(
-      ResourceInfo resourceInfo,
-      Set<String> accesslist,
-      boolean isAccesslistAllowlist) {
+      ResourceInfo resourceInfo, Set<String> accesslist, boolean isAccesslistAllowlist) {
     // If the corresponding accesslist (not only the blocklist, but also the allowlist) is empty,
     // it cannot block an endpoint.
     if (accesslist.isEmpty()) {
@@ -121,16 +122,12 @@ public final class ResourceAccesslistFeature implements DynamicFeature {
     return blocked;
   }
 
-  /**
-   * A name by which a resource class/method can be referenced.
-   */
+  /** A name by which a resource class/method can be referenced. */
   @Target({ElementType.METHOD, ElementType.TYPE})
   @Retention(RetentionPolicy.RUNTIME)
   public @interface ResourceName {
 
-    /**
-     * The resource class/method name.
-     */
+    /** The resource class/method name. */
     String value();
   }
 

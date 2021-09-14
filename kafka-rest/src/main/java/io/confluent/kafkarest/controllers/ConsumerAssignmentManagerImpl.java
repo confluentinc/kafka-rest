@@ -37,14 +37,13 @@ final class ConsumerAssignmentManagerImpl implements ConsumerAssignmentManager {
   @Override
   public CompletableFuture<List<ConsumerAssignment>> listConsumerAssignments(
       String clusterId, String consumerGroupId, String consumerId) {
-    return consumerManager.getConsumer(clusterId, consumerGroupId, consumerId)
+    return consumerManager
+        .getConsumer(clusterId, consumerGroupId, consumerId)
+        .thenApply(
+            consumer -> checkEntityExists(consumer, "Consumer %s does not exist.", consumerId))
         .thenApply(
             consumer ->
-                checkEntityExists(consumer, "Consumer %s does not exist.", consumerId))
-        .thenApply(
-            consumer ->
-                consumer.getAssignedPartitions()
-                    .stream()
+                consumer.getAssignedPartitions().stream()
                     .map(
                         partition ->
                             ConsumerAssignment.builder()
@@ -63,8 +62,7 @@ final class ConsumerAssignmentManagerImpl implements ConsumerAssignmentManager {
       String consumerGroupId,
       String consumerId,
       String topicName,
-      int partitionId
-  ) {
+      int partitionId) {
     return listConsumerAssignments(clusterId, consumerGroupId, consumerId)
         .thenApply(
             assignments ->

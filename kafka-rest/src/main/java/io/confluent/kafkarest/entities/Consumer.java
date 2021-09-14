@@ -28,8 +28,7 @@ import org.apache.kafka.clients.admin.MemberDescription;
 @AutoValue
 public abstract class Consumer {
 
-  Consumer() {
-  }
+  Consumer() {}
 
   public abstract String getClusterId();
 
@@ -59,9 +58,7 @@ public abstract class Consumer {
         .setClientId(description.clientId())
         .setHost(description.host())
         .setAssignedPartitions(
-            description.assignment()
-                .topicPartitions()
-                .stream()
+            description.assignment().topicPartitions().stream()
                 .map(
                     partition ->
                         Partition.create(
@@ -76,8 +73,7 @@ public abstract class Consumer {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 

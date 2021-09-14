@@ -24,8 +24,7 @@ import java.util.List;
 @AutoValue
 public abstract class DeleteAclsResponse {
 
-  DeleteAclsResponse() {
-  }
+  DeleteAclsResponse() {}
 
   @JsonProperty("data")
   public abstract ImmutableList<AclData> getData();

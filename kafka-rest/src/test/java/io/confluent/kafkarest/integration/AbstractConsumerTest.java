@@ -50,15 +50,14 @@ import org.junit.Assert;
 
 public class AbstractConsumerTest extends ClusterTestHarness {
 
-  public AbstractConsumerTest() {
-  }
+  public AbstractConsumerTest() {}
 
   public AbstractConsumerTest(int numBrokers, boolean withSchemaRegistry) {
     super(numBrokers, withSchemaRegistry);
   }
 
-  protected Response createConsumerInstance(String groupName, String id,
-                                            String name, EmbeddedFormat format) {
+  protected Response createConsumerInstance(
+      String groupName, String id, String name, EmbeddedFormat format) {
     CreateConsumerInstanceRequest config = null;
     if (id != null || name != null || format != null) {
       config =
@@ -71,14 +70,13 @@ public class AbstractConsumerTest extends ClusterTestHarness {
               /* responseMinBytes= */ null,
               /* requestWaitMs= */ null);
     }
-    return request("/consumers/" + groupName)
-        .post(Entity.entity(config, Versions.KAFKA_V2_JSON));
+    return request("/consumers/" + groupName).post(Entity.entity(config, Versions.KAFKA_V2_JSON));
   }
 
   protected String consumerNameFromInstanceUrl(String url) {
     try {
       String[] pathComponents = new URL(url).getPath().split("/");
-      return pathComponents[pathComponents.length-1];
+      return pathComponents[pathComponents.length - 1];
     } catch (MalformedURLException e) {
       throw new RuntimeException(e);
     }
@@ -88,28 +86,31 @@ public class AbstractConsumerTest extends ClusterTestHarness {
    * Start a new consumer instance and start consuming messages. This expects that you have not
    * produced any data so the initial read request will timeout.
    *
-   * @param groupName         consumer group name
-   * @param topic             topic to consume
-   * @param format            embedded format to use. If null, an null ConsumerInstanceConfig is
-   *                          sent, resulting in default settings
+   * @param groupName consumer group name
+   * @param topic topic to consume
+   * @param format embedded format to use. If null, an null ConsumerInstanceConfig is sent,
+   *     resulting in default settings
    * @param expectedMediatype expected Content-Type of response
    * @return the new consumer instance's base URI
    */
-  protected String startConsumeMessages(String groupName, String topic, EmbeddedFormat format,
-      String expectedMediatype) {
-    return startConsumeMessages(groupName, Collections.singletonList(topic), format, expectedMediatype);
+  protected String startConsumeMessages(
+      String groupName, String topic, EmbeddedFormat format, String expectedMediatype) {
+    return startConsumeMessages(
+        groupName, Collections.singletonList(topic), format, expectedMediatype);
   }
-  protected String startConsumeMessages(String groupName, List<String> topics, EmbeddedFormat format,
-                                        String expectedMediatype) {
+
+  protected String startConsumeMessages(
+      String groupName, List<String> topics, EmbeddedFormat format, String expectedMediatype) {
     Response createResponse = createConsumerInstance(groupName, null, null, format);
     assertOKResponse(createResponse, Versions.KAFKA_V2_JSON);
 
     CreateConsumerInstanceResponse instanceResponse =
-            TestUtils.tryReadEntityOrLog(createResponse, CreateConsumerInstanceResponse.class);
+        TestUtils.tryReadEntityOrLog(createResponse, CreateConsumerInstanceResponse.class);
     assertNotNull(instanceResponse.getInstanceId());
     assertTrue(instanceResponse.getInstanceId().length() > 0);
-    assertTrue("Base URI should contain the consumer instance ID",
-               instanceResponse.getBaseUri().contains(instanceResponse.getInstanceId()));
+    assertTrue(
+        "Base URI should contain the consumer instance ID",
+        instanceResponse.getBaseUri().contains(instanceResponse.getInstanceId()));
 
     ConsumerSubscriptionRecord subscribeRequest =
         new ConsumerSubscriptionRecord(topics, /* topicPattern= */ null);
@@ -120,12 +121,12 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     Assert.assertEquals(Response.Status.NO_CONTENT.getStatusCode(), subscribeResponse.getStatus());
 
     // Start consuming. Since production hasn't started yet, this is expected to timeout.
-    Response response = request(instanceResponse.getBaseUri() + "/records").accept(expectedMediatype).get();
+    Response response =
+        request(instanceResponse.getBaseUri() + "/records").accept(expectedMediatype).get();
 
     assertOKResponse(response, expectedMediatype);
-    List<BinaryConsumerRecord> consumed = TestUtils.tryReadEntityOrLog(response,
-        new GenericType<List<BinaryConsumerRecord>>() {
-        });
+    List<BinaryConsumerRecord> consumed =
+        TestUtils.tryReadEntityOrLog(response, new GenericType<List<BinaryConsumerRecord>>() {});
     assertEquals(0, consumed.size());
 
     return instanceResponse.getBaseUri();
@@ -150,33 +151,34 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     // Since this is used for unkeyed messages, this can't rely on ordering of messages
     Map<Object, Integer> inputSetCounts = new HashMap<Object, Integer>();
     for (ProducerRecord<KafkaK, KafkaV> rec : records) {
-      Object key = TestUtils.encodeComparable(
-          (converter != null ? converter.convert(rec.key()) : rec.key())),
-          value = TestUtils.encodeComparable(
-              (converter != null ? converter.convert(rec.value()) : rec.value()));
-      inputSetCounts.put(key,
-                         (inputSetCounts.get(key) == null ? 0 : inputSetCounts.get(key)) + 1);
-      inputSetCounts.put(value,
-                         (inputSetCounts.get(value) == null ? 0 : inputSetCounts.get(value)) + 1);
+      Object
+          key =
+              TestUtils.encodeComparable(
+                  (converter != null ? converter.convert(rec.key()) : rec.key())),
+          value =
+              TestUtils.encodeComparable(
+                  (converter != null ? converter.convert(rec.value()) : rec.value()));
+      inputSetCounts.put(key, (inputSetCounts.get(key) == null ? 0 : inputSetCounts.get(key)) + 1);
+      inputSetCounts.put(
+          value, (inputSetCounts.get(value) == null ? 0 : inputSetCounts.get(value)) + 1);
     }
     Map<Object, Integer> outputSetCounts = new HashMap<Object, Integer>();
     for (ConsumerRecord<ClientK, ClientV> rec : consumed) {
       Object key = TestUtils.encodeComparable(rec.getKey()),
           value = TestUtils.encodeComparable(rec.getValue());
       outputSetCounts.put(
-          key,
-          (outputSetCounts.get(key) == null ? 0 : outputSetCounts.get(key)) + 1);
+          key, (outputSetCounts.get(key) == null ? 0 : outputSetCounts.get(key)) + 1);
       outputSetCounts.put(
-          value,
-          (outputSetCounts.get(value) == null ? 0 : outputSetCounts.get(value)) + 1);
+          value, (outputSetCounts.get(value) == null ? 0 : outputSetCounts.get(value)) + 1);
     }
     assertEquals(inputSetCounts, outputSetCounts);
   }
 
-  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType>
-  void consumeMessages(
-      String instanceUri, List<ProducerRecord<KafkaK, KafkaV>> records,
-      String accept, String responseMediatype,
+  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType> void consumeMessages(
+      String instanceUri,
+      List<ProducerRecord<KafkaK, KafkaV>> records,
+      String accept,
+      String responseMediatype,
       GenericType<List<RecordType>> responseEntityType,
       Converter converter,
       Function<RecordType, ConsumerRecord<ClientK, ClientV>> fromJsonWrapper) {
@@ -190,11 +192,12 @@ public class AbstractConsumerTest extends ClusterTestHarness {
   }
 
   protected <RecordType> void consumeForTimeout(
-      String instanceUri, String accept, String responseMediatype,
+      String instanceUri,
+      String accept,
+      String responseMediatype,
       GenericType<List<RecordType>> responseEntityType) {
     long started = System.currentTimeMillis();
-    Response response = request(instanceUri + "/records")
-        .accept(accept).get();
+    Response response = request(instanceUri + "/records").accept(accept).get();
     long finished = System.currentTimeMillis();
     assertOKResponse(response, responseMediatype);
     List<RecordType> consumed = TestUtils.tryReadEntityOrLog(response, responseEntityType);
@@ -208,16 +211,15 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     final int TIMEOUT = restConfig.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
     final int TIMEOUT_SLACK =
         restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG)
-        + restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG) + 500;
+            + restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG)
+            + 500;
     long elapsed = finished - started;
     assertTrue(
         "Consumer request should not return before the timeout when no data is available",
-        elapsed > TIMEOUT
-    );
+        elapsed > TIMEOUT);
     assertTrue(
         "Consumer request should timeout approximately within the request timeout period",
-        (elapsed - TIMEOUT) < TIMEOUT_SLACK
-    );
+        (elapsed - TIMEOUT) < TIMEOUT_SLACK);
   }
 
   protected void seekToTimestamp(
@@ -228,7 +230,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
                 Entity.entity(
                     String.format(
                         "{\"timestamps\":"
-                            +"[{\"topic\": \"%s\", \"partition\": %d, \"timestamp\": \"%s\"}]}",
+                            + "[{\"topic\": \"%s\", \"partition\": %d, \"timestamp\": \"%s\"}]}",
                         topicName, partitionId, DateTimeFormatter.ISO_INSTANT.format(timestamp)),
                     Versions.KAFKA_V2_JSON));
 
@@ -236,8 +238,8 @@ public class AbstractConsumerTest extends ClusterTestHarness {
   }
 
   protected void commitOffsets(String instanceUri) {
-    Response response = request(instanceUri + "/offsets/")
-        .post(Entity.entity(null, Versions.KAFKA_V2_JSON));
+    Response response =
+        request(instanceUri + "/offsets/").post(Entity.entity(null, Versions.KAFKA_V2_JSON));
     assertOKResponse(response, Versions.KAFKA_V2_JSON);
     // We don't verify offsets since they'll depend on how data gets distributed to partitions.
     // Just parse to check the output is formatted validly.
@@ -248,15 +250,16 @@ public class AbstractConsumerTest extends ClusterTestHarness {
   // Either topic or instance not found
   protected void consumeForNotFoundError(String instanceUri) {
     Response response = request(instanceUri + "/records").get();
-    assertErrorResponse(Response.Status.NOT_FOUND, response,
-                        Errors.CONSUMER_INSTANCE_NOT_FOUND_ERROR_CODE,
-                        Errors.CONSUMER_INSTANCE_NOT_FOUND_MESSAGE,
-                        Versions.KAFKA_V2_JSON_BINARY);
+    assertErrorResponse(
+        Response.Status.NOT_FOUND,
+        response,
+        Errors.CONSUMER_INSTANCE_NOT_FOUND_ERROR_CODE,
+        Errors.CONSUMER_INSTANCE_NOT_FOUND_MESSAGE,
+        Versions.KAFKA_V2_JSON_BINARY);
   }
 
   protected void deleteConsumer(String instanceUri) {
     Response response = request(instanceUri).delete();
-    assertErrorResponse(Response.Status.NO_CONTENT, response,
-                        0, null, Versions.KAFKA_V2_JSON);
+    assertErrorResponse(Response.Status.NO_CONTENT, response, 0, null, Versions.KAFKA_V2_JSON);
   }
 }

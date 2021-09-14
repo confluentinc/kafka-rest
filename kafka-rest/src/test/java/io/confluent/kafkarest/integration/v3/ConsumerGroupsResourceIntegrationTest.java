@@ -78,10 +78,13 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
                             .setMetadata(
                                 Resource.Metadata.builder()
                                     .setSelf(
-                                        baseUrl + "/v3/clusters/" + clusterId
+                                        baseUrl
+                                            + "/v3/clusters/"
+                                            + clusterId
                                             + "/consumer-groups/consumer-group-1")
                                     .setResourceName(
-                                        "crn:///kafka=" + clusterId
+                                        "crn:///kafka="
+                                            + clusterId
                                             + "/consumer-group=consumer-group-1")
                                     .build())
                             .setClusterId(clusterId)
@@ -94,11 +97,15 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
                                     baseUrl + "/v3/clusters/" + clusterId + "/brokers/0"))
                             .setConsumers(
                                 Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId
+                                    baseUrl
+                                        + "/v3/clusters/"
+                                        + clusterId
                                         + "/consumer-groups/consumer-group-1/consumers"))
                             .setLagSummary(
                                 Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId
+                                    baseUrl
+                                        + "/v3/clusters/"
+                                        + clusterId
                                         + "/consumer-groups/consumer-group-1/lag-summary"))
                             .build()))
                 .build());
@@ -127,9 +134,7 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
     consumer3.poll(Duration.ofSeconds(1));
 
     Response response =
-        request("/v3/clusters/foobar/consumer-groups")
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
+        request("/v3/clusters/foobar/consumer-groups").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -157,11 +162,12 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
                 .setMetadata(
                     Resource.Metadata.builder()
                         .setSelf(
-                            baseUrl + "/v3/clusters/" + clusterId
+                            baseUrl
+                                + "/v3/clusters/"
+                                + clusterId
                                 + "/consumer-groups/consumer-group-1")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
-                                + "/consumer-group=consumer-group-1")
+                            "crn:///kafka=" + clusterId + "/consumer-group=consumer-group-1")
                         .build())
                 .setClusterId(clusterId)
                 .setConsumerGroupId("consumer-group-1")
@@ -169,15 +175,18 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
                 .setPartitionAssignor("")
                 .setState(State.PREPARING_REBALANCE)
                 .setCoordinator(
-                    Relationship.create(
-                        baseUrl + "/v3/clusters/" + clusterId + "/brokers/0"))
+                    Relationship.create(baseUrl + "/v3/clusters/" + clusterId + "/brokers/0"))
                 .setConsumers(
                     Relationship.create(
-                        baseUrl + "/v3/clusters/" + clusterId
+                        baseUrl
+                            + "/v3/clusters/"
+                            + clusterId
                             + "/consumer-groups/consumer-group-1/consumers"))
                 .setLagSummary(
                     Relationship.create(
-                        baseUrl + "/v3/clusters/" + clusterId
+                        baseUrl
+                            + "/v3/clusters/"
+                            + clusterId
                             + "/consumer-groups/consumer-group-1/lag-summary"))
                 .build());
 

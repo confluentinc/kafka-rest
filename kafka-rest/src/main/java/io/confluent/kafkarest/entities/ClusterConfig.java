@@ -20,14 +20,11 @@ import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.kafka.common.config.ConfigResource;
 
-/**
- * A Kafka cluster-wide dynamic default config.
- */
+/** A Kafka cluster-wide dynamic default config. */
 @AutoValue
 public abstract class ClusterConfig extends AbstractConfig {
 
-  ClusterConfig() {
-  }
+  ClusterConfig() {}
 
   public abstract Type getType();
 
@@ -58,26 +55,19 @@ public abstract class ClusterConfig extends AbstractConfig {
         .build();
   }
 
-  /**
-   * A builder for {@link ClusterConfig}.
-   */
+  /** A builder for {@link ClusterConfig}. */
   @AutoValue.Builder
   public abstract static class Builder extends AbstractConfig.Builder<ClusterConfig, Builder> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setType(Type type);
   }
 
-  /**
-   * The type of the {@link ClusterConfig}.
-   */
+  /** The type of the {@link ClusterConfig}. */
   public enum Type {
 
-    /**
-     * A cluster-wide dynamic default broker config.
-     */
+    /** A cluster-wide dynamic default broker config. */
     BROKER(ConfigResource.Type.BROKER);
 
     private final ConfigResource.Type adminType;

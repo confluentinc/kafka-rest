@@ -23,8 +23,7 @@ import org.apache.kafka.clients.admin.ConfigEntry;
 
 public abstract class AlterConfigCommand {
 
-  private AlterConfigCommand() {
-  }
+  private AlterConfigCommand() {}
 
   public static AlterConfigCommand set(String name, @Nullable String value) {
     return UpdateConfigCommand.create(name, value);
@@ -41,8 +40,7 @@ public abstract class AlterConfigCommand {
   @AutoValue
   abstract static class UpdateConfigCommand extends AlterConfigCommand {
 
-    UpdateConfigCommand() {
-    }
+    UpdateConfigCommand() {}
 
     abstract Optional<String> getValue();
 
@@ -60,8 +58,7 @@ public abstract class AlterConfigCommand {
   @AutoValue
   abstract static class DeleteConfigCommand extends AlterConfigCommand {
 
-    DeleteConfigCommand() {
-    }
+    DeleteConfigCommand() {}
 
     private static DeleteConfigCommand create(String name) {
       return new AutoValue_AlterConfigCommand_DeleteConfigCommand(name);

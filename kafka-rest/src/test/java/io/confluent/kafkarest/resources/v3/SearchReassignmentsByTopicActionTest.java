@@ -58,27 +58,29 @@ public class SearchReassignmentsByTopicActionTest {
   private static final List<Integer> REMOVING_REPLICAS_2 = Arrays.asList(4);
   private static final List<Integer> REMOVING_REPLICAS_3 = Arrays.asList(4);
 
-  private static final Reassignment REASSIGNMENT_1 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_1, ADDING_REPLICAS_1, REMOVING_REPLICAS_1);
-  private static final Reassignment REASSIGNMENT_2 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_2, ADDING_REPLICAS_2, REMOVING_REPLICAS_2);
-  private static final Reassignment REASSIGNMENT_3 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_3, ADDING_REPLICAS_3, REMOVING_REPLICAS_3);
+  private static final Reassignment REASSIGNMENT_1 =
+      Reassignment.create(
+          CLUSTER_ID, TOPIC_1, PARTITION_ID_1, ADDING_REPLICAS_1, REMOVING_REPLICAS_1);
+  private static final Reassignment REASSIGNMENT_2 =
+      Reassignment.create(
+          CLUSTER_ID, TOPIC_1, PARTITION_ID_2, ADDING_REPLICAS_2, REMOVING_REPLICAS_2);
+  private static final Reassignment REASSIGNMENT_3 =
+      Reassignment.create(
+          CLUSTER_ID, TOPIC_1, PARTITION_ID_3, ADDING_REPLICAS_3, REMOVING_REPLICAS_3);
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private ReassignmentManager reassignmentManager;
+  @Mock private ReassignmentManager reassignmentManager;
 
   private SearchReassignmentsByTopicAction listReassignmentsByTopicAction;
 
   @Before
   public void setUp() {
-    listReassignmentsByTopicAction = new SearchReassignmentsByTopicAction(
-        () -> reassignmentManager,
-        new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
-        new FakeUrlFactory());
+    listReassignmentsByTopicAction =
+        new SearchReassignmentsByTopicAction(
+            () -> reassignmentManager,
+            new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
+            new FakeUrlFactory());
   }
 
   @Test

@@ -22,8 +22,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class GetClusterConfigResponse {
 
-  GetClusterConfigResponse() {
-  }
+  GetClusterConfigResponse() {}
 
   @JsonValue
   public abstract ClusterConfigData getValue();

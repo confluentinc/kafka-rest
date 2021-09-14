@@ -57,14 +57,15 @@ import javax.ws.rs.core.MediaType;
 public final class ProduceAction {
 
   private static final Collector<
-      ProduceRequestHeader,
-      ImmutableMultimap.Builder<String, Optional<ByteString>>,
-      ImmutableMultimap<String, Optional<ByteString>>> PRODUCE_REQUEST_HEADER_COLLECTOR =
-      Collector.of(
-          ImmutableMultimap::builder,
-          (builder, header) -> builder.put(header.getName(), header.getValue()),
-          (left, right) -> left.putAll(right.build()),
-          ImmutableMultimap.Builder::build);
+          ProduceRequestHeader,
+          ImmutableMultimap.Builder<String, Optional<ByteString>>,
+          ImmutableMultimap<String, Optional<ByteString>>>
+      PRODUCE_REQUEST_HEADER_COLLECTOR =
+          Collector.of(
+              ImmutableMultimap::builder,
+              (builder, header) -> builder.put(header.getName(), header.getValue()),
+              (left, right) -> left.putAll(right.build()),
+              ImmutableMultimap.Builder::build);
 
   private final Provider<SchemaManager> schemaManager;
   private final Provider<RecordSerializer> recordSerializer;
@@ -89,7 +90,8 @@ public final class ProduceAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
-      MappingIterator<ProduceRequest> requests) throws Exception {
+      MappingIterator<ProduceRequest> requests)
+      throws Exception {
     ProduceController controller = produceController.get();
     StreamingResponse.from(requests)
         .compose(request -> produce(clusterId, topicName, request, controller))
@@ -101,7 +103,8 @@ public final class ProduceAction {
     Optional<RegisteredSchema> keySchema =
         request.getKey().flatMap(key -> getSchema(topicName, /* isKey= */ true, key));
     Optional<EmbeddedFormat> keyFormat =
-        keySchema.map(schema -> Optional.of(schema.getFormat()))
+        keySchema
+            .map(schema -> Optional.of(schema.getFormat()))
             .orElse(request.getKey().flatMap(ProduceRequestData::getFormat));
     Optional<ByteString> serializedKey =
         serialize(topicName, keyFormat, keySchema, request.getKey(), /* isKey= */ true);
@@ -109,7 +112,8 @@ public final class ProduceAction {
     Optional<RegisteredSchema> valueSchema =
         request.getValue().flatMap(value -> getSchema(topicName, /* isKey= */ false, value));
     Optional<EmbeddedFormat> valueFormat =
-        valueSchema.map(schema -> Optional.of(schema.getFormat()))
+        valueSchema
+            .map(schema -> Optional.of(schema.getFormat()))
             .orElse(request.getValue().flatMap(ProduceRequestData::getFormat));
     Optional<ByteString> serializedValue =
         serialize(topicName, valueFormat, valueSchema, request.getValue(), /* isKey= */ false);
@@ -138,15 +142,17 @@ public final class ProduceAction {
 
     try {
       return Optional.of(
-          schemaManager.get().getSchema(
-              topicName,
-              data.getFormat(),
-              data.getSubject(),
-              data.getSubjectNameStrategy().map(Function.identity()),
-              data.getSchemaId(),
-              data.getSchemaVersion(),
-              data.getRawSchema(),
-              isKey));
+          schemaManager
+              .get()
+              .getSchema(
+                  topicName,
+                  data.getFormat(),
+                  data.getSubject(),
+                  data.getSubjectNameStrategy().map(Function.identity()),
+                  data.getSchemaId(),
+                  data.getSchemaVersion(),
+                  data.getRawSchema(),
+                  isKey));
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e.getMessage(), e);
     }
@@ -158,7 +164,8 @@ public final class ProduceAction {
       Optional<RegisteredSchema> schema,
       Optional<ProduceRequestData> data,
       boolean isKey) {
-    return recordSerializer.get()
+    return recordSerializer
+        .get()
         .serialize(
             format.orElse(EmbeddedFormat.BINARY),
             topicName,

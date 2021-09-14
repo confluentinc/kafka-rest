@@ -44,9 +44,10 @@ public class ProducerPerformance extends AbstractPerformanceTest {
   public static void main(String[] args) throws Exception {
     if (args.length < 6) {
       System.out.println(
-          "Usage: java " + ProducerPerformance.class.getName() + " rest_url topic_name "
-          + "num_records record_size batch_size target_records_sec"
-      );
+          "Usage: java "
+              + ProducerPerformance.class.getName()
+              + " rest_url topic_name "
+              + "num_records record_size batch_size target_records_sec");
       System.exit(1);
     }
 
@@ -57,23 +58,20 @@ public class ProducerPerformance extends AbstractPerformanceTest {
     int batchSize = Integer.parseInt(args[4]);
     int throughput = Integer.parseInt(args[5]) / batchSize;
 
-    ProducerPerformance
-        perf =
+    ProducerPerformance perf =
         new ProducerPerformance(
-            baseUrl,
-            topic,
-            numRecords / batchSize,
-            batchSize,
-            throughput,
-            recordSize
-        );
+            baseUrl, topic, numRecords / batchSize, batchSize, throughput, recordSize);
     perf.run(throughput);
   }
 
   public ProducerPerformance(
-      String baseUrl, String topic, long iterations, int recordsPerIteration,
-      long iterationsPerSec, int recordSize
-  ) throws Exception {
+      String baseUrl,
+      String topic,
+      long iterations,
+      int recordsPerIteration,
+      long iterationsPerSec,
+      int recordSize)
+      throws Exception {
     super(iterations * recordsPerIteration);
     this.iterations = iterations;
     this.iterationsPerSec = iterationsPerSec;
@@ -83,9 +81,9 @@ public class ProducerPerformance extends AbstractPerformanceTest {
     /* setup perf test */
     targetUrl = baseUrl + "/topics/" + topic;
     BinaryTopicProduceRequest.BinaryTopicProduceRecord record =
-            new BinaryTopicProduceRequest.BinaryTopicProduceRecord(null, "payload", null);
+        new BinaryTopicProduceRequest.BinaryTopicProduceRecord(null, "payload", null);
     BinaryTopicProduceRequest.BinaryTopicProduceRecord[] records =
-            new BinaryTopicProduceRequest.BinaryTopicProduceRecord[recordsPerIteration];
+        new BinaryTopicProduceRequest.BinaryTopicProduceRecord[recordsPerIteration];
     Arrays.fill(records, record);
     BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(Arrays.asList(records));
     requestEntity = new ObjectMapper().writeValueAsBytes(request);
@@ -118,9 +116,8 @@ public class ProducerPerformance extends AbstractPerformanceTest {
         ErrorMessage errorMessage = jsonDeserializer.readValue(es, ErrorMessage.class);
         es.close();
         throw new RuntimeException(
-            String.format("Unexpected HTTP error status %d: %s",
-                          responseStatus, errorMessage.getMessage()
-            ));
+            String.format(
+                "Unexpected HTTP error status %d: %s", responseStatus, errorMessage.getMessage()));
       }
       InputStream is = connection.getInputStream();
       while (is.read(buffer) > 0) {
@@ -147,4 +144,3 @@ public class ProducerPerformance extends AbstractPerformanceTest {
     return (iteration / elapsed > iterationsPerSec);
   }
 }
-

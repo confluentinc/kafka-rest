@@ -17,12 +17,13 @@ package io.confluent.kafkarest.tools;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.confluent.common.utils.AbstractPerformanceTest;
 import io.confluent.common.utils.PerformanceStats;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionResponse;
+import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
 import io.confluent.rest.entities.ErrorMessage;
 import java.io.InputStream;
@@ -33,8 +34,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+@SuppressFBWarnings("DMI_RANDOM_USED_ONLY_ONCE") // https://github.com/spotbugs/spotbugs/issues/1539
 public class ConsumerPerformance extends AbstractPerformanceTest {
 
+  private static final Random RANDOM = new Random();
   long targetRecords;
   long recordsPerSec;
   ObjectMapper serializer = new ObjectMapper();
@@ -47,9 +50,10 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
   public static void main(String[] args) throws Exception {
     if (args.length < 4) {
       System.out.println(
-          "Usage: java " + ConsumerPerformance.class.getName() + " rest_url topic_name "
-          + "num_records target_records_sec"
-      );
+          "Usage: java "
+              + ConsumerPerformance.class.getName()
+              + " rest_url topic_name "
+              + "num_records target_records_sec");
       System.exit(1);
     }
 
@@ -73,7 +77,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
     this.targetRecords = numRecords;
     this.recordsPerSec = recordsPerSec;
 
-    String groupId = "rest-perf-consumer-" + Integer.toString(new Random().nextInt(100000));
+    String groupId = "rest-perf-consumer-" + RANDOM.nextInt(100000);
 
     // Create consumer instance
     CreateConsumerInstanceRequest consumerConfig =
@@ -86,12 +90,14 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
             /* responseMinBytes= */ null,
             /* requestWaitMs= */ null);
     byte[] createPayload = serializer.writeValueAsBytes(consumerConfig);
-    CreateConsumerInstanceResponse createResponse = (CreateConsumerInstanceResponse) request(
-        baseUrl + "/consumers/" + groupId, "POST", createPayload,
-        Integer.toString(createPayload.length),
-        new TypeReference<CreateConsumerInstanceResponse>() {
-        }
-    );
+    CreateConsumerInstanceResponse createResponse =
+        (CreateConsumerInstanceResponse)
+            request(
+                baseUrl + "/consumers/" + groupId,
+                "POST",
+                createPayload,
+                Integer.toString(createPayload.length),
+                new TypeReference<CreateConsumerInstanceResponse>() {});
 
     instanceUrl =
         baseUrl + "/consumers/" + groupId + "/instances/" + createResponse.getInstanceId();
@@ -101,11 +107,11 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
         new ConsumerSubscriptionRecord(Arrays.asList(topic), null);
     byte[] subscribePayload = serializer.writeValueAsBytes(consumerSubscriptionRecord);
     request(
-        instanceUrl + "/subscription", "POST", subscribePayload,
+        instanceUrl + "/subscription",
+        "POST",
+        subscribePayload,
         Integer.toString(subscribePayload.length),
-        new TypeReference<ConsumerSubscriptionResponse>() {
-        }
-    );
+        new TypeReference<ConsumerSubscriptionResponse>() {});
 
     targetUrl = instanceUrl + "/records";
 
@@ -117,23 +123,14 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
         "GET",
         null,
         null,
-        new TypeReference<List<UndecodedConsumerRecord>>() {
-        }
-    );
+        new TypeReference<List<UndecodedConsumerRecord>>() {});
   }
 
   @Override
   protected void doIteration(PerformanceStats.Callback cb) {
-    List<UndecodedConsumerRecord>
-        records =
+    List<UndecodedConsumerRecord> records =
         request(
-            targetUrl,
-            "GET",
-            null,
-            null,
-            new TypeReference<List<UndecodedConsumerRecord>>() {
-            }
-        );
+            targetUrl, "GET", null, null, new TypeReference<List<UndecodedConsumerRecord>>() {});
     long bytes = 0;
     for (UndecodedConsumerRecord record : records) {
       bytes += record.value.length() * 3 / 4;
@@ -151,8 +148,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
       String method,
       byte[] entity,
       String entityLength,
-      TypeReference<T> responseFormat
-  ) {
+      TypeReference<T> responseFormat) {
     HttpURLConnection connection = null;
     try {
       URL url = new URL(target);
@@ -182,11 +178,7 @@ public class ConsumerPerformance extends AbstractPerformanceTest {
         throw new RuntimeException(
             String.format(
                 "Unexpected HTTP error status %d for %s request to %s: %s",
-                responseStatus,
-                method,
-                target,
-                errorMessage.getMessage()
-            ));
+                responseStatus, method, target, errorMessage.getMessage()));
       }
       if (responseStatus != HttpURLConnection.HTTP_NO_CONTENT) {
         InputStream is = connection.getInputStream();

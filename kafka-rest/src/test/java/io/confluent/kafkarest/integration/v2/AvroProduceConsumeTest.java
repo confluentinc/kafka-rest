@@ -17,39 +17,40 @@ public final class AvroProduceConsumeTest extends SchemaProduceConsumeTest {
   private static final AvroConverter AVRO_CONVERTER = new AvroConverter();
 
   private static final Schema KEY_SCHEMA =
-      new Schema.Parser().parse(""
-          + "{"
-          + "  \"type\": \"int\","
-          + "  \"name\": \"key\""
-          + "}");
+      new Schema.Parser().parse("" + "{" + "  \"type\": \"int\"," + "  \"name\": \"key\"" + "}");
 
   private static final Schema VALUE_SCHEMA =
-      new Schema.Parser().parse(""
-          + "{"
-          + "  \"type\": \"record\", "
-          + "  \"name\": \"ValueRecord\","
-          + "  \"fields\":[{"
-          + "    \"name\": \"value\", "
-          + "    \"type\": \"int\""
-          + "  }]"
-          + "}");
+      new Schema.Parser()
+          .parse(
+              ""
+                  + "{"
+                  + "  \"type\": \"record\", "
+                  + "  \"name\": \"ValueRecord\","
+                  + "  \"fields\":[{"
+                  + "    \"name\": \"value\", "
+                  + "    \"type\": \"int\""
+                  + "  }]"
+                  + "}");
 
   private static final List<SchemaTopicProduceRecord> PRODUCE_RECORDS =
       Arrays.asList(
           new SchemaTopicProduceRecord(
               new IntNode(1),
-              AVRO_CONVERTER.toJson(
-                  new GenericRecordBuilder(VALUE_SCHEMA).set("value", 11).build()).getJson(),
+              AVRO_CONVERTER
+                  .toJson(new GenericRecordBuilder(VALUE_SCHEMA).set("value", 11).build())
+                  .getJson(),
               /* partition= */ 0),
           new SchemaTopicProduceRecord(
               new IntNode(2),
-              AVRO_CONVERTER.toJson(
-                  new GenericRecordBuilder(VALUE_SCHEMA).set("value", 12).build()).getJson(),
+              AVRO_CONVERTER
+                  .toJson(new GenericRecordBuilder(VALUE_SCHEMA).set("value", 12).build())
+                  .getJson(),
               /* partition= */ 0),
           new SchemaTopicProduceRecord(
               new IntNode(3),
-              AVRO_CONVERTER.toJson(
-                  new GenericRecordBuilder(VALUE_SCHEMA).set("value", 13).build()).getJson(),
+              AVRO_CONVERTER
+                  .toJson(new GenericRecordBuilder(VALUE_SCHEMA).set("value", 13).build())
+                  .getJson(),
               /* partition= */ 0));
 
   @Override

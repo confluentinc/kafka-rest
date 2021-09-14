@@ -28,9 +28,7 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface ProduceController {
 
-  /**
-   * Produce the given record to Kafka.
-   */
+  /** Produce the given record to Kafka. */
   CompletableFuture<ProduceResult> produce(
       String clusterId,
       String topicName,

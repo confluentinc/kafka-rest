@@ -24,19 +24,13 @@ import org.hibernate.validator.constraints.URL;
 
 public final class CreateConsumerInstanceResponse {
 
-  @NotBlank
-  @Nullable
-  private final String instanceId;
+  @NotBlank @Nullable private final String instanceId;
 
-  @NotBlank
-  @URL
-  @Nullable
-  private final String baseUri;
+  @NotBlank @URL @Nullable private final String baseUri;
 
   public CreateConsumerInstanceResponse(
       @JsonProperty("instance_id") @Nullable String instanceId,
-      @JsonProperty("base_uri") @Nullable String baseUri
-  ) {
+      @JsonProperty("base_uri") @Nullable String baseUri) {
     this.instanceId = instanceId;
     this.baseUri = baseUri;
   }
@@ -72,8 +66,7 @@ public final class CreateConsumerInstanceResponse {
 
   @Override
   public String toString() {
-    return new StringJoiner(
-        ", ", CreateConsumerInstanceResponse.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", CreateConsumerInstanceResponse.class.getSimpleName() + "[", "]")
         .add("instanceId='" + instanceId + "'")
         .add("baseUri='" + baseUri + "'")
         .toString();

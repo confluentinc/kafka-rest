@@ -23,8 +23,7 @@ import java.util.List;
 @AutoValue
 public abstract class ReassignmentDataList extends ResourceCollection<ReassignmentData> {
 
-  ReassignmentDataList() {
-  }
+  ReassignmentDataList() {}
 
   public static Builder builder() {
     return new AutoValue_ReassignmentDataList.Builder().setKind("KafkaReassignmentList");
@@ -35,18 +34,13 @@ public abstract class ReassignmentDataList extends ResourceCollection<Reassignme
       @JsonProperty("kind") String kind,
       @JsonProperty("metadata") Metadata metadata,
       @JsonProperty("data") List<ReassignmentData> data) {
-    return builder()
-        .setKind(kind)
-        .setMetadata(metadata)
-        .setData(data)
-        .build();
+    return builder().setKind(kind).setMetadata(metadata).setData(data).build();
   }
 
   @AutoValue.Builder
   public abstract static class Builder
       extends ResourceCollection.Builder<ReassignmentData, ReassignmentDataList, Builder> {
 
-    Builder() {
-    }
+    Builder() {}
   }
 }

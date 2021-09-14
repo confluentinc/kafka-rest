@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>kafka-rest-parent</artifactId>
-        <version>7.0.0-0</version>
+        <version>7.1.0-0</version>
     </parent>
 
     <artifactId>kafka-rest</artifactId>
@@ -215,6 +215,18 @@
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
+            </plugin>
+
+	    <plugin>
+	        <groupId>com.diffplug.spotless</groupId>
+	        <artifactId>spotless-maven-plugin</artifactId>
+                <executions>
+	            <execution>
+		        <goals>
+		            <goal>check</goal>
+		        </goals>
+		    </execution>
+	        </executions>
             </plugin>
         </plugins>
     </build>

@@ -24,8 +24,7 @@ import javax.annotation.Nullable;
 
 public final class ConsumerOffsetCommitRequest {
 
-  @Nullable
-  private final List<TopicPartitionOffsetMetadata> offsets;
+  @Nullable private final List<TopicPartitionOffsetMetadata> offsets;
 
   @JsonCreator
   public ConsumerOffsetCommitRequest(
@@ -58,8 +57,7 @@ public final class ConsumerOffsetCommitRequest {
 
   @Override
   public String toString() {
-    return new StringJoiner(
-        ", ", ConsumerOffsetCommitRequest.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", ConsumerOffsetCommitRequest.class.getSimpleName() + "[", "]")
         .add("offsets=" + offsets)
         .toString();
   }

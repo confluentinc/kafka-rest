@@ -25,8 +25,7 @@ import org.apache.kafka.common.TopicPartition;
 @AutoValue
 public abstract class Partition {
 
-  Partition() {
-  }
+  Partition() {}
 
   public abstract String getClusterId();
 
@@ -47,10 +46,7 @@ public abstract class Partition {
   }
 
   public static Partition create(
-      String clusterId,
-      String topicName,
-      int partitionId,
-      List<PartitionReplica> replicas) {
+      String clusterId, String topicName, int partitionId, List<PartitionReplica> replicas) {
     return create(
         clusterId,
         topicName,
