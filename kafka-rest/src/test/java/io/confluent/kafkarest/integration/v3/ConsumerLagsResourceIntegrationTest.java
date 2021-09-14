@@ -248,8 +248,7 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
               assertEquals(expectedOffsets[finalT][finalP], (long) consumerLagData.getCurrentOffset());
               assertEquals(expectedOffsets[finalT][finalP], (long) consumerLagData.getLogEndOffset());
               assertEquals(0, (long) consumerLagData.getLag());
-            }
-        );
+            });
       }
     }
 
