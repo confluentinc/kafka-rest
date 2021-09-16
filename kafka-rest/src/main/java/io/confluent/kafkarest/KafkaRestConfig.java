@@ -145,6 +145,22 @@ public class KafkaRestConfig extends RestConfig {
 
   @Deprecated public static final String PRODUCER_THREADS_DEFAULT = "5";
 
+  public static final String PRODUCE_MAX_REQUESTS_PER_SECOND =
+      "api.v3.produce.rate.limit.max.requests.per.sec";
+  private static final String PRODUCE_MAX_REQUESTS_PER_SECOND_DOC =
+      "Maximum number of requests per second before the grace period for producer rate limiting "
+          + "is started. Within the grace period, an http status code of 429 is returned."
+          + "Once the grace period has expired the client is disconnected.";
+  public static final String PRODUCE_MAX_REQUESTS_PER_SECOND_DEFAULT = "10000";
+  public static final ConfigDef.Range PRODUCE_MAX_REQUESTS_PER_SECOND_VALIDATOR =
+      ConfigDef.Range.between(1, Integer.MAX_VALUE);
+
+  public static final String PRODUCE_GRACE_PERIOD = "api.v3.produce.rate.limit.grace.period.ms";
+  private static final String PRODUCE_GRACE_PERIOD_DOC =
+      "The grace period over which clients are allowed to exceed the produce request rate limit"
+          + "before being disconnected.";
+  public static final String PRODUCE_GRACE_PERIOD_DEFAULT = "30000";
+
   public static final String CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG = "consumer.iterator.timeout.ms";
   private static final String CONSUMER_ITERATOR_TIMEOUT_MS_DOC =
       "Timeout for blocking consumer iterator operations. This should be set to a small enough"
@@ -406,6 +422,19 @@ public class KafkaRestConfig extends RestConfig {
             PRODUCER_THREADS_DEFAULT,
             Importance.LOW,
             PRODUCER_THREADS_DOC)
+        .define(
+            PRODUCE_MAX_REQUESTS_PER_SECOND,
+            Type.INT,
+            PRODUCE_MAX_REQUESTS_PER_SECOND_DEFAULT,
+            PRODUCE_MAX_REQUESTS_PER_SECOND_VALIDATOR,
+            Importance.LOW,
+            PRODUCE_MAX_REQUESTS_PER_SECOND_DOC)
+        .define(
+            PRODUCE_GRACE_PERIOD,
+            Type.INT,
+            PRODUCE_GRACE_PERIOD_DEFAULT,
+            Importance.LOW,
+            PRODUCE_GRACE_PERIOD_DOC)
         .define(
             CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG,
             Type.INT,
