@@ -64,7 +64,7 @@ paths:
         ``bootstrap.servers`` configuration. Therefore only one Kafka cluster will be returned in the
         response.'
       tags:
-        - Cluster
+        - Cluster (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListClustersResponse'
@@ -324,7 +324,7 @@ paths:
         Return a list of brokers that belong to the specified
         Kafka cluster.
       tags:
-        - Broker
+        - Broker (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListBrokersResponse'
@@ -350,7 +350,7 @@ paths:
 
         Returns the broker specified by ``broker_id``.
       tags:
-        - Broker
+        - Broker (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetBrokerResponse'
@@ -375,7 +375,7 @@ paths:
 
         Return the list of configuration parameters for all the brokers in the given Kafka cluster.
       tags:
-        - Configs
+        - Configs (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListBrokerConfigsResponse'
@@ -401,7 +401,7 @@ paths:
 
         Return the list of configuration parameters that belong to the specified Kafka broker.
       tags:
-        - Configs
+        - Configs (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListBrokerConfigsResponse'
@@ -427,7 +427,7 @@ paths:
 
         Updates or deletes a set of broker configuration parameters.
       tags:
-        - Configs
+        - Configs (v3)
       requestBody:
         $ref: '#/components/requestBodies/AlterBrokerConfigBatchRequest'
       responses:
@@ -456,7 +456,7 @@ paths:
 
         Return the configuration parameter specified by ``name``.
       tags:
-        - Configs
+        - Configs (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetBrokerConfigResponse'
@@ -476,7 +476,7 @@ paths:
 
         Updates the configuration parameter specified by ``name``.
       tags:
-        - Configs
+        - Configs (v3)
       requestBody:
         $ref: '#/components/requestBodies/UpdateBrokerConfigRequest'
       responses:
@@ -498,7 +498,7 @@ paths:
 
         Resets the configuration parameter specified by ``name`` to its default value.
       tags:
-        - Configs
+        - Configs (v3)
       responses:
         '204':
           description: 'No Content'
@@ -524,8 +524,8 @@ paths:
 
         Returns the list of replicas assigned to the specified broker.
       tags:
-        - Broker
-        - Replica
+        - Broker (v3)
+        - Replica (v3)
       responses:
         '200':
           $ref: '#/components/responses/SearchReplicasByBrokerResponse'
@@ -1101,7 +1101,7 @@ paths:
 
         Returns the list of all ongoing replica reassignments in the given Kafka cluster.
       tags:
-        - Partition
+        - Partition (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListAllReassignmentsResponse'
@@ -1129,7 +1129,7 @@ paths:
 
         Returns the list of ongoing replica reassignments for the given topic.
       tags:
-        - Partition
+        - Partition (v3)
       responses:
         '200':
           $ref: '#/components/responses/SearchReassignmentsByTopicResponse'
@@ -1158,7 +1158,7 @@ paths:
 
         Returns the list of ongoing replica reassignments for the given partition.
       tags:
-        - Partition
+        - Partition (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetReassignmentResponse'
@@ -1187,7 +1187,7 @@ paths:
 
         Returns the list of replicas for the specified partition.
       tags:
-        - Replica
+        - Replica (v3)
       responses:
         '200':
           $ref: '#/components/responses/ListReplicasResponse'
@@ -1217,7 +1217,7 @@ paths:
 
         Returns the replica for the specified partition assigned to the specified broker.
       tags:
-        - Replica
+        - Replica (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetReplicaResponse'
@@ -1277,7 +1277,7 @@ paths:
                     streamed to and from the server as Concatenated JSON. Errors are reported per
                     record. The HTTP status code will be HTTP 200 OK as long as the connection is successfully established.
       tags:
-        - Records
+        - Records (v3)
       requestBody:
         $ref: '#/components/requestBodies/ProduceRequest'
       responses:
