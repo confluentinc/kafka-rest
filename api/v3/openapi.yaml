@@ -83,7 +83,7 @@ paths:
 
     get:
       summary: 'Get Cluster'
-      operationId: getKafkaV3Cluster
+      operationId: getKafkaCluster
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -108,7 +108,7 @@ paths:
 
     get:
       summary: 'Search ACLs'
-      operationId: getKafkaV3Acls
+      operationId: getKafkaAcls
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -137,7 +137,7 @@ paths:
 
     post:
       summary: 'Create ACLs'
-      operationId: createKafkaV3Acls
+      operationId: createKafkaAcls
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -160,7 +160,7 @@ paths:
 
     delete:
       summary: 'Delete ACLs'
-      operationId: deleteKafkaV3Acls
+      operationId: deleteKafkaAcls
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -193,7 +193,7 @@ paths:
 
     get:
       summary: 'List Cluster Configs'
-      operationId: listKafkaV3ClusterConfigs
+      operationId: listKafkaClusterConfigs
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -219,7 +219,7 @@ paths:
 
     post:
       summary: 'Batch Alter Cluster Configs'
-      operationId: updateKafkaV3ClusterConfigs
+      operationId: updateKafkaClusterConfigs
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -247,7 +247,7 @@ paths:
 
     get:
       summary: 'Get Cluster Config'
-      operationId: getKafkaV3ClusterConfig
+      operationId: getKafkaClusterConfig
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -268,7 +268,7 @@ paths:
 
     put:
       summary: 'Update Cluster Config'
-      operationId: updateKafkaV3ClusterConfig
+      operationId: updateKafkaClusterConfig
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -291,7 +291,7 @@ paths:
 
     delete:
       summary: 'Reset Cluster Config'
-      operationId: deleteKafkaV3ClusterConfig
+      operationId: deleteKafkaClusterConfig
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -544,7 +544,7 @@ paths:
 
     get:
       summary: 'List Consumer Groups'
-      operationId: listKafkaV3ConsumerGroups
+      operationId: listKafkaConsumerGroups
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -571,7 +571,7 @@ paths:
 
     get:
       summary: 'Get Consumer Group'
-      operationId: getKafkaV3ConsumerGroup
+      operationId: getKafkaConsumerGroup
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -597,7 +597,7 @@ paths:
 
     get:
       summary: 'List Consumers'
-      operationId: listKafkaV3Consumers
+      operationId: listKafkaConsumers
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -628,7 +628,7 @@ paths:
       x-lifecycle-stage: Early Access
       x-request-access-name: Cluster Admin For Kafka v3
       summary: 'Get Consumer Group Lag Summary.'
-      operationId: getKafkaV3ConsumerGroupLagSummary
+      operationId: getKafkaConsumerGroupLagSummary
       description: |-
         [![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Request Access To Cluster Admin for Kafka (v3)](https://img.shields.io/badge/-Request%20Access%20To%20Cluster%20Admin%20For%20Kafka%20v3-%23bc8540)](mailto:ccloud-rest-api+consumer-lag-earlyaccess@confluent.io?subject=Request%20to%20join%20v3%20API%20Early%20Access&body=I%E2%80%99d%20like%20to%20join%20the%20Confluent%20Cluster%20Admin%20For%20Kafka%20v3%20Early%20Access%20to%20provide%20early%20feedback%20on%20consumer%20lag%20apis%21%20My%20Cloud%20Organization%20ID%20is%20%3Cretrieve%20from%20https%3A//confluent.cloud/settings/billing/payment%3E.)
 
@@ -658,7 +658,7 @@ paths:
     get:
       x-lifecycle-stage: Early Access
       x-request-access-name: Cluster Admin For Kafka v3
-      operationId: listKafkaV3ConsumerLags
+      operationId: listKafkaConsumerLags
       summary: 'List Consumer Lags'
       description: |-
         [![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Request Access To Cluster Admin for Kafka (v3)](https://img.shields.io/badge/-Request%20Access%20To%20Cluster%20Admin%20For%20Kafka%20v3-%23bc8540)](mailto:ccloud-rest-api+consumer-lag-earlyaccess@confluent.io?subject=Request%20to%20join%20v3%20API%20Early%20Access&body=I%E2%80%99d%20like%20to%20join%20the%20Confluent%20Cluster%20Admin%20For%20Kafka%20v3%20Early%20Access%20to%20provide%20early%20feedback%20on%20consumer%20lag%20apis%21%20My%20Cloud%20Organization%20ID%20is%20%3Cretrieve%20from%20https%3A//confluent.cloud/settings/billing/payment%3E.)
@@ -691,7 +691,7 @@ paths:
     get:
       x-lifecycle-stage: Early Access
       x-request-access-name: Cluster Admin For Kafka v3
-      operationId: getKafkaV3ConsumerLag
+      operationId: getKafkaConsumerLag
       summary: 'Get Consumer Lag'
       description: |-
         [![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Request Access To Cluster Admin for Kafka (v3)](https://img.shields.io/badge/-Request%20Access%20To%20Cluster%20Admin%20For%20Kafka%20v3-%23bc8540)](mailto:ccloud-rest-api+consumer-lag-earlyaccess@confluent.io?subject=Request%20to%20join%20v3%20API%20Early%20Access&body=I%E2%80%99d%20like%20to%20join%20the%20Confluent%20Cluster%20Admin%20For%20Kafka%20v3%20Early%20Access%20to%20provide%20early%20feedback%20on%20consumer%20lag%20apis%21%20My%20Cloud%20Organization%20ID%20is%20%3Cretrieve%20from%20https%3A//confluent.cloud/settings/billing/payment%3E.)
@@ -719,7 +719,7 @@ paths:
 
     get:
       summary: 'Get Consumer'
-      operationId: getKafkaV3Consumer
+      operationId: getKafkaConsumer
       description: |-
         [![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Request Access To Cluster Admin for Kafka (v3)](https://img.shields.io/badge/-Request%20Access%20To%20Cluster%20Admin%20For%20Kafka%20v3-%23bc8540)](mailto:ccloud-rest-api+consumer-lag-earlyaccess@confluent.io?subject=Request%20to%20join%20v3%20API%20Early%20Access&body=I%E2%80%99d%20like%20to%20join%20the%20Confluent%20Cluster%20Admin%20For%20Kafka%20v3%20Early%20Access%20to%20provide%20early%20feedback%20on%20consumer%20lag%20apis%21%20My%20Cloud%20Organization%20ID%20is%20%3Cretrieve%20from%20https%3A//confluent.cloud/settings/billing/payment%3E.)
 
@@ -747,7 +747,7 @@ paths:
 
     get:
       summary: 'List Consumer Assignments'
-      operationId: listKafkaV3ConsumerAssignment
+      operationId: listKafkaConsumerAssignment
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -777,7 +777,8 @@ paths:
 
     get:
       summary: 'Get Consumer Assignment'
-      operationId: getKafkaV3ConsumerAssignment
+      operationId: getKafka
+      ConsumerAssignment
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -803,7 +804,7 @@ paths:
 
     get:
       summary: 'List Topics'
-      operationId: listKafkaV3Topics
+      operationId: listKafkaTopics
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -824,7 +825,7 @@ paths:
 
     post:
       summary: 'Create Topic'
-      operationId: createKafkaV3Topic
+      operationId: createKafkaTopic
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -852,7 +853,7 @@ paths:
 
     get:
       summary: 'Get Topic'
-      operationId: getKafkaV3Topic
+      operationId: getKafkaTopic
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -875,7 +876,7 @@ paths:
 
     delete:
       summary: 'Delete Topic'
-      operationId: deleteKafkaV3Topic
+      operationId: deleteKafkaTopic
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -903,7 +904,7 @@ paths:
 
     get:
       summary: 'List Topic Configs'
-      operationId: listKafkaV3TopicConfigs
+      operationId: listKafkaTopicConfigs
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -931,7 +932,7 @@ paths:
 
     post:
       summary: 'Batch Alter Topic Configs'
-      operationId: updateKafkaV3TopicConfigBatch
+      operationId: updateKafkaTopicConfigBatch
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -962,7 +963,7 @@ paths:
 
     get:
       summary: 'Get Topic Config'
-      operationId: getKafkaV3TopicConfig
+      operationId: getKafkaTopicConfig
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -985,7 +986,7 @@ paths:
 
     put:
       summary: 'Update Topic Config'
-      operationId: updateKafkaV3TopicConfig
+      operationId: updateKafkaTopicConfig
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -1010,7 +1011,7 @@ paths:
 
     delete:
       summary: 'Reset Topic Config'
-      operationId: deleteKafkaV3TopicConfig
+      operationId: deleteKafkaTopicConfig
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -1038,7 +1039,7 @@ paths:
 
     get:
       summary: 'List Partitions'
-      operationId: listKafkaV3Partitions
+      operationId: listKafkaPartitions
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -1067,7 +1068,7 @@ paths:
 
     get:
       summary: 'Get Partition'
-      operationId: getKafkaV3Partition
+      operationId: getKafkaPartition
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -1237,7 +1238,7 @@ paths:
 
     get:
       summary: 'Get All Topic Configs'
-      operationId: listKafkaV3AllTopicConfigs
+      operationId: listKafkaAllTopicConfigs
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
