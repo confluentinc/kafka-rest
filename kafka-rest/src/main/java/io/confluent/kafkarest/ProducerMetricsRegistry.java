@@ -34,16 +34,6 @@ public class ProducerMetricsRegistry {
   public static final String REQUEST_SIZE_AVG = "request-size-avg";
   public static final String REQUEST_SIZE_AVG_DOC = "The average request size in bytes.";
 
-  public static final String REQUEST_SIZE_TOTAL = "request-size-total";
-  public static final String REQUEST_SIZE_TOTAL_DOC = "The total request bytes sent.";
-
-  public static final String REQUEST_SIZE_TOTAL_WINDOWED = "request-size-total-windowed";
-  public static final String REQUEST_SIZE_TOTAL_WINDOWED_DOC =
-      "The total request bytes sent in the given window.";
-
-  public static final String REQUEST_TOTAL = "request-total";
-  public static final String REQUEST_TOTAL_DOC = "The total number of requests sent.";
-
   public static final String REQUEST_TOTAL_WINDOWED = "request-total-windowed";
   public static final String REQUEST_TOTAL_WINDOWED_DOC =
       "The total number of requests sent within the given window.";
@@ -56,25 +46,11 @@ public class ProducerMetricsRegistry {
   public static final String RESPONSE_SIZE_AVG = "response-size-avg";
   public static final String RESPONSE_SIZE_AVG_DOC = "The average response size in bytes";
 
-  public static final String RESPONSE_SIZE_TOTAL = "response-size-total";
-  public static final String RESPONSE_SIZE_TOTAL_DOC = "The total response bytes sent";
-
-  public static final String RESPONSE_SIZE_TOTAL_WINDOWED = "response-size-total-windowed";
-  public static final String RESPONSE_SIZE_TOTAL_WINDOWED_DOC =
-      "The total response bytes sent in the given window.";
-
-  public static final String RESPONSE_TOTAL = "response-total";
-  public static final String RESPONSE_TOTAL_DOC = "The total number of responses sent.";
-
   public static final String RESPONSE_TOTAL_WINDOWED = "response-total-windowed";
   public static final String RESPONSE_TOTAL_WINDOWED_DOC =
       "The total number of responses sent in the given window.";
 
   // errors
-  public static final String RECORD_ERROR_TOTAL = "record-error-total";
-  public static final String RECORD_ERROR_TOTAL_DOC =
-      "The total number of record sends that resulted in errors.";
-
   public static final String RECORD_ERROR_TOTAL_WINDOWED = "record-error-total-windowed";
   public static final String RECORD_ERROR_TOTAL_WINDOWED_DOC =
       "The total number of record sends that resulted in errors in the given window.";

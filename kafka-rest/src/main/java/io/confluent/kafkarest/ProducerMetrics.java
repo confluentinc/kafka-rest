@@ -92,8 +92,6 @@ public class ProducerMetrics {
     // request metrics
     new SensorBuilder(metricMBean, ProducerMetricsRegistry.REQUEST_SENSOR)
         .addRate(ProducerMetricsRegistry.REQUEST_RATE, ProducerMetricsRegistry.REQUEST_RATE_DOC)
-        .addCumulativeCount(
-            ProducerMetricsRegistry.REQUEST_TOTAL, ProducerMetricsRegistry.REQUEST_TOTAL_DOC)
         .addWindowedCount(
             ProducerMetricsRegistry.REQUEST_TOTAL_WINDOWED,
             ProducerMetricsRegistry.REQUEST_TOTAL_WINDOWED_DOC)
@@ -102,12 +100,6 @@ public class ProducerMetrics {
     new SensorBuilder(metricMBean, ProducerMetricsRegistry.REQUEST_SIZE_SENSOR)
         .addAvg(
             ProducerMetricsRegistry.REQUEST_SIZE_AVG, ProducerMetricsRegistry.REQUEST_SIZE_AVG_DOC)
-        .addCumulativeSum(
-            ProducerMetricsRegistry.REQUEST_SIZE_TOTAL,
-            ProducerMetricsRegistry.REQUEST_SIZE_TOTAL_DOC)
-        .addWindowedSum(
-            ProducerMetricsRegistry.REQUEST_SIZE_TOTAL_WINDOWED,
-            ProducerMetricsRegistry.REQUEST_SIZE_TOTAL_WINDOWED_DOC)
         .build();
 
     // response metrics
@@ -115,8 +107,6 @@ public class ProducerMetrics {
         .addRate(
             ProducerMetricsRegistry.RESPONSE_SEND_RATE,
             ProducerMetricsRegistry.RESPONSE_SEND_RATE_DOC)
-        .addCumulativeCount(
-            ProducerMetricsRegistry.RESPONSE_TOTAL, ProducerMetricsRegistry.RESPONSE_TOTAL_DOC)
         .addWindowedCount(
             ProducerMetricsRegistry.RESPONSE_TOTAL_WINDOWED,
             ProducerMetricsRegistry.RESPONSE_TOTAL_WINDOWED_DOC)
@@ -126,21 +116,12 @@ public class ProducerMetrics {
         .addAvg(
             ProducerMetricsRegistry.RESPONSE_SIZE_AVG,
             ProducerMetricsRegistry.RESPONSE_SIZE_AVG_DOC)
-        .addCumulativeSum(
-            ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL,
-            ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL_DOC)
-        .addWindowedSum(
-            ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL_WINDOWED,
-            ProducerMetricsRegistry.RESPONSE_SIZE_TOTAL_WINDOWED_DOC)
         .build();
 
     new SensorBuilder(metricMBean, ProducerMetricsRegistry.RECORD_ERROR_SENSOR)
         .addRate(
             ProducerMetricsRegistry.RECORD_ERROR_RATE,
             ProducerMetricsRegistry.RECORD_ERROR_RATE_DOC)
-        .addCumulativeCount(
-            ProducerMetricsRegistry.RECORD_ERROR_TOTAL,
-            ProducerMetricsRegistry.RECORD_ERROR_TOTAL_DOC)
         .addWindowedCount(
             ProducerMetricsRegistry.RECORD_ERROR_TOTAL_WINDOWED,
             ProducerMetricsRegistry.RECORD_ERROR_TOTAL_WINDOWED_DOC)
