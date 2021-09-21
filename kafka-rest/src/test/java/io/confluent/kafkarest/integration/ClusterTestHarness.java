@@ -77,6 +77,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.Option;
 import scala.collection.JavaConverters;
 
@@ -87,6 +89,8 @@ import scala.collection.JavaConverters;
  */
 @Category(IntegrationTest.class)
 public abstract class ClusterTestHarness {
+
+  private static final Logger log = LoggerFactory.getLogger(ClusterTestHarness.class);
 
   public static final int DEFAULT_NUM_BROKERS = 1;
 
@@ -163,6 +167,7 @@ public abstract class ClusterTestHarness {
 
   @Before
   public void setUp() throws Exception {
+    log.info("Starting setup of {}", getClass().getSimpleName());
     zookeeper = new EmbeddedZookeeper();
     zkConnect = String.format("127.0.0.1:%d", zookeeper.port());
     // start brokers concurrently
@@ -219,9 +224,11 @@ public abstract class ClusterTestHarness {
     restApp = new KafkaRestApplication(restConfig);
     restServer = restApp.createServer();
     restServer.start();
+    log.info("Completed setup of {}", getClass().getSimpleName());
   }
 
   private void startBrokersConcurrently(int numBrokers) {
+    log.info("Starting concurrently {} brokers for {}", numBrokers, getClass().getSimpleName());
     configs =
         IntStream.range(0, numBrokers)
             .mapToObj(
@@ -242,6 +249,7 @@ public abstract class ClusterTestHarness {
                                             System.currentTimeMillis(), System.nanoTime()))))
                     .collect(toList()))
             .join();
+    log.info("Started all {} brokers for {}", numBrokers, getClass().getSimpleName());
   }
 
   protected void setupAcls() {}
@@ -291,6 +299,7 @@ public abstract class ClusterTestHarness {
 
   @After
   public void tearDown() throws Exception {
+    log.info("Starting teardown of {}", getClass().getSimpleName());
     if (restServer != null) {
       restServer.stop();
       restServer.join();
@@ -309,6 +318,7 @@ public abstract class ClusterTestHarness {
     }
 
     zookeeper.shutdown();
+    log.info("Completed teardown of {}", getClass().getSimpleName());
   }
 
   protected Invocation.Builder request(String path) {
