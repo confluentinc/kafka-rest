@@ -94,12 +94,12 @@ public class ConsumerLagsResourceIntegrationTest extends ClusterTestHarness {
 
     consumer1.subscribe(Collections.singletonList(topic1));
     consumer2.subscribe(Collections.singletonList(topic2));
-    consumer1.poll(Duration.ofSeconds(5));
-    consumer2.poll(Duration.ofSeconds(5));
+    consumer1.poll(Duration.ofSeconds(1));
+    consumer2.poll(Duration.ofSeconds(1));
     // After polling once, only one of the consumers will be member of the group, so we poll again
     // to force the other consumer to join the group.
-    consumer1.poll(Duration.ofSeconds(5));
-    consumer2.poll(Duration.ofSeconds(5));
+//    consumer1.poll(Duration.ofSeconds(5));
+//    consumer2.poll(Duration.ofSeconds(5));
     // commit offsets from consuming from subscribed topics
     consumer1.commitSync();
     consumer2.commitSync();
