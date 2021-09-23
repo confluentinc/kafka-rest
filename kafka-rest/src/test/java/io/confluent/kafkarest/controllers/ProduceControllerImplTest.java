@@ -472,6 +472,8 @@ public class ProduceControllerImplTest {
 
     Time time = new MockTime();
     produceController = new ProduceControllerImpl(producer, new KafkaRestConfig(properties));
+    ((ProduceControllerImpl) produceController).rateCounter.clear();
+
     ((ProduceControllerImpl) produceController).time = time;
 
     CompletableFuture<ProduceResult> result1 =
@@ -577,6 +579,155 @@ public class ProduceControllerImplTest {
   }
 
   @Test
+  public void twoProducers() {
+
+    Properties properties = new Properties();
+
+    int rateLimit = 2;
+    int gracePeriod = 10;
+
+    properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(rateLimit));
+    properties.put(PRODUCE_GRACE_PERIOD, Integer.toString(gracePeriod));
+
+    produceController = new ProduceControllerImpl(producer, new KafkaRestConfig(properties));
+    ((ProduceControllerImpl) produceController).rateCounter.clear();
+    ((ProduceControllerImpl) produceController).gracePeriodStart = Optional.empty();
+
+    MockProducer<byte[], byte[]> producer2 =
+        new MockProducer<>(
+            CLUSTER,
+            /* autoComplete= */ false,
+            new RoundRobinPartitioner(),
+            new ByteArraySerializer(),
+            new ByteArraySerializer());
+    ProduceController produceController2 =
+        new ProduceControllerImpl(producer2, new KafkaRestConfig(properties));
+
+    Time time = new MockTime();
+    ((ProduceControllerImpl) produceController).time = time;
+    ((ProduceControllerImpl) produceController2).time = time;
+
+    CompletableFuture<ProduceResult> result1 =
+        produceController.produce(
+            "cluster-1",
+            "topic-1",
+            /* partitionId= */ Optional.of(1),
+            /* headers= */ ImmutableMultimap.of(),
+            Optional.of(ByteString.copyFromUtf8("key-1")),
+            Optional.of(ByteString.copyFromUtf8("value-1")),
+            Instant.ofEpochMilli(1000));
+    producer.completeNext();
+
+    AtomicInteger checkpoint1 = new AtomicInteger(0);
+    assertFalse(result1.isCompletedExceptionally());
+    result1.handle(
+        (result, error) -> {
+          assertNull(error);
+          assertEquals(result, ProduceResult.create(1, 0, null, 0, 0));
+          checkpoint1.incrementAndGet();
+          return true;
+        });
+    assertEquals(new AtomicInteger(1).get(), checkpoint1.get());
+
+    time.sleep(1);
+    CompletableFuture<ProduceResult> result2 =
+        produceController2.produce(
+            "cluster-1",
+            "topic-1",
+            /* partitionId= */ Optional.of(1),
+            /* headers= */ ImmutableMultimap.of(),
+            Optional.of(ByteString.copyFromUtf8("key-2")),
+            Optional.of(ByteString.copyFromUtf8("value-2")),
+            Instant.ofEpochMilli(2000));
+    producer2.completeNext();
+
+    AtomicInteger checkpoint2 = new AtomicInteger(0);
+    assertFalse(result2.isCompletedExceptionally());
+    result2.handle(
+        (result, error) -> {
+          assertNull(error);
+          assertEquals(result, ProduceResult.create(1, 0, null, 0, 0));
+          checkpoint2.incrementAndGet();
+          return true;
+        });
+    assertEquals(new AtomicInteger(1).get(), checkpoint2.get());
+
+    time.sleep(1);
+    CompletableFuture<ProduceResult> result3 =
+        produceController2.produce(
+            "cluster-1",
+            "topic-1",
+            /* partitionId= */ Optional.of(1),
+            /* headers= */ ImmutableMultimap.of(),
+            Optional.of(ByteString.copyFromUtf8("key-3")),
+            Optional.of(ByteString.copyFromUtf8("value-3")),
+            Instant.ofEpochMilli(3000));
+    producer2.completeNext();
+
+    AtomicInteger checkpoint3 = new AtomicInteger(0);
+    assertTrue(result3.isCompletedExceptionally());
+    result3.handle(
+        (result, error) -> {
+          assertNull(result);
+          assertEquals(TooManyRequestsException.class, error.getClass());
+          checkpoint3.incrementAndGet();
+          return true;
+        });
+    assertEquals(new AtomicInteger(1).get(), checkpoint3.get());
+
+    time.sleep(11);
+    CompletableFuture<ProduceResult> result4 =
+        produceController.produce(
+            "cluster-1",
+            "topic-1",
+            /* partitionId= */ Optional.of(1),
+            /* headers= */ ImmutableMultimap.of(),
+            Optional.of(ByteString.copyFromUtf8("key-4")),
+            Optional.of(ByteString.copyFromUtf8("value-4")),
+            Instant.ofEpochMilli(4000));
+    producer.completeNext();
+    AtomicInteger checkpoint4 = new AtomicInteger(0);
+    assertTrue(result3.isCompletedExceptionally());
+    result4.handle(
+        (result, error) -> {
+          assertNull(result);
+          assertEquals(RateLimitGracePeriodExceededException.class, error.getClass());
+          checkpoint4.incrementAndGet();
+          return true;
+        });
+    assertEquals(new AtomicInteger(1).get(), checkpoint4.get());
+
+    assertProducerRecordsEquals(
+        Arrays.asList(
+            new ProducerRecord<>(
+                "topic-1",
+                1,
+                1000L,
+                "key-1".getBytes(StandardCharsets.UTF_8),
+                "value-1".getBytes(StandardCharsets.UTF_8),
+                /* headers= */ emptyList())),
+        producer.history());
+
+    assertProducerRecordsEquals(
+        Arrays.asList(
+            new ProducerRecord<>(
+                "topic-1",
+                1,
+                2000L,
+                "key-2".getBytes(StandardCharsets.UTF_8),
+                "value-2".getBytes(StandardCharsets.UTF_8),
+                /* headers= */ emptyList()),
+            new ProducerRecord<>(
+                "topic-1",
+                1,
+                3000L,
+                "key-3".getBytes(StandardCharsets.UTF_8),
+                "value-3".getBytes(StandardCharsets.UTF_8),
+                /* headers= */ emptyList())),
+        producer2.history());
+  }
+
+  @Test
   public void produceCombinationsHittingRateAndGraceLimit() {
 
     Properties properties = new Properties();
@@ -588,6 +739,9 @@ public class ProduceControllerImplTest {
     properties.put(PRODUCE_GRACE_PERIOD, Integer.toString(gracePeriod));
 
     produceController = new ProduceControllerImpl(producer, new KafkaRestConfig(properties));
+    ((ProduceControllerImpl) produceController).rateCounter.clear();
+    ((ProduceControllerImpl) produceController).gracePeriodStart = Optional.empty();
+
     Time time = new MockTime();
     ((ProduceControllerImpl) produceController).time = time;
     CompletableFuture<ProduceResult> result1 =

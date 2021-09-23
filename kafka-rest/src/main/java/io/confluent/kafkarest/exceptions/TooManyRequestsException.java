@@ -22,7 +22,7 @@ public class TooManyRequestsException extends StatusCodeException {
   public TooManyRequestsException(int rateLimit, int gracePeriod) {
     super(
         Status.TOO_MANY_REQUESTS,
-        "Rate limit of " + rateLimit + "exceeded within the grace period of " + gracePeriod + ".",
+        "Rate limit of " + rateLimit + " exceeded within the grace period of " + gracePeriod + ".",
         "");
   }
 }

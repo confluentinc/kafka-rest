@@ -27,9 +27,10 @@ import io.confluent.kafkarest.entities.ProduceResult;
 import io.confluent.kafkarest.exceptions.RateLimitGracePeriodExceededException;
 import io.confluent.kafkarest.exceptions.TooManyRequestsException;
 import java.time.Instant;
-import java.util.LinkedList;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.producer.Producer;
@@ -44,8 +45,11 @@ final class ProduceControllerImpl implements ProduceController {
 
   private final Producer<byte[], byte[]> producer;
   private final KafkaRestConfig config;
-  private final LinkedList<Long> rateCounter = new LinkedList<>();
-  private Optional<Long> gracePeriodStart = Optional.empty();
+
+  @VisibleForTesting
+  static final ConcurrentLinkedQueue<Long> rateCounter = new ConcurrentLinkedQueue<>();
+
+  @VisibleForTesting static Optional<AtomicLong> gracePeriodStart = Optional.empty();
   private static final int ONE_SECOND = 1000;
 
   @VisibleForTesting public Time time = new SystemTime();
@@ -60,7 +64,7 @@ final class ProduceControllerImpl implements ProduceController {
 
     rateCounter.add(now);
     while (rateCounter.peek() < now - ONE_SECOND) {
-      rateCounter.pop();
+      rateCounter.poll();
     }
     if (rateCounter.size() <= config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND)) {
       gracePeriodStart = Optional.empty();
@@ -86,9 +90,10 @@ final class ProduceControllerImpl implements ProduceController {
 
       if (!gracePeriodStart.isPresent()
           && config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD) != 0) {
-        gracePeriodStart = Optional.of(now);
+        gracePeriodStart = Optional.of(new AtomicLong(now));
       } else if (config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD) == 0
-          || config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD) < now - gracePeriodStart.get()) {
+          || config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD)
+              < now - gracePeriodStart.get().get()) {
         result.completeExceptionally(new RateLimitGracePeriodExceededException());
         return result;
       }

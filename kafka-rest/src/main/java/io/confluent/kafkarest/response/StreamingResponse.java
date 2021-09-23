@@ -126,6 +126,7 @@ public abstract class StreamingResponse<T> {
     } else {
       log.debug("Error processing streaming operation.", error);
       if (error.getCause() instanceof RateLimitGracePeriodExceededException) {
+        log.warn("Rate limit exceeded for longer than grace period.");
         throw (RateLimitGracePeriodExceededException) error.getCause();
       }
       return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(error.getCause()));
