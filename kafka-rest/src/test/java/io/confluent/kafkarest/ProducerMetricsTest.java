@@ -1,8 +1,11 @@
 package io.confluent.kafkarest;
 
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
+import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.mock.MockTime;
+import io.confluent.rest.metrics.RestMetricsContext;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
 import java.util.Set;
@@ -15,27 +18,41 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+import org.easymock.EasyMockRule;
+import org.easymock.Mock;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 public class ProducerMetricsTest {
 
   public static final String METRICS_SEARCH_STRING = "kafka.rest:type=produce-api-metrics,*";
+  public static final RestMetricsContext REST_METRICS_CONTEXT =
+      new RestMetricsContext("kafka.rest", ImmutableMap.of());
+  public static final String NAMESPACE = "kafka.rest";
+
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
+
+  @Mock private KafkaRestConfig kafkaRestConfig;
+
+  @Before
+  public void setUpMocks() {
+    reset(kafkaRestConfig);
+    expect(kafkaRestConfig.getMetricsContext()).andReturn(REST_METRICS_CONTEXT);
+    expect(kafkaRestConfig.getString(KafkaRestConfig.METRICS_JMX_PREFIX_CONFIG))
+        .andReturn(NAMESPACE);
+    replay(kafkaRestConfig);
+  }
 
   @Test
   public void testAvgMetrics()
       throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException,
-          AttributeNotFoundException, MBeanException, IntrospectionException {
+          AttributeNotFoundException, MBeanException {
     Time mockTime = new MockTime();
-    ProducerMetrics metrics = new ProducerMetrics(mockTime);
 
-    ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
+    ProducerMetrics metrics = new ProducerMetrics(kafkaRestConfig, mockTime);
 
-    String[] sensors =
-        new String[] {
-          ProducerMetricsRegistry.RESPONSE_SIZE_SENSOR,
-          ProducerMetricsRegistry.REQUEST_SIZE_SENSOR,
-          ProducerMetricsRegistry.REQUEST_LATENCY_SENSOR
-        };
+    ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean(NAMESPACE, Collections.emptyMap());
 
     String[] avgMetrics =
         new String[] {
@@ -44,9 +61,13 @@ public class ProducerMetricsTest {
           ProducerMetricsRegistry.RESPONSE_SIZE_AVG
         };
 
-    for (String sensor : sensors) {
-      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(sensor, n));
-    }
+    IntStream.range(0, 10)
+        .forEach(
+            n -> {
+              mbean.recordRequestSize(n);
+              mbean.recordRequestLatency(n);
+              mbean.recordResponseSize(n);
+            });
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
@@ -62,16 +83,9 @@ public class ProducerMetricsTest {
       throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException,
           AttributeNotFoundException, MBeanException, InterruptedException, IntrospectionException {
     Time mockTime = new MockTime();
-    ProducerMetrics metrics = new ProducerMetrics(mockTime);
+    ProducerMetrics metrics = new ProducerMetrics(kafkaRestConfig, mockTime);
 
     ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
-
-    String[] sensors =
-        new String[] {
-          ProducerMetricsRegistry.RECORD_ERROR_SENSOR,
-          ProducerMetricsRegistry.REQUEST_SENSOR,
-          ProducerMetricsRegistry.RESPONSE_SENSOR
-        };
 
     String[] rateMetrics =
         new String[] {
@@ -80,9 +94,13 @@ public class ProducerMetricsTest {
           ProducerMetricsRegistry.RESPONSE_SEND_RATE
         };
 
-    for (String sensor : sensors) {
-      IntStream.range(0, 90).forEach(n -> mbean.recordMetrics(sensor, 1.0));
-    }
+    IntStream.range(0, 90)
+        .forEach(
+            n -> {
+              mbean.recordError();
+              mbean.recordRequest();
+              mbean.recordResponse();
+            });
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
@@ -99,17 +117,13 @@ public class ProducerMetricsTest {
       throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException,
           AttributeNotFoundException, MBeanException, InterruptedException, IntrospectionException {
     Time mockTime = new MockTime();
-    ProducerMetrics metrics = new ProducerMetrics(mockTime);
+    ProducerMetrics metrics = new ProducerMetrics(kafkaRestConfig, mockTime);
 
     ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
 
-    String[] sensors = new String[] {ProducerMetricsRegistry.REQUEST_LATENCY_SENSOR};
-
     String[] maxMetrics = new String[] {ProducerMetricsRegistry.REQUEST_LATENCY_MAX};
 
-    for (String sensor : sensors) {
-      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(sensor, n));
-    }
+    IntStream.range(0, 10).forEach(n -> mbean.recordRequestLatency(n));
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
@@ -121,31 +135,55 @@ public class ProducerMetricsTest {
   }
 
   @Test
-  public void testWindowedCountMetrics()
+  public void testPercentileMetrics()
       throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException,
           AttributeNotFoundException, MBeanException, InterruptedException, IntrospectionException {
     Time mockTime = new MockTime();
-    ProducerMetrics metrics = new ProducerMetrics(mockTime);
+    ProducerMetrics metrics = new ProducerMetrics(kafkaRestConfig, mockTime);
 
     ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
 
-    String[] sensors =
+    String[] percentileMetrics =
         new String[] {
-          ProducerMetricsRegistry.REQUEST_SENSOR,
-          ProducerMetricsRegistry.RESPONSE_SENSOR,
-          ProducerMetricsRegistry.RECORD_ERROR_SENSOR
+          ProducerMetricsRegistry.REQUEST_LATENCY_PCT + "p95",
+          ProducerMetricsRegistry.REQUEST_LATENCY_PCT + "p99",
+          ProducerMetricsRegistry.REQUEST_LATENCY_PCT + "p999",
         };
+
+    IntStream.range(0, 1000).forEach(n -> mbean.recordRequestLatency(n));
+
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
+    assertEquals(1, beanNames.size());
+
+    for (String metric : percentileMetrics) {
+      assertEquals(9.0, mBeanServer.getAttribute(beanNames.iterator().next(), metric));
+    }
+  }
+
+  @Test
+  public void testWindowedCountMetrics()
+      throws MalformedObjectNameException, ReflectionException, InstanceNotFoundException,
+          AttributeNotFoundException, MBeanException {
+    Time mockTime = new MockTime();
+    ProducerMetrics metrics = new ProducerMetrics(kafkaRestConfig, mockTime);
+
+    ProducerMetrics.ProduceMetricMBean mbean = metrics.mbean("kafka.rest", Collections.emptyMap());
 
     String[] maxMetrics =
         new String[] {
-          ProducerMetricsRegistry.REQUEST_TOTAL_WINDOWED,
-          ProducerMetricsRegistry.RECORD_ERROR_TOTAL_WINDOWED,
-          ProducerMetricsRegistry.RESPONSE_TOTAL_WINDOWED
+          ProducerMetricsRegistry.REQUEST_COUNT_WINDOWED,
+          ProducerMetricsRegistry.ERROR_COUNT_WINDOWED,
+          ProducerMetricsRegistry.RESPONSE_COUNT_WINDOWED
         };
 
-    for (String sensor : sensors) {
-      IntStream.range(0, 10).forEach(n -> mbean.recordMetrics(sensor, n));
-    }
+    IntStream.range(0, 10)
+        .forEach(
+            n -> {
+              mbean.recordRequest();
+              mbean.recordError();
+              mbean.recordResponse();
+            });
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);

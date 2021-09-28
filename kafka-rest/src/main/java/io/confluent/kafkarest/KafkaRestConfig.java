@@ -199,7 +199,7 @@ public class KafkaRestConfig extends RestConfig {
   private static final String KAFKAREST_LISTENERS_DEFAULT = "";
   @Deprecated private static final int KAFKAREST_PORT_DEFAULT = 8082;
 
-  private static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka.rest";
+  public static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka.rest";
 
   /** <code>client.zk.session.timeout.ms</code> */
   public static final String KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG =

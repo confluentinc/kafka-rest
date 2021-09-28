@@ -130,11 +130,17 @@ public final class KafkaModule extends AbstractBinder {
 
   private static final class ProducerMetricsFactory implements Factory<ProducerMetrics> {
 
+    private final Provider<KafkaRestContext> context;
     private ProducerMetrics producerMetrics;
+
+    @Inject
+    ProducerMetricsFactory(Provider<KafkaRestContext> context) {
+      this.context = requireNonNull(context);
+    }
 
     @Override
     public ProducerMetrics provide() {
-      producerMetrics = new ProducerMetrics(Time.SYSTEM);
+      producerMetrics = new ProducerMetrics(context.get().getConfig(), Time.SYSTEM);
       return producerMetrics;
     }
 

@@ -28,31 +28,31 @@ public class ProducerMetricsRegistry {
   public static final String REQUEST_LATENCY_SENSOR = "request-latency-sensor";
 
   // request
-  public static final String REQUEST_RATE = "request-send-rate";
+  public static final String REQUEST_RATE = "request-rate";
   public static final String REQUEST_RATE_DOC = "The average number of requests sent per second.";
 
   public static final String REQUEST_SIZE_AVG = "request-size-avg";
   public static final String REQUEST_SIZE_AVG_DOC = "The average request size in bytes.";
 
-  public static final String REQUEST_TOTAL_WINDOWED = "request-total-windowed";
-  public static final String REQUEST_TOTAL_WINDOWED_DOC =
+  public static final String REQUEST_COUNT_WINDOWED = "request-count-windowed";
+  public static final String REQUEST_COUNT_WINDOWED_DOC =
       "The total number of requests sent within the given window.";
 
   // response
-  public static final String RESPONSE_SEND_RATE = "response-send-rate";
+  public static final String RESPONSE_SEND_RATE = "response-rate";
   public static final String RESPONSE_SEND_RATE_DOC =
       "The average number of response sent per second.";
 
   public static final String RESPONSE_SIZE_AVG = "response-size-avg";
   public static final String RESPONSE_SIZE_AVG_DOC = "The average response size in bytes";
 
-  public static final String RESPONSE_TOTAL_WINDOWED = "response-total-windowed";
-  public static final String RESPONSE_TOTAL_WINDOWED_DOC =
+  public static final String RESPONSE_COUNT_WINDOWED = "response-count-windowed";
+  public static final String RESPONSE_COUNT_WINDOWED_DOC =
       "The total number of responses sent in the given window.";
 
   // errors
-  public static final String RECORD_ERROR_TOTAL_WINDOWED = "record-error-total-windowed";
-  public static final String RECORD_ERROR_TOTAL_WINDOWED_DOC =
+  public static final String ERROR_COUNT_WINDOWED = "error-count-windowed";
+  public static final String ERROR_COUNT_WINDOWED_DOC =
       "The total number of record sends that resulted in errors in the given window.";
 
   public static final String RECORD_ERROR_RATE = "record-error-rate";
@@ -65,4 +65,7 @@ public class ProducerMetricsRegistry {
 
   public static final String REQUEST_LATENCY_MAX = "request-latency-max";
   public static final String REQUEST_LATENCY_MAX_DOC = "The max request latency";
+
+  public static final String REQUEST_LATENCY_PCT = "request-latency-avg-";
+  public static final String REQUEST_LATENCY_PCT_DOC = "Request latency percentiles.";
 }
