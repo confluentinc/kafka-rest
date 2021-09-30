@@ -131,7 +131,7 @@ public final class KafkaModule extends AbstractBinder {
   private static final class ProducerMetricsFactory implements Factory<ProducerMetrics> {
 
     private final Provider<KafkaRestContext> context;
-    private ProducerMetrics producerMetrics;
+    private volatile ProducerMetrics producerMetrics;
 
     @Inject
     ProducerMetricsFactory(Provider<KafkaRestContext> context) {
@@ -140,6 +140,9 @@ public final class KafkaModule extends AbstractBinder {
 
     @Override
     public ProducerMetrics provide() {
+      if (producerMetrics != null) {
+        throw new IllegalStateException("Attempted to recreate existing global ProducerMetrics");
+      }
       producerMetrics = new ProducerMetrics(context.get().getConfig(), Time.SYSTEM);
       return producerMetrics;
     }
