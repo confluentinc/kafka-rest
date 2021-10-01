@@ -53,7 +53,6 @@ public class ProducerMetrics {
   private final String fullyQualifiedRequestSensor;
   private final String fullyQualifiedRequestSizeSensor;
   private final String fullyQualifiedResponseSensor;
-  private final String fullyQualifiedResponseSizeSensor;
   private final String fullyQualifiedRecordErrorSensor;
   private final String fullyQualifiedRequestLatencySensor;
 
@@ -95,12 +94,6 @@ public class ProducerMetrics {
             jmxPrefix,
             ProducerMetricsRegistry.GROUP_NAME,
             ProducerMetricsRegistry.RESPONSE_SENSOR);
-    this.fullyQualifiedResponseSizeSensor =
-        String.join(
-            ":",
-            jmxPrefix,
-            ProducerMetricsRegistry.GROUP_NAME,
-            ProducerMetricsRegistry.RESPONSE_SIZE_SENSOR);
     setupMetricBeans();
   }
 
@@ -152,12 +145,6 @@ public class ProducerMetrics {
             ProducerMetricsRegistry.RESPONSE_COUNT_WINDOWED_DOC)
         .build();
 
-    new SensorBuilder(metricMBean, jmxPrefix, ProducerMetricsRegistry.RESPONSE_SIZE_SENSOR)
-        .addAvg(
-            ProducerMetricsRegistry.RESPONSE_SIZE_AVG,
-            ProducerMetricsRegistry.RESPONSE_SIZE_AVG_DOC)
-        .build();
-
     new SensorBuilder(metricMBean, jmxPrefix, ProducerMetricsRegistry.RECORD_ERROR_SENSOR)
         .addRate(
             ProducerMetricsRegistry.RECORD_ERROR_RATE,
@@ -191,7 +178,7 @@ public class ProducerMetrics {
 
     public BeanCoordinate(String beanName, Map<String, String> tags) {
       this.beanName = Objects.requireNonNull(beanName);
-      this.tags = Collections.unmodifiableMap(tags);
+      this.tags = ImmutableMap.copyOf(tags);
     }
 
     @Override
@@ -199,7 +186,7 @@ public class ProducerMetrics {
       if (this == o) {
         return true;
       }
-      if (o == null || !(o instanceof BeanCoordinate)) {
+      if (!(o instanceof BeanCoordinate)) {
         return false;
       }
       BeanCoordinate that = (BeanCoordinate) o;
@@ -230,15 +217,11 @@ public class ProducerMetrics {
       this.beanCoordinate = Objects.requireNonNull(beanCoordinate);
     }
 
-    public void recordResponseSize(double value) {
-      recordMetric(fullyQualifiedResponseSizeSensor, value);
-    }
-
     public void recordResponse() {
       recordMetric(fullyQualifiedResponseSensor, 1.0);
     }
 
-    public void recordRequestLatency(double value) {
+    public void recordRequestLatency(long value) {
       recordMetric(fullyQualifiedRequestLatencySensor, value);
     }
 
@@ -254,7 +237,7 @@ public class ProducerMetrics {
       recordMetric(fullyQualifiedRequestSizeSensor, value);
     }
 
-    public void recordMetric(String sensorName, double value) {
+    private void recordMetric(String sensorName, double value) {
       Sensor sensor = metrics.getSensor(sensorName);
       if (sensor != null) {
         sensor.record(value);
@@ -380,8 +363,8 @@ public class ProducerMetrics {
 
     public static CompoundStat percentiles(Map<MetricName, Double> percentiles) {
       return new Percentiles(
-          1000,
-          250,
+          30 * 1000 * 4,
+          30 * 1000,
           Percentiles.BucketSizing.CONSTANT,
           percentiles.entrySet().stream()
               .map(

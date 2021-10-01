@@ -56,9 +56,7 @@ public class ProducerMetricsTest {
 
     String[] avgMetrics =
         new String[] {
-          ProducerMetricsRegistry.REQUEST_SIZE_AVG,
-          ProducerMetricsRegistry.REQUEST_LATENCY_AVG,
-          ProducerMetricsRegistry.RESPONSE_SIZE_AVG
+          ProducerMetricsRegistry.REQUEST_SIZE_AVG, ProducerMetricsRegistry.REQUEST_LATENCY_AVG
         };
 
     IntStream.range(0, 10)
@@ -66,7 +64,6 @@ public class ProducerMetricsTest {
             n -> {
               mbean.recordRequestSize(n);
               mbean.recordRequestLatency(n);
-              mbean.recordResponseSize(n);
             });
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();

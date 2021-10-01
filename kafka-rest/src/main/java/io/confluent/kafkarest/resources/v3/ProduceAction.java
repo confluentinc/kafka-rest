@@ -154,10 +154,9 @@ public final class ProduceAction {
               ProduceResponse response =
                   toProduceResponse(
                       clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
-              double responseSize = getResponseSize(response.getKey(), response.getValue());
-              double latency =
+              long latency =
                   Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
-              recordResponseMetrics(responseSize, latency);
+              recordResponseMetrics(latency);
               return response;
             });
   }
@@ -239,11 +238,7 @@ public final class ProduceAction {
         .build();
   }
 
-  private void recordResponseMetrics(double responseSize, double latency) {
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordResponseSize(responseSize);
+  private void recordResponseMetrics(long latency) {
     producerMetrics
         .get()
         .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
@@ -280,18 +275,6 @@ public final class ProduceAction {
     double size = 0.0;
     size += serializedKey.orElse(ByteString.EMPTY).size();
     size += serializedValue.orElse(ByteString.EMPTY).size();
-    return size;
-  }
-
-  private double getResponseSize(
-      Optional<ProduceResponseData> keyData, Optional<ProduceResponseData> valueData) {
-    double size = 0.0;
-    if (keyData.isPresent()) {
-      size += keyData.get().getSize();
-    }
-    if (valueData.isPresent()) {
-      size += valueData.get().getSize();
-    }
     return size;
   }
 }

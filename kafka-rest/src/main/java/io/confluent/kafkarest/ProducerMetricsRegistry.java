@@ -23,7 +23,6 @@ public class ProducerMetricsRegistry {
   public static final String REQUEST_SENSOR = "request-sensor";
   public static final String REQUEST_SIZE_SENSOR = "request-size-sensor";
   public static final String RESPONSE_SENSOR = "response-sensor";
-  public static final String RESPONSE_SIZE_SENSOR = "response-size-sensor";
   public static final String RECORD_ERROR_SENSOR = "record-error-sensor";
   public static final String REQUEST_LATENCY_SENSOR = "request-latency-sensor";
 
@@ -42,9 +41,6 @@ public class ProducerMetricsRegistry {
   public static final String RESPONSE_SEND_RATE = "response-rate";
   public static final String RESPONSE_SEND_RATE_DOC =
       "The average number of response sent per second.";
-
-  public static final String RESPONSE_SIZE_AVG = "response-size-avg";
-  public static final String RESPONSE_SIZE_AVG_DOC = "The average response size in bytes";
 
   public static final String RESPONSE_COUNT_WINDOWED = "response-count-windowed";
   public static final String RESPONSE_COUNT_WINDOWED_DOC =

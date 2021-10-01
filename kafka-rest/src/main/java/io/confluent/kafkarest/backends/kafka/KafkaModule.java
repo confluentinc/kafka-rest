@@ -140,11 +140,17 @@ public final class KafkaModule extends AbstractBinder {
 
     @Override
     public ProducerMetrics provide() {
-      if (producerMetrics != null) {
-        throw new IllegalStateException("Attempted to recreate existing global ProducerMetrics");
+      ProducerMetrics localProducerMetrics = producerMetrics;
+      if (localProducerMetrics == null) {
+        synchronized (this) {
+          localProducerMetrics = producerMetrics;
+          if (localProducerMetrics == null) {
+            producerMetrics =
+                localProducerMetrics = new ProducerMetrics(context.get().getConfig(), Time.SYSTEM);
+          }
+        }
       }
-      producerMetrics = new ProducerMetrics(context.get().getConfig(), Time.SYSTEM);
-      return producerMetrics;
+      return localProducerMetrics;
     }
 
     @Override
