@@ -34,7 +34,6 @@ import io.confluent.kafka.serializers.subject.RecordNameStrategy;
 import io.confluent.kafka.serializers.subject.TopicNameStrategy;
 import io.confluent.kafka.serializers.subject.TopicRecordNameStrategy;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
-import io.confluent.kafkarest.SizingDeserializer;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import java.time.Instant;
 import java.util.List;
@@ -73,8 +72,7 @@ public abstract class ProduceRequest {
       @JsonProperty("headers") @Nullable List<ProduceRequestHeader> headers,
       @JsonProperty("key") @Nullable ProduceRequestData key,
       @JsonProperty("value") @Nullable ProduceRequestData value,
-      @JsonProperty("timestamp") @Nullable Instant timestamp
-  ) {
+      @JsonProperty("timestamp") @Nullable Instant timestamp) {
     return builder()
         .setPartitionId(partitionId)
         .setHeaders(headers != null ? headers : ImmutableList.of())
