@@ -65,10 +65,19 @@ public class ProduceRequestSerdeModule extends SimpleModule {
     @Override
     public ProduceRequest deserialize(JsonParser p, DeserializationContext ctxt)
         throws IOException {
-      long startPosition = p.getCurrentLocation().getByteOffset();
+      long startPosition =
+          p.getCurrentLocation().getByteOffset() == -1
+              ? p.getCurrentLocation().getCharOffset()
+              : p.getCurrentLocation().getByteOffset();
       ProduceRequest pr = (ProduceRequest) defaultDeserializer.deserialize(p, ctxt);
-      long endPosition = p.getCurrentLocation().getByteOffset();
-      return ProduceRequest.fromUnsized(pr, endPosition - startPosition);
+      long endPosition =
+          p.getCurrentLocation().getByteOffset() == -1
+              ? p.getCurrentLocation().getCharOffset()
+              : p.getCurrentLocation().getByteOffset();
+
+      long requestSize =
+          startPosition == -1 || endPosition == -1 ? 0 : endPosition - startPosition + 1;
+      return ProduceRequest.fromUnsized(pr, requestSize);
     }
 
     @Override
