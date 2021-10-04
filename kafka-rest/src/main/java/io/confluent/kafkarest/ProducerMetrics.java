@@ -64,36 +64,17 @@ public class ProducerMetrics {
   public ProducerMetrics(KafkaRestConfig config, Time time) {
     this.metrics = new MetricsBuilder(config.getMetricsContext()).withTime(time).build();
     this.jmxPrefix = config.getString(KafkaRestConfig.METRICS_JMX_PREFIX_CONFIG);
+    String sensorNameTemplate = jmxPrefix + ":" + ProducerMetricsRegistry.GROUP_NAME + ":%s";
     this.fullyQualifiedRecordErrorSensor =
-        String.join(
-            ":",
-            jmxPrefix,
-            ProducerMetricsRegistry.GROUP_NAME,
-            ProducerMetricsRegistry.RECORD_ERROR_SENSOR);
+        String.format(sensorNameTemplate, ProducerMetricsRegistry.RECORD_ERROR_SENSOR);
     this.fullyQualifiedRequestSensor =
-        String.join(
-            ":",
-            jmxPrefix,
-            ProducerMetricsRegistry.GROUP_NAME,
-            ProducerMetricsRegistry.REQUEST_SENSOR);
+        String.format(sensorNameTemplate, ProducerMetricsRegistry.REQUEST_SENSOR);
     this.fullyQualifiedRequestLatencySensor =
-        String.join(
-            ":",
-            jmxPrefix,
-            ProducerMetricsRegistry.GROUP_NAME,
-            ProducerMetricsRegistry.REQUEST_LATENCY_SENSOR);
+        String.format(sensorNameTemplate, ProducerMetricsRegistry.REQUEST_LATENCY_SENSOR);
     this.fullyQualifiedRequestSizeSensor =
-        String.join(
-            ":",
-            jmxPrefix,
-            ProducerMetricsRegistry.GROUP_NAME,
-            ProducerMetricsRegistry.REQUEST_SIZE_SENSOR);
+        String.format(sensorNameTemplate, ProducerMetricsRegistry.REQUEST_SIZE_SENSOR);
     this.fullyQualifiedResponseSensor =
-        String.join(
-            ":",
-            jmxPrefix,
-            ProducerMetricsRegistry.GROUP_NAME,
-            ProducerMetricsRegistry.RESPONSE_SENSOR);
+        String.format(sensorNameTemplate, ProducerMetricsRegistry.RESPONSE_SENSOR);
     setupMetricBeans();
   }
 
