@@ -24,13 +24,10 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.jaxrs.base.JsonMappingExceptionMapper;
 import com.fasterxml.jackson.jaxrs.base.JsonParseExceptionMapper;
 import com.google.auto.value.AutoValue;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.common.CompletableFutures;
-import io.confluent.kafkarest.exceptions.RateLimitGracePeriodExceededException;
 import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
-import io.confluent.kafkarest.exceptions.v3.RateLimitExceptionMapper;
 import io.confluent.kafkarest.exceptions.v3.V3ExceptionMapper;
 import io.confluent.rest.entities.ErrorMessage;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
@@ -62,7 +59,6 @@ import org.slf4j.LoggerFactory;
 public abstract class StreamingResponse<T> {
 
   private static final Logger log = LoggerFactory.getLogger(StreamingResponse.class);
-  @VisibleForTesting static ChunkedOutputFactory factory;
 
   private static final CompositeErrorMapper EXCEPTION_MAPPER =
       new CompositeErrorMapper.Builder()
@@ -81,27 +77,26 @@ public abstract class StreamingResponse<T> {
               new V3ExceptionMapper(),
               response -> ((ErrorResponse) response.getEntity()).getErrorCode(),
               response -> ((ErrorResponse) response.getEntity()).getMessage())
-          .putMapper(
-              RateLimitGracePeriodExceededException.class,
-              new RateLimitExceptionMapper(),
-              response -> ((ErrorResponse) response.getEntity()).getErrorCode(),
-              response -> ((ErrorResponse) response.getEntity()).getMessage())
           .setDefaultMapper(
               new KafkaExceptionMapper(/* restConfig= */ null),
               response -> ((ErrorMessage) response.getEntity()).getErrorCode(),
               response -> ((ErrorMessage) response.getEntity()).getMessage())
           .build();
 
-  StreamingResponse() {}
+  private ChunkedOutputFactory chunkedOutputFactory;
 
-  public static <T> StreamingResponse<T> from(MappingIterator<T> input) {
-    factory = new ChunkedOutputFactory();
-    return new InputStreamingResponse<>(input);
+  StreamingResponse(ChunkedOutputFactory chunkedOutputFactory) {
+    this.chunkedOutputFactory = chunkedOutputFactory;
+  }
+
+  public static <T> StreamingResponse<T> from(
+      MappingIterator<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
+    return new InputStreamingResponse<>(mappingIteratorInput, chunkedOutputFactory);
   }
 
   public final <O> StreamingResponse<O> compose(
       Function<? super T, ? extends CompletableFuture<O>> transform) {
-    return new ComposingStreamingResponse<>(this, transform);
+    return new ComposingStreamingResponse<>(this, transform, chunkedOutputFactory);
   }
 
   /**
@@ -112,7 +107,7 @@ public abstract class StreamingResponse<T> {
    */
   public final void resume(AsyncResponse asyncResponse) {
     log.debug("Resuming StreamingResponse");
-    AsyncResponseQueue responseQueue = new AsyncResponseQueue();
+    AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
     while (hasNext()) {
       responseQueue.push(next().handle(this::handleNext));
@@ -125,10 +120,6 @@ public abstract class StreamingResponse<T> {
       return ResultOrError.result(result);
     } else {
       log.debug("Error processing streaming operation.", error);
-      if (error.getCause() instanceof RateLimitGracePeriodExceededException) {
-        log.warn("Rate limit exceeded for longer than grace period.");
-        throw (RateLimitGracePeriodExceededException) error.getCause();
-      }
       return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(error.getCause()));
     }
   }
@@ -137,22 +128,24 @@ public abstract class StreamingResponse<T> {
 
   abstract CompletableFuture<T> next();
 
-  private static final class InputStreamingResponse<T> extends StreamingResponse<T> {
-    private final MappingIterator<T> input;
+  private static class InputStreamingResponse<T> extends StreamingResponse<T> {
+    private final MappingIterator<T> mappingIteratorInput;
 
-    private InputStreamingResponse(MappingIterator<T> input) {
-      this.input = requireNonNull(input);
+    private InputStreamingResponse(
+        MappingIterator<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
+      super(chunkedOutputFactory);
+      this.mappingIteratorInput = requireNonNull(mappingIteratorInput);
     }
 
     @Override
     public boolean hasNext() {
-      return input.hasNext();
+      return mappingIteratorInput.hasNext();
     }
 
     @Override
     public CompletableFuture<T> next() {
       try {
-        return CompletableFuture.completedFuture(input.nextValue());
+        return CompletableFuture.completedFuture(mappingIteratorInput.nextValue());
       } catch (Throwable e) {
         return CompletableFutures.failedFuture(e);
       }
@@ -160,32 +153,26 @@ public abstract class StreamingResponse<T> {
   }
 
   private static final class ComposingStreamingResponse<I, O> extends StreamingResponse<O> {
-    private final StreamingResponse<I> input;
+    private final StreamingResponse<I> streamingResponseInput;
     private final Function<? super I, ? extends CompletableFuture<O>> transform;
 
     private ComposingStreamingResponse(
-        StreamingResponse<I> input, Function<? super I, ? extends CompletableFuture<O>> transform) {
-      this.input = requireNonNull(input);
+        StreamingResponse<I> streamingResponseInput,
+        Function<? super I, ? extends CompletableFuture<O>> transform,
+        ChunkedOutputFactory chunkedOutputFactory) {
+      super(chunkedOutputFactory);
+      this.streamingResponseInput = requireNonNull(streamingResponseInput);
       this.transform = requireNonNull(transform);
     }
 
     @Override
     public boolean hasNext() {
-      return input.hasNext();
+      return streamingResponseInput.hasNext();
     }
 
     @Override
     public CompletableFuture<O> next() {
-      return input.next().thenCompose(transform);
-    }
-  }
-
-  @VisibleForTesting
-  static class ChunkedOutputFactory {
-    private static final String CHUNK_SEPARATOR = "\r\n";
-
-    ChunkedOutput<ResultOrError> getChunkedOutput() {
-      return new ChunkedOutput<>(ResultOrError.class, CHUNK_SEPARATOR);
+      return streamingResponseInput.next().thenCompose(transform);
     }
   }
 
@@ -205,8 +192,8 @@ public abstract class StreamingResponse<T> {
     // then(allOf((f_i-1), f_i), write(f_i)) monad is made available for garbage collection.
     private CompletableFuture<Void> tail;
 
-    private AsyncResponseQueue() {
-      sink = factory.getChunkedOutput();
+    private AsyncResponseQueue(ChunkedOutputFactory chunkedOutputFactory) {
+      sink = chunkedOutputFactory.getChunkedOutput();
       tail = CompletableFuture.completedFuture(null);
     }
 
@@ -215,29 +202,23 @@ public abstract class StreamingResponse<T> {
     }
 
     private void push(CompletableFuture<ResultOrError> result) {
-
-
       log.debug("Pushing to response queue");
       tail =
           CompletableFuture.allOf(tail, result)
               .handle(
-                  (unused, error) -> {
-                    if (error != null
-                        && error.getCause() instanceof RateLimitGracePeriodExceededException) {
-                      try {
-                        log.debug("Writing to sink");
+                  (unused, err) -> {
+                    try {
+                      ResultOrError res = result.join();
+                      log.debug("Writing to sink");
+                      sink.write(res);
+                      if (res instanceof ErrorHolder) {
+                        log.warn(
+                            "Connection closed as a result of rate limiting being exceeded "
+                                + "for longer than grace period.");
                         sink.close();
-                      } catch (IOException e) {
-                        log.error(
-                            "Error when closing the response channel after rate limit exceeded.",
-                            e);
                       }
-                    } else {
-                      try {
-                        sink.write(result.join());
-                      } catch (IOException e) {
-                        log.error("Error when writing streaming result to response channel.", e);
-                      }
+                    } catch (IOException e) {
+                      log.error("Error when writing streaming result to response channel.", e);
                     }
                     return null;
                   });
@@ -256,14 +237,13 @@ public abstract class StreamingResponse<T> {
     }
   }
 
-  @VisibleForTesting
-  abstract static class ResultOrError {
+  public abstract static class ResultOrError {
 
-    private static <T> ResultHolder<T> result(T result) {
+    public static <T> ResultHolder<T> result(T result) {
       return new AutoValue_StreamingResponse_ResultHolder<>(result);
     }
 
-    private static ErrorHolder error(ErrorResponse error) {
+    public static ErrorHolder error(ErrorResponse error) {
       return new AutoValue_StreamingResponse_ErrorHolder(error);
     }
   }

@@ -23,6 +23,9 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.ProducerMetrics;
 import io.confluent.kafkarest.ProducerMetricsRegistry;
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.SystemTime;
+import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
@@ -35,8 +38,10 @@ import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestHeader;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.entities.v3.ProduceResponse.ProduceResponseData;
 import io.confluent.kafkarest.exceptions.BadRequestException;
+import io.confluent.kafkarest.exceptions.RateLimitGracePeriodExceededException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
-import io.confluent.kafkarest.response.StreamingResponse;
+import io.confluent.kafkarest.response.ChunkedOutputFactory;
+import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.time.Duration;
 import java.time.Instant;
@@ -44,6 +49,9 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import javax.inject.Inject;
@@ -72,21 +80,48 @@ public final class ProduceAction {
               (left, right) -> left.putAll(right.build()),
               ImmutableMultimap.Builder::build);
 
-  private final Provider<SchemaManager> schemaManager;
-  private final Provider<RecordSerializer> recordSerializer;
-  private final Provider<ProduceController> produceController;
+  private final Provider<SchemaManager> schemaManagerProvider;
+  private final Provider<RecordSerializer> recordSerializerProvider;
+  private final Provider<ProduceController> produceControllerProvider;
   private final Provider<ProducerMetrics> producerMetrics;
+  private final ChunkedOutputFactory chunkedOutputFactory;
+  private final StreamingResponseFactory streamingResponseFactory;
+
+  static final ConcurrentLinkedQueue<Long> rateCounter = new ConcurrentLinkedQueue<>();
+  static Optional<AtomicLong> gracePeriodStart = Optional.empty();
+  private static final int ONE_SECOND = 1000;
+  Time time = new SystemTime();
+  private KafkaRestConfig config;
 
   @Inject
   public ProduceAction(
-      Provider<SchemaManager> schemaManager,
+      Provider<SchemaManager> schemaManagerProvider,
       Provider<RecordSerializer> recordSerializer,
-      Provider<ProduceController> produceController,
+      Provider<ProduceController> produceControllerProvider,
       Provider<ProducerMetrics> producerMetrics) {
-    this.schemaManager = requireNonNull(schemaManager);
-    this.recordSerializer = requireNonNull(recordSerializer);
-    this.produceController = requireNonNull(produceController);
+    this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
+    this.recordSerializerProvider = requireNonNull(recordSerializer);
+    this.produceControllerProvider = requireNonNull(produceControllerProvider);
     this.producerMetrics = requireNonNull(producerMetrics);
+    this.config = config;
+    this.chunkedOutputFactory = ChunkedOutputFactory.getChunkedOutputFactory();
+    this.streamingResponseFactory = new StreamingResponseFactory(chunkedOutputFactory);
+  }
+
+  public ProduceAction(
+      Provider<SchemaManager> schemaManagerProvider,
+      Provider<RecordSerializer> recordSerializer,
+      Provider<ProduceController> produceControllerProvider,
+      KafkaRestConfig config,
+      ChunkedOutputFactory chunkedOutputFactory,
+      StreamingResponseFactory streamingResponseFactory) {
+    this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
+    this.recordSerializerProvider = requireNonNull(recordSerializer);
+    this.produceControllerProvider = requireNonNull(produceControllerProvider);
+    this.config = config;
+    this.streamingResponseFactory = streamingResponseFactory;
+    this.chunkedOutputFactory = chunkedOutputFactory;
+    this.producerMetrics = null;
   }
 
   @POST
@@ -100,9 +135,46 @@ public final class ProduceAction {
       @PathParam("topicName") String topicName,
       MappingIterator<ProduceRequest> requests)
       throws Exception {
-    ProduceController controller = produceController.get();
-    StreamingResponse.from(requests)
-        .compose(request -> produce(clusterId, topicName, request, controller))
+
+    if (rateLimit()) {
+      long now = time.milliseconds();
+      addToAndCullRateCounter(now);
+      if (overRateLimit()) {
+        if (overGracePeriod(now)) {
+          streamingResponseFactory
+              .from(requests)
+              .compose(request -> getGracePeriodExceededFailedFuture(clusterId, topicName))
+              .resume(asyncResponse);
+          return;
+        }
+      } else {
+        gracePeriodStart = Optional.empty();
+      }
+    }
+    AtomicBoolean firstMessage = new AtomicBoolean(true);
+
+    ProduceController controller = produceControllerProvider.get();
+    streamingResponseFactory
+        .from(requests)
+        .compose(
+            request -> {
+              if (rateLimit()) {
+                if (!firstMessage.get()) {
+                  long streamedNow = time.milliseconds();
+                  addToAndCullRateCounter(streamedNow);
+                  if (overRateLimit()) {
+                    if (overGracePeriod(streamedNow)) {
+                      return getGracePeriodExceededFailedFuture(clusterId, topicName);
+                    }
+                  } else {
+                    gracePeriodStart = Optional.empty();
+                  }
+                } else {
+                  firstMessage.set(false);
+                }
+              }
+              return produce(clusterId, topicName, request, controller);
+            })
         .resume(asyncResponse);
   }
 
@@ -140,6 +212,19 @@ public final class ProduceAction {
             serializedValue,
             request.getTimestamp().orElse(Instant.now()));
 
+    final Optional<Long> resumeAfterMs;
+    if (overRateLimit()) {
+      resumeAfterMs =
+          Optional.of(
+              (long)
+                      (rateCounter.size()
+                              / config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND)
+                          - 1)
+                  * 1000);
+    } else {
+      resumeAfterMs = Optional.empty();
+    }
+
     return produceResult
         .handle(
             (result, ex) -> {
@@ -152,15 +237,15 @@ public final class ProduceAction {
               return result;
             })
         .thenApply(
-            result -> {
-              ProduceResponse response =
-                  toProduceResponse(
-                      clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
+        result -> {
+          ProduceResponse response =
+              toProduceResponse(
+                  clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result, resumeAfterMs);
               long latency =
                   Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
               recordResponseMetrics(latency);
               return response;
-            });
+        });
   }
 
   private Optional<RegisteredSchema> getSchema(
@@ -171,7 +256,7 @@ public final class ProduceAction {
 
     try {
       return Optional.of(
-          schemaManager
+          schemaManagerProvider
               .get()
               .getSchema(
                   topicName,
@@ -193,7 +278,7 @@ public final class ProduceAction {
       Optional<RegisteredSchema> schema,
       Optional<ProduceRequestData> data,
       boolean isKey) {
-    return recordSerializer
+    return recordSerializerProvider
         .get()
         .serialize(
             format.orElse(EmbeddedFormat.BINARY),
@@ -210,7 +295,8 @@ public final class ProduceAction {
       Optional<RegisteredSchema> keySchema,
       Optional<EmbeddedFormat> valueFormat,
       Optional<RegisteredSchema> valueSchema,
-      ProduceResult result) {
+      ProduceResult result,
+      Optional<Long> resumeAfterMs) {
     return ProduceResponse.builder()
         .setClusterId(clusterId)
         .setTopicName(topicName)
@@ -237,6 +323,7 @@ public final class ProduceAction {
                         .setSchemaVersion(valueSchema.map(RegisteredSchema::getSchemaVersion))
                         .setSize(result.getSerializedValueSize())
                         .build()))
+        .setResumeAfterMs(resumeAfterMs)
         .build();
   }
 
@@ -272,5 +359,51 @@ public final class ProduceAction {
         .get()
         .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
         .recordRequestSize(size);
+  }
+
+  private void addToAndCullRateCounter(long now) {
+    rateCounter.add(now);
+    while (rateCounter.peek() < now - ONE_SECOND) {
+      rateCounter.poll();
+    }
+    if (rateCounter.size() <= config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND)) {
+      gracePeriodStart = Optional.empty();
+    }
+  }
+
+  private boolean rateLimit() {
+    return config.getBoolean(KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED);
+  }
+
+  private boolean overRateLimit() {
+    return rateCounter.size() > config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND);
+  }
+
+  private boolean overGracePeriod(Long now) {
+    if (!gracePeriodStart.isPresent() && config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD) != 0) {
+      gracePeriodStart = Optional.of(new AtomicLong(now));
+      return false;
+    } else if (config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD) == 0
+        || config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD)
+            < now - gracePeriodStart.get().get()) {
+      return true;
+    }
+    return false;
+  }
+
+  private CompletableFuture<ProduceResponse> getGracePeriodExceededFailedFuture(
+      String clusterId, String topicName) {
+
+    CompletableFuture<ProduceResult> result = new CompletableFuture<>();
+
+    result.completeExceptionally(
+        new RateLimitGracePeriodExceededException(
+            config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND),
+            config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD)));
+
+    return result.thenApply(
+        result2 ->
+            toProduceResponse(
+                clusterId, topicName, null, null, null, null, result2, Optional.empty()));
   }
 }

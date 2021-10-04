@@ -1,6 +1,5 @@
 package io.confluent.kafkarest.response;
 
-import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
@@ -11,8 +10,6 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
-import io.confluent.kafkarest.exceptions.RateLimitGracePeriodExceededException;
-import io.confluent.kafkarest.response.StreamingResponse.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -52,23 +49,36 @@ public class StreamingResponseTest {
     expect(requests.hasNext()).andReturn(false);
     replay(requests);
 
-    StreamingResponse streamingResponse = StreamingResponse.from(requests);
-
     ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
 
-    streamingResponse.factory = mockedChunkedOutputFactory;
+    ProduceResponse produceResponse =
+        ProduceResponse.builder()
+            .setClusterId("clusterId")
+            .setTopicName("topicName")
+            .setPartitionId(1)
+            .setOffset(1L)
+            .setResumeAfterMs(123)
+            .build();
+
+    ResultOrError resultOrError = ResultOrError.result(produceResponse);
+
     expect(mockedChunkedOutputFactory.getChunkedOutput()).andReturn(mockedChunkedOutput);
-    mockedChunkedOutput.close();
+    mockedChunkedOutput.write(resultOrError);
     mockedChunkedOutput.close();
     replay(mockedChunkedOutputFactory);
     replay(mockedChunkedOutput);
 
-    CompletableFuture<ProduceResponse> produceResponse = new CompletableFuture<>();
-    produceResponse.completeExceptionally(new RateLimitGracePeriodExceededException());
+    StreamingResponseFactory streamingResponseFactory =
+        new StreamingResponseFactory(mockedChunkedOutputFactory);
+    StreamingResponse<ProduceRequest> streamingResponse = streamingResponseFactory.from(requests);
+
+    CompletableFuture<ProduceResponse> produceResponseFuture = new CompletableFuture<>();
+
+    produceResponseFuture.complete(produceResponse);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    streamingResponse.compose(result -> produceResponse).resume(response);
+    streamingResponse.compose(result -> produceResponseFuture).resume(response);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
@@ -96,23 +106,14 @@ public class StreamingResponseTest {
                     .build())
             .build();
 
-    MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
-    expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue()).andReturn(request);
-    expect(requests.hasNext()).andReturn(false);
-    replay(requests);
-
-    StreamingResponse streamingResponse = StreamingResponse.from(requests);
+    MappingIterator<ProduceRequest> requestsMappingIterator = mock(MappingIterator.class);
+    expect(requestsMappingIterator.hasNext()).andReturn(true);
+    expect(requestsMappingIterator.nextValue()).andReturn(request);
+    expect(requestsMappingIterator.hasNext()).andReturn(false);
+    replay(requestsMappingIterator);
 
     ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
-
-    streamingResponse.factory = mockedChunkedOutputFactory;
-    expect(mockedChunkedOutputFactory.getChunkedOutput()).andReturn(mockedChunkedOutput);
-    mockedChunkedOutput.write(anyObject());
-    mockedChunkedOutput.close();
-    replay(mockedChunkedOutputFactory);
-    replay(mockedChunkedOutput);
 
     ProduceResponse produceResponse =
         ProduceResponse.builder()
@@ -121,14 +122,27 @@ public class StreamingResponseTest {
             .setPartitionId(1)
             .setOffset(1L)
             .build();
+    ResultOrError resultOrError = ResultOrError.result(produceResponse);
+
+    expect(mockedChunkedOutputFactory.getChunkedOutput()).andReturn(mockedChunkedOutput);
+    mockedChunkedOutput.write(resultOrError);
+    mockedChunkedOutput.close();
+    replay(mockedChunkedOutput, mockedChunkedOutputFactory);
+
+    StreamingResponseFactory streamingResponseFactory =
+        new StreamingResponseFactory(mockedChunkedOutputFactory);
+
+    StreamingResponse<ProduceRequest> streamingResponse =
+        streamingResponseFactory.from(requestsMappingIterator);
+
     CompletableFuture<ProduceResponse> produceResponseFuture = new CompletableFuture<>();
     produceResponseFuture.complete(produceResponse);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    streamingResponse.compose(result -> produceResponse).resume(response);
+    streamingResponse.compose(result -> produceResponseFuture).resume(response);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
-    EasyMock.verify(requests);
+    EasyMock.verify(requestsMappingIterator);
   }
 }

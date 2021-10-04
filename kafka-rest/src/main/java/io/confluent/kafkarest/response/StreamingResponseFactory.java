@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -13,16 +13,19 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.exceptions;
+package io.confluent.kafkarest.response;
 
-import javax.ws.rs.core.Response.Status;
+import com.fasterxml.jackson.databind.MappingIterator;
 
-public class TooManyRequestsException extends StatusCodeException {
+public class StreamingResponseFactory {
 
-  public TooManyRequestsException(int rateLimit, int gracePeriod) {
-    super(
-        Status.TOO_MANY_REQUESTS,
-        "Rate limit of " + rateLimit + " exceeded within the grace period of " + gracePeriod + ".",
-        "");
+  private ChunkedOutputFactory chunkedOutputFactory;
+
+  public StreamingResponseFactory(ChunkedOutputFactory chunkedOutputFactory) {
+    this.chunkedOutputFactory = chunkedOutputFactory;
+  }
+
+  public <T> StreamingResponse<T> from(MappingIterator<T> input) {
+    return StreamingResponse.from(input, chunkedOutputFactory);
   }
 }

@@ -17,20 +17,12 @@ package io.confluent.kafkarest.controllers;
 
 import static java.util.Objects.requireNonNull;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Multimap;
 import com.google.protobuf.ByteString;
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.SystemTime;
-import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.entities.ProduceResult;
-import io.confluent.kafkarest.exceptions.RateLimitGracePeriodExceededException;
-import io.confluent.kafkarest.exceptions.TooManyRequestsException;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.producer.Producer;
@@ -44,31 +36,10 @@ final class ProduceControllerImpl implements ProduceController {
   private static final Logger log = LoggerFactory.getLogger(ProduceController.class);
 
   private final Producer<byte[], byte[]> producer;
-  private final KafkaRestConfig config;
-
-  @VisibleForTesting
-  static final ConcurrentLinkedQueue<Long> rateCounter = new ConcurrentLinkedQueue<>();
-
-  @VisibleForTesting static Optional<AtomicLong> gracePeriodStart = Optional.empty();
-  private static final int ONE_SECOND = 1000;
-
-  @VisibleForTesting public Time time = new SystemTime();
 
   @Inject
-  ProduceControllerImpl(Producer<byte[], byte[]> producer, KafkaRestConfig config) {
+  ProduceControllerImpl(Producer<byte[], byte[]> producer) {
     this.producer = requireNonNull(producer);
-    this.config = config;
-  }
-
-  private void addToAndCullRateCounter(long now) {
-
-    rateCounter.add(now);
-    while (rateCounter.peek() < now - ONE_SECOND) {
-      rateCounter.poll();
-    }
-    if (rateCounter.size() <= config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND)) {
-      gracePeriodStart = Optional.empty();
-    }
   }
 
   @Override
@@ -80,27 +51,9 @@ final class ProduceControllerImpl implements ProduceController {
       Optional<ByteString> key,
       Optional<ByteString> value,
       Instant timestamp) {
-
-    long now = time.milliseconds();
-    addToAndCullRateCounter(now);
-
     CompletableFuture<ProduceResult> result = new CompletableFuture<>();
+
     log.debug("Producing to kafka");
-    if (rateCounter.size() > config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND)) {
-
-      if (!gracePeriodStart.isPresent()
-          && config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD) != 0) {
-        gracePeriodStart = Optional.of(new AtomicLong(now));
-      } else if (config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD) == 0
-          || config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD)
-              < now - gracePeriodStart.get().get()) {
-        result.completeExceptionally(new RateLimitGracePeriodExceededException());
-        return result;
-      }
-
-    } else {
-      gracePeriodStart = Optional.empty();
-    }
 
     producer.send(
         new ProducerRecord<>(
@@ -120,11 +73,6 @@ final class ProduceControllerImpl implements ProduceController {
           if (exception != null) {
             log.debug("Received exception from kafka", exception);
             result.completeExceptionally(exception);
-          } else if (gracePeriodStart.isPresent()) {
-            result.completeExceptionally(
-                new TooManyRequestsException(
-                    config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND),
-                    config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD)));
           } else {
             log.debug("Received response from kafka");
             result.complete(ProduceResult.fromRecordMetadata(metadata, Instant.now()));
