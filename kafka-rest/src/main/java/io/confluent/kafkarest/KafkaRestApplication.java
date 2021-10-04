@@ -117,7 +117,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
         .registerModule(new GuavaModule())
         .registerModule(new Jdk8Module())
         .registerModule(new JavaTimeModule())
-        //.registerModule(new ProduceRequestSerdeModule())
+        .registerModule(new ProduceRequestSerdeModule())
         .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
         .setDateFormat(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"))
         .setTimeZone(TimeZone.getTimeZone("UTC"));

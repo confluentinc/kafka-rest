@@ -128,7 +128,7 @@ public final class ProduceAction {
     Optional<ByteString> serializedValue =
         serialize(topicName, valueFormat, valueSchema, request.getValue(), /* isKey= */ false);
 
-    recordRequestMetrics(serializedKey, serializedValue);
+    recordRequestMetrics(request.getOriginalSize().orElse(0L));
 
     CompletableFuture<ProduceResult> produceResult =
         controller.produce(
@@ -256,25 +256,15 @@ public final class ProduceAction {
         .recordError();
   }
 
-  private void recordRequestMetrics(
-      Optional<ByteString> serializedKey, Optional<ByteString> serializedValue) {
+  private void recordRequestMetrics(long size) {
     producerMetrics
         .get()
         .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
         .recordRequest();
     // record request size
-    double requestSize = getRequestSize(serializedKey, serializedValue);
     producerMetrics
         .get()
         .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordRequestSize(requestSize);
-  }
-
-  private double getRequestSize(
-      Optional<ByteString> serializedKey, Optional<ByteString> serializedValue) {
-    double size = 0.0;
-    size += serializedKey.orElse(ByteString.EMPTY).size();
-    size += serializedValue.orElse(ByteString.EMPTY).size();
-    return size;
+        .recordRequestSize(size);
   }
 }

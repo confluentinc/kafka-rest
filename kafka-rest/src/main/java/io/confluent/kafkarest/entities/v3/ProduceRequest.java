@@ -66,6 +66,10 @@ public abstract class ProduceRequest {
   @JsonInclude(Include.NON_ABSENT)
   public abstract Optional<Instant> getTimestamp();
 
+  @JsonProperty("originalSize")
+  @JsonInclude(Include.NON_ABSENT)
+  public abstract Optional<Long> getOriginalSize();
+
   @JsonCreator()
   static ProduceRequest fromJson(
       @JsonProperty("partition_id") @Nullable Integer partitionId,
@@ -80,6 +84,23 @@ public abstract class ProduceRequest {
         .setValue(value)
         .setTimestamp(timestamp)
         .build();
+  }
+
+  public static ProduceRequest fromUnsized(ProduceRequest original, long size) {
+    Builder builder = builder().setHeaders(original.getHeaders()).setOriginalSize(size);
+    if (original.getPartitionId().isPresent()) {
+      builder.setPartitionId(original.getPartitionId().get());
+    }
+    if (original.getKey().isPresent()) {
+      builder.setKey(original.getKey().get());
+    }
+    if (original.getValue().isPresent()) {
+      builder.setValue(original.getValue().get());
+    }
+    if (original.getTimestamp().isPresent()) {
+      builder.setTimestamp(original.getTimestamp().get());
+    }
+    return builder.build();
   }
 
   public static Builder builder() {
@@ -98,6 +119,8 @@ public abstract class ProduceRequest {
     public abstract Builder setValue(@Nullable ProduceRequestData value);
 
     public abstract Builder setTimestamp(@Nullable Instant timestamp);
+
+    public abstract Builder setOriginalSize(@Nullable Long size);
 
     public abstract ProduceRequest build();
   }
