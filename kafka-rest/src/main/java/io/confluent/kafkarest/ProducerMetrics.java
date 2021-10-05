@@ -261,7 +261,7 @@ public class ProducerMetrics {
   }
 
   // I'm not going to lie this exists only to defeat checkstyle ;-)
-  public static class SensorBuilder {
+  private static class SensorBuilder {
 
     private final ProduceMetricMBean bean;
     private final Sensor sensor;
@@ -324,7 +324,7 @@ public class ProducerMetrics {
     }
   }
 
-  public static class MeasuredStatSupplier {
+  private static class MeasuredStatSupplier {
 
     public static MeasurableStat avg() {
       return new Avg();

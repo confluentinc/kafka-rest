@@ -144,7 +144,9 @@ public final class ProduceAction {
         .handle(
             (result, ex) -> {
               if (ex != null) {
-                recordErrorMetrics();
+                long latency =
+                    Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
+                recordErrorMetrics(latency);
                 throw new CompletionException(ex);
               }
               return result;
@@ -249,11 +251,15 @@ public final class ProduceAction {
         .recordRequestLatency(latency);
   }
 
-  private void recordErrorMetrics() {
+  private void recordErrorMetrics(long latency) {
     producerMetrics
         .get()
         .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
         .recordError();
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
+        .recordRequestLatency(latency);
   }
 
   private void recordRequestMetrics(long size) {

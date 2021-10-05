@@ -19,6 +19,10 @@ public class ProducerMetricsRegistry {
 
   public static final String GROUP_NAME = "produce-api-metrics";
 
+  /*
+  Rate, Average and Percentile metrics use underlying SampledStat and are therefore over a window
+  not equal to the whole lifetime of the sensor (default 30s)
+   */
   // sensor names
   public static final String REQUEST_SENSOR = "request-sensor";
   public static final String REQUEST_SIZE_SENSOR = "request-size-sensor";
@@ -40,7 +44,7 @@ public class ProducerMetricsRegistry {
   // response
   public static final String RESPONSE_SEND_RATE = "response-rate";
   public static final String RESPONSE_SEND_RATE_DOC =
-      "The average number of response sent per second.";
+      "The average number of responses sent per second.";
 
   public static final String RESPONSE_COUNT_WINDOWED = "response-count-windowed";
   public static final String RESPONSE_COUNT_WINDOWED_DOC =
