@@ -66,7 +66,7 @@ final class ProduceControllerImpl implements ProduceController {
           if (exception != null) {
             result.completeExceptionally(exception);
           } else {
-            result.complete(ProduceResult.fromRecordMetadata(metadata));
+            result.complete(ProduceResult.fromRecordMetadata(metadata, Instant.now()));
           }
         });
     return result;

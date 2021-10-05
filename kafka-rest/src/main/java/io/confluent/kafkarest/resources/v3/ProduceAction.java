@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
+import io.confluent.kafkarest.ProducerMetrics;
+import io.confluent.kafkarest.ProducerMetricsRegistry;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
@@ -36,9 +38,12 @@ import io.confluent.kafkarest.exceptions.BadRequestException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.response.StreamingResponse;
 import io.confluent.rest.annotations.PerformanceMetric;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import javax.inject.Inject;
@@ -70,15 +75,18 @@ public final class ProduceAction {
   private final Provider<SchemaManager> schemaManager;
   private final Provider<RecordSerializer> recordSerializer;
   private final Provider<ProduceController> produceController;
+  private final Provider<ProducerMetrics> producerMetrics;
 
   @Inject
   public ProduceAction(
       Provider<SchemaManager> schemaManager,
       Provider<RecordSerializer> recordSerializer,
-      Provider<ProduceController> produceController) {
+      Provider<ProduceController> produceController,
+      Provider<ProducerMetrics> producerMetrics) {
     this.schemaManager = requireNonNull(schemaManager);
     this.recordSerializer = requireNonNull(recordSerializer);
     this.produceController = requireNonNull(produceController);
+    this.producerMetrics = requireNonNull(producerMetrics);
   }
 
   @POST
@@ -100,6 +108,8 @@ public final class ProduceAction {
 
   private CompletableFuture<ProduceResponse> produce(
       String clusterId, String topicName, ProduceRequest request, ProduceController controller) {
+
+    Instant requestInstant = Instant.now();
     Optional<RegisteredSchema> keySchema =
         request.getKey().flatMap(key -> getSchema(topicName, /* isKey= */ true, key));
     Optional<EmbeddedFormat> keyFormat =
@@ -118,6 +128,8 @@ public final class ProduceAction {
     Optional<ByteString> serializedValue =
         serialize(topicName, valueFormat, valueSchema, request.getValue(), /* isKey= */ false);
 
+    recordRequestMetrics(request.getOriginalSize().orElse(0L));
+
     CompletableFuture<ProduceResult> produceResult =
         controller.produce(
             clusterId,
@@ -128,10 +140,27 @@ public final class ProduceAction {
             serializedValue,
             request.getTimestamp().orElse(Instant.now()));
 
-    return produceResult.thenApply(
-        result ->
-            toProduceResponse(
-                clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result));
+    return produceResult
+        .handle(
+            (result, ex) -> {
+              if (ex != null) {
+                long latency =
+                    Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
+                recordErrorMetrics(latency);
+                throw new CompletionException(ex);
+              }
+              return result;
+            })
+        .thenApply(
+            result -> {
+              ProduceResponse response =
+                  toProduceResponse(
+                      clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
+              long latency =
+                  Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
+              recordResponseMetrics(latency);
+              return response;
+            });
   }
 
   private Optional<RegisteredSchema> getSchema(
@@ -209,5 +238,39 @@ public final class ProduceAction {
                         .setSize(result.getSerializedValueSize())
                         .build()))
         .build();
+  }
+
+  private void recordResponseMetrics(long latency) {
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
+        .recordResponse();
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
+        .recordRequestLatency(latency);
+  }
+
+  private void recordErrorMetrics(long latency) {
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
+        .recordError();
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
+        .recordRequestLatency(latency);
+  }
+
+  private void recordRequestMetrics(long size) {
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
+        .recordRequest();
+    // record request size
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
+        .recordRequestSize(size);
   }
 }
