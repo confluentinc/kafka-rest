@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.MappingIterator;
 import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.ProducerMetrics;
 import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
@@ -547,6 +548,7 @@ public class ProduceActionTest {
     expect(produceResult.getTimestamp()).andReturn(Optional.of(Instant.ofEpochMilli(0))).anyTimes();
     expect(produceResult.getSerializedKeySize()).andReturn(1).anyTimes();
     expect(produceResult.getSerializedValueSize()).andReturn(1).anyTimes();
+    expect(produceResult.getCompletionTimestamp()).andReturn(Instant.now()).anyTimes();
     replay(produceResult);
   }
 
@@ -579,12 +581,14 @@ public class ProduceActionTest {
       int times,
       int producerId) {
     Provider<SchemaManager> schemaManagerProvider = mock(Provider.class);
+    Provider<ProducerMetrics> producerMetricsProvider = mock(Provider.class);
+    getProducerMetricsProvider(producerMetricsProvider, times);
     Provider<RecordSerializer> recordSerializerProvider = getRecordSerializerProvider();
     Provider<ProduceController> produceControllerProvider = mock(Provider.class);
     ProduceController produceController = getProduceControllerMock(produceControllerProvider);
     setupExpectsMockCallsForProduce(produceController, times, producerId);
 
-    replay(produceControllerProvider, produceController);
+    replay(producerMetricsProvider, produceControllerProvider, produceController);
 
     StreamingResponseFactory streamingResponseFactory =
         new StreamingResponseFactory(chunkedOutputFactory);
@@ -594,6 +598,7 @@ public class ProduceActionTest {
             schemaManagerProvider,
             recordSerializerProvider,
             produceControllerProvider,
+            producerMetricsProvider,
             new KafkaRestConfig(properties),
             chunkedOutputFactory,
             streamingResponseFactory);
@@ -603,5 +608,15 @@ public class ProduceActionTest {
     ProduceRateLimitCounters.clear();
 
     return produceAction;
+  }
+
+  Provider<ProducerMetrics> getProducerMetricsProvider(
+      Provider<ProducerMetrics> producerMetricsProvider, int times) {
+    ProducerMetrics producerMetrics = mock(ProducerMetrics.class);
+    expect(producerMetricsProvider.get()).andReturn(producerMetrics).anyTimes();
+    ProducerMetrics.ProduceMetricMBean metricMBean = mock(ProducerMetrics.ProduceMetricMBean.class);
+    expect(producerMetrics.mbean(anyObject(), anyObject())).andReturn(metricMBean).anyTimes();
+    replay(producerMetrics);
+    return mock(Provider.class);
   }
 }

@@ -21,9 +21,9 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ProducerMetrics;
 import io.confluent.kafkarest.ProducerMetricsRegistry;
-import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.SystemTime;
 import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.controllers.ProduceController;
@@ -50,7 +50,6 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
@@ -112,16 +111,17 @@ public final class ProduceAction {
       Provider<SchemaManager> schemaManagerProvider,
       Provider<RecordSerializer> recordSerializer,
       Provider<ProduceController> produceControllerProvider,
+      Provider<ProducerMetrics> producerMetrics,
       KafkaRestConfig config,
       ChunkedOutputFactory chunkedOutputFactory,
       StreamingResponseFactory streamingResponseFactory) {
     this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
     this.recordSerializerProvider = requireNonNull(recordSerializer);
     this.produceControllerProvider = requireNonNull(produceControllerProvider);
+    this.producerMetrics = requireNonNull(producerMetrics);
     this.config = config;
     this.streamingResponseFactory = streamingResponseFactory;
     this.chunkedOutputFactory = chunkedOutputFactory;
-    this.producerMetrics = null;
   }
 
   @POST
@@ -250,15 +250,22 @@ public final class ProduceAction {
               return result;
             })
         .thenApply(
-        result -> {
-          ProduceResponse response =
-              toProduceResponse(
-                  clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result, resumeAfterMs);
+            result -> {
+              ProduceResponse response =
+                  toProduceResponse(
+                      clusterId,
+                      topicName,
+                      keyFormat,
+                      keySchema,
+                      valueFormat,
+                      valueSchema,
+                      result,
+                      resumeAfterMs);
               long latency =
                   Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
               recordResponseMetrics(latency);
               return response;
-        });
+            });
   }
 
   private Optional<RegisteredSchema> getSchema(
