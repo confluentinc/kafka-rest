@@ -22,6 +22,7 @@ import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.mock.MockTime;
+import io.confluent.kafkarest.resources.ProduceRateLimitCounters;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
@@ -598,8 +599,8 @@ public class ProduceActionTest {
             streamingResponseFactory);
     produceAction.time = time;
 
-    produceAction.gracePeriodStart = Optional.empty();
-    produceAction.rateCounter.clear();
+    ProduceRateLimitCounters.resetGracePeriodStart();
+    ProduceRateLimitCounters.clear();
 
     return produceAction;
   }

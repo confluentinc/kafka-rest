@@ -40,6 +40,7 @@ import io.confluent.kafkarest.entities.v3.ProduceResponse.ProduceResponseData;
 import io.confluent.kafkarest.exceptions.BadRequestException;
 import io.confluent.kafkarest.exceptions.RateLimitGracePeriodExceededException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
+import io.confluent.kafkarest.resources.ProduceRateLimitCounters;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
@@ -87,8 +88,6 @@ public final class ProduceAction {
   private final ChunkedOutputFactory chunkedOutputFactory;
   private final StreamingResponseFactory streamingResponseFactory;
 
-  static final ConcurrentLinkedQueue<Long> rateCounter = new ConcurrentLinkedQueue<>();
-  static Optional<AtomicLong> gracePeriodStart = Optional.empty();
   private static final int ONE_SECOND = 1000;
   Time time = new SystemTime();
   private KafkaRestConfig config;
@@ -98,7 +97,8 @@ public final class ProduceAction {
       Provider<SchemaManager> schemaManagerProvider,
       Provider<RecordSerializer> recordSerializer,
       Provider<ProduceController> produceControllerProvider,
-      Provider<ProducerMetrics> producerMetrics) {
+      Provider<ProducerMetrics> producerMetrics,
+      KafkaRestConfig config) {
     this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
     this.recordSerializerProvider = requireNonNull(recordSerializer);
     this.produceControllerProvider = requireNonNull(produceControllerProvider);
@@ -143,12 +143,20 @@ public final class ProduceAction {
         if (overGracePeriod(now)) {
           streamingResponseFactory
               .from(requests)
-              .compose(request -> getGracePeriodExceededFailedFuture(clusterId, topicName))
+              .compose(
+                  request -> {
+                    CompletableFuture future = new CompletableFuture();
+                    future.completeExceptionally(
+                        new RateLimitGracePeriodExceededException(
+                            config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND),
+                            config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD)));
+                    return future;
+                  })
               .resume(asyncResponse);
           return;
         }
       } else {
-        gracePeriodStart = Optional.empty();
+        ProduceRateLimitCounters.resetGracePeriodStart();
       }
     }
     AtomicBoolean firstMessage = new AtomicBoolean(true);
@@ -164,10 +172,15 @@ public final class ProduceAction {
                   addToAndCullRateCounter(streamedNow);
                   if (overRateLimit()) {
                     if (overGracePeriod(streamedNow)) {
-                      return getGracePeriodExceededFailedFuture(clusterId, topicName);
+                      CompletableFuture future = new CompletableFuture();
+                      future.completeExceptionally(
+                          new RateLimitGracePeriodExceededException(
+                              config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND),
+                              config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD)));
+                      return future;
                     }
                   } else {
-                    gracePeriodStart = Optional.empty();
+                    ProduceRateLimitCounters.resetGracePeriodStart();
                   }
                 } else {
                   firstMessage.set(false);
@@ -217,7 +230,7 @@ public final class ProduceAction {
       resumeAfterMs =
           Optional.of(
               (long)
-                      (rateCounter.size()
+                      (ProduceRateLimitCounters.size()
                               / config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND)
                           - 1)
                   * 1000);
@@ -362,12 +375,13 @@ public final class ProduceAction {
   }
 
   private void addToAndCullRateCounter(long now) {
-    rateCounter.add(now);
-    while (rateCounter.peek() < now - ONE_SECOND) {
-      rateCounter.poll();
+    ProduceRateLimitCounters.add(now);
+    while (ProduceRateLimitCounters.peek() < now - ONE_SECOND) {
+      ProduceRateLimitCounters.poll();
     }
-    if (rateCounter.size() <= config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND)) {
-      gracePeriodStart = Optional.empty();
+    if (ProduceRateLimitCounters.size()
+        <= config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND)) {
+      ProduceRateLimitCounters.resetGracePeriodStart();
     }
   }
 
@@ -376,34 +390,20 @@ public final class ProduceAction {
   }
 
   private boolean overRateLimit() {
-    return rateCounter.size() > config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND);
+    return ProduceRateLimitCounters.size()
+        > config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND);
   }
 
   private boolean overGracePeriod(Long now) {
-    if (!gracePeriodStart.isPresent() && config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD) != 0) {
-      gracePeriodStart = Optional.of(new AtomicLong(now));
+    if (!ProduceRateLimitCounters.gracePeriodPresent()
+        && config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD) != 0) {
+      ProduceRateLimitCounters.setGracePeriodStart(Optional.of(new AtomicLong(now)));
       return false;
     } else if (config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD) == 0
         || config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD)
-            < now - gracePeriodStart.get().get()) {
+            < now - ProduceRateLimitCounters.get()) {
       return true;
     }
     return false;
-  }
-
-  private CompletableFuture<ProduceResponse> getGracePeriodExceededFailedFuture(
-      String clusterId, String topicName) {
-
-    CompletableFuture<ProduceResult> result = new CompletableFuture<>();
-
-    result.completeExceptionally(
-        new RateLimitGracePeriodExceededException(
-            config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND),
-            config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD)));
-
-    return result.thenApply(
-        result2 ->
-            toProduceResponse(
-                clusterId, topicName, null, null, null, null, result2, Optional.empty()));
   }
 }
