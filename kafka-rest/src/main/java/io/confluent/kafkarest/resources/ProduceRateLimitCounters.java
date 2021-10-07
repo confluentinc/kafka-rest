@@ -29,8 +29,8 @@ public class ProduceRateLimitCounters {
     return produceRateLimitCounters;
   }
 
-  static final ConcurrentLinkedQueue<Long> rateCounter = new ConcurrentLinkedQueue<>();
-  static Optional<AtomicLong> gracePeriodStart = Optional.empty();
+  final ConcurrentLinkedQueue<Long> rateCounter = new ConcurrentLinkedQueue<>();
+  Optional<AtomicLong> gracePeriodStart = Optional.empty();
 
   public void clear() {
     rateCounter.clear();
@@ -61,6 +61,6 @@ public class ProduceRateLimitCounters {
   }
 
   public void setGracePeriodStart(final Optional<AtomicLong> gracePeriodStart) {
-    ProduceRateLimitCounters.gracePeriodStart = gracePeriodStart;
+    this.gracePeriodStart = gracePeriodStart;
   }
 }
