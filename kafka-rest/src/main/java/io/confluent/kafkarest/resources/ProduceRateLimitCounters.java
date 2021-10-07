@@ -21,43 +21,46 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class ProduceRateLimitCounters {
 
+  private static ProduceRateLimitCounters produceRateLimitCounters = new ProduceRateLimitCounters();
+
+  private ProduceRateLimitCounters() {}
+
+  public static ProduceRateLimitCounters getProduceRateLimitCounters() {
+    return produceRateLimitCounters;
+  }
+
   static final ConcurrentLinkedQueue<Long> rateCounter = new ConcurrentLinkedQueue<>();
   static Optional<AtomicLong> gracePeriodStart = Optional.empty();
 
-  public static void clear() {
+  public void clear() {
     rateCounter.clear();
   }
 
-  public static int size() {
+  public int size() {
     return rateCounter.size();
   }
 
-  public static Long peek() {
+  public Long peek() {
     return rateCounter.peek();
   }
 
-  public static Long poll() {
+  public Long poll() {
     return rateCounter.poll();
   }
 
-  public static void add(Long time) {
+  public void add(Long time) {
     rateCounter.add(time);
   }
 
-  public static void resetGracePeriodStart() {
+  public void resetGracePeriodStart() {
     gracePeriodStart = Optional.empty();
   }
 
-  // This throws an exception if the gracePeriodStart is Optional.empty()
-  public static Long get() {
-    return gracePeriodStart.get().get();
+  public Optional<AtomicLong> get() {
+    return gracePeriodStart;
   }
 
-  public static void setGracePeriodStart(final Optional<AtomicLong> gracePeriodStart) {
+  public void setGracePeriodStart(final Optional<AtomicLong> gracePeriodStart) {
     ProduceRateLimitCounters.gracePeriodStart = gracePeriodStart;
-  }
-
-  public static boolean gracePeriodPresent() {
-    return gracePeriodStart.isPresent();
   }
 }

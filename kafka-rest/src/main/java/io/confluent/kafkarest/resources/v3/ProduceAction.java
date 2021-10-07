@@ -44,6 +44,7 @@ import io.confluent.kafkarest.resources.ProduceRateLimitCounters;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
@@ -64,10 +65,14 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/records")
 @ResourceName("api.v3.produce.*")
 public final class ProduceAction {
+
+  private static final Logger log = LoggerFactory.getLogger(ProduceAction.class);
 
   private static final Collector<
           ProduceRequestHeader,
@@ -86,6 +91,7 @@ public final class ProduceAction {
   private final Provider<ProducerMetrics> producerMetrics;
   private final ChunkedOutputFactory chunkedOutputFactory;
   private final StreamingResponseFactory streamingResponseFactory;
+  private final ProduceRateLimitCounters produceRateLimitCounters;
 
   private static final int ONE_SECOND = 1000;
   Time time = new SystemTime();
@@ -97,7 +103,8 @@ public final class ProduceAction {
       Provider<RecordSerializer> recordSerializer,
       Provider<ProduceController> produceControllerProvider,
       Provider<ProducerMetrics> producerMetrics,
-      KafkaRestConfig config) {
+      KafkaRestConfig config,
+      ProduceRateLimitCounters produceRateLimitCounters) {
     this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
     this.recordSerializerProvider = requireNonNull(recordSerializer);
     this.produceControllerProvider = requireNonNull(produceControllerProvider);
@@ -105,6 +112,7 @@ public final class ProduceAction {
     this.config = config;
     this.chunkedOutputFactory = ChunkedOutputFactory.getChunkedOutputFactory();
     this.streamingResponseFactory = new StreamingResponseFactory(chunkedOutputFactory);
+    this.produceRateLimitCounters = produceRateLimitCounters;
   }
 
   public ProduceAction(
@@ -114,7 +122,8 @@ public final class ProduceAction {
       Provider<ProducerMetrics> producerMetrics,
       KafkaRestConfig config,
       ChunkedOutputFactory chunkedOutputFactory,
-      StreamingResponseFactory streamingResponseFactory) {
+      StreamingResponseFactory streamingResponseFactory,
+      ProduceRateLimitCounters produceRateLimitCounters) {
     this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
     this.recordSerializerProvider = requireNonNull(recordSerializer);
     this.produceControllerProvider = requireNonNull(produceControllerProvider);
@@ -122,6 +131,7 @@ public final class ProduceAction {
     this.config = config;
     this.streamingResponseFactory = streamingResponseFactory;
     this.chunkedOutputFactory = chunkedOutputFactory;
+    this.produceRateLimitCounters = produceRateLimitCounters;
   }
 
   @POST
@@ -150,13 +160,22 @@ public final class ProduceAction {
                         new RateLimitGracePeriodExceededException(
                             config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND),
                             config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD)));
-                    return future;
+                    try {
+                      requests.close();
+                    } catch (IOException e) {
+                      log.error(
+                          "Error when closing request stream after rate limit exceeded for "
+                              + "longer than grace period.",
+                          e);
+                    } finally {
+                      return future;
+                    }
                   })
               .resume(asyncResponse);
           return;
         }
       } else {
-        ProduceRateLimitCounters.resetGracePeriodStart();
+        produceRateLimitCounters.resetGracePeriodStart();
       }
     }
     AtomicBoolean firstMessage = new AtomicBoolean(true);
@@ -177,10 +196,19 @@ public final class ProduceAction {
                           new RateLimitGracePeriodExceededException(
                               config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND),
                               config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD)));
-                      return future;
+                      try {
+                        requests.close();
+                      } catch (IOException e) {
+                        log.error(
+                            "Error when closing request stream after rate limit exceeded for "
+                                + "longer than grace period.",
+                            e);
+                      } finally {
+                        return future;
+                      }
                     }
                   } else {
-                    ProduceRateLimitCounters.resetGracePeriodStart();
+                    produceRateLimitCounters.resetGracePeriodStart();
                   }
                 } else {
                   firstMessage.set(false);
@@ -230,7 +258,7 @@ public final class ProduceAction {
       resumeAfterMs =
           Optional.of(
               (long)
-                      (ProduceRateLimitCounters.size()
+                      (produceRateLimitCounters.size()
                               / config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND)
                           - 1)
                   * 1000);
@@ -382,13 +410,13 @@ public final class ProduceAction {
   }
 
   private void addToAndCullRateCounter(long now) {
-    ProduceRateLimitCounters.add(now);
-    while (ProduceRateLimitCounters.peek() < now - ONE_SECOND) {
-      ProduceRateLimitCounters.poll();
+    produceRateLimitCounters.add(now);
+    while (produceRateLimitCounters.peek() < now - ONE_SECOND) {
+      produceRateLimitCounters.poll();
     }
-    if (ProduceRateLimitCounters.size()
+    if (produceRateLimitCounters.size()
         <= config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND)) {
-      ProduceRateLimitCounters.resetGracePeriodStart();
+      produceRateLimitCounters.resetGracePeriodStart();
     }
   }
 
@@ -397,18 +425,18 @@ public final class ProduceAction {
   }
 
   private boolean overRateLimit() {
-    return ProduceRateLimitCounters.size()
+    return produceRateLimitCounters.size()
         > config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND);
   }
 
   private boolean overGracePeriod(Long now) {
-    if (!ProduceRateLimitCounters.gracePeriodPresent()
+    if (!produceRateLimitCounters.get().isPresent()
         && config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD) != 0) {
-      ProduceRateLimitCounters.setGracePeriodStart(Optional.of(new AtomicLong(now)));
+      produceRateLimitCounters.setGracePeriodStart(Optional.of(new AtomicLong(now)));
       return false;
     } else if (config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD) == 0
         || config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD)
-            < now - ProduceRateLimitCounters.get()) {
+            < now - produceRateLimitCounters.get().get().get()) {
       return true;
     }
     return false;

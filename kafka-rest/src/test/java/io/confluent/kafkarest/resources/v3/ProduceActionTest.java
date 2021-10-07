@@ -593,6 +593,9 @@ public class ProduceActionTest {
     StreamingResponseFactory streamingResponseFactory =
         new StreamingResponseFactory(chunkedOutputFactory);
 
+    ProduceRateLimitCounters produceRateLimitCounters =
+        ProduceRateLimitCounters.getProduceRateLimitCounters();
+
     ProduceAction produceAction =
         new ProduceAction(
             schemaManagerProvider,
@@ -601,11 +604,11 @@ public class ProduceActionTest {
             producerMetricsProvider,
             new KafkaRestConfig(properties),
             chunkedOutputFactory,
-            streamingResponseFactory);
+            streamingResponseFactory,
+            produceRateLimitCounters);
     produceAction.time = time;
-
-    ProduceRateLimitCounters.resetGracePeriodStart();
-    ProduceRateLimitCounters.clear();
+    produceRateLimitCounters.resetGracePeriodStart();
+    produceRateLimitCounters.clear();
 
     return produceAction;
   }

@@ -32,6 +32,7 @@ import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature;
 import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.kafkarest.resources.ResourcesFeature;
+import io.confluent.kafkarest.resources.v3.V3ResourcesModule;
 import io.confluent.kafkarest.response.ResponseModule;
 import io.confluent.rest.Application;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
@@ -100,6 +101,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new ExceptionsModule());
     config.register(new ResourcesFeature(appConfig));
     config.register(new ResponseModule());
+    config.register(new V3ResourcesModule());
 
     config.register(ResourceAccesslistFeature.class);
 
