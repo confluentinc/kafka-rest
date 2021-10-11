@@ -19,15 +19,9 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class ProduceRateLimitCounters {
+public final class ProduceRateLimitCounters {
 
-  private static ProduceRateLimitCounters produceRateLimitCounters = new ProduceRateLimitCounters();
-
-  private ProduceRateLimitCounters() {}
-
-  public static ProduceRateLimitCounters getProduceRateLimitCounters() {
-    return produceRateLimitCounters;
-  }
+  public ProduceRateLimitCounters() {}
 
   final ConcurrentLinkedQueue<Long> rateCounter = new ConcurrentLinkedQueue<>();
   Optional<AtomicLong> gracePeriodStart = Optional.empty();

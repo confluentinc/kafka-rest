@@ -134,12 +134,25 @@ public class ProduceActionTest {
     ChunkedOutput<ResultOrError> mockedChunkedOutput1 =
         getChunkedOutput(chunkedOutputFactory1, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1);
     Time time = new MockTime();
+
+    ProduceRateLimitCounters produceRateLimitCounters = new ProduceRateLimitCounters();
+
     ProduceAction produceAction0 =
         getProduceAction(
-            properties, chunkedOutputFactory0, time, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD0, 0);
+            properties,
+            produceRateLimitCounters,
+            chunkedOutputFactory0,
+            time,
+            TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD0,
+            0);
     ProduceAction produceAction1 =
         getProduceAction(
-            properties, chunkedOutputFactory1, time, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1, 1);
+            properties,
+            produceRateLimitCounters,
+            chunkedOutputFactory1,
+            time,
+            TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1,
+            1);
     MappingIterator<ProduceRequest> requests0 =
         getProduceRequestsMappingIterator(TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD0);
     MappingIterator<ProduceRequest> requests1 =
@@ -571,11 +584,13 @@ public class ProduceActionTest {
 
   ProduceAction getProduceAction(
       Properties properties, ChunkedOutputFactory chunkedOutputFactory, Time time, int times) {
-    return getProduceAction(properties, chunkedOutputFactory, time, times, 0);
+    return getProduceAction(
+        properties, new ProduceRateLimitCounters(), chunkedOutputFactory, time, times, 0);
   }
 
   ProduceAction getProduceAction(
       Properties properties,
+      ProduceRateLimitCounters produceRateLimitCounters,
       ChunkedOutputFactory chunkedOutputFactory,
       Time time,
       int times,
@@ -592,9 +607,6 @@ public class ProduceActionTest {
 
     StreamingResponseFactory streamingResponseFactory =
         new StreamingResponseFactory(chunkedOutputFactory);
-
-    ProduceRateLimitCounters produceRateLimitCounters =
-        ProduceRateLimitCounters.getProduceRateLimitCounters();
 
     ProduceAction produceAction =
         new ProduceAction(

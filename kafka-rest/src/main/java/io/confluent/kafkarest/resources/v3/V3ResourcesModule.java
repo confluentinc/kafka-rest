@@ -16,12 +16,13 @@
 package io.confluent.kafkarest.resources.v3;
 
 import io.confluent.kafkarest.resources.ProduceRateLimitCounters;
+import javax.inject.Singleton;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 public class V3ResourcesModule extends AbstractBinder {
 
   @Override
   protected void configure() {
-    bind(ProduceRateLimitCounters.getProduceRateLimitCounters()).to(ProduceRateLimitCounters.class);
+    bindAsContract(ProduceRateLimitCounters.class).in(Singleton.class);
   }
 }
