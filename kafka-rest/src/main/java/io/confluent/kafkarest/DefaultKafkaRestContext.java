@@ -30,6 +30,8 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Shared, global state for the REST proxy server, including configuration and connection pools.
@@ -37,6 +39,8 @@ import org.apache.kafka.common.serialization.ByteArraySerializer;
  * required.
  */
 public class DefaultKafkaRestContext implements KafkaRestContext {
+
+  private static final Logger log = LoggerFactory.getLogger(DefaultKafkaRestContext.class);
 
   private final KafkaRestConfig config;
   private KafkaConsumerManager kafkaConsumerManager;
@@ -55,6 +59,7 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   }
 
   public DefaultKafkaRestContext(KafkaRestConfig config) {
+    log.debug("Creating context with config: {}", config);
     this.config = requireNonNull(config);
   }
 
@@ -117,6 +122,7 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
 
   @Override
   public void shutdown() {
+    log.debug("Shutting down");
     if (kafkaConsumerManager != null) {
       kafkaConsumerManager.shutdown();
     }

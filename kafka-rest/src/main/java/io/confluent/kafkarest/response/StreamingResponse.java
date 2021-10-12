@@ -101,6 +101,7 @@ public abstract class StreamingResponse<T> {
    * written to {@code asyncResponse} asynchronously.
    */
   public final void resume(AsyncResponse asyncResponse) {
+    log.debug("Resuming StreamingResponse");
     AsyncResponseQueue responseQueue = new AsyncResponseQueue();
     responseQueue.asyncResume(asyncResponse);
     while (hasNext()) {
@@ -193,11 +194,13 @@ public abstract class StreamingResponse<T> {
     }
 
     private void push(CompletableFuture<ResultOrError> result) {
+      log.debug("Pushing to response queue");
       tail =
           CompletableFuture.allOf(tail, result)
               .thenApply(
                   unused -> {
                     try {
+                      log.debug("Writing to sink");
                       sink.write(result.join());
                     } catch (IOException e) {
                       log.error("Error when writing streaming result to response channel.", e);
@@ -207,6 +210,7 @@ public abstract class StreamingResponse<T> {
     }
 
     private void close() {
+      log.debug("Closing");
       tail.whenComplete(
           (unused, throwable) -> {
             try {
