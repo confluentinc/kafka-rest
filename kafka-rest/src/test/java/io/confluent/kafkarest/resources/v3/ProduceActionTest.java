@@ -8,11 +8,8 @@ import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.MappingIterator;
-import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ProducerMetrics;
 import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.controllers.ProduceController;
@@ -23,7 +20,7 @@ import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.mock.MockTime;
-import io.confluent.kafkarest.resources.ProduceRateLimitCounters;
+import io.confluent.kafkarest.resources.RateLimiter;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
@@ -34,7 +31,6 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import javax.inject.Provider;
-import org.apache.kafka.common.config.ConfigException;
 import org.easymock.EasyMock;
 import org.glassfish.jersey.server.ChunkedOutput;
 import org.junit.Test;
@@ -97,25 +93,6 @@ public class ProduceActionTest {
   }
 
   @Test
-  public void produceWithZeroRateLimit() {
-
-    Properties properties = new Properties();
-    properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "0");
-    properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
-
-    boolean checkpoint = false;
-    try {
-      getProduceAction(properties, null, null, 1);
-    } catch (ConfigException ce) {
-      checkpoint = true;
-      assertEquals(
-          "Invalid value 0 for configuration api.v3.produce.rate.limit.max.requests.per.sec: Value must be at least 1",
-          ce.getMessage());
-    }
-    assertTrue(checkpoint);
-  }
-
-  @Test
   public void twoProducers() throws Exception {
 
     // config
@@ -135,24 +112,18 @@ public class ProduceActionTest {
         getChunkedOutput(chunkedOutputFactory1, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1);
     Time time = new MockTime();
 
-    ProduceRateLimitCounters produceRateLimitCounters = new ProduceRateLimitCounters();
+    RateLimiter rateLimiter =
+        new RateLimiter(
+            Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD)),
+            Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
+            Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)));
 
     ProduceAction produceAction0 =
         getProduceAction(
-            properties,
-            produceRateLimitCounters,
-            chunkedOutputFactory0,
-            time,
-            TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD0,
-            0);
+            rateLimiter, chunkedOutputFactory0, time, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD0, 0);
     ProduceAction produceAction1 =
         getProduceAction(
-            properties,
-            produceRateLimitCounters,
-            chunkedOutputFactory1,
-            time,
-            TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1,
-            1);
+            rateLimiter, chunkedOutputFactory1, time, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1, 1);
     MappingIterator<ProduceRequest> requests0 =
         getProduceRequestsMappingIterator(TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD0);
     MappingIterator<ProduceRequest> requests1 =
@@ -317,6 +288,9 @@ public class ProduceActionTest {
     final int TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1 = 1;
     final int TOTAL_NUMBER_OF_STREAMING_CALLS = 4;
     Properties properties = new Properties();
+    properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(10000));
+    properties.put(PRODUCE_GRACE_PERIOD, Integer.toString(30000));
+    properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
 
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
@@ -585,19 +559,25 @@ public class ProduceActionTest {
   ProduceAction getProduceAction(
       Properties properties, ChunkedOutputFactory chunkedOutputFactory, Time time, int times) {
     return getProduceAction(
-        properties, new ProduceRateLimitCounters(), chunkedOutputFactory, time, times, 0);
+        new RateLimiter(
+            Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD)),
+            Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
+            Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED))),
+        chunkedOutputFactory,
+        time,
+        times,
+        0);
   }
 
   ProduceAction getProduceAction(
-      Properties properties,
-      ProduceRateLimitCounters produceRateLimitCounters,
+      RateLimiter rateLimiter,
       ChunkedOutputFactory chunkedOutputFactory,
       Time time,
       int times,
       int producerId) {
     Provider<SchemaManager> schemaManagerProvider = mock(Provider.class);
     Provider<ProducerMetrics> producerMetricsProvider = mock(Provider.class);
-    getProducerMetricsProvider(producerMetricsProvider, times);
+    getProducerMetricsProvider(producerMetricsProvider);
     Provider<RecordSerializer> recordSerializerProvider = getRecordSerializerProvider();
     Provider<ProduceController> produceControllerProvider = mock(Provider.class);
     ProduceController produceController = getProduceControllerMock(produceControllerProvider);
@@ -614,24 +594,21 @@ public class ProduceActionTest {
             recordSerializerProvider,
             produceControllerProvider,
             producerMetricsProvider,
-            new KafkaRestConfig(properties),
             chunkedOutputFactory,
             streamingResponseFactory,
-            produceRateLimitCounters);
+            rateLimiter);
     produceAction.time = time;
-    produceRateLimitCounters.resetGracePeriodStart();
-    produceRateLimitCounters.clear();
+    rateLimiter.resetGracePeriodStart();
+    rateLimiter.clear();
 
     return produceAction;
   }
 
-  Provider<ProducerMetrics> getProducerMetricsProvider(
-      Provider<ProducerMetrics> producerMetricsProvider, int times) {
+  void getProducerMetricsProvider(Provider<ProducerMetrics> producerMetricsProvider) {
     ProducerMetrics producerMetrics = mock(ProducerMetrics.class);
     expect(producerMetricsProvider.get()).andReturn(producerMetrics).anyTimes();
     ProducerMetrics.ProduceMetricMBean metricMBean = mock(ProducerMetrics.ProduceMetricMBean.class);
     expect(producerMetrics.mbean(anyObject(), anyObject())).andReturn(metricMBean).anyTimes();
     replay(producerMetrics);
-    return mock(Provider.class);
   }
 }
