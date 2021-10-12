@@ -21,7 +21,6 @@ import static java.util.Objects.requireNonNull;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafkarest.config.SchemaRegistryConfig;
-import io.confluent.kafkarest.response.StreamingResponse;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import java.net.URI;
 import java.util.List;
