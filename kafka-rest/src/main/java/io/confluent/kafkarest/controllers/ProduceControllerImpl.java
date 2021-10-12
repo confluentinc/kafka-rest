@@ -52,7 +52,7 @@ final class ProduceControllerImpl implements ProduceController {
       Optional<ByteString> value,
       Instant timestamp) {
     CompletableFuture<ProduceResult> result = new CompletableFuture<>();
-    log.debug("producing to kafka");
+    log.debug("Producing to kafka");
     producer.send(
         new ProducerRecord<>(
             topicName,
@@ -69,10 +69,10 @@ final class ProduceControllerImpl implements ProduceController {
                 .collect(Collectors.toList())),
         (metadata, exception) -> {
           if (exception != null) {
-            log.debug("received exception from kafka", exception);
+            log.debug("Received exception from kafka", exception);
             result.completeExceptionally(exception);
           } else {
-            log.debug("received response from kafka");
+            log.debug("Received response from kafka");
             result.complete(ProduceResult.fromRecordMetadata(metadata, Instant.now()));
           }
         });

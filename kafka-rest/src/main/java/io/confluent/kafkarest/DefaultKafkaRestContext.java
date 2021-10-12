@@ -59,7 +59,7 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   }
 
   public DefaultKafkaRestContext(KafkaRestConfig config) {
-    log.debug("creating context with config: {}", config);
+    log.debug("Creating context with config: {}", config);
     this.config = requireNonNull(config);
   }
 
@@ -122,7 +122,7 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
 
   @Override
   public void shutdown() {
-    log.debug("shutting down");
+    log.debug("Shutting down");
     if (kafkaConsumerManager != null) {
       kafkaConsumerManager.shutdown();
     }
