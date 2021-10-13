@@ -67,7 +67,7 @@ public abstract class ProduceResponse {
       @JsonProperty("timestamp") @Nullable Instant timestamp,
       @JsonProperty("key") @Nullable ProduceResponseData key,
       @JsonProperty("value") @Nullable ProduceResponseData value,
-      @JsonProperty("resume_after_ms") @Nullable long resumeAfterMs) {
+      @JsonProperty("resume_after_ms") @Nullable Long resumeAfterMs) {
     return builder()
         .setClusterId(clusterId)
         .setTopicName(topicName)
@@ -111,7 +111,7 @@ public abstract class ProduceResponse {
 
     public abstract Builder setResumeAfterMs(Optional<Long> resumeAfterMs);
 
-    public abstract Builder setResumeAfterMs(@Nullable long resumeAfterMs);
+    public abstract Builder setResumeAfterMs(@Nullable Long resumeAfterMs);
 
     public abstract ProduceResponse build();
   }

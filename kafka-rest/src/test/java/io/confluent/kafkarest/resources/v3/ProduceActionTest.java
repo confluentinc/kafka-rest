@@ -26,6 +26,7 @@ import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.Properties;
@@ -116,7 +117,8 @@ public class ProduceActionTest {
         new RateLimiter(
             Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD)),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
-            Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)));
+            Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
+            time);
 
     ProduceAction produceAction0 =
         getProduceAction(
@@ -135,7 +137,8 @@ public class ProduceActionTest {
     mockedChunkedOutput0.write(resultOrErrorOKProd1);
     mockedChunkedOutput0.close();
 
-    ProduceResponse produceResponse2 = getProduceResponse(0, Optional.of(1000L), 1);
+    ProduceResponse produceResponse2 =
+        getProduceResponse(0, Optional.of(Duration.ofMillis(1000)), 1);
     ResultOrError resultOrErrorOKProd2 = ResultOrError.result(produceResponse2);
     mockedChunkedOutput1.write(resultOrErrorOKProd2);
     mockedChunkedOutput1.close();
@@ -145,7 +148,8 @@ public class ProduceActionTest {
     mockedChunkedOutput1.write(resultOrErrorOKProd3);
     mockedChunkedOutput1.close();
 
-    ProduceResponse produceResponse4 = getProduceResponse(1, Optional.of(1000L), 0);
+    ProduceResponse produceResponse4 =
+        getProduceResponse(1, Optional.of(Duration.ofMillis(1000)), 0);
     ResultOrError resultOrErrorOKProd4 = ResultOrError.result(produceResponse4);
     mockedChunkedOutput0.write(resultOrErrorOKProd4);
     mockedChunkedOutput0.close();
@@ -213,7 +217,7 @@ public class ProduceActionTest {
     mockedChunkedOutput.write(resultOrErrorOKProd1);
     mockedChunkedOutput.close();
 
-    ProduceResponse produceResponse2 = getProduceResponse(1, Optional.of(1000L));
+    ProduceResponse produceResponse2 = getProduceResponse(1, Optional.of(Duration.ofMillis(1000)));
     ResultOrError resultOrErrorOKProd2 = ResultOrError.result(produceResponse2);
     mockedChunkedOutput.write(resultOrErrorOKProd2);
     mockedChunkedOutput.close();
@@ -223,12 +227,12 @@ public class ProduceActionTest {
     mockedChunkedOutput.write(resultOrErrorOKProd3);
     mockedChunkedOutput.close();
 
-    ProduceResponse produceResponse4 = getProduceResponse(3, Optional.of(1000L));
+    ProduceResponse produceResponse4 = getProduceResponse(3, Optional.of(Duration.ofMillis(1000)));
     ResultOrError resultOrErrorOKProd4 = ResultOrError.result(produceResponse4);
     mockedChunkedOutput.write(resultOrErrorOKProd4);
     mockedChunkedOutput.close();
 
-    ProduceResponse produceResponse5 = getProduceResponse(4, Optional.of(2000L));
+    ProduceResponse produceResponse5 = getProduceResponse(4, Optional.of(Duration.ofMillis(2000)));
     ResultOrError resultOrErrorOKProd5 = ResultOrError.result(produceResponse5);
     mockedChunkedOutput.write(resultOrErrorOKProd5);
     mockedChunkedOutput.close();
@@ -357,7 +361,7 @@ public class ProduceActionTest {
     ResultOrError resultOrErrorOKProd1 = ResultOrError.result(produceResponse1);
     mockedChunkedOutput.write(resultOrErrorOKProd1);
 
-    ProduceResponse produceResponse2 = getProduceResponse(1, Optional.of(1000L));
+    ProduceResponse produceResponse2 = getProduceResponse(1, Optional.of(Duration.ofMillis(1000)));
     ResultOrError resultOrErrorOKProd2 = ResultOrError.result(produceResponse2);
     mockedChunkedOutput.write(resultOrErrorOKProd2);
 
@@ -365,11 +369,11 @@ public class ProduceActionTest {
     ResultOrError resultOrErrorOKProd3 = ResultOrError.result(produceResponse3);
     mockedChunkedOutput.write(resultOrErrorOKProd3);
 
-    ProduceResponse produceResponse4 = getProduceResponse(3, Optional.of(1000L));
+    ProduceResponse produceResponse4 = getProduceResponse(3, Optional.of(Duration.ofMillis(1000)));
     ResultOrError resultOrErrorOKProd4 = ResultOrError.result(produceResponse4);
     mockedChunkedOutput.write(resultOrErrorOKProd4);
 
-    ProduceResponse produceResponse5 = getProduceResponse(4, Optional.of(2000L));
+    ProduceResponse produceResponse5 = getProduceResponse(4, Optional.of(Duration.ofMillis(2000)));
     ResultOrError resultOrErrorOKProd5 = ResultOrError.result(produceResponse5);
     mockedChunkedOutput.write(resultOrErrorOKProd5);
 
@@ -507,18 +511,23 @@ public class ProduceActionTest {
     return getProduceResponse(offset, Optional.empty(), partitionId);
   }
 
-  ProduceResponse getProduceResponse(int offset, Optional<Long> resumeAfter) {
+  ProduceResponse getProduceResponse(int offset, Optional<Duration> resumeAfter) {
     return getProduceResponse(offset, resumeAfter, 0);
   }
 
-  ProduceResponse getProduceResponse(int offset, Optional<Long> resumeAfter, int partitionId) {
+  ProduceResponse getProduceResponse(
+      int offset, Optional<Duration> resumeAfterMs, int partitionId) {
+
     return ProduceResponse.builder()
         .setClusterId("clusterId")
         .setTopicName("topicName")
         .setPartitionId(partitionId)
         .setOffset(offset)
         .setTimestamp(Instant.ofEpochMilli(0))
-        .setResumeAfterMs(resumeAfter)
+        .setResumeAfterMs(
+            resumeAfterMs.isPresent()
+                ? Optional.of(resumeAfterMs.get().toMillis())
+                : Optional.empty())
         .build();
   }
 
@@ -562,7 +571,8 @@ public class ProduceActionTest {
         new RateLimiter(
             Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD)),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
-            Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED))),
+            Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
+            time),
         chunkedOutputFactory,
         time,
         times,
@@ -597,7 +607,6 @@ public class ProduceActionTest {
             chunkedOutputFactory,
             streamingResponseFactory,
             rateLimiter);
-    produceAction.time = time;
     rateLimiter.resetGracePeriodStart();
     rateLimiter.clear();
 

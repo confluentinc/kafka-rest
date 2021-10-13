@@ -22,13 +22,7 @@ public class ChunkedOutputFactory {
 
   private static final String CHUNK_SEPARATOR = "\r\n";
 
-  static ChunkedOutputFactory me = new ChunkedOutputFactory();
-
   public ChunkedOutput<ResultOrError> getChunkedOutput() {
     return new ChunkedOutput<>(ResultOrError.class, CHUNK_SEPARATOR);
-  }
-
-  public static ChunkedOutputFactory getChunkedOutputFactory() {
-    return me;
   }
 }

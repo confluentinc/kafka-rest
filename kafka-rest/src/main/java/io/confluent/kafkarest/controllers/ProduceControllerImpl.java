@@ -52,9 +52,7 @@ final class ProduceControllerImpl implements ProduceController {
       Optional<ByteString> value,
       Instant timestamp) {
     CompletableFuture<ProduceResult> result = new CompletableFuture<>();
-
     log.debug("Producing to kafka");
-
     producer.send(
         new ProducerRecord<>(
             topicName,

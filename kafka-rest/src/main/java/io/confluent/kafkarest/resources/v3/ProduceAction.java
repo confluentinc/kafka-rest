@@ -23,8 +23,6 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.ProducerMetrics;
 import io.confluent.kafkarest.ProducerMetricsRegistry;
-import io.confluent.kafkarest.SystemTime;
-import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
@@ -37,6 +35,7 @@ import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestHeader;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.entities.v3.ProduceResponse.ProduceResponseData;
 import io.confluent.kafkarest.exceptions.BadRequestException;
+import io.confluent.kafkarest.exceptions.RateLimitGracePeriodExceededException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.resources.RateLimiter;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
@@ -89,24 +88,7 @@ public final class ProduceAction {
   private final StreamingResponseFactory streamingResponseFactory;
   private final RateLimiter rateLimiter;
 
-  Time time = new SystemTime();
-
   @Inject
-  public ProduceAction(
-      Provider<SchemaManager> schemaManagerProvider,
-      Provider<RecordSerializer> recordSerializer,
-      Provider<ProduceController> produceControllerProvider,
-      Provider<ProducerMetrics> producerMetrics,
-      RateLimiter rateLimiter) {
-    this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
-    this.recordSerializerProvider = requireNonNull(recordSerializer);
-    this.produceControllerProvider = requireNonNull(produceControllerProvider);
-    this.producerMetrics = requireNonNull(producerMetrics);
-    this.chunkedOutputFactory = ChunkedOutputFactory.getChunkedOutputFactory();
-    this.streamingResponseFactory = new StreamingResponseFactory(chunkedOutputFactory);
-    this.rateLimiter = rateLimiter;
-  }
-
   public ProduceAction(
       Provider<SchemaManager> schemaManagerProvider,
       Provider<RecordSerializer> recordSerializer,
@@ -119,9 +101,9 @@ public final class ProduceAction {
     this.recordSerializerProvider = requireNonNull(recordSerializer);
     this.produceControllerProvider = requireNonNull(produceControllerProvider);
     this.producerMetrics = requireNonNull(producerMetrics);
-    this.streamingResponseFactory = streamingResponseFactory;
-    this.chunkedOutputFactory = chunkedOutputFactory;
-    this.rateLimiter = rateLimiter;
+    this.chunkedOutputFactory = requireNonNull(chunkedOutputFactory);
+    this.streamingResponseFactory = requireNonNull(streamingResponseFactory);
+    this.rateLimiter = requireNonNull(rateLimiter);
   }
 
   @POST
@@ -136,7 +118,9 @@ public final class ProduceAction {
       MappingIterator<ProduceRequest> requests)
       throws Exception {
 
-    if (rateLimiter.calculateGracePeriodExceeded(time)) {
+    try {
+      Optional<Duration> resumeAfterMs = rateLimiter.calculateGracePeriodExceeded();
+    } catch (RateLimitGracePeriodExceededException gracePeriodExceededException) {
       streamingResponseFactory
           .from(requests)
           .compose(
@@ -149,12 +133,15 @@ public final class ProduceAction {
                           + "longer than grace period.",
                       e);
                 } finally {
-                  return rateLimiter.getLimitsFailureFuture();
+                  CompletableFuture<ProduceResponse> limitFuture = new CompletableFuture();
+                  limitFuture.completeExceptionally(gracePeriodExceededException);
+                  return limitFuture;
                 }
               })
           .resume(asyncResponse);
       return;
     }
+
     AtomicBoolean firstMessage = new AtomicBoolean(true);
 
     ProduceController controller = produceControllerProvider.get();
@@ -162,7 +149,11 @@ public final class ProduceAction {
         .from(requests)
         .compose(
             request -> {
-              if (rateLimiter.calculateGracePeriodExceeded(firstMessage, time)) {
+              try {
+                Optional<Duration> resumeAfterMs =
+                    rateLimiter.calculateGracePeriodExceeded(firstMessage);
+                return produce(clusterId, topicName, request, controller, resumeAfterMs);
+              } catch (RateLimitGracePeriodExceededException gracePeriodExceededException) {
                 try {
                   requests.close();
                 } catch (Exception e) {
@@ -171,11 +162,10 @@ public final class ProduceAction {
                           + "longer than grace period.",
                       e);
                 } finally {
-                  return rateLimiter.getLimitsFailureFuture();
+                  CompletableFuture<ProduceResponse> limitFuture = new CompletableFuture();
+                  limitFuture.completeExceptionally(gracePeriodExceededException);
+                  return limitFuture;
                 }
-              } else {
-                return produce(
-                    clusterId, topicName, request, controller, rateLimiter.getResumeAfterMs());
               }
             })
         .resume(asyncResponse);
@@ -186,7 +176,7 @@ public final class ProduceAction {
       String topicName,
       ProduceRequest request,
       ProduceController controller,
-      Optional<Long> resumeAfterMs) {
+      Optional<Duration> resumeAfterMs) {
 
     Instant requestInstant = Instant.now();
     Optional<RegisteredSchema> keySchema =
@@ -297,7 +287,7 @@ public final class ProduceAction {
       Optional<EmbeddedFormat> valueFormat,
       Optional<RegisteredSchema> valueSchema,
       ProduceResult result,
-      Optional<Long> resumeAfterMs) {
+      Optional<Duration> resumeAfterMs) {
     return ProduceResponse.builder()
         .setClusterId(clusterId)
         .setTopicName(topicName)
@@ -324,7 +314,10 @@ public final class ProduceAction {
                         .setSchemaVersion(valueSchema.map(RegisteredSchema::getSchemaVersion))
                         .setSize(result.getSerializedValueSize())
                         .build()))
-        .setResumeAfterMs(resumeAfterMs)
+        .setResumeAfterMs(
+            resumeAfterMs.isPresent()
+                ? Optional.of(resumeAfterMs.get().toMillis())
+                : Optional.empty())
         .build();
   }
 
