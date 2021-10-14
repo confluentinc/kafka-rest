@@ -78,4 +78,10 @@ final class ProduceControllerImpl implements ProduceController {
         });
     return result;
   }
+
+  @Override
+  public void dispose() {
+    log.debug("Closing Producer");
+    producer.close();
+  }
 }

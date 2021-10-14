@@ -37,4 +37,7 @@ public interface ProduceController {
       Optional<ByteString> key,
       Optional<ByteString> value,
       Instant timestamp);
+
+  /** dispose of any resources. */
+  void dispose();
 }

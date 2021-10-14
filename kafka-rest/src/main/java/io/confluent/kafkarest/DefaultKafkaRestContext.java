@@ -129,8 +129,5 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
     if (adminClient != null) {
       adminClient.close();
     }
-    if (producer != null) {
-      producer.close();
-    }
   }
 }

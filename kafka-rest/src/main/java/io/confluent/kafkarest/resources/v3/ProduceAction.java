@@ -102,7 +102,9 @@ public final class ProduceAction {
       throws Exception {
     ProduceController controller = produceController.get();
     StreamingResponse.from(requests)
-        .compose(request -> produce(clusterId, topicName, request, controller))
+        .compose(
+            request -> produce(clusterId, topicName, request, controller),
+            () -> controller.dispose())
         .resume(asyncResponse);
   }
 

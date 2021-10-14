@@ -90,8 +90,8 @@ public abstract class StreamingResponse<T> {
   }
 
   public final <O> StreamingResponse<O> compose(
-      Function<? super T, ? extends CompletableFuture<O>> transform) {
-    return new ComposingStreamingResponse<>(this, transform);
+      Function<? super T, ? extends CompletableFuture<O>> transform, Runnable dispose) {
+    return new ComposingStreamingResponse<>(this, transform, dispose);
   }
 
   /**
@@ -100,7 +100,7 @@ public abstract class StreamingResponse<T> {
    * <p>This method will block until all requests are read in. The responses are computed and
    * written to {@code asyncResponse} asynchronously.
    */
-  public final void resume(AsyncResponse asyncResponse) {
+  public void resume(AsyncResponse asyncResponse) {
     log.debug("Resuming StreamingResponse");
     AsyncResponseQueue responseQueue = new AsyncResponseQueue();
     responseQueue.asyncResume(asyncResponse);
@@ -148,11 +148,15 @@ public abstract class StreamingResponse<T> {
   private static final class ComposingStreamingResponse<I, O> extends StreamingResponse<O> {
     private final StreamingResponse<I> input;
     private final Function<? super I, ? extends CompletableFuture<O>> transform;
+    private final Runnable dispose;
 
     private ComposingStreamingResponse(
-        StreamingResponse<I> input, Function<? super I, ? extends CompletableFuture<O>> transform) {
+        StreamingResponse<I> input,
+        Function<? super I, ? extends CompletableFuture<O>> transform,
+        Runnable dispose) {
       this.input = requireNonNull(input);
       this.transform = requireNonNull(transform);
+      this.dispose = requireNonNull(dispose);
     }
 
     @Override
@@ -163,6 +167,12 @@ public abstract class StreamingResponse<T> {
     @Override
     public CompletableFuture<O> next() {
       return input.next().thenCompose(transform);
+    }
+
+    @Override
+    public void resume(AsyncResponse response) {
+      super.resume(response);
+      dispose.run();
     }
   }
 
