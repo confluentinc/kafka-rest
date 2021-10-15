@@ -23,14 +23,13 @@ import io.confluent.kafkarest.response.StreamingResponseFactory;
 import javax.inject.Singleton;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
-public class V3ResourcesModule extends AbstractBinder {
+public final class V3ResourcesModule extends AbstractBinder {
 
   @Override
   protected void configure() {
     bindAsContract(RateLimiter.class).in(Singleton.class);
-    bindAsContract(ChunkedOutputFactory.class).in(Singleton.class);
-    bind(new StreamingResponseFactory(new ChunkedOutputFactory()))
-        .to(StreamingResponseFactory.class);
+    bindAsContract(ChunkedOutputFactory.class);
+    bindAsContract(StreamingResponseFactory.class);
     bind(SystemTime.class).to(Time.class);
   }
 }

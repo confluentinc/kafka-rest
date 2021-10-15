@@ -109,9 +109,10 @@ public abstract class StreamingResponse<T> {
     log.debug("Resuming StreamingResponse");
     AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
-    while (hasNext()) {
+    while (hasNext() && !responseQueue.sinkClosed) {
       responseQueue.push(next().handle(this::handleNext));
     }
+    close();
     responseQueue.close();
   }
 
@@ -126,6 +127,8 @@ public abstract class StreamingResponse<T> {
 
   abstract boolean hasNext();
 
+  abstract void close();
+
   abstract CompletableFuture<T> next();
 
   private static class InputStreamingResponse<T> extends StreamingResponse<T> {
@@ -135,6 +138,14 @@ public abstract class StreamingResponse<T> {
         MappingIterator<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
       super(chunkedOutputFactory);
       this.mappingIteratorInput = requireNonNull(mappingIteratorInput);
+    }
+
+    public void close() {
+      try {
+        mappingIteratorInput.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
     }
 
     @Override
@@ -174,6 +185,10 @@ public abstract class StreamingResponse<T> {
     public CompletableFuture<O> next() {
       return streamingResponseInput.next().thenCompose(transform);
     }
+
+    public void close() {
+      streamingResponseInput.close();
+    }
   }
 
   private static final class AsyncResponseQueue {
@@ -201,20 +216,26 @@ public abstract class StreamingResponse<T> {
       asyncResponse.resume(Response.ok(sink).build());
     }
 
+    boolean sinkClosed = false;
+
     private void push(CompletableFuture<ResultOrError> result) {
       log.debug("Pushing to response queue");
       tail =
           CompletableFuture.allOf(tail, result)
-              .handle(
-                  (unused, err) -> {
+              .thenApply(
+                  unused -> {
                     try {
                       ResultOrError res = result.join();
                       log.debug("Writing to sink");
-                      sink.write(res);
-                      if (res instanceof ErrorHolder) {
+                      if (!sink.isClosed()) {
+                        sink.write(res);
+                      }
+                      if (res instanceof ErrorHolder
+                          && ((ErrorHolder) res).getError().getErrorCode() == 429) {
                         log.warn(
                             "Connection closed as a result of rate limiting being exceeded "
                                 + "for longer than grace period.");
+                        sinkClosed = true;
                         sink.close();
                       }
                     } catch (IOException e) {
@@ -225,11 +246,12 @@ public abstract class StreamingResponse<T> {
     }
 
     private void close() {
-      log.debug("Closing");
       tail.whenComplete(
           (unused, throwable) -> {
             try {
+              sinkClosed = true;
               sink.close();
+
             } catch (IOException e) {
               log.error("Error when closing response channel.", e);
             }

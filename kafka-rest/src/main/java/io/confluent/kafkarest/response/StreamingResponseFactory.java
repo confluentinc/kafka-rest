@@ -15,14 +15,18 @@
 
 package io.confluent.kafkarest.response;
 
-import com.fasterxml.jackson.databind.MappingIterator;
+import static java.util.Objects.requireNonNull;
 
-public class StreamingResponseFactory {
+import com.fasterxml.jackson.databind.MappingIterator;
+import javax.inject.Inject;
+
+public final class StreamingResponseFactory {
 
   private ChunkedOutputFactory chunkedOutputFactory;
 
+  @Inject
   public StreamingResponseFactory(ChunkedOutputFactory chunkedOutputFactory) {
-    this.chunkedOutputFactory = chunkedOutputFactory;
+    this.chunkedOutputFactory = requireNonNull(chunkedOutputFactory);
   }
 
   public <T> StreamingResponse<T> from(MappingIterator<T> input) {

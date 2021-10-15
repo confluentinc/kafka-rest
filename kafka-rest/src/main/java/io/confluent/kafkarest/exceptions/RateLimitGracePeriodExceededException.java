@@ -17,12 +17,16 @@ package io.confluent.kafkarest.exceptions;
 
 import javax.ws.rs.core.Response.Status;
 
-public class RateLimitGracePeriodExceededException extends StatusCodeException {
+public final class RateLimitGracePeriodExceededException extends StatusCodeException {
 
   public RateLimitGracePeriodExceededException(int rateLimit, int gracePeriod) {
     super(
         Status.TOO_MANY_REQUESTS,
-        "Rate limit of " + rateLimit + " exceeded within the grace period of " + gracePeriod,
-        "Connection will be closed.");
+        "Rate limit of "
+            + rateLimit
+            + " messages per second exceeded within the grace period of "
+            + gracePeriod
+            + " ms ",
+        "connection will be closed.");
   }
 }

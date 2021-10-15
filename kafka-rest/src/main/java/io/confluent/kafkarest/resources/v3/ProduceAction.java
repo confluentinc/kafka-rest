@@ -35,7 +35,6 @@ import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestHeader;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.entities.v3.ProduceResponse.ProduceResponseData;
 import io.confluent.kafkarest.exceptions.BadRequestException;
-import io.confluent.kafkarest.exceptions.RateLimitGracePeriodExceededException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.resources.RateLimiter;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
@@ -47,7 +46,6 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import javax.inject.Inject;
@@ -118,55 +116,13 @@ public final class ProduceAction {
       MappingIterator<ProduceRequest> requests)
       throws Exception {
 
-    try {
-      Optional<Duration> resumeAfterMs = rateLimiter.calculateGracePeriodExceeded();
-    } catch (RateLimitGracePeriodExceededException gracePeriodExceededException) {
-      streamingResponseFactory
-          .from(requests)
-          .compose(
-              request -> {
-                try {
-                  requests.close();
-                } catch (Exception e) {
-                  log.error(
-                      "Error when closing request stream after rate limit exceeded for "
-                          + "longer than grace period.",
-                      e);
-                } finally {
-                  CompletableFuture<ProduceResponse> limitFuture = new CompletableFuture();
-                  limitFuture.completeExceptionally(gracePeriodExceededException);
-                  return limitFuture;
-                }
-              })
-          .resume(asyncResponse);
-      return;
-    }
-
-    AtomicBoolean firstMessage = new AtomicBoolean(true);
-
     ProduceController controller = produceControllerProvider.get();
     streamingResponseFactory
         .from(requests)
         .compose(
             request -> {
-              try {
-                Optional<Duration> resumeAfterMs =
-                    rateLimiter.calculateGracePeriodExceeded(firstMessage);
-                return produce(clusterId, topicName, request, controller, resumeAfterMs);
-              } catch (RateLimitGracePeriodExceededException gracePeriodExceededException) {
-                try {
-                  requests.close();
-                } catch (Exception e) {
-                  log.error(
-                      "Error when closing request stream after rate limit exceeded for "
-                          + "longer than grace period.",
-                      e);
-                } finally {
-                  CompletableFuture<ProduceResponse> limitFuture = new CompletableFuture();
-                  limitFuture.completeExceptionally(gracePeriodExceededException);
-                  return limitFuture;
-                }
-              }
+              Optional<Duration> resumeAfterMs = rateLimiter.calculateGracePeriodExceeded();
+              return produce(clusterId, topicName, request, controller, resumeAfterMs);
             })
         .resume(asyncResponse);
   }

@@ -24,22 +24,22 @@ import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitEnabledConfig;
 import io.confluent.kafkarest.exceptions.RateLimitGracePeriodExceededException;
 import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 
 public final class RateLimiter {
 
-  private static final int ONE_SECOND = 1000;
-  private static final AtomicBoolean FALSE = new AtomicBoolean(false);
+  private static final int ONE_SECOND_MS = 1000;
 
   private final int maxRequestsPerSecond;
   private final int gracePeriod;
   private final boolean rateLimitingEnabled;
   private final Time time;
+  private final AtomicInteger rateCounterSize = new AtomicInteger(0);
 
-  private final ConcurrentLinkedQueue<Long> rateCounter = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedDeque<Long> rateCounter = new ConcurrentLinkedDeque<>();
   private final AtomicLong gracePeriodStart = new AtomicLong(-1);
 
   @Inject
@@ -56,40 +56,35 @@ public final class RateLimiter {
 
   public Optional<Duration> calculateGracePeriodExceeded()
       throws RateLimitGracePeriodExceededException {
-    return calculateGracePeriodExceeded(FALSE);
-  }
-
-  public Optional<Duration> calculateGracePeriodExceeded(AtomicBoolean firstMessage)
-      throws RateLimitGracePeriodExceededException {
-
     if (!rateLimitingEnabled) {
       return Optional.empty();
     }
 
     long now = time.milliseconds();
-    int currentRate = firstMessage.getAndSet(false) ? rateCounter.size() : addAndGetRate(now);
-    Optional<Duration> resumeAfterMs = getResumeAfterMs(currentRate);
+    int currentRate = addAndGetRate(now);
+    Optional<Duration> resumeAfter = getResumeAfter(currentRate);
 
-    if (!resumeAfterMs.isPresent()) {
+    if (!resumeAfter.isPresent()) {
       resetGracePeriodStart();
       return Optional.empty();
     }
 
-    if (overGracePeriod(now)) {
+    if (isOverGracePeriod(now)) {
       throw new RateLimitGracePeriodExceededException(maxRequestsPerSecond, gracePeriod);
     }
-    return resumeAfterMs;
+    return resumeAfter;
   }
 
   public void clear() {
     rateCounter.clear();
+    rateCounterSize.set(0);
   }
 
   public void resetGracePeriodStart() {
     gracePeriodStart.set(-1);
   }
 
-  private boolean overGracePeriod(Long now) {
+  private boolean isOverGracePeriod(Long now) {
     if (gracePeriodStart.get() < 0 && gracePeriod != 0) {
       gracePeriodStart.set(now);
       return false;
@@ -102,15 +97,24 @@ public final class RateLimiter {
 
   private int addAndGetRate(long now) {
     rateCounter.add(now);
-    while (rateCounter.peek() < now - ONE_SECOND) {
-      rateCounter.poll();
+    rateCounterSize.incrementAndGet();
+
+    synchronized (rateCounter) {
+      if (rateCounter.peekLast() < now - ONE_SECOND_MS) {
+        rateCounter.clear();
+        rateCounterSize.set(0);
+      } else {
+        while (rateCounter.peek() < now - ONE_SECOND_MS) {
+          rateCounter.poll();
+          rateCounterSize.decrementAndGet();
+        }
+      }
     }
-    return rateCounter.size();
+    return rateCounterSize.get();
   }
 
-  private Optional<Duration> getResumeAfterMs(int currentRate) {
+  private Optional<Duration> getResumeAfter(int currentRate) {
     if (currentRate <= maxRequestsPerSecond) {
-      resetGracePeriodStart();
       return Optional.empty();
     }
     double resumeInMs = ((double) currentRate / (double) maxRequestsPerSecond - 1) * 1000;

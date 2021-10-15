@@ -48,6 +48,7 @@ public class StreamingResponseTest {
     expect(requests.hasNext()).andReturn(true);
     expect(requests.nextValue()).andReturn(request);
     expect(requests.hasNext()).andReturn(false);
+    requests.close();
     replay(requests);
 
     ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
@@ -66,6 +67,7 @@ public class StreamingResponseTest {
 
     expect(mockedChunkedOutputFactory.getChunkedOutput()).andReturn(mockedChunkedOutput);
     mockedChunkedOutput.write(resultOrError);
+    expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.close();
     replay(mockedChunkedOutputFactory);
     replay(mockedChunkedOutput);
@@ -111,6 +113,7 @@ public class StreamingResponseTest {
     expect(requestsMappingIterator.hasNext()).andReturn(true);
     expect(requestsMappingIterator.nextValue()).andReturn(request);
     expect(requestsMappingIterator.hasNext()).andReturn(false);
+    requestsMappingIterator.close();
     replay(requestsMappingIterator);
 
     ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
@@ -127,6 +130,7 @@ public class StreamingResponseTest {
 
     expect(mockedChunkedOutputFactory.getChunkedOutput()).andReturn(mockedChunkedOutput);
     mockedChunkedOutput.write(resultOrError);
+    expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.close();
     replay(mockedChunkedOutput, mockedChunkedOutputFactory);
 
