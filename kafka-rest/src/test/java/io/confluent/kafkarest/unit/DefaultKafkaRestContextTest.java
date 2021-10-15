@@ -33,21 +33,6 @@ public class DefaultKafkaRestContextTest {
   }
 
   @Test
-  public void testGetProducerThreadSafety() throws InterruptedException {
-    Set<Object> refs = new CopyOnWriteArraySet<>();
-
-    ExecutorService executor = Executors.newFixedThreadPool(100);
-    // Captures reference as it's invoked.
-    for (int i = 0; i < 100; i++) {
-      executor.submit(() -> refs.add(context.getProducer()));
-    }
-    executor.shutdown();
-    assertTrue(executor.awaitTermination(60, TimeUnit.SECONDS));
-
-    assertEquals(1, refs.size());
-  }
-
-  @Test
   public void testGetKafkaConsumerManagerThreadSafety() throws InterruptedException {
     Set<Object> refs = new CopyOnWriteArraySet<>();
 
@@ -55,21 +40,6 @@ public class DefaultKafkaRestContextTest {
     // Captures reference as it's invoked.
     for (int i = 0; i < 100; i++) {
       executor.submit(() -> refs.add(context.getKafkaConsumerManager()));
-    }
-    executor.shutdown();
-    assertTrue(executor.awaitTermination(60, TimeUnit.SECONDS));
-
-    assertEquals(1, refs.size());
-  }
-
-  @Test
-  public void testGetAdminThreadSafety() throws InterruptedException {
-    Set<Object> refs = new CopyOnWriteArraySet<>();
-
-    ExecutorService executor = Executors.newFixedThreadPool(100);
-    // Captures reference as it's invoked.
-    for (int i = 0; i < 100; i++) {
-      executor.submit(() -> refs.add(context.getAdmin()));
     }
     executor.shutdown();
     assertTrue(executor.awaitTermination(60, TimeUnit.SECONDS));
