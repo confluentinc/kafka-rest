@@ -142,12 +142,11 @@ public final class ProduceAction {
 
     return produceResult
         .handle(
-            (result, ex) -> {
-              if (ex != null) {
-                long latency =
-                    Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
+            (result, error) -> {
+              if (error != null) {
+                long latency = Duration.between(requestInstant, Instant.now()).toMillis();
                 recordErrorMetrics(latency);
-                throw new CompletionException(ex);
+                throw new CompletionException(error);
               }
               return result;
             })

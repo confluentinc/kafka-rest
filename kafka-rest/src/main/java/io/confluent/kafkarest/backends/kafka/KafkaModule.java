@@ -24,15 +24,12 @@ import io.confluent.kafkarest.ProducerMetrics;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.utils.Time;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.process.internal.RequestScoped;
 
 /**
  * A module to configure access to Kafka.
@@ -43,19 +40,15 @@ import org.glassfish.jersey.process.internal.RequestScoped;
  */
 public final class KafkaModule extends AbstractBinder {
 
-  public static final String KAFKA_REST_CONTEXT_PROPERTY_NAME = "io.confluent.kafkarest.context";
-
   @Override
   protected void configure() {
-    bindFactory(KafkaRestContextFactory.class, Singleton.class)
-        .to(KafkaRestContext.class)
-        .in(RequestScoped.class);
+    bindFactory(KafkaRestContextFactory.class).to(KafkaRestContext.class).in(Singleton.class);
 
-    bindFactory(AdminFactory.class).to(Admin.class).in(RequestScoped.class);
+    bindFactory(AdminFactory.class).to(Admin.class).in(Singleton.class);
 
     bindFactory(ProducerFactory.class)
         .to(new TypeLiteral<Producer<byte[], byte[]>>() {})
-        .in(RequestScoped.class);
+        .in(Singleton.class);
 
     bindFactory(ProducerMetricsFactory.class, Singleton.class)
         .to(ProducerMetrics.class)
@@ -63,68 +56,59 @@ public final class KafkaModule extends AbstractBinder {
   }
 
   private static final class KafkaRestContextFactory implements Factory<KafkaRestContext> {
-
-    private final Provider<ContainerRequestContext> requestContext;
-    private final KafkaRestContext defaultContext;
+    private final KafkaRestConfig config;
 
     @Inject
-    private KafkaRestContextFactory(
-        @Context Provider<ContainerRequestContext> requestContext, KafkaRestConfig config) {
-      this.requestContext = requireNonNull(requestContext);
-      this.defaultContext = new DefaultKafkaRestContext(config);
+    private KafkaRestContextFactory(KafkaRestConfig config) {
+      this.config = requireNonNull(config);
     }
 
     @Override
     public KafkaRestContext provide() {
-      KafkaRestContext context =
-          (KafkaRestContext) requestContext.get().getProperty(KAFKA_REST_CONTEXT_PROPERTY_NAME);
-      return context != null ? context : defaultContext;
+      return new DefaultKafkaRestContext(config);
     }
 
     @Override
-    public void dispose(KafkaRestContext instance) {
-      // The context is either disposed by whoever set it in the ContainerRequestContext, or it is
-      // the defaultContext, in which case it should not be disposed.
+    public void dispose(KafkaRestContext context) {
+      context.shutdown();
     }
   }
 
   private static final class AdminFactory implements Factory<Admin> {
-
-    private final Provider<KafkaRestContext> context;
+    private final KafkaRestContext context;
 
     @Inject
-    private AdminFactory(Provider<KafkaRestContext> context) {
+    private AdminFactory(KafkaRestContext context) {
       this.context = requireNonNull(context);
     }
 
     @Override
     public Admin provide() {
-      return context.get().getAdmin();
+      return context.getAdmin();
     }
 
     @Override
-    public void dispose(Admin instance) {
-      // AdminClient is disposed when the KafkaRestContext is disposed.
+    public void dispose(Admin admin) {
+      admin.close();
     }
   }
 
   private static final class ProducerFactory implements Factory<Producer<byte[], byte[]>> {
-
-    private final Provider<KafkaRestContext> context;
+    private final KafkaRestContext context;
 
     @Inject
-    private ProducerFactory(Provider<KafkaRestContext> context) {
+    private ProducerFactory(KafkaRestContext context) {
       this.context = requireNonNull(context);
     }
 
     @Override
     public Producer<byte[], byte[]> provide() {
-      return context.get().getProducer();
+      return context.getProducer();
     }
 
     @Override
     public void dispose(Producer<byte[], byte[]> producer) {
-      // Producer is disposed when the KafkaRestContext is disposed.
+      producer.close();
     }
   }
 

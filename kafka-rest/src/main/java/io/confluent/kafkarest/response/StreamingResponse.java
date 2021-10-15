@@ -31,11 +31,13 @@ import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.exceptions.v3.V3ExceptionMapper;
 import io.confluent.rest.entities.ErrorMessage;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
+import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import javax.annotation.Nullable;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -77,6 +79,11 @@ public abstract class StreamingResponse<T> {
               new V3ExceptionMapper(),
               response -> ((ErrorResponse) response.getEntity()).getErrorCode(),
               response -> ((ErrorResponse) response.getEntity()).getMessage())
+          .putMapper(
+              WebApplicationException.class,
+              new WebApplicationExceptionMapper(/* restConfig= */ null),
+              response -> ((ErrorMessage) response.getEntity()).getErrorCode(),
+              response -> ((ErrorMessage) response.getEntity()).getMessage())
           .setDefaultMapper(
               new KafkaExceptionMapper(/* restConfig= */ null),
               response -> ((ErrorMessage) response.getEntity()).getErrorCode(),
