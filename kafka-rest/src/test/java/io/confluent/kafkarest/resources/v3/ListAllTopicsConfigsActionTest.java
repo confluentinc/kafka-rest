@@ -17,6 +17,7 @@ package io.confluent.kafkarest.resources.v3;
 
 import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -110,11 +111,12 @@ public class ListAllTopicsConfigsActionTest {
 
   @Test
   public void listTopicConfigs_existingTopic_returnsConfigs() {
-    expect(topicManager.listTopics(CLUSTER_ID))
+    expect(topicManager.listTopics(CLUSTER_ID, false))
         .andReturn(
             completedFuture(
                 Arrays.asList(
-                    Topic.create(CLUSTER_ID, TOPIC_NAME, new ArrayList<>(), (short) 1, false))));
+                    Topic.create(
+                        CLUSTER_ID, TOPIC_NAME, new ArrayList<>(), (short) 1, false, emptySet()))));
 
     expect(topicConfigManager.listTopicConfigs(CLUSTER_ID, Arrays.asList(TOPIC_NAME)))
         .andReturn(
@@ -208,7 +210,8 @@ public class ListAllTopicsConfigsActionTest {
 
   @Test
   public void listTopicConfigs_noTopics_returnsEmptyConfigs() {
-    expect(topicManager.listTopics(CLUSTER_ID)).andReturn(completedFuture(new ArrayList<>()));
+    expect(topicManager.listTopics(CLUSTER_ID, false))
+        .andReturn(completedFuture(new ArrayList<>()));
 
     expect(topicConfigManager.listTopicConfigs(CLUSTER_ID, new ArrayList<>()))
         .andReturn(completedFuture(new HashMap<String, List<TopicConfig>>()));
@@ -232,7 +235,8 @@ public class ListAllTopicsConfigsActionTest {
 
   @Test
   public void listTopicConfigs_nonExistingCluster_throwsNotFound() {
-    expect(topicManager.listTopics(CLUSTER_ID)).andReturn(failedFuture(new NotFoundException()));
+    expect(topicManager.listTopics(CLUSTER_ID, false))
+        .andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();

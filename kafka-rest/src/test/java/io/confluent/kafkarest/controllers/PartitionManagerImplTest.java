@@ -27,6 +27,7 @@ import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -145,7 +146,8 @@ public class PartitionManagerImplTest {
           TOPIC_NAME,
           Arrays.asList(PARTITION_1, PARTITION_2, PARTITION_3),
           /* replicationFactor= */ (short) 3,
-          /* isInternal= */ false);
+          /* isInternal= */ false,
+          Collections.emptySet());
 
   @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
@@ -178,7 +180,7 @@ public class PartitionManagerImplTest {
 
   @Test
   public void listPartitions_existingTopic_returnsPartitions() throws Exception {
-    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
+    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME, false))
         .andReturn(CompletableFuture.completedFuture(Optional.of(TOPIC)));
     // Neither OffsetSpec or ListOffsetsOptions implement equals. We have to rely on ordering of
     // method calls. Earliest fist, then latest.
@@ -221,7 +223,7 @@ public class PartitionManagerImplTest {
 
   @Test
   public void listPartitions_nonExistingTopic_throwsNotFound() throws Exception {
-    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
+    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME, false))
         .andReturn(CompletableFuture.completedFuture(Optional.empty()));
     replay(topicManager);
 
@@ -235,7 +237,7 @@ public class PartitionManagerImplTest {
 
   @Test
   public void listPartitions_nonExistingCluster_throwsNotFound() throws Exception {
-    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
+    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME, false))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);
 
@@ -306,7 +308,7 @@ public class PartitionManagerImplTest {
 
   @Test
   public void getPartition_existingPartition_returnsPartition() throws Exception {
-    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
+    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME, false))
         .andReturn(CompletableFuture.completedFuture(Optional.of(TOPIC)));
     // Neither OffsetSpec or ListOffsetsOptions implement equals. We have to rely on ordering of
     // method calls. Earliest fist, then latest.
@@ -334,7 +336,7 @@ public class PartitionManagerImplTest {
 
   @Test
   public void getPartition_nonExistingPartition_returnsEmpty() throws Exception {
-    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
+    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME, false))
         .andReturn(CompletableFuture.completedFuture(Optional.of(TOPIC)));
     replay(topicManager);
 
@@ -346,7 +348,7 @@ public class PartitionManagerImplTest {
 
   @Test
   public void getPartition_nonExistingTopic_throwsNotFound() throws Exception {
-    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
+    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME, false))
         .andReturn(CompletableFuture.completedFuture(Optional.empty()));
     replay(topicManager);
 
@@ -360,7 +362,7 @@ public class PartitionManagerImplTest {
 
   @Test
   public void getPartition_nonExistingCluster_throwsNotFound() throws Exception {
-    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
+    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME, false))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);
 

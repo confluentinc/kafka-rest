@@ -21,6 +21,7 @@ import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.common.KafkaFutures;
+import io.confluent.kafkarest.entities.Acl;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
@@ -35,6 +36,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.DescribeTopicsOptions;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.admin.TopicListing;
@@ -53,7 +55,8 @@ final class TopicManagerImpl implements TopicManager {
   }
 
   @Override
-  public CompletableFuture<List<Topic>> listTopics(String clusterId) {
+  public CompletableFuture<List<Topic>> listTopics(
+      String clusterId, boolean includeAuthorizedOperations) {
     return clusterManager
         .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
@@ -66,7 +69,8 @@ final class TopicManagerImpl implements TopicManager {
               }
               return describeTopics(
                   clusterId,
-                  topicListings.stream().map(TopicListing::name).collect(Collectors.toList()));
+                  topicListings.stream().map(TopicListing::name).collect(Collectors.toList()),
+                  includeAuthorizedOperations);
             });
   }
 
@@ -86,18 +90,22 @@ final class TopicManagerImpl implements TopicManager {
                               cluster.getClusterId(),
                               topicListings.stream()
                                   .map(TopicListing::name)
-                                  .collect(Collectors.toList()));
+                                  .collect(Collectors.toList()),
+                              false);
                         }));
   }
 
   @Override
-  public CompletableFuture<Optional<Topic>> getTopic(String clusterId, String topicName) {
+  public CompletableFuture<Optional<Topic>> getTopic(
+      String clusterId, String topicName, boolean includeAuthorizedOperations) {
     requireNonNull(topicName);
 
     return clusterManager
         .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
-        .thenCompose(cluster -> describeTopics(clusterId, singletonList(topicName)))
+        .thenCompose(
+            cluster ->
+                describeTopics(clusterId, singletonList(topicName), includeAuthorizedOperations))
         .thenApply(
             topics -> {
               if (topics == null || topics.isEmpty()) {
@@ -119,7 +127,8 @@ final class TopicManagerImpl implements TopicManager {
 
     return clusterManager
         .getLocalCluster()
-        .thenCompose(cluster -> describeTopics(cluster.getClusterId(), singletonList(topicName)))
+        .thenCompose(
+            cluster -> describeTopics(cluster.getClusterId(), singletonList(topicName), false))
         .thenApply(
             topics -> {
               if (topics == null || topics.isEmpty()) {
@@ -133,8 +142,15 @@ final class TopicManagerImpl implements TopicManager {
             });
   }
 
-  private CompletableFuture<List<Topic>> describeTopics(String clusterId, List<String> topicNames) {
-    return KafkaFutures.toCompletableFuture(adminClient.describeTopics(topicNames).all())
+  private CompletableFuture<List<Topic>> describeTopics(
+      String clusterId, List<String> topicNames, boolean includeAuthorizedOperations) {
+    return KafkaFutures.toCompletableFuture(
+            adminClient
+                .describeTopics(
+                    topicNames,
+                    new DescribeTopicsOptions()
+                        .includeAuthorizedOperations(includeAuthorizedOperations))
+                .all())
         .thenApply(
             topics ->
                 topics.values().stream()
@@ -150,7 +166,10 @@ final class TopicManagerImpl implements TopicManager {
             .map(partition -> toPartition(clusterId, topicDescription.name(), partition))
             .collect(Collectors.toList()),
         (short) topicDescription.partitions().get(0).replicas().size(),
-        topicDescription.isInternal());
+        topicDescription.isInternal(),
+        topicDescription.authorizedOperations().stream()
+            .map(Acl.Operation::fromAclOperation)
+            .collect(Collectors.toSet()));
   }
 
   private static Partition toPartition(

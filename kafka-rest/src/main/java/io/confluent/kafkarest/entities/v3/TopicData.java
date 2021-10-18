@@ -18,8 +18,11 @@ package io.confluent.kafkarest.entities.v3;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
+import io.confluent.kafkarest.entities.Acl;
 import io.confluent.kafkarest.entities.Topic;
+import java.util.Set;
 
+// CHECKSTYLE:OFF:ParameterNumber
 @AutoValue
 public abstract class TopicData extends Resource {
 
@@ -49,6 +52,9 @@ public abstract class TopicData extends Resource {
   @JsonProperty("partition_reassignments")
   public abstract Relationship getPartitionReassignments();
 
+  @JsonProperty("authorized_operations")
+  public abstract Set<Acl.Operation> getAuthorizedOperations();
+
   public static Builder builder() {
     return new AutoValue_TopicData.Builder().setKind("KafkaTopic");
   }
@@ -59,7 +65,8 @@ public abstract class TopicData extends Resource {
         .setTopicName(topic.getName())
         .setInternal(topic.isInternal())
         .setReplicationFactor(topic.getReplicationFactor())
-        .setPartitionsCount(topic.getPartitions().size());
+        .setPartitionsCount(topic.getPartitions().size())
+        .setAuthorizedOperations(topic.getAuthorizedOperations());
   }
 
   @JsonCreator
@@ -73,7 +80,8 @@ public abstract class TopicData extends Resource {
       @JsonProperty("partitions_count") int partitionsCount,
       @JsonProperty("partitions") Relationship partitions,
       @JsonProperty("configs") Relationship configs,
-      @JsonProperty("partition_reassignments") Relationship partitionReassignments) {
+      @JsonProperty("partition_reassignments") Relationship partitionReassignments,
+      @JsonProperty("authorized_operations") Set<Acl.Operation> authorizedOperations) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -85,6 +93,7 @@ public abstract class TopicData extends Resource {
         .setPartitions(partitions)
         .setConfigs(configs)
         .setPartitionReassignments(partitionReassignments)
+        .setAuthorizedOperations(authorizedOperations)
         .build();
   }
 
@@ -109,6 +118,9 @@ public abstract class TopicData extends Resource {
 
     public abstract Builder setPartitionReassignments(Relationship partitionReassignments);
 
+    public abstract Builder setAuthorizedOperations(Set<Acl.Operation> authorizedOperations);
+
     public abstract TopicData build();
   }
 }
+// CHECKSTYLE:ON:ParameterNumber

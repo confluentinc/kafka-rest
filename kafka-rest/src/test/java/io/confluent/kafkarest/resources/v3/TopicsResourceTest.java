@@ -16,8 +16,7 @@
 package io.confluent.kafkarest.resources.v3;
 
 import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
-import static java.util.Collections.singletonList;
-import static java.util.Collections.singletonMap;
+import static java.util.Collections.*;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -149,7 +148,8 @@ public class TopicsResourceTest {
                           /* isLeader= */ true,
                           /* isInSync= */ true)))),
           /* replicationFactor= */ (short) 3,
-          /* isInternal= */ true);
+          /* isInternal= */ true,
+          emptySet());
 
   private static final Topic TOPIC_2 =
       Topic.create(
@@ -235,7 +235,8 @@ public class TopicsResourceTest {
                           /* isLeader= */ false,
                           /* isInSync= */ false)))),
           /* replicationFactor= */ (short) 3,
-          /* isInternal= */ true);
+          /* isInternal= */ true,
+          emptySet());
 
   private static final Topic TOPIC_3 =
       Topic.create(
@@ -321,7 +322,8 @@ public class TopicsResourceTest {
                           /* isLeader= */ false,
                           /* isInSync= */ false)))),
           /* replicationFactor= */ (short) 3,
-          /* isInternal= */ false);
+          /* isInternal= */ false,
+          emptySet());
 
   @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
@@ -352,6 +354,7 @@ public class TopicsResourceTest {
                 String.format(
                     "/v3/clusters/cluster-1/topics/%s/partitions/-/reassignment", topicName)))
         .setPartitionsCount(partitionsCount)
+        .setAuthorizedOperations(emptySet())
         .build();
   }
 
@@ -366,12 +369,12 @@ public class TopicsResourceTest {
 
   @Test
   public void listTopics_existingCluster_returnsTopics() {
-    expect(topicManager.listTopics(CLUSTER_ID))
+    expect(topicManager.listTopics(CLUSTER_ID, false))
         .andReturn(completedFuture(Arrays.asList(TOPIC_1, TOPIC_2, TOPIC_3)));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    topicsResource.listTopics(response, CLUSTER_ID);
+    topicsResource.listTopics(response, CLUSTER_ID, false);
 
     ListTopicsResponse expected =
         ListTopicsResponse.create(
@@ -392,34 +395,36 @@ public class TopicsResourceTest {
 
   @Test
   public void listTopics_timeoutException_returnsTimeoutException() {
-    expect(topicManager.listTopics(CLUSTER_ID)).andReturn(failedFuture(new TimeoutException()));
+    expect(topicManager.listTopics(CLUSTER_ID, false))
+        .andReturn(failedFuture(new TimeoutException()));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    topicsResource.listTopics(response, CLUSTER_ID);
+    topicsResource.listTopics(response, CLUSTER_ID, false);
 
     assertEquals(TimeoutException.class, response.getException().getClass());
   }
 
   @Test
   public void listTopics_nonExistingCluster_returnsNotFound() {
-    expect(topicManager.listTopics(CLUSTER_ID)).andReturn(failedFuture(new NotFoundException()));
+    expect(topicManager.listTopics(CLUSTER_ID, false))
+        .andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    topicsResource.listTopics(response, CLUSTER_ID);
+    topicsResource.listTopics(response, CLUSTER_ID, false);
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }
 
   @Test
   public void getTopics_existingCluster_returnsTopic() {
-    expect(topicManager.getTopic(TOPIC_1.getClusterId(), TOPIC_1.getName()))
+    expect(topicManager.getTopic(TOPIC_1.getClusterId(), TOPIC_1.getName(), false))
         .andReturn(completedFuture(Optional.of(TOPIC_1)));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    topicsResource.getTopic(response, TOPIC_1.getClusterId(), TOPIC_1.getName());
+    topicsResource.getTopic(response, TOPIC_1.getClusterId(), TOPIC_1.getName(), false);
 
     GetTopicResponse expected = GetTopicResponse.create(newTopicData("topic-1", true, 3, 3));
 
@@ -428,24 +433,24 @@ public class TopicsResourceTest {
 
   @Test
   public void getTopics_nonExistingCluster_throwsNotFoundException() {
-    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_1.getName()))
+    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_1.getName(), false))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    topicsResource.getTopic(response, CLUSTER_ID, TOPIC_1.getName());
+    topicsResource.getTopic(response, CLUSTER_ID, TOPIC_1.getName(), false);
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }
 
   @Test
   public void getTopics_existingCluster_nonExistingTopic_throwsNotFound() {
-    expect(topicManager.getTopic(TOPIC_1.getClusterId(), TOPIC_1.getName()))
+    expect(topicManager.getTopic(TOPIC_1.getClusterId(), TOPIC_1.getName(), false))
         .andReturn(completedFuture(Optional.empty()));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    topicsResource.getTopic(response, TOPIC_1.getClusterId(), TOPIC_1.getName());
+    topicsResource.getTopic(response, TOPIC_1.getClusterId(), TOPIC_1.getName(), false);
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }

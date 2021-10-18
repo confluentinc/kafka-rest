@@ -53,7 +53,7 @@ final class PartitionManagerImpl implements PartitionManager {
   @Override
   public CompletableFuture<List<Partition>> listPartitions(String clusterId, String topicName) {
     return topicManager
-        .getTopic(clusterId, topicName)
+        .getTopic(clusterId, topicName, false)
         .thenApply(topic -> checkEntityExists(topic, "Topic %s cannot be found.", topic))
         .thenApply(Topic::getPartitions)
         .thenCompose(this::withOffsets);
@@ -72,7 +72,7 @@ final class PartitionManagerImpl implements PartitionManager {
   public CompletableFuture<Optional<Partition>> getPartition(
       String clusterId, String topicName, int partitionId) {
     return topicManager
-        .getTopic(clusterId, topicName)
+        .getTopic(clusterId, topicName, false)
         .thenApply(topic -> checkEntityExists(topic, "Topic %s cannot be found.", topic))
         .thenApply(Topic::getPartitions)
         .thenApply(

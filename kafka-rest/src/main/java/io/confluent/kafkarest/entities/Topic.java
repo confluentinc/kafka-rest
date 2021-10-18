@@ -15,9 +15,13 @@
 
 package io.confluent.kafkarest.entities;
 
+import static java.util.Collections.emptySet;
+
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 @AutoValue
 public abstract class Topic {
@@ -34,13 +38,21 @@ public abstract class Topic {
 
   public abstract boolean isInternal();
 
+  public abstract Set<Acl.Operation> getAuthorizedOperations();
+
   public static Topic create(
       String clusterId,
       String name,
       List<Partition> partitions,
       short replicationFactor,
-      boolean isInternal) {
+      boolean isInternal,
+      @Nullable Set<Acl.Operation> authorizedOperations) {
     return new AutoValue_Topic(
-        clusterId, name, ImmutableList.copyOf(partitions), replicationFactor, isInternal);
+        clusterId,
+        name,
+        ImmutableList.copyOf(partitions),
+        replicationFactor,
+        isInternal,
+        authorizedOperations == null ? emptySet() : authorizedOperations);
   }
 }

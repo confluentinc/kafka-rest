@@ -18,6 +18,7 @@ package io.confluent.kafkarest.resources.v2;
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -138,7 +139,8 @@ public class TopicsResourceTest
                           /* isLeader= */ true,
                           /* isInSync= */ true)))),
           /* replicationFactor= */ (short) 3,
-          /* isInternal= */ true);
+          /* isInternal= */ true,
+          emptySet());
 
   private static final Topic TOPIC_2 =
       Topic.create(
@@ -224,7 +226,8 @@ public class TopicsResourceTest
                           /* isLeader= */ false,
                           /* isInSync= */ false)))),
           /* replicationFactor= */ (short) 3,
-          /* isInternal= */ true);
+          /* isInternal= */ true,
+          emptySet());
 
   private static final Topic TOPIC_3 =
       Topic.create(
@@ -310,7 +313,8 @@ public class TopicsResourceTest
                           /* isLeader= */ false,
                           /* isInSync= */ false)))),
           /* replicationFactor= */ (short) 3,
-          /* isInternal= */ false);
+          /* isInternal= */ false,
+          emptySet());
 
   private static final TopicConfig CONFIG_1 =
       TopicConfig.create(
