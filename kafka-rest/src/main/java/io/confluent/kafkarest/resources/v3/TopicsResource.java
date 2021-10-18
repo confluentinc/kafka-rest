@@ -119,7 +119,7 @@ public final class TopicsResource {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
-      @QueryParam("includeAuthorizedOperations") @DefaultValue("false")
+      @QueryParam("include_authorized_operations") @DefaultValue("false")
           boolean includeAuthorizedOperations) {
     CompletableFuture<GetTopicResponse> response =
         topicManager
