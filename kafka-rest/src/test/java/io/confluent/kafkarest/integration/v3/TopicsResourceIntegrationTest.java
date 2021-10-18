@@ -33,6 +33,7 @@ import io.confluent.kafkarest.entities.v3.TopicData;
 import io.confluent.kafkarest.entities.v3.TopicDataList;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Properties;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -123,6 +124,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                                         + "/topics/"
                                         + TOPIC_1
                                         + "/partitions/-/reassignment"))
+                            .setAuthorizedOperations(Collections.emptySet())
                             .build(),
                         TopicData.builder()
                             .setMetadata(
@@ -165,6 +167,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                                         + "/topics/"
                                         + TOPIC_2
                                         + "/partitions/-/reassignment"))
+                            .setAuthorizedOperations(Collections.emptySet())
                             .build(),
                         TopicData.builder()
                             .setMetadata(
@@ -207,6 +210,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                                         + "/topics/"
                                         + TOPIC_3
                                         + "/partitions/-/reassignment"))
+                            .setAuthorizedOperations(Collections.emptySet())
                             .build()))
                 .build());
 
@@ -268,6 +272,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             + "/topics/"
                             + TOPIC_1
                             + "/partitions/-/reassignment"))
+                .setAuthorizedOperations(Collections.emptySet())
                 .build());
 
     Response response =
@@ -341,6 +346,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             + "/topics/"
                             + topicName
                             + "/partitions/-/reassignment"))
+                .setAuthorizedOperations(Collections.emptySet())
                 .build());
 
     Response response =
@@ -408,6 +414,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             + "/topics/"
                             + topicName
                             + "/partitions/-/reassignment"))
+                .setAuthorizedOperations(Collections.emptySet())
                 .build());
 
     Response response =
@@ -552,6 +559,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             + "/topics/"
                             + topicName
                             + "/partitions/-/reassignment"))
+                .setAuthorizedOperations(Collections.emptySet())
                 .build());
 
     Response createTopicResponse =
@@ -613,6 +621,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             + "/topics/"
                             + topicName
                             + "/partitions/-/reassignment"))
+                .setAuthorizedOperations(Collections.emptySet())
                 .build());
 
     testWithRetry(
