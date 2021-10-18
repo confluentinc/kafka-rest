@@ -16,7 +16,9 @@
 package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
-import static java.util.Collections.*;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.common.KafkaFutures;
@@ -166,10 +168,11 @@ final class TopicManagerImpl implements TopicManager {
             .collect(Collectors.toList()),
         (short) topicDescription.partitions().get(0).replicas().size(),
         topicDescription.isInternal(),
-        topicDescription.authorizedOperations() == null ? emptySet() :
-            topicDescription.authorizedOperations().stream()
-            .map(Acl.Operation::fromAclOperation)
-            .collect(Collectors.toSet()));
+        topicDescription.authorizedOperations() == null
+            ? emptySet()
+            : topicDescription.authorizedOperations().stream()
+                .map(Acl.Operation::fromAclOperation)
+                .collect(Collectors.toSet()));
   }
 
   private static Partition toPartition(
