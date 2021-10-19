@@ -180,7 +180,7 @@ public class PartitionManagerImplTest {
 
   @Test
   public void listPartitions_existingTopic_returnsPartitions() throws Exception {
-    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME, false))
+    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
         .andReturn(CompletableFuture.completedFuture(Optional.of(TOPIC)));
     // Neither OffsetSpec or ListOffsetsOptions implement equals. We have to rely on ordering of
     // method calls. Earliest fist, then latest.
@@ -223,7 +223,7 @@ public class PartitionManagerImplTest {
 
   @Test
   public void listPartitions_nonExistingTopic_throwsNotFound() throws Exception {
-    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME, false))
+    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
         .andReturn(CompletableFuture.completedFuture(Optional.empty()));
     replay(topicManager);
 
@@ -237,7 +237,7 @@ public class PartitionManagerImplTest {
 
   @Test
   public void listPartitions_nonExistingCluster_throwsNotFound() throws Exception {
-    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME, false))
+    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);
 
@@ -308,7 +308,7 @@ public class PartitionManagerImplTest {
 
   @Test
   public void getPartition_existingPartition_returnsPartition() throws Exception {
-    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME, false))
+    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
         .andReturn(CompletableFuture.completedFuture(Optional.of(TOPIC)));
     // Neither OffsetSpec or ListOffsetsOptions implement equals. We have to rely on ordering of
     // method calls. Earliest fist, then latest.
@@ -336,7 +336,7 @@ public class PartitionManagerImplTest {
 
   @Test
   public void getPartition_nonExistingPartition_returnsEmpty() throws Exception {
-    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME, false))
+    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
         .andReturn(CompletableFuture.completedFuture(Optional.of(TOPIC)));
     replay(topicManager);
 
@@ -348,7 +348,7 @@ public class PartitionManagerImplTest {
 
   @Test
   public void getPartition_nonExistingTopic_throwsNotFound() throws Exception {
-    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME, false))
+    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
         .andReturn(CompletableFuture.completedFuture(Optional.empty()));
     replay(topicManager);
 
@@ -362,7 +362,7 @@ public class PartitionManagerImplTest {
 
   @Test
   public void getPartition_nonExistingCluster_throwsNotFound() throws Exception {
-    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME, false))
+    expect(topicManager.getTopic(CLUSTER_ID, TOPIC_NAME))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);
 

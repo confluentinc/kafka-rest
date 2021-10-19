@@ -56,6 +56,11 @@ final class TopicManagerImpl implements TopicManager {
   }
 
   @Override
+  public CompletableFuture<List<Topic>> listTopics(String clusterId) {
+    return listTopics(clusterId, false);
+  }
+
+  @Override
   public CompletableFuture<List<Topic>> listTopics(
       String clusterId, boolean includeAuthorizedOperations) {
     return clusterManager
@@ -94,6 +99,11 @@ final class TopicManagerImpl implements TopicManager {
                                   .collect(Collectors.toList()),
                               false);
                         }));
+  }
+
+  @Override
+  public CompletableFuture<Optional<Topic>> getTopic(String clusterId, String topicName) {
+    return getTopic(clusterId, topicName, false);
   }
 
   @Override

@@ -26,6 +26,12 @@ public interface TopicManager {
 
   /**
    * Returns the list of Kafka {@link Topic Topics} belonging to the {@link
+   * io.confluent.kafkarest.entities.Cluster} with the given {@code clusterId}.
+   */
+  CompletableFuture<List<Topic>> listTopics(String clusterId);
+
+  /**
+   * Returns the list of Kafka {@link Topic Topics} belonging to the {@link
    * io.confluent.kafkarest.entities.Cluster} with the given {@code clusterId} and a flag to
    * determine whether to return authorised operations: {@code includeAuthorizedOperations}.
    */
@@ -38,6 +44,12 @@ public interface TopicManager {
   CompletableFuture<List<Topic>> listLocalTopics();
 
   /** Returns the Kafka {@link Topic} with the given {@code topicName}. */
+  CompletableFuture<Optional<Topic>> getTopic(String clusterId, String topicName);
+
+  /**
+   * Returns the Kafka {@link Topic} with the given {@code topicName} and a flag to determine
+   * whether to return authorised operations: {@code includeAuthorizedOperations}.
+   */
   CompletableFuture<Optional<Topic>> getTopic(
       String clusterId, String topicName, boolean includeAuthorizedOperations);
 
