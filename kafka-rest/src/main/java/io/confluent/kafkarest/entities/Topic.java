@@ -45,6 +45,15 @@ public abstract class Topic {
       String name,
       List<Partition> partitions,
       short replicationFactor,
+      boolean isInternal) {
+    return create(clusterId, name, partitions, replicationFactor, isInternal, null);
+  }
+
+  public static Topic create(
+      String clusterId,
+      String name,
+      List<Partition> partitions,
+      short replicationFactor,
       boolean isInternal,
       @Nullable Set<Acl.Operation> authorizedOperations) {
     return new AutoValue_Topic(
