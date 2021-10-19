@@ -16,16 +16,28 @@
 package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.common.KafkaFutures.failedFuture;
-import static java.util.Collections.*;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.isA;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
-import io.confluent.kafkarest.entities.*;
+import io.confluent.kafkarest.entities.Acl;
+import io.confluent.kafkarest.entities.Broker;
+import io.confluent.kafkarest.entities.Cluster;
+import io.confluent.kafkarest.entities.Partition;
+import io.confluent.kafkarest.entities.PartitionReplica;
+import io.confluent.kafkarest.entities.Topic;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -492,7 +504,7 @@ public class TopicManagerImplTest {
                     TOPIC_DESCRIPTION_1, TOPIC_DESCRIPTION_2, TOPIC_DESCRIPTION_3)));
     replay(clusterManager, adminClient, listTopicsResult, describeTopicResult);
 
-    List<Topic> topics = topicManager.listTopics(CLUSTER_ID, false).get();
+    List<Topic> topics = topicManager.listTopics(CLUSTER_ID).get();
 
     assertEquals(Arrays.asList(TOPIC_1, TOPIC_2, TOPIC_3), topics);
   }
@@ -505,7 +517,7 @@ public class TopicManagerImplTest {
     replay(clusterManager, adminClient, listTopicsResult);
 
     try {
-      topicManager.listTopics(CLUSTER_ID, false).get();
+      topicManager.listTopics(CLUSTER_ID).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(TimeoutException.class, e.getCause().getClass());
@@ -537,7 +549,7 @@ public class TopicManagerImplTest {
     replay(clusterManager);
 
     try {
-      topicManager.listTopics(CLUSTER_ID, false).get();
+      topicManager.listTopics(CLUSTER_ID).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -553,7 +565,7 @@ public class TopicManagerImplTest {
         .andReturn(KafkaFuture.completedFuture(createTopicDescriptionMap(TOPIC_DESCRIPTION_1)));
     replay(clusterManager, adminClient, describeTopicResult);
 
-    Topic topic = topicManager.getTopic(CLUSTER_ID, TOPIC_1.getName(), false).get().get();
+    Topic topic = topicManager.getTopic(CLUSTER_ID, TOPIC_1.getName()).get().get();
 
     assertEquals(TOPIC_1, topic);
   }
@@ -566,7 +578,7 @@ public class TopicManagerImplTest {
     replay(clusterManager);
 
     try {
-      topicManager.listTopics(CLUSTER_ID, false).get();
+      topicManager.listTopics(CLUSTER_ID).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -581,7 +593,7 @@ public class TopicManagerImplTest {
     expect(describeTopicResult.all()).andReturn(KafkaFuture.completedFuture(new HashMap<>()));
     replay(clusterManager, adminClient, describeTopicResult);
 
-    Optional<Topic> topic = topicManager.getTopic(CLUSTER_ID, TOPIC_1.getName(), false).get();
+    Optional<Topic> topic = topicManager.getTopic(CLUSTER_ID, TOPIC_1.getName()).get();
 
     assertFalse(topic.isPresent());
   }

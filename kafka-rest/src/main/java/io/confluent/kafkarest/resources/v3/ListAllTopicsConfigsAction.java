@@ -73,7 +73,7 @@ public final class ListAllTopicsConfigsAction {
     CompletableFuture<ListTopicConfigsResponse> response =
         topicManager
             .get()
-            .listTopics(clusterId, false)
+            .listTopics(clusterId)
             .thenCompose(
                 topics ->
                     resolvedTopicConfigManager

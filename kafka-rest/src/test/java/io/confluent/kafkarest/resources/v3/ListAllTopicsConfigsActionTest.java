@@ -111,7 +111,7 @@ public class ListAllTopicsConfigsActionTest {
 
   @Test
   public void listTopicConfigs_existingTopic_returnsConfigs() {
-    expect(topicManager.listTopics(CLUSTER_ID, false))
+    expect(topicManager.listTopics(CLUSTER_ID))
         .andReturn(
             completedFuture(
                 Arrays.asList(
@@ -210,8 +210,7 @@ public class ListAllTopicsConfigsActionTest {
 
   @Test
   public void listTopicConfigs_noTopics_returnsEmptyConfigs() {
-    expect(topicManager.listTopics(CLUSTER_ID, false))
-        .andReturn(completedFuture(new ArrayList<>()));
+    expect(topicManager.listTopics(CLUSTER_ID)).andReturn(completedFuture(new ArrayList<>()));
 
     expect(topicConfigManager.listTopicConfigs(CLUSTER_ID, new ArrayList<>()))
         .andReturn(completedFuture(new HashMap<String, List<TopicConfig>>()));
@@ -235,8 +234,7 @@ public class ListAllTopicsConfigsActionTest {
 
   @Test
   public void listTopicConfigs_nonExistingCluster_throwsNotFound() {
-    expect(topicManager.listTopics(CLUSTER_ID, false))
-        .andReturn(failedFuture(new NotFoundException()));
+    expect(topicManager.listTopics(CLUSTER_ID)).andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
