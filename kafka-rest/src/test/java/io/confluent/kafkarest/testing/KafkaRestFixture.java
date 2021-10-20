@@ -38,7 +38,7 @@ public final class KafkaRestFixture extends ExternalResource {
 
   @Nullable private final SslFixture certificates;
   private final HashMap<String, String> configs;
-  private final KafkaClusterFixture kafkaCluster;
+  @Nullable private final KafkaClusterFixture kafkaCluster;
   @Nullable private final String kafkaPassword;
   @Nullable private final String kafkaUser;
   @Nullable private final String keyName;
@@ -51,7 +51,7 @@ public final class KafkaRestFixture extends ExternalResource {
   private KafkaRestFixture(
       @Nullable SslFixture certificates,
       HashMap<String, String> configs,
-      KafkaClusterFixture kafkaCluster,
+      @Nullable KafkaClusterFixture kafkaCluster,
       @Nullable String kafkaPassword,
       @Nullable String kafkaUser,
       @Nullable String keyName,
@@ -60,7 +60,7 @@ public final class KafkaRestFixture extends ExternalResource {
     checkArgument(certificates != null ^ keyName == null);
     this.certificates = certificates;
     this.configs = requireNonNull(configs);
-    this.kafkaCluster = requireNonNull(kafkaCluster);
+    this.kafkaCluster = kafkaCluster;
     this.kafkaPassword = kafkaPassword;
     this.kafkaUser = kafkaUser;
     this.keyName = keyName;
@@ -92,17 +92,19 @@ public final class KafkaRestFixture extends ExternalResource {
 
   private Properties getKafkaConfigs() {
     Properties properties = new Properties();
-    properties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaCluster.getBootstrapServers());
-    properties.put("client.security.protocol", kafkaCluster.getSecurityProtocol().name());
-    if (kafkaCluster.isSaslSecurity() && kafkaUser != null) {
-      properties.put(
-          "client.sasl.jaas.config",
-          String.format(
-              "org.apache.kafka.common.security.plain.PlainLoginModule required "
-                  + "username=\"%s\" "
-                  + "password=\"%s\";",
-              kafkaUser, kafkaPassword));
-      properties.put("client.sasl.mechanism", "PLAIN");
+    if (kafkaCluster != null) {
+      properties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaCluster.getBootstrapServers());
+      properties.put("client.security.protocol", kafkaCluster.getSecurityProtocol().name());
+      if (kafkaCluster.isSaslSecurity() && kafkaUser != null) {
+        properties.put(
+            "client.sasl.jaas.config",
+            String.format(
+                "org.apache.kafka.common.security.plain.PlainLoginModule required "
+                    + "username=\"%s\" "
+                    + "password=\"%s\";",
+                kafkaUser, kafkaPassword));
+        properties.put("client.sasl.mechanism", "PLAIN");
+      }
     }
     if (certificates != null) {
       properties.putAll(certificates.getSslConfigs(keyName, "client."));
