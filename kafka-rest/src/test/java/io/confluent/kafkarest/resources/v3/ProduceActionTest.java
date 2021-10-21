@@ -11,7 +11,6 @@ import static org.easymock.EasyMock.replay;
 
 import com.fasterxml.jackson.databind.MappingIterator;
 import io.confluent.kafkarest.ProducerMetrics;
-import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
@@ -19,13 +18,13 @@ import io.confluent.kafkarest.entities.ProduceResult;
 import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
-import io.confluent.kafkarest.mock.MockTime;
 import io.confluent.kafkarest.resources.RateLimiter;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import java.io.IOException;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -41,13 +40,8 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ProduceActionTest {
 
-  /**
-   * Provider<SchemaManager> schemaManager, Provider<RecordSerializer> recordSerializer,
-   * Provider<ProduceController> produceController, KafkaRestConfig config
-   */
   @Test
   public void produceWithZeroGracePeriod() throws Exception {
-
     // config
     final int TOTAL_NUMBER_OF_PRODUCE_CALLS = 2;
     Properties properties = new Properties();
@@ -59,8 +53,8 @@ public class ProduceActionTest {
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
         getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS);
-    Time time = new MockTime();
-    ProduceAction produceAction = getProduceAction(properties, chunkedOutputFactory, time, 1);
+    Clock clock = mock(Clock.class);
+    ProduceAction produceAction = getProduceAction(properties, chunkedOutputFactory, clock, 1);
     MappingIterator<ProduceRequest> requests =
         getProduceRequestsMappingIterator(TOTAL_NUMBER_OF_PRODUCE_CALLS);
 
@@ -82,13 +76,14 @@ public class ProduceActionTest {
     mockedChunkedOutput.close(); // error close
     mockedChunkedOutput.close(); // second close always happens on tidy up
 
-    replay(mockedChunkedOutput, chunkedOutputFactory);
+    expect(clock.millis()).andReturn(0L);
+    expect(clock.millis()).andReturn(1L);
+
+    replay(mockedChunkedOutput, chunkedOutputFactory, clock);
 
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
     produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests);
-
-    time.sleep(1);
     FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
     produceAction.produce(fakeAsyncResponse2, "clusterId", "topicName", requests);
 
@@ -99,7 +94,6 @@ public class ProduceActionTest {
 
   @Test
   public void twoProducers() throws Exception {
-
     // config
     final int TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD0 = 2;
     final int TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1 = 3;
@@ -115,14 +109,14 @@ public class ProduceActionTest {
     ChunkedOutputFactory chunkedOutputFactory1 = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput1 =
         getChunkedOutput(chunkedOutputFactory1, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1);
-    Time time = new MockTime();
+    Clock clock = mock(Clock.class);
 
     RateLimiter rateLimiter =
         new RateLimiter(
             Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS)),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
-            time);
+            clock);
 
     ProduceAction produceAction0 =
         getProduceAction(
@@ -173,26 +167,28 @@ public class ProduceActionTest {
     mockedChunkedOutput1.close();
     mockedChunkedOutput1.close();
 
+    expect(clock.millis()).andReturn(0L);
+    expect(clock.millis()).andReturn(1L);
+    expect(clock.millis()).andReturn(1011L);
+    expect(clock.millis()).andReturn(1012L);
+    expect(clock.millis()).andReturn(1023L);
+
     replay(
-        mockedChunkedOutput0, chunkedOutputFactory0, mockedChunkedOutput1, chunkedOutputFactory1);
+        mockedChunkedOutput0,
+        chunkedOutputFactory0,
+        mockedChunkedOutput1,
+        chunkedOutputFactory1,
+        clock);
 
     // run test
     FakeAsyncResponse fakeAsyncResponse1 = new FakeAsyncResponse();
     produceAction0.produce(fakeAsyncResponse1, "clusterId", "topicName", requests0);
-
-    time.sleep(1);
     FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
     produceAction1.produce(fakeAsyncResponse2, "clusterId", "topicName", requests1);
-
-    time.sleep(1010);
     FakeAsyncResponse fakeAsyncResponse3 = new FakeAsyncResponse();
     produceAction1.produce(fakeAsyncResponse3, "clusterId", "topicName", requests1);
-
-    time.sleep(1);
     FakeAsyncResponse fakeAsyncResponse4 = new FakeAsyncResponse();
     produceAction0.produce(fakeAsyncResponse4, "clusterId", "topicName", requests0);
-
-    time.sleep(11);
     FakeAsyncResponse fakeAsyncResponse5 = new FakeAsyncResponse();
     produceAction1.produce(fakeAsyncResponse5, "clusterId", "topicName", requests1);
 
@@ -204,7 +200,6 @@ public class ProduceActionTest {
 
   @Test
   public void produceCombinationsHittingRateAndGraceLimit() throws Exception {
-
     // config
     final int TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD = 7;
     Properties properties = new Properties();
@@ -216,10 +211,10 @@ public class ProduceActionTest {
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
         getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD);
-    Time time = new MockTime();
+    Clock clock = mock(Clock.class);
     ProduceAction produceAction =
         getProduceAction(
-            properties, chunkedOutputFactory, time, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD);
+            properties, chunkedOutputFactory, clock, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD);
     MappingIterator<ProduceRequest> requests =
         getProduceRequestsMappingIterator(TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD);
 
@@ -273,31 +268,28 @@ public class ProduceActionTest {
 
     replay(mockedChunkedOutput, chunkedOutputFactory);
 
+    expect(clock.millis()).andReturn(0L);
+    expect(clock.millis()).andReturn(1L);
+    expect(clock.millis()).andReturn(1011L);
+    expect(clock.millis()).andReturn(1012L);
+    expect(clock.millis()).andReturn(1013L);
+    expect(clock.millis()).andReturn(1024L);
+    expect(clock.millis()).andReturn(2025L);
+    replay(clock);
+
     // run test
     FakeAsyncResponse fakeAsyncResponse1 = new FakeAsyncResponse();
     produceAction.produce(fakeAsyncResponse1, "clusterId", "topicName", requests);
-
-    time.sleep(1);
     FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
     produceAction.produce(fakeAsyncResponse2, "clusterId", "topicName", requests);
-
-    time.sleep(1001);
     FakeAsyncResponse fakeAsyncResponse3 = new FakeAsyncResponse();
     produceAction.produce(fakeAsyncResponse3, "clusterId", "topicName", requests);
-
-    time.sleep(1);
     FakeAsyncResponse fakeAsyncResponse4 = new FakeAsyncResponse();
     produceAction.produce(fakeAsyncResponse4, "clusterId", "topicName", requests);
-
-    time.sleep(1);
     FakeAsyncResponse fakeAsyncResponse5 = new FakeAsyncResponse();
     produceAction.produce(fakeAsyncResponse5, "clusterId", "topicName", requests);
-
-    time.sleep(11);
     FakeAsyncResponse fakeAsyncResponse6 = new FakeAsyncResponse();
     produceAction.produce(fakeAsyncResponse6, "clusterId", "topicName", requests);
-
-    time.sleep(1001);
     FakeAsyncResponse fakeAsyncResponse7 = new FakeAsyncResponse();
     produceAction.produce(fakeAsyncResponse7, "clusterId", "topicName", requests);
 
@@ -308,7 +300,6 @@ public class ProduceActionTest {
 
   @Test
   public void streamingRequests() throws Exception {
-
     // config
     final int TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1 = 1;
     final int TOTAL_NUMBER_OF_STREAMING_CALLS = 4;
@@ -321,10 +312,10 @@ public class ProduceActionTest {
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
         getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1);
-    Time time = new MockTime();
+    Clock clock = mock(Clock.class);
 
     ProduceAction produceAction1 =
-        getProduceAction(properties, chunkedOutputFactory, time, TOTAL_NUMBER_OF_STREAMING_CALLS);
+        getProduceAction(properties, chunkedOutputFactory, clock, TOTAL_NUMBER_OF_STREAMING_CALLS);
     MappingIterator<ProduceRequest> requests = getStreamingProduceRequestsMappingIterator(4);
 
     // expected results
@@ -349,7 +340,13 @@ public class ProduceActionTest {
     mockedChunkedOutput.write(resultOrErrorOKProd4);
     mockedChunkedOutput.close();
 
-    replay(mockedChunkedOutput, chunkedOutputFactory);
+    expect((clock.millis())).andReturn(0L);
+    expect((clock.millis())).andReturn(1L);
+    expect((clock.millis())).andReturn(2L);
+    expect((clock.millis())).andReturn(3L);
+    expect((clock.millis())).andReturn(4L);
+
+    replay(mockedChunkedOutput, chunkedOutputFactory, clock);
 
     // run test
     FakeAsyncResponse fakeAsyncResponse1 = new FakeAsyncResponse();
@@ -362,7 +359,6 @@ public class ProduceActionTest {
 
   @Test
   public void produceStreamingCombinationsHittingRateAndGraceLimit() throws Exception {
-
     // config
     final int TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD = 5;
     Properties properties = new Properties();
@@ -374,13 +370,13 @@ public class ProduceActionTest {
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
         getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD);
-    Time time = new MockTime();
+    Clock clock = mock(Clock.class);
     ProduceAction produceAction =
         getProduceAction(
-            properties, chunkedOutputFactory, time, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD);
+            properties, chunkedOutputFactory, clock, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD);
 
     MappingIterator<ProduceRequest> requests =
-        getStreamingProduceRequestsMappingIteratorCombinations(time);
+        getStreamingProduceRequestsMappingIteratorCombinations(clock);
 
     // expected results
     ProduceResponse produceResponse1 = getProduceResponse(0);
@@ -430,7 +426,7 @@ public class ProduceActionTest {
     EasyMock.verify(mockedChunkedOutput);
   }
 
-  Provider<RecordSerializer> getRecordSerializerProvider() {
+  private static Provider<RecordSerializer> getRecordSerializerProvider() {
     Provider<RecordSerializer> recordSerializerProvider = mock(Provider.class);
     RecordSerializer recordSerializer = mock(RecordSerializer.class);
     expect(recordSerializerProvider.get()).andReturn(recordSerializer).anyTimes();
@@ -443,13 +439,14 @@ public class ProduceActionTest {
     return recordSerializerProvider;
   }
 
-  ProduceController getProduceControllerMock(Provider produceControllerProvider) {
+  private static ProduceController getProduceControllerMock(Provider produceControllerProvider) {
     ProduceController produceController = mock(ProduceController.class);
     expect(produceControllerProvider.get()).andReturn(produceController).anyTimes();
     return produceController;
   }
 
-  MappingIterator<ProduceRequest> getProduceRequestsMappingIterator(int times) throws IOException {
+  private static MappingIterator<ProduceRequest> getProduceRequestsMappingIterator(int times)
+      throws IOException {
     MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
     ProduceRequest request = ProduceRequest.builder().build();
     for (int i = 0; i < times; i++) {
@@ -463,8 +460,8 @@ public class ProduceActionTest {
     return requests;
   }
 
-  MappingIterator<ProduceRequest> getStreamingProduceRequestsMappingIterator(int times)
-      throws IOException {
+  private static MappingIterator<ProduceRequest> getStreamingProduceRequestsMappingIterator(
+      int times) throws IOException {
     MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
 
     for (int i = 0; i < times; i++) {
@@ -478,64 +475,45 @@ public class ProduceActionTest {
     return requests;
   }
 
-  MappingIterator<ProduceRequest> getStreamingProduceRequestsMappingIteratorCombinations(Time time)
-      throws IOException {
-
+  private static MappingIterator<ProduceRequest>
+      getStreamingProduceRequestsMappingIteratorCombinations(Clock clock) throws IOException {
     MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
+
+    expect(clock.millis()).andReturn(0L);
+    expect(clock.millis()).andReturn(1L);
+    expect(clock.millis()).andReturn(1002L);
+    expect(clock.millis()).andReturn(1003L);
+    expect(clock.millis()).andReturn(1004L);
+    expect(clock.millis()).andReturn(1015L);
+    replay(clock);
 
     ProduceRequest request = ProduceRequest.builder().build();
     expect(requests.hasNext()).andReturn(true);
     expect(requests.nextValue()).andReturn(request);
 
     expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue())
-        .andAnswer(
-            () -> {
-              time.sleep(1);
-              return request;
-            });
+    expect(requests.nextValue()).andReturn(request);
 
     expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue())
-        .andAnswer(
-            () -> {
-              time.sleep(1001);
-              return request;
-            });
+    expect(requests.nextValue()).andReturn(request);
 
     expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue())
-        .andAnswer(
-            () -> {
-              time.sleep(1);
-              return request;
-            });
+    expect(requests.nextValue()).andReturn(request);
 
     expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue())
-        .andAnswer(
-            () -> {
-              time.sleep(1);
-              return request;
-            });
+    expect(requests.nextValue()).andReturn(request);
 
     expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue())
-        .andAnswer(
-            () -> {
-              time.sleep(11);
-              return request;
-            });
+    expect(requests.nextValue()).andReturn(request);
 
     expect(requests.hasNext()).andReturn(false).times(1);
     requests.close();
-    //    requests.close();
     replay(requests);
 
     return requests;
   }
 
-  ChunkedOutput<ResultOrError> getChunkedOutput(
+  private static ChunkedOutput<ResultOrError> getChunkedOutput(
       ChunkedOutputFactory chunkedOutputFactory, int times) {
     ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
     expect(chunkedOutputFactory.getChunkedOutput()).andReturn(mockedChunkedOutput).times(times);
@@ -543,42 +521,40 @@ public class ProduceActionTest {
     return mockedChunkedOutput;
   }
 
-  ProduceResponse getProduceResponse(int offset) {
+  private static ProduceResponse getProduceResponse(int offset) {
     return getProduceResponse(offset, Optional.empty());
   }
 
-  ProduceResponse getProduceResponse(int offset, int partitionId) {
+  private static ProduceResponse getProduceResponse(int offset, int partitionId) {
     return getProduceResponse(offset, Optional.empty(), partitionId);
   }
 
-  ProduceResponse getProduceResponse(int offset, Optional<Duration> resumeAfter) {
+  private static ProduceResponse getProduceResponse(int offset, Optional<Duration> resumeAfter) {
     return getProduceResponse(offset, resumeAfter, 0);
   }
 
-  ProduceResponse getProduceResponse(
-      int offset, Optional<Duration> resumeAfterMs, int partitionId) {
-
+  private static ProduceResponse getProduceResponse(
+      int offset, Optional<Duration> resumeAfter, int partitionId) {
     return ProduceResponse.builder()
         .setClusterId("clusterId")
         .setTopicName("topicName")
         .setPartitionId(partitionId)
         .setOffset(offset)
         .setTimestamp(Instant.ofEpochMilli(0))
-        .setResumeAfterMs(
-            resumeAfterMs.isPresent()
-                ? Optional.of(resumeAfterMs.get().toMillis())
-                : Optional.empty())
+        .setResumeAfter(
+            resumeAfter.isPresent() ? Optional.of(resumeAfter.get().toMillis()) : Optional.empty())
         .build();
   }
 
-  CompletableFuture<ProduceResult> getProduceResultMock(int offset, int producerId) {
+  private static CompletableFuture<ProduceResult> getProduceResultMock(int offset, int producerId) {
     ProduceResult produceResult = mock(ProduceResult.class);
     setExpectsForProduceResult(produceResult, offset, producerId);
 
     return CompletableFuture.completedFuture(produceResult);
   }
 
-  void setExpectsForProduceResult(ProduceResult produceResult, long offset, int producerId) {
+  private static void setExpectsForProduceResult(
+      ProduceResult produceResult, long offset, int producerId) {
     expect(produceResult.getPartitionId()).andReturn(producerId).anyTimes();
     expect(produceResult.getOffset()).andReturn(offset).anyTimes();
     expect(produceResult.getTimestamp()).andReturn(Optional.of(Instant.ofEpochMilli(0))).anyTimes();
@@ -588,7 +564,7 @@ public class ProduceActionTest {
     replay(produceResult);
   }
 
-  void setupExpectsMockCallsForProduce(
+  private static void setupExpectsMockCallsForProduce(
       ProduceController produceController, int times, int producerId) {
     for (int i = 0; i < times; i++) {
       CompletableFuture<ProduceResult> response = getProduceResultMock(i, producerId);
@@ -605,20 +581,20 @@ public class ProduceActionTest {
     }
   }
 
-  ProduceAction getProduceAction(
-      Properties properties, ChunkedOutputFactory chunkedOutputFactory, Time time, int times) {
+  private static ProduceAction getProduceAction(
+      Properties properties, ChunkedOutputFactory chunkedOutputFactory, Clock clock, int times) {
     return getProduceAction(
         new RateLimiter(
             Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS)),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
-            time),
+            clock),
         chunkedOutputFactory,
         times,
         0);
   }
 
-  ProduceAction getProduceAction(
+  private static ProduceAction getProduceAction(
       RateLimiter rateLimiter,
       ChunkedOutputFactory chunkedOutputFactory,
       int times,
@@ -651,7 +627,8 @@ public class ProduceActionTest {
     return produceAction;
   }
 
-  void getProducerMetricsProvider(Provider<ProducerMetrics> producerMetricsProvider) {
+  private static void getProducerMetricsProvider(
+      Provider<ProducerMetrics> producerMetricsProvider) {
     ProducerMetrics producerMetrics = mock(ProducerMetrics.class);
     expect(producerMetricsProvider.get()).andReturn(producerMetrics).anyTimes();
     ProducerMetrics.ProduceMetricMBean metricMBean = mock(ProducerMetrics.ProduceMetricMBean.class);

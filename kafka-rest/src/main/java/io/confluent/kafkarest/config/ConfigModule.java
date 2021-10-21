@@ -23,6 +23,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.net.URI;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -83,7 +84,7 @@ public final class ConfigModule extends AbstractBinder {
 
     bind(config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD_MS))
         .qualifiedBy(new ProduceGracePeriodConfigImpl())
-        .to(Integer.class);
+        .to(new TypeLiteral<Duration>() {});
 
     bind(config.getBoolean(KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED))
         .qualifiedBy(new ProduceRateLimitEnabledConfigImpl())

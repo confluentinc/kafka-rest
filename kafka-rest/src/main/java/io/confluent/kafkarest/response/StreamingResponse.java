@@ -83,10 +83,10 @@ public abstract class StreamingResponse<T> {
               response -> ((ErrorMessage) response.getEntity()).getMessage())
           .build();
 
-  private ChunkedOutputFactory chunkedOutputFactory;
+  private final ChunkedOutputFactory chunkedOutputFactory;
 
   StreamingResponse(ChunkedOutputFactory chunkedOutputFactory) {
-    this.chunkedOutputFactory = chunkedOutputFactory;
+    this.chunkedOutputFactory = requireNonNull(chunkedOutputFactory);
   }
 
   public static <T> StreamingResponse<T> from(
@@ -109,7 +109,7 @@ public abstract class StreamingResponse<T> {
     log.debug("Resuming StreamingResponse");
     AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
-    while (hasNext() && !responseQueue.sinkClosed) {
+    while (hasNext() && !responseQueue.isClosed()) {
       responseQueue.push(next().handle(this::handleNext));
     }
     close();
@@ -132,6 +132,7 @@ public abstract class StreamingResponse<T> {
   abstract CompletableFuture<T> next();
 
   private static class InputStreamingResponse<T> extends StreamingResponse<T> {
+
     private final MappingIterator<T> mappingIteratorInput;
 
     private InputStreamingResponse(
@@ -144,7 +145,7 @@ public abstract class StreamingResponse<T> {
       try {
         mappingIteratorInput.close();
       } catch (IOException e) {
-        e.printStackTrace();
+        log.error("Error when closing the request stream.", e);
       }
     }
 
@@ -164,6 +165,7 @@ public abstract class StreamingResponse<T> {
   }
 
   private static final class ComposingStreamingResponse<I, O> extends StreamingResponse<O> {
+
     private final StreamingResponse<I> streamingResponseInput;
     private final Function<? super I, ? extends CompletableFuture<O>> transform;
 
@@ -192,6 +194,7 @@ public abstract class StreamingResponse<T> {
   }
 
   private static final class AsyncResponseQueue {
+
     private final ChunkedOutput<ResultOrError> sink;
 
     // tail is the end of a linked list of completable futures. The futures are tied together by
@@ -216,7 +219,11 @@ public abstract class StreamingResponse<T> {
       asyncResponse.resume(Response.ok(sink).build());
     }
 
-    boolean sinkClosed = false;
+    private volatile boolean sinkClosed = false;
+
+    private boolean isClosed() {
+      return sinkClosed;
+    }
 
     private void push(CompletableFuture<ResultOrError> result) {
       log.debug("Pushing to response queue");
@@ -225,11 +232,13 @@ public abstract class StreamingResponse<T> {
               .thenApply(
                   unused -> {
                     try {
+                      if (sink.isClosed()) {
+                        sinkClosed = true;
+                        return null;
+                      }
                       ResultOrError res = result.join();
                       log.debug("Writing to sink");
-                      if (!sink.isClosed()) {
-                        sink.write(res);
-                      }
+                      sink.write(res);
                       if (res instanceof ErrorHolder
                           && ((ErrorHolder) res).getError().getErrorCode() == 429) {
                         log.warn(
@@ -251,7 +260,6 @@ public abstract class StreamingResponse<T> {
             try {
               sinkClosed = true;
               sink.close();
-
             } catch (IOException e) {
               log.error("Error when closing response channel.", e);
             }
@@ -289,6 +297,7 @@ public abstract class StreamingResponse<T> {
   }
 
   private static final class ErrorMapper<T extends Throwable> {
+
     private final Class<T> errorClass;
     private final ExceptionMapper<T> mapper;
     private final Function<Response, Integer> errorCode;
@@ -317,6 +326,7 @@ public abstract class StreamingResponse<T> {
   }
 
   private static final class CompositeErrorMapper {
+
     private final List<ErrorMapper<?>> mappers;
     private final ErrorMapper<Throwable> defaultMapper;
 
@@ -336,6 +346,7 @@ public abstract class StreamingResponse<T> {
     }
 
     private static final class Builder {
+
       private final ImmutableList.Builder<ErrorMapper<?>> mappers = ImmutableList.builder();
       private ErrorMapper<Throwable> defaultMapper;
 

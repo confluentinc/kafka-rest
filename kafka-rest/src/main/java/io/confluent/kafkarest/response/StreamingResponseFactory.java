@@ -22,7 +22,7 @@ import javax.inject.Inject;
 
 public final class StreamingResponseFactory {
 
-  private ChunkedOutputFactory chunkedOutputFactory;
+  private final ChunkedOutputFactory chunkedOutputFactory;
 
   @Inject
   public StreamingResponseFactory(ChunkedOutputFactory chunkedOutputFactory) {

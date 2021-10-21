@@ -154,7 +154,7 @@ public class KafkaRestConfig extends RestConfig {
       "api.v3.produce.rate.limit.max.requests.per.sec";
   private static final String PRODUCE_MAX_REQUESTS_PER_SECOND_DOC =
       "Maximum number of requests per second before the grace period for producer rate limiting "
-          + "comes into force. Within the grace period, the resume_after_ms field of the response "
+          + "comes into force. Within the grace period, the wait_for_ms field of the response "
           + "suggests to the client how long to wait before attempting to produce again. "
           + "Once the grace period has expired the client is disconnected.";
   public static final String PRODUCE_MAX_REQUESTS_PER_SECOND_DEFAULT = "10000";
@@ -163,7 +163,7 @@ public class KafkaRestConfig extends RestConfig {
 
   public static final String PRODUCE_GRACE_PERIOD_MS = "api.v3.produce.rate.limit.grace.period.ms";
   private static final String PRODUCE_GRACE_PERIOD_MS_DOC =
-      "The grace period over which clients are allowed to exceed the produce request rate limit"
+      "The grace period over which clients are allowed to exceed the produce request rate limit "
           + "before being disconnected.";
   public static final String PRODUCE_GRACE_PERIOD_MS_DEFAULT = "30000";
 
@@ -193,7 +193,7 @@ public class KafkaRestConfig extends RestConfig {
   private static final String CONSUMER_REQUEST_MAX_BYTES_DOC =
       "Maximum number of bytes in unencoded message keys and values returned "
           + "by a single request. This can be used by administrators to limit the memory used "
-          + "by a single consumer and to control the memory usage required to decode responses"
+          + "by a single consumer and to control the memory usage required to decode responses "
           + "on clients that cannot perform a streaming decode. "
           + "Note that the actual payload will be larger due to overhead from base64 encoding the "
           + "response data and from JSON encoding the entire response.";

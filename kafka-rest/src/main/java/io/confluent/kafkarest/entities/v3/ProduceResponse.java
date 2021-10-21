@@ -54,9 +54,9 @@ public abstract class ProduceResponse {
   @JsonInclude(Include.NON_ABSENT)
   public abstract Optional<ProduceResponseData> getValue();
 
-  @JsonProperty("resume_after_ms")
+  @JsonProperty("wait_for_ms")
   @JsonInclude(Include.NON_ABSENT)
-  public abstract Optional<Long> getResumeAfterMs();
+  public abstract Optional<Long> getResumeAfter();
 
   @JsonCreator
   static ProduceResponse fromJson(
@@ -67,7 +67,7 @@ public abstract class ProduceResponse {
       @JsonProperty("timestamp") @Nullable Instant timestamp,
       @JsonProperty("key") @Nullable ProduceResponseData key,
       @JsonProperty("value") @Nullable ProduceResponseData value,
-      @JsonProperty("resume_after_ms") @Nullable Long resumeAfterMs) {
+      @JsonProperty("wait_for_ms") @Nullable Long resumeAfter) {
     return builder()
         .setClusterId(clusterId)
         .setTopicName(topicName)
@@ -76,7 +76,7 @@ public abstract class ProduceResponse {
         .setTimestamp(timestamp)
         .setKey(key)
         .setValue(value)
-        .setResumeAfterMs(resumeAfterMs)
+        .setResumeAfter(resumeAfter)
         .build();
   }
 
@@ -109,9 +109,9 @@ public abstract class ProduceResponse {
 
     public abstract Builder setValue(@Nullable ProduceResponseData value);
 
-    public abstract Builder setResumeAfterMs(Optional<Long> resumeAfterMs);
+    public abstract Builder setResumeAfter(Optional<Long> resumeAfter);
 
-    public abstract Builder setResumeAfterMs(@Nullable Long resumeAfterMs);
+    public abstract Builder setResumeAfter(@Nullable Long resumeAfter);
 
     public abstract ProduceResponse build();
   }

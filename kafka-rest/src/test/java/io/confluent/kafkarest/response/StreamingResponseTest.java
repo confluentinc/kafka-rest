@@ -60,7 +60,7 @@ public class StreamingResponseTest {
             .setTopicName("topicName")
             .setPartitionId(1)
             .setOffset(1L)
-            .setResumeAfterMs(Optional.of(123L))
+            .setResumeAfter(Optional.of(123L))
             .build();
 
     ResultOrError resultOrError = ResultOrError.result(produceResponse);

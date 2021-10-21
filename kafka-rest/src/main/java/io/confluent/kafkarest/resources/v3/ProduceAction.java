@@ -121,8 +121,8 @@ public final class ProduceAction {
         .from(requests)
         .compose(
             request -> {
-              Optional<Duration> resumeAfterMs = rateLimiter.calculateGracePeriodExceeded();
-              return produce(clusterId, topicName, request, controller, resumeAfterMs);
+              Optional<Duration> resumeAfter = rateLimiter.calculateGracePeriodExceeded();
+              return produce(clusterId, topicName, request, controller, resumeAfter);
             })
         .resume(asyncResponse);
   }
@@ -132,7 +132,7 @@ public final class ProduceAction {
       String topicName,
       ProduceRequest request,
       ProduceController controller,
-      Optional<Duration> resumeAfterMs) {
+      Optional<Duration> resumeAfter) {
 
     Instant requestInstant = Instant.now();
     Optional<RegisteredSchema> keySchema =
@@ -187,7 +187,7 @@ public final class ProduceAction {
                       valueFormat,
                       valueSchema,
                       result,
-                      resumeAfterMs);
+                      resumeAfter);
               long latency =
                   Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
               recordResponseMetrics(latency);
@@ -243,7 +243,7 @@ public final class ProduceAction {
       Optional<EmbeddedFormat> valueFormat,
       Optional<RegisteredSchema> valueSchema,
       ProduceResult result,
-      Optional<Duration> resumeAfterMs) {
+      Optional<Duration> resumeAfter) {
     return ProduceResponse.builder()
         .setClusterId(clusterId)
         .setTopicName(topicName)
@@ -270,10 +270,7 @@ public final class ProduceAction {
                         .setSchemaVersion(valueSchema.map(RegisteredSchema::getSchemaVersion))
                         .setSize(result.getSerializedValueSize())
                         .build()))
-        .setResumeAfterMs(
-            resumeAfterMs.isPresent()
-                ? Optional.of(resumeAfterMs.get().toMillis())
-                : Optional.empty())
+        .setResumeAfter(resumeAfter.map(Duration::toMillis))
         .build();
   }
 
