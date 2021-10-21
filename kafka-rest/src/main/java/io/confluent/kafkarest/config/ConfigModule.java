@@ -82,7 +82,7 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new ProduceRateLimitConfigImpl())
         .to(Integer.class);
 
-    bind(Duration.ofMillis(config.getLong(KafkaRestConfig.PRODUCE_GRACE_PERIOD_MS)))
+    bind(Duration.ofMillis(config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD_MS)))
         .qualifiedBy(new ProduceGracePeriodConfigImpl())
         .to(Duration.class);
 

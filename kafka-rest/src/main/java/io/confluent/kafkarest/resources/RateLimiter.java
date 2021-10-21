@@ -34,7 +34,7 @@ public final class RateLimiter {
   private static final int ONE_SECOND_MS = 1000;
 
   private final int maxRequestsPerSecond;
-  private final int gracePeriod;
+  private final long gracePeriod;
   private final boolean rateLimitingEnabled;
   private final Clock clock;
   private final AtomicInteger rateCounterSize = new AtomicInteger(0);
@@ -44,12 +44,13 @@ public final class RateLimiter {
 
   @Inject
   public RateLimiter(
-      @ProduceGracePeriodConfig Integer produceGracePeriodConfig,
+      @ProduceGracePeriodConfig Duration produceGracePeriodConfig,
       @ProduceRateLimitConfig Integer produceRateLimitConfig,
       @ProduceRateLimitEnabledConfig Boolean produceRateLimitEnabledConfig,
       Clock clock) {
+    requireNonNull(produceGracePeriodConfig);
     this.maxRequestsPerSecond = requireNonNull(produceRateLimitConfig);
-    this.gracePeriod = requireNonNull(produceGracePeriodConfig);
+    this.gracePeriod = produceGracePeriodConfig.toMillis();
     this.rateLimitingEnabled = requireNonNull(produceRateLimitEnabledConfig);
     this.clock = requireNonNull(clock);
   }
@@ -60,8 +61,8 @@ public final class RateLimiter {
       return Optional.empty();
     }
 
-    long now = clock.millis();
-    int currentRate = addAndGetRate(now);
+    long nowMs = clock.millis();
+    int currentRate = addAndGetRate(nowMs);
     Optional<Duration> waitFor = getWaitFor(currentRate);
 
     if (!waitFor.isPresent()) {
@@ -69,8 +70,9 @@ public final class RateLimiter {
       return Optional.empty();
     }
 
-    if (isOverGracePeriod(now)) {
-      throw new RateLimitGracePeriodExceededException(maxRequestsPerSecond, gracePeriod);
+    if (isOverGracePeriod(nowMs)) {
+      throw new RateLimitGracePeriodExceededException(
+          maxRequestsPerSecond, Duration.ofMillis(gracePeriod));
     }
     return waitFor;
   }

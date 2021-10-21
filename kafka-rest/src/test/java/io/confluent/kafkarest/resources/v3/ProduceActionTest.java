@@ -113,7 +113,7 @@ public class ProduceActionTest {
 
     RateLimiter rateLimiter =
         new RateLimiter(
-            Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS)),
+            Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             clock);
@@ -534,15 +534,15 @@ public class ProduceActionTest {
   }
 
   private static ProduceResponse getProduceResponse(
-      int offset, Optional<Duration> resumeAfter, int partitionId) {
+      int offset, Optional<Duration> waitFor, int partitionId) {
     return ProduceResponse.builder()
         .setClusterId("clusterId")
         .setTopicName("topicName")
         .setPartitionId(partitionId)
         .setOffset(offset)
         .setTimestamp(Instant.ofEpochMilli(0))
-        .setWaitFor(
-            resumeAfter.isPresent() ? Optional.of(resumeAfter.get().toMillis()) : Optional.empty())
+        .setWaitForMs(
+            waitFor.isPresent() ? Optional.of(waitFor.get().toMillis()) : Optional.empty())
         .build();
   }
 
@@ -585,7 +585,7 @@ public class ProduceActionTest {
       Properties properties, ChunkedOutputFactory chunkedOutputFactory, Clock clock, int times) {
     return getProduceAction(
         new RateLimiter(
-            Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS)),
+            Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             clock),

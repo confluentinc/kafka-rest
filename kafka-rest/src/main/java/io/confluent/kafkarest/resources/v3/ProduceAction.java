@@ -270,7 +270,7 @@ public final class ProduceAction {
                         .setSchemaVersion(valueSchema.map(RegisteredSchema::getSchemaVersion))
                         .setSize(result.getSerializedValueSize())
                         .build()))
-        .setWaitFor(waitFor.map(Duration::toMillis))
+        .setWaitForMs(waitFor.map(Duration::toMillis))
         .build();
   }
 

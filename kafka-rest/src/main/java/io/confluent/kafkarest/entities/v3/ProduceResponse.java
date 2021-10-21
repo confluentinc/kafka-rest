@@ -56,7 +56,7 @@ public abstract class ProduceResponse {
 
   @JsonProperty("wait_for_ms")
   @JsonInclude(Include.NON_ABSENT)
-  public abstract Optional<Long> getWaitFor();
+  public abstract Optional<Long> getWaitForMs();
 
   @JsonCreator
   static ProduceResponse fromJson(
@@ -67,7 +67,7 @@ public abstract class ProduceResponse {
       @JsonProperty("timestamp") @Nullable Instant timestamp,
       @JsonProperty("key") @Nullable ProduceResponseData key,
       @JsonProperty("value") @Nullable ProduceResponseData value,
-      @JsonProperty("wait_for_ms") @Nullable Long waitFor) {
+      @JsonProperty("wait_for_ms") @Nullable Long waitForMs) {
     return builder()
         .setClusterId(clusterId)
         .setTopicName(topicName)
@@ -76,7 +76,7 @@ public abstract class ProduceResponse {
         .setTimestamp(timestamp)
         .setKey(key)
         .setValue(value)
-        .setWaitFor(waitFor)
+        .setWaitForMs(waitForMs)
         .build();
   }
 
@@ -109,9 +109,9 @@ public abstract class ProduceResponse {
 
     public abstract Builder setValue(@Nullable ProduceResponseData value);
 
-    public abstract Builder setWaitFor(Optional<Long> waitFor);
+    public abstract Builder setWaitForMs(Optional<Long> waitForMs);
 
-    public abstract Builder setWaitFor(@Nullable Long waitFor);
+    public abstract Builder setWaitForMs(@Nullable Long waitForMs);
 
     public abstract ProduceResponse build();
   }
