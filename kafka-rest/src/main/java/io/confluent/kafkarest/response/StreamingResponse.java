@@ -90,15 +90,20 @@ public abstract class StreamingResponse<T> {
               response -> ((ErrorMessage) response.getEntity()).getMessage())
           .build();
 
-  StreamingResponse() {}
+  private final ChunkedOutputFactory chunkedOutputFactory;
 
-  public static <T> StreamingResponse<T> from(MappingIterator<T> input) {
-    return new InputStreamingResponse<>(input);
+  StreamingResponse(ChunkedOutputFactory chunkedOutputFactory) {
+    this.chunkedOutputFactory = requireNonNull(chunkedOutputFactory);
+  }
+
+  public static <T> StreamingResponse<T> from(
+      MappingIterator<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
+    return new InputStreamingResponse<>(mappingIteratorInput, chunkedOutputFactory);
   }
 
   public final <O> StreamingResponse<O> compose(
       Function<? super T, ? extends CompletableFuture<O>> transform) {
-    return new ComposingStreamingResponse<>(this, transform);
+    return new ComposingStreamingResponse<>(this, transform, chunkedOutputFactory);
   }
 
   /**
@@ -109,11 +114,12 @@ public abstract class StreamingResponse<T> {
    */
   public final void resume(AsyncResponse asyncResponse) {
     log.debug("Resuming StreamingResponse");
-    AsyncResponseQueue responseQueue = new AsyncResponseQueue();
+    AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
-    while (hasNext()) {
+    while (hasNext() && !responseQueue.isClosed()) {
       responseQueue.push(next().handle(this::handleNext));
     }
+    close();
     responseQueue.close();
   }
 
@@ -128,24 +134,37 @@ public abstract class StreamingResponse<T> {
 
   abstract boolean hasNext();
 
+  abstract void close();
+
   abstract CompletableFuture<T> next();
 
-  private static final class InputStreamingResponse<T> extends StreamingResponse<T> {
-    private final MappingIterator<T> input;
+  private static class InputStreamingResponse<T> extends StreamingResponse<T> {
 
-    private InputStreamingResponse(MappingIterator<T> input) {
-      this.input = requireNonNull(input);
+    private final MappingIterator<T> mappingIteratorInput;
+
+    private InputStreamingResponse(
+        MappingIterator<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
+      super(chunkedOutputFactory);
+      this.mappingIteratorInput = requireNonNull(mappingIteratorInput);
+    }
+
+    public void close() {
+      try {
+        mappingIteratorInput.close();
+      } catch (IOException e) {
+        log.error("Error when closing the request stream.", e);
+      }
     }
 
     @Override
     public boolean hasNext() {
-      return input.hasNext();
+      return mappingIteratorInput.hasNext();
     }
 
     @Override
     public CompletableFuture<T> next() {
       try {
-        return CompletableFuture.completedFuture(input.nextValue());
+        return CompletableFuture.completedFuture(mappingIteratorInput.nextValue());
       } catch (Throwable e) {
         return CompletableFutures.failedFuture(e);
       }
@@ -153,28 +172,35 @@ public abstract class StreamingResponse<T> {
   }
 
   private static final class ComposingStreamingResponse<I, O> extends StreamingResponse<O> {
-    private final StreamingResponse<I> input;
+
+    private final StreamingResponse<I> streamingResponseInput;
     private final Function<? super I, ? extends CompletableFuture<O>> transform;
 
     private ComposingStreamingResponse(
-        StreamingResponse<I> input, Function<? super I, ? extends CompletableFuture<O>> transform) {
-      this.input = requireNonNull(input);
+        StreamingResponse<I> streamingResponseInput,
+        Function<? super I, ? extends CompletableFuture<O>> transform,
+        ChunkedOutputFactory chunkedOutputFactory) {
+      super(chunkedOutputFactory);
+      this.streamingResponseInput = requireNonNull(streamingResponseInput);
       this.transform = requireNonNull(transform);
     }
 
     @Override
     public boolean hasNext() {
-      return input.hasNext();
+      return streamingResponseInput.hasNext();
     }
 
     @Override
     public CompletableFuture<O> next() {
-      return input.next().thenCompose(transform);
+      return streamingResponseInput.next().thenCompose(transform);
+    }
+
+    public void close() {
+      streamingResponseInput.close();
     }
   }
 
   private static final class AsyncResponseQueue {
-    private static final String CHUNK_SEPARATOR = "\r\n";
 
     private final ChunkedOutput<ResultOrError> sink;
 
@@ -191,13 +217,19 @@ public abstract class StreamingResponse<T> {
     // then(allOf((f_i-1), f_i), write(f_i)) monad is made available for garbage collection.
     private CompletableFuture<Void> tail;
 
-    private AsyncResponseQueue() {
-      sink = new ChunkedOutput<>(ResultOrError.class, CHUNK_SEPARATOR);
+    private AsyncResponseQueue(ChunkedOutputFactory chunkedOutputFactory) {
+      sink = chunkedOutputFactory.getChunkedOutput();
       tail = CompletableFuture.completedFuture(null);
     }
 
     private void asyncResume(AsyncResponse asyncResponse) {
       asyncResponse.resume(Response.ok(sink).build());
+    }
+
+    private volatile boolean sinkClosed = false;
+
+    private boolean isClosed() {
+      return sinkClosed;
     }
 
     private void push(CompletableFuture<ResultOrError> result) {
@@ -207,8 +239,21 @@ public abstract class StreamingResponse<T> {
               .thenApply(
                   unused -> {
                     try {
+                      if (sinkClosed || sink.isClosed()) {
+                        sinkClosed = true;
+                        return null;
+                      }
+                      ResultOrError res = result.join();
                       log.debug("Writing to sink");
-                      sink.write(result.join());
+                      sink.write(res);
+                      if (res instanceof ErrorHolder
+                          && ((ErrorHolder) res).getError().getErrorCode() == 429) {
+                        log.warn(
+                            "Connection closed as a result of rate limiting being exceeded "
+                                + "for longer than grace period.");
+                        sinkClosed = true;
+                        sink.close();
+                      }
                     } catch (IOException e) {
                       log.error("Error when writing streaming result to response channel.", e);
                     }
@@ -217,10 +262,10 @@ public abstract class StreamingResponse<T> {
     }
 
     private void close() {
-      log.debug("Closing");
       tail.whenComplete(
           (unused, throwable) -> {
             try {
+              sinkClosed = true;
               sink.close();
             } catch (IOException e) {
               log.error("Error when closing response channel.", e);
@@ -229,13 +274,13 @@ public abstract class StreamingResponse<T> {
     }
   }
 
-  private abstract static class ResultOrError {
+  public abstract static class ResultOrError {
 
-    private static <T> ResultHolder<T> result(T result) {
+    public static <T> ResultHolder<T> result(T result) {
       return new AutoValue_StreamingResponse_ResultHolder<>(result);
     }
 
-    private static ErrorHolder error(ErrorResponse error) {
+    public static ErrorHolder error(ErrorResponse error) {
       return new AutoValue_StreamingResponse_ErrorHolder(error);
     }
   }
@@ -259,6 +304,7 @@ public abstract class StreamingResponse<T> {
   }
 
   private static final class ErrorMapper<T extends Throwable> {
+
     private final Class<T> errorClass;
     private final ExceptionMapper<T> mapper;
     private final Function<Response, Integer> errorCode;
@@ -287,6 +333,7 @@ public abstract class StreamingResponse<T> {
   }
 
   private static final class CompositeErrorMapper {
+
     private final List<ErrorMapper<?>> mappers;
     private final ErrorMapper<Throwable> defaultMapper;
 
@@ -306,6 +353,7 @@ public abstract class StreamingResponse<T> {
     }
 
     private static final class Builder {
+
       private final ImmutableList.Builder<ErrorMapper<?>> mappers = ImmutableList.builder();
       private ErrorMapper<Throwable> defaultMapper;
 

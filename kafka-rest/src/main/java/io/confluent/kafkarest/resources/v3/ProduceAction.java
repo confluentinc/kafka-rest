@@ -36,7 +36,9 @@ import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.entities.v3.ProduceResponse.ProduceResponseData;
 import io.confluent.kafkarest.exceptions.BadRequestException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
-import io.confluent.kafkarest.response.StreamingResponse;
+import io.confluent.kafkarest.resources.RateLimiter;
+import io.confluent.kafkarest.response.ChunkedOutputFactory;
+import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.time.Duration;
 import java.time.Instant;
@@ -56,10 +58,14 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/records")
 @ResourceName("api.v3.produce.*")
 public final class ProduceAction {
+
+  private static final Logger log = LoggerFactory.getLogger(ProduceAction.class);
 
   private static final Collector<
           ProduceRequestHeader,
@@ -72,21 +78,30 @@ public final class ProduceAction {
               (left, right) -> left.putAll(right.build()),
               ImmutableMultimap.Builder::build);
 
-  private final Provider<SchemaManager> schemaManager;
-  private final Provider<RecordSerializer> recordSerializer;
-  private final Provider<ProduceController> produceController;
+  private final Provider<SchemaManager> schemaManagerProvider;
+  private final Provider<RecordSerializer> recordSerializerProvider;
+  private final Provider<ProduceController> produceControllerProvider;
   private final Provider<ProducerMetrics> producerMetrics;
+  private final ChunkedOutputFactory chunkedOutputFactory;
+  private final StreamingResponseFactory streamingResponseFactory;
+  private final RateLimiter rateLimiter;
 
   @Inject
   public ProduceAction(
-      Provider<SchemaManager> schemaManager,
+      Provider<SchemaManager> schemaManagerProvider,
       Provider<RecordSerializer> recordSerializer,
-      Provider<ProduceController> produceController,
-      Provider<ProducerMetrics> producerMetrics) {
-    this.schemaManager = requireNonNull(schemaManager);
-    this.recordSerializer = requireNonNull(recordSerializer);
-    this.produceController = requireNonNull(produceController);
+      Provider<ProduceController> produceControllerProvider,
+      Provider<ProducerMetrics> producerMetrics,
+      ChunkedOutputFactory chunkedOutputFactory,
+      StreamingResponseFactory streamingResponseFactory,
+      RateLimiter rateLimiter) {
+    this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
+    this.recordSerializerProvider = requireNonNull(recordSerializer);
+    this.produceControllerProvider = requireNonNull(produceControllerProvider);
     this.producerMetrics = requireNonNull(producerMetrics);
+    this.chunkedOutputFactory = requireNonNull(chunkedOutputFactory);
+    this.streamingResponseFactory = requireNonNull(streamingResponseFactory);
+    this.rateLimiter = requireNonNull(rateLimiter);
   }
 
   @POST
@@ -100,14 +115,24 @@ public final class ProduceAction {
       @PathParam("topicName") String topicName,
       MappingIterator<ProduceRequest> requests)
       throws Exception {
-    ProduceController controller = produceController.get();
-    StreamingResponse.from(requests)
-        .compose(request -> produce(clusterId, topicName, request, controller))
+
+    ProduceController controller = produceControllerProvider.get();
+    streamingResponseFactory
+        .from(requests)
+        .compose(
+            request -> {
+              Optional<Duration> waitFor = rateLimiter.calculateGracePeriodExceeded();
+              return produce(clusterId, topicName, request, controller, waitFor);
+            })
         .resume(asyncResponse);
   }
 
   private CompletableFuture<ProduceResponse> produce(
-      String clusterId, String topicName, ProduceRequest request, ProduceController controller) {
+      String clusterId,
+      String topicName,
+      ProduceRequest request,
+      ProduceController controller,
+      Optional<Duration> waitFor) {
 
     Instant requestInstant = Instant.now();
     Optional<RegisteredSchema> keySchema =
@@ -154,7 +179,14 @@ public final class ProduceAction {
             result -> {
               ProduceResponse response =
                   toProduceResponse(
-                      clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
+                      clusterId,
+                      topicName,
+                      keyFormat,
+                      keySchema,
+                      valueFormat,
+                      valueSchema,
+                      result,
+                      waitFor);
               long latency =
                   Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
               recordResponseMetrics(latency);
@@ -170,7 +202,7 @@ public final class ProduceAction {
 
     try {
       return Optional.of(
-          schemaManager
+          schemaManagerProvider
               .get()
               .getSchema(
                   topicName,
@@ -192,7 +224,7 @@ public final class ProduceAction {
       Optional<RegisteredSchema> schema,
       Optional<ProduceRequestData> data,
       boolean isKey) {
-    return recordSerializer
+    return recordSerializerProvider
         .get()
         .serialize(
             format.orElse(EmbeddedFormat.BINARY),
@@ -209,7 +241,8 @@ public final class ProduceAction {
       Optional<RegisteredSchema> keySchema,
       Optional<EmbeddedFormat> valueFormat,
       Optional<RegisteredSchema> valueSchema,
-      ProduceResult result) {
+      ProduceResult result,
+      Optional<Duration> waitFor) {
     return ProduceResponse.builder()
         .setClusterId(clusterId)
         .setTopicName(topicName)
@@ -236,6 +269,7 @@ public final class ProduceAction {
                         .setSchemaVersion(valueSchema.map(RegisteredSchema::getSchemaVersion))
                         .setSize(result.getSerializedValueSize())
                         .build()))
+        .setWaitForMs(waitFor.map(Duration::toMillis))
         .build();
   }
 

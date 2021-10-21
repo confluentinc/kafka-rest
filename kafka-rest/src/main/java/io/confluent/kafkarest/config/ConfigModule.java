@@ -23,6 +23,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.net.URI;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +77,18 @@ public final class ConfigModule extends AbstractBinder {
     bind(config.getString(KafkaRestConfig.CRN_AUTHORITY_CONFIG))
         .qualifiedBy(new CrnAuthorityConfigImpl())
         .to(String.class);
+
+    bind(config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND))
+        .qualifiedBy(new ProduceRateLimitConfigImpl())
+        .to(Integer.class);
+
+    bind(Duration.ofMillis(config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD_MS)))
+        .qualifiedBy(new ProduceGracePeriodConfigImpl())
+        .to(Duration.class);
+
+    bind(config.getBoolean(KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED))
+        .qualifiedBy(new ProduceRateLimitEnabledConfigImpl())
+        .to(Boolean.class);
 
     bind(config.getString(KafkaRestConfig.HOST_NAME_CONFIG))
         .qualifiedBy(new HostNameConfigImpl())
@@ -133,6 +146,31 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class AdvertisedListenersConfigImpl
       extends AnnotationLiteral<AdvertisedListenersConfig> implements AdvertisedListenersConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceRateLimitConfig {}
+
+  private static final class ProduceRateLimitConfigImpl
+      extends AnnotationLiteral<ProduceRateLimitConfig> implements ProduceRateLimitConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceGracePeriodConfig {}
+
+  private static final class ProduceGracePeriodConfigImpl
+      extends AnnotationLiteral<ProduceGracePeriodConfig> implements ProduceGracePeriodConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceRateLimitEnabledConfig {}
+
+  private static final class ProduceRateLimitEnabledConfigImpl
+      extends AnnotationLiteral<ProduceRateLimitEnabledConfig>
+      implements ProduceRateLimitEnabledConfig {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)

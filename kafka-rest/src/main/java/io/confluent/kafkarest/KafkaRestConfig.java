@@ -145,9 +145,33 @@ public class KafkaRestConfig extends RestConfig {
 
   @Deprecated public static final String PRODUCER_THREADS_DEFAULT = "5";
 
+  public static final String PRODUCE_RATE_LIMIT_ENABLED = "api.v3.produce.rate.limit.enabled";
+  private static final String PRODUCE_RATE_LIMIT_ENABLED_DOC =
+      "Whether to enable rate limiting of produce requests. Default is true.";
+  public static final String PRODUCE_RATE_LIMIT_ENABLED_DEFAULT = "true";
+
+  public static final String PRODUCE_MAX_REQUESTS_PER_SECOND =
+      "api.v3.produce.rate.limit.max.requests.per.sec";
+  private static final String PRODUCE_MAX_REQUESTS_PER_SECOND_DOC =
+      "Maximum number of requests per second before the grace period for producer rate limiting "
+          + "comes into force. Within the grace period, the wait_for_ms field of the response "
+          + "suggests to the client how long to wait before attempting to produce again. "
+          + "Once the grace period has expired the client is disconnected.";
+  public static final String PRODUCE_MAX_REQUESTS_PER_SECOND_DEFAULT = "10000";
+  public static final ConfigDef.Range PRODUCE_MAX_REQUESTS_PER_SECOND_VALIDATOR =
+      ConfigDef.Range.between(1, Integer.MAX_VALUE);
+
+  public static final String PRODUCE_GRACE_PERIOD_MS = "api.v3.produce.rate.limit.grace.period.ms";
+  private static final String PRODUCE_GRACE_PERIOD_MS_DOC =
+      "The grace period over which clients are allowed to exceed the produce request rate limit "
+          + "before being disconnected.";
+  public static final String PRODUCE_GRACE_PERIOD_MS_DEFAULT = "30000";
+  public static final ConfigDef.Range PRODUCE_GRACE_PERIOD_MS_VALIDATOR =
+      ConfigDef.Range.between(0, Integer.MAX_VALUE);
+
   public static final String CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG = "consumer.iterator.timeout.ms";
   private static final String CONSUMER_ITERATOR_TIMEOUT_MS_DOC =
-      "Timeout for blocking consumer iterator operations. This should be set to a small enough"
+      "Timeout for blocking consumer iterator operations. This should be set to a small enough "
           + " value that it is possible to effectively peek() on the iterator.";
   public static final String CONSUMER_ITERATOR_TIMEOUT_MS_DEFAULT = "1";
 
@@ -171,7 +195,7 @@ public class KafkaRestConfig extends RestConfig {
   private static final String CONSUMER_REQUEST_MAX_BYTES_DOC =
       "Maximum number of bytes in unencoded message keys and values returned "
           + "by a single request. This can be used by administrators to limit the memory used "
-          + "by a single consumer and to control the memory usage required to decode responses"
+          + "by a single consumer and to control the memory usage required to decode responses "
           + "on clients that cannot perform a streaming decode. "
           + "Note that the actual payload will be larger due to overhead from base64 encoding the "
           + "response data and from JSON encoding the entire response.";
@@ -406,6 +430,26 @@ public class KafkaRestConfig extends RestConfig {
             PRODUCER_THREADS_DEFAULT,
             Importance.LOW,
             PRODUCER_THREADS_DOC)
+        .define(
+            PRODUCE_RATE_LIMIT_ENABLED,
+            Type.BOOLEAN,
+            PRODUCE_RATE_LIMIT_ENABLED_DEFAULT,
+            Importance.LOW,
+            PRODUCE_RATE_LIMIT_ENABLED_DOC)
+        .define(
+            PRODUCE_MAX_REQUESTS_PER_SECOND,
+            Type.INT,
+            PRODUCE_MAX_REQUESTS_PER_SECOND_DEFAULT,
+            PRODUCE_MAX_REQUESTS_PER_SECOND_VALIDATOR,
+            Importance.LOW,
+            PRODUCE_MAX_REQUESTS_PER_SECOND_DOC)
+        .define(
+            PRODUCE_GRACE_PERIOD_MS,
+            Type.INT,
+            PRODUCE_GRACE_PERIOD_MS_DEFAULT,
+            PRODUCE_GRACE_PERIOD_MS_VALIDATOR,
+            Importance.LOW,
+            PRODUCE_GRACE_PERIOD_MS_DOC)
         .define(
             CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG,
             Type.INT,
