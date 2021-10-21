@@ -48,7 +48,6 @@ public final class RateLimiter {
       @ProduceRateLimitConfig Integer produceRateLimitConfig,
       @ProduceRateLimitEnabledConfig Boolean produceRateLimitEnabledConfig,
       Clock clock) {
-    requireNonNull(produceGracePeriodConfig);
     this.maxRequestsPerSecond = requireNonNull(produceRateLimitConfig);
     this.gracePeriod = produceGracePeriodConfig.toMillis();
     this.rateLimitingEnabled = requireNonNull(produceRateLimitEnabledConfig);
@@ -86,27 +85,27 @@ public final class RateLimiter {
     gracePeriodStart.set(-1);
   }
 
-  private boolean isOverGracePeriod(Long now) {
+  private boolean isOverGracePeriod(Long nowMs) {
     if (gracePeriodStart.get() < 0 && gracePeriod != 0) {
-      gracePeriodStart.set(now);
+      gracePeriodStart.set(nowMs);
       return false;
     }
-    if (gracePeriod == 0 || gracePeriod < now - gracePeriodStart.get()) {
+    if (gracePeriod == 0 || gracePeriod < nowMs - gracePeriodStart.get()) {
       return true;
     }
     return false;
   }
 
-  private int addAndGetRate(long now) {
-    rateCounter.add(now);
+  private int addAndGetRate(long nowMs) {
+    rateCounter.add(nowMs);
     rateCounterSize.incrementAndGet();
 
     synchronized (rateCounter) {
-      if (rateCounter.peekLast() < now - ONE_SECOND_MS) {
+      if (rateCounter.peekLast() < nowMs - ONE_SECOND_MS) {
         rateCounter.clear();
         rateCounterSize.set(0);
       } else {
-        while (rateCounter.peek() < now - ONE_SECOND_MS) {
+        while (rateCounter.peek() < nowMs - ONE_SECOND_MS) {
           rateCounter.poll();
           rateCounterSize.decrementAndGet();
         }
