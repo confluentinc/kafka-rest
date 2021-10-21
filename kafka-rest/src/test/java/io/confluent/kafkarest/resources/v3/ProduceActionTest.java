@@ -529,8 +529,8 @@ public class ProduceActionTest {
     return getProduceResponse(offset, Optional.empty(), partitionId);
   }
 
-  private static ProduceResponse getProduceResponse(int offset, Optional<Duration> resumeAfter) {
-    return getProduceResponse(offset, resumeAfter, 0);
+  private static ProduceResponse getProduceResponse(int offset, Optional<Duration> waitFor) {
+    return getProduceResponse(offset, waitFor, 0);
   }
 
   private static ProduceResponse getProduceResponse(
@@ -541,7 +541,7 @@ public class ProduceActionTest {
         .setPartitionId(partitionId)
         .setOffset(offset)
         .setTimestamp(Instant.ofEpochMilli(0))
-        .setResumeAfter(
+        .setWaitFor(
             resumeAfter.isPresent() ? Optional.of(resumeAfter.get().toMillis()) : Optional.empty())
         .build();
   }

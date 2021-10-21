@@ -121,8 +121,8 @@ public final class ProduceAction {
         .from(requests)
         .compose(
             request -> {
-              Optional<Duration> resumeAfter = rateLimiter.calculateGracePeriodExceeded();
-              return produce(clusterId, topicName, request, controller, resumeAfter);
+              Optional<Duration> waitFor = rateLimiter.calculateGracePeriodExceeded();
+              return produce(clusterId, topicName, request, controller, waitFor);
             })
         .resume(asyncResponse);
   }
@@ -132,7 +132,7 @@ public final class ProduceAction {
       String topicName,
       ProduceRequest request,
       ProduceController controller,
-      Optional<Duration> resumeAfter) {
+      Optional<Duration> waitFor) {
 
     Instant requestInstant = Instant.now();
     Optional<RegisteredSchema> keySchema =
@@ -187,7 +187,7 @@ public final class ProduceAction {
                       valueFormat,
                       valueSchema,
                       result,
-                      resumeAfter);
+                      waitFor);
               long latency =
                   Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
               recordResponseMetrics(latency);
@@ -243,7 +243,7 @@ public final class ProduceAction {
       Optional<EmbeddedFormat> valueFormat,
       Optional<RegisteredSchema> valueSchema,
       ProduceResult result,
-      Optional<Duration> resumeAfter) {
+      Optional<Duration> waitFor) {
     return ProduceResponse.builder()
         .setClusterId(clusterId)
         .setTopicName(topicName)
@@ -270,7 +270,7 @@ public final class ProduceAction {
                         .setSchemaVersion(valueSchema.map(RegisteredSchema::getSchemaVersion))
                         .setSize(result.getSerializedValueSize())
                         .build()))
-        .setResumeAfter(resumeAfter.map(Duration::toMillis))
+        .setWaitFor(waitFor.map(Duration::toMillis))
         .build();
   }
 

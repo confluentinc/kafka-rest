@@ -25,7 +25,6 @@ public class StreamingResponseTest {
 
   @Test
   public void testGracePeriodExceededExceptionThrown() throws IOException {
-
     String key = "foo";
     String value = "bar";
     ProduceRequest request =
@@ -60,7 +59,7 @@ public class StreamingResponseTest {
             .setTopicName("topicName")
             .setPartitionId(1)
             .setOffset(1L)
-            .setResumeAfter(Optional.of(123L))
+            .setWaitFor(Optional.of(123L))
             .build();
 
     ResultOrError resultOrError = ResultOrError.result(produceResponse);
@@ -90,7 +89,6 @@ public class StreamingResponseTest {
 
   @Test
   public void testWriteToChunkedOutput() throws IOException {
-
     String key = "foo";
     String value = "bar";
     ProduceRequest request =

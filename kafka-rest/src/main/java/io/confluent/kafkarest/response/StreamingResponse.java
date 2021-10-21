@@ -232,7 +232,7 @@ public abstract class StreamingResponse<T> {
               .thenApply(
                   unused -> {
                     try {
-                      if (sink.isClosed()) {
+                      if (sinkClosed || sink.isClosed()) {
                         sinkClosed = true;
                         return null;
                       }

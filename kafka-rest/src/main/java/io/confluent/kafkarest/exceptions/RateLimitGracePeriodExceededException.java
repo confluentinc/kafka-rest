@@ -19,11 +19,11 @@ import javax.ws.rs.core.Response.Status;
 
 public final class RateLimitGracePeriodExceededException extends StatusCodeException {
 
-  public RateLimitGracePeriodExceededException(int rateLimit, int gracePeriod) {
+  public RateLimitGracePeriodExceededException(int maxRequestsPerSec, int gracePeriod) {
     super(
         Status.TOO_MANY_REQUESTS,
         "Rate limit of "
-            + rateLimit
+            + maxRequestsPerSec
             + " messages per second exceeded within the grace period of "
             + gracePeriod
             + " ms ",

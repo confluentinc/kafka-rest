@@ -62,9 +62,9 @@ public final class RateLimiter {
 
     long now = clock.millis();
     int currentRate = addAndGetRate(now);
-    Optional<Duration> resumeAfter = getResumeAfter(currentRate);
+    Optional<Duration> waitFor = getWaitFor(currentRate);
 
-    if (!resumeAfter.isPresent()) {
+    if (!waitFor.isPresent()) {
       resetGracePeriodStart();
       return Optional.empty();
     }
@@ -72,7 +72,7 @@ public final class RateLimiter {
     if (isOverGracePeriod(now)) {
       throw new RateLimitGracePeriodExceededException(maxRequestsPerSecond, gracePeriod);
     }
-    return resumeAfter;
+    return waitFor;
   }
 
   public void clear() {
@@ -113,11 +113,11 @@ public final class RateLimiter {
     return rateCounterSize.get();
   }
 
-  private Optional<Duration> getResumeAfter(int currentRate) {
+  private Optional<Duration> getWaitFor(int currentRate) {
     if (currentRate <= maxRequestsPerSecond) {
       return Optional.empty();
     }
-    double resumeInMs = ((double) currentRate / (double) maxRequestsPerSecond - 1) * 1000;
-    return Optional.of((Duration.ofMillis((long) resumeInMs)));
+    double waitForMs = ((double) currentRate / (double) maxRequestsPerSecond - 1) * 1000;
+    return Optional.of((Duration.ofMillis((long) waitForMs)));
   }
 }
