@@ -18,8 +18,12 @@ package io.confluent.kafkarest.entities.v3;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableSet;
+import io.confluent.kafkarest.entities.Acl;
 import io.confluent.kafkarest.entities.Topic;
+import java.util.Set;
 
+// CHECKSTYLE:OFF:ParameterNumber
 @AutoValue
 public abstract class TopicData extends Resource {
 
@@ -49,6 +53,9 @@ public abstract class TopicData extends Resource {
   @JsonProperty("partition_reassignments")
   public abstract Relationship getPartitionReassignments();
 
+  @JsonProperty("authorized_operations")
+  public abstract ImmutableSet<Acl.Operation> getAuthorizedOperations();
+
   public static Builder builder() {
     return new AutoValue_TopicData.Builder().setKind("KafkaTopic");
   }
@@ -59,7 +66,8 @@ public abstract class TopicData extends Resource {
         .setTopicName(topic.getName())
         .setInternal(topic.isInternal())
         .setReplicationFactor(topic.getReplicationFactor())
-        .setPartitionsCount(topic.getPartitions().size());
+        .setPartitionsCount(topic.getPartitions().size())
+        .setAuthorizedOperations(topic.getAuthorizedOperations());
   }
 
   @JsonCreator
@@ -72,6 +80,7 @@ public abstract class TopicData extends Resource {
       @JsonProperty("replication_factor") int replicationFactor,
       @JsonProperty("partitions_count") int partitionsCount,
       @JsonProperty("partitions") Relationship partitions,
+      @JsonProperty("authorized_operations") ImmutableSet<Acl.Operation> authorizedOperations,
       @JsonProperty("configs") Relationship configs,
       @JsonProperty("partition_reassignments") Relationship partitionReassignments) {
     return builder()
@@ -85,6 +94,7 @@ public abstract class TopicData extends Resource {
         .setPartitions(partitions)
         .setConfigs(configs)
         .setPartitionReassignments(partitionReassignments)
+        .setAuthorizedOperations(authorizedOperations)
         .build();
   }
 
@@ -109,6 +119,9 @@ public abstract class TopicData extends Resource {
 
     public abstract Builder setPartitionReassignments(Relationship partitionReassignments);
 
+    public abstract Builder setAuthorizedOperations(Set<Acl.Operation> authorizedOperations);
+
     public abstract TopicData build();
   }
 }
+// CHECKSTYLE:ON:ParameterNumber

@@ -16,9 +16,13 @@
 package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.common.KafkaFutures.failedFuture;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.replay;
@@ -29,6 +33,7 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
+import io.confluent.kafkarest.entities.Acl;
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.Partition;
@@ -37,7 +42,6 @@ import io.confluent.kafkarest.entities.Topic;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -56,6 +60,7 @@ import org.apache.kafka.clients.admin.TopicListing;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartitionInfo;
+import org.apache.kafka.common.acl.AclOperation;
 import org.apache.kafka.common.errors.TimeoutException;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
@@ -212,7 +217,8 @@ public class TopicManagerImplTest {
                           /* isLeader= */ false,
                           /* isInSync= */ true)))),
           /* replicationFactor= */ (short) 3,
-          /* isInternal= */ true);
+          /* isInternal= */ true,
+          /* authorizedOperations= */ emptySet());
 
   private static final Topic TOPIC_2 =
       Topic.create(
@@ -298,7 +304,8 @@ public class TopicManagerImplTest {
                           /* isLeader= */ false,
                           /* isInSync= */ false)))),
           /* replicationFactor= */ (short) 3,
-          /* isInternal= */ true);
+          /* isInternal= */ true,
+          /* authorizedOperations= */ emptySet());
 
   private static final Topic TOPIC_3 =
       Topic.create(
@@ -384,7 +391,52 @@ public class TopicManagerImplTest {
                           /* isLeader= */ false,
                           /* isInSync= */ false)))),
           /* replicationFactor= */ (short) 3,
-          /* isInternal= */ false);
+          /* isInternal= */ false,
+          /* authorizedOperations= */ emptySet());
+
+  private static final TopicDescription TOPIC_DESCRIPTION_4 =
+      new TopicDescription(
+          "topic-4",
+          /* internal= */ false,
+          singletonList(
+              new TopicPartitionInfo(
+                  0, NODE_2, Arrays.asList(NODE_1, NODE_2, NODE_3), singletonList(NODE_2))),
+          singleton(AclOperation.CREATE));
+
+  private static final Topic TOPIC_4 =
+      Topic.create(
+          CLUSTER_ID,
+          "topic-4",
+          singletonList(
+              Partition.create(
+                  CLUSTER_ID,
+                  "topic-4",
+                  /* partitionId= */ 0,
+                  Arrays.asList(
+                      PartitionReplica.create(
+                          CLUSTER_ID,
+                          "topic-4",
+                          /* partitionId= */ 0,
+                          /* brokerId= */ 1,
+                          /* isLeader= */ false,
+                          /* isInSync= */ false),
+                      PartitionReplica.create(
+                          CLUSTER_ID,
+                          "topic-4",
+                          /* partitionId= */ 0,
+                          /* brokerId= */ 2,
+                          /* isLeader= */ true,
+                          /* isInSync= */ true),
+                      PartitionReplica.create(
+                          CLUSTER_ID,
+                          "topic-4",
+                          /* partitionId= */ 0,
+                          /* brokerId= */ 3,
+                          /* isLeader= */ false,
+                          /* isInSync= */ false)))),
+          /* replicationFactor= */ (short) 3,
+          /* isInternal= */ false,
+          singleton(Acl.Operation.CREATE));
 
   @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
@@ -408,11 +460,43 @@ public class TopicManagerImplTest {
   }
 
   @Test
+  public void listTopics_existingCluster_returnsTopicsWithAuthOperations() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.listTopics()).andReturn(listTopicsResult);
+    expect(listTopicsResult.listings())
+        .andReturn(KafkaFuture.completedFuture(singletonList(new TopicListing("topic-4", false))));
+    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+        .andReturn(describeTopicResult);
+    expect(describeTopicResult.all())
+        .andReturn(KafkaFuture.completedFuture(createTopicDescriptionMap(TOPIC_DESCRIPTION_4)));
+    replay(clusterManager, adminClient, listTopicsResult, describeTopicResult);
+
+    List<Topic> topics = topicManager.listTopics(CLUSTER_ID, true).get();
+
+    assertEquals(Arrays.asList(TOPIC_4), topics);
+  }
+
+  @Test
+  public void getTopic_existingCluster_returnsTopicsWithAuthOperations() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+        .andReturn(describeTopicResult);
+    expect(describeTopicResult.all())
+        .andReturn(KafkaFuture.completedFuture(createTopicDescriptionMap(TOPIC_DESCRIPTION_4)));
+    replay(clusterManager, adminClient, describeTopicResult);
+
+    Optional<Topic> topic = topicManager.getTopic(CLUSTER_ID, "topic-4", true).get();
+
+    assertEquals(TOPIC_4, topic.get());
+  }
+
+  @Test
   public void listTopics_existingCluster_returnsTopics() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.listTopics()).andReturn(listTopicsResult);
     expect(listTopicsResult.listings()).andReturn(KafkaFuture.completedFuture(TOPIC_LISTINGS));
-    expect(adminClient.describeTopics(isA(Collection.class))).andReturn(describeTopicResult);
+    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+        .andReturn(describeTopicResult);
     expect(describeTopicResult.all())
         .andReturn(
             KafkaFuture.completedFuture(
@@ -445,7 +529,8 @@ public class TopicManagerImplTest {
     expect(clusterManager.getLocalCluster()).andReturn(completedFuture(CLUSTER));
     expect(adminClient.listTopics()).andReturn(listTopicsResult);
     expect(listTopicsResult.listings()).andReturn(KafkaFuture.completedFuture(TOPIC_LISTINGS));
-    expect(adminClient.describeTopics(isA(Collection.class))).andReturn(describeTopicResult);
+    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+        .andReturn(describeTopicResult);
     expect(describeTopicResult.all())
         .andReturn(
             KafkaFuture.completedFuture(
@@ -474,7 +559,8 @@ public class TopicManagerImplTest {
   @Test
   public void getTopic_existingTopic_returnsTopic() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
-    expect(adminClient.describeTopics(isA(Collection.class))).andReturn(describeTopicResult);
+    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+        .andReturn(describeTopicResult);
     expect(describeTopicResult.all())
         .andReturn(KafkaFuture.completedFuture(createTopicDescriptionMap(TOPIC_DESCRIPTION_1)));
     replay(clusterManager, adminClient, describeTopicResult);
@@ -487,7 +573,8 @@ public class TopicManagerImplTest {
   @Test
   public void getTopic_nonExistingCluster_throwsNotFoundException() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
-    expect(adminClient.describeTopics(isA(Collection.class))).andReturn(describeTopicResult);
+    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+        .andReturn(describeTopicResult);
     replay(clusterManager);
 
     try {
@@ -501,7 +588,8 @@ public class TopicManagerImplTest {
   @Test
   public void getTopic_nonExistingTopic_returnsEmpty() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
-    expect(adminClient.describeTopics(isA(Collection.class))).andReturn(describeTopicResult);
+    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+        .andReturn(describeTopicResult);
     expect(describeTopicResult.all()).andReturn(KafkaFuture.completedFuture(new HashMap<>()));
     replay(clusterManager, adminClient, describeTopicResult);
 
@@ -513,7 +601,8 @@ public class TopicManagerImplTest {
   @Test
   public void getLocalTopic_existingTopic_returnsTopic() throws Exception {
     expect(clusterManager.getLocalCluster()).andReturn(completedFuture(CLUSTER));
-    expect(adminClient.describeTopics(isA(Collection.class))).andReturn(describeTopicResult);
+    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+        .andReturn(describeTopicResult);
     expect(describeTopicResult.all())
         .andReturn(KafkaFuture.completedFuture(createTopicDescriptionMap(TOPIC_DESCRIPTION_1)));
     replay(clusterManager, adminClient, describeTopicResult);
@@ -526,7 +615,8 @@ public class TopicManagerImplTest {
   @Test
   public void getLocalTopic_nonExistingTopic_returnsEmpty() throws Exception {
     expect(clusterManager.getLocalCluster()).andReturn(completedFuture(CLUSTER));
-    expect(adminClient.describeTopics(isA(Collection.class))).andReturn(describeTopicResult);
+    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+        .andReturn(describeTopicResult);
     expect(describeTopicResult.all()).andReturn(KafkaFuture.completedFuture(new HashMap<>()));
     replay(clusterManager, adminClient, describeTopicResult);
 
@@ -556,7 +646,7 @@ public class TopicManagerImplTest {
             TOPIC_1.getName(),
             Optional.of(TOPIC_1.getPartitions().size()),
             Optional.of(TOPIC_1.getReplicationFactor()),
-            /* replicasAssignments= */ Collections.emptyMap(),
+            /* replicasAssignments= */ emptyMap(),
             singletonMap("cleanup.policy", Optional.of("compact")))
         .get();
 
@@ -584,7 +674,7 @@ public class TopicManagerImplTest {
             TOPIC_1.getName(),
             /* partitionsCount= */ Optional.empty(),
             Optional.of(TOPIC_1.getReplicationFactor()),
-            /* replicasAssignments= */ Collections.emptyMap(),
+            /* replicasAssignments= */ emptyMap(),
             singletonMap("cleanup.policy", Optional.of("compact")))
         .get();
 
@@ -613,7 +703,7 @@ public class TopicManagerImplTest {
             TOPIC_1.getName(),
             Optional.of(TOPIC_1.getPartitions().size()),
             /* replicationFactor= */ Optional.empty(),
-            /* replicasAssignments= */ Collections.emptyMap(),
+            /* replicasAssignments= */ emptyMap(),
             singletonMap("cleanup.policy", Optional.of("compact")))
         .get();
 
@@ -680,7 +770,7 @@ public class TopicManagerImplTest {
               TOPIC_1.getName(),
               Optional.of(TOPIC_1.getPartitions().size()),
               Optional.of(TOPIC_1.getReplicationFactor()),
-              /* replicasAssignments= */ Collections.emptyMap(),
+              /* replicasAssignments= */ emptyMap(),
               singletonMap("cleanup.policy", Optional.of("compact")))
           .get();
       fail();
@@ -703,7 +793,7 @@ public class TopicManagerImplTest {
               TOPIC_1.getName(),
               Optional.of(TOPIC_1.getPartitions().size()),
               Optional.of(TOPIC_1.getReplicationFactor()),
-              /* replicasAssignments= */ Collections.emptyMap(),
+              /* replicasAssignments= */ emptyMap(),
               singletonMap("cleanup.policy", Optional.of("compact")))
           .get();
       fail();

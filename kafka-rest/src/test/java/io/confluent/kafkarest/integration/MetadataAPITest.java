@@ -17,6 +17,7 @@ package io.confluent.kafkarest.integration;
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static io.confluent.kafkarest.TestUtils.tryReadEntityOrLog;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 
@@ -54,7 +55,7 @@ public class MetadataAPITest extends ClusterTestHarness {
                   PartitionReplica.create(/* clusterId= */ "", "topic1", 0, 0, true, true),
                   PartitionReplica.create(/* clusterId= */ "", "topic1", 0, 1, false, false))));
   private static final Topic topic1 =
-      Topic.create("", topic1Name, topic1Partitions, (short) 2, false);
+      Topic.create("", topic1Name, topic1Partitions, (short) 2, false, emptySet());
   private static final String topic2Name = "topic2";
   private static final List<Partition> topic2Partitions =
       Arrays.asList(

@@ -17,6 +17,7 @@ package io.confluent.kafkarest.resources.v3;
 
 import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -114,7 +115,8 @@ public class ListAllTopicsConfigsActionTest {
         .andReturn(
             completedFuture(
                 Arrays.asList(
-                    Topic.create(CLUSTER_ID, TOPIC_NAME, new ArrayList<>(), (short) 1, false))));
+                    Topic.create(
+                        CLUSTER_ID, TOPIC_NAME, new ArrayList<>(), (short) 1, false, emptySet()))));
 
     expect(topicConfigManager.listTopicConfigs(CLUSTER_ID, Arrays.asList(TOPIC_NAME)))
         .andReturn(

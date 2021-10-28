@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.resources.v3;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.controllers.TopicManager;
@@ -47,12 +48,14 @@ import javax.inject.Provider;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
@@ -80,11 +83,14 @@ public final class TopicsResource {
   @PerformanceMetric("v3.topics.list")
   @ResourceName("api.v3.topics.list")
   public void listTopics(
-      @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
+      @Suspended AsyncResponse asyncResponse,
+      @PathParam("clusterId") String clusterId,
+      @QueryParam("includeAuthorizedOperations") @DefaultValue("false")
+          boolean includeAuthorizedOperations) {
     CompletableFuture<ListTopicsResponse> response =
         topicManager
             .get()
-            .listTopics(clusterId)
+            .listTopics(clusterId, includeAuthorizedOperations)
             .thenApply(
                 topics ->
                     ListTopicsResponse.create(
@@ -112,11 +118,13 @@ public final class TopicsResource {
   public void getTopic(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @PathParam("topicName") String topicName) {
+      @PathParam("topicName") String topicName,
+      @QueryParam("include_authorized_operations") @DefaultValue("false")
+          boolean includeAuthorizedOperations) {
     CompletableFuture<GetTopicResponse> response =
         topicManager
             .get()
-            .getTopic(clusterId, topicName)
+            .getTopic(clusterId, topicName, includeAuthorizedOperations)
             .thenApply(topic -> topic.orElseThrow(NotFoundException::new))
             .thenApply(topic -> GetTopicResponse.create(toTopicData(topic)));
 
@@ -156,7 +164,8 @@ public final class TopicsResource {
                 topicName,
                 /* partitions= */ emptyList(),
                 assumedReplicationFactor,
-                /* isInternal= */ false));
+                /* isInternal= */ false,
+                /* authorizedOperations= */ emptySet()));
 
     CompletableFuture<CreateTopicResponse> response =
         topicManager
