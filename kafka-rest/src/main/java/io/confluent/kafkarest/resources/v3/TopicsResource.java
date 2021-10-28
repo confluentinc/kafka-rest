@@ -165,7 +165,7 @@ public final class TopicsResource {
                 /* partitions= */ emptyList(),
                 assumedReplicationFactor,
                 /* isInternal= */ false,
-                emptySet()));
+                /* authorizedOperations= */ emptySet()));
 
     CompletableFuture<CreateTopicResponse> response =
         topicManager

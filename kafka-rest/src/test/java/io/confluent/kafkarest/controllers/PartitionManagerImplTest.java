@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
+import static java.util.Collections.emptySet;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -27,7 +28,6 @@ import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -147,7 +147,7 @@ public class PartitionManagerImplTest {
           Arrays.asList(PARTITION_1, PARTITION_2, PARTITION_3),
           /* replicationFactor= */ (short) 3,
           /* isInternal= */ false,
-          Collections.emptySet());
+          /* authorizedOperations= */ emptySet());
 
   @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 

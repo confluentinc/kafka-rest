@@ -151,7 +151,7 @@ public class TopicsResourceTest {
                           /* isInSync= */ true)))),
           /* replicationFactor= */ (short) 3,
           /* isInternal= */ true,
-          emptySet());
+          /* authorizedOperations= */ emptySet());
 
   private static final Topic TOPIC_2 =
       Topic.create(
@@ -238,7 +238,7 @@ public class TopicsResourceTest {
                           /* isInSync= */ false)))),
           /* replicationFactor= */ (short) 3,
           /* isInternal= */ true,
-          emptySet());
+          /* authorizedOperations= */ emptySet());
 
   private static final Topic TOPIC_3 =
       Topic.create(
@@ -325,7 +325,7 @@ public class TopicsResourceTest {
                           /* isInSync= */ false)))),
           /* replicationFactor= */ (short) 3,
           /* isInternal= */ false,
-          emptySet());
+          /* authorizedOperations= */ emptySet());
 
   @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 

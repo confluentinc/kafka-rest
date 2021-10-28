@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.common.KafkaFutures.failedFuture;
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
@@ -41,7 +42,6 @@ import io.confluent.kafkarest.entities.Topic;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -218,7 +218,7 @@ public class TopicManagerImplTest {
                           /* isInSync= */ true)))),
           /* replicationFactor= */ (short) 3,
           /* isInternal= */ true,
-          emptySet());
+          /* authorizedOperations= */ emptySet());
 
   private static final Topic TOPIC_2 =
       Topic.create(
@@ -305,7 +305,7 @@ public class TopicManagerImplTest {
                           /* isInSync= */ false)))),
           /* replicationFactor= */ (short) 3,
           /* isInternal= */ true,
-          emptySet());
+          /* authorizedOperations= */ emptySet());
 
   private static final Topic TOPIC_3 =
       Topic.create(
@@ -392,7 +392,7 @@ public class TopicManagerImplTest {
                           /* isInSync= */ false)))),
           /* replicationFactor= */ (short) 3,
           /* isInternal= */ false,
-          emptySet());
+          /* authorizedOperations= */ emptySet());
 
   private static final TopicDescription TOPIC_DESCRIPTION_4 =
       new TopicDescription(
@@ -401,7 +401,7 @@ public class TopicManagerImplTest {
           singletonList(
               new TopicPartitionInfo(
                   0, NODE_2, Arrays.asList(NODE_1, NODE_2, NODE_3), singletonList(NODE_2))),
-          /* authorizedOperations= */ Collections.singleton(AclOperation.CREATE));
+          singleton(AclOperation.CREATE));
 
   private static final Topic TOPIC_4 =
       Topic.create(
@@ -436,7 +436,7 @@ public class TopicManagerImplTest {
                           /* isInSync= */ false)))),
           /* replicationFactor= */ (short) 3,
           /* isInternal= */ false,
-          /* authorizedOperations= */ singleton(Acl.Operation.CREATE));
+          singleton(Acl.Operation.CREATE));
 
   @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
@@ -646,7 +646,7 @@ public class TopicManagerImplTest {
             TOPIC_1.getName(),
             Optional.of(TOPIC_1.getPartitions().size()),
             Optional.of(TOPIC_1.getReplicationFactor()),
-            /* replicasAssignments= */ Collections.emptyMap(),
+            /* replicasAssignments= */ emptyMap(),
             singletonMap("cleanup.policy", Optional.of("compact")))
         .get();
 
@@ -674,7 +674,7 @@ public class TopicManagerImplTest {
             TOPIC_1.getName(),
             /* partitionsCount= */ Optional.empty(),
             Optional.of(TOPIC_1.getReplicationFactor()),
-            /* replicasAssignments= */ Collections.emptyMap(),
+            /* replicasAssignments= */ emptyMap(),
             singletonMap("cleanup.policy", Optional.of("compact")))
         .get();
 
@@ -703,7 +703,7 @@ public class TopicManagerImplTest {
             TOPIC_1.getName(),
             Optional.of(TOPIC_1.getPartitions().size()),
             /* replicationFactor= */ Optional.empty(),
-            /* replicasAssignments= */ Collections.emptyMap(),
+            /* replicasAssignments= */ emptyMap(),
             singletonMap("cleanup.policy", Optional.of("compact")))
         .get();
 
@@ -770,7 +770,7 @@ public class TopicManagerImplTest {
               TOPIC_1.getName(),
               Optional.of(TOPIC_1.getPartitions().size()),
               Optional.of(TOPIC_1.getReplicationFactor()),
-              /* replicasAssignments= */ Collections.emptyMap(),
+              /* replicasAssignments= */ emptyMap(),
               singletonMap("cleanup.policy", Optional.of("compact")))
           .get();
       fail();
@@ -793,7 +793,7 @@ public class TopicManagerImplTest {
               TOPIC_1.getName(),
               Optional.of(TOPIC_1.getPartitions().size()),
               Optional.of(TOPIC_1.getReplicationFactor()),
-              /* replicasAssignments= */ Collections.emptyMap(),
+              /* replicasAssignments= */ emptyMap(),
               singletonMap("cleanup.policy", Optional.of("compact")))
           .get();
       fail();

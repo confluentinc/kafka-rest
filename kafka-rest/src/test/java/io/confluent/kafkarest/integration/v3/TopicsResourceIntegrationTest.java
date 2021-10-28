@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.integration.v3;
 
 import static io.confluent.kafkarest.TestUtils.testWithRetry;
+import static java.util.Collections.emptySet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -33,7 +34,6 @@ import io.confluent.kafkarest.entities.v3.TopicData;
 import io.confluent.kafkarest.entities.v3.TopicDataList;
 import io.confluent.kafkarest.integration.ClusterTestHarness;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Properties;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -124,7 +124,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                                         + "/topics/"
                                         + TOPIC_1
                                         + "/partitions/-/reassignment"))
-                            .setAuthorizedOperations(Collections.emptySet())
+                            .setAuthorizedOperations(emptySet())
                             .build(),
                         TopicData.builder()
                             .setMetadata(
@@ -167,7 +167,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                                         + "/topics/"
                                         + TOPIC_2
                                         + "/partitions/-/reassignment"))
-                            .setAuthorizedOperations(Collections.emptySet())
+                            .setAuthorizedOperations(emptySet())
                             .build(),
                         TopicData.builder()
                             .setMetadata(
@@ -210,7 +210,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                                         + "/topics/"
                                         + TOPIC_3
                                         + "/partitions/-/reassignment"))
-                            .setAuthorizedOperations(Collections.emptySet())
+                            .setAuthorizedOperations(emptySet())
                             .build()))
                 .build());
 
@@ -272,7 +272,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             + "/topics/"
                             + TOPIC_1
                             + "/partitions/-/reassignment"))
-                .setAuthorizedOperations(Collections.emptySet())
+                .setAuthorizedOperations(emptySet())
                 .build());
 
     Response response =
@@ -346,7 +346,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             + "/topics/"
                             + topicName
                             + "/partitions/-/reassignment"))
-                .setAuthorizedOperations(Collections.emptySet())
+                .setAuthorizedOperations(emptySet())
                 .build());
 
     Response response =
@@ -414,7 +414,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             + "/topics/"
                             + topicName
                             + "/partitions/-/reassignment"))
-                .setAuthorizedOperations(Collections.emptySet())
+                .setAuthorizedOperations(emptySet())
                 .build());
 
     Response response =
@@ -559,7 +559,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             + "/topics/"
                             + topicName
                             + "/partitions/-/reassignment"))
-                .setAuthorizedOperations(Collections.emptySet())
+                .setAuthorizedOperations(emptySet())
                 .build());
 
     Response createTopicResponse =
@@ -621,7 +621,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                             + "/topics/"
                             + topicName
                             + "/partitions/-/reassignment"))
-                .setAuthorizedOperations(Collections.emptySet())
+                .setAuthorizedOperations(emptySet())
                 .build());
 
     testWithRetry(
