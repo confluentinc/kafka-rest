@@ -4,8 +4,18 @@
 
 package io.confluent.kafkarest.integration;
 
+import static java.util.Objects.requireNonNull;
+import static org.junit.Assert.assertEquals;
+
 import io.confluent.kafkarest.common.CompletableFutures;
 import io.confluent.kafkarest.testing.KafkaRestFixture;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,17 +27,6 @@ import org.testcontainers.containers.output.BaseConsumer;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
-
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static java.util.Objects.requireNonNull;
-import static org.junit.Assert.assertEquals;
 
 @RunWith(JUnit4.class)
 public class TestContainerTest {
@@ -255,10 +254,10 @@ public class TestContainerTest {
         return;
       }
       if (newLine) {
-        //System.out.print(color + "[" + name + "]\033[0m ");
+        // System.out.print(color + "[" + name + "]\033[0m ");
       }
       String message = outputFrame.getUtf8String();
-      //System.out.print(message);
+      // System.out.print(message);
       newLine = message.endsWith("\n");
     }
   }
