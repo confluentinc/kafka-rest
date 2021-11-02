@@ -198,7 +198,56 @@ public class TestContainerTest {
   }
 
   @Test
-  public void foobar() throws Exception {
+  public void test0() throws Exception {
+    doTest();
+  }
+
+  @Test
+  public void test1() throws Exception {
+    doTest();
+  }
+
+  @Test
+  public void test2() throws Exception {
+    doTest();
+  }
+
+  @Test
+  public void test3() throws Exception {
+    doTest();
+  }
+
+  @Test
+  public void test4() throws Exception {
+    doTest();
+  }
+
+  @Test
+  public void test5() throws Exception {
+    doTest();
+  }
+
+  @Test
+  public void test6() throws Exception {
+    doTest();
+  }
+
+  @Test
+  public void test7() throws Exception {
+    doTest();
+  }
+
+  @Test
+  public void test8() throws Exception {
+    doTest();
+  }
+
+  @Test
+  public void test9() throws Exception {
+    doTest();
+  }
+
+  private void doTest() throws Exception {
     CompletableFutures.allAsList(
             Arrays.asList(kafka1, kafka2, kafka3).stream()
                 .map(
