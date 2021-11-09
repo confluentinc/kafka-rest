@@ -2,4 +2,5 @@
 common {
   slackChannel = '#kafka-rest-warn'
   upstreamProjects = 'confluentinc/schema-registry'
+   disableConcurrentBuilds = true
 }
