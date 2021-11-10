@@ -37,6 +37,7 @@ import io.confluent.rest.RestConfigException;
 import io.confluent.rest.metrics.RestMetricsContext;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -916,7 +917,7 @@ public class KafkaRestConfig extends RestConfig {
     private final Map<String, ConfigValue> configs = new HashMap<>();
 
     private ConfigsBuilder() {
-      this.mask = null;
+      this(Collections.emptySet());
     }
 
     private ConfigsBuilder(Set<String> mask) {
@@ -938,7 +939,7 @@ public class KafkaRestConfig extends RestConfig {
 
     private ConfigsBuilder addConfigs(String prefix, boolean strip) {
       Map<String, Object> filtered = originalsWithPrefix(prefix, strip);
-      if (mask != null) {
+      if (!mask.isEmpty()) {
         filtered = Maps.filterKeys(filtered, mask::contains);
       }
       Map<String, ConfigValue> toAdd = filtered
