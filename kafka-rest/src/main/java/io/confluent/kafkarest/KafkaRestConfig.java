@@ -37,6 +37,7 @@ import io.confluent.rest.RestConfigException;
 import io.confluent.rest.metrics.RestMetricsContext;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -44,7 +45,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.MediaType;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Range;
@@ -54,7 +54,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Settings for the REST proxy server.
+ * Settings for the Kafka REST server.
  */
 public class KafkaRestConfig extends RestConfig {
 
@@ -372,13 +372,6 @@ public class KafkaRestConfig extends RestConfig {
   private static final String API_V3_ENABLE_DOC =
       "Whether to enable REST Proxy V3 API. Default is true.";
   private static final boolean API_V3_ENABLE_DEFAULT = true;
-
-  // These property names should not be filtered out when determining the allowed properties for
-  // producer and consumer configs. See KREST-481 for more details.
-  private static final String MONITORING_INTERCEPTOR_TOPIC_CONFIG =
-      "confluent.monitoring.interceptor.topic";
-  private static final String MONITORING_INTERCEPTOR_PUBLISH_MS_PERIOD_CONFIG =
-      "confluent.monitoring.interceptor.publishMs";
 
   private static final ConfigDef config;
 
@@ -870,17 +863,12 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   public Properties getProducerProperties() {
-    Set<String> mask =
-        ImmutableSet.<String>builder()
-            .addAll(ProducerConfig.configNames())
-            .add(MONITORING_INTERCEPTOR_TOPIC_CONFIG)
-            .add(MONITORING_INTERCEPTOR_PUBLISH_MS_PERIOD_CONFIG)
-            .build();
     Map<String, Object> producerConfigs =
-        new ConfigsBuilder(mask)
+        new ConfigsBuilder()
             .addConfig(BOOTSTRAP_SERVERS_CONFIG)
             .addConfigs("client.")
             .addConfigs("producer.")
+            .addConfigs("schema.registry.", false)
             .build();
 
     Properties producerProperties = new Properties();
@@ -947,8 +935,12 @@ public class KafkaRestConfig extends RestConfig {
   }
 
   private final class ConfigsBuilder {
-    private final Set<String> mask ;
+    private final Set<String> mask;
     private final Map<String, ConfigValue> configs = new HashMap<>();
+
+    private ConfigsBuilder() {
+      this(Collections.emptySet());
+    }
 
     private ConfigsBuilder(Set<String> mask) {
       this.mask = requireNonNull(mask);
@@ -968,14 +960,17 @@ public class KafkaRestConfig extends RestConfig {
     }
 
     private ConfigsBuilder addConfigs(String prefix, boolean strip) {
-      Map<String, ConfigValue> toAdd =
-          Maps.filterKeys(originalsWithPrefix(prefix, strip), mask::contains)
-              .entrySet()
-              .stream()
-              .collect(
-                  Collectors.toMap(
-                      Entry::getKey,
-                      entry -> ConfigValue.create(prefix + entry.getKey(), entry.getValue())));
+      Map<String, Object> filtered = originalsWithPrefix(prefix, strip);
+      if (!mask.isEmpty()) {
+        filtered = Maps.filterKeys(filtered, mask::contains);
+      }
+      Map<String, ConfigValue> toAdd = filtered
+          .entrySet()
+          .stream()
+          .collect(
+              Collectors.toMap(
+                  Entry::getKey,
+                  entry -> ConfigValue.create(prefix + entry.getKey(), entry.getValue())));
       addConfigs(toAdd);
       return this;
     }
