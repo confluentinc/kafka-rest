@@ -7,7 +7,6 @@ import static io.confluent.kafkarest.KafkaRestMetricsContext.RESOURCE_LABEL_COMM
 import static io.confluent.kafkarest.KafkaRestMetricsContext.RESOURCE_LABEL_VERSION;
 import static java.util.Collections.singletonMap;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 import com.google.common.collect.ImmutableMap;
 import io.confluent.kafka.serializers.subject.DefaultReferenceSubjectNameStrategy;
@@ -191,39 +190,39 @@ public class KafkaRestConfigTest {
   }
 
   @Test
-  public void getProducerProperties_doesNotPropagateSchemaRegistryConfigs() {
+  public void getProducerProperties_propagatesSchemaRegistryConfigs() {
     Properties properties = new Properties();
     properties.put("schema.registry.url", "foobar");
     properties.put("schema.registry.basic.auth.user.info", "fozbaz");
     KafkaRestConfig config = new KafkaRestConfig(properties);
 
     Properties producerProperties = config.getProducerProperties();
-    assertNull(producerProperties.get("schema.registry.url"));
-    assertNull(producerProperties.get("schema.registry.basic.auth.user.info"));
+    assertEquals("foobar", producerProperties.get("schema.registry.url"));
+    assertEquals("fozbaz", producerProperties.get("schema.registry.basic.auth.user.info"));
   }
 
   @Test
-  public void getProducerProperties_doesNotPropagateClientSchemaRegistryConfigs() {
+  public void getProducerProperties_propagatesClientSchemaRegistryConfigs() {
     Properties properties = new Properties();
     properties.put("client.schema.registry.url", "foobar");
     properties.put("client.schema.registry.basic.auth.user.info", "fozbaz");
     KafkaRestConfig config = new KafkaRestConfig(properties);
 
     Properties producerProperties = config.getProducerProperties();
-    assertNull(producerProperties.get("schema.registry.url"));
-    assertNull(producerProperties.get("schema.registry.basic.auth.user.info"));
+    assertEquals("foobar", producerProperties.get("schema.registry.url"));
+    assertEquals("fozbaz", producerProperties.get("schema.registry.basic.auth.user.info"));
   }
 
   @Test
-  public void getProducerProperties_doesNotPropagateProducerSchemaRegistryConfigs() {
+  public void getProducerProperties_propagatesProducerSchemaRegistryConfigs() {
     Properties properties = new Properties();
     properties.put("producer.schema.registry.url", "foobar");
     properties.put("producer.schema.registry.basic.auth.user.info", "fozbaz");
     KafkaRestConfig config = new KafkaRestConfig(properties);
 
     Properties producerProperties = config.getProducerProperties();
-    assertNull(producerProperties.get("schema.registry.url"));
-    assertNull(producerProperties.get("schema.registry.basic.auth.user.info"));
+    assertEquals("foobar", producerProperties.get("schema.registry.url"));
+    assertEquals("fozbaz", producerProperties.get("schema.registry.basic.auth.user.info"));
   }
 
   @Test
