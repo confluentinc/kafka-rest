@@ -31,6 +31,7 @@ import io.confluent.kafkarest.extension.EnumConverterProvider;
 import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature;
 import io.confluent.kafkarest.extension.RestResourceExtension;
+import io.confluent.kafkarest.ratelimit.RateLimitFeature;
 import io.confluent.kafkarest.resources.ResourcesFeature;
 import io.confluent.kafkarest.response.ResponseModule;
 import io.confluent.rest.Application;
@@ -98,6 +99,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new ConfigModule(appConfig));
     config.register(new ControllersModule());
     config.register(new ExceptionsModule());
+    config.register(RateLimitFeature.class);
     config.register(new ResourcesFeature(appConfig));
     config.register(new ResponseModule());
 

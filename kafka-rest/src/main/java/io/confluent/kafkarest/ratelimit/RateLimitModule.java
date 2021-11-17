@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -13,21 +13,23 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.resources.v3;
+package io.confluent.kafkarest.ratelimit;
 
-import io.confluent.kafkarest.response.ChunkedOutputFactory;
-import io.confluent.kafkarest.response.StreamingResponseFactory;
-import java.time.Clock;
 import javax.inject.Singleton;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.process.internal.RequestScoped;
 
-public final class V3ResourcesModule extends AbstractBinder {
+/**
+ * A module to configure bindings for {@link FixedCostRateLimiter} and {@link RequestRateLimiter}.
+ */
+final class RateLimitModule extends AbstractBinder {
 
   @Override
   protected void configure() {
-    bindAsContract(ProduceRateLimiter.class).in(Singleton.class);
-    bindAsContract(ChunkedOutputFactory.class);
-    bindAsContract(StreamingResponseFactory.class);
-    bind(Clock.systemUTC()).to(Clock.class);
+    bindFactory(RequestRateLimiterFactory.class).to(RequestRateLimiter.class).in(Singleton.class);
+
+    bindFactory(FixedCostRateLimiterFactory.class)
+        .to(FixedCostRateLimiter.class)
+        .in(RequestScoped.class);
   }
 }

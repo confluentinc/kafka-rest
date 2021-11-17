@@ -13,10 +13,11 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.resources;
+package io.confluent.kafkarest.resources.v3;
 
 import static java.util.Objects.requireNonNull;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.confluent.kafkarest.config.ConfigModule.ProduceGracePeriodConfig;
 import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitConfig;
 import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitEnabledConfig;
@@ -29,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 
-public final class RateLimiter {
+final class ProduceRateLimiter {
 
   private static final int ONE_SECOND_MS = 1000;
 
@@ -43,7 +44,7 @@ public final class RateLimiter {
   private final AtomicLong gracePeriodStart = new AtomicLong(-1);
 
   @Inject
-  public RateLimiter(
+  ProduceRateLimiter(
       @ProduceGracePeriodConfig Duration produceGracePeriodConfig,
       @ProduceRateLimitConfig Integer produceRateLimitConfig,
       @ProduceRateLimitEnabledConfig Boolean produceRateLimitEnabledConfig,
@@ -54,8 +55,7 @@ public final class RateLimiter {
     this.clock = requireNonNull(clock);
   }
 
-  public Optional<Duration> calculateGracePeriodExceeded()
-      throws RateLimitGracePeriodExceededException {
+  Optional<Duration> calculateGracePeriodExceeded() throws RateLimitGracePeriodExceededException {
     if (!rateLimitingEnabled) {
       return Optional.empty();
     }
@@ -76,12 +76,14 @@ public final class RateLimiter {
     return waitFor;
   }
 
-  public void clear() {
+  @VisibleForTesting
+  void clear() {
     rateCounter.clear();
     rateCounterSize.set(0);
   }
 
-  public void resetGracePeriodStart() {
+  @VisibleForTesting
+  void resetGracePeriodStart() {
     gracePeriodStart.set(-1);
   }
 
