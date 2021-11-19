@@ -17,6 +17,7 @@ package io.confluent.kafkarest.config;
 
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.ratelimit.RateLimitBackend;
 import io.confluent.rest.RestConfig;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -78,18 +79,6 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new CrnAuthorityConfigImpl())
         .to(String.class);
 
-    bind(config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND))
-        .qualifiedBy(new ProduceRateLimitConfigImpl())
-        .to(Integer.class);
-
-    bind(Duration.ofMillis(config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD_MS)))
-        .qualifiedBy(new ProduceGracePeriodConfigImpl())
-        .to(Duration.class);
-
-    bind(config.getBoolean(KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED))
-        .qualifiedBy(new ProduceRateLimitEnabledConfigImpl())
-        .to(Boolean.class);
-
     bind(config.getString(KafkaRestConfig.HOST_NAME_CONFIG))
         .qualifiedBy(new HostNameConfigImpl())
         .to(String.class);
@@ -114,6 +103,18 @@ public final class ConfigModule extends AbstractBinder {
 
     bind(config.getInt(RestConfig.PORT_CONFIG)).qualifiedBy(new PortConfigImpl()).to(Integer.class);
 
+    bind(Duration.ofMillis(config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD_MS)))
+        .qualifiedBy(new ProduceGracePeriodConfigImpl())
+        .to(Duration.class);
+
+    bind(config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND))
+        .qualifiedBy(new ProduceRateLimitConfigImpl())
+        .to(Integer.class);
+
+    bind(config.getBoolean(KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED))
+        .qualifiedBy(new ProduceRateLimitEnabledConfigImpl())
+        .to(Boolean.class);
+
     bind(config.getProducerConfigs())
         .qualifiedBy(new ProducerConfigsImpl())
         .to(new TypeLiteral<Map<String, Object>>() {});
@@ -121,6 +122,28 @@ public final class ConfigModule extends AbstractBinder {
     bind(config.getProtobufSerializerConfigs())
         .qualifiedBy(new ProtobufSerializerConfigsImpl())
         .to(new TypeLiteral<Map<String, Object>>() {});
+
+    bind(config.getRateLimitBackend()).to(RateLimitBackend.class);
+
+    bind(config.getRateLimitCosts())
+        .qualifiedBy(new RateLimitCostsConfigImpl())
+        .to(new TypeLiteral<Map<String, Integer>>() {});
+
+    bind(config.getRateLimitDefaultCost())
+        .qualifiedBy(new RateLimitDefaultCostConfigImpl())
+        .to(Integer.class);
+
+    bind(config.isRateLimitEnabled())
+        .qualifiedBy(new RateLimitEnabledConfigImpl())
+        .to(Boolean.class);
+
+    bind(config.getRateLimitPermitsPerSec())
+        .qualifiedBy(new RateLimitPermitsPerSecConfigImpl())
+        .to(Integer.class);
+
+    bind(config.getRateLimitTimeout())
+        .qualifiedBy(new RateLimitTimeoutConfigImpl())
+        .to(Duration.class);
 
     bind(config.getSchemaRegistryConfigs())
         .qualifiedBy(new SchemaRegistryConfigsImpl())
@@ -146,31 +169,6 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class AdvertisedListenersConfigImpl
       extends AnnotationLiteral<AdvertisedListenersConfig> implements AdvertisedListenersConfig {}
-
-  @Qualifier
-  @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
-  public @interface ProduceRateLimitConfig {}
-
-  private static final class ProduceRateLimitConfigImpl
-      extends AnnotationLiteral<ProduceRateLimitConfig> implements ProduceRateLimitConfig {}
-
-  @Qualifier
-  @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
-  public @interface ProduceGracePeriodConfig {}
-
-  private static final class ProduceGracePeriodConfigImpl
-      extends AnnotationLiteral<ProduceGracePeriodConfig> implements ProduceGracePeriodConfig {}
-
-  @Qualifier
-  @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
-  public @interface ProduceRateLimitEnabledConfig {}
-
-  private static final class ProduceRateLimitEnabledConfigImpl
-      extends AnnotationLiteral<ProduceRateLimitEnabledConfig>
-      implements ProduceRateLimitEnabledConfig {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
@@ -260,6 +258,31 @@ public final class ConfigModule extends AbstractBinder {
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceGracePeriodConfig {}
+
+  private static final class ProduceGracePeriodConfigImpl
+      extends AnnotationLiteral<ProduceGracePeriodConfig> implements ProduceGracePeriodConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceRateLimitConfig {}
+
+  private static final class ProduceRateLimitConfigImpl
+      extends AnnotationLiteral<ProduceRateLimitConfig> implements ProduceRateLimitConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceRateLimitEnabledConfig {}
+
+  private static final class ProduceRateLimitEnabledConfigImpl
+      extends AnnotationLiteral<ProduceRateLimitEnabledConfig>
+      implements ProduceRateLimitEnabledConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
   public @interface ProducerConfigs {}
 
   private static final class ProducerConfigsImpl extends AnnotationLiteral<ProducerConfigs>
@@ -272,6 +295,47 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class ProtobufSerializerConfigsImpl
       extends AnnotationLiteral<ProtobufSerializerConfigs> implements ProtobufSerializerConfigs {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface RateLimitCostsConfig {}
+
+  private static final class RateLimitCostsConfigImpl
+      extends AnnotationLiteral<RateLimitCostsConfig> implements RateLimitCostsConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface RateLimitDefaultCostConfig {}
+
+  private static final class RateLimitDefaultCostConfigImpl
+      extends AnnotationLiteral<RateLimitDefaultCostConfig> implements RateLimitDefaultCostConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface RateLimitEnabledConfig {}
+
+  private static final class RateLimitEnabledConfigImpl
+      extends AnnotationLiteral<RateLimitEnabledConfig> implements RateLimitEnabledConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface RateLimitPermitsPerSecConfig {}
+
+  private static final class RateLimitPermitsPerSecConfigImpl
+      extends AnnotationLiteral<RateLimitPermitsPerSecConfig>
+      implements RateLimitPermitsPerSecConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface RateLimitTimeoutConfig {}
+
+  private static final class RateLimitTimeoutConfigImpl
+      extends AnnotationLiteral<RateLimitTimeoutConfig> implements RateLimitTimeoutConfig {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
