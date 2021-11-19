@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.AUTO_REGISTER_SCHEMAS;
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.USE_LATEST_VERSION;
 import static java.util.Collections.emptyMap;
@@ -24,6 +26,7 @@ import static java.util.Objects.requireNonNull;
 import static org.apache.kafka.clients.CommonClientConfigs.METRICS_CONTEXT_PREFIX;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.MapDifference.ValueDifference;
@@ -32,11 +35,14 @@ import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.serializers.KafkaJsonSerializerConfig;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializerConfig;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializerConfig;
+import io.confluent.kafkarest.ratelimit.RateLimitBackend;
 import io.confluent.rest.RestConfig;
 import io.confluent.rest.RestConfigException;
 import io.confluent.rest.metrics.RestMetricsContext;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -365,6 +371,44 @@ public class KafkaRestConfig extends RestConfig {
       "Whether to enable REST Proxy V3 API. Default is true.";
   private static final boolean API_V3_ENABLE_DEFAULT = true;
 
+  public static final String RATE_LIMIT_ENABLE_CONFIG = "rate.limit.enable";
+  private static final String RATE_LIMIT_ENABLE_DOC =
+      "Whether to enable request rate-limiting. Default is false.";
+  private static final boolean RATE_LIMIT_ENABLE_DEFAULT = false;
+
+  public static final String RATE_LIMIT_BACKEND_CONFIG = "rate.limit.backend";
+  private static final String RATE_LIMIT_BACKEND_DOC =
+      "The rate-limiting backend to use. The options are 'guava' and 'resilience4j'. Default is "
+          + "'guava'.";
+  private static final String RATE_LIMIT_BACKEND_DEFAULT = "guava";
+
+  public static final String RATE_LIMIT_PERMITS_PER_SEC_CONFIG = "rate.limit.permits.per.sec";
+  private static final String RATE_LIMIT_PERMITS_PER_SEC_DOC =
+      "The maximum number of permits to emit per second. A permit is an unit of cost for a "
+          + "request. More expensive requests will consume more permits. The cost for each "
+          + "resource/method can configured via rate.limit.default.cost and rate.limit.costs. "
+          + "Default is 50.";
+  private static final Integer RATE_LIMIT_PERMITS_PER_SEC_DEFAULT = 50;
+
+  public static final String RATE_LIMIT_TIMEOUT_MS_CONFIG = "rate.limit.timeout.ms";
+  private static final String RATE_LIMIT_TIMEOUT_MS_DOC =
+      "How much to wait for the necessary permits to proceed, in milliseconds. A request that "
+          + "fails to acquire the necessary permits within the timeout will fail with HTTP 429. "
+          + "Default is 0ms.";
+  private static final long RATE_LIMIT_TIMEOUT_MS_DEFAULT = 0;
+
+  public static final String RATE_LIMIT_DEFAULT_COST_CONFIG = "rate.limit.default.cost";
+  private static final String RATE_LIMIT_DEFAULT_COST_DOC =
+      "The default cost for resources/methods without an explicit cost configured via"
+          + "rate.limit.costs. Default is 1.";
+  private static final int RATE_LIMIT_DEFAULT_COST_DEFAULT = 1;
+
+  public static final String RATE_LIMIT_COSTS_CONFIG = "rate.limit.costs";
+  private static final String RATE_LIMIT_COSTS_DOC =
+      "Map of rate-limit cost per endpoint. Example value: "
+          + "\"api.v3.clusters.*=1,api.v3.brokers.list=2\". A cost of zero means no rate-limit.";
+  private static final String RATE_LIMIT_COSTS_DEFAULT = "";
+
   private static final ConfigDef config;
 
   static {
@@ -667,7 +711,43 @@ public class KafkaRestConfig extends RestConfig {
             Type.BOOLEAN,
             API_V3_ENABLE_DEFAULT,
             Importance.LOW,
-            API_V3_ENABLE_DOC);
+            API_V3_ENABLE_DOC)
+        .define(
+            RATE_LIMIT_ENABLE_CONFIG,
+            Type.BOOLEAN,
+            RATE_LIMIT_ENABLE_DEFAULT,
+            Importance.LOW,
+            RATE_LIMIT_ENABLE_DOC)
+        .define(
+            RATE_LIMIT_BACKEND_CONFIG,
+            Type.STRING,
+            RATE_LIMIT_BACKEND_DEFAULT,
+            Importance.LOW,
+            RATE_LIMIT_BACKEND_DOC)
+        .define(
+            RATE_LIMIT_PERMITS_PER_SEC_CONFIG,
+            Type.INT,
+            RATE_LIMIT_PERMITS_PER_SEC_DEFAULT,
+            Importance.LOW,
+            RATE_LIMIT_PERMITS_PER_SEC_DOC)
+        .define(
+            RATE_LIMIT_TIMEOUT_MS_CONFIG,
+            Type.LONG,
+            RATE_LIMIT_TIMEOUT_MS_DEFAULT,
+            Importance.LOW,
+            RATE_LIMIT_TIMEOUT_MS_DOC)
+        .define(
+            RATE_LIMIT_DEFAULT_COST_CONFIG,
+            Type.INT,
+            RATE_LIMIT_DEFAULT_COST_DEFAULT,
+            Importance.LOW,
+            RATE_LIMIT_DEFAULT_COST_DOC)
+        .define(
+            RATE_LIMIT_COSTS_CONFIG,
+            Type.STRING,
+            RATE_LIMIT_COSTS_DEFAULT,
+            Importance.LOW,
+            RATE_LIMIT_COSTS_DOC);
   }
 
   private static Properties getPropsFromFile(String propsFile) throws RestConfigException {
@@ -860,6 +940,46 @@ public class KafkaRestConfig extends RestConfig {
 
   public boolean isV3ApiEnabled() {
     return getBoolean(API_V3_ENABLE_CONFIG);
+  }
+
+  public final boolean isRateLimitEnabled() {
+    return getBoolean(RATE_LIMIT_ENABLE_CONFIG);
+  }
+
+  public final RateLimitBackend getRateLimitBackend() {
+    return RateLimitBackend.valueOf(getString(RATE_LIMIT_BACKEND_CONFIG).toUpperCase());
+  }
+
+  public final Integer getRateLimitPermitsPerSec() {
+    return getInt(RATE_LIMIT_PERMITS_PER_SEC_CONFIG);
+  }
+
+  public final Duration getRateLimitTimeout() {
+    return Duration.ofMillis(getLong(RATE_LIMIT_TIMEOUT_MS_CONFIG));
+  }
+
+  public final int getRateLimitDefaultCost() {
+    return getInt(RATE_LIMIT_DEFAULT_COST_CONFIG);
+  }
+
+  public final ImmutableMap<String, Integer> getRateLimitCosts() {
+    String value = getString(RATE_LIMIT_COSTS_CONFIG);
+    return Arrays.stream(value.split(","))
+        .map(String::trim)
+        .filter(entry -> !entry.isEmpty())
+        .peek(
+            entry ->
+                checkArgument(
+                    entry.contains("="),
+                    String.format(
+                        "Invalid value for config %s: %s. Example valid value: "
+                            + "\"api.v3.clusters.*=1,api.v3.brokers.list=2\". A cost of zero means "
+                            + "no rate-limit.",
+                        RATE_LIMIT_COSTS_CONFIG, value)))
+        .collect(
+            toImmutableMap(
+                entry -> entry.substring(0, entry.indexOf('=')).trim(),
+                entry -> Integer.valueOf(entry.substring(entry.indexOf('=') + 1).trim())));
   }
 
   public void addTelemetryReporterProperties(Properties props) {
