@@ -169,6 +169,15 @@ public class KafkaRestConfig extends RestConfig {
   public static final ConfigDef.Range PRODUCE_GRACE_PERIOD_MS_VALIDATOR =
       ConfigDef.Range.between(0, Integer.MAX_VALUE);
 
+  public static final String PRODUCE_RESPONSE_THREAD_POOL_SIZE =
+      "api.v3.produce.response.thread.pool.size";
+  private static final String PRODUCE_RESPONSE_THREAD_POOL_SIZE_DOC =
+      "Number of threads in the executor thread pool used to process produce responses.";
+  public static final String PRODUCE_RESPONSE_THREAD_POOL_SIZE_DEFAULT =
+      Integer.toString(Runtime.getRuntime().availableProcessors());
+  public static final ConfigDef.Range PRODUCE_RESPONSE_THREAD_POOL_SIZE_VALIDATOR =
+      ConfigDef.Range.between(1, Integer.MAX_VALUE);
+
   public static final String CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG = "consumer.iterator.timeout.ms";
   private static final String CONSUMER_ITERATOR_TIMEOUT_MS_DOC =
       "Timeout for blocking consumer iterator operations. This should be set to a small enough "
@@ -443,6 +452,13 @@ public class KafkaRestConfig extends RestConfig {
             PRODUCE_GRACE_PERIOD_MS_VALIDATOR,
             Importance.LOW,
             PRODUCE_GRACE_PERIOD_MS_DOC)
+        .define(
+            PRODUCE_RESPONSE_THREAD_POOL_SIZE,
+            Type.INT,
+            PRODUCE_RESPONSE_THREAD_POOL_SIZE_DEFAULT,
+            PRODUCE_RESPONSE_THREAD_POOL_SIZE_VALIDATOR,
+            Importance.LOW,
+            PRODUCE_RESPONSE_THREAD_POOL_SIZE_DOC)
         .define(
             CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG,
             Type.INT,
