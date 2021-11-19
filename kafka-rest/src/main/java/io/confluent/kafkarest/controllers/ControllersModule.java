@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.controllers;
 
+import javax.inject.Singleton;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 /** A module to install the various controllers required by the application. */
@@ -31,7 +32,7 @@ public final class ControllersModule extends AbstractBinder {
     bind(ConsumerGroupManagerImpl.class).to(ConsumerGroupManager.class);
     bind(ConsumerLagManagerImpl.class).to(ConsumerLagManager.class);
     bind(ConsumerManagerImpl.class).to(ConsumerManager.class);
-    bindAsContract(NoSchemaRecordSerializer.class);
+    bindAsContract(NoSchemaRecordSerializer.class).in(Singleton.class);
     bind(PartitionManagerImpl.class).to(PartitionManager.class);
     bind(ProduceControllerImpl.class).to(ProduceController.class);
     bind(ReassignmentManagerImpl.class).to(ReassignmentManager.class);
