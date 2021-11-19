@@ -36,8 +36,7 @@ import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.entities.v3.ProduceResponse.ProduceResponseData;
 import io.confluent.kafkarest.exceptions.BadRequestException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
-import io.confluent.kafkarest.resources.RateLimiter;
-import io.confluent.kafkarest.response.ChunkedOutputFactory;
+import io.confluent.kafkarest.ratelimit.DoNotRateLimit;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.time.Duration;
@@ -61,6 +60,7 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@DoNotRateLimit
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/records")
 @ResourceName("api.v3.produce.*")
 public final class ProduceAction {
@@ -82,9 +82,8 @@ public final class ProduceAction {
   private final Provider<RecordSerializer> recordSerializerProvider;
   private final Provider<ProduceController> produceControllerProvider;
   private final Provider<ProducerMetrics> producerMetrics;
-  private final ChunkedOutputFactory chunkedOutputFactory;
   private final StreamingResponseFactory streamingResponseFactory;
-  private final RateLimiter rateLimiter;
+  private final ProduceRateLimiter rateLimiter;
 
   @Inject
   public ProduceAction(
@@ -92,14 +91,12 @@ public final class ProduceAction {
       Provider<RecordSerializer> recordSerializer,
       Provider<ProduceController> produceControllerProvider,
       Provider<ProducerMetrics> producerMetrics,
-      ChunkedOutputFactory chunkedOutputFactory,
       StreamingResponseFactory streamingResponseFactory,
-      RateLimiter rateLimiter) {
+      ProduceRateLimiter rateLimiter) {
     this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
     this.recordSerializerProvider = requireNonNull(recordSerializer);
     this.produceControllerProvider = requireNonNull(produceControllerProvider);
     this.producerMetrics = requireNonNull(producerMetrics);
-    this.chunkedOutputFactory = requireNonNull(chunkedOutputFactory);
     this.streamingResponseFactory = requireNonNull(streamingResponseFactory);
     this.rateLimiter = requireNonNull(rateLimiter);
   }

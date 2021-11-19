@@ -34,7 +34,7 @@ public class StatusCodeException extends RuntimeException {
     return new StatusCodeException(status, title, detail);
   }
 
-  StatusCodeException(Status status, String title, String detail) {
+  public StatusCodeException(Status status, String title, String detail) {
     this(status, status.getStatusCode(), title, detail);
   }
 
