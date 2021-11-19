@@ -18,7 +18,6 @@ import io.confluent.kafkarest.entities.ProduceResult;
 import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
-import io.confluent.kafkarest.resources.RateLimiter;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
@@ -111,8 +110,8 @@ public class ProduceActionTest {
         getChunkedOutput(chunkedOutputFactory1, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1);
     Clock clock = mock(Clock.class);
 
-    RateLimiter rateLimiter =
-        new RateLimiter(
+    ProduceRateLimiter rateLimiter =
+        new ProduceRateLimiter(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
@@ -584,7 +583,7 @@ public class ProduceActionTest {
   private static ProduceAction getProduceAction(
       Properties properties, ChunkedOutputFactory chunkedOutputFactory, Clock clock, int times) {
     return getProduceAction(
-        new RateLimiter(
+        new ProduceRateLimiter(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
@@ -595,7 +594,7 @@ public class ProduceActionTest {
   }
 
   private static ProduceAction getProduceAction(
-      RateLimiter rateLimiter,
+      ProduceRateLimiter rateLimiter,
       ChunkedOutputFactory chunkedOutputFactory,
       int times,
       int producerId) {
@@ -618,7 +617,6 @@ public class ProduceActionTest {
             recordSerializerProvider,
             produceControllerProvider,
             producerMetricsProvider,
-            chunkedOutputFactory,
             streamingResponseFactory,
             rateLimiter);
     rateLimiter.resetGracePeriodStart();
