@@ -17,7 +17,6 @@ package io.confluent.kafkarest.ratelimit;
 
 import javax.inject.Singleton;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.process.internal.RequestScoped;
 
 /**
  * A module to configure bindings for {@link FixedCostRateLimiter} and {@link RequestRateLimiter}.
@@ -27,9 +26,5 @@ final class RateLimitModule extends AbstractBinder {
   @Override
   protected void configure() {
     bindFactory(RequestRateLimiterFactory.class).to(RequestRateLimiter.class).in(Singleton.class);
-
-    bindFactory(FixedCostRateLimiterFactory.class)
-        .to(FixedCostRateLimiter.class)
-        .in(RequestScoped.class);
   }
 }

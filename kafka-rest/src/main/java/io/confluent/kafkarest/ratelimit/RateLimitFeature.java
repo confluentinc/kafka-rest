@@ -50,7 +50,7 @@ public final class RateLimitFeature implements Feature {
   public boolean configure(FeatureContext context) {
     if (rateLimitEnabled) {
       context.register(RateLimitModule.class);
-      context.register(FixedCostRateLimitRequestFilter.class);
+      context.register(FixedCostRateLimitFeature.class);
       return true;
     } else {
       context.register(NullRateLimitModule.class);

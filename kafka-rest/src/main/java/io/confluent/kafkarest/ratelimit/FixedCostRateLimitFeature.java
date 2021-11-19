@@ -22,44 +22,40 @@ import io.confluent.kafkarest.config.ConfigModule.RateLimitDefaultCostConfig;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import java.util.Map;
 import javax.inject.Inject;
+import javax.ws.rs.container.DynamicFeature;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
-import org.glassfish.hk2.api.Factory;
+import javax.ws.rs.core.FeatureContext;
 
-/** A {@link Factory} for {@link FixedCostRateLimiter}. */
-final class FixedCostRateLimiterFactory implements Factory<FixedCostRateLimiter> {
+final class FixedCostRateLimitFeature implements DynamicFeature {
   private final Map<String, Integer> costs;
   private final int defaultCost;
-  private final ResourceInfo resourceInfo;
   private final RequestRateLimiter requestRateLimiter;
 
   @Inject
-  FixedCostRateLimiterFactory(
+  FixedCostRateLimitFeature(
       @RateLimitCostsConfig Map<String, Integer> costs,
       @RateLimitDefaultCostConfig Integer defaultCost,
-      @Context ResourceInfo resourceInfo,
-      RequestRateLimiter requestRateLimiter) {
+      @Context RequestRateLimiter requestRateLimiter) {
     this.costs = requireNonNull(costs);
     this.defaultCost = defaultCost;
-    this.resourceInfo = requireNonNull(resourceInfo);
     this.requestRateLimiter = requireNonNull(requestRateLimiter);
   }
 
   @Override
-  public FixedCostRateLimiter provide() {
-    int cost = getCost();
+  public void configure(ResourceInfo resourceInfo, FeatureContext context) {
+    int cost = getCost(resourceInfo);
     if (cost == 0) {
-      return new NullFixedCostRateLimiter();
+      context.register(new FixedCostRateLimitRequestFilter(new NullFixedCostRateLimiter()));
     } else {
-      return new FixedCostRateLimiterImpl(requestRateLimiter, cost);
+      context.register(
+          new FixedCostRateLimitRequestFilter(
+              new FixedCostRateLimiterImpl(requestRateLimiter, cost)));
     }
   }
 
-  @Override
-  public void dispose(FixedCostRateLimiter rateLimiter) {}
-
-  /** Returns the cost of this request for rate-limiting purposes. */
-  private int getCost() {
+  /** Returns the cost of the resource/method for rate-limiting purposes. */
+  private int getCost(ResourceInfo resourceInfo) {
     DoNotRateLimit methodIgnore =
         resourceInfo.getResourceMethod().getAnnotation(DoNotRateLimit.class);
     if (methodIgnore != null) {

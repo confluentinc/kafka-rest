@@ -17,8 +17,6 @@ package io.confluent.kafkarest.ratelimit;
 
 import static java.util.Objects.requireNonNull;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 
@@ -29,15 +27,14 @@ import javax.ws.rs.container.ContainerRequestFilter;
  * io.confluent.kafkarest.KafkaRestConfig#RATE_LIMIT_DEFAULT_COST_CONFIG} configs.
  */
 final class FixedCostRateLimitRequestFilter implements ContainerRequestFilter {
-  private final Provider<FixedCostRateLimiter> rateLimiter;
+  private final FixedCostRateLimiter rateLimiter;
 
-  @Inject
-  FixedCostRateLimitRequestFilter(Provider<FixedCostRateLimiter> rateLimiter) {
+  FixedCostRateLimitRequestFilter(FixedCostRateLimiter rateLimiter) {
     this.rateLimiter = requireNonNull(rateLimiter);
   }
 
   @Override
   public void filter(ContainerRequestContext requestContext) {
-    rateLimiter.get().rateLimit();
+    rateLimiter.rateLimit();
   }
 }

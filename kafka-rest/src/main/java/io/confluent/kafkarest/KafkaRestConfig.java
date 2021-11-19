@@ -405,7 +405,8 @@ public class KafkaRestConfig extends RestConfig {
 
   public static final String RATE_LIMIT_COSTS_CONFIG = "rate.limit.costs";
   private static final String RATE_LIMIT_COSTS_DOC =
-      "Map of rate-limit cost per endpoint. The map should be in the form 'api1=10,api2=20'.";
+      "Map of rate-limit cost per endpoint. Example value: "
+          + "\"api.v3.clusters.*=1,api.v3.brokers.list=2\". A cost of zero means no rate-limit.";
   private static final String RATE_LIMIT_COSTS_DEFAULT = "";
 
   private static final ConfigDef config;
@@ -964,17 +965,21 @@ public class KafkaRestConfig extends RestConfig {
   public final ImmutableMap<String, Integer> getRateLimitCosts() {
     String value = getString(RATE_LIMIT_COSTS_CONFIG);
     return Arrays.stream(value.split(","))
+        .map(String::trim)
         .filter(entry -> !entry.isEmpty())
         .peek(
             entry ->
                 checkArgument(
                     entry.contains("="),
                     String.format(
-                        "Invalid value for config %s: %s", RATE_LIMIT_COSTS_CONFIG, value)))
+                        "Invalid value for config %s: %s. Example valid value: "
+                            + "\"api.v3.clusters.*=1,api.v3.brokers.list=2\". A cost of zero means "
+                            + "no rate-limit.",
+                        RATE_LIMIT_COSTS_CONFIG, value)))
         .collect(
             toImmutableMap(
-                entry -> entry.substring(0, entry.indexOf('=')),
-                entry -> Integer.valueOf(entry.substring(entry.indexOf('=') + 1))));
+                entry -> entry.substring(0, entry.indexOf('=')).trim(),
+                entry -> Integer.valueOf(entry.substring(entry.indexOf('=') + 1).trim())));
   }
 
   public void addTelemetryReporterProperties(Properties props) {
