@@ -37,7 +37,7 @@ import io.confluent.kafkarest.entities.v3.ProduceResponse.ProduceResponseData;
 import io.confluent.kafkarest.exceptions.BadRequestException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.resources.RateLimiter;
-import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseExecutorService;
+import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
@@ -98,7 +98,7 @@ public final class ProduceAction {
       ChunkedOutputFactory chunkedOutputFactory,
       StreamingResponseFactory streamingResponseFactory,
       RateLimiter rateLimiter,
-      @ProduceResponseExecutorService ExecutorService executorService) {
+      @ProduceResponseThreadPool ExecutorService executorService) {
     this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
     this.recordSerializerProvider = requireNonNull(recordSerializer);
     this.produceControllerProvider = requireNonNull(produceControllerProvider);

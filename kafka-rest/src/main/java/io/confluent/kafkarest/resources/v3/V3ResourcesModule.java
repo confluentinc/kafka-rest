@@ -20,12 +20,17 @@ import io.confluent.kafkarest.config.ConfigModule.ProduceResponseThreadPoolSizeC
 import io.confluent.kafkarest.resources.RateLimiter;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.time.Clock;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+import javax.inject.Qualifier;
 import javax.inject.Singleton;
 import org.glassfish.hk2.api.AnnotationLiteral;
 import org.glassfish.hk2.api.Factory;
@@ -40,15 +45,21 @@ public final class V3ResourcesModule extends AbstractBinder {
     bindAsContract(StreamingResponseFactory.class);
     bind(Clock.systemUTC()).to(Clock.class);
     bindFactory(ProduceResponseExecutorServiceFactory.class)
+        .qualifiedBy(new ProduceResponseThreadPoolImpl())
         .to(ExecutorService.class)
         .in(Singleton.class);
   }
 
-  public @interface ProduceResponseExecutorService {}
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceResponseThreadPool {}
+
+  private static final class ProduceResponseThreadPoolImpl
+      extends AnnotationLiteral<ProduceResponseThreadPool> implements ProduceResponseThreadPool {}
 
   private static final class ProduceResponseExecutorServiceFactory
-      extends AnnotationLiteral<ProduceResponseExecutorService>
-      implements ProduceResponseExecutorService, Factory<ExecutorService> {
+      implements Factory<ExecutorService> {
 
     private final int produceResponseThreadPoolSize;
 
