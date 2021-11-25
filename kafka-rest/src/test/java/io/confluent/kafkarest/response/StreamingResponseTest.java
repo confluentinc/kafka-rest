@@ -39,6 +39,7 @@ public class StreamingResponseTest {
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(TextNode.valueOf(value))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
@@ -102,6 +103,7 @@ public class StreamingResponseTest {
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(TextNode.valueOf(value))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     MappingIterator<ProduceRequest> requestsMappingIterator = mock(MappingIterator.class);

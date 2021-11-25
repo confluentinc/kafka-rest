@@ -112,6 +112,7 @@ public class SchemaRegistrySaslInheritTest {
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(TextNode.valueOf(value))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
