@@ -44,6 +44,6 @@ public final class Resilience4jRateLimitTest extends AbstractRateLimitEnabledTes
 
   @Override
   int getSlack() {
-    return 0;
+    return 25;
   }
 }

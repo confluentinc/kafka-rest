@@ -44,6 +44,6 @@ public final class GuavaRateLimitTest extends AbstractRateLimitEnabledTest {
 
   @Override
   int getSlack() {
-    return 5;
+    return 25;
   }
 }
