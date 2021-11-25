@@ -2,6 +2,7 @@ package io.confluent.kafkarest.resources.v3;
 
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_GRACE_PERIOD_MS;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND;
+import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED;
 import static org.easymock.EasyMock.anyBoolean;
 import static org.easymock.EasyMock.anyObject;
@@ -47,6 +48,7 @@ public class ProduceActionTest {
     properties.put(PRODUCE_GRACE_PERIOD_MS, "0");
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "1");
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, "3600000");
 
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
@@ -68,7 +70,7 @@ public class ProduceActionTest {
         ErrorResponse.create(
             429,
             "Rate limit of 1 messages per second exceeded within the grace period of 0 ms "
-                + ": connection will be closed.");
+                + ": Connection will be closed.");
     ResultOrError resultOrErrorFail = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorFail); // failing second produce
@@ -100,6 +102,7 @@ public class ProduceActionTest {
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
     // setup
     ChunkedOutputFactory chunkedOutputFactory0 = mock(ChunkedOutputFactory.class);
@@ -110,19 +113,21 @@ public class ProduceActionTest {
         getChunkedOutput(chunkedOutputFactory1, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1);
     Clock clock = mock(Clock.class);
 
-    ProduceRateLimiter rateLimiter =
-        new ProduceRateLimiter(
+    ProduceRateLimiters produceRateLimiters =
+        new ProduceRateLimiters(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
+            Duration.ofMillis(
+                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
             clock);
 
     ProduceAction produceAction0 =
         getProduceAction(
-            rateLimiter, chunkedOutputFactory0, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD0, 0);
+            produceRateLimiters, chunkedOutputFactory0, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD0, 0);
     ProduceAction produceAction1 =
         getProduceAction(
-            rateLimiter, chunkedOutputFactory1, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1, 1);
+            produceRateLimiters, chunkedOutputFactory1, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1, 1);
     MappingIterator<ProduceRequest> requests0 =
         getProduceRequestsMappingIterator(TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD0);
     MappingIterator<ProduceRequest> requests1 =
@@ -159,7 +164,7 @@ public class ProduceActionTest {
         ErrorResponse.create(
             429,
             "Rate limit of 1 messages per second exceeded within the grace period of 10 "
-                + "ms : connection will be closed.");
+                + "ms : Connection will be closed.");
     ResultOrError resultOrErrorOKProd5 = ResultOrError.error(err);
     expect(mockedChunkedOutput1.isClosed()).andReturn(false);
     mockedChunkedOutput1.write(resultOrErrorOKProd5);
@@ -205,6 +210,7 @@ public class ProduceActionTest {
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
@@ -252,7 +258,7 @@ public class ProduceActionTest {
         ErrorResponse.create(
             429,
             "Rate limit of 1 messages per second exceeded within the grace period of 10 "
-                + "ms : connection will be closed.");
+                + "ms : Connection will be closed.");
     ResultOrError resultOrErrorProd6 = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorProd6);
@@ -306,6 +312,7 @@ public class ProduceActionTest {
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(10000));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(30000));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
@@ -364,6 +371,7 @@ public class ProduceActionTest {
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
@@ -407,7 +415,7 @@ public class ProduceActionTest {
         ErrorResponse.create(
             429,
             "Rate limit of 1 messages per second exceeded within the grace period of 10 "
-                + "ms : connection will be closed.");
+                + "ms : Connection will be closed.");
     ResultOrError resultOrErrorProd6 = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorProd6);
@@ -583,10 +591,12 @@ public class ProduceActionTest {
   private static ProduceAction getProduceAction(
       Properties properties, ChunkedOutputFactory chunkedOutputFactory, Clock clock, int times) {
     return getProduceAction(
-        new ProduceRateLimiter(
+        new ProduceRateLimiters(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
+            Duration.ofMillis(
+                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
             clock),
         chunkedOutputFactory,
         times,
@@ -594,7 +604,7 @@ public class ProduceActionTest {
   }
 
   private static ProduceAction getProduceAction(
-      ProduceRateLimiter rateLimiter,
+      ProduceRateLimiters produceRateLimiters,
       ChunkedOutputFactory chunkedOutputFactory,
       int times,
       int producerId) {
@@ -618,9 +628,8 @@ public class ProduceActionTest {
             produceControllerProvider,
             producerMetricsProvider,
             streamingResponseFactory,
-            rateLimiter);
-    rateLimiter.resetGracePeriodStart();
-    rateLimiter.clear();
+            produceRateLimiters);
+    produceRateLimiters.clear();
 
     return produceAction;
   }

@@ -83,7 +83,7 @@ public final class ProduceAction {
   private final Provider<ProduceController> produceControllerProvider;
   private final Provider<ProducerMetrics> producerMetrics;
   private final StreamingResponseFactory streamingResponseFactory;
-  private final ProduceRateLimiter rateLimiter;
+  private final ProduceRateLimiters produceRateLimiters;
 
   @Inject
   public ProduceAction(
@@ -92,13 +92,13 @@ public final class ProduceAction {
       Provider<ProduceController> produceControllerProvider,
       Provider<ProducerMetrics> producerMetrics,
       StreamingResponseFactory streamingResponseFactory,
-      ProduceRateLimiter rateLimiter) {
+      ProduceRateLimiters produceRateLimiters) {
     this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
     this.recordSerializerProvider = requireNonNull(recordSerializer);
     this.produceControllerProvider = requireNonNull(produceControllerProvider);
     this.producerMetrics = requireNonNull(producerMetrics);
     this.streamingResponseFactory = requireNonNull(streamingResponseFactory);
-    this.rateLimiter = requireNonNull(rateLimiter);
+    this.produceRateLimiters = requireNonNull(produceRateLimiters);
   }
 
   @POST
@@ -118,7 +118,8 @@ public final class ProduceAction {
         .from(requests)
         .compose(
             request -> {
-              Optional<Duration> waitFor = rateLimiter.calculateGracePeriodExceeded();
+              Optional<Duration> waitFor =
+                  produceRateLimiters.calculateGracePeriodExceeded(clusterId);
               return produce(clusterId, topicName, request, controller, waitFor);
             })
         .resume(asyncResponse);
