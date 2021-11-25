@@ -177,11 +177,12 @@ public class KafkaRestConfig extends RestConfig {
   public static final ConfigDef.Range PRODUCE_GRACE_PERIOD_MS_VALIDATOR =
       ConfigDef.Range.between(0, Integer.MAX_VALUE);
 
-  public static final String PRODUCE_CACHE_EXPIRY_MS = "api.v3.produce.cache.expiry.ms";
-  private static final String PRODUCE_CACHE_EXPIRY_MS_DOC =
+  public static final String PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS =
+      "api.v3.produce.rate.limit.cache.expiry.ms";
+  private static final String PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS_DOC =
       "How long after the last produce a cluster remains in the cache storing rateLimits. Default "
           + "is 1 hour.";
-  public static final String PRODUCE_CACHE_EXPIRY_MS_DEFAULT = "3600000";
+  public static final String PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS_DEFAULT = "3600000";
 
   public static final String CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG = "consumer.iterator.timeout.ms";
   private static final String CONSUMER_ITERATOR_TIMEOUT_MS_DOC =
@@ -496,11 +497,11 @@ public class KafkaRestConfig extends RestConfig {
             Importance.LOW,
             PRODUCE_GRACE_PERIOD_MS_DOC)
         .define(
-            PRODUCE_CACHE_EXPIRY_MS,
+            PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS,
             Type.INT,
-            PRODUCE_CACHE_EXPIRY_MS_DEFAULT,
+            PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS_DEFAULT,
             Importance.LOW,
-            PRODUCE_CACHE_EXPIRY_MS_DOC)
+            PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS_DOC)
         .define(
             CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG,
             Type.INT,

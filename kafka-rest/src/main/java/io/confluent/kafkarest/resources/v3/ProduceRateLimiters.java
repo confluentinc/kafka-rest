@@ -35,7 +35,7 @@ public class ProduceRateLimiters {
   private final int maxRequestsPerSecond;
   private final Duration gracePeriod;
   private final boolean rateLimitingEnabled;
-  private LoadingCache<String, ProduceRateLimiter> cache;
+  private final LoadingCache<String, ProduceRateLimiter> cache;
 
   @Inject
   public ProduceRateLimiters(
@@ -49,19 +49,17 @@ public class ProduceRateLimiters {
     this.rateLimitingEnabled = requireNonNull(produceRateLimitEnabledConfig);
     requireNonNull(time);
 
-    CacheLoader<String, ProduceRateLimiter> loader =
-        new CacheLoader<String, ProduceRateLimiter>() {
-          @Override
-          public ProduceRateLimiter load(String key) {
-            return new ProduceRateLimiter(
-                gracePeriod, maxRequestsPerSecond, produceRateLimitEnabledConfig, time);
-          }
-        };
-
     cache =
         CacheBuilder.newBuilder()
             .expireAfterAccess(produceRateLimitCacheExpiryConfig.toMillis(), TimeUnit.MILLISECONDS)
-            .build(loader);
+            .build(
+                new CacheLoader<String, ProduceRateLimiter>() {
+                  @Override
+                  public ProduceRateLimiter load(String key) {
+                    return new ProduceRateLimiter(
+                        gracePeriod, maxRequestsPerSecond, produceRateLimitEnabledConfig, time);
+                  }
+                });
   }
 
   public Optional<Duration> calculateGracePeriodExceeded(String clusterId) {

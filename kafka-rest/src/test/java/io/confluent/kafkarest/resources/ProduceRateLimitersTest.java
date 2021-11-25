@@ -1,8 +1,8 @@
 package io.confluent.kafkarest.resources;
 
-import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_CACHE_EXPIRY_MS;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_GRACE_PERIOD_MS;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND;
+import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.mock;
@@ -33,14 +33,15 @@ public class ProduceRateLimitersTest {
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "false");
-    properties.put(PRODUCE_CACHE_EXPIRY_MS, Integer.toString(3600000));
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
-            Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_CACHE_EXPIRY_MS))),
+            Duration.ofMillis(
+                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
             clock);
     Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId");
 
@@ -55,14 +56,15 @@ public class ProduceRateLimitersTest {
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
-    properties.put(PRODUCE_CACHE_EXPIRY_MS, Integer.toString(3600000));
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
-            Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_CACHE_EXPIRY_MS))),
+            Duration.ofMillis(
+                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
             clock);
     Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId");
 
@@ -81,14 +83,15 @@ public class ProduceRateLimitersTest {
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
-    properties.put(PRODUCE_CACHE_EXPIRY_MS, Integer.toString(3600000));
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
-            Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_CACHE_EXPIRY_MS))),
+            Duration.ofMillis(
+                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
             clock);
 
     Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId");
@@ -113,14 +116,15 @@ public class ProduceRateLimitersTest {
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(0));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
-    properties.put(PRODUCE_CACHE_EXPIRY_MS, Integer.toString(3600000));
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
-            Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_CACHE_EXPIRY_MS))),
+            Duration.ofMillis(
+                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
             clock);
 
     Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId");
@@ -145,14 +149,15 @@ public class ProduceRateLimitersTest {
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(100));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
-    properties.put(PRODUCE_CACHE_EXPIRY_MS, Integer.toString(5));
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(5));
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
-            Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_CACHE_EXPIRY_MS))),
+            Duration.ofMillis(
+                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
             clock);
 
     Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId");

@@ -91,7 +91,7 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new ProduceRateLimitEnabledConfigImpl())
         .to(Boolean.class);
 
-    bind(Duration.ofMillis(config.getInt(KafkaRestConfig.PRODUCE_CACHE_EXPIRY_MS)))
+    bind(Duration.ofMillis(config.getInt(KafkaRestConfig.PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS)))
         .qualifiedBy(new ProduceRateLimitCacheExpiryConfigImpl())
         .to(Duration.class);
 

@@ -1,8 +1,8 @@
 package io.confluent.kafkarest.resources.v3;
 
-import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_CACHE_EXPIRY_MS;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_GRACE_PERIOD_MS;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND;
+import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED;
 import static org.easymock.EasyMock.anyBoolean;
 import static org.easymock.EasyMock.anyObject;
@@ -48,7 +48,7 @@ public class ProduceActionTest {
     properties.put(PRODUCE_GRACE_PERIOD_MS, "0");
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "1");
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
-    properties.put(PRODUCE_CACHE_EXPIRY_MS, "3600000");
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, "3600000");
 
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
@@ -102,7 +102,7 @@ public class ProduceActionTest {
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
-    properties.put(PRODUCE_CACHE_EXPIRY_MS, Integer.toString(3600000));
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
     // setup
     ChunkedOutputFactory chunkedOutputFactory0 = mock(ChunkedOutputFactory.class);
@@ -118,7 +118,8 @@ public class ProduceActionTest {
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
-            Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_CACHE_EXPIRY_MS))),
+            Duration.ofMillis(
+                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
             clock);
 
     ProduceAction produceAction0 =
@@ -209,7 +210,7 @@ public class ProduceActionTest {
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
-    properties.put(PRODUCE_CACHE_EXPIRY_MS, Integer.toString(3600000));
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
@@ -311,7 +312,7 @@ public class ProduceActionTest {
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(10000));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(30000));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
-    properties.put(PRODUCE_CACHE_EXPIRY_MS, Integer.toString(3600000));
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
@@ -370,7 +371,7 @@ public class ProduceActionTest {
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
-    properties.put(PRODUCE_CACHE_EXPIRY_MS, Integer.toString(3600000));
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
@@ -594,7 +595,8 @@ public class ProduceActionTest {
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
-            Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_CACHE_EXPIRY_MS))),
+            Duration.ofMillis(
+                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
             clock),
         chunkedOutputFactory,
         times,
