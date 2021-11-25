@@ -25,7 +25,7 @@ public final class V3ResourcesModule extends AbstractBinder {
 
   @Override
   protected void configure() {
-    bindAsContract(ProduceRateLimiter.class).in(Singleton.class);
+    bindAsContract(ProduceRateLimiters.class).in(Singleton.class);
     bindAsContract(ChunkedOutputFactory.class);
     bindAsContract(StreamingResponseFactory.class);
     bind(Clock.systemUTC()).to(Clock.class);
