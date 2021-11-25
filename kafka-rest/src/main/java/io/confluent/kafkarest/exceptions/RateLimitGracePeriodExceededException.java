@@ -28,6 +28,6 @@ public final class RateLimitGracePeriodExceededException extends StatusCodeExcep
             + " messages per second exceeded within the grace period of "
             + gracePeriod.toMillis()
             + " ms ",
-        "connection will be closed.");
+        "Connection will be closed.");
   }
 }
