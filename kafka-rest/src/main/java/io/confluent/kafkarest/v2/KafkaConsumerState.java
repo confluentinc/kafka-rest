@@ -65,7 +65,16 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
 
   private final Queue<ConsumerRecord<KafkaKeyT, KafkaValueT>> consumerRecords = new ArrayDeque<>();
 
-  volatile Long expiration;
+  class Expiration {
+
+    long value;
+
+    Expiration(long expiration) {
+      this.value = expiration;
+    }
+  }
+
+  volatile Expiration expiration;
 
   KafkaConsumerState(
       KafkaRestConfig config,
@@ -75,8 +84,8 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     this.config = config;
     this.instanceId = instanceId;
     this.consumer = consumer;
-    this.expiration = config.getTime().milliseconds()
-                      + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
+    this.expiration = new Expiration(config.getTime().milliseconds()
+                      + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG));
   }
 
   public ConsumerInstanceId getId() {
@@ -336,14 +345,14 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   }
 
   public boolean expired(long nowMs) {
-    synchronized (expiration) {
-      return expiration <= nowMs;
+    synchronized (this.expiration) {
+      return expiration.value <= nowMs;
     }
   }
 
   public void updateExpiration() {
-    synchronized (expiration) {
-      this.expiration = config.getTime().milliseconds()
+    synchronized (this.expiration) {
+      this.expiration.value = config.getTime().milliseconds()
                         + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
     }
   }
