@@ -140,7 +140,7 @@ final class ProduceRateLimiter {
     return Optional.of((Duration.ofMillis((long) waitForMs)));
   }
 
-  private final class TimeAndSize {
+  private static final class TimeAndSize {
     private long time;
     private long size;
 

@@ -22,16 +22,6 @@ public final class RateLimitGracePeriodExceededException extends StatusCodeExcep
 
   public RateLimitGracePeriodExceededException(
       int maxRequestsPerSec, int maxBytesPerSec, Duration gracePeriod) {
-    super(
-        Status.TOO_MANY_REQUESTS,
-        "Rate limit of "
-            + maxRequestsPerSec
-            + " messages per second or "
-            + maxBytesPerSec
-            + " bytes per second "
-            + "exceeded within the grace period of "
-            + gracePeriod.toMillis()
-            + " ms ",
-        "Connection will be closed.");
+    super(Status.TOO_MANY_REQUESTS, "Rate limit exceeded ", "Connection will be closed.");
   }
 }

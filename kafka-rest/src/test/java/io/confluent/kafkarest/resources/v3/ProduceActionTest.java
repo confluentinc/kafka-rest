@@ -69,10 +69,7 @@ public class ProduceActionTest {
     mockedChunkedOutput.close();
 
     ErrorResponse err =
-        ErrorResponse.create(
-            429,
-            "Rate limit of 1 messages per second or 999999999 bytes per second exceeded "
-                + "within the grace period of 0 ms : Connection will be closed.");
+        ErrorResponse.create(429, "Rate limit exceeded : Connection will be closed.");
     ResultOrError resultOrErrorFail = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorFail); // failing second produce
@@ -165,10 +162,7 @@ public class ProduceActionTest {
     mockedChunkedOutput0.close();
 
     ErrorResponse err =
-        ErrorResponse.create(
-            429,
-            "Rate limit of 1 messages per second or 999999999 bytes per second exceeded "
-                + "within the grace period of 10 ms : Connection will be closed.");
+        ErrorResponse.create(429, "Rate limit exceeded : Connection will be closed.");
     ResultOrError resultOrErrorOKProd5 = ResultOrError.error(err);
     expect(mockedChunkedOutput1.isClosed()).andReturn(false);
     mockedChunkedOutput1.write(resultOrErrorOKProd5);
@@ -260,10 +254,7 @@ public class ProduceActionTest {
     mockedChunkedOutput.close();
 
     ErrorResponse err =
-        ErrorResponse.create(
-            429,
-            "Rate limit of 1 messages per second or 999999999 bytes per second exceeded "
-                + "within the grace period of 10 ms : Connection will be closed.");
+        ErrorResponse.create(429, "Rate limit exceeded : Connection will be closed.");
     ResultOrError resultOrErrorProd6 = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorProd6);
@@ -419,10 +410,7 @@ public class ProduceActionTest {
     mockedChunkedOutput.write(resultOrErrorOKProd5);
 
     ErrorResponse err =
-        ErrorResponse.create(
-            429,
-            "Rate limit of 1 messages per second or 999999999 bytes per second exceeded "
-                + "within the grace period of 10 ms : Connection will be closed.");
+        ErrorResponse.create(429, "Rate limit exceeded : Connection will be closed.");
     ResultOrError resultOrErrorProd6 = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorProd6);
@@ -469,10 +457,7 @@ public class ProduceActionTest {
     mockedChunkedOutput.close();
 
     ErrorResponse err =
-        ErrorResponse.create(
-            429,
-            "Rate limit of 100 messages per second or 30 bytes per second exceeded within "
-                + "the grace period of 0 ms : Connection will be closed.");
+        ErrorResponse.create(429, "Rate limit exceeded : Connection will be closed.");
     ResultOrError resultOrErrorFail = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorFail); // failing second produce
