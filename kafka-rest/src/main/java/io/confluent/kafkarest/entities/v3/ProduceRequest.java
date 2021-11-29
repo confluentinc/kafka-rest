@@ -66,8 +66,7 @@ public abstract class ProduceRequest {
   @JsonInclude(Include.NON_ABSENT)
   public abstract Optional<Instant> getTimestamp();
 
-  @JsonProperty("originalSize")
-  @JsonInclude(Include.NON_ABSENT)
+  @JsonIgnore
   public abstract Optional<Long> getOriginalSize();
 
   @JsonCreator()
