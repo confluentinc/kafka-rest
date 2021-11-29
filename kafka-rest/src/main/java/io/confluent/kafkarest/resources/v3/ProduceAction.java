@@ -37,6 +37,7 @@ import io.confluent.kafkarest.entities.v3.ProduceResponse.ProduceResponseData;
 import io.confluent.kafkarest.exceptions.BadRequestException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.ratelimit.DoNotRateLimit;
+import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.time.Duration;
@@ -45,6 +46,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import javax.inject.Inject;
@@ -84,6 +86,7 @@ public final class ProduceAction {
   private final Provider<ProducerMetrics> producerMetrics;
   private final StreamingResponseFactory streamingResponseFactory;
   private final ProduceRateLimiters produceRateLimiters;
+  private final ExecutorService executorService;
 
   @Inject
   public ProduceAction(
@@ -92,13 +95,15 @@ public final class ProduceAction {
       Provider<ProduceController> produceControllerProvider,
       Provider<ProducerMetrics> producerMetrics,
       StreamingResponseFactory streamingResponseFactory,
-      ProduceRateLimiters produceRateLimiters) {
+      ProduceRateLimiters produceRateLimiters,
+      @ProduceResponseThreadPool ExecutorService executorService) {
     this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
     this.recordSerializerProvider = requireNonNull(recordSerializer);
     this.produceControllerProvider = requireNonNull(produceControllerProvider);
     this.producerMetrics = requireNonNull(producerMetrics);
     this.streamingResponseFactory = requireNonNull(streamingResponseFactory);
     this.produceRateLimiters = requireNonNull(produceRateLimiters);
+    this.executorService = requireNonNull(executorService);
   }
 
   @POST
@@ -172,7 +177,7 @@ public final class ProduceAction {
             request.getTimestamp().orElse(Instant.now()));
 
     return produceResult
-        .handle(
+        .handleAsync(
             (result, error) -> {
               if (error != null) {
                 long latency = Duration.between(requestInstant, Instant.now()).toMillis();
@@ -180,8 +185,9 @@ public final class ProduceAction {
                 throw new CompletionException(error);
               }
               return result;
-            })
-        .thenApply(
+            },
+            executorService)
+        .thenApplyAsync(
             result -> {
               ProduceResponse response =
                   toProduceResponse(
@@ -197,7 +203,8 @@ public final class ProduceAction {
                   Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
               recordResponseMetrics(latency);
               return response;
-            });
+            },
+            executorService);
   }
 
   private Optional<RegisteredSchema> getSchema(

@@ -12,6 +12,7 @@ import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
 
 import com.fasterxml.jackson.databind.MappingIterator;
+import com.google.common.util.concurrent.MoreExecutors;
 import io.confluent.kafkarest.ProducerMetrics;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
@@ -31,6 +32,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import javax.inject.Provider;
 import org.easymock.EasyMock;
 import org.glassfish.jersey.server.ChunkedOutput;
@@ -668,6 +670,9 @@ public class ProduceActionTest {
     StreamingResponseFactory streamingResponseFactory =
         new StreamingResponseFactory(chunkedOutputFactory);
 
+    // get the current thread so that the call counts can be seen by easy mock
+    ExecutorService executorService = MoreExecutors.newDirectExecutorService();
+
     ProduceAction produceAction =
         new ProduceAction(
             schemaManagerProvider,
@@ -675,9 +680,9 @@ public class ProduceActionTest {
             produceControllerProvider,
             producerMetricsProvider,
             streamingResponseFactory,
-            produceRateLimiters);
+            produceRateLimiters,
+            executorService);
     produceRateLimiters.clear();
-
     return produceAction;
   }
 
