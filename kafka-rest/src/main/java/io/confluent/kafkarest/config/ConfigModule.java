@@ -123,6 +123,10 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new ProduceRateLimitEnabledConfigImpl())
         .to(Boolean.class);
 
+    bind(config.getInt(KafkaRestConfig.PRODUCE_RESPONSE_THREAD_POOL_SIZE))
+        .qualifiedBy(new ProduceResponseThreadPoolSizeImpl())
+        .to(Integer.class);
+
     bind(config.getProducerConfigs())
         .qualifiedBy(new ProducerConfigsImpl())
         .to(new TypeLiteral<Map<String, Object>>() {});
@@ -303,6 +307,15 @@ public final class ConfigModule extends AbstractBinder {
   private static final class ProduceRateLimitEnabledConfigImpl
       extends AnnotationLiteral<ProduceRateLimitEnabledConfig>
       implements ProduceRateLimitEnabledConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceResponseThreadPoolSizeConfig {}
+
+  private static final class ProduceResponseThreadPoolSizeImpl
+      extends AnnotationLiteral<ProduceResponseThreadPoolSizeConfig>
+      implements ProduceResponseThreadPoolSizeConfig {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
