@@ -79,22 +79,6 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new CrnAuthorityConfigImpl())
         .to(String.class);
 
-    bind(config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND))
-        .qualifiedBy(new ProduceRateLimitConfigImpl())
-        .to(Integer.class);
-
-    bind(Duration.ofMillis(config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD_MS)))
-        .qualifiedBy(new ProduceGracePeriodConfigImpl())
-        .to(Duration.class);
-
-    bind(config.getBoolean(KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED))
-        .qualifiedBy(new ProduceRateLimitEnabledConfigImpl())
-        .to(Boolean.class);
-
-    bind(Duration.ofMillis(config.getInt(KafkaRestConfig.PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS)))
-        .qualifiedBy(new ProduceRateLimitCacheExpiryConfigImpl())
-        .to(Duration.class);
-
     bind(config.getString(KafkaRestConfig.HOST_NAME_CONFIG))
         .qualifiedBy(new HostNameConfigImpl())
         .to(String.class);
@@ -123,9 +107,17 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new ProduceGracePeriodConfigImpl())
         .to(Duration.class);
 
-    bind(config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND))
-        .qualifiedBy(new ProduceRateLimitConfigImpl())
+    bind(config.getInt(KafkaRestConfig.PRODUCE_MAX_BYTES_PER_SECOND))
+        .qualifiedBy(new ProduceRateLimitBytesConfigImpl())
         .to(Integer.class);
+
+    bind(config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND))
+        .qualifiedBy(new ProduceRateLimitCountConfigImpl())
+        .to(Integer.class);
+
+    bind(Duration.ofMillis(config.getInt(KafkaRestConfig.PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS)))
+        .qualifiedBy(new ProduceRateLimitCacheExpiryConfigImpl())
+        .to(Duration.class);
 
     bind(config.getBoolean(KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED))
         .qualifiedBy(new ProduceRateLimitEnabledConfigImpl())
@@ -288,13 +280,20 @@ public final class ConfigModule extends AbstractBinder {
       extends AnnotationLiteral<ProduceRateLimitCacheExpiryConfig>
       implements ProduceRateLimitCacheExpiryConfig {}
 
+  public @interface ProduceRateLimitCountConfig {}
+
+  private static final class ProduceRateLimitCountConfigImpl
+      extends AnnotationLiteral<ProduceRateLimitCountConfig>
+      implements ProduceRateLimitCountConfig {}
+
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
-  public @interface ProduceRateLimitConfig {}
+  public @interface ProduceRateLimitBytesConfig {}
 
-  private static final class ProduceRateLimitConfigImpl
-      extends AnnotationLiteral<ProduceRateLimitConfig> implements ProduceRateLimitConfig {}
+  private static final class ProduceRateLimitBytesConfigImpl
+      extends AnnotationLiteral<ProduceRateLimitBytesConfig>
+      implements ProduceRateLimitBytesConfig {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)

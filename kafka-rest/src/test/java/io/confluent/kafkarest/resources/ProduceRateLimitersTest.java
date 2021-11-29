@@ -1,6 +1,7 @@
 package io.confluent.kafkarest.resources;
 
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_GRACE_PERIOD_MS;
+import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_BYTES_PER_SECOND;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED;
@@ -31,6 +32,7 @@ public class ProduceRateLimitersTest {
 
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
+    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(100));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "false");
     properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
@@ -39,11 +41,12 @@ public class ProduceRateLimitersTest {
         new ProduceRateLimiters(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
+            Integer.parseInt(properties.getProperty(PRODUCE_MAX_BYTES_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
             clock);
-    Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId");
+    Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
 
     assertFalse(waitTime.isPresent());
   }
@@ -54,6 +57,7 @@ public class ProduceRateLimitersTest {
 
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
+    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(100));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
     properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
@@ -62,11 +66,12 @@ public class ProduceRateLimitersTest {
         new ProduceRateLimiters(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
+            Integer.parseInt(properties.getProperty(PRODUCE_MAX_BYTES_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
             clock);
-    Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId");
+    Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
 
     assertFalse(waitTime.isPresent());
   }
@@ -81,6 +86,7 @@ public class ProduceRateLimitersTest {
 
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
+    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(100));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
     properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
@@ -89,17 +95,19 @@ public class ProduceRateLimitersTest {
         new ProduceRateLimiters(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
+            Integer.parseInt(properties.getProperty(PRODUCE_MAX_BYTES_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
             clock);
 
-    Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId");
+    Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
     assertFalse(waitTime.isPresent());
-    waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId");
+    waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
     assertTrue(waitTime.isPresent());
     assertEquals(waitTime.get().toMillis(), 1000);
-    Optional<Duration> waitTime2 = produceRateLimiters.calculateGracePeriodExceeded("clusterId2");
+    Optional<Duration> waitTime2 =
+        produceRateLimiters.calculateGracePeriodExceeded("clusterId2", 10);
     assertFalse(waitTime2.isPresent());
     assertTrue(waitTime.isPresent());
     assertEquals(waitTime.get().toMillis(), 1000);
@@ -114,6 +122,7 @@ public class ProduceRateLimitersTest {
 
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
+    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(100));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(0));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
     properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
@@ -122,15 +131,16 @@ public class ProduceRateLimitersTest {
         new ProduceRateLimiters(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
+            Integer.parseInt(properties.getProperty(PRODUCE_MAX_BYTES_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
             clock);
 
-    Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId");
+    Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
     assertFalse(waitTime.isPresent());
     try {
-      produceRateLimiters.calculateGracePeriodExceeded("clusterId");
+      produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
       fail("RateLimitGracePeriodExceededException should be thrown");
     } catch (RateLimitGracePeriodExceededException e) {
       assertEquals("Connection will be closed.", e.getMessage());
@@ -147,6 +157,7 @@ public class ProduceRateLimitersTest {
 
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
+    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(100));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(100));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
     properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(5));
@@ -155,18 +166,19 @@ public class ProduceRateLimitersTest {
         new ProduceRateLimiters(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
+            Integer.parseInt(properties.getProperty(PRODUCE_MAX_BYTES_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
             clock);
 
-    Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId");
+    Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
     assertFalse(waitTime.isPresent());
-    waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId");
+    waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
     assertTrue(waitTime.isPresent());
     assertEquals(waitTime.get().toMillis(), 1000);
     Thread.sleep(6);
-    waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId");
+    waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
     assertFalse(waitTime.isPresent());
   }
 }
