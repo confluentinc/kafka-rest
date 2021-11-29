@@ -107,13 +107,25 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new ProduceGracePeriodConfigImpl())
         .to(Duration.class);
 
-    bind(config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND))
-        .qualifiedBy(new ProduceRateLimitConfigImpl())
+    bind(config.getInt(KafkaRestConfig.PRODUCE_MAX_BYTES_PER_SECOND))
+        .qualifiedBy(new ProduceRateLimitBytesConfigImpl())
         .to(Integer.class);
+
+    bind(config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND))
+        .qualifiedBy(new ProduceRateLimitCountConfigImpl())
+        .to(Integer.class);
+
+    bind(Duration.ofMillis(config.getInt(KafkaRestConfig.PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS)))
+        .qualifiedBy(new ProduceRateLimitCacheExpiryConfigImpl())
+        .to(Duration.class);
 
     bind(config.getBoolean(KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED))
         .qualifiedBy(new ProduceRateLimitEnabledConfigImpl())
         .to(Boolean.class);
+
+    bind(config.getInt(KafkaRestConfig.PRODUCE_RESPONSE_THREAD_POOL_SIZE))
+        .qualifiedBy(new ProduceResponseThreadPoolSizeImpl())
+        .to(Integer.class);
 
     bind(config.getProducerConfigs())
         .qualifiedBy(new ProducerConfigsImpl())
@@ -266,10 +278,26 @@ public final class ConfigModule extends AbstractBinder {
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
-  public @interface ProduceRateLimitConfig {}
+  public @interface ProduceRateLimitCacheExpiryConfig {}
 
-  private static final class ProduceRateLimitConfigImpl
-      extends AnnotationLiteral<ProduceRateLimitConfig> implements ProduceRateLimitConfig {}
+  private static final class ProduceRateLimitCacheExpiryConfigImpl
+      extends AnnotationLiteral<ProduceRateLimitCacheExpiryConfig>
+      implements ProduceRateLimitCacheExpiryConfig {}
+
+  public @interface ProduceRateLimitCountConfig {}
+
+  private static final class ProduceRateLimitCountConfigImpl
+      extends AnnotationLiteral<ProduceRateLimitCountConfig>
+      implements ProduceRateLimitCountConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceRateLimitBytesConfig {}
+
+  private static final class ProduceRateLimitBytesConfigImpl
+      extends AnnotationLiteral<ProduceRateLimitBytesConfig>
+      implements ProduceRateLimitBytesConfig {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
@@ -279,6 +307,15 @@ public final class ConfigModule extends AbstractBinder {
   private static final class ProduceRateLimitEnabledConfigImpl
       extends AnnotationLiteral<ProduceRateLimitEnabledConfig>
       implements ProduceRateLimitEnabledConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceResponseThreadPoolSizeConfig {}
+
+  private static final class ProduceResponseThreadPoolSizeImpl
+      extends AnnotationLiteral<ProduceResponseThreadPoolSizeConfig>
+      implements ProduceResponseThreadPoolSizeConfig {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)

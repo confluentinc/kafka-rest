@@ -1,7 +1,9 @@
 package io.confluent.kafkarest.resources.v3;
 
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_GRACE_PERIOD_MS;
+import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_BYTES_PER_SECOND;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND;
+import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED;
 import static org.easymock.EasyMock.anyBoolean;
 import static org.easymock.EasyMock.anyObject;
@@ -10,6 +12,7 @@ import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
 
 import com.fasterxml.jackson.databind.MappingIterator;
+import com.google.common.util.concurrent.MoreExecutors;
 import io.confluent.kafkarest.ProducerMetrics;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
@@ -29,6 +32,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import javax.inject.Provider;
 import org.easymock.EasyMock;
 import org.glassfish.jersey.server.ChunkedOutput;
@@ -46,7 +50,9 @@ public class ProduceActionTest {
     Properties properties = new Properties();
     properties.put(PRODUCE_GRACE_PERIOD_MS, "0");
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "1");
+    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(999999999));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, "3600000");
 
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
@@ -65,10 +71,7 @@ public class ProduceActionTest {
     mockedChunkedOutput.close();
 
     ErrorResponse err =
-        ErrorResponse.create(
-            429,
-            "Rate limit of 1 messages per second exceeded within the grace period of 0 ms "
-                + ": connection will be closed.");
+        ErrorResponse.create(429, "Rate limit exceeded : Connection will be closed.");
     ResultOrError resultOrErrorFail = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorFail); // failing second produce
@@ -98,8 +101,10 @@ public class ProduceActionTest {
     final int TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1 = 3;
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
+    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(999999999));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
     // setup
     ChunkedOutputFactory chunkedOutputFactory0 = mock(ChunkedOutputFactory.class);
@@ -110,19 +115,22 @@ public class ProduceActionTest {
         getChunkedOutput(chunkedOutputFactory1, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1);
     Clock clock = mock(Clock.class);
 
-    ProduceRateLimiter rateLimiter =
-        new ProduceRateLimiter(
+    ProduceRateLimiters produceRateLimiters =
+        new ProduceRateLimiters(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
+            Integer.parseInt(properties.getProperty(PRODUCE_MAX_BYTES_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
+            Duration.ofMillis(
+                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
             clock);
 
     ProduceAction produceAction0 =
         getProduceAction(
-            rateLimiter, chunkedOutputFactory0, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD0, 0);
+            produceRateLimiters, chunkedOutputFactory0, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD0, 0);
     ProduceAction produceAction1 =
         getProduceAction(
-            rateLimiter, chunkedOutputFactory1, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1, 1);
+            produceRateLimiters, chunkedOutputFactory1, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1, 1);
     MappingIterator<ProduceRequest> requests0 =
         getProduceRequestsMappingIterator(TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD0);
     MappingIterator<ProduceRequest> requests1 =
@@ -156,10 +164,7 @@ public class ProduceActionTest {
     mockedChunkedOutput0.close();
 
     ErrorResponse err =
-        ErrorResponse.create(
-            429,
-            "Rate limit of 1 messages per second exceeded within the grace period of 10 "
-                + "ms : connection will be closed.");
+        ErrorResponse.create(429, "Rate limit exceeded : Connection will be closed.");
     ResultOrError resultOrErrorOKProd5 = ResultOrError.error(err);
     expect(mockedChunkedOutput1.isClosed()).andReturn(false);
     mockedChunkedOutput1.write(resultOrErrorOKProd5);
@@ -203,8 +208,10 @@ public class ProduceActionTest {
     final int TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD = 7;
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
+    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(999999999));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
@@ -249,10 +256,7 @@ public class ProduceActionTest {
     mockedChunkedOutput.close();
 
     ErrorResponse err =
-        ErrorResponse.create(
-            429,
-            "Rate limit of 1 messages per second exceeded within the grace period of 10 "
-                + "ms : connection will be closed.");
+        ErrorResponse.create(429, "Rate limit exceeded : Connection will be closed.");
     ResultOrError resultOrErrorProd6 = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorProd6);
@@ -304,8 +308,10 @@ public class ProduceActionTest {
     final int TOTAL_NUMBER_OF_STREAMING_CALLS = 4;
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(10000));
+    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(999999999));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(30000));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
@@ -362,8 +368,10 @@ public class ProduceActionTest {
     final int TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD = 5;
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
+    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(999999999));
     properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
@@ -404,10 +412,7 @@ public class ProduceActionTest {
     mockedChunkedOutput.write(resultOrErrorOKProd5);
 
     ErrorResponse err =
-        ErrorResponse.create(
-            429,
-            "Rate limit of 1 messages per second exceeded within the grace period of 10 "
-                + "ms : connection will be closed.");
+        ErrorResponse.create(429, "Rate limit exceeded : Connection will be closed.");
     ResultOrError resultOrErrorProd6 = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorProd6);
@@ -419,6 +424,58 @@ public class ProduceActionTest {
     // run test
     FakeAsyncResponse fakeAsyncResponse1 = new FakeAsyncResponse();
     produceAction.produce(fakeAsyncResponse1, "clusterId", "topicName", requests);
+
+    // check results
+    EasyMock.verify(requests);
+    EasyMock.verify(mockedChunkedOutput);
+  }
+
+  @Test
+  public void produceWithByteLimit() throws Exception {
+    // config
+    final int TOTAL_NUMBER_OF_PRODUCE_CALLS = 2;
+    Properties properties = new Properties();
+    properties.put(PRODUCE_GRACE_PERIOD_MS, "0");
+    properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "100");
+    properties.put(
+        PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(30)); // first record is 25 bytes long
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, "3600000");
+    properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+
+    // setup
+    ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
+    ChunkedOutput<ResultOrError> mockedChunkedOutput =
+        getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS);
+    Clock clock = mock(Clock.class);
+    ProduceAction produceAction = getProduceAction(properties, chunkedOutputFactory, clock, 1);
+    MappingIterator<ProduceRequest> requests =
+        getProduceRequestsMappingIterator(TOTAL_NUMBER_OF_PRODUCE_CALLS);
+
+    // expected results
+    ProduceResponse produceResponse = getProduceResponse(0);
+    ResultOrError resultOrErrorOK = ResultOrError.result(produceResponse);
+    expect(mockedChunkedOutput.isClosed()).andReturn(false);
+    mockedChunkedOutput.write(resultOrErrorOK); // successful first produce
+    mockedChunkedOutput.close();
+
+    ErrorResponse err =
+        ErrorResponse.create(429, "Rate limit exceeded : Connection will be closed.");
+    ResultOrError resultOrErrorFail = ResultOrError.error(err);
+    expect(mockedChunkedOutput.isClosed()).andReturn(false);
+    mockedChunkedOutput.write(resultOrErrorFail); // failing second produce
+    mockedChunkedOutput.close(); // error close
+    mockedChunkedOutput.close(); // second close always happens on tidy up
+
+    expect(clock.millis()).andReturn(0L);
+    expect(clock.millis()).andReturn(1L);
+
+    replay(mockedChunkedOutput, chunkedOutputFactory, clock);
+
+    // run test
+    FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
+    produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests);
+    FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
+    produceAction.produce(fakeAsyncResponse2, "clusterId", "topicName", requests);
 
     // check results
     EasyMock.verify(requests);
@@ -447,14 +504,13 @@ public class ProduceActionTest {
   private static MappingIterator<ProduceRequest> getProduceRequestsMappingIterator(int times)
       throws IOException {
     MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
-    ProduceRequest request = ProduceRequest.builder().build();
+    ProduceRequest request = ProduceRequest.builder().setOriginalSize(25L).build();
     for (int i = 0; i < times; i++) {
       expect(requests.hasNext()).andReturn(true).times(1);
       expect(requests.nextValue()).andReturn(request).times(1);
       expect(requests.hasNext()).andReturn(false).times(1);
       requests.close();
     }
-    // requests.close();
     replay(requests);
     return requests;
   }
@@ -464,7 +520,7 @@ public class ProduceActionTest {
     MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
 
     for (int i = 0; i < times; i++) {
-      ProduceRequest request = ProduceRequest.builder().build();
+      ProduceRequest request = ProduceRequest.builder().setOriginalSize(25L).build();
       expect(requests.hasNext()).andReturn(true).times(1);
       expect(requests.nextValue()).andReturn(request).times(1);
     }
@@ -486,7 +542,7 @@ public class ProduceActionTest {
     expect(clock.millis()).andReturn(1015L);
     replay(clock);
 
-    ProduceRequest request = ProduceRequest.builder().build();
+    ProduceRequest request = ProduceRequest.builder().setOriginalSize(25L).build();
     expect(requests.hasNext()).andReturn(true);
     expect(requests.nextValue()).andReturn(request);
 
@@ -583,10 +639,13 @@ public class ProduceActionTest {
   private static ProduceAction getProduceAction(
       Properties properties, ChunkedOutputFactory chunkedOutputFactory, Clock clock, int times) {
     return getProduceAction(
-        new ProduceRateLimiter(
+        new ProduceRateLimiters(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
             Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
+            Integer.parseInt(properties.getProperty(PRODUCE_MAX_BYTES_PER_SECOND)),
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
+            Duration.ofMillis(
+                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
             clock),
         chunkedOutputFactory,
         times,
@@ -594,7 +653,7 @@ public class ProduceActionTest {
   }
 
   private static ProduceAction getProduceAction(
-      ProduceRateLimiter rateLimiter,
+      ProduceRateLimiters produceRateLimiters,
       ChunkedOutputFactory chunkedOutputFactory,
       int times,
       int producerId) {
@@ -611,6 +670,9 @@ public class ProduceActionTest {
     StreamingResponseFactory streamingResponseFactory =
         new StreamingResponseFactory(chunkedOutputFactory);
 
+    // get the current thread so that the call counts can be seen by easy mock
+    ExecutorService executorService = MoreExecutors.newDirectExecutorService();
+
     ProduceAction produceAction =
         new ProduceAction(
             schemaManagerProvider,
@@ -618,10 +680,9 @@ public class ProduceActionTest {
             produceControllerProvider,
             producerMetricsProvider,
             streamingResponseFactory,
-            rateLimiter);
-    rateLimiter.resetGracePeriodStart();
-    rateLimiter.clear();
-
+            produceRateLimiters,
+            executorService);
+    produceRateLimiters.clear();
     return produceAction;
   }
 

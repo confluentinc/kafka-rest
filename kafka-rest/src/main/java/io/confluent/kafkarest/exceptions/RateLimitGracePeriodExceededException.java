@@ -20,14 +20,8 @@ import javax.ws.rs.core.Response.Status;
 
 public final class RateLimitGracePeriodExceededException extends StatusCodeException {
 
-  public RateLimitGracePeriodExceededException(int maxRequestsPerSec, Duration gracePeriod) {
-    super(
-        Status.TOO_MANY_REQUESTS,
-        "Rate limit of "
-            + maxRequestsPerSec
-            + " messages per second exceeded within the grace period of "
-            + gracePeriod.toMillis()
-            + " ms ",
-        "connection will be closed.");
+  public RateLimitGracePeriodExceededException(
+      int maxRequestsPerSec, int maxBytesPerSec, Duration gracePeriod) {
+    super(Status.TOO_MANY_REQUESTS, "Rate limit exceeded ", "Connection will be closed.");
   }
 }
