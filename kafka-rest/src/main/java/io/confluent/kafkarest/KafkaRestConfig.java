@@ -153,8 +153,8 @@ public class KafkaRestConfig extends RestConfig {
 
   public static final String PRODUCE_RATE_LIMIT_ENABLED = "api.v3.produce.rate.limit.enabled";
   private static final String PRODUCE_RATE_LIMIT_ENABLED_DOC =
-      "Whether to enable rate limiting of produce requests. Default is true.";
-  public static final String PRODUCE_RATE_LIMIT_ENABLED_DEFAULT = "true";
+      "Whether to enable rate limiting of produce requests. Default is false.";
+  public static final String PRODUCE_RATE_LIMIT_ENABLED_DEFAULT = "false";
 
   public static final String PRODUCE_MAX_REQUESTS_PER_SECOND =
       "api.v3.produce.rate.limit.max.requests.per.sec";
@@ -176,7 +176,7 @@ public class KafkaRestConfig extends RestConfig {
           + "comes into force. Within the grace period, the wait_for_ms field of the response "
           + "suggests to the client how long to wait before attempting to produce again. "
           + "Once the grace period has expired the client is disconnected.";
-  public static final String PRODUCE_MAX_BYTES_PER_SECOND_DEFAULT = "10000";
+  public static final String PRODUCE_MAX_BYTES_PER_SECOND_DEFAULT = "10000000";
   public static final ConfigDef.Range PRODUCE_MAX_BYTES_PER_SECOND_VALIDATOR =
       ConfigDef.Range.between(1, Integer.MAX_VALUE);
 
