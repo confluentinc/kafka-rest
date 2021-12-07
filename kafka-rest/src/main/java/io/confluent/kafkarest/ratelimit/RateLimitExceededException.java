@@ -31,4 +31,11 @@ public final class RateLimitExceededException extends StatusCodeException {
         "Request rate limit exceeded",
         "The rate limit of requests per second has been exceeded.");
   }
+
+  @Override
+  public synchronized Throwable fillInStackTrace() {
+    // Skipping stack-trace filling, as these exceptions are being used as a specific signal with
+    // well-known origin (our rate-limiting infrastructure).
+    return this;
+  }
 }
