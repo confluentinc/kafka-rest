@@ -24,4 +24,11 @@ public final class RateLimitGracePeriodExceededException extends StatusCodeExcep
       int maxRequestsPerSec, int maxBytesPerSec, Duration gracePeriod) {
     super(Status.TOO_MANY_REQUESTS, "Rate limit exceeded ", "Connection will be closed.");
   }
+
+  @Override
+  public synchronized Throwable fillInStackTrace() {
+    // Skipping stack-trace filling, as these exceptions are being used as a specific signal with
+    // well-known origin (our rate-limiting infrastructure).
+    return this;
+  }
 }
