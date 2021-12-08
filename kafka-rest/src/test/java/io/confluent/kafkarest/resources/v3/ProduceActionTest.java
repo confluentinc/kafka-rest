@@ -508,10 +508,9 @@ public class ProduceActionTest {
     MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
     ProduceRequest request = ProduceRequest.builder().setOriginalSize(25L).build();
     for (int i = 0; i < times; i++) {
-      expect(requests.hasNext()).andReturn(true).times(1);
+      expect(requests.hasNextValue()).andReturn(true).times(1);
       expect(requests.nextValue()).andReturn(request).times(1);
-      expect(requests.hasNext()).andReturn(false).times(1);
-      requests.close();
+      expect(requests.hasNextValue()).andReturn(false).times(1);
     }
     replay(requests);
     return requests;
@@ -523,11 +522,10 @@ public class ProduceActionTest {
 
     for (int i = 0; i < times; i++) {
       ProduceRequest request = ProduceRequest.builder().setOriginalSize(25L).build();
-      expect(requests.hasNext()).andReturn(true).times(1);
+      expect(requests.hasNextValue()).andReturn(true).times(1);
       expect(requests.nextValue()).andReturn(request).times(1);
     }
-    expect(requests.hasNext()).andReturn(false).times(1);
-    requests.close();
+    expect(requests.hasNextValue()).andReturn(false).times(1);
     replay(requests);
     return requests;
   }
@@ -545,26 +543,25 @@ public class ProduceActionTest {
     replay(clock);
 
     ProduceRequest request = ProduceRequest.builder().setOriginalSize(25L).build();
-    expect(requests.hasNext()).andReturn(true);
+    expect(requests.hasNextValue()).andReturn(true);
     expect(requests.nextValue()).andReturn(request);
 
-    expect(requests.hasNext()).andReturn(true);
+    expect(requests.hasNextValue()).andReturn(true);
     expect(requests.nextValue()).andReturn(request);
 
-    expect(requests.hasNext()).andReturn(true);
+    expect(requests.hasNextValue()).andReturn(true);
     expect(requests.nextValue()).andReturn(request);
 
-    expect(requests.hasNext()).andReturn(true);
+    expect(requests.hasNextValue()).andReturn(true);
     expect(requests.nextValue()).andReturn(request);
 
-    expect(requests.hasNext()).andReturn(true);
+    expect(requests.hasNextValue()).andReturn(true);
     expect(requests.nextValue()).andReturn(request);
 
-    expect(requests.hasNext()).andReturn(true);
+    expect(requests.hasNextValue()).andReturn(true);
     expect(requests.nextValue()).andReturn(request);
 
-    expect(requests.hasNext()).andReturn(false).times(1);
-    requests.close();
+    expect(requests.hasNextValue()).andReturn(false).times(1);
     replay(requests);
 
     return requests;

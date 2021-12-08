@@ -64,6 +64,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -71,7 +72,7 @@ import org.junit.runners.JUnit4;
 
 // TODO ddimitrov This continues being way too flaky.
 //  Until we fix it (KREST-1542), we should ignore it, as it might be hiding even worse errors.
-// @Ignore
+@Ignore
 @RunWith(JUnit4.class)
 public class ProduceActionIntegrationTest {
 
