@@ -23,13 +23,16 @@ import javax.inject.Inject;
 public final class StreamingResponseFactory {
 
   private final ChunkedOutputFactory chunkedOutputFactory;
+  private final StreamingResponseIdleTimeLimiter idleTimeLimiter;
 
   @Inject
-  public StreamingResponseFactory(ChunkedOutputFactory chunkedOutputFactory) {
+  public StreamingResponseFactory(
+      ChunkedOutputFactory chunkedOutputFactory, StreamingResponseIdleTimeLimiter idleTimeLimiter) {
     this.chunkedOutputFactory = requireNonNull(chunkedOutputFactory);
+    this.idleTimeLimiter = requireNonNull(idleTimeLimiter);
   }
 
   public <T> StreamingResponse<T> from(MappingIterator<T> input) {
-    return StreamingResponse.from(input, chunkedOutputFactory);
+    return StreamingResponse.from(input, chunkedOutputFactory, idleTimeLimiter);
   }
 }

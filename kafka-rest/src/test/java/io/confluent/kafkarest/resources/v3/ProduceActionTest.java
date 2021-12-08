@@ -12,6 +12,7 @@ import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
 
 import com.fasterxml.jackson.databind.MappingIterator;
+import com.google.common.util.concurrent.FakeTimeLimiter;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.confluent.kafkarest.ProducerMetrics;
 import io.confluent.kafkarest.controllers.ProduceController;
@@ -25,6 +26,7 @@ import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
+import io.confluent.kafkarest.response.StreamingResponseIdleTimeLimiter;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
@@ -668,7 +670,9 @@ public class ProduceActionTest {
     replay(producerMetricsProvider, produceControllerProvider, produceController);
 
     StreamingResponseFactory streamingResponseFactory =
-        new StreamingResponseFactory(chunkedOutputFactory);
+        new StreamingResponseFactory(
+            chunkedOutputFactory,
+            new StreamingResponseIdleTimeLimiter(new FakeTimeLimiter(), Duration.ZERO));
 
     // get the current thread so that the call counts can be seen by easy mock
     ExecutorService executorService = MoreExecutors.newDirectExecutorService();

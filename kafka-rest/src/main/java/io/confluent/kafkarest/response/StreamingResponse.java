@@ -25,16 +25,21 @@ import com.fasterxml.jackson.jaxrs.base.JsonMappingExceptionMapper;
 import com.fasterxml.jackson.jaxrs.base.JsonParseExceptionMapper;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import io.confluent.kafkarest.common.CompletableFutures;
 import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.exceptions.v3.V3ExceptionMapper;
+import io.confluent.kafkarest.response.StreamingResponseIdleTimeLimiter.MaxIdleTimeExceededException;
+import io.confluent.kafkarest.response.StreamingResponseIdleTimeLimiter.MaxIdleTimeExceededExceptionMapper;
 import io.confluent.rest.entities.ErrorMessage;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
 import java.io.IOException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.ws.rs.WebApplicationException;
@@ -75,6 +80,11 @@ public abstract class StreamingResponse<T> {
               response -> Status.BAD_REQUEST.getStatusCode(),
               response -> (String) response.getEntity())
           .putMapper(
+              MaxIdleTimeExceededException.class,
+              new MaxIdleTimeExceededExceptionMapper(),
+              response -> ((ErrorResponse) response.getEntity()).getErrorCode(),
+              response -> ((ErrorResponse) response.getEntity()).getMessage())
+          .putMapper(
               StatusCodeException.class,
               new V3ExceptionMapper(),
               response -> ((ErrorResponse) response.getEntity()).getErrorCode(),
@@ -97,8 +107,11 @@ public abstract class StreamingResponse<T> {
   }
 
   public static <T> StreamingResponse<T> from(
-      MappingIterator<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
-    return new InputStreamingResponse<>(mappingIteratorInput, chunkedOutputFactory);
+      MappingIterator<T> mappingIteratorInput,
+      ChunkedOutputFactory chunkedOutputFactory,
+      StreamingResponseIdleTimeLimiter idleTimeLimiter) {
+    return new InputStreamingResponse<>(
+        mappingIteratorInput, chunkedOutputFactory, idleTimeLimiter);
   }
 
   public final <O> StreamingResponse<O> compose(
@@ -141,31 +154,56 @@ public abstract class StreamingResponse<T> {
   private static class InputStreamingResponse<T> extends StreamingResponse<T> {
 
     private final MappingIterator<T> mappingIteratorInput;
+    private final StreamingResponseIdleTimeLimiter idleTimeLimiter;
+
+    private Throwable hasNextError = null;
+    private boolean closed = false;
 
     private InputStreamingResponse(
-        MappingIterator<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
+        MappingIterator<T> mappingIteratorInput,
+        ChunkedOutputFactory chunkedOutputFactory,
+        StreamingResponseIdleTimeLimiter idleTimeLimiter) {
       super(chunkedOutputFactory);
       this.mappingIteratorInput = requireNonNull(mappingIteratorInput);
+      this.idleTimeLimiter = requireNonNull(idleTimeLimiter);
     }
 
     public void close() {
-      try {
-        mappingIteratorInput.close();
-      } catch (IOException e) {
-        log.error("Error when closing the request stream.", e);
-      }
+      closed = true;
     }
 
     @Override
     public boolean hasNext() {
-      return mappingIteratorInput.hasNext();
+      if (closed) {
+        return false;
+      }
+      try {
+        return idleTimeLimiter.callWithTimeout(mappingIteratorInput::hasNextValue);
+      } catch (ExecutionException | UncheckedExecutionException e) {
+        hasNextError = e.getCause();
+        return true;
+      } catch (InterruptedException | MaxIdleTimeExceededException e) {
+        hasNextError = e;
+        return true;
+      }
     }
 
     @Override
     public CompletableFuture<T> next() {
+      if (closed) {
+        throw new NoSuchElementException();
+      }
+      if (hasNextError != null) {
+        close();
+        return CompletableFutures.failedFuture(hasNextError);
+      }
       try {
-        return CompletableFuture.completedFuture(mappingIteratorInput.nextValue());
-      } catch (Throwable e) {
+        return CompletableFuture.completedFuture(
+            idleTimeLimiter.callWithTimeout(mappingIteratorInput::nextValue));
+      } catch (ExecutionException | UncheckedExecutionException e) {
+        return CompletableFutures.failedFuture(e.getCause());
+      } catch (InterruptedException | MaxIdleTimeExceededException e) {
+        close();
         return CompletableFutures.failedFuture(e);
       }
     }
@@ -246,13 +284,17 @@ public abstract class StreamingResponse<T> {
                       ResultOrError res = result.join();
                       log.debug("Writing to sink");
                       sink.write(res);
-                      if (res instanceof ErrorHolder
-                          && ((ErrorHolder) res).getError().getErrorCode() == 429) {
-                        log.warn(
-                            "Connection closed as a result of rate limiting being exceeded "
-                                + "for longer than grace period.");
-                        sinkClosed = true;
-                        sink.close();
+                      if (res instanceof ErrorHolder) {
+                        if (res.asError().getError().getErrorCode() == 429) {
+                          log.warn("Rate limit exceeded. Closing connection.");
+                          sinkClosed = true;
+                          sink.close();
+                        } else if (res.asError().getError().getErrorCode()
+                            == KafkaExceptionMapper.KAFKA_AUTHENTICATION_ERROR_CODE) {
+                          log.warn("Unauthenticated. Closing connection.");
+                          sinkClosed = true;
+                          sink.close();
+                        }
                       }
                     } catch (IOException e) {
                       log.error("Error when writing streaming result to response channel.", e);
@@ -282,6 +324,10 @@ public abstract class StreamingResponse<T> {
 
     public static ErrorHolder error(ErrorResponse error) {
       return new AutoValue_StreamingResponse_ErrorHolder(error);
+    }
+
+    public ErrorHolder asError() {
+      return (ErrorHolder) this;
     }
   }
 

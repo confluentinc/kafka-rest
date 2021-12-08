@@ -3,19 +3,26 @@ package io.confluent.kafkarest.response;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.assertEquals;
 
 import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.databind.node.TextNode;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.v3.ProduceRequest;
-import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
-import io.confluent.kafkarest.entities.v3.ProduceResponse;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.FakeTimeLimiter;
+import com.google.common.util.concurrent.SimpleTimeLimiter;
+import io.confluent.kafkarest.common.CompletableFutures;
+import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import java.io.IOException;
-import java.util.Optional;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
-import org.easymock.EasyMock;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import org.apache.kafka.common.errors.AuthenticationException;
 import org.glassfish.jersey.server.ChunkedOutput;
+import org.glassfish.jersey.server.internal.LocalizationMessages;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -23,129 +30,191 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class StreamingResponseTest {
 
+  private FakeChunkedOutputFactory chunkedOutputFactory;
+  private FakeAsyncResponse response;
+
+  @Before
+  public void setUp() {
+    chunkedOutputFactory = new FakeChunkedOutputFactory();
+    response = new FakeAsyncResponse();
+  }
+
   @Test
   public void testGracePeriodExceededExceptionThrown() throws IOException {
-    String key = "foo";
-    String value = "bar";
-    ProduceRequest request =
-        ProduceRequest.builder()
-            .setKey(
-                ProduceRequestData.builder()
-                    .setFormat(EmbeddedFormat.AVRO)
-                    .setRawSchema("{\"type\": \"string\"}")
-                    .setData(TextNode.valueOf(key))
-                    .build())
-            .setValue(
-                ProduceRequestData.builder()
-                    .setFormat(EmbeddedFormat.AVRO)
-                    .setRawSchema("{\"type\": \"string\"}")
-                    .setData(TextNode.valueOf(value))
-                    .build())
-            .build();
-
-    MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
-    expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue()).andReturn(request);
-    expect(requests.hasNext()).andReturn(false);
-    requests.close();
-    replay(requests);
-
-    ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
-    ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
-
-    ProduceResponse produceResponse =
-        ProduceResponse.builder()
-            .setClusterId("clusterId")
-            .setTopicName("topicName")
-            .setPartitionId(1)
-            .setOffset(1L)
-            .setWaitForMs(Optional.of(123L))
-            .build();
-
-    ResultOrError resultOrError = ResultOrError.result(produceResponse);
-
-    expect(mockedChunkedOutputFactory.getChunkedOutput()).andReturn(mockedChunkedOutput);
-    mockedChunkedOutput.write(resultOrError);
-    expect(mockedChunkedOutput.isClosed()).andReturn(false);
-    mockedChunkedOutput.close();
-    replay(mockedChunkedOutputFactory);
-    replay(mockedChunkedOutput);
-
     StreamingResponseFactory streamingResponseFactory =
-        new StreamingResponseFactory(mockedChunkedOutputFactory);
-    StreamingResponse<ProduceRequest> streamingResponse = streamingResponseFactory.from(requests);
+        new StreamingResponseFactory(
+            chunkedOutputFactory,
+            new StreamingResponseIdleTimeLimiter(new FakeTimeLimiter(), Duration.ZERO));
 
-    CompletableFuture<ProduceResponse> produceResponseFuture = new CompletableFuture<>();
+    MappingIterator<Integer> input = mock(MappingIterator.class);
+    expect(input.hasNextValue())
+        .andReturn(true)
+        .andReturn(true)
+        .andReturn(true)
+        .andStubReturn(false);
+    expect(input.nextValue())
+        .andReturn(1)
+        .andReturn(2)
+        .andReturn(3)
+        .andStubThrow(new NoSuchElementException());
+    replay(input);
 
-    produceResponseFuture.complete(produceResponse);
+    streamingResponseFactory
+        .from(input)
+        .compose(result -> CompletableFuture.completedFuture(10 + result))
+        .resume(response);
 
-    FakeAsyncResponse response = new FakeAsyncResponse();
-    streamingResponse.compose(result -> produceResponseFuture).resume(response);
-
-    EasyMock.verify(mockedChunkedOutput);
-    EasyMock.verify(mockedChunkedOutputFactory);
-    EasyMock.verify(requests);
+    assertEquals(
+        ImmutableList.of(
+            ResultOrError.result(11), ResultOrError.result(12), ResultOrError.result(13)),
+        chunkedOutputFactory.getChunkedOutput().getWritten());
   }
 
   @Test
   public void testWriteToChunkedOutput() throws IOException {
-    String key = "foo";
-    String value = "bar";
-    ProduceRequest request =
-        ProduceRequest.builder()
-            .setKey(
-                ProduceRequestData.builder()
-                    .setFormat(EmbeddedFormat.AVRO)
-                    .setRawSchema("{\"type\": \"string\"}")
-                    .setData(TextNode.valueOf(key))
-                    .build())
-            .setValue(
-                ProduceRequestData.builder()
-                    .setFormat(EmbeddedFormat.AVRO)
-                    .setRawSchema("{\"type\": \"string\"}")
-                    .setData(TextNode.valueOf(value))
-                    .build())
-            .build();
-
-    MappingIterator<ProduceRequest> requestsMappingIterator = mock(MappingIterator.class);
-    expect(requestsMappingIterator.hasNext()).andReturn(true);
-    expect(requestsMappingIterator.nextValue()).andReturn(request);
-    expect(requestsMappingIterator.hasNext()).andReturn(false);
-    requestsMappingIterator.close();
-    replay(requestsMappingIterator);
-
-    ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
-    ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
-
-    ProduceResponse produceResponse =
-        ProduceResponse.builder()
-            .setClusterId("clusterId")
-            .setTopicName("topicName")
-            .setPartitionId(1)
-            .setOffset(1L)
-            .build();
-    ResultOrError resultOrError = ResultOrError.result(produceResponse);
-
-    expect(mockedChunkedOutputFactory.getChunkedOutput()).andReturn(mockedChunkedOutput);
-    mockedChunkedOutput.write(resultOrError);
-    expect(mockedChunkedOutput.isClosed()).andReturn(false);
-    mockedChunkedOutput.close();
-    replay(mockedChunkedOutput, mockedChunkedOutputFactory);
-
     StreamingResponseFactory streamingResponseFactory =
-        new StreamingResponseFactory(mockedChunkedOutputFactory);
+        new StreamingResponseFactory(
+            chunkedOutputFactory,
+            new StreamingResponseIdleTimeLimiter(new FakeTimeLimiter(), Duration.ZERO));
 
-    StreamingResponse<ProduceRequest> streamingResponse =
-        streamingResponseFactory.from(requestsMappingIterator);
+    MappingIterator<Integer> input = mock(MappingIterator.class);
+    expect(input.hasNextValue())
+        .andReturn(true)
+        .andReturn(true)
+        .andReturn(true)
+        .andStubReturn(false);
+    expect(input.nextValue())
+        .andReturn(1)
+        .andReturn(2)
+        .andReturn(3)
+        .andStubThrow(new NoSuchElementException());
+    replay(input);
 
-    CompletableFuture<ProduceResponse> produceResponseFuture = new CompletableFuture<>();
-    produceResponseFuture.complete(produceResponse);
+    streamingResponseFactory
+        .from(input)
+        .compose(result -> CompletableFuture.completedFuture(10 + result))
+        .resume(response);
 
-    FakeAsyncResponse response = new FakeAsyncResponse();
-    streamingResponse.compose(result -> produceResponseFuture).resume(response);
+    assertEquals(
+        ImmutableList.of(
+            ResultOrError.result(11), ResultOrError.result(12), ResultOrError.result(13)),
+        chunkedOutputFactory.getChunkedOutput().getWritten());
+  }
 
-    EasyMock.verify(mockedChunkedOutput);
-    EasyMock.verify(mockedChunkedOutputFactory);
-    EasyMock.verify(requestsMappingIterator);
+  @Test
+  public void testStreamIsClosedIfIdleTimeExceeded() throws IOException {
+    ExecutorService idleTimeExecutor = Executors.newSingleThreadExecutor();
+    StreamingResponseFactory streamingResponseFactory =
+        new StreamingResponseFactory(
+            chunkedOutputFactory,
+            new StreamingResponseIdleTimeLimiter(
+                SimpleTimeLimiter.create(idleTimeExecutor), Duration.ofMillis(100)));
+
+    MappingIterator<Integer> input = mock(MappingIterator.class);
+    expect(input.hasNextValue())
+        .andReturn(true)
+        .andAnswer(
+            () -> {
+              Thread.sleep(200);
+              return true;
+            })
+        .andReturn(true)
+        .andStubReturn(false);
+    expect(input.nextValue())
+        .andReturn(1)
+        .andReturn(2)
+        .andReturn(3)
+        .andStubThrow(new NoSuchElementException());
+    replay(input);
+
+    streamingResponseFactory
+        .from(input)
+        .compose(result -> CompletableFuture.completedFuture(10 + result))
+        .resume(response);
+
+    assertEquals(
+        ImmutableList.of(
+            ResultOrError.result(11),
+            ResultOrError.error(
+                ErrorResponse.create(408, "Timeout while reading from inputStream"))),
+        chunkedOutputFactory.getChunkedOutput().getWritten());
+  }
+
+  @Test
+  public void testStreamIsClosedIfUnauthenticated() throws IOException {
+    StreamingResponseFactory streamingResponseFactory =
+        new StreamingResponseFactory(
+            chunkedOutputFactory,
+            new StreamingResponseIdleTimeLimiter(new FakeTimeLimiter(), Duration.ZERO));
+
+    MappingIterator<Integer> input = mock(MappingIterator.class);
+    expect(input.hasNextValue())
+        .andReturn(true)
+        .andReturn(true)
+        .andReturn(true)
+        .andStubReturn(false);
+    expect(input.nextValue())
+        .andReturn(1)
+        .andReturn(2)
+        .andReturn(3)
+        .andStubThrow(new NoSuchElementException());
+    replay(input);
+
+    streamingResponseFactory
+        .from(input)
+        .compose(result -> CompletableFutures.failedFuture(new AuthenticationException("foobar")))
+        .resume(response);
+
+    assertEquals(
+        ImmutableList.of(ResultOrError.error(ErrorResponse.create(40101, "foobar"))),
+        chunkedOutputFactory.getChunkedOutput().getWritten());
+  }
+
+  private static final class FakeChunkedOutputFactory extends ChunkedOutputFactory {
+    private final FakeChunkedOutput<ResultOrError> chunkedOutput =
+        new FakeChunkedOutput<>(ResultOrError.class);
+
+    @Override
+    public FakeChunkedOutput<ResultOrError> getChunkedOutput() {
+      return chunkedOutput;
+    }
+  }
+
+  private static final class FakeChunkedOutput<T> extends ChunkedOutput<T> {
+    private final ArrayList<T> written = new ArrayList<>();
+
+    private boolean isClosed = false;
+
+    private FakeChunkedOutput(Class<? extends T> chunkType) {
+      super(chunkType);
+    }
+
+    @Override
+    public void write(T chunk) throws IOException {
+      if (isClosed) {
+        throw new IOException(LocalizationMessages.CHUNKED_OUTPUT_CLOSED());
+      }
+      written.add(chunk);
+    }
+
+    @Override
+    protected void flushQueue() {}
+
+    @Override
+    public void close() {
+      isClosed = true;
+    }
+
+    @Override
+    public boolean isClosed() {
+      return isClosed;
+    }
+
+    @Override
+    protected void onClose(Exception e) {}
+
+    private ImmutableList<T> getWritten() {
+      return ImmutableList.copyOf(written);
+    }
   }
 }

@@ -438,6 +438,13 @@ public class KafkaRestConfig extends RestConfig {
           + "\"api.v3.clusters.*=1,api.v3.brokers.list=2\". A cost of zero means no rate-limit.";
   private static final String RATE_LIMIT_COSTS_DEFAULT = "";
 
+  private static final String STREAMING_RESPONSE_MAX_IDLE_TIME_MS_CONFIG =
+      "streaming.response.max.idle.time.ms";
+  private static final String STREAMING_RESPONSE_MAX_IDLE_TIME_MS_DOC =
+      "Maximum time that a chunked-encoding stream will be kept open without seeing a complete "
+          + "input message.";
+  private static final long STREAMING_RESPONSE_MAX_IDLE_TIME_MS_DEFAULT = 30000L;
+
   private static final ConfigDef config;
 
   static {
@@ -796,7 +803,13 @@ public class KafkaRestConfig extends RestConfig {
             Type.STRING,
             RATE_LIMIT_COSTS_DEFAULT,
             Importance.LOW,
-            RATE_LIMIT_COSTS_DOC);
+            RATE_LIMIT_COSTS_DOC)
+        .define(
+            STREAMING_RESPONSE_MAX_IDLE_TIME_MS_CONFIG,
+            Type.LONG,
+            STREAMING_RESPONSE_MAX_IDLE_TIME_MS_DEFAULT,
+            Importance.LOW,
+            STREAMING_RESPONSE_MAX_IDLE_TIME_MS_DOC);
   }
 
   private static Properties getPropsFromFile(String propsFile) throws RestConfigException {
@@ -1029,6 +1042,10 @@ public class KafkaRestConfig extends RestConfig {
             toImmutableMap(
                 entry -> entry.substring(0, entry.indexOf('=')).trim(),
                 entry -> Integer.valueOf(entry.substring(entry.indexOf('=') + 1).trim())));
+  }
+
+  public final Duration getStreamingResponseMaxIdleTime() {
+    return Duration.ofMillis(getLong(STREAMING_RESPONSE_MAX_IDLE_TIME_MS_CONFIG));
   }
 
   public void addTelemetryReporterProperties(Properties props) {

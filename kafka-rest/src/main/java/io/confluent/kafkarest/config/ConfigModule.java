@@ -172,6 +172,10 @@ public final class ConfigModule extends AbstractBinder {
         .to(new TypeLiteral<List<URI>>() {});
 
     bind(schemaRegistryConfig.getSubjectNameStrategy()).to(SubjectNameStrategy.class);
+
+    bind(config.getStreamingResponseMaxIdleTime())
+        .qualifiedBy(new StreamingResponseMaxIdleTimeConfigImpl())
+        .to(Duration.class);
   }
 
   @Qualifier
@@ -401,5 +405,14 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class SchemaRegistryUrlsConfigImpl
       extends AnnotationLiteral<SchemaRegistryUrlsConfig> implements SchemaRegistryUrlsConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface StreamingResponseMaxIdleTimeConfig {}
+
+  private static final class StreamingResponseMaxIdleTimeConfigImpl
+      extends AnnotationLiteral<StreamingResponseMaxIdleTimeConfig>
+      implements StreamingResponseMaxIdleTimeConfig {}
 }
 // CHECKSTYLE:ON:ClassDataAbstractionCoupling

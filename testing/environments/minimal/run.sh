@@ -37,16 +37,15 @@ aws ecr get-login-password --region us-west-2 \
  | docker login --username AWS --password-stdin 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/
 
 # Download latest cp-zookeeper image.
-docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-zookeeper:master-latest
-
+docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-zookeeper:7.1.x-latest
 # Download latest cp-server image.
-docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-server:master-latest
+docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-server:7.1.x-latest
 
 # Download latest cp-schema-registry image.
-docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-schema-registry:master-latest
+docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-schema-registry:7.1.x-latest
 
 # Download latest cp-kafka-rest image.
-docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-kafka-rest:master-latest
+docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-kafka-rest:7.1.x-latest
 
 # Make sure kafka-rest is packaged.
 mvn -f "$base_dir"/kafka-rest/pom.xml -DskipTests=true clean package
