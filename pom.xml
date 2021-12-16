@@ -47,6 +47,7 @@
     <properties>
         <checkstyle.suppressions.location>checkstyle/suppressions.xml</checkstyle.suppressions.location>
         <io.confluent.kafka-rest.version>7.1.0-601</io.confluent.kafka-rest.version>
+        <confluent-log4j.version>1.2.17-cp5</confluent-log4j.version>
     </properties>
 
     <repositories>
