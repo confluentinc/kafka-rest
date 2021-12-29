@@ -26,26 +26,36 @@ import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.Errors;
+import io.confluent.kafkarest.config.ConfigModule.SchemaRegistryEnabledConfig;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
+import io.confluent.kafkarest.exceptions.BadRequestException;
 import java.io.IOException;
 import java.util.Optional;
 import javax.inject.Inject;
-import org.apache.kafka.common.errors.SerializationException;
+import org.apache.avro.SchemaParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-final class SchemaManagerImpl implements SchemaManager {
-  private final SchemaRegistryClient schemaRegistryClient;
+public final class SchemaManagerImpl implements SchemaManager {
+  private final Optional<SchemaRegistryClient> schemaRegistryClient;
   private final SubjectNameStrategy defaultSubjectNameStrategy;
+  private final boolean schemaRegistryEnabled;
+
+  private static final Logger log = LoggerFactory.getLogger(SchemaManagerImpl.class);
 
   @Inject
-  SchemaManagerImpl(
-      SchemaRegistryClient schemaRegistryClient, SubjectNameStrategy defaultSubjectNameStrategy) {
+  public SchemaManagerImpl(
+      Optional<SchemaRegistryClient> schemaRegistryClient,
+      SubjectNameStrategy defaultSubjectNameStrategy,
+      @SchemaRegistryEnabledConfig Boolean schemaRegistryEnabled) {
     this.schemaRegistryClient = requireNonNull(schemaRegistryClient);
     this.defaultSubjectNameStrategy = requireNonNull(defaultSubjectNameStrategy);
+    this.schemaRegistryEnabled = schemaRegistryEnabled;
   }
 
   @Override
-  public RegisteredSchema getSchema(
+  public Optional<RegisteredSchema> getSchema(
       String topicName,
       Optional<EmbeddedFormat> format,
       Optional<String> subject,
@@ -55,31 +65,45 @@ final class SchemaManagerImpl implements SchemaManager {
       Optional<String> rawSchema,
       boolean isKey) {
     // (subject|subjectNameStrategy)?, schemaId
+
+    if (!schemaRegistryEnabled && !format.isPresent()) {
+      throw Errors.invalidPayloadException(
+          String.format(
+              "Type must be specified when the server is configured without a Schema Registry."));
+    }
+
+    if (!schemaRegistryEnabled) {
+      return Optional.empty();
+    }
+
     if (schemaId.isPresent()) {
       checkArgument(!format.isPresent());
       checkArgument(!schemaVersion.isPresent());
       checkArgument(!rawSchema.isPresent());
-      return getSchemaFromSchemaId(topicName, subject, subjectNameStrategy, schemaId.get(), isKey);
+      return Optional.of(
+          getSchemaFromSchemaId(topicName, subject, subjectNameStrategy, schemaId.get(), isKey));
     }
 
     // (subject|subjectNameStrategy)?, schemaVersion
     if (schemaVersion.isPresent()) {
       checkArgument(!format.isPresent());
       checkArgument(!rawSchema.isPresent());
-      return getSchemaFromSchemaVersion(
-          topicName, subject, subjectNameStrategy, schemaVersion.get(), isKey);
+      return Optional.of(
+          getSchemaFromSchemaVersion(
+              topicName, subject, subjectNameStrategy, schemaVersion.get(), isKey));
     }
 
     // format, (subject|subjectNameStrategy)?, rawSchema
     if (rawSchema.isPresent()) {
       checkArgument(format.isPresent());
-      return getSchemaFromRawSchema(
-          topicName, format.get(), subject, subjectNameStrategy, rawSchema.get(), isKey);
+      return Optional.of(
+          getSchemaFromRawSchema(
+              topicName, format.get(), subject, subjectNameStrategy, rawSchema.get(), isKey));
     }
 
     // (subject|subjectNameStrategy)?
     checkArgument(!format.isPresent());
-    return findLatestSchema(topicName, subject, subjectNameStrategy, isKey);
+    return Optional.of(findLatestSchema(topicName, subject, subjectNameStrategy, isKey));
   }
 
   private RegisteredSchema getSchemaFromSchemaId(
@@ -90,10 +114,10 @@ final class SchemaManagerImpl implements SchemaManager {
       boolean isKey) {
     ParsedSchema schema;
     try {
-      schema = schemaRegistryClient.getSchemaById(schemaId);
+      schema = schemaRegistryClient.get().getSchemaById(schemaId);
     } catch (IOException | RestClientException e) {
-      throw new SerializationException(
-          String.format("Error when fetching schema by id. schemaId = %d", schemaId), e);
+      throw new BadRequestException(
+          String.format("Error when fetching schema by id. schemaId = %d", schemaId));
     }
 
     String actualSubject =
@@ -109,12 +133,19 @@ final class SchemaManagerImpl implements SchemaManager {
 
   private int getSchemaVersion(String subject, ParsedSchema schema) {
     try {
-      return schemaRegistryClient.getVersion(subject, schema);
+      return schemaRegistryClient.get().getVersion(subject, schema);
     } catch (IOException | RestClientException e) {
-      throw new SerializationException(
+      String schemaString;
+      if (schema.canonicalString().equals("\"int\"")) {
+        schemaString = "";
+      } else {
+        schemaString = schema.canonicalString();
+      }
+
+      throw Errors.messageSerializationException(
           String.format(
               "Error when fetching schema version. subject = %s, schema = %s",
-              subject, schema.canonicalString()),
+              subject, schemaString),
           e);
     }
   }
@@ -128,20 +159,35 @@ final class SchemaManagerImpl implements SchemaManager {
     String actualSubject =
         subject.orElse(getSchemaSubjectUnsafe(topicName, isKey, subjectNameStrategy));
 
-    Schema schema =
-        schemaRegistryClient.getByVersion(
-            actualSubject, schemaVersion, /* lookupDeletedSchema= */ false);
+    Schema schema;
+    try {
+      schema =
+          schemaRegistryClient
+              .get()
+              .getByVersion(actualSubject, schemaVersion, /* lookupDeletedSchema= */ false);
+    } catch (RuntimeException restClientException) {
+      throw new BadRequestException(
+          String.format(
+              "Schema does not exist for subject: %s, version: %s", actualSubject, schemaVersion),
+          restClientException);
+    }
 
-    ParsedSchema parsedSchema =
-        EmbeddedFormat.forSchemaType(schema.getSchemaType())
-            .getSchemaProvider()
-            .parseSchema(schema.getSchema(), schema.getReferences(), /* isNew= */ false)
-            .orElseThrow(
-                () ->
-                    Errors.invalidSchemaException(
-                        String.format(
-                            "Error when fetching schema by version. subject = %s, version = %d",
-                            actualSubject, schemaVersion)));
+    ParsedSchema parsedSchema;
+    try {
+      parsedSchema =
+          EmbeddedFormat.forSchemaType(schema.getSchemaType())
+              .getSchemaProvider() // throws unsupportedOperationException for bad config
+              .parseSchema(schema.getSchema(), schema.getReferences(), /* isNew= */ false)
+              .orElseThrow(
+                  () ->
+                      Errors.invalidSchemaException(
+                          String.format(
+                              "Error when fetching schema by version. subject = %s, version = %d",
+                              actualSubject, schemaVersion)));
+    } catch (UnsupportedOperationException | SchemaParseException e) {
+      throw new BadRequestException(
+          String.format("Schema version not supported for %s", schema.getSchemaType()), e);
+    }
 
     return RegisteredSchema.create(
         schema.getSubject(), schema.getId(), schemaVersion, parsedSchema);
@@ -156,16 +202,21 @@ final class SchemaManagerImpl implements SchemaManager {
       boolean isKey) {
     checkArgument(format.requiresSchema(), "%s does not support schemas.", format);
 
-    ParsedSchema schema =
-        format
-            .getSchemaProvider()
-            .parseSchema(rawSchema, /* references= */ emptyList(), /* isNew= */ true)
-            .orElseThrow(
-                () ->
-                    Errors.invalidSchemaException(
-                        String.format(
-                            "Error when parsing raw schema. format = %s, schema = %s",
-                            format, rawSchema)));
+    ParsedSchema schema;
+    try {
+      schema =
+          format
+              .getSchemaProvider() // throws UnsupportedOperationException for bad config
+              .parseSchema(rawSchema, /* references= */ emptyList(), /* isNew= */ true)
+              .orElseThrow(
+                  () ->
+                      Errors.invalidSchemaException(
+                          String.format(
+                              "Error when parsing raw schema. format = %s, schema = %s",
+                              format, rawSchema)));
+    } catch (UnsupportedOperationException | SchemaParseException e) {
+      throw new BadRequestException(String.format("Raw schema not supported with %s", format), e);
+    }
 
     String actualSubject =
         subject.orElse(
@@ -177,13 +228,13 @@ final class SchemaManagerImpl implements SchemaManager {
     try {
       try {
         // Check if the schema already exists first.
-        schemaId = schemaRegistryClient.getId(actualSubject, schema);
+        schemaId = schemaRegistryClient.get().getId(actualSubject, schema);
       } catch (IOException | RestClientException e) {
         // Could not find the schema. We try to register the schema in that case.
-        schemaId = schemaRegistryClient.register(actualSubject, schema);
+        schemaId = schemaRegistryClient.get().register(actualSubject, schema);
       }
     } catch (IOException | RestClientException e) {
-      throw new SerializationException(
+      throw Errors.messageSerializationException(
           String.format(
               "Error when registering schema. format = %s, subject = %s, schema = %s",
               format, actualSubject, schema.canonicalString()),
@@ -205,23 +256,31 @@ final class SchemaManagerImpl implements SchemaManager {
 
     SchemaMetadata metadata;
     try {
-      metadata = schemaRegistryClient.getLatestSchemaMetadata(actualSubject);
+      metadata = schemaRegistryClient.get().getLatestSchemaMetadata(actualSubject);
     } catch (IOException | RestClientException e) {
-      throw new SerializationException(
+      throw Errors.messageSerializationException(
           String.format("Error when fetching latest schema version. subject = %s", actualSubject),
           e);
     }
 
-    ParsedSchema schema =
-        EmbeddedFormat.forSchemaType(metadata.getSchemaType())
-            .getSchemaProvider()
-            .parseSchema(metadata.getSchema(), metadata.getReferences(), /* isNew= */ false)
-            .orElseThrow(
-                () ->
-                    Errors.invalidSchemaException(
-                        String.format(
-                            "Error when fetching latest schema version. subject = %s",
-                            actualSubject)));
+    ParsedSchema schema;
+    try {
+      schema =
+          EmbeddedFormat.forSchemaType(metadata.getSchemaType())
+              .getSchemaProvider() // throws UnsupportedOperationException for bad config
+              .parseSchema(metadata.getSchema(), metadata.getReferences(), /* isNew= */ false)
+              .orElseThrow(
+                  () ->
+                      Errors.invalidSchemaException(
+                          String.format(
+                              "Error when fetching latest schema version. subject = %s",
+                              actualSubject)));
+    } catch (UnsupportedOperationException | SchemaParseException e) {
+      // Shouldn't be possible to get here as "forSchemaType" throws an IllegalArgumentException if
+      // the schema type doesn't support fetching the latest schema version
+      throw new BadRequestException(
+          String.format("Schema subject not supported for %s", metadata.getSchemaType()), e);
+    }
 
     return RegisteredSchema.create(actualSubject, metadata.getId(), metadata.getVersion(), schema);
   }

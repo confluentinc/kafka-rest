@@ -133,7 +133,7 @@ public class TopicsResourceAvroProduceTest
                 /* schemaVersion= */ Optional.empty(),
                 /* rawSchema= */ Optional.of(RAW_KEY_SCHEMA),
                 /* isKey= */ true))
-        .andStubReturn(registeredKeySchema);
+        .andStubReturn(Optional.of(registeredKeySchema));
     expect(
             schemaManager.getSchema(
                 /* topicName= */ TOPIC_NAME,
@@ -144,7 +144,7 @@ public class TopicsResourceAvroProduceTest
                 /* schemaVersion= */ Optional.empty(),
                 /* rawSchema= */ Optional.of(RAW_VALUE_SCHEMA),
                 /* isKey= */ false))
-        .andStubReturn(registeredValueSchema);
+        .andStubReturn(Optional.of(registeredValueSchema));
     expect(
             schemaManager.getSchema(
                 /* topicName= */ TOPIC_NAME,
@@ -155,7 +155,7 @@ public class TopicsResourceAvroProduceTest
                 /* schemaVersion= */ Optional.empty(),
                 /* rawSchema= */ Optional.empty(),
                 /* isKey= */ true))
-        .andStubReturn(registeredKeySchema);
+        .andStubReturn(Optional.of(registeredKeySchema));
     expect(
             schemaManager.getSchema(
                 /* topicName= */ TOPIC_NAME,
@@ -166,7 +166,7 @@ public class TopicsResourceAvroProduceTest
                 /* schemaVersion= */ Optional.empty(),
                 /* rawSchema= */ Optional.empty(),
                 /* isKey= */ false))
-        .andStubReturn(registeredValueSchema);
+        .andStubReturn(Optional.of(registeredValueSchema));
 
     for (int i = 0; i < request.getRecords().size(); i++) {
       ProduceRecord record = request.getRecords().get(i);

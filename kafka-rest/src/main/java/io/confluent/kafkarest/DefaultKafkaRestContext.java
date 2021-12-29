@@ -24,6 +24,7 @@ import io.confluent.kafkarest.config.SchemaRegistryConfig;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -91,10 +92,15 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   }
 
   @Override
-  public SchemaRegistryClient getSchemaRegistryClient() {
+  public Optional<SchemaRegistryClient> getSchemaRegistryClient() {
+
+    if (!config.isSchemaRegistryEnabled()) {
+      return Optional.empty();
+    }
     if (schemaRegistryClient == null) {
       SchemaRegistryConfig schemaRegistryConfig =
           new SchemaRegistryConfig(config.getSchemaRegistryConfigs());
+
       List<String> schemaRegistryUrls =
           schemaRegistryConfig.getSchemaRegistryUrls().stream()
               .map(URI::create)
@@ -108,7 +114,7 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
               config.getSchemaRegistryConfigs(),
               schemaRegistryConfig.requestHeaders());
     }
-    return schemaRegistryClient;
+    return Optional.of(schemaRegistryClient);
   }
 
   @Override

@@ -153,6 +153,10 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new RateLimitPermitsPerSecConfigImpl())
         .to(Integer.class);
 
+    bind(config.isSchemaRegistryEnabled())
+        .qualifiedBy(new SchemaRegistryEnabledConfigImpl())
+        .to(Boolean.class);
+
     bind(config.getRateLimitTimeout())
         .qualifiedBy(new RateLimitTimeoutConfigImpl())
         .to(Duration.class);
@@ -368,6 +372,15 @@ public final class ConfigModule extends AbstractBinder {
   private static final class RateLimitPermitsPerSecConfigImpl
       extends AnnotationLiteral<RateLimitPermitsPerSecConfig>
       implements RateLimitPermitsPerSecConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface SchemaRegistryEnabledConfig {}
+
+  private static final class SchemaRegistryEnabledConfigImpl
+      extends AnnotationLiteral<SchemaRegistryEnabledConfig>
+      implements SchemaRegistryEnabledConfig {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)

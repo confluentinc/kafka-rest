@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerMetrics;
 import io.confluent.kafkarest.ProducerMetricsRegistry;
 import io.confluent.kafkarest.controllers.ProduceController;
@@ -59,6 +60,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
+import org.apache.kafka.common.errors.SerializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -214,20 +216,21 @@ public final class ProduceAction {
     }
 
     try {
-      return Optional.of(
-          schemaManagerProvider
-              .get()
-              .getSchema(
-                  topicName,
-                  data.getFormat(),
-                  data.getSubject(),
-                  data.getSubjectNameStrategy().map(Function.identity()),
-                  data.getSchemaId(),
-                  data.getSchemaVersion(),
-                  data.getRawSchema(),
-                  isKey));
+      return schemaManagerProvider
+          .get()
+          .getSchema(
+              topicName,
+              data.getFormat(),
+              data.getSubject(),
+              data.getSubjectNameStrategy().map(Function.identity()),
+              data.getSchemaId(),
+              data.getSchemaVersion(),
+              data.getRawSchema(),
+              isKey);
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e.getMessage(), e);
+    } catch (SerializationException se) {
+      throw Errors.messageSerializationException(se.getMessage());
     }
   }
 

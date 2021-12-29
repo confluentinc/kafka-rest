@@ -20,6 +20,7 @@ import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHE
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.USE_LATEST_VERSION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
@@ -96,10 +97,45 @@ public class RecordSerializerFacadeTest {
             new NoSchemaRecordSerializer(SCHEMA_SERIALIZER_CONFIGS),
             () ->
                 new SchemaRecordSerializer(
-                    schemaRegistryClient,
+                    Optional.of(schemaRegistryClient),
                     SCHEMA_SERIALIZER_CONFIGS,
                     SCHEMA_SERIALIZER_CONFIGS,
                     SCHEMA_SERIALIZER_CONFIGS));
+  }
+
+  @Test
+  public void noSchemaRegistryClientConfigured() {
+
+    RecordSerializerFacade myRecordSerializer =
+        new RecordSerializerFacade(
+            new NoSchemaRecordSerializer(SCHEMA_SERIALIZER_CONFIGS),
+            () ->
+                new SchemaRecordSerializer(
+                    Optional.empty(),
+                    SCHEMA_SERIALIZER_CONFIGS,
+                    SCHEMA_SERIALIZER_CONFIGS,
+                    SCHEMA_SERIALIZER_CONFIGS));
+
+    boolean checkpoint = false;
+    try {
+      myRecordSerializer
+          .serialize(
+              EmbeddedFormat.AVRO,
+              TOPIC_NAME,
+              /* schema= */ Optional.empty(),
+              TextNode.valueOf(
+                  BaseEncoding.base64().encode("foobar".getBytes(StandardCharsets.UTF_8))),
+              /* isKey= */ true)
+          .get();
+    } catch (RestConstraintViolationException rcve) {
+      assertEquals(
+          "Error deserializing message. Schema registry not defined, no Schema Registry client available to serialize message.",
+          rcve.getMessage());
+      assertEquals(42207, rcve.getErrorCode());
+      checkpoint = true;
+    }
+
+    assertTrue(checkpoint);
   }
 
   @Test

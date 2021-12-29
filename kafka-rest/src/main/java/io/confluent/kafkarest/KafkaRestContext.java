@@ -17,6 +17,7 @@ package io.confluent.kafkarest;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
+import java.util.Optional;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.producer.Producer;
 
@@ -36,7 +37,7 @@ public interface KafkaRestContext {
     return getProducerPool().getProducer();
   }
 
-  default SchemaRegistryClient getSchemaRegistryClient() {
+  default Optional<SchemaRegistryClient> getSchemaRegistryClient() {
     return null;
   }
 

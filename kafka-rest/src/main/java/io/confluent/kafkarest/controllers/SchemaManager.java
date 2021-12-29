@@ -56,7 +56,7 @@ public interface SchemaManager {
    * org.apache.kafka.common.errors.SerializationException}, as it will any other Schema Registry
    * related error. Invalid combination of options will result in {@link IllegalArgumentException}.
    */
-  RegisteredSchema getSchema(
+  Optional<RegisteredSchema> getSchema(
       String topicName,
       Optional<EmbeddedFormat> format,
       Optional<String> subject,

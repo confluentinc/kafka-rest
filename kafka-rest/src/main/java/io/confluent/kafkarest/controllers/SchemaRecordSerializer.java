@@ -53,14 +53,22 @@ final class SchemaRecordSerializer {
 
   @Inject
   SchemaRecordSerializer(
-      SchemaRegistryClient schemaRegistryClient,
+      Optional<SchemaRegistryClient> schemaRegistryClient,
       @AvroSerializerConfigs Map<String, Object> avroSerializerConfigs,
       @JsonschemaSerializerConfigs Map<String, Object> jsonschemaSerializerConfigs,
       @ProtobufSerializerConfigs Map<String, Object> protobufSerializerConfigs) {
-    avroSerializer = new AvroSerializer(schemaRegistryClient, avroSerializerConfigs);
-    jsonschemaSerializer =
-        new JsonSchemaSerializer(schemaRegistryClient, jsonschemaSerializerConfigs);
-    protobufSerializer = new ProtobufSerializer(schemaRegistryClient, protobufSerializerConfigs);
+
+    if (schemaRegistryClient.isPresent()) {
+      avroSerializer = new AvroSerializer(schemaRegistryClient.get(), avroSerializerConfigs);
+      jsonschemaSerializer =
+          new JsonSchemaSerializer(schemaRegistryClient.get(), jsonschemaSerializerConfigs);
+      protobufSerializer =
+          new ProtobufSerializer(schemaRegistryClient.get(), protobufSerializerConfigs);
+    } else {
+      throw Errors.messageSerializationException(
+          "Schema registry not defined, no Schema Registry client "
+              + "available to serialize message.");
+    }
   }
 
   Optional<ByteString> serialize(

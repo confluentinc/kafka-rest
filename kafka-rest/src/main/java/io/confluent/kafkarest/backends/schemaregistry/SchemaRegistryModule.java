@@ -19,22 +19,29 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafkarest.KafkaRestContext;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import org.glassfish.hk2.api.Factory;
+import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.process.internal.RequestScoped;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class SchemaRegistryModule extends AbstractBinder {
+
+  private static final Logger log = LoggerFactory.getLogger(SchemaRegistryModule.class);
 
   @Override
   protected void configure() {
     bindFactory(SchemaRegistryClientFactory.class)
-        .to(SchemaRegistryClient.class)
+        .to(new TypeLiteral<Optional<SchemaRegistryClient>>() {})
         .in(RequestScoped.class);
   }
 
-  private static final class SchemaRegistryClientFactory implements Factory<SchemaRegistryClient> {
+  private static final class SchemaRegistryClientFactory
+      implements Factory<Optional<SchemaRegistryClient>> {
 
     private final Provider<KafkaRestContext> context;
 
@@ -44,11 +51,11 @@ public final class SchemaRegistryModule extends AbstractBinder {
     }
 
     @Override
-    public SchemaRegistryClient provide() {
+    public Optional<SchemaRegistryClient> provide() {
       return context.get().getSchemaRegistryClient();
     }
 
     @Override
-    public void dispose(SchemaRegistryClient schemaRegistryClient) {}
+    public void dispose(Optional<SchemaRegistryClient> schemaRegistryClient) {}
   }
 }

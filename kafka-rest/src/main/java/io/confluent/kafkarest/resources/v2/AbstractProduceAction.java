@@ -115,18 +115,17 @@ abstract class AbstractProduceAction {
       Optional<String> schema,
       boolean isKey) {
     if (format.requiresSchema() && (schemaId.isPresent() || schema.isPresent())) {
-      return Optional.of(
-          schemaManager
-              .get()
-              .getSchema(
-                  /* topicName= */ topicName,
-                  /* format= */ schema.map(unused -> format),
-                  /* subject= */ Optional.empty(),
-                  /* subjectNameStrategy= */ Optional.empty(),
-                  /* schemaId= */ schemaId,
-                  /* schemaVersion= */ Optional.empty(),
-                  /* rawSchema= */ schema,
-                  /* isKey= */ isKey));
+      return schemaManager
+          .get()
+          .getSchema(
+              /* topicName= */ topicName,
+              /* format= */ schema.map(unused -> format),
+              /* subject= */ Optional.empty(),
+              /* subjectNameStrategy= */ Optional.empty(),
+              /* schemaId= */ schemaId,
+              /* schemaVersion= */ Optional.empty(),
+              /* rawSchema= */ schema,
+              /* isKey= */ isKey);
     } else {
       return Optional.empty();
     }
