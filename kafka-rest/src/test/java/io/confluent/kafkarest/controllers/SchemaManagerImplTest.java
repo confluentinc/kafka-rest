@@ -440,9 +440,11 @@ public class SchemaManagerImplTest {
           /* schemaVersion= */ Optional.empty(),
           /* rawSchema= */ Optional.empty(),
           /* isKey= */ true);
-    } catch (BadRequestException rcve) {
-      assertEquals("Error when fetching schema by id. schemaId = 1000", rcve.getMessage());
-      assertEquals(400, rcve.getCode());
+    } catch (RestConstraintViolationException rcve) {
+      assertEquals(
+          "Error deserializing message. Error when fetching schema by id. schemaId = 1000",
+          rcve.getMessage());
+      assertEquals(42207, rcve.getErrorCode());
       checkpoint = true;
     }
     assertTrue(checkpoint);

@@ -116,7 +116,7 @@ public final class SchemaManagerImpl implements SchemaManager {
     try {
       schema = schemaRegistryClient.get().getSchemaById(schemaId);
     } catch (IOException | RestClientException e) {
-      throw new BadRequestException(
+      throw Errors.messageSerializationException(
           String.format("Error when fetching schema by id. schemaId = %d", schemaId));
     }
 
