@@ -92,7 +92,7 @@ public abstract class StreamingResponse<T> {
           .putMapper(
               IllegalArgumentException.class,
               new IllegalArgumentExceptionMapper(),
-              response -> ((ErrorResponse) response.getEntity()).getErrorCode(),
+              response -> Status.BAD_REQUEST.getStatusCode(),
               response -> ((ErrorResponse) response.getEntity()).getMessage())
           .putMapper(
               WebApplicationException.class,
