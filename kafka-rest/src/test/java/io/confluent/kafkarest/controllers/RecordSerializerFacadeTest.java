@@ -96,7 +96,7 @@ public class RecordSerializerFacadeTest {
         new RecordSerializerFacade(
             new NoSchemaRecordSerializer(SCHEMA_SERIALIZER_CONFIGS),
             () ->
-                new SchemaRecordSerializer(
+                new SchemaRecordSerializerImpl(
                     Optional.of(schemaRegistryClient),
                     SCHEMA_SERIALIZER_CONFIGS,
                     SCHEMA_SERIALIZER_CONFIGS,
@@ -110,7 +110,7 @@ public class RecordSerializerFacadeTest {
         new RecordSerializerFacade(
             new NoSchemaRecordSerializer(SCHEMA_SERIALIZER_CONFIGS),
             () ->
-                new SchemaRecordSerializer(
+                new SchemaRecordSerializerImpl(
                     Optional.empty(),
                     SCHEMA_SERIALIZER_CONFIGS,
                     SCHEMA_SERIALIZER_CONFIGS,

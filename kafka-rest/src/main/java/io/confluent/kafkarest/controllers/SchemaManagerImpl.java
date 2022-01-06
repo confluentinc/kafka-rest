@@ -34,15 +34,11 @@ import java.io.IOException;
 import java.util.Optional;
 import javax.inject.Inject;
 import org.apache.avro.SchemaParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class SchemaManagerImpl implements SchemaManager {
   private final Optional<SchemaRegistryClient> schemaRegistryClient;
   private final SubjectNameStrategy defaultSubjectNameStrategy;
   private final boolean schemaRegistryEnabled;
-
-  private static final Logger log = LoggerFactory.getLogger(SchemaManagerImpl.class);
 
   @Inject
   public SchemaManagerImpl(
@@ -66,14 +62,9 @@ public final class SchemaManagerImpl implements SchemaManager {
       boolean isKey) {
     // (subject|subjectNameStrategy)?, schemaId
 
-    if (!schemaRegistryEnabled && !format.isPresent()) {
-      throw Errors.invalidPayloadException(
-          String.format(
-              "Type must be specified when the server is configured without a Schema Registry."));
-    }
-
     if (!schemaRegistryEnabled) {
-      return Optional.empty();
+      throw Errors.invalidPayloadException(
+          String.format("Schema registry must be configured when using schemas."));
     }
 
     if (schemaId.isPresent()) {

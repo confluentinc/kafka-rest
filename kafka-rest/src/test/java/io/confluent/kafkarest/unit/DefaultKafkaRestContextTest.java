@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -51,7 +50,7 @@ public class DefaultKafkaRestContextTest {
     props.put(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, "localhost:5234");
     KafkaRestConfig restConfig = new KafkaRestConfig(props);
     context = new DefaultKafkaRestContext(restConfig);
-    assertTrue(context.getSchemaRegistryClient().isPresent());
+    assertTrue(context.getSchemaRegistryClient() != null);
   }
 
   @Test
@@ -60,6 +59,6 @@ public class DefaultKafkaRestContextTest {
     props.put(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, "");
     KafkaRestConfig restConfig = new KafkaRestConfig(props);
     context = new DefaultKafkaRestContext(restConfig);
-    assertEquals(context.getSchemaRegistryClient(), Optional.empty());
+    assertEquals(context.getSchemaRegistryClient(), null);
   }
 }

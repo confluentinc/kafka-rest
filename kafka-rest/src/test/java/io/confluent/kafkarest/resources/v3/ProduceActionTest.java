@@ -76,7 +76,7 @@ public class ProduceActionTest {
     ErrorResponse err =
         ErrorResponse.create(
             422,
-            "Error: 42207 : Error deserializing message. Schema registry not defined, no Schema Registry client available to deserialize message.");
+            "Error: 42206 : Payload error. Schema registry must be configured when using schemas.");
     ResultOrError resultOrErrorFail = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorFail);

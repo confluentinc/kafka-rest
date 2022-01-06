@@ -132,7 +132,7 @@ public class KafkaRestConfig extends RestConfig {
   private static final String SCHEMA_REGISTRY_URL_DOC =
       "The base URL for the schema registry that should be used by the Avro serializer. "
           + "An empty value means that use of a schema registry is disable.";
-  private static final String SCHEMA_REGISTRY_URL_DEFAULT = "";
+  private static final String SCHEMA_REGISTRY_URL_DEFAULT = "http://localhost:8081";
 
   public static final String PROXY_FETCH_MIN_BYTES_CONFIG = "fetch.min.bytes";
   private static final String PROXY_FETCH_MIN_BYTES_DOC =
@@ -867,9 +867,11 @@ public class KafkaRestConfig extends RestConfig {
 
     if (!configs.containsKey(SCHEMA_REGISTRY_URL_CONFIG)) {
       log.warn(
-          "Using the default value of \"{}\" for config {}. If you are using Schema Registry, "
-              + "please specify {} explicitly. An empty value for this property means that the "
-              + "Schema Registry is disabled.",
+          "Using default value {} for config {}. In a future release this config won't have a"
+              + "default value anymore. If you are using Schema Registry, please, specify {}"
+              + "explicitly. Requests will fail in a future release if you try to use Schema "
+              + "Registry but have not specified a value for {}. An empty value for this property "
+              + "means that the Schema Registry is disabled.",
           SCHEMA_REGISTRY_URL_DEFAULT,
           SCHEMA_REGISTRY_URL_CONFIG,
           SCHEMA_REGISTRY_URL_CONFIG);

@@ -628,7 +628,7 @@ public class SchemaManagerImplTest {
   }
 
   @Test
-  public void schemaRegistryDisabledAndNoFormatReturnsError() {
+  public void schemaRegistryDisabledReturnsError() {
     SchemaManager mySchemaManager =
         new SchemaManagerImpl(Optional.empty(), new TopicNameStrategy(), false);
     boolean checkpoint = false;
@@ -645,30 +645,11 @@ public class SchemaManagerImplTest {
           /* isKey= */ true);
     } catch (RestConstraintViolationException e) {
       assertEquals(
-          "Payload error. Type must be specified when the server is configured without a Schema Registry.",
-          e.getMessage());
+          "Payload error. Schema registry must be configured when using schemas.", e.getMessage());
       assertEquals(42206, e.getErrorCode());
       checkpoint = true;
     }
     assertTrue(checkpoint);
-  }
-
-  @Test
-  public void schemaRegistryDisabledReturnsEmpty() {
-    SchemaManager mySchemaManager =
-        new SchemaManagerImpl(Optional.empty(), new TopicNameStrategy(), false);
-
-    assertEquals(
-        Optional.empty(),
-        mySchemaManager.getSchema(
-            TOPIC_NAME,
-            /* format= */ Optional.of(EmbeddedFormat.JSON),
-            /* subject= */ Optional.empty(),
-            /* subjectNameStrategy= */ Optional.empty(),
-            /* schemaId= */ Optional.empty(),
-            /* schemaVersion= */ Optional.empty(),
-            /* rawSchema= */ Optional.empty(),
-            /* isKey= */ true));
   }
 
   @Test

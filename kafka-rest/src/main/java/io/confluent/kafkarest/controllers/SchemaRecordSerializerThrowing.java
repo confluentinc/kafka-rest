@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Confluent Inc.
+ * Copyright 2022 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -15,41 +15,30 @@
 
 package io.confluent.kafkarest.controllers;
 
-import static java.util.Objects.requireNonNull;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.protobuf.ByteString;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
-final class RecordSerializerFacade implements RecordSerializer {
+public class SchemaRecordSerializerThrowing implements SchemaRecordSerializer {
 
-  private final NoSchemaRecordSerializer noSchemaRecordSerializer;
-  private final Provider<SchemaRecordSerializer> schemaRecordSerializerProvider;
+  public SchemaRecordSerializerThrowing() {
 
-  @Inject
-  RecordSerializerFacade(
-      NoSchemaRecordSerializer noSchemaRecordSerializer,
-      Provider<SchemaRecordSerializer> schemaRecordSerializerProvider) {
-    this.noSchemaRecordSerializer = requireNonNull(noSchemaRecordSerializer);
-    this.schemaRecordSerializerProvider = requireNonNull(schemaRecordSerializerProvider);
+    throw Errors.messageSerializationException(
+        "Schema registry not defined, no Schema "
+            + "Registry client available to serialize message.");
   }
 
-  @Override
   public Optional<ByteString> serialize(
       EmbeddedFormat format,
       String topicName,
       Optional<RegisteredSchema> schema,
       JsonNode data,
       boolean isKey) {
-
-    if (format.requiresSchema()) {
-      return schemaRecordSerializerProvider.get().serialize(format, topicName, schema, data, isKey);
-    } else {
-      return noSchemaRecordSerializer.serialize(format, data);
-    }
+    throw Errors.messageSerializationException(
+        "Schema registry not defined, no Schema "
+            + "Registry client available to serialize message.");
   }
 }

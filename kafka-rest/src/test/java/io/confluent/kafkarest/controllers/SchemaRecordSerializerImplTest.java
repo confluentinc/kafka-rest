@@ -11,14 +11,14 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class SchemaRecordSerializerTest {
+public class SchemaRecordSerializerImplTest {
 
   @Test
   public void errorWhenNoSchemaRegistryDefined() {
     boolean checkpoint = false;
     try {
-      SchemaRecordSerializer schemaRecordSerializer =
-          new SchemaRecordSerializer(
+      SchemaRecordSerializerImpl schemaRecordSerializerImpl =
+          new SchemaRecordSerializerImpl(
               Optional.empty(),
               Collections.EMPTY_MAP,
               Collections.EMPTY_MAP,
