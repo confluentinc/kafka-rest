@@ -46,9 +46,7 @@ public final class SchemaRegistryModule extends AbstractBinder {
         .to(new TypeLiteral<Optional<SchemaRegistryClient>>() {})
         .in(RequestScoped.class);
 
-    bindFactory(SchemaRecordSerializerFactory.class)
-        .to(SchemaRecordSerializer.class)
-        .in(RequestScoped.class);
+    bindFactory(SchemaRecordSerializerFactory.class).to(SchemaRecordSerializer.class);
   }
 
   private static final class SchemaRegistryClientFactory
