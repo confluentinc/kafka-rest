@@ -3,8 +3,6 @@ package io.confluent.kafkarest.response;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
@@ -13,7 +11,6 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
-import io.confluent.kafkarest.exceptions.BadRequestException;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import java.io.IOException;
@@ -229,22 +226,5 @@ public class StreamingResponseTest {
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
     EasyMock.verify(requests);
-  }
-
-  @Test
-  public void testHasNextOnNullData() {
-    MappingIterator<ProduceRequest> requests = null;
-    ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
-    StreamingResponseFactory streamingResponseFactory =
-        new StreamingResponseFactory(mockedChunkedOutputFactory);
-    boolean checkpoint = false;
-    try {
-      StreamingResponse<ProduceRequest> streamingResponse = streamingResponseFactory.from(requests);
-    } catch (BadRequestException bre) {
-      assertEquals("Null input provided. Data is required.", bre.getMessage());
-      assertEquals(400, bre.getCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
   }
 }

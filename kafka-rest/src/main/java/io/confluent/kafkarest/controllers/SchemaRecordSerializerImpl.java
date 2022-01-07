@@ -45,7 +45,7 @@ import javax.inject.Inject;
 import org.apache.avro.AvroTypeException;
 import org.everit.json.schema.ValidationException;
 
-public final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
+final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
 
   private final AvroSerializer avroSerializer;
   private final JsonSchemaSerializer jsonschemaSerializer;
@@ -57,20 +57,14 @@ public final class SchemaRecordSerializerImpl implements SchemaRecordSerializer 
       @AvroSerializerConfigs Map<String, Object> avroSerializerConfigs,
       @JsonschemaSerializerConfigs Map<String, Object> jsonschemaSerializerConfigs,
       @ProtobufSerializerConfigs Map<String, Object> protobufSerializerConfigs) {
-
-    if (schemaRegistryClient.isPresent()) {
-      avroSerializer = new AvroSerializer(schemaRegistryClient.get(), avroSerializerConfigs);
-      jsonschemaSerializer =
-          new JsonSchemaSerializer(schemaRegistryClient.get(), jsonschemaSerializerConfigs);
-      protobufSerializer =
-          new ProtobufSerializer(schemaRegistryClient.get(), protobufSerializerConfigs);
-    } else {
-      throw Errors.messageSerializationException(
-          "Schema registry not defined, no Schema Registry client "
-              + "available to serialize message.");
-    }
+    avroSerializer = new AvroSerializer(schemaRegistryClient.get(), avroSerializerConfigs);
+    jsonschemaSerializer =
+        new JsonSchemaSerializer(schemaRegistryClient.get(), jsonschemaSerializerConfigs);
+    protobufSerializer =
+        new ProtobufSerializer(schemaRegistryClient.get(), protobufSerializerConfigs);
   }
 
+  @Override
   public Optional<ByteString> serialize(
       EmbeddedFormat format,
       String topicName,

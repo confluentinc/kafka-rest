@@ -28,7 +28,6 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.common.CompletableFutures;
 import io.confluent.kafkarest.exceptions.BadRequestException;
-import io.confluent.kafkarest.exceptions.IllegalArgumentExceptionMapper;
 import io.confluent.kafkarest.exceptions.RestConstraintViolationExceptionMapper;
 import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
@@ -88,11 +87,6 @@ public abstract class StreamingResponse<T> {
               RestConstraintViolationException.class,
               new RestConstraintViolationExceptionMapper(),
               response -> ((ErrorResponse) response.getEntity()).getErrorCode(),
-              response -> ((ErrorResponse) response.getEntity()).getMessage())
-          .putMapper(
-              IllegalArgumentException.class,
-              new IllegalArgumentExceptionMapper(),
-              response -> Status.BAD_REQUEST.getStatusCode(),
               response -> ((ErrorResponse) response.getEntity()).getMessage())
           .putMapper(
               WebApplicationException.class,
@@ -168,9 +162,6 @@ public abstract class StreamingResponse<T> {
     private InputStreamingResponse(
         MappingIterator<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
       super(chunkedOutputFactory);
-      if (mappingIteratorInput == null) {
-        throw new BadRequestException("Null input provided. Data is required.");
-      }
       this.mappingIteratorInput = mappingIteratorInput;
     }
 

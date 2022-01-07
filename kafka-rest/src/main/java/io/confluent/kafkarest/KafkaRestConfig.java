@@ -130,8 +130,8 @@ public class KafkaRestConfig extends RestConfig {
 
   public static final String SCHEMA_REGISTRY_URL_CONFIG = "schema.registry.url";
   private static final String SCHEMA_REGISTRY_URL_DOC =
-      "The base URL for the schema registry that should be used by the Avro serializer. "
-          + "An empty value means that use of a schema registry is disable.";
+      "The base URL for the Schema Registry that should be used by the Avro serializer. "
+          + "An empty value means that use of a schema registry is disabled.";
   private static final String SCHEMA_REGISTRY_URL_DEFAULT = "http://localhost:8081";
 
   public static final String PROXY_FETCH_MIN_BYTES_CONFIG = "fetch.min.bytes";
@@ -874,6 +874,7 @@ public class KafkaRestConfig extends RestConfig {
               + "means that the Schema Registry is disabled.",
           SCHEMA_REGISTRY_URL_DEFAULT,
           SCHEMA_REGISTRY_URL_CONFIG,
+          SCHEMA_REGISTRY_URL_CONFIG,
           SCHEMA_REGISTRY_URL_CONFIG);
       configs.put(SCHEMA_REGISTRY_URL_CONFIG, SCHEMA_REGISTRY_URL_DEFAULT);
     }
@@ -881,7 +882,7 @@ public class KafkaRestConfig extends RestConfig {
     // Disable auto-registration of schemas.
     if (configs.containsKey(AUTO_REGISTER_SCHEMAS)) {
       log.warn(
-          "Config {} is not supported in REST Proxy and will be ignored. Please remove this "
+          "Config {} is not supported in Kafka REST and will be ignored. Please remove this "
               + "config. Configuration will fail in a future release for such cases.",
           AUTO_REGISTER_SCHEMAS);
     }
@@ -890,7 +891,7 @@ public class KafkaRestConfig extends RestConfig {
     // Disable latest-version fetching of schemas.
     if (configs.containsKey(USE_LATEST_VERSION)) {
       log.warn(
-          "Config {} is not supported in REST Proxy and will be ignored. Please remove this "
+          "Config {} is not supported in Kafka REST and will be ignored. Please remove this "
               + "config. Configuration will fail in a future release for such cases.",
           USE_LATEST_VERSION);
     }

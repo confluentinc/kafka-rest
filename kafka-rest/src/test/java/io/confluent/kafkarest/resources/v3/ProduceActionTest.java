@@ -11,17 +11,17 @@ import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.util.concurrent.MoreExecutors;
-import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerMetrics;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
-import io.confluent.kafkarest.controllers.SchemaManagerImpl;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.ProduceResult;
 import io.confluent.kafkarest.entities.v3.ProduceRequest;
@@ -32,6 +32,7 @@ import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
+import io.confluent.rest.exceptions.RestConstraintViolationException;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
@@ -76,7 +77,7 @@ public class ProduceActionTest {
     ErrorResponse err =
         ErrorResponse.create(
             422,
-            "Error: 42206 : Payload error. Schema registry must be configured when using schemas.");
+            "Error: 42206 : Payload error. Schema Registry must be configured when using schemas.");
     ResultOrError resultOrErrorFail = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorFail);
@@ -542,6 +543,37 @@ public class ProduceActionTest {
     EasyMock.verify(mockedChunkedOutput);
   }
 
+  @Test
+  public void testHasNextOnNullData() throws Exception {
+    Properties properties = new Properties();
+    properties.put(PRODUCE_GRACE_PERIOD_MS, "0");
+    properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "100");
+    properties.put(
+        PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(30)); // first record is 25 bytes long
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, "3600000");
+    properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+
+    // setup
+    ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
+
+    Clock clock = mock(Clock.class);
+    ProduceAction produceAction = getProduceAction(properties, chunkedOutputFactory, clock, 1);
+    MappingIterator<ProduceRequest> requests = null;
+
+    FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
+
+    boolean checkpoint = false;
+    try {
+      produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests);
+    } catch (RestConstraintViolationException e) {
+      assertEquals("Payload error. Null input provided. Data is required.", e.getMessage());
+      assertEquals(42206, e.getErrorCode());
+      checkpoint = true;
+    }
+
+    assertTrue(checkpoint);
+  }
+
   private static Provider<RecordSerializer> getRecordSerializerProvider(boolean error) {
     Provider<RecordSerializer> recordSerializerProvider = mock(Provider.class);
     RecordSerializer recordSerializer = mock(RecordSerializer.class);
@@ -559,10 +591,12 @@ public class ProduceActionTest {
                   anyObject(), anyObject(), anyObject(), anyObject(), anyBoolean()))
           .andThrow(
               Errors.messageSerializationException(
-                  "Schema registry not defined, no Schema Registry client available to deserialize message."))
+                  "Schema Registry not defined, no Schema Registry client available to deserialize message."))
           .anyTimes();
     }
     replay(recordSerializerProvider, recordSerializer);
+
+    EasyMock.verify(recordSerializer);
     return recordSerializerProvider;
   }
 
@@ -761,11 +795,22 @@ public class ProduceActionTest {
       int producerId,
       boolean errorSchemaRegistry) {
     Provider<SchemaManager> schemaManagerProvider = mock(Provider.class);
-    SubjectNameStrategy subjectNameStrategyMock = mock(SubjectNameStrategy.class);
-    SchemaManager schemaManager =
-        new SchemaManagerImpl(Optional.empty(), subjectNameStrategyMock, false);
-    expect(schemaManagerProvider.get()).andReturn(schemaManager);
-    replay(schemaManagerProvider);
+    SchemaManager schemaManagerMock = mock(SchemaManager.class);
+    expect(schemaManagerProvider.get()).andReturn(schemaManagerMock);
+    expect(
+            schemaManagerMock.getSchema(
+                "topicName",
+                Optional.of(EmbeddedFormat.AVRO),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.of("bob"),
+                true))
+        .andThrow(
+            Errors.invalidPayloadException(
+                "Schema Registry must be configured when using schemas."));
+    replay(schemaManagerProvider, schemaManagerMock);
     Provider<ProducerMetrics> producerMetricsProvider = mock(Provider.class);
     getProducerMetricsProvider(producerMetricsProvider);
     Provider<RecordSerializer> recordSerializerProvider =

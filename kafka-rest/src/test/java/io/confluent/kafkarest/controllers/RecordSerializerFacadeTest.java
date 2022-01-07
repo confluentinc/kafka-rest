@@ -109,12 +109,7 @@ public class RecordSerializerFacadeTest {
     RecordSerializerFacade myRecordSerializer =
         new RecordSerializerFacade(
             new NoSchemaRecordSerializer(SCHEMA_SERIALIZER_CONFIGS),
-            () ->
-                new SchemaRecordSerializerImpl(
-                    Optional.empty(),
-                    SCHEMA_SERIALIZER_CONFIGS,
-                    SCHEMA_SERIALIZER_CONFIGS,
-                    SCHEMA_SERIALIZER_CONFIGS));
+            () -> new SchemaRecordSerializerThrowing());
 
     boolean checkpoint = false;
     try {
@@ -129,7 +124,7 @@ public class RecordSerializerFacadeTest {
           .get();
     } catch (RestConstraintViolationException rcve) {
       assertEquals(
-          "Error deserializing message. Schema registry not defined, no Schema Registry client available to serialize message.",
+          "Error serializing message. Schema Registry not defined, no Schema Registry client available to serialize message.",
           rcve.getMessage());
       assertEquals(42207, rcve.getErrorCode());
       checkpoint = true;

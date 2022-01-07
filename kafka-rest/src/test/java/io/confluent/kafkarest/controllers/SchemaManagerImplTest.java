@@ -75,8 +75,7 @@ public class SchemaManagerImplTest {
                     new JsonSchemaProvider(),
                     new ProtobufSchemaProvider()));
 
-    schemaManager =
-        new SchemaManagerImpl(Optional.of(schemaRegistryClient), new TopicNameStrategy(), true);
+    schemaManager = new SchemaManagerImpl(schemaRegistryClient, new TopicNameStrategy());
   }
 
   @After
@@ -91,17 +90,15 @@ public class SchemaManagerImplTest {
     int schemaVersion = schemaRegistryClient.getVersion(KEY_SUBJECT, schema);
 
     RegisteredSchema actual =
-        schemaManager
-            .getSchema(
-                TOPIC_NAME,
-                /* format= */ Optional.empty(),
-                /* subject= */ Optional.empty(),
-                /* subjectNameStrategy= */ Optional.empty(),
-                /* schemaId= */ Optional.of(schemaId),
-                /* schemaVersion= */ Optional.empty(),
-                /* rawSchema= */ Optional.empty(),
-                /* isKey= */ true)
-            .get();
+        schemaManager.getSchema(
+            TOPIC_NAME,
+            /* format= */ Optional.empty(),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.of(schemaId),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.empty(),
+            /* isKey= */ true);
 
     assertEquals(RegisteredSchema.create(KEY_SUBJECT, schemaId, schemaVersion, schema), actual);
   }
@@ -114,17 +111,15 @@ public class SchemaManagerImplTest {
     int schemaVersion = schemaRegistryClient.getVersion(subject, schema);
 
     RegisteredSchema actual =
-        schemaManager
-            .getSchema(
-                TOPIC_NAME,
-                /* format= */ Optional.empty(),
-                /* subject= */ Optional.of(subject),
-                /* subjectNameStrategy= */ Optional.empty(),
-                /* schemaId= */ Optional.of(schemaId),
-                /* schemaVersion= */ Optional.empty(),
-                /* rawSchema= */ Optional.empty(),
-                /* isKey= */ true)
-            .get();
+        schemaManager.getSchema(
+            TOPIC_NAME,
+            /* format= */ Optional.empty(),
+            /* subject= */ Optional.of(subject),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.of(schemaId),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.empty(),
+            /* isKey= */ true);
 
     assertEquals(RegisteredSchema.create(subject, schemaId, schemaVersion, schema), actual);
   }
@@ -138,17 +133,15 @@ public class SchemaManagerImplTest {
     int schemaVersion = schemaRegistryClient.getVersion(subject, schema);
 
     RegisteredSchema actual =
-        schemaManager
-            .getSchema(
-                TOPIC_NAME,
-                /* format= */ Optional.empty(),
-                /* subject= */ Optional.empty(),
-                /* subjectNameStrategy= */ Optional.of(strategy),
-                /* schemaId= */ Optional.of(schemaId),
-                /* schemaVersion= */ Optional.empty(),
-                /* rawSchema= */ Optional.empty(),
-                /* isKey= */ true)
-            .get();
+        schemaManager.getSchema(
+            TOPIC_NAME,
+            /* format= */ Optional.empty(),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.of(strategy),
+            /* schemaId= */ Optional.of(schemaId),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.empty(),
+            /* isKey= */ true);
 
     assertEquals(RegisteredSchema.create(subject, schemaId, schemaVersion, schema), actual);
   }
@@ -160,17 +153,15 @@ public class SchemaManagerImplTest {
     int schemaVersion = schemaRegistryClient.getVersion(KEY_SUBJECT, schema);
 
     RegisteredSchema actual =
-        schemaManager
-            .getSchema(
-                TOPIC_NAME,
-                /* format= */ Optional.empty(),
-                /* subject= */ Optional.empty(),
-                /* subjectNameStrategy= */ Optional.empty(),
-                /* schemaId= */ Optional.empty(),
-                /* schemaVersion= */ Optional.of(schemaVersion),
-                /* rawSchema= */ Optional.empty(),
-                /* isKey= */ true)
-            .get();
+        schemaManager.getSchema(
+            TOPIC_NAME,
+            /* format= */ Optional.empty(),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.of(schemaVersion),
+            /* rawSchema= */ Optional.empty(),
+            /* isKey= */ true);
 
     assertEquals(RegisteredSchema.create(KEY_SUBJECT, schemaId, schemaVersion, schema), actual);
   }
@@ -183,17 +174,15 @@ public class SchemaManagerImplTest {
     int schemaVersion = schemaRegistryClient.getVersion(subject, schema);
 
     RegisteredSchema actual =
-        schemaManager
-            .getSchema(
-                TOPIC_NAME,
-                /* format= */ Optional.empty(),
-                /* subject= */ Optional.of(subject),
-                /* subjectNameStrategy= */ Optional.empty(),
-                /* schemaId= */ Optional.empty(),
-                /* schemaVersion= */ Optional.of(schemaVersion),
-                /* rawSchema= */ Optional.empty(),
-                /* isKey= */ true)
-            .get();
+        schemaManager.getSchema(
+            TOPIC_NAME,
+            /* format= */ Optional.empty(),
+            /* subject= */ Optional.of(subject),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.of(schemaVersion),
+            /* rawSchema= */ Optional.empty(),
+            /* isKey= */ true);
 
     assertEquals(RegisteredSchema.create(subject, schemaId, schemaVersion, schema), actual);
   }
@@ -207,17 +196,15 @@ public class SchemaManagerImplTest {
     int schemaVersion = schemaRegistryClient.getVersion(subject, schema);
 
     RegisteredSchema actual =
-        schemaManager
-            .getSchema(
-                TOPIC_NAME,
-                /* format= */ Optional.empty(),
-                /* subject= */ Optional.empty(),
-                /* subjectNameStrategy= */ Optional.of(strategy),
-                /* schemaId= */ Optional.empty(),
-                /* schemaVersion= */ Optional.of(schemaVersion),
-                /* rawSchema= */ Optional.empty(),
-                /* isKey= */ true)
-            .get();
+        schemaManager.getSchema(
+            TOPIC_NAME,
+            /* format= */ Optional.empty(),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.of(strategy),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.of(schemaVersion),
+            /* rawSchema= */ Optional.empty(),
+            /* isKey= */ true);
 
     assertEquals(RegisteredSchema.create(subject, schemaId, schemaVersion, schema), actual);
   }
@@ -225,17 +212,15 @@ public class SchemaManagerImplTest {
   @Test
   public void getSchema_avro_rawSchema() throws Exception {
     RegisteredSchema actual =
-        schemaManager
-            .getSchema(
-                TOPIC_NAME,
-                /* format= */ Optional.of(EmbeddedFormat.AVRO),
-                /* subject= */ Optional.empty(),
-                /* subjectNameStrategy= */ Optional.empty(),
-                /* schemaId= */ Optional.empty(),
-                /* schemaVersion= */ Optional.empty(),
-                /* rawSchema= */ Optional.of("{\"type\": \"int\"}"),
-                /* isKey= */ true)
-            .get();
+        schemaManager.getSchema(
+            TOPIC_NAME,
+            /* format= */ Optional.of(EmbeddedFormat.AVRO),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.of("{\"type\": \"int\"}"),
+            /* isKey= */ true);
 
     ParsedSchema schema = schemaRegistryClient.getSchemaById(actual.getSchemaId());
     int schemaId = schemaRegistryClient.getId(KEY_SUBJECT, schema);
@@ -248,17 +233,15 @@ public class SchemaManagerImplTest {
   public void getSchema_avro_rawSchema_subject() throws Exception {
     String subject = "my-subject";
     RegisteredSchema actual =
-        schemaManager
-            .getSchema(
-                TOPIC_NAME,
-                /* format= */ Optional.of(EmbeddedFormat.AVRO),
-                /* subject= */ Optional.of(subject),
-                /* subjectNameStrategy= */ Optional.empty(),
-                /* schemaId= */ Optional.empty(),
-                /* schemaVersion= */ Optional.empty(),
-                /* rawSchema= */ Optional.of("{\"type\": \"int\"}"),
-                /* isKey= */ true)
-            .get();
+        schemaManager.getSchema(
+            TOPIC_NAME,
+            /* format= */ Optional.of(EmbeddedFormat.AVRO),
+            /* subject= */ Optional.of(subject),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.of("{\"type\": \"int\"}"),
+            /* isKey= */ true);
 
     ParsedSchema schema = schemaRegistryClient.getSchemaById(actual.getSchemaId());
     int schemaId = schemaRegistryClient.getId(subject, schema);
@@ -272,17 +255,15 @@ public class SchemaManagerImplTest {
     SubjectNameStrategy strategy = new MySubjectNameStrategy();
     String subject = strategy.subjectName(TOPIC_NAME, /* isKey= */ true, /* schema= */ null);
     RegisteredSchema actual =
-        schemaManager
-            .getSchema(
-                TOPIC_NAME,
-                /* format= */ Optional.of(EmbeddedFormat.AVRO),
-                /* subject= */ Optional.empty(),
-                /* subjectNameStrategy= */ Optional.of(strategy),
-                /* schemaId= */ Optional.empty(),
-                /* schemaVersion= */ Optional.empty(),
-                /* rawSchema= */ Optional.of("{\"type\": \"int\"}"),
-                /* isKey= */ true)
-            .get();
+        schemaManager.getSchema(
+            TOPIC_NAME,
+            /* format= */ Optional.of(EmbeddedFormat.AVRO),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.of(strategy),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.of("{\"type\": \"int\"}"),
+            /* isKey= */ true);
 
     ParsedSchema schema = schemaRegistryClient.getSchemaById(actual.getSchemaId());
     int schemaId = schemaRegistryClient.getId(subject, schema);
@@ -298,17 +279,15 @@ public class SchemaManagerImplTest {
     int schemaVersion = schemaRegistryClient.getVersion(KEY_SUBJECT, schema);
 
     RegisteredSchema actual =
-        schemaManager
-            .getSchema(
-                TOPIC_NAME,
-                /* format= */ Optional.empty(),
-                /* subject= */ Optional.empty(),
-                /* subjectNameStrategy= */ Optional.empty(),
-                /* schemaId= */ Optional.empty(),
-                /* schemaVersion= */ Optional.empty(),
-                /* rawSchema= */ Optional.empty(),
-                /* isKey= */ true)
-            .get();
+        schemaManager.getSchema(
+            TOPIC_NAME,
+            /* format= */ Optional.empty(),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.empty(),
+            /* isKey= */ true);
 
     assertEquals(RegisteredSchema.create(KEY_SUBJECT, schemaId, schemaVersion, schema), actual);
   }
@@ -321,17 +300,15 @@ public class SchemaManagerImplTest {
     int schemaVersion = schemaRegistryClient.getVersion(subject, schema);
 
     RegisteredSchema actual =
-        schemaManager
-            .getSchema(
-                TOPIC_NAME,
-                /* format= */ Optional.empty(),
-                /* subject= */ Optional.of(subject),
-                /* subjectNameStrategy= */ Optional.empty(),
-                /* schemaId= */ Optional.empty(),
-                /* schemaVersion= */ Optional.empty(),
-                /* rawSchema= */ Optional.empty(),
-                /* isKey= */ true)
-            .get();
+        schemaManager.getSchema(
+            TOPIC_NAME,
+            /* format= */ Optional.empty(),
+            /* subject= */ Optional.of(subject),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.empty(),
+            /* isKey= */ true);
 
     assertEquals(RegisteredSchema.create(subject, schemaId, schemaVersion, schema), actual);
   }
@@ -345,17 +322,15 @@ public class SchemaManagerImplTest {
     int schemaVersion = schemaRegistryClient.getVersion(subject, schema);
 
     RegisteredSchema actual =
-        schemaManager
-            .getSchema(
-                TOPIC_NAME,
-                /* format= */ Optional.empty(),
-                /* subject= */ Optional.empty(),
-                /* subjectNameStrategy= */ Optional.of(strategy),
-                /* schemaId= */ Optional.empty(),
-                /* schemaVersion= */ Optional.empty(),
-                /* rawSchema= */ Optional.empty(),
-                /* isKey= */ true)
-            .get();
+        schemaManager.getSchema(
+            TOPIC_NAME,
+            /* format= */ Optional.empty(),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.of(strategy),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.empty(),
+            /* isKey= */ true);
 
     assertEquals(RegisteredSchema.create(subject, schemaId, schemaVersion, schema), actual);
   }
@@ -363,17 +338,15 @@ public class SchemaManagerImplTest {
   @Test
   public void getSchema_jsonschema_rawSchema() throws Exception {
     RegisteredSchema actual =
-        schemaManager
-            .getSchema(
-                TOPIC_NAME,
-                /* format= */ Optional.of(EmbeddedFormat.JSONSCHEMA),
-                /* subject= */ Optional.empty(),
-                /* subjectNameStrategy= */ Optional.empty(),
-                /* schemaId= */ Optional.empty(),
-                /* schemaVersion= */ Optional.empty(),
-                /* rawSchema= */ Optional.of("{\"type\": \"string\"}"),
-                /* isKey= */ true)
-            .get();
+        schemaManager.getSchema(
+            TOPIC_NAME,
+            /* format= */ Optional.of(EmbeddedFormat.JSONSCHEMA),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.of("{\"type\": \"string\"}"),
+            /* isKey= */ true);
 
     ParsedSchema schema = schemaRegistryClient.getSchemaById(actual.getSchemaId());
     int schemaId = schemaRegistryClient.getId(KEY_SUBJECT, schema);
@@ -385,18 +358,15 @@ public class SchemaManagerImplTest {
   @Test
   public void getSchema_protobuf_rawSchema() throws Exception {
     RegisteredSchema actual =
-        schemaManager
-            .getSchema(
-                TOPIC_NAME,
-                /* format= */ Optional.of(EmbeddedFormat.PROTOBUF),
-                /* subject= */ Optional.empty(),
-                /* subjectNameStrategy= */ Optional.empty(),
-                /* schemaId= */ Optional.empty(),
-                /* schemaVersion= */ Optional.empty(),
-                /* rawSchema= */ Optional.of(
-                    "syntax = \"proto3\"; message MyKey { string foo = 1; }"),
-                /* isKey= */ true)
-            .get();
+        schemaManager.getSchema(
+            TOPIC_NAME,
+            /* format= */ Optional.of(EmbeddedFormat.PROTOBUF),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.of("syntax = \"proto3\"; message MyKey { string foo = 1; }"),
+            /* isKey= */ true);
 
     ParsedSchema schema = schemaRegistryClient.getSchemaById(actual.getSchemaId());
     int schemaId = schemaRegistryClient.getId(KEY_SUBJECT, schema);
@@ -412,17 +382,15 @@ public class SchemaManagerImplTest {
     int schemaVersion = schemaRegistryClient.getVersion(VALUE_SUBJECT, schema);
 
     RegisteredSchema actual =
-        schemaManager
-            .getSchema(
-                TOPIC_NAME,
-                /* format= */ Optional.empty(),
-                /* subject= */ Optional.empty(),
-                /* subjectNameStrategy= */ Optional.empty(),
-                /* schemaId= */ Optional.empty(),
-                /* schemaVersion= */ Optional.empty(),
-                /* rawSchema= */ Optional.empty(),
-                /* isKey= */ false)
-            .get();
+        schemaManager.getSchema(
+            TOPIC_NAME,
+            /* format= */ Optional.empty(),
+            /* subject= */ Optional.empty(),
+            /* subjectNameStrategy= */ Optional.empty(),
+            /* schemaId= */ Optional.empty(),
+            /* schemaVersion= */ Optional.empty(),
+            /* rawSchema= */ Optional.empty(),
+            /* isKey= */ false);
 
     assertEquals(RegisteredSchema.create(VALUE_SUBJECT, schemaId, schemaVersion, schema), actual);
   }
@@ -442,7 +410,7 @@ public class SchemaManagerImplTest {
           /* isKey= */ true);
     } catch (RestConstraintViolationException rcve) {
       assertEquals(
-          "Error deserializing message. Error when fetching schema by id. schemaId = 1000",
+          "Error serializing message. Error when fetching schema by id. schemaId = 1000",
           rcve.getMessage());
       assertEquals(42207, rcve.getErrorCode());
       checkpoint = true;
@@ -468,7 +436,7 @@ public class SchemaManagerImplTest {
           /* isKey= */ true);
     } catch (RestConstraintViolationException rcve) {
       assertEquals(
-          "Error deserializing message. Error when fetching schema version. subject = topic-1-key, schema = \n"
+          "Error serializing message. Error when fetching schema version. subject = topic-1-key, schema = \"int\"\n"
               + "Subject Not Found; error code: 40401",
           rcve.getMessage());
       assertEquals(42207, rcve.getErrorCode());
@@ -563,7 +531,7 @@ public class SchemaManagerImplTest {
 
     } catch (RestConstraintViolationException rcve) {
       assertEquals(
-          "Error deserializing message. Error when fetching latest schema version. subject = topic-1-key\n"
+          "Error serializing message. Error when fetching latest schema version. subject = topic-1-key\n"
               + "Subject Not Found; error code: 40401",
           rcve.getMessage());
       assertEquals(42207, rcve.getErrorCode());
@@ -629,8 +597,7 @@ public class SchemaManagerImplTest {
 
   @Test
   public void schemaRegistryDisabledReturnsError() {
-    SchemaManager mySchemaManager =
-        new SchemaManagerImpl(Optional.empty(), new TopicNameStrategy(), false);
+    SchemaManager mySchemaManager = new SchemaManagerThrowing();
     boolean checkpoint = false;
 
     try {
@@ -645,7 +612,7 @@ public class SchemaManagerImplTest {
           /* isKey= */ true);
     } catch (RestConstraintViolationException e) {
       assertEquals(
-          "Payload error. Schema registry must be configured when using schemas.", e.getMessage());
+          "Payload error. Schema Registry must be configured when using schemas.", e.getMessage());
       assertEquals(42206, e.getErrorCode());
       checkpoint = true;
     }
@@ -687,7 +654,7 @@ public class SchemaManagerImplTest {
     replay(schemaRegistryClientMock, schemaMock);
 
     SchemaManager mySchemaManager =
-        new SchemaManagerImpl(Optional.of(schemaRegistryClientMock), new TopicNameStrategy(), true);
+        new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
 
     boolean checkpoint = false;
     try {
@@ -724,7 +691,7 @@ public class SchemaManagerImplTest {
     replay(schemaRegistryClientMock, schemaMock);
 
     SchemaManager mySchemaManager =
-        new SchemaManagerImpl(Optional.of(schemaRegistryClientMock), new TopicNameStrategy(), true);
+        new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
 
     boolean checkpoint = false;
     try {
@@ -758,7 +725,7 @@ public class SchemaManagerImplTest {
     replay(schemaRegistryClientMock, schemaMock);
 
     SchemaManager mySchemaManager =
-        new SchemaManagerImpl(Optional.of(schemaRegistryClientMock), new TopicNameStrategy(), true);
+        new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
 
     boolean checkpoint = false;
     try {
@@ -816,7 +783,7 @@ public class SchemaManagerImplTest {
     replay(embeddedFormatMock, schemaProviderMock, schemaRegistryClientMock);
 
     SchemaManager mySchemaManager =
-        new SchemaManagerImpl(Optional.of(schemaRegistryClientMock), new TopicNameStrategy(), true);
+        new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
 
     boolean checkpoint = false;
     try {
@@ -898,7 +865,7 @@ public class SchemaManagerImplTest {
     replay(schemaRegistryClientMock, embeddedFormatMock, schemaProviderMock);
 
     SchemaManager mySchemaManager =
-        new SchemaManagerImpl(Optional.of(schemaRegistryClientMock), new TopicNameStrategy(), true);
+        new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
 
     boolean checkpoint = false;
     try {
@@ -913,7 +880,7 @@ public class SchemaManagerImplTest {
           /* isKey= */ true);
     } catch (RestConstraintViolationException rcve) {
       assertEquals(
-          "Error deserializing message. Error when registering schema. format = EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat, subject = subject1, schema = null\n"
+          "Error serializing message. Error when registering schema. format = EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat, subject = subject1, schema = null\n"
               + "Can't register Schema",
           rcve.getMessage());
       assertEquals(42207, rcve.getErrorCode());
@@ -937,7 +904,7 @@ public class SchemaManagerImplTest {
     replay(schemaRegistryClientMock, schemaMetadataMock);
 
     SchemaManager mySchemaManager =
-        new SchemaManagerImpl(Optional.of(schemaRegistryClientMock), new TopicNameStrategy(), true);
+        new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
 
     boolean checkpoint = false;
     try {
@@ -979,7 +946,7 @@ public class SchemaManagerImplTest {
     replay(schemaRegistryClientMock, schemaMetadataMock);
 
     SchemaManager mySchemaManager =
-        new SchemaManagerImpl(Optional.of(schemaRegistryClientMock), new TopicNameStrategy(), true);
+        new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
 
     boolean checkpoint = false;
     try {

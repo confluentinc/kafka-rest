@@ -22,15 +22,9 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.util.Optional;
 
-public class SchemaRecordSerializerThrowing implements SchemaRecordSerializer {
+final class SchemaRecordSerializerThrowing implements SchemaRecordSerializer {
 
-  public SchemaRecordSerializerThrowing() {
-
-    throw Errors.messageSerializationException(
-        "Schema registry not defined, no Schema "
-            + "Registry client available to serialize message.");
-  }
-
+  @Override
   public Optional<ByteString> serialize(
       EmbeddedFormat format,
       String topicName,
@@ -38,7 +32,7 @@ public class SchemaRecordSerializerThrowing implements SchemaRecordSerializer {
       JsonNode data,
       boolean isKey) {
     throw Errors.messageSerializationException(
-        "Schema registry not defined, no Schema "
+        "Schema Registry not defined, no Schema "
             + "Registry client available to serialize message.");
   }
 }

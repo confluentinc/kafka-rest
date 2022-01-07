@@ -120,6 +120,10 @@ public final class ProduceAction {
       MappingIterator<ProduceRequest> requests)
       throws Exception {
 
+    if (requests == null) {
+      throw Errors.invalidPayloadException("Null input provided. Data is required.");
+    }
+
     ProduceController controller = produceControllerProvider.get();
     streamingResponseFactory
         .from(requests)
@@ -216,17 +220,18 @@ public final class ProduceAction {
     }
 
     try {
-      return schemaManagerProvider
-          .get()
-          .getSchema(
-              topicName,
-              data.getFormat(),
-              data.getSubject(),
-              data.getSubjectNameStrategy().map(Function.identity()),
-              data.getSchemaId(),
-              data.getSchemaVersion(),
-              data.getRawSchema(),
-              isKey);
+      return Optional.of(
+          schemaManagerProvider
+              .get()
+              .getSchema(
+                  topicName,
+                  data.getFormat(),
+                  data.getSubject(),
+                  data.getSubjectNameStrategy().map(Function.identity()),
+                  data.getSchemaId(),
+                  data.getSchemaVersion(),
+                  data.getRawSchema(),
+                  isKey));
     } catch (SerializationException se) {
       throw Errors.messageSerializationException(se.getMessage());
     } catch (IllegalArgumentException iae) {

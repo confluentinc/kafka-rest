@@ -45,7 +45,6 @@ final class RecordSerializerFacade implements RecordSerializer {
       Optional<RegisteredSchema> schema,
       JsonNode data,
       boolean isKey) {
-
     if (format.requiresSchema()) {
       return schemaRecordSerializerProvider.get().serialize(format, topicName, schema, data, isKey);
     } else {

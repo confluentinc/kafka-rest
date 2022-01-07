@@ -92,7 +92,6 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
 
   @Override
   public SchemaRegistryClient getSchemaRegistryClient() {
-
     if (!config.isSchemaRegistryEnabled()) {
       return null;
     }

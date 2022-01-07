@@ -19,38 +19,22 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.config.ConfigModule.AvroSerializerConfigs;
-import io.confluent.kafkarest.config.ConfigModule.JsonschemaSerializerConfigs;
-import io.confluent.kafkarest.config.ConfigModule.ProtobufSerializerConfigs;
-import io.confluent.kafkarest.controllers.SchemaRecordSerializer;
-import io.confluent.kafkarest.controllers.SchemaRecordSerializerImpl;
-import io.confluent.kafkarest.controllers.SchemaRecordSerializerThrowing;
-import java.util.Map;
-import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import org.glassfish.hk2.api.Factory;
-import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.process.internal.RequestScoped;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class SchemaRegistryModule extends AbstractBinder {
-
-  private static final Logger log = LoggerFactory.getLogger(SchemaRegistryModule.class);
 
   @Override
   protected void configure() {
     bindFactory(SchemaRegistryClientFactory.class)
-        .to(new TypeLiteral<Optional<SchemaRegistryClient>>() {})
+        .to(SchemaRegistryClient.class)
         .in(RequestScoped.class);
-
-    bindFactory(SchemaRecordSerializerFactory.class).to(SchemaRecordSerializer.class);
   }
 
-  private static final class SchemaRegistryClientFactory
-      implements Factory<Optional<SchemaRegistryClient>> {
+  private static final class SchemaRegistryClientFactory implements Factory<SchemaRegistryClient> {
 
     private final Provider<KafkaRestContext> context;
 
@@ -60,48 +44,11 @@ public final class SchemaRegistryModule extends AbstractBinder {
     }
 
     @Override
-    public Optional<SchemaRegistryClient> provide() {
-      return Optional.ofNullable(context.get().getSchemaRegistryClient());
+    public SchemaRegistryClient provide() {
+      return context.get().getSchemaRegistryClient();
     }
 
     @Override
-    public void dispose(Optional<SchemaRegistryClient> schemaRegistryClient) {}
-  }
-
-  private static final class SchemaRecordSerializerFactory
-      implements Factory<SchemaRecordSerializer> {
-
-    private final Optional<SchemaRegistryClient> schemaRegistryClient;
-    private final Map<String, Object> avroSerializerConfigs;
-    private final Map<String, Object> jsonschemaSerializerConfigs;
-    private final Map<String, Object> protobufSerializerConfigs;
-
-    @Inject
-    private SchemaRecordSerializerFactory(
-        Optional<SchemaRegistryClient> schemaRegistryClient,
-        @AvroSerializerConfigs Map<String, Object> avroSerializerConfigs,
-        @JsonschemaSerializerConfigs Map<String, Object> jsonschemaSerializerConfigs,
-        @ProtobufSerializerConfigs Map<String, Object> protobufSerializerConfigs) {
-      this.schemaRegistryClient = schemaRegistryClient;
-      this.avroSerializerConfigs = avroSerializerConfigs;
-      this.jsonschemaSerializerConfigs = jsonschemaSerializerConfigs;
-      this.protobufSerializerConfigs = protobufSerializerConfigs;
-    }
-
-    @Override
-    public SchemaRecordSerializer provide() {
-      if (schemaRegistryClient.isPresent()) {
-        return new SchemaRecordSerializerImpl(
-            schemaRegistryClient,
-            avroSerializerConfigs,
-            jsonschemaSerializerConfigs,
-            protobufSerializerConfigs);
-      } else {
-        return new SchemaRecordSerializerThrowing();
-      }
-    }
-
-    @Override
-    public void dispose(SchemaRecordSerializer schemaRecordSerializer) {}
+    public void dispose(SchemaRegistryClient schemaRegistryClient) {}
   }
 }

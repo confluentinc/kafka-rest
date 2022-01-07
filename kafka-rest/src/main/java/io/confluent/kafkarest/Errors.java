@@ -170,7 +170,7 @@ public class Errors {
         INVALID_PAYLOAD_MESSAGE + cause, INVALID_PAYLOAD_ERROR_CODE);
   }
 
-  public static final String SERIALIZATION_EXCEPTION_MESSAGE = "Error deserializing message. ";
+  public static final String SERIALIZATION_EXCEPTION_MESSAGE = "Error serializing message. ";
   public static final int SERIALIZATION_EXCEPTION_ERROR_CODE = 42207;
 
   public static RestConstraintViolationException messageSerializationException(String cause) {

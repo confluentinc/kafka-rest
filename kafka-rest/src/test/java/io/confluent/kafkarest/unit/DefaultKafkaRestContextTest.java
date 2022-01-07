@@ -1,6 +1,7 @@
 package io.confluent.kafkarest.unit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import io.confluent.kafkarest.DefaultKafkaRestContext;
@@ -50,7 +51,7 @@ public class DefaultKafkaRestContextTest {
     props.put(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, "localhost:5234");
     KafkaRestConfig restConfig = new KafkaRestConfig(props);
     context = new DefaultKafkaRestContext(restConfig);
-    assertTrue(context.getSchemaRegistryClient() != null);
+    assertNotNull(context.getSchemaRegistryClient());
   }
 
   @Test
