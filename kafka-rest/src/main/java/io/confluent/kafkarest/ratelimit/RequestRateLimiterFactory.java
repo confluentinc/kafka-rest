@@ -23,7 +23,7 @@ import javax.inject.Inject;
 import org.glassfish.hk2.api.Factory;
 
 /** A {@link Factory} for {@link RequestRateLimiter}. */
-final class RequestRateLimiterFactory implements Factory<RequestRateLimiter> {
+class RequestRateLimiterFactory implements Factory<RequestRateLimiter> {
   private final RateLimitBackend backend;
   private final int permitsPerSecond;
   private final Duration timeout;

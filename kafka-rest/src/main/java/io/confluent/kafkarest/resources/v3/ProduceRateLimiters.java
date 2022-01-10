@@ -20,66 +20,79 @@ import static java.util.Objects.requireNonNull;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import io.confluent.kafkarest.config.ConfigModule.ProduceGracePeriodConfig;
-import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitBytesConfig;
 import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitCacheExpiryConfig;
-import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitCountConfig;
 import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitEnabledConfig;
-import java.time.Clock;
+import io.confluent.kafkarest.ratelimit.RequestRateLimiter;
+import io.confluent.kafkarest.ratelimit.RequestRateLimiterProduceBytes;
+import io.confluent.kafkarest.ratelimit.RequestRateLimiterProduceCount;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+import javax.inject.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ProduceRateLimiters {
 
-  private final int maxRequestsPerSecond;
-  private final int maxBytesPerSecond;
-  private final Duration gracePeriod;
   private final boolean rateLimitingEnabled;
-  private final LoadingCache<String, ProduceRateLimiter> cache;
+  private final LoadingCache<String, RequestRateLimiter> countCache;
+  private final LoadingCache<String, RequestRateLimiter> bytesCache;
+  Provider<RequestRateLimiterProduceCount> countLimiterProvider;
+  Provider<RequestRateLimiterProduceBytes> bytesLimiterProvider;
+
+  private static final Logger log = LoggerFactory.getLogger(ProduceRateLimiters.class);
 
   @Inject
   public ProduceRateLimiters(
-      @ProduceGracePeriodConfig Duration produceGracePeriodConfig,
-      @ProduceRateLimitCountConfig Integer produceRateLimitCountConfig,
-      @ProduceRateLimitBytesConfig Integer produceRateLimitBytesConfig,
+      Provider<RequestRateLimiterProduceCount> countLimiterProvider,
+      Provider<RequestRateLimiterProduceBytes> bytesLimiterProvider,
       @ProduceRateLimitEnabledConfig Boolean produceRateLimitEnabledConfig,
-      @ProduceRateLimitCacheExpiryConfig Duration produceRateLimitCacheExpiryConfig,
-      Clock time) {
-    this.maxRequestsPerSecond = requireNonNull(produceRateLimitCountConfig);
-    this.gracePeriod = requireNonNull(produceGracePeriodConfig);
+      @ProduceRateLimitCacheExpiryConfig Duration produceRateLimitCacheExpiryConfig) {
     this.rateLimitingEnabled = requireNonNull(produceRateLimitEnabledConfig);
-    this.maxBytesPerSecond = requireNonNull(produceRateLimitBytesConfig);
-    requireNonNull(time);
+    this.countLimiterProvider = countLimiterProvider;
+    this.bytesLimiterProvider = bytesLimiterProvider;
 
-    cache =
+    countCache =
         CacheBuilder.newBuilder()
             .expireAfterAccess(produceRateLimitCacheExpiryConfig.toMillis(), TimeUnit.MILLISECONDS)
             .build(
-                new CacheLoader<String, ProduceRateLimiter>() {
+                new CacheLoader<String, RequestRateLimiter>() {
                   @Override
-                  public ProduceRateLimiter load(String key) {
-                    return new ProduceRateLimiter(
-                        gracePeriod,
-                        maxRequestsPerSecond,
-                        maxBytesPerSecond,
-                        produceRateLimitEnabledConfig,
-                        time);
+                  public RequestRateLimiter load(String key) {
+                    return countLimiterProvider.get().getLimiter();
+                  }
+                });
+
+    bytesCache =
+        CacheBuilder.newBuilder()
+            .expireAfterAccess(produceRateLimitCacheExpiryConfig.toMillis(), TimeUnit.MILLISECONDS)
+            .build(
+                new CacheLoader<String, RequestRateLimiter>() {
+                  @Override
+                  public RequestRateLimiter load(String key) {
+                    return bytesLimiterProvider.get().getLimiter();
                   }
                 });
   }
 
-  public Optional<Duration> calculateGracePeriodExceeded(String clusterId, long requestSize) {
+  public void rateLimit(String clusterId, Optional<Long> requestSize) {
     if (!rateLimitingEnabled) {
-      return Optional.empty();
+      return;
     }
-    ProduceRateLimiter rateLimiter = cache.getUnchecked(clusterId);
-    Optional<Duration> waitTime = rateLimiter.calculateGracePeriodExceeded(requestSize);
-    return waitTime;
+
+    RequestRateLimiter countRateLimiter = countCache.getUnchecked(clusterId);
+    RequestRateLimiter byteRateLimiter = bytesCache.getUnchecked(clusterId);
+    countRateLimiter.rateLimit(1);
+
+    if (requestSize.isPresent()) {
+      byteRateLimiter.rateLimit(requestSize.get().intValue());
+    }
+    // requestSize should always be present, but if there is no message size available
+    // we allow the request through without limiting it
   }
 
   public void clear() {
-    cache.invalidateAll();
+    countCache.invalidateAll();
   }
 }

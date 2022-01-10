@@ -26,5 +26,9 @@ final class RateLimitModule extends AbstractBinder {
   @Override
   protected void configure() {
     bindFactory(RequestRateLimiterFactory.class).to(RequestRateLimiter.class).in(Singleton.class);
+    bindFactory(RequestRateLimiterProduceBytesFactory.class)
+        .to(RequestRateLimiterProduceBytes.class);
+    bindFactory(RequestRateLimiterProduceCountFactory.class)
+        .to(RequestRateLimiterProduceCount.class);
   }
 }
