@@ -21,7 +21,7 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.util.Optional;
 
-public class SchemaManagerThrowing implements SchemaManager {
+final class SchemaManagerThrowing implements SchemaManager {
 
   @Override
   public RegisteredSchema getSchema(

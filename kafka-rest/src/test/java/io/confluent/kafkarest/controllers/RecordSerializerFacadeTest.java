@@ -20,7 +20,7 @@ import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHE
 import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.USE_LATEST_VERSION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
@@ -97,7 +97,7 @@ public class RecordSerializerFacadeTest {
             new NoSchemaRecordSerializer(SCHEMA_SERIALIZER_CONFIGS),
             () ->
                 new SchemaRecordSerializerImpl(
-                    Optional.of(schemaRegistryClient),
+                    schemaRegistryClient,
                     SCHEMA_SERIALIZER_CONFIGS,
                     SCHEMA_SERIALIZER_CONFIGS,
                     SCHEMA_SERIALIZER_CONFIGS));
@@ -111,26 +111,22 @@ public class RecordSerializerFacadeTest {
             new NoSchemaRecordSerializer(SCHEMA_SERIALIZER_CONFIGS),
             () -> new SchemaRecordSerializerThrowing());
 
-    boolean checkpoint = false;
-    try {
-      myRecordSerializer
-          .serialize(
-              EmbeddedFormat.AVRO,
-              TOPIC_NAME,
-              /* schema= */ Optional.empty(),
-              TextNode.valueOf(
-                  BaseEncoding.base64().encode("foobar".getBytes(StandardCharsets.UTF_8))),
-              /* isKey= */ true)
-          .get();
-    } catch (RestConstraintViolationException rcve) {
-      assertEquals(
-          "Error serializing message. Schema Registry not defined, no Schema Registry client available to serialize message.",
-          rcve.getMessage());
-      assertEquals(42207, rcve.getErrorCode());
-      checkpoint = true;
-    }
+    RestConstraintViolationException rcve =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                myRecordSerializer.serialize(
+                    EmbeddedFormat.AVRO,
+                    TOPIC_NAME,
+                    /* schema= */ Optional.empty(),
+                    TextNode.valueOf(
+                        BaseEncoding.base64().encode("foobar".getBytes(StandardCharsets.UTF_8))),
+                    /* isKey= */ true));
 
-    assertTrue(checkpoint);
+    assertEquals(
+        "Error serializing message. Schema Registry not defined, no Schema Registry client available to serialize message.",
+        rcve.getMessage());
+    assertEquals(42207, rcve.getErrorCode());
   }
 
   @Test

@@ -12,7 +12,7 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -562,16 +562,12 @@ public class ProduceActionTest {
 
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
 
-    boolean checkpoint = false;
-    try {
-      produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests);
-    } catch (RestConstraintViolationException e) {
-      assertEquals("Payload error. Null input provided. Data is required.", e.getMessage());
-      assertEquals(42206, e.getErrorCode());
-      checkpoint = true;
-    }
-
-    assertTrue(checkpoint);
+    RestConstraintViolationException e =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () -> produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests));
+    assertEquals("Payload error. Null input provided. Data is required.", e.getMessage());
+    assertEquals(42206, e.getErrorCode());
   }
 
   private static Provider<RecordSerializer> getRecordSerializerProvider(boolean error) {

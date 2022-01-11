@@ -20,6 +20,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafka.schemaregistry.ParsedSchema;
+import io.confluent.kafka.schemaregistry.SchemaProvider;
 import io.confluent.kafka.schemaregistry.client.SchemaMetadata;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
@@ -39,7 +40,7 @@ final class SchemaManagerImpl implements SchemaManager {
   private final SubjectNameStrategy defaultSubjectNameStrategy;
 
   @Inject
-  public SchemaManagerImpl(
+  SchemaManagerImpl(
       SchemaRegistryClient schemaRegistryClient, SubjectNameStrategy defaultSubjectNameStrategy) {
     this.schemaRegistryClient = requireNonNull(schemaRegistryClient);
     this.defaultSubjectNameStrategy = requireNonNull(defaultSubjectNameStrategy);
@@ -58,29 +59,29 @@ final class SchemaManagerImpl implements SchemaManager {
     // (subject|subjectNameStrategy)?, schemaId
 
     if (schemaId.isPresent()) {
-      checkArgument(!format.isPresent());
-      checkArgument(!schemaVersion.isPresent());
-      checkArgument(!rawSchema.isPresent());
+      checkArgumentWrapper(!format.isPresent());
+      checkArgumentWrapper(!schemaVersion.isPresent());
+      checkArgumentWrapper(!rawSchema.isPresent());
       return getSchemaFromSchemaId(topicName, subject, subjectNameStrategy, schemaId.get(), isKey);
     }
 
     // (subject|subjectNameStrategy)?, schemaVersion
     if (schemaVersion.isPresent()) {
-      checkArgument(!format.isPresent());
-      checkArgument(!rawSchema.isPresent());
+      checkArgumentWrapper(!format.isPresent());
+      checkArgumentWrapper(!rawSchema.isPresent());
       return getSchemaFromSchemaVersion(
           topicName, subject, subjectNameStrategy, schemaVersion.get(), isKey);
     }
 
     // format, (subject|subjectNameStrategy)?, rawSchema
     if (rawSchema.isPresent()) {
-      checkArgument(format.isPresent());
+      checkArgumentWrapper(format.isPresent());
       return getSchemaFromRawSchema(
           topicName, format.get(), subject, subjectNameStrategy, rawSchema.get(), isKey);
     }
 
     // (subject|subjectNameStrategy)?
-    checkArgument(!format.isPresent());
+    checkArgumentWrapper(!format.isPresent());
     return findLatestSchema(topicName, subject, subjectNameStrategy, isKey);
   }
 
@@ -143,10 +144,18 @@ final class SchemaManagerImpl implements SchemaManager {
     }
 
     ParsedSchema parsedSchema;
+    SchemaProvider schemaProvider;
+
+    try {
+      schemaProvider = EmbeddedFormat.forSchemaType(schema.getSchemaType()).getSchemaProvider();
+    } catch (UnsupportedOperationException e) {
+      throw new BadRequestException(
+          String.format("Schema version not supported for %s", schema.getSchemaType()), e);
+    }
+
     try {
       parsedSchema =
-          EmbeddedFormat.forSchemaType(schema.getSchemaType())
-              .getSchemaProvider() // throws unsupportedOperationException for bad config
+          schemaProvider
               .parseSchema(schema.getSchema(), schema.getReferences(), /* isNew= */ false)
               .orElseThrow(
                   () ->
@@ -154,9 +163,9 @@ final class SchemaManagerImpl implements SchemaManager {
                           String.format(
                               "Error when fetching schema by version. subject = %s, version = %d",
                               actualSubject, schemaVersion)));
-    } catch (UnsupportedOperationException | SchemaParseException e) {
+    } catch (SchemaParseException e) {
       throw new BadRequestException(
-          String.format("Schema version not supported for %s", schema.getSchemaType()), e);
+          String.format("Error parsing schema for %s", schema.getSchemaType()), e);
     }
 
     return RegisteredSchema.create(
@@ -170,13 +179,25 @@ final class SchemaManagerImpl implements SchemaManager {
       Optional<SubjectNameStrategy> subjectNameStrategy,
       String rawSchema,
       boolean isKey) {
-    checkArgument(format.requiresSchema(), "%s does not support schemas.", format);
+    try {
+      checkArgument(format.requiresSchema(), "%s does not support schemas.", format);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage(), e);
+    }
 
     ParsedSchema schema;
+    SchemaProvider schemaProvider;
+
+    try {
+      schemaProvider = format.getSchemaProvider();
+    } catch (UnsupportedOperationException e) {
+      throw new BadRequestException(
+          String.format("Raw schema not supported with format = %s", format), e);
+    }
+
     try {
       schema =
-          format
-              .getSchemaProvider() // throws UnsupportedOperationException for bad config
+          schemaProvider
               .parseSchema(rawSchema, /* references= */ emptyList(), /* isNew= */ true)
               .orElseThrow(
                   () ->
@@ -184,8 +205,9 @@ final class SchemaManagerImpl implements SchemaManager {
                           String.format(
                               "Error when parsing raw schema. format = %s, schema = %s",
                               format, rawSchema)));
-    } catch (UnsupportedOperationException | SchemaParseException e) {
-      throw new BadRequestException(String.format("Raw schema not supported with %s", format), e);
+    } catch (SchemaParseException e) {
+      throw new BadRequestException(
+          String.format("Error parsing schema with format = %s", format), e);
     }
 
     String actualSubject =
@@ -234,10 +256,20 @@ final class SchemaManagerImpl implements SchemaManager {
     }
 
     ParsedSchema schema;
+    SchemaProvider schemaProvider;
+
+    try {
+      schemaProvider = EmbeddedFormat.forSchemaType(metadata.getSchemaType()).getSchemaProvider();
+    } catch (UnsupportedOperationException e) {
+      throw new BadRequestException(
+          String.format(
+              "Schema subject not supported for schema type = %s", metadata.getSchemaType()),
+          e);
+    }
+
     try {
       schema =
-          EmbeddedFormat.forSchemaType(metadata.getSchemaType())
-              .getSchemaProvider() // throws UnsupportedOperationException for bad config
+          schemaProvider
               .parseSchema(metadata.getSchema(), metadata.getReferences(), /* isNew= */ false)
               .orElseThrow(
                   () ->
@@ -245,11 +277,9 @@ final class SchemaManagerImpl implements SchemaManager {
                           String.format(
                               "Error when fetching latest schema version. subject = %s",
                               actualSubject)));
-    } catch (UnsupportedOperationException | SchemaParseException e) {
-      // Shouldn't be possible to get here as "forSchemaType" throws an IllegalArgumentException if
-      // the schema type doesn't support fetching the latest schema version
+    } catch (SchemaParseException e) {
       throw new BadRequestException(
-          String.format("Schema subject not supported for %s", metadata.getSchemaType()), e);
+          String.format("Error parsing schema type = %s", metadata.getSchemaType()), e);
     }
 
     return RegisteredSchema.create(actualSubject, metadata.getId(), metadata.getVersion(), schema);
@@ -292,5 +322,13 @@ final class SchemaManagerImpl implements SchemaManager {
     }
 
     return subject;
+  }
+
+  void checkArgumentWrapper(boolean argument) {
+    try {
+      checkArgument(argument);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException("", e);
+    }
   }
 }

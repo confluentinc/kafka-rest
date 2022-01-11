@@ -22,7 +22,6 @@ import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.config.ConfigModule.AvroSerializerConfigs;
 import io.confluent.kafkarest.config.ConfigModule.JsonschemaSerializerConfigs;
 import io.confluent.kafkarest.config.ConfigModule.ProtobufSerializerConfigs;
-import io.confluent.kafkarest.config.ConfigModule.SchemaRegistryEnabledConfig;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -80,7 +79,7 @@ public final class ControllersModule extends AbstractBinder {
     public SchemaRecordSerializer provide() {
       if (schemaRegistryClient.isPresent()) {
         return new SchemaRecordSerializerImpl(
-            schemaRegistryClient,
+            schemaRegistryClient.get(),
             avroSerializerConfigs,
             jsonschemaSerializerConfigs,
             protobufSerializerConfigs);
@@ -97,21 +96,17 @@ public final class ControllersModule extends AbstractBinder {
 
     private final SchemaRegistryClient schemaRegistryClient;
     private final SubjectNameStrategy defaultSubjectNameStrategy;
-    private final boolean schemaRegistryEnabled;
 
     @Inject
     private SchemaManagerFactory(
-        SchemaRegistryClient schemaRegistryClient,
-        SubjectNameStrategy defaultSubjectNameStrategy,
-        @SchemaRegistryEnabledConfig Boolean schemaRegistryEnabled) {
+        SchemaRegistryClient schemaRegistryClient, SubjectNameStrategy defaultSubjectNameStrategy) {
       this.schemaRegistryClient = schemaRegistryClient;
       this.defaultSubjectNameStrategy = requireNonNull(defaultSubjectNameStrategy);
-      this.schemaRegistryEnabled = requireNonNull(schemaRegistryEnabled);
     }
 
     @Override
     public SchemaManager provide() {
-      if (schemaRegistryEnabled) {
+      if (schemaRegistryClient != null) {
         return new SchemaManagerImpl(schemaRegistryClient, defaultSubjectNameStrategy);
       } else {
         return new SchemaManagerThrowing();

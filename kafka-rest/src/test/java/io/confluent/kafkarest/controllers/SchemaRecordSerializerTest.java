@@ -16,7 +16,7 @@
 package io.confluent.kafkarest.controllers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
@@ -30,17 +30,17 @@ public class SchemaRecordSerializerTest {
 
   @Test
   public void errorWhenNoSchemaRegistryDefined() {
-    boolean checkpoint = false;
-    try {
-      SchemaRecordSerializer schemaRecordSerializer = new SchemaRecordSerializerThrowing();
-      schemaRecordSerializer.serialize(EmbeddedFormat.AVRO, "topic", Optional.empty(), null, true);
-    } catch (RestConstraintViolationException rcve) {
-      assertEquals(42207, rcve.getErrorCode());
-      assertEquals(
-          "Error serializing message. Schema Registry not defined, no Schema Registry client available to serialize message.",
-          rcve.getMessage());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    SchemaRecordSerializer schemaRecordSerializer = new SchemaRecordSerializerThrowing();
+    RestConstraintViolationException rcve =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                schemaRecordSerializer.serialize(
+                    EmbeddedFormat.AVRO, "topic", Optional.empty(), null, true));
+
+    assertEquals(42207, rcve.getErrorCode());
+    assertEquals(
+        "Error serializing message. Schema Registry not defined, no Schema Registry client available to serialize message.",
+        rcve.getMessage());
   }
 }

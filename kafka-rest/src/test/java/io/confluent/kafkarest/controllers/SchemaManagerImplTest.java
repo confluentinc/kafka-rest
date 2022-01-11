@@ -20,6 +20,7 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -47,7 +48,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import org.apache.avro.SchemaParseException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -397,25 +397,23 @@ public class SchemaManagerImplTest {
 
   @Test
   public void getSchema_avro_schemaId_nonExistingSchemaId() {
-    boolean checkpoint = false;
-    try {
-      schemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.empty(),
-          /* subject= */ Optional.empty(),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.of(1000),
-          /* schemaVersion= */ Optional.empty(),
-          /* rawSchema= */ Optional.empty(),
-          /* isKey= */ true);
-    } catch (RestConstraintViolationException rcve) {
-      assertEquals(
-          "Error serializing message. Error when fetching schema by id. schemaId = 1000",
-          rcve.getMessage());
-      assertEquals(42207, rcve.getErrorCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    RestConstraintViolationException rcve =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                schemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.empty(),
+                    /* subject= */ Optional.empty(),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.of(1000),
+                    /* schemaVersion= */ Optional.empty(),
+                    /* rawSchema= */ Optional.empty(),
+                    /* isKey= */ true));
+    assertEquals(
+        "Error serializing message. Error when fetching schema by id. schemaId = 1000",
+        rcve.getMessage());
+    assertEquals(42207, rcve.getErrorCode());
   }
 
   @Test
@@ -423,121 +421,109 @@ public class SchemaManagerImplTest {
     ParsedSchema schema = new AvroSchema("{\"type\": \"int\"}");
     int schemaId = schemaRegistryClient.register("foobar", schema);
 
-    boolean checkpoint = false;
-    try {
-      schemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.empty(),
-          /* subject= */ Optional.empty(),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.of(schemaId),
-          /* schemaVersion= */ Optional.empty(),
-          /* rawSchema= */ Optional.empty(),
-          /* isKey= */ true);
-    } catch (RestConstraintViolationException rcve) {
-      assertEquals(
-          "Error serializing message. Error when fetching schema version. subject = topic-1-key, schema = \"int\"\n"
-              + "Subject Not Found; error code: 40401",
-          rcve.getMessage());
-      assertEquals(42207, rcve.getErrorCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    RestConstraintViolationException rcve =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                schemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.empty(),
+                    /* subject= */ Optional.empty(),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.of(schemaId),
+                    /* schemaVersion= */ Optional.empty(),
+                    /* rawSchema= */ Optional.empty(),
+                    /* isKey= */ true));
+    assertEquals(
+        "Error serializing message. Error when fetching schema version. subject = topic-1-key, schema = \"int\"\n"
+            + "Subject Not Found; error code: 40401",
+        rcve.getMessage());
+    assertEquals(42207, rcve.getErrorCode());
   }
 
   @Test
   public void getSchema_avro_rawSchema_invalidSchema() {
-    boolean checkpoint = false;
-    try {
-      schemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.of(EmbeddedFormat.AVRO),
-          /* subject= */ Optional.empty(),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.empty(),
-          /* rawSchema= */ Optional.of("foobar"),
-          /* isKey= */ true);
-
-    } catch (RestConstraintViolationException rcve) {
-      assertEquals(
-          "Invalid schema: Error when parsing raw schema. format = AVRO, schema = foobar",
-          rcve.getMessage());
-      assertEquals(42205, rcve.getErrorCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    RestConstraintViolationException rcve =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                schemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.of(EmbeddedFormat.AVRO),
+                    /* subject= */ Optional.empty(),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.empty(),
+                    /* rawSchema= */ Optional.of("foobar"),
+                    /* isKey= */ true));
+    assertEquals(
+        "Invalid schema: Error when parsing raw schema. format = AVRO, schema = foobar",
+        rcve.getMessage());
+    assertEquals(42205, rcve.getErrorCode());
   }
 
   @Test
   public void getSchema_jsonschema_rawSchema_invalidSchema() {
-    boolean checkpoint = false;
-    try {
-      schemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.of(EmbeddedFormat.JSONSCHEMA),
-          /* subject= */ Optional.empty(),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.empty(),
-          /* rawSchema= */ Optional.of("foobar"),
-          /* isKey= */ true);
-    } catch (RestConstraintViolationException rcve) {
-      assertEquals(
-          "Invalid schema: Error when parsing raw schema. format = JSONSCHEMA, schema = foobar",
-          rcve.getMessage());
-      assertEquals(42205, rcve.getErrorCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    RestConstraintViolationException rcve =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                schemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.of(EmbeddedFormat.JSONSCHEMA),
+                    /* subject= */ Optional.empty(),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.empty(),
+                    /* rawSchema= */ Optional.of("foobar"),
+                    /* isKey= */ true));
+    assertEquals(
+        "Invalid schema: Error when parsing raw schema. format = JSONSCHEMA, schema = foobar",
+        rcve.getMessage());
+    assertEquals(42205, rcve.getErrorCode());
   }
 
   @Test
   public void getSchema_protobuf_rawSchema_invalidSchema() {
-    boolean checkpoint = false;
-    try {
-      schemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.of(EmbeddedFormat.PROTOBUF),
-          /* subject= */ Optional.empty(),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.empty(),
-          /* rawSchema= */ Optional.of("foobar"),
-          /* isKey= */ true);
-    } catch (RestConstraintViolationException rcve) {
-      assertEquals(
-          "Invalid schema: Error when parsing raw schema. format = PROTOBUF, schema = foobar",
-          rcve.getMessage());
-      assertEquals(42205, rcve.getErrorCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    RestConstraintViolationException rcve =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                schemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.of(EmbeddedFormat.PROTOBUF),
+                    /* subject= */ Optional.empty(),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.empty(),
+                    /* rawSchema= */ Optional.of("foobar"),
+                    /* isKey= */ true));
+    assertEquals(
+        "Invalid schema: Error when parsing raw schema. format = PROTOBUF, schema = foobar",
+        rcve.getMessage());
+    assertEquals(42205, rcve.getErrorCode());
   }
 
   @Test
   public void getSchema_avro_latestSchema_noSchema() {
-    boolean checkpoint = false;
-    try {
-      schemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.empty(),
-          /* subject= */ Optional.empty(),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.empty(),
-          /* rawSchema= */ Optional.empty(),
-          /* isKey= */ true);
-
-    } catch (RestConstraintViolationException rcve) {
-      assertEquals(
-          "Error serializing message. Error when fetching latest schema version. subject = topic-1-key\n"
-              + "Subject Not Found; error code: 40401",
-          rcve.getMessage());
-      assertEquals(42207, rcve.getErrorCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    RestConstraintViolationException rcve =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                schemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.empty(),
+                    /* subject= */ Optional.empty(),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.empty(),
+                    /* rawSchema= */ Optional.empty(),
+                    /* isKey= */ true));
+    assertEquals(
+        "Error serializing message. Error when fetching latest schema version. subject = topic-1-key\n"
+            + "Subject Not Found; error code: 40401",
+        rcve.getMessage());
+    assertEquals(42207, rcve.getErrorCode());
   }
 
   @Test
@@ -549,23 +535,21 @@ public class SchemaManagerImplTest {
     schemaRegistryClient.register(subject, schema);
     int schemaVersion = schemaRegistryClient.getVersion(subject, schema);
 
-    boolean checkpoint = false;
-    try {
-      schemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.empty(),
-          /* subject= */ Optional.empty(),
-          /* subjectNameStrategy= */ Optional.of(strategy),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.of(schemaVersion),
-          /* rawSchema= */ Optional.empty(),
-          /* isKey= */ true);
-    } catch (BadRequestException bre) {
-      assertEquals("Schema does not exist for subject: my-subject-, version: 1", bre.getMessage());
-      assertEquals(400, bre.getCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    BadRequestException bre =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                schemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.empty(),
+                    /* subject= */ Optional.empty(),
+                    /* subjectNameStrategy= */ Optional.of(strategy),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.of(schemaVersion),
+                    /* rawSchema= */ Optional.empty(),
+                    /* isKey= */ true));
+    assertEquals("Schema does not exist for subject: my-subject-, version: 1", bre.getMessage());
+    assertEquals(400, bre.getCode());
   }
 
   @Test
@@ -573,71 +557,65 @@ public class SchemaManagerImplTest {
     SubjectNameStrategy strategy = new NullReturningSubjectNameStrategy();
     strategy.subjectName(TOPIC_NAME, /* isKey= */ true, /* schema= */ null);
 
-    boolean checkpoint = false;
-    try {
-      schemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.empty(),
-          /* subject= */ Optional.empty(),
-          /* subjectNameStrategy= */ Optional.of(strategy),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.of(100),
-          /* rawSchema= */ Optional.empty(),
-          /* isKey= */ true);
-    } catch (IllegalArgumentException rcve) {
-      assertTrue(
-          rcve.getMessage()
-              .startsWith(
-                  "Cannot use schema_subject_strategy=io.confluent.kafkarest.controllers.SchemaManagerImplTest$NullReturningSubjectNameStrategy@"));
-      assertTrue(rcve.getMessage().endsWith(" without schema_id or schema."));
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    IllegalArgumentException rcve =
+        assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                schemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.empty(),
+                    /* subject= */ Optional.empty(),
+                    /* subjectNameStrategy= */ Optional.of(strategy),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.of(100),
+                    /* rawSchema= */ Optional.empty(),
+                    /* isKey= */ true));
+    assertTrue(
+        rcve.getMessage()
+            .startsWith(
+                "Cannot use schema_subject_strategy=io.confluent.kafkarest.controllers.SchemaManagerImplTest$NullReturningSubjectNameStrategy@"));
+    assertTrue(rcve.getMessage().endsWith(" without schema_id or schema."));
   }
 
   @Test
   public void schemaRegistryDisabledReturnsError() {
     SchemaManager mySchemaManager = new SchemaManagerThrowing();
-    boolean checkpoint = false;
 
-    try {
-      mySchemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.empty(),
-          /* subject= */ Optional.empty(),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.empty(),
-          /* rawSchema= */ Optional.empty(),
-          /* isKey= */ true);
-    } catch (RestConstraintViolationException e) {
-      assertEquals(
-          "Payload error. Schema Registry must be configured when using schemas.", e.getMessage());
-      assertEquals(42206, e.getErrorCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    RestConstraintViolationException e =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                mySchemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.empty(),
+                    /* subject= */ Optional.empty(),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.empty(),
+                    /* rawSchema= */ Optional.empty(),
+                    /* isKey= */ true));
+    assertEquals(
+        "Payload error. Schema Registry must be configured when using schemas.", e.getMessage());
+    assertEquals(42206, e.getErrorCode());
   }
 
   @Test
   public void rawSchemaWithUnsupportedSchemaVersionThrowsException() {
-    boolean checkpoint = false;
-    try {
-      schemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.empty(),
-          /* subject= */ Optional.empty(),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.of(0),
-          /* rawSchema= */ Optional.empty(),
-          /* isKey= */ true);
-    } catch (BadRequestException iae) {
-      assertEquals("Schema does not exist for subject: topic-1-key, version: 0", iae.getMessage());
-      assertEquals(400, iae.getCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    BadRequestException iae =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                schemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.empty(),
+                    /* subject= */ Optional.empty(),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.of(0),
+                    /* rawSchema= */ Optional.empty(),
+                    /* isKey= */ true));
+    assertEquals("Schema does not exist for subject: topic-1-key, version: 0", iae.getMessage());
+    assertEquals(400, iae.getCode());
   }
 
   @Test
@@ -656,25 +634,23 @@ public class SchemaManagerImplTest {
     SchemaManager mySchemaManager =
         new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
 
-    boolean checkpoint = false;
-    try {
-      mySchemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.empty(),
-          /* subject= */ Optional.of("subject1"),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.of(0),
-          /* rawSchema= */ Optional.empty(),
-          /* isKey= */ true);
-    } catch (RestConstraintViolationException iae) {
-      assertEquals(
-          "Invalid schema: Error when fetching schema by version. subject = subject1, version = 0",
-          iae.getMessage());
-      assertEquals(42205, iae.getErrorCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    RestConstraintViolationException iae =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                mySchemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.empty(),
+                    /* subject= */ Optional.of("subject1"),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.of(0),
+                    /* rawSchema= */ Optional.empty(),
+                    /* isKey= */ true));
+    assertEquals(
+        "Invalid schema: Error when fetching schema by version. subject = subject1, version = 0",
+        iae.getMessage());
+    assertEquals(42205, iae.getErrorCode());
   }
 
   @Test
@@ -693,23 +669,21 @@ public class SchemaManagerImplTest {
     SchemaManager mySchemaManager =
         new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
 
-    boolean checkpoint = false;
-    try {
-      mySchemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.empty(),
-          /* subject= */ Optional.of("subject1"),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.of(0),
-          /* rawSchema= */ Optional.empty(),
-          /* isKey= */ true);
-    } catch (BadRequestException iae) {
-      assertEquals("Schema version not supported for JSON", iae.getMessage());
-      assertEquals(400, iae.getCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    BadRequestException iae =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                mySchemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.empty(),
+                    /* subject= */ Optional.of("subject1"),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.of(0),
+                    /* rawSchema= */ Optional.empty(),
+                    /* isKey= */ true));
+    assertEquals("Schema version not supported for JSON", iae.getMessage());
+    assertEquals(400, iae.getCode());
   }
 
   @Test
@@ -727,46 +701,42 @@ public class SchemaManagerImplTest {
     SchemaManager mySchemaManager =
         new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
 
-    boolean checkpoint = false;
-    try {
-      mySchemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.empty(),
-          /* subject= */ Optional.of("subject1"),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.of(123),
-          /* rawSchema= */ Optional.empty(),
-          /* isKey= */ true);
-    } catch (RestConstraintViolationException iae) {
-      assertEquals(
-          "Invalid schema: Error when fetching schema by version. subject = subject1, version = 123",
-          iae.getMessage());
-      assertEquals(42205, iae.getErrorCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    RestConstraintViolationException iae =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                mySchemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.empty(),
+                    /* subject= */ Optional.of("subject1"),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.of(123),
+                    /* rawSchema= */ Optional.empty(),
+                    /* isKey= */ true));
+    assertEquals(
+        "Invalid schema: Error when fetching schema by version. subject = subject1, version = 123",
+        iae.getMessage());
+    assertEquals(42205, iae.getErrorCode());
   }
 
   @Test
   public void errorRawSchemaNotSupportedWithFormat() {
 
-    boolean checkpoint = false;
-    try {
-      schemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.of(EmbeddedFormat.JSON),
-          /* subject= */ Optional.empty(),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.empty(),
-          /* rawSchema= */ Optional.of("rawSchema"),
-          /* isKey= */ true);
-    } catch (IllegalArgumentException iae) {
-      assertEquals("JSON does not support schemas.", iae.getMessage());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    BadRequestException iae =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                schemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.of(EmbeddedFormat.JSON),
+                    /* subject= */ Optional.empty(),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.empty(),
+                    /* rawSchema= */ Optional.of("rawSchema"),
+                    /* isKey= */ true));
+    assertEquals("JSON does not support schemas.", iae.getMessage());
   }
 
   @Test
@@ -778,32 +748,30 @@ public class SchemaManagerImplTest {
 
     expect(embeddedFormatMock.requiresSchema()).andReturn(true);
     expect(embeddedFormatMock.getSchemaProvider())
-        .andThrow(new SchemaParseException("parse gone wrong"));
+        .andThrow(new UnsupportedOperationException("Unsupported"));
 
     replay(embeddedFormatMock, schemaProviderMock, schemaRegistryClientMock);
 
     SchemaManager mySchemaManager =
         new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
 
-    boolean checkpoint = false;
-    try {
-      mySchemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.of(embeddedFormatMock),
-          /* subject= */ Optional.empty(),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.empty(),
-          /* rawSchema= */ Optional.of(TextNode.valueOf("rawSchema").toString()),
-          /* isKey= */ true);
-    } catch (BadRequestException rcve) {
-      assertEquals(
-          "Raw schema not supported with EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat",
-          rcve.getMessage());
-      assertEquals(400, rcve.getCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    BadRequestException rcve =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                mySchemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.of(embeddedFormatMock),
+                    /* subject= */ Optional.empty(),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.empty(),
+                    /* rawSchema= */ Optional.of(TextNode.valueOf("rawSchema").toString()),
+                    /* isKey= */ true));
+    assertEquals(
+        "Raw schema not supported with format = EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat",
+        rcve.getMessage());
+    assertEquals(400, rcve.getCode());
   }
 
   @Test
@@ -822,25 +790,23 @@ public class SchemaManagerImplTest {
 
     replay(embeddedFormatMock, schemaProviderMock);
 
-    boolean checkpoint = false;
-    try {
-      schemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.of(embeddedFormatMock),
-          /* subject= */ Optional.empty(),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.empty(),
-          /* rawSchema= */ Optional.of(TextNode.valueOf("rawSchema").toString()),
-          /* isKey= */ true);
-    } catch (BadRequestException bre) {
-      assertEquals(
-          "Raw schema not supported with EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat",
-          bre.getMessage());
-      assertEquals(400, bre.getCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    BadRequestException bre =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                schemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.of(embeddedFormatMock),
+                    /* subject= */ Optional.empty(),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.empty(),
+                    /* rawSchema= */ Optional.of(TextNode.valueOf("rawSchema").toString()),
+                    /* isKey= */ true));
+    assertEquals(
+        "Raw schema not supported with format = EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat",
+        bre.getMessage());
+    assertEquals(400, bre.getCode());
   }
 
   @Test
@@ -867,26 +833,24 @@ public class SchemaManagerImplTest {
     SchemaManager mySchemaManager =
         new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
 
-    boolean checkpoint = false;
-    try {
-      mySchemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.of(embeddedFormatMock),
-          /* subject= */ Optional.of("subject1"),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.empty(),
-          /* rawSchema= */ Optional.of(TextNode.valueOf("rawString").toString()),
-          /* isKey= */ true);
-    } catch (RestConstraintViolationException rcve) {
-      assertEquals(
-          "Error serializing message. Error when registering schema. format = EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat, subject = subject1, schema = null\n"
-              + "Can't register Schema",
-          rcve.getMessage());
-      assertEquals(42207, rcve.getErrorCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    RestConstraintViolationException rcve =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                mySchemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.of(embeddedFormatMock),
+                    /* subject= */ Optional.of("subject1"),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.empty(),
+                    /* rawSchema= */ Optional.of(TextNode.valueOf("rawString").toString()),
+                    /* isKey= */ true));
+    assertEquals(
+        "Error serializing message. Error when registering schema. format = EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat, subject = subject1, schema = null\n"
+            + "Can't register Schema",
+        rcve.getMessage());
+    assertEquals(42207, rcve.getErrorCode());
   }
 
   @Test
@@ -906,25 +870,23 @@ public class SchemaManagerImplTest {
     SchemaManager mySchemaManager =
         new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
 
-    boolean checkpoint = false;
-    try {
-      mySchemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.empty(),
-          /* subject= */ Optional.of("subject1"),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.empty(),
-          /* rawSchema= */ Optional.empty(),
-          /* isKey= */ true);
-    } catch (RestConstraintViolationException rcve) {
-      assertEquals(
-          "Invalid schema: Error when fetching latest schema version. subject = subject1",
-          rcve.getMessage());
-      assertEquals(42205, rcve.getErrorCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    RestConstraintViolationException rcve =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                mySchemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.empty(),
+                    /* subject= */ Optional.of("subject1"),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.empty(),
+                    /* rawSchema= */ Optional.empty(),
+                    /* isKey= */ true));
+    assertEquals(
+        "Invalid schema: Error when fetching latest schema version. subject = subject1",
+        rcve.getMessage());
+    assertEquals(42205, rcve.getErrorCode());
   }
 
   @Test
@@ -948,23 +910,21 @@ public class SchemaManagerImplTest {
     SchemaManager mySchemaManager =
         new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
 
-    boolean checkpoint = false;
-    try {
-      mySchemaManager.getSchema(
-          TOPIC_NAME,
-          /* format= */ Optional.empty(),
-          /* subject= */ Optional.of("subject1"),
-          /* subjectNameStrategy= */ Optional.empty(),
-          /* schemaId= */ Optional.empty(),
-          /* schemaVersion= */ Optional.empty(),
-          /* rawSchema= */ Optional.empty(),
-          /* isKey= */ true);
-    } catch (BadRequestException bre) {
-      assertEquals("Schema subject not supported for schemaType", bre.getMessage());
-      assertEquals(400, bre.getCode());
-      checkpoint = true;
-    }
-    assertTrue(checkpoint);
+    BadRequestException bre =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                mySchemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.empty(),
+                    /* subject= */ Optional.of("subject1"),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.empty(),
+                    /* rawSchema= */ Optional.empty(),
+                    /* isKey= */ true));
+    assertEquals("Schema subject not supported for schema type = schemaType", bre.getMessage());
+    assertEquals(400, bre.getCode());
   }
 
   private static final class MySubjectNameStrategy implements SubjectNameStrategy {

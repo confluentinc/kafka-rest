@@ -162,7 +162,7 @@ public abstract class StreamingResponse<T> {
     private InputStreamingResponse(
         MappingIterator<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
       super(chunkedOutputFactory);
-      this.mappingIteratorInput = mappingIteratorInput;
+      this.mappingIteratorInput = requireNonNull(mappingIteratorInput);
     }
 
     public void close() {

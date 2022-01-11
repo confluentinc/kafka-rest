@@ -52,16 +52,16 @@ final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
   private final ProtobufSerializer protobufSerializer;
 
   @Inject
-  public SchemaRecordSerializerImpl(
-      Optional<SchemaRegistryClient> schemaRegistryClient,
+  SchemaRecordSerializerImpl(
+      SchemaRegistryClient schemaRegistryClient,
       @AvroSerializerConfigs Map<String, Object> avroSerializerConfigs,
       @JsonschemaSerializerConfigs Map<String, Object> jsonschemaSerializerConfigs,
       @ProtobufSerializerConfigs Map<String, Object> protobufSerializerConfigs) {
-    avroSerializer = new AvroSerializer(schemaRegistryClient.get(), avroSerializerConfigs);
+    requireNonNull(schemaRegistryClient);
+    avroSerializer = new AvroSerializer(schemaRegistryClient, avroSerializerConfigs);
     jsonschemaSerializer =
-        new JsonSchemaSerializer(schemaRegistryClient.get(), jsonschemaSerializerConfigs);
-    protobufSerializer =
-        new ProtobufSerializer(schemaRegistryClient.get(), protobufSerializerConfigs);
+        new JsonSchemaSerializer(schemaRegistryClient, jsonschemaSerializerConfigs);
+    protobufSerializer = new ProtobufSerializer(schemaRegistryClient, protobufSerializerConfigs);
   }
 
   @Override
