@@ -32,14 +32,12 @@ import io.confluent.kafkarest.entities.RegisteredSchema;
 import io.confluent.kafkarest.exceptions.BadRequestException;
 import java.io.IOException;
 import java.util.Optional;
-import javax.inject.Inject;
 import org.apache.avro.SchemaParseException;
 
 final class SchemaManagerImpl implements SchemaManager {
   private final SchemaRegistryClient schemaRegistryClient;
   private final SubjectNameStrategy defaultSubjectNameStrategy;
 
-  @Inject
   SchemaManagerImpl(
       SchemaRegistryClient schemaRegistryClient, SubjectNameStrategy defaultSubjectNameStrategy) {
     this.schemaRegistryClient = requireNonNull(schemaRegistryClient);
@@ -324,11 +322,11 @@ final class SchemaManagerImpl implements SchemaManager {
     return subject;
   }
 
-  void checkArgumentWrapper(boolean argument) {
+  private static void checkArgumentWrapper(boolean argument) {
     try {
       checkArgument(argument);
     } catch (IllegalArgumentException e) {
-      throw new BadRequestException("", e);
+      throw new BadRequestException("Unsupported argument: ", e.getMessage(), e);
     }
   }
 }

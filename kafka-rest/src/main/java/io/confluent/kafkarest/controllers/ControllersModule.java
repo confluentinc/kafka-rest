@@ -94,20 +94,21 @@ public final class ControllersModule extends AbstractBinder {
 
   private static final class SchemaManagerFactory implements Factory<SchemaManager> {
 
-    private final SchemaRegistryClient schemaRegistryClient;
+    private final Optional<SchemaRegistryClient> schemaRegistryClient;
     private final SubjectNameStrategy defaultSubjectNameStrategy;
 
     @Inject
     private SchemaManagerFactory(
-        SchemaRegistryClient schemaRegistryClient, SubjectNameStrategy defaultSubjectNameStrategy) {
+        Optional<SchemaRegistryClient> schemaRegistryClient,
+        SubjectNameStrategy defaultSubjectNameStrategy) {
       this.schemaRegistryClient = schemaRegistryClient;
       this.defaultSubjectNameStrategy = requireNonNull(defaultSubjectNameStrategy);
     }
 
     @Override
     public SchemaManager provide() {
-      if (schemaRegistryClient != null) {
-        return new SchemaManagerImpl(schemaRegistryClient, defaultSubjectNameStrategy);
+      if (schemaRegistryClient.isPresent()) {
+        return new SchemaManagerImpl(schemaRegistryClient.get(), defaultSubjectNameStrategy);
       } else {
         return new SchemaManagerThrowing();
       }

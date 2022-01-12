@@ -867,8 +867,8 @@ public class KafkaRestConfig extends RestConfig {
 
     if (!configs.containsKey(SCHEMA_REGISTRY_URL_CONFIG)) {
       log.warn(
-          "Using default value {} for config {}. In a future release this config won't have a"
-              + "default value anymore. If you are using Schema Registry, please, specify {}"
+          "Using default value {} for config {}. In a future release this config won't have a "
+              + "default value anymore. If you are using Schema Registry, please, specify {} "
               + "explicitly. Requests will fail in a future release if you try to use Schema "
               + "Registry but have not specified a value for {}. An empty value for this property "
               + "means that the Schema Registry is disabled.",
