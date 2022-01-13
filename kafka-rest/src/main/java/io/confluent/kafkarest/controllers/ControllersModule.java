@@ -63,8 +63,6 @@ public final class ControllersModule extends AbstractBinder {
     private final Map<String, Object> jsonschemaSerializerConfigs;
     private final Map<String, Object> protobufSerializerConfigs;
 
-    //dummy change
-
     @Inject
     private SchemaRecordSerializerFactory(
         Optional<SchemaRegistryClient> schemaRegistryClient,
@@ -103,7 +101,7 @@ public final class ControllersModule extends AbstractBinder {
     private SchemaManagerFactory(
         Optional<SchemaRegistryClient> schemaRegistryClient,
         SubjectNameStrategy defaultSubjectNameStrategy) {
-      this.schemaRegistryClient = schemaRegistryClient;
+      this.schemaRegistryClient = requireNonNull(schemaRegistryClient);
       this.defaultSubjectNameStrategy = requireNonNull(defaultSubjectNameStrategy);
     }
 
