@@ -5,11 +5,13 @@ import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
 
 import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
+import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import java.io.IOException;
 import java.util.Optional;
@@ -147,5 +149,82 @@ public class StreamingResponseTest {
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
     EasyMock.verify(requestsMappingIterator);
+  }
+
+  @Test
+  public void testHasNextMappingException() throws IOException {
+
+    MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
+    expect(requests.hasNext())
+        .andThrow(
+            new RuntimeJsonMappingException(
+                "Error thrown by mapping iterator describing problem."));
+    requests.close();
+    replay(requests);
+
+    ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
+    ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
+
+    ResultOrError resultOrError =
+        ResultOrError.error(
+            ErrorResponse.create(
+                400,
+                "Bad Request: Error processing JSON: Error thrown by mapping iterator describing problem."));
+
+    expect(mockedChunkedOutputFactory.getChunkedOutput()).andReturn(mockedChunkedOutput);
+    mockedChunkedOutput.write(resultOrError);
+    expect(mockedChunkedOutput.isClosed()).andReturn(false);
+    mockedChunkedOutput.close();
+    replay(mockedChunkedOutputFactory);
+    replay(mockedChunkedOutput);
+
+    StreamingResponseFactory streamingResponseFactory =
+        new StreamingResponseFactory(mockedChunkedOutputFactory);
+    StreamingResponse<ProduceRequest> streamingResponse = streamingResponseFactory.from(requests);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+
+    streamingResponse.compose(result -> new CompletableFuture<>()).resume(response);
+
+    EasyMock.verify(mockedChunkedOutput);
+    EasyMock.verify(mockedChunkedOutputFactory);
+    EasyMock.verify(requests);
+  }
+
+  @Test
+  public void testHasNextRuntimeException() throws IOException {
+    MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
+    expect(requests.hasNext())
+        .andThrow(new RuntimeException("IO error thrown by mapping iterator describing problem."));
+    requests.close();
+    replay(requests);
+
+    ChunkedOutputFactory mockedChunkedOutputFactory = mock(ChunkedOutputFactory.class);
+    ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
+
+    ResultOrError resultOrError =
+        ResultOrError.error(
+            ErrorResponse.create(
+                400,
+                "Bad Request: Error processing message: IO error thrown by mapping iterator describing problem."));
+
+    expect(mockedChunkedOutputFactory.getChunkedOutput()).andReturn(mockedChunkedOutput);
+    mockedChunkedOutput.write(resultOrError);
+    expect(mockedChunkedOutput.isClosed()).andReturn(false);
+    mockedChunkedOutput.close();
+    replay(mockedChunkedOutputFactory);
+    replay(mockedChunkedOutput);
+
+    StreamingResponseFactory streamingResponseFactory =
+        new StreamingResponseFactory(mockedChunkedOutputFactory);
+    StreamingResponse<ProduceRequest> streamingResponse = streamingResponseFactory.from(requests);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+
+    streamingResponse.compose(result -> new CompletableFuture<>()).resume(response);
+
+    EasyMock.verify(mockedChunkedOutput);
+    EasyMock.verify(mockedChunkedOutputFactory);
+    EasyMock.verify(requests);
   }
 }

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerMetrics;
 import io.confluent.kafkarest.ProducerMetricsRegistry;
 import io.confluent.kafkarest.controllers.ProduceController;
@@ -57,6 +58,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
+import org.apache.kafka.common.errors.SerializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,6 +114,10 @@ public final class ProduceAction {
       @PathParam("topicName") String topicName,
       MappingIterator<ProduceRequest> requests)
       throws Exception {
+
+    if (requests == null) {
+      throw Errors.invalidPayloadException("Null input provided. Data is required.");
+    }
 
     ProduceController controller = produceControllerProvider.get();
     streamingResponseFactory
@@ -219,8 +225,10 @@ public final class ProduceAction {
                   data.getSchemaVersion(),
                   data.getRawSchema(),
                   isKey));
-    } catch (IllegalArgumentException e) {
-      throw new BadRequestException(e.getMessage(), e);
+    } catch (SerializationException se) {
+      throw Errors.messageSerializationException(se.getMessage());
+    } catch (IllegalArgumentException iae) {
+      throw new BadRequestException(iae.getMessage(), iae);
     }
   }
 

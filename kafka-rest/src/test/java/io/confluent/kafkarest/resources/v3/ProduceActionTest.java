@@ -5,25 +5,33 @@ import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_BYTES_PER_SECON
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED;
+import static io.confluent.kafkarest.KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG;
 import static org.easymock.EasyMock.anyBoolean;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.node.TextNode;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.ProducerMetrics;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
+import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.ProduceResult;
 import io.confluent.kafkarest.entities.v3.ProduceRequest;
+import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
+import io.confluent.rest.exceptions.RestConstraintViolationException;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
@@ -40,6 +48,51 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class ProduceActionTest {
+
+  @Test
+  public void produceNoSchemaRegistryDefined() throws Exception {
+    // config
+    final int TOTAL_NUMBER_OF_PRODUCE_CALLS = 1;
+    Properties properties = new Properties();
+    properties.put(PRODUCE_GRACE_PERIOD_MS, "100");
+    properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "100");
+    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(999999999));
+    properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, "3600000");
+    properties.put(SCHEMA_REGISTRY_URL_CONFIG, "");
+
+    // setup
+    ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
+    ChunkedOutput<ResultOrError> mockedChunkedOutput =
+        getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS);
+    Clock clock = mock(Clock.class);
+    ProduceAction produceAction =
+        getProduceAction(properties, chunkedOutputFactory, clock, 1, true);
+    MappingIterator<ProduceRequest> requests = getProduceRequestsMappingIteratorWithSchemaNeeded();
+
+    // expected results
+
+    ErrorResponse err =
+        ErrorResponse.create(
+            422,
+            "Error: 42206 : Payload error. Schema Registry must be configured when using schemas.");
+    ResultOrError resultOrErrorFail = ResultOrError.error(err);
+    expect(mockedChunkedOutput.isClosed()).andReturn(false);
+    mockedChunkedOutput.write(resultOrErrorFail);
+    mockedChunkedOutput.close();
+
+    expect(clock.millis()).andReturn(0L);
+
+    replay(mockedChunkedOutput, chunkedOutputFactory, clock);
+
+    // run test
+    FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
+    produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests);
+
+    // check results
+    EasyMock.verify(requests);
+    EasyMock.verify(mockedChunkedOutput);
+  }
 
   @Test
   public void produceWithZeroGracePeriod() throws Exception {
@@ -125,10 +178,18 @@ public class ProduceActionTest {
 
     ProduceAction produceAction0 =
         getProduceAction(
-            produceRateLimiters, chunkedOutputFactory0, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD0, 0);
+            produceRateLimiters,
+            chunkedOutputFactory0,
+            TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD0,
+            0,
+            false);
     ProduceAction produceAction1 =
         getProduceAction(
-            produceRateLimiters, chunkedOutputFactory1, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1, 1);
+            produceRateLimiters,
+            chunkedOutputFactory1,
+            TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1,
+            1,
+            false);
     MappingIterator<ProduceRequest> requests0 =
         getProduceRequestsMappingIterator(TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD0);
     MappingIterator<ProduceRequest> requests1 =
@@ -480,16 +541,56 @@ public class ProduceActionTest {
     EasyMock.verify(mockedChunkedOutput);
   }
 
-  private static Provider<RecordSerializer> getRecordSerializerProvider() {
+  @Test
+  public void testHasNextOnNullData() throws Exception {
+    Properties properties = new Properties();
+    properties.put(PRODUCE_GRACE_PERIOD_MS, "0");
+    properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "100");
+    properties.put(
+        PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(30)); // first record is 25 bytes long
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, "3600000");
+    properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+
+    // setup
+    ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
+
+    Clock clock = mock(Clock.class);
+    ProduceAction produceAction = getProduceAction(properties, chunkedOutputFactory, clock, 1);
+    MappingIterator<ProduceRequest> requests = null;
+
+    FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
+
+    RestConstraintViolationException e =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () -> produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests));
+    assertEquals("Payload error. Null input provided. Data is required.", e.getMessage());
+    assertEquals(42206, e.getErrorCode());
+  }
+
+  private static Provider<RecordSerializer> getRecordSerializerProvider(boolean error) {
     Provider<RecordSerializer> recordSerializerProvider = mock(Provider.class);
     RecordSerializer recordSerializer = mock(RecordSerializer.class);
     expect(recordSerializerProvider.get()).andReturn(recordSerializer).anyTimes();
-    expect(
-            recordSerializer.serialize(
-                anyObject(), anyObject(), anyObject(), anyObject(), anyBoolean()))
-        .andReturn(Optional.empty())
-        .anyTimes();
+
+    if (!error) {
+      expect(
+              recordSerializer.serialize(
+                  anyObject(), anyObject(), anyObject(), anyObject(), anyBoolean()))
+          .andReturn(Optional.empty())
+          .anyTimes();
+    } else {
+      expect(
+              recordSerializer.serialize(
+                  anyObject(), anyObject(), anyObject(), anyObject(), anyBoolean()))
+          .andThrow(
+              Errors.messageSerializationException(
+                  "Schema Registry not defined, no Schema Registry client available to deserialize message."))
+          .anyTimes();
+    }
     replay(recordSerializerProvider, recordSerializer);
+
+    EasyMock.verify(recordSerializer);
     return recordSerializerProvider;
   }
 
@@ -509,6 +610,27 @@ public class ProduceActionTest {
       expect(requests.hasNext()).andReturn(false).times(1);
       requests.close();
     }
+    replay(requests);
+    return requests;
+  }
+
+  private static MappingIterator<ProduceRequest> getProduceRequestsMappingIteratorWithSchemaNeeded()
+      throws IOException {
+    MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
+    ProduceRequestData key =
+        ProduceRequestData.builder()
+            .setFormat(EmbeddedFormat.AVRO)
+            .setData(TextNode.valueOf("bob"))
+            .setRawSchema("bob")
+            .build();
+
+    ProduceRequest request = ProduceRequest.builder().setKey(key).setOriginalSize(25L).build();
+
+    expect(requests.hasNext()).andReturn(true).times(1);
+    expect(requests.nextValue()).andReturn(request).times(1);
+    expect(requests.hasNext()).andReturn(false).times(1);
+    requests.close();
+
     replay(requests);
     return requests;
   }
@@ -636,6 +758,15 @@ public class ProduceActionTest {
 
   private static ProduceAction getProduceAction(
       Properties properties, ChunkedOutputFactory chunkedOutputFactory, Clock clock, int times) {
+    return getProduceAction(properties, chunkedOutputFactory, clock, times, false);
+  }
+
+  private static ProduceAction getProduceAction(
+      Properties properties,
+      ChunkedOutputFactory chunkedOutputFactory,
+      Clock clock,
+      int times,
+      boolean errorSchemaRegistry) {
     return getProduceAction(
         new ProduceRateLimiters(
             Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
@@ -647,18 +778,37 @@ public class ProduceActionTest {
             clock),
         chunkedOutputFactory,
         times,
-        0);
+        0,
+        errorSchemaRegistry);
   }
 
   private static ProduceAction getProduceAction(
       ProduceRateLimiters produceRateLimiters,
       ChunkedOutputFactory chunkedOutputFactory,
       int times,
-      int producerId) {
+      int producerId,
+      boolean errorSchemaRegistry) {
     Provider<SchemaManager> schemaManagerProvider = mock(Provider.class);
+    SchemaManager schemaManagerMock = mock(SchemaManager.class);
+    expect(schemaManagerProvider.get()).andReturn(schemaManagerMock);
+    expect(
+            schemaManagerMock.getSchema(
+                "topicName",
+                Optional.of(EmbeddedFormat.AVRO),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.of("bob"),
+                true))
+        .andThrow(
+            Errors.invalidPayloadException(
+                "Schema Registry must be configured when using schemas."));
+    replay(schemaManagerProvider, schemaManagerMock);
     Provider<ProducerMetrics> producerMetricsProvider = mock(Provider.class);
     getProducerMetricsProvider(producerMetricsProvider);
-    Provider<RecordSerializer> recordSerializerProvider = getRecordSerializerProvider();
+    Provider<RecordSerializer> recordSerializerProvider =
+        getRecordSerializerProvider(errorSchemaRegistry);
     Provider<ProduceController> produceControllerProvider = mock(Provider.class);
     ProduceController produceController = getProduceControllerMock(produceControllerProvider);
     setupExpectsMockCallsForProduce(produceController, times, producerId);

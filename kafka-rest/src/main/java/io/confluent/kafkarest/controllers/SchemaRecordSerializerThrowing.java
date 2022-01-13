@@ -17,16 +17,22 @@ package io.confluent.kafkarest.controllers;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.protobuf.ByteString;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.util.Optional;
 
-interface SchemaRecordSerializer {
+final class SchemaRecordSerializerThrowing implements SchemaRecordSerializer {
 
-  Optional<ByteString> serialize(
+  @Override
+  public Optional<ByteString> serialize(
       EmbeddedFormat format,
       String topicName,
       Optional<RegisteredSchema> schema,
       JsonNode data,
-      boolean isKey);
+      boolean isKey) {
+    throw Errors.messageSerializationException(
+        "Schema Registry not defined, no Schema "
+            + "Registry client available to serialize message.");
+  }
 }

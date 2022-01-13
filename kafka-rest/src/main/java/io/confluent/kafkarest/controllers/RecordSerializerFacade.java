@@ -28,14 +28,14 @@ import javax.inject.Provider;
 final class RecordSerializerFacade implements RecordSerializer {
 
   private final NoSchemaRecordSerializer noSchemaRecordSerializer;
-  private final Provider<SchemaRecordSerializer> schemaRecordSerializer;
+  private final Provider<SchemaRecordSerializer> schemaRecordSerializerProvider;
 
   @Inject
   RecordSerializerFacade(
       NoSchemaRecordSerializer noSchemaRecordSerializer,
-      Provider<SchemaRecordSerializer> schemaRecordSerializer) {
+      Provider<SchemaRecordSerializer> schemaRecordSerializerProvider) {
     this.noSchemaRecordSerializer = requireNonNull(noSchemaRecordSerializer);
-    this.schemaRecordSerializer = requireNonNull(schemaRecordSerializer);
+    this.schemaRecordSerializerProvider = requireNonNull(schemaRecordSerializerProvider);
   }
 
   @Override
@@ -46,7 +46,7 @@ final class RecordSerializerFacade implements RecordSerializer {
       JsonNode data,
       boolean isKey) {
     if (format.requiresSchema()) {
-      return schemaRecordSerializer.get().serialize(format, topicName, schema, data, isKey);
+      return schemaRecordSerializerProvider.get().serialize(format, topicName, schema, data, isKey);
     } else {
       return noSchemaRecordSerializer.serialize(format, data);
     }
