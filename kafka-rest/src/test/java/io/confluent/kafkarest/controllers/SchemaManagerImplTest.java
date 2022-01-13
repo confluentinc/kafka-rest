@@ -78,6 +78,8 @@ public class SchemaManagerImplTest {
     schemaManager = new SchemaManagerImpl(schemaRegistryClient, new TopicNameStrategy());
   }
 
+  //dummy change
+
   @After
   public void tearDown() {
     schemaRegistryClient.reset();

@@ -63,6 +63,8 @@ public final class ControllersModule extends AbstractBinder {
     private final Map<String, Object> jsonschemaSerializerConfigs;
     private final Map<String, Object> protobufSerializerConfigs;
 
+    //dummy change
+
     @Inject
     private SchemaRecordSerializerFactory(
         Optional<SchemaRegistryClient> schemaRegistryClient,
