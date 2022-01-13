@@ -1,6 +1,7 @@
 package io.confluent.kafkarest.unit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import io.confluent.kafkarest.DefaultKafkaRestContext;
@@ -12,7 +13,6 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -22,18 +22,16 @@ public class DefaultKafkaRestContextTest {
 
   private KafkaRestContext context;
 
-  @Before
-  public void setUp() {
+  @Test
+  public void testGetKafkaConsumerManagerThreadSafety() throws InterruptedException {
+
     Properties props = new Properties();
     // Required to satisfy config definition
     props.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:5234");
     KafkaRestConfig restConfig = new KafkaRestConfig(props);
 
     context = new DefaultKafkaRestContext(restConfig);
-  }
 
-  @Test
-  public void testGetKafkaConsumerManagerThreadSafety() throws InterruptedException {
     Set<Object> refs = new CopyOnWriteArraySet<>();
 
     ExecutorService executor = Executors.newFixedThreadPool(100);
@@ -45,5 +43,23 @@ public class DefaultKafkaRestContextTest {
     assertTrue(executor.awaitTermination(60, TimeUnit.SECONDS));
 
     assertEquals(1, refs.size());
+  }
+
+  @Test
+  public void testGetSchemaRegistryClientEnabled() {
+    Properties props = new Properties();
+    props.put(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, "localhost:5234");
+    KafkaRestConfig restConfig = new KafkaRestConfig(props);
+    context = new DefaultKafkaRestContext(restConfig);
+    assertNotNull(context.getSchemaRegistryClient());
+  }
+
+  @Test
+  public void testGetSchemaRegistryClientDisabled() {
+    Properties props = new Properties();
+    props.put(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, "");
+    KafkaRestConfig restConfig = new KafkaRestConfig(props);
+    context = new DefaultKafkaRestContext(restConfig);
+    assertEquals(context.getSchemaRegistryClient(), null);
   }
 }

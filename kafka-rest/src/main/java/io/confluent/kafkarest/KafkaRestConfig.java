@@ -130,7 +130,8 @@ public class KafkaRestConfig extends RestConfig {
 
   public static final String SCHEMA_REGISTRY_URL_CONFIG = "schema.registry.url";
   private static final String SCHEMA_REGISTRY_URL_DOC =
-      "The base URL for the schema registry that should be used by the Avro serializer.";
+      "The base URL for the Schema Registry that should be used by the Avro serializer. "
+          + "An empty value means that use of a schema registry is disabled.";
   private static final String SCHEMA_REGISTRY_URL_DEFAULT = "http://localhost:8081";
 
   public static final String PROXY_FETCH_MIN_BYTES_CONFIG = "fetch.min.bytes";
@@ -866,10 +867,11 @@ public class KafkaRestConfig extends RestConfig {
 
     if (!configs.containsKey(SCHEMA_REGISTRY_URL_CONFIG)) {
       log.warn(
-          "Using default value {} for config {}. In a future release this config won't have a"
-              + "default value anymore. If you are using Schema Registry, please, specify {}"
+          "Using default value {} for config {}. In a future release this config won't have a "
+              + "default value anymore. If you are using Schema Registry, please, specify {} "
               + "explicitly. Requests will fail in a future release if you try to use Schema "
-              + "Registry but have not specified a value for {}.",
+              + "Registry but have not specified a value for {}. An empty value for this property "
+              + "means that the Schema Registry is disabled.",
           SCHEMA_REGISTRY_URL_DEFAULT,
           SCHEMA_REGISTRY_URL_CONFIG,
           SCHEMA_REGISTRY_URL_CONFIG,
@@ -880,8 +882,8 @@ public class KafkaRestConfig extends RestConfig {
     // Disable auto-registration of schemas.
     if (configs.containsKey(AUTO_REGISTER_SCHEMAS)) {
       log.warn(
-          "Config {} is not support in REST Proxy and will be ignored. Please, remove this config. "
-              + "Configuration will fail in a future release for such cases.",
+          "Config {} is not supported in Kafka REST and will be ignored. Please remove this "
+              + "config. Configuration will fail in a future release for such cases.",
           AUTO_REGISTER_SCHEMAS);
     }
     configs.put(AUTO_REGISTER_SCHEMAS, false);
@@ -889,8 +891,8 @@ public class KafkaRestConfig extends RestConfig {
     // Disable latest-version fetching of schemas.
     if (configs.containsKey(USE_LATEST_VERSION)) {
       log.warn(
-          "Config {} is not support in REST Proxy and will be ignored. Please, remove this config. "
-              + "Configuration will fail in a future release for such cases.",
+          "Config {} is not supported in Kafka REST and will be ignored. Please remove this "
+              + "config. Configuration will fail in a future release for such cases.",
           USE_LATEST_VERSION);
     }
     configs.put(USE_LATEST_VERSION, false);
@@ -993,6 +995,10 @@ public class KafkaRestConfig extends RestConfig {
 
   public final boolean isRateLimitEnabled() {
     return getBoolean(RATE_LIMIT_ENABLE_CONFIG);
+  }
+
+  public final boolean isSchemaRegistryEnabled() {
+    return !getSchemaRegistryConfigs().get(SCHEMA_REGISTRY_URL_CONFIG).equals("");
   }
 
   public final RateLimitBackend getRateLimitBackend() {
