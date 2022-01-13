@@ -141,9 +141,7 @@ final class SchemaManagerImpl implements SchemaManager {
           e);
     }
 
-    ParsedSchema parsedSchema;
     SchemaProvider schemaProvider;
-
     try {
       schemaProvider = EmbeddedFormat.forSchemaType(schema.getSchemaType()).getSchemaProvider();
     } catch (UnsupportedOperationException e) {
@@ -151,6 +149,7 @@ final class SchemaManagerImpl implements SchemaManager {
           String.format("Schema version not supported for %s", schema.getSchemaType()), e);
     }
 
+    ParsedSchema parsedSchema;
     try {
       parsedSchema =
           schemaProvider
@@ -183,9 +182,7 @@ final class SchemaManagerImpl implements SchemaManager {
       throw new BadRequestException(e.getMessage(), e);
     }
 
-    ParsedSchema schema;
     SchemaProvider schemaProvider;
-
     try {
       schemaProvider = format.getSchemaProvider();
     } catch (UnsupportedOperationException e) {
@@ -193,6 +190,7 @@ final class SchemaManagerImpl implements SchemaManager {
           String.format("Raw schema not supported with format = %s", format), e);
     }
 
+    ParsedSchema schema;
     try {
       schema =
           schemaProvider
@@ -253,9 +251,7 @@ final class SchemaManagerImpl implements SchemaManager {
           e);
     }
 
-    ParsedSchema schema;
     SchemaProvider schemaProvider;
-
     try {
       schemaProvider = EmbeddedFormat.forSchemaType(metadata.getSchemaType()).getSchemaProvider();
     } catch (UnsupportedOperationException e) {
@@ -265,6 +261,7 @@ final class SchemaManagerImpl implements SchemaManager {
           e);
     }
 
+    ParsedSchema schema;
     try {
       schema =
           schemaProvider
