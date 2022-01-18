@@ -2427,9 +2427,6 @@ components:
           schema:
             $ref: '#/components/schemas/CreateAclRequestData'
           example:
-            kind: 'KafkaAcl'
-            metadata:
-              self: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/acls?resource_type=CLUSTER&resource_name=kafka-cluster&pattern_type=LITERAL&principal=bob&host=*&operation=DESCRIBE&permission=DENY'
             resource_type: 'CLUSTER'
             resource_name: 'kafka-cluster'
             pattern_type: 'LITERAL'
