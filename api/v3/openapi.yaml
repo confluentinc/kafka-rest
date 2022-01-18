@@ -1793,9 +1793,6 @@ components:
           schema:
             $ref: '#/components/schemas/CreateAclRequestData'
           example:
-            kind: 'KafkaAcl'
-            metadata:
-              self: 'http://localhost:9391/v3/clusters/cluster-1/acls?resource_type=CLUSTER&resource_name=cluster-1&pattern_type=LITERAL&principal=bob&host=*&operation=DESCRIBE&permission=DENY'
             resource_type: 'CLUSTER'
             resource_name: 'cluster-1'
             pattern_type: 'LITERAL'
