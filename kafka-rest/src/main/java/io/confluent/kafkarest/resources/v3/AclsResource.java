@@ -212,25 +212,25 @@ public final class AclsResource {
   public void deleteAcls(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
-      @QueryParam("resource_type") @DefaultValue("any") ResourceType resourceType,
+      @QueryParam("resource_type") @DefaultValue("unknown") ResourceType resourceType,
       @QueryParam("resource_name") @DefaultValue("") String resourceName,
-      @QueryParam("pattern_type") @DefaultValue("any") PatternType patternType,
+      @QueryParam("pattern_type") @DefaultValue("unknown") PatternType patternType,
       @QueryParam("principal") @DefaultValue("") String principal,
       @QueryParam("host") @DefaultValue("") String host,
-      @QueryParam("operation") @DefaultValue("any") Operation operation,
-      @QueryParam("permission") @DefaultValue("any") Permission permission
+      @QueryParam("operation") @DefaultValue("unknown") Operation operation,
+      @QueryParam("permission") @DefaultValue("unknown") Permission permission
   ) {
     if (resourceType == Acl.ResourceType.UNKNOWN) {
-      throw new BadRequestException("resource_type cannot be ANY");
+      throw new BadRequestException("resource_type cannot be unspecified or UNKNOWN");
     }
     if (patternType == Acl.PatternType.UNKNOWN) {
-      throw new BadRequestException("pattern_type cannot be UNKNOWN");
+      throw new BadRequestException("pattern_type cannot be unspecified or UNKNOWN");
     }
     if (operation == Acl.Operation.UNKNOWN) {
-      throw new BadRequestException("operation cannot be ANY");
+      throw new BadRequestException("operation cannot be unspecified or UNKNOWN");
     }
     if (permission == Acl.Permission.UNKNOWN) {
-      throw new BadRequestException("permission cannot be ANY");
+      throw new BadRequestException("permission cannot be unspecified or UNKNOWN");
     }
 
     CompletableFuture<DeleteAclsResponse> response =
