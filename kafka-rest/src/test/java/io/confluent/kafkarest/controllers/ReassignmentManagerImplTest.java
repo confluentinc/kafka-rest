@@ -19,10 +19,10 @@ import static io.confluent.kafkarest.common.KafkaFutures.failedFuture;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Cluster;
@@ -41,15 +41,13 @@ import org.apache.kafka.clients.admin.PartitionReassignment;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(JUnit4.class)
+@ExtendWith(EasyMockExtension.class)
 public class ReassignmentManagerImplTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -109,8 +107,6 @@ public class ReassignmentManagerImplTest {
       Reassignment.create(
           CLUSTER_ID, TOPIC_1, PARTITION_ID_3, ADDING_REPLICAS_3, REMOVING_REPLICAS_3);
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private Admin adminClient;
 
   @Mock private ListPartitionReassignmentsResult listPartitionReassignmentsResult;
@@ -119,7 +115,7 @@ public class ReassignmentManagerImplTest {
 
   private ReassignmentManagerImpl reassignmentManager;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     reassignmentManager = new ReassignmentManagerImpl(adminClient, clusterManager);
     REASSIGNMENT_MAP.put(TOPIC_PARTITION_1, PARTITION_REASSIGNMENT_1);

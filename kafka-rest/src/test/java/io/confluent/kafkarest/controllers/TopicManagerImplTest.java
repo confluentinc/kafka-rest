@@ -27,9 +27,9 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
@@ -64,12 +64,13 @@ import org.apache.kafka.common.acl.AclOperation;
 import org.apache.kafka.common.errors.TimeoutException;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(EasyMockExtension.class)
 public class TopicManagerImplTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -438,8 +439,6 @@ public class TopicManagerImplTest {
           /* isInternal= */ false,
           singleton(Acl.Operation.CREATE));
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private Admin adminClient;
 
   @Mock private ClusterManager clusterManager;
@@ -454,7 +453,7 @@ public class TopicManagerImplTest {
 
   private TopicManagerImpl topicManager;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     topicManager = new TopicManagerImpl(adminClient, clusterManager);
   }

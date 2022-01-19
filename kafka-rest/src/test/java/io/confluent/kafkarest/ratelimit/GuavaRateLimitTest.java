@@ -16,10 +16,7 @@
 package io.confluent.kafkarest.ratelimit;
 
 import java.time.Duration;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
 public final class GuavaRateLimitTest extends AbstractRateLimitEnabledTest {
 
   @Override

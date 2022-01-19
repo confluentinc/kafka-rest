@@ -62,12 +62,9 @@ import java.util.Optional;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.util.Utf8;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-@RunWith(JUnit4.class)
 public class RecordSerializerFacadeTest {
   private static final String TOPIC_NAME = "topic-1";
   private static final String SCHEMA_REGISTRY_SCOPE = "sr";
@@ -82,7 +79,7 @@ public class RecordSerializerFacadeTest {
   private MockSchemaRegistryClient schemaRegistryClient;
   private RecordSerializer recordSerializer;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     schemaRegistryClient =
         (MockSchemaRegistryClient)
@@ -187,24 +184,30 @@ public class RecordSerializerFacadeTest {
     assertFalse(serialized.isPresent());
   }
 
-  @Test(expected = BadRequestException.class)
+  @Test
   public void serializeInvalidBinaryKey_throwsBadRequestException() {
-    recordSerializer.serialize(
-        EmbeddedFormat.BINARY,
-        TOPIC_NAME,
-        /* schema= */ Optional.empty(),
-        TextNode.valueOf("fooba"),
-        /* isKey= */ true);
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            recordSerializer.serialize(
+                EmbeddedFormat.BINARY,
+                TOPIC_NAME,
+                /* schema= */ Optional.empty(),
+                TextNode.valueOf("fooba"),
+                /* isKey= */ true));
   }
 
-  @Test(expected = BadRequestException.class)
+  @Test
   public void serializeInvalidBinaryValue_throwsBadRequestException() {
-    recordSerializer.serialize(
-        EmbeddedFormat.BINARY,
-        TOPIC_NAME,
-        /* schema= */ Optional.empty(),
-        TextNode.valueOf("fooba"),
-        /* isKey= */ false);
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            recordSerializer.serialize(
+                EmbeddedFormat.BINARY,
+                TOPIC_NAME,
+                /* schema= */ Optional.empty(),
+                TextNode.valueOf("fooba"),
+                /* isKey= */ false));
   }
 
   @Test
@@ -699,28 +702,35 @@ public class RecordSerializerFacadeTest {
     assertFalse(serialized.isPresent());
   }
 
-  @Test(expected = RestConstraintViolationException.class)
+  @Test
   public void serializeNonNullAvroKeyNullSchema_throwsSerializationException() {
-    recordSerializer.serialize(
-        EmbeddedFormat.AVRO,
-        TOPIC_NAME,
-        /* schema= */ Optional.empty(),
-        TextNode.valueOf("foobar"),
-        /* isKey= */ true);
+
+    assertThrows(
+        RestConstraintViolationException.class,
+        () ->
+            recordSerializer.serialize(
+                EmbeddedFormat.AVRO,
+                TOPIC_NAME,
+                /* schema= */ Optional.empty(),
+                TextNode.valueOf("foobar"),
+                /* isKey= */ true));
   }
 
-  @Test(expected = BadRequestException.class)
+  @Test
   public void serializeInvalidAvroKey_throwsBadRequestException() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"int\"}");
     String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
     int schemaId = schemaRegistryClient.register(subject, schema);
 
-    recordSerializer.serialize(
-        EmbeddedFormat.AVRO,
-        TOPIC_NAME,
-        Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
-        TextNode.valueOf("foobar"),
-        /* isKey= */ true);
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            recordSerializer.serialize(
+                EmbeddedFormat.AVRO,
+                TOPIC_NAME,
+                Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+                TextNode.valueOf("foobar"),
+                /* isKey= */ true));
   }
 
   @Test
@@ -993,28 +1003,34 @@ public class RecordSerializerFacadeTest {
     assertFalse(serialized.isPresent());
   }
 
-  @Test(expected = RestConstraintViolationException.class)
+  @Test
   public void serializeNonNullAvroValueNullSchema_throwsSerializationException() {
-    recordSerializer.serialize(
-        EmbeddedFormat.AVRO,
-        TOPIC_NAME,
-        /* schema= */ Optional.empty(),
-        TextNode.valueOf("foobar"),
-        /* isKey= */ false);
+    assertThrows(
+        RestConstraintViolationException.class,
+        () ->
+            recordSerializer.serialize(
+                EmbeddedFormat.AVRO,
+                TOPIC_NAME,
+                /* schema= */ Optional.empty(),
+                TextNode.valueOf("foobar"),
+                /* isKey= */ false));
   }
 
-  @Test(expected = BadRequestException.class)
+  @Test
   public void serializeInvalidAvroValue_throwsBadRequestException() throws Exception {
     AvroSchema schema = new AvroSchema("{\"type\": \"int\"}");
     String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
     int schemaId = schemaRegistryClient.register(subject, schema);
 
-    recordSerializer.serialize(
-        EmbeddedFormat.AVRO,
-        TOPIC_NAME,
-        Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
-        TextNode.valueOf("foobar"),
-        /* isKey= */ false);
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            recordSerializer.serialize(
+                EmbeddedFormat.AVRO,
+                TOPIC_NAME,
+                Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+                TextNode.valueOf("foobar"),
+                /* isKey= */ false));
   }
 
   @Test
@@ -1200,28 +1216,34 @@ public class RecordSerializerFacadeTest {
     assertFalse(serialized.isPresent());
   }
 
-  @Test(expected = RestConstraintViolationException.class)
+  @Test
   public void serializeNonNullJsonschemaKeyNullSchema_throwsSerializationException() {
-    recordSerializer.serialize(
-        EmbeddedFormat.JSONSCHEMA,
-        TOPIC_NAME,
-        /* schema= */ Optional.empty(),
-        TextNode.valueOf("foobar"),
-        /* isKey= */ true);
+    assertThrows(
+        RestConstraintViolationException.class,
+        () ->
+            recordSerializer.serialize(
+                EmbeddedFormat.JSONSCHEMA,
+                TOPIC_NAME,
+                /* schema= */ Optional.empty(),
+                TextNode.valueOf("foobar"),
+                /* isKey= */ true));
   }
 
-  @Test(expected = BadRequestException.class)
+  @Test
   public void serializeInvalidJsonschemaKey_throwsBadRequestException() throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"integer\"}");
     String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ true, schema);
     int schemaId = schemaRegistryClient.register(subject, schema);
 
-    recordSerializer.serialize(
-        EmbeddedFormat.JSONSCHEMA,
-        TOPIC_NAME,
-        Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
-        TextNode.valueOf("foobar"),
-        /* isKey= */ true);
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            recordSerializer.serialize(
+                EmbeddedFormat.JSONSCHEMA,
+                TOPIC_NAME,
+                Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+                TextNode.valueOf("foobar"),
+                /* isKey= */ true));
   }
 
   @Test
@@ -1407,28 +1429,34 @@ public class RecordSerializerFacadeTest {
     assertFalse(serialized.isPresent());
   }
 
-  @Test(expected = RestConstraintViolationException.class)
+  @Test
   public void serializeNonNullJsonschemaValueNullSchema_throwsSerializationException() {
-    recordSerializer.serialize(
-        EmbeddedFormat.JSONSCHEMA,
-        TOPIC_NAME,
-        /* schema= */ Optional.empty(),
-        TextNode.valueOf("foobar"),
-        /* isKey= */ false);
+    assertThrows(
+        RestConstraintViolationException.class,
+        () ->
+            recordSerializer.serialize(
+                EmbeddedFormat.JSONSCHEMA,
+                TOPIC_NAME,
+                /* schema= */ Optional.empty(),
+                TextNode.valueOf("foobar"),
+                /* isKey= */ false));
   }
 
-  @Test(expected = BadRequestException.class)
+  @Test
   public void serializeInvalidJsonschemaValue_throwsBadRequestException() throws Exception {
     JsonSchema schema = new JsonSchema("{\"type\": \"integer\"}");
     String subject = SUBJECT_NAME_STRATEGY.subjectName(TOPIC_NAME, /* isKey= */ false, schema);
     int schemaId = schemaRegistryClient.register(subject, schema);
 
-    recordSerializer.serialize(
-        EmbeddedFormat.JSONSCHEMA,
-        TOPIC_NAME,
-        Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
-        TextNode.valueOf("foobar"),
-        /* isKey= */ false);
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            recordSerializer.serialize(
+                EmbeddedFormat.JSONSCHEMA,
+                TOPIC_NAME,
+                Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+                TextNode.valueOf("foobar"),
+                /* isKey= */ false));
   }
 
   @Test
@@ -1492,21 +1520,24 @@ public class RecordSerializerFacadeTest {
     assertFalse(serialized.isPresent());
   }
 
-  @Test(expected = RestConstraintViolationException.class)
+  @Test
   public void serializeNonNullProtobufKeyNullSchema_throwsSerializationException() {
     ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
     node.put("foo", 1);
     node.put("bar", true);
 
-    recordSerializer.serialize(
-        EmbeddedFormat.PROTOBUF,
-        TOPIC_NAME,
-        /* schema= */ Optional.empty(),
-        node,
-        /* isKey= */ true);
+    assertThrows(
+        RestConstraintViolationException.class,
+        () ->
+            recordSerializer.serialize(
+                EmbeddedFormat.PROTOBUF,
+                TOPIC_NAME,
+                /* schema= */ Optional.empty(),
+                node,
+                /* isKey= */ true));
   }
 
-  @Test(expected = BadRequestException.class)
+  @Test
   public void serializeInvalidProtobufKey_throwsBadRequestException() throws Exception {
     ProtobufSchema schema =
         new ProtobufSchema(
@@ -1516,12 +1547,15 @@ public class RecordSerializerFacadeTest {
     ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
     node.put("foo", "bar");
 
-    recordSerializer.serialize(
-        EmbeddedFormat.PROTOBUF,
-        TOPIC_NAME,
-        Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
-        node,
-        /* isKey= */ true);
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            recordSerializer.serialize(
+                EmbeddedFormat.PROTOBUF,
+                TOPIC_NAME,
+                Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+                node,
+                /* isKey= */ true));
   }
 
   @Test
@@ -1586,21 +1620,24 @@ public class RecordSerializerFacadeTest {
     assertFalse(serialized.isPresent());
   }
 
-  @Test(expected = RestConstraintViolationException.class)
+  @Test
   public void serializeNonNullProtobufValueNullSchema_throwsSerializationException() {
     ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
     node.put("foo", 1);
     node.put("bar", true);
 
-    recordSerializer.serialize(
-        EmbeddedFormat.PROTOBUF,
-        TOPIC_NAME,
-        /* schema= */ Optional.empty(),
-        node,
-        /* isKey= */ false);
+    assertThrows(
+        RestConstraintViolationException.class,
+        () ->
+            recordSerializer.serialize(
+                EmbeddedFormat.PROTOBUF,
+                TOPIC_NAME,
+                /* schema= */ Optional.empty(),
+                node,
+                /* isKey= */ false));
   }
 
-  @Test(expected = BadRequestException.class)
+  @Test
   public void serializeInvalidProtobufValue_throwsBadRequestException() throws Exception {
     ProtobufSchema schema =
         new ProtobufSchema(
@@ -1610,11 +1647,14 @@ public class RecordSerializerFacadeTest {
     ObjectNode node = new ObjectNode(JsonNodeFactory.instance);
     node.put("foo", "bar");
 
-    recordSerializer.serialize(
-        EmbeddedFormat.PROTOBUF,
-        TOPIC_NAME,
-        Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
-        node,
-        /* isKey= */ false);
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            recordSerializer.serialize(
+                EmbeddedFormat.PROTOBUF,
+                TOPIC_NAME,
+                Optional.of(RegisteredSchema.create(subject, schemaId, SCHEMA_VERSION, schema)),
+                node,
+                /* isKey= */ false));
   }
 }

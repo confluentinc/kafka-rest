@@ -16,7 +16,7 @@
 package io.confluent.kafkarest;
 
 import static org.easymock.EasyMock.*;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.mock.MockTime;
@@ -33,12 +33,13 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(EasyMockExtension.class)
 public class ProducerMetricsTest {
 
   public static final String METRICS_SEARCH_STRING = "kafka.rest:type=produce-api-metrics,*";
@@ -46,11 +47,9 @@ public class ProducerMetricsTest {
       new RestMetricsContext("kafka.rest", ImmutableMap.of());
   public static final String NAMESPACE = "kafka.rest";
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private KafkaRestConfig kafkaRestConfig;
 
-  @Before
+  @BeforeEach
   public void setUpMocks() {
     reset(kafkaRestConfig);
     expect(kafkaRestConfig.getMetricsContext()).andReturn(REST_METRICS_CONTEXT);

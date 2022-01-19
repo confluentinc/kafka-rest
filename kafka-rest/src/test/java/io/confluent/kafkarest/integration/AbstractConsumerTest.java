@@ -16,9 +16,9 @@ package io.confluent.kafkarest.integration;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
@@ -46,7 +46,6 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.junit.Assert;
 
 public class AbstractConsumerTest extends ClusterTestHarness {
 
@@ -109,8 +108,8 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     assertNotNull(instanceResponse.getInstanceId());
     assertTrue(instanceResponse.getInstanceId().length() > 0);
     assertTrue(
-        "Base URI should contain the consumer instance ID",
-        instanceResponse.getBaseUri().contains(instanceResponse.getInstanceId()));
+        instanceResponse.getBaseUri().contains(instanceResponse.getInstanceId()),
+        "Base URI should contain the consumer instance ID");
 
     ConsumerSubscriptionRecord subscribeRequest =
         new ConsumerSubscriptionRecord(topics, /* topicPattern= */ null);
@@ -118,7 +117,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
         request(instanceResponse.getBaseUri() + "/subscription")
             .accept(Versions.KAFKA_V2_JSON)
             .post(Entity.entity(subscribeRequest, Versions.KAFKA_V2_JSON));
-    Assert.assertEquals(Response.Status.NO_CONTENT.getStatusCode(), subscribeResponse.getStatus());
+    assertEquals(Response.Status.NO_CONTENT.getStatusCode(), subscribeResponse.getStatus());
 
     // Start consuming. Since production hasn't started yet, this is expected to timeout.
     Response response =
@@ -215,11 +214,11 @@ public class AbstractConsumerTest extends ClusterTestHarness {
             + 500;
     long elapsed = finished - started;
     assertTrue(
-        "Consumer request should not return before the timeout when no data is available",
-        elapsed > TIMEOUT);
+        elapsed > TIMEOUT,
+        "Consumer request should not return before the timeout when no data is available");
     assertTrue(
-        "Consumer request should timeout approximately within the request timeout period",
-        (elapsed - TIMEOUT) < TIMEOUT_SLACK);
+        (elapsed - TIMEOUT) < TIMEOUT_SLACK,
+        "Consumer request should timeout approximately within the request timeout period");
   }
 
   protected void seekToTimestamp(

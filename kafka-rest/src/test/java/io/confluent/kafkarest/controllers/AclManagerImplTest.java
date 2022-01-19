@@ -22,8 +22,8 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import io.confluent.kafkarest.entities.Acl;
 import io.confluent.kafkarest.entities.Cluster;
@@ -50,15 +50,13 @@ import org.apache.kafka.common.resource.PatternType;
 import org.apache.kafka.common.resource.ResourcePattern;
 import org.apache.kafka.common.resource.ResourcePatternFilter;
 import org.apache.kafka.common.resource.ResourceType;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(JUnit4.class)
+@ExtendWith(EasyMockExtension.class)
 public class AclManagerImplTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -103,8 +101,6 @@ public class AclManagerImplTest {
               AclOperation.WRITE,
               AclPermissionType.DENY));
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private Admin adminClient;
 
   @Mock private ClusterManager clusterManager;
@@ -123,7 +119,7 @@ public class AclManagerImplTest {
 
   private AclManagerImpl aclManager;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     aclManager = new AclManagerImpl(adminClient, clusterManager);
   }

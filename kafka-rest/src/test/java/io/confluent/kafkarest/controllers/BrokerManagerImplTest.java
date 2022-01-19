@@ -17,9 +17,9 @@ package io.confluent.kafkarest.controllers;
 
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Cluster;
@@ -29,15 +29,13 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.NotFoundException;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(JUnit4.class)
+@ExtendWith(EasyMockExtension.class)
 public class BrokerManagerImplTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -49,13 +47,11 @@ public class BrokerManagerImplTest {
   private static final Cluster CLUSTER =
       Cluster.create(CLUSTER_ID, BROKER_1, Arrays.asList(BROKER_1, BROKER_2, BROKER_3));
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private ClusterManager clusterManager;
 
   private BrokerManagerImpl brokerManager;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     brokerManager = new BrokerManagerImpl(clusterManager);
   }

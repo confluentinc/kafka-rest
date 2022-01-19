@@ -15,13 +15,13 @@
 
 package io.confluent.kafkarest.integration;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class JsonParsingErrorTest extends ClusterTestHarness {
 

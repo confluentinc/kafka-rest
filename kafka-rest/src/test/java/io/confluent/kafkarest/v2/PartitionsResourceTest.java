@@ -22,7 +22,7 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.reset;
 import static org.easymock.EasyMock.verify;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.controllers.PartitionManager;
 import io.confluent.kafkarest.entities.Partition;
@@ -35,12 +35,20 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(EasyMockExtension.class)
+@TestInstance(Lifecycle.PER_CLASS)
 public class PartitionsResourceTest extends JerseyTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -87,7 +95,17 @@ public class PartitionsResourceTest extends JerseyTest {
     return application;
   }
 
-  @Before
+  @BeforeAll
+  public void before() throws Exception {
+    super.setUp();
+  }
+
+  @AfterAll
+  public void after() throws Exception {
+    super.tearDown();
+  }
+
+  @BeforeEach
   public void setUpMocks() {
     reset(partitionManager);
   }

@@ -19,26 +19,28 @@ import static com.google.common.base.Preconditions.checkState;
 
 import javax.annotation.Nullable;
 import kafka.zk.EmbeddedZookeeper;
-import org.junit.rules.ExternalResource;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
- * An {@link ExternalResource} that runs a Zookeeper server.
+ * An extension that runs a Zookeeper server.
  *
  * <p>This fixture currently does not support SSL and/or SASL.
  */
-public final class ZookeeperFixture extends ExternalResource {
+public final class ZookeeperFixture implements BeforeEachCallback, AfterEachCallback {
 
   @Nullable private EmbeddedZookeeper zookeeper;
 
   private ZookeeperFixture() {}
 
   @Override
-  public void before() {
+  public void beforeEach(ExtensionContext extensionContext) {
     zookeeper = new EmbeddedZookeeper();
   }
 
   @Override
-  public void after() {
+  public void afterEach(ExtensionContext extensionContext) {
     if (zookeeper != null) {
       zookeeper.shutdown();
     }

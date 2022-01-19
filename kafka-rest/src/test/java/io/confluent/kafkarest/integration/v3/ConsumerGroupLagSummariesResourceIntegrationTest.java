@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
@@ -37,12 +37,9 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.BytesDeserializer;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-@RunWith(JUnit4.class)
 public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTestHarness {
 
   private static final String topic1 = "topic-1";
@@ -57,7 +54,7 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
           new BinaryPartitionProduceRecord(null, "value2"),
           new BinaryPartitionProduceRecord(null, "value3"));
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();

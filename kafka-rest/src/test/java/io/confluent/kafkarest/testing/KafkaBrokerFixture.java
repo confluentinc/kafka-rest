@@ -38,10 +38,12 @@ import kafka.utils.TestUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
-import org.junit.rules.ExternalResource;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
-/** An {@link ExternalResource} that runs a Kafka broker. */
-public final class KafkaBrokerFixture extends ExternalResource {
+/** An extension that runs a Kafka broker. */
+public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCallback {
 
   private static final ImmutableMap<String, String> CONFIG_TEMPLATE =
       ImmutableMap.<String, String>builder()
@@ -93,7 +95,7 @@ public final class KafkaBrokerFixture extends ExternalResource {
   }
 
   @Override
-  public void before() throws Exception {
+  public void beforeEach(ExtensionContext extensionContext) throws Exception {
     logDir = Files.createTempDirectory(String.format("kafka-%d-", brokerId));
     broker = TestUtils.createServer(KafkaConfig.fromProps(getBrokerConfigs()), MOCK_TIME);
   }
@@ -166,7 +168,7 @@ public final class KafkaBrokerFixture extends ExternalResource {
   }
 
   @Override
-  public void after() {
+  public void afterEach(ExtensionContext extensionContext) {
     if (broker != null) {
       broker.shutdown();
     }

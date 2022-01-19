@@ -17,8 +17,8 @@ package io.confluent.kafkarest.integration.v3;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
@@ -63,27 +63,24 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 // TODO ddimitrov This continues being way too flaky.
 //  Until we fix it (KREST-1542), we should ignore it, as it might be hiding even worse errors.
-@Ignore
-@RunWith(JUnit4.class)
+@Disabled
 public class ProduceActionIntegrationTest {
 
   private static final String TOPIC_NAME = "topic-1";
   private static final String DEFAULT_KEY_SUBJECT = "topic-1-key";
   private static final String DEFAULT_VALUE_SUBJECT = "topic-1-value";
 
-  @Rule
+  @RegisterExtension
   public final DefaultKafkaRestTestEnvironment testEnv = new DefaultKafkaRestTestEnvironment();
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     testEnv.kafkaCluster().createTopic(TOPIC_NAME, 3, (short) 1);
   }
