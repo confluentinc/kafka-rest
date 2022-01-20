@@ -15,20 +15,18 @@
 
 package io.confluent.kafkarest.ratelimit;
 
-public class RequestRateLimiterProduceBytes extends RequestRateLimiter {
+import io.confluent.kafkarest.config.ConfigModule.RateLimitPermitsPerSecConfig;
+import io.confluent.kafkarest.config.ConfigModule.RateLimitTimeoutConfig;
+import java.time.Duration;
+import javax.inject.Inject;
 
-  RequestRateLimiter requestRateLimiter;
+final class RequestRateLimiterGenericFactory extends RequestRateLimiterFactory {
 
-  RequestRateLimiterProduceBytes(RequestRateLimiter requestRateLimiter) {
-    this.requestRateLimiter = requestRateLimiter;
-  }
-
-  public RequestRateLimiter getLimiter() {
-    return requestRateLimiter;
-  }
-
-  @Override
-  public void rateLimit(final int cost) {
-    requestRateLimiter.rateLimit(cost);
+  @Inject
+  public RequestRateLimiterGenericFactory(
+      RateLimitBackend backend,
+      @RateLimitPermitsPerSecConfig Integer permitsPerSecond,
+      @RateLimitTimeoutConfig Duration timeout) {
+    super(backend, permitsPerSecond, timeout);
   }
 }

@@ -19,9 +19,7 @@ import io.confluent.kafkarest.config.ConfigModule;
 import java.time.Duration;
 import javax.inject.Inject;
 
-public class RequestRateLimiterProduceCountFactory extends RequestRateLimiterFactory {
-
-  RequestRateLimiterProduceCount requestRateLimiterProduceCount;
+final class RequestRateLimiterProduceCountFactory extends RequestRateLimiterFactory {
 
   @Inject
   RequestRateLimiterProduceCountFactory(
@@ -29,10 +27,5 @@ public class RequestRateLimiterProduceCountFactory extends RequestRateLimiterFac
       @ConfigModule.ProduceRateLimitCountConfig Integer permitsPerSecond,
       @ConfigModule.RateLimitTimeoutConfig Duration timeout) {
     super(backend, permitsPerSecond, timeout);
-    requestRateLimiterProduceCount = new RequestRateLimiterProduceCount(super.provide());
-  }
-
-  public RequestRateLimiter provide() {
-    return requestRateLimiterProduceCount;
   }
 }

@@ -22,36 +22,34 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitCacheExpiryConfig;
 import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitEnabledConfig;
+import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterBytes;
+import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterCount;
 import io.confluent.kafkarest.ratelimit.RequestRateLimiter;
-import io.confluent.kafkarest.ratelimit.RequestRateLimiterProduceBytes;
-import io.confluent.kafkarest.ratelimit.RequestRateLimiterProduceCount;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ProduceRateLimiters {
 
   private final boolean rateLimitingEnabled;
   private final LoadingCache<String, RequestRateLimiter> countCache;
   private final LoadingCache<String, RequestRateLimiter> bytesCache;
-  Provider<RequestRateLimiterProduceCount> countLimiterProvider;
-  Provider<RequestRateLimiterProduceBytes> bytesLimiterProvider;
-
-  private static final Logger log = LoggerFactory.getLogger(ProduceRateLimiters.class);
+  private final Provider<RequestRateLimiter> countLimiterProvider;
+  private final Provider<RequestRateLimiter> bytesLimiterProvider;
+  private final Duration produceRateLimitCacheExpiryConfig;
 
   @Inject
   public ProduceRateLimiters(
-      Provider<RequestRateLimiterProduceCount> countLimiterProvider,
-      Provider<RequestRateLimiterProduceBytes> bytesLimiterProvider,
+      @ProduceRateLimiterCount Provider<RequestRateLimiter> countLimiterProvider,
+      @ProduceRateLimiterBytes Provider<RequestRateLimiter> bytesLimiterProvider,
       @ProduceRateLimitEnabledConfig Boolean produceRateLimitEnabledConfig,
       @ProduceRateLimitCacheExpiryConfig Duration produceRateLimitCacheExpiryConfig) {
     this.rateLimitingEnabled = requireNonNull(produceRateLimitEnabledConfig);
-    this.countLimiterProvider = countLimiterProvider;
-    this.bytesLimiterProvider = bytesLimiterProvider;
+    this.countLimiterProvider = requireNonNull(countLimiterProvider);
+    this.bytesLimiterProvider = requireNonNull(bytesLimiterProvider);
+    this.produceRateLimitCacheExpiryConfig = requireNonNull(produceRateLimitCacheExpiryConfig);
 
     countCache =
         CacheBuilder.newBuilder()
@@ -60,7 +58,7 @@ public class ProduceRateLimiters {
                 new CacheLoader<String, RequestRateLimiter>() {
                   @Override
                   public RequestRateLimiter load(String key) {
-                    return countLimiterProvider.get().getLimiter();
+                    return countLimiterProvider.get();
                   }
                 });
 
@@ -71,7 +69,7 @@ public class ProduceRateLimiters {
                 new CacheLoader<String, RequestRateLimiter>() {
                   @Override
                   public RequestRateLimiter load(String key) {
-                    return bytesLimiterProvider.get().getLimiter();
+                    return bytesLimiterProvider.get();
                   }
                 });
   }
@@ -94,5 +92,6 @@ public class ProduceRateLimiters {
 
   public void clear() {
     countCache.invalidateAll();
+    bytesCache.invalidateAll();
   }
 }

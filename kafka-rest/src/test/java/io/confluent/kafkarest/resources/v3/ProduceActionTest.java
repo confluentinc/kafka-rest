@@ -31,8 +31,6 @@ import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
 import io.confluent.kafkarest.ratelimit.RequestRateLimiter;
-import io.confluent.kafkarest.ratelimit.RequestRateLimiterProduceBytes;
-import io.confluent.kafkarest.ratelimit.RequestRateLimiterProduceCount;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
@@ -68,27 +66,17 @@ public class ProduceActionTest {
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
         getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS);
 
-    Provider<RequestRateLimiterProduceCount> countLimitProvider = mock(Provider.class);
-    Provider<RequestRateLimiterProduceBytes> bytesLimitProvider = mock(Provider.class);
-    RequestRateLimiterProduceCount countLimiter = mock(RequestRateLimiterProduceCount.class);
-    RequestRateLimiterProduceBytes bytesLimiter = mock(RequestRateLimiterProduceBytes.class);
+    Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
 
-    expect(countLimitProvider.get()).andReturn(countLimiter);
-    expect(bytesLimitProvider.get()).andReturn(bytesLimiter);
-    expect(countLimiter.getLimiter()).andReturn(rateLimiterForCount);
-    expect(bytesLimiter.getLimiter()).andReturn(rateLimiterForBytes);
+    expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
+    expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
 
-    replay(
-        countLimiter,
-        bytesLimiter,
-        countLimitProvider,
-        bytesLimitProvider,
-        rateLimiterForCount,
-        rateLimiterForBytes);
+    replay(countLimitProvider, bytesLimitProvider, rateLimiterForCount, rateLimiterForBytes);
 
     ProduceAction produceAction =
         getProduceAction(
@@ -133,17 +121,13 @@ public class ProduceActionTest {
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
         getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1);
 
-    Provider<RequestRateLimiterProduceCount> countLimitProvider = mock(Provider.class);
-    Provider<RequestRateLimiterProduceBytes> bytesLimitProvider = mock(Provider.class);
-    RequestRateLimiterProduceCount countLimiter = mock(RequestRateLimiterProduceCount.class);
-    RequestRateLimiterProduceBytes bytesLimiter = mock(RequestRateLimiterProduceBytes.class);
+    Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
 
-    expect(countLimitProvider.get()).andReturn(countLimiter);
-    expect(bytesLimitProvider.get()).andReturn(bytesLimiter);
-    expect(countLimiter.getLimiter()).andReturn(rateLimiterForCount);
-    expect(bytesLimiter.getLimiter()).andReturn(rateLimiterForBytes);
+    expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
+    expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
     rateLimiterForCount.rateLimit(anyInt());
@@ -153,13 +137,7 @@ public class ProduceActionTest {
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
 
-    replay(
-        countLimiter,
-        bytesLimiter,
-        countLimitProvider,
-        bytesLimitProvider,
-        rateLimiterForCount,
-        rateLimiterForBytes);
+    replay(countLimitProvider, bytesLimitProvider, rateLimiterForCount, rateLimiterForBytes);
 
     ProduceAction produceAction1 =
         getProduceAction(
@@ -219,17 +197,13 @@ public class ProduceActionTest {
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
         getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS);
 
-    Provider<RequestRateLimiterProduceCount> countLimitProvider = mock(Provider.class);
-    Provider<RequestRateLimiterProduceBytes> bytesLimitProvider = mock(Provider.class);
-    RequestRateLimiterProduceCount countLimiter = mock(RequestRateLimiterProduceCount.class);
-    RequestRateLimiterProduceBytes bytesLimiter = mock(RequestRateLimiterProduceBytes.class);
+    Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
 
-    expect(countLimitProvider.get()).andReturn(countLimiter);
-    expect(bytesLimitProvider.get()).andReturn(bytesLimiter);
-    expect(countLimiter.getLimiter()).andReturn(rateLimiterForCount);
-    expect(bytesLimiter.getLimiter()).andReturn(rateLimiterForBytes);
+    expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
+    expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
 
@@ -237,13 +211,7 @@ public class ProduceActionTest {
     rateLimiterForBytes.rateLimit(anyInt());
     EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
 
-    replay(
-        countLimiter,
-        bytesLimiter,
-        countLimitProvider,
-        bytesLimitProvider,
-        rateLimiterForCount,
-        rateLimiterForBytes);
+    replay(countLimitProvider, bytesLimitProvider, rateLimiterForCount, rateLimiterForBytes);
 
     ProduceAction produceAction =
         getProduceAction(
@@ -280,8 +248,6 @@ public class ProduceActionTest {
     verify(
         requests,
         mockedChunkedOutput,
-        countLimiter,
-        bytesLimiter,
         countLimitProvider,
         bytesLimitProvider,
         rateLimiterForCount,
@@ -304,30 +270,20 @@ public class ProduceActionTest {
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
         getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS);
 
-    Provider<RequestRateLimiterProduceCount> countLimitProvider = mock(Provider.class);
-    Provider<RequestRateLimiterProduceBytes> bytesLimitProvider = mock(Provider.class);
-    RequestRateLimiterProduceCount countLimiter = mock(RequestRateLimiterProduceCount.class);
-    RequestRateLimiterProduceBytes bytesLimiter = mock(RequestRateLimiterProduceBytes.class);
+    Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
 
-    expect(countLimitProvider.get()).andReturn(countLimiter);
-    expect(bytesLimitProvider.get()).andReturn(bytesLimiter);
-    expect(countLimiter.getLimiter()).andReturn(rateLimiterForCount);
-    expect(bytesLimiter.getLimiter()).andReturn(rateLimiterForBytes);
+    expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
+    expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
 
     rateLimiterForCount.rateLimit(anyInt());
     EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
 
-    replay(
-        countLimiter,
-        bytesLimiter,
-        countLimitProvider,
-        bytesLimitProvider,
-        rateLimiterForCount,
-        rateLimiterForBytes);
+    replay(countLimitProvider, bytesLimitProvider, rateLimiterForCount, rateLimiterForBytes);
 
     ProduceAction produceAction =
         getProduceAction(
@@ -360,12 +316,9 @@ public class ProduceActionTest {
     produceAction.produce(fakeAsyncResponse2, "clusterId", "topicName", requests);
 
     // check results
-    // check results
     verify(
         requests,
         mockedChunkedOutput,
-        countLimiter,
-        bytesLimiter,
         countLimitProvider,
         bytesLimitProvider,
         rateLimiterForCount,
@@ -388,20 +341,12 @@ public class ProduceActionTest {
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
         getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS);
 
-    Provider<RequestRateLimiterProduceCount> countLimitProvider = mock(Provider.class);
-    Provider<RequestRateLimiterProduceBytes> bytesLimitProvider = mock(Provider.class);
-    RequestRateLimiterProduceCount countLimiter = mock(RequestRateLimiterProduceCount.class);
-    RequestRateLimiterProduceBytes bytesLimiter = mock(RequestRateLimiterProduceBytes.class);
+    Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
 
-    replay(
-        countLimiter,
-        bytesLimiter,
-        countLimitProvider,
-        bytesLimitProvider,
-        rateLimiterForCount,
-        rateLimiterForBytes);
+    replay(countLimitProvider, bytesLimitProvider, rateLimiterForCount, rateLimiterForBytes);
 
     ProduceAction produceAction =
         getProduceAction(
@@ -422,7 +367,6 @@ public class ProduceActionTest {
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorOK2); // successful second produce
     mockedChunkedOutput.close();
-    // mockedChunkedOutput.close(); // second close always happens on tidy up
 
     replay(mockedChunkedOutput, chunkedOutputFactory);
 
@@ -433,12 +377,9 @@ public class ProduceActionTest {
     produceAction.produce(fakeAsyncResponse2, "clusterId", "topicName", requests);
 
     // check results
-    // check results
     verify(
         requests,
         mockedChunkedOutput,
-        countLimiter,
-        bytesLimiter,
         countLimitProvider,
         bytesLimitProvider,
         rateLimiterForCount,
@@ -457,17 +398,13 @@ public class ProduceActionTest {
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
 
-    Provider<RequestRateLimiterProduceCount> countLimitProvider = mock(Provider.class);
-    Provider<RequestRateLimiterProduceBytes> bytesLimitProvider = mock(Provider.class);
-    RequestRateLimiterProduceCount countLimiter = mock(RequestRateLimiterProduceCount.class);
-    RequestRateLimiterProduceBytes bytesLimiter = mock(RequestRateLimiterProduceBytes.class);
+    Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
 
-    expect(countLimitProvider.get()).andReturn(countLimiter);
-    expect(bytesLimitProvider.get()).andReturn(bytesLimiter);
-    expect(countLimiter.getLimiter()).andReturn(rateLimiterForCount);
-    expect(bytesLimiter.getLimiter()).andReturn(rateLimiterForBytes);
+    expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
+    expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
 
@@ -669,8 +606,8 @@ public class ProduceActionTest {
       Properties properties,
       ChunkedOutputFactory chunkedOutputFactory,
       int times,
-      Provider<RequestRateLimiterProduceCount> countLimiter,
-      Provider<RequestRateLimiterProduceBytes> bytesLimiter) {
+      Provider<RequestRateLimiter> countLimiter,
+      Provider<RequestRateLimiter> bytesLimiter) {
     return getProduceAction(
         properties, chunkedOutputFactory, times, countLimiter, bytesLimiter, false);
   }
@@ -679,8 +616,8 @@ public class ProduceActionTest {
       Properties properties,
       ChunkedOutputFactory chunkedOutputFactory,
       int times,
-      Provider<RequestRateLimiterProduceCount> countLimiter,
-      Provider<RequestRateLimiterProduceBytes> bytesLimiter,
+      Provider<RequestRateLimiter> countLimiter,
+      Provider<RequestRateLimiter> bytesLimiter,
       boolean errorSchemaRegistry) {
     return getProduceAction(
         new ProduceRateLimiters(
