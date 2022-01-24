@@ -19,9 +19,9 @@ import static java.util.Collections.emptyList;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
@@ -48,13 +48,10 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-@RunWith(JUnit4.class)
 public class SchemaManagerImplTest {
 
   private static final String TOPIC_NAME = "topic-1";
@@ -64,7 +61,7 @@ public class SchemaManagerImplTest {
   private MockSchemaRegistryClient schemaRegistryClient;
   private SchemaManager schemaManager;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     schemaRegistryClient =
         (MockSchemaRegistryClient)
@@ -78,7 +75,7 @@ public class SchemaManagerImplTest {
     schemaManager = new SchemaManagerImpl(schemaRegistryClient, new TopicNameStrategy());
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     schemaRegistryClient.reset();
   }

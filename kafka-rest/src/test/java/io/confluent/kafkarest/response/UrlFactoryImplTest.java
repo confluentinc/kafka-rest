@@ -19,21 +19,17 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.URI;
 import javax.ws.rs.core.UriInfo;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(JUnit4.class)
+@ExtendWith(EasyMockExtension.class)
 public class UrlFactoryImplTest {
-
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
   @Mock private UriInfo requestUriInfo;
 

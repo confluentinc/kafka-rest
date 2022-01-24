@@ -21,11 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
 import java.util.Optional;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
-@RunWith(JUnit4.class)
 public class SchemaRecordSerializerTest {
 
   @Test

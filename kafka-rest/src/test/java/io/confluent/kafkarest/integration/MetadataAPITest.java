@@ -19,7 +19,7 @@ import static io.confluent.kafkarest.TestUtils.assertOKResponse;
 import static io.confluent.kafkarest.TestUtils.tryReadEntityOrLog;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.Versions;
@@ -35,8 +35,8 @@ import java.util.List;
 import java.util.Properties;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests metadata access against a real cluster. This isn't exhaustive since the unit tests cover
@@ -86,7 +86,7 @@ public class MetadataAPITest extends ClusterTestHarness {
     super(2, false);
   }
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();
