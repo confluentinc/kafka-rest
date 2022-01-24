@@ -272,14 +272,6 @@ public abstract class StreamingResponse<T> {
                       ResultOrError res = result.join();
                       log.debug("Writing to sink");
                       sink.write(res);
-                      if (res instanceof ErrorHolder
-                          && ((ErrorHolder) res).getError().getErrorCode() == 429) {
-                        log.warn(
-                            "Connection closed as a result of rate limiting being exceeded "
-                                + "for longer than grace period.");
-                        sinkClosed = true;
-                        sink.close();
-                      }
                     } catch (IOException e) {
                       log.error("Error when writing streaming result to response channel.", e);
                     }

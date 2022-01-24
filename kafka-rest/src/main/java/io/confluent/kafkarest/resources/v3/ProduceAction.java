@@ -127,29 +127,14 @@ public final class ProduceAction {
     ProduceController controller = produceControllerProvider.get();
     streamingResponseFactory
         .from(requests)
-        .compose(
-            request -> {
-              Optional<Long> messageSize = request.getOriginalSize();
-              if (messageSize.isPresent()) {
-                return produce(
-                    clusterId,
-                    topicName,
-                    request,
-                    controller,
-                    produceRateLimiters.calculateGracePeriodExceeded(clusterId, messageSize.get()));
-              } else {
-                return produce(clusterId, topicName, request, controller, Optional.empty());
-              }
-            })
+        .compose(request -> produce(clusterId, topicName, request, controller))
         .resume(asyncResponse);
   }
 
   private CompletableFuture<ProduceResponse> produce(
-      String clusterId,
-      String topicName,
-      ProduceRequest request,
-      ProduceController controller,
-      Optional<Duration> waitFor) {
+      String clusterId, String topicName, ProduceRequest request, ProduceController controller) {
+
+    produceRateLimiters.rateLimit(clusterId, request.getOriginalSize());
 
     Instant requestInstant = Instant.now();
     Optional<RegisteredSchema> keySchema =
@@ -197,14 +182,7 @@ public final class ProduceAction {
             result -> {
               ProduceResponse response =
                   toProduceResponse(
-                      clusterId,
-                      topicName,
-                      keyFormat,
-                      keySchema,
-                      valueFormat,
-                      valueSchema,
-                      result,
-                      waitFor);
+                      clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
               long latency =
                   Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
               recordResponseMetrics(latency);
@@ -262,8 +240,7 @@ public final class ProduceAction {
       Optional<RegisteredSchema> keySchema,
       Optional<EmbeddedFormat> valueFormat,
       Optional<RegisteredSchema> valueSchema,
-      ProduceResult result,
-      Optional<Duration> waitFor) {
+      ProduceResult result) {
     return ProduceResponse.builder()
         .setClusterId(clusterId)
         .setTopicName(topicName)
@@ -290,7 +267,6 @@ public final class ProduceAction {
                         .setSchemaVersion(valueSchema.map(RegisteredSchema::getSchemaVersion))
                         .setSize(result.getSerializedValueSize())
                         .build()))
-        .setWaitForMs(waitFor.map(Duration::toMillis))
         .build();
   }
 
