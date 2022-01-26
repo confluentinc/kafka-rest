@@ -16,9 +16,13 @@
 package io.confluent.kafkarest.ratelimit;
 
 import java.time.Duration;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+// TODO ddimitrov This continues being way too flaky.
+//  Until we fix it (KREST-3850), we should ignore it, as it might be hiding even worse errors.
+@Ignore
 @RunWith(JUnit4.class)
 public final class GuavaRateLimitTest extends AbstractRateLimitEnabledTest {
 
