@@ -46,6 +46,7 @@
     </modules>
 
     <properties>
+        <confluent.maven.repo>https://packages.confluent.io/maven/</confluent.maven.repo>
         <checkstyle.suppressions.location>checkstyle/suppressions.xml</checkstyle.suppressions.location>
         <io.confluent.kafka-rest.version>6.1.5-0</io.confluent.kafka-rest.version>
     </properties>
