@@ -2705,6 +2705,7 @@ public class ProduceActionIntegrationTest {
                       .setFormat(EmbeddedFormat.JSON)
                       .setData(TextNode.valueOf("value-" + i))
                       .build())
+              .setOriginalSize(0L)
               .build());
     }
 
@@ -2774,6 +2775,7 @@ public class ProduceActionIntegrationTest {
                       .setFormat(EmbeddedFormat.BINARY)
                       .setData(IntNode.valueOf(2 * i + 1))
                       .build())
+              .setOriginalSize(0L)
               .build());
     }
 
