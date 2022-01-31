@@ -19,6 +19,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.entities.Acl;
 import io.confluent.kafkarest.entities.v3.AclData;
@@ -37,6 +38,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class AclsResourceIntegrationTest extends ClusterTestHarness {
@@ -60,6 +62,12 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
           .setHost("1.2.3.4")
           .setOperation(Acl.Operation.WRITE)
           .setPermission(Acl.Permission.ALLOW);
+
+  private String clusterId;
+  private String baseAclUrl;
+  private String expectedAliceUrl;
+  private String expectedBobUrl;
+  private String expectedSearchUrl;
 
   public AclsResourceIntegrationTest() {
     super(/* numBrokers= */ 3, /* withSchemaRegistry= */ false);
@@ -99,16 +107,15 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
     props.put("client.security.protocol", "SASL_PLAINTEXT");
   }
 
-  @Test
-  public void testCreateSearchAndDelete() {
-    String baseUrl = restConnect;
-    String clusterId = getClusterId();
+  @BeforeEach
+  public void setUp() throws Exception {
+    super.setUp();
 
-    String expectedAliceUrl =
-        baseUrl
-            + "/v3/clusters/"
-            + clusterId
-            + "/acls"
+    clusterId = getClusterId();
+    baseAclUrl = "/v3/clusters/" + clusterId + "/acls";
+    expectedAliceUrl =
+        restConnect
+            + baseAclUrl
             + "?resource_type=TOPIC"
             + "&resource_name=*"
             + "&pattern_type=LITERAL"
@@ -116,11 +123,9 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
             + "&host=*"
             + "&operation=READ"
             + "&permission=ALLOW";
-    String expectedBobUrl =
-        baseUrl
-            + "/v3/clusters/"
-            + clusterId
-            + "/acls"
+    expectedBobUrl =
+        restConnect
+            + baseAclUrl
             + "?resource_type=TOPIC"
             + "&resource_name=topic-"
             + "&pattern_type=PREFIXED"
@@ -128,11 +133,9 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
             + "&host=1.2.3.4"
             + "&operation=WRITE"
             + "&permission=ALLOW";
-    String expectedSearchUrl =
-        baseUrl
-            + "/v3/clusters/"
-            + clusterId
-            + "/acls"
+    expectedSearchUrl =
+        restConnect
+            + baseAclUrl
             + "?resource_type=TOPIC"
             + "&resource_name=topic-1"
             + "&pattern_type=MATCH"
@@ -140,7 +143,9 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
             + "&host="
             + "&operation=ANY"
             + "&permission=ANY";
+  }
 
+  private void createAliceAndBobAcls() {
     SearchAclsResponse expectedPreCreateSearchResponse =
         SearchAclsResponse.create(
             AclDataList.builder()
@@ -151,7 +156,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
 
     Response actualPreCreateSearchResponse =
         request(
-                "/v3/clusters/" + clusterId + "/acls",
+                baseAclUrl,
                 ImmutableMap.of(
                     "resource_type", "topic",
                     "resource_name", "topic-1",
@@ -164,7 +169,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
         actualPreCreateSearchResponse.readEntity(SearchAclsResponse.class));
 
     Response actualCreateAliceResponse =
-        request("/v3/clusters/" + clusterId + "/acls")
+        request(baseAclUrl)
             .post(
                 Entity.entity(
                     CreateAclRequest.builder()
@@ -181,7 +186,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(expectedAliceUrl, actualCreateAliceResponse.getLocation().toString());
 
     Response actualCreateBobResponse =
-        request("/v3/clusters/" + clusterId + "/acls")
+        request(baseAclUrl)
             .post(
                 Entity.entity(
                     CreateAclRequest.builder()
@@ -218,7 +223,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
 
     Response actualPostCreateSearchResponse =
         request(
-                "/v3/clusters/" + clusterId + "/acls",
+                baseAclUrl,
                 ImmutableMap.of(
                     "resource_type", "topic",
                     "resource_name", "topic-1",
@@ -229,6 +234,11 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(
         expectedPostCreateSearchResponse,
         actualPostCreateSearchResponse.readEntity(SearchAclsResponse.class));
+  }
+
+  @Test
+  public void testCreateSearchAndSeparateDelete() {
+    createAliceAndBobAcls();
 
     DeleteAclsResponse expectedDeleteAliceResponse =
         DeleteAclsResponse.create(
@@ -241,11 +251,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
     Client webClient = getClient();
     restApp.configureBaseApplication(webClient);
     Response actualDeleteAliceResponse =
-        webClient
-            .target(actualCreateAliceResponse.getLocation())
-            .request()
-            .accept(MediaType.APPLICATION_JSON)
-            .delete();
+        webClient.target(expectedAliceUrl).request().accept(MediaType.APPLICATION_JSON).delete();
     assertEquals(Status.OK.getStatusCode(), actualDeleteAliceResponse.getStatus());
     assertEquals(
         expectedDeleteAliceResponse,
@@ -260,11 +266,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
                     .build()));
 
     Response actualDeleteBobResponse =
-        webClient
-            .target(actualCreateBobResponse.getLocation())
-            .request()
-            .accept(MediaType.APPLICATION_JSON)
-            .delete();
+        webClient.target(expectedBobUrl).request().accept(MediaType.APPLICATION_JSON).delete();
     assertEquals(Status.OK.getStatusCode(), actualDeleteBobResponse.getStatus());
     assertEquals(
         expectedDeleteBobResponse, actualDeleteBobResponse.readEntity(DeleteAclsResponse.class));
@@ -279,7 +281,7 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
 
     Response actualPostDeleteSearchResponse =
         request(
-                "/v3/clusters/" + clusterId + "/acls",
+                baseAclUrl,
                 ImmutableMap.of(
                     "resource_type", "topic",
                     "resource_name", "topic-1",
@@ -290,5 +292,44 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(
         expectedPostDeleteSearchResponse,
         actualPostDeleteSearchResponse.readEntity(SearchAclsResponse.class));
+  }
+
+  @Test
+  public void testCreateSearchAndMultiDelete() {
+    createAliceAndBobAcls();
+
+    DeleteAclsResponse expectedMultiDeleteResponse =
+        DeleteAclsResponse.create(
+            ImmutableList.of(
+                ALICE_ACL_DATA
+                    .setMetadata(Resource.Metadata.builder().setSelf(expectedAliceUrl).build())
+                    .setClusterId(clusterId)
+                    .build(),
+                BOB_ACL_DATA
+                    .setMetadata(Resource.Metadata.builder().setSelf(expectedBobUrl).build())
+                    .setClusterId(clusterId)
+                    .build()));
+
+    Client webClient = getClient();
+    restApp.configureBaseApplication(webClient);
+
+    // KREST-4113 First ensure that a DELETE request without any parameters specified doesn't
+    // delete all ACLs, but throws an HTTP 400 Bad Request instead.
+    Response multiDeleteNoParamsResponse =
+        webClient
+            .target(restConnect + baseAclUrl)
+            .request()
+            .accept(MediaType.APPLICATION_JSON)
+            .delete();
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), multiDeleteNoParamsResponse.getStatus());
+
+    // Then ensure that a DELETE request with the parameters needed to search for and match both
+    // ACLs does delete both ACLs at once.
+    Response multiDeleteResourceTypeAll =
+        webClient.target(expectedSearchUrl).request().accept(MediaType.APPLICATION_JSON).delete();
+    assertEquals(Status.OK.getStatusCode(), multiDeleteResourceTypeAll.getStatus());
+    assertEquals(
+        expectedMultiDeleteResponse,
+        multiDeleteResourceTypeAll.readEntity(DeleteAclsResponse.class));
   }
 }
