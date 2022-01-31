@@ -97,7 +97,6 @@ public abstract class ProduceRequest {
           .setTimestamp(timestamp);
     }
 
-    @JsonProperty("partition_id")
     public abstract Builder setPartitionId(@Nullable Integer partitionId);
 
     public abstract Builder setHeaders(List<ProduceRequestHeader> headers);
@@ -108,7 +107,7 @@ public abstract class ProduceRequest {
 
     public abstract Builder setTimestamp(@Nullable Instant timestamp);
 
-    public abstract Builder setOriginalSize(@Nullable Long size);
+    public abstract Builder setOriginalSize(long size);
 
     public abstract ProduceRequest build();
   }

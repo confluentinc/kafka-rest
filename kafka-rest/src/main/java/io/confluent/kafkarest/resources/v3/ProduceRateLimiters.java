@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import static java.lang.Math.toIntExact;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.cache.CacheBuilder;
@@ -26,8 +27,6 @@ import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterBytes;
 import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterCount;
 import io.confluent.kafkarest.ratelimit.RequestRateLimiter;
 import java.time.Duration;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -36,9 +35,6 @@ public class ProduceRateLimiters {
   private final boolean rateLimitingEnabled;
   private final LoadingCache<String, RequestRateLimiter> countCache;
   private final LoadingCache<String, RequestRateLimiter> bytesCache;
-  private final Provider<RequestRateLimiter> countLimiterProvider;
-  private final Provider<RequestRateLimiter> bytesLimiterProvider;
-  private final Duration produceRateLimitCacheExpiryConfig;
 
   @Inject
   public ProduceRateLimiters(
@@ -47,34 +43,17 @@ public class ProduceRateLimiters {
       @ProduceRateLimitEnabledConfig Boolean produceRateLimitEnabledConfig,
       @ProduceRateLimitCacheExpiryConfig Duration produceRateLimitCacheExpiryConfig) {
     this.rateLimitingEnabled = requireNonNull(produceRateLimitEnabledConfig);
-    this.countLimiterProvider = requireNonNull(countLimiterProvider);
-    this.bytesLimiterProvider = requireNonNull(bytesLimiterProvider);
-    this.produceRateLimitCacheExpiryConfig = requireNonNull(produceRateLimitCacheExpiryConfig);
-
     countCache =
         CacheBuilder.newBuilder()
-            .expireAfterAccess(produceRateLimitCacheExpiryConfig.toMillis(), TimeUnit.MILLISECONDS)
-            .build(
-                new CacheLoader<String, RequestRateLimiter>() {
-                  @Override
-                  public RequestRateLimiter load(String key) {
-                    return countLimiterProvider.get();
-                  }
-                });
-
+            .expireAfterAccess(produceRateLimitCacheExpiryConfig)
+            .build(new RequestRateLimiterCacheLoader(countLimiterProvider));
     bytesCache =
         CacheBuilder.newBuilder()
-            .expireAfterAccess(produceRateLimitCacheExpiryConfig.toMillis(), TimeUnit.MILLISECONDS)
-            .build(
-                new CacheLoader<String, RequestRateLimiter>() {
-                  @Override
-                  public RequestRateLimiter load(String key) {
-                    return bytesLimiterProvider.get();
-                  }
-                });
+            .expireAfterAccess(produceRateLimitCacheExpiryConfig)
+            .build(new RequestRateLimiterCacheLoader(bytesLimiterProvider));
   }
 
-  public void rateLimit(String clusterId, Optional<Long> requestSize) {
+  public void rateLimit(String clusterId, long requestSize) {
     if (!rateLimitingEnabled) {
       return;
     }
@@ -82,16 +61,25 @@ public class ProduceRateLimiters {
     RequestRateLimiter countRateLimiter = countCache.getUnchecked(clusterId);
     RequestRateLimiter byteRateLimiter = bytesCache.getUnchecked(clusterId);
     countRateLimiter.rateLimit(1);
-
-    if (requestSize.isPresent()) {
-      byteRateLimiter.rateLimit(requestSize.get().intValue());
-    }
-    // requestSize should always be present, but if there is no message size available
-    // we allow the request through without limiting it
+    byteRateLimiter.rateLimit(toIntExact(requestSize));
   }
 
   public void clear() {
     countCache.invalidateAll();
     bytesCache.invalidateAll();
+  }
+
+  private static final class RequestRateLimiterCacheLoader
+      extends CacheLoader<String, RequestRateLimiter> {
+    private final Provider<RequestRateLimiter> rateLimiter;
+
+    private RequestRateLimiterCacheLoader(Provider<RequestRateLimiter> rateLimiter) {
+      this.rateLimiter = requireNonNull(rateLimiter);
+    }
+
+    @Override
+    public RequestRateLimiter load(String key) {
+      return rateLimiter.get();
+    }
   }
 }

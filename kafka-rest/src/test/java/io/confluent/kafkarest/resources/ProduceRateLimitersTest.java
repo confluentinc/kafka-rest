@@ -14,7 +14,6 @@ import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
 import io.confluent.kafkarest.ratelimit.RequestRateLimiter;
 import io.confluent.kafkarest.resources.v3.ProduceRateLimiters;
 import java.time.Duration;
-import java.util.Optional;
 import java.util.Properties;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -45,7 +44,7 @@ public class ProduceRateLimitersTest {
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
-    produceRateLimiters.rateLimit("clusterId", Optional.of(10L));
+    produceRateLimiters.rateLimit("clusterId", 10L);
 
     verify(countLimitProvider, bytesLimitProvider, rateLimiterForCount, rateLimiterForBytes);
   }
@@ -91,9 +90,9 @@ public class ProduceRateLimitersTest {
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
 
-    produceRateLimiters.rateLimit("clusterId", Optional.of(10L));
+    produceRateLimiters.rateLimit("clusterId", 10L);
 
-    produceRateLimiters.rateLimit("clusterId2", Optional.of(10L));
+    produceRateLimiters.rateLimit("clusterId2", 10L);
 
     verify(
         countLimitProvider,
@@ -134,12 +133,12 @@ public class ProduceRateLimitersTest {
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
 
-    produceRateLimiters.rateLimit("clusterId", Optional.of(10L));
+    produceRateLimiters.rateLimit("clusterId", 10L);
 
     RateLimitExceededException e =
         assertThrows(
             RateLimitExceededException.class,
-            () -> produceRateLimiters.rateLimit("clusterId", Optional.of(10L)));
+            () -> produceRateLimiters.rateLimit("clusterId", 10L));
 
     assertEquals("The rate limit of requests per second has been exceeded.", e.getMessage());
 
@@ -177,12 +176,12 @@ public class ProduceRateLimitersTest {
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
 
-    produceRateLimiters.rateLimit("clusterId", Optional.of(10L));
+    produceRateLimiters.rateLimit("clusterId", 10L);
 
     RateLimitExceededException e =
         assertThrows(
             RateLimitExceededException.class,
-            () -> produceRateLimiters.rateLimit("clusterId", Optional.of(10L)));
+            () -> produceRateLimiters.rateLimit("clusterId", 10L));
 
     assertEquals("The rate limit of requests per second has been exceeded.", e.getMessage());
 
@@ -223,10 +222,10 @@ public class ProduceRateLimitersTest {
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
 
-    produceRateLimiters.rateLimit("clusterId", Optional.of(10L));
+    produceRateLimiters.rateLimit("clusterId", 10L);
 
     Thread.sleep(50);
-    produceRateLimiters.rateLimit("clusterId", Optional.of(10L));
+    produceRateLimiters.rateLimit("clusterId", 10L);
 
     verify(countLimitProvider, bytesLimitProvider, rateLimiterForCount, rateLimiterForBytes);
   }
