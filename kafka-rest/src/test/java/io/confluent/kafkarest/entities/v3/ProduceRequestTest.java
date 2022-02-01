@@ -13,7 +13,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest;
+package io.confluent.kafkarest.entities.v3;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import io.confluent.kafkarest.entities.v3.ProduceRequest;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,10 +31,11 @@ import java.util.TimeZone;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class ProduceRequestSerdeModuleTest {
+public class ProduceRequestTest {
 
   private static final String REQUEST =
-      "{\"key\":{\"type\":\"BINARY\",\"data\":\"Zm9v\"},\"value\":{\"type\":\"BINARY\",\"data\":\"YmFy\"}}";
+      "{\"key\":{\"type\":\"BINARY\",\"data\":\"Zm9v\"},\"value\":{\"type\":\"BINARY\","
+          + "\"data\":\"YmFy\"}}";
 
   private ObjectMapper mapper;
 
@@ -45,7 +45,6 @@ public class ProduceRequestSerdeModuleTest {
     mapper.registerModule(new GuavaModule());
     mapper.registerModule(new Jdk8Module());
     mapper.registerModule(new JavaTimeModule());
-    mapper.registerModule(new ProduceRequestSerdeModule());
     mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
     mapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"));
     mapper.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -55,7 +54,7 @@ public class ProduceRequestSerdeModuleTest {
   public void testProduceRequestDeserializerAddsSizeFromString() throws JsonProcessingException {
     ProduceRequest pr = mapper.readValue(REQUEST, ProduceRequest.class);
 
-    assertEquals(REQUEST.length(), (long) pr.getOriginalSize().get());
+    assertEquals(REQUEST.length(), pr.getOriginalSize());
   }
 
   @Test
@@ -64,7 +63,7 @@ public class ProduceRequestSerdeModuleTest {
     InputStream requestStream = new ByteArrayInputStream(REQUEST.getBytes());
     ProduceRequest pr = mapper.readValue(requestStream, ProduceRequest.class);
 
-    assertEquals(REQUEST.length(), (long) pr.getOriginalSize().get());
+    assertEquals(REQUEST.length(), pr.getOriginalSize());
   }
 
   @Test

@@ -155,7 +155,7 @@ public final class ProduceAction {
     Optional<ByteString> serializedValue =
         serialize(topicName, valueFormat, valueSchema, request.getValue(), /* isKey= */ false);
 
-    recordRequestMetrics(request.getOriginalSize().orElse(0L));
+    recordRequestMetrics(request.getOriginalSize());
 
     CompletableFuture<ProduceResult> produceResult =
         controller.produce(

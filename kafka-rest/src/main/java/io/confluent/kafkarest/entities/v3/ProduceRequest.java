@@ -24,7 +24,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.node.BinaryNode;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
@@ -35,6 +39,7 @@ import io.confluent.kafka.serializers.subject.TopicNameStrategy;
 import io.confluent.kafka.serializers.subject.TopicRecordNameStrategy;
 import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +47,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 @AutoValue
+@JsonDeserialize(using = ProduceRequest.Deserializer.class)
 public abstract class ProduceRequest {
 
   ProduceRequest() {}
@@ -67,40 +73,7 @@ public abstract class ProduceRequest {
   public abstract Optional<Instant> getTimestamp();
 
   @JsonIgnore
-  public abstract Optional<Long> getOriginalSize();
-
-  @JsonCreator()
-  static ProduceRequest fromJson(
-      @JsonProperty("partition_id") @Nullable Integer partitionId,
-      @JsonProperty("headers") @Nullable List<ProduceRequestHeader> headers,
-      @JsonProperty("key") @Nullable ProduceRequestData key,
-      @JsonProperty("value") @Nullable ProduceRequestData value,
-      @JsonProperty("timestamp") @Nullable Instant timestamp) {
-    return builder()
-        .setPartitionId(partitionId)
-        .setHeaders(headers != null ? headers : ImmutableList.of())
-        .setKey(key)
-        .setValue(value)
-        .setTimestamp(timestamp)
-        .build();
-  }
-
-  public static ProduceRequest fromUnsized(ProduceRequest original, long size) {
-    Builder builder = builder().setHeaders(original.getHeaders()).setOriginalSize(size);
-    if (original.getPartitionId().isPresent()) {
-      builder.setPartitionId(original.getPartitionId().get());
-    }
-    if (original.getKey().isPresent()) {
-      builder.setKey(original.getKey().get());
-    }
-    if (original.getValue().isPresent()) {
-      builder.setValue(original.getValue().get());
-    }
-    if (original.getTimestamp().isPresent()) {
-      builder.setTimestamp(original.getTimestamp().get());
-    }
-    return builder.build();
-  }
+  public abstract long getOriginalSize();
 
   public static Builder builder() {
     return new AutoValue_ProduceRequest.Builder().setHeaders(emptyList());
@@ -108,6 +81,21 @@ public abstract class ProduceRequest {
 
   @AutoValue.Builder
   public abstract static class Builder {
+
+    @JsonCreator
+    static Builder fromJson(
+        @JsonProperty("partition_id") @Nullable Integer partitionId,
+        @JsonProperty("headers") @Nullable List<ProduceRequestHeader> headers,
+        @JsonProperty("key") @Nullable ProduceRequestData key,
+        @JsonProperty("value") @Nullable ProduceRequestData value,
+        @JsonProperty("timestamp") @Nullable Instant timestamp) {
+      return ProduceRequest.builder()
+          .setPartitionId(partitionId)
+          .setHeaders(headers != null ? headers : ImmutableList.of())
+          .setKey(key)
+          .setValue(value)
+          .setTimestamp(timestamp);
+    }
 
     public abstract Builder setPartitionId(@Nullable Integer partitionId);
 
@@ -119,9 +107,29 @@ public abstract class ProduceRequest {
 
     public abstract Builder setTimestamp(@Nullable Instant timestamp);
 
-    public abstract Builder setOriginalSize(@Nullable Long size);
+    public abstract Builder setOriginalSize(long size);
 
     public abstract ProduceRequest build();
+  }
+
+  static final class Deserializer extends JsonDeserializer<ProduceRequest> {
+
+    @Override
+    public ProduceRequest deserialize(JsonParser parser, DeserializationContext context)
+        throws IOException {
+      long start =
+          parser.getCurrentLocation().getByteOffset() == -1
+              ? parser.getCurrentLocation().getCharOffset()
+              : parser.getCurrentLocation().getByteOffset();
+      ProduceRequest.Builder builder = parser.readValueAs(ProduceRequest.Builder.class);
+      long end =
+          parser.getCurrentLocation().getByteOffset() == -1
+              ? parser.getCurrentLocation().getCharOffset()
+              : parser.getCurrentLocation().getByteOffset();
+      long size = start == -1 || end == -1 ? 0 : end - start + 1;
+      builder.setOriginalSize(size);
+      return builder.build();
+    }
   }
 
   @AutoValue
