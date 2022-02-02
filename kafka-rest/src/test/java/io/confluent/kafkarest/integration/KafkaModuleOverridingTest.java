@@ -175,8 +175,8 @@ public class KafkaModuleOverridingTest {
     public KafkaConsumerManager getKafkaConsumerManager() {
       KafkaConsumerManager kafkaConsumerManager = mock(KafkaConsumerManager.class);
       expect(
-          kafkaConsumerManager.createConsumer(
-              anyString(), anyObject(ConsumerInstanceConfig.class)))
+              kafkaConsumerManager.createConsumer(
+                  anyString(), anyObject(ConsumerInstanceConfig.class)))
           .andThrow(
               new RestException(
                   "I'm a teapot", I_M_A_TEAPOT_STATUS_CODE, I_M_A_TEAPOT_STATUS_CODE));
