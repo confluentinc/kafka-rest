@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -86,11 +87,11 @@ import javax.ws.rs.core.UriInfo;
 @ResourceName("api.v2.consumers.*")
 public final class ConsumersResource {
 
-  private final KafkaRestContext ctx;
+  private final Provider<KafkaRestContext> context;
 
   @Inject
-  public ConsumersResource(KafkaRestContext ctx) {
-    this.ctx = ctx;
+  public ConsumersResource(Provider<KafkaRestContext> context) {
+    this.context = context;
   }
 
   @POST
@@ -106,9 +107,13 @@ public final class ConsumersResource {
       config = CreateConsumerInstanceRequest.PROTOTYPE;
     }
     String instanceId =
-        ctx.getKafkaConsumerManager().createConsumer(group, config.toConsumerInstanceConfig());
+        context
+            .get()
+            .getKafkaConsumerManager()
+            .createConsumer(group, config.toConsumerInstanceConfig());
     String instanceBaseUri =
-        UriUtils.absoluteUri(ctx.getConfig(), uriInfo, "consumers", group, "instances", instanceId);
+        UriUtils.absoluteUri(
+            context.get().getConfig(), uriInfo, "consumers", group, "instances", instanceId);
     return new CreateConsumerInstanceResponse(instanceId, instanceBaseUri);
   }
 
@@ -118,7 +123,7 @@ public final class ConsumersResource {
   @ResourceName("api.v2.consumers.delete")
   public void deleteGroup(
       final @PathParam("group") String group, final @PathParam("instance") String instance) {
-    ctx.getKafkaConsumerManager().deleteConsumer(group, instance);
+    context.get().getKafkaConsumerManager().deleteConsumer(group, instance);
   }
 
   @POST
@@ -131,7 +136,7 @@ public final class ConsumersResource {
       final @PathParam("instance") String instance,
       @Valid @NotNull ConsumerSubscriptionRecord subscription) {
     try {
-      ctx.getKafkaConsumerManager().subscribe(group, instance, subscription);
+      context.get().getKafkaConsumerManager().subscribe(group, instance, subscription);
     } catch (java.lang.IllegalStateException e) {
       throw Errors.illegalStateException(e);
     }
@@ -145,7 +150,7 @@ public final class ConsumersResource {
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance) {
-    return ctx.getKafkaConsumerManager().subscription(group, instance);
+    return context.get().getKafkaConsumerManager().subscription(group, instance);
   }
 
   @DELETE
@@ -156,7 +161,7 @@ public final class ConsumersResource {
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance) {
-    ctx.getKafkaConsumerManager().unsubscribe(group, instance);
+    context.get().getKafkaConsumerManager().unsubscribe(group, instance);
   }
 
   @GET
@@ -274,7 +279,9 @@ public final class ConsumersResource {
       final @PathParam("instance") String instance,
       @QueryParam("async") @DefaultValue("false") String async,
       @Valid ConsumerOffsetCommitRequest offsetCommitRequest) {
-    ctx.getKafkaConsumerManager()
+    context
+        .get()
+        .getKafkaConsumerManager()
         .commitOffsets(
             group,
             instance,
@@ -303,7 +310,7 @@ public final class ConsumersResource {
     if (request == null) {
       throw Errors.partitionNotFoundException();
     }
-    return ctx.getKafkaConsumerManager().committed(group, instance, request);
+    return context.get().getKafkaConsumerManager().committed(group, instance, request);
   }
 
   @POST
@@ -316,7 +323,7 @@ public final class ConsumersResource {
       final @PathParam("instance") String instance,
       @Valid @NotNull ConsumerSeekToRequest seekToRequest) {
     try {
-      ctx.getKafkaConsumerManager().seekToBeginning(group, instance, seekToRequest);
+      context.get().getKafkaConsumerManager().seekToBeginning(group, instance, seekToRequest);
     } catch (java.lang.IllegalStateException e) {
       throw Errors.illegalStateException(e);
     }
@@ -332,7 +339,7 @@ public final class ConsumersResource {
       final @PathParam("instance") String instance,
       @Valid @NotNull ConsumerSeekToRequest seekToRequest) {
     try {
-      ctx.getKafkaConsumerManager().seekToEnd(group, instance, seekToRequest);
+      context.get().getKafkaConsumerManager().seekToEnd(group, instance, seekToRequest);
     } catch (java.lang.IllegalStateException e) {
       throw Errors.illegalStateException(e);
     }
@@ -348,7 +355,7 @@ public final class ConsumersResource {
       final @PathParam("instance") String instance,
       @Valid @NotNull ConsumerSeekRequest request) {
     try {
-      ctx.getKafkaConsumerManager().seek(group, instance, request);
+      context.get().getKafkaConsumerManager().seek(group, instance, request);
     } catch (java.lang.IllegalStateException e) {
       throw Errors.illegalStateException(e);
     }
@@ -364,7 +371,7 @@ public final class ConsumersResource {
       final @PathParam("instance") String instance,
       @Valid @NotNull ConsumerAssignmentRequest assignmentRequest) {
     try {
-      ctx.getKafkaConsumerManager().assign(group, instance, assignmentRequest);
+      context.get().getKafkaConsumerManager().assign(group, instance, assignmentRequest);
     } catch (java.lang.IllegalStateException e) {
       throw Errors.illegalStateException(e);
     }
@@ -378,7 +385,7 @@ public final class ConsumersResource {
       @javax.ws.rs.core.Context UriInfo uriInfo,
       final @PathParam("group") String group,
       final @PathParam("instance") String instance) {
-    return ctx.getKafkaConsumerManager().assignment(group, instance);
+    return context.get().getKafkaConsumerManager().assignment(group, instance);
   }
 
   private <KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> void readRecords(
@@ -392,7 +399,9 @@ public final class ConsumersResource {
       Function<ConsumerRecord<ClientKeyT, ClientValueT>, ?> toJsonWrapper) {
     maxBytes = (maxBytes <= 0) ? Long.MAX_VALUE : maxBytes;
 
-    ctx.getKafkaConsumerManager()
+    context
+        .get()
+        .getKafkaConsumerManager()
         .readRecords(
             group,
             instance,
