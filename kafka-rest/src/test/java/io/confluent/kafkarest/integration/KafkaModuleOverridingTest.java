@@ -17,6 +17,7 @@ package io.confluent.kafkarest.integration;
 
 import static java.util.Objects.requireNonNull;
 import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.anyString;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
@@ -30,7 +31,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
 import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.common.KafkaFutures;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
+import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.kafkarest.testing.KafkaRestFixture;
@@ -99,6 +103,23 @@ public class KafkaModuleOverridingTest {
     assertEquals(I_M_A_TEAPOT_STATUS_CODE, error.getErrorCode());
   }
 
+  @Test
+  public void consumersResourceIsInitializedCorrectly() {
+    // ConsumersResource is the only resource requiring a KafkaRestContext. If the context is not
+    // injected via a Provider, it will be resolved too early (before filters augmenting the
+    // context have kicked in), resulting in NullPointerExceptions leading to HTTP 500 errors
+    // (see KREST-4243 to KREST-4245 and KREST-4374 to KREST-4376).
+    Response response =
+        kafkaRest
+            .target()
+            .path("/consumers/bar")
+            .request()
+            .header("X-Teapot-Context", "")
+            .accept(Versions.KAFKA_V2_JSON)
+            .post(Entity.entity(CreateConsumerInstanceRequest.PROTOTYPE, Versions.KAFKA_V2_JSON));
+    assertEquals(I_M_A_TEAPOT_STATUS_CODE, response.getStatus());
+  }
+
   public static final class TeapotRestContextExtension implements RestResourceExtension {
 
     @Override
@@ -149,7 +170,17 @@ public class KafkaModuleOverridingTest {
 
     @Override
     public KafkaConsumerManager getKafkaConsumerManager() {
-      throw new UnsupportedOperationException();
+      KafkaConsumerManager kafkaConsumerManager = mock(KafkaConsumerManager.class);
+      expect(
+              kafkaConsumerManager.createConsumer(
+                  anyString(), anyObject(ConsumerInstanceConfig.class)))
+          .andThrow(
+              new RestException(
+                  "I'm a teapot", I_M_A_TEAPOT_STATUS_CODE, I_M_A_TEAPOT_STATUS_CODE));
+      kafkaConsumerManager.shutdown();
+      expectLastCall();
+      replay(kafkaConsumerManager);
+      return kafkaConsumerManager;
     }
 
     @Override
