@@ -36,8 +36,10 @@ import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestHeader;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.entities.v3.ProduceResponse.ProduceResponseData;
 import io.confluent.kafkarest.exceptions.BadRequestException;
+import io.confluent.kafkarest.exceptions.StacklessCompletionException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.ratelimit.DoNotRateLimit;
+import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
 import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
@@ -46,7 +48,6 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.stream.Collector;
@@ -134,7 +135,12 @@ public final class ProduceAction {
   private CompletableFuture<ProduceResponse> produce(
       String clusterId, String topicName, ProduceRequest request, ProduceController controller) {
 
-    produceRateLimiters.rateLimit(clusterId, request.getOriginalSize());
+    try {
+      produceRateLimiters.rateLimit(clusterId, request.getOriginalSize());
+    } catch (RateLimitExceededException e) {
+      // KREST-4356 Use our own CompletionException that will avoid the costly stack trace fill.
+      throw new StacklessCompletionException(e);
+    }
 
     Instant requestInstant = Instant.now();
     Optional<RegisteredSchema> keySchema =
@@ -173,7 +179,7 @@ public final class ProduceAction {
               if (error != null) {
                 long latency = Duration.between(requestInstant, Instant.now()).toMillis();
                 recordErrorMetrics(latency);
-                throw new CompletionException(error);
+                throw new StacklessCompletionException(error);
               }
               return result;
             },
