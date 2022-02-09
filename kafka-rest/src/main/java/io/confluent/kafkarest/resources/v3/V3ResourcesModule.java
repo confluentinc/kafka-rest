@@ -15,7 +15,11 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import static java.util.Objects.requireNonNull;
+
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import io.confluent.kafkarest.KafkaRestContext;
+import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.config.ConfigModule.ProduceResponseThreadPoolSizeConfig;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
@@ -29,6 +33,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Qualifier;
 import javax.inject.Singleton;
 import org.glassfish.hk2.api.AnnotationLiteral;
@@ -46,6 +51,9 @@ public final class V3ResourcesModule extends AbstractBinder {
     bindFactory(ProduceResponseExecutorServiceFactory.class)
         .qualifiedBy(new ProduceResponseThreadPoolImpl())
         .to(ExecutorService.class)
+        .in(Singleton.class);
+    bindFactory(ProducerMetricsFactory.class, Singleton.class)
+        .to(ProducerMetrics.class)
         .in(Singleton.class);
   }
 
@@ -85,6 +93,37 @@ public final class V3ResourcesModule extends AbstractBinder {
       } catch (InterruptedException e) {
         executorService.shutdownNow();
       }
+    }
+  }
+
+  private static final class ProducerMetricsFactory implements Factory<ProducerMetrics> {
+
+    private final Provider<KafkaRestContext> context;
+    private volatile ProducerMetrics producerMetrics;
+
+    @Inject
+    ProducerMetricsFactory(Provider<KafkaRestContext> context) {
+      this.context = requireNonNull(context);
+    }
+
+    @Override
+    public ProducerMetrics provide() {
+      ProducerMetrics localProducerMetrics = producerMetrics;
+      if (localProducerMetrics == null) {
+        synchronized (this) {
+          localProducerMetrics = producerMetrics;
+          if (localProducerMetrics == null) {
+            producerMetrics =
+                localProducerMetrics = new ProducerMetrics(context.get().getConfig(), Time.SYSTEM);
+          }
+        }
+      }
+      return localProducerMetrics;
+    }
+
+    @Override
+    public void dispose(ProducerMetrics producerMetrics) {
+      // the JVM will close JMX
     }
   }
 }

@@ -13,9 +13,12 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest;
+package io.confluent.kafkarest.resources.v3;
+
+import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.ImmutableMap;
+import io.confluent.kafkarest.KafkaRestConfig;
 import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.HashSet;
@@ -46,7 +49,7 @@ import org.apache.kafka.common.utils.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ProducerMetrics {
+final class ProducerMetrics {
 
   private static final Logger log = LoggerFactory.getLogger(ProducerMetrics.class);
 
@@ -61,8 +64,8 @@ public class ProducerMetrics {
   private final ConcurrentMap<BeanCoordinate, ProduceMetricMBean> beansByCoordinate =
       new ConcurrentHashMap<>();
 
-  public ProducerMetrics(KafkaRestConfig config, Time time) {
-    this.metrics = new MetricsBuilder(config.getMetricsContext()).withTime(time).build();
+  ProducerMetrics(KafkaRestConfig config, Time time) {
+    this.metrics = new MetricsBuilder(config.getMetricsContext(), time).build();
     this.jmxPrefix = config.getString(KafkaRestConfig.METRICS_JMX_PREFIX_CONFIG);
     String sensorNameTemplate = jmxPrefix + ":" + ProducerMetricsRegistry.GROUP_NAME + ":%s";
     this.fullyQualifiedRecordErrorSensor =
@@ -86,7 +89,7 @@ public class ProducerMetrics {
    * @param tags pairs of tag name and values
    * @return the {@link ProduceMetricMBean} that can be used to create metrics; never null
    */
-  public ProduceMetricMBean mbean(String groupName, Map<String, String> tags) {
+  ProduceMetricMBean mbean(String groupName, Map<String, String> tags) {
     BeanCoordinate beanCoordinate = new BeanCoordinate(groupName, tags);
     beansByCoordinate.putIfAbsent(beanCoordinate, new ProduceMetricMBean(beanCoordinate));
     return beansByCoordinate.get(beanCoordinate);
@@ -153,12 +156,12 @@ public class ProducerMetrics {
     log.info("Successfully registered kafka-rest produce metrics with JMX");
   }
 
-  private class BeanCoordinate {
-    private final String beanName;
-    private final Map<String, String> tags;
+  private static final class BeanCoordinate {
+    final String beanName;
+    final Map<String, String> tags;
 
-    public BeanCoordinate(String beanName, Map<String, String> tags) {
-      this.beanName = Objects.requireNonNull(beanName);
+    BeanCoordinate(String beanName, Map<String, String> tags) {
+      this.beanName = requireNonNull(beanName);
       this.tags = ImmutableMap.copyOf(tags);
     }
 
@@ -186,7 +189,7 @@ public class ProducerMetrics {
    * Metrics} class, so that the sensor names are made to be unique (based on the MBean name) and so
    * the sensors are removed when this group is {@link #close() closed}.
    */
-  public class ProduceMetricMBean implements AutoCloseable {
+  final class ProduceMetricMBean implements AutoCloseable {
     private final BeanCoordinate beanCoordinate;
 
     /**
@@ -195,26 +198,26 @@ public class ProducerMetrics {
      * @param beanCoordinate the identifier of the bean; may not be null and must be valid
      */
     ProduceMetricMBean(BeanCoordinate beanCoordinate) {
-      this.beanCoordinate = Objects.requireNonNull(beanCoordinate);
+      this.beanCoordinate = requireNonNull(beanCoordinate);
     }
 
-    public void recordResponse() {
+    void recordResponse() {
       recordMetric(fullyQualifiedResponseSensor, 1.0);
     }
 
-    public void recordRequestLatency(long value) {
+    void recordRequestLatency(long value) {
       recordMetric(fullyQualifiedRequestLatencySensor, value);
     }
 
-    public void recordError() {
+    void recordError() {
       recordMetric(fullyQualifiedRecordErrorSensor, 1.0);
     }
 
-    public void recordRequest() {
+    void recordRequest() {
       recordMetric(fullyQualifiedRequestSensor, 1.0);
     }
 
-    public void recordRequestSize(double value) {
+    void recordRequestSize(double value) {
       recordMetric(fullyQualifiedRequestSizeSensor, value);
     }
 
@@ -232,7 +235,7 @@ public class ProducerMetrics {
      * @return the metric name; never null
      * @throws IllegalArgumentException if the name is not valid
      */
-    public MetricName metricName(MetricNameTemplate template) {
+    private MetricName metricName(MetricNameTemplate template) {
       return metrics.metricInstance(template, beanCoordinate.tags);
     }
 
@@ -243,7 +246,7 @@ public class ProducerMetrics {
      * @param name The sensor name
      * @return The sensor
      */
-    synchronized Sensor sensor(String name) {
+    private synchronized Sensor sensor(String name) {
       Sensor sensor = metrics.sensor(name);
       return sensor;
     }
@@ -261,43 +264,42 @@ public class ProducerMetrics {
   }
 
   // I'm not going to lie this exists only to defeat checkstyle ;-)
-  private static class SensorBuilder {
+  private static final class SensorBuilder {
 
-    private final ProduceMetricMBean bean;
-    private final Sensor sensor;
+    final ProduceMetricMBean bean;
+    final Sensor sensor;
 
-    public SensorBuilder(ProduceMetricMBean bean, String jmxPrefix, String name) {
+    SensorBuilder(ProduceMetricMBean bean, String jmxPrefix, String name) {
       this.bean = bean;
       this.sensor =
           bean.sensor(String.join(":", jmxPrefix, ProducerMetricsRegistry.GROUP_NAME, name));
     }
 
-    public SensorBuilder addAvg(String name, String doc) {
+    SensorBuilder addAvg(String name, String doc) {
       MetricName metricName = getMetricName(name, doc);
       sensor.add(metricName, MeasuredStatSupplier.avg());
       return this;
     }
 
-    public SensorBuilder addRate(String name, String doc) {
+    SensorBuilder addRate(String name, String doc) {
       MetricName metricName = getMetricName(name, doc);
       sensor.add(metricName, MeasuredStatSupplier.rate());
       return this;
     }
 
-    public SensorBuilder addMax(String name, String doc) {
+    SensorBuilder addMax(String name, String doc) {
       MetricName metricName = getMetricName(name, doc);
       sensor.add(metricName, MeasuredStatSupplier.max());
       return this;
     }
 
-    public SensorBuilder addWindowedCount(String name, String doc) {
+    SensorBuilder addWindowedCount(String name, String doc) {
       MetricName metricName = getMetricName(name, doc);
       sensor.add(metricName, MeasuredStatSupplier.windowedCount());
       return this;
     }
 
-    public SensorBuilder addPercentiles(
-        String name, Map<String, Double> suffixPercentiles, String doc) {
+    SensorBuilder addPercentiles(String name, Map<String, Double> suffixPercentiles, String doc) {
       Map<MetricName, Double> namePercentiles =
           suffixPercentiles.entrySet().stream()
               .map(
@@ -311,11 +313,11 @@ public class ProducerMetrics {
       return this;
     }
 
-    public Sensor build() {
+    Sensor build() {
       return sensor;
     }
 
-    private MetricName getMetricName(String name, String doc) {
+    MetricName getMetricName(String name, String doc) {
       MetricName metricName =
           bean.metricName(
               new MetricNameTemplate(
@@ -326,23 +328,23 @@ public class ProducerMetrics {
 
   private static class MeasuredStatSupplier {
 
-    public static MeasurableStat avg() {
+    static MeasurableStat avg() {
       return new Avg();
     }
 
-    public static MeasurableStat rate() {
+    static MeasurableStat rate() {
       return new Rate();
     }
 
-    public static MeasurableStat max() {
+    static MeasurableStat max() {
       return new Max();
     }
 
-    public static MeasurableStat windowedCount() {
+    static MeasurableStat windowedCount() {
       return new WindowedCount();
     }
 
-    public static CompoundStat percentiles(Map<MetricName, Double> percentiles) {
+    static CompoundStat percentiles(Map<MetricName, Double> percentiles) {
       return new Percentiles(
           30 * 1000 * 4,
           30 * 1000,
@@ -355,35 +357,31 @@ public class ProducerMetrics {
     }
   }
 
-  public static class MetricsBuilder {
+  private static final class MetricsBuilder {
 
-    private MetricsContext metricsContext;
-    private JmxReporter reporter;
+    final MetricsContext metricsContext;
+    final JmxReporter reporter;
     // 1 sample per second
-    private int numSamples = 10;
-    private long sampleWindowMs = 10000;
-    private Time time = Time.SYSTEM;
+    final int numSamples = 10;
+    final long sampleWindowMs = 10000;
+    final Time time;
 
-    private Sensor.RecordingLevel level = Sensor.RecordingLevel.INFO;
+    static final Sensor.RecordingLevel LEVEL = Sensor.RecordingLevel.INFO;
 
-    public MetricsBuilder(MetricsContext metricsContext) {
+    MetricsBuilder(MetricsContext metricsContext, Time time) {
       this.metricsContext = metricsContext;
       reporter = new JmxReporter();
       reporter.contextChange(metricsContext);
+      this.time = requireNonNull(time);
     }
 
-    public MetricsBuilder withTime(Time time) {
-      this.time = time;
-      return this;
-    }
-
-    public Metrics build() {
+    Metrics build() {
       List<MetricsReporter> reporters = Collections.singletonList(reporter);
       MetricConfig metricConfig =
           new MetricConfig()
               .samples(numSamples)
               .timeWindow(sampleWindowMs, TimeUnit.MILLISECONDS)
-              .recordLevel(level);
+              .recordLevel(LEVEL);
       return new Metrics(metricConfig, reporters, time, metricsContext);
     }
   }

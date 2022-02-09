@@ -13,9 +13,9 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest;
+package io.confluent.kafkarest.resources.v3;
 
-public class ProducerMetricsRegistry {
+final class ProducerMetricsRegistry {
 
   public static final String GROUP_NAME = "produce-api-metrics";
 
@@ -68,4 +68,6 @@ public class ProducerMetricsRegistry {
 
   public static final String REQUEST_LATENCY_PCT = "request-latency-avg-";
   public static final String REQUEST_LATENCY_PCT_DOC = "Request latency percentiles.";
+
+  private ProducerMetricsRegistry() {}
 }

@@ -13,12 +13,14 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest;
+package io.confluent.kafkarest.resources.v3;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.collect.ImmutableMap;
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.mock.MockTime;
 import io.confluent.rest.metrics.RestMetricsContext;
 import java.lang.management.ManagementFactory;

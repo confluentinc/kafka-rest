@@ -20,7 +20,7 @@
     </description>
 
     <properties>
-        <io.confluent.schema-registry.version>7.2.0-489</io.confluent.schema-registry.version>
+        <io.confluent.schema-registry.version>${confluent.version.range}</io.confluent.schema-registry.version>
     </properties>
 
     <dependencies>
@@ -152,11 +152,6 @@
            <groupId>org.bouncycastle</groupId>
            <artifactId>bcprov-ext-jdk15on</artifactId>
            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
