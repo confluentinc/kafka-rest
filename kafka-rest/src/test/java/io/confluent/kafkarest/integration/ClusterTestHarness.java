@@ -143,6 +143,8 @@ public abstract class ClusterTestHarness {
   protected Server restServer = null;
   protected String restConnect = null;
 
+  private static final long SLEEP_MS = 1000;
+
   public ClusterTestHarness() {
     this(DEFAULT_NUM_BROKERS, false);
   }
@@ -219,10 +221,30 @@ public abstract class ClusterTestHarness {
     restProperties.put("producer." + ProducerConfig.MAX_BLOCK_MS_CONFIG, "5000");
 
     restConfig = new KafkaRestConfig(restProperties);
-    restApp = new KafkaRestApplication(restConfig);
-    restServer = restApp.createServer();
-    restServer.start();
+
+    try {
+      restApp = new KafkaRestApplication(restConfig);
+      restServer = restApp.createServer();
+      restServer.start();
+    } catch (IOException e) { // sometimes we get an address already in use exception
+      stopRestServer();
+      Thread.sleep(SLEEP_MS);
+      restServer = restApp.createServer();
+      restServer.start();
+    }
     log.info("Completed setup of {}", getClass().getSimpleName());
+  }
+
+  private void stopRestServer() throws Exception {
+    if (restApp != null) {
+      restApp.stop();
+      restApp.getMetrics().close();
+      restApp.getMetrics().metrics().clear();
+    }
+    if (restServer != null) {
+      restServer.stop();
+      restServer.join();
+    }
   }
 
   private void startBrokersConcurrently(int numBrokers) {
@@ -298,10 +320,7 @@ public abstract class ClusterTestHarness {
   @AfterEach
   public void tearDown() throws Exception {
     log.info("Starting teardown of {}", getClass().getSimpleName());
-    if (restServer != null) {
-      restServer.stop();
-      restServer.join();
-    }
+    stopRestServer();
 
     if (schemaRegServer != null) {
       schemaRegServer.stop();
@@ -310,6 +329,7 @@ public abstract class ClusterTestHarness {
 
     for (KafkaServer server : servers) {
       server.shutdown();
+      server.metrics().close();
     }
     for (KafkaServer server : servers) {
       CoreUtils.delete(server.config().logDirs());
