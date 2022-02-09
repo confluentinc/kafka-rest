@@ -13,7 +13,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.ratelimit;
+package io.confluent.kafkarest.exceptions;
 
 import java.util.concurrent.CompletionException;
 
