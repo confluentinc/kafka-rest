@@ -91,6 +91,7 @@ import scala.collection.JavaConverters;
 public abstract class ClusterTestHarness {
 
   private static final Logger log = LoggerFactory.getLogger(ClusterTestHarness.class);
+  private static final long SLEEP_MS = 500;
 
   public static final int DEFAULT_NUM_BROKERS = 1;
 
@@ -170,6 +171,15 @@ public abstract class ClusterTestHarness {
   @BeforeEach
   public void setUp() throws Exception {
     log.info("Starting setup of {}", getClass().getSimpleName());
+    setupMethod();
+    log.info("Completed setup of {}", getClass().getSimpleName());
+  }
+
+  // Calling setup() in this class calls the setup() from the calling sub-class, which includes the
+  // createTopic calls, which then causes an infinite loop on topic creation.
+  // Pulling out the functionality to a separate method so we can call it without this behaviour
+  // getting in the way
+  private void setupMethod() throws Exception {
     zookeeper = new EmbeddedZookeeper();
     zkConnect = String.format("127.0.0.1:%d", zookeeper.port());
     // start brokers concurrently
@@ -247,6 +257,7 @@ public abstract class ClusterTestHarness {
   }
 
   private void stopRest() throws Exception {
+    restProperties.clear();
     if (restApp != null) {
       restApp.stop();
       restApp.getMetrics().close();
@@ -332,6 +343,18 @@ public abstract class ClusterTestHarness {
   public void tearDown() throws Exception {
     log.info("Starting teardown of {}", getClass().getSimpleName());
     stopRest();
+    tearDownMethod();
+    log.info("Completed teardown of {}", getClass().getSimpleName());
+  }
+
+  private void tearDownMethod() throws Exception {
+
+    restProperties.clear();
+
+    schemaRegProperties.clear();
+    if (schemaRegApp != null) {
+      schemaRegApp.stop();
+    }
 
     if (schemaRegServer != null) {
       schemaRegServer.stop();
@@ -442,24 +465,97 @@ public abstract class ClusterTestHarness {
     try {
       return result.names().get();
     } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(String.format("Failed to create topic: %s", e.getMessage()));
+      throw new RuntimeException(String.format("Failed to get topic: %s", e.getMessage()));
     }
   }
 
   protected final void createTopic(String topicName, int numPartitions, short replicationFactor) {
-    Properties properties = restConfig.getAdminProperties();
-    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
-    createTopic(topicName, numPartitions, replicationFactor, properties);
+    createTopic(topicName, numPartitions, replicationFactor, restConfig.getAdminProperties());
   }
 
   protected final void createTopic(
       String topicName, int numPartitions, short replicationFactor, Properties properties) {
-    AdminClient adminClient = AdminClient.create(properties);
+    createTopic(
+        topicName,
+        Optional.of(numPartitions),
+        Optional.of(replicationFactor),
+        Optional.empty(),
+        properties);
+  }
+
+  protected final void createTopic(
+      String topicName,
+      Optional<Integer> numPartitions,
+      Optional<Short> replicationFactor,
+      Optional<Map<Integer, List<Integer>>> replicasAssignments,
+      Properties properties) {
 
     CreateTopicsResult result =
-        adminClient.createTopics(
-            Collections.singletonList(new NewTopic(topicName, numPartitions, replicationFactor)));
+        createTopicCall(
+            topicName, numPartitions, replicationFactor, replicasAssignments, properties);
 
+    try {
+      result.all().get();
+      throw new InterruptedException();
+    } catch (InterruptedException | ExecutionException e) {
+      pause();
+      Set<String> topicNames = getTopicNames();
+      if (topicNames.size() == 0) { // Can restart because no topics exist yet
+        log.warn("Restarting the environment as topic creation failed the first time");
+        try {
+          tearDownMethod();
+          pause();
+          setupMethod();
+          pause();
+        } catch (Exception tearDownException) {
+          fail(String.format("Failed to create topic: %s", tearDownException.getMessage()));
+        }
+
+        result =
+            createTopicCall(
+                topicName, numPartitions, replicationFactor, replicasAssignments, properties);
+        getTopicCreateFutures(result);
+      } else if (!topicNames.stream()
+          .filter(returnedTopicName -> topicName.equals(returnedTopicName))
+          .findFirst()
+          .isPresent()) {
+        // We can't restart the environment as we will lose any existing topics
+        log.warn("Topic creation failed the first time round, trying again.");
+        result =
+            createTopicCall(
+                topicName, numPartitions, replicationFactor, replicasAssignments, properties);
+        pause(); // It's struggling at this point, give it a little time
+        getTopicCreateFutures(result);
+      }
+    }
+  }
+
+  private CreateTopicsResult createTopicCall(
+      String topicName,
+      Optional<Integer> numPartitions,
+      Optional<Short> replicationFactor,
+      Optional<Map<Integer, List<Integer>>> replicasAssignments,
+      Properties properties) {
+    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    AdminClient adminClient = AdminClient.create(properties);
+
+    if (replicasAssignments.isPresent()) {
+      return adminClient.createTopics(
+          Collections.singletonList(new NewTopic(topicName, replicasAssignments.get())));
+    } else {
+      return adminClient.createTopics(
+          Collections.singletonList(new NewTopic(topicName, numPartitions, replicationFactor)));
+    }
+  }
+
+  private void pause() {
+    try {
+      Thread.sleep(SLEEP_MS);
+    } catch (InterruptedException ie3) {
+    }
+  }
+
+  private void getTopicCreateFutures(CreateTopicsResult result) {
     try {
       result.all().get();
     } catch (InterruptedException | ExecutionException e) {
@@ -490,19 +586,12 @@ public abstract class ClusterTestHarness {
 
   protected final void createTopic(
       String topicName, Map<Integer, List<Integer>> replicasAssignments) {
-    Properties properties = restConfig.getAdminProperties();
-    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
-    AdminClient adminClient = AdminClient.create(properties);
-
-    CreateTopicsResult result =
-        adminClient.createTopics(
-            Collections.singletonList(new NewTopic(topicName, replicasAssignments)));
-
-    try {
-      result.all().get();
-    } catch (InterruptedException | ExecutionException e) {
-      fail(String.format("Failed to create topic: %s", e.getMessage()));
-    }
+    createTopic(
+        topicName,
+        Optional.empty(),
+        Optional.empty(),
+        Optional.of(replicasAssignments),
+        restConfig.getAdminProperties());
   }
 
   protected final void alterPartitionReassignment(
