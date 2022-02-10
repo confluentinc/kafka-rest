@@ -40,6 +40,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 public class TopicsResourceIntegrationTest extends ClusterTestHarness {
@@ -69,8 +70,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
     return props;
   }
 
-  @Test
-  public void listTopics_existingCluster_returnsTopics() {
+  @RepeatedTest(1)
+  public void listTopics_existingCluster_returnsTopics() {  //tiny bit flakey
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -229,14 +230,14 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void listTopics_nonExistingCluster_returnsNotFound() {
+  public void listTopics_nonExistingCluster_returnsNotFound() { //even more tiny bit flakey
     Response response =
         request("/v3/clusters/foobar/topics").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void getTopic_existingClusterExistingTopic_returnsTopic() {
+  public void getTopic_existingClusterExistingTopic_returnsTopic() { //really quite flakey
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -286,14 +287,14 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void getTopic_nonExistingCluster_returnsNotFound() {
+  public void getTopic_nonExistingCluster_returnsNotFound() { //little bit flakey (topic not found, npe)
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1).accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void getTopic_nonExistingTopic_returnsNotFound() {
+  public void getTopic_nonExistingTopic_returnsNotFound() { //tiny bit flakey - NPE
     String clusterId = getClusterId();
 
     Response response =
@@ -304,7 +305,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void createTopic_nonExistingTopic_returnsCreatedTopic() {
+  public void createTopic_nonExistingTopic_returnsCreatedTopic() { //really flakey - topic not made yet
     String baseUrl = restConnect;
     String clusterId = getClusterId();
     String topicName = "topic-4";
@@ -372,7 +373,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void createTopic_nonExistingTopic_customReplicasAssignments_returnsCreatedTopic() {
+  public void createTopic_nonExistingTopic_customReplicasAssignments_returnsCreatedTopic() {  //really flakey, failed to create topic
     String baseUrl = restConnect;
     String clusterId = getClusterId();
     String topicName = "topic-4";
@@ -439,7 +440,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void createTopic_existingTopic_returnsBadRequest() {
+  public void createTopic_existingTopic_returnsBadRequest() { //tiny flake NPE
     String clusterId = getClusterId();
 
     Response response =
@@ -456,7 +457,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void createTopic_nonExistingCluster_returnsNotFound() {
+  public void createTopic_nonExistingCluster_returnsNotFound() { //quite flakey, failed to create topic
     Response response =
         request("/v3/clusters/foobar/topics")
             .accept(MediaType.APPLICATION_JSON)
@@ -468,7 +469,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void deleteTopic_existingTopic_deletesTopic() {
+  public void deleteTopic_existingTopic_deletesTopic() { //tiny bit flakey NPE
     String clusterId = getClusterId();
 
     Response response =
@@ -485,7 +486,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void deleteTopic_nonExistingTopic_returnsNotFound() {
+  public void deleteTopic_nonExistingTopic_returnsNotFound() { //tiny flake - topic not there and expected:<404> but was:<500>
     String clusterId = getClusterId();
 
     Response response =
@@ -496,7 +497,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void deleteTopic_nonExistingCluster_returnsNotFound() {
+  public void deleteTopic_nonExistingCluster_returnsNotFound() { //tiny flake - failed to create topic, and NPE
     Response response =
         request("/v3/clusters/foobar/topics/" + TOPIC_1)
             .accept(MediaType.APPLICATION_JSON)
@@ -505,13 +506,13 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void deleteTopic_nonExistingCluster_noContentType_returnsNotFound() {
+  public void deleteTopic_nonExistingCluster_noContentType_returnsNotFound() { //tiny flake NPE
     Response response = request("/v3/clusters/foobar/topics/" + TOPIC_1).delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
-  public void createAndDelete_nonExisting_returnsNotFoundCreatedAndNotFound() {
+  public void createAndDelete_nonExisting_returnsNotFoundCreatedAndNotFound() { //really flakey <404> but was: <200>
     String baseUrl = restConnect;
     String clusterId = getClusterId();
     String topicName = "topic-4";
