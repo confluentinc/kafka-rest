@@ -143,7 +143,7 @@ public abstract class ClusterTestHarness {
   protected Server restServer = null;
   protected String restConnect = null;
 
-  private static final long SLEEP_MS = 1000;
+  private static final long ONE_SECOND_MS = 1000L;
 
   public ClusterTestHarness() {
     this(DEFAULT_NUM_BROKERS, false);
@@ -226,7 +226,7 @@ public abstract class ClusterTestHarness {
       startRest();
     } catch (IOException e) { // sometimes we get an address already in use exception
       stopRest();
-      Thread.sleep(SLEEP_MS);
+      Thread.sleep(ONE_SECOND_MS);
       startRest();
     }
     log.info("Completed setup of {}", getClass().getSimpleName());

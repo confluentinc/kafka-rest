@@ -45,8 +45,6 @@ import org.junit.jupiter.api.Test;
  */
 public class MetadataAPITest extends ClusterTestHarness {
 
-  private static final long SLEEP_MS = 500;
-
   private static final String topic1Name = "topic1";
   private static final List<Partition> topic1Partitions =
       singletonList(
@@ -127,7 +125,14 @@ public class MetadataAPITest extends ClusterTestHarness {
   @Test
   public void testTopicsList() throws InterruptedException {
     // Listing
-    testWithRetry(() -> verifyTopicGet());
+    testWithRetry(
+        () -> {
+          Response response = request("/topics").get();
+          assertOKResponse(response, Versions.KAFKA_V2_JSON);
+          final List<String> topicsResponse =
+              tryReadEntityOrLog(response, new GenericType<List<String>>() {});
+          assertEquals(Arrays.asList(topic1Name, topic2Name), topicsResponse);
+        });
 
     // Get topic
     Response response1 = request("/topics/{topic}", "topic", topic1Name).get();
@@ -155,8 +160,8 @@ public class MetadataAPITest extends ClusterTestHarness {
   public void testPartitionsList() throws InterruptedException {
     // Listing
 
-    testWithRetry(() -> verifyPartitionGet(topic1Name, topic1Partitions.size(), 1));
-    testWithRetry(() -> verifyPartitionGet(topic2Name, topic2Partitions.size(), 2));
+    testWithRetry(() -> verifyPartitionGet(topic1Name, 2, 1));
+    testWithRetry(() -> verifyPartitionGet(topic2Name, 2, 2));
 
     // Get single partition
     // No need to retry, because we know the topic has been made by this point as the above
@@ -178,24 +183,16 @@ public class MetadataAPITest extends ClusterTestHarness {
         Versions.KAFKA_V2_JSON);
   }
 
-  private void verifyTopicGet() {
-    Response response = request("/topics").get();
-    assertOKResponse(response, Versions.KAFKA_V2_JSON);
-    final List<String> topicsResponse =
-        tryReadEntityOrLog(response, new GenericType<List<String>>() {});
-    assertEquals(Arrays.asList(topic1Name, topic2Name), topicsResponse);
-  }
-
-  private void verifyPartitionGet(String topicName, int size, int numPartitions) {
+  private void verifyPartitionGet(String topicName, int numReplicas, int numPartitions) {
     Response response = request("/topics/" + topicName + "/partitions").get();
     assertOKResponse(response, Versions.KAFKA_V2_JSON);
-    List<GetPartitionResponse> partitions1Response =
+    List<GetPartitionResponse> partitionsResponse =
         tryReadEntityOrLog(response, new GenericType<List<GetPartitionResponse>>() {});
     // Just verify some basic properties because the exact values can vary based on replica
     // assignment, leader election
-    assertEquals(size, partitions1Response.size());
+    assertEquals(numPartitions, partitionsResponse.size());
     for (int i = 0; i < numPartitions; i++) {
-      assertEquals(numReplicas, partitions1Response.get(i).getReplicas().size());
+      assertEquals(numReplicas, partitionsResponse.get(i).getReplicas().size());
     }
   }
 }
