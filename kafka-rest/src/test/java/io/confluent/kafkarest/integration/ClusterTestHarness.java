@@ -89,6 +89,8 @@ import scala.collection.JavaConverters;
 public abstract class ClusterTestHarness {
 
   private static final Logger log = LoggerFactory.getLogger(ClusterTestHarness.class);
+  private static final long ONE_SECOND_MS = 1000l;
+  private static final int RETRY_COUNT = 3;
 
   public static final int DEFAULT_NUM_BROKERS = 1;
 
@@ -529,11 +531,7 @@ public abstract class ClusterTestHarness {
     KafkaProducer<Object, Object> producer =
         new KafkaProducer<Object, Object>(props, avroKeySerializer, avroValueSerializer);
     for (ProducerRecord<Object, Object> rec : records) {
-      try {
-        producer.send(rec).get();
-      } catch (Exception e) {
-        fail("Couldn't produce input messages to Kafka: " + e);
-      }
+      doProduce(producer, rec);
     }
     producer.close();
   }
@@ -546,11 +544,7 @@ public abstract class ClusterTestHarness {
     props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
     Producer<byte[], byte[]> producer = new KafkaProducer<byte[], byte[]>(props);
     for (ProducerRecord<byte[], byte[]> rec : records) {
-      try {
-        producer.send(rec).get();
-      } catch (Exception e) {
-        fail("Couldn't produce input messages to Kafka: " + e);
-      }
+      doProduce(producer, rec);
     }
     producer.close();
   }
@@ -562,14 +556,36 @@ public abstract class ClusterTestHarness {
     props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
     Producer<Object, Object> producer = new KafkaProducer<Object, Object>(props);
+
     for (ProducerRecord<Object, Object> rec : records) {
-      try {
-        producer.send(rec).get();
-      } catch (Exception e) {
-        fail("Couldn't produce input messages to Kafka: " + e);
-      }
+      doProduce(producer, rec);
     }
     producer.close();
+  }
+
+  private <T, R extends Producer> void doProduce(R producer, ProducerRecord<T, T> rec) {
+    boolean sent = false;
+    int errorCount = 0;
+    while (!sent) {
+      try {
+        producer.send(rec).get();
+        sent = true;
+      } catch (Exception e) {
+        errorCount++;
+        if (errorCount > RETRY_COUNT) {
+          fail("Couldn't produce input messages to Kafka: " + e);
+        }
+        pause(errorCount);
+      }
+    }
+  }
+
+  private final void pause(int times) {
+    try {
+      Thread.sleep(ONE_SECOND_MS * times);
+    } catch (InterruptedException e) {
+
+    }
   }
 
   protected Map<Integer, List<Integer>> createAssignment(
