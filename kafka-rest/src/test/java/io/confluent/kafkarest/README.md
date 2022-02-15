@@ -26,7 +26,7 @@ Notes
 
 To run individual tests you must be within the kafka-rest project folder (eg `~/git/kafka-rest/kafka-rest`) otherwise no tests will be found.
 
-If you make changes to the code, you will need to rebuild before running the tests for any code changes to be picked up. For example rebuild with `mvn package -DskipTests=true`
+If you make changes to the code, you will need to rebuild before running the tests for any code changes to be picked up. For example rebuild with `mvn clean package -DskipTests=true`
 
 To run the same test multiple times, there are several options, which include:
 
