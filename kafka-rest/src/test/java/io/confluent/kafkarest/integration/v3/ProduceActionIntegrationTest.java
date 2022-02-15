@@ -65,12 +65,14 @@ import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 // TODO ddimitrov This continues being way too flaky.
 //  Until we fix it (KREST-1542), we should ignore it, as it might be hiding even worse errors.
 @Disabled
+@Tag("IntegrationTest")
 public class ProduceActionIntegrationTest {
 
   private static final String TOPIC_NAME = "topic-1";

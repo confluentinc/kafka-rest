@@ -58,9 +58,11 @@ import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.process.internal.RequestScoped;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+@Tag("IntegrationTest")
 public class KafkaModuleOverridingTest {
   /** HTTP 418 I'm a teapot */
   private static final int I_M_A_TEAPOT_STATUS_CODE = 418;
