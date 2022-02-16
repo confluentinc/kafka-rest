@@ -16,6 +16,9 @@
 package io.confluent.kafkarest.integration.v3;
 
 import static java.util.Collections.singletonList;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.AnyOf.anyOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.entities.ConsumerGroup.State;
@@ -62,7 +65,7 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
     consumer2.poll(Duration.ofSeconds(1));
     consumer3.poll(Duration.ofSeconds(1));
 
-    ListConsumerGroupsResponse expected =
+    ListConsumerGroupsResponse expected1 =
         ListConsumerGroupsResponse.create(
             ConsumerGroupDataList.builder()
                 .setMetadata(
@@ -107,12 +110,58 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
                             .build()))
                 .build());
 
+    ListConsumerGroupsResponse expected2 =
+        ListConsumerGroupsResponse.create(
+            ConsumerGroupDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder()
+                        .setSelf(baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups")
+                        .build())
+                .setData(
+                    singletonList(
+                        ConsumerGroupData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        baseUrl
+                                            + "/v3/clusters/"
+                                            + clusterId
+                                            + "/consumer-groups/consumer-group-1")
+                                    .setResourceName(
+                                        "crn:///kafka="
+                                            + clusterId
+                                            + "/consumer-group=consumer-group-1")
+                                    .build())
+                            .setClusterId(clusterId)
+                            .setConsumerGroupId("consumer-group-1")
+                            .setSimple(false)
+                            .setPartitionAssignor("range")
+                            .setState(State.STABLE)
+                            .setCoordinator(
+                                Relationship.create(
+                                    baseUrl + "/v3/clusters/" + clusterId + "/brokers/0"))
+                            .setConsumers(
+                                Relationship.create(
+                                    baseUrl
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/consumer-groups/consumer-group-1/consumers"))
+                            .setLagSummary(
+                                Relationship.create(
+                                    baseUrl
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/consumer-groups/consumer-group-1/lag-summary"))
+                            .build()))
+                .build());
+
     Response response =
         request("/v3/clusters/" + clusterId + "/consumer-groups")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    assertEquals(expected, response.readEntity(ListConsumerGroupsResponse.class));
+    assertThat(
+        response.readEntity(ListConsumerGroupsResponse.class), anyOf(is(expected1), is(expected2)));
   }
 
   @Test
@@ -153,7 +202,41 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
     consumer2.poll(Duration.ofSeconds(1));
     consumer3.poll(Duration.ofSeconds(1));
 
-    GetConsumerGroupResponse expected =
+    GetConsumerGroupResponse expected1 =
+        GetConsumerGroupResponse.create(
+            ConsumerGroupData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(
+                            baseUrl
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/consumer-groups/consumer-group-1")
+                        .setResourceName(
+                            "crn:///kafka=" + clusterId + "/consumer-group=consumer-group-1")
+                        .build())
+                .setClusterId(clusterId)
+                .setConsumerGroupId("consumer-group-1")
+                .setSimple(false)
+                .setPartitionAssignor("range")
+                .setState(State.STABLE)
+                .setCoordinator(
+                    Relationship.create(baseUrl + "/v3/clusters/" + clusterId + "/brokers/0"))
+                .setConsumers(
+                    Relationship.create(
+                        baseUrl
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/consumer-groups/consumer-group-1/consumers"))
+                .setLagSummary(
+                    Relationship.create(
+                        baseUrl
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/consumer-groups/consumer-group-1/lag-summary"))
+                .build());
+
+    GetConsumerGroupResponse expected2 =
         GetConsumerGroupResponse.create(
             ConsumerGroupData.builder()
                 .setMetadata(
@@ -192,7 +275,8 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
-    assertEquals(expected, response.readEntity(GetConsumerGroupResponse.class));
+    assertThat(
+        response.readEntity(GetConsumerGroupResponse.class), anyOf(is(expected1), is(expected2)));
   }
 
   @Test
