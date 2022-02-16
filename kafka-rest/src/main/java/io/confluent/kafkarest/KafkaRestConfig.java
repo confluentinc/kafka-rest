@@ -874,7 +874,8 @@ public class KafkaRestConfig extends RestConfig {
     Properties producerProperties = new Properties();
     producerProperties.putAll(producerConfigs);
 
-    // KREST-4606: Disable idempotency until KAFKA-13668 is fixed.
+    // KREST-4606: Disable idempotency until at the very least KAFKA-13668 is fixed, but maybe
+    // forever.
     if (Boolean.parseBoolean(producerProperties.getProperty("enable.idempotence"))) {
       log.warn(
           "Idempotent producers are not supported in Kafka REST. Ignoring 'enable.idempotence'.");
