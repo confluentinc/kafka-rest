@@ -16,6 +16,7 @@ package io.confluent.kafkarest.integration;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static io.confluent.kafkarest.TestUtils.tryReadEntityOrLog;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
@@ -124,15 +125,18 @@ public class MetadataAPITest extends ClusterTestHarness {
   @Test
   public void testTopicsList() throws InterruptedException {
     // Listing
-    Response response = request("/topics").get();
-    assertOKResponse(response, Versions.KAFKA_V2_JSON);
-    final List<String> topicsResponse =
-        tryReadEntityOrLog(response, new GenericType<List<String>>() {});
-    assertEquals(Arrays.asList(topic1Name, topic2Name), topicsResponse);
+    testWithRetry(
+        () -> {
+          Response response = request("/topics").get();
+          assertOKResponse(response, Versions.KAFKA_V2_JSON);
+          final List<String> topicsResponse =
+              tryReadEntityOrLog(response, new GenericType<List<String>>() {});
+          assertEquals(Arrays.asList(topic1Name, topic2Name), topicsResponse);
+        });
 
     // Get topic
     Response response1 = request("/topics/{topic}", "topic", topic1Name).get();
-    assertOKResponse(response, Versions.KAFKA_V2_JSON);
+    assertOKResponse(response1, Versions.KAFKA_V2_JSON);
     final GetTopicResponse topic1Response = tryReadEntityOrLog(response1, GetTopicResponse.class);
     // Just verify some basic properties because the exact values can vary based on replica
     // assignment, leader election
@@ -155,25 +159,14 @@ public class MetadataAPITest extends ClusterTestHarness {
   @Test
   public void testPartitionsList() throws InterruptedException {
     // Listing
-    Response response = request("/topics/" + topic1Name + "/partitions").get();
-    assertOKResponse(response, Versions.KAFKA_V2_JSON);
-    List<GetPartitionResponse> partitions1Response =
-        tryReadEntityOrLog(response, new GenericType<List<GetPartitionResponse>>() {});
-    // Just verify some basic properties because the exact values can vary based on replica
-    // assignment, leader election
-    assertEquals(topic1Partitions.size(), partitions1Response.size());
-    assertEquals(numReplicas, partitions1Response.get(0).getReplicas().size());
 
-    response = request("/topics/" + topic2Name + "/partitions").get();
-    assertOKResponse(response, Versions.KAFKA_V2_JSON);
-    List<GetPartitionResponse> partitions2Response =
-        tryReadEntityOrLog(response, new GenericType<List<GetPartitionResponse>>() {});
-    assertEquals(topic2Partitions.size(), partitions2Response.size());
-    assertEquals(numReplicas, partitions2Response.get(0).getReplicas().size());
-    assertEquals(numReplicas, partitions2Response.get(1).getReplicas().size());
+    testWithRetry(() -> verifyPartitionGet(topic1Name, 2, 1));
+    testWithRetry(() -> verifyPartitionGet(topic2Name, 2, 2));
 
     // Get single partition
-    response = request("/topics/" + topic1Name + "/partitions/0").get();
+    // No need to retry, because we know the topic has been made by this point as the above
+    // assertions pass
+    Response response = request("/topics/" + topic1Name + "/partitions/0").get();
     assertOKResponse(response, Versions.KAFKA_V2_JSON);
     final GetPartitionResponse getPartitionResponse =
         tryReadEntityOrLog(response, GetPartitionResponse.class);
@@ -188,5 +181,18 @@ public class MetadataAPITest extends ClusterTestHarness {
         Errors.PARTITION_NOT_FOUND_ERROR_CODE,
         Errors.PARTITION_NOT_FOUND_MESSAGE,
         Versions.KAFKA_V2_JSON);
+  }
+
+  private void verifyPartitionGet(String topicName, int numReplicas, int numPartitions) {
+    Response response = request("/topics/" + topicName + "/partitions").get();
+    assertOKResponse(response, Versions.KAFKA_V2_JSON);
+    List<GetPartitionResponse> partitionsResponse =
+        tryReadEntityOrLog(response, new GenericType<List<GetPartitionResponse>>() {});
+    // Just verify some basic properties because the exact values can vary based on replica
+    // assignment, leader election
+    assertEquals(numPartitions, partitionsResponse.size());
+    for (int i = 0; i < numPartitions; i++) {
+      assertEquals(numReplicas, partitionsResponse.get(i).getReplicas().size());
+    }
   }
 }
