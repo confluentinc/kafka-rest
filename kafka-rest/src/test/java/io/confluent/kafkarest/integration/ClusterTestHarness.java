@@ -225,9 +225,15 @@ public abstract class ClusterTestHarness {
     try {
       startRest();
     } catch (IOException e) { // sometimes we get an address already in use exception
+      log.warn("IOException when attempting to start rest, trying again", e);
       stopRest();
       Thread.sleep(ONE_SECOND_MS);
-      startRest();
+      try {
+        startRest();
+      } catch (IOException e2) {
+        log.error("Restart of rest server failed", e2);
+        throw e2;
+      }
     }
     log.info("Completed setup of {}", getClass().getSimpleName());
   }
