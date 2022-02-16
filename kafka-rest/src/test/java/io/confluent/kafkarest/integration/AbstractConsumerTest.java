@@ -145,7 +145,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
         pause();
         response =
             request(instanceResponse.getBaseUri() + "/records").accept(expectedMediatype).get();
-        assertOKResponse(response, Versions.KAFKA_V2_JSON);
+        assertOKResponse(response, expectedMediatype);
       } else {
         fail("Consume of records failed", e);
       }
