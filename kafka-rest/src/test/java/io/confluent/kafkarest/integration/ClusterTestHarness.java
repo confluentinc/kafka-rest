@@ -14,8 +14,10 @@
  */
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.common.utils.IntegrationTest;
 import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
@@ -41,6 +43,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -498,16 +501,9 @@ public abstract class ClusterTestHarness {
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
 
-    KafkaProducer<Object, Object> producer
-        = new KafkaProducer<Object, Object>(props, avroKeySerializer, avroValueSerializer);
     for (ProducerRecord<Object, Object> rec : records) {
-      try {
-        producer.send(rec).get();
-      } catch (Exception e) {
-        fail("Couldn't produce input messages to Kafka: " + e);
-      }
+      doProduce(rec, () -> new KafkaProducer<>(props, avroKeySerializer, avroValueSerializer));
     }
-    producer.close();
   }
 
   protected final void produceBinaryMessages(List<ProducerRecord<byte[], byte[]>> records) {
@@ -516,15 +512,10 @@ public abstract class ClusterTestHarness {
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
     props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
-    Producer<byte[], byte[]> producer = new KafkaProducer<byte[], byte[]>(props);
+
     for (ProducerRecord<byte[], byte[]> rec : records) {
-      try {
-        producer.send(rec).get();
-      } catch (Exception e) {
-        fail("Couldn't produce input messages to Kafka: " + e);
-      }
+      doProduce(rec, () -> new KafkaProducer<>(props));
     }
-    producer.close();
   }
 
   protected final void produceJsonMessages(List<ProducerRecord<Object, Object>> records) {
@@ -533,15 +524,28 @@ public abstract class ClusterTestHarness {
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaJsonSerializer.class);
     props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
-    Producer<Object, Object> producer = new KafkaProducer<Object, Object>(props);
+
     for (ProducerRecord<Object, Object> rec : records) {
-      try {
-        producer.send(rec).get();
-      } catch (Exception e) {
-        fail("Couldn't produce input messages to Kafka: " + e);
-      }
+      doProduce(rec, () -> new KafkaProducer<>(props));
     }
-    producer.close();
+  }
+
+  private <T> void doProduce(
+      ProducerRecord<T, T> rec, Supplier<KafkaProducer<T, T>> createProducer) {
+
+    testWithRetry(
+        () -> {
+          final KafkaProducer<T, T> producer = createProducer.get();
+          boolean sent = false;
+          try {
+            producer.send(rec).get();
+            sent = true;
+          } catch (Exception e) {
+            log.info("Produce failed within testWithRetry", e);
+          }
+          producer.close();
+          assertTrue(sent);
+        });
   }
 
   protected Map<Integer, List<Integer>> createAssignment(
