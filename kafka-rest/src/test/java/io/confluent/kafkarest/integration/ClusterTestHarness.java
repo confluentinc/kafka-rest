@@ -145,6 +145,8 @@ public abstract class ClusterTestHarness {
   protected Server restServer = null;
   protected String restConnect = null;
 
+  private static final long ONE_SECOND_MS = 1000L;
+
   public ClusterTestHarness() {
     this(DEFAULT_NUM_BROKERS, false);
   }
@@ -221,10 +223,39 @@ public abstract class ClusterTestHarness {
     restProperties.put("producer." + ProducerConfig.MAX_BLOCK_MS_CONFIG, "5000");
 
     restConfig = new KafkaRestConfig(restProperties);
+
+    try {
+      startRest();
+    } catch (IOException e) { // sometimes we get an address already in use exception
+      log.warn("IOException when attempting to start rest, trying again", e);
+      stopRest();
+      Thread.sleep(ONE_SECOND_MS);
+      try {
+        startRest();
+      } catch (IOException e2) {
+        log.error("Restart of rest server failed", e2);
+        throw e2;
+      }
+    }
+    log.info("Completed setup of {}", getClass().getSimpleName());
+  }
+
+  private void startRest() throws Exception {
     restApp = new KafkaRestApplication(restConfig);
     restServer = restApp.createServer();
     restServer.start();
-    log.info("Completed setup of {}", getClass().getSimpleName());
+  }
+
+  private void stopRest() throws Exception {
+    if (restApp != null) {
+      restApp.stop();
+      restApp.getMetrics().close();
+      restApp.getMetrics().metrics().clear();
+    }
+    if (restServer != null) {
+      restServer.stop();
+      restServer.join();
+    }
   }
 
   private void startBrokersConcurrently(int numBrokers) {
@@ -300,10 +331,7 @@ public abstract class ClusterTestHarness {
   @After
   public void tearDown() throws Exception {
     log.info("Starting teardown of {}", getClass().getSimpleName());
-    if (restServer != null) {
-      restServer.stop();
-      restServer.join();
-    }
+    stopRest();
 
     if (schemaRegServer != null) {
       schemaRegServer.stop();
@@ -312,6 +340,7 @@ public abstract class ClusterTestHarness {
 
     for (KafkaServer server : servers) {
       server.shutdown();
+      server.metrics().close();
     }
     for (KafkaServer server : servers) {
       CoreUtils.delete(server.config().logDirs());
