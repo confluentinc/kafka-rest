@@ -65,95 +65,11 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
     consumer2.poll(Duration.ofSeconds(1));
     consumer3.poll(Duration.ofSeconds(1));
 
-    ListConsumerGroupsResponse expected1 =
-        ListConsumerGroupsResponse.create(
-            ConsumerGroupDataList.builder()
-                .setMetadata(
-                    ResourceCollection.Metadata.builder()
-                        .setSelf(baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups")
-                        .build())
-                .setData(
-                    singletonList(
-                        ConsumerGroupData.builder()
-                            .setMetadata(
-                                Resource.Metadata.builder()
-                                    .setSelf(
-                                        baseUrl
-                                            + "/v3/clusters/"
-                                            + clusterId
-                                            + "/consumer-groups/consumer-group-1")
-                                    .setResourceName(
-                                        "crn:///kafka="
-                                            + clusterId
-                                            + "/consumer-group=consumer-group-1")
-                                    .build())
-                            .setClusterId(clusterId)
-                            .setConsumerGroupId("consumer-group-1")
-                            .setSimple(false)
-                            .setPartitionAssignor("")
-                            .setState(State.PREPARING_REBALANCE)
-                            .setCoordinator(
-                                Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId + "/brokers/0"))
-                            .setConsumers(
-                                Relationship.create(
-                                    baseUrl
-                                        + "/v3/clusters/"
-                                        + clusterId
-                                        + "/consumer-groups/consumer-group-1/consumers"))
-                            .setLagSummary(
-                                Relationship.create(
-                                    baseUrl
-                                        + "/v3/clusters/"
-                                        + clusterId
-                                        + "/consumer-groups/consumer-group-1/lag-summary"))
-                            .build()))
-                .build());
+    ListConsumerGroupsResponse expectedPreparingRebalance =
+        getExpectedListResponse(baseUrl, clusterId, "", State.PREPARING_REBALANCE);
 
-    ListConsumerGroupsResponse expected2 =
-        ListConsumerGroupsResponse.create(
-            ConsumerGroupDataList.builder()
-                .setMetadata(
-                    ResourceCollection.Metadata.builder()
-                        .setSelf(baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups")
-                        .build())
-                .setData(
-                    singletonList(
-                        ConsumerGroupData.builder()
-                            .setMetadata(
-                                Resource.Metadata.builder()
-                                    .setSelf(
-                                        baseUrl
-                                            + "/v3/clusters/"
-                                            + clusterId
-                                            + "/consumer-groups/consumer-group-1")
-                                    .setResourceName(
-                                        "crn:///kafka="
-                                            + clusterId
-                                            + "/consumer-group=consumer-group-1")
-                                    .build())
-                            .setClusterId(clusterId)
-                            .setConsumerGroupId("consumer-group-1")
-                            .setSimple(false)
-                            .setPartitionAssignor("range")
-                            .setState(State.STABLE)
-                            .setCoordinator(
-                                Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId + "/brokers/0"))
-                            .setConsumers(
-                                Relationship.create(
-                                    baseUrl
-                                        + "/v3/clusters/"
-                                        + clusterId
-                                        + "/consumer-groups/consumer-group-1/consumers"))
-                            .setLagSummary(
-                                Relationship.create(
-                                    baseUrl
-                                        + "/v3/clusters/"
-                                        + clusterId
-                                        + "/consumer-groups/consumer-group-1/lag-summary"))
-                            .build()))
-                .build());
+    ListConsumerGroupsResponse expectedStable =
+        getExpectedListResponse(baseUrl, clusterId, "range", State.STABLE);
 
     Response response =
         request("/v3/clusters/" + clusterId + "/consumer-groups")
@@ -161,7 +77,8 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
     assertThat(
-        response.readEntity(ListConsumerGroupsResponse.class), anyOf(is(expected1), is(expected2)));
+        response.readEntity(ListConsumerGroupsResponse.class),
+        anyOf(is(expectedPreparingRebalance), is(expectedStable)));
   }
 
   @Test
@@ -202,73 +119,11 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
     consumer2.poll(Duration.ofSeconds(1));
     consumer3.poll(Duration.ofSeconds(1));
 
-    GetConsumerGroupResponse expected1 =
-        GetConsumerGroupResponse.create(
-            ConsumerGroupData.builder()
-                .setMetadata(
-                    Resource.Metadata.builder()
-                        .setSelf(
-                            baseUrl
-                                + "/v3/clusters/"
-                                + clusterId
-                                + "/consumer-groups/consumer-group-1")
-                        .setResourceName(
-                            "crn:///kafka=" + clusterId + "/consumer-group=consumer-group-1")
-                        .build())
-                .setClusterId(clusterId)
-                .setConsumerGroupId("consumer-group-1")
-                .setSimple(false)
-                .setPartitionAssignor("range")
-                .setState(State.STABLE)
-                .setCoordinator(
-                    Relationship.create(baseUrl + "/v3/clusters/" + clusterId + "/brokers/0"))
-                .setConsumers(
-                    Relationship.create(
-                        baseUrl
-                            + "/v3/clusters/"
-                            + clusterId
-                            + "/consumer-groups/consumer-group-1/consumers"))
-                .setLagSummary(
-                    Relationship.create(
-                        baseUrl
-                            + "/v3/clusters/"
-                            + clusterId
-                            + "/consumer-groups/consumer-group-1/lag-summary"))
-                .build());
+    GetConsumerGroupResponse expectedStable =
+        getExpectedGroupResponse(baseUrl, clusterId, "range", State.STABLE);
 
-    GetConsumerGroupResponse expected2 =
-        GetConsumerGroupResponse.create(
-            ConsumerGroupData.builder()
-                .setMetadata(
-                    Resource.Metadata.builder()
-                        .setSelf(
-                            baseUrl
-                                + "/v3/clusters/"
-                                + clusterId
-                                + "/consumer-groups/consumer-group-1")
-                        .setResourceName(
-                            "crn:///kafka=" + clusterId + "/consumer-group=consumer-group-1")
-                        .build())
-                .setClusterId(clusterId)
-                .setConsumerGroupId("consumer-group-1")
-                .setSimple(false)
-                .setPartitionAssignor("")
-                .setState(State.PREPARING_REBALANCE)
-                .setCoordinator(
-                    Relationship.create(baseUrl + "/v3/clusters/" + clusterId + "/brokers/0"))
-                .setConsumers(
-                    Relationship.create(
-                        baseUrl
-                            + "/v3/clusters/"
-                            + clusterId
-                            + "/consumer-groups/consumer-group-1/consumers"))
-                .setLagSummary(
-                    Relationship.create(
-                        baseUrl
-                            + "/v3/clusters/"
-                            + clusterId
-                            + "/consumer-groups/consumer-group-1/lag-summary"))
-                .build());
+    GetConsumerGroupResponse expectedRebalance =
+        getExpectedGroupResponse(baseUrl, clusterId, "", State.PREPARING_REBALANCE);
 
     Response response =
         request("/v3/clusters/" + clusterId + "/consumer-groups/consumer-group-1")
@@ -276,7 +131,8 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
     assertThat(
-        response.readEntity(GetConsumerGroupResponse.class), anyOf(is(expected1), is(expected2)));
+        response.readEntity(GetConsumerGroupResponse.class),
+        anyOf(is(expectedStable), is(expectedRebalance)));
   }
 
   @Test
@@ -330,5 +186,85 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
     properties.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroup);
     properties.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
     return new KafkaConsumer<>(properties, new BytesDeserializer(), new BytesDeserializer());
+  }
+
+  private ListConsumerGroupsResponse getExpectedListResponse(
+      String baseUrl, String clusterId, String partitionAssignor, State state) {
+    return ListConsumerGroupsResponse.create(
+        ConsumerGroupDataList.builder()
+            .setMetadata(
+                ResourceCollection.Metadata.builder()
+                    .setSelf(baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups")
+                    .build())
+            .setData(
+                singletonList(
+                    ConsumerGroupData.builder()
+                        .setMetadata(
+                            Resource.Metadata.builder()
+                                .setSelf(
+                                    baseUrl
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/consumer-groups/consumer-group-1")
+                                .setResourceName(
+                                    "crn:///kafka="
+                                        + clusterId
+                                        + "/consumer-group=consumer-group-1")
+                                .build())
+                        .setClusterId(clusterId)
+                        .setConsumerGroupId("consumer-group-1")
+                        .setSimple(false)
+                        .setPartitionAssignor(partitionAssignor)
+                        .setState(state)
+                        .setCoordinator(
+                            Relationship.create(
+                                baseUrl + "/v3/clusters/" + clusterId + "/brokers/0"))
+                        .setConsumers(
+                            Relationship.create(
+                                baseUrl
+                                    + "/v3/clusters/"
+                                    + clusterId
+                                    + "/consumer-groups/consumer-group-1/consumers"))
+                        .setLagSummary(
+                            Relationship.create(
+                                baseUrl
+                                    + "/v3/clusters/"
+                                    + clusterId
+                                    + "/consumer-groups/consumer-group-1/lag-summary"))
+                        .build()))
+            .build());
+  }
+
+  private GetConsumerGroupResponse getExpectedGroupResponse(
+      String baseUrl, String clusterId, String partitionAssignor, State state) {
+    return GetConsumerGroupResponse.create(
+        ConsumerGroupData.builder()
+            .setMetadata(
+                Resource.Metadata.builder()
+                    .setSelf(
+                        baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups/consumer-group-1")
+                    .setResourceName(
+                        "crn:///kafka=" + clusterId + "/consumer-group=consumer-group-1")
+                    .build())
+            .setClusterId(clusterId)
+            .setConsumerGroupId("consumer-group-1")
+            .setSimple(false)
+            .setPartitionAssignor(partitionAssignor)
+            .setState(state)
+            .setCoordinator(
+                Relationship.create(baseUrl + "/v3/clusters/" + clusterId + "/brokers/0"))
+            .setConsumers(
+                Relationship.create(
+                    baseUrl
+                        + "/v3/clusters/"
+                        + clusterId
+                        + "/consumer-groups/consumer-group-1/consumers"))
+            .setLagSummary(
+                Relationship.create(
+                    baseUrl
+                        + "/v3/clusters/"
+                        + clusterId
+                        + "/consumer-groups/consumer-group-1/lag-summary"))
+            .build());
   }
 }
