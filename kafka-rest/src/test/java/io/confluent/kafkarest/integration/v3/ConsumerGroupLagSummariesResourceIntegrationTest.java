@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.integration.v3;
 
+import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.Versions;
@@ -111,13 +112,6 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
     produce(topic2, 1, request);
     produce(topic2, 1, request);
 
-    // group lag request returns maxLag=6, totalLag=9, maxTopicName=topic2, maxPartitionId=1
-    Response response2 =
-        request("/v3/clusters/" + getClusterId() + "/consumer-groups/" + group1 + "/lag-summary")
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
-    assertEquals(Status.OK.getStatusCode(), response2.getStatus());
-
     GetConsumerGroupLagSummaryResponse expectedResponse =
         GetConsumerGroupLagSummaryResponse.create(
             ConsumerGroupLagSummaryData.builder()
@@ -147,7 +141,22 @@ public class ConsumerGroupLagSummariesResourceIntegrationTest extends ClusterTes
                             + "/topics/" + topic2 + "/partitions/" + 1))
                 .build());
 
-    assertEquals(expectedResponse, response2.readEntity(GetConsumerGroupLagSummaryResponse.class));
+    // group lag request returns maxLag=6, totalLag=9, maxTopicName=topic2, maxPartitionId=1
+    testWithRetry(
+        () -> {
+          Response response2 =
+              request(
+                      "/v3/clusters/"
+                          + getClusterId()
+                          + "/consumer-groups/"
+                          + group1
+                          + "/lag-summary")
+                  .accept(MediaType.APPLICATION_JSON)
+                  .get();
+          assertEquals(Status.OK.getStatusCode(), response2.getStatus());
+          assertEquals(
+              expectedResponse, response2.readEntity(GetConsumerGroupLagSummaryResponse.class));
+        });
   }
 
   @Test
