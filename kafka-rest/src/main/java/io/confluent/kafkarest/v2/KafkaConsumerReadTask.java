@@ -186,7 +186,7 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
     } catch (Throwable t) {
       // This protects the worker thread from any issues with the callback code. Nothing to be
       // done here but log it since it indicates a bug in the calling code.
-      log.error("Consumer read callback threw an unhandled exception id={}", this, e);
+      log.error("Consumer read callback threw an unhandled exception id={} exception={}", this, e);
     }
     finished = true;
   }
