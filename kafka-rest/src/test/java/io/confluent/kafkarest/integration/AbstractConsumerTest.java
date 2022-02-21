@@ -32,10 +32,13 @@ import io.confluent.kafkarest.entities.v2.CommitOffsetsResponse;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
+import io.confluent.kafkarest.entities.v2.JsonConsumerRecord;
+import io.confluent.kafkarest.entities.v2.SchemaConsumerRecord;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -47,10 +50,13 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AbstractConsumerTest extends ClusterTestHarness {
 
   private static final long ONE_SECOND_MS = 1000L;
+  private static final Logger log = LoggerFactory.getLogger(AbstractConsumerTest.class);
 
   public AbstractConsumerTest() {}
 
@@ -59,7 +65,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
   }
 
   protected Response createConsumerInstance(
-      String groupName, String id, String name, EmbeddedFormat format) {
+      String groupName, String id, String name, EmbeddedFormat format, String autoOffsetReset) {
     CreateConsumerInstanceRequest config = null;
     if (id != null || name != null || format != null) {
       config =
@@ -67,7 +73,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
               id,
               name,
               format != null ? format.toString() : null,
-              /* autoOffsetReset= */ null,
+              /* autoOffsetReset= */ autoOffsetReset,
               /* autoCommitEnable */ null,
               /* responseMinBytes= */ null,
               /* requestWaitMs= */ null);
@@ -96,22 +102,30 @@ public class AbstractConsumerTest extends ClusterTestHarness {
    * @return the new consumer instance's base URI
    */
   protected String startConsumeMessages(
-      String groupName, String topic, EmbeddedFormat format, String expectedMediatype) {
+      String groupName,
+      String topic,
+      EmbeddedFormat format,
+      String expectedMediatype,
+      String autoOffsetReset) {
     return startConsumeMessages(
-        groupName, Collections.singletonList(topic), format, expectedMediatype);
+        groupName, Collections.singletonList(topic), format, expectedMediatype, autoOffsetReset);
   }
 
   protected String startConsumeMessages(
-      String groupName, List<String> topics, EmbeddedFormat format, String expectedMediatype) {
+      String groupName,
+      List<String> topics,
+      EmbeddedFormat format,
+      String expectedMediatype,
+      String autoOffsetReset) {
     Response createResponse = null;
     try {
-      createResponse = createConsumerInstance(groupName, null, null, format);
+      createResponse = createConsumerInstance(groupName, null, null, format, autoOffsetReset);
       assertOKResponse(createResponse, Versions.KAFKA_V2_JSON);
     } catch (AssertionError e) {
       if (createResponse != null
           && createResponse.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
         pause();
-        createResponse = createConsumerInstance(groupName, null, null, format);
+        createResponse = createConsumerInstance(groupName, null, null, format, autoOffsetReset);
         assertOKResponse(createResponse, Versions.KAFKA_V2_JSON);
       } else {
         fail("Create consumer instance failed.", e);
@@ -206,31 +220,44 @@ public class AbstractConsumerTest extends ClusterTestHarness {
       GenericType<List<RecordType>> responseEntityType,
       Converter converter,
       Function<RecordType, ConsumerRecord<ClientK, ClientV>> fromJsonWrapper) {
-    Response response = request(instanceUri + "/records").accept(accept).get();
-    assertOKResponse(response, responseMediatype);
-    List<RecordType> consumed = TestUtils.tryReadEntityOrLog(response, responseEntityType);
-    try {
-      assertEquals(records.size(), consumed.size());
-    } catch (AssertionError e) {
-      pause();
-      Response response2 = request(instanceUri + "/records").accept(accept).get();
-      assertOKResponse(response2, responseMediatype);
-      List<RecordType> consumed2 = TestUtils.tryReadEntityOrLog(response2, responseEntityType);
-      consumed.addAll(consumed2);
+
+    int retryCount = 0;
+    final int TOTAL_RETRIES = 3;
+    List<RecordType> consumed = new ArrayList<>();
+
+    while (retryCount < TOTAL_RETRIES) {
+      Response response = request(instanceUri + "/records").accept(accept).get();
+      assertOKResponse(response, responseMediatype);
+      consumed.addAll(TestUtils.tryReadEntityOrLog(response, responseEntityType));
       try {
         assertEquals(records.size(), consumed.size());
-      } catch (AssertionError e2) {
-        pause(2);
-        Response response3 = request(instanceUri + "/records").accept(accept).get();
-        assertOKResponse(response3, responseMediatype);
-        List<RecordType> consumed3 = TestUtils.tryReadEntityOrLog(response3, responseEntityType);
-        consumed.addAll(consumed3);
-        assertEquals(records.size(), consumed.size());
+        retryCount = TOTAL_RETRIES;
+      } catch (AssertionError assertionError) {
+        logConsumeData(records, consumed);
+        pause(++retryCount);
       }
     }
 
     assertEqualsMessages(
         records, consumed.stream().map(fromJsonWrapper).collect(Collectors.toList()), converter);
+  }
+
+  private final <KafkaK, KafkaV, RecordType> void logConsumeData(
+      List<ProducerRecord<KafkaK, KafkaV>> records, List<RecordType> consumed) {
+    log.info("Records produced : {}", records.size());
+    log.info("Consume failed.  Record offsets are:");
+    consumed.forEach(
+        record -> {
+          if (record instanceof SchemaConsumerRecord) {
+            log.info("{}", ((SchemaConsumerRecord) record).getOffset());
+          } else if (record instanceof BinaryConsumerRecord) {
+            log.info("{}", ((BinaryConsumerRecord) record).getOffset());
+          } else if (record instanceof JsonConsumerRecord) {
+            log.info("{}", ((JsonConsumerRecord) record).getOffset());
+          } else {
+            log.info("Unknown record type {}", record.toString());
+          }
+        });
   }
 
   private final void pause() {
