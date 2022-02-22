@@ -91,7 +91,7 @@ import scala.collection.JavaConverters;
 public abstract class ClusterTestHarness {
 
   private static final Logger log = LoggerFactory.getLogger(ClusterTestHarness.class);
-  private static final long SLEEP_MS = 500;
+  private static final long HALF_SECOND_MILLIS = 500L;
 
   public static final int DEFAULT_NUM_BROKERS = 1;
 
@@ -370,7 +370,6 @@ public abstract class ClusterTestHarness {
     }
 
     zookeeper.shutdown();
-    log.info("Completed teardown of {}", getClass().getSimpleName());
   }
 
   protected Invocation.Builder request(String path) {
@@ -550,7 +549,7 @@ public abstract class ClusterTestHarness {
 
   private void pause() {
     try {
-      Thread.sleep(SLEEP_MS);
+      Thread.sleep(HALF_SECOND_MILLIS);
     } catch (InterruptedException ie3) {
     }
   }
