@@ -18,7 +18,7 @@ package io.confluent.kafkarest.resources.v3;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import io.confluent.kafkarest.KafkaRestContext;
+import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.config.ConfigModule.ProduceResponseThreadPoolSizeConfig;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
@@ -52,9 +52,7 @@ public final class V3ResourcesModule extends AbstractBinder {
         .qualifiedBy(new ProduceResponseThreadPoolImpl())
         .to(ExecutorService.class)
         .in(Singleton.class);
-    bindFactory(ProducerMetricsFactory.class, Singleton.class)
-        .to(ProducerMetrics.class)
-        .in(Singleton.class);
+    bindFactory(ProducerMetricsFactory.class).to(ProducerMetrics.class).in(Singleton.class);
   }
 
   @Qualifier
@@ -97,33 +95,19 @@ public final class V3ResourcesModule extends AbstractBinder {
   }
 
   private static final class ProducerMetricsFactory implements Factory<ProducerMetrics> {
-
-    private final Provider<KafkaRestContext> context;
-    private volatile ProducerMetrics producerMetrics;
+    private final Provider<KafkaRestConfig> config;
 
     @Inject
-    ProducerMetricsFactory(Provider<KafkaRestContext> context) {
-      this.context = requireNonNull(context);
+    ProducerMetricsFactory(Provider<KafkaRestConfig> config) {
+      this.config = requireNonNull(config);
     }
 
     @Override
     public ProducerMetrics provide() {
-      ProducerMetrics localProducerMetrics = producerMetrics;
-      if (localProducerMetrics == null) {
-        synchronized (this) {
-          localProducerMetrics = producerMetrics;
-          if (localProducerMetrics == null) {
-            producerMetrics =
-                localProducerMetrics = new ProducerMetrics(context.get().getConfig(), Time.SYSTEM);
-          }
-        }
-      }
-      return localProducerMetrics;
+      return new ProducerMetrics(config.get(), Time.SYSTEM);
     }
 
     @Override
-    public void dispose(ProducerMetrics producerMetrics) {
-      // the JVM will close JMX
-    }
+    public void dispose(ProducerMetrics producerMetrics) {}
   }
 }

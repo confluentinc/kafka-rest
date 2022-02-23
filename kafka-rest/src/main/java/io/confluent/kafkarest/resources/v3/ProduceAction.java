@@ -43,7 +43,6 @@ import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -275,36 +274,18 @@ public final class ProduceAction {
   }
 
   private void recordResponseMetrics(long latency) {
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordResponse();
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordRequestLatency(latency);
+    producerMetrics.get().recordResponse();
+    producerMetrics.get().recordRequestLatency(latency);
   }
 
   private void recordErrorMetrics(long latency) {
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordError();
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordRequestLatency(latency);
+    producerMetrics.get().recordError();
+    producerMetrics.get().recordRequestLatency(latency);
   }
 
   private void recordRequestMetrics(long size) {
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordRequest();
+    producerMetrics.get().recordRequest();
     // record request size
-    producerMetrics
-        .get()
-        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
-        .recordRequestSize(size);
+    producerMetrics.get().recordRequestSize(size);
   }
 }
