@@ -46,12 +46,13 @@ import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestData;
 import io.confluent.kafkarest.entities.v3.ProduceRequest.ProduceRequestHeader;
 import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
-import io.confluent.kafkarest.testing.DefaultKafkaRestTestEnvironment;
-import io.confluent.kafkarest.testing.SchemaRegistryFixture.SchemaKey;
+import io.confluent.kafkarest.testing.AbstractSchemaRegistry.SchemaKey;
+import io.confluent.kafkarest.testing.fake.FakeKafkaRestTestEnvironment;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
@@ -64,14 +65,10 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-// TODO ddimitrov This continues being way too flaky.
-//  Until we fix it (KREST-1542), we should ignore it, as it might be hiding even worse errors.
-@Disabled
 @Tag("IntegrationTest")
 public class ProduceActionIntegrationTest {
 
@@ -80,15 +77,15 @@ public class ProduceActionIntegrationTest {
   private static final String DEFAULT_VALUE_SUBJECT = "topic-1-value";
 
   @RegisterExtension
-  public final DefaultKafkaRestTestEnvironment testEnv = new DefaultKafkaRestTestEnvironment();
+  public final FakeKafkaRestTestEnvironment testEnv = new FakeKafkaRestTestEnvironment();
 
   @BeforeEach
   public void setUp() throws Exception {
-    testEnv.kafkaCluster().createTopic(TOPIC_NAME, 3, (short) 1);
+    testEnv.kafkaCluster().createTopic(TOPIC_NAME, Optional.empty(), Optional.empty());
   }
 
   @Test
-  public void produceBinary() throws Exception {
+  public void produceBinary() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ByteString key = ByteString.copyFromUtf8("foo");
     ByteString value = ByteString.copyFromUtf8("bar");
@@ -132,7 +129,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceBinaryWithNullData() throws Exception {
+  public void produceBinaryWithNullData() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -174,7 +171,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceBinaryWithInvalidData_throwsBadRequest() throws Exception {
+  public void produceBinaryWithInvalidData_throwsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -206,7 +203,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceJson() throws Exception {
+  public void produceJson() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
     String value = "bar";
@@ -252,7 +249,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceJsonWithNullData() throws Exception {
+  public void produceJsonWithNullData() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -296,7 +293,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithRawSchema() throws Exception {
+  public void produceAvroWithRawSchema() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
     String value = "bar";
@@ -342,7 +339,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithRawSchemaAndNullData_throwsBadRequest() throws Exception {
+  public void produceAvroWithRawSchemaAndNullData_throwsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -386,7 +383,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithRawSchemaAndInvalidData() throws Exception {
+  public void produceAvroWithRawSchemaAndInvalidData() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -566,7 +563,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithRawSchemaAndSubject() throws Exception {
+  public void produceAvroWithRawSchemaAndSubject() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
     String value = "bar";
@@ -772,7 +769,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithRawSchemaAndSubjectStrategy() throws Exception {
+  public void produceAvroWithRawSchemaAndSubjectStrategy() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String keyRawSchema =
         "{\"type\": \"record\", \"name\": \"MyKey\", \"fields\": [{\"name\": \"foo\", \"type\": "
@@ -1029,7 +1026,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceJsonschemaWithRawSchema() throws Exception {
+  public void produceJsonschemaWithRawSchema() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     TextNode key = TextNode.valueOf("foo");
     TextNode value = TextNode.valueOf("bar");
@@ -1075,7 +1072,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceJsonschemaWithRawSchemaAndNullData() throws Exception {
+  public void produceJsonschemaWithRawSchemaAndNullData() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -1119,7 +1116,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceJsonschemaWithRawSchemaAndInvalidData_throwsBadRequest() throws Exception {
+  public void produceJsonschemaWithRawSchemaAndInvalidData_throwsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request =
         ProduceRequest.builder()
@@ -1299,7 +1296,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceJsonschemaWithRawSchemaAndSubject() throws Exception {
+  public void produceJsonschemaWithRawSchemaAndSubject() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     TextNode key = TextNode.valueOf("foo");
     TextNode value = TextNode.valueOf("bar");
@@ -1498,7 +1495,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceJsonschemaWithRawSchemaAndSubjectStrategy() throws Exception {
+  public void produceJsonschemaWithRawSchemaAndSubjectStrategy() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String keyRawSchema =
         "{\"type\": \"object\", \"title\": \"MyKey\", \"properties\": {\"foo\": "
@@ -1738,7 +1735,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceProtobufWithRawSchema() throws Exception {
+  public void produceProtobufWithRawSchema() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -1794,7 +1791,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceProtobufWithRawSchemaAndNullData() throws Exception {
+  public void produceProtobufWithRawSchemaAndNullData() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -1842,7 +1839,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceProtobufWithRawSchemaAndInvalidData_throwsBadRequest() throws Exception {
+  public void produceProtobufWithRawSchemaAndInvalidData_throwsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -2042,7 +2039,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceProtobufWithRawSchemaAndSubject() throws Exception {
+  public void produceProtobufWithRawSchemaAndSubject() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -2270,7 +2267,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceProtobufWithRawSchemaAndSubjectStrategy() throws Exception {
+  public void produceProtobufWithRawSchemaAndSubjectStrategy() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProtobufSchema keySchema =
         new ProtobufSchema("syntax = \"proto3\"; message MyKey { string foo = 1; }");
@@ -2390,7 +2387,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceBinaryWithPartitionId() throws Exception {
+  public void produceBinaryWithPartitionId() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     int partitionId = 1;
     ByteString key = ByteString.copyFromUtf8("foo");
@@ -2436,7 +2433,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceBinaryWithTimestamp() throws Exception {
+  public void produceBinaryWithTimestamp() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     Instant timestamp = Instant.ofEpochMilli(1000);
     ByteString key = ByteString.copyFromUtf8("foo");
@@ -2483,7 +2480,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceBinaryWithHeaders() throws Exception {
+  public void produceBinaryWithHeaders() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ByteString key = ByteString.copyFromUtf8("foo");
     ByteString value = ByteString.copyFromUtf8("bar");
@@ -2541,7 +2538,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceBinaryAndAvro() throws Exception {
+  public void produceBinaryAndAvro() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ByteString key = ByteString.copyFromUtf8("foo");
     String value = "bar";
@@ -2586,7 +2583,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceBinaryKeyOnly() throws Exception {
+  public void produceBinaryKeyOnly() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ByteString key = ByteString.copyFromUtf8("foo");
     ProduceRequest request =
@@ -2624,7 +2621,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceBinaryValueOnly() throws Exception {
+  public void produceBinaryValueOnly() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ByteString value = ByteString.copyFromUtf8("bar");
     ProduceRequest request =
@@ -2662,7 +2659,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceNothing() throws Exception {
+  public void produceNothing() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ProduceRequest request = ProduceRequest.builder().setOriginalSize(0L).build();
 
@@ -2804,7 +2801,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceBinaryWithSchemaSubject_returnsBadRequest() throws Exception {
+  public void produceBinaryWithSchemaSubject_returnsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"BINARY\", \"subject\": \"foobar\" } }";
 
@@ -2823,7 +2820,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceBinaryWithSchemaSubjectStrategy_returnsBadRequest() throws Exception {
+  public void produceBinaryWithSchemaSubjectStrategy_returnsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"BINARY\", \"subject_name_strategy\": \"TOPIC\" } }";
 
@@ -2842,7 +2839,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceBinaryWithRawSchema_returnsBadRequest() throws Exception {
+  public void produceBinaryWithRawSchema_returnsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request =
         "{ \"key\": { \"type\": \"BINARY\", \"schema\": \"{ \\\"type\\\": \\\"string\\\" }\" } }";
@@ -2862,7 +2859,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceBinaryWithSchemaId_returnsBadRequest() throws Exception {
+  public void produceBinaryWithSchemaId_returnsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"BINARY\", \"schema_id\": 1 } }";
 
@@ -2881,7 +2878,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceBinaryWithSchemaVersion_returnsBadRequest() throws Exception {
+  public void produceBinaryWithSchemaVersion_returnsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"BINARY\", \"schema_version\": 1 } }";
 
@@ -2900,7 +2897,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithTypeAndSchemaVersion_returnsBadRequest() throws Exception {
+  public void produceAvroWithTypeAndSchemaVersion_returnsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"AVRO\", \"schema_version\": 1 } }";
 
@@ -2919,7 +2916,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithTypeAndSchemaId_returnsBadRequest() throws Exception {
+  public void produceAvroWithTypeAndSchemaId_returnsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"AVRO\", \"schema_id\": 1 } }";
 
@@ -2938,7 +2935,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithTypeAndLatestSchema_returnsBadRequest() throws Exception {
+  public void produceAvroWithTypeAndLatestSchema_returnsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"type\": \"AVRO\" } }";
 
@@ -2957,8 +2954,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithSchemaSubjectAndSchemaSubjectStrategy_returnsBadRequest()
-      throws Exception {
+  public void produceAvroWithSchemaSubjectAndSchemaSubjectStrategy_returnsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request =
         "{ \"key\": { \"subject\": \"foobar\", \"subject_name_strategy\": \"TOPIC\" } }";
@@ -2978,7 +2974,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithSchemaIdAndSchemaVersion_returnsBadRequest() throws Exception {
+  public void produceAvroWithSchemaIdAndSchemaVersion_returnsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"schema_id\": 1, \"schema_version\": 1 } }";
 
@@ -2997,7 +2993,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithRawSchemaAndSchemaId_returnsBadRequest() throws Exception {
+  public void produceAvroWithRawSchemaAndSchemaId_returnsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request =
         "{ \"key\": { \"schema\": \"{ \\\"type\\\": \\\"string\\\" }\", \"schema_id\": 1 } }";
@@ -3017,7 +3013,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithRawSchemaAndSchemaVersion_returnsBadRequest() throws Exception {
+  public void produceAvroWithRawSchemaAndSchemaVersion_returnsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request =
         "{ \"key\": { \"schema\": \"{ \\\"type\\\": \\\"string\\\" }\", \"schema_version\": 1 } }";
@@ -3037,8 +3033,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithRecordSchemaSubjectStrategyAndSchemaVersion_returnsBadRequest()
-      throws Exception {
+  public void produceAvroWithRecordSchemaSubjectStrategyAndSchemaVersion_returnsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request =
         "{ \"key\": { \"subject_name_strategy\": \"RECORD_NAME\", \"schema_version\": 1 } }";
@@ -3058,8 +3053,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithRecordSchemaSubjectStrategyAndLatestVersion_returnsBadRequest()
-      throws Exception {
+  public void produceAvroWithRecordSchemaSubjectStrategyAndLatestVersion_returnsBadRequest() {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"subject_name_strategy\": \"RECORD_NAME\" } }";
 

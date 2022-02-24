@@ -20,17 +20,24 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.rest.RestConfig;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Configurable;
 import org.eclipse.jetty.server.Server;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -39,12 +46,13 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 public final class KafkaRestFixture implements BeforeEachCallback, AfterEachCallback {
 
   @Nullable private final SslFixture certificates;
-  private final HashMap<String, String> configs;
+  private final ImmutableMap<String, String> configs;
   @Nullable private final KafkaClusterFixture kafkaCluster;
   @Nullable private final String kafkaPassword;
   @Nullable private final String kafkaUser;
   @Nullable private final String keyName;
   @Nullable private final SchemaRegistryFixture schemaRegistry;
+  private final ImmutableList<AbstractBinder> modules;
 
   @Nullable private URI baseUri;
   @Nullable private KafkaRestApplication application;
@@ -52,27 +60,29 @@ public final class KafkaRestFixture implements BeforeEachCallback, AfterEachCall
 
   private KafkaRestFixture(
       @Nullable SslFixture certificates,
-      HashMap<String, String> configs,
+      Map<String, String> configs,
       @Nullable KafkaClusterFixture kafkaCluster,
       @Nullable String kafkaPassword,
       @Nullable String kafkaUser,
       @Nullable String keyName,
-      @Nullable SchemaRegistryFixture schemaRegistry) {
+      @Nullable SchemaRegistryFixture schemaRegistry,
+      List<AbstractBinder> modules) {
     checkArgument(kafkaUser != null ^ kafkaPassword == null);
     checkArgument(certificates != null ^ keyName == null);
     this.certificates = certificates;
-    this.configs = requireNonNull(configs);
+    this.configs = ImmutableMap.copyOf(configs);
     this.kafkaCluster = kafkaCluster;
     this.kafkaPassword = kafkaPassword;
     this.kafkaUser = kafkaUser;
     this.keyName = keyName;
     this.schemaRegistry = schemaRegistry;
+    this.modules = ImmutableList.copyOf(modules);
   }
 
   @Override
   public void beforeEach(ExtensionContext extensionContext) throws Exception {
     checkState(server == null);
-    application = new KafkaRestApplication(createConfigs());
+    application = new TestKafkaRestApplication(createConfigs(), modules);
     server = application.createServer();
     server.start();
     baseUri = server.getURI();
@@ -185,6 +195,7 @@ public final class KafkaRestFixture implements BeforeEachCallback, AfterEachCall
     private String kafkaUser = null;
     private String keyName = null;
     private SchemaRegistryFixture schemaRegistry = null;
+    private final ArrayList<AbstractBinder> modules = new ArrayList<>();
 
     private Builder() {}
 
@@ -221,9 +232,36 @@ public final class KafkaRestFixture implements BeforeEachCallback, AfterEachCall
       return this;
     }
 
+    public Builder addModule(AbstractBinder module) {
+      modules.add(module);
+      return this;
+    }
+
     public KafkaRestFixture build() {
       return new KafkaRestFixture(
-          certificates, configs, kafkaCluster, kafkaPassword, kafkaUser, keyName, schemaRegistry);
+          certificates,
+          configs,
+          kafkaCluster,
+          kafkaPassword,
+          kafkaUser,
+          keyName,
+          schemaRegistry,
+          modules);
+    }
+  }
+
+  private static final class TestKafkaRestApplication extends KafkaRestApplication {
+    private final ImmutableList<AbstractBinder> modules;
+
+    private TestKafkaRestApplication(KafkaRestConfig configs, List<AbstractBinder> modules) {
+      super(configs);
+      this.modules = ImmutableList.copyOf(modules);
+    }
+
+    @Override
+    public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
+      super.setupResources(config, appConfig);
+      modules.forEach(config::register);
     }
   }
 }
