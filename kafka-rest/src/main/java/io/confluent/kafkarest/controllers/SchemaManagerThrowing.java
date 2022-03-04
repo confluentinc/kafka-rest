@@ -15,18 +15,25 @@
 
 package io.confluent.kafkarest.controllers;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.protobuf.ByteString;
+import io.confluent.kafka.serializers.subject.strategy.SubjectNameStrategy;
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import java.util.Optional;
 
-interface SchemaRecordSerializer {
+final class SchemaManagerThrowing implements SchemaManager {
 
-  Optional<ByteString> serialize(
-      EmbeddedFormat format,
+  @Override
+  public RegisteredSchema getSchema(
       String topicName,
-      Optional<RegisteredSchema> schema,
-      JsonNode data,
-      boolean isKey);
+      Optional<EmbeddedFormat> format,
+      Optional<String> subject,
+      Optional<SubjectNameStrategy> subjectNameStrategy,
+      Optional<Integer> schemaId,
+      Optional<Integer> schemaVersion,
+      Optional<String> rawSchema,
+      boolean isKey) {
+    throw Errors.invalidPayloadException(
+        String.format("Schema Registry must be configured when using schemas."));
+  }
 }
