@@ -30,10 +30,11 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
   private static final Integer requestTimeout = 500;
   // This is pretty large since there is sometimes significant overhead to doing a read (e.g.
   // checking topic existence in ZK)
-  private static final Integer instanceTimeout = 1000;
-  //there is a 1s sleep in the KafkaConsumerManager cleanup thread, which means that if the instance
-  // timeout takes 1s to expire, it could be 2s before the consumer is cleaned up (if we just missed
-  // the timer) + we need to allow for slack on top of this
+  // Tests have seen > 2s delays between registering the consumer and the consume
+  private static final Integer instanceTimeout = 3500;
+  // There is a 1s sleep in the KafkaConsumerManager cleanup thread, which means that if the
+  // instance timeout takes 1s to expire, it could be 2s before the consumer is cleaned up
+  // (if we just missed the timer) + we need to allow for slack on top of this
   private static final Integer slackTime = 2000;
 
   @Before
