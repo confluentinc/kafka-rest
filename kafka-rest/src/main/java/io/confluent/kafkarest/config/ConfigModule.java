@@ -103,10 +103,6 @@ public final class ConfigModule extends AbstractBinder {
 
     bind(config.getInt(RestConfig.PORT_CONFIG)).qualifiedBy(new PortConfigImpl()).to(Integer.class);
 
-    bind(Duration.ofMillis(config.getInt(KafkaRestConfig.PRODUCE_GRACE_PERIOD_MS)))
-        .qualifiedBy(new ProduceGracePeriodConfigImpl())
-        .to(Duration.class);
-
     bind(config.getInt(KafkaRestConfig.PRODUCE_MAX_BYTES_PER_SECOND))
         .qualifiedBy(new ProduceRateLimitBytesConfigImpl())
         .to(Integer.class);
@@ -266,14 +262,6 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class PortConfigImpl extends AnnotationLiteral<PortConfig>
       implements PortConfig {}
-
-  @Qualifier
-  @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
-  public @interface ProduceGracePeriodConfig {}
-
-  private static final class ProduceGracePeriodConfigImpl
-      extends AnnotationLiteral<ProduceGracePeriodConfig> implements ProduceGracePeriodConfig {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)

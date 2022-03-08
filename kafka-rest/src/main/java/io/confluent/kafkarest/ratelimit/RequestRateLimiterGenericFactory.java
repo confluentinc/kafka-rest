@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Confluent Inc.
+ * Copyright 2022 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -15,35 +15,18 @@
 
 package io.confluent.kafkarest.ratelimit;
 
+import io.confluent.kafkarest.config.ConfigModule.RateLimitPermitsPerSecConfig;
+import io.confluent.kafkarest.config.ConfigModule.RateLimitTimeoutConfig;
 import java.time.Duration;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import javax.inject.Inject;
 
-@RunWith(JUnit4.class)
-public final class GuavaRateLimitTest extends AbstractRateLimitEnabledTest {
+final class RequestRateLimiterGenericFactory extends RequestRateLimiterFactory {
 
-  @Override
-  RateLimitBackend getBackend() {
-    return RateLimitBackend.GUAVA;
-  }
-
-  @Override
-  Duration getRate() {
-    return Duration.ofMillis(1);
-  }
-
-  @Override
-  int getWarmupRequests() {
-    return 500;
-  }
-
-  @Override
-  int getTotalRequests() {
-    return 1500;
-  }
-
-  @Override
-  int getSlack() {
-    return 10;
+  @Inject
+  public RequestRateLimiterGenericFactory(
+      RateLimitBackend backend,
+      @RateLimitPermitsPerSecConfig Integer permitsPerSecond,
+      @RateLimitTimeoutConfig Duration timeout) {
+    super(backend, permitsPerSecond, timeout);
   }
 }

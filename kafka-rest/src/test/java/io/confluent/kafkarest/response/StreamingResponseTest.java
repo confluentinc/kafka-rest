@@ -14,7 +14,6 @@ import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import org.easymock.EasyMock;
 import org.glassfish.jersey.server.ChunkedOutput;
@@ -61,7 +60,6 @@ public class StreamingResponseTest {
             .setTopicName("topicName")
             .setPartitionId(1)
             .setOffset(1L)
-            .setWaitForMs(Optional.of(123L))
             .build();
 
     ResultOrError resultOrError = ResultOrError.result(produceResponse);

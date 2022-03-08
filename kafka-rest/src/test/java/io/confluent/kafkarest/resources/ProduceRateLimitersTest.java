@@ -1,24 +1,24 @@
 package io.confluent.kafkarest.resources;
 
-import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_GRACE_PERIOD_MS;
-import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_BYTES_PER_SECOND;
-import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SECOND;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED;
+import static org.easymock.EasyMock.anyInt;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
-import io.confluent.kafkarest.exceptions.RateLimitGracePeriodExceededException;
+import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
+import io.confluent.kafkarest.ratelimit.RequestRateLimiter;
 import io.confluent.kafkarest.resources.v3.ProduceRateLimiters;
-import java.time.Clock;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.Properties;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import org.easymock.EasyMock;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -27,158 +27,210 @@ import org.junit.runners.JUnit4;
 public class ProduceRateLimitersTest {
 
   @Test
+  @Inject
   public void rateLimitingDisabledNoWaitTimeGiven() {
-    Clock clock = mock(Clock.class);
 
     Properties properties = new Properties();
-    properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
-    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(100));
-    properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "false");
     properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
-    ProduceRateLimiters produceRateLimiters =
-        new ProduceRateLimiters(
-            Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
-            Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
-            Integer.parseInt(properties.getProperty(PRODUCE_MAX_BYTES_PER_SECOND)),
-            Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
-            Duration.ofMillis(
-                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
-            clock);
-    Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
+    Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
+    RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
+    RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
 
-    assertFalse(waitTime.isPresent());
-  }
-
-  @Test
-  public void newRateLimiterReturnsNoWait() {
-    Clock clock = mock(Clock.class);
-
-    Properties properties = new Properties();
-    properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
-    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(100));
-    properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
-    properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
-    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
+    replay(countLimitProvider, bytesLimitProvider, rateLimiterForCount, rateLimiterForBytes);
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
-            Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
-            Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
-            Integer.parseInt(properties.getProperty(PRODUCE_MAX_BYTES_PER_SECOND)),
+            countLimitProvider,
+            bytesLimitProvider,
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
-                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
-            clock);
-    Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
+                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
+    produceRateLimiters.rateLimit("clusterId", Optional.of(10L));
 
-    assertFalse(waitTime.isPresent());
+    verify(countLimitProvider, bytesLimitProvider, rateLimiterForCount, rateLimiterForBytes);
   }
 
   @Test
+  @Inject
   public void waitTimesReturnedForMultipleClusters() {
-    Clock clock = mock(Clock.class);
-    expect(clock.millis()).andReturn(0L);
-    expect(clock.millis()).andReturn(1L);
-    expect(clock.millis()).andReturn(2L);
-    replay(clock);
 
     Properties properties = new Properties();
-    properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
-    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(100));
-    properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
     properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
+    Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
+    RequestRateLimiter rateLimiterForCount1 = mock(RequestRateLimiter.class);
+    RequestRateLimiter rateLimiterForBytes1 = mock(RequestRateLimiter.class);
+    RequestRateLimiter rateLimiterForCount2 = mock(RequestRateLimiter.class);
+    RequestRateLimiter rateLimiterForBytes2 = mock(RequestRateLimiter.class);
+
+    expect(countLimitProvider.get()).andReturn(rateLimiterForCount1);
+    expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes1);
+    rateLimiterForCount1.rateLimit(anyInt());
+    rateLimiterForBytes1.rateLimit(anyInt());
+
+    expect(countLimitProvider.get()).andReturn(rateLimiterForCount2);
+    expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes2);
+    rateLimiterForCount2.rateLimit(anyInt());
+    rateLimiterForBytes2.rateLimit(anyInt());
+
+    replay(
+        countLimitProvider,
+        bytesLimitProvider,
+        rateLimiterForCount1,
+        rateLimiterForBytes1,
+        rateLimiterForCount2,
+        rateLimiterForBytes2);
+
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
-            Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
-            Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
-            Integer.parseInt(properties.getProperty(PRODUCE_MAX_BYTES_PER_SECOND)),
+            countLimitProvider,
+            bytesLimitProvider,
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
-                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
-            clock);
+                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
 
-    Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
-    assertFalse(waitTime.isPresent());
-    waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
-    assertTrue(waitTime.isPresent());
-    assertEquals(waitTime.get().toMillis(), 1000);
-    Optional<Duration> waitTime2 =
-        produceRateLimiters.calculateGracePeriodExceeded("clusterId2", 10);
-    assertFalse(waitTime2.isPresent());
-    assertTrue(waitTime.isPresent());
-    assertEquals(waitTime.get().toMillis(), 1000);
+    produceRateLimiters.rateLimit("clusterId", Optional.of(10L));
+
+    produceRateLimiters.rateLimit("clusterId2", Optional.of(10L));
+
+    verify(
+        countLimitProvider,
+        bytesLimitProvider,
+        rateLimiterForCount1,
+        rateLimiterForBytes1,
+        rateLimiterForCount2,
+        rateLimiterForBytes2);
   }
 
   @Test
-  public void gracePeriodExceptionThrown() {
-    Clock clock = mock(Clock.class);
-    expect(clock.millis()).andReturn(0L);
-    expect(clock.millis()).andReturn(1L);
-    replay(clock);
+  @Inject
+  public void rateLimitedOnCountExceptionThrown() {
 
     Properties properties = new Properties();
-    properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
-    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(100));
-    properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(0));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
     properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
 
+    Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
+    RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
+    RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
+
+    expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
+    expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
+    rateLimiterForCount.rateLimit(anyInt());
+    rateLimiterForBytes.rateLimit(anyInt());
+    rateLimiterForCount.rateLimit(anyInt());
+    EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
+
+    replay(countLimitProvider, bytesLimitProvider, rateLimiterForCount, rateLimiterForBytes);
+
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
-            Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
-            Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
-            Integer.parseInt(properties.getProperty(PRODUCE_MAX_BYTES_PER_SECOND)),
+            countLimitProvider,
+            bytesLimitProvider,
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
-                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
-            clock);
+                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
 
-    Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
-    assertFalse(waitTime.isPresent());
+    produceRateLimiters.rateLimit("clusterId", Optional.of(10L));
+
     try {
-      produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
-      fail("RateLimitGracePeriodExceededException should be thrown");
-    } catch (RateLimitGracePeriodExceededException e) {
-      assertEquals("Connection will be closed.", e.getMessage());
+      produceRateLimiters.rateLimit("clusterId", Optional.of(10L));
+      Assert.fail("RateLimitExceededException should be thrown");
+    } catch (RateLimitExceededException e) {
+      assertEquals("The rate limit of requests per second has been exceeded.", e.getMessage());
     }
+
+    verify(countLimitProvider, bytesLimitProvider, rateLimiterForCount, rateLimiterForBytes);
+  }
+
+  @Test
+  @Inject
+  public void rateLimitedOnBytesExceptionThrown() {
+
+    Properties properties = new Properties();
+    properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(3600000));
+
+    Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
+    RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
+    RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
+
+    expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
+    expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
+    rateLimiterForCount.rateLimit(anyInt());
+    rateLimiterForBytes.rateLimit(anyInt());
+    rateLimiterForCount.rateLimit(anyInt());
+    rateLimiterForBytes.rateLimit(anyInt());
+    EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
+
+    replay(countLimitProvider, bytesLimitProvider, rateLimiterForCount, rateLimiterForBytes);
+
+    ProduceRateLimiters produceRateLimiters =
+        new ProduceRateLimiters(
+            countLimitProvider,
+            bytesLimitProvider,
+            Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
+            Duration.ofMillis(
+                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
+
+    produceRateLimiters.rateLimit("clusterId", Optional.of(10L));
+
+    try {
+      produceRateLimiters.rateLimit("clusterId", Optional.of(10L));
+      Assert.fail("RateLimitExceededException should be thrown");
+    } catch (RateLimitExceededException e) {
+      assertEquals("The rate limit of requests per second has been exceeded.", e.getMessage());
+    }
+
+    verify(countLimitProvider, bytesLimitProvider, rateLimiterForCount, rateLimiterForBytes);
   }
 
   @Test
   public void cacheExpiresforeRateLimit() throws InterruptedException {
-    Clock clock = mock(Clock.class);
-    expect(clock.millis()).andReturn(0L);
-    expect(clock.millis()).andReturn(1L);
-    expect(clock.millis()).andReturn(8L);
-    replay(clock);
 
     Properties properties = new Properties();
-    properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
-    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(100));
-    properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(100));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
-    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(5));
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(20));
+
+    Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
+    RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
+    RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
+
+    expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
+    expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
+    rateLimiterForCount.rateLimit(anyInt());
+    rateLimiterForBytes.rateLimit(anyInt());
+
+    // these are called after the delay that will reset the cache
+    expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
+    expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
+
+    rateLimiterForCount.rateLimit(anyInt());
+    rateLimiterForBytes.rateLimit(anyInt());
+
+    replay(countLimitProvider, bytesLimitProvider, rateLimiterForCount, rateLimiterForBytes);
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
-            Duration.ofMillis(Integer.parseInt(properties.getProperty(PRODUCE_GRACE_PERIOD_MS))),
-            Integer.parseInt(properties.getProperty(PRODUCE_MAX_REQUESTS_PER_SECOND)),
-            Integer.parseInt(properties.getProperty(PRODUCE_MAX_BYTES_PER_SECOND)),
+            countLimitProvider,
+            bytesLimitProvider,
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
-                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))),
-            clock);
+                Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
 
-    Optional<Duration> waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
-    assertFalse(waitTime.isPresent());
-    waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
-    assertTrue(waitTime.isPresent());
-    assertEquals(waitTime.get().toMillis(), 1000);
-    Thread.sleep(6);
-    waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
-    assertFalse(waitTime.isPresent());
+    produceRateLimiters.rateLimit("clusterId", Optional.of(10L));
+
+    Thread.sleep(50);
+    produceRateLimiters.rateLimit("clusterId", Optional.of(10L));
+
+    verify(countLimitProvider, bytesLimitProvider, rateLimiterForCount, rateLimiterForBytes);
   }
 }
