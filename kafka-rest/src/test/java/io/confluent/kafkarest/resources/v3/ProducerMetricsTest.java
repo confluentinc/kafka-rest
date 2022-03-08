@@ -71,7 +71,7 @@ public class ProducerMetricsTest {
         new String[] {
           ProducerMetrics.RECORD_ERROR_RATE_METRIC_NAME,
           ProducerMetrics.REQUEST_RATE_METRIC_NAME,
-          ProducerMetrics.RESPONSE_SEND_RATE_METRIC_NAME
+          ProducerMetrics.RESPONSE_RATE_METRIC_NAME
         };
 
     IntStream.range(0, 90)
@@ -132,7 +132,7 @@ public class ProducerMetricsTest {
     String[] maxMetrics =
         new String[] {
           ProducerMetrics.REQUEST_COUNT_WINDOWED_METRIC_NAME,
-          ProducerMetrics.ERROR_COUNT_WINDOWED_METRIC_NAME,
+          ProducerMetrics.RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME,
           ProducerMetrics.RESPONSE_COUNT_WINDOWED_METRIC_NAME
         };
 

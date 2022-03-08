@@ -45,7 +45,7 @@ final class ProducerMetrics {
   private static final String GROUP_NAME = "produce-api-metrics";
   private static final ImmutableMap<String, String> METRIC_TAGS = ImmutableMap.of();
   private static final int NUM_SAMPLES = 10;
-  private static final long SAMPLE_WINDOWS_MS = 10000;
+  private static final long SAMPLE_WINDOW_MS = 10000L;
   private static final Sensor.RecordingLevel RECORDING_LEVEL = Sensor.RecordingLevel.INFO;
 
   /*
@@ -72,8 +72,8 @@ final class ProducerMetrics {
       "The total number of requests sent within the given window.";
 
   // response
-  static final String RESPONSE_SEND_RATE_METRIC_NAME = "response-rate";
-  private static final String RESPONSE_SEND_RATE_METRIC_DOC =
+  static final String RESPONSE_RATE_METRIC_NAME = "response-rate";
+  private static final String RESPONSE_RATE_METRIC_DOC =
       "The average number of responses sent per second.";
 
   static final String RESPONSE_COUNT_WINDOWED_METRIC_NAME = "response-count-windowed";
@@ -81,8 +81,8 @@ final class ProducerMetrics {
       "The total number of responses sent in the given window.";
 
   // errors
-  static final String ERROR_COUNT_WINDOWED_METRIC_NAME = "error-count-windowed";
-  private static final String ERROR_COUNT_WINDOWED_METRIC_DOC =
+  static final String RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME = "error-count-windowed";
+  private static final String RECORD_ERROR_COUNT_WINDOWED_METRIC_DOC =
       "The total number of record sends that resulted in errors in the given window.";
 
   static final String RECORD_ERROR_RATE_METRIC_NAME = "record-error-rate";
@@ -96,7 +96,7 @@ final class ProducerMetrics {
   static final String REQUEST_LATENCY_MAX_METRIC_NAME = "request-latency-max";
   private static final String REQUEST_LATENCY_MAX_METRIC_DOC = "The max request latency";
 
-  static final String REQUEST_LATENCY_PCT_METRIC_PREFIX = "request-latency-avg-";
+  static final String REQUEST_LATENCY_PCT_METRIC_PREFIX = "request-latency-";
   private static final String REQUEST_LATENCY_PCT_METRIC_DOC = "Request latency percentiles.";
 
   private final Metrics metrics;
@@ -125,7 +125,7 @@ final class ProducerMetrics {
     return new Metrics(
         new MetricConfig()
             .samples(NUM_SAMPLES)
-            .timeWindow(SAMPLE_WINDOWS_MS, TimeUnit.MILLISECONDS)
+            .timeWindow(SAMPLE_WINDOW_MS, TimeUnit.MILLISECONDS)
             .recordLevel(RECORDING_LEVEL),
         singletonList(reporter),
         time,
@@ -133,9 +133,6 @@ final class ProducerMetrics {
   }
 
   private void setupSensors() {
-    // Clear out any previous metrics and sensors that might have been present
-    removeExistingMetrics();
-
     // request metrics
     setupRequestSensor();
     setupRequestSizeSensor();
@@ -146,14 +143,6 @@ final class ProducerMetrics {
     setupRequestLatencySensor();
 
     log.info("Successfully registered kafka-rest produce metrics with JMX");
-  }
-
-  private void removeExistingMetrics() {
-    for (MetricName metricName : metrics.metrics().keySet()) {
-      if (metricName.group().equals(GROUP_NAME) && METRIC_TAGS.equals(metricName.tags())) {
-        metrics.removeMetric(metricName);
-      }
-    }
   }
 
   private void setupRequestSensor() {
@@ -170,7 +159,7 @@ final class ProducerMetrics {
 
   private void setupResponseSensor() {
     Sensor responseSensor = createSensor(RESPONSE_SENSOR_NAME);
-    addRate(responseSensor, RESPONSE_SEND_RATE_METRIC_NAME, RESPONSE_SEND_RATE_METRIC_DOC);
+    addRate(responseSensor, RESPONSE_RATE_METRIC_NAME, RESPONSE_RATE_METRIC_DOC);
     addWindowedCount(
         responseSensor, RESPONSE_COUNT_WINDOWED_METRIC_NAME, RESPONSE_COUNT_WINDOWED_METRIC_DOC);
   }
@@ -179,7 +168,9 @@ final class ProducerMetrics {
     Sensor recordErrorSensor = createSensor(RECORD_ERROR_SENSOR_NAME);
     addRate(recordErrorSensor, RECORD_ERROR_RATE_METRIC_NAME, RECORD_ERROR_RATE_METRIC_DOC);
     addWindowedCount(
-        recordErrorSensor, ERROR_COUNT_WINDOWED_METRIC_NAME, ERROR_COUNT_WINDOWED_METRIC_DOC);
+        recordErrorSensor,
+        RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME,
+        RECORD_ERROR_COUNT_WINDOWED_METRIC_DOC);
   }
 
   private void setupRequestLatencySensor() {
