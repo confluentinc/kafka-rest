@@ -111,6 +111,14 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new ProduceRateLimitCountConfigImpl())
         .to(Integer.class);
 
+    bind(config.getInt(KafkaRestConfig.PRODUCE_MAX_REQUESTS_GLOBAL_PER_SECOND))
+        .qualifiedBy(new ProduceRateLimitCountGlobalConfigImpl())
+        .to(Integer.class);
+
+    bind(config.getInt(KafkaRestConfig.PRODUCE_MAX_BYTES_GLOBAL_PER_SECOND))
+        .qualifiedBy(new ProduceRateLimitBytesGlobalConfigImpl())
+        .to(Integer.class);
+
     bind(Duration.ofMillis(config.getInt(KafkaRestConfig.PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS)))
         .qualifiedBy(new ProduceRateLimitCacheExpiryConfigImpl())
         .to(Duration.class);
@@ -289,6 +297,24 @@ public final class ConfigModule extends AbstractBinder {
   private static final class ProduceRateLimitBytesConfigImpl
       extends AnnotationLiteral<ProduceRateLimitBytesConfig>
       implements ProduceRateLimitBytesConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceRateLimitBytesGlobalConfig {}
+
+  private static final class ProduceRateLimitBytesGlobalConfigImpl
+      extends AnnotationLiteral<ProduceRateLimitBytesGlobalConfig>
+      implements ProduceRateLimitBytesGlobalConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceRateLimitCountGlobalConfig {}
+
+  private static final class ProduceRateLimitCountGlobalConfigImpl
+      extends AnnotationLiteral<ProduceRateLimitCountGlobalConfig>
+      implements ProduceRateLimitCountGlobalConfig {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
