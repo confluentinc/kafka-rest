@@ -37,15 +37,15 @@ public class ProduceRateLimiters {
   private final boolean rateLimitingEnabled;
   private final LoadingCache<String, RequestRateLimiter> countCache;
   private final LoadingCache<String, RequestRateLimiter> bytesCache;
-  private final RequestRateLimiter bytesLimiterGlobal;
-  private final RequestRateLimiter countLimiterGlobal;
+  private final Provider<RequestRateLimiter> bytesLimiterGlobal;
+  private final Provider<RequestRateLimiter> countLimiterGlobal;
 
   @Inject
   public ProduceRateLimiters(
       @ProduceRateLimiterCount Provider<RequestRateLimiter> countLimiterProvider,
       @ProduceRateLimiterBytes Provider<RequestRateLimiter> bytesLimiterProvider,
-      @ProduceRateLimiterCountGlobal RequestRateLimiter countLimiterGlobal,
-      @ProduceRateLimiterBytesGlobal RequestRateLimiter bytesLimiterGlobal,
+      @ProduceRateLimiterCountGlobal Provider<RequestRateLimiter> countLimiterGlobal,
+      @ProduceRateLimiterBytesGlobal Provider<RequestRateLimiter> bytesLimiterGlobal,
       @ProduceRateLimitEnabledConfig Boolean produceRateLimitEnabledConfig,
       @ProduceRateLimitCacheExpiryConfig Duration produceRateLimitCacheExpiryConfig) {
     this.rateLimitingEnabled = requireNonNull(produceRateLimitEnabledConfig);
@@ -72,8 +72,8 @@ public class ProduceRateLimiters {
     countRateLimiter.rateLimit(1);
     byteRateLimiter.rateLimit(toIntExact(requestSize));
 
-    countLimiterGlobal.rateLimit(1);
-    bytesLimiterGlobal.rateLimit(toIntExact(requestSize));
+    countLimiterGlobal.get().rateLimit(1);
+    bytesLimiterGlobal.get().rateLimit(toIntExact(requestSize));
   }
 
   public void clear() {

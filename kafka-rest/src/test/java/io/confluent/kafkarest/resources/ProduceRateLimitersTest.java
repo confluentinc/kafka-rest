@@ -32,6 +32,8 @@ public class ProduceRateLimitersTest {
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> countLimiterGlobalProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimiterGlobalProvider = mock(Provider.class);
     RequestRateLimiter countLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
@@ -49,8 +51,8 @@ public class ProduceRateLimitersTest {
         new ProduceRateLimiters(
             countLimitProvider,
             bytesLimitProvider,
-            countLimiterGlobal,
-            bytesLimiterGlobal,
+            countLimiterGlobalProvider,
+            bytesLimiterGlobalProvider,
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
@@ -75,10 +77,10 @@ public class ProduceRateLimitersTest {
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
-    RequestRateLimiter countLimiterGlobal = mock(RequestRateLimiter.class);
-    RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
     Provider<RequestRateLimiter> countLimiterGlobalProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimiterGlobalProvider = mock(Provider.class);
+    RequestRateLimiter countLimiterGlobal = mock(RequestRateLimiter.class);
+    RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForCount1 = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes1 = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForCount2 = mock(RequestRateLimiter.class);
@@ -95,6 +97,8 @@ public class ProduceRateLimitersTest {
 
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount2);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes2);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
     rateLimiterForCount2.rateLimit(anyInt());
     rateLimiterForBytes2.rateLimit(anyInt());
     bytesLimiterGlobal.rateLimit(anyInt());
@@ -108,14 +112,16 @@ public class ProduceRateLimitersTest {
         rateLimiterForCount2,
         rateLimiterForBytes2,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        countLimiterGlobalProvider,
+        bytesLimiterGlobalProvider);
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
             countLimitProvider,
             bytesLimitProvider,
-            countLimiterGlobal,
-            bytesLimiterGlobal,
+            countLimiterGlobalProvider,
+            bytesLimiterGlobalProvider,
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
@@ -145,6 +151,8 @@ public class ProduceRateLimitersTest {
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> countLimiterGlobalProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimiterGlobalProvider = mock(Provider.class);
     RequestRateLimiter countLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
@@ -152,6 +160,8 @@ public class ProduceRateLimitersTest {
 
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
     bytesLimiterGlobal.rateLimit(anyInt());
@@ -166,14 +176,16 @@ public class ProduceRateLimitersTest {
         rateLimiterForCount,
         rateLimiterForBytes,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        countLimiterGlobalProvider,
+        bytesLimiterGlobalProvider);
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
             countLimitProvider,
             bytesLimitProvider,
-            countLimiterGlobal,
-            bytesLimiterGlobal,
+            countLimiterGlobalProvider,
+            bytesLimiterGlobalProvider,
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
@@ -206,6 +218,8 @@ public class ProduceRateLimitersTest {
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> countLimiterGlobalProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimiterGlobalProvider = mock(Provider.class);
     RequestRateLimiter countLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
@@ -213,6 +227,8 @@ public class ProduceRateLimitersTest {
 
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
     bytesLimiterGlobal.rateLimit(anyInt());
@@ -228,14 +244,16 @@ public class ProduceRateLimitersTest {
         rateLimiterForCount,
         rateLimiterForBytes,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        countLimiterGlobalProvider,
+        bytesLimiterGlobalProvider);
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
             countLimitProvider,
             bytesLimitProvider,
-            countLimiterGlobal,
-            bytesLimiterGlobal,
+            countLimiterGlobalProvider,
+            bytesLimiterGlobalProvider,
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
@@ -267,6 +285,8 @@ public class ProduceRateLimitersTest {
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> countLimiterGlobalProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimiterGlobalProvider = mock(Provider.class);
     RequestRateLimiter countLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
@@ -274,6 +294,8 @@ public class ProduceRateLimitersTest {
 
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
     bytesLimiterGlobal.rateLimit(anyInt());
@@ -282,6 +304,8 @@ public class ProduceRateLimitersTest {
     // these are called after the delay that will reset the cache
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
 
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
@@ -294,14 +318,16 @@ public class ProduceRateLimitersTest {
         rateLimiterForCount,
         rateLimiterForBytes,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        countLimiterGlobalProvider,
+        bytesLimiterGlobalProvider);
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
             countLimitProvider,
             bytesLimitProvider,
-            countLimiterGlobal,
-            bytesLimiterGlobal,
+            countLimiterGlobalProvider,
+            bytesLimiterGlobalProvider,
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
@@ -330,6 +356,8 @@ public class ProduceRateLimitersTest {
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> countLimiterGlobalProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimiterGlobalProvider = mock(Provider.class);
     RequestRateLimiter countLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForCount1 = mock(RequestRateLimiter.class);
@@ -337,6 +365,8 @@ public class ProduceRateLimitersTest {
 
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount1);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes1);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
     rateLimiterForCount1.rateLimit(anyInt());
     rateLimiterForBytes1.rateLimit(anyInt());
 
@@ -349,14 +379,16 @@ public class ProduceRateLimitersTest {
         rateLimiterForCount1,
         rateLimiterForBytes1,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        countLimiterGlobalProvider,
+        bytesLimiterGlobalProvider);
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
             countLimitProvider,
             bytesLimitProvider,
-            countLimiterGlobal,
-            bytesLimiterGlobal,
+            countLimiterGlobalProvider,
+            bytesLimiterGlobalProvider,
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
@@ -385,6 +417,8 @@ public class ProduceRateLimitersTest {
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> countLimiterGlobalProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimiterGlobalProvider = mock(Provider.class);
     RequestRateLimiter countLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForCount1 = mock(RequestRateLimiter.class);
@@ -392,6 +426,8 @@ public class ProduceRateLimitersTest {
 
     expect(countLimitProvider.get()).andReturn(rateLimiterForCount1);
     expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes1);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
     rateLimiterForCount1.rateLimit(anyInt());
     rateLimiterForBytes1.rateLimit(anyInt());
 
@@ -405,14 +441,16 @@ public class ProduceRateLimitersTest {
         rateLimiterForCount1,
         rateLimiterForBytes1,
         countLimiterGlobal,
-        bytesLimiterGlobal);
+        bytesLimiterGlobal,
+        countLimiterGlobalProvider,
+        bytesLimiterGlobalProvider);
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
             countLimitProvider,
             bytesLimitProvider,
-            countLimiterGlobal,
-            bytesLimiterGlobal,
+            countLimiterGlobalProvider,
+            bytesLimiterGlobalProvider,
             Boolean.parseBoolean(properties.getProperty(PRODUCE_RATE_LIMIT_ENABLED)),
             Duration.ofMillis(
                 Integer.parseInt(properties.getProperty(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS))));
