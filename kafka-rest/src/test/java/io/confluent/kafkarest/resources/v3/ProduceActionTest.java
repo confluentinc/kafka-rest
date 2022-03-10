@@ -19,7 +19,8 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.confluent.kafkarest.Errors;
-import io.confluent.kafkarest.ProducerMetrics;
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
@@ -803,15 +804,13 @@ public class ProduceActionTest {
             Errors.invalidPayloadException(
                 "Schema Registry must be configured when using schemas."));
     replay(schemaManagerProvider, schemaManagerMock);
-    Provider<ProducerMetrics> producerMetricsProvider = mock(Provider.class);
-    getProducerMetricsProvider(producerMetricsProvider);
     Provider<RecordSerializer> recordSerializerProvider =
         getRecordSerializerProvider(errorSchemaRegistry);
     Provider<ProduceController> produceControllerProvider = mock(Provider.class);
     ProduceController produceController = getProduceControllerMock(produceControllerProvider);
     setupExpectsMockCallsForProduce(produceController, times, producerId);
 
-    replay(producerMetricsProvider, produceControllerProvider, produceController);
+    replay(produceControllerProvider, produceController);
 
     StreamingResponseFactory streamingResponseFactory =
         new StreamingResponseFactory(chunkedOutputFactory);
@@ -824,20 +823,11 @@ public class ProduceActionTest {
             schemaManagerProvider,
             recordSerializerProvider,
             produceControllerProvider,
-            producerMetricsProvider,
+            () -> new ProducerMetrics(new KafkaRestConfig(), Time.SYSTEM),
             streamingResponseFactory,
             produceRateLimiters,
             executorService);
     produceRateLimiters.clear();
     return produceAction;
-  }
-
-  private static void getProducerMetricsProvider(
-      Provider<ProducerMetrics> producerMetricsProvider) {
-    ProducerMetrics producerMetrics = mock(ProducerMetrics.class);
-    expect(producerMetricsProvider.get()).andReturn(producerMetrics).anyTimes();
-    ProducerMetrics.ProduceMetricMBean metricMBean = mock(ProducerMetrics.ProduceMetricMBean.class);
-    expect(producerMetrics.mbean(anyObject(), anyObject())).andReturn(metricMBean).anyTimes();
-    replay(producerMetrics);
   }
 }
