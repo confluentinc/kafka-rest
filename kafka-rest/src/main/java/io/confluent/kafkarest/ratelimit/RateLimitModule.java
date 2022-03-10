@@ -46,6 +46,16 @@ public final class RateLimitModule extends AbstractBinder {
         .qualifiedBy(new ProduceRateLimiterBytesImpl())
         .to(RequestRateLimiter.class)
         .in(PerLookup.class);
+
+    bindFactory(RequestRateLimiterProduceCountGlobalFactory.class)
+        .qualifiedBy(new ProduceRateLimiterCountGlobalImpl())
+        .to(RequestRateLimiter.class)
+        .in(Singleton.class);
+
+    bindFactory(RequestRateLimiterProduceBytesGlobalFactory.class)
+        .qualifiedBy(new ProduceRateLimiterBytesGlobalImpl())
+        .to(RequestRateLimiter.class)
+        .in(Singleton.class);
   }
 
   @Qualifier
@@ -63,6 +73,24 @@ public final class RateLimitModule extends AbstractBinder {
 
   private static final class ProduceRateLimiterBytesImpl
       extends AnnotationLiteral<ProduceRateLimiterBytes> implements ProduceRateLimiterBytes {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceRateLimiterCountGlobal {}
+
+  private static final class ProduceRateLimiterCountGlobalImpl
+      extends AnnotationLiteral<ProduceRateLimiterCountGlobal>
+      implements ProduceRateLimiterCountGlobal {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface ProduceRateLimiterBytesGlobal {}
+
+  private static final class ProduceRateLimiterBytesGlobalImpl
+      extends AnnotationLiteral<ProduceRateLimiterBytesGlobal>
+      implements ProduceRateLimiterBytesGlobal {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)

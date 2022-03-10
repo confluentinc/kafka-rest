@@ -24,7 +24,9 @@ import com.google.common.cache.LoadingCache;
 import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitCacheExpiryConfig;
 import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitEnabledConfig;
 import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterBytes;
+import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterBytesGlobal;
 import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterCount;
+import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterCountGlobal;
 import io.confluent.kafkarest.ratelimit.RequestRateLimiter;
 import java.time.Duration;
 import javax.inject.Inject;
@@ -35,14 +37,21 @@ public class ProduceRateLimiters {
   private final boolean rateLimitingEnabled;
   private final LoadingCache<String, RequestRateLimiter> countCache;
   private final LoadingCache<String, RequestRateLimiter> bytesCache;
+  private final Provider<RequestRateLimiter> bytesLimiterGlobal;
+  private final Provider<RequestRateLimiter> countLimiterGlobal;
 
   @Inject
   public ProduceRateLimiters(
       @ProduceRateLimiterCount Provider<RequestRateLimiter> countLimiterProvider,
       @ProduceRateLimiterBytes Provider<RequestRateLimiter> bytesLimiterProvider,
+      @ProduceRateLimiterCountGlobal Provider<RequestRateLimiter> countLimiterGlobal,
+      @ProduceRateLimiterBytesGlobal Provider<RequestRateLimiter> bytesLimiterGlobal,
       @ProduceRateLimitEnabledConfig Boolean produceRateLimitEnabledConfig,
       @ProduceRateLimitCacheExpiryConfig Duration produceRateLimitCacheExpiryConfig) {
     this.rateLimitingEnabled = requireNonNull(produceRateLimitEnabledConfig);
+    this.countLimiterGlobal = requireNonNull(countLimiterGlobal);
+    this.bytesLimiterGlobal = requireNonNull(bytesLimiterGlobal);
+
     countCache =
         CacheBuilder.newBuilder()
             .expireAfterAccess(produceRateLimitCacheExpiryConfig)
@@ -62,6 +71,9 @@ public class ProduceRateLimiters {
     RequestRateLimiter byteRateLimiter = bytesCache.getUnchecked(clusterId);
     countRateLimiter.rateLimit(1);
     byteRateLimiter.rateLimit(toIntExact(requestSize));
+
+    countLimiterGlobal.get().rateLimit(1);
+    bytesLimiterGlobal.get().rateLimit(toIntExact(requestSize));
   }
 
   public void clear() {
