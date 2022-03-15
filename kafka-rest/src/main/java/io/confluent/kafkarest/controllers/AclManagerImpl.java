@@ -25,6 +25,7 @@ import io.confluent.kafkarest.entities.Acl.Operation;
 import io.confluent.kafkarest.entities.Acl.PatternType;
 import io.confluent.kafkarest.entities.Acl.Permission;
 import io.confluent.kafkarest.entities.Acl.ResourceType;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -33,6 +34,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.DeleteAclsResult.FilterResult;
+import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.acl.AccessControlEntry;
 import org.apache.kafka.common.acl.AccessControlEntryFilter;
 import org.apache.kafka.common.acl.AclBinding;
@@ -98,13 +100,28 @@ final class AclManagerImpl implements AclManager {
             new AccessControlEntry(
                 principal, host, operation.toAclOperation(), permission.toAclPermissionType()));
 
-    return clusterManager
-        .getCluster(clusterId)
-        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
-        .thenApply(cluster -> adminClient.createAcls(singletonList(aclBinding)))
-        .thenCompose(
-            createAclsResult ->
-                KafkaFutures.toCompletableFuture(createAclsResult.values().get(aclBinding)));
+    return submitBindings(clusterId, singletonList(aclBinding));
+  }
+
+  @Override
+  public CompletableFuture<Void> createAcls(String clusterId, List<Acl> acls) {
+    List<AclBinding> aclBindings =
+        acls.stream()
+            .map(
+                acl ->
+                    new AclBinding(
+                        new ResourcePattern(
+                            acl.getResourceType().toAdminResourceType(),
+                            acl.getResourceName(),
+                            acl.getPatternType().toAdminPatternType()),
+                        new AccessControlEntry(
+                            acl.getPrincipal(),
+                            acl.getHost(),
+                            acl.getOperation().toAclOperation(),
+                            acl.getPermission().toAclPermissionType())))
+            .collect(Collectors.toList());
+
+    return submitBindings(clusterId, aclBindings);
   }
 
   @Override
@@ -142,5 +159,21 @@ final class AclManagerImpl implements AclManager {
 
   private static Acl toAcl(String clusterId, AclBinding aclBinding) {
     return Acl.fromAclBinding(aclBinding).setClusterId(clusterId).build();
+  }
+
+  private CompletableFuture<Void> submitBindings(String clusterId, List<AclBinding> aclBindings) {
+    return clusterManager
+        .getCluster(clusterId)
+        .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
+        .thenApply(cluster -> adminClient.createAcls(aclBindings))
+        .thenCompose(
+            createAclsResult -> {
+              Collection<KafkaFuture<Void>> results = createAclsResult.values().values();
+              return CompletableFuture.allOf(
+                  results.stream()
+                      .map(f -> KafkaFutures.toCompletableFuture(f))
+                      .collect(Collectors.toList())
+                      .toArray(new CompletableFuture[results.size()]));
+            });
   }
 }
