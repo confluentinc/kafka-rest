@@ -27,10 +27,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import io.confluent.kafkarest.entities.Acl;
 import io.confluent.kafkarest.entities.Cluster;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
@@ -226,6 +223,71 @@ public class AclManagerImplTest {
               Acl.Operation.READ,
               Acl.Permission.ALLOW)
           .get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(NotFoundException.class, e.getCause().getClass());
+    }
+  }
+
+  @Test
+  public void createAcls_createsAcls() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID))
+        .andReturn(
+            completedFuture(
+                Optional.of(Cluster.create(CLUSTER_ID, /* controller= */ null, emptyList()))));
+    expect(adminClient.createAcls(Arrays.asList(ACL_BINDING_1, ACL_BINDING_2)))
+        .andReturn(createAclsResult);
+    expect(createAclsResult.values())
+        .andReturn(
+            new HashMap<AclBinding, KafkaFuture<Void>>() {
+              {
+                put(ACL_BINDING_1, KafkaFuture.completedFuture(null));
+                put(ACL_BINDING_2, KafkaFuture.completedFuture(null));
+              }
+            });
+    replay(clusterManager, adminClient, createAclsResult);
+
+    List<Acl> acls =
+        Arrays.asList(
+            Acl.builder()
+                .setClusterId(CLUSTER_ID)
+                .setOperation(Acl.Operation.valueOf(ACL_BINDING_1.entry().operation().name()))
+                .setHost(ACL_BINDING_1.entry().host())
+                .setPermission(
+                    Acl.Permission.valueOf(ACL_BINDING_1.entry().permissionType().name()))
+                .setPrincipal(ACL_BINDING_1.entry().principal())
+                .setPatternType(
+                    Acl.PatternType.valueOf(ACL_BINDING_1.pattern().patternType().name()))
+                .setResourceName(ACL_BINDING_1.pattern().name())
+                .setResourceType(
+                    Acl.ResourceType.valueOf(ACL_BINDING_1.pattern().resourceType().name()))
+                .build(),
+            Acl.builder()
+                .setClusterId(CLUSTER_ID)
+                .setOperation(Acl.Operation.valueOf(ACL_BINDING_2.entry().operation().name()))
+                .setHost(ACL_BINDING_2.entry().host())
+                .setPermission(
+                    Acl.Permission.valueOf(ACL_BINDING_2.entry().permissionType().name()))
+                .setPrincipal(ACL_BINDING_2.entry().principal())
+                .setPatternType(
+                    Acl.PatternType.valueOf(ACL_BINDING_2.pattern().patternType().name()))
+                .setResourceName(ACL_BINDING_2.pattern().name())
+                .setResourceType(
+                    Acl.ResourceType.valueOf(ACL_BINDING_2.pattern().resourceType().name()))
+                .build());
+
+    aclManager.createAcls(CLUSTER_ID, acls).get();
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void createAcls_nonExistingCluster_throwsNotFound() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
+    replay(clusterManager);
+
+    try {
+      aclManager.createAcls(CLUSTER_ID, emptyList()).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
