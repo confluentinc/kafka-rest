@@ -1491,7 +1491,7 @@ components:
         schema_version:
           type: integer
           nullable: true
-        raw_schema:
+        schema:
           type: string
           nullable: true
         data:
