@@ -66,14 +66,14 @@ public class ProduceRateLimiters {
     if (!rateLimitingEnabled) {
       return;
     }
-
+    // Global rate limit first to reduce CPU usage under load
+    // https://confluentinc.atlassian.net/browse/KREST-4979
+    countLimiterGlobal.get().rateLimit(1);
+    bytesLimiterGlobal.get().rateLimit(toIntExact(requestSize));
     RequestRateLimiter countRateLimiter = countCache.getUnchecked(clusterId);
     RequestRateLimiter byteRateLimiter = bytesCache.getUnchecked(clusterId);
     countRateLimiter.rateLimit(1);
     byteRateLimiter.rateLimit(toIntExact(requestSize));
-
-    countLimiterGlobal.get().rateLimit(1);
-    bytesLimiterGlobal.get().rateLimit(toIntExact(requestSize));
   }
 
   public void clear() {

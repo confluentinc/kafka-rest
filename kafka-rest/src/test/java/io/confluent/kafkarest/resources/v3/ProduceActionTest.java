@@ -268,6 +268,10 @@ public class ProduceActionTest {
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
 
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
+    bytesLimiterGlobal.rateLimit(anyInt());
+    countLimiterGlobal.rateLimit(anyInt());
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
     EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
@@ -365,6 +369,10 @@ public class ProduceActionTest {
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
 
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
+    bytesLimiterGlobal.rateLimit(anyInt());
+    countLimiterGlobal.rateLimit(anyInt());
     rateLimiterForCount.rateLimit(anyInt());
     EasyMock.expectLastCall().andThrow(new RateLimitExceededException());
 

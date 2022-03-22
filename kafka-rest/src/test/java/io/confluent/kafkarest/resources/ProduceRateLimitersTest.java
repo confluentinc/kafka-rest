@@ -167,6 +167,10 @@ public class ProduceRateLimitersTest {
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
 
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
+    bytesLimiterGlobal.rateLimit(anyInt());
+    countLimiterGlobal.rateLimit(anyInt());
     rateLimiterForCount.rateLimit(anyInt());
     expectLastCall().andThrow(new RateLimitExceededException());
 
@@ -234,6 +238,10 @@ public class ProduceRateLimitersTest {
     bytesLimiterGlobal.rateLimit(anyInt());
     countLimiterGlobal.rateLimit(anyInt());
 
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
+    bytesLimiterGlobal.rateLimit(anyInt());
+    countLimiterGlobal.rateLimit(anyInt());
     rateLimiterForCount.rateLimit(anyInt());
     rateLimiterForBytes.rateLimit(anyInt());
     expectLastCall().andThrow(new RateLimitExceededException());
@@ -363,12 +371,8 @@ public class ProduceRateLimitersTest {
     RequestRateLimiter rateLimiterForCount1 = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes1 = mock(RequestRateLimiter.class);
 
-    expect(countLimitProvider.get()).andReturn(rateLimiterForCount1);
-    expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes1);
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
     expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
-    rateLimiterForCount1.rateLimit(anyInt());
-    rateLimiterForBytes1.rateLimit(anyInt());
 
     countLimiterGlobal.rateLimit(anyInt());
     expectLastCall().andThrow(new RateLimitExceededException());
@@ -424,13 +428,8 @@ public class ProduceRateLimitersTest {
     RequestRateLimiter rateLimiterForCount1 = mock(RequestRateLimiter.class);
     RequestRateLimiter rateLimiterForBytes1 = mock(RequestRateLimiter.class);
 
-    expect(countLimitProvider.get()).andReturn(rateLimiterForCount1);
-    expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes1);
     expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
     expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
-    rateLimiterForCount1.rateLimit(anyInt());
-    rateLimiterForBytes1.rateLimit(anyInt());
-
     countLimiterGlobal.rateLimit(anyInt());
     bytesLimiterGlobal.rateLimit(anyInt());
     expectLastCall().andThrow(new RateLimitExceededException());
