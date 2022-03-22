@@ -66,14 +66,13 @@ public class ProduceRateLimiters {
     if (!rateLimitingEnabled) {
       return;
     }
-
+    // global rate limit first to reduce CPU usage under load
+    countLimiterGlobal.get().rateLimit(1);
+    bytesLimiterGlobal.get().rateLimit(toIntExact(requestSize));
     RequestRateLimiter countRateLimiter = countCache.getUnchecked(clusterId);
     RequestRateLimiter byteRateLimiter = bytesCache.getUnchecked(clusterId);
     countRateLimiter.rateLimit(1);
     byteRateLimiter.rateLimit(toIntExact(requestSize));
-
-    countLimiterGlobal.get().rateLimit(1);
-    bytesLimiterGlobal.get().rateLimit(toIntExact(requestSize));
   }
 
   public void clear() {
