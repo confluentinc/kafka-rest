@@ -169,15 +169,39 @@ public class KafkaRestConfig extends RestConfig {
   public static final ConfigDef.Range PRODUCE_MAX_REQUESTS_PER_SECOND_VALIDATOR =
       ConfigDef.Range.between(1, Integer.MAX_VALUE);
 
+  public static final String PRODUCE_MAX_REQUESTS_GLOBAL_PER_SECOND =
+      "api.v3.produce.rate.limit.max.requests.global.per.sec";
+  private static final String PRODUCE_MAX_REQUESTS_GLOBAL_PER_SECOND_DOC =
+      "Maximum number of requests per second before rate limiting is enforced, across the whole "
+          + "Kafka REST instance. "
+          + "Messages produced that exceed the rate limit are discarded and a 429 is returned "
+          + "to the client.";
+  public static final String PRODUCE_MAX_REQUESTS_GLOBAL_PER_SECOND_DEFAULT = "10000";
+  public static final ConfigDef.Range PRODUCE_MAX_REQUESTS_GLOBAL_PER_SECOND_VALIDATOR =
+      ConfigDef.Range.between(1, Integer.MAX_VALUE);
+
   public static final String PRODUCE_MAX_BYTES_PER_SECOND =
       "api.v3.produce.rate.limit.max.bytes.per.sec";
   private static final String PRODUCE_MAX_BYTES_PER_SECOND_DOC =
       "Maximum number of bytes per second before rate limiting is enforced. "
+          + "The limit is enforced per clusterId, so the total rate limit will be "
+          + "number of clusters * api.v3.produce.rate.limit.max.bytes.per.sec. "
           + "Messages produced that exceed the rate limit are discarded and a 429 is returned "
           + "to the client.";
   public static final String PRODUCE_MAX_BYTES_PER_SECOND_DEFAULT = "10000000";
   public static final ConfigDef.Range PRODUCE_MAX_BYTES_PER_SECOND_VALIDATOR =
-      ConfigDef.Range.between(1, Integer.MAX_VALUE);
+      ConfigDef.Range.between(1, Long.MAX_VALUE);
+
+  public static final String PRODUCE_MAX_BYTES_GLOBAL_PER_SECOND =
+      "api.v3.produce.rate.limit.max.bytes.global.per.sec";
+  private static final String PRODUCE_MAX_BYTES_GLOBAL_PER_SECOND_DOC =
+      "Maximum number of bytes per second before rate limiting is enforced, across the whole "
+          + "Kafka REST instance. "
+          + "Messages produced that exceed the rate limit are discarded and a 429 is returned "
+          + "to the client.";
+  public static final String PRODUCE_MAX_BYTES_GLOBAL_PER_SECOND_DEFAULT = "10000000";
+  public static final ConfigDef.Range PRODUCE_MAX_BYTES_GLOBAL_PER_SECOND_VALIDATOR =
+      ConfigDef.Range.between(1, Long.MAX_VALUE);
 
   public static final String PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS =
       "api.v3.produce.rate.limit.cache.expiry.ms";
@@ -501,12 +525,26 @@ public class KafkaRestConfig extends RestConfig {
             Importance.LOW,
             PRODUCE_MAX_REQUESTS_PER_SECOND_DOC)
         .define(
+            PRODUCE_MAX_REQUESTS_GLOBAL_PER_SECOND,
+            Type.INT,
+            PRODUCE_MAX_REQUESTS_GLOBAL_PER_SECOND_DEFAULT,
+            PRODUCE_MAX_REQUESTS_GLOBAL_PER_SECOND_VALIDATOR,
+            Importance.LOW,
+            PRODUCE_MAX_REQUESTS_GLOBAL_PER_SECOND_DOC)
+        .define(
             PRODUCE_MAX_BYTES_PER_SECOND,
             Type.INT,
             PRODUCE_MAX_BYTES_PER_SECOND_DEFAULT,
             PRODUCE_MAX_BYTES_PER_SECOND_VALIDATOR,
             Importance.LOW,
             PRODUCE_MAX_BYTES_PER_SECOND_DOC)
+        .define(
+            PRODUCE_MAX_BYTES_GLOBAL_PER_SECOND,
+            Type.INT,
+            PRODUCE_MAX_BYTES_GLOBAL_PER_SECOND_DEFAULT,
+            PRODUCE_MAX_BYTES_GLOBAL_PER_SECOND_VALIDATOR,
+            Importance.LOW,
+            PRODUCE_MAX_BYTES_GLOBAL_PER_SECOND_DOC)
         .define(
             PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS,
             Type.INT,
