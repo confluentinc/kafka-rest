@@ -72,6 +72,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   private final Queue<ConsumerRecord<KafkaKeyT, KafkaValueT>> consumerRecords = new ArrayDeque<>();
 
   volatile Instant expiration;
+  private final Object expirationLock = new Object();
 
   KafkaConsumerState(
       KafkaRestConfig config,
@@ -376,11 +377,15 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
   }
 
   public synchronized boolean expired(Instant now) {
-    return !expiration.isAfter(now);
+    synchronized (this.expirationLock) {
+      return !expiration.isAfter(now);
+    }
   }
 
   public synchronized void updateExpiration() {
-    this.expiration = clock.instant().plus(consumerInstanceTimeout);
+    synchronized (this.expirationLock) {
+      this.expiration = clock.instant().plus(consumerInstanceTimeout);
+    }
   }
 
   synchronized ConsumerRecord<KafkaKeyT, KafkaValueT> peek() {
