@@ -47,29 +47,11 @@ import org.apache.kafka.common.TopicPartition;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.EasyMockRunner;
-import org.easymock.EasyMockSupport;
 import org.easymock.Mock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
-import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.entities.v2.BinaryConsumerRecord;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
-import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.TopicPartitionOffset;
-import io.confluent.rest.RestConfigException;
 import org.junit.runner.RunWith;
 
 /**
@@ -514,7 +496,7 @@ public class KafkaConsumerManagerTest {
     public void testConsumerExpirationIsUpdated() throws Exception {
         bootstrapConsumer(consumer);
         KafkaConsumerState state = consumerManager.getConsumerInstance(groupName, consumer.cid());
-        Instant initialExpiration = state.expiration;
+        Instant lastExpiration = state.expiration;
         consumerManager.readRecords(
             groupName,
             consumer.cid(),
@@ -530,12 +512,12 @@ public class KafkaConsumerManagerTest {
                 }
             });
         Thread.sleep(100);
-        assertTrue(state.expiration.isAfter(initialExpiration));
-        initialExpiration = state.expiration;
+        assertFalse(state.expired(lastExpiration));
+        lastExpiration = state.expiration;
         awaitRead();
         assertTrue("Callback failed to fire", sawCallback);
-        assertTrue(state.expiration.isAfter(initialExpiration));
-        initialExpiration = state.expiration;
+        assertFalse(state.expired(lastExpiration));
+        lastExpiration = state.expiration;
 
         consumerManager.commitOffsets(groupName, consumer.cid(), null, null, new KafkaConsumerManager.CommitCallback() {
             @Override
@@ -546,7 +528,7 @@ public class KafkaConsumerManagerTest {
                 actualOffsets = offsets;
             }
         }).get();
-        assertTrue(state.expiration.isAfter(initialExpiration));
+        assertFalse(state.expired(lastExpiration));
     }
 
     private void awaitRead() throws InterruptedException {
