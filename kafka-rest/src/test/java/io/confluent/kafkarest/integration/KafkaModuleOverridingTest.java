@@ -166,11 +166,6 @@ public class KafkaModuleOverridingTest {
     }
 
     @Override
-    public ProducerPool getProducerPool() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
     public KafkaConsumerManager getKafkaConsumerManager() {
       KafkaConsumerManager kafkaConsumerManager = mock(KafkaConsumerManager.class);
       expect(
