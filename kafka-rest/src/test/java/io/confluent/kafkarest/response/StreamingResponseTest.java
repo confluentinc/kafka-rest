@@ -16,6 +16,7 @@ import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import org.easymock.EasyMock;
+import org.eclipse.jetty.http.HttpStatus;
 import org.glassfish.jersey.server.ChunkedOutput;
 import org.junit.jupiter.api.Test;
 
@@ -58,6 +59,7 @@ public class StreamingResponseTest {
             .setTopicName("topicName")
             .setPartitionId(1)
             .setOffset(1L)
+            .setErrorCode(HttpStatus.OK_200)
             .build();
 
     ResultOrError resultOrError = ResultOrError.result(produceResponse);
@@ -122,6 +124,7 @@ public class StreamingResponseTest {
             .setTopicName("topicName")
             .setPartitionId(1)
             .setOffset(1L)
+            .setErrorCode(HttpStatus.ACCEPTED_202)
             .build();
     ResultOrError resultOrError = ResultOrError.result(produceResponse);
 

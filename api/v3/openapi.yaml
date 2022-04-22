@@ -2061,11 +2061,15 @@ components:
     ProduceResponse:
       type: object
       required:
+        - error_code
         - cluster_id
         - topic_name
         - partition_id
         - offset
       properties:
+        error_code:
+          type: integer
+          format: int32
         cluster_id:
           type: string
         topic_name:
@@ -3623,6 +3627,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProduceResponse'
           example:
+            error_code: 200
             cluster_id: 'cluster-1'
             topic_name: 'topic-1'
             partition_id: 1

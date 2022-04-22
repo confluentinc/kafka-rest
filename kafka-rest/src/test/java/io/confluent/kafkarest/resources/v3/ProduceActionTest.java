@@ -46,6 +46,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import javax.inject.Provider;
 import org.easymock.EasyMock;
+import org.eclipse.jetty.http.HttpStatus;
 import org.glassfish.jersey.server.ChunkedOutput;
 import org.junit.jupiter.api.Test;
 
@@ -707,6 +708,7 @@ public class ProduceActionTest {
         .setPartitionId(partitionId)
         .setOffset(offset)
         .setTimestamp(Instant.ofEpochMilli(0))
+        .setErrorCode(HttpStatus.OK_200)
         .build();
   }
 
