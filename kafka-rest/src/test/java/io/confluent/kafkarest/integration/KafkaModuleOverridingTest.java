@@ -30,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
@@ -163,11 +162,6 @@ public class KafkaModuleOverridingTest {
     @Override
     public KafkaRestConfig getConfig() {
       return config;
-    }
-
-    @Override
-    public ProducerPool getProducerPool() {
-      throw new UnsupportedOperationException();
     }
 
     @Override

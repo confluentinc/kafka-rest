@@ -67,11 +67,6 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
   }
 
   @Override
-  public ProducerPool getProducerPool() {
-    return new ProducerPool(getProducer());
-  }
-
-  @Override
   public synchronized KafkaConsumerManager getKafkaConsumerManager() {
     if (kafkaConsumerManager == null) {
       kafkaConsumerManager = new KafkaConsumerManager(config);
