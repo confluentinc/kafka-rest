@@ -23,8 +23,8 @@ import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 /**
  * Permitted formats for ProduceRecords embedded in produce requests/consume responses, e.g.
  * base64-encoded binary, JSON-encoded Avro, etc. Each of these correspond to a content type, a
- * ProduceRecord implementation, a Producer in the ProducerPool (with corresponding Kafka
- * serializer), ConsumerRecord implementation, and a serializer for any instantiated consumers.
+ * ProduceRecord implementation, a Serializer in RecordSerializer, a ConsumerRecord implementation,
+ * and a serializer for any instantiated consumers.
  *
  * <p>Note that for each type, it's assumed that the key and value can be handled by the same
  * serializer. This means each serializer should handle both it's complex type (e.g.
