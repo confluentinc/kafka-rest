@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.common.KafkaFutures.failedFuture;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
@@ -23,8 +24,8 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,7 +42,6 @@ import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +60,7 @@ import org.apache.kafka.clients.admin.TopicListing;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartitionInfo;
+import org.apache.kafka.common.Uuid;
 import org.apache.kafka.common.acl.AclOperation;
 import org.apache.kafka.common.errors.TimeoutException;
 import org.apache.kafka.common.errors.TopicExistsException;
@@ -88,9 +89,9 @@ public class TopicManagerImplTest {
 
   private static final List<TopicListing> TOPIC_LISTINGS =
       Arrays.asList(
-          new TopicListing("topic-1", true),
-          new TopicListing("topic-2", true),
-          new TopicListing("topic-3", false));
+          new TopicListing("topic-1", Uuid.randomUuid(), true),
+          new TopicListing("topic-2", Uuid.randomUuid(), true),
+          new TopicListing("topic-3", Uuid.randomUuid(), false));
 
   private static final TopicDescription TOPIC_DESCRIPTION_1 =
       new TopicDescription(
@@ -463,10 +464,12 @@ public class TopicManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.listTopics()).andReturn(listTopicsResult);
     expect(listTopicsResult.listings())
-        .andReturn(KafkaFuture.completedFuture(singletonList(new TopicListing("topic-4", false))));
-    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+        .andReturn(
+            KafkaFuture.completedFuture(
+                singletonList(new TopicListing("topic-4", Uuid.randomUuid(), false))));
+    expect(adminClient.describeTopics(eq(singletonList("topic-4")), anyObject()))
         .andReturn(describeTopicResult);
-    expect(describeTopicResult.all())
+    expect(describeTopicResult.allTopicNames())
         .andReturn(KafkaFuture.completedFuture(createTopicDescriptionMap(TOPIC_DESCRIPTION_4)));
     replay(clusterManager, adminClient, listTopicsResult, describeTopicResult);
 
@@ -478,9 +481,9 @@ public class TopicManagerImplTest {
   @Test
   public void getTopic_existingCluster_returnsTopicsWithAuthOperations() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
-    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+    expect(adminClient.describeTopics(eq(singletonList("topic-4")), anyObject()))
         .andReturn(describeTopicResult);
-    expect(describeTopicResult.all())
+    expect(describeTopicResult.allTopicNames())
         .andReturn(KafkaFuture.completedFuture(createTopicDescriptionMap(TOPIC_DESCRIPTION_4)));
     replay(clusterManager, adminClient, describeTopicResult);
 
@@ -494,9 +497,11 @@ public class TopicManagerImplTest {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.listTopics()).andReturn(listTopicsResult);
     expect(listTopicsResult.listings()).andReturn(KafkaFuture.completedFuture(TOPIC_LISTINGS));
-    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+    expect(
+            adminClient.describeTopics(
+                eq(Arrays.asList("topic-1", "topic-2", "topic-3")), anyObject()))
         .andReturn(describeTopicResult);
-    expect(describeTopicResult.all())
+    expect(describeTopicResult.allTopicNames())
         .andReturn(
             KafkaFuture.completedFuture(
                 createTopicDescriptionMap(
@@ -528,9 +533,11 @@ public class TopicManagerImplTest {
     expect(clusterManager.getLocalCluster()).andReturn(completedFuture(CLUSTER));
     expect(adminClient.listTopics()).andReturn(listTopicsResult);
     expect(listTopicsResult.listings()).andReturn(KafkaFuture.completedFuture(TOPIC_LISTINGS));
-    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+    expect(
+            adminClient.describeTopics(
+                eq(Arrays.asList("topic-1", "topic-2", "topic-3")), anyObject()))
         .andReturn(describeTopicResult);
-    expect(describeTopicResult.all())
+    expect(describeTopicResult.allTopicNames())
         .andReturn(
             KafkaFuture.completedFuture(
                 createTopicDescriptionMap(
@@ -558,9 +565,9 @@ public class TopicManagerImplTest {
   @Test
   public void getTopic_existingTopic_returnsTopic() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
-    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+    expect(adminClient.describeTopics(eq(singletonList("topic-1")), anyObject()))
         .andReturn(describeTopicResult);
-    expect(describeTopicResult.all())
+    expect(describeTopicResult.allTopicNames())
         .andReturn(KafkaFuture.completedFuture(createTopicDescriptionMap(TOPIC_DESCRIPTION_1)));
     replay(clusterManager, adminClient, describeTopicResult);
 
@@ -572,8 +579,7 @@ public class TopicManagerImplTest {
   @Test
   public void getTopic_nonExistingCluster_throwsNotFoundException() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
-    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
-        .andReturn(describeTopicResult);
+    expect(adminClient.describeTopics(eq(emptyList()), anyObject())).andReturn(describeTopicResult);
     replay(clusterManager);
 
     try {
@@ -587,9 +593,10 @@ public class TopicManagerImplTest {
   @Test
   public void getTopic_nonExistingTopic_returnsEmpty() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
-    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+    expect(adminClient.describeTopics(eq(singletonList("topic-1")), anyObject()))
         .andReturn(describeTopicResult);
-    expect(describeTopicResult.all()).andReturn(KafkaFuture.completedFuture(new HashMap<>()));
+    expect(describeTopicResult.allTopicNames())
+        .andReturn(KafkaFuture.completedFuture(new HashMap<>()));
     replay(clusterManager, adminClient, describeTopicResult);
 
     Optional<Topic> topic = topicManager.getTopic(CLUSTER_ID, TOPIC_1.getName()).get();
@@ -600,9 +607,9 @@ public class TopicManagerImplTest {
   @Test
   public void getLocalTopic_existingTopic_returnsTopic() throws Exception {
     expect(clusterManager.getLocalCluster()).andReturn(completedFuture(CLUSTER));
-    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+    expect(adminClient.describeTopics(eq(singletonList("topic-1")), anyObject()))
         .andReturn(describeTopicResult);
-    expect(describeTopicResult.all())
+    expect(describeTopicResult.allTopicNames())
         .andReturn(KafkaFuture.completedFuture(createTopicDescriptionMap(TOPIC_DESCRIPTION_1)));
     replay(clusterManager, adminClient, describeTopicResult);
 
@@ -614,9 +621,10 @@ public class TopicManagerImplTest {
   @Test
   public void getLocalTopic_nonExistingTopic_returnsEmpty() throws Exception {
     expect(clusterManager.getLocalCluster()).andReturn(completedFuture(CLUSTER));
-    expect(adminClient.describeTopics(isA(Collection.class), anyObject()))
+    expect(adminClient.describeTopics(eq(singletonList("topic-1")), anyObject()))
         .andReturn(describeTopicResult);
-    expect(describeTopicResult.all()).andReturn(KafkaFuture.completedFuture(new HashMap<>()));
+    expect(describeTopicResult.allTopicNames())
+        .andReturn(KafkaFuture.completedFuture(new HashMap<>()));
     replay(clusterManager, adminClient, describeTopicResult);
 
     Optional<Topic> topic = topicManager.getLocalTopic(TOPIC_1.getName()).get();

@@ -101,8 +101,6 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new MaxSchemasPerSubjectConfigImpl())
         .to(Integer.class);
 
-    bind(config.getInt(RestConfig.PORT_CONFIG)).qualifiedBy(new PortConfigImpl()).to(Integer.class);
-
     bind(config.getInt(KafkaRestConfig.PRODUCE_MAX_BYTES_PER_SECOND))
         .qualifiedBy(new ProduceRateLimitBytesConfigImpl())
         .to(Integer.class);
@@ -223,7 +221,6 @@ public final class ConfigModule extends AbstractBinder {
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
-  @Deprecated
   public @interface HostNameConfig {}
 
   private static final class HostNameConfigImpl extends AnnotationLiteral<HostNameConfig>
@@ -261,15 +258,6 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class MaxSchemasPerSubjectConfigImpl
       extends AnnotationLiteral<MaxSchemasPerSubjectConfig> implements MaxSchemasPerSubjectConfig {}
-
-  @Qualifier
-  @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
-  @Deprecated
-  public @interface PortConfig {}
-
-  private static final class PortConfigImpl extends AnnotationLiteral<PortConfig>
-      implements PortConfig {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)

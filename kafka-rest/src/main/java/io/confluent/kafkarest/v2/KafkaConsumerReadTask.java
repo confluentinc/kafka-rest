@@ -97,7 +97,11 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
         messages = new Vector<>();
       }
 
-      addRecords();
+      Instant now = clock.instant();
+      Duration elapsed = Duration.between(started, now);
+      Duration remaining = requestTimeout.minus(elapsed);
+
+      addRecords(remaining);
 
       log.trace(
           "KafkaConsumerReadTask exiting read with id={} messages={} bytes={}, backing off if not"
@@ -106,12 +110,9 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
           messages.size(),
           bytesConsumed);
 
-      Instant now = clock.instant();
-      Duration elapsed = Duration.between(started, now);
-
       // Including the rough message size here ensures processing finishes if the next
       // message exceeds the maxResponseBytes
-      boolean requestTimedOut = elapsed.compareTo(requestTimeout) >= 0;
+      boolean requestTimedOut = remaining.isNegative() || remaining.isZero();
       if (requestTimedOut || exceededMaxResponseBytes || exceededMinResponseBytes) {
         log.trace(
             "Finishing KafkaConsumerReadTask id={} requestTimedOut={} "
@@ -136,10 +137,10 @@ class KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
    * Polls for and reads records until either the minimum response bytes are filled, the maximum
    * response bytes will be reached, or no more records can be read from polling.
    */
-  private void addRecords() {
-    while (!exceededMinResponseBytes && !exceededMaxResponseBytes && parent.hasNext()) {
+  private void addRecords(Duration timeout) {
+    while (!exceededMinResponseBytes && !exceededMaxResponseBytes && parent.hasNext(timeout)) {
       synchronized (parent) {
-        if (parent.hasNext()) {
+        if (parent.hasNext(timeout)) {
           maybeAddRecord();
         }
       }

@@ -32,7 +32,7 @@ public class JsonKafkaConsumerState extends KafkaConsumerState<byte[], byte[], O
       KafkaRestConfig config,
       ConsumerInstanceConfig consumerInstanceConfig,
       ConsumerInstanceId instanceId,
-      Consumer consumer) {
+      Consumer<byte[], byte[]> consumer) {
     super(config, consumerInstanceConfig, instanceId, consumer);
   }
 

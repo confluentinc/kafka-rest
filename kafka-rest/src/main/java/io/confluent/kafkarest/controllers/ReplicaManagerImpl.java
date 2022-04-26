@@ -81,13 +81,13 @@ final class ReplicaManagerImpl implements ReplicaManager {
               DescribeLogDirsResult result =
                   adminClient.describeLogDirs(
                       singletonList(brokerId), new DescribeLogDirsOptions());
-              return KafkaFutures.toCompletableFuture(result.values().get(brokerId));
+              return KafkaFutures.toCompletableFuture(result.descriptions().get(brokerId));
             })
         .thenCompose(
             logDirs ->
                 CompletableFutures.allAsList(
                     logDirs.values().stream()
-                        .flatMap(logDir -> logDir.replicaInfos.keySet().stream())
+                        .flatMap(logDir -> logDir.replicaInfos().keySet().stream())
                         .map(
                             partition ->
                                 getReplica(

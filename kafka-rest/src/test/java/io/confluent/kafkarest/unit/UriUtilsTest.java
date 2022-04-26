@@ -41,7 +41,7 @@ public class UriUtilsTest {
   public void testAbsoluteURIBuilderDefaultHost() {
     KafkaRestConfig config = new KafkaRestConfig();
     EasyMock.expect(uriInfo.getAbsolutePath()).andStubReturn(URI.create("http://foo.com"));
-    EasyMock.expect(uriInfo.getBaseUri()).andReturn(URI.create("http://foo.com"));
+    EasyMock.expect(uriInfo.getBaseUri()).andStubReturn(URI.create("http://foo.com"));
     EasyMock.replay(uriInfo);
     assertEquals("http://foo.com", UriUtils.absoluteUri(config, uriInfo));
     EasyMock.verify(uriInfo);
@@ -53,33 +53,20 @@ public class UriUtilsTest {
     props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
     KafkaRestConfig config = new KafkaRestConfig(props);
     EasyMock.expect(uriInfo.getAbsolutePath()).andStubReturn(URI.create("http://foo.com"));
-    EasyMock.expect(uriInfo.getBaseUri()).andReturn(URI.create("http://foo.com"));
+    EasyMock.expect(uriInfo.getBaseUri()).andStubReturn(URI.create("http://foo.com"));
     EasyMock.replay(uriInfo);
     assertEquals("http://bar.net", UriUtils.absoluteUri(config, uriInfo));
     EasyMock.verify(uriInfo);
   }
 
   @Test
-  public void testAbsoluteURIBuilderWithPort() {
+  public void testAbsoluteURIBuilderWithInvalidAdvertisedListeners() {
     Properties props = new Properties();
     props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
-    props.put(KafkaRestConfig.PORT_CONFIG, 5000);
-    KafkaRestConfig config = new KafkaRestConfig(props);
-    EasyMock.expect(uriInfo.getAbsolutePath()).andStubReturn(URI.create("http://foo.com:5000"));
-    EasyMock.expect(uriInfo.getBaseUri()).andReturn(URI.create("http://foo.com:5000"));
-    EasyMock.replay(uriInfo);
-    assertEquals("http://bar.net:5000", UriUtils.absoluteUri(config, uriInfo));
-    EasyMock.verify(uriInfo);
-  }
-
-  @Test
-  public void testAbsoluteURIBuilderWithInvalidListener() {
-    Properties props = new Properties();
-    props.put(KafkaRestConfig.HOST_NAME_CONFIG, "bar.net");
-    props.put(KafkaRestConfig.LISTENERS_CONFIG, "http:||0.0.0.0:9091");
+    props.put(KafkaRestConfig.ADVERTISED_LISTENERS_CONFIG, "http:||0.0.0.0:9091");
     KafkaRestConfig config = new KafkaRestConfig(props);
     EasyMock.expect(uriInfo.getAbsolutePath()).andStubReturn(URI.create("http://foo.com:9091"));
-    EasyMock.expect(uriInfo.getBaseUri()).andReturn(URI.create("http://foo.com:9091"));
+    EasyMock.expect(uriInfo.getBaseUri()).andStubReturn(URI.create("http://foo.com:9091"));
     EasyMock.replay(uriInfo);
 
     assertThrows(ConfigException.class, () -> UriUtils.absoluteUri(config, uriInfo));
@@ -92,7 +79,7 @@ public class UriUtilsTest {
     props.put(KafkaRestConfig.LISTENERS_CONFIG, "http://0.0.0.0:9091,https://0.0.0.0:9092");
     KafkaRestConfig config = new KafkaRestConfig(props);
     EasyMock.expect(uriInfo.getAbsolutePath()).andStubReturn(URI.create("http://foo.com:9091"));
-    EasyMock.expect(uriInfo.getBaseUri()).andReturn(URI.create("http://foo.com:9091"));
+    EasyMock.expect(uriInfo.getBaseUri()).andStubReturn(URI.create("http://foo.com:9091"));
     EasyMock.replay(uriInfo);
     assertEquals("http://bar.net:9091", UriUtils.absoluteUri(config, uriInfo));
     EasyMock.verify(uriInfo);
@@ -105,7 +92,7 @@ public class UriUtilsTest {
     props.put(KafkaRestConfig.LISTENERS_CONFIG, "http://0.0.0.0:9091,https://0.0.0.0:9092");
     KafkaRestConfig config = new KafkaRestConfig(props);
     EasyMock.expect(uriInfo.getAbsolutePath()).andStubReturn(URI.create("https://foo.com:9092"));
-    EasyMock.expect(uriInfo.getBaseUri()).andReturn(URI.create("https://foo.com:9092"));
+    EasyMock.expect(uriInfo.getBaseUri()).andStubReturn(URI.create("https://foo.com:9092"));
     EasyMock.replay(uriInfo);
     assertEquals("https://bar.net:9092", UriUtils.absoluteUri(config, uriInfo));
     EasyMock.verify(uriInfo);
@@ -118,7 +105,7 @@ public class UriUtilsTest {
     props.put(KafkaRestConfig.LISTENERS_CONFIG, "http://[fe80:0:1:2:3:4:5:6]:9092");
     KafkaRestConfig config = new KafkaRestConfig(props);
     EasyMock.expect(uriInfo.getAbsolutePath()).andStubReturn(URI.create("http://foo.com:9092"));
-    EasyMock.expect(uriInfo.getBaseUri()).andReturn(URI.create("http://foo.com:9092"));
+    EasyMock.expect(uriInfo.getBaseUri()).andStubReturn(URI.create("http://foo.com:9092"));
     EasyMock.replay(uriInfo);
     assertEquals("http://bar.net:9092", UriUtils.absoluteUri(config, uriInfo));
     EasyMock.verify(uriInfo);
@@ -131,7 +118,7 @@ public class UriUtilsTest {
     props.put(KafkaRestConfig.LISTENERS_CONFIG, "http://[fe80::1]:9092");
     KafkaRestConfig config = new KafkaRestConfig(props);
     EasyMock.expect(uriInfo.getAbsolutePath()).andStubReturn(URI.create("http://foo.com:9092"));
-    EasyMock.expect(uriInfo.getBaseUri()).andReturn(URI.create("http://foo.com:9092"));
+    EasyMock.expect(uriInfo.getBaseUri()).andStubReturn(URI.create("http://foo.com:9092"));
     EasyMock.replay(uriInfo);
     assertEquals("http://bar.net:9092", UriUtils.absoluteUri(config, uriInfo));
     EasyMock.verify(uriInfo);

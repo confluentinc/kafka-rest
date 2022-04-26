@@ -162,7 +162,7 @@ public class AvroConverterTest {
   @Test
   public void testArrayToJson() {
     GenericData.Array<String> data =
-        new GenericData.Array(arraySchema, Arrays.asList("one", "two", "three"));
+        new GenericData.Array<>(arraySchema, Arrays.asList("one", "two", "three"));
     AvroConverter.JsonNodeAndSize result = new AvroConverter().toJson(data);
     assertTrue(result.getSize() > 0);
 

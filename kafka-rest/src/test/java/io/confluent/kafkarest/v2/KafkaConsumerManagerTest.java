@@ -121,10 +121,10 @@ public class KafkaConsumerManagerTest {
     consumerManager.shutdown();
   }
 
-  private void expectCreate(MockConsumer consumer) {
+  private <K, V> void expectCreate(MockConsumer<K, V> consumer) {
     capturedConsumerConfig = Capture.newInstance();
     Properties props = EasyMock.capture(capturedConsumerConfig);
-    EasyMock.expect(consumerFactory.createConsumer(props)).andStubReturn(consumer);
+    EasyMock.expect(consumerFactory.<K, V>createConsumer(props)).andStubReturn(consumer);
     EasyMock.replay(consumerFactory);
   }
 
@@ -161,7 +161,8 @@ public class KafkaConsumerManagerTest {
   @Test
   public void testConsumerOverrides() {
     final Capture<Properties> consumerConfig = Capture.newInstance();
-    EasyMock.expect(consumerFactory.createConsumer(EasyMock.capture(consumerConfig)))
+    EasyMock.expect(
+            consumerFactory.<byte[], byte[]>createConsumer(EasyMock.capture(consumerConfig)))
         .andReturn(consumer);
 
     EasyMock.replay(consumerFactory);
@@ -521,7 +522,8 @@ public class KafkaConsumerManagerTest {
   @Test
   public void testConsumerExpirationIsUpdated() throws Exception {
     bootstrapConsumer(consumer);
-    KafkaConsumerState state = consumerManager.getConsumerInstance(groupName, consumer.cid());
+    KafkaConsumerState<?, ?, ?, ?> state =
+        consumerManager.getConsumerInstance(groupName, consumer.cid());
     Instant initialExpiration = state.expiration;
     consumerManager.readRecords(
         groupName,
@@ -577,11 +579,13 @@ public class KafkaConsumerManagerTest {
     props.setProperty(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG, "1");
     config = new KafkaRestConfig(props);
     consumerManager = new KafkaConsumerManager(config, consumerFactory);
-    MockConsumer consumer1 = new MockConsumer<>(OffsetResetStrategy.EARLIEST, "a");
-    MockConsumer consumer2 = new MockConsumer<>(OffsetResetStrategy.EARLIEST, "b");
-    MockConsumer consumer3 = new MockConsumer<>(OffsetResetStrategy.EARLIEST, "c");
+    MockConsumer<byte[], byte[]> consumer1 = new MockConsumer<>(OffsetResetStrategy.EARLIEST, "a");
+    MockConsumer<byte[], byte[]> consumer2 = new MockConsumer<>(OffsetResetStrategy.EARLIEST, "b");
+    MockConsumer<byte[], byte[]> consumer3 = new MockConsumer<>(OffsetResetStrategy.EARLIEST, "c");
     capturedConsumerConfig = Capture.newInstance();
-    EasyMock.expect(consumerFactory.createConsumer(EasyMock.capture(capturedConsumerConfig)))
+    EasyMock.expect(
+            consumerFactory.<byte[], byte[]>createConsumer(
+                EasyMock.capture(capturedConsumerConfig)))
         .andReturn(consumer1)
         .andReturn(consumer2)
         .andReturn(consumer3);
@@ -590,7 +594,7 @@ public class KafkaConsumerManagerTest {
     bootstrapConsumer(consumer2, false);
     bootstrapConsumer(consumer3, false);
 
-    ConsumerReadCallback callback =
+    ConsumerReadCallback<ByteString, ByteString> callback =
         new ConsumerReadCallback<ByteString, ByteString>() {
           @Override
           public void onCompletion(

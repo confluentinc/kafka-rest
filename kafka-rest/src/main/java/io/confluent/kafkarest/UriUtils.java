@@ -26,14 +26,9 @@ public class UriUtils {
 
   public static String absoluteUri(KafkaRestConfig config, UriInfo uriInfo, String... components) {
     List<URI> advertisedListeners;
-    List<URI> listeners;
     try {
       advertisedListeners =
           config.getList(KafkaRestConfig.ADVERTISED_LISTENERS_CONFIG).stream()
-              .map(URI::create)
-              .collect(Collectors.toList());
-      listeners =
-          config.getList(KafkaRestConfig.LISTENERS_CONFIG).stream()
               .map(URI::create)
               .collect(Collectors.toList());
     } catch (IllegalArgumentException e) {
@@ -41,11 +36,7 @@ public class UriUtils {
     }
 
     return new UrlFactoryImpl(
-            config.getString(KafkaRestConfig.HOST_NAME_CONFIG),
-            config.getInt(KafkaRestConfig.PORT_CONFIG),
-            advertisedListeners,
-            listeners,
-            uriInfo)
+            advertisedListeners, config.getString(KafkaRestConfig.HOST_NAME_CONFIG), uriInfo)
         .create(components);
   }
 }

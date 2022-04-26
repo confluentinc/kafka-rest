@@ -82,7 +82,7 @@ public class KafkaRestConfig extends RestConfig {
   // ensures poll is frequently needed and called
   public static final String MAX_POLL_RECORDS_VALUE = "30";
 
-  @Deprecated public static final String HOST_NAME_CONFIG = "host.name";
+  public static final String HOST_NAME_CONFIG = "host.name";
   private static final String HOST_NAME_DOC =
       "The host name used to generate absolute URLs in responses. If empty, the default canonical"
           + " hostname is used";
@@ -269,9 +269,7 @@ public class KafkaRestConfig extends RestConfig {
           + " Use 0 for no timeout";
   public static final String SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT = "1000";
 
-  // TODO: change this to "http://0.0.0.0:8082" when PORT_CONFIG is deleted.
-  private static final String KAFKAREST_LISTENERS_DEFAULT = "";
-  @Deprecated private static final int KAFKAREST_PORT_DEFAULT = 8082;
+  private static final String KAFKAREST_LISTENERS_DEFAULT = "http://0.0.0.0:8082";
 
   public static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka.rest";
 
@@ -461,7 +459,7 @@ public class KafkaRestConfig extends RestConfig {
 
   protected static ConfigDef baseKafkaRestConfigDef() {
     return baseConfigDef(
-            KAFKAREST_PORT_DEFAULT,
+            0 /* port */,
             KAFKAREST_LISTENERS_DEFAULT,
             String.join(",", Versions.PREFERRED_RESPONSE_TYPES),
             MediaType.APPLICATION_JSON,

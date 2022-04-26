@@ -39,10 +39,10 @@ import java.util.concurrent.ExecutionException;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.DescribeLogDirsResult;
+import org.apache.kafka.clients.admin.LogDirDescription;
+import org.apache.kafka.clients.admin.ReplicaInfo;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.requests.DescribeLogDirsResponse.LogDirInfo;
-import org.apache.kafka.common.requests.DescribeLogDirsResponse.ReplicaInfo;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
 import org.junit.jupiter.api.BeforeEach;
@@ -236,12 +236,12 @@ public class ReplicaManagerImplTest {
         .andReturn(completedFuture(Optional.of(BROKER_1)));
     expect(adminClient.describeLogDirs(eq(singletonList(BROKER_ID_1)), anyObject()))
         .andReturn(describeLogDirsResult);
-    expect(describeLogDirsResult.values())
+    expect(describeLogDirsResult.descriptions())
         .andReturn(
             singletonMap(
                 BROKER_ID_1,
                 KafkaFuture.completedFuture(
-                    singletonMap(TOPIC_NAME, new LogDirInfo(null, partitions)))));
+                    singletonMap(TOPIC_NAME, new LogDirDescription(null, partitions)))));
     expect(partitionManager.getPartition(CLUSTER_ID, TOPIC_NAME, PARTITION_ID_1))
         .andReturn(completedFuture(Optional.of(PARTITION_1)));
     expect(partitionManager.getPartition(CLUSTER_ID, TOPIC_NAME, PARTITION_ID_2))

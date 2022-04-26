@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.v2;
 
+import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
@@ -269,7 +270,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     if (consumer != null) {
       for (io.confluent.kafkarest.entities.v2.TopicPartition t : request.getPartitions()) {
         TopicPartition partition = new TopicPartition(t.getTopic(), t.getPartition());
-        OffsetAndMetadata offsetMetadata = consumer.committed(partition);
+        OffsetAndMetadata offsetMetadata = consumer.committed(singleton(partition)).get(partition);
         if (offsetMetadata != null) {
           offsets.add(
               new TopicPartitionOffsetMetadata(
@@ -357,12 +358,12 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     return consumerRecords.peek();
   }
 
-  synchronized boolean hasNext() {
+  synchronized boolean hasNext(Duration timeout) {
     if (hasNextCached()) {
       return true;
     }
     // If none are available, try checking for any records already fetched by the consumer.
-    getOrCreateConsumerRecords();
+    getOrCreateConsumerRecords(timeout);
 
     return hasNextCached();
   }
@@ -380,8 +381,8 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * the existing consumer records if the records have not been fully consumed by client yet. Must
    * be invoked with the lock held, i.e. after startRead().
    */
-  private synchronized void getOrCreateConsumerRecords() {
-    ConsumerRecords<KafkaKeyT, KafkaValueT> polledRecords = consumer.poll(0);
+  private synchronized void getOrCreateConsumerRecords(Duration timeout) {
+    ConsumerRecords<KafkaKeyT, KafkaValueT> polledRecords = consumer.poll(timeout);
     // drain the iterator and buffer to list
     for (ConsumerRecord<KafkaKeyT, KafkaValueT> consumerRecord : polledRecords) {
       consumerRecords.add(consumerRecord);

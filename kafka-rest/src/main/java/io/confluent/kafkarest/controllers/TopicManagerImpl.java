@@ -151,7 +151,7 @@ final class TopicManagerImpl implements TopicManager {
                     topicNames,
                     new DescribeTopicsOptions()
                         .includeAuthorizedOperations(includeAuthorizedOperations))
-                .all())
+                .allTopicNames())
         .thenApply(
             topics ->
                 topics.values().stream()

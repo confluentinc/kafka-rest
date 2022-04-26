@@ -37,7 +37,7 @@ public final class SchemaKafkaConsumerState
       KafkaRestConfig config,
       ConsumerInstanceConfig consumerInstanceConfig,
       ConsumerInstanceId instanceId,
-      Consumer consumer,
+      Consumer<Object, Object> consumer,
       SchemaConverter schemaConverter) {
     super(config, consumerInstanceConfig, instanceId, consumer);
     this.schemaConverter = schemaConverter;

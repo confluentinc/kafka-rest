@@ -97,8 +97,8 @@ public class TopicsResourceBinaryProduceTest
   private static final TopicPartition PARTITION = new TopicPartition(TOPIC_NAME, 0);
   private static final List<CompletableFuture<RecordMetadata>> PRODUCE_RESULTS =
       Arrays.asList(
-          CompletableFuture.completedFuture(new RecordMetadata(PARTITION, 0L, 0L, 0L, 0L, 1, 1)),
-          CompletableFuture.completedFuture(new RecordMetadata(PARTITION, 0L, 1L, 0L, 0L, 1, 1)));
+          CompletableFuture.completedFuture(new RecordMetadata(PARTITION, 0L, 0, 0L, 1, 1)),
+          CompletableFuture.completedFuture(new RecordMetadata(PARTITION, 0L, 1, 0L, 1, 1)));
   private static final List<PartitionOffset> OFFSETS =
       Arrays.asList(new PartitionOffset(0, 0L, null, null), new PartitionOffset(0, 1L, null, null));
   private static final List<ProduceRecord> PRODUCE_EXCEPTION_DATA =

@@ -94,8 +94,7 @@ public class KafkaConsumerManager {
   // KafkaConsumerState is generic, but we store them untyped here. This allows many operations to
   // work without having to know the types for the consumer, only requiring type information
   // during read operations.
-  private final Map<ConsumerInstanceId, KafkaConsumerState> consumers =
-      new HashMap<ConsumerInstanceId, KafkaConsumerState>();
+  private final Map<ConsumerInstanceId, KafkaConsumerState<?, ?, ?, ?>> consumers = new HashMap<>();
   // All kind of operations, like reading records, committing offsets and closing a consumer
   // are executed separately in dedicated threads via a cached thread pool.
   private final ExecutorService executor;
@@ -127,7 +126,7 @@ public class KafkaConsumerManager {
               @Override
               public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
                 if (r instanceof ReadFutureTask) {
-                  RunnableReadTask readTask = ((ReadFutureTask) r).readTask;
+                  RunnableReadTask readTask = ((ReadFutureTask<?>) r).readTask;
                   Duration retry = Duration.ofMillis(ThreadLocalRandom.current().nextInt(25, 76));
                   log.debug(
                       "The runnable {} was rejected execution because the thread pool is saturated."
@@ -192,10 +191,10 @@ public class KafkaConsumerManager {
 
       Properties props = getConsumerInstanceProperties(group, instanceConfig);
 
-      Consumer consumer;
+      Consumer<?, ?> consumer;
       try {
         if (consumerFactory == null) {
-          consumer = new KafkaConsumer(props);
+          consumer = new KafkaConsumer<>(props);
         } else {
           consumer = consumerFactory.createConsumer(props);
         }
@@ -203,7 +202,7 @@ public class KafkaConsumerManager {
         throw Errors.invalidConsumerConfigException(e.getMessage());
       }
 
-      KafkaConsumerState state = createConsumerState(instanceConfig, cid, consumer);
+      KafkaConsumerState<?, ?, ?, ?> state = createConsumerState(instanceConfig, cid, consumer);
       synchronized (this) {
         consumers.put(cid, state);
       }
@@ -292,23 +291,34 @@ public class KafkaConsumerManager {
     return props;
   }
 
-  private KafkaConsumerState createConsumerState(
-      ConsumerInstanceConfig instanceConfig, ConsumerInstanceId cid, Consumer consumer)
+  @SuppressWarnings("unchecked")
+  private KafkaConsumerState<?, ?, ?, ?> createConsumerState(
+      ConsumerInstanceConfig instanceConfig, ConsumerInstanceId cid, Consumer<?, ?> consumer)
       throws RestServerErrorException {
     switch (instanceConfig.getFormat()) {
       case BINARY:
-        return new BinaryKafkaConsumerState(config, instanceConfig, cid, consumer);
+        return new BinaryKafkaConsumerState(
+            config, instanceConfig, cid, (Consumer<byte[], byte[]>) consumer);
       case AVRO:
         return new SchemaKafkaConsumerState(
-            config, instanceConfig, cid, consumer, new AvroConverter());
+            config, instanceConfig, cid, (Consumer<Object, Object>) consumer, new AvroConverter());
       case JSON:
-        return new JsonKafkaConsumerState(config, instanceConfig, cid, consumer);
+        return new JsonKafkaConsumerState(
+            config, instanceConfig, cid, (Consumer<byte[], byte[]>) consumer);
       case JSONSCHEMA:
         return new SchemaKafkaConsumerState(
-            config, instanceConfig, cid, consumer, new JsonSchemaConverter());
+            config,
+            instanceConfig,
+            cid,
+            (Consumer<Object, Object>) consumer,
+            new JsonSchemaConverter());
       case PROTOBUF:
         return new SchemaKafkaConsumerState(
-            config, instanceConfig, cid, consumer, new ProtobufConverter());
+            config,
+            instanceConfig,
+            cid,
+            (Consumer<Object, Object>) consumer,
+            new ProtobufConverter());
       default:
         throw new RestServerErrorException(
             String.format(
@@ -328,7 +338,7 @@ public class KafkaConsumerManager {
       final Duration timeout,
       final long maxBytes,
       final ConsumerReadCallback<ClientKeyT, ClientValueT> callback) {
-    final KafkaConsumerState state;
+    final KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> state;
     try {
       state = getConsumerInstance(group, instance);
     } catch (RestNotFoundException e) {
@@ -341,9 +351,8 @@ public class KafkaConsumerManager {
       return;
     }
 
-    final KafkaConsumerReadTask<?, ?, ?, ?> task =
-        new KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>(
-            state, timeout, maxBytes, callback, config);
+    final KafkaConsumerReadTask<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> task =
+        new KafkaConsumerReadTask<>(state, timeout, maxBytes, callback, config);
     executor.submit(new RunnableReadTask(new ReadTaskState(task, state, callback), config));
   }
 
@@ -467,13 +476,13 @@ public class KafkaConsumerManager {
     public void onCompletion(List<TopicPartitionOffset> offsets, Exception e);
   }
 
-  public Future commitOffsets(
+  public Future<?> commitOffsets(
       String group,
       String instance,
       final String async,
       final ConsumerOffsetCommitRequest offsetCommitRequest,
       final CommitCallback callback) {
-    final KafkaConsumerState state;
+    final KafkaConsumerState<?, ?, ?, ?> state;
     try {
       state = getConsumerInstance(group, instance);
     } catch (RestNotFoundException e) {
@@ -507,7 +516,7 @@ public class KafkaConsumerManager {
       String group, String instance, ConsumerCommittedRequest request) {
     log.debug("Committed offsets for consumer " + instance + " in group " + group);
     ConsumerCommittedResponse response;
-    KafkaConsumerState state = getConsumerInstance(group, instance);
+    KafkaConsumerState<?, ?, ?, ?> state = getConsumerInstance(group, instance);
     if (state != null) {
       response = state.committed(request);
     } else {
@@ -568,13 +577,13 @@ public class KafkaConsumerManager {
 
   public void deleteConsumer(String group, String instance) {
     log.debug("Destroying consumer " + instance + " in group " + group);
-    final KafkaConsumerState state = getConsumerInstance(group, instance, true);
+    final KafkaConsumerState<?, ?, ?, ?> state = getConsumerInstance(group, instance, true);
     state.close();
   }
 
   public void subscribe(String group, String instance, ConsumerSubscriptionRecord subscription) {
     log.debug("Subscribing consumer " + instance + " in group " + group);
-    KafkaConsumerState state = getConsumerInstance(group, instance);
+    KafkaConsumerState<?, ?, ?, ?> state = getConsumerInstance(group, instance);
     if (state != null) {
       state.subscribe(subscription);
     }
@@ -582,7 +591,7 @@ public class KafkaConsumerManager {
 
   public void unsubscribe(String group, String instance) {
     log.debug("Unsubcribing consumer " + instance + " in group " + group);
-    KafkaConsumerState state = getConsumerInstance(group, instance);
+    KafkaConsumerState<?, ?, ?, ?> state = getConsumerInstance(group, instance);
     if (state != null) {
       state.unsubscribe();
     }
@@ -599,7 +608,7 @@ public class KafkaConsumerManager {
 
   public void seekToBeginning(String group, String instance, ConsumerSeekToRequest seekToRequest) {
     log.debug("seeking to beginning " + instance + " in group " + group);
-    KafkaConsumerState state = getConsumerInstance(group, instance);
+    KafkaConsumerState<?, ?, ?, ?> state = getConsumerInstance(group, instance);
     if (state != null) {
       state.seekToBeginning(seekToRequest);
     }
@@ -607,7 +616,7 @@ public class KafkaConsumerManager {
 
   public void seekToEnd(String group, String instance, ConsumerSeekToRequest seekToRequest) {
     log.debug("seeking to end " + instance + " in group " + group);
-    KafkaConsumerState state = getConsumerInstance(group, instance);
+    KafkaConsumerState<?, ?, ?, ?> state = getConsumerInstance(group, instance);
     if (state != null) {
       state.seekToEnd(seekToRequest);
     }
@@ -623,7 +632,7 @@ public class KafkaConsumerManager {
 
   public void assign(String group, String instance, ConsumerAssignmentRequest assignmentRequest) {
     log.debug("seeking to end " + instance + " in group " + group);
-    KafkaConsumerState state = getConsumerInstance(group, instance);
+    KafkaConsumerState<?, ?, ?, ?> state = getConsumerInstance(group, instance);
     if (state != null) {
       state.assign(assignmentRequest);
     }
@@ -632,7 +641,7 @@ public class KafkaConsumerManager {
   public ConsumerAssignmentResponse assignment(String group, String instance) {
     log.debug("getting assignment for  " + instance + " in group " + group);
     Vector<io.confluent.kafkarest.entities.v2.TopicPartition> partitions = new Vector<>();
-    KafkaConsumerState state = getConsumerInstance(group, instance);
+    KafkaConsumerState<?, ?, ?, ?> state = getConsumerInstance(group, instance);
     if (state != null) {
       java.util.Set<TopicPartition> topicPartitions = state.assignment();
       for (TopicPartition t : topicPartitions) {
@@ -652,7 +661,8 @@ public class KafkaConsumerManager {
     expirationThread.shutdown();
     readTaskSchedulerThread.shutdown();
     synchronized (this) {
-      for (Map.Entry<ConsumerInstanceId, KafkaConsumerState> entry : consumers.entrySet()) {
+      for (Map.Entry<ConsumerInstanceId, KafkaConsumerState<?, ?, ?, ?>> entry :
+          consumers.entrySet()) {
         entry.getValue().close();
       }
       consumers.clear();
@@ -664,38 +674,49 @@ public class KafkaConsumerManager {
    * Gets the specified consumer instance or throws a not found exception. Also removes the
    * consumer's expiration timeout so it is not cleaned up mid-operation.
    */
-  private synchronized KafkaConsumerState<?, ?, ?, ?> getConsumerInstance(
-      String group, String instance, boolean toRemove) {
+  private synchronized <KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
+      KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> getConsumerInstance(
+          String group, String instance, boolean toRemove) {
     ConsumerInstanceId id = new ConsumerInstanceId(group, instance);
-    final KafkaConsumerState state = toRemove ? consumers.remove(id) : consumers.get(id);
+    @SuppressWarnings("unchecked")
+    final KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> state =
+        (KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>) consumers.get(id);
     if (state == null) {
       throw Errors.consumerInstanceNotFoundException();
+    }
+    if (toRemove) {
+      consumers.remove(id);
     }
     state.updateExpiration();
     return state;
   }
 
-  KafkaConsumerState<?, ?, ?, ?> getConsumerInstance(String group, String instance) {
+  <KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
+      KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> getConsumerInstance(
+          String group, String instance) {
     return getConsumerInstance(group, instance, false);
   }
 
-  private KafkaConsumerState<?, ?, ?, ?> getConsumerInstance(
-      ConsumerInstanceId consumerInstanceId) {
+  private <KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT>
+      KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> getConsumerInstance(
+          ConsumerInstanceId consumerInstanceId) {
     return getConsumerInstance(consumerInstanceId.getGroup(), consumerInstanceId.getInstance());
   }
 
   public interface KafkaConsumerFactory {
 
-    Consumer createConsumer(Properties props);
+    <K, V> Consumer<K, V> createConsumer(Properties props);
   }
 
   private static class ReadTaskState {
-    final KafkaConsumerReadTask task;
-    final KafkaConsumerState consumerState;
-    final ConsumerReadCallback callback;
+    final KafkaConsumerReadTask<?, ?, ?, ?> task;
+    final KafkaConsumerState<?, ?, ?, ?> consumerState;
+    final ConsumerReadCallback<?, ?> callback;
 
     public ReadTaskState(
-        KafkaConsumerReadTask task, KafkaConsumerState state, ConsumerReadCallback callback) {
+        KafkaConsumerReadTask<?, ?, ?, ?> task,
+        KafkaConsumerState<?, ?, ?, ?> state,
+        ConsumerReadCallback<?, ?> callback) {
 
       this.task = task;
       this.consumerState = state;
@@ -755,9 +776,9 @@ public class KafkaConsumerManager {
         while (isRunning.get()) {
           synchronized (KafkaConsumerManager.this) {
             Instant now = clock.instant();
-            Iterator itr = consumers.values().iterator();
+            Iterator<KafkaConsumerState<?, ?, ?, ?>> itr = consumers.values().iterator();
             while (itr.hasNext()) {
-              final KafkaConsumerState state = (KafkaConsumerState) itr.next();
+              final KafkaConsumerState<?, ?, ?, ?> state = itr.next();
               if (state != null && state.expired(now)) {
                 log.debug("Removing the expired consumer {}", state.getId());
                 itr.remove();

@@ -21,7 +21,7 @@ import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
+import io.confluent.kafka.schemaregistry.CompatibilityLevel;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
@@ -29,6 +29,7 @@ import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.common.CompletableFutures;
+import io.confluent.rest.RestConfig;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -71,6 +72,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.ConfigResource;
+import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.eclipse.jetty.server.Server;
@@ -80,7 +82,7 @@ import org.junit.jupiter.api.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
-import scala.collection.JavaConverters;
+import scala.jdk.javaapi.CollectionConverters;
 
 /**
  * Test harness to run against a real, local Kafka cluster and REST proxy. This is essentially
@@ -133,7 +135,7 @@ public abstract class ClusterTestHarness {
   protected String plaintextBrokerList = null;
 
   // Schema registry config
-  protected String schemaRegCompatibility = AvroCompatibilityLevel.NONE.name;
+  protected String schemaRegCompatibility = CompatibilityLevel.NONE.name;
   protected Properties schemaRegProperties = null;
   protected String schemaRegConnect = null;
   protected SchemaRegistryRestApplication schemaRegApp = null;
@@ -176,29 +178,29 @@ public abstract class ClusterTestHarness {
     startBrokersConcurrently(numBrokers);
 
     brokerList =
-        TestUtils.getBrokerListStrFromServers(
-            JavaConverters.asScalaBuffer(servers), getBrokerSecurityProtocol());
+        TestUtils.bootstrapServers(
+            CollectionConverters.asScala(servers),
+            ListenerName.forSecurityProtocol(getBrokerSecurityProtocol()));
     plaintextBrokerList =
-        TestUtils.getBrokerListStrFromServers(
-            JavaConverters.asScalaBuffer(servers), SecurityProtocol.PLAINTEXT);
+        TestUtils.plaintextBootstrapServers(CollectionConverters.asScala(servers));
 
     setupAcls();
     if (withSchemaRegistry) {
       int schemaRegPort = choosePort();
-      schemaRegProperties.put(
-          SchemaRegistryConfig.PORT_CONFIG, ((Integer) schemaRegPort).toString());
-      schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG, zkConnect);
+      schemaRegConnect = String.format("http://localhost:%d", schemaRegPort);
+      schemaRegProperties.put(RestConfig.LISTENERS_CONFIG, schemaRegConnect);
       schemaRegProperties.put(
           SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG,
           SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC);
-      schemaRegProperties.put(SchemaRegistryConfig.COMPATIBILITY_CONFIG, schemaRegCompatibility);
+      schemaRegProperties.put(
+          SchemaRegistryConfig.SCHEMA_COMPATIBILITY_CONFIG, schemaRegCompatibility);
       String broker =
           SecurityProtocol.PLAINTEXT.name
               + "://"
-              + TestUtils.getBrokerListStrFromServers(
-                  JavaConverters.asScalaBuffer(servers), SecurityProtocol.PLAINTEXT);
+              + TestUtils.bootstrapServers(
+                  CollectionConverters.asScala(servers),
+                  ListenerName.forSecurityProtocol(SecurityProtocol.PLAINTEXT));
       schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, broker);
-      schemaRegConnect = String.format("http://localhost:%d", schemaRegPort);
 
       schemaRegProperties = overrideSchemaRegistryProps(schemaRegProperties);
 
@@ -209,7 +211,7 @@ public abstract class ClusterTestHarness {
     }
 
     int restPort = choosePort();
-    restProperties.put(KafkaRestConfig.PORT_CONFIG, ((Integer) restPort).toString());
+    restProperties.put(RestConfig.LISTENERS_CONFIG, "http://0.0.0.0:" + restPort);
     restProperties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     overrideKafkaRestConfigs(restProperties);
     if (withSchemaRegistry) {

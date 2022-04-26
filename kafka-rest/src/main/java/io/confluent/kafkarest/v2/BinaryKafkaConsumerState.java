@@ -34,7 +34,7 @@ public class BinaryKafkaConsumerState
       KafkaRestConfig config,
       ConsumerInstanceConfig consumerInstanceConfig,
       ConsumerInstanceId instanceId,
-      Consumer consumer) {
+      Consumer<byte[], byte[]> consumer) {
     super(config, consumerInstanceConfig, instanceId, consumer);
   }
 

@@ -67,30 +67,31 @@ public class LoadTest {
   private Random random = new Random();
 
   class ConsumerTestRun {
-    private final MockConsumer consumer;
+    private final MockConsumer<byte[], byte[]> consumer;
     private final Time time;
     private ReentrantLock lock = new ReentrantLock();
     private Condition cond = lock.newCondition();
     private volatile boolean sawCallback = false;
-    private volatile List<ConsumerRecord<byte[], byte[]>> actualRecords = null;
+    private volatile List<ConsumerRecord<ByteString, ByteString>> actualRecords = null;
     private volatile Exception actualException;
-    private ConsumerReadCallback callback;
+    private ConsumerReadCallback<ByteString, ByteString> callback;
     private int latestOffset = 0;
     private long readStartMs;
 
-    ConsumerTestRun(MockConsumer consumer) {
+    ConsumerTestRun(MockConsumer<byte[], byte[]> consumer) {
       this(consumer, new SystemTime());
     }
 
-    ConsumerTestRun(MockConsumer consumer, Time time) {
+    ConsumerTestRun(MockConsumer<byte[], byte[]> consumer, Time time) {
       this.consumer = consumer;
       this.time = time;
       this.readStartMs = Integer.MAX_VALUE;
       sawCallback = false;
       callback =
-          new ConsumerReadCallback<byte[], byte[]>() {
+          new ConsumerReadCallback<ByteString, ByteString>() {
             @Override
-            public void onCompletion(List<ConsumerRecord<byte[], byte[]>> records, Exception e) {
+            public void onCompletion(
+                List<ConsumerRecord<ByteString, ByteString>> records, Exception e) {
               lock.lock();
               try {
                 sawCallback = true;
@@ -212,7 +213,8 @@ public class LoadTest {
     }
     capturedConsumerConfig = Capture.newInstance();
     Properties properties = EasyMock.capture(capturedConsumerConfig);
-    IExpectationSetters<Consumer> a = EasyMock.expect(consumerFactory.createConsumer(properties));
+    IExpectationSetters<Consumer<byte[], byte[]>> a =
+        EasyMock.expect(consumerFactory.createConsumer(properties));
     Method andReturnInstance = a.getClass().getMethod("andReturn", Object.class);
     for (ConsumerTestRun run : consumers) {
       andReturnInstance.invoke(a, run.consumer);
