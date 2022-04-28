@@ -124,7 +124,7 @@ public class StreamingResponseTest {
             .setTopicName("topicName")
             .setPartitionId(1)
             .setOffset(1L)
-            .setErrorCode(HttpStatus.ACCEPTED_202)
+            .setErrorCode(HttpStatus.OK_200)
             .build();
     ResultOrError resultOrError = ResultOrError.result(produceResponse);
 
