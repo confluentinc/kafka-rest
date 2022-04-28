@@ -12,9 +12,11 @@ Installation
 ------------
 
 You can download prebuilt versions of the Kafka REST Proxy as part of the
-[Confluent Platform](http://confluent.io/downloads/). 
+[Confluent Platform](http://confluent.io/downloads/).
 
-You can read our full [installation instructions](http://docs.confluent.io/current/installation.html#installation) and the complete  [documentation](http://docs.confluent.io/current/kafka-rest/docs/)
+You can read our
+full [installation instructions](http://docs.confluent.io/current/installation.html#installation)
+and the complete  [documentation](http://docs.confluent.io/current/kafka-rest/docs/)
 
 
 To install from source, follow the instructions in the Development section below.
