@@ -26,6 +26,7 @@ import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.mock.MockTime;
 import io.confluent.rest.RestConfig;
 import java.lang.management.ManagementFactory;
+import java.time.Duration;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -84,7 +85,7 @@ public class ProducerMetricsTest {
     IntStream.range(0, 10)
         .forEach(
             n -> {
-              producerMetrics.recordRequestLatency(n);
+              producerMetrics.recordRequestLatency(Duration.ofMillis(n));
             });
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
@@ -109,6 +110,7 @@ public class ProducerMetricsTest {
         .forEach(
             n -> {
               producerMetrics.recordError();
+              producerMetrics.recordRateLimited();
               producerMetrics.recordRequest();
               producerMetrics.recordResponse();
             });
@@ -130,7 +132,9 @@ public class ProducerMetricsTest {
   public void testMaxMetrics() throws Exception {
     String[] maxMetrics = new String[] {ProducerMetrics.REQUEST_LATENCY_MAX_METRIC_NAME};
 
-    IntStream.range(0, 10).forEach(producerMetrics::recordRequestLatency);
+    IntStream.range(0, 10)
+        .mapToObj(Duration::ofMillis)
+        .forEach(producerMetrics::recordRequestLatency);
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
@@ -150,7 +154,9 @@ public class ProducerMetricsTest {
           ProducerMetrics.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p999",
         };
 
-    IntStream.range(0, 1000).forEach(producerMetrics::recordRequestLatency);
+    IntStream.range(0, 1000)
+        .mapToObj(Duration::ofMillis)
+        .forEach(producerMetrics::recordRequestLatency);
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
@@ -175,6 +181,7 @@ public class ProducerMetricsTest {
             n -> {
               producerMetrics.recordRequest();
               producerMetrics.recordError();
+              producerMetrics.recordRateLimited();
               producerMetrics.recordResponse();
             });
 

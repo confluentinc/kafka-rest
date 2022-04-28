@@ -134,10 +134,12 @@ public final class ProduceAction {
       ProduceRequest request,
       ProduceController controller,
       ProducerMetrics metrics) {
+    Instant requestStart = Instant.now();
 
     try {
       produceRateLimiters.rateLimit(clusterId, request.getOriginalSize());
     } catch (RateLimitExceededException e) {
+      recordRateLimitedMetrics(metrics, Duration.between(requestStart, Instant.now()));
       // KREST-4356 Use our own CompletionException that will avoid the costly stack trace fill.
       throw new StacklessCompletionException(e);
     }
@@ -179,7 +181,7 @@ public final class ProduceAction {
         .handleAsync(
             (result, error) -> {
               if (error != null) {
-                long latency = Duration.between(requestInstant, Instant.now()).toMillis();
+                Duration latency = Duration.between(requestStart, Instant.now());
                 recordErrorMetrics(metrics, latency);
                 throw new StacklessCompletionException(error);
               }
@@ -191,8 +193,7 @@ public final class ProduceAction {
               ProduceResponse response =
                   toProduceResponse(
                       clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
-              long latency =
-                  Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
+              Duration latency = Duration.between(requestStart, result.getCompletionTimestamp());
               recordResponseMetrics(metrics, latency);
               return response;
             },
@@ -279,13 +280,18 @@ public final class ProduceAction {
         .build();
   }
 
-  private void recordResponseMetrics(ProducerMetrics metrics, long latency) {
+  private void recordResponseMetrics(ProducerMetrics metrics, Duration latency) {
     metrics.recordResponse();
     metrics.recordRequestLatency(latency);
   }
 
-  private void recordErrorMetrics(ProducerMetrics metrics, long latency) {
+  private void recordErrorMetrics(ProducerMetrics metrics, Duration latency) {
     metrics.recordError();
+    metrics.recordRequestLatency(latency);
+  }
+
+  private void recordRateLimitedMetrics(ProducerMetrics metrics, Duration latency) {
+    metrics.recordRateLimited();
     metrics.recordRequestLatency(latency);
   }
 
