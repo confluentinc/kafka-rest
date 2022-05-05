@@ -833,7 +833,7 @@ public class ProduceActionTest {
             schemaManagerProvider,
             recordSerializerProvider,
             produceControllerProvider,
-            () -> new ProducerMetrics(new KafkaRestConfig(), Time.SYSTEM),
+            new ProducerMetricsImpl(new KafkaRestConfig(), Time.SYSTEM),
             streamingResponseFactory,
             produceRateLimiters,
             executorService);

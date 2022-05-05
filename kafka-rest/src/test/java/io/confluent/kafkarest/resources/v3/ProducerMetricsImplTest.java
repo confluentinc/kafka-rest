@@ -29,7 +29,7 @@ import javax.management.ObjectName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class ProducerMetricsTest {
+public class ProducerMetricsImplTest {
   private static final String METRICS_SEARCH_STRING = "kafka.rest:type=produce-api-metrics,*";
 
   private ProducerMetrics metrics;
@@ -38,15 +38,15 @@ public class ProducerMetricsTest {
   public void setUp() {
     Properties properties = new Properties();
     properties.setProperty(RestConfig.METRICS_JMX_PREFIX_CONFIG, "kafka.rest");
-    metrics = new ProducerMetrics(new KafkaRestConfig(properties), new MockTime());
+    metrics = new ProducerMetricsImpl(new KafkaRestConfig(properties), new MockTime());
   }
 
   @Test
   public void testAvgMetrics() throws Exception {
     String[] avgMetrics =
         new String[] {
-          ProducerMetrics.REQUEST_SIZE_AVG_METRIC_NAME,
-          ProducerMetrics.REQUEST_LATENCY_AVG_METRIC_NAME
+          AbstractProducerMetrics.REQUEST_SIZE_AVG_METRIC_NAME,
+          AbstractProducerMetrics.REQUEST_LATENCY_AVG_METRIC_NAME
         };
 
     IntStream.range(0, 10)
@@ -69,9 +69,9 @@ public class ProducerMetricsTest {
   public void testRateMetrics() throws Exception {
     String[] rateMetrics =
         new String[] {
-          ProducerMetrics.RECORD_ERROR_RATE_METRIC_NAME,
-          ProducerMetrics.REQUEST_RATE_METRIC_NAME,
-          ProducerMetrics.RESPONSE_RATE_METRIC_NAME
+          AbstractProducerMetrics.RECORD_ERROR_RATE_METRIC_NAME,
+          AbstractProducerMetrics.REQUEST_RATE_METRIC_NAME,
+          AbstractProducerMetrics.RESPONSE_RATE_METRIC_NAME
         };
 
     IntStream.range(0, 90)
@@ -94,7 +94,7 @@ public class ProducerMetricsTest {
 
   @Test
   public void testMaxMetrics() throws Exception {
-    String[] maxMetrics = new String[] {ProducerMetrics.REQUEST_LATENCY_MAX_METRIC_NAME};
+    String[] maxMetrics = new String[] {AbstractProducerMetrics.REQUEST_LATENCY_MAX_METRIC_NAME};
 
     IntStream.range(0, 10).forEach(metrics::recordRequestLatency);
 
@@ -111,9 +111,9 @@ public class ProducerMetricsTest {
   public void testPercentileMetrics() throws Exception {
     String[] percentileMetrics =
         new String[] {
-          ProducerMetrics.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p95",
-          ProducerMetrics.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p99",
-          ProducerMetrics.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p999",
+          AbstractProducerMetrics.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p95",
+          AbstractProducerMetrics.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p99",
+          AbstractProducerMetrics.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p999",
         };
 
     IntStream.range(0, 1000).forEach(metrics::recordRequestLatency);
@@ -131,9 +131,9 @@ public class ProducerMetricsTest {
   public void testWindowedCountMetrics() throws Exception {
     String[] maxMetrics =
         new String[] {
-          ProducerMetrics.REQUEST_COUNT_WINDOWED_METRIC_NAME,
-          ProducerMetrics.RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME,
-          ProducerMetrics.RESPONSE_COUNT_WINDOWED_METRIC_NAME
+          AbstractProducerMetrics.REQUEST_COUNT_WINDOWED_METRIC_NAME,
+          AbstractProducerMetrics.RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME,
+          AbstractProducerMetrics.RESPONSE_COUNT_WINDOWED_METRIC_NAME
         };
 
     IntStream.range(0, 10)
@@ -154,8 +154,14 @@ public class ProducerMetricsTest {
   }
 
   @Test
+<<<<<<< HEAD:kafka-rest/src/test/java/io/confluent/kafkarest/resources/v3/ProducerMetricsTest.java
   public void testCumulativeSumMetrics() throws Exception {
     String[] maxMetrics = new String[] {ProducerMetrics.REQUEST_SIZE_CUMULATIVE_SUM_METRIC_NAME};
+=======
+  public void testWindowedSumMetrics() throws Exception {
+    String[] maxMetrics =
+        new String[] {AbstractProducerMetrics.REQUEST_SIZE_WINDOWED_SUM_METRIC_NAME};
+>>>>>>> c72fe1ea (KREST-5732 Refactor to allow us to override producer metrics in ce-kafka-rest):kafka-rest/src/test/java/io/confluent/kafkarest/resources/v3/ProducerMetricsImplTest.java
 
     IntStream.range(0, 10)
         .forEach(

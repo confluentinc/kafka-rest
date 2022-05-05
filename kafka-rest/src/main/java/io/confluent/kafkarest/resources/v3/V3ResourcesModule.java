@@ -104,7 +104,7 @@ public final class V3ResourcesModule extends AbstractBinder {
 
     @Override
     public ProducerMetrics provide() {
-      return new ProducerMetrics(config.get(), Time.SYSTEM);
+      return new ProducerMetricsImpl(config.get(), Time.SYSTEM);
     }
 
     @Override

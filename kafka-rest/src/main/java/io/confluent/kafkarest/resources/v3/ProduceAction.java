@@ -84,7 +84,7 @@ public final class ProduceAction {
   private final Provider<SchemaManager> schemaManagerProvider;
   private final Provider<RecordSerializer> recordSerializerProvider;
   private final Provider<ProduceController> produceControllerProvider;
-  private final Provider<ProducerMetrics> producerMetrics;
+  private final ProducerMetrics producerMetrics;
   private final StreamingResponseFactory streamingResponseFactory;
   private final ProduceRateLimiters produceRateLimiters;
   private final ExecutorService executorService;
@@ -94,7 +94,7 @@ public final class ProduceAction {
       Provider<SchemaManager> schemaManagerProvider,
       Provider<RecordSerializer> recordSerializer,
       Provider<ProduceController> produceControllerProvider,
-      Provider<ProducerMetrics> producerMetrics,
+      ProducerMetrics producerMetrics,
       StreamingResponseFactory streamingResponseFactory,
       ProduceRateLimiters produceRateLimiters,
       @ProduceResponseThreadPool ExecutorService executorService) {
@@ -278,18 +278,18 @@ public final class ProduceAction {
   }
 
   private void recordResponseMetrics(long latency) {
-    producerMetrics.get().recordResponse();
-    producerMetrics.get().recordRequestLatency(latency);
+    producerMetrics.recordResponse();
+    producerMetrics.recordRequestLatency(latency);
   }
 
   private void recordErrorMetrics(long latency) {
-    producerMetrics.get().recordError();
-    producerMetrics.get().recordRequestLatency(latency);
+    producerMetrics.recordError();
+    producerMetrics.recordRequestLatency(latency);
   }
 
   private void recordRequestMetrics(long size) {
-    producerMetrics.get().recordRequest();
+    producerMetrics.recordRequest();
     // record request size
-    producerMetrics.get().recordRequestSize(size);
+    producerMetrics.recordRequestSize(size);
   }
 }
