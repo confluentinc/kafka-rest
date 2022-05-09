@@ -140,6 +140,8 @@ public final class ProduceAction {
       throw new StacklessCompletionException(e);
     }
 
+    // Request metrics are recorded before we check the validity of the message body, but after
+    // rate limiting, as these metrics are used for billing.
     recordRequestMetrics(request.getOriginalSize());
 
     Instant requestInstant = Instant.now();

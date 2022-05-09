@@ -70,7 +70,7 @@ final class ProducerMetrics {
 
   static final String REQUEST_SIZE_WINDOWED_SUM_METRIC_NAME = "request-size-windowed-sum";
   private static final String REQUEST_SIZE_WINDOWED_SUM_METRIC_DOC =
-      "The windowed sum of request sizes in bytes.";
+      "The summed size in bytes of requests sent within the given window";
 
   static final String REQUEST_COUNT_WINDOWED_METRIC_NAME = "request-count-windowed";
   private static final String REQUEST_COUNT_WINDOWED_METRIC_DOC =
