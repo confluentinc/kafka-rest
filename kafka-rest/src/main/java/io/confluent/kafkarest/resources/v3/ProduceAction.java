@@ -140,6 +140,10 @@ public final class ProduceAction {
       throw new StacklessCompletionException(e);
     }
 
+    // Request metrics are recorded before we check the validity of the message body, but after
+    // rate limiting, as these metrics are used for billing.
+    recordRequestMetrics(request.getOriginalSize());
+
     Instant requestInstant = Instant.now();
     Optional<RegisteredSchema> keySchema =
         request.getKey().flatMap(key -> getSchema(topicName, /* isKey= */ true, key));
@@ -158,8 +162,6 @@ public final class ProduceAction {
             .orElse(request.getValue().flatMap(ProduceRequestData::getFormat));
     Optional<ByteString> serializedValue =
         serialize(topicName, valueFormat, valueSchema, request.getValue(), /* isKey= */ false);
-
-    recordRequestMetrics(request.getOriginalSize());
 
     CompletableFuture<ProduceResult> produceResult =
         controller.produce(

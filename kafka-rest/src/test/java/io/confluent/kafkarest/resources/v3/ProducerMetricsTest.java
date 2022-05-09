@@ -152,4 +152,23 @@ public class ProducerMetricsTest {
       assertEquals(10.0, mBeanServer.getAttribute(beanNames.iterator().next(), metric));
     }
   }
+
+  @Test
+  public void testWindowedSumMetrics() throws Exception {
+    String[] maxMetrics = new String[] {ProducerMetrics.REQUEST_SIZE_WINDOWED_SUM_METRIC_NAME};
+
+    IntStream.range(0, 10)
+        .forEach(
+            n -> {
+              metrics.recordRequestSize(123);
+            });
+
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
+    assertEquals(1, beanNames.size());
+
+    for (String metric : maxMetrics) {
+      assertEquals(1230.0, mBeanServer.getAttribute(beanNames.iterator().next(), metric));
+    }
+  }
 }
