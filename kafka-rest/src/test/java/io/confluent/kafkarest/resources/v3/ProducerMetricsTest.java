@@ -154,8 +154,8 @@ public class ProducerMetricsTest {
   }
 
   @Test
-  public void testWindowedSumMetrics() throws Exception {
-    String[] maxMetrics = new String[] {ProducerMetrics.REQUEST_SIZE_WINDOWED_SUM_METRIC_NAME};
+  public void testCumulativeSumMetrics() throws Exception {
+    String[] maxMetrics = new String[] {ProducerMetrics.REQUEST_SIZE_CUMULATIVE_SUM_METRIC_NAME};
 
     IntStream.range(0, 10)
         .forEach(

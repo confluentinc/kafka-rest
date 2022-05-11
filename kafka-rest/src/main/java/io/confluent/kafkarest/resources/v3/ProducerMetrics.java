@@ -30,12 +30,12 @@ import org.apache.kafka.common.metrics.MetricConfig;
 import org.apache.kafka.common.metrics.Metrics;
 import org.apache.kafka.common.metrics.Sensor;
 import org.apache.kafka.common.metrics.stats.Avg;
+import org.apache.kafka.common.metrics.stats.CumulativeSum;
 import org.apache.kafka.common.metrics.stats.Max;
 import org.apache.kafka.common.metrics.stats.Percentile;
 import org.apache.kafka.common.metrics.stats.Percentiles;
 import org.apache.kafka.common.metrics.stats.Rate;
 import org.apache.kafka.common.metrics.stats.WindowedCount;
-import org.apache.kafka.common.metrics.stats.WindowedSum;
 import org.apache.kafka.common.utils.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,9 +68,9 @@ final class ProducerMetrics {
   static final String REQUEST_SIZE_AVG_METRIC_NAME = "request-size-avg";
   private static final String REQUEST_SIZE_AVG_METRIC_DOC = "The average request size in bytes.";
 
-  static final String REQUEST_SIZE_WINDOWED_SUM_METRIC_NAME = "request-size-windowed-sum";
-  private static final String REQUEST_SIZE_WINDOWED_SUM_METRIC_DOC =
-      "The summed size in bytes of requests sent within the given window";
+  static final String REQUEST_SIZE_CUMULATIVE_SUM_METRIC_NAME = "request-bytes";
+  private static final String REQUEST_SIZE_CUMULATIVE_SUM_METRIC_DOC =
+      "The cumulative summed size in bytes of requests sent.";
 
   static final String REQUEST_COUNT_WINDOWED_METRIC_NAME = "request-count-windowed";
   private static final String REQUEST_COUNT_WINDOWED_METRIC_DOC =
@@ -160,10 +160,10 @@ final class ProducerMetrics {
   private void setupRequestSizeSensor() {
     Sensor requestSizeSensor = createSensor(REQUEST_SIZE_SENSOR_NAME);
     addAvg(requestSizeSensor, REQUEST_SIZE_AVG_METRIC_NAME, REQUEST_SIZE_AVG_METRIC_DOC);
-    addWindowedSum(
+    addCumulativeSum(
         requestSizeSensor,
-        REQUEST_SIZE_WINDOWED_SUM_METRIC_NAME,
-        REQUEST_SIZE_WINDOWED_SUM_METRIC_DOC);
+        REQUEST_SIZE_CUMULATIVE_SUM_METRIC_NAME,
+        REQUEST_SIZE_CUMULATIVE_SUM_METRIC_DOC);
   }
 
   private void setupResponseSensor() {
@@ -216,8 +216,8 @@ final class ProducerMetrics {
     sensor.add(getMetricName(name, doc), new WindowedCount());
   }
 
-  private void addWindowedSum(Sensor sensor, String name, String doc) {
-    sensor.add(getMetricName(name, doc), new WindowedSum());
+  private void addCumulativeSum(Sensor sensor, String name, String doc) {
+    sensor.add(getMetricName(name, doc), new CumulativeSum());
   }
 
   private void addPercentiles(
