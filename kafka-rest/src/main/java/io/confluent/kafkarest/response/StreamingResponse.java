@@ -20,7 +20,6 @@ import static java.util.Objects.requireNonNull;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
 import com.fasterxml.jackson.jaxrs.base.JsonMappingExceptionMapper;
 import com.fasterxml.jackson.jaxrs.base.JsonParseExceptionMapper;
@@ -106,7 +105,7 @@ public abstract class StreamingResponse<T> {
   }
 
   public static <T> StreamingResponse<T> from(
-      MappingIterator<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
+      JsonStream<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
     return new InputStreamingResponse<>(mappingIteratorInput, chunkedOutputFactory);
   }
 
@@ -157,10 +156,10 @@ public abstract class StreamingResponse<T> {
 
   private static class InputStreamingResponse<T> extends StreamingResponse<T> {
 
-    private final MappingIterator<T> mappingIteratorInput;
+    private final JsonStream<T> mappingIteratorInput;
 
     private InputStreamingResponse(
-        MappingIterator<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
+        JsonStream<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
       super(chunkedOutputFactory);
       this.mappingIteratorInput = requireNonNull(mappingIteratorInput);
     }

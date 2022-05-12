@@ -17,7 +17,6 @@ package io.confluent.kafkarest.response;
 
 import static java.util.Objects.requireNonNull;
 
-import com.fasterxml.jackson.databind.MappingIterator;
 import javax.inject.Inject;
 
 public final class StreamingResponseFactory {
@@ -29,7 +28,7 @@ public final class StreamingResponseFactory {
     this.chunkedOutputFactory = requireNonNull(chunkedOutputFactory);
   }
 
-  public <T> StreamingResponse<T> from(MappingIterator<T> input) {
+  public <T> StreamingResponse<T> from(JsonStream<T> input) {
     return StreamingResponse.from(input, chunkedOutputFactory);
   }
 }

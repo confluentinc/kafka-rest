@@ -33,8 +33,8 @@ env_dir=$(dirname "$0")
 base_dir=$env_dir/../../..
 
 # Login to nightly docker repository.
-aws ecr get-login-password --region us-west-2 \
- | docker login --username AWS --password-stdin 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/
+#aws ecr get-login-password --region us-west-2 \
+# | docker login --username AWS --password-stdin 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/
 
 # Download latest cp-zookeeper image.
 docker pull 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-zookeeper:master-latest
