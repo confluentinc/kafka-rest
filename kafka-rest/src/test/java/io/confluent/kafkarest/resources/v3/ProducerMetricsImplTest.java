@@ -17,6 +17,7 @@ package io.confluent.kafkarest.resources.v3;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.mock.MockTime;
 import io.confluent.rest.RestConfig;
@@ -24,29 +25,36 @@ import java.lang.management.ManagementFactory;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.IntStream;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class ProducerMetricsImplTest {
+
   private static final String METRICS_SEARCH_STRING = "kafka.rest:type=produce-api-metrics,*";
 
   private ProducerMetrics metrics;
 
   @BeforeEach
-  public void setUp() {
+  public void setUp()
+      throws MalformedObjectNameException, InstanceNotFoundException, MBeanRegistrationException {
     Properties properties = new Properties();
     properties.setProperty(RestConfig.METRICS_JMX_PREFIX_CONFIG, "kafka.rest");
-    metrics = new ProducerMetricsImpl(new KafkaRestConfig(properties), new MockTime());
+    metrics =
+        new ProducerMetricsImpl(
+            new KafkaRestConfig(properties), new MockTime(), ImmutableMap.of("tag", "value"));
   }
 
   @Test
   public void testAvgMetrics() throws Exception {
     String[] avgMetrics =
         new String[] {
-          AbstractProducerMetrics.REQUEST_SIZE_AVG_METRIC_NAME,
-          AbstractProducerMetrics.REQUEST_LATENCY_AVG_METRIC_NAME
+          ProducerMetricsImpl.REQUEST_SIZE_AVG_METRIC_NAME,
+          ProducerMetricsImpl.REQUEST_LATENCY_AVG_METRIC_NAME
         };
 
     IntStream.range(0, 10)
@@ -69,9 +77,9 @@ public class ProducerMetricsImplTest {
   public void testRateMetrics() throws Exception {
     String[] rateMetrics =
         new String[] {
-          AbstractProducerMetrics.RECORD_ERROR_RATE_METRIC_NAME,
-          AbstractProducerMetrics.REQUEST_RATE_METRIC_NAME,
-          AbstractProducerMetrics.RESPONSE_RATE_METRIC_NAME
+          ProducerMetricsImpl.RECORD_ERROR_RATE_METRIC_NAME,
+          ProducerMetricsImpl.REQUEST_RATE_METRIC_NAME,
+          ProducerMetricsImpl.RESPONSE_RATE_METRIC_NAME
         };
 
     IntStream.range(0, 90)
@@ -94,7 +102,7 @@ public class ProducerMetricsImplTest {
 
   @Test
   public void testMaxMetrics() throws Exception {
-    String[] maxMetrics = new String[] {AbstractProducerMetrics.REQUEST_LATENCY_MAX_METRIC_NAME};
+    String[] maxMetrics = new String[] {ProducerMetricsImpl.REQUEST_LATENCY_MAX_METRIC_NAME};
 
     IntStream.range(0, 10).forEach(metrics::recordRequestLatency);
 
@@ -111,9 +119,9 @@ public class ProducerMetricsImplTest {
   public void testPercentileMetrics() throws Exception {
     String[] percentileMetrics =
         new String[] {
-          AbstractProducerMetrics.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p95",
-          AbstractProducerMetrics.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p99",
-          AbstractProducerMetrics.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p999",
+          ProducerMetricsImpl.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p95",
+          ProducerMetricsImpl.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p99",
+          ProducerMetricsImpl.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p999",
         };
 
     IntStream.range(0, 1000).forEach(metrics::recordRequestLatency);
@@ -131,9 +139,9 @@ public class ProducerMetricsImplTest {
   public void testWindowedCountMetrics() throws Exception {
     String[] maxMetrics =
         new String[] {
-          AbstractProducerMetrics.REQUEST_COUNT_WINDOWED_METRIC_NAME,
-          AbstractProducerMetrics.RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME,
-          AbstractProducerMetrics.RESPONSE_COUNT_WINDOWED_METRIC_NAME
+          ProducerMetricsImpl.REQUEST_COUNT_WINDOWED_METRIC_NAME,
+          ProducerMetricsImpl.RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME,
+          ProducerMetricsImpl.RESPONSE_COUNT_WINDOWED_METRIC_NAME
         };
 
     IntStream.range(0, 10)
@@ -154,14 +162,9 @@ public class ProducerMetricsImplTest {
   }
 
   @Test
-<<<<<<< HEAD:kafka-rest/src/test/java/io/confluent/kafkarest/resources/v3/ProducerMetricsTest.java
   public void testCumulativeSumMetrics() throws Exception {
-    String[] maxMetrics = new String[] {ProducerMetrics.REQUEST_SIZE_CUMULATIVE_SUM_METRIC_NAME};
-=======
-  public void testWindowedSumMetrics() throws Exception {
     String[] maxMetrics =
-        new String[] {AbstractProducerMetrics.REQUEST_SIZE_WINDOWED_SUM_METRIC_NAME};
->>>>>>> c72fe1ea (KREST-5732 Refactor to allow us to override producer metrics in ce-kafka-rest):kafka-rest/src/test/java/io/confluent/kafkarest/resources/v3/ProducerMetricsImplTest.java
+        new String[] {ProducerMetricsImpl.REQUEST_SIZE_CUMULATIVE_SUM_METRIC_NAME};
 
     IntStream.range(0, 10)
         .forEach(
@@ -176,5 +179,15 @@ public class ProducerMetricsImplTest {
     for (String metric : maxMetrics) {
       assertEquals(1230.0, mBeanServer.getAttribute(beanNames.iterator().next(), metric));
     }
+  }
+
+  @Test
+  public void testTenantTag() throws Exception {
+    metrics.recordRequestSize(3);
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
+    assertEquals(1, beanNames.size());
+    String tenantId = beanNames.stream().iterator().next().getKeyPropertyList().get("tag");
+    assertEquals("value", tenantId);
   }
 }

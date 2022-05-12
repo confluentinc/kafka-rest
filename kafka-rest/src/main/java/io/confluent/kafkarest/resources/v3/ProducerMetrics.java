@@ -26,5 +26,4 @@ public interface ProducerMetrics {
   public void recordRequest();
 
   public void recordRequestSize(double value);
-
 }
