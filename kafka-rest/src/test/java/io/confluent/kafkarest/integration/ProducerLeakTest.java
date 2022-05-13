@@ -66,7 +66,7 @@ public class ProducerLeakTest {
       KafkaRestFixture.builder()
           .setConfig("producer.max.block.ms", "5000")
           .setConfig(
-              "kafka.rest.resource.extension.class", TeapotRestContextExtension.class.getName())
+              "kafka.rest.resource.extension.class", LeakyContextExtension.class.getName())
           .setKafkaCluster(kafkaCluster)
           .build();
 
@@ -101,23 +101,23 @@ public class ProducerLeakTest {
         "Expected no live Kafka client threads, but some got left behind instead: " + aliveClients);
   }
 
-  public static final class TeapotRestContextExtension implements RestResourceExtension {
+  public static final class LeakyContextExtension implements RestResourceExtension {
 
     @Override
     public void register(Configurable<?> configurable, KafkaRestConfig config) {
-      configurable.register(TeapotContainerRequestFilter.class);
-      configurable.register(TeapotModule.class);
+      configurable.register(LeakyFilter.class);
+      configurable.register(LeakyModule.class);
     }
 
     @Override
     public void clean() {}
   }
 
-  private static final class TeapotContainerRequestFilter implements ContainerRequestFilter {
+  private static final class LeakyFilter implements ContainerRequestFilter {
     private final Provider<Producer<byte[], byte[]>> producer;
 
     @Inject
-    public TeapotContainerRequestFilter(Provider<Producer<byte[], byte[]>> producer) {
+    public LeakyFilter(Provider<Producer<byte[], byte[]>> producer) {
       this.producer = requireNonNull(producer);
     }
 
@@ -127,22 +127,22 @@ public class ProducerLeakTest {
     }
   }
 
-  private static final class TeapotModule extends AbstractBinder {
+  private static final class LeakyModule extends AbstractBinder {
 
     @Override
     protected void configure() {
-      bindFactory(TeapotProducerFactory.class)
+      bindFactory(LeakyProducerFactory.class)
           .to(new TypeLiteral<Producer<byte[], byte[]>>() {})
           .in(RequestScoped.class)
           .ranked(1);
     }
   }
 
-  private static final class TeapotProducerFactory implements Factory<Producer<byte[], byte[]>> {
+  private static final class LeakyProducerFactory implements Factory<Producer<byte[], byte[]>> {
     private final KafkaRestConfig config;
 
     @Inject
-    private TeapotProducerFactory(KafkaRestConfig config) {
+    private LeakyProducerFactory(KafkaRestConfig config) {
       this.config = requireNonNull(config);
     }
 
