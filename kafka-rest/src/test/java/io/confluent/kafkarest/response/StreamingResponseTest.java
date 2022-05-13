@@ -73,7 +73,8 @@ public class StreamingResponseTest {
 
     StreamingResponseFactory streamingResponseFactory =
         new StreamingResponseFactory(mockedChunkedOutputFactory);
-    StreamingResponse<ProduceRequest> streamingResponse = streamingResponseFactory.from(requests);
+    StreamingResponse<ProduceRequest> streamingResponse =
+        streamingResponseFactory.from(new JsonStream<>(() -> requests));
 
     CompletableFuture<ProduceResponse> produceResponseFuture = new CompletableFuture<>();
 
@@ -138,7 +139,7 @@ public class StreamingResponseTest {
         new StreamingResponseFactory(mockedChunkedOutputFactory);
 
     StreamingResponse<ProduceRequest> streamingResponse =
-        streamingResponseFactory.from(requestsMappingIterator);
+        streamingResponseFactory.from(new JsonStream<>(() -> requestsMappingIterator));
 
     CompletableFuture<ProduceResponse> produceResponseFuture = new CompletableFuture<>();
     produceResponseFuture.complete(produceResponse);
@@ -180,7 +181,8 @@ public class StreamingResponseTest {
 
     StreamingResponseFactory streamingResponseFactory =
         new StreamingResponseFactory(mockedChunkedOutputFactory);
-    StreamingResponse<ProduceRequest> streamingResponse = streamingResponseFactory.from(requests);
+    StreamingResponse<ProduceRequest> streamingResponse =
+        streamingResponseFactory.from(new JsonStream<>(() -> requests));
 
     FakeAsyncResponse response = new FakeAsyncResponse();
 
@@ -217,7 +219,8 @@ public class StreamingResponseTest {
 
     StreamingResponseFactory streamingResponseFactory =
         new StreamingResponseFactory(mockedChunkedOutputFactory);
-    StreamingResponse<ProduceRequest> streamingResponse = streamingResponseFactory.from(requests);
+    StreamingResponse<ProduceRequest> streamingResponse =
+        streamingResponseFactory.from(new JsonStream<>(() -> requests));
 
     FakeAsyncResponse response = new FakeAsyncResponse();
 

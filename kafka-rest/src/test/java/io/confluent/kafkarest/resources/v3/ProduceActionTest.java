@@ -34,6 +34,7 @@ import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
 import io.confluent.kafkarest.ratelimit.RequestRateLimiter;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
+import io.confluent.kafkarest.response.JsonStream;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
@@ -123,7 +124,8 @@ public class ProduceActionTest {
 
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests);
+    produceAction.produce(
+        fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
 
     // check results
     EasyMock.verify(requests);
@@ -229,7 +231,8 @@ public class ProduceActionTest {
 
     // run test
     FakeAsyncResponse fakeAsyncResponse1 = new FakeAsyncResponse();
-    produceAction1.produce(fakeAsyncResponse1, "clusterId", "topicName", requests);
+    produceAction1.produce(
+        fakeAsyncResponse1, "clusterId", "topicName", new JsonStream<>(() -> requests));
 
     // check results
     EasyMock.verify(requests);
@@ -320,9 +323,11 @@ public class ProduceActionTest {
 
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests);
+    produceAction.produce(
+        fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
     FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse2, "clusterId", "topicName", requests);
+    produceAction.produce(
+        fakeAsyncResponse2, "clusterId", "topicName", new JsonStream<>(() -> requests));
 
     // check results
     // check results
@@ -420,9 +425,11 @@ public class ProduceActionTest {
 
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests);
+    produceAction.produce(
+        fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
     FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse2, "clusterId", "topicName", requests);
+    produceAction.produce(
+        fakeAsyncResponse2, "clusterId", "topicName", new JsonStream<>(() -> requests));
 
     // check results
     verify(
@@ -501,9 +508,11 @@ public class ProduceActionTest {
 
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests);
+    produceAction.produce(
+        fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
     FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse2, "clusterId", "topicName", requests);
+    produceAction.produce(
+        fakeAsyncResponse2, "clusterId", "topicName", new JsonStream<>(() -> requests));
 
     // check results
     verify(
@@ -556,14 +565,13 @@ public class ProduceActionTest {
             bytesLimitProvider,
             countLimiterGlobalProvider,
             bytesLimiterGlobalProvider);
-    MappingIterator<ProduceRequest> requests = null;
 
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
 
     RestConstraintViolationException e =
         assertThrows(
             RestConstraintViolationException.class,
-            () -> produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests));
+            () -> produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", null));
     assertEquals("Payload error. Null input provided. Data is required.", e.getMessage());
     assertEquals(42206, e.getErrorCode());
   }

@@ -17,7 +17,6 @@ package io.confluent.kafkarest.resources.v3;
 
 import static java.util.Objects.requireNonNull;
 
-import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
@@ -39,6 +38,7 @@ import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.ratelimit.DoNotRateLimit;
 import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
 import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
+import io.confluent.kafkarest.response.JsonStream;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.time.Duration;
@@ -60,15 +60,11 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 import org.apache.kafka.common.errors.SerializationException;
 import org.eclipse.jetty.http.HttpStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @DoNotRateLimit
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/records")
 @ResourceName("api.v3.produce.*")
 public final class ProduceAction {
-
-  private static final Logger log = LoggerFactory.getLogger(ProduceAction.class);
 
   private static final Collector<
           ProduceRequestHeader,
@@ -116,7 +112,7 @@ public final class ProduceAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
-      MappingIterator<ProduceRequest> requests)
+      JsonStream<ProduceRequest> requests)
       throws Exception {
 
     if (requests == null) {

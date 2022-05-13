@@ -20,7 +20,6 @@ import static java.util.Objects.requireNonNull;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
 import com.fasterxml.jackson.jaxrs.base.JsonMappingExceptionMapper;
 import com.fasterxml.jackson.jaxrs.base.JsonParseExceptionMapper;
@@ -106,8 +105,8 @@ public abstract class StreamingResponse<T> {
   }
 
   public static <T> StreamingResponse<T> from(
-      MappingIterator<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
-    return new InputStreamingResponse<>(mappingIteratorInput, chunkedOutputFactory);
+      JsonStream<T> inputStream, ChunkedOutputFactory chunkedOutputFactory) {
+    return new InputStreamingResponse<>(inputStream, chunkedOutputFactory);
   }
 
   public final <O> StreamingResponse<O> compose(
@@ -157,17 +156,17 @@ public abstract class StreamingResponse<T> {
 
   private static class InputStreamingResponse<T> extends StreamingResponse<T> {
 
-    private final MappingIterator<T> mappingIteratorInput;
+    private final JsonStream<T> inputStream;
 
     private InputStreamingResponse(
-        MappingIterator<T> mappingIteratorInput, ChunkedOutputFactory chunkedOutputFactory) {
+        JsonStream<T> inputStream, ChunkedOutputFactory chunkedOutputFactory) {
       super(chunkedOutputFactory);
-      this.mappingIteratorInput = requireNonNull(mappingIteratorInput);
+      this.inputStream = requireNonNull(inputStream);
     }
 
     public void close() {
       try {
-        mappingIteratorInput.close();
+        inputStream.close();
       } catch (IOException e) {
         log.error("Error when closing the request stream.", e);
       }
@@ -176,7 +175,7 @@ public abstract class StreamingResponse<T> {
     @Override
     public boolean hasNext() {
       try {
-        return mappingIteratorInput.hasNext();
+        return inputStream.hasNext();
       } catch (RuntimeJsonMappingException jme) {
         // jersey returns a 400 in both these cases first, so we should match this
         throw new BadRequestException(
@@ -190,7 +189,7 @@ public abstract class StreamingResponse<T> {
     @Override
     public CompletableFuture<T> next() {
       try {
-        return CompletableFuture.completedFuture(mappingIteratorInput.nextValue());
+        return CompletableFuture.completedFuture(inputStream.nextValue());
       } catch (Throwable e) {
         return CompletableFutures.failedFuture(e);
       }
