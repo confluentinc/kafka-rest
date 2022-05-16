@@ -33,7 +33,7 @@ import javax.management.ObjectName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class ProducerMetricsImplTest {
+public class ProducerMetricsTest {
 
   private static final String METRICS_SEARCH_STRING = "kafka.rest:type=produce-api-metrics,*";
 
@@ -45,7 +45,7 @@ public class ProducerMetricsImplTest {
     Properties properties = new Properties();
     properties.setProperty(RestConfig.METRICS_JMX_PREFIX_CONFIG, "kafka.rest");
     metrics =
-        new ProducerMetricsImpl(
+        new ProducerMetrics(
             new KafkaRestConfig(properties), new MockTime(), ImmutableMap.of("tag", "value"));
   }
 
@@ -53,8 +53,8 @@ public class ProducerMetricsImplTest {
   public void testAvgMetrics() throws Exception {
     String[] avgMetrics =
         new String[] {
-          ProducerMetricsImpl.REQUEST_SIZE_AVG_METRIC_NAME,
-          ProducerMetricsImpl.REQUEST_LATENCY_AVG_METRIC_NAME
+          ProducerMetrics.REQUEST_SIZE_AVG_METRIC_NAME,
+          ProducerMetrics.REQUEST_LATENCY_AVG_METRIC_NAME
         };
 
     IntStream.range(0, 10)
@@ -77,9 +77,9 @@ public class ProducerMetricsImplTest {
   public void testRateMetrics() throws Exception {
     String[] rateMetrics =
         new String[] {
-          ProducerMetricsImpl.RECORD_ERROR_RATE_METRIC_NAME,
-          ProducerMetricsImpl.REQUEST_RATE_METRIC_NAME,
-          ProducerMetricsImpl.RESPONSE_RATE_METRIC_NAME
+          ProducerMetrics.RECORD_ERROR_RATE_METRIC_NAME,
+          ProducerMetrics.REQUEST_RATE_METRIC_NAME,
+          ProducerMetrics.RESPONSE_RATE_METRIC_NAME
         };
 
     IntStream.range(0, 90)
@@ -102,7 +102,7 @@ public class ProducerMetricsImplTest {
 
   @Test
   public void testMaxMetrics() throws Exception {
-    String[] maxMetrics = new String[] {ProducerMetricsImpl.REQUEST_LATENCY_MAX_METRIC_NAME};
+    String[] maxMetrics = new String[] {ProducerMetrics.REQUEST_LATENCY_MAX_METRIC_NAME};
 
     IntStream.range(0, 10).forEach(metrics::recordRequestLatency);
 
@@ -119,9 +119,9 @@ public class ProducerMetricsImplTest {
   public void testPercentileMetrics() throws Exception {
     String[] percentileMetrics =
         new String[] {
-          ProducerMetricsImpl.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p95",
-          ProducerMetricsImpl.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p99",
-          ProducerMetricsImpl.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p999",
+          ProducerMetrics.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p95",
+          ProducerMetrics.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p99",
+          ProducerMetrics.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p999",
         };
 
     IntStream.range(0, 1000).forEach(metrics::recordRequestLatency);
@@ -139,9 +139,9 @@ public class ProducerMetricsImplTest {
   public void testWindowedCountMetrics() throws Exception {
     String[] maxMetrics =
         new String[] {
-          ProducerMetricsImpl.REQUEST_COUNT_WINDOWED_METRIC_NAME,
-          ProducerMetricsImpl.RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME,
-          ProducerMetricsImpl.RESPONSE_COUNT_WINDOWED_METRIC_NAME
+          ProducerMetrics.REQUEST_COUNT_WINDOWED_METRIC_NAME,
+          ProducerMetrics.RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME,
+          ProducerMetrics.RESPONSE_COUNT_WINDOWED_METRIC_NAME
         };
 
     IntStream.range(0, 10)
@@ -163,8 +163,7 @@ public class ProducerMetricsImplTest {
 
   @Test
   public void testCumulativeSumMetrics() throws Exception {
-    String[] maxMetrics =
-        new String[] {ProducerMetricsImpl.REQUEST_SIZE_CUMULATIVE_SUM_METRIC_NAME};
+    String[] maxMetrics = new String[] {ProducerMetrics.REQUEST_SIZE_CUMULATIVE_SUM_METRIC_NAME};
 
     IntStream.range(0, 10)
         .forEach(
@@ -183,7 +182,6 @@ public class ProducerMetricsImplTest {
 
   @Test
   public void testTenantTag() throws Exception {
-    metrics.recordRequestSize(3);
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
     assertEquals(1, beanNames.size());
