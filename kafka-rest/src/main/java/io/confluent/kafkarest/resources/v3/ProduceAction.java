@@ -84,24 +84,26 @@ public final class ProduceAction {
   private final Provider<SchemaManager> schemaManagerProvider;
   private final Provider<RecordSerializer> recordSerializerProvider;
   private final Provider<ProduceController> produceControllerProvider;
-  private final ProducerMetrics producerMetrics;
+  private final Provider<ProducerMetrics> producerMetricsProvider;
   private final StreamingResponseFactory streamingResponseFactory;
   private final ProduceRateLimiters produceRateLimiters;
   private final ExecutorService executorService;
+
+  private ProducerMetrics metrics = null;
 
   @Inject
   public ProduceAction(
       Provider<SchemaManager> schemaManagerProvider,
       Provider<RecordSerializer> recordSerializer,
       Provider<ProduceController> produceControllerProvider,
-      ProducerMetrics producerMetrics,
+      Provider<ProducerMetrics> producerMetrics,
       StreamingResponseFactory streamingResponseFactory,
       ProduceRateLimiters produceRateLimiters,
       @ProduceResponseThreadPool ExecutorService executorService) {
     this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
     this.recordSerializerProvider = requireNonNull(recordSerializer);
     this.produceControllerProvider = requireNonNull(produceControllerProvider);
-    this.producerMetrics = requireNonNull(producerMetrics);
+    this.producerMetricsProvider = requireNonNull(producerMetrics);
     this.streamingResponseFactory = requireNonNull(streamingResponseFactory);
     this.produceRateLimiters = requireNonNull(produceRateLimiters);
     this.executorService = requireNonNull(executorService);
@@ -123,6 +125,7 @@ public final class ProduceAction {
       throw Errors.invalidPayloadException("Null input provided. Data is required.");
     }
 
+    metrics = producerMetricsProvider.get();
     ProduceController controller = produceControllerProvider.get();
     streamingResponseFactory
         .from(requests)
@@ -278,18 +281,18 @@ public final class ProduceAction {
   }
 
   private void recordResponseMetrics(long latency) {
-    producerMetrics.recordResponse();
-    producerMetrics.recordRequestLatency(latency);
+    metrics.recordResponse();
+    metrics.recordRequestLatency(latency);
   }
 
   private void recordErrorMetrics(long latency) {
-    producerMetrics.recordError();
-    producerMetrics.recordRequestLatency(latency);
+    metrics.recordError();
+    metrics.recordRequestLatency(latency);
   }
 
   private void recordRequestMetrics(long size) {
-    producerMetrics.recordRequest();
+    metrics.recordRequest();
     // record request size
-    producerMetrics.recordRequestSize(size);
+    metrics.recordRequestSize(size);
   }
 }

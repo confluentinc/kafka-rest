@@ -111,15 +111,13 @@ public final class ProducerMetrics {
   private final String responseSensorName;
   private final String recordErrorSensorName;
   private final String requestLatencySensorName;
-  private final Map<String, String> metricsTags;
 
   ProducerMetrics(KafkaRestConfig config, Time time) {
     this(config, time, ImmutableMap.of());
   }
 
   ProducerMetrics(KafkaRestConfig config, Time time, Map<String, String> metricsTags) {
-    this.metricsTags = metricsTags;
-    this.metrics = createMetrics(config.getMetricsContext(), time);
+    this.metrics = createMetrics(config.getMetricsContext(), time, metricsTags);
     this.jmxPrefix = config.getString(KafkaRestConfig.METRICS_JMX_PREFIX_CONFIG);
     String sensorNamePrefix = jmxPrefix + ":" + GROUP_NAME + ":";
     this.recordErrorSensorName = sensorNamePrefix + RECORD_ERROR_SENSOR_NAME;
@@ -127,10 +125,11 @@ public final class ProducerMetrics {
     this.requestLatencySensorName = sensorNamePrefix + REQUEST_LATENCY_SENSOR_NAME;
     this.requestSizeSensorName = sensorNamePrefix + REQUEST_SIZE_SENSOR_NAME;
     this.responseSensorName = sensorNamePrefix + RESPONSE_SENSOR_NAME;
-    setupSensors();
+    setupSensors(metricsTags);
   }
 
-  private Metrics createMetrics(RestMetricsContext metricsContext, Time time) {
+  private Metrics createMetrics(
+      RestMetricsContext metricsContext, Time time, Map<String, String> metricsTags) {
     JmxReporter reporter = new JmxReporter();
     reporter.contextChange(metricsContext);
     return new Metrics(
@@ -144,55 +143,76 @@ public final class ProducerMetrics {
         metricsContext);
   }
 
-  private void setupSensors() {
+  private void setupSensors(Map<String, String> metricsTags) {
     // request metrics
-    setupRequestSensor();
-    setupRequestSizeSensor();
+    setupRequestSensor(metricsTags);
+    setupRequestSizeSensor(metricsTags);
 
     // response metrics
-    setupResponseSensor();
-    setupRecordErrorSensor();
-    setupRequestLatencySensor();
+    setupResponseSensor(metricsTags);
+    setupRecordErrorSensor(metricsTags);
+    setupRequestLatencySensor(metricsTags);
 
     log.info("Successfully registered kafka-rest produce metrics with JMX");
   }
 
-  private void setupRequestSensor() {
+  private void setupRequestSensor(Map<String, String> metricsTags) {
     Sensor requestSensor = createSensor(REQUEST_SENSOR_NAME);
-    addAvg(requestSensor, REQUEST_RATE_METRIC_NAME, REQUEST_RATE_METRIC_DOC);
+    addAvg(requestSensor, REQUEST_RATE_METRIC_NAME, REQUEST_RATE_METRIC_DOC, metricsTags);
     addWindowedCount(
-        requestSensor, REQUEST_COUNT_WINDOWED_METRIC_NAME, REQUEST_COUNT_WINDOWED_METRIC_DOC);
+        requestSensor,
+        REQUEST_COUNT_WINDOWED_METRIC_NAME,
+        REQUEST_COUNT_WINDOWED_METRIC_DOC,
+        metricsTags);
   }
 
-  private void setupRequestSizeSensor() {
+  private void setupRequestSizeSensor(Map<String, String> metricsTags) {
     Sensor requestSizeSensor = createSensor(REQUEST_SIZE_SENSOR_NAME);
-    addAvg(requestSizeSensor, REQUEST_SIZE_AVG_METRIC_NAME, REQUEST_SIZE_AVG_METRIC_DOC);
+    addAvg(
+        requestSizeSensor, REQUEST_SIZE_AVG_METRIC_NAME, REQUEST_SIZE_AVG_METRIC_DOC, metricsTags);
     addCumulativeSum(
         requestSizeSensor,
         REQUEST_SIZE_CUMULATIVE_SUM_METRIC_NAME,
-        REQUEST_SIZE_CUMULATIVE_SUM_METRIC_DOC);
+        REQUEST_SIZE_CUMULATIVE_SUM_METRIC_DOC,
+        metricsTags);
   }
 
-  private void setupResponseSensor() {
+  private void setupResponseSensor(Map<String, String> metricsTags) {
     Sensor responseSensor = createSensor(RESPONSE_SENSOR_NAME);
-    addRate(responseSensor, RESPONSE_RATE_METRIC_NAME, RESPONSE_RATE_METRIC_DOC);
+    addRate(responseSensor, RESPONSE_RATE_METRIC_NAME, RESPONSE_RATE_METRIC_DOC, metricsTags);
     addWindowedCount(
-        responseSensor, RESPONSE_COUNT_WINDOWED_METRIC_NAME, RESPONSE_COUNT_WINDOWED_METRIC_DOC);
+        responseSensor,
+        RESPONSE_COUNT_WINDOWED_METRIC_NAME,
+        RESPONSE_COUNT_WINDOWED_METRIC_DOC,
+        metricsTags);
   }
 
-  private void setupRecordErrorSensor() {
+  private void setupRecordErrorSensor(Map<String, String> metricsTags) {
     Sensor recordErrorSensor = createSensor(RECORD_ERROR_SENSOR_NAME);
-    addRate(recordErrorSensor, RECORD_ERROR_RATE_METRIC_NAME, RECORD_ERROR_RATE_METRIC_DOC);
+    addRate(
+        recordErrorSensor,
+        RECORD_ERROR_RATE_METRIC_NAME,
+        RECORD_ERROR_RATE_METRIC_DOC,
+        metricsTags);
     addWindowedCount(
         recordErrorSensor,
         RECORD_ERROR_COUNT_WINDOWED_METRIC_NAME,
-        RECORD_ERROR_COUNT_WINDOWED_METRIC_DOC);
+        RECORD_ERROR_COUNT_WINDOWED_METRIC_DOC,
+        metricsTags);
   }
 
-  private void setupRequestLatencySensor() {
+  private void setupRequestLatencySensor(Map<String, String> metricsTags) {
     Sensor requestLatencySensor = createSensor(REQUEST_LATENCY_SENSOR_NAME);
-    addMax(requestLatencySensor, REQUEST_LATENCY_MAX_METRIC_NAME, REQUEST_LATENCY_MAX_METRIC_DOC);
-    addAvg(requestLatencySensor, REQUEST_LATENCY_AVG_METRIC_NAME, REQUEST_LATENCY_AVG_METRIC_DOC);
+    addMax(
+        requestLatencySensor,
+        REQUEST_LATENCY_MAX_METRIC_NAME,
+        REQUEST_LATENCY_MAX_METRIC_DOC,
+        metricsTags);
+    addAvg(
+        requestLatencySensor,
+        REQUEST_LATENCY_AVG_METRIC_NAME,
+        REQUEST_LATENCY_AVG_METRIC_DOC,
+        metricsTags);
     addPercentiles(
         requestLatencySensor,
         REQUEST_LATENCY_PCT_METRIC_PREFIX,
@@ -200,35 +220,42 @@ public final class ProducerMetrics {
             "p95", 0.95,
             "p99", 0.99,
             "p999", 0.999),
-        REQUEST_LATENCY_PCT_METRIC_DOC);
+        REQUEST_LATENCY_PCT_METRIC_DOC,
+        metricsTags);
   }
 
   private Sensor createSensor(String name) {
     return metrics.sensor(String.join(":", jmxPrefix, GROUP_NAME, name));
   }
 
-  private void addAvg(Sensor sensor, String name, String doc) {
-    sensor.add(getMetricName(name, doc), new Avg());
+  private void addAvg(Sensor sensor, String name, String doc, Map<String, String> metricsTags) {
+    sensor.add(getMetricName(name, doc, metricsTags), new Avg());
   }
 
-  private void addRate(Sensor sensor, String name, String doc) {
-    sensor.add(getMetricName(name, doc), new Rate());
+  private void addRate(Sensor sensor, String name, String doc, Map<String, String> metricsTags) {
+    sensor.add(getMetricName(name, doc, metricsTags), new Rate());
   }
 
-  private void addMax(Sensor sensor, String name, String doc) {
-    sensor.add(getMetricName(name, doc), new Max());
+  private void addMax(Sensor sensor, String name, String doc, Map<String, String> metricsTags) {
+    sensor.add(getMetricName(name, doc, metricsTags), new Max());
   }
 
-  private void addWindowedCount(Sensor sensor, String name, String doc) {
-    sensor.add(getMetricName(name, doc), new WindowedCount());
+  private void addWindowedCount(
+      Sensor sensor, String name, String doc, Map<String, String> metricsTags) {
+    sensor.add(getMetricName(name, doc, metricsTags), new WindowedCount());
   }
 
-  private void addCumulativeSum(Sensor sensor, String name, String doc) {
-    sensor.add(getMetricName(name, doc), new CumulativeSum());
+  private void addCumulativeSum(
+      Sensor sensor, String name, String doc, Map<String, String> metricsTags) {
+    sensor.add(getMetricName(name, doc, metricsTags), new CumulativeSum());
   }
 
   private void addPercentiles(
-      Sensor sensor, String prefix, Map<String, Double> percentiles, String doc) {
+      Sensor sensor,
+      String prefix,
+      Map<String, Double> percentiles,
+      String doc,
+      Map<String, String> metricsTags) {
     sensor.add(
         new Percentiles(
             30 * 1000 * 4,
@@ -238,32 +265,33 @@ public final class ProducerMetrics {
                 .map(
                     entry ->
                         new Percentile(
-                            getMetricName(prefix + entry.getKey(), doc), entry.getValue()))
+                            getMetricName(prefix + entry.getKey(), doc, metricsTags),
+                            entry.getValue()))
                 .toArray(Percentile[]::new)));
   }
 
-  private MetricName getMetricName(String name, String doc) {
+  private MetricName getMetricName(String name, String doc, Map<String, String> metricsTags) {
     return metrics.metricInstance(
         new MetricNameTemplate(name, GROUP_NAME, doc, metricsTags.keySet()), metricsTags);
   }
 
-  public void recordResponse() {
+  void recordResponse() {
     recordMetric(responseSensorName, 1.0);
   }
 
-  public void recordRequestLatency(long value) {
+  void recordRequestLatency(long value) {
     recordMetric(requestLatencySensorName, value);
   }
 
-  public void recordError() {
+  void recordError() {
     recordMetric(recordErrorSensorName, 1.0);
   }
 
-  public void recordRequest() {
+  void recordRequest() {
     recordMetric(requestSensorName, 1.0);
   }
 
-  public void recordRequestSize(double value) {
+  void recordRequestSize(double value) {
     recordMetric(requestSizeSensorName, value);
   }
 
