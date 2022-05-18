@@ -70,4 +70,12 @@ public class AvroProduceRecord extends ProduceRecordBase<JsonNode, JsonNode> {
     result = 31 * result + (value != null ? value.hashCode() : 0);
     return result;
   }
+
+  public boolean hasKey() {
+    return this.getJsonKey() != null && !this.getJsonKey().isNull();
+  }
+
+  public boolean hasValue() {
+    return this.getJsonValue() != null && !this.getJsonValue().isNull();
+  }
 }
