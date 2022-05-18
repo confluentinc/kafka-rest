@@ -204,5 +204,13 @@ public final class AvroPartitionProduceRequest {
           .add("value=" + value)
           .toString();
     }
+
+    public boolean hasKey() {
+      return key != null && !key.isNull();
+    }
+
+    public boolean hasValue() {
+      return value != null && !value.isNull();
+    }
   }
 }

@@ -274,8 +274,8 @@ public final class PartitionsResource {
     boolean hasKeys = false;
     boolean hasValues = false;
     for (AvroPartitionProduceRecord rec : request.getRecords()) {
-      hasKeys = hasKeys || !rec.getKey().isNull();
-      hasValues = hasValues || !rec.getValue().isNull();
+      hasKeys = hasKeys || rec.hasKey();
+      hasValues = hasValues || rec.hasValue();
     }
     if (hasKeys && request.getKeySchema() == null && request.getKeySchemaId() == null) {
       throw Errors.keySchemaMissingException();
