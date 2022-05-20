@@ -29,23 +29,17 @@ import javax.validation.constraints.PositiveOrZero;
 
 public final class GetPartitionResponse {
 
-  @PositiveOrZero
-  @Nullable
-  private final Integer partition;
+  @PositiveOrZero @Nullable private final Integer partition;
 
-  @PositiveOrZero
-  @Nullable
-  private final Integer leader;
+  @PositiveOrZero @Nullable private final Integer leader;
 
-  @Nullable
-  private final List<Replica> replicas;
+  @Nullable private final List<Replica> replicas;
 
   @JsonCreator
   private GetPartitionResponse(
       @JsonProperty("partition") @Nullable Integer partition,
       @JsonProperty("leader") @Nullable Integer leader,
-      @JsonProperty("replicas") @Nullable List<Replica> replicas
-  ) {
+      @JsonProperty("replicas") @Nullable List<Replica> replicas) {
     this.partition = partition;
     this.leader = leader;
     this.replicas = replicas;
@@ -108,15 +102,11 @@ public final class GetPartitionResponse {
 
   public static final class Replica {
 
-    @PositiveOrZero
-    @Nullable
-    private Integer broker;
+    @PositiveOrZero @Nullable private Integer broker;
 
-    @Nullable
-    private Boolean leader;
+    @Nullable private Boolean leader;
 
-    @Nullable
-    private Boolean inSync;
+    @Nullable private Boolean inSync;
 
     @JsonCreator
     private Replica(

@@ -68,7 +68,9 @@ public final class SearchReassignmentsByTopicAction {
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName) {
     CompletableFuture<SearchReassignmentsByTopicResponse> response =
-        reassignmentManager.get().searchReassignmentsByTopicName(clusterId, topicName)
+        reassignmentManager
+            .get()
+            .searchReassignmentsByTopicName(clusterId, topicName)
             .thenApply(
                 reassignments ->
                     SearchReassignmentsByTopicResponse.create(

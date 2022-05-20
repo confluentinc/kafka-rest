@@ -29,21 +29,15 @@ import javax.validation.constraints.NotEmpty;
 
 public final class SchemaPartitionProduceRequest {
 
-  @NotEmpty
-  @Nullable
-  private final List<SchemaPartitionProduceRecord> records;
+  @NotEmpty @Nullable private final List<SchemaPartitionProduceRecord> records;
 
-  @Nullable
-  private final String keySchema;
+  @Nullable private final String keySchema;
 
-  @Nullable
-  private final Integer keySchemaId;
+  @Nullable private final Integer keySchemaId;
 
-  @Nullable
-  private final String valueSchema;
+  @Nullable private final String valueSchema;
 
-  @Nullable
-  private final Integer valueSchemaId;
+  @Nullable private final Integer valueSchemaId;
 
   @JsonCreator
   private SchemaPartitionProduceRequest(
@@ -51,8 +45,7 @@ public final class SchemaPartitionProduceRequest {
       @JsonProperty("key_schema") @Nullable String keySchema,
       @JsonProperty("key_schema_id") @Nullable Integer keySchemaId,
       @JsonProperty("value_schema") @Nullable String valueSchema,
-      @JsonProperty("value_schema_id") @Nullable Integer valueSchemaId
-  ) {
+      @JsonProperty("value_schema_id") @Nullable Integer valueSchemaId) {
     this.records = records;
     this.keySchema = keySchema;
     this.keySchemaId = keySchemaId;
@@ -140,8 +133,7 @@ public final class SchemaPartitionProduceRequest {
 
   @Override
   public String toString() {
-    return new StringJoiner(
-        ", ", SchemaPartitionProduceRequest.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", SchemaPartitionProduceRequest.class.getSimpleName() + "[", "]")
         .add("records=" + records)
         .add("keySchema='" + keySchema + "'")
         .add("keySchemaId=" + keySchemaId)
@@ -152,17 +144,14 @@ public final class SchemaPartitionProduceRequest {
 
   public static final class SchemaPartitionProduceRecord {
 
-    @Nullable
-    private final JsonNode key;
+    @Nullable private final JsonNode key;
 
-    @Nullable
-    private final JsonNode value;
+    @Nullable private final JsonNode value;
 
     @JsonCreator
     public SchemaPartitionProduceRecord(
         @JsonProperty("key") @Nullable JsonNode key,
-        @JsonProperty("value") @Nullable JsonNode value
-    ) {
+        @JsonProperty("value") @Nullable JsonNode value) {
       this.key = key;
       this.value = value;
     }
@@ -198,8 +187,7 @@ public final class SchemaPartitionProduceRequest {
 
     @Override
     public String toString() {
-      return new StringJoiner(
-          ", ", SchemaPartitionProduceRecord.class.getSimpleName() + "[", "]")
+      return new StringJoiner(", ", SchemaPartitionProduceRecord.class.getSimpleName() + "[", "]")
           .add("key=" + key)
           .add("value=" + value)
           .toString();

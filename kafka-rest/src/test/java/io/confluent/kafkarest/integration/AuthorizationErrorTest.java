@@ -54,19 +54,19 @@ public class AuthorizationErrorTest
   private static final String USERNAME = "alice";
 
   // Produce to topic inputs & results
-  private final List<BinaryTopicProduceRecord> topicRecords = Arrays.asList(
-      new BinaryTopicProduceRecord("key", "value", null),
-      new BinaryTopicProduceRecord("key", "value2", null),
-      new BinaryTopicProduceRecord("key", "value3", null),
-      new BinaryTopicProduceRecord("key", "value4", null)
-  );
+  private final List<BinaryTopicProduceRecord> topicRecords =
+      Arrays.asList(
+          new BinaryTopicProduceRecord("key", "value", null),
+          new BinaryTopicProduceRecord("key", "value2", null),
+          new BinaryTopicProduceRecord("key", "value3", null),
+          new BinaryTopicProduceRecord("key", "value4", null));
 
-  private final List<PartitionOffset> produceOffsets = Arrays.asList(
-      new PartitionOffset(0, 0L, null, null),
-      new PartitionOffset(0, 1L, null, null),
-      new PartitionOffset(0, 2L, null, null),
-      new PartitionOffset(0, 3L, null, null)
-  );
+  private final List<PartitionOffset> produceOffsets =
+      Arrays.asList(
+          new PartitionOffset(0, 0L, null, null),
+          new PartitionOffset(0, 1L, null, null),
+          new PartitionOffset(0, 2L, null, null),
+          new PartitionOffset(0, 3L, null, null));
 
   @Before
   public void setUp() throws Exception {
@@ -80,22 +80,40 @@ public class AuthorizationErrorTest
   @Override
   protected Properties getBrokerProperties(int i) {
 
-    final Option<SecurityProtocol>
-        securityProtocolOption = Option.apply(SecurityProtocol.SASL_PLAINTEXT);
+    final Option<SecurityProtocol> securityProtocolOption =
+        Option.apply(SecurityProtocol.SASL_PLAINTEXT);
     Properties saslProps = new Properties();
-    saslProps.setProperty("sasl.enabled.mechanisms","PLAIN");
-    saslProps.setProperty("sasl.mechanism.inter.broker.protocol","PLAIN");
+    saslProps.setProperty("sasl.enabled.mechanisms", "PLAIN");
+    saslProps.setProperty("sasl.mechanism.inter.broker.protocol", "PLAIN");
     Option<Properties> saslProperties = Option.apply(saslProps);
-    Properties brokerProps = kafka.utils.TestUtils.createBrokerConfig(
-        0, "", false, false, kafka.utils.TestUtils.RandomPort(), securityProtocolOption,
-        Option.empty(), saslProperties, true, true, kafka.utils.TestUtils.RandomPort(),
-        false, kafka.utils.TestUtils.RandomPort(), false, kafka.utils.TestUtils.RandomPort(), Option.empty(), 1,
-        false, 1, (short) 1);
+    Properties brokerProps =
+        kafka.utils.TestUtils.createBrokerConfig(
+            0,
+            "",
+            false,
+            false,
+            kafka.utils.TestUtils.RandomPort(),
+            securityProtocolOption,
+            Option.empty(),
+            saslProperties,
+            true,
+            true,
+            kafka.utils.TestUtils.RandomPort(),
+            false,
+            kafka.utils.TestUtils.RandomPort(),
+            false,
+            kafka.utils.TestUtils.RandomPort(),
+            Option.empty(),
+            1,
+            false,
+            1,
+            (short) 1);
     brokerProps.put(KafkaConfig.BrokerIdProp(), Integer.toString(i));
     brokerProps.put(KafkaConfig.ZkConnectProp(), zkConnect);
     brokerProps.setProperty("authorizer.class.name", AclAuthorizer.class.getName());
     brokerProps.setProperty("super.users", "User:admin");
-    brokerProps.setProperty("listener.name.sasl_plaintext.plain.sasl.jaas.config",
+    brokerProps.setProperty(
+        "listener.name.sasl_plaintext.plain.sasl.jaas.config",
         "org.apache.kafka.common.security.plain.PlainLoginModule required "
             + "username=\"admin\" "
             + "password=\"admin-secret\" "
@@ -106,22 +124,26 @@ public class AuthorizationErrorTest
 
   protected void overrideKafkaRestConfigs(Properties restProperties) {
     restProperties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
-    restProperties.put("client.security.protocol","SASL_PLAINTEXT");
+    restProperties.put("client.security.protocol", "SASL_PLAINTEXT");
     restProperties.put("client.sasl.mechanism", "PLAIN");
     restProperties.put("client.sasl.jaas.config", createPlainLoginModule(USERNAME, "alice-secret"));
   }
 
   private static String createPlainLoginModule(String username, String password) {
     return "org.apache.kafka.common.security.plain.PlainLoginModule required "
-        + " username=\"" + username + "\""
-        + " password=\"" + password + "\";";
+        + " username=\""
+        + username
+        + "\""
+        + " password=\""
+        + password
+        + "\";";
   }
 
   @Test
   public void testConsumerRequest() {
-    //test wihout acls
+    // test wihout acls
     verifySubscribeToTopic(true);
-    //add acls
+    // add acls
     SecureTestUtils.setConsumerAcls(zkConnect, TOPIC_NAME, USERNAME, CONSUMER_GROUP);
     verifySubscribeToTopic(false);
   }
@@ -131,7 +153,7 @@ public class AuthorizationErrorTest
     BinaryTopicProduceRequest request = BinaryTopicProduceRequest.create(topicRecords);
     // test without any acls
     testProduceToAuthorizationError(TOPIC_NAME, request);
-    //add acls
+    // add acls
     SecureTestUtils.setProduceAcls(zkConnect, TOPIC_NAME, USERNAME);
     testProduceToTopic(
         TOPIC_NAME,
@@ -147,25 +169,31 @@ public class AuthorizationErrorTest
     Response createResponse = createConsumerInstance(CONSUMER_GROUP);
     assertOKResponse(createResponse, Versions.KAFKA_V2_JSON);
 
-    //create group
+    // create group
     CreateConsumerInstanceResponse instanceResponse =
         TestUtils.tryReadEntityOrLog(createResponse, CreateConsumerInstanceResponse.class);
     assertNotNull(instanceResponse.getInstanceId());
-    assertTrue("Base URI should contain the consumer instance ID",
+    assertTrue(
+        "Base URI should contain the consumer instance ID",
         instanceResponse.getBaseUri().contains(instanceResponse.getInstanceId()));
 
     String topicJson = "{\"topics\":[\"" + TOPIC_NAME + "\"]}";
 
-    //subscribe to group
-    Response subscribe = request(instanceResponse.getBaseUri() + "/subscription")
-        .post(Entity.entity(topicJson, Versions.KAFKA_V2_JSON));
+    // subscribe to group
+    Response subscribe =
+        request(instanceResponse.getBaseUri() + "/subscription")
+            .post(Entity.entity(topicJson, Versions.KAFKA_V2_JSON));
 
-    //poll some records
-    Response response = request(instanceResponse.getBaseUri() + "/records")
-        .accept(Versions.KAFKA_V2_JSON_BINARY).get();
+    // poll some records
+    Response response =
+        request(instanceResponse.getBaseUri() + "/records")
+            .accept(Versions.KAFKA_V2_JSON_BINARY)
+            .get();
 
     if (expectFailure) {
-      assertErrorResponse(Response.Status.FORBIDDEN, response,
+      assertErrorResponse(
+          Response.Status.FORBIDDEN,
+          response,
           Errors.KAFKA_AUTHORIZATION_ERROR_CODE,
           "Not authorized to access topics",
           Versions.KAFKA_V2_JSON_BINARY);
@@ -187,7 +215,7 @@ public class AuthorizationErrorTest
 
   @Override
   protected void setupAcls() {
-    //to allow plaintext consumer
+    // to allow plaintext consumer
     SecureTestUtils.setConsumerAcls(zkConnect, TOPIC_NAME, KafkaPrincipal.ANONYMOUS.getName(), "*");
   }
 

@@ -71,11 +71,9 @@ public final class AlterClusterConfigBatchActionTest {
           /* synonyms= */ emptyList(),
           ClusterConfig.Type.BROKER);
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private ClusterConfigManager clusterConfigManager;
+  @Mock private ClusterConfigManager clusterConfigManager;
 
   private AlterClusterConfigBatchAction alterClusterConfigBatchAction;
 
@@ -87,12 +85,12 @@ public final class AlterClusterConfigBatchActionTest {
   @Test
   public void alterClusterConfigs_existingConfig_alterConfigs() {
     expect(
-        clusterConfigManager.alterClusterConfigs(
-            CLUSTER_ID,
-            ClusterConfig.Type.BROKER,
-            Arrays.asList(
-                AlterConfigCommand.set(CONFIG_1.getName(), "newValue"),
-                AlterConfigCommand.delete(CONFIG_2.getName()))))
+            clusterConfigManager.alterClusterConfigs(
+                CLUSTER_ID,
+                ClusterConfig.Type.BROKER,
+                Arrays.asList(
+                    AlterConfigCommand.set(CONFIG_1.getName(), "newValue"),
+                    AlterConfigCommand.delete(CONFIG_2.getName()))))
         .andReturn(completedFuture(null));
     replay(clusterConfigManager);
 
@@ -104,10 +102,7 @@ public final class AlterClusterConfigBatchActionTest {
         AlterClusterConfigBatchRequest.create(
             AlterConfigBatchRequestData.create(
                 Arrays.asList(
-                    AlterEntry.builder()
-                        .setName(CONFIG_1.getName())
-                        .setValue("newValue")
-                        .build(),
+                    AlterEntry.builder().setName(CONFIG_1.getName()).setValue("newValue").build(),
                     AlterEntry.builder()
                         .setName(CONFIG_2.getName())
                         .setOperation(AlterOperation.DELETE)
@@ -121,12 +116,12 @@ public final class AlterClusterConfigBatchActionTest {
   @Test
   public void alterClusterConfigs_nonExistingCluster_throwsNotFound() {
     expect(
-        clusterConfigManager.alterClusterConfigs(
-            CLUSTER_ID,
-            ClusterConfig.Type.BROKER,
-            Arrays.asList(
-                AlterConfigCommand.set(CONFIG_1.getName(), "newValue"),
-                AlterConfigCommand.delete(CONFIG_2.getName()))))
+            clusterConfigManager.alterClusterConfigs(
+                CLUSTER_ID,
+                ClusterConfig.Type.BROKER,
+                Arrays.asList(
+                    AlterConfigCommand.set(CONFIG_1.getName(), "newValue"),
+                    AlterConfigCommand.delete(CONFIG_2.getName()))))
         .andReturn(failedFuture(new NotFoundException()));
     replay(clusterConfigManager);
 
@@ -138,10 +133,7 @@ public final class AlterClusterConfigBatchActionTest {
         AlterClusterConfigBatchRequest.create(
             AlterConfigBatchRequestData.create(
                 Arrays.asList(
-                    AlterEntry.builder()
-                        .setName(CONFIG_1.getName())
-                        .setValue("newValue")
-                        .build(),
+                    AlterEntry.builder().setName(CONFIG_1.getName()).setValue("newValue").build(),
                     AlterEntry.builder()
                         .setName(CONFIG_2.getName())
                         .setOperation(AlterOperation.DELETE)

@@ -20,16 +20,15 @@ import static java.util.Objects.requireNonNull;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import javax.annotation.Nullable;
-import javax.security.auth.login.Configuration;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.security.auth.login.Configuration;
 import org.apache.kafka.common.security.JaasUtils;
 import org.junit.rules.ExternalResource;
 
@@ -71,8 +70,7 @@ public final class JvmPropertyFileLoginModuleFixture extends ExternalResource {
             "};"));
     Files.write(
         passConfig,
-        users.entrySet()
-            .stream()
+        users.entrySet().stream()
             .map(entry -> entry.getKey() + ": " + entry.getValue().toString())
             .collect(Collectors.toList()));
     System.setProperty(JaasUtils.JAVA_LOGIN_CONFIG_PARAM, jaasConfig.toString());
@@ -109,20 +107,15 @@ public final class JvmPropertyFileLoginModuleFixture extends ExternalResource {
     @Nullable private String name;
     private ImmutableMap.Builder<String, PasswordAndRoles> users = ImmutableMap.builder();
 
-    private Builder() {
-    }
+    private Builder() {}
 
-    /**
-     * Adds a {@code username: password,role1,role2,...} line in the users properties file.
-     */
+    /** Adds a {@code username: password,role1,role2,...} line in the users properties file. */
     public Builder addUser(String username, String password, String... roles) {
       users.put(username, PasswordAndRoles.create(password, Arrays.asList(roles)));
       return this;
     }
 
-    /**
-     * Sets the name of the section in the JAAS file.
-     */
+    /** Sets the name of the section in the JAAS file. */
     public Builder setName(String name) {
       this.name = name;
       return this;
@@ -136,8 +129,7 @@ public final class JvmPropertyFileLoginModuleFixture extends ExternalResource {
   @AutoValue
   abstract static class PasswordAndRoles {
 
-    PasswordAndRoles() {
-    }
+    PasswordAndRoles() {}
 
     abstract String getPassword();
 

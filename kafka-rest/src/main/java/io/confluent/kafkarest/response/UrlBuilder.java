@@ -16,7 +16,6 @@
 package io.confluent.kafkarest.response;
 
 import com.google.auto.value.AutoValue;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -58,8 +57,7 @@ public final class UrlBuilder {
   @AutoValue
   abstract static class QueryParameter {
 
-    QueryParameter() {
-    }
+    QueryParameter() {}
 
     public abstract String getKey();
 

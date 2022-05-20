@@ -21,12 +21,10 @@ import org.apache.kafka.common.internals.KafkaFutureImpl;
 
 public final class KafkaFutures {
 
-  private KafkaFutures() {
-  }
+  private KafkaFutures() {}
 
   /**
-   * Returns a {@link KafkaFuture} that is completed exceptionally with the given {@code
-   * exception}.
+   * Returns a {@link KafkaFuture} that is completed exceptionally with the given {@code exception}.
    */
   public static <T> KafkaFuture<T> failedFuture(Throwable exception) {
     KafkaFutureImpl<T> future = new KafkaFutureImpl<>();
@@ -34,9 +32,7 @@ public final class KafkaFutures {
     return future;
   }
 
-  /**
-   * Converts the given {@link KafkaFuture} to a {@link CompletableFuture}.
-   */
+  /** Converts the given {@link KafkaFuture} to a {@link CompletableFuture}. */
   public static <T> CompletableFuture<T> toCompletableFuture(KafkaFuture<T> kafkaFuture) {
     CompletableFuture<T> completableFuture = new CompletableFuture<>();
     kafkaFuture.whenComplete(

@@ -28,8 +28,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class CreateTopicRequest {
 
-  CreateTopicRequest() {
-  }
+  CreateTopicRequest() {}
 
   @JsonProperty("topic_name")
   public abstract String getTopicName();
@@ -58,8 +57,7 @@ public abstract class CreateTopicRequest {
       @JsonProperty("replication_factor") @Nullable Short replicationFactor,
       @JsonProperty("replicas_assignments") @Nullable
           Map<Integer, List<Integer>> replicasAssignments,
-      @JsonProperty("configs") @Nullable List<ConfigEntry> configs
-  ) {
+      @JsonProperty("configs") @Nullable List<ConfigEntry> configs) {
     return builder()
         .setTopicName(topicName)
         .setPartitionsCount(partitionsCount)
@@ -73,8 +71,7 @@ public abstract class CreateTopicRequest {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setTopicName(String topicName);
 
@@ -92,8 +89,7 @@ public abstract class CreateTopicRequest {
   @AutoValue
   public abstract static class ConfigEntry {
 
-    ConfigEntry() {
-    }
+    ConfigEntry() {}
 
     @JsonProperty("name")
     public abstract String getName();

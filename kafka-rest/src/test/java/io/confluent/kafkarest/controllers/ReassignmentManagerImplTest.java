@@ -67,7 +67,6 @@ public class ReassignmentManagerImplTest {
   private static final int PARTITION_ID_2 = 2;
   private static final int PARTITION_ID_3 = 3;
 
-
   private static final Cluster CLUSTER =
       Cluster.create(CLUSTER_ID, BROKER_1, Arrays.asList(BROKER_1, BROKER_2, BROKER_3));
 
@@ -83,13 +82,12 @@ public class ReassignmentManagerImplTest {
   private static final List<Integer> REMOVING_REPLICAS_2 = Arrays.asList(4);
   private static final List<Integer> REMOVING_REPLICAS_3 = Arrays.asList(4);
 
-
-  private static final TopicPartition TOPIC_PARTITION_1 = new TopicPartition(TOPIC_1,
-      PARTITION_ID_1);
-  private static final TopicPartition TOPIC_PARTITION_2 = new TopicPartition(TOPIC_1,
-      PARTITION_ID_2);
-  private static final TopicPartition TOPIC_PARTITION_3 = new TopicPartition(TOPIC_1,
-      PARTITION_ID_3);
+  private static final TopicPartition TOPIC_PARTITION_1 =
+      new TopicPartition(TOPIC_1, PARTITION_ID_1);
+  private static final TopicPartition TOPIC_PARTITION_2 =
+      new TopicPartition(TOPIC_1, PARTITION_ID_2);
+  private static final TopicPartition TOPIC_PARTITION_3 =
+      new TopicPartition(TOPIC_1, PARTITION_ID_3);
 
   private static final PartitionReassignment PARTITION_REASSIGNMENT_1 =
       new PartitionReassignment(REPLICAS_1, ADDING_REPLICAS_1, REMOVING_REPLICAS_1);
@@ -101,24 +99,23 @@ public class ReassignmentManagerImplTest {
   private static final Map<TopicPartition, PartitionReassignment> REASSIGNMENT_MAP =
       new HashMap<>();
 
-  private static final Reassignment REASSIGNMENT_1 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_1, ADDING_REPLICAS_1, REMOVING_REPLICAS_1);
-  private static final Reassignment REASSIGNMENT_2 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_2, ADDING_REPLICAS_2, REMOVING_REPLICAS_2);
-  private static final Reassignment REASSIGNMENT_3 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_3, ADDING_REPLICAS_3, REMOVING_REPLICAS_3);
+  private static final Reassignment REASSIGNMENT_1 =
+      Reassignment.create(
+          CLUSTER_ID, TOPIC_1, PARTITION_ID_1, ADDING_REPLICAS_1, REMOVING_REPLICAS_1);
+  private static final Reassignment REASSIGNMENT_2 =
+      Reassignment.create(
+          CLUSTER_ID, TOPIC_1, PARTITION_ID_2, ADDING_REPLICAS_2, REMOVING_REPLICAS_2);
+  private static final Reassignment REASSIGNMENT_3 =
+      Reassignment.create(
+          CLUSTER_ID, TOPIC_1, PARTITION_ID_3, ADDING_REPLICAS_3, REMOVING_REPLICAS_3);
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private Admin adminClient;
+  @Mock private Admin adminClient;
 
-  @Mock
-  private ListPartitionReassignmentsResult listPartitionReassignmentsResult;
+  @Mock private ListPartitionReassignmentsResult listPartitionReassignmentsResult;
 
-  @Mock
-  private ClusterManager clusterManager;
+  @Mock private ClusterManager clusterManager;
 
   private ReassignmentManagerImpl reassignmentManager;
 
@@ -138,8 +135,7 @@ public class ReassignmentManagerImplTest {
         .andReturn(KafkaFuture.completedFuture(REASSIGNMENT_MAP));
     replay(clusterManager, adminClient, listPartitionReassignmentsResult);
 
-    List<Reassignment> reassignments = reassignmentManager.listReassignments(CLUSTER_ID)
-        .get();
+    List<Reassignment> reassignments = reassignmentManager.listReassignments(CLUSTER_ID).get();
 
     assertEquals(Arrays.asList(REASSIGNMENT_1, REASSIGNMENT_2, REASSIGNMENT_3), reassignments);
   }
@@ -215,15 +211,14 @@ public class ReassignmentManagerImplTest {
   }
 
   @Test
-  public void getReassignment_existingClusterTopicPartition_returnsReassignment()
-      throws Exception {
+  public void getReassignment_existingClusterTopicPartition_returnsReassignment() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.listPartitionReassignments()).andReturn(listPartitionReassignmentsResult);
     expect(listPartitionReassignmentsResult.reassignments())
         .andReturn(KafkaFuture.completedFuture(REASSIGNMENT_MAP));
     replay(clusterManager, adminClient, listPartitionReassignmentsResult);
-    Optional<Reassignment> reassignment = reassignmentManager.getReassignment(CLUSTER_ID, TOPIC_1
-        , PARTITION_ID_1).get();
+    Optional<Reassignment> reassignment =
+        reassignmentManager.getReassignment(CLUSTER_ID, TOPIC_1, PARTITION_ID_1).get();
 
     assertEquals(REASSIGNMENT_1, reassignment.get());
   }
@@ -248,8 +243,8 @@ public class ReassignmentManagerImplTest {
     expect(listPartitionReassignmentsResult.reassignments())
         .andReturn(KafkaFuture.completedFuture(REASSIGNMENT_MAP));
     replay(clusterManager, adminClient, listPartitionReassignmentsResult);
-    Optional<Reassignment> reassignment = reassignmentManager.getReassignment(CLUSTER_ID, "foobar",
-        3).get();
+    Optional<Reassignment> reassignment =
+        reassignmentManager.getReassignment(CLUSTER_ID, "foobar", 3).get();
 
     assertFalse(reassignment.isPresent());
   }
@@ -262,8 +257,8 @@ public class ReassignmentManagerImplTest {
         .andReturn(KafkaFuture.completedFuture(REASSIGNMENT_MAP));
     replay(clusterManager, adminClient, listPartitionReassignmentsResult);
 
-    Optional<Reassignment> reassignment = reassignmentManager.getReassignment(CLUSTER_ID, TOPIC_1
-        , 4).get();
+    Optional<Reassignment> reassignment =
+        reassignmentManager.getReassignment(CLUSTER_ID, TOPIC_1, 4).get();
 
     assertFalse(reassignment.isPresent());
   }

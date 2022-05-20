@@ -22,8 +22,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class GetConsumerAssignmentResponse {
 
-  GetConsumerAssignmentResponse() {
-  }
+  GetConsumerAssignmentResponse() {}
 
   @JsonValue
   public abstract ConsumerAssignmentData getValue();

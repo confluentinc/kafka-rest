@@ -68,11 +68,9 @@ public class AclsResourceTest {
           .setPermission(Acl.Permission.ALLOW)
           .build();
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  public AclManager aclManager;
+  @Mock public AclManager aclManager;
 
   private AclsResource aclsResource;
 
@@ -84,15 +82,15 @@ public class AclsResourceTest {
   @Test
   public void searchAcls_returnsMatchedAcls() {
     expect(
-        aclManager.searchAcls(
-            CLUSTER_ID,
-            Acl.ResourceType.TOPIC,
-            /* resourceName= */ "topic-1",
-            Acl.PatternType.MATCH,
-            /* principal= */ null,
-            /* host= */ null,
-            Acl.Operation.ANY,
-            Acl.Permission.ALLOW))
+            aclManager.searchAcls(
+                CLUSTER_ID,
+                Acl.ResourceType.TOPIC,
+                /* resourceName= */ "topic-1",
+                Acl.PatternType.MATCH,
+                /* principal= */ null,
+                /* host= */ null,
+                Acl.Operation.ANY,
+                Acl.Permission.ALLOW))
         .andReturn(completedFuture(Arrays.asList(ACL_1, ACL_2)));
     replay(aclManager);
 
@@ -177,15 +175,15 @@ public class AclsResourceTest {
   @Test
   public void createAcl_createsAcl() {
     expect(
-        aclManager.createAcl(
-            CLUSTER_ID,
-            Acl.ResourceType.TOPIC,
-            /* resourceName= */ "*",
-            Acl.PatternType.LITERAL,
-            /* principal= */ "User:alice",
-            /* host= */ "*",
-            Acl.Operation.READ,
-            Acl.Permission.ALLOW))
+            aclManager.createAcl(
+                CLUSTER_ID,
+                Acl.ResourceType.TOPIC,
+                /* resourceName= */ "*",
+                Acl.PatternType.LITERAL,
+                /* principal= */ "User:alice",
+                /* host= */ "*",
+                Acl.Operation.READ,
+                Acl.Permission.ALLOW))
         .andReturn(completedFuture(/* value= */ null));
     replay(aclManager);
 
@@ -210,15 +208,15 @@ public class AclsResourceTest {
   @Test
   public void deleteAcl_deletesAndReturnsMatchedAcls() {
     expect(
-        aclManager.deleteAcls(
-            CLUSTER_ID,
-            Acl.ResourceType.TOPIC,
-            /* resourceName= */ "topic-1",
-            Acl.PatternType.MATCH,
-            /* principal= */ null,
-            /* host= */ null,
-            Acl.Operation.ANY,
-            Acl.Permission.ALLOW))
+            aclManager.deleteAcls(
+                CLUSTER_ID,
+                Acl.ResourceType.TOPIC,
+                /* resourceName= */ "topic-1",
+                Acl.PatternType.MATCH,
+                /* principal= */ null,
+                /* host= */ null,
+                Acl.Operation.ANY,
+                Acl.Permission.ALLOW))
         .andReturn(completedFuture(Arrays.asList(ACL_1, ACL_2)));
     replay(aclManager);
 

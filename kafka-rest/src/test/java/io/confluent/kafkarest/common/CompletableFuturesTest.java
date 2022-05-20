@@ -34,7 +34,7 @@ public class CompletableFuturesTest {
         CompletableFutures.catchingCompose(
             future.thenApply(str -> str.length() + Integer.parseInt(str)),
             NumberFormatException.class,
-            error ->  CompletableFuture.completedFuture(0));
+            error -> CompletableFuture.completedFuture(0));
     future.complete("foobar"); // Integer.parseInt(str) will throw NumberFormatException
 
     assertEquals(0, (int) throwing.get());
@@ -47,7 +47,7 @@ public class CompletableFuturesTest {
         CompletableFutures.catchingCompose(
             future.thenApply(str -> str.length() + Integer.parseInt(str)),
             NumberFormatException.class,
-            error ->  CompletableFuture.completedFuture(0));
+            error -> CompletableFuture.completedFuture(0));
     future.complete(null); // str.length() will throw NullPointerException
 
     try {
@@ -65,7 +65,7 @@ public class CompletableFuturesTest {
             CompletableFutures.catchingCompose(
                 future.thenApply(str -> str.length() + Integer.parseInt(str)),
                 NumberFormatException.class,
-                error ->  CompletableFuture.completedFuture(0)),
+                error -> CompletableFuture.completedFuture(0)),
             NullPointerException.class,
             error -> CompletableFuture.completedFuture(1));
     future.complete("foobar"); // Integer.parseInt(str) will throw NumberFormatException
@@ -80,7 +80,7 @@ public class CompletableFuturesTest {
         CompletableFutures.catchingCompose(
             future.thenApply(str -> str.length() + Integer.parseInt(str)),
             NumberFormatException.class,
-            error ->  CompletableFuture.completedFuture(0));
+            error -> CompletableFuture.completedFuture(0));
     future.complete("100"); // 3 + 100 = 103
 
     assertEquals(103, (int) throwing.get());
@@ -93,7 +93,7 @@ public class CompletableFuturesTest {
         CompletableFutures.catchingCompose(
             future.thenApply(str -> str.length() + Integer.parseInt(str)),
             IOException.class,
-            error ->  CompletableFuture.completedFuture(0));
+            error -> CompletableFuture.completedFuture(0));
     future.completeExceptionally(new IOException());
 
     assertEquals(0, (int) throwing.get());
@@ -106,7 +106,7 @@ public class CompletableFuturesTest {
         CompletableFutures.catchingCompose(
             future.thenApply(str -> str.length() + Integer.parseInt(str)),
             NumberFormatException.class,
-            error ->  CompletableFuture.completedFuture(0));
+            error -> CompletableFuture.completedFuture(0));
     future.completeExceptionally(new IOException());
 
     try {
@@ -125,7 +125,7 @@ public class CompletableFuturesTest {
                 CompletableFutures.catchingCompose(
                     future.thenApply(str -> str.length() + Integer.parseInt(str)),
                     NumberFormatException.class,
-                    error ->  CompletableFuture.completedFuture(0)),
+                    error -> CompletableFuture.completedFuture(0)),
                 NullPointerException.class,
                 error -> CompletableFuture.completedFuture(1)),
             IOException.class,

@@ -15,9 +15,7 @@
 
 package io.confluent.kafkarest.response;
 
-/**
- * A factory to create absolute URLs to resources/collections in this application.
- */
+/** A factory to create absolute URLs to resources/collections in this application. */
 public interface UrlFactory {
 
   /**
@@ -29,7 +27,7 @@ public interface UrlFactory {
    * derived from {@code host.name} and {@code port} configs, {@code advertised.listeners} config,
    * {@code listeners} config, or the incoming request authority, in order of preference, and {@code
    * base_path} will be the base path this application's {@link javax.servlet.ServletContext} was
-   * installed at.</p>
+   * installed at.
    */
   String create(String... segments);
 
@@ -41,7 +39,7 @@ public interface UrlFactory {
    * derived from {@code host.name} and {@code port} configs, {@code advertised.listeners} config,
    * {@code listeners} config, or the incoming request authority, in order of preference, and {@code
    * base_path} will be the base path this application's {@link javax.servlet.ServletContext} was
-   * installed at.</p>
+   * installed at.
    */
   UrlBuilder newUrlBuilder();
 }

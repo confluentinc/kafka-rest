@@ -21,8 +21,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ProduceRecord<K, V> {
 
-  ProduceRecord() {
-  }
+  ProduceRecord() {}
 
   @Nullable
   public abstract K getKey();

@@ -34,7 +34,6 @@ import io.confluent.kafkarest.entities.AlterConfigCommand;
 import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.TopicConfig;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -160,20 +159,15 @@ public class TopicConfigManagerImplTest {
                   CONFIG_3.isSensitive(),
                   CONFIG_3.isReadOnly())));
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private Admin adminClient;
+  @Mock private Admin adminClient;
 
-  @Mock
-  private ClusterManager clusterManager;
+  @Mock private ClusterManager clusterManager;
 
-  @Mock
-  private DescribeConfigsResult describeConfigsResult;
+  @Mock private DescribeConfigsResult describeConfigsResult;
 
-  @Mock
-  private AlterConfigsResult alterConfigsResult;
+  @Mock private AlterConfigsResult alterConfigsResult;
 
   private TopicConfigManagerImpl topicConfigManager;
 
@@ -186,15 +180,14 @@ public class TopicConfigManagerImplTest {
   public void listTopicConfigs_existingTopic_returnsConfigs() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG)));
     replay(adminClient, clusterManager, describeConfigsResult);
 
     List<TopicConfig> configs = topicConfigManager.listTopicConfigs(CLUSTER_ID, TOPIC_NAME).get();
@@ -207,13 +200,12 @@ public class TopicConfigManagerImplTest {
   public void listTopicConfigs_nonExistingTopic_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
-        .andReturn(
-            KafkaFutures.failedFuture(new UnknownTopicOrPartitionException()));
+        .andReturn(KafkaFutures.failedFuture(new UnknownTopicOrPartitionException()));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
@@ -241,26 +233,32 @@ public class TopicConfigManagerImplTest {
   public void listTopicConfigs_multipleExistingTopics_returnsConfigs() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(Arrays.asList(
-                new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME)
-            )),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(
+                    Arrays.asList(
+                        new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
+                        new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(new HashMap<ConfigResource, Config>() {{
-              put(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG);
-              put(new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME), CONFIG);
-            }}));
+            KafkaFuture.completedFuture(
+                new HashMap<ConfigResource, Config>() {
+                  {
+                    put(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG);
+                    put(new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME), CONFIG);
+                  }
+                }));
     replay(adminClient, clusterManager, describeConfigsResult);
 
-    Map<String, List<TopicConfig>> configs = topicConfigManager.listTopicConfigs(CLUSTER_ID,
-        Arrays.asList(TOPIC_NAME, ALT_TOPIC_NAME)).get();
+    Map<String, List<TopicConfig>> configs =
+        topicConfigManager
+            .listTopicConfigs(CLUSTER_ID, Arrays.asList(TOPIC_NAME, ALT_TOPIC_NAME))
+            .get();
 
     assertEquals(
-        new HashSet<>(Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3)), new HashSet<>(configs.get(TOPIC_NAME)));
+        new HashSet<>(Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3)),
+        new HashSet<>(configs.get(TOPIC_NAME)));
     assertEquals(
         new HashSet<>(Arrays.asList(ALT_CONFIG_1, ALT_CONFIG_2, ALT_CONFIG_3)),
         new HashSet<>(configs.get(ALT_TOPIC_NAME)));
@@ -270,20 +268,21 @@ public class TopicConfigManagerImplTest {
   public void listTopicConfigs_multipleTopicsOneNonExistingTopic_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(Arrays.asList(
-                new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME)
-            )),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(
+                    Arrays.asList(
+                        new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
+                        new ConfigResource(ConfigResource.Type.TOPIC, ALT_TOPIC_NAME))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
-        .andReturn(
-            KafkaFutures.failedFuture(new UnknownTopicOrPartitionException()));
+        .andReturn(KafkaFutures.failedFuture(new UnknownTopicOrPartitionException()));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      topicConfigManager.listTopicConfigs(CLUSTER_ID, Arrays.asList(TOPIC_NAME, ALT_TOPIC_NAME)).get();
+      topicConfigManager
+          .listTopicConfigs(CLUSTER_ID, Arrays.asList(TOPIC_NAME, ALT_TOPIC_NAME))
+          .get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
@@ -296,7 +295,9 @@ public class TopicConfigManagerImplTest {
     replay(clusterManager);
 
     try {
-      topicConfigManager.listTopicConfigs(CLUSTER_ID, Arrays.asList(TOPIC_NAME, ALT_TOPIC_NAME)).get();
+      topicConfigManager
+          .listTopicConfigs(CLUSTER_ID, Arrays.asList(TOPIC_NAME, ALT_TOPIC_NAME))
+          .get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -307,22 +308,18 @@ public class TopicConfigManagerImplTest {
   public void getTopicConfig_existingConfig_returnsConfig() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG)));
     replay(adminClient, clusterManager, describeConfigsResult);
 
     TopicConfig config =
-        topicConfigManager.getTopicConfig(
-            CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName())
-            .get()
-            .get();
+        topicConfigManager.getTopicConfig(CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()).get().get();
 
     assertEquals(CONFIG_1, config);
   }
@@ -331,15 +328,14 @@ public class TopicConfigManagerImplTest {
   public void getTopicConfig_nonExistingConfig_returnsEmpty() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG)));
     replay(adminClient, clusterManager, describeConfigsResult);
 
     Optional<TopicConfig> config =
@@ -352,18 +348,16 @@ public class TopicConfigManagerImplTest {
   public void getTopicConfig_nonExistingTopic_throwsUnknownTopicOrPartition() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
-        .andReturn(
-            KafkaFutures.failedFuture(new UnknownTopicOrPartitionException()));
+        .andReturn(KafkaFutures.failedFuture(new UnknownTopicOrPartitionException()));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      topicConfigManager.getTopicConfig(
-          CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()).get();
+      topicConfigManager.getTopicConfig(CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
@@ -376,8 +370,7 @@ public class TopicConfigManagerImplTest {
     replay(clusterManager);
 
     try {
-      topicConfigManager.getTopicConfig(
-          CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()).get();
+      topicConfigManager.getTopicConfig(CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -388,23 +381,22 @@ public class TopicConfigManagerImplTest {
   public void updateTopicConfig_existingConfig_updatesConfig() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG)));
     expect(
-        adminClient.incrementalAlterConfigs(
-            singletonMap(
-                new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                singletonList(
-                    new AlterConfigOp(
-                        new ConfigEntry(CONFIG_1.getName(), "new-value"),
-                        AlterConfigOp.OpType.SET)))))
+            adminClient.incrementalAlterConfigs(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
+                    singletonList(
+                        new AlterConfigOp(
+                            new ConfigEntry(CONFIG_1.getName(), "new-value"),
+                            AlterConfigOp.OpType.SET)))))
         .andReturn(alterConfigsResult);
     expect(alterConfigsResult.values())
         .andReturn(
@@ -413,8 +405,9 @@ public class TopicConfigManagerImplTest {
                 KafkaFuture.completedFuture(null)));
     replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
 
-    topicConfigManager.updateTopicConfig(
-        CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName(), "new-value").get();
+    topicConfigManager
+        .updateTopicConfig(CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName(), "new-value")
+        .get();
 
     verify(adminClient);
   }
@@ -423,20 +416,18 @@ public class TopicConfigManagerImplTest {
   public void updateTopicConfig_nonExistingConfig_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG)));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      topicConfigManager.updateTopicConfig(
-          CLUSTER_ID, TOPIC_NAME, "foobar", "new-value").get();
+      topicConfigManager.updateTopicConfig(CLUSTER_ID, TOPIC_NAME, "foobar", "new-value").get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -449,18 +440,18 @@ public class TopicConfigManagerImplTest {
   public void updateTopicConfig_nonExistingTopic_throwsUnknownTopicOrPartition() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
-        .andReturn(
-            KafkaFutures.failedFuture(new UnknownTopicOrPartitionException()));
+        .andReturn(KafkaFutures.failedFuture(new UnknownTopicOrPartitionException()));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      topicConfigManager.updateTopicConfig(
-          CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName(), "new-value").get();
+      topicConfigManager
+          .updateTopicConfig(CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName(), "new-value")
+          .get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
@@ -475,8 +466,9 @@ public class TopicConfigManagerImplTest {
     replay(clusterManager, adminClient);
 
     try {
-      topicConfigManager.updateTopicConfig(
-          CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName(), "new-value").get();
+      topicConfigManager
+          .updateTopicConfig(CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName(), "new-value")
+          .get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -489,23 +481,22 @@ public class TopicConfigManagerImplTest {
   public void resetTopicConfig_existingConfig_resetsConfig() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG)));
     expect(
-        adminClient.incrementalAlterConfigs(
-            singletonMap(
-                new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                singletonList(
-                    new AlterConfigOp(
-                        new ConfigEntry(CONFIG_1.getName(), /* value= */ null),
-                        AlterConfigOp.OpType.DELETE)))))
+            adminClient.incrementalAlterConfigs(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
+                    singletonList(
+                        new AlterConfigOp(
+                            new ConfigEntry(CONFIG_1.getName(), /* value= */ null),
+                            AlterConfigOp.OpType.DELETE)))))
         .andReturn(alterConfigsResult);
     expect(alterConfigsResult.values())
         .andReturn(
@@ -514,8 +505,7 @@ public class TopicConfigManagerImplTest {
                 KafkaFuture.completedFuture(null)));
     replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
 
-    topicConfigManager.resetTopicConfig(
-        CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()).get();
+    topicConfigManager.resetTopicConfig(CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()).get();
 
     verify(adminClient);
   }
@@ -524,15 +514,14 @@ public class TopicConfigManagerImplTest {
   public void resetTopicConfig_nonExistingConfig_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG)));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
@@ -549,18 +538,16 @@ public class TopicConfigManagerImplTest {
   public void resetTopicConfig_nonExistingTopic_throwsUnknownTopicOrPartition() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
-        .andReturn(
-            KafkaFutures.failedFuture(new UnknownTopicOrPartitionException()));
+        .andReturn(KafkaFutures.failedFuture(new UnknownTopicOrPartitionException()));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      topicConfigManager.resetTopicConfig(
-          CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()).get();
+      topicConfigManager.resetTopicConfig(CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
@@ -575,8 +562,7 @@ public class TopicConfigManagerImplTest {
     replay(clusterManager, adminClient);
 
     try {
-      topicConfigManager.resetTopicConfig(
-          CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()).get();
+      topicConfigManager.resetTopicConfig(CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()).get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -589,26 +575,25 @@ public class TopicConfigManagerImplTest {
   public void alterTopicConfigs_existingConfigs_alterConfigs() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG)));
     expect(
-        adminClient.incrementalAlterConfigs(
-            singletonMap(
-                new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                Arrays.asList(
-                    new AlterConfigOp(
-                        new ConfigEntry(CONFIG_1.getName(), "new-value"),
-                        AlterConfigOp.OpType.SET),
-                    new AlterConfigOp(
-                        new ConfigEntry(CONFIG_2.getName(), /* value= */ null),
-                        AlterConfigOp.OpType.DELETE)))))
+            adminClient.incrementalAlterConfigs(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
+                    Arrays.asList(
+                        new AlterConfigOp(
+                            new ConfigEntry(CONFIG_1.getName(), "new-value"),
+                            AlterConfigOp.OpType.SET),
+                        new AlterConfigOp(
+                            new ConfigEntry(CONFIG_2.getName(), /* value= */ null),
+                            AlterConfigOp.OpType.DELETE)))))
         .andReturn(alterConfigsResult);
     expect(alterConfigsResult.values())
         .andReturn(
@@ -617,12 +602,13 @@ public class TopicConfigManagerImplTest {
                 KafkaFuture.completedFuture(null)));
     replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
 
-    topicConfigManager.alterTopicConfigs(
-        CLUSTER_ID,
-        TOPIC_NAME,
-        Arrays.asList(
-            AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
-            AlterConfigCommand.delete(CONFIG_2.getName())))
+    topicConfigManager
+        .alterTopicConfigs(
+            CLUSTER_ID,
+            TOPIC_NAME,
+            Arrays.asList(
+                AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
+                AlterConfigCommand.delete(CONFIG_2.getName())))
         .get();
 
     verify(adminClient);
@@ -634,12 +620,13 @@ public class TopicConfigManagerImplTest {
     replay(clusterManager);
 
     try {
-      topicConfigManager.alterTopicConfigs(
-          CLUSTER_ID,
-          TOPIC_NAME,
-          Arrays.asList(
-              AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
-              AlterConfigCommand.delete(CONFIG_2.getName())))
+      topicConfigManager
+          .alterTopicConfigs(
+              CLUSTER_ID,
+              TOPIC_NAME,
+              Arrays.asList(
+                  AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
+                  AlterConfigCommand.delete(CONFIG_2.getName())))
           .get();
       fail();
     } catch (ExecutionException e) {
@@ -651,26 +638,25 @@ public class TopicConfigManagerImplTest {
   public void alterTopicConfigs_nonExistingTopic_alterConfigs() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG)));
     expect(
-        adminClient.incrementalAlterConfigs(
-            singletonMap(
-                new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                Arrays.asList(
-                    new AlterConfigOp(
-                        new ConfigEntry(CONFIG_1.getName(), "new-value"),
-                        AlterConfigOp.OpType.SET),
-                    new AlterConfigOp(
-                        new ConfigEntry(CONFIG_2.getName(), /* value= */ null),
-                        AlterConfigOp.OpType.DELETE)))))
+            adminClient.incrementalAlterConfigs(
+                singletonMap(
+                    new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
+                    Arrays.asList(
+                        new AlterConfigOp(
+                            new ConfigEntry(CONFIG_1.getName(), "new-value"),
+                            AlterConfigOp.OpType.SET),
+                        new AlterConfigOp(
+                            new ConfigEntry(CONFIG_2.getName(), /* value= */ null),
+                            AlterConfigOp.OpType.DELETE)))))
         .andReturn(alterConfigsResult);
     expect(alterConfigsResult.values())
         .andReturn(
@@ -680,12 +666,13 @@ public class TopicConfigManagerImplTest {
     replay(clusterManager, adminClient, describeConfigsResult, alterConfigsResult);
 
     try {
-      topicConfigManager.alterTopicConfigs(
-          CLUSTER_ID,
-          TOPIC_NAME,
-          Arrays.asList(
-              AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
-              AlterConfigCommand.delete(CONFIG_2.getName())))
+      topicConfigManager
+          .alterTopicConfigs(
+              CLUSTER_ID,
+              TOPIC_NAME,
+              Arrays.asList(
+                  AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
+                  AlterConfigCommand.delete(CONFIG_2.getName())))
           .get();
       fail();
     } catch (ExecutionException e) {
@@ -697,24 +684,24 @@ public class TopicConfigManagerImplTest {
   public void alterTopicConfigs_oneNonExistingConfig_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(
-        adminClient.describeConfigs(
-            eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
-            anyObject(DescribeConfigsOptions.class)))
+            adminClient.describeConfigs(
+                eq(singletonList(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME))),
+                anyObject(DescribeConfigsOptions.class)))
         .andReturn(describeConfigsResult);
     expect(describeConfigsResult.all())
         .andReturn(
-            KafkaFuture.completedFuture(singletonMap(
-                new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME),
-                CONFIG)));
+            KafkaFuture.completedFuture(
+                singletonMap(new ConfigResource(ConfigResource.Type.TOPIC, TOPIC_NAME), CONFIG)));
     replay(clusterManager, adminClient, describeConfigsResult);
 
     try {
-      topicConfigManager.alterTopicConfigs(
-          CLUSTER_ID,
-          TOPIC_NAME,
-          Arrays.asList(
-              AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
-              AlterConfigCommand.delete("foobar")))
+      topicConfigManager
+          .alterTopicConfigs(
+              CLUSTER_ID,
+              TOPIC_NAME,
+              Arrays.asList(
+                  AlterConfigCommand.set(CONFIG_1.getName(), "new-value"),
+                  AlterConfigCommand.delete("foobar")))
           .get();
       fail();
     } catch (ExecutionException e) {

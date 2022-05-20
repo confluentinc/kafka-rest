@@ -35,11 +35,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
 
     ResourceCollection.Metadata expectedMetadata =
         ResourceCollection.Metadata.builder()
-            .setSelf(
-                baseUrl
-                    + "/v3/clusters/" + clusterId
-                    + "/brokers/" + brokerId
-                    + "/configs")
+            .setSelf(baseUrl + "/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs")
             .build();
 
     BrokerConfigData expectedConfig1 =
@@ -48,12 +44,16 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                 Resource.Metadata.builder()
                     .setSelf(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/brokers/" + brokerId
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/brokers/"
+                            + brokerId
                             + "/configs/max.connections")
                     .setResourceName(
-                        "crn:///kafka=" + clusterId
-                            + "/broker=" + brokerId
+                        "crn:///kafka="
+                            + clusterId
+                            + "/broker="
+                            + brokerId
                             + "/config=max.connections")
                     .build())
             .setClusterId(clusterId)
@@ -78,14 +78,17 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
             .setMetadata(
                 Resource.Metadata.builder()
                     .setSelf(
-
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/brokers/" + brokerId
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/brokers/"
+                            + brokerId
                             + "/configs/compression.type")
                     .setResourceName(
-                        "crn:///kafka=" + clusterId
-                            + "/broker=" + brokerId
+                        "crn:///kafka="
+                            + clusterId
+                            + "/broker="
+                            + brokerId
                             + "/config=compression.type")
                     .build())
             .setClusterId(clusterId)
@@ -111,12 +114,16 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                 Resource.Metadata.builder()
                     .setSelf(
                         baseUrl
-                            + "/v3/clusters/" + clusterId
-                            + "/brokers/" + brokerId
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/brokers/"
+                            + brokerId
                             + "/configs/log.cleaner.threads")
                     .setResourceName(
-                        "crn:///kafka=" + clusterId
-                            + "/broker=" + brokerId
+                        "crn:///kafka="
+                            + clusterId
+                            + "/broker="
+                            + brokerId
                             + "/config=log.cleaner.threads")
                     .build())
             .setClusterId(clusterId)
@@ -193,12 +200,16 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     Resource.Metadata.builder()
                         .setSelf(
                             baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/brokers/" + brokerId
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/brokers/"
+                                + brokerId
                                 + "/configs/max.connections")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
-                                + "/broker=" + brokerId
+                            "crn:///kafka="
+                                + clusterId
+                                + "/broker="
+                                + brokerId
                                 + "/config=max.connections")
                         .build())
                 .setClusterId(clusterId)
@@ -219,10 +230,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                 .build());
 
     Response response =
-        request(
-            "/v3/clusters/" + clusterId
-                + "/brokers/" + brokerId
-                + "/configs/max.connections")
+        request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/max.connections")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
@@ -277,12 +285,16 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     Resource.Metadata.builder()
                         .setSelf(
                             baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/brokers/" + brokerId
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/brokers/"
+                                + brokerId
                                 + "/configs/compression.type")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
-                                + "/broker=" + brokerId
+                            "crn:///kafka="
+                                + clusterId
+                                + "/broker="
+                                + brokerId
                                 + "/config=compression.type")
                         .build())
                 .setClusterId(clusterId)
@@ -303,10 +315,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                 .build());
 
     Response responseBeforeUpdate =
-        request(
-            "/v3/clusters/" + clusterId
-                + "/brokers/" + brokerId
-                + "/configs/compression.type")
+        request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/compression.type")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.OK.getStatusCode(), responseBeforeUpdate.getStatus());
@@ -316,8 +325,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     assertEquals(expectedBeforeUpdate, actualBeforeUpdate);
 
     Response updateResponse =
-        request(
-            "/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/compression.type")
+        request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/compression.type")
             .accept(MediaType.APPLICATION_JSON)
             .put(Entity.entity("{\"value\":\"gzip\"}", MediaType.APPLICATION_JSON));
     assertEquals(Status.NO_CONTENT.getStatusCode(), updateResponse.getStatus());
@@ -329,12 +337,16 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     Resource.Metadata.builder()
                         .setSelf(
                             baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/brokers/" + brokerId
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/brokers/"
+                                + brokerId
                                 + "/configs/compression.type")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
-                                + "/broker=" + brokerId
+                            "crn:///kafka="
+                                + clusterId
+                                + "/broker="
+                                + brokerId
                                 + "/config=compression.type")
                         .build())
                 .setClusterId(clusterId)
@@ -363,9 +375,11 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
         () -> {
           Response responseAfterUpdate =
               request(
-                  "/v3/clusters/" + clusterId
-                      + "/brokers/" + brokerId
-                      + "/configs/compression.type")
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/brokers/"
+                          + brokerId
+                          + "/configs/compression.type")
                   .accept(MediaType.APPLICATION_JSON)
                   .get();
           assertEquals(Status.OK.getStatusCode(), responseAfterUpdate.getStatus());
@@ -376,8 +390,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
         });
 
     Response resetResponse =
-        request(
-            "/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/compression.type")
+        request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs/compression.type")
             .accept(MediaType.APPLICATION_JSON)
             .delete();
     assertEquals(Status.NO_CONTENT.getStatusCode(), resetResponse.getStatus());
@@ -389,12 +402,16 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     Resource.Metadata.builder()
                         .setSelf(
                             baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/brokers/" + brokerId
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/brokers/"
+                                + brokerId
                                 + "/configs/compression.type")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
-                                + "/broker=" + brokerId
+                            "crn:///kafka="
+                                + clusterId
+                                + "/broker="
+                                + brokerId
                                 + "/config=compression.type")
                         .build())
                 .setClusterId(clusterId)
@@ -418,9 +435,11 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
         () -> {
           Response responseAfterReset =
               request(
-                  "/v3/clusters/" + clusterId
-                      + "/brokers/" + brokerId
-                      + "/configs/compression.type")
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/brokers/"
+                          + brokerId
+                          + "/configs/compression.type")
                   .accept(MediaType.APPLICATION_JSON)
                   .get();
           assertEquals(Status.OK.getStatusCode(), responseAfterReset.getStatus());
@@ -516,8 +535,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     int brokerId = getBrokers().get(0).id();
 
     Response response =
-        request("/v3/clusters/foobar/brokers/" + brokerId + "/configs/compression.type")
-            .delete();
+        request("/v3/clusters/foobar/brokers/" + brokerId + "/configs/compression.type").delete();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -528,8 +546,7 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
     int brokerId = getBrokers().get(0).id();
 
     Response updateResponse =
-        request(
-            "/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs:alter")
+        request("/v3/clusters/" + clusterId + "/brokers/" + brokerId + "/configs:alter")
             .accept(MediaType.APPLICATION_JSON)
             .post(
                 Entity.entity(
@@ -546,12 +563,16 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     Resource.Metadata.builder()
                         .setSelf(
                             baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/brokers/" + brokerId
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/brokers/"
+                                + brokerId
                                 + "/configs/max.connections")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
-                                + "/broker=" + brokerId
+                            "crn:///kafka="
+                                + clusterId
+                                + "/broker="
+                                + brokerId
                                 + "/config=max.connections")
                         .build())
                 .setClusterId(clusterId)
@@ -582,12 +603,16 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
                     Resource.Metadata.builder()
                         .setSelf(
                             baseUrl
-                                + "/v3/clusters/" + clusterId
-                                + "/brokers/" + brokerId
+                                + "/v3/clusters/"
+                                + clusterId
+                                + "/brokers/"
+                                + brokerId
                                 + "/configs/compression.type")
                         .setResourceName(
-                            "crn:///kafka=" + clusterId
-                                + "/broker=" + brokerId
+                            "crn:///kafka="
+                                + clusterId
+                                + "/broker="
+                                + brokerId
                                 + "/config=compression.type")
                         .build())
                 .setClusterId(clusterId)
@@ -616,9 +641,11 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
         () -> {
           Response responseAfterUpdate1 =
               request(
-                  "/v3/clusters/" + clusterId
-                      + "/brokers/" + brokerId
-                      + "/configs/max.connections")
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/brokers/"
+                          + brokerId
+                          + "/configs/max.connections")
                   .accept(MediaType.APPLICATION_JSON)
                   .get();
           assertEquals(Status.OK.getStatusCode(), responseAfterUpdate1.getStatus());
@@ -631,9 +658,11 @@ public class BrokerConfigsResourceIntegrationTest extends ClusterTestHarness {
         () -> {
           Response responseAfterUpdate2 =
               request(
-                  "/v3/clusters/" + clusterId
-                      + "/brokers/" + brokerId
-                      + "/configs/compression.type")
+                      "/v3/clusters/"
+                          + clusterId
+                          + "/brokers/"
+                          + brokerId
+                          + "/configs/compression.type")
                   .accept(MediaType.APPLICATION_JSON)
                   .get();
           assertEquals(Status.OK.getStatusCode(), responseAfterUpdate2.getStatus());

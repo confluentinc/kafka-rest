@@ -40,9 +40,7 @@ import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.junit.rules.ExternalResource;
 
-/**
- * An {@link ExternalResource} that runs a Kafka broker.
- */
+/** An {@link ExternalResource} that runs a Kafka broker. */
 public final class KafkaBrokerFixture extends ExternalResource {
 
   private static final ImmutableMap<String, String> CONFIG_TEMPLATE =
@@ -133,8 +131,7 @@ public final class KafkaBrokerFixture extends ExternalResource {
 
   private String getBrokerPlainSaslJaasConfig() {
     String userEntries =
-        users.entrySet()
-            .stream()
+        users.entrySet().stream()
             .map(entry -> String.format("user_%s=\"%s\"", entry.getKey(), entry.getValue()))
             .collect(Collectors.joining(" "));
     return "org.apache.kafka.common.security.plain.PlainLoginModule required "
@@ -224,9 +221,7 @@ public final class KafkaBrokerFixture extends ExternalResource {
   }
 
   public static Builder builder() {
-    return new Builder()
-        .addUser("kafka", "kafka-pass")
-        .addSuperUser("kafka");
+    return new Builder().addUser("kafka", "kafka-pass").addSuperUser("kafka");
   }
 
   public static final class Builder {
@@ -239,46 +234,35 @@ public final class KafkaBrokerFixture extends ExternalResource {
     private final ImmutableSet.Builder<String> superUsers = ImmutableSet.builder();
     private ZookeeperFixture zookeeper = null;
 
-    private Builder() {
-    }
+    private Builder() {}
 
-    /**
-     * Adds a SASL PLAIN user.
-     */
+    /** Adds a SASL PLAIN user. */
     public Builder addUser(String username, String password) {
       users.put(username, password);
       return this;
     }
 
-    /**
-     * @see #addUser(String, String)
-     */
+    /** @see #addUser(String, String) */
     public Builder addUsers(Map<String, String> users) {
       this.users.putAll(users);
       return this;
     }
 
-    /**
-     * Sets the given SASL PLAIN user as a super-user.
-     */
+    /** Sets the given SASL PLAIN user as a super-user. */
     public Builder addSuperUser(String username) {
       checkArgument(users.build().containsKey(username));
       superUsers.add(username);
       return this;
     }
 
-    /**
-     * @see #addSuperUser(String)
-     */
+    /** @see #addSuperUser(String) */
     public Builder addSuperUsers(Set<String> superUsers) {
       checkArgument(users.build().keySet().containsAll(superUsers));
       this.superUsers.addAll(superUsers);
       return this;
     }
 
-    /**
-     * Sets the broker ID.
-     */
+    /** Sets the broker ID. */
     public Builder setBrokerId(int brokerId) {
       checkArgument(brokerId >= 0);
       this.brokerId = brokerId;
@@ -295,17 +279,13 @@ public final class KafkaBrokerFixture extends ExternalResource {
       return this;
     }
 
-    /**
-     * Sets the given broker config.
-     */
+    /** Sets the given broker config. */
     public Builder setConfig(String name, String value) {
       configs.put(name, value);
       return this;
     }
 
-    /**
-     * @see #setConfig(String, String)
-     */
+    /** @see #setConfig(String, String) */
     public Builder setConfigs(Map<String, String> configs) {
       this.configs.putAll(configs);
       return this;

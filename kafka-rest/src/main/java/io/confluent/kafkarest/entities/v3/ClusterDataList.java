@@ -23,8 +23,7 @@ import java.util.List;
 @AutoValue
 public abstract class ClusterDataList extends ResourceCollection<ClusterData> {
 
-  ClusterDataList() {
-  }
+  ClusterDataList() {}
 
   public static Builder builder() {
     return new AutoValue_ClusterDataList.Builder().setKind("KafkaClusterList");
@@ -34,20 +33,14 @@ public abstract class ClusterDataList extends ResourceCollection<ClusterData> {
   static ClusterDataList fromJson(
       @JsonProperty("kind") String kind,
       @JsonProperty("metadata") Metadata metadata,
-      @JsonProperty("data") List<ClusterData> data
-  ) {
-    return builder()
-        .setKind(kind)
-        .setMetadata(metadata)
-        .setData(data)
-        .build();
+      @JsonProperty("data") List<ClusterData> data) {
+    return builder().setKind(kind).setMetadata(metadata).setData(data).build();
   }
 
   @AutoValue.Builder
   public abstract static class Builder
       extends ResourceCollection.Builder<ClusterData, ClusterDataList, Builder> {
 
-    Builder() {
-    }
+    Builder() {}
   }
 }

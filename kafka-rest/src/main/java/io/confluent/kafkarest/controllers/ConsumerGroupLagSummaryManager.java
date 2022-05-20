@@ -19,14 +19,10 @@ import io.confluent.kafkarest.entities.ConsumerGroupLagSummary;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * A service to manage Kafka {@link ConsumerGroupLagSummary ConsumerGroupLagSummary}.
- */
+/** A service to manage Kafka {@link ConsumerGroupLagSummary ConsumerGroupLagSummary}. */
 public interface ConsumerGroupLagSummaryManager {
 
-  /**
-   * Returns the Kafka {@link ConsumerGroupLagSummary} with the given {@code consumerGroupId}.
-   */
+  /** Returns the Kafka {@link ConsumerGroupLagSummary} with the given {@code consumerGroupId}. */
   CompletableFuture<Optional<ConsumerGroupLagSummary>> getConsumerGroupLagSummary(
       String clusterId, String consumerGroupId);
 }

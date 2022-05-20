@@ -40,9 +40,7 @@ public interface AclManager {
       Operation operation,
       Permission permissionType);
 
-  /**
-   * Creates a Kafka {@link Acl}.
-   */
+  /** Creates a Kafka {@link Acl}. */
   CompletableFuture<Void> createAcl(
       String clusterId,
       ResourceType resourceType,

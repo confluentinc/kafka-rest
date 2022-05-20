@@ -59,7 +59,6 @@ public class EnumConverterProviderTest {
   }
 
   public enum EnumWithNoJsonValue {
-
     FOO("abc"),
 
     BAR("123");
@@ -76,7 +75,6 @@ public class EnumConverterProviderTest {
   }
 
   public enum EnumWithSingleJsonValue {
-
     FOO("abc"),
 
     BAR("123");
@@ -94,7 +92,6 @@ public class EnumConverterProviderTest {
   }
 
   public enum EnumWithMultipleJsonValue {
-
     FOO("abc"),
 
     BAR("123");
@@ -117,7 +114,6 @@ public class EnumConverterProviderTest {
   }
 
   private enum EnumWithPrivateJsonValue {
-
     FOO("abc"),
 
     BAR("123");
@@ -135,7 +131,6 @@ public class EnumConverterProviderTest {
   }
 
   public enum EnumWithNonStringJsonValue {
-
     FOO("abc"),
 
     BAR("123");

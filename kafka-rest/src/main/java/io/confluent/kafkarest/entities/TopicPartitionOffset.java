@@ -20,8 +20,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class TopicPartitionOffset {
 
-  TopicPartitionOffset() {
-  }
+  TopicPartitionOffset() {}
 
   public abstract String getTopic();
 

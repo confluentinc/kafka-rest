@@ -38,9 +38,7 @@ import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.DescribeConfigsOptions;
 import org.apache.kafka.common.config.ConfigResource;
 
-/**
- * An abstract base class for managers of subtypes of {@link AbstractConfig}.
- */
+/** An abstract base class for managers of subtypes of {@link AbstractConfig}. */
 abstract class AbstractConfigManager<
     T extends AbstractConfig, B extends AbstractConfig.Builder<T, B>> {
 
@@ -58,39 +56,43 @@ abstract class AbstractConfigManager<
         .thenApply(result -> result.get(resourceId));
   }
 
-  final CompletableFuture<Map<ConfigResource,List<T>>> listConfigs(
+  final CompletableFuture<Map<ConfigResource, List<T>>> listConfigs(
       String clusterId, List<ConfigResource> resourceIds, B prototype) {
-    return clusterManager.getCluster(clusterId)
+    return clusterManager
+        .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenCompose(
             cluster ->
                 KafkaFutures.toCompletableFuture(
-                    adminClient.describeConfigs(
-                        resourceIds,
-                        new DescribeConfigsOptions().includeSynonyms(true))
-                        .all()
-                ))
+                    adminClient
+                        .describeConfigs(
+                            resourceIds, new DescribeConfigsOptions().includeSynonyms(true))
+                        .all()))
         .thenApply(
-            configsMap -> configsMap.entrySet().stream()
-                .collect(
-                    Collectors.toMap(
-                        e -> e.getKey(),
-                        e -> e.getValue().entries().stream()
-                            .map(
-                                entry ->
-                                    prototype.setName(entry.name())
-                                        .setValue(entry.value())
-                                        .setDefault(entry.isDefault())
-                                        .setReadOnly(entry.isReadOnly())
-                                        .setSensitive(entry.isSensitive())
-                                        .setSource(ConfigSource.fromAdminConfigSource(
-                                            entry.source()))
-                                        .setSynonyms(
-                                            entry.synonyms().stream()
-                                                .map(ConfigSynonym::fromAdminConfigSynonym)
-                                                .collect(Collectors.toList()))
-                                        .build())
-                            .collect(Collectors.toList()))));
+            configsMap ->
+                configsMap.entrySet().stream()
+                    .collect(
+                        Collectors.toMap(
+                            e -> e.getKey(),
+                            e ->
+                                e.getValue().entries().stream()
+                                    .map(
+                                        entry ->
+                                            prototype
+                                                .setName(entry.name())
+                                                .setValue(entry.value())
+                                                .setDefault(entry.isDefault())
+                                                .setReadOnly(entry.isReadOnly())
+                                                .setSensitive(entry.isSensitive())
+                                                .setSource(
+                                                    ConfigSource.fromAdminConfigSource(
+                                                        entry.source()))
+                                                .setSynonyms(
+                                                    entry.synonyms().stream()
+                                                        .map(ConfigSynonym::fromAdminConfigSynonym)
+                                                        .collect(Collectors.toList()))
+                                                .build())
+                                    .collect(Collectors.toList()))));
   }
 
   final CompletableFuture<Optional<T>> getConfig(
@@ -125,16 +127,15 @@ abstract class AbstractConfigManager<
    */
   final CompletableFuture<Void> unsafeUpdateConfig(
       String clusterId, ConfigResource resourceId, String name, String newValue) {
-    return clusterManager.getCluster(clusterId)
+    return clusterManager
+        .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenCompose(
             cluster ->
                 alterConfigs(resourceId, singletonList(AlterConfigCommand.set(name, newValue))));
   }
 
-  /**
-   * Resets the config {@code name} to its default value, checking if the config exists first.
-   */
+  /** Resets the config {@code name} to its default value, checking if the config exists first. */
   final CompletableFuture<Void> safeResetConfig(
       String clusterId, ConfigResource resourceId, B prototype, String name) {
     return getConfig(clusterId, resourceId, prototype, name)
@@ -157,7 +158,8 @@ abstract class AbstractConfigManager<
    */
   final CompletableFuture<Void> unsafeResetConfig(
       String clusterId, ConfigResource resourceId, String name) {
-    return clusterManager.getCluster(clusterId)
+    return clusterManager
+        .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenCompose(
             cluster -> alterConfigs(resourceId, singletonList(AlterConfigCommand.delete(name))));
@@ -178,10 +180,7 @@ abstract class AbstractConfigManager<
                   throw new NotFoundException(
                       String.format(
                           "Config %s cannot be found for %s %s in cluster %s.",
-                          command.getName(),
-                          resourceId.type(),
-                          resourceId.name(),
-                          clusterId));
+                          command.getName(), resourceId.type(), resourceId.name(), clusterId));
                 }
               }
               return configs;
@@ -195,7 +194,8 @@ abstract class AbstractConfigManager<
    */
   final CompletableFuture<Void> unsafeAlterConfigs(
       String clusterId, ConfigResource resourceId, List<AlterConfigCommand> commands) {
-    return clusterManager.getCluster(clusterId)
+    return clusterManager
+        .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
         .thenCompose(cluster -> alterConfigs(resourceId, commands));
   }
@@ -203,12 +203,13 @@ abstract class AbstractConfigManager<
   private CompletableFuture<Void> alterConfigs(
       ConfigResource resourceId, List<AlterConfigCommand> commands) {
     return KafkaFutures.toCompletableFuture(
-        adminClient.incrementalAlterConfigs(
-            singletonMap(
-                resourceId,
-                commands.stream()
-                    .map(AlterConfigCommand::toAlterConfigOp)
-                    .collect(Collectors.toList())))
+        adminClient
+            .incrementalAlterConfigs(
+                singletonMap(
+                    resourceId,
+                    commands.stream()
+                        .map(AlterConfigCommand::toAlterConfigOp)
+                        .collect(Collectors.toList())))
             .values()
             .get(resourceId));
   }

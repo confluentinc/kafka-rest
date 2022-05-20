@@ -27,12 +27,12 @@ import io.confluent.kafkarest.controllers.BrokerManager;
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.BrokerConfig;
 import io.confluent.kafkarest.entities.ConfigSource;
+import io.confluent.kafkarest.entities.v3.BrokerConfigData;
 import io.confluent.kafkarest.entities.v3.BrokerConfigDataList;
 import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
 import io.confluent.kafkarest.entities.v3.ListBrokerConfigsResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
-import io.confluent.kafkarest.entities.v3.BrokerConfigData;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
@@ -90,14 +90,11 @@ public class ListAllBrokersConfigsActionTest {
           ConfigSource.DYNAMIC_BROKER_CONFIG,
           /* synonyms= */ emptyList());
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private BrokerConfigManager brokerConfigManager;
+  @Mock private BrokerConfigManager brokerConfigManager;
 
-  @Mock
-  private BrokerManager brokerManager;
+  @Mock private BrokerManager brokerManager;
 
   private ListAllBrokersConfigsAction allBrokersConfigsAction;
 
@@ -115,20 +112,17 @@ public class ListAllBrokersConfigsActionTest {
   public void listAllBrokerConfigs_existingBrokers_returnsConfigs() {
     expect(brokerManager.listBrokers(CLUSTER_ID))
         .andReturn(
-            completedFuture(Arrays.asList(Broker.create(
-                CLUSTER_ID,
-                BROKER_ID,
-                "localhost",
-                9092,
-                "us-east"
-            )))
-        );
+            completedFuture(
+                Arrays.asList(Broker.create(CLUSTER_ID, BROKER_ID, "localhost", 9092, "us-east"))));
 
     expect(brokerConfigManager.listAllBrokerConfigs(CLUSTER_ID, Arrays.asList(BROKER_ID)))
         .andReturn(
-            completedFuture(new HashMap<Integer, List<BrokerConfig>>() {{
-              put(BROKER_ID, Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3));
-            }}));
+            completedFuture(
+                new HashMap<Integer, List<BrokerConfig>>() {
+                  {
+                    put(BROKER_ID, Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3));
+                  }
+                }));
     replay(brokerManager, brokerConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -139,16 +133,14 @@ public class ListAllBrokersConfigsActionTest {
             BrokerConfigDataList.builder()
                 .setMetadata(
                     ResourceCollection.Metadata.builder()
-                        .setSelf(
-                            "/v3/clusters/cluster-1/brokers/-/configs")
+                        .setSelf("/v3/clusters/cluster-1/brokers/-/configs")
                         .build())
                 .setData(
                     Arrays.asList(
                         BrokerConfigData.builder()
                             .setMetadata(
                                 Resource.Metadata.builder()
-                                    .setSelf(
-                                        "/v3/clusters/cluster-1/brokers/1/configs/config-1")
+                                    .setSelf("/v3/clusters/cluster-1/brokers/1/configs/config-1")
                                     .setResourceName(
                                         "crn:///kafka=cluster-1/broker=1/config=config-1")
                                     .build())
@@ -168,8 +160,7 @@ public class ListAllBrokersConfigsActionTest {
                         BrokerConfigData.builder()
                             .setMetadata(
                                 Resource.Metadata.builder()
-                                    .setSelf(
-                                        "/v3/clusters/cluster-1/brokers/1/configs/config-2")
+                                    .setSelf("/v3/clusters/cluster-1/brokers/1/configs/config-2")
                                     .setResourceName(
                                         "crn:///kafka=cluster-1/broker=1/config=config-2")
                                     .build())
@@ -189,8 +180,7 @@ public class ListAllBrokersConfigsActionTest {
                         BrokerConfigData.builder()
                             .setMetadata(
                                 Resource.Metadata.builder()
-                                    .setSelf(
-                                        "/v3/clusters/cluster-1/brokers/1/configs/config-3")
+                                    .setSelf("/v3/clusters/cluster-1/brokers/1/configs/config-3")
                                     .setResourceName(
                                         "crn:///kafka=cluster-1/broker=1/config=config-3")
                                     .build())
@@ -214,14 +204,10 @@ public class ListAllBrokersConfigsActionTest {
 
   @Test
   public void listAllBrokerConfigs_noBrokers_returnsEmptyConfigs() {
-    expect(brokerManager.listBrokers(CLUSTER_ID))
-        .andReturn(
-            completedFuture(new ArrayList<>())
-        );
+    expect(brokerManager.listBrokers(CLUSTER_ID)).andReturn(completedFuture(new ArrayList<>()));
 
     expect(brokerConfigManager.listAllBrokerConfigs(CLUSTER_ID, new ArrayList<>()))
-        .andReturn(
-            completedFuture(new HashMap<Integer, List<BrokerConfig>>()));
+        .andReturn(completedFuture(new HashMap<Integer, List<BrokerConfig>>()));
     replay(brokerManager, brokerConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -232,8 +218,7 @@ public class ListAllBrokersConfigsActionTest {
             BrokerConfigDataList.builder()
                 .setMetadata(
                     ResourceCollection.Metadata.builder()
-                        .setSelf(
-                            "/v3/clusters/cluster-1/brokers/-/configs")
+                        .setSelf("/v3/clusters/cluster-1/brokers/-/configs")
                         .build())
                 .setData(new ArrayList<>())
                 .build());
@@ -243,8 +228,7 @@ public class ListAllBrokersConfigsActionTest {
 
   @Test
   public void listAllBrokerConfigs_nonExistingCluster_throwsNotFound() {
-    expect(brokerManager.listBrokers(CLUSTER_ID))
-        .andReturn(failedFuture(new NotFoundException()));
+    expect(brokerManager.listBrokers(CLUSTER_ID)).andReturn(failedFuture(new NotFoundException()));
     replay(brokerManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -252,5 +236,4 @@ public class ListAllBrokersConfigsActionTest {
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }
-
 }

@@ -22,8 +22,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class ListTopicConfigsResponse {
 
-  ListTopicConfigsResponse() {
-  }
+  ListTopicConfigsResponse() {}
 
   @JsonValue
   public abstract TopicConfigDataList getValue();

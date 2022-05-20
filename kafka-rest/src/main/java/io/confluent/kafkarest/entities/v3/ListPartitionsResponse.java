@@ -22,8 +22,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class ListPartitionsResponse {
 
-  ListPartitionsResponse() {
-  }
+  ListPartitionsResponse() {}
 
   @JsonValue
   public abstract PartitionDataList getValue();

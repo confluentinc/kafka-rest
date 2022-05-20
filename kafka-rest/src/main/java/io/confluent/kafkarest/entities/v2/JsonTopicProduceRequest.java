@@ -29,9 +29,7 @@ import javax.validation.constraints.PositiveOrZero;
 
 public final class JsonTopicProduceRequest {
 
-  @NotEmpty
-  @Nullable
-  private final List<JsonTopicProduceRecord> records;
+  @NotEmpty @Nullable private final List<JsonTopicProduceRecord> records;
 
   @JsonCreator
   private JsonTopicProduceRequest(
@@ -39,8 +37,7 @@ public final class JsonTopicProduceRequest {
       @JsonProperty("key_schema") @Nullable String keySchema,
       @JsonProperty("key_schema_id") @Nullable Integer keySchemaId,
       @JsonProperty("value_schema") @Nullable String valueSchema,
-      @JsonProperty("value_schema_id") @Nullable Integer valueSchemaId
-  ) {
+      @JsonProperty("value_schema_id") @Nullable Integer valueSchemaId) {
     this.records = records;
   }
 
@@ -102,22 +99,17 @@ public final class JsonTopicProduceRequest {
 
   public static final class JsonTopicProduceRecord {
 
-    @Nullable
-    private final Object key;
+    @Nullable private final Object key;
 
-    @Nullable
-    private final Object value;
+    @Nullable private final Object value;
 
-    @PositiveOrZero
-    @Nullable
-    private final Integer partition;
+    @PositiveOrZero @Nullable private final Integer partition;
 
     @JsonCreator
     public JsonTopicProduceRecord(
         @JsonProperty("key") @Nullable Object key,
         @JsonProperty("value") @Nullable Object value,
-        @JsonProperty("partition") @Nullable Integer partition
-    ) {
+        @JsonProperty("partition") @Nullable Integer partition) {
       this.key = key;
       this.value = value;
       this.partition = partition;

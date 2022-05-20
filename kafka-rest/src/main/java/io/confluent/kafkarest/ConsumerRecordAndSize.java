@@ -17,9 +17,7 @@ package io.confluent.kafkarest;
 
 import io.confluent.kafkarest.entities.ConsumerRecord;
 
-/**
- * Simple wrapper for a ConsumerRecord and an approximate serialized size.
- */
+/** Simple wrapper for a ConsumerRecord and an approximate serialized size. */
 public class ConsumerRecordAndSize<K, V> {
 
   private final ConsumerRecord<K, V> record;

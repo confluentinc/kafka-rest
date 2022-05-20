@@ -22,8 +22,7 @@ import javax.ws.rs.NotFoundException;
 
 final class Entities {
 
-  private Entities() {
-  }
+  private Entities() {}
 
   static <T> T checkEntityExists(Optional<T> entity, String message, Object... args) {
     return entity.orElseThrow(() -> new NotFoundException(String.format(message, args)));

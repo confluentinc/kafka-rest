@@ -23,8 +23,7 @@ import java.util.List;
 @AutoValue
 public abstract class ConsumerGroupDataList extends ResourceCollection<ConsumerGroupData> {
 
-  ConsumerGroupDataList() {
-  }
+  ConsumerGroupDataList() {}
 
   public static Builder builder() {
     return new AutoValue_ConsumerGroupDataList.Builder().setKind("KafkaConsumerGroupList");
@@ -34,20 +33,14 @@ public abstract class ConsumerGroupDataList extends ResourceCollection<ConsumerG
   static ConsumerGroupDataList fromJson(
       @JsonProperty("kind") String kind,
       @JsonProperty("metadata") Metadata metadata,
-      @JsonProperty("data") List<ConsumerGroupData> data
-  ) {
-    return builder()
-        .setKind(kind)
-        .setMetadata(metadata)
-        .setData(data)
-        .build();
+      @JsonProperty("data") List<ConsumerGroupData> data) {
+    return builder().setKind(kind).setMetadata(metadata).setData(data).build();
   }
 
   @AutoValue.Builder
   public abstract static class Builder
       extends ResourceCollection.Builder<ConsumerGroupData, ConsumerGroupDataList, Builder> {
 
-    Builder() {
-    }
+    Builder() {}
   }
 }

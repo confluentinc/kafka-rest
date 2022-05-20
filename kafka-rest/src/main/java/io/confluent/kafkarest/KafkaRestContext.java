@@ -24,9 +24,7 @@ public interface KafkaRestContext {
 
   KafkaRestConfig getConfig();
 
-  /**
-   * @deprecated Use {@link #getProducer()} instead.
-   */
+  /** @deprecated Use {@link #getProducer()} instead. */
   @Deprecated
   ProducerPool getProducerPool();
 

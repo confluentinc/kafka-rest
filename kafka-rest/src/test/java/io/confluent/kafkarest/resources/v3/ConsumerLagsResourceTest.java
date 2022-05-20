@@ -76,14 +76,12 @@ public class ConsumerLagsResourceTest {
           .setLogEndOffset(200L)
           .build();
 
-  private static final List<ConsumerLag> CONSUMER_LAG_LIST = Arrays
-      .asList(CONSUMER_LAG_1, CONSUMER_LAG_2);
+  private static final List<ConsumerLag> CONSUMER_LAG_LIST =
+      Arrays.asList(CONSUMER_LAG_1, CONSUMER_LAG_2);
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private ConsumerLagManager consumerLagManager;
+  @Mock private ConsumerLagManager consumerLagManager;
 
   private ConsumerLagsResource consumerLagsResource;
 
@@ -108,8 +106,7 @@ public class ConsumerLagsResourceTest {
             ConsumerLagDataList.builder()
                 .setMetadata(
                     ResourceCollection.Metadata.builder()
-                        .setSelf(
-                            "/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags")
+                        .setSelf("/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags")
                         .build())
                 .setData(
                     Arrays.asList(
@@ -135,7 +132,7 @@ public class ConsumerLagsResourceTest {
                                             + "lag=topic-1/partition=1")
                                     .build())
                             .build()))
-            .build());
+                .build());
 
     assertEquals(expected, response.getValue());
   }
@@ -154,10 +151,12 @@ public class ConsumerLagsResourceTest {
             ConsumerLagData.fromConsumerLag(CONSUMER_LAG_1)
                 .setMetadata(
                     Resource.Metadata.builder()
-                        .setSelf("/v3/clusters/cluster-1/consumer-groups/consumer-group-1/"
-                            + "lags/topic-1/partitions/1")
-                        .setResourceName("crn:///kafka=cluster-1/consumer-group=consumer-group-1/"
-                            + "lag=topic-1/partition=1")
+                        .setSelf(
+                            "/v3/clusters/cluster-1/consumer-groups/consumer-group-1/"
+                                + "lags/topic-1/partitions/1")
+                        .setResourceName(
+                            "crn:///kafka=cluster-1/consumer-group=consumer-group-1/"
+                                + "lag=topic-1/partition=1")
                         .build())
                 .build());
 
@@ -166,8 +165,7 @@ public class ConsumerLagsResourceTest {
 
   @Test
   public void getConsumerLag_nonExistingConsumerLag_throwsNotFound() {
-    expect(consumerLagManager.getConsumerLag(
-        CLUSTER_ID, CONSUMER_GROUP_ID, TOPIC, 1))
+    expect(consumerLagManager.getConsumerLag(CLUSTER_ID, CONSUMER_GROUP_ID, TOPIC, 1))
         .andReturn(completedFuture(Optional.empty()));
     replay(consumerLagManager);
 

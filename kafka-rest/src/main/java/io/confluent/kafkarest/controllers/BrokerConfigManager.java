@@ -37,9 +37,7 @@ public interface BrokerConfigManager {
   CompletableFuture<Map<Integer, List<BrokerConfig>>> listAllBrokerConfigs(
       String clusterId, List<Integer> brokerIds);
 
-  /**
-   * Returns the Kafka {@link BrokerConfig} with the given {@code name}.
-   */
+  /** Returns the Kafka {@link BrokerConfig} with the given {@code name}. */
   CompletableFuture<Optional<BrokerConfig>> getBrokerConfig(
       String clusterId, int brokerId, String name);
 
@@ -50,9 +48,7 @@ public interface BrokerConfigManager {
   CompletableFuture<Void> updateBrokerConfig(
       String clusterId, int brokerId, String name, String newValue);
 
-  /**
-   * Resets the Kafka {@link BrokerConfig} with the given {@code name} to its default value.
-   */
+  /** Resets the Kafka {@link BrokerConfig} with the given {@code name} to its default value. */
   CompletableFuture<Void> resetBrokerConfig(String clusterId, int brokerId, String name);
 
   /**

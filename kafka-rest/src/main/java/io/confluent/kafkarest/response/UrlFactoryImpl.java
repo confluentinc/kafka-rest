@@ -39,8 +39,7 @@ public final class UrlFactoryImpl implements UrlFactory {
       @PortConfig Integer portConfig,
       @AdvertisedListenersConfig List<URI> advertisedListenersConfig,
       @ListenersConfig List<URI> listenersConfig,
-      @Context UriInfo requestUriInfo
-  ) {
+      @Context UriInfo requestUriInfo) {
     baseUrl =
         computeBaseUrl(
             hostNameConfig, portConfig, advertisedListenersConfig, listenersConfig, requestUriInfo);
@@ -68,8 +67,7 @@ public final class UrlFactoryImpl implements UrlFactory {
       Integer portConfig,
       List<URI> advertisedListenersConfig,
       List<URI> listenersConfig,
-      UriInfo requestUriInfo
-  ) {
+      UriInfo requestUriInfo) {
     String scheme = computeScheme(requestUriInfo);
     String authority =
         computeAuthority(
@@ -95,9 +93,9 @@ public final class UrlFactoryImpl implements UrlFactory {
       List<URI> listenersConfig,
       UriInfo requestUriInfo) {
     return Stream.of(
-        computeAuthorityFromAdvertisedListeners(advertisedListenersConfig, requestUriInfo),
-        computeAuthorityFromHostNameAndPort(
-            hostNameConfig, portConfig, listenersConfig, requestUriInfo))
+            computeAuthorityFromAdvertisedListeners(advertisedListenersConfig, requestUriInfo),
+            computeAuthorityFromHostNameAndPort(
+                hostNameConfig, portConfig, listenersConfig, requestUriInfo))
         .filter(Optional::isPresent)
         .map(Optional::get)
         .findFirst()
@@ -119,8 +117,7 @@ public final class UrlFactoryImpl implements UrlFactory {
       String hostNameConfig,
       Integer portConfig,
       List<URI> listenersConfig,
-      UriInfo requestUriInfo
-  ) {
+      UriInfo requestUriInfo) {
     String requestScheme = requestUriInfo.getAbsolutePath().getScheme();
     if (hostNameConfig == null || hostNameConfig.isEmpty()) {
       return Optional.empty();

@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.protobuf.ByteString;
+import io.confluent.kafkarest.ProducerMetrics;
+import io.confluent.kafkarest.ProducerMetricsRegistry;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
@@ -34,11 +36,17 @@ import io.confluent.kafkarest.entities.v3.ProduceResponse;
 import io.confluent.kafkarest.entities.v3.ProduceResponse.ProduceResponseData;
 import io.confluent.kafkarest.exceptions.BadRequestException;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
-import io.confluent.kafkarest.response.StreamingResponse;
+import io.confluent.kafkarest.ratelimit.DoNotRateLimit;
+import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
+import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import javax.inject.Inject;
@@ -51,33 +59,51 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+@DoNotRateLimit
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/records")
 @ResourceName("api.v3.produce.*")
 public final class ProduceAction {
 
-  private static final Collector<
-      ProduceRequestHeader,
-      ImmutableMultimap.Builder<String, Optional<ByteString>>,
-      ImmutableMultimap<String, Optional<ByteString>>> PRODUCE_REQUEST_HEADER_COLLECTOR =
-      Collector.of(
-          ImmutableMultimap::builder,
-          (builder, header) -> builder.put(header.getName(), header.getValue()),
-          (left, right) -> left.putAll(right.build()),
-          ImmutableMultimap.Builder::build);
+  private static final Logger log = LoggerFactory.getLogger(ProduceAction.class);
 
-  private final Provider<SchemaManager> schemaManager;
-  private final Provider<RecordSerializer> recordSerializer;
-  private final Provider<ProduceController> produceController;
+  private static final Collector<
+          ProduceRequestHeader,
+          ImmutableMultimap.Builder<String, Optional<ByteString>>,
+          ImmutableMultimap<String, Optional<ByteString>>>
+      PRODUCE_REQUEST_HEADER_COLLECTOR =
+          Collector.of(
+              ImmutableMultimap::builder,
+              (builder, header) -> builder.put(header.getName(), header.getValue()),
+              (left, right) -> left.putAll(right.build()),
+              ImmutableMultimap.Builder::build);
+
+  private final Provider<SchemaManager> schemaManagerProvider;
+  private final Provider<RecordSerializer> recordSerializerProvider;
+  private final Provider<ProduceController> produceControllerProvider;
+  private final Provider<ProducerMetrics> producerMetrics;
+  private final StreamingResponseFactory streamingResponseFactory;
+  private final ProduceRateLimiters produceRateLimiters;
+  private final ExecutorService executorService;
 
   @Inject
   public ProduceAction(
-      Provider<SchemaManager> schemaManager,
+      Provider<SchemaManager> schemaManagerProvider,
       Provider<RecordSerializer> recordSerializer,
-      Provider<ProduceController> produceController) {
-    this.schemaManager = requireNonNull(schemaManager);
-    this.recordSerializer = requireNonNull(recordSerializer);
-    this.produceController = requireNonNull(produceController);
+      Provider<ProduceController> produceControllerProvider,
+      Provider<ProducerMetrics> producerMetrics,
+      StreamingResponseFactory streamingResponseFactory,
+      ProduceRateLimiters produceRateLimiters,
+      @ProduceResponseThreadPool ExecutorService executorService) {
+    this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
+    this.recordSerializerProvider = requireNonNull(recordSerializer);
+    this.produceControllerProvider = requireNonNull(produceControllerProvider);
+    this.producerMetrics = requireNonNull(producerMetrics);
+    this.streamingResponseFactory = requireNonNull(streamingResponseFactory);
+    this.produceRateLimiters = requireNonNull(produceRateLimiters);
+    this.executorService = requireNonNull(executorService);
   }
 
   @POST
@@ -89,19 +115,42 @@ public final class ProduceAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
-      MappingIterator<ProduceRequest> requests) throws Exception {
-    ProduceController controller = produceController.get();
-    StreamingResponse.from(requests)
-        .compose(request -> produce(clusterId, topicName, request, controller))
+      MappingIterator<ProduceRequest> requests)
+      throws Exception {
+
+    ProduceController controller = produceControllerProvider.get();
+    streamingResponseFactory
+        .from(requests)
+        .compose(
+            request -> {
+              Optional<Long> messageSize = request.getOriginalSize();
+              if (messageSize.isPresent()) {
+                return produce(
+                    clusterId,
+                    topicName,
+                    request,
+                    controller,
+                    produceRateLimiters.calculateGracePeriodExceeded(clusterId, messageSize.get()));
+              } else {
+                return produce(clusterId, topicName, request, controller, Optional.empty());
+              }
+            })
         .resume(asyncResponse);
   }
 
   private CompletableFuture<ProduceResponse> produce(
-      String clusterId, String topicName, ProduceRequest request, ProduceController controller) {
+      String clusterId,
+      String topicName,
+      ProduceRequest request,
+      ProduceController controller,
+      Optional<Duration> waitFor) {
+
+    Instant requestInstant = Instant.now();
     Optional<RegisteredSchema> keySchema =
         request.getKey().flatMap(key -> getSchema(topicName, /* isKey= */ true, key));
     Optional<EmbeddedFormat> keyFormat =
-        keySchema.map(schema -> Optional.of(schema.getFormat()))
+        keySchema
+            .map(schema -> Optional.of(schema.getFormat()))
             .orElse(request.getKey().flatMap(ProduceRequestData::getFormat));
     Optional<ByteString> serializedKey =
         serialize(topicName, keyFormat, keySchema, request.getKey(), /* isKey= */ true);
@@ -109,10 +158,13 @@ public final class ProduceAction {
     Optional<RegisteredSchema> valueSchema =
         request.getValue().flatMap(value -> getSchema(topicName, /* isKey= */ false, value));
     Optional<EmbeddedFormat> valueFormat =
-        valueSchema.map(schema -> Optional.of(schema.getFormat()))
+        valueSchema
+            .map(schema -> Optional.of(schema.getFormat()))
             .orElse(request.getValue().flatMap(ProduceRequestData::getFormat));
     Optional<ByteString> serializedValue =
         serialize(topicName, valueFormat, valueSchema, request.getValue(), /* isKey= */ false);
+
+    recordRequestMetrics(request.getOriginalSize().orElse(0L));
 
     CompletableFuture<ProduceResult> produceResult =
         controller.produce(
@@ -124,10 +176,35 @@ public final class ProduceAction {
             serializedValue,
             request.getTimestamp().orElse(Instant.now()));
 
-    return produceResult.thenApply(
-        result ->
-            toProduceResponse(
-                clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result));
+    return produceResult
+        .handleAsync(
+            (result, error) -> {
+              if (error != null) {
+                long latency = Duration.between(requestInstant, Instant.now()).toMillis();
+                recordErrorMetrics(latency);
+                throw new CompletionException(error);
+              }
+              return result;
+            },
+            executorService)
+        .thenApplyAsync(
+            result -> {
+              ProduceResponse response =
+                  toProduceResponse(
+                      clusterId,
+                      topicName,
+                      keyFormat,
+                      keySchema,
+                      valueFormat,
+                      valueSchema,
+                      result,
+                      waitFor);
+              long latency =
+                  Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
+              recordResponseMetrics(latency);
+              return response;
+            },
+            executorService);
   }
 
   private Optional<RegisteredSchema> getSchema(
@@ -138,15 +215,17 @@ public final class ProduceAction {
 
     try {
       return Optional.of(
-          schemaManager.get().getSchema(
-              topicName,
-              data.getFormat(),
-              data.getSubject(),
-              data.getSubjectNameStrategy().map(Function.identity()),
-              data.getSchemaId(),
-              data.getSchemaVersion(),
-              data.getRawSchema(),
-              isKey));
+          schemaManagerProvider
+              .get()
+              .getSchema(
+                  topicName,
+                  data.getFormat(),
+                  data.getSubject(),
+                  data.getSubjectNameStrategy().map(Function.identity()),
+                  data.getSchemaId(),
+                  data.getSchemaVersion(),
+                  data.getRawSchema(),
+                  isKey));
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e.getMessage(), e);
     }
@@ -158,7 +237,8 @@ public final class ProduceAction {
       Optional<RegisteredSchema> schema,
       Optional<ProduceRequestData> data,
       boolean isKey) {
-    return recordSerializer.get()
+    return recordSerializerProvider
+        .get()
         .serialize(
             format.orElse(EmbeddedFormat.BINARY),
             topicName,
@@ -174,7 +254,8 @@ public final class ProduceAction {
       Optional<RegisteredSchema> keySchema,
       Optional<EmbeddedFormat> valueFormat,
       Optional<RegisteredSchema> valueSchema,
-      ProduceResult result) {
+      ProduceResult result,
+      Optional<Duration> waitFor) {
     return ProduceResponse.builder()
         .setClusterId(clusterId)
         .setTopicName(topicName)
@@ -201,6 +282,41 @@ public final class ProduceAction {
                         .setSchemaVersion(valueSchema.map(RegisteredSchema::getSchemaVersion))
                         .setSize(result.getSerializedValueSize())
                         .build()))
+        .setWaitForMs(waitFor.map(Duration::toMillis))
         .build();
+  }
+
+  private void recordResponseMetrics(long latency) {
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
+        .recordResponse();
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
+        .recordRequestLatency(latency);
+  }
+
+  private void recordErrorMetrics(long latency) {
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
+        .recordError();
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
+        .recordRequestLatency(latency);
+  }
+
+  private void recordRequestMetrics(long size) {
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
+        .recordRequest();
+    // record request size
+    producerMetrics
+        .get()
+        .mbean(ProducerMetricsRegistry.GROUP_NAME, Collections.emptyMap())
+        .recordRequestSize(size);
   }
 }

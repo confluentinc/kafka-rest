@@ -21,8 +21,7 @@ import io.confluent.kafka.schemaregistry.ParsedSchema;
 @AutoValue
 public abstract class RegisteredSchema {
 
-  RegisteredSchema() {
-  }
+  RegisteredSchema() {}
 
   public abstract String getSubject();
 

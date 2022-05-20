@@ -35,46 +35,54 @@ import org.junit.Test;
 
 public class AvroConverterTest {
 
-  private static final Schema recordSchema = new Schema.Parser().parse(
-      "{\"namespace\": \"namespace\",\n"
-      + " \"type\": \"record\",\n"
-      + " \"name\": \"test\",\n"
-      + " \"fields\": [\n"
-      + "     {\"name\": \"null\", \"type\": \"null\"},\n"
-      + "     {\"name\": \"boolean\", \"type\": \"boolean\"},\n"
-      + "     {\"name\": \"int\", \"type\": \"int\"},\n"
-      + "     {\"name\": \"long\", \"type\": \"long\"},\n"
-      + "     {\"name\": \"float\", \"type\": \"float\"},\n"
-      + "     {\"name\": \"double\", \"type\": \"double\"},\n"
-      + "     {\"name\": \"bytes\", \"type\": \"bytes\"},\n"
-      + "     {\"name\": \"string\", \"type\": \"string\", \"aliases\": [\"string_alias\"]},\n"
-      + "     {\"name\": \"null_default\", \"type\": \"null\", \"default\": null},\n"
-      + "     {\"name\": \"boolean_default\", \"type\": \"boolean\", \"default\": false},\n"
-      + "     {\"name\": \"int_default\", \"type\": \"int\", \"default\": 24},\n"
-      + "     {\"name\": \"long_default\", \"type\": \"long\", \"default\": 4000000000},\n"
-      + "     {\"name\": \"float_default\", \"type\": \"float\", \"default\": 12.3},\n"
-      + "     {\"name\": \"double_default\", \"type\": \"double\", \"default\": 23.2},\n"
-      + "     {\"name\": \"bytes_default\", \"type\": \"bytes\", \"default\": \"bytes\"},\n"
-      + "     {\"name\": \"string_default\", \"type\": \"string\", \"default\": "
-      + "\"default string\"}\n"
-      + "]\n"
-      + "}"
-  );
+  private static final Schema recordSchema =
+      new Schema.Parser()
+          .parse(
+              "{\"namespace\": \"namespace\",\n"
+                  + " \"type\": \"record\",\n"
+                  + " \"name\": \"test\",\n"
+                  + " \"fields\": [\n"
+                  + "     {\"name\": \"null\", \"type\": \"null\"},\n"
+                  + "     {\"name\": \"boolean\", \"type\": \"boolean\"},\n"
+                  + "     {\"name\": \"int\", \"type\": \"int\"},\n"
+                  + "     {\"name\": \"long\", \"type\": \"long\"},\n"
+                  + "     {\"name\": \"float\", \"type\": \"float\"},\n"
+                  + "     {\"name\": \"double\", \"type\": \"double\"},\n"
+                  + "     {\"name\": \"bytes\", \"type\": \"bytes\"},\n"
+                  + "     {\"name\": \"string\", \"type\": \"string\", \"aliases\":"
+                  + " [\"string_alias\"]},\n"
+                  + "     {\"name\": \"null_default\", \"type\": \"null\", \"default\": null},\n"
+                  + "     {\"name\": \"boolean_default\", \"type\": \"boolean\", \"default\":"
+                  + " false},\n"
+                  + "     {\"name\": \"int_default\", \"type\": \"int\", \"default\": 24},\n"
+                  + "     {\"name\": \"long_default\", \"type\": \"long\", \"default\":"
+                  + " 4000000000},\n"
+                  + "     {\"name\": \"float_default\", \"type\": \"float\", \"default\": 12.3},\n"
+                  + "     {\"name\": \"double_default\", \"type\": \"double\", \"default\":"
+                  + " 23.2},\n"
+                  + "     {\"name\": \"bytes_default\", \"type\": \"bytes\", \"default\":"
+                  + " \"bytes\"},\n"
+                  + "     {\"name\": \"string_default\", \"type\": \"string\", \"default\":"
+                  + " \"default string\"}\n"
+                  + "]\n"
+                  + "}");
 
-  private static final Schema arraySchema = new Schema.Parser().parse(
-      "{\"namespace\": \"namespace\",\n"
-      + " \"type\": \"array\",\n"
-      + " \"name\": \"test\",\n"
-      + " \"items\": \"string\"\n"
-      + "}"
-  );
+  private static final Schema arraySchema =
+      new Schema.Parser()
+          .parse(
+              "{\"namespace\": \"namespace\",\n"
+                  + " \"type\": \"array\",\n"
+                  + " \"name\": \"test\",\n"
+                  + " \"items\": \"string\"\n"
+                  + "}");
 
-  private static final Schema enumSchema = new Schema.Parser().parse(
-      "{ \"type\": \"enum\",\n"
-      + "  \"name\": \"Suit\",\n"
-      + "  \"symbols\" : [\"SPADES\", \"HEARTS\", \"DIAMONDS\", \"CLUBS\"]\n"
-      + "}"
-  );
+  private static final Schema enumSchema =
+      new Schema.Parser()
+          .parse(
+              "{ \"type\": \"enum\",\n"
+                  + "  \"name\": \"Suit\",\n"
+                  + "  \"symbols\" : [\"SPADES\", \"HEARTS\", \"DIAMONDS\", \"CLUBS\"]\n"
+                  + "}");
 
   @Test
   public void testPrimitiveTypesToJson() {
@@ -117,16 +125,17 @@ public class AvroConverterTest {
 
   @Test
   public void testRecordToJson() {
-    GenericRecord data = new GenericRecordBuilder(recordSchema)
-        .set("null", null)
-        .set("boolean", true)
-        .set("int", 12)
-        .set("long", 5000000000L)
-        .set("float", 23.4f)
-        .set("double", 800.25)
-        .set("bytes", ByteBuffer.wrap("bytes".getBytes()))
-        .set("string", "string")
-        .build();
+    GenericRecord data =
+        new GenericRecordBuilder(recordSchema)
+            .set("null", null)
+            .set("boolean", true)
+            .set("int", 12)
+            .set("long", 5000000000L)
+            .set("float", 23.4f)
+            .set("double", 800.25)
+            .set("bytes", ByteBuffer.wrap("bytes".getBytes()))
+            .set("string", "string")
+            .build();
 
     AvroConverter.JsonNodeAndSize result = new AvroConverter().toJson(data);
     assertTrue(result.getSize() > 0);
@@ -152,8 +161,8 @@ public class AvroConverterTest {
 
   @Test
   public void testArrayToJson() {
-    GenericData.Array<String>
-        data = new GenericData.Array(arraySchema, Arrays.asList("one", "two", "three"));
+    GenericData.Array<String> data =
+        new GenericData.Array(arraySchema, Arrays.asList("one", "two", "three"));
     AvroConverter.JsonNodeAndSize result = new AvroConverter().toJson(data);
     assertTrue(result.getSize() > 0);
 
@@ -182,8 +191,8 @@ public class AvroConverterTest {
 
   @Test
   public void testEnumToJson() {
-    AvroConverter.JsonNodeAndSize result
-        = new AvroConverter().toJson(new GenericData.EnumSymbol(enumSchema, "SPADES"));
+    AvroConverter.JsonNodeAndSize result =
+        new AvroConverter().toJson(new GenericData.EnumSymbol(enumSchema, "SPADES"));
     assertTrue(result.getSize() > 0);
     assertTrue(result.getJson().isTextual());
     assertEquals("SPADES", result.getJson().textValue());
@@ -192,9 +201,10 @@ public class AvroConverterTest {
   private static void expectConversionException(Object obj) {
     try {
       new AvroConverter().toJson(obj);
-      fail("Expected conversion of "
-           + (obj == null ? "null" : (obj.toString() + " (" + obj.getClass().getName() + ")"))
-           + " to fail");
+      fail(
+          "Expected conversion of "
+              + (obj == null ? "null" : (obj.toString() + " (" + obj.getClass().getName() + ")"))
+              + " to fail");
     } catch (ConversionException e) {
       // Expected
     }

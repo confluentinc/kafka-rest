@@ -89,11 +89,9 @@ public final class ClusterConfigResourceTest {
           /* synonyms= */ emptyList(),
           ClusterConfig.Type.BROKER);
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private ClusterConfigManager clusterConfigManager;
+  @Mock private ClusterConfigManager clusterConfigManager;
 
   private ClusterConfigsResource clusterConfigsResource;
 
@@ -102,15 +100,14 @@ public final class ClusterConfigResourceTest {
     clusterConfigsResource =
         new ClusterConfigsResource(
             () -> clusterConfigManager,
-            new CrnFactoryImpl(/* crnAuthorityConfig= */""),
+            new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
             new FakeUrlFactory());
   }
 
   @Test
   public void listClusterConfigs_existingCluster_returnsConfigs() {
     expect(clusterConfigManager.listClusterConfigs(CLUSTER_ID, ClusterConfig.Type.BROKER))
-        .andReturn(
-            completedFuture(Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3)));
+        .andReturn(completedFuture(Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3)));
     replay(clusterConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -121,16 +118,14 @@ public final class ClusterConfigResourceTest {
             ClusterConfigDataList.builder()
                 .setMetadata(
                     ResourceCollection.Metadata.builder()
-                        .setSelf(
-                            "/v3/clusters/cluster-1/broker-configs")
+                        .setSelf("/v3/clusters/cluster-1/broker-configs")
                         .build())
                 .setData(
                     Arrays.asList(
                         ClusterConfigData.builder()
                             .setMetadata(
                                 Resource.Metadata.builder()
-                                    .setSelf(
-                                        "/v3/clusters/cluster-1/broker-configs/config-1")
+                                    .setSelf("/v3/clusters/cluster-1/broker-configs/config-1")
                                     .setResourceName(
                                         "crn:///kafka=cluster-1/broker-config=config-1")
                                     .build())
@@ -150,8 +145,7 @@ public final class ClusterConfigResourceTest {
                         ClusterConfigData.builder()
                             .setMetadata(
                                 Resource.Metadata.builder()
-                                    .setSelf(
-                                        "/v3/clusters/cluster-1/broker-configs/config-2")
+                                    .setSelf("/v3/clusters/cluster-1/broker-configs/config-2")
                                     .setResourceName(
                                         "crn:///kafka=cluster-1/broker-config=config-2")
                                     .build())
@@ -171,8 +165,7 @@ public final class ClusterConfigResourceTest {
                         ClusterConfigData.builder()
                             .setMetadata(
                                 Resource.Metadata.builder()
-                                    .setSelf(
-                                        "/v3/clusters/cluster-1/broker-configs/config-3")
+                                    .setSelf("/v3/clusters/cluster-1/broker-configs/config-3")
                                     .setResourceName(
                                         "crn:///kafka=cluster-1/broker-config=config-3")
                                     .build())
@@ -208,8 +201,9 @@ public final class ClusterConfigResourceTest {
 
   @Test
   public void getClusterConfig_existingConfig_returnsConfig() {
-    expect(clusterConfigManager.getClusterConfig(
-        CLUSTER_ID, ClusterConfig.Type.BROKER, CONFIG_1.getName()))
+    expect(
+            clusterConfigManager.getClusterConfig(
+                CLUSTER_ID, ClusterConfig.Type.BROKER, CONFIG_1.getName()))
         .andReturn(completedFuture(Optional.of(CONFIG_1)));
     replay(clusterConfigManager);
 
@@ -221,10 +215,8 @@ public final class ClusterConfigResourceTest {
             ClusterConfigData.builder()
                 .setMetadata(
                     Resource.Metadata.builder()
-                        .setSelf(
-                            "/v3/clusters/cluster-1/broker-configs/config-1")
-                        .setResourceName(
-                            "crn:///kafka=cluster-1/broker-config=config-1")
+                        .setSelf("/v3/clusters/cluster-1/broker-configs/config-1")
+                        .setResourceName("crn:///kafka=cluster-1/broker-config=config-1")
                         .build())
                 .setClusterId(CLUSTER_ID)
                 .setConfigType(ClusterConfig.Type.BROKER)
@@ -245,8 +237,9 @@ public final class ClusterConfigResourceTest {
 
   @Test
   public void getClusterConfig_nonExistingConfig_throwsNotFound() {
-    expect(clusterConfigManager.getClusterConfig(
-        CLUSTER_ID, ClusterConfig.Type.BROKER, CONFIG_1.getName()))
+    expect(
+            clusterConfigManager.getClusterConfig(
+                CLUSTER_ID, ClusterConfig.Type.BROKER, CONFIG_1.getName()))
         .andReturn(failedFuture(new NotFoundException()));
     replay(clusterConfigManager);
 
@@ -259,8 +252,9 @@ public final class ClusterConfigResourceTest {
 
   @Test
   public void getClusterConfig_nonExistingCluster_throwsNotFound() {
-    expect(clusterConfigManager.getClusterConfig(
-        CLUSTER_ID, ClusterConfig.Type.BROKER, CONFIG_1.getName()))
+    expect(
+            clusterConfigManager.getClusterConfig(
+                CLUSTER_ID, ClusterConfig.Type.BROKER, CONFIG_1.getName()))
         .andReturn(failedFuture(new NotFoundException()));
     replay(clusterConfigManager);
 
@@ -274,11 +268,8 @@ public final class ClusterConfigResourceTest {
   @Test
   public void updateClusterConfig_existingConfig_updatesConfig() {
     expect(
-        clusterConfigManager.upsertClusterConfig(
-            CLUSTER_ID,
-            ClusterConfig.Type.BROKER,
-            CONFIG_1.getName(),
-            "new-value"))
+            clusterConfigManager.upsertClusterConfig(
+                CLUSTER_ID, ClusterConfig.Type.BROKER, CONFIG_1.getName(), "new-value"))
         .andReturn(completedFuture(null));
     replay(clusterConfigManager);
 
@@ -297,11 +288,8 @@ public final class ClusterConfigResourceTest {
   @Test
   public void updateConfig_nonExistingCluster_throwsNotFound() {
     expect(
-        clusterConfigManager.upsertClusterConfig(
-            CLUSTER_ID,
-            ClusterConfig.Type.BROKER,
-            CONFIG_1.getName(),
-            "new-value"))
+            clusterConfigManager.upsertClusterConfig(
+                CLUSTER_ID, ClusterConfig.Type.BROKER, CONFIG_1.getName(), "new-value"))
         .andReturn(failedFuture(new NotFoundException()));
     replay(clusterConfigManager);
 
@@ -319,10 +307,8 @@ public final class ClusterConfigResourceTest {
   @Test
   public void resetClusterConfig_existingConfig_resetsConfig() {
     expect(
-        clusterConfigManager.deleteClusterConfig(
-            CLUSTER_ID,
-            ClusterConfig.Type.BROKER,
-            CONFIG_1.getName()))
+            clusterConfigManager.deleteClusterConfig(
+                CLUSTER_ID, ClusterConfig.Type.BROKER, CONFIG_1.getName()))
         .andReturn(completedFuture(null));
     replay(clusterConfigManager);
 
@@ -338,10 +324,8 @@ public final class ClusterConfigResourceTest {
   @Test
   public void resetClusterConfig_nonExistingCluster_throwsNotFound() {
     expect(
-        clusterConfigManager.deleteClusterConfig(
-            CLUSTER_ID,
-            ClusterConfig.Type.BROKER,
-            CONFIG_1.getName()))
+            clusterConfigManager.deleteClusterConfig(
+                CLUSTER_ID, ClusterConfig.Type.BROKER, CONFIG_1.getName()))
         .andReturn(failedFuture(new NotFoundException()));
     replay(clusterConfigManager);
 

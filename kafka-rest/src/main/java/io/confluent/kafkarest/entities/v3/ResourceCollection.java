@@ -25,8 +25,7 @@ import javax.annotation.Nullable;
 
 public abstract class ResourceCollection<ResourceT extends Resource> {
 
-  ResourceCollection() {
-  }
+  ResourceCollection() {}
 
   @JsonProperty("kind")
   public abstract String getKind();
@@ -42,8 +41,7 @@ public abstract class ResourceCollection<ResourceT extends Resource> {
       ResourceCollectionT extends ResourceCollection<ResourceT>,
       BuilderT extends Builder<ResourceT, ResourceCollectionT, BuilderT>> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract BuilderT setKind(String kind);
 
@@ -57,8 +55,7 @@ public abstract class ResourceCollection<ResourceT extends Resource> {
   @AutoValue
   public abstract static class Metadata {
 
-    Metadata() {
-    }
+    Metadata() {}
 
     @JsonProperty("self")
     public abstract String getSelf();
@@ -73,17 +70,13 @@ public abstract class ResourceCollection<ResourceT extends Resource> {
     @JsonCreator
     static Metadata fromJson(
         @JsonProperty("self") String self, @JsonProperty("next") @Nullable String next) {
-      return builder()
-          .setSelf(self)
-          .setNext(next)
-          .build();
+      return builder().setSelf(self).setNext(next).build();
     }
 
     @AutoValue.Builder
     public abstract static class Builder {
 
-      Builder() {
-      }
+      Builder() {}
 
       public abstract Builder setSelf(String self);
 

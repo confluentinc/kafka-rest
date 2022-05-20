@@ -22,8 +22,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class AlterBrokerConfigBatchRequest {
 
-  AlterBrokerConfigBatchRequest() {
-  }
+  AlterBrokerConfigBatchRequest() {}
 
   @JsonValue
   public abstract AlterConfigBatchRequestData getValue();

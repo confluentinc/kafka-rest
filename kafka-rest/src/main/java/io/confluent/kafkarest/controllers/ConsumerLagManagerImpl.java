@@ -36,16 +36,14 @@ import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class ConsumerLagManagerImpl
-    extends AbstractConsumerLagManager implements ConsumerLagManager {
+final class ConsumerLagManagerImpl extends AbstractConsumerLagManager
+    implements ConsumerLagManager {
 
   private final ConsumerGroupManager consumerGroupManager;
   private static final Logger log = LoggerFactory.getLogger(ConsumerLagManagerImpl.class);
 
   @Inject
-  ConsumerLagManagerImpl(
-      Admin kafkaAdminClient,
-      ConsumerGroupManager consumerGroupManager) {
+  ConsumerLagManagerImpl(Admin kafkaAdminClient, ConsumerGroupManager consumerGroupManager) {
     super(kafkaAdminClient);
     this.consumerGroupManager = requireNonNull(consumerGroupManager);
   }
@@ -53,12 +51,12 @@ final class ConsumerLagManagerImpl
   @Override
   public CompletableFuture<List<ConsumerLag>> listConsumerLags(
       String clusterId, String consumerGroupId) {
-    return consumerGroupManager.getConsumerGroup(clusterId, consumerGroupId)
+    return consumerGroupManager
+        .getConsumerGroup(clusterId, consumerGroupId)
         .thenApply(
             consumerGroup ->
                 checkEntityExists(
-                    consumerGroup,
-                    "Consumer Group %s could not be found.", consumerGroupId))
+                    consumerGroup, "Consumer Group %s could not be found.", consumerGroupId))
         .thenCompose(
             consumerGroup ->
                 getCurrentOffsets(consumerGroupId)
@@ -99,42 +97,45 @@ final class ConsumerLagManagerImpl
       Map<TopicPartition, ListOffsetsResultInfo> latestOffsets) {
     Map<Partition, Consumer> partitionAssignment = consumerGroup.getPartitionAssignment();
     List<ConsumerLag> consumerLags = new ArrayList<>();
-    fetchedCurrentOffsets.keySet().forEach(
-        topicPartition -> {
-          Optional<Consumer> consumer =
-              Optional.ofNullable(partitionAssignment.get(
-                  Partition.create(
-                      clusterId,
-                      topicPartition.topic(),
-                      topicPartition.partition(),
-                      emptyList())));
-          Optional<Long> currentOffset =
-              getCurrentOffset(fetchedCurrentOffsets, topicPartition);
-          Optional<Long> latestOffset =
-              getLatestOffset(latestOffsets, topicPartition);
-          if (currentOffset.isPresent() && latestOffset.isPresent()) {
-            consumerLags.add(
-                ConsumerLag.builder()
-                    .setClusterId(clusterId)
-                    .setConsumerGroupId(consumerGroup.getConsumerGroupId())
-                    .setTopicName(topicPartition.topic())
-                    .setPartitionId(topicPartition.partition())
-                    .setConsumerId(consumer.map(Consumer::getConsumerId).orElse(""))
-                    .setInstanceId(consumer.flatMap(Consumer::getInstanceId))
-                    .setClientId(consumer.map(Consumer::getClientId).orElse(""))
-                    .setCurrentOffset(currentOffset.get())
-                    .setLogEndOffset(latestOffset.get())
-                    .build());
-          } else {
-            log.debug("missing offset for consumerId={} topic={} partition={} "
-                    + "current={} latest={}",
-                consumer.map(Consumer::getConsumerId).orElse(""),
-                topicPartition.topic(),
-                topicPartition.partition(),
-                currentOffset.orElse(null),
-                latestOffset.orElse(null));
-          }
-        });
+    fetchedCurrentOffsets
+        .keySet()
+        .forEach(
+            topicPartition -> {
+              Optional<Consumer> consumer =
+                  Optional.ofNullable(
+                      partitionAssignment.get(
+                          Partition.create(
+                              clusterId,
+                              topicPartition.topic(),
+                              topicPartition.partition(),
+                              emptyList())));
+              Optional<Long> currentOffset =
+                  getCurrentOffset(fetchedCurrentOffsets, topicPartition);
+              Optional<Long> latestOffset = getLatestOffset(latestOffsets, topicPartition);
+              if (currentOffset.isPresent() && latestOffset.isPresent()) {
+                consumerLags.add(
+                    ConsumerLag.builder()
+                        .setClusterId(clusterId)
+                        .setConsumerGroupId(consumerGroup.getConsumerGroupId())
+                        .setTopicName(topicPartition.topic())
+                        .setPartitionId(topicPartition.partition())
+                        .setConsumerId(consumer.map(Consumer::getConsumerId).orElse(""))
+                        .setInstanceId(consumer.flatMap(Consumer::getInstanceId))
+                        .setClientId(consumer.map(Consumer::getClientId).orElse(""))
+                        .setCurrentOffset(currentOffset.get())
+                        .setLogEndOffset(latestOffset.get())
+                        .build());
+              } else {
+                log.debug(
+                    "missing offset for consumerId={} topic={} partition={} "
+                        + "current={} latest={}",
+                    consumer.map(Consumer::getConsumerId).orElse(""),
+                    topicPartition.topic(),
+                    topicPartition.partition(),
+                    currentOffset.orElse(null),
+                    latestOffset.orElse(null));
+              }
+            });
     return consumerLags;
   }
 }

@@ -46,9 +46,7 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
         ListClustersResponse.create(
             ClusterDataList.builder()
                 .setMetadata(
-                    ResourceCollection.Metadata.builder()
-                        .setSelf(baseUrl + "/v3/clusters")
-                        .build())
+                    ResourceCollection.Metadata.builder().setSelf(baseUrl + "/v3/clusters").build())
                 .setData(
                     singletonList(
                         ClusterData.builder()
@@ -61,8 +59,10 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
                             .setController(
                                 Resource.Relationship.create(
                                     baseUrl
-                                        + "/v3/clusters/" + clusterId
-                                        + "/brokers/" + controllerId))
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/brokers/"
+                                        + controllerId))
                             .setAcls(
                                 Resource.Relationship.create(
                                     baseUrl + "/v3/clusters/" + clusterId + "/acls"))
@@ -80,8 +80,10 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
                                     baseUrl + "/v3/clusters/" + clusterId + "/topics"))
                             .setPartitionReassignments(
                                 Resource.Relationship.create(
-                                    baseUrl + "/v3/clusters/" + clusterId +
-                                        "/topics/-/partitions/-/reassignment"))
+                                    baseUrl
+                                        + "/v3/clusters/"
+                                        + clusterId
+                                        + "/topics/-/partitions/-/reassignment"))
                             .build()))
                 .build());
 
@@ -111,8 +113,7 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
                     Resource.Relationship.create(
                         baseUrl + "/v3/clusters/" + clusterId + "/brokers/" + controllerId))
                 .setAcls(
-                    Resource.Relationship.create(
-                        baseUrl + "/v3/clusters/" + clusterId + "/acls"))
+                    Resource.Relationship.create(baseUrl + "/v3/clusters/" + clusterId + "/acls"))
                 .setBrokers(
                     Resource.Relationship.create(
                         baseUrl + "/v3/clusters/" + clusterId + "/brokers"))
@@ -123,12 +124,13 @@ public class ClustersResourceIntegrationTest extends ClusterTestHarness {
                     Resource.Relationship.create(
                         baseUrl + "/v3/clusters/" + clusterId + "/consumer-groups"))
                 .setTopics(
-                    Resource.Relationship.create(
-                        baseUrl + "/v3/clusters/" + clusterId + "/topics"))
+                    Resource.Relationship.create(baseUrl + "/v3/clusters/" + clusterId + "/topics"))
                 .setPartitionReassignments(
                     Resource.Relationship.create(
-                        baseUrl + "/v3/clusters/" + clusterId +
-                            "/topics/-/partitions/-/reassignment"))
+                        baseUrl
+                            + "/v3/clusters/"
+                            + clusterId
+                            + "/topics/-/partitions/-/reassignment"))
                 .build());
 
     Response response =

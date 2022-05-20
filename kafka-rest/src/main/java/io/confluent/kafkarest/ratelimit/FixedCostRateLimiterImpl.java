@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -13,22 +13,22 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.extension;
+package io.confluent.kafkarest.ratelimit;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
+import static java.util.Objects.requireNonNull;
 
-import io.confluent.kafkarest.KafkaRestContext;
+/** A {@link FixedCostRateLimiter} implementation that delegates to {@link RequestRateLimiter}. */
+final class FixedCostRateLimiterImpl implements FixedCostRateLimiter {
+  private final RequestRateLimiter delegate;
+  private final int cost;
 
-
-public class ContextInvocationHandler implements InvocationHandler {
-
-  public ContextInvocationHandler() {
+  FixedCostRateLimiterImpl(RequestRateLimiter delegate, int cost) {
+    this.delegate = requireNonNull(delegate);
+    this.cost = cost;
   }
 
   @Override
-  public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-    KafkaRestContext context = KafkaRestContextProvider.getCurrentContext();
-    return method.invoke(context, args);
+  public void rateLimit() {
+    delegate.rateLimit(cost);
   }
 }

@@ -90,11 +90,9 @@ public class TopicConfigsResourceTest {
           ConfigSource.DYNAMIC_TOPIC_CONFIG,
           /* synonyms= */ emptyList());
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private TopicConfigManager topicConfigManager;
+  @Mock private TopicConfigManager topicConfigManager;
 
   private TopicConfigsResource topicConfigsResource;
 
@@ -110,8 +108,7 @@ public class TopicConfigsResourceTest {
   @Test
   public void listTopicConfigs_existingTopic_returnsConfigs() {
     expect(topicConfigManager.listTopicConfigs(CLUSTER_ID, TOPIC_NAME))
-        .andReturn(
-            completedFuture(Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3)));
+        .andReturn(completedFuture(Arrays.asList(CONFIG_1, CONFIG_2, CONFIG_3)));
     replay(topicConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -122,8 +119,7 @@ public class TopicConfigsResourceTest {
             TopicConfigDataList.builder()
                 .setMetadata(
                     ResourceCollection.Metadata.builder()
-                        .setSelf(
-                            "/v3/clusters/cluster-1/topics/topic-1/configs")
+                        .setSelf("/v3/clusters/cluster-1/topics/topic-1/configs")
                         .build())
                 .setData(
                     Arrays.asList(
@@ -209,9 +205,7 @@ public class TopicConfigsResourceTest {
 
   @Test
   public void getTopicConfig_existingConfig_returnsConfig() {
-    expect(
-        topicConfigManager.getTopicConfig(
-            CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()))
+    expect(topicConfigManager.getTopicConfig(CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()))
         .andReturn(completedFuture(Optional.of(CONFIG_1)));
     replay(topicConfigManager);
 
@@ -223,10 +217,8 @@ public class TopicConfigsResourceTest {
             TopicConfigData.builder()
                 .setMetadata(
                     Resource.Metadata.builder()
-                        .setSelf(
-                            "/v3/clusters/cluster-1/topics/topic-1/configs/config-1")
-                        .setResourceName(
-                            "crn:///kafka=cluster-1/topic=topic-1/config=config-1")
+                        .setSelf("/v3/clusters/cluster-1/topics/topic-1/configs/config-1")
+                        .setResourceName("crn:///kafka=cluster-1/topic=topic-1/config=config-1")
                         .build())
                 .setClusterId(CLUSTER_ID)
                 .setTopicName(TOPIC_NAME)
@@ -247,30 +239,24 @@ public class TopicConfigsResourceTest {
 
   @Test
   public void getTopicConfig_nonExistingConfig_throwsNotFound() {
-    expect(
-        topicConfigManager.getTopicConfig(
-            CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()))
+    expect(topicConfigManager.getTopicConfig(CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()))
         .andReturn(completedFuture(Optional.empty()));
     replay(topicConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    topicConfigsResource.getTopicConfig(
-        response, CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName());
+    topicConfigsResource.getTopicConfig(response, CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName());
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }
 
   @Test
   public void getTopicConfig_nonExistingTopicOrCluster_throwsNotFound() {
-    expect(
-        topicConfigManager.getTopicConfig(
-            CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()))
+    expect(topicConfigManager.getTopicConfig(CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    topicConfigsResource.getTopicConfig(
-        response, CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName());
+    topicConfigsResource.getTopicConfig(response, CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName());
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }
@@ -278,11 +264,8 @@ public class TopicConfigsResourceTest {
   @Test
   public void updateTopicConfig_existingConfig_updatesConfig() {
     expect(
-        topicConfigManager.updateTopicConfig(
-            CLUSTER_ID,
-            TOPIC_NAME,
-            CONFIG_1.getName(),
-            "new-value"))
+            topicConfigManager.updateTopicConfig(
+                CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName(), "new-value"))
         .andReturn(completedFuture(null));
     replay(topicConfigManager);
 
@@ -302,11 +285,8 @@ public class TopicConfigsResourceTest {
   @Test
   public void updateTopicConfig_nonExistingConfigOrTopicOrCluster_throwsNotFound() {
     expect(
-        topicConfigManager.updateTopicConfig(
-            CLUSTER_ID,
-            TOPIC_NAME,
-            CONFIG_1.getName(),
-            "new-value"))
+            topicConfigManager.updateTopicConfig(
+                CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName(), "new-value"))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicConfigManager);
 
@@ -323,17 +303,12 @@ public class TopicConfigsResourceTest {
 
   @Test
   public void resetTopicConfig_existingConfig_resetsConfig() {
-    expect(
-        topicConfigManager.resetTopicConfig(
-            CLUSTER_ID,
-            TOPIC_NAME,
-            CONFIG_1.getName()))
+    expect(topicConfigManager.resetTopicConfig(CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()))
         .andReturn(completedFuture(null));
     replay(topicConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    topicConfigsResource.resetTopicConfig(
-        response, CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName());
+    topicConfigsResource.resetTopicConfig(response, CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName());
 
     assertNull(response.getValue());
     assertNull(response.getException());
@@ -342,17 +317,12 @@ public class TopicConfigsResourceTest {
 
   @Test
   public void resetTopicConfig_nonExistingConfigOrTopicOrCluster_throwsNotFound() {
-    expect(
-        topicConfigManager.resetTopicConfig(
-            CLUSTER_ID,
-            TOPIC_NAME,
-            CONFIG_1.getName()))
+    expect(topicConfigManager.resetTopicConfig(CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName()))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicConfigManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    topicConfigsResource.resetTopicConfig(
-        response, CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName());
+    topicConfigsResource.resetTopicConfig(response, CLUSTER_ID, TOPIC_NAME, CONFIG_1.getName());
 
     assertEquals(NotFoundException.class, response.getException().getClass());
   }

@@ -15,27 +15,21 @@
 
 package io.confluent.kafkarest;
 
+import io.confluent.rest.RestConfigException;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-
-import io.confluent.rest.RestConfigException;
-
 
 public class KafkaRestMain {
 
   private static final Logger log = LoggerFactory.getLogger(KafkaRestMain.class);
 
   static {
-    //for localhost testing only, with schema registry url https://localhost
+    // for localhost testing only, with schema registry url https://localhost
     javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(
         new javax.net.ssl.HostnameVerifier() {
 
-          public boolean verify(
-              String hostname,
-              javax.net.ssl.SSLSession sslSession
-          ) {
+          public boolean verify(String hostname, javax.net.ssl.SSLSession sslSession) {
             if (hostname.equals("localhost")) {
               return true;
             }
@@ -44,9 +38,7 @@ public class KafkaRestMain {
         });
   }
 
-  /**
-   * Starts an embedded Jetty server running the REST server.
-   */
+  /** Starts an embedded Jetty server running the REST server. */
   public static void main(String[] args) throws IOException {
     try {
       KafkaRestConfig config = new KafkaRestConfig((args.length > 0 ? args[0] : null));

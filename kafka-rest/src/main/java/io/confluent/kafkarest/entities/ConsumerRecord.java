@@ -21,8 +21,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ConsumerRecord<K, V> {
 
-  ConsumerRecord() {
-  }
+  ConsumerRecord() {}
 
   public abstract String getTopic();
 

@@ -23,8 +23,7 @@ import java.util.List;
 @AutoValue
 public abstract class PartitionDataList extends ResourceCollection<PartitionData> {
 
-  PartitionDataList() {
-  }
+  PartitionDataList() {}
 
   public static Builder builder() {
     return new AutoValue_PartitionDataList.Builder().setKind("KafkaPartitionList");
@@ -34,20 +33,14 @@ public abstract class PartitionDataList extends ResourceCollection<PartitionData
   static PartitionDataList fromJson(
       @JsonProperty("kind") String kind,
       @JsonProperty("metadata") Metadata metadata,
-      @JsonProperty("data") List<PartitionData> data
-  ) {
-    return builder()
-        .setKind(kind)
-        .setMetadata(metadata)
-        .setData(data)
-        .build();
+      @JsonProperty("data") List<PartitionData> data) {
+    return builder().setKind(kind).setMetadata(metadata).setData(data).build();
   }
 
   @AutoValue.Builder
   public abstract static class Builder
       extends ResourceCollection.Builder<PartitionData, PartitionDataList, Builder> {
 
-    Builder() {
-    }
+    Builder() {}
   }
 }

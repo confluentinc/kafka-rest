@@ -20,8 +20,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class ConsumerAssignment {
 
-  ConsumerAssignment() {
-  }
+  ConsumerAssignment() {}
 
   public abstract String getClusterId();
 
@@ -40,8 +39,7 @@ public abstract class ConsumerAssignment {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 

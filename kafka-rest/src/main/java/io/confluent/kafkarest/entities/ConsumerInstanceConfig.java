@@ -21,8 +21,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ConsumerInstanceConfig {
 
-  ConsumerInstanceConfig() {
-  }
+  ConsumerInstanceConfig() {}
 
   @Nullable
   public abstract String getId();
@@ -62,8 +61,7 @@ public abstract class ConsumerInstanceConfig {
       @Nullable String autoOffsetReset,
       @Nullable String autoCommitEnable,
       @Nullable Integer responseMinBytes,
-      @Nullable Integer requestWaitMs
-  ) {
+      @Nullable Integer requestWaitMs) {
     return new AutoValue_ConsumerInstanceConfig(
         id, name, format, autoOffsetReset, autoCommitEnable, responseMinBytes, requestWaitMs);
   }

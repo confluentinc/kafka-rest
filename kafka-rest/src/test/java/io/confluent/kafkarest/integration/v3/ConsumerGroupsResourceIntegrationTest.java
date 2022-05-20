@@ -100,9 +100,7 @@ public class ConsumerGroupsResourceIntegrationTest extends ClusterTestHarness {
     consumer3.poll(Duration.ofSeconds(1));
 
     Response response =
-        request("/v3/clusters/foobar/consumer-groups")
-            .accept(MediaType.APPLICATION_JSON)
-            .get();
+        request("/v3/clusters/foobar/consumer-groups").accept(MediaType.APPLICATION_JSON).get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 

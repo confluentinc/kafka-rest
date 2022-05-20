@@ -27,8 +27,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ClusterConfigData extends AbstractConfigData {
 
-  ClusterConfigData() {
-  }
+  ClusterConfigData() {}
 
   @JsonProperty("config_type")
   public abstract ClusterConfig.Type getConfigType();
@@ -48,8 +47,7 @@ public abstract class ClusterConfigData extends AbstractConfigData {
         .setSensitive(config.isSensitive())
         .setSource(config.getSource())
         .setSynonyms(
-            config.getSynonyms()
-                .stream()
+            config.getSynonyms().stream()
                 .map(ConfigSynonymData::fromConfigSynonym)
                 .collect(Collectors.toList()));
   }
@@ -67,8 +65,7 @@ public abstract class ClusterConfigData extends AbstractConfigData {
       @JsonProperty("is_read_only") boolean isReadOnly,
       @JsonProperty("is_sensitive") boolean isSensitive,
       @JsonProperty("source") ConfigSource source,
-      @JsonProperty("synonyms") List<ConfigSynonymData> synonyms
-  ) {
+      @JsonProperty("synonyms") List<ConfigSynonymData> synonyms) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)

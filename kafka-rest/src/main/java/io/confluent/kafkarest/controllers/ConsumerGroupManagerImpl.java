@@ -43,7 +43,8 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
 
   @Override
   public CompletableFuture<List<ConsumerGroup>> listConsumerGroups(String clusterId) {
-    return clusterManager.getCluster(clusterId)
+    return clusterManager
+        .getCluster(clusterId)
         .thenApply(
             cluster -> checkEntityExists(cluster, "Cluster %s could not be found.", clusterId))
         .thenCompose(
@@ -60,7 +61,8 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
   @Override
   public CompletableFuture<Optional<ConsumerGroup>> getConsumerGroup(
       String clusterId, String consumerGroupId) {
-    return clusterManager.getCluster(clusterId)
+    return clusterManager
+        .getCluster(clusterId)
         .thenApply(
             cluster -> checkEntityExists(cluster, "Cluster %s could not be found.", clusterId))
         .thenCompose(cluster -> getConsumerGroups(clusterId, singletonList(consumerGroupId)))
@@ -70,17 +72,17 @@ final class ConsumerGroupManagerImpl implements ConsumerGroupManager {
   private CompletableFuture<List<ConsumerGroup>> getConsumerGroups(
       String clusterId, List<String> consumerGroupIds) {
     return KafkaFutures.toCompletableFuture(
-        adminClient.describeConsumerGroups(consumerGroupIds).all())
+            adminClient.describeConsumerGroups(consumerGroupIds).all())
         .thenApply(
             descriptions ->
-                descriptions.values()
-                    .stream()
+                descriptions.values().stream()
                     .filter(
                         // When describing a consumer-group that does not exist, AdminClient returns
                         // a dummy consumer-group with simple=true and state=DEAD.
                         // TODO: Investigate a better way of detecting non-existent consumer-group.
-                        description -> !description.isSimpleConsumerGroup()
-                            || description.state() != ConsumerGroupState.DEAD)
+                        description ->
+                            !description.isSimpleConsumerGroup()
+                                || description.state() != ConsumerGroupState.DEAD)
                     .map(
                         description ->
                             ConsumerGroup.fromConsumerGroupDescription(clusterId, description))

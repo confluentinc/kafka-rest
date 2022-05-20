@@ -25,8 +25,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class BrokerData extends Resource {
 
-  BrokerData() {
-  }
+  BrokerData() {}
 
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
@@ -58,7 +57,8 @@ public abstract class BrokerData extends Resource {
         .setClusterId(broker.getClusterId())
         .setBrokerId(broker.getBrokerId())
         .setHost(broker.getHost())
-        .setPort(broker.getPort()).setRack(broker.getRack());
+        .setPort(broker.getPort())
+        .setRack(broker.getRack());
   }
 
   @JsonCreator
@@ -71,8 +71,7 @@ public abstract class BrokerData extends Resource {
       @JsonProperty("port") @Nullable Integer port,
       @JsonProperty("rack") @Nullable String rack,
       @JsonProperty("configs") Relationship configs,
-      @JsonProperty("partition_replicas") Relationship partitionReplicas
-  ) {
+      @JsonProperty("partition_replicas") Relationship partitionReplicas) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -89,8 +88,7 @@ public abstract class BrokerData extends Resource {
   @AutoValue.Builder
   public abstract static class Builder extends Resource.Builder<Builder> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 

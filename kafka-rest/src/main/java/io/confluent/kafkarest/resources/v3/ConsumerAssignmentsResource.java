@@ -46,8 +46,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
 @Path(
-    "/v3/clusters/{clusterId}/consumer-groups/{consumerGroupId}/consumers/{consumerId}/assignments"
-)
+    "/v3/clusters/{clusterId}/consumer-groups/{consumerGroupId}/consumers/{consumerId}/assignments")
 @ResourceName("api.v3.consumer-assignments.*")
 public final class ConsumerAssignmentsResource {
 
@@ -59,8 +58,7 @@ public final class ConsumerAssignmentsResource {
   public ConsumerAssignmentsResource(
       Provider<ConsumerAssignmentManager> consumerAssignmentManager,
       CrnFactory crnFactory,
-      UrlFactory urlFactory
-  ) {
+      UrlFactory urlFactory) {
     this.consumerAssignmentManager = requireNonNull(consumerAssignmentManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
@@ -74,10 +72,10 @@ public final class ConsumerAssignmentsResource {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("consumerGroupId") String consumerGroupId,
-      @PathParam("consumerId") String consumerId
-  ) {
+      @PathParam("consumerId") String consumerId) {
     CompletableFuture<ListConsumerAssignmentsResponse> response =
-        consumerAssignmentManager.get()
+        consumerAssignmentManager
+            .get()
             .listConsumerAssignments(clusterId, consumerGroupId, consumerId)
             .thenApply(
                 assignments ->
@@ -119,10 +117,10 @@ public final class ConsumerAssignmentsResource {
       @PathParam("consumerGroupId") String consumerGroupId,
       @PathParam("consumerId") String consumerId,
       @PathParam("topicName") String topicName,
-      @PathParam("partitionId") int partitionId
-  ) {
+      @PathParam("partitionId") int partitionId) {
     CompletableFuture<GetConsumerAssignmentResponse> response =
-        consumerAssignmentManager.get()
+        consumerAssignmentManager
+            .get()
             .getConsumerAssignment(clusterId, consumerGroupId, consumerId, topicName, partitionId)
             .thenApply(assignment -> assignment.orElseThrow(NotFoundException::new))
             .thenApply(

@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.controllers;
 
 import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
+import static java.util.Collections.emptySet;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -145,40 +146,30 @@ public class PartitionManagerImplTest {
           TOPIC_NAME,
           Arrays.asList(PARTITION_1, PARTITION_2, PARTITION_3),
           /* replicationFactor= */ (short) 3,
-          /* isInternal= */ false);
+          /* isInternal= */ false,
+          /* authorizedOperations= */ emptySet());
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private Admin adminClient;
+  @Mock private Admin adminClient;
 
-  @Mock
-  private ListOffsetsResult earliestResult;
+  @Mock private ListOffsetsResult earliestResult;
 
-  @Mock
-  private ListOffsetsResultInfo earliestResultInfo1;
+  @Mock private ListOffsetsResultInfo earliestResultInfo1;
 
-  @Mock
-  private ListOffsetsResultInfo earliestResultInfo2;
+  @Mock private ListOffsetsResultInfo earliestResultInfo2;
 
-  @Mock
-  private ListOffsetsResultInfo earliestResultInfo3;
+  @Mock private ListOffsetsResultInfo earliestResultInfo3;
 
-  @Mock
-  private ListOffsetsResult latestResult;
+  @Mock private ListOffsetsResult latestResult;
 
-  @Mock
-  private ListOffsetsResultInfo latestResultInfo1;
+  @Mock private ListOffsetsResultInfo latestResultInfo1;
 
-  @Mock
-  private ListOffsetsResultInfo latestResultInfo2;
+  @Mock private ListOffsetsResultInfo latestResultInfo2;
 
-  @Mock
-  private ListOffsetsResultInfo latestResultInfo3;
+  @Mock private ListOffsetsResultInfo latestResultInfo3;
 
-  @Mock
-  private TopicManager topicManager;
+  @Mock private TopicManager topicManager;
 
   private PartitionManagerImpl partitionManager;
 
@@ -193,8 +184,7 @@ public class PartitionManagerImplTest {
         .andReturn(CompletableFuture.completedFuture(Optional.of(TOPIC)));
     // Neither OffsetSpec or ListOffsetsOptions implement equals. We have to rely on ordering of
     // method calls. Earliest fist, then latest.
-    expect(adminClient.listOffsets(anyObject(), anyObject()))
-        .andReturn(earliestResult);
+    expect(adminClient.listOffsets(anyObject(), anyObject())).andReturn(earliestResult);
     expect(earliestResult.partitionResult(toTopicPartition(PARTITION_1)))
         .andReturn(KafkaFuture.completedFuture(earliestResultInfo1));
     expect(earliestResultInfo1.offset()).andReturn(PARTITION_1.getEarliestOffset());
@@ -204,8 +194,7 @@ public class PartitionManagerImplTest {
     expect(earliestResult.partitionResult(toTopicPartition(PARTITION_3)))
         .andReturn(KafkaFuture.completedFuture(earliestResultInfo3));
     expect(earliestResultInfo3.offset()).andReturn(PARTITION_3.getEarliestOffset());
-    expect(adminClient.listOffsets(anyObject(), anyObject()))
-        .andReturn(latestResult);
+    expect(adminClient.listOffsets(anyObject(), anyObject())).andReturn(latestResult);
     expect(latestResult.partitionResult(toTopicPartition(PARTITION_1)))
         .andReturn(KafkaFuture.completedFuture(latestResultInfo1));
     expect(latestResultInfo1.offset()).andReturn(PARTITION_1.getLatestOffset());
@@ -266,8 +255,7 @@ public class PartitionManagerImplTest {
         .andReturn(CompletableFuture.completedFuture(Optional.of(TOPIC)));
     // Neither OffsetSpec or ListOffsetsOptions implement equals. We have to rely on ordering of
     // method calls. Earliest fist, then latest.
-    expect(adminClient.listOffsets(anyObject(), anyObject()))
-        .andReturn(earliestResult);
+    expect(adminClient.listOffsets(anyObject(), anyObject())).andReturn(earliestResult);
     expect(earliestResult.partitionResult(toTopicPartition(PARTITION_1)))
         .andReturn(KafkaFuture.completedFuture(earliestResultInfo1));
     expect(earliestResultInfo1.offset()).andReturn(PARTITION_1.getEarliestOffset());
@@ -277,8 +265,7 @@ public class PartitionManagerImplTest {
     expect(earliestResult.partitionResult(toTopicPartition(PARTITION_3)))
         .andReturn(KafkaFuture.completedFuture(earliestResultInfo3));
     expect(earliestResultInfo3.offset()).andReturn(PARTITION_3.getEarliestOffset());
-    expect(adminClient.listOffsets(anyObject(), anyObject()))
-        .andReturn(latestResult);
+    expect(adminClient.listOffsets(anyObject(), anyObject())).andReturn(latestResult);
     expect(latestResult.partitionResult(toTopicPartition(PARTITION_1)))
         .andReturn(KafkaFuture.completedFuture(latestResultInfo1));
     expect(latestResultInfo1.offset()).andReturn(PARTITION_1.getLatestOffset());
@@ -325,13 +312,11 @@ public class PartitionManagerImplTest {
         .andReturn(CompletableFuture.completedFuture(Optional.of(TOPIC)));
     // Neither OffsetSpec or ListOffsetsOptions implement equals. We have to rely on ordering of
     // method calls. Earliest fist, then latest.
-    expect(adminClient.listOffsets(anyObject(), anyObject()))
-        .andReturn(earliestResult);
+    expect(adminClient.listOffsets(anyObject(), anyObject())).andReturn(earliestResult);
     expect(earliestResult.partitionResult(toTopicPartition(PARTITION_1)))
         .andReturn(KafkaFuture.completedFuture(earliestResultInfo1));
     expect(earliestResultInfo1.offset()).andReturn(PARTITION_1.getEarliestOffset());
-    expect(adminClient.listOffsets(anyObject(), anyObject()))
-        .andReturn(latestResult);
+    expect(adminClient.listOffsets(anyObject(), anyObject())).andReturn(latestResult);
     expect(latestResult.partitionResult(toTopicPartition(PARTITION_1)))
         .andReturn(KafkaFuture.completedFuture(latestResultInfo1));
     expect(latestResultInfo1.offset()).andReturn(PARTITION_1.getLatestOffset());
@@ -395,13 +380,11 @@ public class PartitionManagerImplTest {
         .andReturn(CompletableFuture.completedFuture(Optional.of(TOPIC)));
     // Neither OffsetSpec or ListOffsetsOptions implement equals. We have to rely on ordering of
     // method calls. Earliest fist, then latest.
-    expect(adminClient.listOffsets(anyObject(), anyObject()))
-        .andReturn(earliestResult);
+    expect(adminClient.listOffsets(anyObject(), anyObject())).andReturn(earliestResult);
     expect(earliestResult.partitionResult(toTopicPartition(PARTITION_1)))
         .andReturn(KafkaFuture.completedFuture(earliestResultInfo1));
     expect(earliestResultInfo1.offset()).andReturn(PARTITION_1.getEarliestOffset());
-    expect(adminClient.listOffsets(anyObject(), anyObject()))
-        .andReturn(latestResult);
+    expect(adminClient.listOffsets(anyObject(), anyObject())).andReturn(latestResult);
     expect(latestResult.partitionResult(toTopicPartition(PARTITION_1)))
         .andReturn(KafkaFuture.completedFuture(latestResultInfo1));
     expect(latestResultInfo1.offset()).andReturn(PARTITION_1.getLatestOffset());
@@ -425,8 +408,7 @@ public class PartitionManagerImplTest {
         .andReturn(CompletableFuture.completedFuture(Optional.of(TOPIC)));
     replay(topicManager);
 
-    Optional<Partition> partition =
-        partitionManager.getLocalPartition(TOPIC_NAME, 100).get();
+    Optional<Partition> partition = partitionManager.getLocalPartition(TOPIC_NAME, 100).get();
 
     assertFalse(partition.isPresent());
   }

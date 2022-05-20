@@ -19,14 +19,11 @@ import com.google.auto.value.AutoValue;
 import javax.annotation.Nullable;
 import org.apache.kafka.common.Node;
 
-/**
- * A Kafka broker.
- */
+/** A Kafka broker. */
 @AutoValue
 public abstract class Broker {
 
-  Broker() {
-  }
+  Broker() {}
 
   public abstract String getClusterId();
 

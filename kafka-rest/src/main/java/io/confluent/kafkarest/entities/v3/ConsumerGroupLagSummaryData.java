@@ -25,8 +25,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ConsumerGroupLagSummaryData extends Resource {
 
-  ConsumerGroupLagSummaryData() {
-  }
+  ConsumerGroupLagSummaryData() {}
 
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
@@ -67,8 +66,7 @@ public abstract class ConsumerGroupLagSummaryData extends Resource {
   }
 
   public static Builder fromConsumerGroupLagSummary(
-      ConsumerGroupLagSummary consumerGroupLagSummary
-  ) {
+      ConsumerGroupLagSummary consumerGroupLagSummary) {
     return builder()
         .setClusterId(consumerGroupLagSummary.getClusterId())
         .setConsumerGroupId(consumerGroupLagSummary.getConsumerGroupId())
@@ -96,8 +94,7 @@ public abstract class ConsumerGroupLagSummaryData extends Resource {
       @JsonProperty("max_lag_instance_id") @Nullable String maxLagInstanceId,
       @JsonProperty("max_lag_topic_name") String maxLagTopicName,
       @JsonProperty("max_lag_partition_id") Integer maxLagPartitionId,
-      @JsonProperty("max_lag_partition") Relationship maxLagPartition
-  ) {
+      @JsonProperty("max_lag_partition") Relationship maxLagPartition) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -119,8 +116,7 @@ public abstract class ConsumerGroupLagSummaryData extends Resource {
   @AutoValue.Builder
   public abstract static class Builder extends Resource.Builder<Builder> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 

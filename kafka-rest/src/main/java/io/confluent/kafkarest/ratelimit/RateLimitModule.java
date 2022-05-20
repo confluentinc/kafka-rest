@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -13,25 +13,18 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.confluent.kafkarest.extension;
-
-import java.io.IOException;
+package io.confluent.kafkarest.ratelimit;
 
 import javax.inject.Singleton;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerResponseContext;
-import javax.ws.rs.container.ContainerResponseFilter;
-import javax.ws.rs.ext.Provider;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
-@Provider
-@Singleton
-public class KafkaRestCleanupFilter implements ContainerResponseFilter {
+/**
+ * A module to configure bindings for {@link FixedCostRateLimiter} and {@link RequestRateLimiter}.
+ */
+final class RateLimitModule extends AbstractBinder {
 
   @Override
-  public void filter(
-      ContainerRequestContext requestContext,
-      ContainerResponseContext responseContext
-  ) throws IOException {
-    KafkaRestContextProvider.clearCurrentContext();
+  protected void configure() {
+    bindFactory(RequestRateLimiterFactory.class).to(RequestRateLimiter.class).in(Singleton.class);
   }
 }

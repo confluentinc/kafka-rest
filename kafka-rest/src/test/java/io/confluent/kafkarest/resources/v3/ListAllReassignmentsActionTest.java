@@ -23,8 +23,8 @@ import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.controllers.ReassignmentManager;
 import io.confluent.kafkarest.entities.Reassignment;
-import io.confluent.kafkarest.entities.v3.ReassignmentData;
 import io.confluent.kafkarest.entities.v3.ListAllReassignmentsResponse;
+import io.confluent.kafkarest.entities.v3.ReassignmentData;
 import io.confluent.kafkarest.entities.v3.ReassignmentDataList;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
@@ -61,27 +61,29 @@ public class ListAllReassignmentsActionTest {
   private static final List<Integer> REMOVING_REPLICAS_2 = Arrays.asList(4);
   private static final List<Integer> REMOVING_REPLICAS_3 = Arrays.asList(4);
 
-  private static final Reassignment REASSIGNMENT_1 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_1, ADDING_REPLICAS_1, REMOVING_REPLICAS_1);
-  private static final Reassignment REASSIGNMENT_2 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_2, ADDING_REPLICAS_2, REMOVING_REPLICAS_2);
-  private static final Reassignment REASSIGNMENT_3 = Reassignment.create(CLUSTER_ID, TOPIC_1,
-      PARTITION_ID_3, ADDING_REPLICAS_3, REMOVING_REPLICAS_3);
+  private static final Reassignment REASSIGNMENT_1 =
+      Reassignment.create(
+          CLUSTER_ID, TOPIC_1, PARTITION_ID_1, ADDING_REPLICAS_1, REMOVING_REPLICAS_1);
+  private static final Reassignment REASSIGNMENT_2 =
+      Reassignment.create(
+          CLUSTER_ID, TOPIC_1, PARTITION_ID_2, ADDING_REPLICAS_2, REMOVING_REPLICAS_2);
+  private static final Reassignment REASSIGNMENT_3 =
+      Reassignment.create(
+          CLUSTER_ID, TOPIC_1, PARTITION_ID_3, ADDING_REPLICAS_3, REMOVING_REPLICAS_3);
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private ReassignmentManager reassignmentManager;
+  @Mock private ReassignmentManager reassignmentManager;
 
   private ListAllReassignmentsAction listAllReassignmentsAction;
 
   @Before
   public void setUp() {
-    listAllReassignmentsAction = new ListAllReassignmentsAction(
-        () -> reassignmentManager,
-        new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
-        new FakeUrlFactory());
+    listAllReassignmentsAction =
+        new ListAllReassignmentsAction(
+            () -> reassignmentManager,
+            new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
+            new FakeUrlFactory());
   }
 
   @Test

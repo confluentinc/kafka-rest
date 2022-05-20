@@ -68,25 +68,24 @@ public class TopicsResourceAvroProduceTest
 
   private static final String TOPIC_NAME = "topic1";
   private static final String RAW_KEY_SCHEMA = "{\"name\":\"int\",\"type\": \"int\"}";
-  private static final String RAW_VALUE_SCHEMA = "{\"type\": \"record\", "
-      + "\"name\":\"test\","
-      + "\"fields\":[{"
-      + "  \"name\":\"field\", "
-      + "  \"type\": \"int\""
-      + "}]}";
+  private static final String RAW_VALUE_SCHEMA =
+      "{\"type\": \"record\", "
+          + "\"name\":\"test\","
+          + "\"fields\":[{"
+          + "  \"name\":\"field\", "
+          + "  \"type\": \"int\""
+          + "}]}";
   private static final AvroSchema KEY_SCHEMA =
       new AvroSchema(new Schema.Parser().parse(RAW_KEY_SCHEMA));
   private static final AvroSchema VALUE_SCHEMA =
       new AvroSchema(new Schema.Parser().parse(RAW_VALUE_SCHEMA));
 
-  private final static JsonNode[] TEST_KEYS = {
-      TestUtils.jsonTree("1"),
-      TestUtils.jsonTree("2"),
+  private static final JsonNode[] TEST_KEYS = {
+    TestUtils.jsonTree("1"), TestUtils.jsonTree("2"),
   };
 
-  private final static JsonNode[] TEST_VALUES = {
-      TestUtils.jsonTree("{\"field\": 1}"),
-      TestUtils.jsonTree("{\"field\": 2}"),
+  private static final JsonNode[] TEST_VALUES = {
+    TestUtils.jsonTree("{\"field\": 1}"), TestUtils.jsonTree("{\"field\": 2}"),
   };
 
   private final List<ProduceRecord> RECORDS =
@@ -100,28 +99,20 @@ public class TopicsResourceAvroProduceTest
           new RecordMetadata(PARTITION, 0L, 0L, 0L, 0L, 1, 1),
           new RecordMetadata(PARTITION, 0L, 1L, 0L, 0L, 1, 1));
   private static final List<PartitionOffset> OFFSETS =
-      Arrays.asList(
-          new PartitionOffset(0, 0L, null, null),
-          new PartitionOffset(0, 1L, null, null));
+      Arrays.asList(new PartitionOffset(0, 0L, null, null), new PartitionOffset(0, 1L, null, null));
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private SchemaManager schemaManager;
+  @Mock private SchemaManager schemaManager;
 
-  @Mock
-  private RecordSerializer recordSerializer;
+  @Mock private RecordSerializer recordSerializer;
 
-  @Mock
-  private ProduceController produceController;
+  @Mock private ProduceController produceController;
 
   public TopicsResourceAvroProduceTest() throws RestConfigException {
     addResource(
         new ProduceToTopicAction(
-            () -> schemaManager,
-            () -> recordSerializer,
-            () -> produceController));
+            () -> schemaManager, () -> recordSerializer, () -> produceController));
   }
 
   private Response produceToTopic(ProduceRequest request, List<RecordMetadata> results) {
@@ -133,48 +124,48 @@ public class TopicsResourceAvroProduceTest
             TOPIC_NAME + "value", /* schemaId= */ 2, /* schemaVersion= */ 1, VALUE_SCHEMA);
 
     expect(
-        schemaManager.getSchema(
-            /* topicName= */ TOPIC_NAME,
-            /* format= */ Optional.of(EmbeddedFormat.AVRO),
-            /* subject= */ Optional.empty(),
-            /* subjectNameStrategy= */ Optional.empty(),
-            /* schemaId= */ Optional.empty(),
-            /* schemaVersion= */ Optional.empty(),
-            /* rawSchema= */ Optional.of(RAW_KEY_SCHEMA),
-            /* isKey= */ true))
+            schemaManager.getSchema(
+                /* topicName= */ TOPIC_NAME,
+                /* format= */ Optional.of(EmbeddedFormat.AVRO),
+                /* subject= */ Optional.empty(),
+                /* subjectNameStrategy= */ Optional.empty(),
+                /* schemaId= */ Optional.empty(),
+                /* schemaVersion= */ Optional.empty(),
+                /* rawSchema= */ Optional.of(RAW_KEY_SCHEMA),
+                /* isKey= */ true))
         .andStubReturn(registeredKeySchema);
     expect(
-        schemaManager.getSchema(
-            /* topicName= */ TOPIC_NAME,
-            /* format= */ Optional.of(EmbeddedFormat.AVRO),
-            /* subject= */ Optional.empty(),
-            /* subjectNameStrategy= */ Optional.empty(),
-            /* schemaId= */ Optional.empty(),
-            /* schemaVersion= */ Optional.empty(),
-            /* rawSchema= */ Optional.of(RAW_VALUE_SCHEMA),
-            /* isKey= */ false))
+            schemaManager.getSchema(
+                /* topicName= */ TOPIC_NAME,
+                /* format= */ Optional.of(EmbeddedFormat.AVRO),
+                /* subject= */ Optional.empty(),
+                /* subjectNameStrategy= */ Optional.empty(),
+                /* schemaId= */ Optional.empty(),
+                /* schemaVersion= */ Optional.empty(),
+                /* rawSchema= */ Optional.of(RAW_VALUE_SCHEMA),
+                /* isKey= */ false))
         .andStubReturn(registeredValueSchema);
     expect(
-        schemaManager.getSchema(
-            /* topicName= */ TOPIC_NAME,
-            /* format= */ Optional.empty(),
-            /* subject= */ Optional.empty(),
-            /* subjectNameStrategy= */ Optional.empty(),
-            /* schemaId= */ Optional.of(1),
-            /* schemaVersion= */ Optional.empty(),
-            /* rawSchema= */ Optional.empty(),
-            /* isKey= */ true))
+            schemaManager.getSchema(
+                /* topicName= */ TOPIC_NAME,
+                /* format= */ Optional.empty(),
+                /* subject= */ Optional.empty(),
+                /* subjectNameStrategy= */ Optional.empty(),
+                /* schemaId= */ Optional.of(1),
+                /* schemaVersion= */ Optional.empty(),
+                /* rawSchema= */ Optional.empty(),
+                /* isKey= */ true))
         .andStubReturn(registeredKeySchema);
     expect(
-        schemaManager.getSchema(
-            /* topicName= */ TOPIC_NAME,
-            /* format= */ Optional.empty(),
-            /* subject= */ Optional.empty(),
-            /* subjectNameStrategy= */ Optional.empty(),
-            /* schemaId= */ Optional.of(2),
-            /* schemaVersion= */ Optional.empty(),
-            /* rawSchema= */ Optional.empty(),
-            /* isKey= */ false))
+            schemaManager.getSchema(
+                /* topicName= */ TOPIC_NAME,
+                /* format= */ Optional.empty(),
+                /* subject= */ Optional.empty(),
+                /* subjectNameStrategy= */ Optional.empty(),
+                /* schemaId= */ Optional.of(2),
+                /* schemaVersion= */ Optional.empty(),
+                /* rawSchema= */ Optional.empty(),
+                /* isKey= */ false))
         .andStubReturn(registeredValueSchema);
 
     for (int i = 0; i < request.getRecords().size(); i++) {
@@ -183,39 +174,40 @@ public class TopicsResourceAvroProduceTest
       ByteString serializedValue = ByteString.copyFromUtf8(String.valueOf(record.getValue()));
 
       expect(
-          recordSerializer.serialize(
-              EmbeddedFormat.AVRO,
-              TopicsResourceAvroProduceTest.TOPIC_NAME,
-              Optional.of(registeredKeySchema),
-              record.getKey().orElse(NullNode.getInstance()),
-              /* isKey= */ true))
+              recordSerializer.serialize(
+                  EmbeddedFormat.AVRO,
+                  TopicsResourceAvroProduceTest.TOPIC_NAME,
+                  Optional.of(registeredKeySchema),
+                  record.getKey().orElse(NullNode.getInstance()),
+                  /* isKey= */ true))
           .andReturn(Optional.of(serializedKey));
       expect(
-          recordSerializer.serialize(
-              EmbeddedFormat.AVRO,
-              TopicsResourceAvroProduceTest.TOPIC_NAME,
-              Optional.of(registeredValueSchema),
-              record.getValue().orElse(NullNode.getInstance()),
-              /* isKey= */ false))
+              recordSerializer.serialize(
+                  EmbeddedFormat.AVRO,
+                  TopicsResourceAvroProduceTest.TOPIC_NAME,
+                  Optional.of(registeredValueSchema),
+                  record.getValue().orElse(NullNode.getInstance()),
+                  /* isKey= */ false))
           .andReturn(Optional.of(serializedValue));
 
       expect(
-          produceController.produce(
-              /* clusterId= */ eq(""),
-              eq(TopicsResourceAvroProduceTest.TOPIC_NAME),
-              eq(record.getPartition()),
-              /* headers= */ eq(ImmutableMultimap.of()),
-              eq(Optional.of(serializedKey)),
-              eq(Optional.of(serializedValue)),
-              /* timestamp= */ isA(Instant.class)))
+              produceController.produce(
+                  /* clusterId= */ eq(""),
+                  eq(TopicsResourceAvroProduceTest.TOPIC_NAME),
+                  eq(record.getPartition()),
+                  /* headers= */ eq(ImmutableMultimap.of()),
+                  eq(Optional.of(serializedKey)),
+                  eq(Optional.of(serializedValue)),
+                  /* timestamp= */ isA(Instant.class)))
           .andReturn(
               CompletableFuture.completedFuture(ProduceResult.fromRecordMetadata(results.get(i))));
     }
 
     replay(schemaManager, recordSerializer, produceController);
 
-    Response response = request("/topics/" + TOPIC_NAME, Versions.KAFKA_V2_JSON)
-        .post(Entity.entity(request, Versions.KAFKA_V2_JSON_AVRO));
+    Response response =
+        request("/topics/" + TOPIC_NAME, Versions.KAFKA_V2_JSON)
+            .post(Entity.entity(request, Versions.KAFKA_V2_JSON_AVRO));
 
     verify(schemaManager, recordSerializer, produceController);
 
@@ -232,10 +224,7 @@ public class TopicsResourceAvroProduceTest
             /* valueSchemaId= */ null,
             RAW_VALUE_SCHEMA);
 
-    Response
-        rawResponse =
-        produceToTopic(
-            request, PRODUCE_RESULTS);
+    Response rawResponse = produceToTopic(request, PRODUCE_RESULTS);
     assertOKResponse(rawResponse, Versions.KAFKA_V2_JSON);
     ProduceResponse response = TestUtils.tryReadEntityOrLog(rawResponse, ProduceResponse.class);
 
@@ -254,9 +243,7 @@ public class TopicsResourceAvroProduceTest
             /* valueSchemaId= */ 2,
             /* valueSchema= */ null);
 
-    Response rawResponse2 =
-        produceToTopic(
-            request2, PRODUCE_RESULTS);
+    Response rawResponse2 = produceToTopic(request2, PRODUCE_RESULTS);
     assertOKResponse(rawResponse2, Versions.KAFKA_V2_JSON);
   }
 }

@@ -66,11 +66,7 @@ public class ConsumerGroupLagSummaryManagerImplTest {
 
   private static final Broker BROKER_1 =
       Broker.create(
-          CLUSTER_ID,
-          /* brokerId= */ 1,
-          /* host= */ "1.2.3.4",
-          /* port= */ 1000,
-          /* rack= */ null);
+          CLUSTER_ID, /* brokerId= */ 1, /* host= */ "1.2.3.4", /* port= */ 1000, /* rack= */ null);
 
   private static final String CONSUMER_GROUP_ID = "consumer-group-1";
 
@@ -124,16 +120,14 @@ public class ConsumerGroupLagSummaryManagerImplTest {
           .setConsumers(Arrays.asList(CONSUMER_1, CONSUMER_2))
           .build();
 
-  private static final TopicPartition TOPIC_PARTITION_1 =
-      new TopicPartition("topic-1", 1);
+  private static final TopicPartition TOPIC_PARTITION_1 = new TopicPartition("topic-1", 1);
 
-  private static final TopicPartition TOPIC_PARTITION_2 =
-      new TopicPartition("topic-2", 2);
+  private static final TopicPartition TOPIC_PARTITION_2 = new TopicPartition("topic-2", 2);
 
-  private static final TopicPartition TOPIC_PARTITION_3 =
-      new TopicPartition("topic-3", 3);
+  private static final TopicPartition TOPIC_PARTITION_3 = new TopicPartition("topic-3", 3);
 
   private static final Map<TopicPartition, OffsetAndMetadata> OFFSET_AND_METADATA_MAP;
+
   static {
     OFFSET_AND_METADATA_MAP = new HashMap<>();
     OFFSET_AND_METADATA_MAP.put(TOPIC_PARTITION_1, new OffsetAndMetadata(0));
@@ -142,17 +136,15 @@ public class ConsumerGroupLagSummaryManagerImplTest {
   }
 
   private static final Map<TopicPartition, KafkaFuture<ListOffsetsResultInfo>> LATEST_OFFSETS_MAP;
+
   static {
     LATEST_OFFSETS_MAP = new HashMap<>();
     LATEST_OFFSETS_MAP.put(
-        TOPIC_PARTITION_1,
-        KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
+        TOPIC_PARTITION_1, KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
     LATEST_OFFSETS_MAP.put(
-        TOPIC_PARTITION_2,
-        KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
+        TOPIC_PARTITION_2, KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
     LATEST_OFFSETS_MAP.put(
-        TOPIC_PARTITION_3,
-        KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
+        TOPIC_PARTITION_3, KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
   }
 
   private static final ConsumerGroupLagSummary CONSUMER_GROUP_LAG_SUMMARY =
@@ -168,20 +160,15 @@ public class ConsumerGroupLagSummaryManagerImplTest {
           .setTotalLag(100L) // negative lag is ignored
           .build();
 
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Mock private ConsumerGroupManager consumerGroupManager;
 
-  @Mock
-  private ConsumerGroupManager consumerGroupManager;
-
-  @Mock
-  private Admin kafkaAdminClient;
+  @Mock private Admin kafkaAdminClient;
 
   private ConsumerGroupLagSummaryManagerImpl consumerGroupLagSummaryManager;
 
-  @Mock
-  private ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult;
+  @Mock private ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult;
 
   @Before
   public void setUp() {
@@ -193,36 +180,41 @@ public class ConsumerGroupLagSummaryManagerImplTest {
   public void getConsumerGroupLagSummary_returnsConsumerGroupLagSummary() throws Exception {
     expect(consumerGroupManager.getConsumerGroup(CLUSTER_ID, CONSUMER_GROUP_ID))
         .andReturn(completedFuture(Optional.of(CONSUMER_GROUP)));
-    expect(kafkaAdminClient.listConsumerGroupOffsets(
-        eq(CONSUMER_GROUP_ID),
-        anyObject(ListConsumerGroupOffsetsOptions.class)))
+    expect(
+            kafkaAdminClient.listConsumerGroupOffsets(
+                eq(CONSUMER_GROUP_ID), anyObject(ListConsumerGroupOffsetsOptions.class)))
         .andReturn(listConsumerGroupOffsetsResult);
     expect(listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata())
         .andReturn(KafkaFuture.completedFuture(OFFSET_AND_METADATA_MAP));
     final Capture<Map<TopicPartition, OffsetSpec>> capturedOffsetSpec = newCapture();
     final Capture<ListOffsetsOptions> capturedListOffsetsOptions = newCapture();
-    expect(kafkaAdminClient.listOffsets(
-        capture(capturedOffsetSpec),
-        capture(capturedListOffsetsOptions)))
+    expect(
+            kafkaAdminClient.listOffsets(
+                capture(capturedOffsetSpec), capture(capturedListOffsetsOptions)))
         .andReturn(new ListOffsetsResult(LATEST_OFFSETS_MAP));
     replay(consumerGroupManager, kafkaAdminClient, listConsumerGroupOffsetsResult);
     ConsumerGroupLagSummary consumerGroupLagSummary =
-        consumerGroupLagSummaryManager.getConsumerGroupLagSummary(CLUSTER_ID, CONSUMER_GROUP_ID).get().get();
+        consumerGroupLagSummaryManager
+            .getConsumerGroupLagSummary(CLUSTER_ID, CONSUMER_GROUP_ID)
+            .get()
+            .get();
     assertEquals(OFFSET_AND_METADATA_MAP.keySet(), capturedOffsetSpec.getValue().keySet());
     assertEquals(
-        IsolationLevel.READ_COMMITTED,
-        capturedListOffsetsOptions.getValue().isolationLevel());
+        IsolationLevel.READ_COMMITTED, capturedListOffsetsOptions.getValue().isolationLevel());
     assertEquals(CONSUMER_GROUP_LAG_SUMMARY, consumerGroupLagSummary);
   }
 
   @Test
-  public void getConsumerGroupLagSummary_nonExistingConsumerGroup_throwsNotFound() throws Exception {
+  public void getConsumerGroupLagSummary_nonExistingConsumerGroup_throwsNotFound()
+      throws Exception {
     expect(consumerGroupManager.getConsumerGroup(CLUSTER_ID, CONSUMER_GROUP_ID))
         .andReturn(completedFuture(Optional.empty()));
     replay(consumerGroupManager);
 
     try {
-      consumerGroupLagSummaryManager.getConsumerGroupLagSummary(CLUSTER_ID, CONSUMER_GROUP_ID).get();
+      consumerGroupLagSummaryManager
+          .getConsumerGroupLagSummary(CLUSTER_ID, CONSUMER_GROUP_ID)
+          .get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());

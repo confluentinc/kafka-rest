@@ -22,8 +22,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class SearchReplicasByBrokerResponse {
 
-  SearchReplicasByBrokerResponse() {
-  }
+  SearchReplicasByBrokerResponse() {}
 
   @JsonValue
   public abstract ReplicaDataList getValue();

@@ -64,9 +64,12 @@ public class ConsumerInstanceId {
   @Override
   public String toString() {
     return "ConsumerInstanceId{"
-           + "group='" + group + '\''
-           + ", instance='" + instance + '\''
-           + '}';
+        + "group='"
+        + group
+        + '\''
+        + ", instance='"
+        + instance
+        + '\''
+        + '}';
   }
 }
-

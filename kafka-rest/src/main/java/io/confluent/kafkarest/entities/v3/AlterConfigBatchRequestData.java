@@ -30,8 +30,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class AlterConfigBatchRequestData {
 
-  AlterConfigBatchRequestData() {
-  }
+  AlterConfigBatchRequestData() {}
 
   @JsonProperty("data")
   public abstract ImmutableList<AlterEntry> getData();
@@ -85,8 +84,7 @@ public abstract class AlterConfigBatchRequestData {
     static AlterEntry fromJson(
         @JsonProperty("name") String name,
         @JsonProperty("value") @Nullable String value,
-        @JsonProperty("operation") @Nullable AlterOperation operation
-    ) {
+        @JsonProperty("operation") @Nullable AlterOperation operation) {
       return builder()
           .setName(name)
           .setValue(value)
@@ -108,7 +106,6 @@ public abstract class AlterConfigBatchRequestData {
   }
 
   public enum AlterOperation {
-
     SET,
 
     DELETE

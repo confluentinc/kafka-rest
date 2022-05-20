@@ -22,8 +22,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class GetReplicaResponse {
 
-  GetReplicaResponse() {
-  }
+  GetReplicaResponse() {}
 
   @JsonValue
   public abstract ReplicaData getValue();

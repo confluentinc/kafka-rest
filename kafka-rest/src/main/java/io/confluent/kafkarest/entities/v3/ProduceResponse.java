@@ -28,8 +28,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ProduceResponse {
 
-  ProduceResponse() {
-  }
+  ProduceResponse() {}
 
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
@@ -55,6 +54,10 @@ public abstract class ProduceResponse {
   @JsonInclude(Include.NON_ABSENT)
   public abstract Optional<ProduceResponseData> getValue();
 
+  @JsonProperty("wait_for_ms")
+  @JsonInclude(Include.NON_ABSENT)
+  public abstract Optional<Long> getWaitForMs();
+
   @JsonCreator
   static ProduceResponse fromJson(
       @JsonProperty("cluster_id") String clusterId,
@@ -63,7 +66,8 @@ public abstract class ProduceResponse {
       @JsonProperty("offset") long offset,
       @JsonProperty("timestamp") @Nullable Instant timestamp,
       @JsonProperty("key") @Nullable ProduceResponseData key,
-      @JsonProperty("value") @Nullable ProduceResponseData value) {
+      @JsonProperty("value") @Nullable ProduceResponseData value,
+      @JsonProperty("wait_for_ms") @Nullable Long waitForMs) {
     return builder()
         .setClusterId(clusterId)
         .setTopicName(topicName)
@@ -72,6 +76,7 @@ public abstract class ProduceResponse {
         .setTimestamp(timestamp)
         .setKey(key)
         .setValue(value)
+        .setWaitForMs(waitForMs)
         .build();
   }
 
@@ -82,8 +87,7 @@ public abstract class ProduceResponse {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 
@@ -105,14 +109,17 @@ public abstract class ProduceResponse {
 
     public abstract Builder setValue(@Nullable ProduceResponseData value);
 
+    public abstract Builder setWaitForMs(Optional<Long> waitForMs);
+
+    public abstract Builder setWaitForMs(@Nullable Long waitForMs);
+
     public abstract ProduceResponse build();
   }
 
   @AutoValue
   public abstract static class ProduceResponseData {
 
-    ProduceResponseData() {
-    }
+    ProduceResponseData() {}
 
     @JsonProperty("type")
     @JsonInclude(Include.NON_ABSENT)
@@ -156,8 +163,7 @@ public abstract class ProduceResponse {
     @AutoValue.Builder
     public abstract static class Builder {
 
-      Builder() {
-      }
+      Builder() {}
 
       public abstract Builder setType(Optional<EmbeddedFormat> type);
 

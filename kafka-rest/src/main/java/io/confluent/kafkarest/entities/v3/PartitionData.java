@@ -25,8 +25,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class PartitionData extends Resource {
 
-  PartitionData() {
-  }
+  PartitionData() {}
 
   @JsonProperty("cluster_id")
   public abstract String getClusterId();
@@ -66,8 +65,7 @@ public abstract class PartitionData extends Resource {
       @JsonProperty("partition_id") int partitionId,
       @JsonProperty("leader") @Nullable Relationship leader,
       @JsonProperty("replicas") Relationship replicas,
-      @JsonProperty("reassignment") Relationship reassignment
-  ) {
+      @JsonProperty("reassignment") Relationship reassignment) {
     return builder()
         .setKind(kind)
         .setMetadata(metadata)
@@ -83,8 +81,7 @@ public abstract class PartitionData extends Resource {
   @AutoValue.Builder
   public abstract static class Builder extends Resource.Builder<Builder> {
 
-    Builder() {
-    }
+    Builder() {}
 
     public abstract Builder setClusterId(String clusterId);
 

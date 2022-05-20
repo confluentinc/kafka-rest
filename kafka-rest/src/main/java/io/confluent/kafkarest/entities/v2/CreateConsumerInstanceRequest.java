@@ -43,26 +43,19 @@ public final class CreateConsumerInstanceRequest {
           /* responseMinBytes= */ null,
           /* requestWaitMs= */ null);
 
-  @Nullable
-  private final String id;
+  @Nullable private final String id;
 
-  @Nullable
-  private final String name;
+  @Nullable private final String name;
 
-  @NotNull
-  private final EmbeddedFormat format;
+  @NotNull private final EmbeddedFormat format;
 
-  @Nullable
-  private final String autoOffsetReset;
+  @Nullable private final String autoOffsetReset;
 
-  @Nullable
-  private final String autoCommitEnable;
+  @Nullable private final String autoCommitEnable;
 
-  @Nullable
-  private final Integer responseMinBytes;
+  @Nullable private final Integer responseMinBytes;
 
-  @Nullable
-  private final Integer requestWaitMs;
+  @Nullable private final Integer requestWaitMs;
 
   @JsonCreator
   public CreateConsumerInstanceRequest(
@@ -71,11 +64,10 @@ public final class CreateConsumerInstanceRequest {
       @JsonProperty("format") @Nullable String format,
       @JsonProperty("auto.offset.reset") @Nullable String autoOffsetReset,
       @JsonProperty("auto.commit.enable") @Nullable String autoCommitEnable,
-      @JsonProperty("fetch.min.bytes") @JsonAlias("responseMinBytes") @Nullable Integer
-          responseMinBytes,
-      @JsonProperty("consumer.request.timeout.ms") @JsonAlias("requestWaitMs") @Nullable Integer
-          requestWaitMs
-  ) {
+      @JsonProperty("fetch.min.bytes") @JsonAlias("responseMinBytes") @Nullable
+          Integer responseMinBytes,
+      @JsonProperty("consumer.request.timeout.ms") @JsonAlias("requestWaitMs") @Nullable
+          Integer requestWaitMs) {
     this.id = id;
     this.name = name;
     this.format = computeFormat(format);
@@ -156,13 +148,7 @@ public final class CreateConsumerInstanceRequest {
 
   public ConsumerInstanceConfig toConsumerInstanceConfig() {
     return ConsumerInstanceConfig.create(
-        id,
-        name,
-        format,
-        autoOffsetReset,
-        autoCommitEnable,
-        responseMinBytes,
-        requestWaitMs);
+        id, name, format, autoOffsetReset, autoCommitEnable, responseMinBytes, requestWaitMs);
   }
 
   @Override
@@ -191,8 +177,7 @@ public final class CreateConsumerInstanceRequest {
 
   @Override
   public String toString() {
-    return new StringJoiner(
-        ", ", CreateConsumerInstanceRequest.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", CreateConsumerInstanceRequest.class.getSimpleName() + "[", "]")
         .add("id='" + id + "'")
         .add("name='" + name + "'")
         .add("format=" + format)

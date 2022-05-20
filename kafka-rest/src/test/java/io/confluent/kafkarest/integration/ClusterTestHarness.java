@@ -14,9 +14,9 @@
  */
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
-import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -50,7 +50,6 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
-
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.CoreUtils;
@@ -96,9 +95,7 @@ public abstract class ClusterTestHarness {
 
   public static final int DEFAULT_NUM_BROKERS = 1;
 
-  /**
-   * Choose a number of random available ports
-   */
+  /** Choose a number of random available ports */
   public static int[] choosePorts(int count) {
     try {
       ServerSocket[] sockets = new ServerSocket[count];
@@ -116,13 +113,10 @@ public abstract class ClusterTestHarness {
     }
   }
 
-  /**
-   * Choose an available port
-   */
+  /** Choose an available port */
   public static int choosePort() {
     return choosePorts(1)[0];
   }
-
 
   private int numBrokers;
   private boolean withSchemaRegistry;
@@ -136,7 +130,7 @@ public abstract class ClusterTestHarness {
   protected List<KafkaConfig> configs = null;
   protected List<KafkaServer> servers = null;
   protected String brokerList = null;
-  //used for test consumer
+  // used for test consumer
   protected String plaintextBrokerList = null;
 
   // Schema registry config
@@ -183,26 +177,27 @@ public abstract class ClusterTestHarness {
     startBrokersConcurrently(numBrokers);
 
     brokerList =
-        TestUtils.getBrokerListStrFromServers(JavaConverters.asScalaBuffer(servers),
-            getBrokerSecurityProtocol());
+        TestUtils.getBrokerListStrFromServers(
+            JavaConverters.asScalaBuffer(servers), getBrokerSecurityProtocol());
     plaintextBrokerList =
-        TestUtils.getBrokerListStrFromServers(JavaConverters.asScalaBuffer(servers),
-            SecurityProtocol.PLAINTEXT);
+        TestUtils.getBrokerListStrFromServers(
+            JavaConverters.asScalaBuffer(servers), SecurityProtocol.PLAINTEXT);
 
     setupAcls();
     if (withSchemaRegistry) {
       int schemaRegPort = choosePort();
-      schemaRegProperties.put(SchemaRegistryConfig.PORT_CONFIG,
-          ((Integer) schemaRegPort).toString());
-      schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG,
-          zkConnect);
-      schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG,
+      schemaRegProperties.put(
+          SchemaRegistryConfig.PORT_CONFIG, ((Integer) schemaRegPort).toString());
+      schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG, zkConnect);
+      schemaRegProperties.put(
+          SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG,
           SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC);
-      schemaRegProperties.put(SchemaRegistryConfig.COMPATIBILITY_CONFIG,
-          schemaRegCompatibility);
-      String broker = SecurityProtocol.PLAINTEXT.name + "://" + TestUtils
-          .getBrokerListStrFromServers(JavaConverters.asScalaBuffer
-              (servers), SecurityProtocol.PLAINTEXT);
+      schemaRegProperties.put(SchemaRegistryConfig.COMPATIBILITY_CONFIG, schemaRegCompatibility);
+      String broker =
+          SecurityProtocol.PLAINTEXT.name
+              + "://"
+              + TestUtils.getBrokerListStrFromServers(
+                  JavaConverters.asScalaBuffer(servers), SecurityProtocol.PLAINTEXT);
       schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, broker);
       schemaRegConnect = String.format("http://localhost:%d", schemaRegPort);
 
@@ -268,26 +263,28 @@ public abstract class ClusterTestHarness {
     log.info("Starting concurrently {} brokers for {}", numBrokers, getClass().getSimpleName());
     configs =
         IntStream.range(0, numBrokers)
-            .mapToObj(brokerId -> KafkaConfig.fromProps(
-                overrideBrokerProperties(brokerId, getBrokerProperties(brokerId))))
+            .mapToObj(
+                brokerId ->
+                    KafkaConfig.fromProps(
+                        overrideBrokerProperties(brokerId, getBrokerProperties(brokerId))))
             .collect(toList());
     servers =
         CompletableFutures.allAsList(
-            configs.stream()
-                .map(
-                    config ->
-                        CompletableFuture.supplyAsync(
-                            () -> TestUtils.createServer(
-                                config,
-                                new MockTime(System.currentTimeMillis(),
-                                    System.nanoTime()))))
-                .collect(toList()))
+                configs.stream()
+                    .map(
+                        config ->
+                            CompletableFuture.supplyAsync(
+                                () ->
+                                    TestUtils.createServer(
+                                        config,
+                                        new MockTime(
+                                            System.currentTimeMillis(), System.nanoTime()))))
+                    .collect(toList()))
             .join();
     log.info("Started all {} brokers for {}", numBrokers, getClass().getSimpleName());
   }
 
-  protected void setupAcls() {
-  }
+  protected void setupAcls() {}
 
   protected SecurityProtocol getBrokerSecurityProtocol() {
     return SecurityProtocol.PLAINTEXT;
@@ -297,19 +294,34 @@ public abstract class ClusterTestHarness {
     return String.format("http://localhost:%d", restPort);
   }
 
-  protected void overrideKafkaRestConfigs(Properties restProperties) {
-
-  }
+  protected void overrideKafkaRestConfigs(Properties restProperties) {}
 
   protected Properties getBrokerProperties(int i) {
     final Option<File> noFile = Option.apply(null);
     final Option<SecurityProtocol> noInterBrokerSecurityProtocol =
         Option.apply(getBrokerSecurityProtocol());
-    Properties props = TestUtils.createBrokerConfig(
-        i, zkConnect, false, false, TestUtils.RandomPort(), noInterBrokerSecurityProtocol,
-        noFile, Option.<Properties>empty(), true, false, TestUtils.RandomPort(), false,
-        TestUtils.RandomPort(), false, TestUtils.RandomPort(), Option.<String>empty(), 1, false,
-        1, (short) 1);
+    Properties props =
+        TestUtils.createBrokerConfig(
+            i,
+            zkConnect,
+            false,
+            false,
+            TestUtils.RandomPort(),
+            noInterBrokerSecurityProtocol,
+            noFile,
+            Option.<Properties>empty(),
+            true,
+            false,
+            TestUtils.RandomPort(),
+            false,
+            TestUtils.RandomPort(),
+            false,
+            TestUtils.RandomPort(),
+            Option.<String>empty(),
+            1,
+            false,
+            1,
+            (short) 1);
     props.setProperty("auto.create.topics.enable", "false");
     // We *must* override this to use the port we allocated (Kafka currently allocates one port
     // that it always uses for ZK
@@ -351,10 +363,8 @@ public abstract class ClusterTestHarness {
     return request(path, templateName, templateValue, null);
   }
 
-  protected Invocation.Builder request(String path,
-                                       String templateName,
-                                       Object templateValue,
-                                       Map<String, String> queryParams) {
+  protected Invocation.Builder request(
+      String path, String templateName, Object templateValue, Map<String, String> queryParams) {
 
     Client client = getClient();
     // Only configure base application here because as a client we shouldn't need the resources
@@ -443,13 +453,13 @@ public abstract class ClusterTestHarness {
     createTopic(topicName, numPartitions, replicationFactor, properties);
   }
 
-  protected final void createTopic(String topicName, int numPartitions, short replicationFactor, Properties properties) {
+  protected final void createTopic(
+      String topicName, int numPartitions, short replicationFactor, Properties properties) {
     AdminClient adminClient = AdminClient.create(properties);
 
     CreateTopicsResult result =
         adminClient.createTopics(
-            Collections.singletonList(
-                new NewTopic(topicName, numPartitions, replicationFactor)));
+            Collections.singletonList(new NewTopic(topicName, numPartitions, replicationFactor)));
 
     try {
       result.all().get();
@@ -467,11 +477,15 @@ public abstract class ClusterTestHarness {
         adminClient.incrementalAlterConfigs(
             singletonMap(
                 new ConfigResource(ConfigResource.Type.TOPIC, topicName),
-                singletonList(new AlterConfigOp(new ConfigEntry(configName, value), AlterConfigOp.OpType.SET))));
+                singletonList(
+                    new AlterConfigOp(
+                        new ConfigEntry(configName, value), AlterConfigOp.OpType.SET))));
     try {
       result.all().get();
     } catch (InterruptedException | ExecutionException e) {
-      Assert.fail(String.format("Failed to alter config %s for topic %s: %s", configName, topicName, e.getMessage()));
+      Assert.fail(
+          String.format(
+              "Failed to alter config %s for topic %s: %s", configName, topicName, e.getMessage()));
     }
   }
 
@@ -492,8 +506,8 @@ public abstract class ClusterTestHarness {
     }
   }
 
-  protected final void alterPartitionReassignment(Map<TopicPartition,
-      Optional<NewPartitionReassignment>> reassignments) {
+  protected final void alterPartitionReassignment(
+      Map<TopicPartition, Optional<NewPartitionReassignment>> reassignments) {
     Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     AdminClient adminClient = AdminClient.create(properties);
@@ -575,8 +589,8 @@ public abstract class ClusterTestHarness {
       List<Integer> replicaIds, String topicName, int numReplicas) {
     Map<TopicPartition, Optional<NewPartitionReassignment>> reassignmentMap = new HashMap<>();
     for (int i = 0; i < numReplicas; i++) {
-      reassignmentMap.put(new TopicPartition(topicName, i),
-          Optional.of(new NewPartitionReassignment(replicaIds)));
+      reassignmentMap.put(
+          new TopicPartition(topicName, i), Optional.of(new NewPartitionReassignment(replicaIds)));
     }
     return reassignmentMap;
   }

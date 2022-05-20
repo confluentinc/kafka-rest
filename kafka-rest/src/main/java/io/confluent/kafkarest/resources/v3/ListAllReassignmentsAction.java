@@ -64,10 +64,11 @@ public final class ListAllReassignmentsAction {
   @PerformanceMetric("v3.topics-partitions-reassignment.list")
   @ResourceName("api.v3.partition-reassignments.list")
   public void listReassignments(
-      @Suspended AsyncResponse asyncResponse,
-      @PathParam("clusterId") String clusterId) {
+      @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<ListAllReassignmentsResponse> response =
-        reassignmentManager.get().listReassignments(clusterId)
+        reassignmentManager
+            .get()
+            .listReassignments(clusterId)
             .thenApply(
                 reassignments ->
                     ListAllReassignmentsResponse.create(

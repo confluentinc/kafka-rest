@@ -19,9 +19,7 @@ import io.confluent.kafkarest.backends.kafka.KafkaModule;
 import io.confluent.kafkarest.backends.schemaregistry.SchemaRegistryModule;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
-/**
- * A module to configure access to external dependencies.
- */
+/** A module to configure access to external dependencies. */
 public final class BackendsModule extends AbstractBinder {
 
   @Override

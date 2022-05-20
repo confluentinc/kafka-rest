@@ -22,8 +22,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class GetConsumerLagResponse {
 
-  GetConsumerLagResponse() {
-  }
+  GetConsumerLagResponse() {}
 
   @JsonValue
   public abstract ConsumerLagData getValue();
@@ -36,5 +35,4 @@ public abstract class GetConsumerLagResponse {
   static GetConsumerLagResponse fromJson(ConsumerLagData value) {
     return create(value);
   }
-
 }

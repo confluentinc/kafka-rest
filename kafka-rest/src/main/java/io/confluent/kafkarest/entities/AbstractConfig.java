@@ -19,13 +19,10 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/**
- * A Kafka config.
- */
+/** A Kafka config. */
 public abstract class AbstractConfig {
 
-  AbstractConfig() {
-  }
+  AbstractConfig() {}
 
   public abstract String getClusterId();
 
@@ -44,9 +41,7 @@ public abstract class AbstractConfig {
 
   public abstract ImmutableList<ConfigSynonym> getSynonyms();
 
-  /**
-   * A builder for {@link AbstractConfig}.
-   */
+  /** A builder for {@link AbstractConfig}. */
   public abstract static class Builder<T extends AbstractConfig, B extends Builder<T, B>> {
 
     public abstract B setClusterId(String clusterId);

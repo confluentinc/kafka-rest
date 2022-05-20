@@ -65,11 +65,9 @@ public class SearchReplicasByBrokerActionTest {
           /* isLeader= */ false,
           /* isInSync= */ false);
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private ReplicaManager replicaManager;
+  @Mock private ReplicaManager replicaManager;
 
   private SearchReplicasByBrokerAction searchReplicasByBrokerAction;
 
@@ -77,7 +75,8 @@ public class SearchReplicasByBrokerActionTest {
   public void setUp() {
     searchReplicasByBrokerAction =
         new SearchReplicasByBrokerAction(
-            () -> replicaManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
+            () -> replicaManager,
+            new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
             new FakeUrlFactory());
   }
 

@@ -27,8 +27,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ConsumerSeekRequest {
 
-  ConsumerSeekRequest() {
-  }
+  ConsumerSeekRequest() {}
 
   @JsonProperty("offsets")
   public abstract ImmutableList<PartitionOffset> getOffsets();
@@ -39,8 +38,7 @@ public abstract class ConsumerSeekRequest {
   @JsonCreator
   static ConsumerSeekRequest fromJson(
       @JsonProperty("offsets") @Nullable List<PartitionOffset> offsets,
-      @JsonProperty("timestamps") @Nullable List<PartitionTimestamp> timestamps
-  ) {
+      @JsonProperty("timestamps") @Nullable List<PartitionTimestamp> timestamps) {
     return new AutoValue_ConsumerSeekRequest(
         offsets != null ? ImmutableList.copyOf(offsets) : ImmutableList.of(),
         timestamps != null ? ImmutableList.copyOf(timestamps) : ImmutableList.of());
@@ -49,8 +47,7 @@ public abstract class ConsumerSeekRequest {
   @AutoValue
   public abstract static class PartitionOffset {
 
-    PartitionOffset() {
-    }
+    PartitionOffset() {}
 
     @JsonProperty("topic")
     public abstract String getTopic();
@@ -69,8 +66,7 @@ public abstract class ConsumerSeekRequest {
         @JsonProperty("topic") String topic,
         @JsonProperty("partition") int partition,
         @JsonProperty("offset") long offset,
-        @JsonProperty("metadata") @Nullable String metadata
-    ) {
+        @JsonProperty("metadata") @Nullable String metadata) {
       return build()
           .setTopic(topic)
           .setPartition(partition)
@@ -86,8 +82,7 @@ public abstract class ConsumerSeekRequest {
     @AutoValue.Builder
     public abstract static class Builder {
 
-      Builder() {
-      }
+      Builder() {}
 
       public abstract Builder setTopic(String topic);
 
@@ -104,8 +99,7 @@ public abstract class ConsumerSeekRequest {
   @AutoValue
   public abstract static class PartitionTimestamp {
 
-    PartitionTimestamp() {
-    }
+    PartitionTimestamp() {}
 
     @JsonProperty("topic")
     public abstract String getTopic();
@@ -124,8 +118,7 @@ public abstract class ConsumerSeekRequest {
         @JsonProperty("topic") String topic,
         @JsonProperty("partition") int partition,
         @JsonProperty("timestamp") Instant timestamp,
-        @JsonProperty("metadata") @Nullable String metadata
-    ) {
+        @JsonProperty("metadata") @Nullable String metadata) {
       return build()
           .setTopic(topic)
           .setPartition(partition)
@@ -141,8 +134,7 @@ public abstract class ConsumerSeekRequest {
     @AutoValue.Builder
     public abstract static class Builder {
 
-      Builder() {
-      }
+      Builder() {}
 
       public abstract Builder setTopic(String topic);
 

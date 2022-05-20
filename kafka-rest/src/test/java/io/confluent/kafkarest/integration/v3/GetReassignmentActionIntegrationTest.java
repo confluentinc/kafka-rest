@@ -59,26 +59,39 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
 
     alterPartitionReassignment(reassignmentMap);
 
-    Response response = request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME +
-        "/partitions/" + PARTITION_ID + "/reassignment")
-        .accept(MediaType.APPLICATION_JSON)
-        .get();
+    Response response =
+        request(
+                "/v3/clusters/"
+                    + clusterId
+                    + "/topics/"
+                    + TOPIC_NAME
+                    + "/partitions/"
+                    + PARTITION_ID
+                    + "/reassignment")
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
 
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
-    GetReassignmentResponse actualReassignment =
-        response.readEntity(GetReassignmentResponse.class);
-    assertEquals(actualReassignment.getValue().getAddingReplicas(),
-        reassignmentMap.get(new TopicPartition(TOPIC_NAME,
-            actualReassignment.getValue().getPartitionId())).get().targetReplicas());
+    GetReassignmentResponse actualReassignment = response.readEntity(GetReassignmentResponse.class);
+    assertEquals(
+        actualReassignment.getValue().getAddingReplicas(),
+        reassignmentMap
+            .get(new TopicPartition(TOPIC_NAME, actualReassignment.getValue().getPartitionId()))
+            .get()
+            .targetReplicas());
   }
 
   @Test
   public void getReassignments_nonExistingCluster_returnsNotFound() {
 
     Response response =
-        request("/v3/clusters/foobar/topics/" + TOPIC_NAME + "/partitions/" + PARTITION_ID
-            + "/reassignment")
+        request(
+                "/v3/clusters/foobar/topics/"
+                    + TOPIC_NAME
+                    + "/partitions/"
+                    + PARTITION_ID
+                    + "/reassignment")
             .accept(MediaType.APPLICATION_JSON)
             .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -88,10 +101,15 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
   public void getReassignments_nonExistingTopic_returnsNotFound() {
     String clusterId = getClusterId();
 
-    Response response = request("/v3/clusters/" + clusterId + "/topics/foobar/partitions/"
-        + PARTITION_ID + "/reassignment")
-        .accept(MediaType.APPLICATION_JSON)
-        .get();
+    Response response =
+        request(
+                "/v3/clusters/"
+                    + clusterId
+                    + "/topics/foobar/partitions/"
+                    + PARTITION_ID
+                    + "/reassignment")
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -99,10 +117,15 @@ public class GetReassignmentActionIntegrationTest extends ClusterTestHarness {
   public void getReassignments_nonExistingPartition_returnsNotFound() {
     String clusterId = getClusterId();
 
-    Response response = request("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME
-        + "/partitions/10/reassignment")
-        .accept(MediaType.APPLICATION_JSON)
-        .get();
+    Response response =
+        request(
+                "/v3/clusters/"
+                    + clusterId
+                    + "/topics/"
+                    + TOPIC_NAME
+                    + "/partitions/10/reassignment")
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 }

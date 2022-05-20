@@ -20,9 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * A service to manage Kafka {@link Broker Brokers}.
- */
+/** A service to manage Kafka {@link Broker Brokers}. */
 public interface BrokerManager {
 
   /**
@@ -31,9 +29,7 @@ public interface BrokerManager {
    */
   CompletableFuture<List<Broker>> listBrokers(String clusterId);
 
-  /**
-   * Returns the Kafka {@link Broker} with the given {@code brokerId}.
-   */
+  /** Returns the Kafka {@link Broker} with the given {@code brokerId}. */
   CompletableFuture<Optional<Broker>> getBroker(String clusterId, int brokerId);
 
   /**

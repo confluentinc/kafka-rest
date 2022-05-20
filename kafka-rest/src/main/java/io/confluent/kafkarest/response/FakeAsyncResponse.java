@@ -25,9 +25,7 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.TimeoutHandler;
 import javax.ws.rs.core.Response;
 
-/**
- * A fake {@link AsyncResponse} to be used in tests.
- */
+/** A fake {@link AsyncResponse} to be used in tests. */
 public final class FakeAsyncResponse implements AsyncResponse {
 
   private enum State {

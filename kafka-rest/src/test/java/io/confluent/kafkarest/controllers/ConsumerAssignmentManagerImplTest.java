@@ -46,36 +46,34 @@ public class ConsumerAssignmentManagerImplTest {
 
   private static final Consumer CONSUMER =
       Consumer.builder()
-              .setClusterId(CLUSTER_ID)
-              .setConsumerGroupId("consumer-group-1")
-              .setConsumerId("consumer-1")
-              .setClientId("client-1")
-              .setInstanceId("instance-1")
-              .setHost("11.12.12.14")
-              .setAssignedPartitions(
-                  Arrays.asList(
-                      Partition.create(
-                          CLUSTER_ID,
-                          /* topicName= */ "topic-1",
-                          /* partitionId= */ 1,
-                          /* replicas= */ emptyList()),
-                      Partition.create(
-                          CLUSTER_ID,
-                          /* topicName= */ "topic-2",
-                          /* partitionId= */ 2,
-                          /* replicas= */ emptyList()),
-                      Partition.create(
-                          CLUSTER_ID,
-                          /* topicName= */ "topic-3",
-                          /* partitionId= */ 3,
-                          /* replicas= */ emptyList())))
-              .build();
+          .setClusterId(CLUSTER_ID)
+          .setConsumerGroupId("consumer-group-1")
+          .setConsumerId("consumer-1")
+          .setClientId("client-1")
+          .setInstanceId("instance-1")
+          .setHost("11.12.12.14")
+          .setAssignedPartitions(
+              Arrays.asList(
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-1",
+                      /* partitionId= */ 1,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-2",
+                      /* partitionId= */ 2,
+                      /* replicas= */ emptyList()),
+                  Partition.create(
+                      CLUSTER_ID,
+                      /* topicName= */ "topic-3",
+                      /* partitionId= */ 3,
+                      /* replicas= */ emptyList())))
+          .build();
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private ConsumerManager consumerManager;
+  @Mock private ConsumerManager consumerManager;
 
   private ConsumerAssignmentManagerImpl consumerAssignmentManager;
 
@@ -87,14 +85,16 @@ public class ConsumerAssignmentManagerImplTest {
   @Test
   public void listConsumerAssignments_returnsConsumerAssignments() throws Exception {
     expect(
-        consumerManager.getConsumer(
-            CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId()))
+            consumerManager.getConsumer(
+                CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId()))
         .andReturn(completedFuture(Optional.of(CONSUMER)));
     replay(consumerManager);
 
     List<ConsumerAssignment> assignments =
-        consumerAssignmentManager.listConsumerAssignments(
-            CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId()).get();
+        consumerAssignmentManager
+            .listConsumerAssignments(
+                CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId())
+            .get();
 
     assertEquals(
         Arrays.asList(
@@ -125,14 +125,16 @@ public class ConsumerAssignmentManagerImplTest {
   @Test
   public void listConsumerAssignments_nonExistentConsumer_throwsNotFound() throws Exception {
     expect(
-        consumerManager.getConsumer(
-            CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId()))
+            consumerManager.getConsumer(
+                CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId()))
         .andReturn(completedFuture(Optional.empty()));
     replay(consumerManager);
 
     try {
-      consumerAssignmentManager.listConsumerAssignments(
-          CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId()).get();
+      consumerAssignmentManager
+          .listConsumerAssignments(
+              CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId())
+          .get();
       fail();
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
@@ -142,14 +144,15 @@ public class ConsumerAssignmentManagerImplTest {
   @Test
   public void getConsumerAssignments_returnsConsumerAssignment() throws Exception {
     expect(
-        consumerManager.getConsumer(
-            CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId()))
+            consumerManager.getConsumer(
+                CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId()))
         .andReturn(completedFuture(Optional.of(CONSUMER)));
     replay(consumerManager);
 
     ConsumerAssignment assignment =
-        consumerAssignmentManager.getConsumerAssignment(
-            CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId(), "topic-1", 1)
+        consumerAssignmentManager
+            .getConsumerAssignment(
+                CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId(), "topic-1", 1)
             .get()
             .get();
 
@@ -167,14 +170,15 @@ public class ConsumerAssignmentManagerImplTest {
   @Test
   public void getConsumerAssignment_nonExistingConsumer_throwsNotFound() throws Exception {
     expect(
-        consumerManager.getConsumer(
-            CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId()))
+            consumerManager.getConsumer(
+                CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId()))
         .andReturn(completedFuture(Optional.empty()));
     replay(consumerManager);
 
     try {
-      consumerAssignmentManager.getConsumerAssignment(
-          CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId(), "topic-1", 1)
+      consumerAssignmentManager
+          .getConsumerAssignment(
+              CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId(), "topic-1", 1)
           .get();
       fail();
     } catch (ExecutionException e) {
@@ -185,14 +189,15 @@ public class ConsumerAssignmentManagerImplTest {
   @Test
   public void getConsumerAssignment_nonExistingConsumerAssignment_returnsEmpty() throws Exception {
     expect(
-        consumerManager.getConsumer(
-            CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId()))
+            consumerManager.getConsumer(
+                CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId()))
         .andReturn(completedFuture(Optional.of(CONSUMER)));
     replay(consumerManager);
 
     Optional<ConsumerAssignment> assignment =
-        consumerAssignmentManager.getConsumerAssignment(
-            CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId(), "foobar", 100)
+        consumerAssignmentManager
+            .getConsumerAssignment(
+                CLUSTER_ID, CONSUMER.getConsumerGroupId(), CONSUMER.getConsumerId(), "foobar", 100)
             .get();
 
     assertFalse(assignment.isPresent());

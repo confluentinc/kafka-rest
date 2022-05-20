@@ -30,18 +30,18 @@ public class ProducerTopicAutoCreationTest
 
   private static final String topicName = "nonexistant";
 
-  private final List<BinaryTopicProduceRecord> topicRecords = Arrays.asList(
-      new BinaryTopicProduceRecord("key", "value", null),
-      new BinaryTopicProduceRecord("key", "value2", null),
-      new BinaryTopicProduceRecord("key", "value3", null),
-      new BinaryTopicProduceRecord("key", "value4", null)
-  );
-  private final List<PartitionOffset> partitionOffsets = Arrays.asList(
-      new PartitionOffset(0, 0L, null, null),
-      new PartitionOffset(0, 1L, null, null),
-      new PartitionOffset(0, 2L, null, null),
-      new PartitionOffset(0, 3L, null, null)
-  );
+  private final List<BinaryTopicProduceRecord> topicRecords =
+      Arrays.asList(
+          new BinaryTopicProduceRecord("key", "value", null),
+          new BinaryTopicProduceRecord("key", "value2", null),
+          new BinaryTopicProduceRecord("key", "value3", null),
+          new BinaryTopicProduceRecord("key", "value4", null));
+  private final List<PartitionOffset> partitionOffsets =
+      Arrays.asList(
+          new PartitionOffset(0, 0L, null, null),
+          new PartitionOffset(0, 1L, null, null),
+          new PartitionOffset(0, 2L, null, null),
+          new PartitionOffset(0, 3L, null, null));
 
   public Properties overrideBrokerProperties(int i, Properties props) {
     Properties refined = (Properties) props.clone();

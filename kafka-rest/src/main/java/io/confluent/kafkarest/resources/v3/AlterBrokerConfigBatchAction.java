@@ -57,10 +57,10 @@ public final class AlterBrokerConfigBatchAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("brokerId") int brokerId,
-      @Valid AlterBrokerConfigBatchRequest request
-  ) {
+      @Valid AlterBrokerConfigBatchRequest request) {
     CompletableFuture<Void> response =
-        brokerConfigManager.get()
+        brokerConfigManager
+            .get()
             .alterBrokerConfigs(clusterId, brokerId, request.getValue().toAlterConfigCommands());
 
     AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))

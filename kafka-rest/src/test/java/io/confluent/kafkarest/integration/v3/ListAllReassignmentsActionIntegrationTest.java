@@ -55,7 +55,8 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
     for (ReassignmentData data : actualReassignments.getValue().getData()) {
       assertEquals(
           data.getAddingReplicas(),
-          reassignmentMap.get(new TopicPartition(TOPIC_NAME, data.getPartitionId()))
+          reassignmentMap
+              .get(new TopicPartition(TOPIC_NAME, data.getPartitionId()))
               .get()
               .targetReplicas());
     }
@@ -64,9 +65,10 @@ public class ListAllReassignmentsActionIntegrationTest extends ClusterTestHarnes
   @Test
   public void listAllReassignments_nonExistingCluster_returnsNotFound() throws Exception {
 
-    Response response = request("/v3/clusters/foobar/topics/-/partitions/-/reassignment")
-        .accept(MediaType.APPLICATION_JSON)
-        .get();
+    Response response =
+        request("/v3/clusters/foobar/topics/-/partitions/-/reassignment")
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
 
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }

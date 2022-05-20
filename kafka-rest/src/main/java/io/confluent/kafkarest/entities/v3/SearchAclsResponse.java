@@ -22,8 +22,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class SearchAclsResponse {
 
-  SearchAclsResponse() {
-  }
+  SearchAclsResponse() {}
 
   @JsonValue
   public abstract AclDataList getValue();

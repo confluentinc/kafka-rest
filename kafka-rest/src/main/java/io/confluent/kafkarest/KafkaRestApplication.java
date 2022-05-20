@@ -28,18 +28,15 @@ import io.confluent.kafkarest.controllers.ControllersModule;
 import io.confluent.kafkarest.exceptions.ExceptionsModule;
 import io.confluent.kafkarest.exceptions.KafkaRestExceptionMapper;
 import io.confluent.kafkarest.extension.EnumConverterProvider;
-import io.confluent.kafkarest.extension.ContextInvocationHandler;
 import io.confluent.kafkarest.extension.InstantConverterProvider;
-import io.confluent.kafkarest.extension.KafkaRestCleanupFilter;
-import io.confluent.kafkarest.extension.KafkaRestContextProvider;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature;
 import io.confluent.kafkarest.extension.RestResourceExtension;
+import io.confluent.kafkarest.ratelimit.RateLimitFeature;
 import io.confluent.kafkarest.resources.ResourcesFeature;
 import io.confluent.kafkarest.response.ResponseModule;
 import io.confluent.rest.Application;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
-import java.lang.reflect.Proxy;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Properties;
@@ -49,9 +46,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.StringUtil;
 import org.glassfish.jersey.server.ServerProperties;
 
-/**
- * Utilities for configuring and running an embedded Kafka server.
- */
+/** Utilities for configuring and running an embedded Kafka server. */
 public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   List<RestResourceExtension> restResourceExtensions;
@@ -69,49 +64,46 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   }
 
   public KafkaRestApplication(KafkaRestConfig config, String path) {
-    super(config, path);
+    this(config, path, null);
+  }
 
-    restResourceExtensions = config.getConfiguredInstances(
-        KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG,
-        RestResourceExtension.class);
+  public KafkaRestApplication(KafkaRestConfig config, String path, String listenerName) {
+    super(config, path, listenerName);
+
+    restResourceExtensions =
+        config.getConfiguredInstances(
+            KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG, RestResourceExtension.class);
   }
 
   @Override
-  public void configurePreResourceHandling(ServletContextHandler context) {
-  }
+  public void configurePreResourceHandling(ServletContextHandler context) {}
 
   @Override
-  public void configurePostResourceHandling(ServletContextHandler context) {
-  }
+  public void configurePostResourceHandling(ServletContextHandler context) {}
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
     if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))
         && StringUtil.isBlank(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG))) {
-      throw new RuntimeException("Atleast one of " + KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG + " "
-                                 + "or "
-                                    + KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG
-                                    + " needs to be configured");
+      throw new RuntimeException(
+          "Atleast one of "
+              + KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG
+              + " "
+              + "or "
+              + KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG
+              + " needs to be configured");
     }
-    KafkaRestContextProvider.initialize(appConfig);
-    ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
-    KafkaRestContext context =
-        (KafkaRestContext) Proxy.newProxyInstance(
-            KafkaRestContext.class.getClassLoader(),
-            new Class[]{KafkaRestContext.class},
-            contextInvocationHandler
-        );
 
     config.property(ServerProperties.OUTBOUND_CONTENT_LENGTH_BUFFER, 0);
     config.register(new BackendsModule());
     config.register(new ConfigModule(appConfig));
     config.register(new ControllersModule());
     config.register(new ExceptionsModule());
-    config.register(new ResourcesFeature(context, appConfig));
+    config.register(RateLimitFeature.class);
+    config.register(new ResourcesFeature(appConfig));
     config.register(new ResponseModule());
 
     config.register(ResourceAccesslistFeature.class);
-    config.register(KafkaRestCleanupFilter.class);
 
     config.register(EnumConverterProvider.class);
     config.register(InstantConverterProvider.class);
@@ -127,6 +119,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
         .registerModule(new GuavaModule())
         .registerModule(new Jdk8Module())
         .registerModule(new JavaTimeModule())
+        .registerModule(new ProduceRequestSerdeModule())
         .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
         .setDateFormat(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"))
         .setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -143,11 +136,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
 
   @Override
   public void onShutdown() {
-
     for (RestResourceExtension restResourceExtension : restResourceExtensions) {
       restResourceExtension.clean();
     }
-
-    KafkaRestContextProvider.clean();
   }
 }

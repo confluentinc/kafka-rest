@@ -15,9 +15,9 @@
 
 package io.confluent.kafkarest.resources.v2;
 
-import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -51,11 +51,9 @@ public class BrokersResourceTest
   private static final Broker BROKER_2 = Broker.create(CLUSTER_ID, 2, "host2", 2, /* rack= */ null);
   private static final Broker BROKER_3 = Broker.create(CLUSTER_ID, 3, "host3", 3, /* rack= */ null);
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private BrokerManager brokerManager;
+  @Mock private BrokerManager brokerManager;
 
   public BrokersResourceTest() throws RestConfigException {
     super();
@@ -75,8 +73,8 @@ public class BrokersResourceTest
 
     Response response = request("/brokers", Versions.KAFKA_V2_JSON).get();
     assertOKResponse(response, Versions.KAFKA_V2_JSON);
-    final BrokerList returnedBrokerIds = TestUtils.tryReadEntityOrLog(response, new GenericType<BrokerList>() {
-    });
+    final BrokerList returnedBrokerIds =
+        TestUtils.tryReadEntityOrLog(response, new GenericType<BrokerList>() {});
     assertEquals(Arrays.asList(1, 2, 3), returnedBrokerIds.getBrokers());
   }
 
@@ -89,7 +87,9 @@ public class BrokersResourceTest
     replay(brokerManager);
 
     Response response = request("/brokers", Versions.KAFKA_V2_JSON).get();
-    assertErrorResponse(Response.Status.UNAUTHORIZED, response,
+    assertErrorResponse(
+        Response.Status.UNAUTHORIZED,
+        response,
         io.confluent.kafkarest.Errors.KAFKA_AUTHENTICATION_ERROR_CODE,
         Errors.SASL_AUTHENTICATION_FAILED.message(),
         Versions.KAFKA_V2_JSON);

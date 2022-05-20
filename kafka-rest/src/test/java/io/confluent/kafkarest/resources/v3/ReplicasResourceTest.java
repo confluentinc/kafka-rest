@@ -75,11 +75,9 @@ public class ReplicasResourceTest {
           /* isLeader= */ false,
           /* isInSync= */ false);
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private ReplicaManager replicaManager;
+  @Mock private ReplicaManager replicaManager;
 
   private ReplicasResource replicasResource;
 
@@ -87,7 +85,8 @@ public class ReplicasResourceTest {
   public void setUp() {
     replicasResource =
         new ReplicasResource(
-            () -> replicaManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
+            () -> replicaManager,
+            new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
             new FakeUrlFactory());
   }
 
@@ -163,8 +162,8 @@ public class ReplicasResourceTest {
                             .setBrokerId(REPLICA_3.getBrokerId())
                             .setLeader(false)
                             .setInSync(false)
-                            .setBroker
-                                (Resource.Relationship.create("/v3/clusters/cluster-1/brokers/3"))
+                            .setBroker(
+                                Resource.Relationship.create("/v3/clusters/cluster-1/brokers/3"))
                             .build()))
                 .build());
 

@@ -39,8 +39,7 @@ final class SchemaManagerImpl implements SchemaManager {
 
   @Inject
   SchemaManagerImpl(
-      SchemaRegistryClient schemaRegistryClient,
-      SubjectNameStrategy defaultSubjectNameStrategy) {
+      SchemaRegistryClient schemaRegistryClient, SubjectNameStrategy defaultSubjectNameStrategy) {
     this.schemaRegistryClient = requireNonNull(schemaRegistryClient);
     this.defaultSubjectNameStrategy = requireNonNull(defaultSubjectNameStrategy);
   }
@@ -60,12 +59,7 @@ final class SchemaManagerImpl implements SchemaManager {
       checkArgument(!format.isPresent());
       checkArgument(!schemaVersion.isPresent());
       checkArgument(!rawSchema.isPresent());
-      return getSchemaFromSchemaId(
-          topicName,
-          subject,
-          subjectNameStrategy,
-          schemaId.get(),
-          isKey);
+      return getSchemaFromSchemaId(topicName, subject, subjectNameStrategy, schemaId.get(), isKey);
     }
 
     // (subject|subjectNameStrategy)?, schemaVersion
@@ -73,23 +67,14 @@ final class SchemaManagerImpl implements SchemaManager {
       checkArgument(!format.isPresent());
       checkArgument(!rawSchema.isPresent());
       return getSchemaFromSchemaVersion(
-          topicName,
-          subject,
-          subjectNameStrategy,
-          schemaVersion.get(),
-          isKey);
+          topicName, subject, subjectNameStrategy, schemaVersion.get(), isKey);
     }
 
     // format, (subject|subjectNameStrategy)?, rawSchema
     if (rawSchema.isPresent()) {
       checkArgument(format.isPresent());
       return getSchemaFromRawSchema(
-          topicName,
-          format.get(),
-          subject,
-          subjectNameStrategy,
-          rawSchema.get(),
-          isKey);
+          topicName, format.get(), subject, subjectNameStrategy, rawSchema.get(), isKey);
     }
 
     // (subject|subjectNameStrategy)?
@@ -113,7 +98,8 @@ final class SchemaManagerImpl implements SchemaManager {
 
     String actualSubject =
         subject.orElse(
-            subjectNameStrategy.orElse(defaultSubjectNameStrategy)
+            subjectNameStrategy
+                .orElse(defaultSubjectNameStrategy)
                 .subjectName(topicName, isKey, schema));
 
     int schemaVersion = getSchemaVersion(actualSubject, schema);
@@ -171,7 +157,8 @@ final class SchemaManagerImpl implements SchemaManager {
     checkArgument(format.requiresSchema(), "%s does not support schemas.", format);
 
     ParsedSchema schema =
-        format.getSchemaProvider()
+        format
+            .getSchemaProvider()
             .parseSchema(rawSchema, /* references= */ emptyList(), /* isNew= */ true)
             .orElseThrow(
                 () ->
@@ -182,7 +169,8 @@ final class SchemaManagerImpl implements SchemaManager {
 
     String actualSubject =
         subject.orElse(
-            subjectNameStrategy.orElse(defaultSubjectNameStrategy)
+            subjectNameStrategy
+                .orElse(defaultSubjectNameStrategy)
                 .subjectName(topicName, isKey, schema));
 
     int schemaId;
@@ -242,9 +230,9 @@ final class SchemaManagerImpl implements SchemaManager {
    * Tries to get the schema subject from only schema_subject_strategy, {@code topicName} and {@code
    * isKey}.
    *
-   * <p>This operation  is only really supported if schema_subject_strategy does not depend on the
-   * parsed schema to generate the subject name, as we need the subject name to fetch the schema
-   * by version. That's the case, for example, of TopicNameStrategy
+   * <p>This operation is only really supported if schema_subject_strategy does not depend on the
+   * parsed schema to generate the subject name, as we need the subject name to fetch the schema by
+   * version. That's the case, for example, of TopicNameStrategy
    * (schema_subject_strategy=TOPIC_NAME). Since TopicNameStrategy is so popular, instead of
    * requiring users to always specify schema_subject if using schema_version?, we try using the
    * strategy to generate the subject name, and fail if that does not work out.

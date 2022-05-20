@@ -42,11 +42,11 @@ import javax.ws.rs.core.Response;
 
 @Path("/topics")
 @Consumes({
-    Versions.KAFKA_V2_JSON_BINARY,
-    Versions.KAFKA_V2_JSON_JSON,
-    Versions.KAFKA_V2_JSON_AVRO,
-    Versions.KAFKA_V2_JSON_PROTOBUF,
-    Versions.KAFKA_V2_JSON_JSON_SCHEMA
+  Versions.KAFKA_V2_JSON_BINARY,
+  Versions.KAFKA_V2_JSON_JSON,
+  Versions.KAFKA_V2_JSON_AVRO,
+  Versions.KAFKA_V2_JSON_PROTOBUF,
+  Versions.KAFKA_V2_JSON_JSON_SCHEMA
 })
 @Produces({Versions.KAFKA_V2_JSON})
 @ResourceName("api.v2.produce-to-topic.*")
@@ -68,8 +68,7 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
   public void produceBinary(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid @NotNull ProduceRequest request
-  ) {
+      @Valid @NotNull ProduceRequest request) {
     CompletableFuture<ProduceResponse> response =
         produceWithoutSchema(
             EmbeddedFormat.BINARY, topicName, /* partitionId= */ Optional.empty(), request);
@@ -88,8 +87,7 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
   public void produceJson(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid @NotNull ProduceRequest request
-  ) {
+      @Valid @NotNull ProduceRequest request) {
     CompletableFuture<ProduceResponse> response =
         produceWithoutSchema(
             EmbeddedFormat.JSON, topicName, /* partitionId= */ Optional.empty(), request);
@@ -108,8 +106,7 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
   public void produceAvro(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid @NotNull ProduceRequest request
-  ) {
+      @Valid @NotNull ProduceRequest request) {
     CompletableFuture<ProduceResponse> response =
         produceWithSchema(
             EmbeddedFormat.AVRO, topicName, /* partitionId= */ Optional.empty(), request);
@@ -128,8 +125,7 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
   public void produceJsonSchema(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid @NotNull ProduceRequest request
-  ) {
+      @Valid @NotNull ProduceRequest request) {
     CompletableFuture<ProduceResponse> response =
         produceWithSchema(
             EmbeddedFormat.JSONSCHEMA, /* partitionId= */ topicName, Optional.empty(), request);
@@ -148,8 +144,7 @@ public final class ProduceToTopicAction extends AbstractProduceAction {
   public void produceProtobuf(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
-      @Valid @NotNull ProduceRequest request
-  ) {
+      @Valid @NotNull ProduceRequest request) {
     CompletableFuture<ProduceResponse> response =
         produceWithSchema(
             EmbeddedFormat.PROTOBUF, topicName, /* partitionId= */ Optional.empty(), request);

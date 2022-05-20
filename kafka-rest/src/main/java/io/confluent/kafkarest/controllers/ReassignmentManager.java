@@ -15,10 +15,10 @@
 
 package io.confluent.kafkarest.controllers;
 
+import io.confluent.kafkarest.entities.Cluster;
+import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.Reassignment;
 import io.confluent.kafkarest.entities.Topic;
-import io.confluent.kafkarest.entities.Partition;
-import io.confluent.kafkarest.entities.Cluster;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;

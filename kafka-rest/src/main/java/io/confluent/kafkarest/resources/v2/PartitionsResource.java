@@ -56,7 +56,8 @@ public final class PartitionsResource {
   @ResourceName("api.v2.partitions.list")
   public void list(@Suspended AsyncResponse asyncResponse, @PathParam("topic") String topic) {
     CompletableFuture<List<GetPartitionResponse>> response =
-        partitionManager.get()
+        partitionManager
+            .get()
             .listLocalPartitions(topic)
             .thenApply(
                 partitions ->
@@ -74,10 +75,10 @@ public final class PartitionsResource {
   public void getPartition(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topic,
-      @PathParam("partition") int partitionId
-  ) {
+      @PathParam("partition") int partitionId) {
     CompletableFuture<GetPartitionResponse> response =
-        partitionManager.get()
+        partitionManager
+            .get()
             .getLocalPartition(topic, partitionId)
             .thenApply(partition -> partition.orElseThrow(Errors::partitionNotFoundException))
             .thenApply(GetPartitionResponse::fromPartition);
@@ -90,7 +91,7 @@ public final class PartitionsResource {
    * partition}.
    *
    * @throws io.confluent.rest.exceptions.RestNotFoundException if either {@code topic} or {@code
-   *                                                            partition} don't exist.
+   *     partition} don't exist.
    */
   @GET
   @Path("/{partition}/offsets")
@@ -98,10 +99,10 @@ public final class PartitionsResource {
   public void getOffsets(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topic,
-      @PathParam("partition") int partitionId
-  ) {
+      @PathParam("partition") int partitionId) {
     CompletableFuture<TopicPartitionOffsetResponse> response =
-        partitionManager.get()
+        partitionManager
+            .get()
             .getLocalPartition(topic, partitionId)
             .thenApply(partition -> partition.orElseThrow(Errors::partitionNotFoundException))
             .thenApply(

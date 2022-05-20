@@ -67,10 +67,10 @@ public final class ReplicasResource {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
-      @PathParam("partitionId") Integer partitionId
-  ) {
+      @PathParam("partitionId") Integer partitionId) {
     CompletableFuture<ListReplicasResponse> response =
-        replicaManager.get()
+        replicaManager
+            .get()
             .listReplicas(clusterId, topicName, partitionId)
             .thenApply(
                 replicas ->
@@ -108,10 +108,10 @@ public final class ReplicasResource {
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
       @PathParam("partitionId") Integer partitionId,
-      @PathParam("brokerId") Integer brokerId
-  ) {
+      @PathParam("brokerId") Integer brokerId) {
     CompletableFuture<GetReplicaResponse> response =
-        replicaManager.get()
+        replicaManager
+            .get()
             .getReplica(clusterId, topicName, partitionId, brokerId)
             .thenApply(replica -> replica.orElseThrow(NotFoundException::new))
             .thenApply(replica -> GetReplicaResponse.create(toReplicaData(replica)));

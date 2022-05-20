@@ -42,11 +42,11 @@ import javax.ws.rs.core.Response;
 
 @Path("/topics/{topic}/partitions")
 @Consumes({
-    Versions.KAFKA_V2_JSON_BINARY,
-    Versions.KAFKA_V2_JSON_JSON,
-    Versions.KAFKA_V2_JSON_AVRO,
-    Versions.KAFKA_V2_JSON_JSON_SCHEMA,
-    Versions.KAFKA_V2_JSON_PROTOBUF
+  Versions.KAFKA_V2_JSON_BINARY,
+  Versions.KAFKA_V2_JSON_JSON,
+  Versions.KAFKA_V2_JSON_AVRO,
+  Versions.KAFKA_V2_JSON_JSON_SCHEMA,
+  Versions.KAFKA_V2_JSON_PROTOBUF
 })
 @Produces({Versions.KAFKA_V2_JSON})
 @ResourceName("api.v2.produce-to-partition.*")
@@ -69,8 +69,7 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
       @PathParam("partition") int partitionId,
-      @Valid @NotNull ProduceRequest request
-  ) {
+      @Valid @NotNull ProduceRequest request) {
     CompletableFuture<ProduceResponse> response =
         produceWithoutSchema(EmbeddedFormat.BINARY, topicName, Optional.of(partitionId), request);
 
@@ -89,8 +88,7 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
       @PathParam("partition") int partitionId,
-      @Valid @NotNull ProduceRequest request
-  ) {
+      @Valid @NotNull ProduceRequest request) {
     CompletableFuture<ProduceResponse> response =
         produceWithoutSchema(EmbeddedFormat.JSON, topicName, Optional.of(partitionId), request);
 
@@ -109,8 +107,7 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
       @PathParam("partition") int partitionId,
-      @Valid @NotNull ProduceRequest request
-  ) {
+      @Valid @NotNull ProduceRequest request) {
     CompletableFuture<ProduceResponse> response =
         produceWithSchema(EmbeddedFormat.AVRO, topicName, Optional.of(partitionId), request);
 
@@ -129,8 +126,7 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
       @PathParam("partition") int partitionId,
-      @Valid @NotNull ProduceRequest request
-  ) {
+      @Valid @NotNull ProduceRequest request) {
     CompletableFuture<ProduceResponse> response =
         produceWithSchema(EmbeddedFormat.JSONSCHEMA, topicName, Optional.of(partitionId), request);
 
@@ -149,8 +145,7 @@ public final class ProduceToPartitionAction extends AbstractProduceAction {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("topic") String topicName,
       @PathParam("partition") int partitionId,
-      @Valid @NotNull ProduceRequest request
-  ) {
+      @Valid @NotNull ProduceRequest request) {
     CompletableFuture<ProduceResponse> response =
         produceWithSchema(EmbeddedFormat.PROTOBUF, topicName, Optional.of(partitionId), request);
 

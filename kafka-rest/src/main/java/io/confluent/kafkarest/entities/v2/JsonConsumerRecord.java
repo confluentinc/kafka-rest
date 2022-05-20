@@ -26,23 +26,15 @@ import javax.validation.constraints.PositiveOrZero;
 
 public final class JsonConsumerRecord {
 
-  @NotNull
-  @Nullable
-  private final String topic;
+  @NotNull @Nullable private final String topic;
 
-  @Nullable
-  private final Object key;
+  @Nullable private final Object key;
 
-  @Nullable
-  private final Object value;
+  @Nullable private final Object value;
 
-  @PositiveOrZero
-  @Nullable
-  private final Integer partition;
+  @PositiveOrZero @Nullable private final Integer partition;
 
-  @PositiveOrZero
-  @Nullable
-  private final Long offset;
+  @PositiveOrZero @Nullable private final Long offset;
 
   @JsonCreator
   private JsonConsumerRecord(

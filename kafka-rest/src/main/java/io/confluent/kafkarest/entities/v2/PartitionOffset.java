@@ -24,27 +24,20 @@ import javax.validation.constraints.PositiveOrZero;
 
 public final class PartitionOffset {
 
-  @PositiveOrZero
-  @Nullable
-  private final Integer partition;
+  @PositiveOrZero @Nullable private final Integer partition;
 
-  @PositiveOrZero
-  @Nullable
-  private final Long offset;
+  @PositiveOrZero @Nullable private final Long offset;
 
-  @Nullable
-  private final Integer errorCode;
+  @Nullable private final Integer errorCode;
 
-  @Nullable
-  private final String error;
+  @Nullable private final String error;
 
   @JsonCreator
   public PartitionOffset(
       @JsonProperty("partition") @Nullable Integer partition,
       @JsonProperty("offset") @Nullable Long offset,
       @JsonProperty("error_code") @Nullable Integer errorCode,
-      @JsonProperty("error") @Nullable String error
-  ) {
+      @JsonProperty("error") @Nullable String error) {
     this.partition = partition;
     this.offset = offset;
     this.errorCode = errorCode;

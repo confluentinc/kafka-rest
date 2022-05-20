@@ -108,7 +108,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -118,7 +119,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<byte[], byte[]> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -147,7 +149,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -157,7 +160,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<byte[], byte[]> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -186,7 +190,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -218,7 +223,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -230,7 +236,8 @@ public class ProduceActionIntegrationTest {
     KafkaJsonDeserializer<Object> deserializer = new KafkaJsonDeserializer<>();
     deserializer.configure(emptyMap(), /* isKey= */ false);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -259,7 +266,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -271,7 +279,8 @@ public class ProduceActionIntegrationTest {
     KafkaJsonDeserializer<Object> deserializer = new KafkaJsonDeserializer<>();
     deserializer.configure(emptyMap(), /* isKey= */ false);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -304,7 +313,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -314,7 +324,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -345,7 +356,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -355,7 +367,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -386,7 +399,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -402,13 +416,13 @@ public class ProduceActionIntegrationTest {
   public void produceAvroWithSchemaId() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
-        testEnv.schemaRegistry()
-            .createSchema(
-                DEFAULT_KEY_SUBJECT, new AvroSchema("{\"type\": \"string\"}"));
+        testEnv
+            .schemaRegistry()
+            .createSchema(DEFAULT_KEY_SUBJECT, new AvroSchema("{\"type\": \"string\"}"));
     SchemaKey valueSchema =
-        testEnv.schemaRegistry()
-            .createSchema(
-                DEFAULT_VALUE_SUBJECT, new AvroSchema("{\"type\": \"string\"}"));
+        testEnv
+            .schemaRegistry()
+            .createSchema(DEFAULT_VALUE_SUBJECT, new AvroSchema("{\"type\": \"string\"}"));
     String key = "foo";
     String value = "bar";
     ProduceRequest request =
@@ -426,7 +440,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -436,7 +451,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -451,13 +467,13 @@ public class ProduceActionIntegrationTest {
   public void produceAvroWithSchemaVersion() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
-        testEnv.schemaRegistry()
-            .createSchema(
-                DEFAULT_KEY_SUBJECT, new AvroSchema("{\"type\": \"string\"}"));
+        testEnv
+            .schemaRegistry()
+            .createSchema(DEFAULT_KEY_SUBJECT, new AvroSchema("{\"type\": \"string\"}"));
     SchemaKey valueSchema =
-        testEnv.schemaRegistry()
-            .createSchema(
-                DEFAULT_VALUE_SUBJECT, new AvroSchema("{\"type\": \"string\"}"));
+        testEnv
+            .schemaRegistry()
+            .createSchema(DEFAULT_VALUE_SUBJECT, new AvroSchema("{\"type\": \"string\"}"));
     String key = "foo";
     String value = "bar";
     ProduceRequest request =
@@ -475,7 +491,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -485,7 +502,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -499,28 +517,23 @@ public class ProduceActionIntegrationTest {
   @Test
   public void produceAvroWithLatestSchema() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
-    testEnv.schemaRegistry()
-        .createSchema(
-            DEFAULT_KEY_SUBJECT, new AvroSchema("{\"type\": \"string\"}"));
-    testEnv.schemaRegistry()
-        .createSchema(
-            DEFAULT_VALUE_SUBJECT, new AvroSchema("{\"type\": \"string\"}"));
+    testEnv
+        .schemaRegistry()
+        .createSchema(DEFAULT_KEY_SUBJECT, new AvroSchema("{\"type\": \"string\"}"));
+    testEnv
+        .schemaRegistry()
+        .createSchema(DEFAULT_VALUE_SUBJECT, new AvroSchema("{\"type\": \"string\"}"));
     String key = "foo";
     String value = "bar";
     ProduceRequest request =
         ProduceRequest.builder()
-            .setKey(
-                ProduceRequestData.builder()
-                    .setData(TextNode.valueOf(key))
-                    .build())
-            .setValue(
-                ProduceRequestData.builder()
-                    .setData(TextNode.valueOf(value))
-                    .build())
+            .setKey(ProduceRequestData.builder().setData(TextNode.valueOf(key)).build())
+            .setValue(ProduceRequestData.builder().setData(TextNode.valueOf(value)).build())
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -530,7 +543,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -565,7 +579,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -575,7 +590,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -590,13 +606,13 @@ public class ProduceActionIntegrationTest {
   public void produceAvroWithSchemaIdAndSubject() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
-        testEnv.schemaRegistry()
-            .createSchema(
-                "my-key-subject", new AvroSchema("{\"type\": \"string\"}"));
+        testEnv
+            .schemaRegistry()
+            .createSchema("my-key-subject", new AvroSchema("{\"type\": \"string\"}"));
     SchemaKey valueSchema =
-        testEnv.schemaRegistry()
-            .createSchema(
-                "my-value-subject", new AvroSchema("{\"type\": \"string\"}"));
+        testEnv
+            .schemaRegistry()
+            .createSchema("my-value-subject", new AvroSchema("{\"type\": \"string\"}"));
     String key = "foo";
     String value = "bar";
     ProduceRequest request =
@@ -616,7 +632,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -626,7 +643,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -641,13 +659,13 @@ public class ProduceActionIntegrationTest {
   public void produceAvroWithSchemaVersionAndSubject() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
-        testEnv.schemaRegistry()
-            .createSchema(
-                "my-key-subject", new AvroSchema("{\"type\": \"string\"}"));
+        testEnv
+            .schemaRegistry()
+            .createSchema("my-key-subject", new AvroSchema("{\"type\": \"string\"}"));
     SchemaKey valueSchema =
-        testEnv.schemaRegistry()
-            .createSchema(
-                "my-value-subject", new AvroSchema("{\"type\": \"string\"}"));
+        testEnv
+            .schemaRegistry()
+            .createSchema("my-value-subject", new AvroSchema("{\"type\": \"string\"}"));
     String key = "foo";
     String value = "bar";
     ProduceRequest request =
@@ -667,7 +685,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -677,7 +696,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -691,12 +711,12 @@ public class ProduceActionIntegrationTest {
   @Test
   public void produceAvroWithLatestSchemaAndSubject() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
-    testEnv.schemaRegistry()
-        .createSchema(
-            "my-key-subject", new AvroSchema("{\"type\": \"string\"}"));
-    testEnv.schemaRegistry()
-        .createSchema(
-            "my-value-subject", new AvroSchema("{\"type\": \"string\"}"));
+    testEnv
+        .schemaRegistry()
+        .createSchema("my-key-subject", new AvroSchema("{\"type\": \"string\"}"));
+    testEnv
+        .schemaRegistry()
+        .createSchema("my-value-subject", new AvroSchema("{\"type\": \"string\"}"));
     String key = "foo";
     String value = "bar";
     ProduceRequest request =
@@ -714,7 +734,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -724,7 +745,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -767,7 +789,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -777,7 +800,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -831,7 +855,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -841,7 +866,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -894,7 +920,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -904,7 +931,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -955,7 +983,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -965,7 +994,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1002,7 +1032,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1012,7 +1043,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1043,7 +1075,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1053,7 +1086,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1084,7 +1118,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1100,10 +1135,12 @@ public class ProduceActionIntegrationTest {
   public void produceJsonschemaWithSchemaId() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
-        testEnv.schemaRegistry()
+        testEnv
+            .schemaRegistry()
             .createSchema(DEFAULT_KEY_SUBJECT, new JsonSchema("{\"type\": \"string\"}"));
     SchemaKey valueSchema =
-        testEnv.schemaRegistry()
+        testEnv
+            .schemaRegistry()
             .createSchema(DEFAULT_VALUE_SUBJECT, new JsonSchema("{\"type\": \"string\"}"));
     TextNode key = TextNode.valueOf("foo");
     TextNode value = TextNode.valueOf("bar");
@@ -1122,7 +1159,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1132,7 +1170,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1147,10 +1186,12 @@ public class ProduceActionIntegrationTest {
   public void produceJsonschemaWithSchemaVersion() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
-        testEnv.schemaRegistry()
+        testEnv
+            .schemaRegistry()
             .createSchema(DEFAULT_KEY_SUBJECT, new JsonSchema("{\"type\": \"string\"}"));
     SchemaKey valueSchema =
-        testEnv.schemaRegistry()
+        testEnv
+            .schemaRegistry()
             .createSchema(DEFAULT_VALUE_SUBJECT, new JsonSchema("{\"type\": \"string\"}"));
     TextNode key = TextNode.valueOf("foo");
     TextNode value = TextNode.valueOf("bar");
@@ -1169,7 +1210,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1179,7 +1221,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1193,26 +1236,23 @@ public class ProduceActionIntegrationTest {
   @Test
   public void produceJsonschemaWithLatestSchema() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
-    testEnv.schemaRegistry()
+    testEnv
+        .schemaRegistry()
         .createSchema(DEFAULT_KEY_SUBJECT, new JsonSchema("{\"type\": \"string\"}"));
-    testEnv.schemaRegistry()
+    testEnv
+        .schemaRegistry()
         .createSchema(DEFAULT_VALUE_SUBJECT, new JsonSchema("{\"type\": \"string\"}"));
     TextNode key = TextNode.valueOf("foo");
     TextNode value = TextNode.valueOf("bar");
     ProduceRequest request =
         ProduceRequest.builder()
-            .setKey(
-                ProduceRequestData.builder()
-                    .setData(key)
-                    .build())
-            .setValue(
-                ProduceRequestData.builder()
-                    .setData(value)
-                    .build())
+            .setKey(ProduceRequestData.builder().setData(key).build())
+            .setValue(ProduceRequestData.builder().setData(value).build())
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1222,7 +1262,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1257,7 +1298,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1267,7 +1309,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1282,10 +1325,12 @@ public class ProduceActionIntegrationTest {
   public void produceJsonschemaWithSchemaIdAndSubject() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
-        testEnv.schemaRegistry()
+        testEnv
+            .schemaRegistry()
             .createSchema("my-key-subject", new JsonSchema("{\"type\": \"string\"}"));
     SchemaKey valueSchema =
-        testEnv.schemaRegistry()
+        testEnv
+            .schemaRegistry()
             .createSchema("my-value-subject", new JsonSchema("{\"type\": \"string\"}"));
     TextNode key = TextNode.valueOf("foo");
     TextNode value = TextNode.valueOf("bar");
@@ -1306,7 +1351,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1316,7 +1362,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1331,10 +1378,12 @@ public class ProduceActionIntegrationTest {
   public void produceJsonschemaWithSchemaVersionAndSubject() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     SchemaKey keySchema =
-        testEnv.schemaRegistry()
+        testEnv
+            .schemaRegistry()
             .createSchema("my-key-subject", new JsonSchema("{\"type\": \"string\"}"));
     SchemaKey valueSchema =
-        testEnv.schemaRegistry()
+        testEnv
+            .schemaRegistry()
             .createSchema("my-value-subject", new JsonSchema("{\"type\": \"string\"}"));
     TextNode key = TextNode.valueOf("foo");
     TextNode value = TextNode.valueOf("bar");
@@ -1355,7 +1404,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1365,7 +1415,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1379,28 +1430,24 @@ public class ProduceActionIntegrationTest {
   @Test
   public void produceJsonschemaWithLatestSchemaAndSubject() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
-    testEnv.schemaRegistry()
+    testEnv
+        .schemaRegistry()
         .createSchema("my-key-subject", new JsonSchema("{\"type\": \"string\"}"));
-    testEnv.schemaRegistry()
+    testEnv
+        .schemaRegistry()
         .createSchema("my-value-subject", new JsonSchema("{\"type\": \"string\"}"));
     TextNode key = TextNode.valueOf("foo");
     TextNode value = TextNode.valueOf("bar");
     ProduceRequest request =
         ProduceRequest.builder()
-            .setKey(
-                ProduceRequestData.builder()
-                    .setSubject("my-key-subject")
-                    .setData(key)
-                    .build())
+            .setKey(ProduceRequestData.builder().setSubject("my-key-subject").setData(key).build())
             .setValue(
-                ProduceRequestData.builder()
-                    .setSubject("my-value-subject")
-                    .setData(value)
-                    .build())
+                ProduceRequestData.builder().setSubject("my-value-subject").setData(value).build())
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1410,7 +1457,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1453,7 +1501,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1463,7 +1512,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1512,7 +1562,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1522,7 +1573,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1571,7 +1623,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1581,7 +1634,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1628,7 +1682,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1638,7 +1693,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Object, Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1677,7 +1733,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1687,7 +1744,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Message, Message> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1726,7 +1784,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1736,7 +1795,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Message, Message> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1771,7 +1831,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1812,7 +1873,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1822,7 +1884,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Message, Message> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1866,7 +1929,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1876,7 +1940,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Message, Message> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1906,18 +1971,13 @@ public class ProduceActionIntegrationTest {
     value.put("bar", "baz");
     ProduceRequest request =
         ProduceRequest.builder()
-            .setKey(
-                ProduceRequestData.builder()
-                    .setData(key)
-                    .build())
-            .setValue(
-                ProduceRequestData.builder()
-                    .setData(value)
-                    .build())
+            .setKey(ProduceRequestData.builder().setData(key).build())
+            .setValue(ProduceRequestData.builder().setData(value).build())
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1927,7 +1987,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Message, Message> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -1972,7 +2033,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -1982,7 +2044,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Message, Message> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -2029,7 +2092,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2039,7 +2103,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Message, Message> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -2086,7 +2151,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2096,7 +2162,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Message, Message> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -2128,20 +2195,13 @@ public class ProduceActionIntegrationTest {
     value.put("bar", "baz");
     ProduceRequest request =
         ProduceRequest.builder()
-            .setKey(
-                ProduceRequestData.builder()
-                    .setSubject(keySubject)
-                    .setData(key)
-                    .build())
-            .setValue(
-                ProduceRequestData.builder()
-                    .setSubject(valueSubject)
-                    .setData(value)
-                    .build())
+            .setKey(ProduceRequestData.builder().setSubject(keySubject).setData(key).build())
+            .setValue(ProduceRequestData.builder().setSubject(valueSubject).setData(value).build())
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2151,7 +2211,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Message, Message> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -2196,7 +2257,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2206,7 +2268,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Message, Message> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -2255,7 +2318,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2265,7 +2329,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<Message, Message> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -2302,7 +2367,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2312,7 +2378,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<byte[], byte[]> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 partitionId,
@@ -2345,7 +2412,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2355,7 +2423,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<byte[], byte[]> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -2392,7 +2461,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2402,7 +2472,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<byte[], byte[]> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -2443,7 +2514,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2453,7 +2525,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<byte[], Object> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -2478,7 +2551,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2488,7 +2562,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<byte[], byte[]> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -2513,7 +2588,8 @@ public class ProduceActionIntegrationTest {
             .build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2523,7 +2599,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<byte[], byte[]> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -2540,7 +2617,8 @@ public class ProduceActionIntegrationTest {
     ProduceRequest request = ProduceRequest.builder().build();
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2550,7 +2628,8 @@ public class ProduceActionIntegrationTest {
 
     ProduceResponse actual = readProduceResponse(response);
     ConsumerRecord<byte[], byte[]> produced =
-        testEnv.kafkaCluster()
+        testEnv
+            .kafkaCluster()
             .getRecord(
                 TOPIC_NAME,
                 actual.getPartitionId(),
@@ -2565,7 +2644,7 @@ public class ProduceActionIntegrationTest {
   public void produceJsonBatch() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ArrayList<ProduceRequest> requests = new ArrayList<>();
-    for (int i = 0; i < 1000; i ++) {
+    for (int i = 0; i < 1000; i++) {
       requests.add(
           ProduceRequest.builder()
               .setKey(
@@ -2588,7 +2667,8 @@ public class ProduceActionIntegrationTest {
     }
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2602,7 +2682,8 @@ public class ProduceActionIntegrationTest {
 
     for (int i = 0; i < 1000; i++) {
       ConsumerRecord<Object, Object> produced =
-          testEnv.kafkaCluster()
+          testEnv
+              .kafkaCluster()
               .getRecord(
                   TOPIC_NAME,
                   actual.get(i).getPartitionId(),
@@ -2610,14 +2691,16 @@ public class ProduceActionIntegrationTest {
                   deserializer,
                   deserializer);
       assertEquals(
-          requests.get(i)
+          requests
+              .get(i)
               .getKey()
               .map(ProduceRequestData::getData)
               .map(JsonNode::asText)
               .orElse(null),
           produced.key());
       assertEquals(
-          requests.get(i)
+          requests
+              .get(i)
               .getValue()
               .map(ProduceRequestData::getData)
               .map(JsonNode::asText)
@@ -2630,7 +2713,7 @@ public class ProduceActionIntegrationTest {
   public void produceBinaryBatchWithInvalidData_throwsMultipleBadRequests() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     ArrayList<ProduceRequest> requests = new ArrayList<>();
-    for (int i = 0; i < 1000; i ++) {
+    for (int i = 0; i < 1000; i++) {
       requests.add(
           ProduceRequest.builder()
               .setKey(
@@ -2653,7 +2736,8 @@ public class ProduceActionIntegrationTest {
     }
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2670,11 +2754,11 @@ public class ProduceActionIntegrationTest {
   @Test
   public void produceBinaryWithSchemaSubject_returnsBadRequest() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
-    String request =
-        "{ \"key\": { \"type\": \"BINARY\", \"subject\": \"foobar\" } }";
+    String request = "{ \"key\": { \"type\": \"BINARY\", \"subject\": \"foobar\" } }";
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2689,11 +2773,11 @@ public class ProduceActionIntegrationTest {
   @Test
   public void produceBinaryWithSchemaSubjectStrategy_returnsBadRequest() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
-    String request =
-        "{ \"key\": { \"type\": \"BINARY\", \"subject_name_strategy\": \"TOPIC\" } }";
+    String request = "{ \"key\": { \"type\": \"BINARY\", \"subject_name_strategy\": \"TOPIC\" } }";
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2712,7 +2796,8 @@ public class ProduceActionIntegrationTest {
         "{ \"key\": { \"type\": \"BINARY\", \"schema\": \"{ \\\"type\\\": \\\"string\\\" }\" } }";
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2727,11 +2812,11 @@ public class ProduceActionIntegrationTest {
   @Test
   public void produceBinaryWithSchemaId_returnsBadRequest() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
-    String request =
-        "{ \"key\": { \"type\": \"BINARY\", \"schema_id\": 1 } }";
+    String request = "{ \"key\": { \"type\": \"BINARY\", \"schema_id\": 1 } }";
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2746,11 +2831,11 @@ public class ProduceActionIntegrationTest {
   @Test
   public void produceBinaryWithSchemaVersion_returnsBadRequest() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
-    String request =
-        "{ \"key\": { \"type\": \"BINARY\", \"schema_version\": 1 } }";
+    String request = "{ \"key\": { \"type\": \"BINARY\", \"schema_version\": 1 } }";
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2768,7 +2853,8 @@ public class ProduceActionIntegrationTest {
     String request = "{ \"key\": { \"type\": \"AVRO\", \"schema_version\": 1 } }";
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2786,7 +2872,8 @@ public class ProduceActionIntegrationTest {
     String request = "{ \"key\": { \"type\": \"AVRO\", \"schema_id\": 1 } }";
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2804,7 +2891,8 @@ public class ProduceActionIntegrationTest {
     String request = "{ \"key\": { \"type\": \"AVRO\" } }";
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2824,7 +2912,8 @@ public class ProduceActionIntegrationTest {
         "{ \"key\": { \"subject\": \"foobar\", \"subject_name_strategy\": \"TOPIC\" } }";
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2837,13 +2926,13 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithSchemaIdAndSchemaVersion_returnsBadRequest()
-      throws Exception {
+  public void produceAvroWithSchemaIdAndSchemaVersion_returnsBadRequest() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request = "{ \"key\": { \"schema_id\": 1, \"schema_version\": 1 } }";
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2856,14 +2945,14 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithRawSchemaAndSchemaId_returnsBadRequest()
-      throws Exception {
+  public void produceAvroWithRawSchemaAndSchemaId_returnsBadRequest() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request =
         "{ \"key\": { \"schema\": \"{ \\\"type\\\": \\\"string\\\" }\", \"schema_id\": 1 } }";
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2876,14 +2965,14 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
-  public void produceAvroWithRawSchemaAndSchemaVersion_returnsBadRequest()
-      throws Exception {
+  public void produceAvroWithRawSchemaAndSchemaVersion_returnsBadRequest() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String request =
         "{ \"key\": { \"schema\": \"{ \\\"type\\\": \\\"string\\\" }\", \"schema_version\": 1 } }";
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2903,7 +2992,8 @@ public class ProduceActionIntegrationTest {
         "{ \"key\": { \"subject_name_strategy\": \"RECORD_NAME\", \"schema_version\": 1 } }";
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()
@@ -2922,7 +3012,8 @@ public class ProduceActionIntegrationTest {
     String request = "{ \"key\": { \"subject_name_strategy\": \"RECORD_NAME\" } }";
 
     Response response =
-        testEnv.kafkaRest()
+        testEnv
+            .kafkaRest()
             .target()
             .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
             .request()

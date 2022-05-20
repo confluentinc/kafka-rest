@@ -67,11 +67,7 @@ public class ConsumerLagManagerImplTest {
 
   private static final Broker BROKER_1 =
       Broker.create(
-          CLUSTER_ID,
-          /* brokerId= */ 1,
-          /* host= */ "1.2.3.4",
-          /* port= */ 1000,
-          /* rack= */ null);
+          CLUSTER_ID, /* brokerId= */ 1, /* host= */ "1.2.3.4", /* port= */ 1000, /* rack= */ null);
 
   private static final String CONSUMER_GROUP_ID = "consumer-group-1";
 
@@ -125,16 +121,14 @@ public class ConsumerLagManagerImplTest {
           .setConsumers(Arrays.asList(CONSUMER_1, CONSUMER_2))
           .build();
 
-  private static final TopicPartition TOPIC_PARTITION_1 =
-      new TopicPartition("topic-1", 1);
+  private static final TopicPartition TOPIC_PARTITION_1 = new TopicPartition("topic-1", 1);
 
-  private static final TopicPartition TOPIC_PARTITION_2 =
-      new TopicPartition("topic-2", 2);
+  private static final TopicPartition TOPIC_PARTITION_2 = new TopicPartition("topic-2", 2);
 
-  private static final TopicPartition TOPIC_PARTITION_3 =
-      new TopicPartition("topic-3", 3);
+  private static final TopicPartition TOPIC_PARTITION_3 = new TopicPartition("topic-3", 3);
 
   private static final Map<TopicPartition, OffsetAndMetadata> OFFSET_AND_METADATA_MAP;
+
   static {
     OFFSET_AND_METADATA_MAP = new HashMap<>();
     OFFSET_AND_METADATA_MAP.put(TOPIC_PARTITION_1, new OffsetAndMetadata(0));
@@ -143,31 +137,24 @@ public class ConsumerLagManagerImplTest {
   }
 
   private static final Map<TopicPartition, KafkaFuture<ListOffsetsResultInfo>> LATEST_OFFSETS_MAP;
+
   static {
     LATEST_OFFSETS_MAP = new HashMap<>();
     LATEST_OFFSETS_MAP.put(
-        TOPIC_PARTITION_1,
-        KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
+        TOPIC_PARTITION_1, KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
     LATEST_OFFSETS_MAP.put(
-        TOPIC_PARTITION_2,
-        KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
+        TOPIC_PARTITION_2, KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
     LATEST_OFFSETS_MAP.put(
-        TOPIC_PARTITION_3,
-        KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
+        TOPIC_PARTITION_3, KafkaFuture.completedFuture(new ListOffsetsResultInfo(100L, 0L, null)));
   }
 
   private static final Map<TopicPartition, ListOffsetsResultInfo> LATEST_OFFSETS_MAP_2;
+
   static {
     LATEST_OFFSETS_MAP_2 = new HashMap<>();
-    LATEST_OFFSETS_MAP_2.put(
-        TOPIC_PARTITION_1,
-        new ListOffsetsResultInfo(100L, 0L, null));
-    LATEST_OFFSETS_MAP_2.put(
-        TOPIC_PARTITION_2,
-        new ListOffsetsResultInfo(100L, 0L, null));
-    LATEST_OFFSETS_MAP_2.put(
-        TOPIC_PARTITION_3,
-        new ListOffsetsResultInfo(100L, 0L, null));
+    LATEST_OFFSETS_MAP_2.put(TOPIC_PARTITION_1, new ListOffsetsResultInfo(100L, 0L, null));
+    LATEST_OFFSETS_MAP_2.put(TOPIC_PARTITION_2, new ListOffsetsResultInfo(100L, 0L, null));
+    LATEST_OFFSETS_MAP_2.put(TOPIC_PARTITION_3, new ListOffsetsResultInfo(100L, 0L, null));
   }
 
   private static final ConsumerLag CONSUMER_LAG_1 =
@@ -209,22 +196,18 @@ public class ConsumerLagManagerImplTest {
           .setLogEndOffset(100L)
           .build();
 
-  private static final List<ConsumerLag> CONSUMER_LAG_LIST = Arrays
-      .asList(CONSUMER_LAG_1, CONSUMER_LAG_2, CONSUMER_LAG_3);
+  private static final List<ConsumerLag> CONSUMER_LAG_LIST =
+      Arrays.asList(CONSUMER_LAG_1, CONSUMER_LAG_2, CONSUMER_LAG_3);
 
-  @Rule
-  public final EasyMockRule mocks = new EasyMockRule(this);
+  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
 
-  @Mock
-  private Admin kafkaAdminClient;
+  @Mock private Admin kafkaAdminClient;
 
-  @Mock
-  private ConsumerGroupManager consumerGroupManager;
+  @Mock private ConsumerGroupManager consumerGroupManager;
 
   private ConsumerLagManagerImpl consumerLagManager;
 
-  @Mock
-  private ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult;
+  @Mock private ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult;
 
   @Before
   public void setUp() {
@@ -235,25 +218,24 @@ public class ConsumerLagManagerImplTest {
   public void listConsumerLags_returnsConsumerLags() throws Exception {
     expect(consumerGroupManager.getConsumerGroup(CLUSTER_ID, CONSUMER_GROUP_ID))
         .andReturn(completedFuture(Optional.of(CONSUMER_GROUP)));
-    expect(kafkaAdminClient.listConsumerGroupOffsets(
-        eq(CONSUMER_GROUP_ID),
-        anyObject(ListConsumerGroupOffsetsOptions.class)))
+    expect(
+            kafkaAdminClient.listConsumerGroupOffsets(
+                eq(CONSUMER_GROUP_ID), anyObject(ListConsumerGroupOffsetsOptions.class)))
         .andReturn(listConsumerGroupOffsetsResult);
     expect(listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata())
         .andReturn(KafkaFuture.completedFuture(OFFSET_AND_METADATA_MAP));
     final Capture<Map<TopicPartition, OffsetSpec>> capturedOffsetSpec = newCapture();
     final Capture<ListOffsetsOptions> capturedListOffsetsOptions = newCapture();
-    expect(kafkaAdminClient.listOffsets(
-        capture(capturedOffsetSpec),
-        capture(capturedListOffsetsOptions)))
+    expect(
+            kafkaAdminClient.listOffsets(
+                capture(capturedOffsetSpec), capture(capturedListOffsetsOptions)))
         .andReturn(new ListOffsetsResult(LATEST_OFFSETS_MAP));
     replay(consumerGroupManager, kafkaAdminClient, listConsumerGroupOffsetsResult);
     List<ConsumerLag> consumerLagList =
         consumerLagManager.listConsumerLags(CLUSTER_ID, CONSUMER_GROUP_ID).get();
     assertEquals(OFFSET_AND_METADATA_MAP.keySet(), capturedOffsetSpec.getValue().keySet());
     assertEquals(
-        IsolationLevel.READ_COMMITTED,
-        capturedListOffsetsOptions.getValue().isolationLevel());
+        IsolationLevel.READ_COMMITTED, capturedListOffsetsOptions.getValue().isolationLevel());
     assertEquals(CONSUMER_LAG_LIST, consumerLagList);
   }
 
@@ -261,30 +243,26 @@ public class ConsumerLagManagerImplTest {
   public void getConsumerLag_returnsConsumerLag() throws Exception {
     expect(consumerGroupManager.getConsumerGroup(CLUSTER_ID, CONSUMER_GROUP_ID))
         .andReturn(completedFuture(Optional.of(CONSUMER_GROUP)));
-    expect(kafkaAdminClient.listConsumerGroupOffsets(
-        eq(CONSUMER_GROUP_ID),
-        anyObject(ListConsumerGroupOffsetsOptions.class)))
+    expect(
+            kafkaAdminClient.listConsumerGroupOffsets(
+                eq(CONSUMER_GROUP_ID), anyObject(ListConsumerGroupOffsetsOptions.class)))
         .andReturn(listConsumerGroupOffsetsResult);
     expect(listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata())
         .andReturn(KafkaFuture.completedFuture(OFFSET_AND_METADATA_MAP));
     final Capture<Map<TopicPartition, OffsetSpec>> capturedOffsetSpec = newCapture();
     final Capture<ListOffsetsOptions> capturedListOffsetsOptions = newCapture();
-    expect(kafkaAdminClient.listOffsets(
-        capture(capturedOffsetSpec),
-        capture(capturedListOffsetsOptions)))
+    expect(
+            kafkaAdminClient.listOffsets(
+                capture(capturedOffsetSpec), capture(capturedListOffsetsOptions)))
         .andReturn(new ListOffsetsResult(LATEST_OFFSETS_MAP));
     replay(consumerGroupManager, kafkaAdminClient, listConsumerGroupOffsetsResult);
 
     ConsumerLag consumerLag =
-        consumerLagManager.getConsumerLag(
-            CLUSTER_ID, CONSUMER_GROUP_ID, "topic-2", 2)
-            .get()
-            .get();
+        consumerLagManager.getConsumerLag(CLUSTER_ID, CONSUMER_GROUP_ID, "topic-2", 2).get().get();
 
     assertEquals(OFFSET_AND_METADATA_MAP.keySet(), capturedOffsetSpec.getValue().keySet());
     assertEquals(
-        IsolationLevel.READ_COMMITTED,
-        capturedListOffsetsOptions.getValue().isolationLevel());
+        IsolationLevel.READ_COMMITTED, capturedListOffsetsOptions.getValue().isolationLevel());
     assertEquals(CONSUMER_LAG_2, consumerLag);
   }
 
@@ -331,30 +309,26 @@ public class ConsumerLagManagerImplTest {
 
     expect(consumerGroupManager.getConsumerGroup(CLUSTER_ID, CONSUMER_GROUP_ID))
         .andReturn(completedFuture(Optional.of(consumerGroup)));
-    expect(kafkaAdminClient.listConsumerGroupOffsets(
-        eq(CONSUMER_GROUP_ID),
-        anyObject(ListConsumerGroupOffsetsOptions.class)))
+    expect(
+            kafkaAdminClient.listConsumerGroupOffsets(
+                eq(CONSUMER_GROUP_ID), anyObject(ListConsumerGroupOffsetsOptions.class)))
         .andReturn(listConsumerGroupOffsetsResult);
     expect(listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata())
         .andReturn(KafkaFuture.completedFuture(OFFSET_AND_METADATA_MAP));
     final Capture<Map<TopicPartition, OffsetSpec>> capturedOffsetSpec = newCapture();
     final Capture<ListOffsetsOptions> capturedListOffsetsOptions = newCapture();
-    expect(kafkaAdminClient.listOffsets(
-        capture(capturedOffsetSpec),
-        capture(capturedListOffsetsOptions)))
+    expect(
+            kafkaAdminClient.listOffsets(
+                capture(capturedOffsetSpec), capture(capturedListOffsetsOptions)))
         .andReturn(new ListOffsetsResult(LATEST_OFFSETS_MAP));
     replay(consumerGroupManager, kafkaAdminClient, listConsumerGroupOffsetsResult);
 
     ConsumerLag consumerLag =
-        consumerLagManager.getConsumerLag(
-            CLUSTER_ID, CONSUMER_GROUP_ID, "topic-1", 1)
-            .get()
-            .get();
+        consumerLagManager.getConsumerLag(CLUSTER_ID, CONSUMER_GROUP_ID, "topic-1", 1).get().get();
 
     assertEquals(OFFSET_AND_METADATA_MAP.keySet(), capturedOffsetSpec.getValue().keySet());
     assertEquals(
-        IsolationLevel.READ_COMMITTED,
-        capturedListOffsetsOptions.getValue().isolationLevel());
+        IsolationLevel.READ_COMMITTED, capturedListOffsetsOptions.getValue().isolationLevel());
     assertEquals(expectedConsumerLag, consumerLag);
   }
 
@@ -362,28 +336,25 @@ public class ConsumerLagManagerImplTest {
   public void getConsumerLag_nonExistingConsumerLag_returnsEmpty() throws Exception {
     expect(consumerGroupManager.getConsumerGroup(CLUSTER_ID, CONSUMER_GROUP_ID))
         .andReturn(completedFuture(Optional.of(CONSUMER_GROUP)));
-    expect(kafkaAdminClient.listConsumerGroupOffsets(
-        eq(CONSUMER_GROUP_ID),
-        anyObject(ListConsumerGroupOffsetsOptions.class)))
+    expect(
+            kafkaAdminClient.listConsumerGroupOffsets(
+                eq(CONSUMER_GROUP_ID), anyObject(ListConsumerGroupOffsetsOptions.class)))
         .andReturn(listConsumerGroupOffsetsResult);
     expect(listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata())
         .andReturn(KafkaFuture.completedFuture(OFFSET_AND_METADATA_MAP));
     final Capture<Map<TopicPartition, OffsetSpec>> capturedOffsetSpec = newCapture();
     final Capture<ListOffsetsOptions> capturedListOffsetsOptions = newCapture();
-    expect(kafkaAdminClient.listOffsets(
-        capture(capturedOffsetSpec),
-        capture(capturedListOffsetsOptions)))
+    expect(
+            kafkaAdminClient.listOffsets(
+                capture(capturedOffsetSpec), capture(capturedListOffsetsOptions)))
         .andReturn(new ListOffsetsResult(LATEST_OFFSETS_MAP));
     replay(consumerGroupManager, kafkaAdminClient, listConsumerGroupOffsetsResult);
 
     Optional<ConsumerLag> consumerLag =
-        consumerLagManager.getConsumerLag(
-            CLUSTER_ID, CONSUMER_GROUP_ID, "topic-1", 2)
-            .get();
+        consumerLagManager.getConsumerLag(CLUSTER_ID, CONSUMER_GROUP_ID, "topic-1", 2).get();
     assertEquals(OFFSET_AND_METADATA_MAP.keySet(), capturedOffsetSpec.getValue().keySet());
     assertEquals(
-        IsolationLevel.READ_COMMITTED,
-        capturedListOffsetsOptions.getValue().isolationLevel());
+        IsolationLevel.READ_COMMITTED, capturedListOffsetsOptions.getValue().isolationLevel());
     assertEquals(consumerLag, Optional.empty());
   }
 
