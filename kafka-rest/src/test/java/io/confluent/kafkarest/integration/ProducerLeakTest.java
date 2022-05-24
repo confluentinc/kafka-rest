@@ -65,8 +65,7 @@ public class ProducerLeakTest {
   private final KafkaRestFixture kafkaRest =
       KafkaRestFixture.builder()
           .setConfig("producer.max.block.ms", "5000")
-          .setConfig(
-              "kafka.rest.resource.extension.class", LeakyContextExtension.class.getName())
+          .setConfig("kafka.rest.resource.extension.class", LeakyContextExtension.class.getName())
           .setKafkaCluster(kafkaCluster)
           .build();
 
