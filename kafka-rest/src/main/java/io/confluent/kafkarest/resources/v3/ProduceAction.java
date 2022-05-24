@@ -89,8 +89,6 @@ public final class ProduceAction {
   private final ProduceRateLimiters produceRateLimiters;
   private final ExecutorService executorService;
 
-  private ProducerMetrics metrics = null;
-
   @Inject
   public ProduceAction(
       Provider<SchemaManager> schemaManagerProvider,
@@ -125,16 +123,21 @@ public final class ProduceAction {
       throw Errors.invalidPayloadException("Null input provided. Data is required.");
     }
 
-    metrics = producerMetricsProvider.get();
     ProduceController controller = produceControllerProvider.get();
     streamingResponseFactory
         .from(requests)
-        .compose(request -> produce(clusterId, topicName, request, controller))
+        .compose(
+            request ->
+                produce(clusterId, topicName, request, controller, producerMetricsProvider.get()))
         .resume(asyncResponse);
   }
 
   private CompletableFuture<ProduceResponse> produce(
-      String clusterId, String topicName, ProduceRequest request, ProduceController controller) {
+      String clusterId,
+      String topicName,
+      ProduceRequest request,
+      ProduceController controller,
+      ProducerMetrics metrics) {
 
     try {
       produceRateLimiters.rateLimit(clusterId, request.getOriginalSize());
@@ -145,7 +148,7 @@ public final class ProduceAction {
 
     // Request metrics are recorded before we check the validity of the message body, but after
     // rate limiting, as these metrics are used for billing.
-    recordRequestMetrics(request.getOriginalSize());
+    recordRequestMetrics(metrics, request.getOriginalSize());
 
     Instant requestInstant = Instant.now();
     Optional<RegisteredSchema> keySchema =
@@ -181,7 +184,7 @@ public final class ProduceAction {
             (result, error) -> {
               if (error != null) {
                 long latency = Duration.between(requestInstant, Instant.now()).toMillis();
-                recordErrorMetrics(latency);
+                recordErrorMetrics(metrics, latency);
                 throw new StacklessCompletionException(error);
               }
               return result;
@@ -194,7 +197,7 @@ public final class ProduceAction {
                       clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
               long latency =
                   Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
-              recordResponseMetrics(latency);
+              recordResponseMetrics(metrics, latency);
               return response;
             },
             executorService);
@@ -280,17 +283,17 @@ public final class ProduceAction {
         .build();
   }
 
-  private void recordResponseMetrics(long latency) {
+  private void recordResponseMetrics(ProducerMetrics metrics, long latency) {
     metrics.recordResponse();
     metrics.recordRequestLatency(latency);
   }
 
-  private void recordErrorMetrics(long latency) {
+  private void recordErrorMetrics(ProducerMetrics metrics, long latency) {
     metrics.recordError();
     metrics.recordRequestLatency(latency);
   }
 
-  private void recordRequestMetrics(long size) {
+  private void recordRequestMetrics(ProducerMetrics metrics, long size) {
     metrics.recordRequest();
     // record request size
     metrics.recordRequestSize(size);
