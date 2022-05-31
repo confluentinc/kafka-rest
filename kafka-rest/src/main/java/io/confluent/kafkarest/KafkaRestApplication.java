@@ -74,6 +74,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     restResourceExtensions =
         config.getConfiguredInstances(
             KafkaRestConfig.KAFKA_REST_RESOURCE_EXTENSION_CONFIG, RestResourceExtension.class);
+    config.setMetrics(metrics);
   }
 
   @Override

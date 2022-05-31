@@ -67,6 +67,7 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+import org.apache.kafka.common.metrics.Metrics;
 import org.easymock.EasyMock;
 import org.eclipse.jetty.http.HttpStatus;
 import org.glassfish.jersey.server.ChunkedOutput;
@@ -840,12 +841,15 @@ public class ProduceActionTest {
     // get the current thread so that the call counts can be seen by easy mock
     ExecutorService executorService = MoreExecutors.newDirectExecutorService();
 
+    KafkaRestConfig kafkaRestConfig = new KafkaRestConfig();
+    kafkaRestConfig.setMetrics(new Metrics());
+
     ProduceAction produceAction =
         new ProduceAction(
             schemaManagerProvider,
             recordSerializerProvider,
             produceControllerProvider,
-            () -> new ProducerMetrics(new KafkaRestConfig(), Time.SYSTEM),
+            () -> new ProducerMetrics(kafkaRestConfig, Time.SYSTEM),
             streamingResponseFactory,
             produceRateLimiters,
             executorService);
