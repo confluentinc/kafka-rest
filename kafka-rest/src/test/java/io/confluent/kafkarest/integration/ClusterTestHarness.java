@@ -495,7 +495,6 @@ public abstract class ClusterTestHarness {
 
     try {
       result.all().get();
-      throw new InterruptedException();
     } catch (InterruptedException | ExecutionException e) {
       pause();
       Set<String> topicNames = getTopicNames();
@@ -518,13 +517,29 @@ public abstract class ClusterTestHarness {
           .filter(returnedTopicName -> topicName.equals(returnedTopicName))
           .findFirst()
           .isPresent()) {
-        // We can't restart the environment as we will lose any existing topics
+        // The topic we are trying to make isn't the first topic to be created, the topic list isn't
+        // 0 length
+        // (that or an exception has been thrown, but the topic was created anyway).
+        // We can't easily restart the environment as we will lose the existing topics.
+        // While we could store them and recreate them all, for now, let's just wait a bit and have
+        // another go with the current topic
         log.warn("Topic creation failed the first time round, trying again.");
         result =
             createTopicCall(
                 topicName, numPartitions, replicationFactor, replicasAssignments, properties);
         pause(); // It's struggling at this point, give it a little time
         getTopicCreateFutures(result);
+      } else {
+        log.warn(
+            String.format(
+                "Exception thrown but topic has been created, carrying on: %s %s",
+                topicName, e.getMessage()));
+      }
+      if (!getTopicNames().stream()
+          .filter(returnedTopicName -> topicName.equals(returnedTopicName))
+          .findFirst()
+          .isPresent()) {
+        fail(String.format("Failed to create topic after retry: %s", topicNames));
       }
     }
   }
