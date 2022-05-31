@@ -80,7 +80,7 @@ public final class ProduceAction {
   private final Provider<SchemaManager> schemaManagerProvider;
   private final Provider<RecordSerializer> recordSerializerProvider;
   private final Provider<ProduceController> produceControllerProvider;
-  private final Provider<ProducerMetrics> producerMetrics;
+  private final Provider<ProducerMetrics> producerMetricsProvider;
   private final StreamingResponseFactory streamingResponseFactory;
   private final ProduceRateLimiters produceRateLimiters;
   private final ExecutorService executorService;
@@ -97,7 +97,7 @@ public final class ProduceAction {
     this.schemaManagerProvider = requireNonNull(schemaManagerProvider);
     this.recordSerializerProvider = requireNonNull(recordSerializer);
     this.produceControllerProvider = requireNonNull(produceControllerProvider);
-    this.producerMetrics = requireNonNull(producerMetrics);
+    this.producerMetricsProvider = requireNonNull(producerMetrics);
     this.streamingResponseFactory = requireNonNull(streamingResponseFactory);
     this.produceRateLimiters = requireNonNull(produceRateLimiters);
     this.executorService = requireNonNull(executorService);
@@ -122,12 +122,18 @@ public final class ProduceAction {
     ProduceController controller = produceControllerProvider.get();
     streamingResponseFactory
         .from(requests)
-        .compose(request -> produce(clusterId, topicName, request, controller))
+        .compose(
+            request ->
+                produce(clusterId, topicName, request, controller, producerMetricsProvider.get()))
         .resume(asyncResponse);
   }
 
   private CompletableFuture<ProduceResponse> produce(
-      String clusterId, String topicName, ProduceRequest request, ProduceController controller) {
+      String clusterId,
+      String topicName,
+      ProduceRequest request,
+      ProduceController controller,
+      ProducerMetrics metrics) {
 
     try {
       produceRateLimiters.rateLimit(clusterId, request.getOriginalSize());
@@ -138,7 +144,7 @@ public final class ProduceAction {
 
     // Request metrics are recorded before we check the validity of the message body, but after
     // rate limiting, as these metrics are used for billing.
-    recordRequestMetrics(request.getOriginalSize());
+    recordRequestMetrics(metrics, request.getOriginalSize());
 
     Instant requestInstant = Instant.now();
     Optional<RegisteredSchema> keySchema =
@@ -174,7 +180,7 @@ public final class ProduceAction {
             (result, error) -> {
               if (error != null) {
                 long latency = Duration.between(requestInstant, Instant.now()).toMillis();
-                recordErrorMetrics(latency);
+                recordErrorMetrics(metrics, latency);
                 throw new StacklessCompletionException(error);
               }
               return result;
@@ -187,7 +193,7 @@ public final class ProduceAction {
                       clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
               long latency =
                   Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
-              recordResponseMetrics(latency);
+              recordResponseMetrics(metrics, latency);
               return response;
             },
             executorService);
@@ -273,19 +279,19 @@ public final class ProduceAction {
         .build();
   }
 
-  private void recordResponseMetrics(long latency) {
-    producerMetrics.get().recordResponse();
-    producerMetrics.get().recordRequestLatency(latency);
+  private void recordResponseMetrics(ProducerMetrics metrics, long latency) {
+    metrics.recordResponse();
+    metrics.recordRequestLatency(latency);
   }
 
-  private void recordErrorMetrics(long latency) {
-    producerMetrics.get().recordError();
-    producerMetrics.get().recordRequestLatency(latency);
+  private void recordErrorMetrics(ProducerMetrics metrics, long latency) {
+    metrics.recordError();
+    metrics.recordRequestLatency(latency);
   }
 
-  private void recordRequestMetrics(long size) {
-    producerMetrics.get().recordRequest();
+  private void recordRequestMetrics(ProducerMetrics metrics, long size) {
+    metrics.recordRequest();
     // record request size
-    producerMetrics.get().recordRequestSize(size);
+    metrics.recordRequestSize(size);
   }
 }

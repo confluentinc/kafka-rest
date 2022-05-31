@@ -17,6 +17,7 @@ package io.confluent.kafkarest.resources.v3;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.mock.MockTime;
 import io.confluent.rest.RestConfig;
@@ -24,21 +25,28 @@ import java.lang.management.ManagementFactory;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.IntStream;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class ProducerMetricsTest {
+
   private static final String METRICS_SEARCH_STRING = "kafka.rest:type=produce-api-metrics,*";
 
   private ProducerMetrics metrics;
 
   @BeforeEach
-  public void setUp() {
+  public void setUp()
+      throws MalformedObjectNameException, InstanceNotFoundException, MBeanRegistrationException {
     Properties properties = new Properties();
     properties.setProperty(RestConfig.METRICS_JMX_PREFIX_CONFIG, "kafka.rest");
-    metrics = new ProducerMetrics(new KafkaRestConfig(properties), new MockTime());
+    metrics =
+        new ProducerMetrics(
+            new KafkaRestConfig(properties), new MockTime(), ImmutableMap.of("tag", "value"));
   }
 
   @Test
@@ -170,5 +178,14 @@ public class ProducerMetricsTest {
     for (String metric : maxMetrics) {
       assertEquals(1230.0, mBeanServer.getAttribute(beanNames.iterator().next(), metric));
     }
+  }
+
+  @Test
+  public void testTenantTag() throws Exception {
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
+    assertEquals(1, beanNames.size());
+    String tenantId = beanNames.stream().iterator().next().getKeyPropertyList().get("tag");
+    assertEquals("value", tenantId);
   }
 }

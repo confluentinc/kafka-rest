@@ -39,6 +39,7 @@ import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -46,12 +47,31 @@ import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import javax.inject.Provider;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import org.easymock.EasyMock;
 import org.eclipse.jetty.http.HttpStatus;
 import org.glassfish.jersey.server.ChunkedOutput;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
 public class ProduceActionTest {
+
+  @AfterAll
+  public static void cleanUp() {
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    // Need to unregister the produce metrics bean to avoid affecting the metrics tests
+    try {
+      mBeanServer.unregisterMBean(new ObjectName("kafka.rest:type=produce-api-metrics"));
+    } catch (MalformedObjectNameException
+        | InstanceNotFoundException
+        | MBeanRegistrationException e) {
+      e.printStackTrace();
+    }
+  }
 
   @Test
   public void produceNoSchemaRegistryDefined() throws Exception {
