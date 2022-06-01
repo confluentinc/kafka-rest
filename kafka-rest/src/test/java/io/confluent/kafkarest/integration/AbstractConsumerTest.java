@@ -16,6 +16,7 @@ package io.confluent.kafkarest.integration;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static io.confluent.kafkarest.TestUtils.testWithRetry;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -221,22 +222,20 @@ public class AbstractConsumerTest extends ClusterTestHarness {
       Converter converter,
       Function<RecordType, ConsumerRecord<ClientK, ClientV>> fromJsonWrapper) {
 
-    int retryCount = 0;
-    final int TOTAL_RETRIES = 3;
     List<RecordType> consumed = new ArrayList<>();
 
-    while (retryCount < TOTAL_RETRIES) {
-      Response response = request(instanceUri + "/records").accept(accept).get();
-      assertOKResponse(response, responseMediatype);
-      consumed.addAll(TestUtils.tryReadEntityOrLog(response, responseEntityType));
-      try {
-        assertEquals(records.size(), consumed.size());
-        retryCount = TOTAL_RETRIES;
-      } catch (AssertionError assertionError) {
-        logConsumeData(records, consumed);
-        pause(++retryCount);
-      }
-    }
+    testWithRetry(
+        () -> {
+          Response response = request(instanceUri + "/records").accept(accept).get();
+          assertOKResponse(response, responseMediatype);
+          consumed.addAll(TestUtils.tryReadEntityOrLog(response, responseEntityType));
+          try {
+            assertEquals(records.size(), consumed.size());
+          } catch (AssertionError assertionError) {
+            logConsumeData(records, consumed);
+            throw assertionError;
+          }
+        });
 
     assertEqualsMessages(
         records, consumed.stream().map(fromJsonWrapper).collect(Collectors.toList()), converter);

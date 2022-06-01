@@ -570,7 +570,10 @@ public abstract class ClusterTestHarness {
             if (result.hasOffset()) {
               sent = true;
             } else {
-              log.info("Failed to get offset back from produce {}", result);
+              log.info(
+                  "Failed to get offset back from produce for record {}.  Result is {}",
+                  rec,
+                  result);
             }
           } catch (Exception e) {
             log.info("Produce failed within testWithRetry", e);
