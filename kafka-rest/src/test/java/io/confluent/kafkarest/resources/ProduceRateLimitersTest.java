@@ -152,15 +152,15 @@ public class ProduceRateLimitersTest {
     Clock clock = mock(Clock.class);
     expect(clock.millis()).andReturn(0L);
     expect(clock.millis()).andReturn(1L);
-    expect(clock.millis()).andReturn(8L);
+    expect(clock.millis()).andReturn(700L);
     replay(clock);
 
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(1));
     properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(100));
-    properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(100));
+    properties.put(PRODUCE_GRACE_PERIOD_MS, Integer.toString(10000));
     properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
-    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(5));
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, Integer.toString(200));
 
     ProduceRateLimiters produceRateLimiters =
         new ProduceRateLimiters(
@@ -177,7 +177,7 @@ public class ProduceRateLimitersTest {
     waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
     assertTrue(waitTime.isPresent());
     assertEquals(waitTime.get().toMillis(), 1000);
-    Thread.sleep(6);
+    Thread.sleep(400);
     waitTime = produceRateLimiters.calculateGracePeriodExceeded("clusterId", 10);
     assertFalse(waitTime.isPresent());
   }
