@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import javax.validation.ConstraintViolationException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
@@ -29,6 +30,8 @@ import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Tag("IntegrationTest")
 public abstract class SchemaProduceConsumeTest {
@@ -36,6 +39,8 @@ public abstract class SchemaProduceConsumeTest {
   private static final String TOPIC = "topic-1";
 
   private static final String CONSUMER_GROUP = "group-1";
+
+  private static final Logger log = LoggerFactory.getLogger(SchemaProduceConsumeTest.class);
 
   @RegisterExtension
   public final DefaultKafkaRestTestEnvironment testEnv = new DefaultKafkaRestTestEnvironment();
@@ -115,14 +120,30 @@ public abstract class SchemaProduceConsumeTest {
             getValueSchema().canonicalString(),
             null);
 
-    ProduceResponse produceResponse =
+    Response genericResponse =
         testEnv
             .kafkaRest()
             .target()
             .path(String.format("/topics/%s", TOPIC))
             .request()
-            .post(Entity.entity(produceRequest, getContentType()))
-            .readEntity(ProduceResponse.class);
+            .post(Entity.entity(produceRequest, getContentType()));
+
+    ProduceResponse produceResponse;
+    try {
+      produceResponse = genericResponse.readEntity(ProduceResponse.class);
+    } catch (ConstraintViolationException e) {
+      // Debug for jenkins only, intermittent failure where the response contains a field called
+      // error_response that isn't part of a v2 ProduceResponse (probably from a v2 ErrorResponse)
+      log.error(
+          "Can't parse produce response class: {} status: {} ",
+          genericResponse.getClass(),
+          genericResponse.getStatus());
+      log.error(
+          "Reading entity using actual class: {}",
+          genericResponse.readEntity(genericResponse.getClass()));
+      e.printStackTrace();
+      throw e;
+    }
     assertEquals(Status.OK, produceResponse.getRequestStatus());
 
     Response readRecordsResponse =

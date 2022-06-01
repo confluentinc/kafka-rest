@@ -68,6 +68,7 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.ConfigResource;
@@ -565,8 +566,15 @@ public abstract class ClusterTestHarness {
           final KafkaProducer<T, T> producer = createProducer.get();
           boolean sent = false;
           try {
-            producer.send(rec).get();
-            sent = true;
+            RecordMetadata result = producer.send(rec).get();
+            if (result.hasOffset()) {
+              sent = true;
+            } else {
+              log.info(
+                  "Failed to get offset back from produce for record {}.  Result is {}",
+                  rec,
+                  result);
+            }
           } catch (Exception e) {
             log.info("Produce failed within testWithRetry", e);
           }

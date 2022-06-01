@@ -42,7 +42,11 @@ public class SeekToTimestampTest extends AbstractConsumerTest {
   public void testConsumeOnlyValues() throws Exception {
     String consumerUri =
         startConsumeMessages(
-            CONSUMER_GROUP_ID, TOPIC_NAME, /* format= */ null, Versions.KAFKA_V2_JSON_BINARY);
+            CONSUMER_GROUP_ID,
+            TOPIC_NAME,
+            /* format= */ null,
+            Versions.KAFKA_V2_JSON_BINARY,
+            "latest");
 
     produceBinaryMessages(RECORDS_BEFORE_TIMESTAMP);
 

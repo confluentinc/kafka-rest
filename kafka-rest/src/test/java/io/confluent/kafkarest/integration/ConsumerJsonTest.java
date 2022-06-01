@@ -84,7 +84,7 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
   public void testConsumeWithKeys() {
     String instanceUri =
         startConsumeMessages(
-            groupName, topicName, EmbeddedFormat.JSON, Versions.KAFKA_V2_JSON_JSON);
+            groupName, topicName, EmbeddedFormat.JSON, Versions.KAFKA_V2_JSON_JSON, "earliest");
     produceJsonMessages(recordsWithKeys);
     consumeMessages(
         instanceUri,
@@ -101,7 +101,7 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
   public void testConsumeOnlyValues() {
     String instanceUri =
         startConsumeMessages(
-            groupName, topicName, EmbeddedFormat.JSON, Versions.KAFKA_V2_JSON_JSON);
+            groupName, topicName, EmbeddedFormat.JSON, Versions.KAFKA_V2_JSON_JSON, "earliest");
     produceJsonMessages(recordsOnlyValues);
     consumeMessages(
         instanceUri,
