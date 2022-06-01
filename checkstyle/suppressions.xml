@@ -5,6 +5,12 @@
 
 <suppressions>
 
+  <!-- With KREST-4067, ImportControl checks will be applied to both the main sources and the test
+       sources, which requires also applying Checkstyle to the test sources. To maintain the
+       pre-existing behavior without additional changes, all other (non-ImportControl) checks
+       should be explicitly suppressed. -->
+  <suppress checks="^(ImportControl)[a-zA-Z]*" files="kafka-rest/src/test" />
+
   <!-- Google Java Format prefers single line Javadocs. -->
   <suppress checks="SingleLineJavadoc" />
 
