@@ -432,7 +432,8 @@ public class SchemaManagerImplTest {
                     /* rawSchema= */ Optional.empty(),
                     /* isKey= */ true));
     assertEquals(
-        "Error serializing message. Error when fetching schema version. subject = topic-1-key, schema = \"int\"\n"
+        "Error serializing message. Error when fetching schema version. "
+            + "subject = topic-1-key, schema = \"int\"\n"
             + "Subject Not Found; error code: 40401",
         rcve.getMessage());
     assertEquals(42207, rcve.getErrorCode());
@@ -517,7 +518,8 @@ public class SchemaManagerImplTest {
                     /* rawSchema= */ Optional.empty(),
                     /* isKey= */ true));
     assertEquals(
-        "Error serializing message. Error when fetching latest schema version. subject = topic-1-key\n"
+        "Error serializing message. Error when fetching latest schema version. "
+            + "subject = topic-1-key\n"
             + "Subject Not Found; error code: 40401",
         rcve.getMessage());
     assertEquals(42207, rcve.getErrorCode());
@@ -570,7 +572,9 @@ public class SchemaManagerImplTest {
     assertTrue(
         rcve.getMessage()
             .startsWith(
-                "Cannot use schema_subject_strategy=io.confluent.kafkarest.controllers.SchemaManagerImplTest$NullReturningSubjectNameStrategy@"));
+                "Cannot use schema_subject_strategy="
+                    + "io.confluent.kafkarest.controllers.SchemaManagerImplTest"
+                    + "$NullReturningSubjectNameStrategy@"));
     assertTrue(rcve.getMessage().endsWith(" without schema_id or schema."));
   }
 
@@ -766,7 +770,8 @@ public class SchemaManagerImplTest {
                     /* rawSchema= */ Optional.of(TextNode.valueOf("rawSchema").toString()),
                     /* isKey= */ true));
     assertEquals(
-        "Raw schema not supported with format = EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat",
+        "Raw schema not supported with format = "
+            + "EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat",
         rcve.getMessage());
     assertEquals(400, rcve.getCode());
   }
@@ -801,7 +806,8 @@ public class SchemaManagerImplTest {
                     /* rawSchema= */ Optional.of(TextNode.valueOf("rawSchema").toString()),
                     /* isKey= */ true));
     assertEquals(
-        "Raw schema not supported with format = EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat",
+        "Raw schema not supported with format = "
+            + "EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat",
         bre.getMessage());
     assertEquals(400, bre.getCode());
   }
@@ -844,7 +850,10 @@ public class SchemaManagerImplTest {
                     /* rawSchema= */ Optional.of(TextNode.valueOf("rawString").toString()),
                     /* isKey= */ true));
     assertEquals(
-        "Error serializing message. Error when registering schema. format = EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat, subject = subject1, schema = null\n"
+        "Error serializing message. Error when registering schema. "
+            + "format = EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat, "
+            + "subject = subject1, "
+            + "schema = null\n"
             + "Can't register Schema",
         rcve.getMessage());
     assertEquals(42207, rcve.getErrorCode());

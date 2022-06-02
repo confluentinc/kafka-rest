@@ -86,13 +86,13 @@ public class TopicsResourceAvroProduceTest
     TestUtils.jsonTree("{\"field\": 1}"), TestUtils.jsonTree("{\"field\": 2}"),
   };
 
-  private final List<ProduceRecord> RECORDS =
+  private static final List<ProduceRecord> RECORDS =
       Arrays.asList(
           ProduceRecord.create(/* partition= */ 0, TEST_KEYS[0], TEST_VALUES[0]),
           ProduceRecord.create(/* partition= */ 0, TEST_KEYS[1], TEST_VALUES[1]));
 
   private static final TopicPartition PARTITION = new TopicPartition(TOPIC_NAME, 0);
-  private final List<RecordMetadata> PRODUCE_RESULTS =
+  private static final List<RecordMetadata> PRODUCE_RESULTS =
       Arrays.asList(
           new RecordMetadata(PARTITION, 0L, 0L, 0L, 0L, 1, 1),
           new RecordMetadata(PARTITION, 0L, 1L, 0L, 0L, 1, 1));

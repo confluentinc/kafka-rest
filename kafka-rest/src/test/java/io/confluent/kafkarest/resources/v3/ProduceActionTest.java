@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.confluent.kafkarest.resources.v3;
 
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_BYTES_PER_SECOND;
@@ -76,7 +91,7 @@ public class ProduceActionTest {
   @Test
   public void produceNoSchemaRegistryDefined() throws Exception {
     // config
-    final int TOTAL_NUMBER_OF_PRODUCE_CALLS = 1;
+    final int totalNumberOfProduceCalls = 1;
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "100");
     properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(999999999));
@@ -87,7 +102,7 @@ public class ProduceActionTest {
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
-        getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS);
+        getChunkedOutput(chunkedOutputFactory, totalNumberOfProduceCalls);
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
@@ -155,8 +170,8 @@ public class ProduceActionTest {
   @Test
   public void streamingRequests() throws Exception {
     // config
-    final int TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1 = 1;
-    final int TOTAL_NUMBER_OF_STREAMING_CALLS = 4;
+    final int totalNumberOfProduceCallsProd1 = 1;
+    final int totalNumberOfStreamingCalls = 4;
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(10000));
     properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(999999999));
@@ -166,7 +181,7 @@ public class ProduceActionTest {
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
-        getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1);
+        getChunkedOutput(chunkedOutputFactory, totalNumberOfProduceCallsProd1);
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
@@ -218,7 +233,7 @@ public class ProduceActionTest {
         getProduceAction(
             properties,
             chunkedOutputFactory,
-            TOTAL_NUMBER_OF_STREAMING_CALLS,
+            totalNumberOfStreamingCalls,
             countLimitProvider,
             bytesLimitProvider,
             countLimiterGlobalProvider,
@@ -262,7 +277,7 @@ public class ProduceActionTest {
   @Test
   public void produceWithByteLimit() throws Exception {
     // config
-    final int TOTAL_NUMBER_OF_PRODUCE_CALLS = 2;
+    final int totalNumberOfProduceCalls = 2;
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "100");
     properties.put(
@@ -273,7 +288,7 @@ public class ProduceActionTest {
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
-        getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS);
+        getChunkedOutput(chunkedOutputFactory, totalNumberOfProduceCalls);
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
@@ -321,7 +336,7 @@ public class ProduceActionTest {
             countLimiterGlobalProvider,
             bytesLimiterGlobalProvider);
     MappingIterator<ProduceRequest> requests =
-        getProduceRequestsMappingIterator(TOTAL_NUMBER_OF_PRODUCE_CALLS);
+        getProduceRequestsMappingIterator(totalNumberOfProduceCalls);
 
     // expected results
     ProduceResponse produceResponse = getProduceResponse(0);
@@ -333,7 +348,8 @@ public class ProduceActionTest {
     ErrorResponse err =
         ErrorResponse.create(
             429,
-            "Request rate limit exceeded: The rate limit of requests per second has been exceeded.");
+            "Request rate limit exceeded: "
+                + "The rate limit of requests per second has been exceeded.");
     ResultOrError resultOrErrorFail = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorFail); // failing second produce
@@ -365,7 +381,7 @@ public class ProduceActionTest {
   @Test
   public void produceWithCountLimit() throws Exception {
     // config
-    final int TOTAL_NUMBER_OF_PRODUCE_CALLS = 2;
+    final int totalNumberOfProduceCalls = 2;
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "100");
     properties.put(
@@ -376,7 +392,7 @@ public class ProduceActionTest {
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
-        getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS);
+        getChunkedOutput(chunkedOutputFactory, totalNumberOfProduceCalls);
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
@@ -423,7 +439,7 @@ public class ProduceActionTest {
             countLimiterGlobalProvider,
             bytesLimiterGlobalProvider);
     MappingIterator<ProduceRequest> requests =
-        getProduceRequestsMappingIterator(TOTAL_NUMBER_OF_PRODUCE_CALLS);
+        getProduceRequestsMappingIterator(totalNumberOfProduceCalls);
 
     // expected results
     ProduceResponse produceResponse = getProduceResponse(0);
@@ -435,7 +451,8 @@ public class ProduceActionTest {
     ErrorResponse err =
         ErrorResponse.create(
             429,
-            "Request rate limit exceeded: The rate limit of requests per second has been exceeded.");
+            "Request rate limit exceeded: "
+                + "The rate limit of requests per second has been exceeded.");
     ResultOrError resultOrErrorFail = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorFail); // failing second produce
@@ -466,7 +483,7 @@ public class ProduceActionTest {
   @Test
   public void produceNoLimit() throws Exception {
     // config
-    final int TOTAL_NUMBER_OF_PRODUCE_CALLS = 2;
+    final int totalNumberOfProduceCalls = 2;
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "100");
     properties.put(
@@ -477,7 +494,7 @@ public class ProduceActionTest {
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
-        getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS);
+        getChunkedOutput(chunkedOutputFactory, totalNumberOfProduceCalls);
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
@@ -508,7 +525,7 @@ public class ProduceActionTest {
             countLimiterGlobalProvider,
             bytesLimiterGlobalProvider);
     MappingIterator<ProduceRequest> requests =
-        getProduceRequestsMappingIterator(TOTAL_NUMBER_OF_PRODUCE_CALLS);
+        getProduceRequestsMappingIterator(totalNumberOfProduceCalls);
 
     // expected results
     ProduceResponse produceResponse = getProduceResponse(0);
@@ -613,7 +630,8 @@ public class ProduceActionTest {
                   anyObject(), anyObject(), anyObject(), anyObject(), anyBoolean()))
           .andThrow(
               Errors.messageSerializationException(
-                  "Schema Registry not defined, no Schema Registry client available to deserialize message."))
+                  "Schema Registry not defined, "
+                      + "no Schema Registry client available to deserialize message."))
           .anyTimes();
     }
     replay(recordSerializerProvider, recordSerializer);
@@ -678,36 +696,6 @@ public class ProduceActionTest {
     return requests;
   }
 
-  private static MappingIterator<ProduceRequest>
-      getStreamingProduceRequestsMappingIteratorCombinations() throws IOException {
-    MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
-
-    ProduceRequest request = ProduceRequest.builder().setOriginalSize(25L).build();
-    expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue()).andReturn(request);
-
-    expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue()).andReturn(request);
-
-    expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue()).andReturn(request);
-
-    expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue()).andReturn(request);
-
-    expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue()).andReturn(request);
-
-    expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue()).andReturn(request);
-
-    expect(requests.hasNext()).andReturn(false).times(1);
-    requests.close();
-    replay(requests);
-
-    return requests;
-  }
-
   private static ChunkedOutput<ResultOrError> getChunkedOutput(
       ChunkedOutputFactory chunkedOutputFactory, int times) {
     ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
@@ -718,10 +706,6 @@ public class ProduceActionTest {
 
   private static ProduceResponse getProduceResponse(int offset) {
     return getProduceResponse(offset, Optional.empty());
-  }
-
-  private static ProduceResponse getProduceResponse(int offset, int partitionId) {
-    return getProduceResponse(offset, Optional.empty(), partitionId);
   }
 
   private static ProduceResponse getProduceResponse(int offset, Optional<Duration> waitFor) {

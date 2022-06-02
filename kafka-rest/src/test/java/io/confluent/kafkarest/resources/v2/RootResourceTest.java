@@ -61,18 +61,18 @@ public class RootResourceTest
 
   @Test
   public void testInvalidEntityContentType() {
-    Response.Status UNSUPPORTED_MEDIA_TYPE = Response.Status.UNSUPPORTED_MEDIA_TYPE;
+    Response.Status unsupportedMediaType = Response.Status.UNSUPPORTED_MEDIA_TYPE;
     Response response =
         request("/", Versions.KAFKA_V2_JSON + ", " + Versions.GENERIC_REQUEST)
             .post(Entity.entity("", "text/plain"));
     assertErrorResponse(
-        UNSUPPORTED_MEDIA_TYPE,
+        unsupportedMediaType,
         response,
-        UNSUPPORTED_MEDIA_TYPE.getStatusCode(),
+        unsupportedMediaType.getStatusCode(),
         "HTTP "
-            + UNSUPPORTED_MEDIA_TYPE.getStatusCode()
+            + unsupportedMediaType.getStatusCode()
             + " "
-            + UNSUPPORTED_MEDIA_TYPE.getReasonPhrase(),
+            + unsupportedMediaType.getReasonPhrase(),
         Versions.KAFKA_V2_JSON);
   }
 }

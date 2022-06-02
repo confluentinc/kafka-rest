@@ -12,6 +12,7 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+
 package io.confluent.kafkarest.integration;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
@@ -43,7 +44,7 @@ import org.junit.jupiter.api.Test;
  * Tests metadata access against a real cluster. This isn't exhaustive since the unit tests cover
  * corner cases; rather it verifies the basic functionality works against a real cluster.
  */
-public class MetadataAPITest extends ClusterTestHarness {
+public class MetadataApiTest extends ClusterTestHarness {
 
   private static final String topic1Name = "topic1";
   private static final List<Partition> topic1Partitions =
@@ -83,7 +84,7 @@ public class MetadataAPITest extends ClusterTestHarness {
 
   private static final short numReplicas = 2;
 
-  public MetadataAPITest() {
+  public MetadataApiTest() {
     super(2, false);
   }
 
