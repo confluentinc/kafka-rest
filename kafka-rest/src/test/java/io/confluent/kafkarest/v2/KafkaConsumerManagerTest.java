@@ -647,7 +647,6 @@ public class KafkaConsumerManagerTest {
   private List<ConsumerRecord<ByteString, ByteString>> bootstrapConsumer(
       final MockConsumer<byte[], byte[]> consumer, boolean toExpectCreate) {
 
-
     if (toExpectCreate) {
       expectCreate(consumer);
     }

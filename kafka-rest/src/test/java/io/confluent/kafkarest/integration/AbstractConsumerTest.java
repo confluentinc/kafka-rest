@@ -191,14 +191,12 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     // Since this is used for unkeyed messages, this can't rely on ordering of messages
     Map<Object, Integer> inputSetCounts = new HashMap<Object, Integer>();
     for (ProducerRecord<KafkaK, KafkaV> rec : records) {
-      Object
-          key =
-              TestUtils.encodeComparable(
-                  (converter != null ? converter.convert(rec.key()) : rec.key()));
-      Object
-          value =
-              TestUtils.encodeComparable(
-                  (converter != null ? converter.convert(rec.value()) : rec.value()));
+      Object key =
+          TestUtils.encodeComparable(
+              (converter != null ? converter.convert(rec.key()) : rec.key()));
+      Object value =
+          TestUtils.encodeComparable(
+              (converter != null ? converter.convert(rec.value()) : rec.value()));
       inputSetCounts.put(key, (inputSetCounts.get(key) == null ? 0 : inputSetCounts.get(key)) + 1);
       inputSetCounts.put(
           value, (inputSetCounts.get(value) == null ? 0 : inputSetCounts.get(value)) + 1);
