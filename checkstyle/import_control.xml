@@ -83,6 +83,7 @@
   <allow pkg="com.fasterxml.jackson" />
   <allow pkg="com.google.common" />
   <allow pkg="com.google.protobuf" />
+  <allow pkg="io.github.resilience4j" />
   <allow pkg="java" />
   <allow pkg="javax.annotation" />
   <allow pkg="javax.inject" />
@@ -111,10 +112,6 @@
   <!-- Various one-off classes -->
   <allow class="com.google.auto.value.AutoValue" />
   <allow class="edu.umd.cs.findbugs.annotations.SuppressFBWarnings" />
-  <!-- We use just 2 Resilience4J imports, so we'll enumerate them explicitly instead of adding an
-       allow package rule -->
-  <allow class="io.github.resilience4j.ratelimiter.RateLimiter" />
-  <allow class="io.github.resilience4j.ratelimiter.RateLimiterConfig" />
   <allow class="javax.xml.bind.DatatypeConverter" />
   <allow class="org.hibernate.validator.constraints.URL" />
 
