@@ -41,8 +41,8 @@ import io.confluent.kafkarest.exceptions.BadRequestException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
-import javax.validation.ValidationException;
 import org.apache.avro.AvroTypeException;
+import org.everit.json.schema.ValidationException;
 
 final class SchemaRecordSerializerImpl implements SchemaRecordSerializer {
 

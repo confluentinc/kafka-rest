@@ -113,6 +113,7 @@
   <allow class="com.google.auto.value.AutoValue" />
   <allow class="edu.umd.cs.findbugs.annotations.SuppressFBWarnings" />
   <allow class="javax.xml.bind.DatatypeConverter" />
+  <allow class="org.everit.json.schema.ValidationException" />
   <allow class="org.hibernate.validator.constraints.URL" />
 
   <!-- Static field imports -->
