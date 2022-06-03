@@ -35,7 +35,7 @@
   <suppress checks="VariableDeclarationUsageDistance" files="[A-Za-z]*Test" />
 
   <!-- That check flags names that are better kept as-is - e.g. mBeanServer. -->
-  <suppress checks="LocalVariableName" files="TestUtils|ProducerMetricsTest" />
+  <suppress checks="LocalVariableName" files="TestUtils|ProducerMetricsTest|ProduceActionTest" />
 
   <!-- That check is not great - it complains about RecordType as a type parameter name. -->
   <suppress checks="MethodTypeParameterName" files="AbstractConsumerTest" />
@@ -48,7 +48,7 @@
 
   <suppress
     checks="ClassDataAbstractionCoupling"
-    files="ProduceActionIntegrationTest|ClusterTestHarness|LoadTest|SchemaRegistryFixture|ProduceControllerImplTest|RecordSerializerFacadeTest|SchemaManagerImplTest" />
+    files="ClusterTestHarness|LoadTest|SchemaRegistryFixture|RecordSerializerFacadeTest|SchemaManagerImplTest|Produce[A-Za-z]*Test" />
 
   <!-- The tests below contain methods that use builders to create fairly complex result objects -->
   <suppress
