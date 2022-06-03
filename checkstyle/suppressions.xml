@@ -60,4 +60,7 @@
     checks="LineLength"
     files="UrlFactoryImplTest|PartitionsResourceTest|ConsumerGroupsResourceTest" />
 
+  <!-- AutoValue-generated classes can contain various violations which should be ignored. -->
+  <suppress checks="[A-za-z]*" files="AutoValue[A-Za-z_]*" />
+
 </suppressions>
