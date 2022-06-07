@@ -178,7 +178,7 @@ public abstract class ClusterTestHarness {
   // Calling setup() in this class calls the setup() from the calling sub-class, which includes the
   // createTopic calls, which then causes an infinite loop on topic creation.
   // Pulling out the functionality to a separate method so we can call it without this behaviour
-  // getting in the way
+  // getting in the way.
   private void setupMethod() throws Exception {
     zookeeper = new EmbeddedZookeeper();
     zkConnect = String.format("127.0.0.1:%d", zookeeper.port());
@@ -518,11 +518,10 @@ public abstract class ClusterTestHarness {
           .findFirst()
           .isPresent()) {
         // The topic we are trying to make isn't the first topic to be created, the topic list isn't
-        // 0 length
-        // (that or an exception has been thrown, but the topic was created anyway).
+        // 0 length (that or an exception has been thrown, but the topic was created anyway).
         // We can't easily restart the environment as we will lose the existing topics.
         // While we could store them and recreate them all, for now, let's just wait a bit and have
-        // another go with the current topic
+        // another go with the current topic.
         log.warn("Topic creation failed the first time round, trying again.");
         result =
             createTopicCall(
@@ -532,7 +531,7 @@ public abstract class ClusterTestHarness {
       } else {
         log.warn(
             String.format(
-                "Exception thrown but topic has been created, carrying on: %s %s",
+                "Exception thrown but topic  %s has been created, carrying on: %s",
                 topicName, e.getMessage()));
       }
       if (!getTopicNames().stream()
