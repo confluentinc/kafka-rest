@@ -12,6 +12,7 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+
 package io.confluent.kafkarest.integration;
 
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
@@ -190,21 +191,20 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     // Since this is used for unkeyed messages, this can't rely on ordering of messages
     Map<Object, Integer> inputSetCounts = new HashMap<Object, Integer>();
     for (ProducerRecord<KafkaK, KafkaV> rec : records) {
-      Object
-          key =
-              TestUtils.encodeComparable(
-                  (converter != null ? converter.convert(rec.key()) : rec.key())),
-          value =
-              TestUtils.encodeComparable(
-                  (converter != null ? converter.convert(rec.value()) : rec.value()));
+      Object key =
+          TestUtils.encodeComparable(
+              (converter != null ? converter.convert(rec.key()) : rec.key()));
+      Object value =
+          TestUtils.encodeComparable(
+              (converter != null ? converter.convert(rec.value()) : rec.value()));
       inputSetCounts.put(key, (inputSetCounts.get(key) == null ? 0 : inputSetCounts.get(key)) + 1);
       inputSetCounts.put(
           value, (inputSetCounts.get(value) == null ? 0 : inputSetCounts.get(value)) + 1);
     }
     Map<Object, Integer> outputSetCounts = new HashMap<Object, Integer>();
     for (ConsumerRecord<ClientK, ClientV> rec : consumed) {
-      Object key = TestUtils.encodeComparable(rec.getKey()),
-          value = TestUtils.encodeComparable(rec.getValue());
+      Object key = TestUtils.encodeComparable(rec.getKey());
+      Object value = TestUtils.encodeComparable(rec.getValue());
       outputSetCounts.put(
           key, (outputSetCounts.get(key) == null ? 0 : outputSetCounts.get(key)) + 1);
       outputSetCounts.put(
@@ -267,7 +267,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     try {
       Thread.sleep(times * ONE_SECOND_MS);
     } catch (InterruptedException e) {
-
+      // Noop
     }
   }
 
@@ -288,18 +288,18 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     // request timeout, the iterator timeout used for "peeking", and the backoff period, as well
     // as some extra slack for general overhead (which apparently mostly comes from running the
     // request and can be quite substantial).
-    final int TIMEOUT = restConfig.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
-    final long TIMEOUT_SLACK =
+    final int timeout = restConfig.getInt(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG);
+    final long timeoutSlack =
         restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_BACKOFF_MS_CONFIG)
             + restConfig.getInt(KafkaRestConfig.CONSUMER_ITERATOR_TIMEOUT_MS_CONFIG)
             + ONE_SECOND_MS; // This test is inherently flakey, and probably needs a mocked back
     // end, but for now we can give it lots of slack
     long elapsed = finished - started;
     assertTrue(
-        elapsed > TIMEOUT,
+        elapsed > timeout,
         "Consumer request should not return before the timeout when no data is available");
     assertTrue(
-        (elapsed - TIMEOUT) < TIMEOUT_SLACK,
+        (elapsed - timeout) < timeoutSlack,
         "Consumer request should timeout approximately within the request timeout period");
   }
 

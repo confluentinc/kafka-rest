@@ -12,6 +12,7 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+
 package io.confluent.kafkarest.integration;
 
 import static io.confluent.kafkarest.TestUtils.testWithRetry;
@@ -544,6 +545,16 @@ public abstract class ClusterTestHarness {
     }
   }
 
+  protected final void createTopic(
+      String topicName, Map<Integer, List<Integer>> replicasAssignments) {
+    createTopic(
+        topicName,
+        Optional.empty(),
+        Optional.empty(),
+        Optional.of(replicasAssignments),
+        restConfig.getAdminProperties());
+  }
+
   private CreateTopicsResult createTopicCall(
       String topicName,
       Optional<Integer> numPartitions,
@@ -596,16 +607,6 @@ public abstract class ClusterTestHarness {
           String.format(
               "Failed to alter config %s for topic %s: %s", configName, topicName, e.getMessage()));
     }
-  }
-
-  protected final void createTopic(
-      String topicName, Map<Integer, List<Integer>> replicasAssignments) {
-    createTopic(
-        topicName,
-        Optional.empty(),
-        Optional.empty(),
-        Optional.of(replicasAssignments),
-        restConfig.getAdminProperties());
   }
 
   protected final void alterPartitionReassignment(

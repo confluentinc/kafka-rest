@@ -12,6 +12,7 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+
 package io.confluent.kafkarest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -140,7 +141,8 @@ public class TestUtils {
   public static void assertPartitionsEqual(List<PartitionOffset> a, List<PartitionOffset> b) {
     assertEquals(a.size(), b.size());
     for (int i = 0; i < a.size(); i++) {
-      PartitionOffset aOffset = a.get(i), bOffset = b.get(i);
+      PartitionOffset aOffset = a.get(i);
+      PartitionOffset bOffset = b.get(i);
       assertEquals(aOffset.getPartition(), bOffset.getPartition());
     }
   }
@@ -150,7 +152,8 @@ public class TestUtils {
     // exception vs. non-exception responses match up
     assertEquals(a.size(), b.size());
     for (int i = 0; i < a.size(); i++) {
-      PartitionOffset aOffset = a.get(i), bOffset = b.get(i);
+      PartitionOffset aOffset = a.get(i);
+      PartitionOffset bOffset = b.get(i);
       assertEquals(aOffset.getError() != null, bOffset.getError() != null);
       assertEquals(aOffset.getOffset() != null, bOffset.getOffset() != null);
     }
@@ -393,7 +396,9 @@ public class TestUtils {
             if (partition == null || record.partition() == partition) {
               Object msg = encodeComparable(record.value());
               msgCounts.put(msg, (msgCounts.get(msg) == null ? 0 : msgCounts.get(msg)) + 1);
-              if (counter.incrementAndGet() == records.size()) return true;
+              if (counter.incrementAndGet() == records.size()) {
+                return true;
+              }
             }
           }
 

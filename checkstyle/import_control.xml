@@ -1,0 +1,149 @@
+<?xml version="1.0"?>
+<!DOCTYPE import-control PUBLIC
+  "-//Puppy Crawl//DTD Import Control 1.4//EN"
+  "http://www.puppycrawl.com/dtds/import_control_1_4.dtd">
+
+<import-control pkg="io.confluent.kafkarest">
+
+  <!-- Apache Kafka 3.2.0 public API packages per https://kafka.apache.org/32/javadoc/index.html -->
+  <allow pkg="org.apache.kafka.clients.admin" exact-match="true" />
+  <allow pkg="org.apache.kafka.clients.consumer" exact-match="true" />
+  <allow pkg="org.apache.kafka.clients.producer" exact-match="true" />
+  <allow pkg="org.apache.kafka.common" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.acl" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.annotation" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.config" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.config.provider" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.errors" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.header" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.metrics" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.metrics.stats" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.quota" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.resource" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.security.auth" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.security.oauthbearer" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.security.oauthbearer.secured" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.security.plain" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.security.scram" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.security.token.delegation" exact-match="true" />
+  <allow pkg="org.apache.kafka.common.serialization" exact-match="true" />
+  <allow pkg="org.apache.kafka.connect.components" exact-match="true" />
+  <allow pkg="org.apache.kafka.connect.connector" exact-match="true" />
+  <allow pkg="org.apache.kafka.connect.connector.policy" exact-match="true" />
+  <allow pkg="org.apache.kafka.connect.data" exact-match="true" />
+  <allow pkg="org.apache.kafka.connect.errors" exact-match="true" />
+  <allow pkg="org.apache.kafka.connect.header" exact-match="true" />
+  <allow pkg="org.apache.kafka.connect.health" exact-match="true" />
+  <allow pkg="org.apache.kafka.connect.mirror" exact-match="true" />
+  <allow pkg="org.apache.kafka.connect.rest" exact-match="true" />
+  <allow pkg="org.apache.kafka.connect.sink" exact-match="true" />
+  <allow pkg="org.apache.kafka.connect.source" exact-match="true" />
+  <allow pkg="org.apache.kafka.connect.storage" exact-match="true" />
+  <allow pkg="org.apache.kafka.connect.transforms" exact-match="true" />
+  <allow pkg="org.apache.kafka.connect.transforms.predicates" exact-match="true" />
+  <allow pkg="org.apache.kafka.connect.util" exact-match="true" />
+  <allow pkg="org.apache.kafka.server.authorizer" exact-match="true" />
+  <allow pkg="org.apache.kafka.server.log.remote.storage" exact-match="true" />
+  <allow pkg="org.apache.kafka.server.policy" exact-match="true" />
+  <allow pkg="org.apache.kafka.server.quota" exact-match="true" />
+  <allow pkg="org.apache.kafka.streams" exact-match="true" />
+  <allow pkg="org.apache.kafka.streams.errors" exact-match="true" />
+  <allow pkg="org.apache.kafka.streams.kstream" exact-match="true" />
+  <allow pkg="org.apache.kafka.streams.processor" exact-match="true" />
+  <allow pkg="org.apache.kafka.streams.processor.api" exact-match="true" />
+  <allow pkg="org.apache.kafka.streams.query" exact-match="true" />
+  <allow pkg="org.apache.kafka.streams.state" exact-match="true" />
+  <allow pkg="org.apache.kafka.streams.test" exact-match="true" />
+  <!-- A ctor for a public API type (Metrics) takes a parameter of this type, so it is essentially
+       a public API as well... -->
+  <allow class="org.apache.kafka.common.utils.Time" />
+  <!-- Nested classes, not handled by allow package rules with exact-match="true" -->
+  <allow class="org.apache.kafka.clients.admin.DeleteAclsResult.FilterResult" />
+  <allow class="org.apache.kafka.clients.admin.DeleteAclsResult.FilterResults" />
+  <allow class="org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo" />
+  <allow class="org.apache.kafka.common.config.ConfigDef.Importance" />
+  <allow class="org.apache.kafka.common.config.ConfigDef.Range" />
+  <allow class="org.apache.kafka.common.config.ConfigDef.Type" />
+  <allow class="org.apache.kafka.common.config.ConfigResource.Type" />
+  <!-- Deprecated, previously part of the public API -->
+  <allow class="org.apache.kafka.common.requests.DescribeLogDirsResponse.LogDirInfo" />
+  <allow class="org.apache.kafka.common.requests.DescribeLogDirsResponse.ReplicaInfo" />
+  <!-- Non-public APIs that are better imported than reimplemented -->
+  <allow class="org.apache.kafka.common.utils.AppInfoParser" />
+  <allow class="org.apache.kafka.common.internals.KafkaFutureImpl" />
+  <allow class="org.apache.kafka.common.header.internals.RecordHeader" />
+
+  <!-- Various Kafka serialization classes -->
+  <allow class="io\.confluent\.kafka\.serializers\..*Config" regex="true" />
+  <allow class="io\.confluent\.kafka\.serializers\..*Deserializer" regex="true" />
+  <allow class="io\.confluent\.kafka\.serializers\..*Serializer" regex="true" />
+  <allow class="io\.confluent\.kafka\.serializers.subject\..*Strategy" regex="true" />
+
+  <!-- common external library dependencies -->
+  <allow pkg="com.fasterxml.jackson" />
+  <allow pkg="com.google.auto.value" />
+  <allow pkg="com.google.common" />
+  <allow pkg="com.google.protobuf" />
+  <allow pkg="io.github.resilience4j" />
+  <allow pkg="java" />
+  <allow pkg="javax.annotation" />
+  <allow pkg="javax.inject" />
+  <allow pkg="javax.management" />
+  <allow pkg="javax.net.ssl" />
+  <allow pkg="javax.validation" />
+  <allow pkg="javax.ws.rs" />
+  <allow pkg="org.apache.avro" />
+  <allow pkg="org.easymock" />
+  <allow pkg="org.eclipse.jetty" />
+  <allow pkg="org.glassfish.hk2" />
+  <allow pkg="org.glassfish.jersey" />
+  <allow pkg="org.hamcrest" />
+  <allow pkg="org.junit" />
+  <allow pkg="org.slf4j" />
+
+  <!-- Kafka REST's own base package -->
+  <allow pkg="io.confluent.kafkarest" />
+  <!-- common's base package -->
+  <allow pkg="io.confluent.common" />
+  <!-- rest-utils' base package -->
+  <allow pkg="io.confluent.rest" />
+  <!-- schema-registry's core base package -->
+  <allow pkg="io.confluent.kafka.schemaregistry" />
+
+  <!-- Various one-off classes -->
+  <allow class="edu.umd.cs.findbugs.annotations.SuppressFBWarnings" />
+  <allow class="javax.xml.bind.DatatypeConverter" />
+  <allow class="org.everit.json.schema.ValidationException" />
+  <allow class="org.hibernate.validator.constraints.URL" />
+
+  <!-- Static field imports -->
+  <allow class="io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.AUTO_REGISTER_SCHEMAS" />
+  <allow class="io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.MAX_SCHEMAS_PER_SUBJECT_DEFAULT" />
+  <allow class="io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG" />
+  <allow class="io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.USE_LATEST_VERSION" />
+  <allow class="org.apache.kafka.clients.CommonClientConfigs.METRICS_CONTEXT_PREFIX" />
+
+  <!-- Test-specific imports -->
+
+  <!-- a. One-off classes from common external dependencies -->
+  <allow class="javax.security.auth.login.Configuration" />
+  <allow class="scala.Option" />
+  <allow class="scala.collection.JavaConverters" />
+  <!-- b. Non-public Apache Kafka APIs -->
+  <allow class="org.apache.kafka.clients.CommonClientConfigs" />
+  <allow class="org.apache.kafka.common.config.types.Password" />
+  <allow class="org.apache.kafka.common.network.ListenerName" />
+  <allow class="org.apache.kafka.common.protocol.Errors" />
+  <allow class="org.apache.kafka.common.security.JaasUtils" />
+  <allow class="org.apache.kafka.test.TestSslUtils" />
+  <!-- c. Non-public Confluent Community Kafka APIs -->
+  <allow class="kafka.admin.AclCommand" />
+  <allow class="kafka.security.authorizer.AclAuthorizer" />
+  <allow class="kafka.server.KafkaConfig" />
+  <allow class="kafka.server.KafkaServer" />
+  <allow class="kafka.utils.CoreUtils" />
+  <allow class="kafka.utils.MockTime" />
+  <allow class="kafka.utils.TestUtils" />
+  <allow class="kafka.zk.EmbeddedZookeeper" />
+
+</import-control>
