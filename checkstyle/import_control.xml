@@ -81,6 +81,7 @@
 
   <!-- common external library dependencies -->
   <allow pkg="com.fasterxml.jackson" />
+  <allow pkg="com.google.auto.value" />
   <allow pkg="com.google.common" />
   <allow pkg="com.google.protobuf" />
   <allow pkg="io.github.resilience4j" />
@@ -110,7 +111,6 @@
   <allow pkg="io.confluent.kafka.schemaregistry" />
 
   <!-- Various one-off classes -->
-  <allow class="com.google.auto.value.AutoValue" />
   <allow class="edu.umd.cs.findbugs.annotations.SuppressFBWarnings" />
   <allow class="javax.xml.bind.DatatypeConverter" />
   <allow class="org.everit.json.schema.ValidationException" />
