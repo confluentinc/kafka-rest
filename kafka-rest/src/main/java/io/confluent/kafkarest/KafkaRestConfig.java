@@ -455,7 +455,7 @@ public class KafkaRestConfig extends RestConfig {
   private static final String RATE_LIMIT_COSTS_DEFAULT = "";
 
   private static final ConfigDef config;
-  private Metrics metrics;
+  private volatile Metrics metrics;
 
   static {
     config = baseKafkaRestConfigDef();
