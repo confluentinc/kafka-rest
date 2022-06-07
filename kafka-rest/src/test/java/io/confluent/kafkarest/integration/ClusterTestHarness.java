@@ -577,6 +577,7 @@ public abstract class ClusterTestHarness {
     try {
       Thread.sleep(HALF_SECOND_MILLIS);
     } catch (InterruptedException ie3) {
+      // Noop
     }
   }
 
