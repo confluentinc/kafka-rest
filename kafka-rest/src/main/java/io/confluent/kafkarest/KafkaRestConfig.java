@@ -56,6 +56,7 @@ import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Range;
 import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.common.config.SaslConfigs;
+import org.apache.kafka.common.metrics.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -454,6 +455,7 @@ public class KafkaRestConfig extends RestConfig {
   private static final String RATE_LIMIT_COSTS_DEFAULT = "";
 
   private static final ConfigDef config;
+  private volatile Metrics metrics;
 
   static {
     config = baseKafkaRestConfigDef();
@@ -1013,6 +1015,14 @@ public class KafkaRestConfig extends RestConfig {
     adminProps.putAll(originalsWithPrefix("admin.", /* strip= */ true));
 
     return adminProps;
+  }
+
+  public void setMetrics(Metrics metrics) {
+    this.metrics = metrics;
+  }
+
+  public Metrics getMetrics() {
+    return metrics;
   }
 
   public boolean isV2ApiEnabled() {

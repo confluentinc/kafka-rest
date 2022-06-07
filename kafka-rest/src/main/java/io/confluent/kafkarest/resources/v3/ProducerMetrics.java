@@ -15,22 +15,19 @@
 
 package io.confluent.kafkarest.resources.v3;
 
-import static java.util.Collections.singletonList;
+import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.rest.metrics.RestMetricsContext;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.MetricNameTemplate;
-import org.apache.kafka.common.metrics.JmxReporter;
-import org.apache.kafka.common.metrics.MetricConfig;
 import org.apache.kafka.common.metrics.Metrics;
 import org.apache.kafka.common.metrics.Sensor;
 import org.apache.kafka.common.metrics.stats.Avg;
-import org.apache.kafka.common.metrics.stats.CumulativeSum;
 import org.apache.kafka.common.metrics.stats.Max;
+import org.apache.kafka.common.metrics.stats.Meter;
 import org.apache.kafka.common.metrics.stats.Percentile;
 import org.apache.kafka.common.metrics.stats.Percentiles;
 import org.apache.kafka.common.metrics.stats.Rate;
@@ -40,7 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // CHECKSTYLE:OFF:ClassDataAbstractionCoupling
-public final class ProducerMetrics {
+final class ProducerMetrics {
 
   private static final Logger log = LoggerFactory.getLogger(ProducerMetrics.class);
 
@@ -64,13 +61,6 @@ public final class ProducerMetrics {
   static final String REQUEST_RATE_METRIC_NAME = "request-rate";
   private static final String REQUEST_RATE_METRIC_DOC =
       "The average number of requests sent per second.";
-
-  static final String REQUEST_SIZE_AVG_METRIC_NAME = "request-size-avg";
-  private static final String REQUEST_SIZE_AVG_METRIC_DOC = "The average request size in bytes.";
-
-  static final String REQUEST_SIZE_CUMULATIVE_SUM_METRIC_NAME = "request-bytes";
-  private static final String REQUEST_SIZE_CUMULATIVE_SUM_METRIC_DOC =
-      "The cumulative summed size in bytes of requests sent.";
 
   static final String REQUEST_COUNT_WINDOWED_METRIC_NAME = "request-count-windowed";
   private static final String REQUEST_COUNT_WINDOWED_METRIC_DOC =
@@ -104,6 +94,8 @@ public final class ProducerMetrics {
   static final String REQUEST_LATENCY_PCT_METRIC_PREFIX = "request-latency-";
   private static final String REQUEST_LATENCY_PCT_METRIC_DOC = "Request latency percentiles.";
 
+  public static final long EXPIRY_SECONDS = TimeUnit.DAYS.toSeconds(7);
+
   private final Metrics metrics;
   private final String jmxPrefix;
   private final String requestSensorName;
@@ -117,7 +109,7 @@ public final class ProducerMetrics {
   }
 
   ProducerMetrics(KafkaRestConfig config, Time time, Map<String, String> metricsTags) {
-    this.metrics = createMetrics(config.getMetricsContext(), time, metricsTags);
+    this.metrics = requireNonNull(config.getMetrics());
     this.jmxPrefix = config.getString(KafkaRestConfig.METRICS_JMX_PREFIX_CONFIG);
     String sensorNamePrefix = jmxPrefix + ":" + GROUP_NAME + ":";
     this.recordErrorSensorName = sensorNamePrefix + RECORD_ERROR_SENSOR_NAME;
@@ -126,21 +118,6 @@ public final class ProducerMetrics {
     this.requestSizeSensorName = sensorNamePrefix + REQUEST_SIZE_SENSOR_NAME;
     this.responseSensorName = sensorNamePrefix + RESPONSE_SENSOR_NAME;
     setupSensors(metricsTags);
-  }
-
-  private Metrics createMetrics(
-      RestMetricsContext metricsContext, Time time, Map<String, String> metricsTags) {
-    JmxReporter reporter = new JmxReporter();
-    reporter.contextChange(metricsContext);
-    return new Metrics(
-        new MetricConfig()
-            .samples(NUM_SAMPLES)
-            .timeWindow(SAMPLE_WINDOW_MS, TimeUnit.MILLISECONDS)
-            .recordLevel(RECORDING_LEVEL)
-            .tags(metricsTags),
-        singletonList(reporter),
-        time,
-        metricsContext);
   }
 
   private void setupSensors(Map<String, String> metricsTags) {
@@ -156,6 +133,23 @@ public final class ProducerMetrics {
     log.info("Successfully registered kafka-rest produce metrics with JMX");
   }
 
+  protected Meter createMeter(
+      Metrics metrics, Map<String, String> metricTags, String baseName, String descriptiveName) {
+    MetricName rateMetricName =
+        metrics.metricName(
+            baseName + "-rate",
+            GROUP_NAME,
+            String.format("The number of %s per second", descriptiveName),
+            metricTags);
+    MetricName totalMetricName =
+        metrics.metricName(
+            baseName + "-total",
+            GROUP_NAME,
+            String.format("The total number of %s", descriptiveName),
+            metricTags);
+    return new Meter(rateMetricName, totalMetricName);
+  }
+
   private void setupRequestSensor(Map<String, String> metricsTags) {
     Sensor requestSensor = createSensor(REQUEST_SENSOR_NAME);
     addAvg(requestSensor, REQUEST_RATE_METRIC_NAME, REQUEST_RATE_METRIC_DOC, metricsTags);
@@ -168,13 +162,7 @@ public final class ProducerMetrics {
 
   private void setupRequestSizeSensor(Map<String, String> metricsTags) {
     Sensor requestSizeSensor = createSensor(REQUEST_SIZE_SENSOR_NAME);
-    addAvg(
-        requestSizeSensor, REQUEST_SIZE_AVG_METRIC_NAME, REQUEST_SIZE_AVG_METRIC_DOC, metricsTags);
-    addCumulativeSum(
-        requestSizeSensor,
-        REQUEST_SIZE_CUMULATIVE_SUM_METRIC_NAME,
-        REQUEST_SIZE_CUMULATIVE_SUM_METRIC_DOC,
-        metricsTags);
+    requestSizeSensor.add(createMeter(metrics, metricsTags, "request-byte", "request bytes"));
   }
 
   private void setupResponseSensor(Map<String, String> metricsTags) {
@@ -243,11 +231,6 @@ public final class ProducerMetrics {
   private void addWindowedCount(
       Sensor sensor, String name, String doc, Map<String, String> metricsTags) {
     sensor.add(getMetricName(name, doc, metricsTags), new WindowedCount());
-  }
-
-  private void addCumulativeSum(
-      Sensor sensor, String name, String doc, Map<String, String> metricsTags) {
-    sensor.add(getMetricName(name, doc, metricsTags), new CumulativeSum());
   }
 
   private void addPercentiles(
