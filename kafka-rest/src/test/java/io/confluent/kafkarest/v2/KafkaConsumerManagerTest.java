@@ -506,7 +506,7 @@ public class KafkaConsumerManagerTest {
     public void testConsumerExpirationIsUpdated() throws Exception {
         bootstrapConsumer(consumer);
         KafkaConsumerState state = consumerManager.getConsumerInstance(groupName, consumer.cid());
-        long initialExpiration = state.expiration;
+        long lastExpiration = state.expiration;
         consumerManager.readRecords(groupName, consumer.cid(), BinaryKafkaConsumerState.class, -1, Long.MAX_VALUE,
                 new ConsumerReadCallback<byte[], byte[]>() {
                     @Override
@@ -518,12 +518,12 @@ public class KafkaConsumerManagerTest {
                     }
                 });
         Thread.sleep(100);
-        assertTrue(state.expiration > initialExpiration);
-        initialExpiration = state.expiration;
+        assertFalse(state.expired(lastExpiration));
+        lastExpiration = state.expiration;
         awaitRead();
         assertTrue("Callback failed to fire", sawCallback);
-        assertTrue(state.expiration > initialExpiration);
-        initialExpiration = state.expiration;
+        assertFalse(state.expired(lastExpiration));
+        lastExpiration = state.expiration;
 
         consumerManager.commitOffsets(groupName, consumer.cid(), null, null, new KafkaConsumerManager.CommitCallback() {
             @Override
@@ -534,7 +534,7 @@ public class KafkaConsumerManagerTest {
                 actualOffsets = offsets;
             }
         }).get();
-        assertTrue(state.expiration > initialExpiration);
+        assertFalse(state.expired(lastExpiration));
     }
 
     private void awaitRead() throws InterruptedException {
