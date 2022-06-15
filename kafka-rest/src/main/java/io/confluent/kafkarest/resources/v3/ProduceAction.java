@@ -139,7 +139,7 @@ public final class ProduceAction {
     try {
       produceRateLimiters.rateLimit(clusterId, request.getOriginalSize());
     } catch (RateLimitExceededException e) {
-      recordRateLimitedMetrics(metrics, Duration.between(requestStart, Instant.now()));
+      recordRateLimitedMetrics(metrics);
       // KREST-4356 Use our own CompletionException that will avoid the costly stack trace fill.
       throw new StacklessCompletionException(e);
     }
@@ -148,7 +148,6 @@ public final class ProduceAction {
     // rate limiting, as these metrics are used for billing.
     recordRequestMetrics(metrics, request.getOriginalSize());
 
-    Instant requestInstant = Instant.now();
     Optional<RegisteredSchema> keySchema =
         request.getKey().flatMap(key -> getSchema(topicName, /* isKey= */ true, key));
     Optional<EmbeddedFormat> keyFormat =
@@ -290,9 +289,8 @@ public final class ProduceAction {
     metrics.recordRequestLatency(latency);
   }
 
-  private void recordRateLimitedMetrics(ProducerMetrics metrics, Duration latency) {
+  private void recordRateLimitedMetrics(ProducerMetrics metrics) {
     metrics.recordRateLimited();
-    metrics.recordRequestLatency(latency);
   }
 
   private void recordRequestMetrics(ProducerMetrics metrics, long size) {

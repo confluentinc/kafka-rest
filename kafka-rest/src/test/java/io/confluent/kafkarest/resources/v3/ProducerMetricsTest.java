@@ -23,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.mock.MockTime;
 import io.confluent.rest.RestConfig;
 import java.lang.management.ManagementFactory;
 import java.time.Duration;
@@ -75,7 +74,7 @@ public class ProducerMetricsTest {
 
     config.setMetrics(metrics);
 
-    producerMetrics = new ProducerMetrics(config, new MockTime(), ImmutableMap.of("tag", "value"));
+    producerMetrics = new ProducerMetrics(config, ImmutableMap.of("tag", "value"));
   }
 
   @Test
