@@ -19,7 +19,6 @@ import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.KafkaRestConfig;
-import java.time.Duration;
 import java.util.Map;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.MetricNameTemplate;
@@ -286,8 +285,8 @@ final class ProducerMetrics {
     recordMetric(responseSensorName, 1.0);
   }
 
-  void recordRequestLatency(Duration value) {
-    recordMetric(requestLatencySensorName, value.toMillis());
+  void recordRequestLatency(long valueMs) {
+    recordMetric(requestLatencySensorName, valueMs);
   }
 
   void recordError() {

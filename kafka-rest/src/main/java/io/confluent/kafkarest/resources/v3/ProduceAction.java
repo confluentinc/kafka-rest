@@ -41,11 +41,11 @@ import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThre
 import io.confluent.kafkarest.response.JsonStream;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import javax.inject.Inject;
@@ -134,7 +134,7 @@ public final class ProduceAction {
       ProduceRequest request,
       ProduceController controller,
       ProducerMetrics metrics) {
-    Instant requestStart = Instant.now();
+    long requestStartNs = System.nanoTime();
 
     try {
       produceRateLimiters.rateLimit(clusterId, request.getOriginalSize());
@@ -180,7 +180,7 @@ public final class ProduceAction {
         .handleAsync(
             (result, error) -> {
               if (error != null) {
-                Duration latency = Duration.between(requestStart, Instant.now());
+                long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
                 recordErrorMetrics(metrics, latency);
                 throw new StacklessCompletionException(error);
               }
@@ -192,7 +192,7 @@ public final class ProduceAction {
               ProduceResponse response =
                   toProduceResponse(
                       clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
-              Duration latency = Duration.between(requestStart, result.getCompletionTimestamp());
+              long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
               recordResponseMetrics(metrics, latency);
               return response;
             },
@@ -279,14 +279,14 @@ public final class ProduceAction {
         .build();
   }
 
-  private void recordResponseMetrics(ProducerMetrics metrics, Duration latency) {
+  private void recordResponseMetrics(ProducerMetrics metrics, long latencyMs) {
     metrics.recordResponse();
-    metrics.recordRequestLatency(latency);
+    metrics.recordRequestLatency(latencyMs);
   }
 
-  private void recordErrorMetrics(ProducerMetrics metrics, Duration latency) {
+  private void recordErrorMetrics(ProducerMetrics metrics, long latencyMs) {
     metrics.recordError();
-    metrics.recordRequestLatency(latency);
+    metrics.recordRequestLatency(latencyMs);
   }
 
   private void recordRateLimitedMetrics(ProducerMetrics metrics) {
