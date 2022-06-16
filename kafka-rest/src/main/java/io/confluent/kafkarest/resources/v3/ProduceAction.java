@@ -41,11 +41,11 @@ import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThre
 import io.confluent.kafkarest.response.JsonStream;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import javax.inject.Inject;
@@ -134,10 +134,12 @@ public final class ProduceAction {
       ProduceRequest request,
       ProduceController controller,
       ProducerMetrics metrics) {
+    long requestStartNs = System.nanoTime();
 
     try {
       produceRateLimiters.rateLimit(clusterId, request.getOriginalSize());
     } catch (RateLimitExceededException e) {
+      recordRateLimitedMetrics(metrics);
       // KREST-4356 Use our own CompletionException that will avoid the costly stack trace fill.
       throw new StacklessCompletionException(e);
     }
@@ -146,7 +148,6 @@ public final class ProduceAction {
     // rate limiting, as these metrics are used for billing.
     recordRequestMetrics(metrics, request.getOriginalSize());
 
-    Instant requestInstant = Instant.now();
     Optional<RegisteredSchema> keySchema =
         request.getKey().flatMap(key -> getSchema(topicName, /* isKey= */ true, key));
     Optional<EmbeddedFormat> keyFormat =
@@ -179,7 +180,7 @@ public final class ProduceAction {
         .handleAsync(
             (result, error) -> {
               if (error != null) {
-                long latency = Duration.between(requestInstant, Instant.now()).toMillis();
+                long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
                 recordErrorMetrics(metrics, latency);
                 throw new StacklessCompletionException(error);
               }
@@ -191,8 +192,7 @@ public final class ProduceAction {
               ProduceResponse response =
                   toProduceResponse(
                       clusterId, topicName, keyFormat, keySchema, valueFormat, valueSchema, result);
-              long latency =
-                  Duration.between(requestInstant, result.getCompletionTimestamp()).toMillis();
+              long latency = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - requestStartNs);
               recordResponseMetrics(metrics, latency);
               return response;
             },
@@ -279,14 +279,18 @@ public final class ProduceAction {
         .build();
   }
 
-  private void recordResponseMetrics(ProducerMetrics metrics, long latency) {
+  private void recordResponseMetrics(ProducerMetrics metrics, long latencyMs) {
     metrics.recordResponse();
-    metrics.recordRequestLatency(latency);
+    metrics.recordRequestLatency(latencyMs);
   }
 
-  private void recordErrorMetrics(ProducerMetrics metrics, long latency) {
+  private void recordErrorMetrics(ProducerMetrics metrics, long latencyMs) {
     metrics.recordError();
-    metrics.recordRequestLatency(latency);
+    metrics.recordRequestLatency(latencyMs);
+  }
+
+  private void recordRateLimitedMetrics(ProducerMetrics metrics) {
+    metrics.recordRateLimited();
   }
 
   private void recordRequestMetrics(ProducerMetrics metrics, long size) {

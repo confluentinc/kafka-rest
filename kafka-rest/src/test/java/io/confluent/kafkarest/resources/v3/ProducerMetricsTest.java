@@ -17,19 +17,20 @@ package io.confluent.kafkarest.resources.v3;
 
 import static io.confluent.rest.RestConfig.METRICS_JMX_PREFIX_CONFIG;
 import static java.util.Collections.singletonList;
+import static java.util.function.LongUnaryOperator.identity;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.number.IsCloseTo.closeTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.mock.MockTime;
 import io.confluent.rest.RestConfig;
 import java.lang.management.ManagementFactory;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
@@ -74,18 +75,14 @@ public class ProducerMetricsTest {
 
     config.setMetrics(metrics);
 
-    producerMetrics = new ProducerMetrics(config, new MockTime(), ImmutableMap.of("tag", "value"));
+    producerMetrics = new ProducerMetrics(config, ImmutableMap.of("tag", "value"));
   }
 
   @Test
   public void testAvgMetrics() throws Exception {
     String[] avgMetrics = new String[] {ProducerMetrics.REQUEST_LATENCY_AVG_METRIC_NAME};
 
-    IntStream.range(0, 10)
-        .forEach(
-            n -> {
-              producerMetrics.recordRequestLatency(n);
-            });
+    LongStream.range(0L, 10L).forEach(producerMetrics::recordRequestLatency);
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
@@ -109,6 +106,7 @@ public class ProducerMetricsTest {
         .forEach(
             n -> {
               producerMetrics.recordError();
+              producerMetrics.recordRateLimited();
               producerMetrics.recordRequest();
               producerMetrics.recordResponse();
             });
@@ -130,7 +128,7 @@ public class ProducerMetricsTest {
   public void testMaxMetrics() throws Exception {
     String[] maxMetrics = new String[] {ProducerMetrics.REQUEST_LATENCY_MAX_METRIC_NAME};
 
-    IntStream.range(0, 10).forEach(producerMetrics::recordRequestLatency);
+    LongStream.range(0L, 10L).forEach(producerMetrics::recordRequestLatency);
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
@@ -150,7 +148,7 @@ public class ProducerMetricsTest {
           ProducerMetrics.REQUEST_LATENCY_PCT_METRIC_PREFIX + "p999",
         };
 
-    IntStream.range(0, 1000).forEach(producerMetrics::recordRequestLatency);
+    LongStream.range(0L, 1000L).forEach(producerMetrics::recordRequestLatency);
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
@@ -175,6 +173,7 @@ public class ProducerMetricsTest {
             n -> {
               producerMetrics.recordRequest();
               producerMetrics.recordError();
+              producerMetrics.recordRateLimited();
               producerMetrics.recordResponse();
             });
 
@@ -189,12 +188,7 @@ public class ProducerMetricsTest {
 
   @Test
   public void testMeterBasedMetrics() throws Exception {
-
-    IntStream.range(0, 30)
-        .forEach(
-            n -> {
-              producerMetrics.recordRequestSize(1);
-            });
+    LongStream.iterate(1L, identity()).limit(30).forEach(producerMetrics::recordRequestSize);
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
