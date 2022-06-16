@@ -110,7 +110,7 @@ final class ProducerMetrics {
   private final String recordRateLimitedSensorName;
   private final String requestLatencySensorName;
 
-  // TODO: Used in ce-kafka-rest. To be deleted.
+  // TODO: Delete once all usages have been removed.
   ProducerMetrics(KafkaRestConfig config, Time time, Map<String, String> metricsTags) {
     this(config, metricsTags);
   }
