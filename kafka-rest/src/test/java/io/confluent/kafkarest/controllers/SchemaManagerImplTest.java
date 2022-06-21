@@ -15,6 +15,7 @@
 
 package io.confluent.kafkarest.controllers;
 
+import static io.confluent.kafkarest.Errors.KAFKA_AUTHORIZATION_ERROR_CODE;
 import static java.util.Collections.emptyList;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.mock;
@@ -42,12 +43,14 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import io.confluent.kafkarest.exceptions.BadRequestException;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
+import io.confluent.rest.exceptions.RestException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import javax.ws.rs.core.Response.Status;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -408,7 +411,8 @@ public class SchemaManagerImplTest {
                     /* rawSchema= */ Optional.empty(),
                     /* isKey= */ true));
     assertEquals(
-        "Error serializing message. Error when fetching schema by id. schemaId = 1000",
+        "Error serializing message. Error when fetching schema by id. schemaId = 1000\nSubject "
+            + "Not Found; error code: 40401",
         rcve.getMessage());
     assertEquals(42207, rcve.getErrorCode());
   }
@@ -432,8 +436,8 @@ public class SchemaManagerImplTest {
                     /* rawSchema= */ Optional.empty(),
                     /* isKey= */ true));
     assertEquals(
-        "Error serializing message. Error when fetching schema version. subject = topic-1-key, schema = \"int\"\n"
-            + "Subject Not Found; error code: 40401",
+        "Error serializing message. Error when fetching schema version. subject = topic-1-key, "
+            + "schema = \"int\"\nSubject Not Found; error code: 40401",
         rcve.getMessage());
     assertEquals(42207, rcve.getErrorCode());
   }
@@ -517,8 +521,8 @@ public class SchemaManagerImplTest {
                     /* rawSchema= */ Optional.empty(),
                     /* isKey= */ true));
     assertEquals(
-        "Error serializing message. Error when fetching latest schema version. subject = topic-1-key\n"
-            + "Subject Not Found; error code: 40401",
+        "Error serializing message. Error when fetching latest schema version. subject = "
+            + "topic-1-key\nSubject Not Found; error code: 40401",
         rcve.getMessage());
     assertEquals(42207, rcve.getErrorCode());
   }
@@ -570,7 +574,8 @@ public class SchemaManagerImplTest {
     assertTrue(
         rcve.getMessage()
             .startsWith(
-                "Cannot use schema_subject_strategy=io.confluent.kafkarest.controllers.SchemaManagerImplTest$NullReturningSubjectNameStrategy@"));
+                "Cannot use schema_subject_strategy=io.confluent.kafkarest.controllers."
+                    + "SchemaManagerImplTest$NullReturningSubjectNameStrategy@"));
     assertTrue(rcve.getMessage().endsWith(" without schema_id or schema."));
   }
 
@@ -617,7 +622,6 @@ public class SchemaManagerImplTest {
 
   @Test
   public void getSchemaFromSchemaVersionThrowsInvalidSchemaException() {
-
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
     Schema schemaMock = mock(Schema.class);
 
@@ -652,7 +656,6 @@ public class SchemaManagerImplTest {
 
   @Test
   public void getSchemaFromSchemaVersionThrowsInvalidBadRequestException() {
-
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
     Schema schemaMock = mock(Schema.class);
 
@@ -685,7 +688,6 @@ public class SchemaManagerImplTest {
 
   @Test
   public void errorFetchingSchemaBySchemaVersion() {
-
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
     Schema schemaMock = mock(Schema.class);
 
@@ -719,7 +721,6 @@ public class SchemaManagerImplTest {
 
   @Test
   public void errorRawSchemaNotSupportedWithFormat() {
-
     BadRequestException iae =
         assertThrows(
             BadRequestException.class,
@@ -738,7 +739,6 @@ public class SchemaManagerImplTest {
 
   @Test
   public void errorRawSchemaCantParseSchema() {
-
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
     EmbeddedFormat embeddedFormatMock = mock(EmbeddedFormat.class);
     SchemaProvider schemaProviderMock = mock(SchemaProvider.class);
@@ -766,14 +766,14 @@ public class SchemaManagerImplTest {
                     /* rawSchema= */ Optional.of(TextNode.valueOf("rawSchema").toString()),
                     /* isKey= */ true));
     assertEquals(
-        "Raw schema not supported with format = EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat",
+        "Raw schema not supported with format = EasyMock for class "
+            + "io.confluent.kafkarest.entities.EmbeddedFormat",
         rcve.getMessage());
     assertEquals(400, rcve.getCode());
   }
 
   @Test
   public void errorRawSchemaNotSupportedWithSchema() {
-
     EmbeddedFormat embeddedFormatMock = mock(EmbeddedFormat.class);
     SchemaProvider schemaProviderMock = mock(SchemaProvider.class);
 
@@ -801,14 +801,14 @@ public class SchemaManagerImplTest {
                     /* rawSchema= */ Optional.of(TextNode.valueOf("rawSchema").toString()),
                     /* isKey= */ true));
     assertEquals(
-        "Raw schema not supported with format = EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat",
+        "Raw schema not supported with format = EasyMock for class "
+            + "io.confluent.kafkarest.entities.EmbeddedFormat",
         bre.getMessage());
     assertEquals(400, bre.getCode());
   }
 
   @Test
   public void errorRegisteringSchema() throws RestClientException, IOException {
-
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
     ParsedSchema parsedSchemaMock = mock(ParsedSchema.class);
     EmbeddedFormat embeddedFormatMock = mock(EmbeddedFormat.class);
@@ -844,16 +844,63 @@ public class SchemaManagerImplTest {
                     /* rawSchema= */ Optional.of(TextNode.valueOf("rawString").toString()),
                     /* isKey= */ true));
     assertEquals(
-        "Error serializing message. Error when registering schema. format = EasyMock for class io.confluent.kafkarest.entities.EmbeddedFormat, subject = subject1, schema = null\n"
+        "Error serializing message. Error when registering schema. format = EasyMock for class "
+            + "io.confluent.kafkarest.entities.EmbeddedFormat, subject = subject1, schema = null\n"
             + "Can't register Schema",
         rcve.getMessage());
     assertEquals(42207, rcve.getErrorCode());
   }
 
   @Test
+  public void errorRegisteringSchemaUnauthorized() throws RestClientException, IOException {
+    SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
+    ParsedSchema parsedSchemaMock = mock(ParsedSchema.class);
+    EmbeddedFormat embeddedFormatMock = mock(EmbeddedFormat.class);
+    SchemaProvider schemaProviderMock = mock(SchemaProvider.class);
+
+    expect(embeddedFormatMock.requiresSchema()).andReturn(true);
+    expect(embeddedFormatMock.getSchemaProvider()).andReturn(schemaProviderMock);
+    expect(
+            schemaProviderMock.parseSchema(
+                TextNode.valueOf("rawString").toString(), emptyList(), true))
+        .andReturn(Optional.of(parsedSchemaMock));
+    expect(schemaRegistryClientMock.getId("subject1", parsedSchemaMock))
+        .andThrow(new IOException("Can't get Schema"));
+    expect(schemaRegistryClientMock.register("subject1", parsedSchemaMock))
+        .andThrow(
+            new RestClientException(
+                "User is denied operation Write on Subject: subject1",
+                Status.FORBIDDEN.getStatusCode(),
+                KAFKA_AUTHORIZATION_ERROR_CODE));
+
+    replay(schemaRegistryClientMock, embeddedFormatMock, schemaProviderMock);
+
+    SchemaManager mySchemaManager =
+        new SchemaManagerImpl(schemaRegistryClientMock, new TopicNameStrategy());
+
+    RestException rcve =
+        assertThrows(
+            RestException.class,
+            () ->
+                mySchemaManager.getSchema(
+                    TOPIC_NAME,
+                    /* format= */ Optional.of(embeddedFormatMock),
+                    /* subject= */ Optional.of("subject1"),
+                    /* subjectNameStrategy= */ Optional.empty(),
+                    /* schemaId= */ Optional.empty(),
+                    /* schemaVersion= */ Optional.empty(),
+                    /* rawSchema= */ Optional.of(TextNode.valueOf("rawString").toString()),
+                    /* isKey= */ true));
+    assertEquals(
+        "Error when registering schema. format = EasyMock for class "
+            + "io.confluent.kafkarest.entities.EmbeddedFormat, subject = subject1, schema = null",
+        rcve.getMessage());
+    assertEquals(KAFKA_AUTHORIZATION_ERROR_CODE, rcve.getErrorCode());
+  }
+
+  @Test
   public void errorFetchingLatestSchemaBySchemaVersionInvalidSchema()
       throws RestClientException, IOException {
-
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
     SchemaMetadata schemaMetadataMock = mock(SchemaMetadata.class);
 
@@ -889,7 +936,6 @@ public class SchemaManagerImplTest {
   @Test
   public void errorFetchingLatestSchemaBySchemaVersionBadRequest()
       throws RestClientException, IOException {
-
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
     SchemaMetadata schemaMetadataMock = mock(SchemaMetadata.class);
 
