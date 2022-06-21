@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.controllers;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static io.confluent.kafkarest.Errors.KAFKA_AUTHORIZATION_ERROR_CODE;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
@@ -30,8 +31,10 @@ import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.RegisteredSchema;
 import io.confluent.kafkarest.exceptions.BadRequestException;
+import io.confluent.rest.exceptions.RestException;
 import java.io.IOException;
 import java.util.Optional;
+import javax.ws.rs.core.Response.Status;
 import org.apache.avro.SchemaParseException;
 
 final class SchemaManagerImpl implements SchemaManager {
@@ -93,8 +96,8 @@ final class SchemaManagerImpl implements SchemaManager {
     try {
       schema = schemaRegistryClient.getSchemaById(schemaId);
     } catch (IOException | RestClientException e) {
-      throw Errors.messageSerializationException(
-          String.format("Error when fetching schema by id. schemaId = %d", schemaId));
+      throw handleRestClientException(
+          e, "Error when fetching schema by id. schemaId = %d", schemaId);
     }
 
     String actualSubject =
@@ -112,11 +115,11 @@ final class SchemaManagerImpl implements SchemaManager {
     try {
       return schemaRegistryClient.getVersion(subject, schema);
     } catch (IOException | RestClientException e) {
-      throw Errors.messageSerializationException(
-          String.format(
-              "Error when fetching schema version. subject = %s, schema = %s",
-              subject, schema.canonicalString()),
-          e);
+      throw handleRestClientException(
+          e,
+          "Error when fetching schema version. subject = %s, schema = %s",
+          subject,
+          schema.canonicalString());
     }
   }
 
@@ -222,11 +225,12 @@ final class SchemaManagerImpl implements SchemaManager {
         schemaId = schemaRegistryClient.register(actualSubject, schema);
       }
     } catch (IOException | RestClientException e) {
-      throw Errors.messageSerializationException(
-          String.format(
-              "Error when registering schema. format = %s, subject = %s, schema = %s",
-              format, actualSubject, schema.canonicalString()),
-          e);
+      throw handleRestClientException(
+          e,
+          "Error when registering schema. format = %s, subject = %s, schema = %s",
+          format,
+          actualSubject,
+          schema.canonicalString());
     }
 
     int schemaVersion = getSchemaVersion(actualSubject, schema);
@@ -246,9 +250,8 @@ final class SchemaManagerImpl implements SchemaManager {
     try {
       metadata = schemaRegistryClient.getLatestSchemaMetadata(actualSubject);
     } catch (IOException | RestClientException e) {
-      throw Errors.messageSerializationException(
-          String.format("Error when fetching latest schema version. subject = %s", actualSubject),
-          e);
+      throw handleRestClientException(
+          e, "Error when fetching latest schema version. subject = %s", actualSubject);
     }
 
     SchemaProvider schemaProvider;
@@ -324,6 +327,20 @@ final class SchemaManagerImpl implements SchemaManager {
       checkArgument(argument);
     } catch (IllegalArgumentException e) {
       throw new BadRequestException("Unsupported argument: ", e.getMessage(), e);
+    }
+  }
+
+  private static RuntimeException handleRestClientException(
+      Exception cause, String message, Object... args) {
+    if (cause instanceof RestClientException
+        && ((RestClientException) cause).getErrorCode() == KAFKA_AUTHORIZATION_ERROR_CODE) {
+      return new RestException(
+          String.format(message, args),
+          Status.FORBIDDEN.getStatusCode(),
+          KAFKA_AUTHORIZATION_ERROR_CODE,
+          cause);
+    } else {
+      return Errors.messageSerializationException(String.format(message, args), cause);
     }
   }
 }
