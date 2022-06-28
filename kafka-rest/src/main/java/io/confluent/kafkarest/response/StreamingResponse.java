@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
 import com.fasterxml.jackson.jaxrs.base.JsonMappingExceptionMapper;
 import com.fasterxml.jackson.jaxrs.base.JsonParseExceptionMapper;
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.common.CompletableFutures;
 import io.confluent.kafkarest.exceptions.BadRequestException;
@@ -36,8 +37,14 @@ import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
 import java.io.IOException;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.ws.rs.WebApplicationException;
@@ -100,18 +107,34 @@ public abstract class StreamingResponse<T> {
 
   private final ChunkedOutputFactory chunkedOutputFactory;
 
-  StreamingResponse(ChunkedOutputFactory chunkedOutputFactory) {
+  private final Duration maxDuration;
+  private final Duration gracePeriod;
+  volatile boolean closingStarted = false;
+  private Instant streamStartTime;
+  private Clock clock;
+
+  StreamingResponse(
+      ChunkedOutputFactory chunkedOutputFactory, Duration maxDuration, Duration gracePeriod) {
+    clock = Clock.systemUTC();
     this.chunkedOutputFactory = requireNonNull(chunkedOutputFactory);
+    this.streamStartTime = clock.instant();
+    this.maxDuration = maxDuration;
+    this.gracePeriod = gracePeriod;
   }
 
   public static <T> StreamingResponse<T> from(
-      JsonStream<T> inputStream, ChunkedOutputFactory chunkedOutputFactory) {
-    return new InputStreamingResponse<>(inputStream, chunkedOutputFactory);
+      JsonStream<T> inputStream,
+      ChunkedOutputFactory chunkedOutputFactory,
+      Duration maxDuration,
+      Duration gracePeriod) {
+    return new InputStreamingResponse<>(
+        inputStream, chunkedOutputFactory, maxDuration, gracePeriod);
   }
 
   public final <O> StreamingResponse<O> compose(
       Function<? super T, ? extends CompletableFuture<O>> transform) {
-    return new ComposingStreamingResponse<>(this, transform, chunkedOutputFactory);
+    return new ComposingStreamingResponse<>(
+        this, transform, chunkedOutputFactory, maxDuration, gracePeriod);
   }
 
   /**
@@ -124,9 +147,33 @@ public abstract class StreamingResponse<T> {
     log.debug("Resuming StreamingResponse");
     AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
+    boolean startedCloseScheduler = false;
     try {
-      while (hasNext() && !responseQueue.isClosed()) {
-        responseQueue.push(next().handle(this::handleNext));
+      // hasNext() needs to be last here. It hangs if there is nothing on the mappingIterator
+      while (!closingStarted && hasNext()) {
+        // need to recheck closingStarted because hasNext can take time to respond
+        if (!closingStarted
+            && Duration.between(streamStartTime, clock.instant()).compareTo(maxDuration) > 0) {
+          if (!startedCloseScheduler) {
+            startedCloseScheduler = true;
+            ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+            executorService.schedule(
+                () -> closeAll(responseQueue), gracePeriod.toMillis(), TimeUnit.MILLISECONDS);
+          }
+          next();
+          responseQueue.push(
+              CompletableFuture.completedFuture(
+                  ResultOrError.error(
+                      EXCEPTION_MAPPER.toErrorResponse(
+                          new StatusCodeException(
+                              Status.REQUEST_TIMEOUT,
+                              "Streaming connection open for longer than allowed",
+                              "Connection will be closed.")))));
+        } else if (!closingStarted) {
+          responseQueue.push(next().handle(this::handleNext));
+        } else {
+          break;
+        }
       }
     } catch (Exception e) {
       log.debug("Exception thrown when processing stream ", e);
@@ -137,6 +184,12 @@ public abstract class StreamingResponse<T> {
       close();
       responseQueue.close();
     }
+  }
+
+  private void closeAll(AsyncResponseQueue responseQueue) {
+    closingStarted = true;
+    close();
+    responseQueue.close();
   }
 
   private ResultOrError handleNext(T result, @Nullable Throwable error) {
@@ -159,8 +212,11 @@ public abstract class StreamingResponse<T> {
     private final JsonStream<T> inputStream;
 
     private InputStreamingResponse(
-        JsonStream<T> inputStream, ChunkedOutputFactory chunkedOutputFactory) {
-      super(chunkedOutputFactory);
+        JsonStream<T> inputStream,
+        ChunkedOutputFactory chunkedOutputFactory,
+        Duration maxDuration,
+        Duration gracePeriod) {
+      super(chunkedOutputFactory, maxDuration, gracePeriod);
       this.inputStream = requireNonNull(inputStream);
     }
 
@@ -204,15 +260,29 @@ public abstract class StreamingResponse<T> {
     private ComposingStreamingResponse(
         StreamingResponse<I> streamingResponseInput,
         Function<? super I, ? extends CompletableFuture<O>> transform,
-        ChunkedOutputFactory chunkedOutputFactory) {
-      super(chunkedOutputFactory);
+        ChunkedOutputFactory chunkedOutputFactory,
+        Duration maxDuration,
+        Duration gracePeriod) {
+      super(chunkedOutputFactory, maxDuration, gracePeriod);
       this.streamingResponseInput = requireNonNull(streamingResponseInput);
       this.transform = requireNonNull(transform);
     }
 
     @Override
     public boolean hasNext() {
-      return streamingResponseInput.hasNext();
+      try {
+        return streamingResponseInput.hasNext();
+      } catch (BadRequestException e) {
+        // hasNext() hangs on an empty queue.  If the mapping iterator is closed during this
+        // hang, then it throws an ArrayOutOfBoundsException.
+        if (closingStarted
+            && e.getCause() != null
+            && e.getCause() instanceof ArrayIndexOutOfBoundsException) {
+          return false;
+        } else {
+          throw e;
+        }
+      }
     }
 
     @Override
@@ -397,6 +467,13 @@ public abstract class StreamingResponse<T> {
         return new CompositeErrorMapper(mappers.build(), defaultMapper);
       }
     }
+  }
+
+  @VisibleForTesting
+  protected StreamingResponse<T> overrideClock(Clock clock) {
+    this.clock = clock;
+    streamStartTime = clock.instant();
+    return this;
   }
 }
 // CHECKSTYLE:ON:ClassDataAbstractionCoupling

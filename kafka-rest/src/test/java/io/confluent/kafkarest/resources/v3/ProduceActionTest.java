@@ -76,6 +76,8 @@ import org.junit.jupiter.api.Test;
 
 public class ProduceActionTest {
 
+  private static final Duration DURATION = Duration.ofMillis(5000);
+
   @AfterAll
   public static void cleanUp() {
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
@@ -150,7 +152,8 @@ public class ProduceActionTest {
     ErrorResponse err =
         ErrorResponse.create(
             422,
-            "Error: 42206 : Payload error. Schema Registry must be configured when using schemas.");
+            "Error: 42206 : Payload error. Schema Registry must be configured when using"
+                + " schemas.");
     ResultOrError resultOrErrorFail = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorFail);
@@ -836,7 +839,7 @@ public class ProduceActionTest {
     replay(produceControllerProvider, produceController);
 
     StreamingResponseFactory streamingResponseFactory =
-        new StreamingResponseFactory(chunkedOutputFactory);
+        new StreamingResponseFactory(chunkedOutputFactory, DURATION, DURATION);
 
     // get the current thread so that the call counts can be seen by easy mock
     ExecutorService executorService = MoreExecutors.newDirectExecutorService();
