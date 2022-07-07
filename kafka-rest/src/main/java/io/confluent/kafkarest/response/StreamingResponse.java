@@ -112,6 +112,7 @@ public abstract class StreamingResponse<T> {
   volatile boolean closingStarted = false;
   private Instant streamStartTime;
   private Clock clock;
+  private static final int ONE_SECOND_MS = 1000;
 
   StreamingResponse(
       ChunkedOutputFactory chunkedOutputFactory, Duration maxDuration, Duration gracePeriod) {
@@ -147,16 +148,16 @@ public abstract class StreamingResponse<T> {
     log.debug("Resuming StreamingResponse");
     AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
-    boolean startedCloseScheduler = false;
+    ScheduledExecutorService executorService = null;
+
     try {
       // hasNext() needs to be last here. It hangs if there is nothing on the mappingIterator
       while (!closingStarted && hasNext()) {
         // need to recheck closingStarted because hasNext can take time to respond
         if (!closingStarted
             && Duration.between(streamStartTime, clock.instant()).compareTo(maxDuration) > 0) {
-          if (!startedCloseScheduler) {
-            startedCloseScheduler = true;
-            ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+          if (executorService == null) {
+            executorService = Executors.newSingleThreadScheduledExecutor();
             executorService.schedule(
                 () -> closeAll(responseQueue), gracePeriod.toMillis(), TimeUnit.MILLISECONDS);
           }
@@ -183,6 +184,16 @@ public abstract class StreamingResponse<T> {
     } finally {
       close();
       responseQueue.close();
+      if (executorService != null) {
+        executorService.shutdown();
+        try {
+          if (!executorService.awaitTermination(ONE_SECOND_MS, TimeUnit.MILLISECONDS)) {
+            executorService.shutdownNow();
+          }
+        } catch (InterruptedException e) {
+          log.debug("Exception thrown when attempting to shutdown executorService {}", e);
+        }
+      }
     }
   }
 

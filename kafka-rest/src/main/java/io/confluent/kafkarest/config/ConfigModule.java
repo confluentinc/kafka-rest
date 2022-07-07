@@ -161,12 +161,12 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new RateLimitTimeoutConfigImpl())
         .to(Duration.class);
 
-    bind(config.getStreamingConnectionTimeout())
-        .qualifiedBy(new StreamingConnectionTimeoutConfigImpl())
+    bind(config.getStreamingConnectionMaxDuration())
+        .qualifiedBy(new StreamingConnectionMaxDurationConfigImpl())
         .to(Duration.class);
 
-    bind(config.getStreamingConnectionTimeoutGracePeriod())
-        .qualifiedBy(new StreamingConnectionTimeoutGracePeriodImpl())
+    bind(config.getStreamingConnectionMaxDurationGracePeriod())
+        .qualifiedBy(new StreamingConnectionMaxDurationGracePeriodImpl())
         .to(Duration.class);
 
     bind(config.getSchemaRegistryConfigs())
@@ -429,7 +429,7 @@ public final class ConfigModule extends AbstractBinder {
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
   public @interface StreamingMaxConnectionDurationConfig {}
 
-  private static final class StreamingConnectionTimeoutConfigImpl
+  private static final class StreamingConnectionMaxDurationConfigImpl
       extends AnnotationLiteral<StreamingMaxConnectionDurationConfig>
       implements StreamingMaxConnectionDurationConfig {}
 
@@ -438,7 +438,7 @@ public final class ConfigModule extends AbstractBinder {
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
   public @interface StreamingMaxConnectionGracePeriod {}
 
-  private static final class StreamingConnectionTimeoutGracePeriodImpl
+  private static final class StreamingConnectionMaxDurationGracePeriodImpl
       extends AnnotationLiteral<StreamingMaxConnectionGracePeriod>
       implements StreamingMaxConnectionGracePeriod {}
 }

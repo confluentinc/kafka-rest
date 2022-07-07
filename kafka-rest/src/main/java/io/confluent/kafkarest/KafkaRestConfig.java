@@ -454,18 +454,19 @@ public class KafkaRestConfig extends RestConfig {
           + "\"api.v3.clusters.*=1,api.v3.brokers.list=2\". A cost of zero means no rate-limit.";
   private static final String RATE_LIMIT_COSTS_DEFAULT = "";
 
-  public static final String STREAMING_CONNECTION_TIMEOUT_MS = "streaming.connection.timeout.ms";
-  private static final String STREAMING_CONNECTION_TIMEOUT_MS_DOC =
+  public static final String STREAMING_CONNECTION_MAX_DURATION_MS =
+      "streaming.connection.max.duration.ms";
+  private static final String STREAMING_CONNECTION_MAX_DURATION_MS_DOC =
       "The maximum duration of a streaming connection. Once this time has elapsed, the connection "
           + "is closed.";
-  private static final String STREAMING_CONNECTION_TIMEOUT_MS_DEFAULT = "86400000";
+  private static final String STREAMING_CONNECTION_MAX_DURATION_MS_DEFAULT = "86400000";
 
-  public static final String STREAMING_CONNECTION_TIMEOUT_GRACE_PERIOD_MS =
-      "streaming.connection.timeout.grace.period.ms";
-  private static final String STREAMING_CONNECTION_TIMEOUT_GRACE_PERIOD_MS_DOC =
+  public static final String STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS =
+      "streaming.connection.max.duration.grace.period.ms";
+  private static final String STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DOC =
       "How long after a streaming connection reaches its maximum duration that outstanding "
           + "requests can be processed for before the connection is closed.";
-  private static final String STREAMING_CONNECTION_TIMEOUT_GRACE_PERIOD_MS_DEFAULT = "500";
+  private static final String STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DEFAULT = "500";
 
   private static final ConfigDef config;
   private volatile Metrics metrics;
@@ -835,17 +836,17 @@ public class KafkaRestConfig extends RestConfig {
             Importance.LOW,
             RATE_LIMIT_COSTS_DOC)
         .define(
-            STREAMING_CONNECTION_TIMEOUT_MS,
+            STREAMING_CONNECTION_MAX_DURATION_MS,
             Type.LONG,
-            STREAMING_CONNECTION_TIMEOUT_MS_DEFAULT,
+            STREAMING_CONNECTION_MAX_DURATION_MS_DEFAULT,
             Importance.LOW,
-            STREAMING_CONNECTION_TIMEOUT_MS_DOC)
+            STREAMING_CONNECTION_MAX_DURATION_MS_DOC)
         .define(
-            STREAMING_CONNECTION_TIMEOUT_GRACE_PERIOD_MS,
+            STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS,
             Type.LONG,
-            STREAMING_CONNECTION_TIMEOUT_GRACE_PERIOD_MS_DEFAULT,
+            STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DEFAULT,
             Importance.LOW,
-            STREAMING_CONNECTION_TIMEOUT_GRACE_PERIOD_MS_DOC);
+            STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DOC);
   }
 
   private static Properties getPropsFromFile(String propsFile) throws RestConfigException {
@@ -1078,12 +1079,12 @@ public class KafkaRestConfig extends RestConfig {
     return Duration.ofMillis(getLong(RATE_LIMIT_TIMEOUT_MS_CONFIG));
   }
 
-  public final Duration getStreamingConnectionTimeout() {
-    return Duration.ofMillis(getLong(STREAMING_CONNECTION_TIMEOUT_MS));
+  public final Duration getStreamingConnectionMaxDuration() {
+    return Duration.ofMillis(getLong(STREAMING_CONNECTION_MAX_DURATION_MS));
   }
 
-  public final Duration getStreamingConnectionTimeoutGracePeriod() {
-    return Duration.ofMillis(getLong(STREAMING_CONNECTION_TIMEOUT_GRACE_PERIOD_MS));
+  public final Duration getStreamingConnectionMaxDurationGracePeriod() {
+    return Duration.ofMillis(getLong(STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS));
   }
 
   public final int getRateLimitDefaultCost() {

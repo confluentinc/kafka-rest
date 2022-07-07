@@ -76,7 +76,7 @@ import org.junit.jupiter.api.Test;
 
 public class ProduceActionTest {
 
-  private static final Duration DURATION = Duration.ofMillis(5000);
+  private static final Duration FIVE_SECONDS_MS = Duration.ofMillis(5000);
 
   @AfterAll
   public static void cleanUp() {
@@ -839,7 +839,7 @@ public class ProduceActionTest {
     replay(produceControllerProvider, produceController);
 
     StreamingResponseFactory streamingResponseFactory =
-        new StreamingResponseFactory(chunkedOutputFactory, DURATION, DURATION);
+        new StreamingResponseFactory(chunkedOutputFactory, FIVE_SECONDS_MS, FIVE_SECONDS_MS);
 
     // get the current thread so that the call counts can be seen by easy mock
     ExecutorService executorService = MoreExecutors.newDirectExecutorService();
