@@ -340,8 +340,12 @@ public class StreamingResponseTest {
             mockedChunkedOutputFactory, Duration.ofMillis(timeout), Duration.ofMillis(50));
 
     StreamingResponse<ProduceRequest> streamingResponse =
-        streamingResponseFactory.from(new JsonStream<>(() -> requestsMappingIterator));
-    streamingResponse.overrideClock(clock);
+        StreamingResponse.fromWithClock(
+            new JsonStream<>(() -> requestsMappingIterator),
+            mockedChunkedOutputFactory,
+            Duration.ofMillis(timeout),
+            Duration.ofMillis(50),
+            clock);
 
     CompletableFuture<ProduceResponse> produceResponseFuture = new CompletableFuture<>();
     produceResponseFuture.complete(produceResponse);
@@ -352,7 +356,6 @@ public class StreamingResponseTest {
             result -> {
               return produceResponseFuture;
             })
-        .overrideClock(clock)
         .resume(response);
 
     EasyMock.verify(mockedChunkedOutput);
