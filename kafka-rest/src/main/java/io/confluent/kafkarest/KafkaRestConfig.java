@@ -458,14 +458,15 @@ public class KafkaRestConfig extends RestConfig {
       "streaming.connection.max.duration.ms";
   private static final String STREAMING_CONNECTION_MAX_DURATION_MS_DOC =
       "The maximum duration of a streaming connection. Once this time has elapsed, the connection "
-          + "is closed.";
+          + "will stop processing new requests and will be closed once there are no "
+          + "outstanding requests.";
   private static final String STREAMING_CONNECTION_MAX_DURATION_MS_DEFAULT = "86400000";
 
   public static final String STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS =
       "streaming.connection.max.duration.grace.period.ms";
   private static final String STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DOC =
-      "How long after a streaming connection reaches its maximum duration that outstanding "
-          + "requests can be processed for before the connection is closed.";
+      "How long after a streaming connection reaches its maximum duration outstanding "
+          + "requests will be processed for before the connection is closed.";
   private static final String STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DEFAULT = "500";
 
   private static final ConfigDef config;

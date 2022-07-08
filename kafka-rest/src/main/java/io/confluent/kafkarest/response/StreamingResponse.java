@@ -71,6 +71,7 @@ import org.slf4j.LoggerFactory;
 public abstract class StreamingResponse<T> {
 
   private static final Logger log = LoggerFactory.getLogger(StreamingResponse.class);
+  private static final int ONE_SECOND_MS = 1000;
 
   private static final CompositeErrorMapper EXCEPTION_MAPPER =
       new CompositeErrorMapper.Builder()
@@ -106,13 +107,12 @@ public abstract class StreamingResponse<T> {
           .build();
 
   private final ChunkedOutputFactory chunkedOutputFactory;
-
   private final Duration maxDuration;
   private final Duration gracePeriod;
-  volatile boolean closingStarted = false;
   private final Instant streamStartTime;
   private final Clock clock;
-  private static final int ONE_SECOND_MS = 1000;
+
+  volatile boolean closingStarted = false;
 
   StreamingResponse(
       ChunkedOutputFactory chunkedOutputFactory,
