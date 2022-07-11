@@ -169,6 +169,14 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new StreamingConnectionMaxDurationGracePeriodImpl())
         .to(Duration.class);
 
+    bind(config.getStreamingConnectionMaxQueueDepthBeforeThrottling())
+        .qualifiedBy(new getStreamingConnectionMaxQueueDepthBeforeThrottlingImpl())
+        .to(Integer.class);
+
+    bind(config.getStreamingConnectionMaxQueueDepthBeforeDisconnect())
+        .qualifiedBy(new getStreamingConnectionMaxQueueDepthBeforeDisconnectImpl())
+        .to(Integer.class);
+
     bind(config.getSchemaRegistryConfigs())
         .qualifiedBy(new SchemaRegistryConfigsImpl())
         .to(new TypeLiteral<Map<String, Object>>() {});
@@ -441,5 +449,23 @@ public final class ConfigModule extends AbstractBinder {
   private static final class StreamingConnectionMaxDurationGracePeriodImpl
       extends AnnotationLiteral<StreamingMaxConnectionGracePeriod>
       implements StreamingMaxConnectionGracePeriod {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface getStreamingConnectionMaxQueueDepthBeforeThrottling {}
+
+  private static final class getStreamingConnectionMaxQueueDepthBeforeThrottlingImpl
+      extends AnnotationLiteral<getStreamingConnectionMaxQueueDepthBeforeThrottling>
+      implements getStreamingConnectionMaxQueueDepthBeforeThrottling {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface getStreamingConnectionMaxQueueDepthBeforeDisconnect {}
+
+  private static final class getStreamingConnectionMaxQueueDepthBeforeDisconnectImpl
+      extends AnnotationLiteral<getStreamingConnectionMaxQueueDepthBeforeDisconnect>
+      implements getStreamingConnectionMaxQueueDepthBeforeDisconnect {}
 }
 // CHECKSTYLE:ON:ClassDataAbstractionCoupling

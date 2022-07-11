@@ -49,8 +49,11 @@ public final class JsonStream<T> implements Closeable {
 
   @Override
   public void close() throws IOException {
+    System.out.println("CLOSE in json stream which calls mapping iterator close");
     if (delegate.get() != null) {
+      System.out.println("delegate not null" + delegate.get().getClass());
       delegate.get().close();
+      System.out.println("delegate now closed");
     }
   }
 }
