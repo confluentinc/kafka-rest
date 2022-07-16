@@ -627,8 +627,8 @@ public class SchemaManagerImplTest {
   @Test
   public void getSchemaFromSchemaVersionThrowsInvalidSchemaException() {
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
-    Schema schema = new Schema(null, null, null,
-            EmbeddedFormat.AVRO.toString(), Collections.emptyList(), null);
+    Schema schema =
+        new Schema(null, null, null, EmbeddedFormat.AVRO.toString(), Collections.emptyList(), null);
 
     expect(schemaRegistryClientMock.getByVersion("subject1", 0, false)).andReturn(schema);
     replay(schemaRegistryClientMock);
@@ -690,8 +690,8 @@ public class SchemaManagerImplTest {
   @Test
   public void errorFetchingSchemaBySchemaVersion() {
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
-    Schema schema = new Schema(null, null, null,
-            EmbeddedFormat.JSON.toString(), Collections.emptyList(), null);
+    Schema schema =
+        new Schema(null, null, null, EmbeddedFormat.JSON.toString(), Collections.emptyList(), null);
 
     expect(schemaRegistryClientMock.getByVersion("subject1", 123, false)).andReturn(schema);
     replay(schemaRegistryClientMock);
@@ -906,12 +906,15 @@ public class SchemaManagerImplTest {
   public void errorFetchingLatestSchemaBySchemaVersionInvalidSchema()
       throws RestClientException, IOException {
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
-    SchemaMetadata schemaMetadata = new SchemaMetadata(
-            -1, 0, EmbeddedFormat.AVRO.name(), Collections.emptyList(),
+    SchemaMetadata schemaMetadata =
+        new SchemaMetadata(
+            -1,
+            0,
+            EmbeddedFormat.AVRO.name(),
+            Collections.emptyList(),
             TextNode.valueOf("schema").toString());
 
-    expect(schemaRegistryClientMock.getLatestSchemaMetadata("subject1"))
-        .andReturn(schemaMetadata);
+    expect(schemaRegistryClientMock.getLatestSchemaMetadata("subject1")).andReturn(schemaMetadata);
     replay(schemaRegistryClientMock);
 
     SchemaManager mySchemaManager =
