@@ -73,6 +73,7 @@ public abstract class StreamingResponse<T> {
 
   private static final Logger log = LoggerFactory.getLogger(StreamingResponse.class);
   private static final int ONE_SECOND_MS = 1000;
+  private static final int MAX_CLOSE_RETRIES = 2;
 
   private static final CompositeErrorMapper EXCEPTION_MAPPER =
       new CompositeErrorMapper.Builder()
@@ -188,8 +189,8 @@ public abstract class StreamingResponse<T> {
    * <p>This method will block until all requests are read in. The responses are computed and
    * written to {@code asyncResponse} asynchronously.
    */
-  public final void resume(AsyncResponse asyncResponse) throws InterruptedException {
-    log.error("Resuming StreamingResponse - about to call new async response queue");
+  public final void resume(AsyncResponse asyncResponse) {
+    log.debug("Resuming StreamingResponse");
     AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
     ScheduledExecutorService executorService = null;
@@ -210,32 +211,29 @@ public abstract class StreamingResponse<T> {
         }
       }
     } catch (Exception e) {
-      log.error("Exception thrown when processing stream ", e);
+      log.debug("Exception thrown when processing stream ", e);
       responseQueue.push(
           CompletableFuture.completedFuture(
               ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(e))));
     } finally {
-      System.out.println(
-          "why isfinally triggered closing started"
-              + closingStarted); // can't call hasnext because of the mocking
       // if there are still outstanding response to send back, for example hasNext has returned
       // false, but the executorService hasn't triggered yet, give everything a chance to
-      // complete within the grace period if there are still outstanding responses.
-      System.out.println("FINALLY before tail length wait");
-      if (responseQueue.getTailLength().get() > 0) {
-        System.out.println("in tail length wait");
-        Thread.sleep(gracePeriod.toMillis()); // TODO make this smarter, grace period could be HUGE
+      // complete within the grace period plus a little bit.
+      int retries = 0;
+      while (!closingFinished && retries < MAX_CLOSE_RETRIES) {
+        retries++;
+        try {
+          Thread.sleep(gracePeriod.toMillis() / retries);
+        } catch (InterruptedException e) {
+          // do nothing
+        }
       }
-      System.out.println("FINALL calling a close " + this.getClass());
-      //if (!closingFinished) {
-        close();
-        System.out.println("FINALLY calling responseQueue close" + this.getClass());
-        responseQueue.close();
-      //}
+      close();
+      responseQueue.close();
       if (executorService != null) {
         executorService.shutdown();
         try {
-          if (!executorService.awaitTermination(ONE_SECOND_MS, TimeUnit.MILLISECONDS)) {
+          if (!executorService.awaitTermination(gracePeriod.toMillis(), TimeUnit.MILLISECONDS)) {
             executorService.shutdownNow();
           }
         } catch (InterruptedException e) {
@@ -243,6 +241,20 @@ public abstract class StreamingResponse<T> {
         }
       }
     }
+  }
+
+  private void handleOverMaxStreamDuration(
+      ScheduledExecutorService executorService, AsyncResponseQueue responseQueue) {
+    triggerDelayedClose(executorService, responseQueue);
+    next();
+    responseQueue.push(
+        CompletableFuture.completedFuture(
+            ResultOrError.error(
+                EXCEPTION_MAPPER.toErrorResponse(
+                    new StatusCodeException(
+                        Status.REQUEST_TIMEOUT,
+                        "Streaming connection open for longer than allowed",
+                        "Connection will be closed.")))));
   }
 
   private void handleResponseQueueDepthTooLarge(
@@ -259,20 +271,6 @@ public abstract class StreamingResponse<T> {
                         Status.TOO_MANY_REQUESTS,
                         "Backlog of messages waiting to be sent to Kafka is too large",
                         "Not sending to Kafka.")))));
-  }
-
-  private void handleOverMaxStreamDuration(
-      ScheduledExecutorService executorService, AsyncResponseQueue responseQueue) {
-    triggerDelayedClose(executorService, responseQueue);
-    next();
-    responseQueue.push(
-        CompletableFuture.completedFuture(
-            ResultOrError.error(
-                EXCEPTION_MAPPER.toErrorResponse(
-                    new StatusCodeException(
-                        Status.REQUEST_TIMEOUT,
-                        "Streaming connection open for longer than allowed",
-                        "Connection will be closed.")))));
   }
 
   private void triggerDelayedClose(
@@ -318,13 +316,10 @@ public abstract class StreamingResponse<T> {
     }
 
     public void closeAll(AsyncResponseQueue responseQueue) {
-      System.out.println("!!! do nothing");
+      // Never called
     }
 
     public void close() {
-      System.out.println(
-          "CLOSE could be either from THREAD or FINALLY -> calls through to inputStreaming close"
-              + this.getClass());
       try {
         inputStream.close();
       } catch (IOException e) {
@@ -382,17 +377,10 @@ public abstract class StreamingResponse<T> {
 
     @Override
     protected void closeAll(AsyncResponseQueue responseQueue) {
-      System.out.println("THREAD EXECUTOR TRIGGERS" + this.getClass());
       streamingResponseInput.closingStarted = true;
       closingStarted = true;
-      System.out.println(
-          "THREAD EXECUTOR closeAll from thread executor call through to a sub close "
-              + this.getClass());
       close();
-      System.out.println(
-          "THREAD EXECUTOR closeAll from thread executor calling responsequeue.close");
       responseQueue.close();
-      System.out.println("THREAD EXECUTOR closeAll from thread executor after responsequeue.close");
       streamingResponseInput.closingFinished = true;
       closingFinished = true;
     }
@@ -420,9 +408,6 @@ public abstract class StreamingResponse<T> {
     }
 
     public void close() {
-      System.out.println(
-          "CLOSE could be from either THREAD or FINALLY ->  calls through to inputStreaming close"
-              + this.getClass());
       streamingResponseInput.close();
     }
   }
@@ -469,7 +454,6 @@ public abstract class StreamingResponse<T> {
                   unused -> {
                     try {
                       if (sinkClosed || sink.isClosed()) {
-                        System.out.println("closing sink " + this.getClass());
                         sinkClosed = true;
                         return null;
                       }
@@ -485,14 +469,10 @@ public abstract class StreamingResponse<T> {
     }
 
     private void close() {
-      System.out.println("CLOSE response queue from FINALLY or THREAD " + this.getClass());
       tail.whenComplete(
           (unused, throwable) -> {
             try {
               sinkClosed = true;
-              System.out.println(
-                  "*** actually closing tail from FINALLY or TRHEAD (Is an Async call)"
-                      + this.getClass());
               sink.close();
             } catch (IOException e) {
               log.error("Error when closing response channel.", e);

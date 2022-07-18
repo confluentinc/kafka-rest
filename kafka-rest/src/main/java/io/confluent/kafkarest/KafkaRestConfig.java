@@ -466,8 +466,11 @@ public class KafkaRestConfig extends RestConfig {
       "streaming.connection.max.duration.grace.period.ms";
   private static final String STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DOC =
       "How long after a streaming connection reaches its maximum duration outstanding "
-          + "requests will be processed for before the connection is closed.";
+          + "requests will be processed for before the connection is closed. "
+          + "Maximum value is 10 seconds.";
   private static final String STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DEFAULT = "500";
+  public static final ConfigDef.Range STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_VALIDATOR =
+      ConfigDef.Range.between(1, 10000);
 
   public static final String STREAMING_RESPONSE_QUEUE_THROTTLE_DEPTH =
       "streaming.response.queue.throttle.depth";
@@ -864,6 +867,7 @@ public class KafkaRestConfig extends RestConfig {
             STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS,
             Type.LONG,
             STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DEFAULT,
+            STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_VALIDATOR,
             Importance.LOW,
             STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DOC)
         .define(
