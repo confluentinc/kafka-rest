@@ -17,19 +17,28 @@ package io.confluent.kafkarest.response;
 
 import static java.util.Objects.requireNonNull;
 
-import com.fasterxml.jackson.databind.MappingIterator;
+import io.confluent.kafkarest.config.ConfigModule.StreamingMaxConnectionDurationConfig;
+import io.confluent.kafkarest.config.ConfigModule.StreamingMaxConnectionGracePeriod;
+import java.time.Duration;
 import javax.inject.Inject;
 
 public final class StreamingResponseFactory {
 
   private final ChunkedOutputFactory chunkedOutputFactory;
+  private final Duration maxDuration;
+  private final Duration gracePeriod;
 
   @Inject
-  public StreamingResponseFactory(ChunkedOutputFactory chunkedOutputFactory) {
+  public StreamingResponseFactory(
+      ChunkedOutputFactory chunkedOutputFactory,
+      @StreamingMaxConnectionDurationConfig Duration maxDuration,
+      @StreamingMaxConnectionGracePeriod Duration gracePeriod) {
     this.chunkedOutputFactory = requireNonNull(chunkedOutputFactory);
+    this.maxDuration = maxDuration;
+    this.gracePeriod = gracePeriod;
   }
 
-  public <T> StreamingResponse<T> from(MappingIterator<T> input) {
-    return StreamingResponse.from(input, chunkedOutputFactory);
+  public <T> StreamingResponse<T> from(JsonStream<T> inputStream) {
+    return StreamingResponse.from(inputStream, chunkedOutputFactory, maxDuration, gracePeriod);
   }
 }

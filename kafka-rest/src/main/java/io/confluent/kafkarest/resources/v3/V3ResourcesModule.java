@@ -15,11 +15,11 @@
 
 package io.confluent.kafkarest.resources.v3;
 
+import static java.util.Collections.emptyMap;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.config.ConfigModule.ProduceResponseThreadPoolSizeConfig;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
@@ -104,7 +104,7 @@ public final class V3ResourcesModule extends AbstractBinder {
 
     @Override
     public ProducerMetrics provide() {
-      return new ProducerMetrics(config.get(), Time.SYSTEM);
+      return new ProducerMetrics(config.get(), emptyMap());
     }
 
     @Override

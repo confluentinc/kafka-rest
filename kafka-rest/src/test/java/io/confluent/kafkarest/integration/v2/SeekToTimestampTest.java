@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.confluent.kafkarest.integration.v2;
 
 import io.confluent.kafkarest.Versions;
@@ -16,13 +31,13 @@ public class SeekToTimestampTest extends AbstractConsumerTest {
   private static final String TOPIC_NAME = "topic-1";
   private static final String CONSUMER_GROUP_ID = "consumer-group-1";
 
-  private final List<ProducerRecord<byte[], byte[]>> RECORDS_BEFORE_TIMESTAMP =
+  private static final List<ProducerRecord<byte[], byte[]>> RECORDS_BEFORE_TIMESTAMP =
       Arrays.asList(
           new ProducerRecord<>(TOPIC_NAME, "value-1".getBytes()),
           new ProducerRecord<>(TOPIC_NAME, "value-2".getBytes()),
           new ProducerRecord<>(TOPIC_NAME, "value-3".getBytes()));
 
-  private final List<ProducerRecord<byte[], byte[]>> RECORDS_AFTER_TIMESTAMP =
+  private static final List<ProducerRecord<byte[], byte[]>> RECORDS_AFTER_TIMESTAMP =
       Arrays.asList(
           new ProducerRecord<>(TOPIC_NAME, "value-4".getBytes()),
           new ProducerRecord<>(TOPIC_NAME, "value-5".getBytes()),
@@ -42,7 +57,11 @@ public class SeekToTimestampTest extends AbstractConsumerTest {
   public void testConsumeOnlyValues() throws Exception {
     String consumerUri =
         startConsumeMessages(
-            CONSUMER_GROUP_ID, TOPIC_NAME, /* format= */ null, Versions.KAFKA_V2_JSON_BINARY);
+            CONSUMER_GROUP_ID,
+            TOPIC_NAME,
+            /* format= */ null,
+            Versions.KAFKA_V2_JSON_BINARY,
+            "latest");
 
     produceBinaryMessages(RECORDS_BEFORE_TIMESTAMP);
 

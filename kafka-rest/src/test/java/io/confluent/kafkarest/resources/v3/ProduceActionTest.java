@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.confluent.kafkarest.resources.v3;
 
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_BYTES_PER_SECOND;
@@ -5,6 +20,7 @@ import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_MAX_REQUESTS_PER_SE
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS;
 import static io.confluent.kafkarest.KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED;
 import static io.confluent.kafkarest.KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG;
+import static java.util.Collections.emptyMap;
 import static org.easymock.EasyMock.anyBoolean;
 import static org.easymock.EasyMock.anyInt;
 import static org.easymock.EasyMock.anyObject;
@@ -20,7 +36,6 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.controllers.ProduceController;
 import io.confluent.kafkarest.controllers.RecordSerializer;
 import io.confluent.kafkarest.controllers.SchemaManager;
@@ -34,10 +49,12 @@ import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
 import io.confluent.kafkarest.ratelimit.RequestRateLimiter;
 import io.confluent.kafkarest.response.ChunkedOutputFactory;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
+import io.confluent.kafkarest.response.JsonStream;
 import io.confluent.kafkarest.response.StreamingResponse.ResultOrError;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -45,16 +62,39 @@ import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import javax.inject.Provider;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import org.apache.kafka.common.metrics.Metrics;
 import org.easymock.EasyMock;
+import org.eclipse.jetty.http.HttpStatus;
 import org.glassfish.jersey.server.ChunkedOutput;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
 public class ProduceActionTest {
 
+  private static final Duration FIVE_SECONDS_MS = Duration.ofMillis(5000);
+
+  @AfterAll
+  public static void cleanUp() {
+    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    // Need to unregister the produce metrics bean to avoid affecting the metrics tests
+    try {
+      mBeanServer.unregisterMBean(new ObjectName("kafka.rest:type=produce-api-metrics"));
+    } catch (MalformedObjectNameException
+        | InstanceNotFoundException
+        | MBeanRegistrationException e) {
+      e.printStackTrace();
+    }
+  }
+
   @Test
   public void produceNoSchemaRegistryDefined() throws Exception {
     // config
-    final int TOTAL_NUMBER_OF_PRODUCE_CALLS = 1;
+    final int totalNumberOfProduceCalls = 1;
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "100");
     properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(999999999));
@@ -65,7 +105,7 @@ public class ProduceActionTest {
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
-        getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS);
+        getChunkedOutput(chunkedOutputFactory, totalNumberOfProduceCalls);
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
@@ -112,7 +152,8 @@ public class ProduceActionTest {
     ErrorResponse err =
         ErrorResponse.create(
             422,
-            "Error: 42206 : Payload error. Schema Registry must be configured when using schemas.");
+            "Error: 42206 : Payload error. Schema Registry must be configured when using"
+                + " schemas.");
     ResultOrError resultOrErrorFail = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorFail);
@@ -122,7 +163,8 @@ public class ProduceActionTest {
 
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests);
+    produceAction.produce(
+        fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
 
     // check results
     EasyMock.verify(requests);
@@ -132,8 +174,8 @@ public class ProduceActionTest {
   @Test
   public void streamingRequests() throws Exception {
     // config
-    final int TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1 = 1;
-    final int TOTAL_NUMBER_OF_STREAMING_CALLS = 4;
+    final int totalNumberOfProduceCallsProd1 = 1;
+    final int totalNumberOfStreamingCalls = 4;
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, Integer.toString(10000));
     properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(999999999));
@@ -143,7 +185,7 @@ public class ProduceActionTest {
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
-        getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS_PROD1);
+        getChunkedOutput(chunkedOutputFactory, totalNumberOfProduceCallsProd1);
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
@@ -195,7 +237,7 @@ public class ProduceActionTest {
         getProduceAction(
             properties,
             chunkedOutputFactory,
-            TOTAL_NUMBER_OF_STREAMING_CALLS,
+            totalNumberOfStreamingCalls,
             countLimitProvider,
             bytesLimitProvider,
             countLimiterGlobalProvider,
@@ -228,7 +270,8 @@ public class ProduceActionTest {
 
     // run test
     FakeAsyncResponse fakeAsyncResponse1 = new FakeAsyncResponse();
-    produceAction1.produce(fakeAsyncResponse1, "clusterId", "topicName", requests);
+    produceAction1.produce(
+        fakeAsyncResponse1, "clusterId", "topicName", new JsonStream<>(() -> requests));
 
     // check results
     EasyMock.verify(requests);
@@ -238,7 +281,7 @@ public class ProduceActionTest {
   @Test
   public void produceWithByteLimit() throws Exception {
     // config
-    final int TOTAL_NUMBER_OF_PRODUCE_CALLS = 2;
+    final int totalNumberOfProduceCalls = 2;
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "100");
     properties.put(
@@ -249,7 +292,7 @@ public class ProduceActionTest {
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
-        getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS);
+        getChunkedOutput(chunkedOutputFactory, totalNumberOfProduceCalls);
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
@@ -297,7 +340,7 @@ public class ProduceActionTest {
             countLimiterGlobalProvider,
             bytesLimiterGlobalProvider);
     MappingIterator<ProduceRequest> requests =
-        getProduceRequestsMappingIterator(TOTAL_NUMBER_OF_PRODUCE_CALLS);
+        getProduceRequestsMappingIterator(totalNumberOfProduceCalls);
 
     // expected results
     ProduceResponse produceResponse = getProduceResponse(0);
@@ -309,7 +352,8 @@ public class ProduceActionTest {
     ErrorResponse err =
         ErrorResponse.create(
             429,
-            "Request rate limit exceeded: The rate limit of requests per second has been exceeded.");
+            "Request rate limit exceeded: "
+                + "The rate limit of requests per second has been exceeded.");
     ResultOrError resultOrErrorFail = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorFail); // failing second produce
@@ -319,9 +363,11 @@ public class ProduceActionTest {
 
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests);
+    produceAction.produce(
+        fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
     FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse2, "clusterId", "topicName", requests);
+    produceAction.produce(
+        fakeAsyncResponse2, "clusterId", "topicName", new JsonStream<>(() -> requests));
 
     // check results
     // check results
@@ -339,7 +385,7 @@ public class ProduceActionTest {
   @Test
   public void produceWithCountLimit() throws Exception {
     // config
-    final int TOTAL_NUMBER_OF_PRODUCE_CALLS = 2;
+    final int totalNumberOfProduceCalls = 2;
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "100");
     properties.put(
@@ -350,7 +396,7 @@ public class ProduceActionTest {
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
-        getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS);
+        getChunkedOutput(chunkedOutputFactory, totalNumberOfProduceCalls);
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
@@ -397,7 +443,7 @@ public class ProduceActionTest {
             countLimiterGlobalProvider,
             bytesLimiterGlobalProvider);
     MappingIterator<ProduceRequest> requests =
-        getProduceRequestsMappingIterator(TOTAL_NUMBER_OF_PRODUCE_CALLS);
+        getProduceRequestsMappingIterator(totalNumberOfProduceCalls);
 
     // expected results
     ProduceResponse produceResponse = getProduceResponse(0);
@@ -409,7 +455,8 @@ public class ProduceActionTest {
     ErrorResponse err =
         ErrorResponse.create(
             429,
-            "Request rate limit exceeded: The rate limit of requests per second has been exceeded.");
+            "Request rate limit exceeded: "
+                + "The rate limit of requests per second has been exceeded.");
     ResultOrError resultOrErrorFail = ResultOrError.error(err);
     expect(mockedChunkedOutput.isClosed()).andReturn(false);
     mockedChunkedOutput.write(resultOrErrorFail); // failing second produce
@@ -419,9 +466,11 @@ public class ProduceActionTest {
 
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests);
+    produceAction.produce(
+        fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
     FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse2, "clusterId", "topicName", requests);
+    produceAction.produce(
+        fakeAsyncResponse2, "clusterId", "topicName", new JsonStream<>(() -> requests));
 
     // check results
     verify(
@@ -438,7 +487,7 @@ public class ProduceActionTest {
   @Test
   public void produceNoLimit() throws Exception {
     // config
-    final int TOTAL_NUMBER_OF_PRODUCE_CALLS = 2;
+    final int totalNumberOfProduceCalls = 2;
     Properties properties = new Properties();
     properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "100");
     properties.put(
@@ -449,7 +498,7 @@ public class ProduceActionTest {
     // setup
     ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
     ChunkedOutput<ResultOrError> mockedChunkedOutput =
-        getChunkedOutput(chunkedOutputFactory, TOTAL_NUMBER_OF_PRODUCE_CALLS);
+        getChunkedOutput(chunkedOutputFactory, totalNumberOfProduceCalls);
 
     Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
     Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
@@ -480,7 +529,7 @@ public class ProduceActionTest {
             countLimiterGlobalProvider,
             bytesLimiterGlobalProvider);
     MappingIterator<ProduceRequest> requests =
-        getProduceRequestsMappingIterator(TOTAL_NUMBER_OF_PRODUCE_CALLS);
+        getProduceRequestsMappingIterator(totalNumberOfProduceCalls);
 
     // expected results
     ProduceResponse produceResponse = getProduceResponse(0);
@@ -500,9 +549,11 @@ public class ProduceActionTest {
 
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests);
+    produceAction.produce(
+        fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
     FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse2, "clusterId", "topicName", requests);
+    produceAction.produce(
+        fakeAsyncResponse2, "clusterId", "topicName", new JsonStream<>(() -> requests));
 
     // check results
     verify(
@@ -555,14 +606,13 @@ public class ProduceActionTest {
             bytesLimitProvider,
             countLimiterGlobalProvider,
             bytesLimiterGlobalProvider);
-    MappingIterator<ProduceRequest> requests = null;
 
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
 
     RestConstraintViolationException e =
         assertThrows(
             RestConstraintViolationException.class,
-            () -> produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests));
+            () -> produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", null));
     assertEquals("Payload error. Null input provided. Data is required.", e.getMessage());
     assertEquals(42206, e.getErrorCode());
   }
@@ -584,7 +634,8 @@ public class ProduceActionTest {
                   anyObject(), anyObject(), anyObject(), anyObject(), anyBoolean()))
           .andThrow(
               Errors.messageSerializationException(
-                  "Schema Registry not defined, no Schema Registry client available to deserialize message."))
+                  "Schema Registry not defined, "
+                      + "no Schema Registry client available to deserialize message."))
           .anyTimes();
     }
     replay(recordSerializerProvider, recordSerializer);
@@ -649,36 +700,6 @@ public class ProduceActionTest {
     return requests;
   }
 
-  private static MappingIterator<ProduceRequest>
-      getStreamingProduceRequestsMappingIteratorCombinations() throws IOException {
-    MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
-
-    ProduceRequest request = ProduceRequest.builder().setOriginalSize(25L).build();
-    expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue()).andReturn(request);
-
-    expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue()).andReturn(request);
-
-    expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue()).andReturn(request);
-
-    expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue()).andReturn(request);
-
-    expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue()).andReturn(request);
-
-    expect(requests.hasNext()).andReturn(true);
-    expect(requests.nextValue()).andReturn(request);
-
-    expect(requests.hasNext()).andReturn(false).times(1);
-    requests.close();
-    replay(requests);
-
-    return requests;
-  }
-
   private static ChunkedOutput<ResultOrError> getChunkedOutput(
       ChunkedOutputFactory chunkedOutputFactory, int times) {
     ChunkedOutput<ResultOrError> mockedChunkedOutput = mock(ChunkedOutput.class);
@@ -689,10 +710,6 @@ public class ProduceActionTest {
 
   private static ProduceResponse getProduceResponse(int offset) {
     return getProduceResponse(offset, Optional.empty());
-  }
-
-  private static ProduceResponse getProduceResponse(int offset, int partitionId) {
-    return getProduceResponse(offset, Optional.empty(), partitionId);
   }
 
   private static ProduceResponse getProduceResponse(int offset, Optional<Duration> waitFor) {
@@ -707,6 +724,7 @@ public class ProduceActionTest {
         .setPartitionId(partitionId)
         .setOffset(offset)
         .setTimestamp(Instant.ofEpochMilli(0))
+        .setErrorCode(HttpStatus.OK_200)
         .build();
   }
 
@@ -821,17 +839,20 @@ public class ProduceActionTest {
     replay(produceControllerProvider, produceController);
 
     StreamingResponseFactory streamingResponseFactory =
-        new StreamingResponseFactory(chunkedOutputFactory);
+        new StreamingResponseFactory(chunkedOutputFactory, FIVE_SECONDS_MS, FIVE_SECONDS_MS);
 
     // get the current thread so that the call counts can be seen by easy mock
     ExecutorService executorService = MoreExecutors.newDirectExecutorService();
+
+    KafkaRestConfig kafkaRestConfig = new KafkaRestConfig();
+    kafkaRestConfig.setMetrics(new Metrics());
 
     ProduceAction produceAction =
         new ProduceAction(
             schemaManagerProvider,
             recordSerializerProvider,
             produceControllerProvider,
-            () -> new ProducerMetrics(new KafkaRestConfig(), Time.SYSTEM),
+            () -> new ProducerMetrics(kafkaRestConfig, emptyMap()),
             streamingResponseFactory,
             produceRateLimiters,
             executorService);

@@ -12,6 +12,7 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+
 package io.confluent.kafkarest.integration;
 
 import io.confluent.kafkarest.Versions;
@@ -84,7 +85,7 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
   public void testConsumeWithKeys() {
     String instanceUri =
         startConsumeMessages(
-            groupName, topicName, EmbeddedFormat.JSON, Versions.KAFKA_V2_JSON_JSON);
+            groupName, topicName, EmbeddedFormat.JSON, Versions.KAFKA_V2_JSON_JSON, "earliest");
     produceJsonMessages(recordsWithKeys);
     consumeMessages(
         instanceUri,
@@ -101,7 +102,7 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
   public void testConsumeOnlyValues() {
     String instanceUri =
         startConsumeMessages(
-            groupName, topicName, EmbeddedFormat.JSON, Versions.KAFKA_V2_JSON_JSON);
+            groupName, topicName, EmbeddedFormat.JSON, Versions.KAFKA_V2_JSON_JSON, "earliest");
     produceJsonMessages(recordsOnlyValues);
     consumeMessages(
         instanceUri,
