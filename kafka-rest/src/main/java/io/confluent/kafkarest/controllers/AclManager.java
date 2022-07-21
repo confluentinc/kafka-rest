@@ -51,6 +51,9 @@ public interface AclManager {
       Operation operation,
       Permission permission);
 
+  /** Creates a collection of Kafka {@link Acl acls}. */
+  CompletableFuture<Void> createAcls(String clusterId, List<Acl> acls);
+
   /**
    * Deletes and returns the list of Kafka {@link Acl acls} belonging to the {@link
    * io.confluent.kafkarest.entities.Cluster} that match the given search criteria.

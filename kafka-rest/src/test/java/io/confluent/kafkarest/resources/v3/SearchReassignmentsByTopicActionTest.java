@@ -19,7 +19,7 @@ import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
 import static java.util.Arrays.asList;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.controllers.ReassignmentManager;
 import io.confluent.kafkarest.entities.Reassignment;
@@ -35,12 +35,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import javax.ws.rs.NotFoundException;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(EasyMockExtension.class)
 public class SearchReassignmentsByTopicActionTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -68,13 +69,11 @@ public class SearchReassignmentsByTopicActionTest {
       Reassignment.create(
           CLUSTER_ID, TOPIC_1, PARTITION_ID_3, ADDING_REPLICAS_3, REMOVING_REPLICAS_3);
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private ReassignmentManager reassignmentManager;
 
   private SearchReassignmentsByTopicAction listReassignmentsByTopicAction;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     listReassignmentsByTopicAction =
         new SearchReassignmentsByTopicAction(

@@ -41,10 +41,12 @@ import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
 import org.eclipse.jetty.server.Server;
-import org.junit.rules.ExternalResource;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
-/** An {@link ExternalResource} that runs a Schema Registry server. */
-public final class SchemaRegistryFixture extends ExternalResource {
+/** An extension that runs a Schema Registry server. */
+public final class SchemaRegistryFixture implements BeforeEachCallback, AfterEachCallback {
 
   @Nullable private final SslFixture certificates;
   private final ImmutableMap<String, String> clientConfigs;
@@ -78,7 +80,7 @@ public final class SchemaRegistryFixture extends ExternalResource {
   }
 
   @Override
-  public void before() throws Exception {
+  public void beforeEach(ExtensionContext extensionContext) throws Exception {
     checkState(server == null);
     server = new SchemaRegistryRestApplication(createConfigs()).createServer();
     server.start();
@@ -142,7 +144,7 @@ public final class SchemaRegistryFixture extends ExternalResource {
   }
 
   @Override
-  public void after() {
+  public void afterEach(ExtensionContext extensionContext) {
     if (server != null) {
       try {
         server.stop();

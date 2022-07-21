@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.integration.accesslist;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.extension.RestResourceExtension;
@@ -30,7 +30,7 @@ import javax.ws.rs.core.Configurable;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ResourceDiscoverabilityTest extends ClusterTestHarness {
 

@@ -17,8 +17,8 @@ package io.confluent.kafkarest.integration.v3;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
@@ -63,27 +63,26 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 // TODO ddimitrov This continues being way too flaky.
 //  Until we fix it (KREST-1542), we should ignore it, as it might be hiding even worse errors.
-@Ignore
-@RunWith(JUnit4.class)
+@Disabled
+@Tag("IntegrationTest")
 public class ProduceActionIntegrationTest {
 
   private static final String TOPIC_NAME = "topic-1";
   private static final String DEFAULT_KEY_SUBJECT = "topic-1-key";
   private static final String DEFAULT_VALUE_SUBJECT = "topic-1-value";
 
-  @Rule
+  @RegisterExtension
   public final DefaultKafkaRestTestEnvironment testEnv = new DefaultKafkaRestTestEnvironment();
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     testEnv.kafkaCluster().createTopic(TOPIC_NAME, 3, (short) 1);
   }
@@ -105,6 +104,7 @@ public class ProduceActionIntegrationTest {
                     .setFormat(EmbeddedFormat.BINARY)
                     .setData(BinaryNode.valueOf(value.toByteArray()))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -146,6 +146,7 @@ public class ProduceActionIntegrationTest {
                     .setFormat(EmbeddedFormat.BINARY)
                     .setData(NullNode.getInstance())
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -187,6 +188,7 @@ public class ProduceActionIntegrationTest {
                     .setFormat(EmbeddedFormat.BINARY)
                     .setData(TextNode.valueOf("fooba")) // invalid base64 string
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -220,6 +222,7 @@ public class ProduceActionIntegrationTest {
                     .setFormat(EmbeddedFormat.JSON)
                     .setData(TextNode.valueOf(value))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -263,6 +266,7 @@ public class ProduceActionIntegrationTest {
                     .setFormat(EmbeddedFormat.JSON)
                     .setData(NullNode.getInstance())
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -310,6 +314,7 @@ public class ProduceActionIntegrationTest {
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(TextNode.valueOf(value))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -353,6 +358,7 @@ public class ProduceActionIntegrationTest {
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(NullNode.getInstance())
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -396,6 +402,7 @@ public class ProduceActionIntegrationTest {
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(IntNode.valueOf(2))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -437,6 +444,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaId(valueSchema.getSchemaId())
                     .setData(TextNode.valueOf(value))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -488,6 +496,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaVersion(valueSchema.getSchemaVersion())
                     .setData(TextNode.valueOf(value))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -529,6 +538,7 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(ProduceRequestData.builder().setData(TextNode.valueOf(key)).build())
             .setValue(ProduceRequestData.builder().setData(TextNode.valueOf(value)).build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -576,6 +586,7 @@ public class ProduceActionIntegrationTest {
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(TextNode.valueOf(value))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -629,6 +640,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaId(valueSchema.getSchemaId())
                     .setData(TextNode.valueOf(value))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -682,6 +694,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaVersion(valueSchema.getSchemaVersion())
                     .setData(TextNode.valueOf(value))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -731,6 +744,7 @@ public class ProduceActionIntegrationTest {
                     .setSubject("my-value-subject")
                     .setData(TextNode.valueOf(value))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -786,6 +800,7 @@ public class ProduceActionIntegrationTest {
                     .setRawSchema(valueRawSchema)
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -852,6 +867,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaId(valueSchemaKey.getSchemaId())
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -917,6 +933,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaVersion(valueSchemaKey.getSchemaVersion())
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -980,6 +997,7 @@ public class ProduceActionIntegrationTest {
                     .setSubjectNameStrategy(EnumSubjectNameStrategy.TOPIC_NAME)
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1029,6 +1047,7 @@ public class ProduceActionIntegrationTest {
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1072,6 +1091,7 @@ public class ProduceActionIntegrationTest {
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(NullNode.getInstance())
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1115,6 +1135,7 @@ public class ProduceActionIntegrationTest {
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(IntNode.valueOf(2))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1156,6 +1177,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaId(valueSchema.getSchemaId())
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1207,6 +1229,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaVersion(valueSchema.getSchemaVersion())
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1248,6 +1271,7 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(ProduceRequestData.builder().setData(key).build())
             .setValue(ProduceRequestData.builder().setData(value).build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1295,6 +1319,7 @@ public class ProduceActionIntegrationTest {
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1348,6 +1373,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaId(valueSchema.getSchemaId())
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1401,6 +1427,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaVersion(valueSchema.getSchemaVersion())
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1443,6 +1470,7 @@ public class ProduceActionIntegrationTest {
             .setKey(ProduceRequestData.builder().setSubject("my-key-subject").setData(key).build())
             .setValue(
                 ProduceRequestData.builder().setSubject("my-value-subject").setData(value).build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1498,6 +1526,7 @@ public class ProduceActionIntegrationTest {
                     .setRawSchema(valueRawSchema)
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1559,6 +1588,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaId(valueSchemaKey.getSchemaId())
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1620,6 +1650,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaVersion(valueSchemaKey.getSchemaVersion())
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1679,6 +1710,7 @@ public class ProduceActionIntegrationTest {
                     .setSubjectNameStrategy(EnumSubjectNameStrategy.TOPIC_NAME)
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1730,6 +1762,7 @@ public class ProduceActionIntegrationTest {
                     .setRawSchema(valueSchema.canonicalString())
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1781,6 +1814,7 @@ public class ProduceActionIntegrationTest {
                     .setRawSchema(valueSchema.canonicalString())
                     .setData(NullNode.getInstance())
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1828,6 +1862,7 @@ public class ProduceActionIntegrationTest {
                     .setRawSchema(valueSchema.canonicalString())
                     .setData(IntNode.valueOf(2))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1870,6 +1905,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaId(valueSchemaKey.getSchemaId())
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1926,6 +1962,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaVersion(valueSchemaKey.getSchemaVersion())
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -1973,6 +2010,7 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(ProduceRequestData.builder().setData(key).build())
             .setValue(ProduceRequestData.builder().setData(value).build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -2030,6 +2068,7 @@ public class ProduceActionIntegrationTest {
                     .setRawSchema(valueSchema.canonicalString())
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -2089,6 +2128,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaId(valueSchemaKey.getSchemaId())
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -2148,6 +2188,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaVersion(valueSchemaKey.getSchemaVersion())
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -2197,6 +2238,7 @@ public class ProduceActionIntegrationTest {
         ProduceRequest.builder()
             .setKey(ProduceRequestData.builder().setSubject(keySubject).setData(key).build())
             .setValue(ProduceRequestData.builder().setSubject(valueSubject).setData(value).build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -2254,6 +2296,7 @@ public class ProduceActionIntegrationTest {
                     .setRawSchema(valueSchema.canonicalString())
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -2315,6 +2358,7 @@ public class ProduceActionIntegrationTest {
                     .setSchemaId(valueSchemaKey.getSchemaId())
                     .setData(value)
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -2364,6 +2408,7 @@ public class ProduceActionIntegrationTest {
                     .setFormat(EmbeddedFormat.BINARY)
                     .setData(BinaryNode.valueOf(value.toByteArray()))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -2409,6 +2454,7 @@ public class ProduceActionIntegrationTest {
                     .setData(BinaryNode.valueOf(value.toByteArray()))
                     .build())
             .setTimestamp(timestamp)
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -2458,6 +2504,7 @@ public class ProduceActionIntegrationTest {
                     .setFormat(EmbeddedFormat.BINARY)
                     .setData(BinaryNode.valueOf(value.toByteArray()))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -2511,6 +2558,7 @@ public class ProduceActionIntegrationTest {
                     .setRawSchema("{\"type\": \"string\"}")
                     .setData(TextNode.valueOf(value))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -2548,6 +2596,7 @@ public class ProduceActionIntegrationTest {
                     .setFormat(EmbeddedFormat.BINARY)
                     .setData(BinaryNode.valueOf(key.toByteArray()))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -2585,6 +2634,7 @@ public class ProduceActionIntegrationTest {
                     .setFormat(EmbeddedFormat.BINARY)
                     .setData(BinaryNode.valueOf(value.toByteArray()))
                     .build())
+            .setOriginalSize(0L)
             .build();
 
     Response response =
@@ -2614,7 +2664,7 @@ public class ProduceActionIntegrationTest {
   @Test
   public void produceNothing() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
-    ProduceRequest request = ProduceRequest.builder().build();
+    ProduceRequest request = ProduceRequest.builder().setOriginalSize(0L).build();
 
     Response response =
         testEnv
@@ -2657,6 +2707,7 @@ public class ProduceActionIntegrationTest {
                       .setFormat(EmbeddedFormat.JSON)
                       .setData(TextNode.valueOf("value-" + i))
                       .build())
+              .setOriginalSize(0L)
               .build());
     }
 
@@ -2726,6 +2777,7 @@ public class ProduceActionIntegrationTest {
                       .setFormat(EmbeddedFormat.BINARY)
                       .setData(IntNode.valueOf(2 * i + 1))
                       .build())
+              .setOriginalSize(0L)
               .build());
     }
 

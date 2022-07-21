@@ -25,8 +25,8 @@ import javax.ws.rs.core.GenericType;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ConsumerAvroTest extends AbstractConsumerTest {
 
@@ -75,7 +75,7 @@ public class ConsumerAvroTest extends AbstractConsumerTest {
     super(1, true);
   }
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();

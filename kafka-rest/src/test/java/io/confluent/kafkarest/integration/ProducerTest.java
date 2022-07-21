@@ -14,7 +14,7 @@
  */
 package io.confluent.kafkarest.integration;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
@@ -27,8 +27,8 @@ import java.util.List;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ProducerTest
     extends AbstractProducerTest<BinaryTopicProduceRequest, BinaryPartitionProduceRequest> {
@@ -101,7 +101,7 @@ public class ProducerTest
           new PartitionOffset(1, 1L, null, null),
           new PartitionOffset(2, 0L, null, null));
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -213,14 +213,14 @@ public class ProducerTest
 
     for (String version : versions) {
       Response response = request("/topics/" + topicName).post(Entity.entity(null, version));
-      assertEquals("Produces to topic failed using " + version, 422, response.getStatus());
+      assertEquals(422, response.getStatus(), "Produces to topic failed using " + version);
     }
 
     for (String version : versions) {
       Response response =
           request("/topics/" + topicName + " /partitions/0").post(Entity.entity(null, version));
       assertEquals(
-          "Produces to topic partition failed using " + version, 422, response.getStatus());
+          422, response.getStatus(), "Produces to topic partition failed using " + version);
     }
   }
 }

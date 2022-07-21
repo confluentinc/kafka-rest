@@ -16,8 +16,8 @@
 package io.confluent.kafkarest.integration.v3;
 
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.kafkarest.entities.ConfigSource;
 import io.confluent.kafkarest.entities.v3.ConfigSynonymData;
@@ -31,8 +31,8 @@ import java.util.List;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ListAllTopicsConfigsActionIntegrationTest extends ClusterTestHarness {
 
@@ -43,7 +43,7 @@ public class ListAllTopicsConfigsActionIntegrationTest extends ClusterTestHarnes
     super(/* numBrokers= */ 1, /* withSchemaRegistry= */ false);
   }
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -168,23 +168,23 @@ public class ListAllTopicsConfigsActionIntegrationTest extends ClusterTestHarnes
     ListTopicConfigsResponse responseBody = response.readEntity(ListTopicConfigsResponse.class);
     assertEquals(expectedMetadata, responseBody.getValue().getMetadata());
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedTopic1Config1),
-        responseBody.getValue().getData().contains(expectedTopic1Config1));
+        responseBody.getValue().getData().contains(expectedTopic1Config1),
+        String.format("Not true that `%s' contains `%s'.", responseBody, expectedTopic1Config1));
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedTopic1Config2),
-        responseBody.getValue().getData().contains(expectedTopic1Config2));
+        responseBody.getValue().getData().contains(expectedTopic1Config2),
+        String.format("Not true that `%s' contains `%s'.", responseBody, expectedTopic1Config2));
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedTopic1Config3),
-        responseBody.getValue().getData().contains(expectedTopic1Config3));
+        responseBody.getValue().getData().contains(expectedTopic1Config3),
+        String.format("Not true that `%s' contains `%s'.", responseBody, expectedTopic1Config3));
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedTopic2Config1),
-        responseBody.getValue().getData().contains(expectedTopic2Config1));
+        responseBody.getValue().getData().contains(expectedTopic2Config1),
+        String.format("Not true that `%s' contains `%s'.", responseBody, expectedTopic2Config1));
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedTopic2Config2),
-        responseBody.getValue().getData().contains(expectedTopic2Config2));
+        responseBody.getValue().getData().contains(expectedTopic2Config2),
+        String.format("Not true that `%s' contains `%s'.", responseBody, expectedTopic2Config2));
     assertTrue(
-        String.format("Not true that `%s' contains `%s'.", responseBody, expectedTopic2Config3),
-        responseBody.getValue().getData().contains(expectedTopic2Config3));
+        responseBody.getValue().getData().contains(expectedTopic2Config3),
+        String.format("Not true that `%s' contains `%s'.", responseBody, expectedTopic2Config3));
   }
 
   @Test

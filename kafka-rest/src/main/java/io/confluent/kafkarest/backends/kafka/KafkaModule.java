@@ -20,13 +20,10 @@ import static java.util.Objects.requireNonNull;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.ProducerMetrics;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.common.utils.Time;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -48,10 +45,6 @@ public final class KafkaModule extends AbstractBinder {
 
     bindFactory(ProducerFactory.class)
         .to(new TypeLiteral<Producer<byte[], byte[]>>() {})
-        .in(Singleton.class);
-
-    bindFactory(ProducerMetricsFactory.class, Singleton.class)
-        .to(ProducerMetrics.class)
         .in(Singleton.class);
   }
 
@@ -109,37 +102,6 @@ public final class KafkaModule extends AbstractBinder {
     @Override
     public void dispose(Producer<byte[], byte[]> producer) {
       producer.close();
-    }
-  }
-
-  private static final class ProducerMetricsFactory implements Factory<ProducerMetrics> {
-
-    private final Provider<KafkaRestContext> context;
-    private volatile ProducerMetrics producerMetrics;
-
-    @Inject
-    ProducerMetricsFactory(Provider<KafkaRestContext> context) {
-      this.context = requireNonNull(context);
-    }
-
-    @Override
-    public ProducerMetrics provide() {
-      ProducerMetrics localProducerMetrics = producerMetrics;
-      if (localProducerMetrics == null) {
-        synchronized (this) {
-          localProducerMetrics = producerMetrics;
-          if (localProducerMetrics == null) {
-            producerMetrics =
-                localProducerMetrics = new ProducerMetrics(context.get().getConfig(), Time.SYSTEM);
-          }
-        }
-      }
-      return localProducerMetrics;
-    }
-
-    @Override
-    public void dispose(ProducerMetrics producerMetrics) {
-      // the JVM will close JMX
     }
   }
 }

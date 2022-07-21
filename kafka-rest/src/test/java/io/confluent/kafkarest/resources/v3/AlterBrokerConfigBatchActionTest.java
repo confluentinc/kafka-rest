@@ -20,9 +20,9 @@ import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.kafkarest.controllers.BrokerConfigManager;
 import io.confluent.kafkarest.entities.AlterConfigCommand;
@@ -35,15 +35,13 @@ import io.confluent.kafkarest.entities.v3.AlterConfigBatchRequestData.AlterOpera
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import java.util.Arrays;
 import javax.ws.rs.NotFoundException;
-import org.easymock.EasyMockRule;
+import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(JUnit4.class)
+@ExtendWith(EasyMockExtension.class)
 public final class AlterBrokerConfigBatchActionTest {
 
   private static final String CLUSTER_ID = "cluster-1";
@@ -72,13 +70,11 @@ public final class AlterBrokerConfigBatchActionTest {
           ConfigSource.STATIC_BROKER_CONFIG,
           /* synonyms= */ emptyList());
 
-  @Rule public final EasyMockRule mocks = new EasyMockRule(this);
-
   @Mock private BrokerConfigManager brokerConfigManager;
 
   private AlterBrokerConfigBatchAction alterBrokerConfigBatchAction;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     alterBrokerConfigBatchAction = new AlterBrokerConfigBatchAction(() -> brokerConfigManager);
   }

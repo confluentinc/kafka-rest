@@ -92,9 +92,13 @@ public class DefaultKafkaRestContext implements KafkaRestContext {
 
   @Override
   public SchemaRegistryClient getSchemaRegistryClient() {
+    if (!config.isSchemaRegistryEnabled()) {
+      return null;
+    }
     if (schemaRegistryClient == null) {
       SchemaRegistryConfig schemaRegistryConfig =
           new SchemaRegistryConfig(config.getSchemaRegistryConfigs());
+
       List<String> schemaRegistryUrls =
           schemaRegistryConfig.getSchemaRegistryUrls().stream()
               .map(URI::create)

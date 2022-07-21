@@ -15,15 +15,12 @@
 
 package io.confluent.kafkarest.integration.accesslist;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Properties;
 import javax.ws.rs.core.Response.Status;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
-@RunWith(JUnit4.class)
 public class ResourceAllowlistTest extends ResourceAccesslistTestBase {
 
   @Override

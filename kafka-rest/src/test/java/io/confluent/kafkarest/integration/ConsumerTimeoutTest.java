@@ -19,8 +19,8 @@ import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.BinaryConsumerRecord;
 import java.util.List;
 import javax.ws.rs.core.GenericType;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ConsumerTimeoutTest extends AbstractConsumerTest {
 
@@ -37,7 +37,7 @@ public class ConsumerTimeoutTest extends AbstractConsumerTest {
   // (if we just missed the timer) + we need to allow for slack on top of this
   private static final Integer SLACK_TIME_MS = 2000;
 
-  @Before
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     restProperties.setProperty("consumer.request.timeout.ms", REQUEST_TIMEOUT_MS.toString());
