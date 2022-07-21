@@ -46,7 +46,7 @@ public final class SchemaKafkaConsumerState
     SchemaConverter.JsonNodeAndSize keyNode = schemaConverter.toJson(record.key());
     SchemaConverter.JsonNodeAndSize valueNode = schemaConverter.toJson(record.value());
     return new ConsumerRecordAndSize<>(
-        new io.confluent.kafkarest.entities.ConsumerRecord<>(
+        io.confluent.kafkarest.entities.ConsumerRecord.create(
             record.topic(),
             keyNode.getJson(),
             valueNode.getJson(),

@@ -41,13 +41,21 @@
     </fileSets>
     <dependencySets>
         <dependencySet>
-            <outputDirectory>share/java/kafka-rest</outputDirectory>
+            <outputDirectory>share/java/kafka-rest-lib</outputDirectory>
             <useProjectArtifact>true</useProjectArtifact>
             <useTransitiveFiltering>true</useTransitiveFiltering>
             <excludes>
                 <exclude>io.confluent:rest-utils</exclude>
-                <exclude>io.confluent:rest-utils-test</exclude>
+                <exclude>org.slf4j:slf4j-log4j12</exclude>
             </excludes>
+        </dependencySet>
+        <dependencySet>
+            <outputDirectory>share/java/kafka-rest-bin</outputDirectory>
+            <useProjectArtifact>false</useProjectArtifact>
+            <useTransitiveFiltering>true</useTransitiveFiltering>
+            <includes>
+                <include>org.slf4j:slf4j-log4j12</include>
+            </includes>
         </dependencySet>
     </dependencySets>
 </assembly>

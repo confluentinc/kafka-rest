@@ -15,49 +15,25 @@
 
 package io.confluent.kafkarest.entities.v3;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.auto.value.AutoValue;
 
-/**
- * Response body for {@code GET /v3/clusters/<clusterId>/topics/<topicName>/configs/<name>}
- * requests.
- */
-public final class GetTopicConfigResponse {
+@AutoValue
+public abstract class GetTopicConfigResponse {
 
-  private final TopicConfigData data;
-
-  public GetTopicConfigResponse(TopicConfigData data) {
-    this.data = Objects.requireNonNull(data);
+  GetTopicConfigResponse() {
   }
 
-  @JsonProperty("data")
-  public TopicConfigData getData() {
-    return data;
+  @JsonValue
+  public abstract TopicConfigData getValue();
+
+  public static GetTopicConfigResponse create(TopicConfigData value) {
+    return new AutoValue_GetTopicConfigResponse(value);
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    GetTopicConfigResponse that = (GetTopicConfigResponse) o;
-    return Objects.equals(data, that.data);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(data);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(
-        ", ", GetTopicConfigResponse.class.getSimpleName() + "[", "]")
-        .add("data=" + data)
-        .toString();
+  @JsonCreator
+  static GetTopicConfigResponse fromJson(TopicConfigData value) {
+    return create(value);
   }
 }

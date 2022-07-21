@@ -18,15 +18,17 @@ package io.confluent.kafkarest.controllers;
 import static io.confluent.kafkarest.controllers.Entities.checkEntityExists;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.Objects.requireNonNull;
 
+import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -46,8 +48,8 @@ final class TopicManagerImpl implements TopicManager {
 
   @Inject
   TopicManagerImpl(Admin adminClient, ClusterManager clusterManager) {
-    this.adminClient = Objects.requireNonNull(adminClient);
-    this.clusterManager = Objects.requireNonNull(clusterManager);
+    this.adminClient = requireNonNull(adminClient);
+    this.clusterManager = requireNonNull(clusterManager);
   }
 
   @Override
@@ -68,8 +70,27 @@ final class TopicManagerImpl implements TopicManager {
   }
 
   @Override
+  public CompletableFuture<List<Topic>> listLocalTopics() {
+    return clusterManager.getLocalCluster()
+        .thenCompose(
+            cluster ->
+                KafkaFutures.toCompletableFuture(adminClient.listTopics().listings())
+                    .thenCompose(
+                        topicListings -> {
+                          if (topicListings == null) {
+                            return CompletableFuture.completedFuture(emptyList());
+                          }
+                          return describeTopics(
+                              cluster.getClusterId(),
+                              topicListings.stream()
+                                  .map(TopicListing::name)
+                                  .collect(Collectors.toList()));
+                        }));
+  }
+
+  @Override
   public CompletableFuture<Optional<Topic>> getTopic(String clusterId, String topicName) {
-    Objects.requireNonNull(topicName);
+    requireNonNull(topicName);
 
     return clusterManager.getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
@@ -90,6 +111,25 @@ final class TopicManagerImpl implements TopicManager {
             });
   }
 
+  @Override
+  public CompletableFuture<Optional<Topic>> getLocalTopic(String topicName) {
+    requireNonNull(topicName);
+
+    return clusterManager.getLocalCluster()
+        .thenCompose(cluster -> describeTopics(cluster.getClusterId(), singletonList(topicName)))
+        .thenApply(
+            topics -> {
+              if (topics == null || topics.isEmpty()) {
+                return Optional.empty();
+              }
+              if (topics.size() > 1) {
+                throw new IllegalStateException(
+                    String.format("More than one topic exists with name %s.", topicName));
+              }
+              return Optional.of(topics.get(0));
+            });
+  }
+
   private CompletableFuture<List<Topic>> describeTopics(String clusterId, List<String> topicNames) {
     return KafkaFutures.toCompletableFuture(adminClient.describeTopics(topicNames).all())
         .thenApply(
@@ -100,7 +140,7 @@ final class TopicManagerImpl implements TopicManager {
   }
 
   private static Topic toTopic(String clusterId, TopicDescription topicDescription) {
-    return new Topic(
+    return Topic.create(
         clusterId,
         topicDescription.name(),
         topicDescription.partitions().stream()
@@ -116,28 +156,31 @@ final class TopicManagerImpl implements TopicManager {
     List<PartitionReplica> replicas = new ArrayList<>();
     for (Node replica : partitionInfo.replicas()) {
       replicas.add(
-          new PartitionReplica(
+          PartitionReplica.create(
               clusterId,
               topicName,
               partitionInfo.partition(),
               replica.id(),
-              partitionInfo.leader().equals(replica),
+              replica.equals(partitionInfo.leader()),
               inSyncReplicas.contains(replica)));
     }
-    return new Partition(clusterId, topicName, partitionInfo.partition(), replicas);
+    return Partition.create(clusterId, topicName, partitionInfo.partition(), replicas);
   }
 
   @Override
   public CompletableFuture<Void> createTopic(
       String clusterId,
       String topicName,
-      int partitionsCount,
-      short replicationFactor,
-      Map<String, String> configs) {
-    Objects.requireNonNull(topicName);
+      Optional<Integer> partitionsCount,
+      Optional<Short> replicationFactor,
+      Map<String, Optional<String>> configs) {
+    requireNonNull(topicName);
+
+    Map<String, String> nullableConfigs = new HashMap<>();
+    configs.forEach((key, value) -> nullableConfigs.put(key, value.orElse(null)));
 
     NewTopic createTopicRequest =
-        new NewTopic(topicName, partitionsCount, replicationFactor).configs(configs);
+        new NewTopic(topicName, partitionsCount, replicationFactor).configs(nullableConfigs);
 
     return clusterManager.getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
@@ -149,7 +192,7 @@ final class TopicManagerImpl implements TopicManager {
 
   @Override
   public CompletableFuture<Void> deleteTopic(String clusterId, String topicName) {
-    Objects.requireNonNull(topicName);
+    requireNonNull(topicName);
 
     return clusterManager.getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))

@@ -15,104 +15,83 @@
 
 package io.confluent.kafkarest.resources.v2;
 
+import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
 import static io.confluent.kafkarest.TestUtils.assertErrorResponse;
 import static io.confluent.kafkarest.TestUtils.assertOKResponse;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
 
-import io.confluent.kafkarest.AdminClientWrapper;
-import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.controllers.BrokerManager;
+import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.v2.BrokerList;
 import io.confluent.rest.EmbeddedServerTestHarness;
 import io.confluent.rest.RestConfigException;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Properties;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.DescribeClusterResult;
-import org.apache.kafka.common.Node;
 import org.apache.kafka.common.errors.SaslAuthenticationException;
-import org.apache.kafka.common.internals.KafkaFutureImpl;
 import org.apache.kafka.common.protocol.Errors;
-import org.easymock.EasyMock;
+import org.easymock.EasyMockRule;
+import org.easymock.Mock;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 public class BrokersResourceTest
     extends EmbeddedServerTestHarness<KafkaRestConfig, KafkaRestApplication> {
 
-  private AdminClient adminClient;
-  private ProducerPool producerPool;
-  private DefaultKafkaRestContext ctx;
+  private static final String CLUSTER_ID = "cluster-1";
+  private static final Broker BROKER_1 = Broker.create(CLUSTER_ID, 1, "host1", 1, /* rack= */ null);
+  private static final Broker BROKER_2 = Broker.create(CLUSTER_ID, 2, "host2", 2, /* rack= */ null);
+  private static final Broker BROKER_3 = Broker.create(CLUSTER_ID, 3, "host3", 3, /* rack= */ null);
+
+  @Rule
+  public final EasyMockRule mocks = new EasyMockRule(this);
+
+  @Mock
+  private BrokerManager brokerManager;
 
   public BrokersResourceTest() throws RestConfigException {
-    adminClient = EasyMock.createMock(AdminClient.class);
-    AdminClientWrapper adminClientWrapper = new AdminClientWrapper(new KafkaRestConfig(new Properties()), adminClient);
-    producerPool = EasyMock.createMock(ProducerPool.class);
-    ctx = new DefaultKafkaRestContext(config,
-        producerPool,
-        null,
-        adminClientWrapper,
-        null
-    );
-    addResource(new BrokersResource(ctx));
+    super();
   }
 
   @Before
   public void setUp() throws Exception {
+    addResource(new BrokersResource(() -> brokerManager));
     super.setUp();
-    EasyMock.reset(adminClient, producerPool);
   }
 
   @Test
   public void testList() {
-    final Collection<Node> nodes = Arrays.asList(new Node(1, "host1", 1),
-        new Node(2, "host2", 2),
-        new Node(3, "host3", 3));
-    DescribeClusterResult describeClusterResult = EasyMock.createMock(DescribeClusterResult.class);
-
-    KafkaFutureImpl<Collection<Node>> nodesFuture = new KafkaFutureImpl<>();
-    nodesFuture.complete(nodes);
-    EasyMock.expect(describeClusterResult.nodes()).andReturn(nodesFuture);
-    EasyMock.expect(adminClient.describeCluster()).andReturn(describeClusterResult);
-
-    EasyMock.replay(describeClusterResult);
-    EasyMock.replay(adminClient);
+    expect(brokerManager.listLocalBrokers())
+        .andReturn(completedFuture(Arrays.asList(BROKER_1, BROKER_2, BROKER_3)));
+    replay(brokerManager);
 
     Response response = request("/brokers", Versions.KAFKA_V2_JSON).get();
     assertOKResponse(response, Versions.KAFKA_V2_JSON);
     final BrokerList returnedBrokerIds = TestUtils.tryReadEntityOrLog(response, new GenericType<BrokerList>() {
     });
     assertEquals(Arrays.asList(1, 2, 3), returnedBrokerIds.getBrokers());
-    EasyMock.verify(adminClient);
-    EasyMock.reset(adminClient, producerPool);
   }
 
   @Test
   public void testAuthenticationError() {
-    DescribeClusterResult describeClusterResult = EasyMock.createMock(DescribeClusterResult.class);
-
-    KafkaFutureImpl<Collection<Node>> nodes = new KafkaFutureImpl<>();
-    nodes.completeExceptionally(new SaslAuthenticationException(Errors.SASL_AUTHENTICATION_FAILED.message()));
-    EasyMock.expect(describeClusterResult.nodes()).andReturn(nodes);
-    EasyMock.expect(adminClient.describeCluster()).andReturn(describeClusterResult);
-
-    EasyMock.replay(describeClusterResult);
-    EasyMock.replay(adminClient);
+    expect(brokerManager.listLocalBrokers())
+        .andReturn(
+            failedFuture(
+                new SaslAuthenticationException(Errors.SASL_AUTHENTICATION_FAILED.message())));
+    replay(brokerManager);
 
     Response response = request("/brokers", Versions.KAFKA_V2_JSON).get();
     assertErrorResponse(Response.Status.UNAUTHORIZED, response,
         io.confluent.kafkarest.Errors.KAFKA_AUTHENTICATION_ERROR_CODE,
         Errors.SASL_AUTHENTICATION_FAILED.message(),
         Versions.KAFKA_V2_JSON);
-
-    EasyMock.verify(adminClient);
-    EasyMock.reset(adminClient, producerPool);
   }
 }

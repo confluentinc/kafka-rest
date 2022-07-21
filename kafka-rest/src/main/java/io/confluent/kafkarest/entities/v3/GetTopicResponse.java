@@ -15,47 +15,25 @@
 
 package io.confluent.kafkarest.entities.v3;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.auto.value.AutoValue;
 
-/**
- * Response body for {@code GET /v3/clusters/<clusterId>/topics/<topicName>} requests.
- */
-public final class GetTopicResponse {
+@AutoValue
+public abstract class GetTopicResponse {
 
-  private final TopicData data;
-
-  public GetTopicResponse(TopicData data) {
-    this.data = Objects.requireNonNull(data);
+  GetTopicResponse() {
   }
 
-  @JsonProperty("data")
-  public TopicData getData() {
-    return data;
+  @JsonValue
+  public abstract TopicData getValue();
+
+  public static GetTopicResponse create(TopicData value) {
+    return new AutoValue_GetTopicResponse(value);
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    GetTopicResponse that = (GetTopicResponse) o;
-    return Objects.equals(data, that.data);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(data);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", GetTopicResponse.class.getSimpleName() + "[", "]")
-        .add("data=" + data)
-        .toString();
+  @JsonCreator
+  static GetTopicResponse fromJson(TopicData value) {
+    return create(value);
   }
 }

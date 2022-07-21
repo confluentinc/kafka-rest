@@ -181,7 +181,7 @@ public final class ConsumersResource {
   @GET
   @Path("/{group}/instances/{instance}/records")
   @PerformanceMetric("consumer.records.read-json+v2")
-  @Produces({Versions.KAFKA_V2_JSON_JSON_WEIGHTED})
+  @Produces({Versions.KAFKA_V2_JSON_JSON_WEIGHTED_LOW})
   // Using low weight ensures binary is default
   public void readRecordJson(
       final @Suspended AsyncResponse asyncResponse,
@@ -203,7 +203,7 @@ public final class ConsumersResource {
   @GET
   @Path("/{group}/instances/{instance}/records")
   @PerformanceMetric("consumer.records.read-avro+v2")
-  @Produces({Versions.KAFKA_V2_JSON_AVRO_WEIGHTED})
+  @Produces({Versions.KAFKA_V2_JSON_AVRO_WEIGHTED_LOW})
   // Using low weight ensures binary is default
   public void readRecordAvro(
       final @Suspended AsyncResponse asyncResponse,
@@ -225,7 +225,7 @@ public final class ConsumersResource {
   @GET
   @Path("/{group}/instances/{instance}/records")
   @PerformanceMetric("consumer.records.read-jsonschema+v2")
-  @Produces({Versions.KAFKA_V2_JSON_JSON_SCHEMA_WEIGHTED})
+  @Produces({Versions.KAFKA_V2_JSON_JSON_SCHEMA_WEIGHTED_LOW})
   // Using low weight ensures binary is default
   public void readRecordJsonSchema(
       final @Suspended AsyncResponse asyncResponse,
@@ -247,7 +247,7 @@ public final class ConsumersResource {
   @GET
   @Path("/{group}/instances/{instance}/records")
   @PerformanceMetric("consumer.records.read-protobuf+v2")
-  @Produces({Versions.KAFKA_V2_JSON_PROTOBUF_WEIGHTED})
+  @Produces({Versions.KAFKA_V2_JSON_PROTOBUF_WEIGHTED_LOW})
   // Using low weight ensures binary is default
   public void readRecordProtobuf(
       final @Suspended AsyncResponse asyncResponse,

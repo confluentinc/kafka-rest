@@ -23,8 +23,8 @@ import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.kafkarest.entities.v1.PartitionOffset;
-import io.confluent.kafkarest.entities.v1.ProduceResponse;
+import io.confluent.kafkarest.entities.v2.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.ProduceResponse;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +64,7 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
   ) {
     Response response = request("/topics/" + topicName, queryParams)
         .post(Entity.entity(request, getEmbeddedContentType()));
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+    assertOKResponse(response, Versions.KAFKA_V2_JSON);
     final ProduceResponse produceResponse =
         TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
     if (matchPartitions) {
@@ -101,7 +101,7 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
   ) {
     Response response = request("/topics/" + topicName + "/partitions/0", queryParams)
         .post(Entity.entity(request, getEmbeddedContentType()));
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+    assertOKResponse(response, Versions.KAFKA_V2_JSON);
     final ProduceResponse poffsetResponse
         = TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
     assertEquals(offsetResponse, poffsetResponse.getOffsets());
@@ -120,8 +120,8 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
       Map<String, String> queryParams
   ) {
     Response response = request("/topics/" + topicName, queryParams)
-        .post(Entity.entity(request, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        .post(Entity.entity(request, Versions.KAFKA_V2_JSON_BINARY));
+    assertOKResponse(response, Versions.KAFKA_V2_JSON);
     final ProduceResponse produceResponse =
         TestUtils.tryReadEntityOrLog(response, ProduceResponse.class);
     for (PartitionOffset pOffset : produceResponse.getOffsets()) {
@@ -139,7 +139,7 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
       Map<String, String> queryParams
   ) {
     Response response = request("/topics/" + topicName, queryParams)
-        .post(Entity.entity(request, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
+        .post(Entity.entity(request, Versions.KAFKA_V2_JSON_BINARY));
 
     assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response.getStatus());
     final ProduceResponse produceResponse =
@@ -150,6 +150,6 @@ public class AbstractProducerTest<TopicRequestT, PartitionRequestT> extends Clus
   }
 
   protected String getEmbeddedContentType() {
-    return Versions.KAFKA_MOST_SPECIFIC_DEFAULT;
+    return Versions.KAFKA_V2_JSON_BINARY;
   }
 }

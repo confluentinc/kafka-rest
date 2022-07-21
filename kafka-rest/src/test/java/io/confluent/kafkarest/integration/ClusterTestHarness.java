@@ -24,7 +24,6 @@ import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafka.serializers.KafkaJsonSerializer;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.ScalaConsumersContext;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -35,6 +34,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
@@ -52,14 +52,17 @@ import kafka.zk.KafkaZkClient;
 import kafka.zookeeper.ZooKeeperClient;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.AlterPartitionReassignmentsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
+import org.apache.kafka.clients.admin.NewPartitionReassignment;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Node;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -70,7 +73,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.experimental.categories.Category;
 import scala.Option;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 /**
  * Test harness to run against a real, local Kafka cluster and REST proxy. This is essentially
@@ -93,8 +96,9 @@ public abstract class ClusterTestHarness {
         sockets[i] = new ServerSocket(0);
         ports[i] = sockets[i].getLocalPort();
       }
-      for (int i = 0; i < count; i++)
+      for (int i = 0; i < count; i++) {
         sockets[i].close();
+      }
       return ports;
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -165,8 +169,9 @@ public abstract class ClusterTestHarness {
     zkConnect = String.format("127.0.0.1:%d", zookeeper.port());
     Time time = Time.SYSTEM;
     zkClient = new KafkaZkClient(
-        new ZooKeeperClient(zkConnect, zkSessionTimeout, zkConnectionTimeout, Integer.MAX_VALUE, time,
-                "testMetricGroup", "testMetricGroupType"),
+        new ZooKeeperClient(zkConnect, zkSessionTimeout, zkConnectionTimeout, Integer.MAX_VALUE,
+            time,
+            "testMetricGroup", "testMetricGroupType"),
         JaasUtils.isZkSaslEnabled(),
         time);
 
@@ -185,25 +190,25 @@ public abstract class ClusterTestHarness {
     }
 
     brokerList =
-        TestUtils.getBrokerListStrFromServers(JavaConversions.asScalaBuffer(servers),
-                                              getBrokerSecurityProtocol());
+        TestUtils.getBrokerListStrFromServers(JavaConverters.asScalaBuffer(servers),
+            getBrokerSecurityProtocol());
     plaintextBrokerList =
-        TestUtils.getBrokerListStrFromServers(JavaConversions.asScalaBuffer(servers),
+        TestUtils.getBrokerListStrFromServers(JavaConverters.asScalaBuffer(servers),
             SecurityProtocol.PLAINTEXT);
 
     setupAcls();
     if (withSchemaRegistry) {
       int schemaRegPort = choosePort();
       schemaRegProperties.put(SchemaRegistryConfig.PORT_CONFIG,
-                              ((Integer) schemaRegPort).toString());
+          ((Integer) schemaRegPort).toString());
       schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG,
-                              zkConnect);
+          zkConnect);
       schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG,
-                              SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC);
+          SchemaRegistryConfig.DEFAULT_KAFKASTORE_TOPIC);
       schemaRegProperties.put(SchemaRegistryConfig.COMPATIBILITY_CONFIG,
-                              schemaRegCompatibility);
-      String broker = SecurityProtocol.PLAINTEXT.name+"://"+TestUtils
-          .getBrokerListStrFromServers(JavaConversions.asScalaBuffer
+          schemaRegCompatibility);
+      String broker = SecurityProtocol.PLAINTEXT.name + "://" + TestUtils
+          .getBrokerListStrFromServers(JavaConverters.asScalaBuffer
               (servers), SecurityProtocol.PLAINTEXT);
       schemaRegProperties.put(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, broker);
       schemaRegConnect = String.format("http://localhost:%d", schemaRegPort);
@@ -218,20 +223,18 @@ public abstract class ClusterTestHarness {
 
     int restPort = choosePort();
     restProperties.put(KafkaRestConfig.PORT_CONFIG, ((Integer) restPort).toString());
-    restProperties.put(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG, zkConnect);
+    restProperties.put(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     overrideKafkaRestConfigs(restProperties);
     if (withSchemaRegistry) {
       restProperties.put(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegConnect);
     }
     restConnect = getRestConnectString(restPort);
-    restProperties.put("listeners",restConnect);
+    restProperties.put("listeners", restConnect);
 
     restConfig = new KafkaRestConfig(restProperties);
-    restApp = new TestKafkaRestApplication(restConfig,
-        getProducerPool(restConfig),
-        null,
-        null,
-        getScalaConsumersContext(restConfig));
+    restApp =
+        new TestKafkaRestApplication(
+            restConfig, getProducerPool(restConfig), /* kafkaConsumerManager= */ null);
     restServer = restApp.createServer();
     restServer.start();
   }
@@ -239,7 +242,7 @@ public abstract class ClusterTestHarness {
   protected void setupAcls() {
   }
 
-  protected SecurityProtocol getBrokerSecurityProtocol(){
+  protected SecurityProtocol getBrokerSecurityProtocol() {
     return SecurityProtocol.PLAINTEXT;
   }
 
@@ -253,7 +256,8 @@ public abstract class ClusterTestHarness {
 
   protected Properties getBrokerProperties(int i) {
     final Option<File> noFile = Option.apply(null);
-    final Option<SecurityProtocol> noInterBrokerSecurityProtocol = Option.apply(null);
+    final Option<SecurityProtocol> noInterBrokerSecurityProtocol =
+        Option.apply(getBrokerSecurityProtocol());
     Properties props = TestUtils.createBrokerConfig(
         i, zkConnect, false, false, TestUtils.RandomPort(), noInterBrokerSecurityProtocol,
         noFile, Option.<Properties>empty(), true, false, TestUtils.RandomPort(), false,
@@ -267,10 +271,6 @@ public abstract class ClusterTestHarness {
   }
 
   protected ProducerPool getProducerPool(KafkaRestConfig appConfig) {
-    return null;
-  }
-
-  protected ScalaConsumersContext getScalaConsumersContext(KafkaRestConfig appConfig) {
     return null;
   }
 
@@ -310,7 +310,7 @@ public abstract class ClusterTestHarness {
   }
 
   protected Invocation.Builder request(String path, String templateName, Object templateValue,
-                                       Map<String, String> queryParams) {
+      Map<String, String> queryParams) {
 
     Client client = getClient();
     // Only configure base application here because as a client we shouldn't need the resources
@@ -344,7 +344,7 @@ public abstract class ClusterTestHarness {
   }
 
   protected final String getClusterId() {
-    Properties properties = new Properties();
+    Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     AdminClient adminClient = AdminClient.create(properties);
 
@@ -356,7 +356,7 @@ public abstract class ClusterTestHarness {
   }
 
   protected final int getControllerID() {
-    Properties properties = new Properties();
+    Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     AdminClient adminClient = AdminClient.create(properties);
 
@@ -368,7 +368,7 @@ public abstract class ClusterTestHarness {
   }
 
   protected final ArrayList<Node> getBrokers() {
-    Properties properties = new Properties();
+    Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     AdminClient adminClient = AdminClient.create(properties);
 
@@ -380,7 +380,7 @@ public abstract class ClusterTestHarness {
   }
 
   protected final Set<String> getTopicNames() {
-    Properties properties = new Properties();
+    Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     AdminClient adminClient = AdminClient.create(properties);
 
@@ -394,7 +394,7 @@ public abstract class ClusterTestHarness {
   }
 
   protected final void createTopic(String topicName, int numPartitions, short replicationFactor) {
-    Properties properties = new Properties();
+    Properties properties = restConfig.getAdminProperties();
     properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     AdminClient adminClient = AdminClient.create(properties);
 
@@ -408,6 +408,32 @@ public abstract class ClusterTestHarness {
     } catch (InterruptedException | ExecutionException e) {
       Assert.fail(String.format("Failed to create topic: %s", e.getMessage()));
     }
+  }
+
+  protected final void createTopic(
+      String topicName, Map<Integer, List<Integer>> replicasAssignments) {
+    Properties properties = restConfig.getAdminProperties();
+    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    AdminClient adminClient = AdminClient.create(properties);
+
+    CreateTopicsResult result =
+        adminClient.createTopics(
+            Collections.singletonList(new NewTopic(topicName, replicasAssignments)));
+
+    try {
+      result.all().get();
+    } catch (InterruptedException | ExecutionException e) {
+      Assert.fail(String.format("Failed to create topic: %s", e.getMessage()));
+    }
+  }
+
+  protected final void alterPartitionReassignment(Map<TopicPartition,
+      Optional<NewPartitionReassignment>> reassignments) {
+    Properties properties = restConfig.getAdminProperties();
+    properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+    AdminClient adminClient = AdminClient.create(properties);
+
+    adminClient.alterPartitionReassignments(reassignments);
   }
 
   protected final void produceAvroMessages(List<ProducerRecord<Object, Object>> records) {
@@ -468,5 +494,24 @@ public abstract class ClusterTestHarness {
       }
     }
     producer.close();
+  }
+
+  protected Map<Integer, List<Integer>> createAssignment(
+      List<Integer> replicaIds, int numReplicas) {
+    Map<Integer, List<Integer>> replicaAssignments = new HashMap<>();
+    for (int i = 0; i < numReplicas; i++) {
+      replicaAssignments.put(i, replicaIds);
+    }
+    return replicaAssignments;
+  }
+
+  protected Map<TopicPartition, Optional<NewPartitionReassignment>> createReassignment(
+      List<Integer> replicaIds, String topicName, int numReplicas) {
+    Map<TopicPartition, Optional<NewPartitionReassignment>> reassignmentMap = new HashMap<>();
+    for (int i = 0; i < numReplicas; i++) {
+      reassignmentMap.put(new TopicPartition(topicName, i),
+          Optional.of(new NewPartitionReassignment(replicaIds)));
+    }
+    return reassignmentMap;
   }
 }

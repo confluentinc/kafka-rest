@@ -84,7 +84,8 @@ fi
 %files
 %defattr(-,root,root)
 /usr/bin/*
-/usr/share/java/kafka-rest
+/usr/share/java/kafka-rest-bin
+/usr/share/java/kafka-rest-lib
 /lib/systemd/system/
 
 %doc

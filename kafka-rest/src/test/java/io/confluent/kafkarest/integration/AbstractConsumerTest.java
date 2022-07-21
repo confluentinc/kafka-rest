@@ -22,18 +22,18 @@ import static org.junit.Assert.assertTrue;
 
 import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.ScalaConsumersContext;
 import io.confluent.kafkarest.TestUtils;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
-import io.confluent.kafkarest.entities.v1.BinaryConsumerRecord;
-import io.confluent.kafkarest.entities.v1.CommitOffsetsResponse;
-import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceRequest;
-import io.confluent.kafkarest.entities.v1.CreateConsumerInstanceResponse;
+import io.confluent.kafkarest.entities.v2.BinaryConsumerRecord;
+import io.confluent.kafkarest.entities.v2.CommitOffsetsResponse;
+import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
+import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
+import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +43,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.junit.Assert;
 
 public class AbstractConsumerTest extends ClusterTestHarness {
 
@@ -51,11 +52,6 @@ public class AbstractConsumerTest extends ClusterTestHarness {
 
   public AbstractConsumerTest(int numBrokers, boolean withSchemaRegistry) {
     super(numBrokers, withSchemaRegistry);
-  }
-
-  @Override
-  protected ScalaConsumersContext getScalaConsumersContext(KafkaRestConfig appConfig) {
-    return new ScalaConsumersContext(appConfig);
   }
 
   protected Response createConsumerInstance(String groupName, String id,
@@ -73,7 +69,7 @@ public class AbstractConsumerTest extends ClusterTestHarness {
               /* requestWaitMs= */ null);
     }
     return request("/consumers/" + groupName)
-        .post(Entity.entity(config, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
+        .post(Entity.entity(config, Versions.KAFKA_V2_JSON));
   }
 
   protected String consumerNameFromInstanceUrl(String url) {
@@ -85,13 +81,6 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     }
   }
 
-  // Need to start consuming before producing since consumer is instantiated internally and
-  // starts at latest offset
-  protected String startConsumeMessages(String groupName, String topic, EmbeddedFormat format,
-                                        String expectedMediatype) {
-    return startConsumeMessages(groupName, topic, format, expectedMediatype, false);
-  }
-
   /**
    * Start a new consumer instance and start consuming messages. This expects that you have not
    * produced any data so the initial read request will timeout.
@@ -101,14 +90,12 @@ public class AbstractConsumerTest extends ClusterTestHarness {
    * @param format            embedded format to use. If null, an null ConsumerInstanceConfig is
    *                          sent, resulting in default settings
    * @param expectedMediatype expected Content-Type of response
-   * @param expectFailure     if true, expect the initial read request to generate a 404
    * @return the new consumer instance's base URI
    */
   protected String startConsumeMessages(String groupName, String topic, EmbeddedFormat format,
-                                        String expectedMediatype,
-                                        boolean expectFailure) {
+                                        String expectedMediatype) {
     Response createResponse = createConsumerInstance(groupName, null, null, format);
-    assertOKResponse(createResponse, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+    assertOKResponse(createResponse, Versions.KAFKA_V2_JSON);
 
     CreateConsumerInstanceResponse instanceResponse =
             TestUtils.tryReadEntityOrLog(createResponse, CreateConsumerInstanceResponse.class);
@@ -117,21 +104,22 @@ public class AbstractConsumerTest extends ClusterTestHarness {
     assertTrue("Base URI should contain the consumer instance ID",
                instanceResponse.getBaseUri().contains(instanceResponse.getInstanceId()));
 
+    ConsumerSubscriptionRecord subscribeRequest =
+        new ConsumerSubscriptionRecord(Collections.singletonList(topic), /* topicPattern= */ null);
+    Response subscribeResponse =
+        request(instanceResponse.getBaseUri() + "/subscription")
+            .accept(Versions.KAFKA_V2_JSON)
+            .post(Entity.entity(subscribeRequest, Versions.KAFKA_V2_JSON));
+    Assert.assertEquals(Response.Status.NO_CONTENT.getStatusCode(), subscribeResponse.getStatus());
+
     // Start consuming. Since production hasn't started yet, this is expected to timeout.
-    Response response = request(instanceResponse.getBaseUri() + "/topics/" + topic)
-        .accept(expectedMediatype).get();
-    if (expectFailure) {
-      assertErrorResponse(Response.Status.NOT_FOUND, response,
-                          Errors.TOPIC_NOT_FOUND_ERROR_CODE,
-                          Errors.TOPIC_NOT_FOUND_MESSAGE,
-                          expectedMediatype);
-    } else {
-      assertOKResponse(response, expectedMediatype);
-      List<BinaryConsumerRecord> consumed = TestUtils.tryReadEntityOrLog(response, 
-          new GenericType<List<BinaryConsumerRecord>>() {
-          });
-      assertEquals(0, consumed.size());
-    }
+    Response response = request(instanceResponse.getBaseUri() + "/records").accept(expectedMediatype).get();
+
+    assertOKResponse(response, expectedMediatype);
+    List<BinaryConsumerRecord> consumed = TestUtils.tryReadEntityOrLog(response,
+        new GenericType<List<BinaryConsumerRecord>>() {
+        });
+    assertEquals(0, consumed.size());
 
     return instanceResponse.getBaseUri();
   }
@@ -179,42 +167,13 @@ public class AbstractConsumerTest extends ClusterTestHarness {
   }
 
   protected <KafkaK, KafkaV, ClientK, ClientV, RecordType>
-  void simpleConsumeMessages(
-      String topicName,
-      int offset,
-      Integer count,
-      List<ProducerRecord<KafkaK, KafkaV>> records,
-      String accept,
-      String responseMediatype,
-      GenericType<List<RecordType>> responseEntityType,
-      Converter converter,
-      Function<RecordType, ConsumerRecord<ClientK, ClientV>> fromJsonWrapper) {
-
-    Map<String, String> queryParams = new HashMap<String, String>();
-    queryParams.put("offset", Integer.toString(offset));
-    if (count != null) {
-      queryParams.put("count", count.toString());
-    }
-
-    Response response = request("/topics/" + topicName + "/partitions/0/messages", queryParams)
-        .accept(accept).get();
-    assertOKResponse(response, responseMediatype);
-    List<RecordType> consumed = TestUtils.tryReadEntityOrLog(response, responseEntityType);
-    assertEquals(records.size(), consumed.size());
-
-    assertEqualsMessages(
-        records, consumed.stream().map(fromJsonWrapper).collect(Collectors.toList()), converter);
-  }
-
-  protected <KafkaK, KafkaV, ClientK, ClientV, RecordType>
   void consumeMessages(
-      String instanceUri, String topic, List<ProducerRecord<KafkaK, KafkaV>> records,
+      String instanceUri, List<ProducerRecord<KafkaK, KafkaV>> records,
       String accept, String responseMediatype,
       GenericType<List<RecordType>> responseEntityType,
       Converter converter,
       Function<RecordType, ConsumerRecord<ClientK, ClientV>> fromJsonWrapper) {
-    Response response = request(instanceUri + "/topics/" + topic)
-        .accept(accept).get();
+    Response response = request(instanceUri + "/records").accept(accept).get();
     assertOKResponse(response, responseMediatype);
     List<RecordType> consumed = TestUtils.tryReadEntityOrLog(response, responseEntityType);
     assertEquals(records.size(), consumed.size());
@@ -224,10 +183,10 @@ public class AbstractConsumerTest extends ClusterTestHarness {
   }
 
   protected <RecordType> void consumeForTimeout(
-      String instanceUri, String topic, String accept, String responseMediatype,
+      String instanceUri, String accept, String responseMediatype,
       GenericType<List<RecordType>> responseEntityType) {
     long started = System.currentTimeMillis();
-    Response response = request(instanceUri + "/topics/" + topic)
+    Response response = request(instanceUri + "/records")
         .accept(accept).get();
     long finished = System.currentTimeMillis();
     assertOKResponse(response, responseMediatype);
@@ -256,8 +215,8 @@ public class AbstractConsumerTest extends ClusterTestHarness {
 
   protected void commitOffsets(String instanceUri) {
     Response response = request(instanceUri + "/offsets/")
-        .post(Entity.entity(null, Versions.KAFKA_MOST_SPECIFIC_DEFAULT));
-    assertOKResponse(response, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+        .post(Entity.entity(null, Versions.KAFKA_V2_JSON));
+    assertOKResponse(response, Versions.KAFKA_V2_JSON);
     // We don't verify offsets since they'll depend on how data gets distributed to partitions.
     // Just parse to check the output is formatted validly.
     CommitOffsetsResponse offsets =
@@ -265,18 +224,17 @@ public class AbstractConsumerTest extends ClusterTestHarness {
   }
 
   // Either topic or instance not found
-  protected void consumeForNotFoundError(String instanceUri, String topic) {
-    Response response = request(instanceUri + "/topics/" + topic)
-        .get();
+  protected void consumeForNotFoundError(String instanceUri) {
+    Response response = request(instanceUri + "/records").get();
     assertErrorResponse(Response.Status.NOT_FOUND, response,
                         Errors.CONSUMER_INSTANCE_NOT_FOUND_ERROR_CODE,
                         Errors.CONSUMER_INSTANCE_NOT_FOUND_MESSAGE,
-                        Versions.KAFKA_V1_JSON_BINARY);
+                        Versions.KAFKA_V2_JSON_BINARY);
   }
 
   protected void deleteConsumer(String instanceUri) {
     Response response = request(instanceUri).delete();
     assertErrorResponse(Response.Status.NO_CONTENT, response,
-                        0, null, Versions.KAFKA_MOST_SPECIFIC_DEFAULT);
+                        0, null, Versions.KAFKA_V2_JSON);
   }
 }

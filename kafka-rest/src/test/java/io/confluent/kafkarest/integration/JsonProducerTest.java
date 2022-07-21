@@ -16,11 +16,11 @@ package io.confluent.kafkarest.integration;
 
 import io.confluent.kafka.serializers.KafkaJsonDeserializer;
 import io.confluent.kafkarest.Versions;
-import io.confluent.kafkarest.entities.v1.JsonPartitionProduceRequest;
-import io.confluent.kafkarest.entities.v1.JsonPartitionProduceRequest.JsonPartitionProduceRecord;
-import io.confluent.kafkarest.entities.v1.JsonTopicProduceRequest;
-import io.confluent.kafkarest.entities.v1.JsonTopicProduceRequest.JsonTopicProduceRecord;
-import io.confluent.kafkarest.entities.v1.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.JsonPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v2.JsonPartitionProduceRequest.JsonPartitionProduceRecord;
+import io.confluent.kafkarest.entities.v2.JsonTopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.JsonTopicProduceRequest.JsonTopicProduceRecord;
+import io.confluent.kafkarest.entities.v2.PartitionOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Properties;
 import org.junit.Before;
 import org.junit.Test;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 public class JsonProducerTest
     extends AbstractProducerTest<JsonTopicProduceRequest, JsonPartitionProduceRequest> {
@@ -43,13 +43,13 @@ public class JsonProducerTest
     final int numPartitions = 3;
     final int replicationFactor = 1;
     kafka.utils.TestUtils.createTopic(zkClient, topicName, numPartitions, replicationFactor,
-        JavaConversions.asScalaBuffer(this.servers),
+        JavaConverters.asScalaBuffer(this.servers),
         new Properties());
   }
 
   @Override
   protected String getEmbeddedContentType() {
-    return Versions.KAFKA_V1_JSON_JSON;
+    return Versions.KAFKA_V2_JSON_JSON;
   }
 
   private Map<String, Object> exampleMapValue() {
