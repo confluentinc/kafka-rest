@@ -24,6 +24,7 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
@@ -43,6 +44,7 @@ import io.confluent.kafkarest.entities.v3.TopicDataList;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
+import io.confluent.rest.exceptions.RestConstraintViolationException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -638,6 +640,18 @@ public class TopicsResourceTest {
             .build());
 
     assertEquals(NotFoundException.class, response.getException().getClass());
+  }
+
+  @Test
+  public void createTopic_nonData_throwsInvalidPayload() {
+    FakeAsyncResponse response = new FakeAsyncResponse();
+
+    RestConstraintViolationException e =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () -> topicsResource.createTopic(response, TOPIC_1.getClusterId(), null));
+    assertEquals("Payload error. Null input provided. Data is required.", e.getMessage());
+    assertEquals(42206, e.getErrorCode());
   }
 
   @Test
