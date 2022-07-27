@@ -650,7 +650,7 @@ public class TopicsResourceTest {
         assertThrows(
             RestConstraintViolationException.class,
             () -> topicsResource.createTopic(response, TOPIC_1.getClusterId(), null));
-    assertEquals("Payload error. Null input provided. Data is required.", e.getMessage());
+    assertEquals("Payload error. Request body is empty. Data is required.", e.getMessage());
     assertEquals(42206, e.getErrorCode());
   }
 
