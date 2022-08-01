@@ -46,19 +46,19 @@ the REST Proxy running using the default settings and some topics already create
 
 ```bash
     # Get a list of topics
-    $ curl "http://localhost:8082/topics"
+    $ curl http://localhost:8082/topics
       
       ["__consumer_offsets","jsontest"]
 
     # Get info about one topic
-    $ curl "http://localhost:8082/topics/jsontest"
+    $ curl http://localhost:8082/topics/jsontest
     
       {"name":"jsontest","configs":{},"partitions":[{"partition":0,"leader":0,"replicas":[{"broker":0,"leader":true,"in_sync":true}]}]}
 
     # Produce a message with JSON data
     $ curl -X POST -H "Content-Type: application/vnd.kafka.json.v2+json" \
           --data '{"records":[{"value":{"name": "testUser"}}]}' \
-          "http://localhost:8082/topics/jsontest"
+          http://localhost:8082/topics/jsontest
           
       {"offsets":[{"partition":0,"offset":3,"error_code":null,"error":null}],"key_schema_id":null,"value_schema_id":null}
 
