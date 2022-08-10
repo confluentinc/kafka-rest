@@ -20,6 +20,10 @@ import static java.util.Objects.requireNonNull;
 import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.KafkaRestConfig;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.MetricNameTemplate;
 import org.apache.kafka.common.metrics.Metrics;
@@ -41,6 +45,7 @@ final class ProducerMetrics {
   private static final Logger log = LoggerFactory.getLogger(ProducerMetrics.class);
 
   private static final String GROUP_NAME = "produce-api-metrics";
+  public static final long EXPIRY_SECONDS = TimeUnit.HOURS.toSeconds(1);
 
   /*
    * Rate, Average and Percentile metrics use underlying SampledStat and are therefore over a window
@@ -116,34 +121,43 @@ final class ProducerMetrics {
   }
 
   ProducerMetrics(KafkaRestConfig config, Map<String, String> metricsTags) {
+    // Tag should only be empty or "tenant" but sort on the key just in case
+    SortedMap<String, String> sortedMetricsTags = new TreeMap<>(metricsTags);
+    String sensorTags =
+        sortedMetricsTags.keySet().stream()
+            .map(key -> ":" + metricsTags.get(key))
+            .collect(Collectors.joining());
+
     this.metrics = requireNonNull(config.getMetrics());
     this.jmxPrefix = config.getString(KafkaRestConfig.METRICS_JMX_PREFIX_CONFIG);
     String sensorNamePrefix = jmxPrefix + ":" + GROUP_NAME + ":";
-    this.recordErrorSensorName = sensorNamePrefix + RECORD_ERROR_SENSOR_NAME;
-    this.recordRateLimitedSensorName = sensorNamePrefix + RECORD_RATE_LIMITED_SENSOR_NAME;
-    this.requestSensorName = sensorNamePrefix + REQUEST_SENSOR_NAME;
-    this.requestLatencySensorName = sensorNamePrefix + REQUEST_LATENCY_SENSOR_NAME;
-    this.requestSizeSensorName = sensorNamePrefix + REQUEST_SIZE_SENSOR_NAME;
-    this.responseSensorName = sensorNamePrefix + RESPONSE_SENSOR_NAME;
-    setupSensors(metricsTags);
+    this.recordErrorSensorName = sensorNamePrefix + RECORD_ERROR_SENSOR_NAME + sensorTags;
+    this.recordRateLimitedSensorName =
+        sensorNamePrefix + RECORD_RATE_LIMITED_SENSOR_NAME + sensorTags;
+    this.requestSensorName = sensorNamePrefix + REQUEST_SENSOR_NAME + sensorTags;
+    this.requestLatencySensorName = sensorNamePrefix + REQUEST_LATENCY_SENSOR_NAME + sensorTags;
+    this.requestSizeSensorName = sensorNamePrefix + REQUEST_SIZE_SENSOR_NAME + sensorTags;
+    this.responseSensorName = sensorNamePrefix + RESPONSE_SENSOR_NAME + sensorTags;
+
+    setupSensors(sortedMetricsTags, sensorTags);
   }
 
-  private void setupSensors(Map<String, String> metricsTags) {
+  private void setupSensors(Map<String, String> metricsTags, String sensorTags) {
     // request metrics
-    setupRequestSensor(metricsTags);
-    setupRequestSizeSensor(metricsTags);
+    setupRequestSensor(metricsTags, sensorTags);
+    setupRequestSizeSensor(metricsTags, sensorTags);
 
     // response metrics
-    setupResponseSensor(metricsTags);
-    setupRecordErrorSensor(metricsTags);
-    setupRecordRateLimitedSensor(metricsTags);
-    setupRequestLatencySensor(metricsTags);
+    setupResponseSensor(metricsTags, sensorTags);
+    setupRecordErrorSensor(metricsTags, sensorTags);
+    setupRecordRateLimitedSensor(metricsTags, sensorTags);
+    setupRequestLatencySensor(metricsTags, sensorTags);
 
     log.info("Successfully registered kafka-rest produce metrics with JMX");
   }
 
-  private void setupRequestSensor(Map<String, String> metricsTags) {
-    Sensor requestSensor = createSensor(REQUEST_SENSOR_NAME);
+  private void setupRequestSensor(Map<String, String> metricsTags, String sensorTags) {
+    Sensor requestSensor = createSensor(REQUEST_SENSOR_NAME, sensorTags);
     addAvg(requestSensor, REQUEST_RATE_METRIC_NAME, REQUEST_RATE_METRIC_DOC, metricsTags);
     addWindowedCount(
         requestSensor,
@@ -152,8 +166,8 @@ final class ProducerMetrics {
         metricsTags);
   }
 
-  private void setupRequestSizeSensor(Map<String, String> metricsTags) {
-    Sensor requestSizeSensor = createSensor(REQUEST_SIZE_SENSOR_NAME);
+  private void setupRequestSizeSensor(Map<String, String> metricsTags, String sensorTags) {
+    Sensor requestSizeSensor = createSensor(REQUEST_SIZE_SENSOR_NAME, sensorTags);
     requestSizeSensor.add(createMeter(metrics, metricsTags, "request-byte", "request bytes"));
   }
 
@@ -174,8 +188,8 @@ final class ProducerMetrics {
     return new Meter(rateMetricName, totalMetricName);
   }
 
-  private void setupResponseSensor(Map<String, String> metricsTags) {
-    Sensor responseSensor = createSensor(RESPONSE_SENSOR_NAME);
+  private void setupResponseSensor(Map<String, String> metricsTags, String sensorTags) {
+    Sensor responseSensor = createSensor(RESPONSE_SENSOR_NAME, sensorTags);
     addRate(responseSensor, RESPONSE_RATE_METRIC_NAME, RESPONSE_RATE_METRIC_DOC, metricsTags);
     addWindowedCount(
         responseSensor,
@@ -184,8 +198,8 @@ final class ProducerMetrics {
         metricsTags);
   }
 
-  private void setupRecordErrorSensor(Map<String, String> metricsTags) {
-    Sensor recordErrorSensor = createSensor(RECORD_ERROR_SENSOR_NAME);
+  private void setupRecordErrorSensor(Map<String, String> metricsTags, String sensorTags) {
+    Sensor recordErrorSensor = createSensor(RECORD_ERROR_SENSOR_NAME, sensorTags);
     addRate(
         recordErrorSensor,
         RECORD_ERROR_RATE_METRIC_NAME,
@@ -198,8 +212,8 @@ final class ProducerMetrics {
         metricsTags);
   }
 
-  private void setupRecordRateLimitedSensor(Map<String, String> metricsTags) {
-    Sensor recordRateLimitedSensor = createSensor(RECORD_RATE_LIMITED_SENSOR_NAME);
+  private void setupRecordRateLimitedSensor(Map<String, String> metricsTags, String sensorTags) {
+    Sensor recordRateLimitedSensor = createSensor(RECORD_RATE_LIMITED_SENSOR_NAME, sensorTags);
     addRate(
         recordRateLimitedSensor,
         RECORD_RATE_LIMITED_RATE_METRIC_NAME,
@@ -212,8 +226,8 @@ final class ProducerMetrics {
         metricsTags);
   }
 
-  private void setupRequestLatencySensor(Map<String, String> metricsTags) {
-    Sensor requestLatencySensor = createSensor(REQUEST_LATENCY_SENSOR_NAME);
+  private void setupRequestLatencySensor(Map<String, String> metricsTags, String sensorTags) {
+    Sensor requestLatencySensor = createSensor(REQUEST_LATENCY_SENSOR_NAME, sensorTags);
     addMax(
         requestLatencySensor,
         REQUEST_LATENCY_MAX_METRIC_NAME,
@@ -235,8 +249,10 @@ final class ProducerMetrics {
         metricsTags);
   }
 
-  private Sensor createSensor(String name) {
-    return metrics.sensor(String.join(":", jmxPrefix, GROUP_NAME, name));
+  private Sensor createSensor(String name, String sensorTags) {
+    String fullSensorName = String.join(":", jmxPrefix, GROUP_NAME, name);
+    fullSensorName = fullSensorName.concat(sensorTags);
+    return metrics.sensor(fullSensorName, null, EXPIRY_SECONDS);
   }
 
   private void addAvg(Sensor sensor, String name, String doc, Map<String, String> metricsTags) {
