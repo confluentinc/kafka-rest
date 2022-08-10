@@ -26,7 +26,6 @@ import com.google.common.collect.ImmutableMap;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.rest.RestConfig;
 import java.lang.management.ManagementFactory;
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
@@ -53,7 +52,7 @@ public class ProducerMetricsTest {
   private static final String METRICS_SEARCH_STRING = "kafka.rest:type=produce-api-metrics,*";
 
   private ProducerMetrics producerMetrics;
-  KafkaRestConfig config;
+  private KafkaRestConfig config;
 
   @BeforeEach
   public void setUp()
@@ -218,36 +217,31 @@ public class ProducerMetricsTest {
   @Test
   public void testMultipleSensors() throws Exception {
 
-    ProducerMetrics producerMetrics1 =
-        new ProducerMetrics(config, ImmutableMap.of("tag", "value1"));
-    Map<String, String> tags2 = new HashMap<>();
-    tags2.put("tag", "value2");
-    tags2.put("otherTag", "otherValue2");
+    Map<String, String> tags2 = ImmutableMap.of("tag", "value2", "otherTag", "otherValue2");
     ProducerMetrics producerMetrics2 = new ProducerMetrics(config, tags2);
 
-    producerMetrics1.recordRequest();
+    producerMetrics.recordRequest();
     producerMetrics2.recordRequest();
     producerMetrics2.recordRequest();
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     Set<ObjectName> beanNames = mBeanServer.queryNames(new ObjectName(METRICS_SEARCH_STRING), null);
-    assertEquals(3, beanNames.size()); // don't forget the one made in setup
+    assertEquals(2, beanNames.size());
     Iterator<ObjectName> i = beanNames.stream().iterator();
     String tenantId = i.next().getKeyPropertyList().get("tag");
-    String tenantId1 = i.next().getKeyPropertyList().get("tag");
 
     Hashtable<String, String> object2 = i.next().getKeyPropertyList();
     String tenantId2 = object2.get("tag");
     String otherValue2 = object2.get("otherTag");
 
-    assertEquals("value1", tenantId1);
+    assertEquals("value", tenantId);
     assertEquals("value2", tenantId2);
     assertEquals("otherValue2", otherValue2);
 
     assertEquals(
         1.0,
         mBeanServer.getAttribute(
-            new ObjectName("kafka.rest:type=produce-api-metrics,tag=value1"),
+            new ObjectName("kafka.rest:type=produce-api-metrics,tag=value"),
             "request-count-windowed"));
     assertEquals(
         2.0,
@@ -255,14 +249,14 @@ public class ProducerMetricsTest {
             new ObjectName("kafka.rest:type=produce-api-metrics,otherTag=otherValue2,tag=value2"),
             "request-count-windowed"));
 
-    producerMetrics1.recordRequest();
+    producerMetrics.recordRequest();
     producerMetrics2.recordRequest();
     producerMetrics2.recordRequest();
 
     assertEquals(
         2.0,
         mBeanServer.getAttribute(
-            new ObjectName("kafka.rest:type=produce-api-metrics,tag=value1"),
+            new ObjectName("kafka.rest:type=produce-api-metrics,tag=value"),
             "request-count-windowed"));
     assertEquals(
         4.0,
@@ -270,7 +264,7 @@ public class ProducerMetricsTest {
             new ObjectName("kafka.rest:type=produce-api-metrics,otherTag=otherValue2,tag=value2"),
             "request-count-windowed"));
 
-    mBeanServer.unregisterMBean(new ObjectName("kafka.rest:type=produce-api-metrics,tag=value1"));
+    mBeanServer.unregisterMBean(new ObjectName("kafka.rest:type=produce-api-metrics,tag=value"));
     mBeanServer.unregisterMBean(
         new ObjectName("kafka.rest:type=produce-api-metrics," + "otherTag=otherValue2,tag=value2"));
   }
