@@ -381,7 +381,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
    * be invoked with the lock held, i.e. after startRead().
    */
   private synchronized void getOrCreateConsumerRecords() {
-    ConsumerRecords<KafkaKeyT, KafkaValueT> polledRecords = consumer.poll(0);
+    ConsumerRecords<KafkaKeyT, KafkaValueT> polledRecords = consumer.poll(Duration.ZERO);
     // drain the iterator and buffer to list
     for (ConsumerRecord<KafkaKeyT, KafkaValueT> consumerRecord : polledRecords) {
       consumerRecords.add(consumerRecord);
