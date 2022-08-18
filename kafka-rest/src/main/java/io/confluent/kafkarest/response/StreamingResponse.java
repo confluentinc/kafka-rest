@@ -29,11 +29,13 @@ import io.confluent.kafkarest.common.CompletableFutures;
 import io.confluent.kafkarest.exceptions.StatusCodeException;
 import io.confluent.kafkarest.exceptions.v3.ErrorResponse;
 import io.confluent.kafkarest.exceptions.v3.V3ExceptionMapper;
+import io.confluent.kafkarest.tracing.Tracer;
 import io.confluent.rest.entities.ErrorMessage;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import javax.annotation.Nullable;
@@ -106,27 +108,30 @@ public abstract class StreamingResponse<T> {
     return new ComposingStreamingResponse<>(this, transform, chunkedOutputFactory);
   }
 
+  // TODO ddimitrov Make traceId an instance field in a way minimally intrusive to tests.
   /**
    * Stream requests in and start transforming them into responses.
    *
    * <p>This method will block until all requests are read in. The responses are computed and
    * written to {@code asyncResponse} asynchronously.
    */
-  public final void resume(AsyncResponse asyncResponse) {
+  public final void resume(AsyncResponse asyncResponse, UUID traceId) {
     log.debug("Resuming StreamingResponse");
     AsyncResponseQueue responseQueue = new AsyncResponseQueue(chunkedOutputFactory);
     responseQueue.asyncResume(asyncResponse);
     while (hasNext() && !responseQueue.isClosed()) {
-      responseQueue.push(next().handle(this::handleNext));
+      responseQueue.push(next().handle((result, error) -> handleNext(result, error, traceId)));
     }
     close();
-    responseQueue.close();
+    responseQueue.close(traceId);
   }
 
-  private ResultOrError handleNext(T result, @Nullable Throwable error) {
+  private ResultOrError handleNext(T result, @Nullable Throwable error, UUID traceId) {
     if (error == null) {
+      Tracer.trace(traceId, "Successfully produced a record");
       return ResultOrError.result(result);
     } else {
+      Tracer.trace(traceId, "Error %s while producing a record", error);
       log.debug("Error processing streaming operation.", error);
       return ResultOrError.error(EXCEPTION_MAPPER.toErrorResponse(error.getCause()));
     }
@@ -261,9 +266,10 @@ public abstract class StreamingResponse<T> {
                   });
     }
 
-    private void close() {
+    private void close(UUID traceId) {
       tail.whenComplete(
           (unused, throwable) -> {
+            Tracer.trace(traceId, "Closing the produce batch or stream");
             try {
               sinkClosed = true;
               sink.close();
