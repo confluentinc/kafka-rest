@@ -39,11 +39,13 @@ import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.ratelimit.DoNotRateLimit;
 import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
+import io.confluent.kafkarest.tracing.Tracer;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
@@ -57,7 +59,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,17 +116,25 @@ public final class ProduceAction {
   @PerformanceMetric("v3.produce.produce-to-topic")
   @ResourceName("api.v3.produce.produce-to-topic")
   public void produce(
+      @Context ContainerRequestContext requestContext,
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
       MappingIterator<ProduceRequest> requests)
       throws Exception {
 
+    final UUID traceId =
+        requestContext != null
+            ? (UUID) requestContext.getProperty(Tracer.TRACE_ID_PROPERTY_NAME)
+            : null;
+    Tracer.trace(traceId, "Starting a produce batch or stream");
+
     ProduceController controller = produceControllerProvider.get();
     streamingResponseFactory
         .from(requests)
         .compose(
             request -> {
+              Tracer.trace(traceId, "Parsing and producing a record");
               Optional<Long> messageSize = request.getOriginalSize();
               if (messageSize.isPresent()) {
                 return produce(
@@ -135,7 +147,7 @@ public final class ProduceAction {
                 return produce(clusterId, topicName, request, controller, Optional.empty());
               }
             })
-        .resume(asyncResponse);
+        .resume(asyncResponse, traceId);
   }
 
   private CompletableFuture<ProduceResponse> produce(

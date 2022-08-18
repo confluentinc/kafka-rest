@@ -85,9 +85,9 @@ public class ProduceActionTest {
 
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests);
+    produceAction.produce(null, fakeAsyncResponse, "clusterId", "topicName", requests);
     FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse2, "clusterId", "topicName", requests);
+    produceAction.produce(null, fakeAsyncResponse2, "clusterId", "topicName", requests);
 
     // check results
     EasyMock.verify(requests);
@@ -186,15 +186,15 @@ public class ProduceActionTest {
 
     // run test
     FakeAsyncResponse fakeAsyncResponse1 = new FakeAsyncResponse();
-    produceAction0.produce(fakeAsyncResponse1, "clusterId", "topicName", requests0);
+    produceAction0.produce(null, fakeAsyncResponse1, "clusterId", "topicName", requests0);
     FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
-    produceAction1.produce(fakeAsyncResponse2, "clusterId", "topicName", requests1);
+    produceAction1.produce(null, fakeAsyncResponse2, "clusterId", "topicName", requests1);
     FakeAsyncResponse fakeAsyncResponse3 = new FakeAsyncResponse();
-    produceAction1.produce(fakeAsyncResponse3, "clusterId", "topicName", requests1);
+    produceAction1.produce(null, fakeAsyncResponse3, "clusterId", "topicName", requests1);
     FakeAsyncResponse fakeAsyncResponse4 = new FakeAsyncResponse();
-    produceAction0.produce(fakeAsyncResponse4, "clusterId", "topicName", requests0);
+    produceAction0.produce(null, fakeAsyncResponse4, "clusterId", "topicName", requests0);
     FakeAsyncResponse fakeAsyncResponse5 = new FakeAsyncResponse();
-    produceAction1.produce(fakeAsyncResponse5, "clusterId", "topicName", requests1);
+    produceAction1.produce(null, fakeAsyncResponse5, "clusterId", "topicName", requests1);
 
     // check results
     EasyMock.verify(requests0);
@@ -282,19 +282,19 @@ public class ProduceActionTest {
 
     // run test
     FakeAsyncResponse fakeAsyncResponse1 = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse1, "clusterId", "topicName", requests);
+    produceAction.produce(null, fakeAsyncResponse1, "clusterId", "topicName", requests);
     FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse2, "clusterId", "topicName", requests);
+    produceAction.produce(null, fakeAsyncResponse2, "clusterId", "topicName", requests);
     FakeAsyncResponse fakeAsyncResponse3 = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse3, "clusterId", "topicName", requests);
+    produceAction.produce(null, fakeAsyncResponse3, "clusterId", "topicName", requests);
     FakeAsyncResponse fakeAsyncResponse4 = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse4, "clusterId", "topicName", requests);
+    produceAction.produce(null, fakeAsyncResponse4, "clusterId", "topicName", requests);
     FakeAsyncResponse fakeAsyncResponse5 = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse5, "clusterId", "topicName", requests);
+    produceAction.produce(null, fakeAsyncResponse5, "clusterId", "topicName", requests);
     FakeAsyncResponse fakeAsyncResponse6 = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse6, "clusterId", "topicName", requests);
+    produceAction.produce(null, fakeAsyncResponse6, "clusterId", "topicName", requests);
     FakeAsyncResponse fakeAsyncResponse7 = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse7, "clusterId", "topicName", requests);
+    produceAction.produce(null, fakeAsyncResponse7, "clusterId", "topicName", requests);
 
     // check results
     EasyMock.verify(requests);
@@ -355,7 +355,7 @@ public class ProduceActionTest {
 
     // run test
     FakeAsyncResponse fakeAsyncResponse1 = new FakeAsyncResponse();
-    produceAction1.produce(fakeAsyncResponse1, "clusterId", "topicName", requests);
+    produceAction1.produce(null, fakeAsyncResponse1, "clusterId", "topicName", requests);
 
     // check results
     EasyMock.verify(requests);
@@ -423,7 +423,7 @@ public class ProduceActionTest {
 
     // run test
     FakeAsyncResponse fakeAsyncResponse1 = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse1, "clusterId", "topicName", requests);
+    produceAction.produce(null, fakeAsyncResponse1, "clusterId", "topicName", requests);
 
     // check results
     EasyMock.verify(requests);
@@ -473,9 +473,9 @@ public class ProduceActionTest {
 
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", requests);
+    produceAction.produce(null, fakeAsyncResponse, "clusterId", "topicName", requests);
     FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
-    produceAction.produce(fakeAsyncResponse2, "clusterId", "topicName", requests);
+    produceAction.produce(null, fakeAsyncResponse2, "clusterId", "topicName", requests);
 
     // check results
     EasyMock.verify(requests);

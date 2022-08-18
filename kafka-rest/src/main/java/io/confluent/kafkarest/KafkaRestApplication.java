@@ -34,6 +34,7 @@ import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.kafkarest.ratelimit.RateLimitFeature;
 import io.confluent.kafkarest.resources.ResourcesFeature;
 import io.confluent.kafkarest.response.ResponseModule;
+import io.confluent.kafkarest.tracing.TracingFeature;
 import io.confluent.rest.Application;
 import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
@@ -102,9 +103,8 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(RateLimitFeature.class);
     config.register(new ResourcesFeature(appConfig));
     config.register(new ResponseModule());
-
+    config.register(TracingFeature.class);
     config.register(ResourceAccesslistFeature.class);
-
     config.register(EnumConverterProvider.class);
     config.register(InstantConverterProvider.class);
 
