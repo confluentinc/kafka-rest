@@ -613,7 +613,7 @@ public class ProduceActionTest {
         assertThrows(
             RestConstraintViolationException.class,
             () -> produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", null));
-    assertEquals("Payload error. Null input provided. Data is required.", e.getMessage());
+    assertEquals("Payload error. Request body is empty. Data is required.", e.getMessage());
     assertEquals(42206, e.getErrorCode());
   }
 
