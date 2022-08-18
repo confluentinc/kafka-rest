@@ -41,6 +41,7 @@ public class KafkaRestMain {
   /** Starts an embedded Jetty server running the REST server. */
   public static void main(String[] args) throws IOException {
     try {
+      log.info("Starting server with diagnostic patch KREST-7091, not suitable for production !!!");
       KafkaRestConfig config = new KafkaRestConfig((args.length > 0 ? args[0] : null));
 
       KafkaRestApplication app = new KafkaRestApplication(config);
