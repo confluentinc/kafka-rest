@@ -17,6 +17,7 @@ package io.confluent.kafkarest.resources.v3;
 
 import static java.util.Objects.requireNonNull;
 
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.controllers.AclManager;
 import io.confluent.kafkarest.entities.Acl;
 import io.confluent.kafkarest.entities.Acl.Operation;
@@ -158,24 +159,12 @@ public final class AclsResource {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @Valid CreateAclRequest request) {
-    if (request.getResourceType() == Acl.ResourceType.ANY
-        || request.getResourceType() == Acl.ResourceType.UNKNOWN) {
-      throw new BadRequestException("resource_type cannot be ANY");
+
+    if (request == null) {
+      throw Errors.invalidPayloadException("Null input provided. Data is required.");
     }
-    if (request.getPatternType() == Acl.PatternType.ANY
-        || request.getPatternType() == Acl.PatternType.MATCH
-        || request.getPatternType() == Acl.PatternType.UNKNOWN) {
-      throw new BadRequestException(
-          String.format("pattern_type cannot be %s", request.getPatternType()));
-    }
-    if (request.getOperation() == Acl.Operation.ANY
-        || request.getOperation() == Acl.Operation.UNKNOWN) {
-      throw new BadRequestException("operation cannot be ANY");
-    }
-    if (request.getPermission() == Acl.Permission.ANY
-        || request.getPermission() == Acl.Permission.UNKNOWN) {
-      throw new BadRequestException("permission cannot be ANY");
-    }
+
+    validateParameters(request);
 
     CompletableFuture<Void> response =
         aclManager
@@ -210,6 +199,28 @@ public final class AclsResource {
                             .build())))
         .entity(response)
         .asyncResume(asyncResponse);
+  }
+
+  private void validateParameters(CreateAclRequest request) {
+
+    if (request.getResourceType() == Acl.ResourceType.ANY
+        || request.getResourceType() == Acl.ResourceType.UNKNOWN) {
+      throw new BadRequestException("resource_type cannot be ANY");
+    }
+    if (request.getPatternType() == Acl.PatternType.ANY
+        || request.getPatternType() == Acl.PatternType.MATCH
+        || request.getPatternType() == Acl.PatternType.UNKNOWN) {
+      throw new BadRequestException(
+          String.format("pattern_type cannot be %s", request.getPatternType()));
+    }
+    if (request.getOperation() == Acl.Operation.ANY
+        || request.getOperation() == Acl.Operation.UNKNOWN) {
+      throw new BadRequestException("operation cannot be ANY");
+    }
+    if (request.getPermission() == Acl.Permission.ANY
+        || request.getPermission() == Acl.Permission.UNKNOWN) {
+      throw new BadRequestException("permission cannot be ANY");
+    }
   }
 
   @DELETE
