@@ -19,9 +19,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import io.confluent.kafkarest.Errors;
 import java.util.List;
-
-// import io.confluent.kafkarest.entities.Acl;
 
 @AutoValue
 public abstract class CreateAclBatchRequestData {
@@ -31,8 +30,14 @@ public abstract class CreateAclBatchRequestData {
   @JsonProperty("data")
   public abstract ImmutableList<CreateAclRequest> getData();
 
-  public static CreateAclBatchRequestData create(List<CreateAclRequest> data) {
-    return new AutoValue_CreateAclBatchRequestData(ImmutableList.copyOf(data));
+  public static CreateAclBatchRequestData create(List<CreateAclRequest> requests) {
+    CreateAclBatchRequestData request;
+    try {
+      request = new AutoValue_CreateAclBatchRequestData(ImmutableList.copyOf(requests));
+    } catch (NullPointerException e) {
+      throw Errors.invalidPayloadException("Empty input provided. Data is required.");
+    }
+    return request;
   }
 
   @JsonCreator

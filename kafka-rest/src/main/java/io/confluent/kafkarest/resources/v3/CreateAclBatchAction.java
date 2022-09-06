@@ -53,8 +53,8 @@ public final class CreateAclBatchAction {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  @PerformanceMetric("v3.acls.create")
-  @ResourceName("api.v3.acls.create")
+  @PerformanceMetric("v3.acls.batch-create")
+  @ResourceName("api.v3.acls.batch-create")
   public void createAcls(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -67,6 +67,7 @@ public final class CreateAclBatchAction {
     CompletableFuture<Void> response =
         aclManager
             .get()
+            .validateAclCreateParameters(request.getValue().getData().asList())
             .createAcls(
                 clusterId,
                 request.getValue().getData().stream()

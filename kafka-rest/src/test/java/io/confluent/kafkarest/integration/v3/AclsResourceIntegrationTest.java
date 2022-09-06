@@ -428,4 +428,158 @@ public class AclsResourceIntegrationTest extends ClusterTestHarness {
         expectedPostCreateSearchResponse,
         actualPostCreateSearchResponse.readEntity(SearchAclsResponse.class));
   }
+
+  @Test
+  public void testBatchAclCreateWithNoRequestBody() {
+
+    Response nullRequestBodyResponse =
+        request(batchAclUrl).post(Entity.entity(null, MediaType.APPLICATION_JSON));
+
+    assertEquals(422, nullRequestBodyResponse.getStatus());
+
+    SearchAclsResponse expectedPostCreateSearchResponse =
+        SearchAclsResponse.create(
+            AclDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder().setSelf(expectedSearchUrl).build())
+                .setData(Arrays.asList())
+                .build());
+
+    Response actualPostCreateSearchResponse =
+        request(
+                baseAclUrl,
+                ImmutableMap.of(
+                    "resource_type", "topic",
+                    "resource_name", "topic-1",
+                    "pattern_type", "match"))
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
+    assertEquals(Status.OK.getStatusCode(), actualPostCreateSearchResponse.getStatus());
+    assertEquals(
+        expectedPostCreateSearchResponse,
+        actualPostCreateSearchResponse.readEntity(SearchAclsResponse.class));
+  }
+
+  @Test
+  public void testBatchAclCreateRequestWithBodyAndNoContent() {
+
+    Response emptyRequestBodyResponse =
+        request(batchAclUrl).post(Entity.entity("{}}", MediaType.APPLICATION_JSON));
+
+    assertEquals(422, emptyRequestBodyResponse.getStatus());
+
+    SearchAclsResponse expectedPostCreateSearchResponse =
+        SearchAclsResponse.create(
+            AclDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder().setSelf(expectedSearchUrl).build())
+                .setData(Arrays.asList())
+                .build());
+
+    Response actualPostCreateSearchResponse =
+        request(
+                baseAclUrl,
+                ImmutableMap.of(
+                    "resource_type", "topic",
+                    "resource_name", "topic-1",
+                    "pattern_type", "match"))
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
+    assertEquals(Status.OK.getStatusCode(), actualPostCreateSearchResponse.getStatus());
+    assertEquals(
+        expectedPostCreateSearchResponse,
+        actualPostCreateSearchResponse.readEntity(SearchAclsResponse.class));
+  }
+
+  @Test
+  public void testBatchAclCreateWithBodyAndEmptyData() {
+
+    List<CreateAclRequest> acls = Arrays.asList();
+
+    CreateAclBatchRequestData data = CreateAclBatchRequestData.create(acls);
+
+    CreateAclBatchRequest list = CreateAclBatchRequest.create(data);
+
+    Response actualCreateAliceAndBobResponse =
+        request(batchAclUrl).post(Entity.entity(list, MediaType.APPLICATION_JSON));
+
+    assertEquals(Status.NO_CONTENT.getStatusCode(), actualCreateAliceAndBobResponse.getStatus());
+
+    SearchAclsResponse expectedPostCreateSearchResponse =
+        SearchAclsResponse.create(
+            AclDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder().setSelf(expectedSearchUrl).build())
+                .setData(Arrays.asList())
+                .build());
+
+    Response actualPostCreateSearchResponse =
+        request(
+                baseAclUrl,
+                ImmutableMap.of(
+                    "resource_type", "topic",
+                    "resource_name", "topic-1",
+                    "pattern_type", "match"))
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
+    assertEquals(Status.OK.getStatusCode(), actualPostCreateSearchResponse.getStatus());
+    assertEquals(
+        expectedPostCreateSearchResponse,
+        actualPostCreateSearchResponse.readEntity(SearchAclsResponse.class));
+  }
+
+  @Test
+  public void testBatchAclCreateInvalidEntry() {
+
+    CreateAclRequest bob =
+        CreateAclRequest.builder()
+            .setResourceType(Acl.ResourceType.TOPIC)
+            .setResourceName("topic-")
+            .setPatternType(Acl.PatternType.PREFIXED)
+            .setPrincipal("User:bill")
+            .setHost("1.2.3.4")
+            .setOperation(Acl.Operation.WRITE)
+            .setPermission(Acl.Permission.ALLOW)
+            .build();
+
+    CreateAclRequest alice =
+        CreateAclRequest.builder()
+            .setResourceType(Acl.ResourceType.TOPIC)
+            .setResourceName("*")
+            .setPatternType(Acl.PatternType.LITERAL)
+            .setPrincipal("User:alice")
+            .setHost("*")
+            .setOperation(Acl.Operation.READ)
+            .setPermission(Acl.Permission.ALLOW)
+            .build();
+
+    String payload = "{\"data\": [{\"resource_type\":\"TOPIC\"}]}";
+
+    Response actualCreateAliceAndBobResponse =
+        request(batchAclUrl).post(Entity.entity(payload, MediaType.APPLICATION_JSON));
+
+    assertEquals(Status.BAD_REQUEST.getStatusCode(), actualCreateAliceAndBobResponse.getStatus());
+
+    SearchAclsResponse expectedPostCreateSearchResponse =
+        SearchAclsResponse.create(
+            AclDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder().setSelf(expectedSearchUrl).build())
+                .setData(Arrays.asList())
+                .build());
+
+    Response actualPostCreateSearchResponse =
+        request(
+                baseAclUrl,
+                ImmutableMap.of(
+                    "resource_type", "topic",
+                    "resource_name", "topic-1",
+                    "pattern_type", "match"))
+            .accept(MediaType.APPLICATION_JSON)
+            .get();
+    assertEquals(Status.OK.getStatusCode(), actualPostCreateSearchResponse.getStatus());
+    assertEquals(
+        expectedPostCreateSearchResponse,
+        actualPostCreateSearchResponse.readEntity(SearchAclsResponse.class));
+  }
 }

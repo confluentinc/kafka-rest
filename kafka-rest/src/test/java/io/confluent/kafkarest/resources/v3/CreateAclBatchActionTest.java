@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.resources.v3;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -76,6 +77,7 @@ public class CreateAclBatchActionTest {
   @Test
   public void createAcls_createsAcls() {
     expect(aclManager.createAcls(CLUSTER_ID, ACLS)).andReturn(completedFuture(/* value= */ null));
+    expect(aclManager.validateAclCreateParameters(anyObject())).andReturn(aclManager);
     replay(aclManager);
 
     CreateAclBatchRequest createRequest =

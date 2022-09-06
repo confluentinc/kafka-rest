@@ -37,6 +37,7 @@ import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.UrlFactory;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.net.URI;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -164,11 +165,10 @@ public final class AclsResource {
       throw Errors.invalidPayloadException("Null input provided. Data is required.");
     }
 
-    validateParameters(request);
-
     CompletableFuture<Void> response =
         aclManager
             .get()
+            .validateAclCreateParameters(Collections.singletonList(request))
             .createAcl(
                 clusterId,
                 request.getResourceType(),
@@ -199,28 +199,6 @@ public final class AclsResource {
                             .build())))
         .entity(response)
         .asyncResume(asyncResponse);
-  }
-
-  private void validateParameters(CreateAclRequest request) {
-
-    if (request.getResourceType() == Acl.ResourceType.ANY
-        || request.getResourceType() == Acl.ResourceType.UNKNOWN) {
-      throw new BadRequestException("resource_type cannot be ANY");
-    }
-    if (request.getPatternType() == Acl.PatternType.ANY
-        || request.getPatternType() == Acl.PatternType.MATCH
-        || request.getPatternType() == Acl.PatternType.UNKNOWN) {
-      throw new BadRequestException(
-          String.format("pattern_type cannot be %s", request.getPatternType()));
-    }
-    if (request.getOperation() == Acl.Operation.ANY
-        || request.getOperation() == Acl.Operation.UNKNOWN) {
-      throw new BadRequestException("operation cannot be ANY");
-    }
-    if (request.getPermission() == Acl.Permission.ANY
-        || request.getPermission() == Acl.Permission.UNKNOWN) {
-      throw new BadRequestException("permission cannot be ANY");
-    }
   }
 
   @DELETE

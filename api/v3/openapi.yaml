@@ -110,8 +110,6 @@ paths:
       summary: 'Batch Create ACLs'
       operationId: batchCreateKafkaV3Acls
       description: |-
-        Internal use only.
-
         Creates ACLs.
       tags:
         - ACL (v3)
