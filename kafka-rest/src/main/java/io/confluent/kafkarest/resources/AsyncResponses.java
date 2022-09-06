@@ -108,24 +108,18 @@ public final class AsyncResponses {
                 asyncResponse.resume(responseBuilder.entity(entity).build());
               }
             } else if (exception instanceof CompletionException) {
-              if (entity != null) {
-                log.error(
-                    "Erroring response entity: {}, {}, {} ",
-                    entity.getClass(),
-                    entity.hashCode(),
-                    entity);
-              }
-              log.error("AsyncResponse CompletionException: {}", exception);
+              log.error(
+                  "Async response CompletionException with error response entity of type {}: {}",
+                  entity != null ? entity.getClass() : "unknown",
+                  entity,
+                  exception);
               asyncResponse.resume(exception.getCause());
             } else {
-              if (entity != null) {
-                log.error(
-                    "Erroring response entity: {}, {}, {} ",
-                    entity.getClass(),
-                    entity.hashCode(),
-                    entity);
-              }
-              log.error("AsyncResponse generic exception: {}", exception);
+              log.error(
+                  "Async response exception with error response entity of type {}: {}",
+                  entity != null ? entity.getClass() : "unknown",
+                  entity,
+                  exception);
               asyncResponse.resume(exception);
             }
           });
