@@ -39,11 +39,15 @@ import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class PartitionManagerImpl implements PartitionManager {
 
   private final Admin adminClient;
   private final TopicManager topicManager;
+
+  private static final Logger log = LoggerFactory.getLogger(PartitionManagerImpl.class);
 
   @Inject
   PartitionManagerImpl(Admin adminClient, TopicManager topicManager) {
@@ -77,13 +81,18 @@ final class PartitionManagerImpl implements PartitionManager {
         .handle(
             (value, exception) -> {
               if (exception != null) {
-                String exceptionMessage = exception.getMessage();
-                if (exceptionMessage.contains("UnknownTopicOrPartitionException")) {
-                  exceptionMessage =
+                log.error("Caught exception while get topic from cluster", exception);
+                if (exception.getCause() instanceof UnknownTopicOrPartitionException) {
+                  String exceptionMessage =
                       String.format(
                           "This server does not host this topic-partition for topic %s", topicName);
+                  throw new UnknownTopicOrPartitionException(exceptionMessage, exception);
                 }
-                throw new UnknownTopicOrPartitionException(exceptionMessage, exception);
+                try {
+                  throw exception;
+                } catch (Throwable throwable) {
+                  log.error("Caught another exception while re-throw exception", throwable);
+                }
               }
               return checkEntityExists(value, "Topic %s cannot be found.", value);
             })
