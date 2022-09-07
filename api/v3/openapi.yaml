@@ -1266,7 +1266,7 @@ paths:
     post:
       summary: 'Produce records to the given topic.'
       description: |-
-        [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
+        [![Open Preview](https://img.shields.io/badge/Lifecycle%20Stage-Open%20Preview-%2300afba)](#section/Versioning/API-Lifecycle-Policy)
 
         Produce records to the given topic, returning delivery reports for each
                     record produced. This API can be used in streaming mode by setting "Transfer-Encoding:
