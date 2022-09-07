@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2020 - 2022 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -38,6 +38,7 @@ import org.apache.kafka.clients.admin.ListOffsetsResult;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 
 final class PartitionManagerImpl implements PartitionManager {
 
@@ -73,7 +74,19 @@ final class PartitionManagerImpl implements PartitionManager {
       String clusterId, String topicName, int partitionId) {
     return topicManager
         .getTopic(clusterId, topicName)
-        .thenApply(topic -> checkEntityExists(topic, "Topic %s cannot be found.", topic))
+        .handle(
+            (value, exception) -> {
+              if (exception != null) {
+                String exceptionMessage = exception.getMessage();
+                if (exceptionMessage.contains("UnknownTopicOrPartitionException")) {
+                  exceptionMessage =
+                      String.format(
+                          "This server does not host this topic-partition for topic %s", topicName);
+                }
+                throw new UnknownTopicOrPartitionException(exceptionMessage, exception);
+              }
+              return checkEntityExists(value, "Topic %s cannot be found.", value);
+            })
         .thenApply(Topic::getPartitions)
         .thenApply(
             partitions -> findEntityByKey(partitions, Partition::getPartitionId, partitionId))
