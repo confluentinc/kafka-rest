@@ -31,8 +31,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.ListOffsetsOptions;
 import org.apache.kafka.clients.admin.ListOffsetsResult;
@@ -88,8 +88,10 @@ final class PartitionManagerImpl implements PartitionManager {
                       String.format(
                           "This server does not host this topic-partition for topic %s", topicName);
                   throw new UnknownTopicOrPartitionException(exceptionMessage, exception);
+                } else if (exception.getCause() instanceof NotFoundException) {
+                  throw new NotFoundException(exception);
                 }
-                throw new CompletionException(exception);
+                throw new RuntimeException(exception);
               }
               return checkEntityExists(value, "Topic %s cannot be found.", value);
             })
