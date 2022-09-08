@@ -90,19 +90,14 @@ final class ReplicaManagerImpl implements ReplicaManager {
         .thenCompose(
             logDirs -> {
               logDirs.forEach((key, value) -> log.debug("Describe log Dirs" + key + value));
-              CompletableFuture<List<Optional<PartitionReplica>>> res =
-                  CompletableFutures.allAsList(
-                      logDirs.values().stream()
-                          .flatMap(logDir -> logDir.replicaInfos.keySet().stream())
-                          .map(
-                              partition ->
-                                  getReplica(
-                                      clusterId,
-                                      partition.topic(),
-                                      partition.partition(),
-                                      brokerId))
-                          .collect(Collectors.toList()));
-              return res;
+              return CompletableFutures.allAsList(
+                  logDirs.values().stream()
+                      .flatMap(logDir -> logDir.replicaInfos.keySet().stream())
+                      .map(
+                          partition ->
+                              getReplica(
+                                  clusterId, partition.topic(), partition.partition(), brokerId))
+                      .collect(Collectors.toList()));
             })
         .thenApply(
             replicas ->
