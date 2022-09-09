@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
@@ -79,29 +80,28 @@ final class PartitionManagerImpl implements PartitionManager {
       String clusterId, String topicName, int partitionId) {
     return topicManager
         .getTopic(clusterId, topicName)
-        .handle(
-            (value, exception) -> {
-              if (exception != null) {
-                log.error("Caught exception while get topic from cluster", exception);
-                if (exception.getCause() instanceof UnknownTopicOrPartitionException) {
-                  String exceptionMessage =
-                      String.format(
-                          "This server does not host this topic-partition for topic %s", topicName);
-                  throw new UnknownTopicOrPartitionException(exceptionMessage, exception);
-                } else if (exception instanceof NotFoundException
-                    || exception.getCause() instanceof NotFoundException) {
-                  throw new NotFoundException(exception);
-                }
-                throw new RuntimeException(exception);
-              }
-              return checkEntityExists(value, "Topic %s cannot be found.", value);
-            })
+        .thenApply(topic -> checkEntityExists(topic, "Topic %s cannot be found.", topic))
         .thenApply(Topic::getPartitions)
         .thenApply(
             partitions -> findEntityByKey(partitions, Partition::getPartitionId, partitionId))
         .thenApply(partition -> partition.map(Collections::singletonList).orElse(emptyList()))
         .thenCompose(this::withOffsets)
-        .thenApply(partitions -> partitions.stream().findAny());
+        .thenApply(partitions -> partitions.stream().findAny())
+        .exceptionally(
+            exception -> {
+              if (exception != null) {
+                if (exception.getCause() instanceof UnknownTopicOrPartitionException) {
+                  String exceptionMessage =
+                      String.format(
+                          "This server does not host this topic-partition for topic %s", topicName);
+                  throw new UnknownTopicOrPartitionException(exceptionMessage, exception);
+                }
+              } else if (exception instanceof NotFoundException
+                  || exception.getCause() instanceof NotFoundException) {
+                throw new NotFoundException(exception.getCause());
+              }
+              throw new CompletionException(exception.getCause());
+            });
   }
 
   @Override
