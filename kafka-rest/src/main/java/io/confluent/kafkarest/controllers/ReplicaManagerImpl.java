@@ -89,7 +89,7 @@ final class ReplicaManagerImpl implements ReplicaManager {
             })
         .thenCompose(
             logDirs -> {
-              logDirs.forEach((key, value) -> log.debug("Describe log Dirs" + key + value));
+              log.debug("Describe log dirs {} ", logDirs);
               return CompletableFutures.allAsList(
                   logDirs.values().stream()
                       .flatMap(logDir -> logDir.replicaInfos.keySet().stream())

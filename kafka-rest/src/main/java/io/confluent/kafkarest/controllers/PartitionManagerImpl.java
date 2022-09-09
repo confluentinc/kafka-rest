@@ -93,7 +93,8 @@ final class PartitionManagerImpl implements PartitionManager {
                 if (exception.getCause() instanceof UnknownTopicOrPartitionException) {
                   String exceptionMessage =
                       String.format(
-                          "This server does not host this topic-partition for topic %s", topicName);
+                          "This server does not host topic-partition %d for topic %s",
+                          partitionId, topicName);
                   throw new UnknownTopicOrPartitionException(exceptionMessage, exception);
                 }
               } else if (exception instanceof NotFoundException

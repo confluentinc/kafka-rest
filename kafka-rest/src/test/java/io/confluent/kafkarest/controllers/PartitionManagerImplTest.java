@@ -378,8 +378,8 @@ public class PartitionManagerImplTest {
             failedFuture(
                 new UnknownTopicOrPartitionException(
                     String.format(
-                        "This server does not host this topic-partition for topic %s",
-                        TOPIC_NAME))));
+                        "This server does not host topic-partition %d for topic %s",
+                        0, TOPIC_NAME))));
     replay(topicManager);
 
     try {
@@ -388,7 +388,7 @@ public class PartitionManagerImplTest {
     } catch (ExecutionException e) {
       assertEquals(UnknownTopicOrPartitionException.class, e.getCause().getClass());
       assertEquals(
-          String.format("This server does not host this topic-partition for topic %s", TOPIC_NAME),
+          String.format("This server does not host topic-partition %d for topic %s", 0, TOPIC_NAME),
           e.getCause().getMessage());
     }
   }

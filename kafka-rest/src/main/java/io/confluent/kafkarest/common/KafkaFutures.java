@@ -44,7 +44,7 @@ public final class KafkaFutures {
           if (exception == null) {
             completableFuture.complete(value);
           } else {
-            log.error("Caught Exception when Complete KafkaFuture", exception);
+            log.error("Caught Exception on completion of KafkaFuture", exception);
             completableFuture.completeExceptionally(exception);
           }
         });
