@@ -100,6 +100,9 @@ final class PartitionManagerImpl implements PartitionManager {
               } else if (exception instanceof NotFoundException
                   || exception.getCause() instanceof NotFoundException) {
                 throw new NotFoundException(exception.getCause());
+              } else if (exception instanceof RuntimeException
+                  || exception.getCause() instanceof RuntimeException) {
+                throw (RuntimeException) exception;
               }
               throw new CompletionException(exception.getCause());
             });
