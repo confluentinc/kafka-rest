@@ -89,14 +89,12 @@ final class PartitionManagerImpl implements PartitionManager {
         .thenApply(partitions -> partitions.stream().findAny())
         .exceptionally(
             exception -> {
-              if (exception != null) {
-                if (exception.getCause() instanceof UnknownTopicOrPartitionException) {
-                  String exceptionMessage =
-                      String.format(
-                          "This server does not host topic-partition %d for topic %s",
-                          partitionId, topicName);
-                  throw new UnknownTopicOrPartitionException(exceptionMessage, exception);
-                }
+              if (exception.getCause() instanceof UnknownTopicOrPartitionException) {
+                String exceptionMessage =
+                    String.format(
+                        "This server does not host topic-partition %d for topic %s",
+                        partitionId, topicName);
+                throw new UnknownTopicOrPartitionException(exceptionMessage, exception);
               } else if (exception instanceof NotFoundException
                   || exception.getCause() instanceof NotFoundException) {
                 throw new NotFoundException(exception.getCause());
