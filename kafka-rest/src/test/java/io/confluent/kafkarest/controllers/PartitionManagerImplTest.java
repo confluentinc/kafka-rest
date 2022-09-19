@@ -377,9 +377,7 @@ public class PartitionManagerImplTest {
         .andReturn(
             failedFuture(
                 new UnknownTopicOrPartitionException(
-                    String.format(
-                        "This server does not host topic-partition %d for topic %s",
-                        0, TOPIC_NAME))));
+                    "This server does not host this topic-partition.")));
     replay(topicManager);
 
     try {
