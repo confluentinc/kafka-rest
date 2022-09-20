@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2020 - 2022 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -32,12 +32,16 @@ import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.DescribeLogDirsOptions;
 import org.apache.kafka.clients.admin.DescribeLogDirsResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class ReplicaManagerImpl implements ReplicaManager {
 
   private final Admin adminClient;
   private final BrokerManager brokerManager;
   private final PartitionManager partitionManager;
+
+  private static final Logger log = LoggerFactory.getLogger(ReplicaManagerImpl.class);
 
   @Inject
   ReplicaManagerImpl(
@@ -84,15 +88,17 @@ final class ReplicaManagerImpl implements ReplicaManager {
               return KafkaFutures.toCompletableFuture(result.values().get(brokerId));
             })
         .thenCompose(
-            logDirs ->
-                CompletableFutures.allAsList(
-                    logDirs.values().stream()
-                        .flatMap(logDir -> logDir.replicaInfos.keySet().stream())
-                        .map(
-                            partition ->
-                                getReplica(
-                                    clusterId, partition.topic(), partition.partition(), brokerId))
-                        .collect(Collectors.toList())))
+            logDirs -> {
+              log.debug("Describe log dirs {} ", logDirs);
+              return CompletableFutures.allAsList(
+                  logDirs.values().stream()
+                      .flatMap(logDir -> logDir.replicaInfos.keySet().stream())
+                      .map(
+                          partition ->
+                              getReplica(
+                                  clusterId, partition.topic(), partition.partition(), brokerId))
+                      .collect(Collectors.toList()));
+            })
         .thenApply(
             replicas ->
                 replicas.stream()
