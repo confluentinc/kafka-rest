@@ -341,13 +341,13 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
         .map(OffsetAndTimestamp::offset);
   }
 
-  public synchronized boolean expired(Instant now) {
+  public boolean expired(Instant now) {
     synchronized (this.expirationLock) {
       return !expiration.isAfter(now);
     }
   }
 
-  public synchronized void updateExpiration() {
+  public void updateExpiration() {
     synchronized (this.expirationLock) {
       this.expiration = clock.instant().plus(consumerInstanceTimeout);
     }
