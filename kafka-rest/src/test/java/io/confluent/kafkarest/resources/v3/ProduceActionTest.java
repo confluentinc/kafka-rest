@@ -164,7 +164,7 @@ public class ProduceActionTest {
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
     produceAction.produce(
-        fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
+        null, fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
 
     // check results
     EasyMock.verify(requests);
@@ -271,7 +271,7 @@ public class ProduceActionTest {
     // run test
     FakeAsyncResponse fakeAsyncResponse1 = new FakeAsyncResponse();
     produceAction1.produce(
-        fakeAsyncResponse1, "clusterId", "topicName", new JsonStream<>(() -> requests));
+        null, fakeAsyncResponse1, "clusterId", "topicName", new JsonStream<>(() -> requests));
 
     // check results
     EasyMock.verify(requests);
@@ -364,10 +364,10 @@ public class ProduceActionTest {
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
     produceAction.produce(
-        fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
+        null, fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
     FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
     produceAction.produce(
-        fakeAsyncResponse2, "clusterId", "topicName", new JsonStream<>(() -> requests));
+        null, fakeAsyncResponse2, "clusterId", "topicName", new JsonStream<>(() -> requests));
 
     // check results
     // check results
@@ -467,10 +467,10 @@ public class ProduceActionTest {
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
     produceAction.produce(
-        fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
+        null, fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
     FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
     produceAction.produce(
-        fakeAsyncResponse2, "clusterId", "topicName", new JsonStream<>(() -> requests));
+        null, fakeAsyncResponse2, "clusterId", "topicName", new JsonStream<>(() -> requests));
 
     // check results
     verify(
@@ -550,10 +550,10 @@ public class ProduceActionTest {
     // run test
     FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
     produceAction.produce(
-        fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
+        null, fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
     FakeAsyncResponse fakeAsyncResponse2 = new FakeAsyncResponse();
     produceAction.produce(
-        fakeAsyncResponse2, "clusterId", "topicName", new JsonStream<>(() -> requests));
+        null, fakeAsyncResponse2, "clusterId", "topicName", new JsonStream<>(() -> requests));
 
     // check results
     verify(
@@ -612,7 +612,7 @@ public class ProduceActionTest {
     RestConstraintViolationException e =
         assertThrows(
             RestConstraintViolationException.class,
-            () -> produceAction.produce(fakeAsyncResponse, "clusterId", "topicName", null));
+            () -> produceAction.produce(null, fakeAsyncResponse, "clusterId", "topicName", null));
     assertEquals("Payload error. Null input provided. Data is required.", e.getMessage());
     assertEquals(42206, e.getErrorCode());
   }

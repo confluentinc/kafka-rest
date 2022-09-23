@@ -40,9 +40,11 @@ import io.confluent.kafkarest.ratelimit.RateLimitExceededException;
 import io.confluent.kafkarest.resources.v3.V3ResourcesModule.ProduceResponseThreadPool;
 import io.confluent.kafkarest.response.JsonStream;
 import io.confluent.kafkarest.response.StreamingResponseFactory;
+import io.confluent.kafkarest.tracing.Tracer;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -56,7 +58,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import org.apache.kafka.common.errors.SerializationException;
 import org.eclipse.jetty.http.HttpStatus;
@@ -109,6 +113,7 @@ public final class ProduceAction {
   @PerformanceMetric("v3.produce.produce-to-topic")
   @ResourceName("api.v3.produce.produce-to-topic")
   public void produce(
+      @Context ContainerRequestContext requestContext,
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
@@ -119,13 +124,22 @@ public final class ProduceAction {
       throw Errors.invalidPayloadException("Null input provided. Data is required.");
     }
 
+    final UUID traceId =
+        requestContext != null
+            ? (UUID) requestContext.getProperty(Tracer.TRACE_ID_PROPERTY_NAME)
+            : null;
+    Tracer.trace(traceId, "Starting a produce batch or stream");
+
     ProduceController controller = produceControllerProvider.get();
     streamingResponseFactory
         .from(requests)
         .compose(
-            request ->
-                produce(clusterId, topicName, request, controller, producerMetricsProvider.get()))
-        .resume(asyncResponse);
+            request -> {
+              Tracer.trace(traceId, "Parsing and producing a record");
+              return produce(
+                  clusterId, topicName, request, controller, producerMetricsProvider.get());
+            })
+        .resume(asyncResponse, traceId);
   }
 
   private CompletableFuture<ProduceResponse> produce(

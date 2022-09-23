@@ -101,7 +101,7 @@ public class StreamingResponseTest {
     produceResponseFuture.complete(produceResponse);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    streamingResponse.compose(result -> produceResponseFuture).resume(response);
+    streamingResponse.compose(result -> produceResponseFuture).resume(response, null);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
@@ -165,7 +165,7 @@ public class StreamingResponseTest {
     produceResponseFuture.complete(produceResponse);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    streamingResponse.compose(result -> produceResponseFuture).resume(response);
+    streamingResponse.compose(result -> produceResponseFuture).resume(response, null);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
@@ -207,7 +207,7 @@ public class StreamingResponseTest {
 
     FakeAsyncResponse response = new FakeAsyncResponse();
 
-    streamingResponse.compose(result -> new CompletableFuture<>()).resume(response);
+    streamingResponse.compose(result -> new CompletableFuture<>()).resume(response, null);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
@@ -247,7 +247,7 @@ public class StreamingResponseTest {
 
     FakeAsyncResponse response = new FakeAsyncResponse();
 
-    streamingResponse.compose(result -> new CompletableFuture<>()).resume(response);
+    streamingResponse.compose(result -> new CompletableFuture<>()).resume(response, null);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
@@ -356,7 +356,7 @@ public class StreamingResponseTest {
             result -> {
               return produceResponseFuture;
             })
-        .resume(response);
+        .resume(response, null);
 
     EasyMock.verify(mockedChunkedOutput);
     EasyMock.verify(mockedChunkedOutputFactory);
