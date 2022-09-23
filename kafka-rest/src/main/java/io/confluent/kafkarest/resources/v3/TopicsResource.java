@@ -19,6 +19,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Objects.requireNonNull;
 
+import io.confluent.kafkarest.Errors;
 import io.confluent.kafkarest.controllers.TopicManager;
 import io.confluent.kafkarest.entities.Topic;
 import io.confluent.kafkarest.entities.v3.CreateTopicRequest;
@@ -140,6 +141,11 @@ public final class TopicsResource {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @Valid CreateTopicRequest request) {
+
+    if (request == null) {
+      throw Errors.invalidPayloadException("Request body is empty. Data is required.");
+    }
+
     String topicName = request.getTopicName();
     Optional<Integer> partitionsCount = request.getPartitionsCount();
     Optional<Short> replicationFactor = request.getReplicationFactor();

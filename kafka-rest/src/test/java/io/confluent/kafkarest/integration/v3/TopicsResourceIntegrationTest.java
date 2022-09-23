@@ -470,6 +470,16 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
+  public void createTopic_withoutRequestBody_returnsInvalidPayload() {
+    String clusterId = getClusterId();
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(Entity.entity(null, MediaType.APPLICATION_JSON));
+    assertEquals(422, response.getStatus());
+  }
+
+  @Test
   public void deleteTopic_existingTopic_deletesTopic() {
     String clusterId = getClusterId();
 
