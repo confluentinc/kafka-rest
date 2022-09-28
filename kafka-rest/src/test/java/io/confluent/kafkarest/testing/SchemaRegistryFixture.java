@@ -21,10 +21,7 @@ import static io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig.MAX_
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 
-import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
-import com.google.protobuf.Message;
-import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaProvider;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
@@ -32,9 +29,6 @@ import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
-import io.confluent.kafka.serializers.KafkaAvroDeserializer;
-import io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer;
-import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Map;
@@ -46,7 +40,8 @@ import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 /** An extension that runs a Schema Registry server. */
-public final class SchemaRegistryFixture implements BeforeEachCallback, AfterEachCallback {
+public final class SchemaRegistryFixture extends AbstractSchemaRegistry
+    implements BeforeEachCallback, AfterEachCallback {
 
   @Nullable private final SslFixture certificates;
   private final ImmutableMap<String, String> clientConfigs;
@@ -161,27 +156,10 @@ public final class SchemaRegistryFixture implements BeforeEachCallback, AfterEac
     return baseUri;
   }
 
+  @Override
   public SchemaRegistryClient getClient() {
     checkState(client != null);
     return client;
-  }
-
-  public SchemaKey createSchema(String subject, ParsedSchema schema) throws Exception {
-    int schemaId = getClient().register(subject, schema);
-    int schemaVersion = getClient().getVersion(subject, schema);
-    return SchemaKey.create(subject, schemaId, schemaVersion);
-  }
-
-  public KafkaAvroDeserializer createAvroDeserializer() {
-    return new KafkaAvroDeserializer(client);
-  }
-
-  public KafkaJsonSchemaDeserializer<Object> createJsonSchemaDeserializer() {
-    return new KafkaJsonSchemaDeserializer<>(client);
-  }
-
-  public KafkaProtobufDeserializer<Message> createProtobufDeserializer() {
-    return new KafkaProtobufDeserializer<>(client);
   }
 
   public static Builder builder() {
@@ -246,22 +224,6 @@ public final class SchemaRegistryFixture implements BeforeEachCallback, AfterEac
           kafkaPassword,
           kafkaUser,
           keyName);
-    }
-  }
-
-  @AutoValue
-  public abstract static class SchemaKey {
-
-    SchemaKey() {}
-
-    public abstract String getSubject();
-
-    public abstract int getSchemaId();
-
-    public abstract int getSchemaVersion();
-
-    public static SchemaKey create(String subject, int schemaId, int schemaVersion) {
-      return new AutoValue_SchemaRegistryFixture_SchemaKey(subject, schemaId, schemaVersion);
     }
   }
 }
