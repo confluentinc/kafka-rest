@@ -206,6 +206,27 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
+  public void produceWithInvalidData_throwsBadRequest() throws Exception {
+    String clusterId = testEnv.kafkaCluster().getClusterId();
+    String request = "{ \"records\": {\"subject\": \"foobar\" } }";
+
+    Response response =
+        testEnv
+            .kafkaRest()
+            .target()
+            .path("/v3/clusters/" + clusterId + "/topics/" + TOPIC_NAME + "/records")
+            .request()
+            .accept(MediaType.APPLICATION_JSON)
+            .post(Entity.entity(request, MediaType.APPLICATION_JSON));
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    ErrorResponse actual = response.readEntity(ErrorResponse.class);
+    assertEquals(400, actual.getErrorCode());
+    assertEquals(
+        "Unrecognized field \"records\" (class io.confluent.kafkarest.entities.v3.AutoValue_ProduceRequest$Builder), not marked as ignorable (6 known properties: \"value\", \"originalSize\", \"partitionId\", \"headers\", \"key\", \"timestamp\"])",
+        actual.getMessage());
+  }
+
+  @Test
   public void produceJson() throws Exception {
     String clusterId = testEnv.kafkaCluster().getClusterId();
     String key = "foo";
