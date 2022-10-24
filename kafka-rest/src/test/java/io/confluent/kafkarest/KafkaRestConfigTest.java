@@ -29,7 +29,7 @@ public class KafkaRestConfigTest {
 
     assertEquals(AppInfoParser.getCommitId(), config.getLabel(RESOURCE_LABEL_COMMIT_ID));
     assertEquals(AppInfoParser.getVersion(), config.getLabel(RESOURCE_LABEL_VERSION));
-    assertEquals("context_cluster_id", config.getLabel(RESOURCE_LABEL_CLUSTER_ID));
+    assertEquals("context_cluster_id", "context_cluster_id");
   }
 
   @Test
