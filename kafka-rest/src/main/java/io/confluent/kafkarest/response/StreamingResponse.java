@@ -274,7 +274,17 @@ public abstract class StreamingResponse<T> {
     @SuppressWarnings("unchecked")
     private ErrorResponse toErrorResponse(Throwable error) {
       Response response = mapper.toResponse((T) error);
-      return ErrorResponse.create(errorCode.apply(response), message.apply(response));
+      String originalMessage = message.apply(response);
+      // The example of exception message is `{"error_code":400,"message":"Bad Request: Error
+      // processing message: Unexpected character ('o' (code 111)): was expecting comma to separate
+      // Object entries\n at [Source:
+      // (org.glassfish.jersey.message.internal.ReaderInterceptorExecutor$UnCloseableInputStream);
+      // line: 1, column: 4]"}`
+      // We don't want to show users the source information, so we need to remove them after the
+      // newline.
+      String messageWithoutSource =
+          originalMessage == null ? null : originalMessage.split("\\n")[0].trim();
+      return ErrorResponse.create(errorCode.apply(response), messageWithoutSource);
     }
   }
 
