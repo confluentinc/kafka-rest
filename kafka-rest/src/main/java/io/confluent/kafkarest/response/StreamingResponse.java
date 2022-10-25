@@ -280,10 +280,10 @@ public abstract class StreamingResponse<T> {
       // Object entries\n at [Source:
       // (org.glassfish.jersey.message.internal.ReaderInterceptorExecutor$UnCloseableInputStream);
       // line: 1, column: 4]"}`
-      // We don't want to show users the source information, so we need to remove them after the
-      // newline.
+      // We don't want to show users the source information, so we need to remove everything after
+      // the newline.
       String messageWithoutSource =
-          originalMessage == null ? null : originalMessage.split("\\n")[0].trim();
+          originalMessage == null ? "" : originalMessage.split("\\n")[0].trim();
       return ErrorResponse.create(errorCode.apply(response), messageWithoutSource);
     }
   }
