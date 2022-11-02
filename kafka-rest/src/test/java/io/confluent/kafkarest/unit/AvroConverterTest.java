@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.confluent.kafkarest.converters.AvroConverter;
-import io.confluent.kafkarest.converters.ConversionException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
