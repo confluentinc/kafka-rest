@@ -116,7 +116,7 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/BatchCreateAclRequest'
       responses:
-        '201':
+        '204':
           description: 'No Content'
         '400':
           $ref: '#/components/responses/BadRequestErrorResponse'
