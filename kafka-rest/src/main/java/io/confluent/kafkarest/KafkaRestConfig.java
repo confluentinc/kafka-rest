@@ -145,6 +145,12 @@ public class KafkaRestConfig extends RestConfig {
   public static final ConfigDef.Range PROXY_FETCH_MIN_BYTES_VALIDATOR =
       ConfigDef.Range.between(-1, PROXY_FETCH_MIN_BYTES_MAX);
 
+  public static final String BROKER_PROXY_PROTOCOL_VERSION_CONFIG = "broker.proxy.protocol.version";
+  public static final String BROKER_PROXY_PROTOCOL_VERSION_DOC =
+      "Which proxy protocol the given cluster's brokers support."
+          + "The options are 'NONE', 'V1', and 'V2'";
+  public static final String BROKER_PROXY_PROTOCOL_VERSION_DEFAULT = "NONE";
+
   @Deprecated public static final String PRODUCER_THREADS_CONFIG = "producer.threads";
 
   @Deprecated
@@ -847,7 +853,13 @@ public class KafkaRestConfig extends RestConfig {
             Type.LONG,
             STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DEFAULT,
             Importance.LOW,
-            STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DOC);
+            STREAMING_CONNECTION_MAX_DURATION_GRACE_PERIOD_MS_DOC)
+        .define(
+            BROKER_PROXY_PROTOCOL_VERSION_CONFIG,
+            Type.STRING,
+            BROKER_PROXY_PROTOCOL_VERSION_DEFAULT,
+            Importance.LOW,
+            BROKER_PROXY_PROTOCOL_VERSION_DOC);
   }
 
   private static Properties getPropsFromFile(String propsFile) throws RestConfigException {
