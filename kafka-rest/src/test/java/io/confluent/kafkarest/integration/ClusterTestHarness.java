@@ -333,7 +333,8 @@ public abstract class ClusterTestHarness {
             1,
             false,
             1,
-            (short) 1);
+            (short) 1,
+            false);
     props.setProperty("auto.create.topics.enable", "false");
     // We *must* override this to use the port we allocated (Kafka currently allocates one port
     // that it always uses for ZK
