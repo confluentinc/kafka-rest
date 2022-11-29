@@ -237,10 +237,10 @@ final class TopicManagerImpl implements TopicManager {
   }
 
   @Override
-  public CompletableFuture<Void> updateTopicPartitionCount(
-      String topicName, Integer partitionCount) {
+  public CompletableFuture<Void> updateTopicPartitionsCount(
+      String topicName, Integer partitionsCount) {
     Map<String, NewPartitions> newPartitionsMap =
-        Collections.singletonMap(topicName, NewPartitions.increaseTo(partitionCount));
+        Collections.singletonMap(topicName, NewPartitions.increaseTo(partitionsCount));
     return KafkaFutures.toCompletableFuture(adminClient.createPartitions(newPartitionsMap).all());
   }
 }

@@ -78,5 +78,5 @@ public interface TopicManager {
   /** Deletes the Kafka {@link Topic} with the given {@code topicName}. */
   CompletableFuture<Void> deleteTopic(String clusterId, String topicName);
 
-  CompletableFuture<Void> updateTopicPartitionCount(String topicName, Integer partitionCount);
+  CompletableFuture<Void> updateTopicPartitionsCount(String topicName, Integer partitionsCount);
 }

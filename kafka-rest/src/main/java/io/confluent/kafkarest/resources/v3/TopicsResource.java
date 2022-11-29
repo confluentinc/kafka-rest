@@ -27,7 +27,7 @@ import io.confluent.kafkarest.entities.v3.CreateTopicRequest.ConfigEntry;
 import io.confluent.kafkarest.entities.v3.CreateTopicResponse;
 import io.confluent.kafkarest.entities.v3.GetTopicResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicsResponse;
-import io.confluent.kafkarest.entities.v3.PartitionCountRequest;
+import io.confluent.kafkarest.entities.v3.PartitionsCountRequest;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.TopicData;
@@ -140,20 +140,20 @@ public final class TopicsResource {
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.topics.partitions")
   @ResourceName("api.v3.topics.partitions")
-  public void updatePartitionCount(
+  public void updatePartitionsCount(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName,
-      @Valid PartitionCountRequest partitionCount) {
+      @Valid PartitionsCountRequest partitionsCount) {
 
-    if (partitionCount == null) {
-      throw Errors.invalidPayloadException("Request body is empty. Partition_count is required.");
+    if (partitionsCount == null) {
+      throw Errors.invalidPayloadException("Request body is empty. Partitions_count is required.");
     }
 
     CompletableFuture<GetTopicResponse> response =
         topicManager
             .get()
-            .updateTopicPartitionCount(topicName, partitionCount.getPartitionCount())
+            .updateTopicPartitionsCount(topicName, partitionsCount.getPartitionsCount())
             .thenCompose(
                 nothing ->
                     topicManager

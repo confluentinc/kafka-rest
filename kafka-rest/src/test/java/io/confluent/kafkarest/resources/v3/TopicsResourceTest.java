@@ -37,7 +37,7 @@ import io.confluent.kafkarest.entities.v3.CreateTopicRequest;
 import io.confluent.kafkarest.entities.v3.CreateTopicResponse;
 import io.confluent.kafkarest.entities.v3.GetTopicResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicsResponse;
-import io.confluent.kafkarest.entities.v3.PartitionCountRequest;
+import io.confluent.kafkarest.entities.v3.PartitionsCountRequest;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.TopicData;
@@ -696,7 +696,7 @@ public class TopicsResourceTest {
 
   @Test
   public void testUpdatePartitions() {
-    expect(topicManager.updateTopicPartitionCount(TOPIC_1.getName(), 3))
+    expect(topicManager.updateTopicPartitionsCount(TOPIC_1.getName(), 3))
         .andReturn(CompletableFuture.completedFuture(null));
     expect(topicManager.getTopic(TOPIC_1.getClusterId(), TOPIC_1.getName()))
         .andReturn(completedFuture(Optional.of(TOPIC_1)));
@@ -704,8 +704,8 @@ public class TopicsResourceTest {
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    PartitionCountRequest request = PartitionCountRequest.builder().setPartitionCount(3).build();
-    topicsResource.updatePartitionCount(
+    PartitionsCountRequest request = PartitionsCountRequest.builder().setPartitionsCount(3).build();
+    topicsResource.updatePartitionsCount(
         response, TOPIC_1.getClusterId(), TOPIC_1.getName(), request);
 
     GetTopicResponse expected = GetTopicResponse.create(newTopicData("topic-1", true, 3, 3));
@@ -717,16 +717,16 @@ public class TopicsResourceTest {
   public void testUpdatePartitionsNoRequest() {
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    PartitionCountRequest request = null;
+    PartitionsCountRequest request = null;
 
     RestConstraintViolationException e =
         assertThrows(
             RestConstraintViolationException.class,
             () ->
-                topicsResource.updatePartitionCount(
+                topicsResource.updatePartitionsCount(
                     response, TOPIC_1.getClusterId(), TOPIC_1.getName(), request));
     assertEquals(
-        "Payload error. Request body is empty. Partition_count is required.", e.getMessage());
+        "Payload error. Request body is empty. Partitions_count is required.", e.getMessage());
     assertEquals(42206, e.getErrorCode());
   }
 
@@ -735,14 +735,14 @@ public class TopicsResourceTest {
 
     CompletableFuture<Void> future = new CompletableFuture();
     future.completeExceptionally(new Exception("Oh no"));
-    expect(topicManager.updateTopicPartitionCount(TOPIC_1.getName(), 2)).andReturn(future);
+    expect(topicManager.updateTopicPartitionsCount(TOPIC_1.getName(), 2)).andReturn(future);
 
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
-    PartitionCountRequest request = PartitionCountRequest.builder().setPartitionCount(2).build();
+    PartitionsCountRequest request = PartitionsCountRequest.builder().setPartitionsCount(2).build();
 
-    topicsResource.updatePartitionCount(
+    topicsResource.updatePartitionsCount(
         response, TOPIC_1.getClusterId(), TOPIC_1.getName(), request);
 
     assertEquals("Oh no", response.getException().getMessage());

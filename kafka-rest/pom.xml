@@ -159,7 +159,6 @@
         <dependency>
             <groupId>org.glassfish.jersey.connectors</groupId>
             <artifactId>jersey-apache-connector</artifactId>
-            <version>2.34</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
