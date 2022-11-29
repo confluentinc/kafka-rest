@@ -27,6 +27,7 @@ import io.confluent.kafkarest.entities.v3.CreateTopicRequest.ConfigEntry;
 import io.confluent.kafkarest.entities.v3.CreateTopicResponse;
 import io.confluent.kafkarest.entities.v3.GetTopicResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicsResponse;
+import io.confluent.kafkarest.entities.v3.PartitionCountRequest;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.TopicData;
@@ -52,6 +53,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -128,6 +130,36 @@ public final class TopicsResource {
             .getTopic(clusterId, topicName, includeAuthorizedOperations)
             .thenApply(topic -> topic.orElseThrow(NotFoundException::new))
             .thenApply(topic -> GetTopicResponse.create(toTopicData(topic)));
+
+    AsyncResponses.asyncResume(asyncResponse, response);
+  }
+
+  @PATCH
+  @Path("/{topicName}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @PerformanceMetric("v3.topics.partitions")
+  @ResourceName("api.v3.topics.partitions")
+  public void updatePartitionCount(
+      @Suspended AsyncResponse asyncResponse,
+      @PathParam("clusterId") String clusterId,
+      @PathParam("topicName") String topicName,
+      @Valid PartitionCountRequest partitionCount) {
+
+    if (partitionCount == null) {
+      throw Errors.invalidPayloadException("Request body is empty. Partition_count is required.");
+    }
+
+    CompletableFuture<GetTopicResponse> response =
+        topicManager
+            .get()
+            .updateTopicPartitionCount(topicName, partitionCount.getPartitionCount())
+            .thenCompose(
+                nothing ->
+                    topicManager
+                        .get()
+                        .getTopic(clusterId, topicName)
+                        .thenApply(topic -> GetTopicResponse.create(toTopicData(topic.get()))));
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }

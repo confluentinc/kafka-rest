@@ -156,6 +156,12 @@
             <artifactId>hamcrest-all</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.connectors</groupId>
+            <artifactId>jersey-apache-connector</artifactId>
+            <version>2.34</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 
@@ -251,7 +257,7 @@
                             <skip>true</skip>
                         </configuration>
                     </plugin>
-    
+
                     <!-- skip integration tests because they do not include smoke tests (other components have smoke tests) -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>

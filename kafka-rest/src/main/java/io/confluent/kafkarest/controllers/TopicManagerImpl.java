@@ -27,6 +27,7 @@ import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.DescribeTopicsOptions;
+import org.apache.kafka.clients.admin.NewPartitions;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.admin.TopicListing;
@@ -232,5 +234,13 @@ final class TopicManagerImpl implements TopicManager {
             cluster ->
                 KafkaFutures.toCompletableFuture(
                     adminClient.deleteTopics(singletonList(topicName)).all()));
+  }
+
+  @Override
+  public CompletableFuture<Void> updateTopicPartitionCount(
+      String topicName, Integer partitionCount) {
+    Map<String, NewPartitions> newPartitionsMap =
+        Collections.singletonMap(topicName, NewPartitions.increaseTo(partitionCount));
+    return KafkaFutures.toCompletableFuture(adminClient.createPartitions(newPartitionsMap).all());
   }
 }

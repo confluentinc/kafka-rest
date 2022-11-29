@@ -37,6 +37,7 @@ import io.confluent.kafkarest.entities.v3.CreateTopicRequest;
 import io.confluent.kafkarest.entities.v3.CreateTopicResponse;
 import io.confluent.kafkarest.entities.v3.GetTopicResponse;
 import io.confluent.kafkarest.entities.v3.ListTopicsResponse;
+import io.confluent.kafkarest.entities.v3.PartitionCountRequest;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.TopicData;
@@ -51,6 +52,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.common.errors.TopicExistsException;
@@ -690,5 +692,59 @@ public class TopicsResourceTest {
     topicsResource.deleteTopic(response, TOPIC_1.getClusterId(), TOPIC_1.getName());
 
     assertEquals(NotFoundException.class, response.getException().getClass());
+  }
+
+  @Test
+  public void testUpdatePartitions() {
+    expect(topicManager.updateTopicPartitionCount(TOPIC_1.getName(), 3))
+        .andReturn(CompletableFuture.completedFuture(null));
+    expect(topicManager.getTopic(TOPIC_1.getClusterId(), TOPIC_1.getName()))
+        .andReturn(completedFuture(Optional.of(TOPIC_1)));
+
+    replay(topicManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    PartitionCountRequest request = PartitionCountRequest.builder().setPartitionCount(3).build();
+    topicsResource.updatePartitionCount(
+        response, TOPIC_1.getClusterId(), TOPIC_1.getName(), request);
+
+    GetTopicResponse expected = GetTopicResponse.create(newTopicData("topic-1", true, 3, 3));
+
+    assertEquals(expected, response.getValue());
+  }
+
+  @Test
+  public void testUpdatePartitionsNoRequest() {
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    PartitionCountRequest request = null;
+
+    RestConstraintViolationException e =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                topicsResource.updatePartitionCount(
+                    response, TOPIC_1.getClusterId(), TOPIC_1.getName(), request));
+    assertEquals(
+        "Payload error. Request body is empty. Partition_count is required.", e.getMessage());
+    assertEquals(42206, e.getErrorCode());
+  }
+
+  @Test
+  public void testUpdatePartitionsUpdateFails() {
+
+    CompletableFuture<Void> future = new CompletableFuture();
+    future.completeExceptionally(new Exception("Oh no"));
+    expect(topicManager.updateTopicPartitionCount(TOPIC_1.getName(), 2)).andReturn(future);
+
+    replay(topicManager);
+
+    FakeAsyncResponse response = new FakeAsyncResponse();
+    PartitionCountRequest request = PartitionCountRequest.builder().setPartitionCount(2).build();
+
+    topicsResource.updatePartitionCount(
+        response, TOPIC_1.getClusterId(), TOPIC_1.getName(), request);
+
+    assertEquals("Oh no", response.getException().getMessage());
   }
 }
