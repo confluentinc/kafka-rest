@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2022 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -20,20 +20,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
 
 @AutoValue
-public abstract class PartitionCountRequest {
+public abstract class PartitionsCountRequest {
 
-  PartitionCountRequest() {}
+  PartitionsCountRequest() {}
 
-  @JsonProperty("partition_count")
-  public abstract Integer getPartitionCount();
+  @JsonProperty("partitions_count")
+  public abstract Integer getPartitionsCount();
 
   public static Builder builder() {
-    return new AutoValue_PartitionCountRequest.Builder();
+    return new AutoValue_PartitionsCountRequest.Builder();
   }
 
   @JsonCreator
-  static PartitionCountRequest fromJson(@JsonProperty("partition_count") Integer partitionCount) {
-    return builder().setPartitionCount(partitionCount).build();
+  static PartitionsCountRequest fromJson(
+      @JsonProperty("partitions_count") Integer partitionsCount) {
+    return builder().setPartitionsCount(partitionsCount).build();
   }
 
   @AutoValue.Builder
@@ -41,8 +42,8 @@ public abstract class PartitionCountRequest {
 
     Builder() {}
 
-    public abstract Builder setPartitionCount(Integer partitionCount);
+    public abstract Builder setPartitionsCount(Integer partitionsCount);
 
-    public abstract PartitionCountRequest build();
+    public abstract PartitionsCountRequest build();
   }
 }

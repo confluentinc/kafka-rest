@@ -731,7 +731,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void updateTopicPartitions_IncreasePartitionCount_returnsTopicWithIncreasedPartitions() {
+  public void updateTopicPartitions_IncreasePartitionsCount_returnsTopicWithIncreasedPartitions() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -775,7 +775,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             .accept(MediaType.APPLICATION_JSON)
             .method(
                 HttpMethod.PATCH,
-                Entity.entity("{\"partition_count\":3}", MediaType.APPLICATION_JSON));
+                Entity.entity("{\"partitions_count\":3}", MediaType.APPLICATION_JSON));
     assertEquals(Status.OK.getStatusCode(), getTopicResponse.getStatus());
 
     GetTopicResponse actualCreateTopicResponse =
@@ -785,7 +785,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
-  public void updateTopicPartitions_decreasePartitionCount_returns40002() {
+  public void updateTopicPartitions_decreasePartitionsCount_returns40002() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -794,12 +794,12 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             .accept(MediaType.APPLICATION_JSON)
             .method(
                 HttpMethod.PATCH,
-                Entity.entity("{\"partition_count\":1}", MediaType.APPLICATION_JSON));
+                Entity.entity("{\"partitions_count\":1}", MediaType.APPLICATION_JSON));
     assertEquals(Status.BAD_REQUEST.getStatusCode(), getTopicResponse.getStatus());
   }
 
   @Test
-  public void updateTopicPartitions_samePartitionCount_returns40002() {
+  public void updateTopicPartitions_samePartitionsCount_returns40002() {
     String baseUrl = restConnect;
     String clusterId = getClusterId();
 
@@ -808,7 +808,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             .accept(MediaType.APPLICATION_JSON)
             .method(
                 HttpMethod.PATCH,
-                Entity.entity("{\"partition_count\":1}", MediaType.APPLICATION_JSON));
+                Entity.entity("{\"partitions_count\":1}", MediaType.APPLICATION_JSON));
     assertEquals(Status.BAD_REQUEST.getStatusCode(), getTopicResponse.getStatus());
   }
 
@@ -822,7 +822,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
             .accept(MediaType.APPLICATION_JSON)
             .method(
                 HttpMethod.PATCH,
-                Entity.entity("{\"partition_count\":1}", MediaType.APPLICATION_JSON));
+                Entity.entity("{\"partitions_count\":1}", MediaType.APPLICATION_JSON));
     assertEquals(Status.BAD_REQUEST.getStatusCode(), getTopicResponse.getStatus());
   }
 }

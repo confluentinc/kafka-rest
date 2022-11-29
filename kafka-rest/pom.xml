@@ -156,6 +156,11 @@
             <artifactId>hamcrest-all</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.connectors</groupId>
+            <artifactId>jersey-apache-connector</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 

@@ -2448,9 +2448,9 @@ components:
     UpdatePartitionCountRequestData:
       type: object
       required:
-        - partition_count
+        - partitions_count
       properties:
-        partition_count:
+        partitions_count:
           type: integer
           format: int32
 
@@ -2675,7 +2675,7 @@ components:
             schema:
               $ref: "#/components/schemas/UpdatePartitionCountRequestData"
             example: 
-               partition_count: 10
+               partitions_count: 10
 
 
   responses:

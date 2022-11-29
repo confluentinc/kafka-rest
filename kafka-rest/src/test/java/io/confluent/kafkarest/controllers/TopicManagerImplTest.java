@@ -862,7 +862,7 @@ public class TopicManagerImplTest {
 
     replay(adminClient, createPartitionsResult);
 
-    topicManager.updateTopicPartitionCount("topicName", 1);
+    topicManager.updateTopicPartitionsCount("topicName", 1);
     verify(adminClient);
   }
 
