@@ -898,6 +898,29 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
+    patch:
+      summary: 'Update partition count'
+      operationId: updatePartitionCountKafkaV3Topic
+      description: |-
+        [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
+
+        Increases number of partitions on a topic.  
+      tags:
+        - Topic (v3)
+      requestBody:
+        $ref: '#/components/requestBodies/UpdatePartitionCountRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/GetTopicResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
+        
     delete:
       summary: 'Delete Topic'
       operationId: deleteKafkaV3Topic
@@ -2422,6 +2445,15 @@ components:
           type: string
           nullable: true
 
+    UpdatePartitionCountRequestData:
+      type: object
+      required:
+        - partitions_count
+      properties:
+        partitions_count:
+          type: integer
+          format: int32
+
   requestBodies:
     AlterBrokerConfigBatchRequest:
       description: 'The alter broker configuration parameter batch request.'
@@ -2499,7 +2531,6 @@ components:
                 host: '*'
                 operation: 'READ'
                 permission: 'ALLOW'
-
 
     CreateTopicRequest:
       description: 'The topic creation request.'
@@ -2636,6 +2667,16 @@ components:
             $ref: "#/components/schemas/UpdateConfigRequestData"
           example:
             value: 'gzip'
+
+    UpdatePartitionCountRequest:
+      description : 'The number of partitions to increase the partition count to.'
+      content:
+         application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePartitionCountRequestData"
+            example: 
+               partitions_count: 10
+
 
   responses:
     CreateTopicResponse:

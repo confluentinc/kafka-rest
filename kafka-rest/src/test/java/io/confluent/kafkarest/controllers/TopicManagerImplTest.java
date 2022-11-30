@@ -42,6 +42,7 @@ import io.confluent.kafkarest.entities.Topic;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -50,10 +51,12 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.CreatePartitionsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
+import org.apache.kafka.clients.admin.NewPartitions;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.admin.TopicListing;
@@ -451,6 +454,8 @@ public class TopicManagerImplTest {
 
   @Mock private DeleteTopicsResult deleteTopicsResult;
 
+  @Mock private CreatePartitionsResult createPartitionsResult;
+
   private TopicManagerImpl topicManager;
 
   @BeforeEach
@@ -844,6 +849,21 @@ public class TopicManagerImplTest {
     } catch (ExecutionException e) {
       assertEquals(NotFoundException.class, e.getCause().getClass());
     }
+  }
+
+  @Test
+  public void alterTopicPartitions_validPartitionRequest_returnsTopic() {
+
+    expect(
+            adminClient.createPartitions(
+                Collections.singletonMap("topicName", anyObject(NewPartitions.class))))
+        .andReturn(createPartitionsResult);
+    expect(createPartitionsResult.all()).andReturn(KafkaFuture.completedFuture(null));
+
+    replay(adminClient, createPartitionsResult);
+
+    topicManager.updateTopicPartitionsCount("topicName", 1);
+    verify(adminClient);
   }
 
   private static Map<String, TopicDescription> createTopicDescriptionMap(
