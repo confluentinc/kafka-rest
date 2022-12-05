@@ -205,17 +205,30 @@ public final class TopicsResource {
                 /* isInternal= */ false,
                 /* authorizedOperations= */ emptySet()));
 
+    boolean validateOnly = request.getValidateOnly().orElse(false);
     CompletableFuture<CreateTopicResponse> response =
-        topicManager
-            .get()
-            .createTopic(
-                clusterId,
-                topicName,
-                partitionsCount,
-                replicationFactor,
-                replicasAssignments,
-                configs)
-            .thenApply(none -> CreateTopicResponse.create(topicData));
+        validateOnly
+            ? topicManager
+                .get()
+                .createTopic(
+                    clusterId,
+                    topicName,
+                    partitionsCount,
+                    replicationFactor,
+                    replicasAssignments,
+                    configs,
+                    true)
+                .thenApply(none -> CreateTopicResponse.create(topicData))
+            : topicManager
+                .get()
+                .createTopic(
+                    clusterId,
+                    topicName,
+                    partitionsCount,
+                    replicationFactor,
+                    replicasAssignments,
+                    configs)
+                .thenApply(none -> CreateTopicResponse.create(topicData));
 
     AsyncResponseBuilder.from(
             Response.status(Status.CREATED).location(URI.create(topicData.getMetadata().getSelf())))

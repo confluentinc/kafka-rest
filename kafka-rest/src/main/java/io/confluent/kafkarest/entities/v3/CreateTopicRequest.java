@@ -45,6 +45,9 @@ public abstract class CreateTopicRequest {
   @JsonProperty("configs")
   public abstract ImmutableList<ConfigEntry> getConfigs();
 
+  @JsonProperty("validate_only")
+  public abstract Optional<Boolean> getValidateOnly();
+
   public static Builder builder() {
     return new AutoValue_CreateTopicRequest.Builder()
         .setReplicasAssignments(Collections.emptyMap());
@@ -57,7 +60,8 @@ public abstract class CreateTopicRequest {
       @JsonProperty("replication_factor") @Nullable Short replicationFactor,
       @JsonProperty("replicas_assignments") @Nullable
           Map<Integer, List<Integer>> replicasAssignments,
-      @JsonProperty("configs") @Nullable List<ConfigEntry> configs) {
+      @JsonProperty("configs") @Nullable List<ConfigEntry> configs,
+      @JsonProperty("validate_only") @Nullable Boolean validateOnly) {
     return builder()
         .setTopicName(topicName)
         .setPartitionsCount(partitionsCount)
@@ -65,6 +69,7 @@ public abstract class CreateTopicRequest {
         .setReplicasAssignments(
             replicasAssignments != null ? replicasAssignments : Collections.emptyMap())
         .setConfigs(configs != null ? configs : ImmutableList.of())
+        .setValidateOnly(validateOnly)
         .build();
   }
 
@@ -82,6 +87,8 @@ public abstract class CreateTopicRequest {
     public abstract Builder setReplicasAssignments(Map<Integer, List<Integer>> replicasAssignments);
 
     public abstract Builder setConfigs(List<ConfigEntry> configs);
+
+    public abstract Builder setValidateOnly(@Nullable Boolean validateOnly);
 
     public abstract CreateTopicRequest build();
   }

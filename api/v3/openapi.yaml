@@ -854,6 +854,7 @@ paths:
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
         Creates a topic.
+        Also supports a dry-run mode that only validates whether the topic creation would succeed.
       tags:
         - Topic (v3)
       requestBody:
@@ -984,6 +985,7 @@ paths:
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
         Updates or deletes a set of topic configs.
+        Also supports a dry-run mode that only validates whether the operation would succeed.
       tags:
         - Configs (v3)
       requestBody:
@@ -1610,6 +1612,8 @@ components:
                   - SET
                   - DELETE
                 nullable: true
+        validate_only:
+          type: boolean
 
     AnyValue:
       nullable: true
@@ -1819,6 +1823,8 @@ components:
               value:
                 type: string
                 nullable: true
+        validate_only:
+          type: boolean
 
     ConfigSource:
       type: string
@@ -2570,6 +2576,12 @@ components:
                     value: 'compact'
                   - name: 'compression.type'
                     value: 'gzip'
+            dry_run_create_topic:
+              value:
+                topic_name: 'topic-Z'
+                partitions_count: 64
+                replication_factor: 3
+                validate_only: true
 
     ProduceRequest:
       description: 'A single record to be produced to Kafka. To produce multiple records on the same

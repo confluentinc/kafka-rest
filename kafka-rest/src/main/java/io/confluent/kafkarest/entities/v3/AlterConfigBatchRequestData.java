@@ -35,13 +35,26 @@ public abstract class AlterConfigBatchRequestData {
   @JsonProperty("data")
   public abstract ImmutableList<AlterEntry> getData();
 
+  // KREST-8518 This option is currently recognized solely by the Batch Alter Topic Config API.
+  // Nevertheless, it makes sense to add it in this generic Batch Alter Config entity as it
+  // should eventually be supported by all the other similar APIs.
+  @JsonProperty("validate_only")
+  public abstract Optional<Boolean> getValidateOnly();
+
   public static AlterConfigBatchRequestData create(List<AlterEntry> data) {
-    return new AutoValue_AlterConfigBatchRequestData(ImmutableList.copyOf(data));
+    return new AutoValue_AlterConfigBatchRequestData(ImmutableList.copyOf(data), Optional.empty());
+  }
+
+  public static AlterConfigBatchRequestData create(
+      List<AlterEntry> data, Optional<Boolean> validateOnly) {
+    return new AutoValue_AlterConfigBatchRequestData(ImmutableList.copyOf(data), validateOnly);
   }
 
   @JsonCreator
-  static AlterConfigBatchRequestData fromJson(@JsonProperty("data") List<AlterEntry> data) {
-    return create(data);
+  static AlterConfigBatchRequestData fromJson(
+      @JsonProperty("data") List<AlterEntry> data,
+      @JsonProperty("validate_only") Optional<Boolean> validateOnly) {
+    return create(data, validateOnly);
   }
 
   public final List<AlterConfigCommand> toAlterConfigCommands() {
