@@ -230,8 +230,10 @@ public final class TopicsResource {
                     configs)
                 .thenApply(none -> CreateTopicResponse.create(topicData));
 
+    // The response status will differ depending on whether a topic has actually been created.
+    Response.Status responseStatus = validateOnly ? Status.OK : Status.CREATED;
     AsyncResponseBuilder.from(
-            Response.status(Status.CREATED).location(URI.create(topicData.getMetadata().getSelf())))
+            Response.status(responseStatus).location(URI.create(topicData.getMetadata().getSelf())))
         .entity(response)
         .asyncResume(asyncResponse);
   }

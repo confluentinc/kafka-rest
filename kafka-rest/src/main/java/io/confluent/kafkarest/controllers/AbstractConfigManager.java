@@ -173,22 +173,7 @@ abstract class AbstractConfigManager<
    */
   final CompletableFuture<Void> safeAlterConfigs(
       String clusterId, ConfigResource resourceId, B prototype, List<AlterConfigCommand> commands) {
-    return listConfigs(clusterId, resourceId, prototype)
-        .thenApply(
-            configs -> {
-              Set<String> configNames =
-                  configs.stream().map(AbstractConfig::getName).collect(Collectors.toSet());
-              for (AlterConfigCommand command : commands) {
-                if (!configNames.contains(command.getName())) {
-                  throw new NotFoundException(
-                      String.format(
-                          "Config %s cannot be found for %s %s in cluster %s.",
-                          command.getName(), resourceId.type(), resourceId.name(), clusterId));
-                }
-              }
-              return configs;
-            })
-        .thenCompose(config -> alterConfigs(resourceId, commands));
+    return safeAlterConfigs(clusterId, resourceId, prototype, commands, false);
   }
 
   /**
