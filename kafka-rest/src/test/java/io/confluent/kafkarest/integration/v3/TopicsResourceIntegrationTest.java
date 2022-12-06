@@ -433,7 +433,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                         + "\"replication_factor\":1,"
                         + "\"validate_only\":true}",
                     MediaType.APPLICATION_JSON));
-    assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
 
     CreateTopicResponse actual = response.readEntity(CreateTopicResponse.class);
     assertEquals(expected, actual);
