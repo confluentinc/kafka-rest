@@ -119,7 +119,7 @@ final class TopicConfigManagerImpl extends AbstractConfigManager<TopicConfig, To
   @Override
   public CompletableFuture<Void> alterTopicConfigs(
       String clusterId, String topicName, List<AlterConfigCommand> commands, boolean validateOnly) {
-    return safeAlterConfigs(
+    return safeAlterOrValidateConfigs(
         clusterId,
         new ConfigResource(ConfigResource.Type.TOPIC, topicName),
         TopicConfig.builder().setClusterId(clusterId).setTopicName(topicName),
