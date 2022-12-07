@@ -854,11 +854,17 @@ paths:
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
         Creates a topic.
+        Also supports a dry-run mode that only validates whether the topic creation would succeed
+        if the ``validate_only`` request property is explicitly specified and set to true.
       tags:
         - Topic (v3)
       requestBody:
         $ref: '#/components/requestBodies/CreateTopicRequest'
       responses:
+        # returned when dry-run mode is being used and a topic has not been created
+        '200':
+          $ref: '#/components/responses/CreateTopicResponse'
+        # returned in regular mode when a topic has been created
         '201':
           $ref: '#/components/responses/CreateTopicResponse'
         '400':
@@ -984,11 +990,14 @@ paths:
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
         Updates or deletes a set of topic configs.
+        Also supports a dry-run mode that only validates whether the operation would succeed if the
+        ``validate_only`` request property is explicitly specified and set to true.
       tags:
         - Configs (v3)
       requestBody:
         $ref: '#/components/requestBodies/AlterTopicConfigBatchRequest'
       responses:
+        # returned in both regular and dry-run modes
         '204':
           description: 'No Content'
         '400':
@@ -1610,6 +1619,8 @@ components:
                   - SET
                   - DELETE
                 nullable: true
+        validate_only:
+          type: boolean
 
     AnyValue:
       nullable: true
@@ -1819,6 +1830,8 @@ components:
               value:
                 type: string
                 nullable: true
+        validate_only:
+          type: boolean
 
     ConfigSource:
       type: string
@@ -2487,12 +2500,22 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AlterConfigBatchRequestData'
-          example:
-            data:
-              - name: 'cleanup.policy'
-                operation: 'DELETE'
-              - name: 'compression.type'
-                value: 'gzip'
+          examples:
+            batch_alter_topic_configs:
+              value:
+                data:
+                  - name: 'cleanup.policy'
+                    operation: 'DELETE'
+                  - name: 'compression.type'
+                    value: 'gzip'
+            validate_only_batch_alter_topic_configs:
+              value:
+                data:
+                  - name: 'cleanup.policy'
+                    operation: 'DELETE'
+                  - name: 'compression.type'
+                    value: 'gzip'
+                validate_only: true
 
     CreateAclRequest:
       description: 'The ACL creation request.'
@@ -2570,6 +2593,12 @@ components:
                     value: 'compact'
                   - name: 'compression.type'
                     value: 'gzip'
+            dry_run_create_topic:
+              value:
+                topic_name: 'topic-Z'
+                partitions_count: 64
+                replication_factor: 3
+                validate_only: true
 
     ProduceRequest:
       description: 'A single record to be produced to Kafka. To produce multiple records on the same

@@ -23,6 +23,7 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.Acl;
+import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
@@ -35,9 +36,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.CreateTopicsOptions;
 import org.apache.kafka.clients.admin.DescribeTopicsOptions;
 import org.apache.kafka.clients.admin.NewPartitions;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -202,6 +206,25 @@ final class TopicManagerImpl implements TopicManager {
       Optional<Short> replicationFactor,
       Map<Integer, List<Integer>> replicasAssignments,
       Map<String, Optional<String>> configs) {
+    return createTopic(
+        clusterId,
+        topicName,
+        partitionsCount,
+        replicationFactor,
+        replicasAssignments,
+        configs,
+        false);
+  }
+
+  @Override
+  public CompletableFuture<Void> createTopic(
+      String clusterId,
+      String topicName,
+      Optional<Integer> partitionsCount,
+      Optional<Short> replicationFactor,
+      Map<Integer, List<Integer>> replicasAssignments,
+      Map<String, Optional<String>> configs,
+      boolean validateOnly) {
     requireNonNull(topicName);
 
     Map<String, String> nullableConfigs = new HashMap<>();
@@ -214,13 +237,22 @@ final class TopicManagerImpl implements TopicManager {
             ? new NewTopic(topicName, partitionsCount, replicationFactor).configs(nullableConfigs)
             : new NewTopic(topicName, replicasAssignments).configs(nullableConfigs);
 
+    Function<? super Cluster, ? extends CompletionStage<Void>> createTopicCall =
+        validateOnly
+            ? cluster ->
+                KafkaFutures.toCompletableFuture(
+                    adminClient
+                        .createTopics(
+                            singletonList(createTopicRequest),
+                            new CreateTopicsOptions().validateOnly(true))
+                        .all())
+            : cluster ->
+                KafkaFutures.toCompletableFuture(
+                    adminClient.createTopics(singletonList(createTopicRequest)).all());
     return clusterManager
         .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
-        .thenCompose(
-            cluster ->
-                KafkaFutures.toCompletableFuture(
-                    adminClient.createTopics(singletonList(createTopicRequest)).all()));
+        .thenCompose(createTopicCall);
   }
 
   @Override
