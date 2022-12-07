@@ -173,7 +173,7 @@ abstract class AbstractConfigManager<
    */
   final CompletableFuture<Void> safeAlterConfigs(
       String clusterId, ConfigResource resourceId, B prototype, List<AlterConfigCommand> commands) {
-    return safeAlterConfigs(clusterId, resourceId, prototype, commands, false);
+    return safeAlterOrValidateConfigs(clusterId, resourceId, prototype, commands, false);
   }
 
   /**
@@ -181,11 +181,11 @@ abstract class AbstractConfigManager<
    * the {@code validateOnly} flag is set, the operation is only dry-ran (the configs do not get
    * altered as a result).
    */
-  // KREST-8518 A separate overload is provided instead of changing the pre-existing
+  // KREST-8518 A separate method is provided instead of changing the pre-existing
   // safeAlterConfigs method in order to minimize any risks related to external usage of that method
   // (as this manager can be injected in projects inheriting from kafka-rest) and to minimize the
   // amount of necessary changes (e.g. by avoiding the need to heavily refactor tests).
-  final CompletableFuture<Void> safeAlterConfigs(
+  final CompletableFuture<Void> safeAlterOrValidateConfigs(
       String clusterId,
       ConfigResource resourceId,
       B prototype,
