@@ -149,6 +149,10 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new RateLimitDefaultCostConfigImpl())
         .to(Integer.class);
 
+    bind(Duration.ofMillis(config.getInt(KafkaRestConfig.RATE_LIMIT_CACHE_EXPIRY_MS)))
+        .qualifiedBy(new RateLimitCacheExpiryConfigImpl())
+        .to(Duration.class);
+
     bind(config.isRateLimitEnabled())
         .qualifiedBy(new RateLimitEnabledConfigImpl())
         .to(Boolean.class);
@@ -373,6 +377,14 @@ public final class ConfigModule extends AbstractBinder {
 
   private static final class RateLimitDefaultCostConfigImpl
       extends AnnotationLiteral<RateLimitDefaultCostConfig> implements RateLimitDefaultCostConfig {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+  public @interface RateLimitCacheExpiryConfig {}
+
+  private static final class RateLimitCacheExpiryConfigImpl
+      extends AnnotationLiteral<RateLimitCacheExpiryConfig> implements RateLimitCacheExpiryConfig {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)

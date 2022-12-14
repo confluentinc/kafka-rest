@@ -454,6 +454,12 @@ public class KafkaRestConfig extends RestConfig {
           + "\"api.v3.clusters.*=1,api.v3.brokers.list=2\". A cost of zero means no rate-limit.";
   private static final String RATE_LIMIT_COSTS_DEFAULT = "";
 
+  public static final String RATE_LIMIT_CACHE_EXPIRY_MS = "rate.limit.cache.expiry.ms";
+  private static final String RATE_LIMIT_CACHE_EXPIRY_MS_DOC =
+      "How long after the request a cluster remains in the cache storing rateLimits. Default is "
+          + "1 hour.";
+  public static final String RATE_LIMIT_CACHE_EXPIRY_MS_DEFAULT = "3600000";
+
   public static final String STREAMING_CONNECTION_MAX_DURATION_MS =
       "streaming.connection.max.duration.ms";
   private static final String STREAMING_CONNECTION_MAX_DURATION_MS_DOC =
@@ -836,6 +842,12 @@ public class KafkaRestConfig extends RestConfig {
             RATE_LIMIT_COSTS_DEFAULT,
             Importance.LOW,
             RATE_LIMIT_COSTS_DOC)
+        .define(
+            RATE_LIMIT_CACHE_EXPIRY_MS,
+            Type.INT,
+            RATE_LIMIT_CACHE_EXPIRY_MS_DEFAULT,
+            Importance.LOW,
+            RATE_LIMIT_CACHE_EXPIRY_MS_DOC)
         .define(
             STREAMING_CONNECTION_MAX_DURATION_MS,
             Type.LONG,
