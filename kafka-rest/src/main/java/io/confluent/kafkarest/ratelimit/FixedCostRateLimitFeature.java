@@ -17,12 +17,19 @@ package io.confluent.kafkarest.ratelimit;
 
 import static java.util.Objects.requireNonNull;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import io.confluent.kafkarest.config.ConfigModule.RateLimitCacheExpiryConfig;
 import io.confluent.kafkarest.config.ConfigModule.RateLimitCostsConfig;
 import io.confluent.kafkarest.config.ConfigModule.RateLimitDefaultCostConfig;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.ratelimit.RateLimitModule.RequestRateLimiterGeneric;
+import io.confluent.kafkarest.ratelimit.RateLimitModule.RequestRateLimiterPerCluster;
+import java.time.Duration;
 import java.util.Map;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.container.DynamicFeature;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
@@ -31,27 +38,37 @@ import javax.ws.rs.core.FeatureContext;
 final class FixedCostRateLimitFeature implements DynamicFeature {
   private final Map<String, Integer> costs;
   private final int defaultCost;
-  private final RequestRateLimiter requestRateLimiter;
+  // this rate limiter is for requests that don't contain clusterId
+  private final RequestRateLimiter genericRateLimiter;
+  // DynamicFeature applies to every endpoint, therefore per cluster rate limit cache should be in
+  // this level so that the cache is available for all endpoints
+  private final LoadingCache<String, RequestRateLimiter> perClusterRateLimiterCache;
 
   @Inject
   FixedCostRateLimitFeature(
       @RateLimitCostsConfig Map<String, Integer> costs,
       @RateLimitDefaultCostConfig Integer defaultCost,
-      @Context @RequestRateLimiterGeneric RequestRateLimiter requestRateLimiter) {
+      @RateLimitCacheExpiryConfig Duration rateLimitCacheExpiryConfig,
+      @Context @RequestRateLimiterGeneric RequestRateLimiter genericRateLimiter,
+      @RequestRateLimiterPerCluster Provider<RequestRateLimiter> perClusterRateLimiterProvider) {
     this.costs = requireNonNull(costs);
     this.defaultCost = defaultCost;
-    this.requestRateLimiter = requireNonNull(requestRateLimiter);
+    this.genericRateLimiter = requireNonNull(genericRateLimiter);
+    this.perClusterRateLimiterCache =
+        CacheBuilder.newBuilder()
+            .expireAfterAccess(rateLimitCacheExpiryConfig)
+            .build(new RequestRateLimiterCacheLoader(perClusterRateLimiterProvider));
   }
 
   @Override
   public void configure(ResourceInfo resourceInfo, FeatureContext context) {
     int cost = getCost(resourceInfo);
     if (cost == 0) {
-      context.register(new FixedCostRateLimitRequestFilter(new NullFixedCostRateLimiter()));
+      context.register(new NullContainerRequestFilter());
     } else {
       context.register(
           new FixedCostRateLimitRequestFilter(
-              new FixedCostRateLimiterImpl(requestRateLimiter, cost)));
+              genericRateLimiter, cost, perClusterRateLimiterCache));
     }
   }
 
@@ -76,5 +93,20 @@ final class FixedCostRateLimitFeature implements DynamicFeature {
       return costs.get(className.value());
     }
     return defaultCost;
+  }
+
+  private static final class RequestRateLimiterCacheLoader
+      extends CacheLoader<String, RequestRateLimiter> {
+
+    private final Provider<RequestRateLimiter> rateLimiter;
+
+    RequestRateLimiterCacheLoader(Provider<RequestRateLimiter> rateLimiter) {
+      this.rateLimiter = requireNonNull(rateLimiter);
+    }
+
+    @Override
+    public RequestRateLimiter load(String key) {
+      return rateLimiter.get();
+    }
   }
 }
