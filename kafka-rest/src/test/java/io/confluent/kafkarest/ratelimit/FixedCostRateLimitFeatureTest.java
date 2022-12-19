@@ -43,7 +43,7 @@ public class FixedCostRateLimitFeatureTest extends AbstractRateLimitTest {
   }
 
   int getTotalRequests() {
-    return 1750;
+    return 1500;
   }
 
   int getSlack() {
@@ -60,7 +60,10 @@ public class FixedCostRateLimitFeatureTest extends AbstractRateLimitTest {
     Properties properties = new Properties();
     properties.put("rate.limit.enable", "true");
     properties.put("rate.limit.backend", getBackend().toString());
+    // generic (global) rate limit permits
     properties.put("rate.limit.permits.per.sec", "500");
+    // per cluster rate limit permits
+    properties.put("rate.limit.per.cluster.permits.per.sec", "400");
     properties.put("rate.limit.default.cost", "1");
     properties.put("rate.limit.costs", "foobar.*=2,foobar.foo=4,fozbaz.baz=0");
     return properties;
@@ -68,27 +71,31 @@ public class FixedCostRateLimitFeatureTest extends AbstractRateLimitTest {
 
   // tests on endpoint without clusterId in path parameters
   @Test
-  public void rateLimitWithClassCost() {
+  public void rateLimitGenericWithClassCost() {
     int oks = hammerAtConstantRate("foobar/bar");
+    // each foobar/bar call cost 2, so we can only get up to 500/2 = 250 requests in
     assertInRange(250 - getSlack(), 250 + getSlack(), oks);
   }
 
   @Test
-  public void rateLimitWithMethodCost() {
+  public void rateLimitGenericWithMethodCost() {
     int oks = hammerAtConstantRate("foobar/foo");
+    // each foobar/foo call cost 4, so we can only get up to 500/4 = 125 requests in
     assertInRange(125 - getSlack(), 125 + getSlack(), oks);
   }
 
   // tests on endpoint with clusterId in path parameters
   @Test
-  public void rateLimitWithDefaultCost() {
+  public void rateLimitPerClusterWithDefaultCost() {
     int oks = hammerAtConstantRate("fozbaz/lkc-mock/foz");
-    assertInRange(500 - getSlack(), 500 + getSlack(), oks);
+    // default cost is 1, so we can only get up to 400 (per cluster permits) requests in
+    assertInRange(400 - getSlack(), 400 + getSlack(), oks);
   }
 
   @Test
-  public void rateLimitWithZeroCost() {
+  public void rateLimitPerClusterWithZeroCost() {
     int oks = hammerAtConstantRate("fozbaz/lkc-mock/baz");
+    // cost is 0, so no rate limit is applied, all requests are in
     assertEquals(getTotalRequests() - getWarmupRequests(), oks);
   }
 

@@ -20,8 +20,10 @@ import static java.util.Objects.requireNonNull;
 import com.google.common.cache.CacheLoader;
 import javax.inject.Provider;
 
-/** RequestRateLimiterCacheLoader is a {@link CacheLoader} to help create a
- * {@link RequestRateLimiter} if it does not exist in the cache */
+/**
+ * RequestRateLimiterCacheLoader is a {@link CacheLoader} to help create a {@link
+ * RequestRateLimiter} if it does not exist in the cache
+ */
 public final class RequestRateLimiterCacheLoader extends CacheLoader<String, RequestRateLimiter> {
 
   private final Provider<RequestRateLimiter> rateLimiter;

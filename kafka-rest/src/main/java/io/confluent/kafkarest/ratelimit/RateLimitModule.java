@@ -37,7 +37,7 @@ public final class RateLimitModule extends AbstractBinder {
         .to(RequestRateLimiter.class)
         .in(Singleton.class);
 
-    bindFactory(RequestRateLimiterGenericFactory.class)
+    bindFactory(RequestRateLimiterPerClusterFactory.class)
         .qualifiedBy(new RequestRateLimiterPerClusterImpl())
         .to(RequestRateLimiter.class)
         .in(PerLookup.class);

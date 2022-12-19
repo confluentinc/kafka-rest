@@ -142,6 +142,7 @@ class FixedCostRateLimitRequestFilterTest {
     expect(requestContext.getUriInfo()).andReturn(mockUriInfo);
     expect(perClusterRateLimiterCache.getUnchecked(CLUSTER_ID)).andReturn(cachedRateLimiter);
     cachedRateLimiter.rateLimit(anyInt());
+    genericRateLimiter.rateLimit(anyInt());
 
     replay(
         requestContext,
@@ -165,7 +166,7 @@ class FixedCostRateLimitRequestFilterTest {
   }
 
   @Test
-  void filter_requestContainClusterId__exceeded() {
+  void filter_requestContainClusterId__exceededPerClusterRateLimiter() {
     // prepare
     RequestRateLimiter genericRateLimiter = mock(RequestRateLimiter.class);
     RequestRateLimiter cachedRateLimiter = mock(RequestRateLimiter.class);
@@ -178,6 +179,47 @@ class FixedCostRateLimitRequestFilterTest {
     expect(requestContext.getUriInfo()).andReturn(mockUriInfo);
     expect(perClusterRateLimiterCache.getUnchecked(CLUSTER_ID)).andReturn(cachedRateLimiter);
     cachedRateLimiter.rateLimit(anyInt());
+    expectLastCall().andThrow(new RateLimitExceededException());
+
+    replay(
+        requestContext,
+        mockUriInfo,
+        genericRateLimiter,
+        cachedRateLimiter,
+        perClusterRateLimiterCache);
+
+    FixedCostRateLimitRequestFilter fixedCostRateLimitRequestFilter =
+        new FixedCostRateLimitRequestFilter(genericRateLimiter, 1, perClusterRateLimiterCache);
+    // act
+    assertThrows(
+        RateLimitExceededException.class,
+        () -> fixedCostRateLimitRequestFilter.filter(requestContext));
+
+    // check
+    verify(
+        genericRateLimiter,
+        cachedRateLimiter,
+        perClusterRateLimiterCache,
+        requestContext,
+        mockUriInfo);
+  }
+
+  @Test
+  void filter_requestContainClusterId__exceededOnGenericRateLimiter() {
+    // prepare
+    RequestRateLimiter genericRateLimiter = mock(RequestRateLimiter.class);
+    RequestRateLimiter cachedRateLimiter = mock(RequestRateLimiter.class);
+    LoadingCache<String, RequestRateLimiter> perClusterRateLimiterCache = mock(LoadingCache.class);
+    ContainerRequestContext requestContext = mock(ContainerRequestContext.class);
+    UriInfo mockUriInfo = mock(UriInfo.class);
+
+    expect(mockUriInfo.getPathParameters(anyBoolean()))
+        .andReturn(new MultivaluedHashMap<>(ImmutableMap.of("clusterId", CLUSTER_ID)));
+    expect(requestContext.getUriInfo()).andReturn(mockUriInfo);
+    expect(perClusterRateLimiterCache.getUnchecked(CLUSTER_ID)).andReturn(cachedRateLimiter);
+    cachedRateLimiter.rateLimit(anyInt());
+    // cluster rate limit pass but generic rate limit fail
+    genericRateLimiter.rateLimit(anyInt());
     expectLastCall().andThrow(new RateLimitExceededException());
 
     replay(

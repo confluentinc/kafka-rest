@@ -45,13 +45,13 @@ final class FixedCostRateLimitRequestFilter implements ContainerRequestFilter {
 
   @Override
   public void filter(ContainerRequestContext requestContext) {
+    // apply per cluster rate limiter
     String clusterId = requestContext.getUriInfo().getPathParameters(true).getFirst("clusterId");
     if (clusterId != null) {
       RequestRateLimiter rateLimiter = perClusterRateLimiterCache.getUnchecked(clusterId);
       rateLimiter.rateLimit(cost);
-    } else {
-      // fallback to the default rate limiter if the request doesn't contain clusterId
-      genericRateLimiter.rateLimit(cost);
     }
+    // apply generic (global) rate limiter
+    genericRateLimiter.rateLimit(cost);
   }
 }

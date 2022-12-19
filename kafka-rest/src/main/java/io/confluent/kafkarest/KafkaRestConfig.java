@@ -454,6 +454,15 @@ public class KafkaRestConfig extends RestConfig {
           + "\"api.v3.clusters.*=1,api.v3.brokers.list=2\". A cost of zero means no rate-limit.";
   private static final String RATE_LIMIT_COSTS_DEFAULT = "";
 
+  public static final String RATE_LIMIT_PER_CLUSTER_PERMITS_PER_SEC_CONFIG =
+      "rate.limit.per.cluster.permits.per.sec";
+  private static final String RATE_LIMIT_PER_CLUSTER_PERMITS_PER_SEC_DOC =
+      "The maximum number of permits to emit per second for a cluster. A permit is an unit of "
+          + "cost for a request. More expensive requests will consume more permits. The cost for "
+          + "each resource/method can configured via rate.limit.default.cost and rate.limit.costs. "
+          + "Default is 50.";
+  private static final Integer RATE_LIMIT_PER_CLUSTER_PERMITS_PER_SEC_DEFAULT = 50;
+
   public static final String RATE_LIMIT_CACHE_EXPIRY_MS = "rate.limit.cache.expiry.ms";
   private static final String RATE_LIMIT_CACHE_EXPIRY_MS_DOC =
       "How long after the request a cluster remains in the cache storing rateLimits. Default is "
@@ -842,6 +851,12 @@ public class KafkaRestConfig extends RestConfig {
             RATE_LIMIT_COSTS_DEFAULT,
             Importance.LOW,
             RATE_LIMIT_COSTS_DOC)
+        .define(
+            RATE_LIMIT_PER_CLUSTER_PERMITS_PER_SEC_CONFIG,
+            Type.INT,
+            RATE_LIMIT_PER_CLUSTER_PERMITS_PER_SEC_DEFAULT,
+            Importance.LOW,
+            RATE_LIMIT_PER_CLUSTER_PERMITS_PER_SEC_DOC)
         .define(
             RATE_LIMIT_CACHE_EXPIRY_MS,
             Type.INT,

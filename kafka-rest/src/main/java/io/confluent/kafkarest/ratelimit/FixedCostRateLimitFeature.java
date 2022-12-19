@@ -36,7 +36,6 @@ import javax.ws.rs.core.FeatureContext;
 final class FixedCostRateLimitFeature implements DynamicFeature {
   private final Map<String, Integer> costs;
   private final int defaultCost;
-  // this rate limiter is for requests that don't contain clusterId
   private final RequestRateLimiter genericRateLimiter;
   // DynamicFeature applies to every endpoint, therefore per cluster rate limit cache should be in
   // this level so that the cache is available for all endpoints
