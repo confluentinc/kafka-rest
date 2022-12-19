@@ -18,7 +18,6 @@ package io.confluent.kafkarest.ratelimit;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.confluent.kafkarest.config.ConfigModule.RateLimitCacheExpiryConfig;
 import io.confluent.kafkarest.config.ConfigModule.RateLimitCostsConfig;
@@ -32,7 +31,6 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.container.DynamicFeature;
 import javax.ws.rs.container.ResourceInfo;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.FeatureContext;
 
 final class FixedCostRateLimitFeature implements DynamicFeature {
@@ -49,7 +47,7 @@ final class FixedCostRateLimitFeature implements DynamicFeature {
       @RateLimitCostsConfig Map<String, Integer> costs,
       @RateLimitDefaultCostConfig Integer defaultCost,
       @RateLimitCacheExpiryConfig Duration rateLimitCacheExpiryConfig,
-      @Context @RequestRateLimiterGeneric RequestRateLimiter genericRateLimiter,
+      @RequestRateLimiterGeneric RequestRateLimiter genericRateLimiter,
       @RequestRateLimiterPerCluster Provider<RequestRateLimiter> perClusterRateLimiterProvider) {
     this.costs = requireNonNull(costs);
     this.defaultCost = defaultCost;
@@ -93,20 +91,5 @@ final class FixedCostRateLimitFeature implements DynamicFeature {
       return costs.get(className.value());
     }
     return defaultCost;
-  }
-
-  private static final class RequestRateLimiterCacheLoader
-      extends CacheLoader<String, RequestRateLimiter> {
-
-    private final Provider<RequestRateLimiter> rateLimiter;
-
-    RequestRateLimiterCacheLoader(Provider<RequestRateLimiter> rateLimiter) {
-      this.rateLimiter = requireNonNull(rateLimiter);
-    }
-
-    @Override
-    public RequestRateLimiter load(String key) {
-      return rateLimiter.get();
-    }
   }
 }
