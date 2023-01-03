@@ -77,7 +77,16 @@ abstract class AbstractRateLimitTest extends JerseyTest {
   @Override
   public final void tearDown() throws Exception {
     super.tearDown();
-    executor.shutdownNow();
+    // try to wait for tasks to finish gracefully
+    executor.shutdown();
+    try {
+      if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+        executor.shutdownNow();
+      }
+    } catch (InterruptedException ex) {
+      executor.shutdownNow();
+      Thread.currentThread().interrupt();
+    }
   }
 
   final int hammerAtConstantRate(
