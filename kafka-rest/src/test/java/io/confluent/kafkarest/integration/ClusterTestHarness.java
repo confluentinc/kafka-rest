@@ -221,6 +221,7 @@ public abstract class ClusterTestHarness {
           new SchemaRegistryRestApplication(new SchemaRegistryConfig(schemaRegProperties));
       schemaRegServer = schemaRegApp.createServer();
       schemaRegServer.start();
+      schemaRegApp.postServerStart();
     }
 
     int restPort = choosePort();
