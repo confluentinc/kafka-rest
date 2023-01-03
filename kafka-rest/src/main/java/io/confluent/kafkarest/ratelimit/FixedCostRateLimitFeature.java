@@ -19,9 +19,9 @@ import static java.util.Objects.requireNonNull;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
-import io.confluent.kafkarest.config.ConfigModule.RateLimitCacheExpiryConfig;
 import io.confluent.kafkarest.config.ConfigModule.RateLimitCostsConfig;
 import io.confluent.kafkarest.config.ConfigModule.RateLimitDefaultCostConfig;
+import io.confluent.kafkarest.config.ConfigModule.RateLimitPerClusterCacheExpiryConfig;
 import io.confluent.kafkarest.extension.ResourceAccesslistFeature.ResourceName;
 import io.confluent.kafkarest.ratelimit.RateLimitModule.RequestRateLimiterGeneric;
 import io.confluent.kafkarest.ratelimit.RateLimitModule.RequestRateLimiterPerCluster;
@@ -45,7 +45,7 @@ final class FixedCostRateLimitFeature implements DynamicFeature {
   FixedCostRateLimitFeature(
       @RateLimitCostsConfig Map<String, Integer> costs,
       @RateLimitDefaultCostConfig Integer defaultCost,
-      @RateLimitCacheExpiryConfig Duration rateLimitCacheExpiryConfig,
+      @RateLimitPerClusterCacheExpiryConfig Duration rateLimitPerClusterCacheExpiryConfig,
       @RequestRateLimiterGeneric RequestRateLimiter genericRateLimiter,
       @RequestRateLimiterPerCluster Provider<RequestRateLimiter> perClusterRateLimiterProvider) {
     this.costs = requireNonNull(costs);
@@ -53,7 +53,7 @@ final class FixedCostRateLimitFeature implements DynamicFeature {
     this.genericRateLimiter = requireNonNull(genericRateLimiter);
     this.perClusterRateLimiterCache =
         CacheBuilder.newBuilder()
-            .expireAfterAccess(rateLimitCacheExpiryConfig)
+            .expireAfterAccess(rateLimitPerClusterCacheExpiryConfig)
             .build(new RequestRateLimiterCacheLoader(perClusterRateLimiterProvider));
   }
 

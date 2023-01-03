@@ -153,8 +153,8 @@ public final class ConfigModule extends AbstractBinder {
         .qualifiedBy(new RateLimitPerClusterPermitsPerSecConfigImpl())
         .to(Integer.class);
 
-    bind(Duration.ofMillis(config.getInt(KafkaRestConfig.RATE_LIMIT_CACHE_EXPIRY_MS)))
-        .qualifiedBy(new RateLimitCacheExpiryConfigImpl())
+    bind(Duration.ofMillis(config.getInt(KafkaRestConfig.RATE_LIMIT_PER_CLUSTER_CACHE_EXPIRY_MS)))
+        .qualifiedBy(new RateLimitPerClusterCacheExpiryConfigImpl())
         .to(Duration.class);
 
     bind(config.isRateLimitEnabled())
@@ -385,10 +385,11 @@ public final class ConfigModule extends AbstractBinder {
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
-  public @interface RateLimitCacheExpiryConfig {}
+  public @interface RateLimitPerClusterCacheExpiryConfig {}
 
-  private static final class RateLimitCacheExpiryConfigImpl
-      extends AnnotationLiteral<RateLimitCacheExpiryConfig> implements RateLimitCacheExpiryConfig {}
+  private static final class RateLimitPerClusterCacheExpiryConfigImpl
+      extends AnnotationLiteral<RateLimitPerClusterCacheExpiryConfig>
+      implements RateLimitPerClusterCacheExpiryConfig {}
 
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
