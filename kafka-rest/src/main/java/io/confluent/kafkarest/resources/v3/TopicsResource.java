@@ -69,14 +69,14 @@ import javax.ws.rs.core.Response.Status;
 @ResourceName("api.v3.topics.*")
 public final class TopicsResource {
 
-  private final Provider<TopicManager> topicManager;
+  private final Provider<TopicManager> topicManagerProvider;
   private final CrnFactory crnFactory;
   private final UrlFactory urlFactory;
 
   @Inject
   public TopicsResource(
       Provider<TopicManager> topicManager, CrnFactory crnFactory, UrlFactory urlFactory) {
-    this.topicManager = requireNonNull(topicManager);
+    this.topicManagerProvider = requireNonNull(topicManager);
     this.crnFactory = requireNonNull(crnFactory);
     this.urlFactory = requireNonNull(urlFactory);
   }
@@ -91,7 +91,7 @@ public final class TopicsResource {
       @QueryParam("includeAuthorizedOperations") @DefaultValue("false")
           boolean includeAuthorizedOperations) {
     CompletableFuture<ListTopicsResponse> response =
-        topicManager
+        topicManagerProvider
             .get()
             .listTopics(clusterId, includeAuthorizedOperations)
             .thenApply(
@@ -125,7 +125,7 @@ public final class TopicsResource {
       @QueryParam("include_authorized_operations") @DefaultValue("false")
           boolean includeAuthorizedOperations) {
     CompletableFuture<GetTopicResponse> response =
-        topicManager
+        topicManagerProvider
             .get()
             .getTopic(clusterId, topicName, includeAuthorizedOperations)
             .thenApply(topic -> topic.orElseThrow(NotFoundException::new))
@@ -150,14 +150,14 @@ public final class TopicsResource {
       throw Errors.invalidPayloadException("Request body is empty. Partitions_count is required.");
     }
 
+    TopicManager topicManager = topicManagerProvider.get();
+
     CompletableFuture<GetTopicResponse> response =
         topicManager
-            .get()
             .updateTopicPartitionsCount(topicName, partitionsCount.getPartitionsCount())
             .thenCompose(
                 nothing ->
                     topicManager
-                        .get()
                         .getTopic(clusterId, topicName)
                         .thenApply(topic -> GetTopicResponse.create(toTopicData(topic.get()))));
 
@@ -208,7 +208,7 @@ public final class TopicsResource {
     boolean validateOnly = request.getValidateOnly().orElse(false);
     CompletableFuture<CreateTopicResponse> response =
         validateOnly
-            ? topicManager
+            ? topicManagerProvider
                 .get()
                 .createTopic(
                     clusterId,
@@ -219,7 +219,7 @@ public final class TopicsResource {
                     configs,
                     true)
                 .thenApply(none -> CreateTopicResponse.create(topicData))
-            : topicManager
+            : topicManagerProvider
                 .get()
                 .createTopic(
                     clusterId,
@@ -247,7 +247,7 @@ public final class TopicsResource {
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
       @PathParam("topicName") String topicName) {
-    CompletableFuture<Void> response = topicManager.get().deleteTopic(clusterId, topicName);
+    CompletableFuture<Void> response = topicManagerProvider.get().deleteTopic(clusterId, topicName);
 
     AsyncResponseBuilder.from(Response.status(Status.NO_CONTENT))
         .entity(response)
