@@ -49,6 +49,7 @@
         <checkstyle.config.location>checkstyle/checkstyle.xml</checkstyle.config.location>
         <checkstyle.suppressions.location>checkstyle/suppressions.xml</checkstyle.suppressions.location>
         <io.confluent.kafka-rest.version>7.4.0-1038</io.confluent.kafka-rest.version>
+	<dependency.check.version>7.4.4</dependency.check.version>
     </properties>
 
     <repositories>
