@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Confluent Inc.
+ * Copyright 2020 - 2022 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -18,8 +18,12 @@ package io.confluent.kafkarest.common;
 import java.util.concurrent.CompletableFuture;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.internals.KafkaFutureImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class KafkaFutures {
+
+  private static final Logger log = LoggerFactory.getLogger(KafkaFutures.class);
 
   private KafkaFutures() {}
 
@@ -40,6 +44,7 @@ public final class KafkaFutures {
           if (exception == null) {
             completableFuture.complete(value);
           } else {
+            log.debug("Caught Exception on completion of KafkaFuture", exception);
             completableFuture.completeExceptionally(exception);
           }
         });

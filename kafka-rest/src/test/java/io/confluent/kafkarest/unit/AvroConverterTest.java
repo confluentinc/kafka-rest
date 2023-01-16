@@ -18,11 +18,9 @@ package io.confluent.kafkarest.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.confluent.kafkarest.converters.AvroConverter;
-import io.confluent.kafkarest.converters.ConversionException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -117,13 +115,6 @@ public class AvroConverterTest {
   }
 
   @Test
-  public void testUnsupportedJavaPrimitivesToJson() {
-    expectConversionException((byte) 0);
-    expectConversionException((char) 0);
-    expectConversionException((short) 0);
-  }
-
-  @Test
   public void testRecordToJson() {
     GenericRecord data =
         new GenericRecordBuilder(recordSchema)
@@ -196,17 +187,5 @@ public class AvroConverterTest {
     assertTrue(result.getSize() > 0);
     assertTrue(result.getJson().isTextual());
     assertEquals("SPADES", result.getJson().textValue());
-  }
-
-  private static void expectConversionException(Object obj) {
-    try {
-      new AvroConverter().toJson(obj);
-      fail(
-          "Expected conversion of "
-              + (obj == null ? "null" : (obj.toString() + " (" + obj.getClass().getName() + ")"))
-              + " to fail");
-    } catch (ConversionException e) {
-      // Expected
-    }
   }
 }

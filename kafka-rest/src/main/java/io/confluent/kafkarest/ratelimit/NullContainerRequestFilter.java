@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Confluent Inc.
+ * Copyright 2022 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -15,20 +15,13 @@
 
 package io.confluent.kafkarest.ratelimit;
 
-import static java.util.Objects.requireNonNull;
+import java.io.IOException;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
 
-/** A {@link FixedCostRateLimiter} implementation that delegates to {@link RequestRateLimiter}. */
-final class FixedCostRateLimiterImpl implements FixedCostRateLimiter {
-  private final RequestRateLimiter delegate;
-  private final int cost;
-
-  FixedCostRateLimiterImpl(RequestRateLimiter delegate, int cost) {
-    this.delegate = requireNonNull(delegate);
-    this.cost = cost;
-  }
+/** A {@link ContainerRequestFilter} that doesn't filter anything. */
+final class NullContainerRequestFilter implements ContainerRequestFilter {
 
   @Override
-  public void rateLimit() {
-    delegate.rateLimit(cost);
-  }
+  public void filter(final ContainerRequestContext requestContext) throws IOException {}
 }

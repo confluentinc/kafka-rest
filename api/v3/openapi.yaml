@@ -102,6 +102,31 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
+  /clusters/{cluster_id}/acls:batch:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+
+    post:
+      summary: 'Batch Create ACLs'
+      operationId: batchCreateKafkaV3Acls
+      description: |-
+        Creates ACLs.
+      tags:
+        - ACL (v3)
+      requestBody:
+        $ref: '#/components/requestBodies/BatchCreateAclRequest'
+      responses:
+        '201':
+          description: 'No Content'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
+
   /clusters/{cluster_id}/acls:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -136,7 +161,7 @@ paths:
           $ref: '#/components/responses/ServerErrorResponse'
 
     post:
-      summary: 'Create ACLs'
+      summary: 'Create an ACL'
       operationId: createKafkaV3Acls
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
@@ -829,11 +854,17 @@ paths:
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
         Creates a topic.
+        Also supports a dry-run mode that only validates whether the topic creation would succeed
+        if the ``validate_only`` request property is explicitly specified and set to true.
       tags:
         - Topic (v3)
       requestBody:
         $ref: '#/components/requestBodies/CreateTopicRequest'
       responses:
+        # returned when dry-run mode is being used and a topic has not been created
+        '200':
+          $ref: '#/components/responses/CreateTopicResponse'
+        # returned in regular mode when a topic has been created
         '201':
           $ref: '#/components/responses/CreateTopicResponse'
         '400':
@@ -873,6 +904,29 @@ paths:
         '5XX':
           $ref: '#/components/responses/ServerErrorResponse'
 
+    patch:
+      summary: 'Update partition count'
+      operationId: updatePartitionCountKafkaV3Topic
+      description: |-
+        [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
+
+        Increases number of partitions on a topic.  
+      tags:
+        - Topic (v3)
+      requestBody:
+        $ref: '#/components/requestBodies/UpdatePartitionCountRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/GetTopicResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsErrorResponse'
+        '5XX':
+          $ref: '#/components/responses/ServerErrorResponse'
+        
     delete:
       summary: 'Delete Topic'
       operationId: deleteKafkaV3Topic
@@ -936,11 +990,14 @@ paths:
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
         Updates or deletes a set of topic configs.
+        Also supports a dry-run mode that only validates whether the operation would succeed if the
+        ``validate_only`` request property is explicitly specified and set to true.
       tags:
         - Configs (v3)
       requestBody:
         $ref: '#/components/requestBodies/AlterTopicConfigBatchRequest'
       responses:
+        # returned in both regular and dry-run modes
         '204':
           description: 'No Content'
         '400':
@@ -1562,6 +1619,8 @@ components:
                   - SET
                   - DELETE
                 nullable: true
+        validate_only:
+          type: boolean
 
     AnyValue:
       nullable: true
@@ -1723,6 +1782,17 @@ components:
         permission:
           $ref: '#/components/schemas/AclPermission'
 
+    CreateAclRequestDataList:
+      allOf:
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreateAclRequestData'
+
     CreateTopicRequestData:
       type: object
       required:
@@ -1760,6 +1830,8 @@ components:
               value:
                 type: string
                 nullable: true
+        validate_only:
+          type: boolean
 
     ConfigSource:
       type: string
@@ -2386,6 +2458,15 @@ components:
           type: string
           nullable: true
 
+    UpdatePartitionCountRequestData:
+      type: object
+      required:
+        - partitions_count
+      properties:
+        partitions_count:
+          type: integer
+          format: int32
+
   requestBodies:
     AlterBrokerConfigBatchRequest:
       description: 'The alter broker configuration parameter batch request.'
@@ -2419,12 +2500,22 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AlterConfigBatchRequestData'
-          example:
-            data:
-              - name: 'cleanup.policy'
-                operation: 'DELETE'
-              - name: 'compression.type'
-                value: 'gzip'
+          examples:
+            batch_alter_topic_configs:
+              value:
+                data:
+                  - name: 'cleanup.policy'
+                    operation: 'DELETE'
+                  - name: 'compression.type'
+                    value: 'gzip'
+            validate_only_batch_alter_topic_configs:
+              value:
+                data:
+                  - name: 'cleanup.policy'
+                    operation: 'DELETE'
+                  - name: 'compression.type'
+                    value: 'gzip'
+                validate_only: true
 
     CreateAclRequest:
       description: 'The ACL creation request.'
@@ -2440,6 +2531,29 @@ components:
             host: '*'
             operation: 'DESCRIBE'
             permission: 'DENY'
+
+    BatchCreateAclRequest:
+      description: 'The batch ACL creation request.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateAclRequestDataList'
+          example:
+            data:
+              - resource_type: 'CLUSTER'
+                resource_name: 'kafka-cluster'
+                pattern_type: 'LITERAL'
+                principal: 'principalType:principalName'
+                host: '*'
+                operation: 'DESCRIBE'
+                permission: 'DENY'
+              - resource_type: 'TOPIC'
+                resource_name: 'kafka-cluster'
+                pattern_type: 'LITERAL'
+                principal: 'principalType:principalName'
+                host: '*'
+                operation: 'READ'
+                permission: 'ALLOW'
 
     CreateTopicRequest:
       description: 'The topic creation request.'
@@ -2479,6 +2593,12 @@ components:
                     value: 'compact'
                   - name: 'compression.type'
                     value: 'gzip'
+            dry_run_create_topic:
+              value:
+                topic_name: 'topic-Z'
+                partitions_count: 64
+                replication_factor: 3
+                validate_only: true
 
     ProduceRequest:
       description: 'A single record to be produced to Kafka. To produce multiple records on the same
@@ -2576,6 +2696,16 @@ components:
             $ref: "#/components/schemas/UpdateConfigRequestData"
           example:
             value: 'gzip'
+
+    UpdatePartitionCountRequest:
+      description : 'The number of partitions to increase the partition count to.'
+      content:
+         application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePartitionCountRequestData"
+            example: 
+               partitions_count: 10
+
 
   responses:
     CreateTopicResponse:

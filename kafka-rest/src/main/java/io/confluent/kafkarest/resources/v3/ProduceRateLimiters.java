@@ -19,7 +19,6 @@ import static java.lang.Math.toIntExact;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitCacheExpiryConfig;
 import io.confluent.kafkarest.config.ConfigModule.ProduceRateLimitEnabledConfig;
@@ -28,6 +27,7 @@ import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterBytesG
 import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterCount;
 import io.confluent.kafkarest.ratelimit.RateLimitModule.ProduceRateLimiterCountGlobal;
 import io.confluent.kafkarest.ratelimit.RequestRateLimiter;
+import io.confluent.kafkarest.ratelimit.RequestRateLimiterCacheLoader;
 import java.time.Duration;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -79,19 +79,5 @@ public class ProduceRateLimiters {
   public void clear() {
     countCache.invalidateAll();
     bytesCache.invalidateAll();
-  }
-
-  private static final class RequestRateLimiterCacheLoader
-      extends CacheLoader<String, RequestRateLimiter> {
-    private final Provider<RequestRateLimiter> rateLimiter;
-
-    private RequestRateLimiterCacheLoader(Provider<RequestRateLimiter> rateLimiter) {
-      this.rateLimiter = requireNonNull(rateLimiter);
-    }
-
-    @Override
-    public RequestRateLimiter load(String key) {
-      return rateLimiter.get();
-    }
   }
 }
