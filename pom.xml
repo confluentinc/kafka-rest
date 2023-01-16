@@ -129,6 +129,7 @@
             <dependency>
                 <groupId>io.confluent</groupId>
                 <artifactId>kafka-schema-registry</artifactId>
+                <version>${io.confluent.schema-registry.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.yaml</groupId>
