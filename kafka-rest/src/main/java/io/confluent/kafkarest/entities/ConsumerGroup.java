@@ -17,6 +17,7 @@ package io.confluent.kafkarest.entities;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
@@ -41,6 +42,16 @@ public abstract class ConsumerGroup {
   public abstract Broker getCoordinator();
 
   public abstract ImmutableList<Consumer> getConsumers();
+
+  public final ImmutableMap<Partition, Consumer> getPartitionAssignment() {
+    ImmutableMap.Builder<Partition, Consumer> partitionAssignment = ImmutableMap.builder();
+    for (Consumer consumer : getConsumers()) {
+      for (Partition partition : consumer.getAssignedPartitions()) {
+        partitionAssignment.put(partition, consumer);
+      }
+    }
+    return partitionAssignment.build();
+  }
 
   public static Builder builder() {
     return new AutoValue_ConsumerGroup.Builder();

@@ -21,6 +21,7 @@ import static java.util.Collections.singletonMap;
 import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.v2.ConsumerAssignmentRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerCommittedRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerCommittedResponse;
@@ -30,6 +31,8 @@ import io.confluent.kafkarest.entities.v2.ConsumerSeekToRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.TopicPartitionOffset;
 import io.confluent.kafkarest.entities.v2.TopicPartitionOffsetMetadata;
+import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -60,29 +63,37 @@ import org.apache.kafka.common.TopicPartition;
  */
 public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, ClientValueT> {
 
-  private KafkaRestConfig config;
   private ConsumerInstanceId instanceId;
   private Consumer<KafkaKeyT, KafkaValueT> consumer;
+  private final Clock clock = Clock.systemUTC();
+  private final Duration consumerInstanceTimeout;
+  private final ConsumerInstanceConfig consumerInstanceConfig;
 
   private final Queue<ConsumerRecord<KafkaKeyT, KafkaValueT>> consumerRecords = new ArrayDeque<>();
 
-  volatile long expiration;
+  volatile Instant expiration;
   private final Object expirationLock = new Object();
 
   KafkaConsumerState(
       KafkaRestConfig config,
+      ConsumerInstanceConfig consumerInstanceConfig,
       ConsumerInstanceId instanceId,
       Consumer<KafkaKeyT, KafkaValueT> consumer
   ) {
-    this.config = config;
     this.instanceId = instanceId;
     this.consumer = consumer;
-    this.expiration = config.getTime().milliseconds()
-                      + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
+    this.consumerInstanceTimeout =
+        Duration.ofMillis(config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG));
+    this.expiration = clock.instant().plus(consumerInstanceTimeout);
+    this.consumerInstanceConfig = consumerInstanceConfig;
   }
 
   public ConsumerInstanceId getId() {
     return instanceId;
+  }
+
+  public ConsumerInstanceConfig getConsumerInstanceConfig() {
+    return consumerInstanceConfig;
   }
 
   /**
@@ -277,6 +288,7 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
     return currAssignment;
   }
 
+
   /**
    * Get the last committed offset for the given partition (whether the commit happened by
    * this process or another).
@@ -364,25 +376,16 @@ public abstract class KafkaConsumerState<KafkaKeyT, KafkaValueT, ClientKeyT, Cli
         .map(OffsetAndTimestamp::offset);
   }
 
-  public boolean expired(long nowMs) {
+  public synchronized boolean expired(Instant now) {
     synchronized (this.expirationLock) {
-      return expiration <= nowMs;
+      return !expiration.isAfter(now);
     }
   }
 
-  public void updateExpiration() {
+  public synchronized void updateExpiration() {
     synchronized (this.expirationLock) {
-      this.expiration = config.getTime().milliseconds()
-                        + config.getInt(KafkaRestConfig.CONSUMER_INSTANCE_TIMEOUT_MS_CONFIG);
+      this.expiration = clock.instant().plus(consumerInstanceTimeout);
     }
-  }
-
-  public synchronized KafkaRestConfig getConfig() {
-    return config;
-  }
-
-  public synchronized void setConfig(KafkaRestConfig config) {
-    this.config = config;
   }
 
   synchronized ConsumerRecord<KafkaKeyT, KafkaValueT> peek() {

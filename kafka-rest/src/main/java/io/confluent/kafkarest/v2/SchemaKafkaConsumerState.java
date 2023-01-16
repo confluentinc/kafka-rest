@@ -20,6 +20,7 @@ import io.confluent.kafkarest.ConsumerInstanceId;
 import io.confluent.kafkarest.ConsumerRecordAndSize;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.converters.SchemaConverter;
+import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
@@ -32,11 +33,13 @@ public final class SchemaKafkaConsumerState
 
   private final SchemaConverter schemaConverter;
 
-  public SchemaKafkaConsumerState(KafkaRestConfig config,
+  public SchemaKafkaConsumerState(
+      KafkaRestConfig config,
+      ConsumerInstanceConfig consumerInstanceConfig,
       ConsumerInstanceId instanceId,
       Consumer consumer,
       SchemaConverter schemaConverter) {
-    super(config, instanceId, consumer);
+    super(config, consumerInstanceConfig, instanceId, consumer);
     this.schemaConverter = schemaConverter;
   }
 

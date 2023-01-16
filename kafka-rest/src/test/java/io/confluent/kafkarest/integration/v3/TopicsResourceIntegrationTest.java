@@ -329,6 +329,64 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
   }
 
   @Test
+  public void createTopic_nonExistingTopic_customReplicasAssignments_returnsCreatedTopic() {
+    String baseUrl = restConnect;
+    String clusterId = getClusterId();
+    String topicName = "topic-4";
+
+    CreateTopicResponse expected =
+        CreateTopicResponse.create(
+            TopicData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf(baseUrl + "/v3/clusters/" + clusterId + "/topics/" + topicName)
+                        .setResourceName("crn:///kafka=" + clusterId + "/topic=" + topicName)
+                        .build())
+                .setClusterId(clusterId)
+                .setTopicName(topicName)
+                .setInternal(false)
+                .setReplicationFactor(2) // As determined by the actual replicas asignments below.
+                .setPartitions(
+                    Resource.Relationship.create(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/topics/" + topicName
+                            + "/partitions"))
+                .setConfigs(
+                    Resource.Relationship.create(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/topics/" + topicName
+                            + "/configs"))
+                .setPartitionReassignments(
+                    Resource.Relationship.create(
+                        baseUrl
+                            + "/v3/clusters/" + clusterId
+                            + "/topics/" + topicName
+                            + "/partitions/-/reassignment"))
+                .build());
+
+    Response response =
+        request("/v3/clusters/" + clusterId + "/topics")
+            .accept(MediaType.APPLICATION_JSON)
+            .post(
+                Entity.entity(
+                    "{\"topic_name\":\"" + topicName
+                        + "\",\"replicas_assignments\":{\"0\":[1,2], \"1\":[2,3], \"2\":[3,1]}}",
+                    MediaType.APPLICATION_JSON));
+    assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
+
+    CreateTopicResponse actual = response.readEntity(CreateTopicResponse.class);
+    assertEquals(expected, actual);
+
+    testWithRetry(
+        () ->
+            assertTrue(
+                String.format("Topic names should contain %s after its creation", topicName),
+                getTopicNames().contains(topicName)));
+  }
+
+  @Test
   public void createTopic_existingTopic_returnsBadRequest() {
     String clusterId = getClusterId();
 

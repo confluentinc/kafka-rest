@@ -16,8 +16,6 @@
 package io.confluent.kafkarest.entities;
 
 import com.google.auto.value.AutoValue;
-import io.confluent.kafkarest.KafkaRestConfig;
-import java.util.Properties;
 import javax.annotation.Nullable;
 
 @AutoValue
@@ -45,19 +43,6 @@ public abstract class ConsumerInstanceConfig {
 
   @Nullable
   public abstract Integer getRequestWaitMs();
-
-  public final Properties toProperties() {
-    Properties properties = new Properties();
-    if (getResponseMinBytes() != null) {
-      properties.setProperty(
-          KafkaRestConfig.PROXY_FETCH_MIN_BYTES_CONFIG, getResponseMinBytes().toString());
-    }
-    if (getRequestWaitMs() != null) {
-      properties.setProperty(
-          KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, getRequestWaitMs().toString());
-    }
-    return properties;
-  }
 
   public static ConsumerInstanceConfig create(EmbeddedFormat format) {
     return create(

@@ -172,6 +172,18 @@ public final class ConsumerAssignmentsResource {
                     assignment.getTopicName(),
                     "partitions",
                     Integer.toString(assignment.getPartitionId()))))
+        .setLag(
+            Relationship.create(
+                urlFactory.create(
+                    "v3",
+                    "clusters",
+                    assignment.getClusterId(),
+                    "topics",
+                    assignment.getTopicName(),
+                    "partitions",
+                    Integer.toString(assignment.getPartitionId()),
+                    "lags",
+                    assignment.getConsumerGroupId())))
         .build();
   }
 }

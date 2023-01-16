@@ -22,9 +22,21 @@ To install from source, follow the instructions in the Development section below
 Deployment
 ----------
 
-The REST proxy includes a built-in Jetty server. The wrapper scripts
-``bin/kafka-rest-start`` and ``bin/kafka-rest-stop`` are the recommended method of
-starting and stopping the service.
+The REST proxy includes a built-in Jetty server and can be deployed after
+being configured to connect to an existing Kafka cluster.
+
+Running ``mvn clean package`` runs all 3 of its assembly targets.
+- The ``development`` target assembles all necessary dependencies in a ``kafka-rest/target``
+  subfolder without packaging them in a distributable format. The wrapper scripts
+  ``bin/kafka-rest-start`` and ``bin/kafka-rest-stop`` can then be used to start and stop the
+  service.
+- The ``package`` target is meant to be used in shared dependency environments and omits some
+  dependencies expected to be provided externally. It assembles the other dependencies in a
+  ``kafka-rest/target`` subfolder as well as in distributable archives. The wrapper scripts
+  ``bin/kafka-rest-start`` and ``bin/kafka-rest-stop`` can then be used to start and stop the
+  service.
+- The ``standalone`` target packages all necessary dependencies as a distributable JAR that can
+  be run as standard (``java -jar $base-dir/kafka-rest/target/kafka-rest-X.Y.Z-standalone.jar``).
 
 Quickstart
 ----------

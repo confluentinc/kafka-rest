@@ -14,7 +14,10 @@
  */
 package io.confluent.kafkarest.integration;
 
+import static io.confluent.kafkarest.TestUtils.testWithRetry;
+import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.confluent.common.utils.IntegrationTest;
 import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
@@ -22,8 +25,9 @@ import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import io.confluent.kafka.serializers.KafkaJsonSerializer;
+import io.confluent.kafkarest.KafkaRestApplication;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.ProducerPool;
+import io.confluent.kafkarest.common.CompletableFutures;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -37,8 +41,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Vector;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
+import java.util.stream.IntStream;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
@@ -46,13 +52,13 @@ import javax.ws.rs.client.WebTarget;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import kafka.utils.CoreUtils;
+import kafka.utils.MockTime;
 import kafka.utils.TestUtils;
 import kafka.zk.EmbeddedZookeeper;
 import kafka.zk.KafkaZkClient;
 import kafka.zookeeper.ZooKeeperClient;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.AlterPartitionReassignmentsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.NewPartitionReassignment;
@@ -72,6 +78,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.Option;
 import scala.collection.JavaConverters;
 
@@ -82,6 +90,8 @@ import scala.collection.JavaConverters;
  */
 @Category(IntegrationTest.class)
 public abstract class ClusterTestHarness {
+
+  private static final Logger log = LoggerFactory.getLogger(ClusterTestHarness.class);
 
   public static final int DEFAULT_NUM_BROKERS = 1;
 
@@ -115,7 +125,6 @@ public abstract class ClusterTestHarness {
 
   private int numBrokers;
   private boolean withSchemaRegistry;
-
   // ZK Config
   protected String zkConnect;
   protected EmbeddedZookeeper zookeeper;
@@ -139,9 +148,11 @@ public abstract class ClusterTestHarness {
 
   protected Properties restProperties = null;
   protected KafkaRestConfig restConfig = null;
-  protected TestKafkaRestApplication restApp = null;
+  protected KafkaRestApplication restApp = null;
   protected Server restServer = null;
   protected String restConnect = null;
+
+  private static final long ONE_SECOND_MS = 1000L;
 
   public ClusterTestHarness() {
     this(DEFAULT_NUM_BROKERS, false);
@@ -165,6 +176,7 @@ public abstract class ClusterTestHarness {
 
   @Before
   public void setUp() throws Exception {
+    log.info("Starting setup of {}", getClass().getSimpleName());
     zookeeper = new EmbeddedZookeeper();
     zkConnect = String.format("127.0.0.1:%d", zookeeper.port());
     Time time = Time.SYSTEM;
@@ -175,19 +187,8 @@ public abstract class ClusterTestHarness {
         JaasUtils.isZkSaslEnabled(),
         time);
 
-    configs = new Vector<>();
-    servers = new Vector<>();
-    for (int i = 0; i < numBrokers; i++) {
-      Properties props = getBrokerProperties(i);
-
-      props = overrideBrokerProperties(i, props);
-
-      KafkaConfig config = KafkaConfig.fromProps(props);
-      configs.add(config);
-
-      KafkaServer server = TestUtils.createServer(config, time);
-      servers.add(server);
-    }
+    // start brokers concurrently
+    startBrokersConcurrently(numBrokers);
 
     brokerList =
         TestUtils.getBrokerListStrFromServers(JavaConverters.asScalaBuffer(servers),
@@ -231,12 +232,66 @@ public abstract class ClusterTestHarness {
     restConnect = getRestConnectString(restPort);
     restProperties.put("listeners", restConnect);
 
+    // Reduce the metadata fetch timeout so requests for topics that don't exist timeout much
+    // faster than the default
+    restProperties.put("producer." + ProducerConfig.MAX_BLOCK_MS_CONFIG, "5000");
+
     restConfig = new KafkaRestConfig(restProperties);
-    restApp =
-        new TestKafkaRestApplication(
-            restConfig, getProducerPool(restConfig), /* kafkaConsumerManager= */ null);
+
+    try {
+      startRest();
+    } catch (IOException e) { // sometimes we get an address already in use exception
+      log.warn("IOException when attempting to start rest, trying again", e);
+      stopRest();
+      Thread.sleep(ONE_SECOND_MS);
+      try {
+        startRest();
+      } catch (IOException e2) {
+        log.error("Restart of rest server failed", e2);
+        throw e2;
+      }
+    }
+    log.info("Completed setup of {}", getClass().getSimpleName());
+  }
+
+  private void startRest() throws Exception {
+    restApp = new KafkaRestApplication(restConfig);
     restServer = restApp.createServer();
     restServer.start();
+  }
+
+  private void stopRest() throws Exception {
+    if (restApp != null) {
+      restApp.stop();
+      restApp.getMetrics().close();
+      restApp.getMetrics().metrics().clear();
+    }
+    if (restServer != null) {
+      restServer.stop();
+      restServer.join();
+    }
+  }
+
+  private void startBrokersConcurrently(int numBrokers) {
+    log.info("Starting concurrently {} brokers for {}", numBrokers, getClass().getSimpleName());
+    configs =
+        IntStream.range(0, numBrokers)
+            .mapToObj(brokerId -> KafkaConfig.fromProps(
+                overrideBrokerProperties(brokerId, getBrokerProperties(brokerId))))
+            .collect(toList());
+    servers =
+        CompletableFutures.allAsList(
+            configs.stream()
+                .map(
+                    config ->
+                        CompletableFuture.supplyAsync(
+                            () -> TestUtils.createServer(
+                                config,
+                                new MockTime(System.currentTimeMillis(),
+                                    System.nanoTime()))))
+                .collect(toList()))
+            .join();
+    log.info("Started all {} brokers for {}", numBrokers, getClass().getSimpleName());
   }
 
   protected void setupAcls() {
@@ -270,16 +325,10 @@ public abstract class ClusterTestHarness {
     return props;
   }
 
-  protected ProducerPool getProducerPool(KafkaRestConfig appConfig) {
-    return null;
-  }
-
   @After
   public void tearDown() throws Exception {
-    if (restServer != null) {
-      restServer.stop();
-      restServer.join();
-    }
+    log.info("Starting teardown of {}", getClass().getSimpleName());
+    stopRest();
 
     if (schemaRegServer != null) {
       schemaRegServer.stop();
@@ -288,6 +337,7 @@ public abstract class ClusterTestHarness {
 
     for (KafkaServer server : servers) {
       server.shutdown();
+      server.metrics().close();
     }
     for (KafkaServer server : servers) {
       CoreUtils.delete(server.config().logDirs());
@@ -295,6 +345,7 @@ public abstract class ClusterTestHarness {
 
     zkClient.close();
     zookeeper.shutdown();
+    log.info("Completed teardown of {}", getClass().getSimpleName());
   }
 
   protected Invocation.Builder request(String path) {
@@ -450,16 +501,9 @@ public abstract class ClusterTestHarness {
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
 
-    KafkaProducer<Object, Object> producer
-        = new KafkaProducer<Object, Object>(props, avroKeySerializer, avroValueSerializer);
     for (ProducerRecord<Object, Object> rec : records) {
-      try {
-        producer.send(rec).get();
-      } catch (Exception e) {
-        fail("Couldn't produce input messages to Kafka: " + e);
-      }
+      doProduce(rec, () -> new KafkaProducer<>(props, avroKeySerializer, avroValueSerializer));
     }
-    producer.close();
   }
 
   protected final void produceBinaryMessages(List<ProducerRecord<byte[], byte[]>> records) {
@@ -468,15 +512,10 @@ public abstract class ClusterTestHarness {
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
     props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
-    Producer<byte[], byte[]> producer = new KafkaProducer<byte[], byte[]>(props);
+
     for (ProducerRecord<byte[], byte[]> rec : records) {
-      try {
-        producer.send(rec).get();
-      } catch (Exception e) {
-        fail("Couldn't produce input messages to Kafka: " + e);
-      }
+      doProduce(rec, () -> new KafkaProducer<>(props));
     }
-    producer.close();
   }
 
   protected final void produceJsonMessages(List<ProducerRecord<Object, Object>> records) {
@@ -485,15 +524,28 @@ public abstract class ClusterTestHarness {
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaJsonSerializer.class);
     props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
     props.setProperty(ProducerConfig.ACKS_CONFIG, "all");
-    Producer<Object, Object> producer = new KafkaProducer<Object, Object>(props);
+
     for (ProducerRecord<Object, Object> rec : records) {
-      try {
-        producer.send(rec).get();
-      } catch (Exception e) {
-        fail("Couldn't produce input messages to Kafka: " + e);
-      }
+      doProduce(rec, () -> new KafkaProducer<>(props));
     }
-    producer.close();
+  }
+
+  private <T> void doProduce(
+      ProducerRecord<T, T> rec, Supplier<KafkaProducer<T, T>> createProducer) {
+
+    testWithRetry(
+        () -> {
+          final KafkaProducer<T, T> producer = createProducer.get();
+          boolean sent = false;
+          try {
+            producer.send(rec).get();
+            sent = true;
+          } catch (Exception e) {
+            log.info("Produce failed within testWithRetry", e);
+          }
+          producer.close();
+          assertTrue(sent);
+        });
   }
 
   protected Map<Integer, List<Integer>> createAssignment(

@@ -29,6 +29,7 @@ import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -111,8 +112,13 @@ public class LoadTest {
             assertNull(actualRecords);
             assertFalse(sawCallback);
             schedulePoll();
-            consumerManager.readRecords(consumer.groupName, consumer.cid(), BinaryKafkaConsumerState.class,
-                    -1, Long.MAX_VALUE, callback);
+            consumerManager.readRecords(
+                consumer.groupName,
+                consumer.cid(),
+                BinaryKafkaConsumerState.class,
+                Duration.ofMillis(-1),
+                Long.MAX_VALUE,
+                callback);
             this.readStartMs = time.milliseconds();
         }
 
@@ -175,7 +181,7 @@ public class LoadTest {
         props.setProperty(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, "PLAINTEXT://hostname:9092");
         props.setProperty(KafkaRestConfig.CONSUMER_MAX_THREADS_CONFIG, "-1");
         props.setProperty(KafkaRestConfig.CONSUMER_REQUEST_TIMEOUT_MS_CONFIG, Long.toString(requestTimeoutMs));
-        config = new KafkaRestConfig(props, new SystemTime());
+        config = new KafkaRestConfig(props);
         consumerManager = new KafkaConsumerManager(config, consumerFactory);
         List<ConsumerTestRun> consumers = new ArrayList<>();
         for (int group = 0; group < 5; group++) {

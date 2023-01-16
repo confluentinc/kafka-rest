@@ -322,6 +322,50 @@ paths:
         '200':
           $ref: '#/components/responses/ListConsumersResponse'
 
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lag-summary:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/ConsumerGroupId'
+
+    get:
+      summary: 'Get Consumer Group Lag Summary.'
+      description: 'Returns the max and total lag of the consumers belonging to the specified consumer group.'
+      tags:
+        - Consumer Group
+      responses:
+        '200':
+          $ref: '#/components/responses/GetConsumerGroupLagSummaryResponse'
+
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/ConsumerGroupId'
+
+    get:
+      summary: 'List Consumer Lags'
+      description: 'Returns a list of consumer lags of the consumers belonging to the specified consumer group.'
+      tags:
+        - Consumer Group
+      responses:
+        '200':
+          $ref: '#/components/responses/ListConsumerLagsResponse'
+
+  /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags/{topic_name}/partitions/{partition_id}:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/ConsumerGroupId'
+      - $ref: '#/components/parameters/TopicName'
+      - $ref: '#/components/parameters/PartitionId'
+
+    get:
+      summary: 'Get Consumer Lag'
+      description: 'Returns the consumer lag on a partition with the given `partition_id`.'
+      tags:
+        - Partition
+      responses:
+        '200':
+          $ref: '#/components/responses/GetConsumerLagResponse'
+
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/consumers/{consumer_id}:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
@@ -582,6 +626,28 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/GetReplicaResponse'
+
+  /clusters/{cluster_id}/topics/{topic_name}/records:
+    parameters:
+      - $ref: '#/components/parameters/ClusterId'
+      - $ref: '#/components/parameters/TopicName'
+
+    post:
+      summary: 'Produce records to the given topic.'
+      description: 'Produce records to the given topic, returning delivery reports for each
+                    record produced. This API can be used in streaming mode by setting "Transfer-Encoding:
+                    chunked" header. For as long as the connection is kept open, the server will
+                    keep accepting records. For each record sent to the server, the server will
+                    asynchronously send back a delivery report, in the same order. Records are
+                    streamed to and from the server as Concatenated JSON. Errors are reported per
+                    record. The HTTP status code will be HTTP 200 OK as long as the connection is successfully established.'
+      tags:
+        - Records
+      requestBody:
+        $ref: '#/components/requestBodies/ProduceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ProduceResponse'
 
 components:
   parameters:
@@ -850,6 +916,9 @@ components:
                   - DELETE
                 nullable: true
 
+    AnyValue:
+      nullable: true
+
     BrokerConfigData:
       allOf:
         - $ref: '#/components/schemas/AbstractConfigData'
@@ -994,6 +1063,8 @@ components:
       properties:
         resource_type:
           $ref: '#/components/schemas/AclResourceType'
+        resource_name:
+          type: string
         pattern_type:
           $ref: '#/components/schemas/AclPatternType'
         principal:
@@ -1009,8 +1080,6 @@ components:
       type: object
       required:
         - topic_name
-        - partitions_count
-        - replication_factor
       properties:
         topic_name:
           type: string
@@ -1018,6 +1087,20 @@ components:
           type: integer
         replication_factor:
           type: integer
+        replicas_assignments:
+          type: array
+          items:
+            type: object
+            required:
+              - partition_id
+              - broker_ids
+            properties:
+              partition_id:
+                type: integer
+              broker_ids:
+                type: array
+                items:
+                  type: integer
         configs:
           type: array
           items:
@@ -1068,6 +1151,7 @@ components:
             - topic_name
             - partition_id
             - partition
+            - lag
           properties:
             cluster_id:
               type: string
@@ -1080,6 +1164,8 @@ components:
             partition_id:
               type: integer
             partition:
+              $ref: '#/components/schemas/Relationship'
+            lag:
               $ref: '#/components/schemas/Relationship'
 
     ConsumerAssignmentDataList:
@@ -1143,6 +1229,7 @@ components:
             - state
             - coordinator
             - consumers
+            - lag_summary
           properties:
             cluster_id:
               type: string
@@ -1157,6 +1244,8 @@ components:
             coordinator:
               $ref: '#/components/schemas/Relationship'
             consumer:
+              $ref: '#/components/schemas/Relationship'
+            lag_summary:
               $ref: '#/components/schemas/Relationship'
 
     ConsumerGroupDataList:
@@ -1180,6 +1269,95 @@ components:
         - STABLE
         - DEAD
         - EMPTY
+
+    ConsumerLagData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - consumer_group_id
+            - topic_name
+            - partition_id
+            - current_offset
+            - log_end_offset
+            - lag
+            - consumer_id
+            - client_id
+          properties:
+            cluster_id:
+              type: string
+            consumer_group_id:
+              type: string
+            topic_name:
+              type: string
+            partition_id:
+              type: integer
+            current_offset:
+              type: integer
+            log_end_offset:
+              type: integer
+            lag:
+              type: integer
+            consumer_id:
+              type: string
+            instance_id:
+              type: string
+              nullable: true
+            client_id:
+              type: string
+
+    ConsumerLagDataList:
+      allOf:
+        - $ref: '#/components/schemas/ResourceCollection'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ConsumerLagData'
+
+    ConsumerGroupLagSummaryData:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          required:
+            - cluster_id
+            - consumer_group_id
+            - max_lag_consumer_id
+            - max_lag_client_id
+            - max_lag_topic_name
+            - max_lag_partition_id
+            - max_lag
+            - total_lag
+            - max_lag_consumer
+            - max_lag_partition
+          properties:
+            cluster_id:
+              type: string
+            consumer_group_id:
+              type: string
+            max_lag_consumer_id:
+              type: string
+            max_lag_instance_id:
+              type: string
+              nullable: true
+            max_lag_client_id:
+              type: string
+            max_lag_topic_name:
+              type: string
+            max_lag_partition_id:
+              type: integer
+            max_lag:
+              type: integer
+            total_lag:
+              type: integer
+            max_lag_consumer:
+              $ref: '#/components/schemas/Relationship'
+            max_lag_partition:
+              $ref: '#/components/schemas/Relationship'
 
     PartitionData:
       allOf:
@@ -1216,6 +1394,121 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/PartitionData'
+
+    ProduceResponse:
+      type: object
+      required:
+        - cluster_id
+        - topic_name
+        - partition_id
+        - offset
+      properties:
+        cluster_id:
+          type: string
+        topic_name:
+          type: string
+        partition_id:
+          type: integer
+        offset:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+          nullable: true
+        key:
+          $ref: '#/components/schemas/ProduceResponseData'
+        value:
+          $ref: '#/components/schemas/ProduceResponseData'
+
+    ProduceResponseData:
+      type: object
+      required:
+        - size
+      properties:
+        type:
+          type: string
+          enum:
+            - BINARY
+            - JSON
+            - AVRO
+            - JSONSCHEMA
+            - PROTOBUF
+          nullable: true
+        subject:
+          type: string
+          nullable: true
+        schema_id:
+          type: integer
+          nullable: true
+        schema_version:
+          type: integer
+          nullable: true
+      nullable: true
+
+    ProduceRequest:
+      type: object
+      properties:
+        partition_id:
+          type: integer
+          nullable: true
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProduceRequestHeader'
+        key:
+          $ref: '#/components/schemas/ProduceRequestData'
+        value:
+          $ref: '#/components/schemas/ProduceRequestData'
+        timestamp:
+          type: string
+          format: date-time
+          nullable: true
+
+    ProduceRequestData:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - BINARY
+            - JSON
+            - AVRO
+            - JSONSCHEMA
+            - PROTOBUF
+        subject:
+          type: string
+          nullable: true
+        subject_name_strategy:
+          type: string
+          enum:
+            - TOPIC_NAME
+            - RECORD_NAME
+            - TOPIC_RECORD_NAME
+          nullable: true
+        schema_id:
+          type: integer
+          nullable: true
+        schema_version:
+          type: integer
+          nullable: true
+        schema:
+          type: string
+          nullable: true
+        data:
+          $ref: '#/components/schemas/AnyValue'
+      nullable: true
+
+    ProduceRequestHeader:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+          format: byte
+          nullable: true
 
     ReassignmentData:
       allOf:
@@ -1411,7 +1704,7 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/TopicData'
-                
+
     UpdateConfigRequestData:
       type: object
       properties:
@@ -1472,15 +1765,108 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreateTopicRequestData'
-          example:
-            topic_name: 'topic-X'
-            partitions_count: 64
-            replication_factor: 3
-            configs:
-              - name: 'cleanup.policy'
-                value: 'compact'
-              - name: 'compression.type'
-                value: 'gzip'
+          examples:
+            uniform_replication:
+              value:
+                topic_name: 'topic-X'
+                partitions_count: 64
+                replication_factor: 3
+                configs:
+                  - name: 'cleanup.policy'
+                    value: 'compact'
+                  - name: 'compression.type'
+                    value: 'gzip'
+            explicit_replicas_assignments:
+              value:
+                topic_name: 'topic-Y'
+                replicas_assignments:
+                  - partition_id: 0
+                    broker_ids:
+                      - 1
+                      - 2
+                  - partition_id: 1
+                    broker_ids:
+                      - 2
+                      - 3
+                  - partition_id: 2
+                    broker_ids:
+                      - 3
+                      - 1
+                configs:
+                  - name: 'cleanup.policy'
+                    value: 'compact'
+                  - name: 'compression.type'
+                    value: 'gzip'
+
+    ProduceRequest:
+      description: 'A single record to be produced to Kafka. To produce multiple records on the same
+                    connection, simply concatenate all the records, e.g.:
+                    {"partition_id":1}{"partition_id":2}. Delivery reports will be concatenated on
+                    the same order as the records are sent. See examples for the options available.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProduceRequest'
+          examples:
+            binary_and_avro_with_subject_and_raw_schema:
+              description: 'If using type: "BINARY" or type: "JSON", or using the schema field, type
+                            is required.'
+              value:
+                partition_id: 1
+                headers:
+                  - name: 'Header-1'
+                    value: 'SGVhZGVyLTE='
+                  - name: 'Header-2'
+                    value: 'SGVhZGVyLTI='
+                key:
+                  type: 'BINARY'
+                  data: 'Zm9vYmFy'
+                value:
+                  type: 'AVRO'
+                  subject: 'topic-1-key'
+                  schema: '{\"type\":\"string\"}'
+                  data: 'foobar'
+                timestamp: '2021-02-05T19:14:42Z'
+            schema_id_and_schema_version:
+              description: 'If not setting type, the record is assumed to use a schema. The actual
+                            schema is queried from Schema Registry based on the subject, schema_id
+                            and schema_version. You can specify the subject directly or you can use
+                            subject_name_strategy. If neither is specified, subject_name_strategy is
+                            assumed to be TOPIC_NAME. You can use either schema_id or schema_version
+                            to identify the actual schema in the subject.'
+              value:
+                key:
+                  subject_name_strategy: 'TOPIC_NAME'
+                  schema_id: 1
+                  data: 1000
+                value:
+                  schema_version: 1
+                  data:
+                    foo: 'bar'
+            latest_schema:
+              description: 'If neither schema_id or schema_version are specified, the latest schema
+                            for the subject is used. This should be the preferred way of using the
+                            API. You should register the schema with Schema Registry directly, then
+                            on Kafka REST you do not need to say anything about the schema and we
+                            will fetch the latest one for you.'
+              value:
+                key:
+                  data: 1000
+                value:
+                  data: 'foobar'
+            null_and_empty_data:
+              description: 'data can be omitted or can be null.'
+              value:
+                key:
+                  schema_id: 1
+                value:
+                  schema_version: 1
+                  data: null
+            empty_value:
+              description: 'key or value can be omitted entirely.'
+              value:
+                key:
+                  data: 1000
 
     UpdateBrokerConfigRequest:
       description: 'The broker configuration parameter update request.'
@@ -1689,6 +2075,8 @@ components:
             partition_id: 1
             partition:
               related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
+            lag:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1'
 
     GetConsumerGroupResponse:
       description: 'The consumer group.'
@@ -1710,6 +2098,55 @@ components:
               related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
             consumers:
               related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers'
+            lag_summary:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lag-summary'
+
+    GetConsumerGroupLagSummaryResponse:
+      description: 'The max and total consumer lag in a consumer group.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ConsumerGroupLagSummaryData'
+          example:
+            kind: 'KafkaConsumerGroupLagSummary'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lag-summary'
+              resource_name: 'crn:///kafka=cluster-1/consumer-groups=consumer-group-1/lag-summary'
+            cluster_id: 'cluster-1'
+            consumer_group_id: 'consumer-group-1'
+            max_lag_consumer_id: 'consumer-1'
+            max_lag_instance_id: 'consumer-instance-1'
+            max_lag_client_id: 'client-1'
+            max_lag_topic_name: 'topic-1'
+            max_lag_partition_id: 1
+            max_lag: 100
+            total_lag: 110
+            max_lag_consumer:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1'
+            max_lag_partition:
+              related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
+
+    GetConsumerLagResponse:
+      description: 'The consumer lag.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ConsumerLagData'
+          example:
+            kind: 'KafkaConsumerLag'
+            metadata:
+              self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags/topic-1/partitions/1'
+              resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/lag=topic-1/partition=1'
+            cluster_id: 'cluster-1'
+            consumer_group_id: 'consumer-group-1'
+            topic_name: 'topic-1'
+            partition_id: 1
+            consumer_id: 'consumer-1'
+            instance_id: 'consumer-instance-1'
+            client_id: 'client-1'
+            current_offset: 1
+            log_end_offset: 101
+            lag: 100
 
     GetConsumerResponse:
       description: 'The consumer.'
@@ -2103,6 +2540,8 @@ components:
                 partition_id: 1
                 partition:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1'
+                lag:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1'
               - kind: 'KafkaConsumerAssignment'
                 metadata:
                   self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1/assignments/topic-2/partitions/2'
@@ -2114,6 +2553,8 @@ components:
                 partition_id: 2
                 partition:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions/2'
+                lag:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-2/partitions/2/lags/consumer-groups-1'
               - kind: 'KafkaConsumerAssignment'
                 metadata:
                   self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers/consumer-1/assignments/topic-3/partitions/3'
@@ -2125,6 +2566,8 @@ components:
                 partition_id: 3
                 partition:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/3'
+                lag:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/3/lags/consumer-groups-1'
 
     ListConsumerGroupsResponse:
       description: 'The list of consumer groups.'
@@ -2151,6 +2594,8 @@ components:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/1'
                 consumers:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/consumers'
+                lag_summary:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lag-summary'
               - kind: 'KafkaConsumerGroup'
                 metadata:
                   self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-2'
@@ -2164,6 +2609,8 @@ components:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/2'
                 consumers:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-2/consumers'
+                lag_summary:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-2/lag-summary'
               - kind: 'KafkaConsumerGroup'
                 metadata:
                   self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-3'
@@ -2177,6 +2624,63 @@ components:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/brokers/3'
                 consumers:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-3/consumers'
+                lag_summary:
+                  related: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-3/lag-summary'
+
+    ListConsumerLagsResponse:
+     description: 'The list of consumer lags.'
+     content:
+       application/json:
+         schema:
+           $ref: '#/components/schemas/ConsumerLagDataList'
+         example:
+           kind: 'KafkaConsumerLagList'
+           metadata:
+             self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags'
+             next: null
+           data:
+             - kind: 'KafkaConsumerLag'
+               metadata:
+                 self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags/topic-1/partitions/1'
+                 resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/lag=topic-1/partition=1'
+               cluster_id: 'cluster-1'
+               consumer_group_id: 'consumer-group-1'
+               topic_name: 'topic-1'
+               partition_id: 1
+               consumer_id: 'consumer-1'
+               instance_id: 'consumer-instance-1'
+               client_id: 'client-1'
+               current_offset: 1
+               log_end_offset: 101
+               lag: 100
+             - kind: 'KafkaConsumerLag'
+               metadata:
+                 self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags/topic-1/partitions/2'
+                 resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/lag=topic-1/partition=2'
+               cluster_id: 'cluster-1'
+               consumer_group_id: 'consumer-group-1'
+               topic_name: 'topic-1'
+               partition_id: 2
+               consumer_id: 'consumer-2'
+               instance_id: 'consumer-instance-2'
+               client_id: 'client-2'
+               current_offset: 1
+               log_end_offset: 11
+               lag: 10
+             - kind: 'KafkaConsumerLag'
+               metadata:
+                 self: 'http://localhost:9391/v3/clusters/cluster-1/consumer-groups/consumer-group-1/lags/topic-1/partitions/3'
+                 resource_name: 'crn:///kafka=cluster-1/consumer-group=consumer-group-1/lag=topic-1/partition=3'
+               cluster_id: 'cluster-1'
+               consumer_group_id: 'consumer-group-1'
+               topic_name: 'topic-1'
+               partition_id: 3
+               consumer_id: 'consumer-3'
+               instance_id: 'consumer-instance-3'
+               client_id: 'client-3'
+               current_offset: 1
+               log_end_offset: 1
+               lag: 0
 
     ListConsumersResponse:
       description: 'The list of consumers.'
@@ -2430,6 +2934,28 @@ components:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/configs'
                 partition_reassignments:
                   related: 'http://localhost:9391/v3/clusters/cluster-1/topics/topic-3/partitions/-/reassignments'
+
+    ProduceResponse:
+      description: ''
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProduceResponse'
+          example:
+            cluster_id: 'cluster-1'
+            topic_name: 'topic-1'
+            partition_id: 1
+            offset: 0
+            timestamp: '2021-02-05T19:14:42Z'
+            key:
+              type: BINARY
+              size: 7
+            value:
+              type: AVRO
+              subject: 'topic-1-value'
+              schema_id: 1
+              schema_version: 1
+              size: 7
 
     SearchAclsResponse:
       description: 'The list of ACLs.'

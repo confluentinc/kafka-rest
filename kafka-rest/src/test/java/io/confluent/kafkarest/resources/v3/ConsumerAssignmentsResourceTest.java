@@ -131,6 +131,9 @@ public class ConsumerAssignmentsResourceTest {
                             .setPartition(
                                 Relationship.create(
                                     "/v3/clusters/cluster-1/topics/topic-1/partitions/1"))
+                            .setLag(
+                                Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1"))
                             .build(),
                         ConsumerAssignmentData.fromConsumerAssignment(CONSUMER_ASSIGNMENT_2)
                             .setMetadata(
@@ -147,6 +150,9 @@ public class ConsumerAssignmentsResourceTest {
                             .setPartition(
                                 Relationship.create(
                                     "/v3/clusters/cluster-1/topics/topic-2/partitions/2"))
+                            .setLag(
+                                Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-2/partitions/2/lags/consumer-group-1"))
                             .build(),
                         ConsumerAssignmentData.fromConsumerAssignment(CONSUMER_ASSIGNMENT_3)
                             .setMetadata(
@@ -163,6 +169,9 @@ public class ConsumerAssignmentsResourceTest {
                             .setPartition(
                                 Relationship.create(
                                     "/v3/clusters/cluster-1/topics/topic-3/partitions/3"))
+                            .setLag(
+                                Relationship.create(
+                                    "/v3/clusters/cluster-1/topics/topic-3/partitions/3/lags/consumer-group-1"))
                             .build()))
                 .build());
 
@@ -198,6 +207,9 @@ public class ConsumerAssignmentsResourceTest {
                 .setPartition(
                     Relationship.create(
                         "/v3/clusters/cluster-1/topics/topic-1/partitions/1"))
+                .setLag(
+                    Relationship.create(
+                        "/v3/clusters/cluster-1/topics/topic-1/partitions/1/lags/consumer-group-1"))
                 .build());
 
     assertEquals(expected, response.getValue());

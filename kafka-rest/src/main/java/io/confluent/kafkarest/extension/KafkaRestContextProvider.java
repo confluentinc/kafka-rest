@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Confluent Inc.
+ * Copyright 2021 Confluent Inc.
  *
  * Licensed under the Confluent Community License (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
@@ -18,10 +18,7 @@ package io.confluent.kafkarest.extension;
 import io.confluent.kafkarest.DefaultKafkaRestContext;
 import io.confluent.kafkarest.KafkaRestConfig;
 import io.confluent.kafkarest.KafkaRestContext;
-import io.confluent.kafkarest.ProducerPool;
-import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.ws.rs.core.Configurable;
 
 public class KafkaRestContextProvider {
 
@@ -32,14 +29,9 @@ public class KafkaRestContextProvider {
 
   private static final AtomicBoolean initialized = new AtomicBoolean();
 
-  public static void initialize(
-      Configurable<?> config,
-      KafkaRestConfig appConfig,
-      ProducerPool producerPool,
-      KafkaConsumerManager kafkaConsumerManager
-  ) {
+  public static void initialize(KafkaRestConfig appConfig) {
     if (initialized.compareAndSet(false, true)) {
-      defaultContext = new DefaultKafkaRestContext(appConfig, producerPool, kafkaConsumerManager);
+      defaultContext = new DefaultKafkaRestContext(appConfig);
       defaultAppConfig = appConfig;
     }
   }

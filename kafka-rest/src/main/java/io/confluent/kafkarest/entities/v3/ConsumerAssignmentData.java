@@ -44,6 +44,9 @@ public abstract class ConsumerAssignmentData extends Resource {
   @JsonProperty("partition")
   public abstract Relationship getPartition();
 
+  @JsonProperty("lag")
+  public abstract Relationship getLag();
+
   public static Builder builder() {
     return new AutoValue_ConsumerAssignmentData.Builder().setKind("KafkaConsumerAssignment");
   }
@@ -66,7 +69,8 @@ public abstract class ConsumerAssignmentData extends Resource {
       @JsonProperty("consumer_id") String consumerId,
       @JsonProperty("topic_name") String topicName,
       @JsonProperty("partition_id") int partitionId,
-      @JsonProperty("partition") Relationship partition
+      @JsonProperty("partition") Relationship partition,
+      @JsonProperty("lag") Relationship lag
   ) {
     return builder()
         .setKind(kind)
@@ -77,6 +81,7 @@ public abstract class ConsumerAssignmentData extends Resource {
         .setTopicName(topicName)
         .setPartitionId(partitionId)
         .setPartition(partition)
+        .setLag(lag)
         .build();
   }
 
@@ -97,6 +102,8 @@ public abstract class ConsumerAssignmentData extends Resource {
     public abstract Builder setPartitionId(int partitionId);
 
     public abstract Builder setPartition(Relationship partition);
+
+    public abstract Builder setLag(Relationship lag);
 
     public abstract ConsumerAssignmentData build();
   }
