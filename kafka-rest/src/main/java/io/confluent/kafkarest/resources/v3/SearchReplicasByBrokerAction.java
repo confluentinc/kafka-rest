@@ -25,6 +25,7 @@ import io.confluent.kafkarest.entities.v3.ReplicaDataList;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.SearchReplicasByBrokerResponse;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -42,6 +43,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
 @Path("/v3/clusters/{clusterId}/brokers/{brokerId}/partition-replicas")
+@ResourceName("api.v3.replicas.*")
 public final class SearchReplicasByBrokerAction {
 
   private final Provider<ReplicaManager> replicaManager;
@@ -59,6 +61,7 @@ public final class SearchReplicasByBrokerAction {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.brokers.partition-replicas.list")
+  @ResourceName("api.v3.replicas.search-by-broker")
   public void searchReplicasByBroker(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

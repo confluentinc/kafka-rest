@@ -15,34 +15,38 @@
 
 package io.confluent.kafkarest;
 
-import org.apache.kafka.common.config.ConfigException;
+import io.confluent.kafkarest.response.UrlFactoryImpl;
 
 import java.net.URI;
-import java.net.URISyntaxException;
-
-import javax.ws.rs.core.UriBuilder;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.UriInfo;
+import org.apache.kafka.common.config.ConfigException;
 
 public class UriUtils {
 
-  public static UriBuilder absoluteUriBuilder(KafkaRestConfig config, UriInfo uriInfo) {
-    String hostname = config.getString(KafkaRestConfig.HOST_NAME_CONFIG);
-    UriBuilder builder = uriInfo.getAbsolutePathBuilder();
-    if (hostname.length() > 0) {
-      builder.host(hostname);
-      // Resetting the hostname removes the scheme and port for some reason, so they may need to
-      // be reset.
-      URI origAbsoluteUri = uriInfo.getAbsolutePath();
-      builder.scheme(origAbsoluteUri.getScheme());
-      // Only reset the port if it was set in the original URI
-      if (origAbsoluteUri.getPort() != -1) {
-        try {
-          builder.port(config.consumerPort(origAbsoluteUri.getScheme()));
-        } catch (URISyntaxException e) {
-          throw new ConfigException(e.getMessage());
-        }
-      }
+  public static String absoluteUri(KafkaRestConfig config, UriInfo uriInfo, String... components) {
+    List<URI> advertisedListeners;
+    List<URI> listeners;
+    try {
+      advertisedListeners =
+          config.getList(KafkaRestConfig.ADVERTISED_LISTENERS_CONFIG).stream()
+              .map(URI::create)
+              .collect(Collectors.toList());
+      listeners =
+          config.getList(KafkaRestConfig.LISTENERS_CONFIG).stream()
+              .map(URI::create)
+              .collect(Collectors.toList());
+    } catch (IllegalArgumentException e) {
+      throw new ConfigException(e.getMessage());
     }
-    return builder;
+
+    return new UrlFactoryImpl(
+        config.getString(KafkaRestConfig.HOST_NAME_CONFIG),
+        config.getInt(KafkaRestConfig.PORT_CONFIG),
+        advertisedListeners,
+        listeners,
+        uriInfo)
+        .create(components);
   }
 }

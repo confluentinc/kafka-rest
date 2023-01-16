@@ -26,6 +26,7 @@ import io.confluent.kafkarest.entities.v3.ListConsumerGroupsResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.Resource.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -44,6 +45,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
 @Path("/v3/clusters/{clusterId}/consumer-groups")
+@ResourceName("api.v3.consumer-groups.*")
 public final class ConsumerGroupsResource {
 
   private final Provider<ConsumerGroupManager> consumerGroupManager;
@@ -63,6 +65,7 @@ public final class ConsumerGroupsResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.consumer-groups.list")
+  @ResourceName("api.v3.consumer-groups.list")
   public void listConsumerGroups(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<ListConsumerGroupsResponse> response =
@@ -93,6 +96,7 @@ public final class ConsumerGroupsResource {
   @Path("/{consumerGroupId}")
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.consumer-groups.get")
+  @ResourceName("api.v3.consumer-groups.get")
   public void getConsumerGroup(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

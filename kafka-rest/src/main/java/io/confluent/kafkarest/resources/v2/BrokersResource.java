@@ -21,6 +21,7 @@ import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.controllers.BrokerManager;
 import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.v2.BrokerList;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.rest.annotations.PerformanceMetric;
 import java.util.concurrent.CompletableFuture;
@@ -40,6 +41,7 @@ import javax.ws.rs.container.Suspended;
 @Path("/brokers")
 @Produces(Versions.KAFKA_V2_JSON_WEIGHTED)
 @Consumes()
+@ResourceName("api.v2.brokers.*")
 public final class BrokersResource {
 
   private final Provider<BrokerManager> brokerManager;
@@ -51,6 +53,7 @@ public final class BrokersResource {
 
   @GET
   @PerformanceMetric("brokers.list+v2")
+  @ResourceName("api.v2.brokers.list")
   public void list(@Suspended AsyncResponse asyncResponse) {
     CompletableFuture<BrokerList> response =
         brokerManager.get()
@@ -59,7 +62,6 @@ public final class BrokersResource {
                 brokers ->
                     new BrokerList(
                         brokers.stream().map(Broker::getBrokerId).collect(Collectors.toList())));
-
 
     AsyncResponses.asyncResume(asyncResponse, response);
   }

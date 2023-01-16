@@ -49,6 +49,13 @@ public abstract class Cluster {
         .build();
   }
 
+  public Builder toBuilder() {
+    return builder()
+        .setClusterId(getClusterId())
+        .setController(getController())
+        .addAllBrokers(getBrokers());
+  }
+
   @AutoValue.Builder
   public abstract static class Builder {
 

@@ -26,6 +26,7 @@ import io.confluent.kafkarest.entities.v3.ListClusterConfigsResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.UpdateClusterConfigRequest;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.CrnFactory;
@@ -52,6 +53,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 @Path("/v3/clusters/{clusterId}/{config_type}-configs")
+@ResourceName("api.v3.cluster-configs.*")
 public final class ClusterConfigsResource {
 
   private final Provider<ClusterConfigManager> clusterConfigManager;
@@ -72,6 +74,7 @@ public final class ClusterConfigsResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.clusters.configs.list")
+  @ResourceName("api.v3.cluster-configs.list")
   public void listClusterConfigs(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -109,6 +112,7 @@ public final class ClusterConfigsResource {
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.clusters.configs.get")
+  @ResourceName("api.v3.cluster-configs.get")
   public void getClusterConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -129,6 +133,7 @@ public final class ClusterConfigsResource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.clusters.configs.update")
+  @ResourceName("api.v3.cluster-configs.update")
   public void upsertClusterConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -150,6 +155,7 @@ public final class ClusterConfigsResource {
   @Path("/{name}")
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.clusters.configs.delete")
+  @ResourceName("api.v3.cluster-configs.delete")
   public void deleteClusterConfig(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

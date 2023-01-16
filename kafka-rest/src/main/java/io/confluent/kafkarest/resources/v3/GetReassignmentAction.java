@@ -22,6 +22,7 @@ import io.confluent.kafkarest.entities.Reassignment;
 import io.confluent.kafkarest.entities.v3.GetReassignmentResponse;
 import io.confluent.kafkarest.entities.v3.ReassignmentData;
 import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -39,6 +40,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/partitions/{partitionId}/reassignment")
+@ResourceName("api.v3.partition-reassignments.*")
 public final class GetReassignmentAction {
 
   private final Provider<ReassignmentManager> reassignmentManager;
@@ -58,6 +60,7 @@ public final class GetReassignmentAction {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.topics.partitions.reassignment.get")
+  @ResourceName("api.v3.partition-reassignments.get")
   public void getReassignment(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

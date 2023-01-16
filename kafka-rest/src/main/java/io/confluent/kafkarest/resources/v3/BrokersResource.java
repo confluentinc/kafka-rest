@@ -25,6 +25,7 @@ import io.confluent.kafkarest.entities.v3.GetBrokerResponse;
 import io.confluent.kafkarest.entities.v3.ListBrokersResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -43,6 +44,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
 @Path("/v3/clusters/{clusterId}/brokers")
+@ResourceName("api.v3.brokers.*")
 public final class BrokersResource {
 
   private final Provider<BrokerManager> brokerManager;
@@ -63,6 +65,7 @@ public final class BrokersResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.brokers.list")
+  @ResourceName("api.v3.brokers.list")
   public void listBrokers(
       @Suspended AsyncResponse asyncResponse, @PathParam("clusterId") String clusterId) {
     CompletableFuture<ListBrokersResponse> response =
@@ -90,6 +93,7 @@ public final class BrokersResource {
   @Path("/{brokerId}")
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.brokers.get")
+  @ResourceName("api.v3.brokers.get")
   public void getBroker(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
