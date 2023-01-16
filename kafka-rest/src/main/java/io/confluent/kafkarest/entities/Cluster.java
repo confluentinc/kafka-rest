@@ -15,109 +15,57 @@
 
 package io.confluent.kafkarest.entities;
 
-import static java.util.Collections.unmodifiableList;
-
-import java.util.ArrayList;
-import java.util.Collection;
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import java.util.List;
-import java.util.Objects;
-import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
 /**
  * A Kafka cluster.
  */
-public final class Cluster {
+@AutoValue
+public abstract class Cluster {
 
-  private final String clusterId;
+  Cluster() {
+  }
+
+  public abstract String getClusterId();
 
   @Nullable
-  private final Broker controller;
+  public abstract Broker getController();
 
-  private final List<Broker> brokers;
+  public abstract ImmutableList<Broker> getBrokers();
 
-  public Cluster(String clusterId, @Nullable Broker controller, List<Broker> brokers) {
-    this.clusterId = Objects.requireNonNull(clusterId);
-    this.controller = controller;
-    this.brokers = unmodifiableList(brokers);
+  public static Builder builder() {
+    return new AutoValue_Cluster.Builder();
   }
 
-  public String getClusterId() {
-    return clusterId;
+  public static Cluster create(
+      String clusterId, @Nullable Broker controller, List<Broker> brokers) {
+    return builder()
+        .setClusterId(clusterId)
+        .setController(controller)
+        .addAllBrokers(brokers)
+        .build();
   }
 
-  @Nullable
-  public Broker getController() {
-    return controller;
-  }
+  @AutoValue.Builder
+  public abstract static class Builder {
 
-  public List<Broker> getBrokers() {
-    return brokers;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    Cluster cluster = (Cluster) o;
-    return clusterId.equals(cluster.clusterId)
-        && Objects.equals(controller, cluster.controller)
-        && brokers.equals(cluster.brokers);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(clusterId, controller, brokers);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", Cluster.class.getSimpleName() + "[", "]")
-        .add("clusterId='" + clusterId + "'")
-        .add("controller=" + controller)
-        .add("brokers=" + brokers)
-        .toString();
-  }
-
-  public static final class Builder {
-
-    @Nullable
-    private String clusterId;
-
-    @Nullable
-    private Broker controller;
-
-    private final List<Broker> brokers = new ArrayList<>();
-
-    public Builder() {
+    Builder() {
     }
 
-    @Nullable
-    public String getClusterId() {
-      return clusterId;
-    }
+    public abstract Builder setClusterId(String clusterId);
 
-    public Builder setClusterId(String clusterId) {
-      this.clusterId = clusterId;
+    public abstract Builder setController(Broker controller);
+
+    abstract ImmutableList.Builder<Broker> brokersBuilder();
+
+    public final Builder addAllBrokers(Iterable<Broker> brokers) {
+      brokersBuilder().addAll(brokers);
       return this;
     }
 
-    public Builder setController(Broker controller) {
-      this.controller = controller;
-      return this;
-    }
-
-    public Builder addAllBrokers(Collection<Broker> brokers) {
-      this.brokers.addAll(brokers);
-      return this;
-    }
-
-    public Cluster build() {
-      return new Cluster(clusterId, controller, brokers);
-    }
+    public abstract Cluster build();
   }
 }

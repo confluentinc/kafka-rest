@@ -17,6 +17,7 @@ package io.confluent.kafkarest.entities.v2;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EntityUtils;
 import java.util.Arrays;
@@ -91,7 +92,7 @@ public final class BinaryConsumerRecord {
   }
 
   public static BinaryConsumerRecord fromConsumerRecord(
-      ConsumerRecord<byte[], byte[]> record) {
+      ConsumerRecord<ByteString, ByteString> record) {
     if (record.getPartition() < 0) {
       throw new IllegalArgumentException();
     }
@@ -100,13 +101,13 @@ public final class BinaryConsumerRecord {
     }
     return new BinaryConsumerRecord(
         Objects.requireNonNull(record.getTopic()),
-        record.getKey(),
-        record.getValue(),
+        record.getKey() != null ? record.getKey().toByteArray() : null,
+        record.getValue() != null ? record.getValue().toByteArray() : null,
         record.getPartition(),
         record.getOffset());
   }
 
-  public ConsumerRecord<byte[], byte[]> toConsumerRecord() {
+  public ConsumerRecord<ByteString, ByteString> toConsumerRecord() {
     if (topic == null) {
       throw new IllegalStateException();
     }
@@ -116,7 +117,12 @@ public final class BinaryConsumerRecord {
     if (offset == null || offset < 0) {
       throw new IllegalStateException();
     }
-    return new ConsumerRecord<>(topic, key, value, partition, offset);
+    return ConsumerRecord.create(
+        topic,
+        key != null ? ByteString.copyFrom(key) : null,
+        value != null ? ByteString.copyFrom(value) : null,
+        partition,
+        offset);
   }
 
   @Override

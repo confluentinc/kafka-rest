@@ -1,0 +1,125 @@
+# Copyright 2020 Confluent Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+version: "3.7"
+
+services:
+  zookeeper:
+    image: 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-zookeeper:6.0.x-latest
+    hostname: zookeeper
+    container_name: sasl-plain-zookeeper
+    volumes:
+      - ./zookeeper-jaas.conf:/etc/zookeeper/zookeeper-jaas.conf
+    environment:
+      ZOOKEEPER_CLIENT_PORT: "9091"
+      ZOOKEEPER_SERVER_ID: 1
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/zookeeper/zookeeper-jaas.conf"
+    ports:
+      - "9091:9091"
+
+  kafka-1:
+    image: 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-server:6.0.x-latest
+    hostname: kafka-1
+    container_name: sasl-plain-kafka-1
+    depends_on:
+      - zookeeper
+    volumes:
+      - ./kafka-jaas.conf:/etc/kafka/kafka-jaas.conf
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: "SASL_PLAINTEXT://kafka-1:9191,EXTERNAL://localhost:9291"
+      KAFKA_AUTHORIZER_CLASS_NAME: "kafka.security.auth.SimpleAclAuthorizer"
+      KAFKA_BROKER_ID: 1
+      KAFKA_DELETE_TOPIC_ENABLE: "true"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "SASL_PLAINTEXT"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "SASL_PLAINTEXT:SASL_PLAINTEXT,EXTERNAL:SASL_PLAINTEXT"
+      KAFKA_LISTENERS: "SASL_PLAINTEXT://0.0.0.0:9191,EXTERNAL://0.0.0.0:9291"
+      KAFKA_SASL_ENABLED_MECHANISMS: "PLAIN"
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: "PLAIN"
+      KAFKA_SUPER_USERS: "User:kafka;User:kafkarest"
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:9091"
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/kafka-jaas.conf"
+    ports:
+      - "9291:9291"
+
+  kafka-2:
+    image: 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-server:6.0.x-latest
+    hostname: kafka-2
+    container_name: sasl-plain-kafka-2
+    depends_on:
+      - zookeeper
+    volumes:
+      - ./kafka-jaas.conf:/etc/kafka/kafka-jaas.conf
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: "SASL_PLAINTEXT://kafka-2:9192,EXTERNAL://localhost:9292"
+      KAFKA_AUTHORIZER_CLASS_NAME: "kafka.security.auth.SimpleAclAuthorizer"
+      KAFKA_BROKER_ID: 2
+      KAFKA_DELETE_TOPIC_ENABLE: "true"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "SASL_PLAINTEXT"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "SASL_PLAINTEXT:SASL_PLAINTEXT,EXTERNAL:SASL_PLAINTEXT"
+      KAFKA_LISTENERS: "SASL_PLAINTEXT://0.0.0.0:9192,EXTERNAL://0.0.0.0:9292"
+      KAFKA_SASL_ENABLED_MECHANISMS: "PLAIN"
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: "PLAIN"
+      KAFKA_SUPER_USERS: "User:kafka;User:kafkarest"
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:9091"
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/kafka-jaas.conf"
+    ports:
+      - "9292:9292"
+
+  kafka-3:
+    image: 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-server:6.0.x-latest
+    hostname: kafka-3
+    container_name: sasl-plain-kafka-3
+    depends_on:
+      - zookeeper
+    volumes:
+      - ./kafka-jaas.conf:/etc/kafka/kafka-jaas.conf
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: "SASL_PLAINTEXT://kafka-3:9193,EXTERNAL://localhost:9293"
+      KAFKA_AUTHORIZER_CLASS_NAME: "kafka.security.auth.SimpleAclAuthorizer"
+      KAFKA_BROKER_ID: 3
+      KAFKA_DELETE_TOPIC_ENABLE: "true"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "SASL_PLAINTEXT"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "SASL_PLAINTEXT:SASL_PLAINTEXT,EXTERNAL:SASL_PLAINTEXT"
+      KAFKA_LISTENERS: "SASL_PLAINTEXT://0.0.0.0:9193,EXTERNAL://0.0.0.0:9293"
+      KAFKA_SASL_ENABLED_MECHANISMS: "PLAIN"
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: "PLAIN"
+      KAFKA_SUPER_USERS: "User:kafka;User:kafkarest"
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:9091"
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/kafka-jaas.conf"
+    ports:
+      - "9293:9293"
+
+  kafka-rest:
+    build:
+      context: ../../..
+      dockerfile: "testing/image/Dockerfile"
+    hostname: kafka-rest
+    container_name: sasl-plain-kafka-rest
+    depends_on:
+      - zookeeper
+      - kafka-1
+    environment:
+      KAFKA_REST_ADVERTISED_LISTENERS: "http://localhost:9391"
+      KAFKA_REST_BOOTSTRAP_SERVERS: "kafka-1:9191"
+      KAFKA_REST_CLIENT_SASL_JAAS_CONFIG: |
+        org.apache.kafka.common.security.plain.PlainLoginModule required \
+        username="kafkarest" \
+        password="kafkarest";
+      KAFKA_REST_CLIENT_SASL_MECHANISM: "PLAIN"
+      KAFKA_REST_CLIENT_SECURITY_PROTOCOL: "SASL_PLAINTEXT"
+      KAFKA_REST_LISTENERS: "http://0.0.0.0:9391"
+      KAFKA_REST_HOST_NAME: "localhost"
+      KAFKA_REST_ZOOKEEPER_CONNECT: "zookeeper:9091"
+    ports:
+      - "9391:9391"

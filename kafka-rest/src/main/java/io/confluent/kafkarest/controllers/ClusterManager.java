@@ -30,14 +30,19 @@ public interface ClusterManager {
    *
    * <p>Right now only one cluster is known, namely, the cluster to which this application is
    * connected to. Therefore, this method will always return at most 1 cluster.</p>
+   *
+   * @see #getLocalCluster()
    */
   CompletableFuture<List<Cluster>> listClusters();
 
   /**
    * Returns the Kafka {@link Cluster} with the given {@code clusterId}, or empty if no such cluster
    * is known.
-   *
-   * <p>See {@link #listClusters()} for caveats about known clusters.</p>
    */
   CompletableFuture<Optional<Cluster>> getCluster(String clusterId);
+
+  /**
+   * Returns the Kafka {@link Cluster} this application is connected to.
+   */
+  CompletableFuture<Cluster> getLocalCluster();
 }

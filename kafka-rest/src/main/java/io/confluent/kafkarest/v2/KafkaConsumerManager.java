@@ -558,7 +558,7 @@ public class KafkaConsumerManager {
 
   private ConsumerInstanceId createAdminConsumerInstance() {
     String consumerGroup = createAdminConsumerGroup();
-    String consumerInstance = createConsumer(consumerGroup, new ConsumerInstanceConfig(
+    String consumerInstance = createConsumer(consumerGroup, ConsumerInstanceConfig.create(
         EmbeddedFormat.BINARY));
     return new ConsumerInstanceId(consumerGroup, consumerInstance);
   }

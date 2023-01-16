@@ -12,16 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM openjdk:8-jre-slim
+FROM 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-kafka-rest:6.0.x-latest
 
-WORKDIR /usr/share/kafka-rest
+COPY bin /usr/bin/
 
-COPY bin testing/image/bin bin/
-
-COPY testing/image/config /etc/kafka-rest/
-
-COPY kafka-rest/target/kafka-rest-*-development/share/java/kafka-rest lib/
-
-ENV CLASSPATH /usr/share/kafka-rest/lib/*
-
-ENTRYPOINT ["bin/entrypoint.sh"]
+COPY kafka-rest/target/kafka-rest-*-package/share/java/kafka-rest-bin /usr/share/java/kafka-rest-bin/
+COPY kafka-rest/target/kafka-rest-*-package/share/java/kafka-rest-lib /usr/share/java/kafka-rest-lib/

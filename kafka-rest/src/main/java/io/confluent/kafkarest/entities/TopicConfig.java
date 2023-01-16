@@ -15,110 +15,57 @@
 
 package io.confluent.kafkarest.entities;
 
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.google.auto.value.AutoValue;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * A Kafka Topic Config.
+ * A Kafka topic config.
  */
-public final class TopicConfig {
+@AutoValue
+public abstract class TopicConfig extends AbstractConfig {
 
-  private final String clusterId;
+  TopicConfig() {
+  }
 
-  private final String topicName;
+  public abstract String getTopicName();
 
-  private final String name;
+  public static Builder builder() {
+    return new AutoValue_TopicConfig.Builder();
+  }
 
-  @Nullable
-  private final String value;
-
-  private final boolean isDefault;
-
-  private final boolean isReadOnly;
-
-  private final boolean isSensitive;
-
-  public TopicConfig(
+  public static TopicConfig create(
       String clusterId,
       String topicName,
       String name,
       @Nullable String value,
       boolean isDefault,
       boolean isReadOnly,
-      boolean isSensitive) {
-    this.clusterId = Objects.requireNonNull(clusterId);
-    this.topicName = Objects.requireNonNull(topicName);
-    this.name = Objects.requireNonNull(name);
-    this.value = value;
-    this.isDefault = isDefault;
-    this.isReadOnly = isReadOnly;
-    this.isSensitive = isSensitive;
+      boolean isSensitive,
+      ConfigSource source,
+      List<ConfigSynonym> synonyms) {
+    return builder()
+        .setClusterId(clusterId)
+        .setName(name)
+        .setValue(value)
+        .setDefault(isDefault)
+        .setReadOnly(isReadOnly)
+        .setSensitive(isSensitive)
+        .setSource(source)
+        .setSynonyms(synonyms)
+        .setTopicName(topicName)
+        .build();
   }
 
-  public String getClusterId() {
-    return clusterId;
-  }
+  /**
+   * A builder for {@link TopicConfig}.
+   */
+  @AutoValue.Builder
+  public abstract static class Builder extends AbstractConfig.Builder<TopicConfig, Builder> {
 
-  public String getTopicName() {
-    return topicName;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  @Nullable
-  public String getValue() {
-    return value;
-  }
-
-  public boolean isDefault() {
-    return isDefault;
-  }
-
-  public boolean isReadOnly() {
-    return isReadOnly;
-  }
-
-  public boolean isSensitive() {
-    return isSensitive;
-  }
-
-  // CHECKSTYLE:OFF:CyclomaticComplexity
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
+    Builder() {
     }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    TopicConfig that = (TopicConfig) o;
-    return isDefault == that.isDefault
-        && isReadOnly == that.isReadOnly
-        && isSensitive == that.isSensitive
-        && Objects.equals(clusterId, that.clusterId)
-        && Objects.equals(topicName, that.topicName)
-        && Objects.equals(name, that.name)
-        && Objects.equals(value, that.value);
-  }
-  // CHECKSTYLE:ON:CyclomaticComplexity
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(clusterId, topicName, name, value, isDefault, isSensitive);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", TopicConfig.class.getSimpleName() + "[", "]")
-        .add("clusterId='" + clusterId + "'")
-        .add("topicName='" + topicName + "'")
-        .add("name='" + name + "'")
-        .add("value='" + value + "'")
-        .add("isDefault=" + isDefault)
-        .add("isSensitive=" + isSensitive)
-        .toString();
+    public abstract Builder setTopicName(String topicName);
   }
 }

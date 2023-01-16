@@ -18,11 +18,11 @@ base_dir=$(dirname $0)/..
 
 # Development jars. `mvn package` should collect all the required dependency jars here
 for dir in $base_dir/kafka-rest/target/kafka-rest-*-development; do
-  CLASSPATH=$CLASSPATH:$dir/share/java/kafka-rest/*
+  CLASSPATH=$CLASSPATH:$dir/share/java/kafka-rest-bin/*:$dir/share/java/kafka-rest-lib/*
 done
 
 # Production jars
-for library in "confluent-security/kafka-rest" "confluent-common" "rest-utils" "kafka-rest" "monitoring-interceptors"; do
+for library in "confluent-security/kafka-rest" "confluent-common" "confluent-telemetry" "rest-utils" "kafka-rest-bin" "kafka-rest-lib" "monitoring-interceptors"; do
   CLASSPATH=$CLASSPATH:$base_dir/share/java/$library/*
 done
 

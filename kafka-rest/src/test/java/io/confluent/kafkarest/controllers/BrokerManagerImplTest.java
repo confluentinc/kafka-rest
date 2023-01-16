@@ -42,12 +42,12 @@ public class BrokerManagerImplTest {
 
   private static final String CLUSTER_ID = "cluster-1";
 
-  private static final Broker BROKER_1 = new Broker(CLUSTER_ID, 1, "1.0.0.1", 1, null);
-  private static final Broker BROKER_2 = new Broker(CLUSTER_ID, 2, "1.0.0.2", 2, null);
-  private static final Broker BROKER_3 = new Broker(CLUSTER_ID, 2, "1.0.0.3", 3, "rack-3");
+  private static final Broker BROKER_1 = Broker.create(CLUSTER_ID, 1, "1.0.0.1", 1, null);
+  private static final Broker BROKER_2 = Broker.create(CLUSTER_ID, 2, "1.0.0.2", 2, null);
+  private static final Broker BROKER_3 = Broker.create(CLUSTER_ID, 2, "1.0.0.3", 3, "rack-3");
 
   private static final Cluster CLUSTER =
-      new Cluster(CLUSTER_ID, BROKER_1, Arrays.asList(BROKER_1, BROKER_2, BROKER_3));
+      Cluster.create(CLUSTER_ID, BROKER_1, Arrays.asList(BROKER_1, BROKER_2, BROKER_3));
 
   @Rule
   public final EasyMockRule mocks = new EasyMockRule(this);
@@ -121,5 +121,15 @@ public class BrokerManagerImplTest {
     Optional<Broker> broker = brokerManager.getBroker(CLUSTER_ID, 4).get();
 
     assertFalse(broker.isPresent());
+  }
+
+  @Test
+  public void listLocalBrokers_returnsBrokers() throws Exception {
+    expect(clusterManager.getLocalCluster()).andReturn(CompletableFuture.completedFuture(CLUSTER));
+    replay(clusterManager);
+
+    List<Broker> brokers = brokerManager.listLocalBrokers().get();
+
+    assertEquals(CLUSTER.getBrokers(), brokers);
   }
 }

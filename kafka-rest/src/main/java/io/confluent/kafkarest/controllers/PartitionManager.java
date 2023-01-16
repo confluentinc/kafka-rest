@@ -32,8 +32,21 @@ public interface PartitionManager {
   CompletableFuture<List<Partition>> listPartitions(String clusterId, String topicName);
 
   /**
+   * Returns the list of Kafka {@link Partition Partitions} belonging to the {@link
+   * io.confluent.kafkarest.entities.Topic} with the given {@code topicName}, in the {@link
+   * io.confluent.kafkarest.entities.Cluster} that this application is connected to.
+   */
+  CompletableFuture<List<Partition>> listLocalPartitions(String topicName);
+
+  /**
    * Returns the Kafka {@link Partition} with the given {@code partitionId}.
    */
   CompletableFuture<Optional<Partition>> getPartition(
       String clusterId, String topicName, int partitionId);
+
+  /**
+   * Returns the Kafka {@link Partition} with the given {@code partitionId}, belonging to the {@link
+   * io.confluent.kafkarest.entities.Cluster} that this application is connected to.
+   */
+  CompletableFuture<Optional<Partition>> getLocalPartition(String topicName, int partitionId);
 }

@@ -15,9 +15,10 @@
 
 package io.confluent.kafkarest.integration;
 
-import io.confluent.kafkarest.*;
+import io.confluent.kafkarest.KafkaRestApplication;
+import io.confluent.kafkarest.KafkaRestConfig;
+import io.confluent.kafkarest.ProducerPool;
 import io.confluent.kafkarest.v2.KafkaConsumerManager;
-
 import javax.ws.rs.core.Configurable;
 
 /**
@@ -28,26 +29,19 @@ public class TestKafkaRestApplication extends KafkaRestApplication {
 
   ProducerPool producerPoolInjected;
   KafkaConsumerManager kafkaConsumerManagerInjected;
-  AdminClientWrapper adminClientWrapperInjected;
-  ScalaConsumersContext scalaConsumersContextInjected;
 
-
-  public TestKafkaRestApplication(KafkaRestConfig config,
-                                  ProducerPool producerPool,
-                                  KafkaConsumerManager kafkaConsumerManager,
-                                  AdminClientWrapper adminClientWrapper,
-                                  ScalaConsumersContext scalaConsumersContext) {
+  public TestKafkaRestApplication(
+      KafkaRestConfig config,
+      ProducerPool producerPool,
+      KafkaConsumerManager kafkaConsumerManager
+  ) {
     super(config);
     producerPoolInjected = producerPool;
     kafkaConsumerManagerInjected = kafkaConsumerManager;
-    adminClientWrapperInjected = adminClientWrapper;
-    scalaConsumersContextInjected = scalaConsumersContext;
   }
 
   @Override
   public void setupResources(Configurable<?> config, KafkaRestConfig appConfig) {
-    setupInjectedResources(config, appConfig, producerPoolInjected, kafkaConsumerManagerInjected,
-        adminClientWrapperInjected, scalaConsumersContextInjected);
+    setupInjectedResources(config, appConfig, producerPoolInjected, kafkaConsumerManagerInjected);
   }
-
 }

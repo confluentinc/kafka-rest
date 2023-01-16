@@ -66,9 +66,9 @@ public final class JsonTopicProduceRequest {
     if (records == null || records.isEmpty()) {
       throw new IllegalStateException();
     }
-    return new ProduceRequest<>(
+    return ProduceRequest.create(
         records.stream()
-            .map(record -> new ProduceRecord<>(record.key, record.value, record.partition))
+            .map(record -> ProduceRecord.create(record.key, record.value, record.partition))
             .collect(Collectors.toList()),
         /* keySchema= */ null,
         /* keySchemaId= */ null,

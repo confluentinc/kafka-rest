@@ -19,22 +19,12 @@ import io.confluent.kafkarest.v2.KafkaConsumerManager;
 import org.apache.kafka.clients.admin.Admin;
 
 public interface KafkaRestContext {
-  public KafkaRestConfig getConfig();
 
-  public ProducerPool getProducerPool();
+  KafkaRestConfig getConfig();
 
-  @Deprecated
-  public ScalaConsumersContext getScalaConsumersContext();
+  ProducerPool getProducerPool();
 
-  @Deprecated
-  public ConsumerManager getConsumerManager();
-
-  @Deprecated
-  public SimpleConsumerManager getSimpleConsumerManager();
-
-  public KafkaConsumerManager getKafkaConsumerManager();
-
-  public AdminClientWrapper getAdminClientWrapper();
+  KafkaConsumerManager getKafkaConsumerManager();
 
   Admin getAdmin();
 

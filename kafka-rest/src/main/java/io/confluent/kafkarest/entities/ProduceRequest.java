@@ -15,28 +15,31 @@
 
 package io.confluent.kafkarest.entities;
 
+import com.google.auto.value.AutoValue;
 import java.util.List;
-import java.util.Objects;
-import java.util.StringJoiner;
 import javax.annotation.Nullable;
 
-public final class ProduceRequest<K, V> {
+@AutoValue
+public abstract class ProduceRequest<K, V> {
 
-  private final List<ProduceRecord<K, V>> records;
+  ProduceRequest() {
+  }
 
-  @Nullable
-  private final String keySchema;
-
-  @Nullable
-  private final Integer keySchemaId;
+  public abstract List<ProduceRecord<K, V>> getRecords();
 
   @Nullable
-  private final String valueSchema;
+  public abstract String getKeySchema();
 
   @Nullable
-  private final Integer valueSchemaId;
+  public abstract Integer getKeySchemaId();
 
-  public ProduceRequest(
+  @Nullable
+  public abstract String getValueSchema();
+
+  @Nullable
+  public abstract Integer getValueSchemaId();
+
+  public static <K, V> ProduceRequest<K, V> create(
       List<ProduceRecord<K, V>> records,
       @Nullable String keySchema,
       @Nullable Integer keySchemaId,
@@ -45,66 +48,7 @@ public final class ProduceRequest<K, V> {
     if (records.isEmpty()) {
       throw new IllegalStateException();
     }
-    this.records = records;
-    this.keySchema = keySchema;
-    this.keySchemaId = keySchemaId;
-    this.valueSchema = valueSchema;
-    this.valueSchemaId = valueSchemaId;
-  }
-
-  public List<ProduceRecord<K, V>> getRecords() {
-    return records;
-  }
-
-  @Nullable
-  public String getKeySchema() {
-    return keySchema;
-  }
-
-  @Nullable
-  public Integer getKeySchemaId() {
-    return keySchemaId;
-  }
-
-  @Nullable
-  public String getValueSchema() {
-    return valueSchema;
-  }
-
-  @Nullable
-  public Integer getValueSchemaId() {
-    return valueSchemaId;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ProduceRequest<?, ?> that = (ProduceRequest<?, ?>) o;
-    return Objects.equals(records, that.records)
-        && Objects.equals(keySchema, that.keySchema)
-        && Objects.equals(keySchemaId, that.keySchemaId)
-        && Objects.equals(valueSchema, that.valueSchema)
-        && Objects.equals(valueSchemaId, that.valueSchemaId);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(records, keySchema, keySchemaId, valueSchema, valueSchemaId);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", ProduceRequest.class.getSimpleName() + "[", "]")
-        .add("records=" + records)
-        .add("keySchema='" + keySchema + "'")
-        .add("keySchemaId=" + keySchemaId)
-        .add("valueSchema='" + valueSchema + "'")
-        .add("valueSchemaId=" + valueSchemaId)
-        .toString();
+    return new AutoValue_ProduceRequest<>(
+        records, keySchema, keySchemaId, valueSchema, valueSchemaId);
   }
 }

@@ -19,11 +19,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import io.confluent.common.utils.Time;
+import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.ConsumerReadCallback;
 import io.confluent.kafkarest.KafkaRestConfig;
-import io.confluent.kafkarest.SystemTime;
+import io.confluent.kafkarest.Time;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
+import io.confluent.kafkarest.SystemTime;
 import io.confluent.kafkarest.entities.ConsumerRecord;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
@@ -129,7 +130,7 @@ public class LoadTest {
         void verifyRead() {
             assertTrue("Callback failed to fire", sawCallback);
             assertNull("There shouldn't be an exception in callback", actualException);
-            List<ConsumerRecord<byte[], byte[]>> expectedRecords = referenceRecords();
+            List<ConsumerRecord<ByteString, ByteString>> expectedRecords = referenceRecords();
             assertEquals("Records returned not as expected", expectedRecords, actualRecords);
 
             lock.lock();
@@ -142,14 +143,14 @@ public class LoadTest {
             }
         }
 
-        private List<ConsumerRecord<byte[], byte[]>> referenceRecords() {
+        private List<ConsumerRecord<ByteString, ByteString>> referenceRecords() {
             return Arrays.asList(
-                new ConsumerRecord<>(
-                    topicName, "k1".getBytes(), "v1".getBytes(), 0, latestOffset - 3),
-                new ConsumerRecord<>(
-                    topicName, "k2".getBytes(), "v2".getBytes(), 0, latestOffset - 2),
-                new ConsumerRecord<>(
-                    topicName, "k3".getBytes(), "v3".getBytes(), 0, latestOffset - 1));
+                ConsumerRecord.create(
+                    topicName, ByteString.copyFromUtf8("k1"), ByteString.copyFromUtf8("v1"), 0, latestOffset - 3),
+                ConsumerRecord.create(
+                    topicName, ByteString.copyFromUtf8("k2"), ByteString.copyFromUtf8("v2"), 0, latestOffset - 2),
+                ConsumerRecord.create(
+                    topicName, ByteString.copyFromUtf8("k3"), ByteString.copyFromUtf8("v3"), 0, latestOffset - 1));
         }
 
         private void schedulePoll() {
@@ -211,7 +212,7 @@ public class LoadTest {
 
     private void bootstrapConsumer(final MockConsumer<byte[], byte[]> consumer) {
         String cid = consumerManager.createConsumer(
-                consumer.groupName, new ConsumerInstanceConfig(EmbeddedFormat.BINARY));
+                consumer.groupName, ConsumerInstanceConfig.create(EmbeddedFormat.BINARY));
 
         consumer.cid(cid);
         consumerManager.subscribe(consumer.groupName, cid, new ConsumerSubscriptionRecord(Collections.singletonList(topicName), null));

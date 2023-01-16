@@ -19,20 +19,22 @@ import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.ByteString;
 import io.confluent.kafkarest.entities.EntityUtils;
 import io.confluent.kafkarest.entities.ProduceRecord;
-import io.confluent.kafkarest.entities.v1.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.PartitionOffset;
 import io.confluent.rest.entities.ErrorMessage;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
+import java.util.function.Supplier;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import org.apache.avro.generic.IndexedRecord;
@@ -41,7 +43,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.KafkaFuture;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,66 +52,8 @@ public class TestUtils {
   private static final Logger log = LoggerFactory.getLogger(TestUtils.class);
   private static final ObjectMapper jsonParser = new ObjectMapper();
 
-  // Media type collections that should be tested together (i.e. expect the same raw output). The
-  // expected output format is included so these lists can include weighted Accept headers.
-  public static final RequestMediaType[] V1_ACCEPT_MEDIATYPES = {
-      // Single type in Accept header
-      new RequestMediaType(Versions.KAFKA_V1_JSON, Versions.KAFKA_V1_JSON),
-      new RequestMediaType(Versions.KAFKA_DEFAULT_JSON, Versions.KAFKA_DEFAULT_JSON),
-      new RequestMediaType(Versions.JSON, Versions.JSON),
-      // Weighted options in Accept header should select the highest weighted option
-      new RequestMediaType(
-          Versions.KAFKA_V1_JSON_WEIGHTED + ", " + Versions.KAFKA_DEFAULT_JSON_WEIGHTED + ", "
-          + Versions.JSON, Versions.KAFKA_V1_JSON),
-      new RequestMediaType(
-          Versions.KAFKA_V1_JSON + "; q=0.8, " + Versions.KAFKA_DEFAULT_JSON + "; q=0.9, "
-          + Versions.JSON + "; q=0.7", Versions.KAFKA_DEFAULT_JSON),
-      new RequestMediaType(
-          Versions.KAFKA_V1_JSON + "; q=0.8, " + Versions.KAFKA_DEFAULT_JSON + "; q=0.7, "
-          + Versions.JSON + "; q=0.9", Versions.JSON),
-      // No accept header, should use most specific default media type. Note that in cases with
-      // embedded data this won't be the most specific value since the version with the embedded
-      // type will be used instead
-      new RequestMediaType(null, Versions.KAFKA_MOST_SPECIFIC_DEFAULT)
-  };
-  public static final List<RequestMediaType> V1_ACCEPT_MEDIATYPES_BINARY;
-
-  static {
-    V1_ACCEPT_MEDIATYPES_BINARY =
-        new ArrayList<RequestMediaType>(Arrays.asList(V1_ACCEPT_MEDIATYPES));
-    V1_ACCEPT_MEDIATYPES_BINARY.add(
-        new RequestMediaType(Versions.KAFKA_V1_JSON_BINARY, Versions.KAFKA_V1_JSON_BINARY));
-  }
-
-  public static final RequestMediaType[] V1_ACCEPT_MEDIATYPES_AVRO = {
-      new RequestMediaType(Versions.KAFKA_V1_JSON_AVRO, Versions.KAFKA_V1_JSON_AVRO)
-  };
-
-  // Response content types we should never allow to be produced
-  public static final String[] V1_INVALID_MEDIATYPES = {
-      "text/plain",
-      "application/octet-stream"
-  };
-
-  public static final String[] V1_REQUEST_ENTITY_TYPES = {
-      Versions.KAFKA_V1_JSON, Versions.KAFKA_DEFAULT_JSON, Versions.JSON, Versions.GENERIC_REQUEST
-  };
-  public static final List<String> V1_REQUEST_ENTITY_TYPES_BINARY;
-
-  static {
-    V1_REQUEST_ENTITY_TYPES_BINARY = new ArrayList<String>(Arrays.asList(V1_REQUEST_ENTITY_TYPES));
-    V1_REQUEST_ENTITY_TYPES_BINARY.add(Versions.KAFKA_V1_JSON_BINARY);
-  }
-
-  public static final List<String> V1_REQUEST_ENTITY_TYPES_AVRO = Arrays.asList(
-      Versions.KAFKA_V1_JSON_AVRO
-  );
-
-  // Request content types we'll always ignore
-  public static final String[] V1_INVALID_REQUEST_MEDIATYPES = {
-      "text/plain"
-  };
-
+  private static final int DEFAULT_EXP_BACKOFF_RETRIES = 3;
+  private static final Duration DEFAULT_INITIAL_BACKOFF = Duration.ofMillis(200L);
 
   /**
    * Try to read the entity. If parsing fails, errors are rethrown, but the raw entity is also logged for debugging.
@@ -133,7 +77,6 @@ public class TestUtils {
       throw t;
     }
   }
-
 
   /**
    * Asserts that the response received an HTTP 200 status code, as well as some optional
@@ -190,7 +133,6 @@ public class TestUtils {
     }
   }
 
-
   /**
    * Parses the given JSON string into Jackson's generic JsonNode structure. Useful for generation
    * test data that's easier to express as a JSON-encoded string.
@@ -232,6 +174,8 @@ public class TestUtils {
       return null;
     } else if (k instanceof byte[]) {
       return EntityUtils.encodeBase64Binary((byte[]) k);
+    } else if (k instanceof ByteString) {
+      return EntityUtils.encodeBase64Binary(((ByteString) k).toByteArray());
     } else if (k instanceof JsonNode) {
       return k;
     } else if (k instanceof IndexedRecord) {
@@ -302,6 +246,31 @@ public class TestUtils {
         valueDeserializerClassName, new Properties(), validateContents);
   }
 
+  public static void testWithRetry(Runnable assertions) {
+    testWithRetry(assertions, DEFAULT_EXP_BACKOFF_RETRIES, DEFAULT_INITIAL_BACKOFF);
+  }
+
+  public static void testWithRetry(Runnable assertions, int numRetries, Duration initialBackoff) {
+    Duration backoff = initialBackoff;
+    for (int i = 0;; i++) {
+      try {
+        assertions.run();
+        return;
+      } catch (Throwable t) {
+        if (i == numRetries) {
+          throw new AssertionError(
+              String.format(
+                  "Failed after %d exponential backoff retries with %d ms initial backoff.",
+                  numRetries,
+                  initialBackoff.toMillis()),
+              t);
+        }
+      }
+      LockSupport.parkNanos(backoff.toNanos());
+      backoff = backoff.multipliedBy(2L);
+    }
+  }
+
   private static <V, K> Map<Object, Integer> topicCounts(final KafkaConsumer<K, V> consumer,
                                                          final String topicName,
                                                          final List<? extends ProduceRecord<K,V>> records,
@@ -333,7 +302,6 @@ public class TestUtils {
     return msgCounts;
   }
 
-
   private static <K, V> KafkaConsumer<K, V> createConsumer(String bootstrapServers, String groupId,
                                                           String consumerId, Long consumerTimeout,
                                                           String keyDeserializerClassName,
@@ -350,10 +318,5 @@ public class TestUtils {
     consumerConfig.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializerClassName);
     consumerConfig.putAll(deserializerProps);
     return new KafkaConsumer<>(consumerConfig);
-  }
-
-  public static <T> KafkaFuture<T> failedFuture(RuntimeException exception) {
-    KafkaFuture<T> future = KafkaFuture.completedFuture(null);
-    return future.whenComplete((value, error) -> { throw exception; });
   }
 }

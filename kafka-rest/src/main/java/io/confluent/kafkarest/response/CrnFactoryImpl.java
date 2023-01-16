@@ -42,8 +42,12 @@ public final class CrnFactoryImpl implements CrnFactory {
     }
     StringJoiner joiner = new StringJoiner(String.valueOf(SEPARATOR)).add(baseCrn);
     for (int i = 0; i < components.length; i += 2) {
-      joiner.add(
-          String.format("%s=%s", trimSeparator(components[i]), trimSeparator(components[i + 1])));
+      if (components[i + 1] != null) {
+        joiner.add(
+            String.format("%s=%s", trimSeparator(components[i]), trimSeparator(components[i + 1])));
+      } else {
+        joiner.add(String.format("%s", trimSeparator(components[i])));
+      }
     }
     return joiner.toString();
   }

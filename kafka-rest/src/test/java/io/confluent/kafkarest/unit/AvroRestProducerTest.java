@@ -65,9 +65,9 @@ public class AvroRestProducerTest {
   @Test(expected= ConstraintViolationException.class)
   public void testInvalidSchema() throws Exception {
     schemaHolder =
-        new ProduceRequest<>(
+        ProduceRequest.create(
             Collections.singletonList(
-                new ProduceRecord<>(mapper.readTree("{}"), mapper.readTree("{}"), null)),
+                ProduceRecord.create(mapper.readTree("{}"), mapper.readTree("{}"), null)),
             /* keySchema= */ null,
             /* keySchemaId= */ null,
             "invalidValueSchema",
@@ -82,9 +82,9 @@ public class AvroRestProducerTest {
   @Test
   public void testInvalidData() throws Exception {
     schemaHolder =
-        new ProduceRequest<>(
+        ProduceRequest.create(
             Collections.singletonList(
-                new ProduceRecord<>(null, mapper.readTree("\"string\""), null)),
+                ProduceRecord.create(null, mapper.readTree("\"string\""), null)),
             /* keySchema= */ null,
             /* keySchemaId= */ null,
             /* valueSchema= */ "\"int\"",
@@ -128,9 +128,9 @@ public class AvroRestProducerTest {
         .andStubReturn(f);
     EasyMock.replay(producer);
     schemaHolder =
-        new ProduceRequest<>(
+        ProduceRequest.create(
             Collections.singletonList(
-                new ProduceRecord<>(null, mapper.readTree("{\"name\": \"bob\"}"), null)),
+                ProduceRecord.create(null, mapper.readTree("{\"name\": \"bob\"}"), null)),
             /* keySchema= */ null,
             /* keySchemaId= */ null,
             valueSchemaStr,

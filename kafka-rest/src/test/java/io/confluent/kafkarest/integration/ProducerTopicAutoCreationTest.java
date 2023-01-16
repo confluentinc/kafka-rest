@@ -15,10 +15,10 @@
 
 package io.confluent.kafkarest.integration;
 
-import io.confluent.kafkarest.entities.v1.BinaryPartitionProduceRequest;
-import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest;
-import io.confluent.kafkarest.entities.v1.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
-import io.confluent.kafkarest.entities.v1.PartitionOffset;
+import io.confluent.kafkarest.entities.v2.BinaryPartitionProduceRequest;
+import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest;
+import io.confluent.kafkarest.entities.v2.BinaryTopicProduceRequest.BinaryTopicProduceRecord;
+import io.confluent.kafkarest.entities.v2.PartitionOffset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;

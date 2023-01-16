@@ -15,7 +15,7 @@
 
 package io.confluent.kafkarest.resources.v3;
 
-import static io.confluent.kafkarest.CompletableFutures.failedFuture;
+import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -23,12 +23,12 @@ import static org.junit.Assert.assertEquals;
 
 import io.confluent.kafkarest.controllers.ReplicaManager;
 import io.confluent.kafkarest.entities.PartitionReplica;
-import io.confluent.kafkarest.entities.v3.CollectionLink;
 import io.confluent.kafkarest.entities.v3.GetReplicaResponse;
 import io.confluent.kafkarest.entities.v3.ListReplicasResponse;
-import io.confluent.kafkarest.entities.v3.Relationship;
 import io.confluent.kafkarest.entities.v3.ReplicaData;
-import io.confluent.kafkarest.entities.v3.ResourceLink;
+import io.confluent.kafkarest.entities.v3.ReplicaDataList;
+import io.confluent.kafkarest.entities.v3.Resource;
+import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
@@ -51,7 +51,7 @@ public class ReplicasResourceTest {
   private static final int PARTITION_ID = 0;
 
   private static final PartitionReplica REPLICA_1 =
-      new PartitionReplica(
+      PartitionReplica.create(
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID,
@@ -59,7 +59,7 @@ public class ReplicasResourceTest {
           /* isLeader= */ true,
           /* isInSync= */ true);
   private static final PartitionReplica REPLICA_2 =
-      new PartitionReplica(
+      PartitionReplica.create(
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID,
@@ -67,7 +67,7 @@ public class ReplicasResourceTest {
           /* isLeader= */ false,
           /* isInSync= */ true);
   private static final PartitionReplica REPLICA_3 =
-      new PartitionReplica(
+      PartitionReplica.create(
           CLUSTER_ID,
           TOPIC_NAME,
           PARTITION_ID,
@@ -87,7 +87,8 @@ public class ReplicasResourceTest {
   public void setUp() {
     replicasResource =
         new ReplicasResource(
-            replicaManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""), new FakeUrlFactory());
+            () -> replicaManager, new CrnFactoryImpl(/* crnAuthorityConfig= */ ""),
+            new FakeUrlFactory());
   }
 
   @Test
@@ -100,43 +101,72 @@ public class ReplicasResourceTest {
     replicasResource.listReplicas(response, CLUSTER_ID, TOPIC_NAME, PARTITION_ID);
 
     ListReplicasResponse expected =
-        new ListReplicasResponse(
-            new CollectionLink(
-                "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas", /* next= */ null),
-            Arrays.asList(
-                new ReplicaData(
-                    "crn:///kafka=cluster-1/topic=topic-1/partition=0/replica=1",
-                    new ResourceLink(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/1"),
-                    CLUSTER_ID,
-                    TOPIC_NAME,
-                    PARTITION_ID,
-                    REPLICA_1.getBrokerId(),
-                    /* isLeader= */ true,
-                    /* isInSync= */ true,
-                    new Relationship("/v3/clusters/cluster-1/brokers/1")),
-                new ReplicaData(
-                    "crn:///kafka=cluster-1/topic=topic-1/partition=0/replica=2",
-                    new ResourceLink(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/2"),
-                    CLUSTER_ID,
-                    TOPIC_NAME,
-                    PARTITION_ID,
-                    REPLICA_2.getBrokerId(),
-                    /* isLeader= */ false,
-                    /* isInSync= */ true,
-                    new Relationship("/v3/clusters/cluster-1/brokers/2")),
-                new ReplicaData(
-                    "crn:///kafka=cluster-1/topic=topic-1/partition=0/replica=3",
-                    new ResourceLink(
-                        "/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/3"),
-                    CLUSTER_ID,
-                    TOPIC_NAME,
-                    PARTITION_ID,
-                    REPLICA_3.getBrokerId(),
-                    /* isLeader= */ false,
-                    /* isInSync= */ false,
-                    new Relationship("/v3/clusters/cluster-1/brokers/3"))));
+        ListReplicasResponse.create(
+            ReplicaDataList.builder()
+                .setMetadata(
+                    ResourceCollection.Metadata.builder()
+                        .setSelf("/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas")
+                        .build())
+                .setData(
+                    Arrays.asList(
+                        ReplicaData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/topic-1/partitions/0"
+                                            + "/replicas/1")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/partition=0"
+                                            + "/replica=1")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_NAME)
+                            .setPartitionId(PARTITION_ID)
+                            .setBrokerId(REPLICA_1.getBrokerId())
+                            .setLeader(true)
+                            .setInSync(true)
+                            .setBroker(
+                                Resource.Relationship.create("/v3/clusters/cluster-1/brokers/1"))
+                            .build(),
+                        ReplicaData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/topic-1/partitions/0"
+                                            + "/replicas/2")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/partition=0"
+                                            + "/replica=2")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_NAME)
+                            .setPartitionId(PARTITION_ID)
+                            .setBrokerId(REPLICA_2.getBrokerId())
+                            .setLeader(false)
+                            .setInSync(true)
+                            .setBroker(
+                                Resource.Relationship.create("/v3/clusters/cluster-1/brokers/2"))
+                            .build(),
+                        ReplicaData.builder()
+                            .setMetadata(
+                                Resource.Metadata.builder()
+                                    .setSelf(
+                                        "/v3/clusters/cluster-1/topics/topic-1/partitions/0"
+                                            + "/replicas/3")
+                                    .setResourceName(
+                                        "crn:///kafka=cluster-1/topic=topic-1/partition=0"
+                                            + "/replica=3")
+                                    .build())
+                            .setClusterId(CLUSTER_ID)
+                            .setTopicName(TOPIC_NAME)
+                            .setPartitionId(PARTITION_ID)
+                            .setBrokerId(REPLICA_3.getBrokerId())
+                            .setLeader(false)
+                            .setInSync(false)
+                            .setBroker
+                                (Resource.Relationship.create("/v3/clusters/cluster-1/brokers/3"))
+                            .build()))
+                .build());
 
     assertEquals(expected, response.getValue());
   }
@@ -164,17 +194,22 @@ public class ReplicasResourceTest {
         response, CLUSTER_ID, TOPIC_NAME, PARTITION_ID, REPLICA_1.getBrokerId());
 
     GetReplicaResponse expected =
-        new GetReplicaResponse(
-            new ReplicaData(
-                "crn:///kafka=cluster-1/topic=topic-1/partition=0/replica=1",
-                new ResourceLink("/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/1"),
-                CLUSTER_ID,
-                TOPIC_NAME,
-                PARTITION_ID,
-                REPLICA_1.getBrokerId(),
-                /* isLeader= */ true,
-                /* isInSync= */ true,
-                new Relationship("/v3/clusters/cluster-1/brokers/1")));
+        GetReplicaResponse.create(
+            ReplicaData.builder()
+                .setMetadata(
+                    Resource.Metadata.builder()
+                        .setSelf("/v3/clusters/cluster-1/topics/topic-1/partitions/0/replicas/1")
+                        .setResourceName(
+                            "crn:///kafka=cluster-1/topic=topic-1/partition=0/replica=1")
+                        .build())
+                .setClusterId(CLUSTER_ID)
+                .setTopicName(TOPIC_NAME)
+                .setPartitionId(PARTITION_ID)
+                .setBrokerId(REPLICA_1.getBrokerId())
+                .setLeader(true)
+                .setInSync(true)
+                .setBroker(Resource.Relationship.create("/v3/clusters/cluster-1/brokers/1"))
+                .build());
 
     assertEquals(expected, response.getValue());
   }

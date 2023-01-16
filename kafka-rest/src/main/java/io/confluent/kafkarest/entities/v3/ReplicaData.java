@@ -15,226 +15,97 @@
 
 package io.confluent.kafkarest.entities.v3;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Objects;
-import java.util.StringJoiner;
+import com.google.auto.value.AutoValue;
+import io.confluent.kafkarest.entities.PartitionReplica;
 
-/**
- * A replica resource type.
- */
-public final class ReplicaData {
+@AutoValue
+public abstract class ReplicaData extends Resource {
 
-  public static final String ELEMENT_TYPE = "replica";
-
-  private final String id;
-
-  private final ResourceLink links;
-
-  private final Attributes attributes;
-
-  private final Relationships relationships;
-
-  public ReplicaData(
-      String id,
-      ResourceLink links,
-      String clusterId,
-      String topicName,
-      Integer partitionId,
-      Integer brokerId,
-      Boolean isLeader,
-      Boolean isInSync,
-      Relationship broker) {
-    this.id = Objects.requireNonNull(id);
-    this.links = Objects.requireNonNull(links);
-    attributes = new Attributes(clusterId, topicName, partitionId, brokerId, isLeader, isInSync);
-    relationships = new Relationships(broker);
+  ReplicaData() {
   }
 
-  @JsonProperty("type")
-  public String getType() {
-    return "KafkaReplica";
+  @JsonProperty("cluster_id")
+  public abstract String getClusterId();
+
+  @JsonProperty("topic_name")
+  public abstract String getTopicName();
+
+  @JsonProperty("partition_id")
+  public abstract int getPartitionId();
+
+  @JsonProperty("broker_id")
+  public abstract int getBrokerId();
+
+  @JsonProperty("is_leader")
+  public abstract boolean isLeader();
+
+  @JsonProperty("is_in_sync")
+  public abstract boolean isInSync();
+
+  @JsonProperty("broker")
+  public abstract Relationship getBroker();
+
+  public static Builder builder() {
+    return new AutoValue_ReplicaData.Builder().setKind("KafkaReplica");
   }
 
-  @JsonProperty("id")
-  public String getId() {
-    return id;
+  public static Builder fromPartitionReplica(PartitionReplica replica) {
+    return builder()
+        .setClusterId(replica.getClusterId())
+        .setTopicName(replica.getTopicName())
+        .setPartitionId(replica.getPartitionId())
+        .setBrokerId(replica.getBrokerId())
+        .setLeader(replica.isLeader())
+        .setInSync(replica.isInSync());
   }
 
-  @JsonProperty("links")
-  public ResourceLink getLinks() {
-    return links;
+  @JsonCreator
+  static ReplicaData fromJson(
+      @JsonProperty("kind") String kind,
+      @JsonProperty("metadata") Metadata metadata,
+      @JsonProperty("cluster_id") String clusterId,
+      @JsonProperty("topic_name") String topicName,
+      @JsonProperty("partition_id") int partitionId,
+      @JsonProperty("broker_id") int brokerId,
+      @JsonProperty("is_leader") boolean isLeader,
+      @JsonProperty("is_in_sync") boolean isInSync,
+      @JsonProperty("broker") Relationship broker
+  ) {
+    return builder()
+        .setKind(kind)
+        .setMetadata(metadata)
+        .setClusterId(clusterId)
+        .setTopicName(topicName)
+        .setPartitionId(partitionId)
+        .setBrokerId(brokerId)
+        .setLeader(isLeader)
+        .setInSync(isInSync)
+        .setBroker(broker)
+        .build();
   }
 
-  @JsonProperty("attributes")
-  public Attributes getAttributes() {
-    return attributes;
-  }
+  @AutoValue.Builder
+  public abstract static class Builder extends Resource.Builder<Builder> {
 
-  @JsonProperty("relationships")
-  public Relationships getRelationships() {
-    return relationships;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ReplicaData that = (ReplicaData) o;
-    return Objects.equals(id, that.id)
-        && Objects.equals(links, that.links)
-        && Objects.equals(attributes, that.attributes)
-        && Objects.equals(relationships, that.relationships);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id, links, attributes, relationships);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", ReplicaData.class.getSimpleName() + "[", "]")
-        .add("id='" + id + "'")
-        .add("links=" + links)
-        .add("attributes=" + attributes)
-        .add("relationships=" + relationships)
-        .toString();
-  }
-
-  public static final class Attributes {
-
-    private final String clusterId;
-
-    private final String topicName;
-
-    private final Integer partitionId;
-
-    private final Integer brokerId;
-
-    private final Boolean isLeader;
-
-    private final Boolean isInSync;
-
-    public Attributes(
-        String clusterId,
-        String topicName,
-        Integer partitionId,
-        Integer brokerId,
-        Boolean isLeader,
-        Boolean isInSync
-    ) {
-      this.clusterId = Objects.requireNonNull(clusterId);
-      this.topicName = Objects.requireNonNull(topicName);
-      this.partitionId = Objects.requireNonNull(partitionId);
-      this.brokerId = Objects.requireNonNull(brokerId);
-      this.isLeader = Objects.requireNonNull(isLeader);
-      this.isInSync = Objects.requireNonNull(isInSync);
+    Builder() {
     }
 
-    @JsonProperty("cluster_id")
-    public String getClusterId() {
-      return clusterId;
-    }
+    public abstract Builder setClusterId(String clusterId);
 
-    @JsonProperty("topic_name")
-    public String getTopicName() {
-      return topicName;
-    }
+    public abstract Builder setTopicName(String topicName);
 
-    @JsonProperty("partition_id")
-    public Integer getPartitionId() {
-      return partitionId;
-    }
+    public abstract Builder setPartitionId(int partitionId);
 
-    @JsonProperty("broker_id")
-    public Integer getBrokerId() {
-      return brokerId;
-    }
+    public abstract Builder setBrokerId(int brokerId);
 
-    @JsonProperty("is_leader")
-    public Boolean getLeader() {
-      return isLeader;
-    }
+    public abstract Builder setLeader(boolean isLeader);
 
-    @JsonProperty("is_in_sync")
-    public Boolean getInSync() {
-      return isInSync;
-    }
+    public abstract Builder setInSync(boolean isInSync);
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      Attributes that = (Attributes) o;
-      return Objects.equals(clusterId, that.clusterId)
-          && Objects.equals(topicName, that.topicName)
-          && Objects.equals(partitionId, that.partitionId)
-          && Objects.equals(brokerId, that.brokerId)
-          && Objects.equals(isLeader, that.isLeader)
-          && Objects.equals(isInSync, that.isInSync);
-    }
+    public abstract Builder setBroker(Relationship broker);
 
-    @Override
-    public int hashCode() {
-      return Objects.hash(clusterId, topicName, partitionId, brokerId, isLeader, isInSync);
-    }
-
-    @Override
-    public String toString() {
-      return new StringJoiner(", ", Attributes.class.getSimpleName() + "[", "]")
-          .add("clusterId='" + clusterId + "'")
-          .add("topicName='" + topicName + "'")
-          .add("partitionId=" + partitionId)
-          .add("brokerId=" + brokerId)
-          .add("isLeader=" + isLeader)
-          .add("isInSync=" + isInSync)
-          .toString();
-    }
-  }
-
-  public static final class Relationships {
-
-    public final Relationship broker;
-
-    public Relationships(Relationship broker) {
-      this.broker = Objects.requireNonNull(broker);
-    }
-
-    @JsonProperty("broker")
-    public Relationship getBroker() {
-      return broker;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      Relationships that = (Relationships) o;
-      return Objects.equals(broker, that.broker);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(broker);
-    }
-
-    @Override
-    public String toString() {
-      return new StringJoiner(", ", Relationships.class.getSimpleName() + "[", "]")
-          .add("broker=" + broker)
-          .toString();
-    }
+    public abstract ReplicaData build();
   }
 }

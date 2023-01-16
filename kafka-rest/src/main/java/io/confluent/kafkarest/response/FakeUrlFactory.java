@@ -15,8 +15,6 @@
 
 package io.confluent.kafkarest.response;
 
-import java.util.StringJoiner;
-
 /**
  * A fake {@link UrlFactory} to be used in tests.
  */
@@ -25,11 +23,16 @@ public final class FakeUrlFactory implements UrlFactory {
   private static final char SEPARATOR = '/';
 
   @Override
-  public String create(String... components) {
-    StringJoiner joiner = new StringJoiner(String.valueOf(SEPARATOR), "/", "");
-    for (String component : components) {
-      joiner.add(component);
+  public String create(String... segments) {
+    UrlBuilder urlBuilder = newUrlBuilder();
+    for (String segment : segments) {
+      urlBuilder.appendPathSegment(segment);
     }
-    return joiner.toString();
+    return urlBuilder.build();
+  }
+
+  @Override
+  public UrlBuilder newUrlBuilder() {
+    return new UrlBuilder(/* baseUrl= */ "");
   }
 }

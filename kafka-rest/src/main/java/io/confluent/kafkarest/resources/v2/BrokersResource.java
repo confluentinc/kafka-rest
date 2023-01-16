@@ -15,15 +15,24 @@
 
 package io.confluent.kafkarest.resources.v2;
 
-import io.confluent.kafkarest.KafkaRestContext;
+import static java.util.Objects.requireNonNull;
+
 import io.confluent.kafkarest.Versions;
+import io.confluent.kafkarest.controllers.BrokerManager;
+import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.v2.BrokerList;
+import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.rest.annotations.PerformanceMetric;
-import javax.validation.Valid;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
 
 /**
  * Resource representing the collection of all available brokers.
@@ -33,16 +42,25 @@ import javax.ws.rs.Produces;
 @Consumes()
 public final class BrokersResource {
 
-  private final KafkaRestContext ctx;
+  private final Provider<BrokerManager> brokerManager;
 
-  BrokersResource(KafkaRestContext ctx) {
-    this.ctx = ctx;
+  @Inject
+  BrokersResource(Provider<BrokerManager> brokerManager) {
+    this.brokerManager = requireNonNull(brokerManager);
   }
 
   @GET
-  @Valid
   @PerformanceMetric("brokers.list+v2")
-  public BrokerList list() throws Exception {
-    return new BrokerList(ctx.getAdminClientWrapper().getBrokerIds());
+  public void list(@Suspended AsyncResponse asyncResponse) {
+    CompletableFuture<BrokerList> response =
+        brokerManager.get()
+            .listLocalBrokers()
+            .thenApply(
+                brokers ->
+                    new BrokerList(
+                        brokers.stream().map(Broker::getBrokerId).collect(Collectors.toList())));
+
+
+    AsyncResponses.asyncResume(asyncResponse, response);
   }
 }
