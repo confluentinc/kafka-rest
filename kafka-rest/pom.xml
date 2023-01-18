@@ -126,6 +126,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-server-common</artifactId>
+            <version>${kafka.version}</version>
+            <classifier>test</classifier>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-schema-registry</artifactId>
             <version>${io.confluent.schema-registry.version}</version>
