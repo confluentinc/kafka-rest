@@ -33,11 +33,11 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
-import kafka.utils.MockTime;
 import kafka.utils.TestUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
+import org.apache.kafka.common.utils.MockTime;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -58,8 +58,7 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
           .put(KafkaConfig.OffsetsTopicReplicationFactorProp(), "1")
           .build();
 
-  private static final MockTime MOCK_TIME =
-      new MockTime(System.currentTimeMillis(), System.nanoTime());
+  private static final MockTime MOCK_TIME = new MockTime();
 
   private final int brokerId;
   @Nullable private final SslFixture certificates;
