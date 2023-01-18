@@ -102,7 +102,8 @@ abstract class AbstractRateLimitTest extends JerseyTest {
                         () -> target(path).request(MediaType.APPLICATION_JSON_TYPE).get(),
                         /* delay= */ i * rate.toMillis(),
                         TimeUnit.MILLISECONDS))
-            .collect(Collectors.toList()).stream()
+            .collect(Collectors.toList())
+            .stream()
             .map(
                 future -> {
                   try {

@@ -18,9 +18,13 @@ package io.confluent.kafkarest.ratelimit;
 /** A {@link RequestRateLimiter} implementation. */
 public enum RateLimitBackend {
 
-  /** @see <a href="https://bit.ly/3CtV3pk">Detailed Explanation of Guava RateLimiter</a> */
+  /**
+   * @see <a href="https://bit.ly/3CtV3pk">Detailed Explanation of Guava RateLimiter</a>
+   */
   GUAVA,
 
-  /** @see <a href="https://resilience4j.readme.io/docs/ratelimiter">Resilience4j RateLimiter</a> */
+  /**
+   * @see <a href="https://resilience4j.readme.io/docs/ratelimiter">Resilience4j RateLimiter</a>
+   */
   RESILIENCE4J
 }

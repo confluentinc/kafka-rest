@@ -244,7 +244,9 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
       return this;
     }
 
-    /** @see #addUser(String, String) */
+    /**
+     * @see #addUser(String, String)
+     */
     public Builder addUsers(Map<String, String> users) {
       this.users.putAll(users);
       return this;
@@ -257,7 +259,9 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
       return this;
     }
 
-    /** @see #addSuperUser(String) */
+    /**
+     * @see #addSuperUser(String)
+     */
     public Builder addSuperUsers(Set<String> superUsers) {
       checkArgument(users.build().keySet().containsAll(superUsers));
       this.superUsers.addAll(superUsers);
@@ -287,7 +291,9 @@ public final class KafkaBrokerFixture implements BeforeEachCallback, AfterEachCa
       return this;
     }
 
-    /** @see #setConfig(String, String) */
+    /**
+     * @see #setConfig(String, String)
+     */
     public Builder setConfigs(Map<String, String> configs) {
       this.configs.putAll(configs);
       return this;

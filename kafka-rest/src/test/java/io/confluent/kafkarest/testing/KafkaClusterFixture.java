@@ -184,13 +184,17 @@ public final class KafkaClusterFixture implements BeforeEachCallback, AfterEachC
 
     private Builder() {}
 
-    /** @see KafkaBrokerFixture.Builder#addUser(String, String) */
+    /**
+     * @see KafkaBrokerFixture.Builder#addUser(String, String)
+     */
     public Builder addUser(String username, String password) {
       users.put(username, password);
       return this;
     }
 
-    /** @see KafkaBrokerFixture.Builder#addSuperUser(String) */
+    /**
+     * @see KafkaBrokerFixture.Builder#addSuperUser(String)
+     */
     public Builder addSuperUser(String username) {
       checkArgument(users.build().containsKey(username));
       superUsers.add(username);
@@ -203,7 +207,9 @@ public final class KafkaClusterFixture implements BeforeEachCallback, AfterEachC
       return this;
     }
 
-    /** @see KafkaBrokerFixture.Builder#setConfig(String, String) */
+    /**
+     * @see KafkaBrokerFixture.Builder#setConfig(String, String)
+     */
     public Builder setConfig(String name, String value) {
       configs.put(name, value);
       return this;
@@ -215,7 +221,9 @@ public final class KafkaClusterFixture implements BeforeEachCallback, AfterEachC
       return this;
     }
 
-    /** @see KafkaBrokerFixture.Builder#setSecurityProtocol(SecurityProtocol) */
+    /**
+     * @see KafkaBrokerFixture.Builder#setSecurityProtocol(SecurityProtocol)
+     */
     public Builder setSecurityProtocol(SecurityProtocol securityProtocol) {
       this.securityProtocol = requireNonNull(securityProtocol);
       return this;
