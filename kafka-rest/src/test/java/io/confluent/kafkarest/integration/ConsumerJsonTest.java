@@ -23,15 +23,23 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.ws.rs.core.GenericType;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConsumerJsonTest extends AbstractConsumerTest {
 
   private static final String topicName = "topic1";
   private static final String groupName = "testconsumergroup";
+
+  private static final Logger log = LoggerFactory.getLogger(ConsumerJsonTest.class);
 
   private Map<String, Object> exampleMapValue() {
     Map<String, Object> res = new HashMap<String, Object>();
@@ -113,5 +121,81 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
         /* converter= */ null,
         JsonConsumerRecord::toConsumerRecord);
     commitOffsets(instanceUri);
+  }
+
+  @Test
+  public void testConsumeWithMultipleParallelConsumers() throws InterruptedException {
+    class ConsumerTask implements Callable<Void> {
+
+      private int index = 0;
+      private CountDownLatch doneLatch;
+      private CountDownLatch readyForConsumeLoop;
+      private CountDownLatch otherConsumerReadyForConsumeLoop;
+
+      public ConsumerTask(
+          int index,
+          CountDownLatch doneLatch,
+          CountDownLatch readyForConsumeLoop,
+          CountDownLatch otherConsumerReadyForConsumeLoop) {
+        this.index = index;
+        this.doneLatch = doneLatch;
+        this.readyForConsumeLoop = readyForConsumeLoop;
+        this.otherConsumerReadyForConsumeLoop = otherConsumerReadyForConsumeLoop;
+      }
+
+      @Override
+      public Void call() throws InterruptedException {
+        log.info("Consumer instance {}, begin.", index);
+        String instanceUri =
+            startConsumeMessages(
+                groupName, topicName, EmbeddedFormat.JSON, Versions.KAFKA_V2_JSON_JSON, "earliest");
+        readyForConsumeLoop.countDown();
+        log.info("Consumer instance {}, subscribed, ready to consume in a loop.", index);
+
+        // Wait for other parallel consumer to be "ready", which implies it should have subscribed
+        // and done consume-once.
+        // The other consumer will do the same, so both after this latch will do parallel consumes.
+        log.info("Consumer instance {}, wait for other consumer to be ready to consume in a loop.");
+        otherConsumerReadyForConsumeLoop.await();
+        log.info("Consumer instance {}, other consumer ready, will consume 20 time more.", index);
+        for (int i = 0; i < 20; i++) {
+          consumeMessages(
+              instanceUri,
+              new ArrayList<>(),
+              Versions.KAFKA_V2_JSON_JSON,
+              Versions.KAFKA_V2_JSON_JSON,
+              jsonConsumerRecordType,
+              /* converter= */ null,
+              JsonConsumerRecord::toConsumerRecord);
+        }
+
+        doneLatch.countDown();
+        log.info("Consumer instance {}, done.", index);
+
+        return null;
+      }
+    }
+
+    ExecutorService consumerExecutor = Executors.newFixedThreadPool(2 /* # of consumers */);
+
+    CountDownLatch consumer0Done = new CountDownLatch(1);
+    CountDownLatch consumer1Done = new CountDownLatch(1);
+    CountDownLatch consumer0ReadyForConsumeLoop = new CountDownLatch(1);
+    CountDownLatch consumer1ReadyForConsumeLoop = new CountDownLatch(1);
+    consumerExecutor.submit(
+        new ConsumerTask(
+            0,
+            consumer0Done,
+            consumer0ReadyForConsumeLoop,
+            consumer1ReadyForConsumeLoop /* otherConsumerReadyForConsumeLoop */));
+    consumerExecutor.submit(
+        new ConsumerTask(
+            1,
+            consumer1Done,
+            consumer1ReadyForConsumeLoop,
+            consumer0ReadyForConsumeLoop /* otherConsumerReadyForConsumeLoop */));
+
+    consumer0Done.await();
+    consumer1Done.await();
   }
 }
