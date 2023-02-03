@@ -154,15 +154,22 @@ final class SchemaManagerImpl implements SchemaManager {
 
     ParsedSchema parsedSchema;
     try {
+      Optional<ParsedSchema> opSchema = schemaProvider.parseSchema(schema, /* isNew= */ false);
+      System.out.println("msn: opSchema is " + opSchema); // msn: opSchema is Optional[null]
+
+      System.out.println(
+          "msn: opSchema.isPresent() is "
+              + opSchema.isPresent()); // msn: opSchema.isPresent() is true
+      System.out.println("msn: opSchema.get() is " + opSchema.get()); // msn: opSchema.get() is null
+
       parsedSchema =
-          schemaProvider
-              .parseSchema(schema, /* isNew= */ false)
-              .orElseThrow(
-                  () ->
-                      Errors.invalidSchemaException(
-                          String.format(
-                              "Error when fetching schema by version. subject = %s, version = %d",
-                              actualSubject, schemaVersion)));
+          opSchema.orElseThrow(
+              () ->
+                  Errors.invalidSchemaException(
+                      String.format(
+                          "Error when fetching schema by version. subject = %s, version = %d",
+                          actualSubject, schemaVersion)));
+
     } catch (SchemaParseException e) {
       throw new BadRequestException(
           String.format("Error parsing schema for %s", schema.getSchemaType()), e);

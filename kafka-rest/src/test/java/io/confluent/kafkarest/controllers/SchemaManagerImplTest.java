@@ -690,8 +690,9 @@ public class SchemaManagerImplTest {
   @Test
   public void errorFetchingSchemaBySchemaVersion() {
     SchemaRegistryClient schemaRegistryClientMock = mock(SchemaRegistryClient.class);
+    System.out.println("msn: updated test.");
     Schema schema =
-        new Schema(null, null, null, EmbeddedFormat.JSON.toString(), Collections.emptyList(), null);
+        new Schema(null, null, null, EmbeddedFormat.JSON.toString(), Collections.emptyList(), "");
 
     expect(schemaRegistryClientMock.getByVersion("subject1", 123, false)).andReturn(schema);
     replay(schemaRegistryClientMock);
