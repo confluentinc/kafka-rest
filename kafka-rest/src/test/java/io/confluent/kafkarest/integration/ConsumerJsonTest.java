@@ -15,6 +15,8 @@
 
 package io.confluent.kafkarest.integration;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import io.confluent.kafkarest.Versions;
 import io.confluent.kafkarest.entities.EmbeddedFormat;
 import io.confluent.kafkarest.entities.v2.JsonConsumerRecord;
@@ -27,6 +29,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.core.GenericType;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
@@ -195,7 +198,10 @@ public class ConsumerJsonTest extends AbstractConsumerTest {
             consumer1ReadyForConsumeLoop,
             consumer0ReadyForConsumeLoop /* otherConsumerReadyForConsumeLoop */));
 
-    consumer0Done.await();
-    consumer1Done.await();
+    boolean isConsumer0Done = consumer0Done.await(60, TimeUnit.SECONDS);
+    boolean isConsumer1Done = consumer1Done.await(60, TimeUnit.SECONDS);
+
+    assertTrue(
+        isConsumer0Done && isConsumer1Done, "test timed out waiting for consumers to finish.");
   }
 }
