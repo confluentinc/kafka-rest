@@ -144,6 +144,13 @@ final class SchemaManagerImpl implements SchemaManager {
           e);
     }
 
+    if (schema.getSchema() == null) {
+      throw Errors.invalidSchemaException(
+          String.format(
+              "Error when fetching schema by version. subject = %s, version = %d",
+              actualSubject, schemaVersion));
+    }
+
     SchemaProvider schemaProvider;
     try {
       schemaProvider = EmbeddedFormat.forSchemaType(schema.getSchemaType()).getSchemaProvider();
@@ -155,12 +162,6 @@ final class SchemaManagerImpl implements SchemaManager {
     ParsedSchema parsedSchema;
     try {
       Optional<ParsedSchema> opSchema = schemaProvider.parseSchema(schema, /* isNew= */ false);
-      System.out.println("msn: opSchema is " + opSchema); // msn: opSchema is Optional[null]
-
-      System.out.println(
-          "msn: opSchema.isPresent() is "
-              + opSchema.isPresent()); // msn: opSchema.isPresent() is true
-      System.out.println("msn: opSchema.get() is " + opSchema.get()); // msn: opSchema.get() is null
 
       parsedSchema =
           opSchema.orElseThrow(
