@@ -144,7 +144,7 @@ final class SchemaManagerImpl implements SchemaManager {
           e);
     }
 
-    if (schema.getSchema() == null) {
+    if (schema == null || schema.getSchema() == null) {
       throw Errors.invalidSchemaException(
           String.format(
               "Error when fetching schema by version. subject = %s, version = %d",
