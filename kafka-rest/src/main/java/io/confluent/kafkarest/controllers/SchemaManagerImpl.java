@@ -144,6 +144,13 @@ final class SchemaManagerImpl implements SchemaManager {
           e);
     }
 
+    if (schema == null || schema.getSchema() == null) {
+      throw Errors.invalidSchemaException(
+          String.format(
+              "Error when fetching schema by version. subject = %s, version = %d",
+              actualSubject, schemaVersion));
+    }
+
     SchemaProvider schemaProvider;
     try {
       schemaProvider = EmbeddedFormat.forSchemaType(schema.getSchemaType()).getSchemaProvider();
@@ -154,15 +161,16 @@ final class SchemaManagerImpl implements SchemaManager {
 
     ParsedSchema parsedSchema;
     try {
+      Optional<ParsedSchema> opSchema = schemaProvider.parseSchema(schema, /* isNew= */ false);
+
       parsedSchema =
-          schemaProvider
-              .parseSchema(schema, /* isNew= */ false)
-              .orElseThrow(
-                  () ->
-                      Errors.invalidSchemaException(
-                          String.format(
-                              "Error when fetching schema by version. subject = %s, version = %d",
-                              actualSubject, schemaVersion)));
+          opSchema.orElseThrow(
+              () ->
+                  Errors.invalidSchemaException(
+                      String.format(
+                          "Error when fetching schema by version. subject = %s, version = %d",
+                          actualSubject, schemaVersion)));
+
     } catch (SchemaParseException e) {
       throw new BadRequestException(
           String.format("Error parsing schema for %s", schema.getSchemaType()), e);
