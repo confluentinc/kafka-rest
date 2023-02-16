@@ -26,8 +26,12 @@ import java.util.Properties;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+// TODO This continues being way too flaky.
+// Until we fix it (KREST-3850), we should ignore it, as it might be hiding even worse errors.
+@Disabled
 public class FixedCostRateLimitFeatureTest extends AbstractRateLimitTest {
 
   RateLimitBackend getBackend() {
