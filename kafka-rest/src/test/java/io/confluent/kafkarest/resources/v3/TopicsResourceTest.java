@@ -46,7 +46,6 @@ import io.confluent.kafkarest.response.CrnFactoryImpl;
 import io.confluent.kafkarest.response.FakeAsyncResponse;
 import io.confluent.kafkarest.response.FakeUrlFactory;
 import io.confluent.rest.exceptions.RestConstraintViolationException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -152,6 +151,72 @@ public class TopicsResourceTest {
                           /* isLeader= */ true,
                           /* isInSync= */ true)))),
           /* replicationFactor= */ (short) 3,
+          /* isInternal= */ true,
+          /* authorizedOperations= */ emptySet());
+
+  private static final Topic TOPIC_1_REPLICAS_2 =
+      Topic.create(
+          CLUSTER_ID,
+          "topic-1",
+          Arrays.asList(
+              Partition.create(
+                  CLUSTER_ID,
+                  "topic-1",
+                  /* partitionId= */ 0,
+                  Arrays.asList(
+                      PartitionReplica.create(
+                          CLUSTER_ID,
+                          "topic-1",
+                          /* partitionId= */ 0,
+                          /* brokerId= */ 1,
+                          /* isLeader= */ true,
+                          /* isInSync= */ true),
+                      PartitionReplica.create(
+                          CLUSTER_ID,
+                          "topic-1",
+                          /* partitionId= */ 0,
+                          /* brokerId= */ 2,
+                          /* isLeader= */ false,
+                          /* isInSync= */ false))),
+              Partition.create(
+                  CLUSTER_ID,
+                  "topic-1",
+                  /* partitionId= */ 1,
+                  Arrays.asList(
+                      PartitionReplica.create(
+                          CLUSTER_ID,
+                          "topic-1",
+                          /* partitionId= */ 1,
+                          /* brokerId= */ 2,
+                          /* isLeader= */ true,
+                          /* isInSync= */ true),
+                      PartitionReplica.create(
+                          CLUSTER_ID,
+                          "topic-1",
+                          /* partitionId= */ 1,
+                          /* brokerId= */ 3,
+                          /* isLeader= */ false,
+                          /* isInSync= */ false))),
+              Partition.create(
+                  CLUSTER_ID,
+                  "topic-1",
+                  /* partitionId= */ 2,
+                  Arrays.asList(
+                      PartitionReplica.create(
+                          CLUSTER_ID,
+                          "topic-1",
+                          /* partitionId= */ 2,
+                          /* brokerId= */ 1,
+                          /* isLeader= */ false,
+                          /* isInSync= */ false),
+                      PartitionReplica.create(
+                          CLUSTER_ID,
+                          "topic-1",
+                          /* partitionId= */ 2,
+                          /* brokerId= */ 3,
+                          /* isLeader= */ true,
+                          /* isInSync= */ true)))),
+          /* replicationFactor= */ (short) 2,
           /* isInternal= */ true,
           /* authorizedOperations= */ emptySet());
 
@@ -468,6 +533,8 @@ public class TopicsResourceTest {
                 /* replicasAssignments= */ Collections.emptyMap(),
                 singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(completedFuture(null));
+    expect(topicManager.getTopic(TOPIC_1.getClusterId(), TOPIC_1.getName()))
+        .andReturn(completedFuture(Optional.of(TOPIC_1)));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -482,7 +549,7 @@ public class TopicsResourceTest {
                 singletonList(CreateTopicRequest.ConfigEntry.create("cleanup.policy", "compact")))
             .build());
 
-    CreateTopicResponse expected = CreateTopicResponse.create(newTopicData("topic-1", false, 3, 0));
+    CreateTopicResponse expected = CreateTopicResponse.create(newTopicData("topic-1", true, 3, 3));
 
     assertEquals(expected, response.getValue());
   }
@@ -498,6 +565,8 @@ public class TopicsResourceTest {
                 /* replicasAssignments= */ Collections.emptyMap(),
                 singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(completedFuture(null));
+    expect(topicManager.getTopic(TOPIC_1.getClusterId(), TOPIC_1.getName()))
+        .andReturn(completedFuture(Optional.of(TOPIC_1)));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -511,7 +580,7 @@ public class TopicsResourceTest {
                 singletonList(CreateTopicRequest.ConfigEntry.create("cleanup.policy", "compact")))
             .build());
 
-    CreateTopicResponse expected = CreateTopicResponse.create(newTopicData("topic-1", false, 3, 0));
+    CreateTopicResponse expected = CreateTopicResponse.create(newTopicData("topic-1", true, 3, 3));
 
     assertEquals(expected, response.getValue());
   }
@@ -527,6 +596,8 @@ public class TopicsResourceTest {
                 /* replicasAssignments= */ Collections.emptyMap(),
                 singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(completedFuture(null));
+    expect(topicManager.getTopic(TOPIC_1.getClusterId(), TOPIC_1.getName()))
+        .andReturn(completedFuture(Optional.of(TOPIC_1)));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -540,23 +611,17 @@ public class TopicsResourceTest {
                 singletonList(CreateTopicRequest.ConfigEntry.create("cleanup.policy", "compact")))
             .build());
 
-    CreateTopicResponse expected = CreateTopicResponse.create(newTopicData("topic-1", false, 0, 0));
+    CreateTopicResponse expected = CreateTopicResponse.create(newTopicData("topic-1", true, 3, 3));
 
     assertEquals(expected, response.getValue());
   }
 
   @Test
   public void createTopic_nonExistingTopic_customReplicasAssignments_createsTopic() {
-    List<Integer> allReplicas = new ArrayList<>();
-    for (int replicaId = 1; replicaId <= TOPIC_1.getReplicationFactor(); replicaId++) {
-      allReplicas.add(replicaId);
-    }
     ImmutableMap.Builder<Integer, List<Integer>> builder = new Builder<>();
-    for (int partitionId = 0; partitionId < TOPIC_1.getPartitions().size(); partitionId++) {
-      List<Integer> replicas = new ArrayList<>(allReplicas);
-      replicas.remove(partitionId % replicas.size());
-      builder.put(partitionId, replicas);
-    }
+    builder.put(0, Arrays.asList(1, 2));
+    builder.put(1, Arrays.asList(2, 3));
+    builder.put(2, Arrays.asList(3, 1));
     Map<Integer, List<Integer>> replicasAssignments = builder.build();
 
     expect(
@@ -568,6 +633,8 @@ public class TopicsResourceTest {
                 replicasAssignments,
                 singletonMap("cleanup.policy", Optional.of("compact"))))
         .andReturn(completedFuture(null));
+    expect(topicManager.getTopic(TOPIC_1.getClusterId(), TOPIC_1.getName()))
+        .andReturn(completedFuture(Optional.of(TOPIC_1_REPLICAS_2)));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -581,9 +648,7 @@ public class TopicsResourceTest {
                 singletonList(CreateTopicRequest.ConfigEntry.create("cleanup.policy", "compact")))
             .build());
 
-    short expectedReplicationFactor = (short) (TOPIC_1.getReplicationFactor() - 1);
-    CreateTopicResponse expected =
-        CreateTopicResponse.create(newTopicData("topic-1", false, expectedReplicationFactor, 0));
+    CreateTopicResponse expected = CreateTopicResponse.create(newTopicData("topic-1", true, 2, 3));
 
     assertEquals(expected, response.getValue());
   }
