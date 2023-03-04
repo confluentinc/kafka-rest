@@ -209,36 +209,16 @@ public final class TopicsResource {
     TopicManager topicManager = topicManagerProvider.get();
 
     CompletableFuture<CreateTopicResponse> response =
-        validateOnly
-            ? topicManager
-                .createTopic(
-                    clusterId,
-                    topicName,
-                    partitionsCount,
-                    replicationFactor,
-                    replicasAssignments,
-                    configs,
-                    true)
-                .thenCompose(
-                    nothing ->
-                        topicManager
-                            .getTopic(clusterId, topicName)
-                            .thenApply(
-                                topic -> CreateTopicResponse.create(toTopicData(topic.get()))))
-            : topicManager
-                .createTopic(
-                    clusterId,
-                    topicName,
-                    partitionsCount,
-                    replicationFactor,
-                    replicasAssignments,
-                    configs)
-                .thenCompose(
-                    nothing ->
-                        topicManager
-                            .getTopic(clusterId, topicName)
-                            .thenApply(
-                                topic -> CreateTopicResponse.create(toTopicData(topic.get()))));
+        topicManager
+            .createTopic(
+                clusterId,
+                topicName,
+                partitionsCount,
+                replicationFactor,
+                replicasAssignments,
+                configs,
+                validateOnly)
+            .thenApply(topic -> CreateTopicResponse.create(toTopicData(topic)));
 
     // The response status will differ depending on whether a topic has actually been created.
     Response.Status responseStatus = validateOnly ? Status.OK : Status.CREATED;

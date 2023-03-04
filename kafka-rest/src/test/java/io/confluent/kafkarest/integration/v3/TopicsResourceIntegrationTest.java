@@ -326,7 +326,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setTopicName(topicName)
                 .setInternal(false)
                 .setReplicationFactor(1)
-                .setPartitionsCount(0)
+                .setPartitionsCount(1)
                 .setPartitions(
                     Resource.Relationship.create(
                         baseUrl
@@ -394,7 +394,7 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setTopicName(topicName)
                 .setInternal(false)
                 .setReplicationFactor(1)
-                .setPartitionsCount(0)
+                .setPartitionsCount(1)
                 .setPartitions(
                     Resource.Relationship.create(
                         baseUrl
@@ -463,8 +463,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setClusterId(clusterId)
                 .setTopicName(topicName)
                 .setInternal(false)
-                .setReplicationFactor(2) // As determined by the actual replicas asignments below.
-                .setPartitionsCount(0)
+                .setReplicationFactor(2) // As determined by the actual replicas assignments below.
+                .setPartitionsCount(3)
                 .setPartitions(
                     Resource.Relationship.create(
                         baseUrl
@@ -636,8 +636,8 @@ public class TopicsResourceIntegrationTest extends ClusterTestHarness {
                 .setClusterId(clusterId)
                 .setTopicName(topicName)
                 .setInternal(false)
-                .setReplicationFactor(0)
-                .setPartitionsCount(0)
+                .setReplicationFactor(2)
+                .setPartitionsCount(1)
                 .setPartitions(
                     Resource.Relationship.create(
                         baseUrl
