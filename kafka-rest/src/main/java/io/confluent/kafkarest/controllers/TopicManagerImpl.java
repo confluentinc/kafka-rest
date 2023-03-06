@@ -23,7 +23,6 @@ import static java.util.Objects.requireNonNull;
 
 import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.Acl;
-import io.confluent.kafkarest.entities.Cluster;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import io.confluent.kafkarest.entities.Topic;
@@ -36,12 +35,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.CreateTopicsOptions;
+import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DescribeTopicsOptions;
 import org.apache.kafka.clients.admin.NewPartitions;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -157,7 +155,7 @@ final class TopicManagerImpl implements TopicManager {
                     topicNames,
                     new DescribeTopicsOptions()
                         .includeAuthorizedOperations(includeAuthorizedOperations))
-                .all())
+                .allTopicNames())
         .thenApply(
             topics ->
                 topics.values().stream()
@@ -206,18 +204,19 @@ final class TopicManagerImpl implements TopicManager {
       Optional<Short> replicationFactor,
       Map<Integer, List<Integer>> replicasAssignments,
       Map<String, Optional<String>> configs) {
-    return createTopic(
-        clusterId,
-        topicName,
-        partitionsCount,
-        replicationFactor,
-        replicasAssignments,
-        configs,
-        false);
+    return createTopic2(
+            clusterId,
+            topicName,
+            partitionsCount,
+            replicationFactor,
+            replicasAssignments,
+            configs,
+            false)
+        .thenAccept(unused -> {});
   }
 
   @Override
-  public CompletableFuture<Void> createTopic(
+  public CompletableFuture<Topic> createTopic2(
       String clusterId,
       String topicName,
       Optional<Integer> partitionsCount,
@@ -237,22 +236,44 @@ final class TopicManagerImpl implements TopicManager {
             ? new NewTopic(topicName, partitionsCount, replicationFactor).configs(nullableConfigs)
             : new NewTopic(topicName, replicasAssignments).configs(nullableConfigs);
 
-    Function<? super Cluster, ? extends CompletionStage<Void>> createTopicCall =
-        validateOnly
-            ? cluster ->
-                KafkaFutures.toCompletableFuture(
-                    adminClient
-                        .createTopics(
-                            singletonList(createTopicRequest),
-                            new CreateTopicsOptions().validateOnly(true))
-                        .all())
-            : cluster ->
-                KafkaFutures.toCompletableFuture(
-                    adminClient.createTopics(singletonList(createTopicRequest)).all());
     return clusterManager
         .getCluster(clusterId)
         .thenApply(cluster -> checkEntityExists(cluster, "Cluster %s cannot be found.", clusterId))
-        .thenCompose(createTopicCall);
+        .thenCompose(
+            cluster -> createTopicInternal(clusterId, topicName, createTopicRequest, validateOnly));
+  }
+
+  private CompletableFuture<Topic> createTopicInternal(
+      String clusterId, String topicName, NewTopic createTopicRequest, boolean validateOnly) {
+
+    CreateTopicsResult createTopicsResult =
+        adminClient.createTopics(
+            singletonList(createTopicRequest),
+            new CreateTopicsOptions().validateOnly(validateOnly));
+
+    return CompletableFuture.completedFuture(Topic.builder())
+        .thenApply(
+            topicBuilder ->
+                topicBuilder
+                    .setClusterId(clusterId)
+                    .setName(topicName)
+                    .setInternal(false)
+                    .setAuthorizedOperations(emptySet()))
+        .thenCombine(
+            KafkaFutures.toCompletableFuture(createTopicsResult.numPartitions(topicName)),
+            (topicBuilder, responseNumPartitions) -> {
+              ArrayList<Partition> dummyPartitions = new ArrayList<>(responseNumPartitions);
+              for (int i = 0; i < responseNumPartitions; i++) {
+                dummyPartitions.add(Partition.create(clusterId, topicName, i, emptyList()));
+              }
+              return topicBuilder.addAllPartitions(dummyPartitions);
+            })
+        .thenCombine(
+            KafkaFutures.toCompletableFuture(createTopicsResult.replicationFactor(topicName)),
+            (topicBuilder, responseReplicationFactor) -> {
+              return topicBuilder.setReplicationFactor(responseReplicationFactor.shortValue());
+            })
+        .thenApply(Topic.Builder::build);
   }
 
   @Override

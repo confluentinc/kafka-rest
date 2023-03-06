@@ -40,6 +40,10 @@ public abstract class Topic {
 
   public abstract Set<Acl.Operation> getAuthorizedOperations();
 
+  public static Builder builder() {
+    return new AutoValue_Topic.Builder();
+  }
+
   public static Topic create(
       String clusterId,
       String name,
@@ -56,12 +60,48 @@ public abstract class Topic {
       short replicationFactor,
       boolean isInternal,
       @Nullable Set<Acl.Operation> authorizedOperations) {
-    return new AutoValue_Topic(
-        clusterId,
-        name,
-        ImmutableList.copyOf(partitions),
-        replicationFactor,
-        isInternal,
-        authorizedOperations == null ? emptySet() : authorizedOperations);
+    return builder()
+        .setClusterId(clusterId)
+        .setName(name)
+        .addAllPartitions(partitions)
+        .setReplicationFactor(replicationFactor)
+        .setInternal(isInternal)
+        .setAuthorizedOperations(authorizedOperations == null ? emptySet() : authorizedOperations)
+        .build();
+  }
+
+  public Builder toBuilder() {
+    return builder()
+        .setClusterId(getClusterId())
+        .setName(getName())
+        .addAllPartitions(getPartitions())
+        .setReplicationFactor(getReplicationFactor())
+        .setInternal(isInternal())
+        .setAuthorizedOperations(getAuthorizedOperations());
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder {
+
+    Builder() {}
+
+    public abstract Builder setClusterId(String clusterId);
+
+    public abstract Builder setName(String name);
+
+    abstract ImmutableList.Builder<Partition> partitionsBuilder();
+
+    public final Builder addAllPartitions(Iterable<Partition> partitions) {
+      partitionsBuilder().addAll(partitions);
+      return this;
+    }
+
+    public abstract Builder setReplicationFactor(short replicationFactor);
+
+    public abstract Builder setInternal(boolean isInternal);
+
+    public abstract Builder setAuthorizedOperations(Set<Acl.Operation> authorizedOperations);
+
+    public abstract Topic build();
   }
 }

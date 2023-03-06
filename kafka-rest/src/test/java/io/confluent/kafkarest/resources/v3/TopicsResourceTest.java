@@ -16,6 +16,7 @@
 package io.confluent.kafkarest.resources.v3;
 
 import static io.confluent.kafkarest.common.CompletableFutures.failedFuture;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
@@ -152,7 +153,7 @@ public class TopicsResourceTest {
                           /* isLeader= */ true,
                           /* isInSync= */ true)))),
           /* replicationFactor= */ (short) 3,
-          /* isInternal= */ true,
+          /* isInternal= */ false,
           /* authorizedOperations= */ emptySet());
 
   private static final Topic TOPIC_2 =
@@ -387,7 +388,7 @@ public class TopicsResourceTest {
                         .build())
                 .setData(
                     Arrays.asList(
-                        newTopicData("topic-1", true, 3, 3),
+                        newTopicData("topic-1", false, 3, 3),
                         newTopicData("topic-2", true, 3, 3),
                         newTopicData("topic-3", false, 3, 3)))
                 .build());
@@ -428,7 +429,7 @@ public class TopicsResourceTest {
     FakeAsyncResponse response = new FakeAsyncResponse();
     topicsResource.getTopic(response, TOPIC_1.getClusterId(), TOPIC_1.getName(), false);
 
-    GetTopicResponse expected = GetTopicResponse.create(newTopicData("topic-1", true, 3, 3));
+    GetTopicResponse expected = GetTopicResponse.create(newTopicData("topic-1", false, 3, 3));
 
     assertEquals(expected, response.getValue());
   }
@@ -460,14 +461,24 @@ public class TopicsResourceTest {
   @Test
   public void createTopic_nonExistingTopic_createsTopic() {
     expect(
-            topicManager.createTopic(
+            topicManager.createTopic2(
                 CLUSTER_ID,
                 TOPIC_1.getName(),
                 Optional.of(TOPIC_1.getPartitions().size()),
                 Optional.of(TOPIC_1.getReplicationFactor()),
                 /* replicasAssignments= */ Collections.emptyMap(),
-                singletonMap("cleanup.policy", Optional.of("compact"))))
-        .andReturn(completedFuture(null));
+                singletonMap("cleanup.policy", Optional.of("compact")),
+                false))
+        .andReturn(
+            completedFuture(
+                Topic.builder()
+                    .setClusterId(CLUSTER_ID)
+                    .setName(TOPIC_1.getName())
+                    .setReplicationFactor(TOPIC_1.getReplicationFactor())
+                    .addAllPartitions(TOPIC_1.getPartitions())
+                    .setInternal(false)
+                    .setAuthorizedOperations(emptySet())
+                    .build()));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -482,7 +493,7 @@ public class TopicsResourceTest {
                 singletonList(CreateTopicRequest.ConfigEntry.create("cleanup.policy", "compact")))
             .build());
 
-    CreateTopicResponse expected = CreateTopicResponse.create(newTopicData("topic-1", false, 3, 0));
+    CreateTopicResponse expected = CreateTopicResponse.create(newTopicData("topic-1", false, 3, 3));
 
     assertEquals(expected, response.getValue());
   }
@@ -490,14 +501,24 @@ public class TopicsResourceTest {
   @Test
   public void createTopic_nonExistingTopic_defaultPartitionsCount_createsTopic() {
     expect(
-            topicManager.createTopic(
+            topicManager.createTopic2(
                 CLUSTER_ID,
                 TOPIC_1.getName(),
                 /* partitionsCount= */ Optional.empty(),
                 Optional.of(TOPIC_1.getReplicationFactor()),
                 /* replicasAssignments= */ Collections.emptyMap(),
-                singletonMap("cleanup.policy", Optional.of("compact"))))
-        .andReturn(completedFuture(null));
+                singletonMap("cleanup.policy", Optional.of("compact")),
+                false))
+        .andReturn(
+            completedFuture(
+                Topic.builder()
+                    .setClusterId(CLUSTER_ID)
+                    .setName(TOPIC_1.getName())
+                    .setReplicationFactor((short) 3)
+                    .addAllPartitions(TOPIC_1.getPartitions())
+                    .setInternal(false)
+                    .setAuthorizedOperations(emptySet())
+                    .build()));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -511,7 +532,7 @@ public class TopicsResourceTest {
                 singletonList(CreateTopicRequest.ConfigEntry.create("cleanup.policy", "compact")))
             .build());
 
-    CreateTopicResponse expected = CreateTopicResponse.create(newTopicData("topic-1", false, 3, 0));
+    CreateTopicResponse expected = CreateTopicResponse.create(newTopicData("topic-1", false, 3, 3));
 
     assertEquals(expected, response.getValue());
   }
@@ -519,14 +540,24 @@ public class TopicsResourceTest {
   @Test
   public void createTopic_nonExistingTopic_defaultReplicationFactor_createsTopic() {
     expect(
-            topicManager.createTopic(
+            topicManager.createTopic2(
                 CLUSTER_ID,
                 TOPIC_1.getName(),
                 Optional.of(TOPIC_1.getPartitions().size()),
                 /* replicationFactor= */ Optional.empty(),
                 /* replicasAssignments= */ Collections.emptyMap(),
-                singletonMap("cleanup.policy", Optional.of("compact"))))
-        .andReturn(completedFuture(null));
+                singletonMap("cleanup.policy", Optional.of("compact")),
+                false))
+        .andReturn(
+            completedFuture(
+                Topic.builder()
+                    .setClusterId(CLUSTER_ID)
+                    .setName(TOPIC_1.getName())
+                    .setReplicationFactor((short) 3)
+                    .addAllPartitions(TOPIC_1.getPartitions())
+                    .setInternal(false)
+                    .setAuthorizedOperations(emptySet())
+                    .build()));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -540,34 +571,42 @@ public class TopicsResourceTest {
                 singletonList(CreateTopicRequest.ConfigEntry.create("cleanup.policy", "compact")))
             .build());
 
-    CreateTopicResponse expected = CreateTopicResponse.create(newTopicData("topic-1", false, 0, 0));
+    CreateTopicResponse expected = CreateTopicResponse.create(newTopicData("topic-1", false, 3, 3));
 
     assertEquals(expected, response.getValue());
   }
 
   @Test
   public void createTopic_nonExistingTopic_customReplicasAssignments_createsTopic() {
-    List<Integer> allReplicas = new ArrayList<>();
-    for (int replicaId = 1; replicaId <= TOPIC_1.getReplicationFactor(); replicaId++) {
-      allReplicas.add(replicaId);
-    }
     ImmutableMap.Builder<Integer, List<Integer>> builder = new Builder<>();
-    for (int partitionId = 0; partitionId < TOPIC_1.getPartitions().size(); partitionId++) {
-      List<Integer> replicas = new ArrayList<>(allReplicas);
-      replicas.remove(partitionId % replicas.size());
-      builder.put(partitionId, replicas);
-    }
+    builder.put(0, Arrays.asList(1, 2));
+    builder.put(1, Arrays.asList(2, 3));
+    builder.put(2, Arrays.asList(3, 1));
     Map<Integer, List<Integer>> replicasAssignments = builder.build();
+    ArrayList<Partition> responsePartitions = new ArrayList<>(3);
+    responsePartitions.add(Partition.create(CLUSTER_ID, TOPIC_1.getName(), 0, emptyList()));
+    responsePartitions.add(Partition.create(CLUSTER_ID, TOPIC_1.getName(), 1, emptyList()));
+    responsePartitions.add(Partition.create(CLUSTER_ID, TOPIC_1.getName(), 2, emptyList()));
 
     expect(
-            topicManager.createTopic(
+            topicManager.createTopic2(
                 CLUSTER_ID,
                 TOPIC_1.getName(),
                 /* partitionsCount= */ Optional.empty(),
                 /* replicationFactor= */ Optional.empty(),
                 replicasAssignments,
-                singletonMap("cleanup.policy", Optional.of("compact"))))
-        .andReturn(completedFuture(null));
+                singletonMap("cleanup.policy", Optional.of("compact")),
+                false))
+        .andReturn(
+            completedFuture(
+                Topic.builder()
+                    .setClusterId(CLUSTER_ID)
+                    .setName(TOPIC_1.getName())
+                    .setReplicationFactor((short) 2)
+                    .addAllPartitions(responsePartitions)
+                    .setInternal(false)
+                    .setAuthorizedOperations(emptySet())
+                    .build()));
     replay(topicManager);
 
     FakeAsyncResponse response = new FakeAsyncResponse();
@@ -581,9 +620,7 @@ public class TopicsResourceTest {
                 singletonList(CreateTopicRequest.ConfigEntry.create("cleanup.policy", "compact")))
             .build());
 
-    short expectedReplicationFactor = (short) (TOPIC_1.getReplicationFactor() - 1);
-    CreateTopicResponse expected =
-        CreateTopicResponse.create(newTopicData("topic-1", false, expectedReplicationFactor, 0));
+    CreateTopicResponse expected = CreateTopicResponse.create(newTopicData("topic-1", false, 2, 3));
 
     assertEquals(expected, response.getValue());
   }
@@ -591,13 +628,14 @@ public class TopicsResourceTest {
   @Test
   public void createTopic_existingTopic_throwsTopicExists() {
     expect(
-            topicManager.createTopic(
+            topicManager.createTopic2(
                 CLUSTER_ID,
                 TOPIC_1.getName(),
                 Optional.of(TOPIC_1.getPartitions().size()),
                 Optional.of(TOPIC_1.getReplicationFactor()),
                 /* replicasAssignments= */ Collections.emptyMap(),
-                singletonMap("cleanup.policy", Optional.of("compact"))))
+                singletonMap("cleanup.policy", Optional.of("compact")),
+                false))
         .andReturn(failedFuture(new TopicExistsException("")));
     replay(topicManager);
 
@@ -619,13 +657,14 @@ public class TopicsResourceTest {
   @Test
   public void createTopic_nonExistingCluster_throwsNotFound() {
     expect(
-            topicManager.createTopic(
+            topicManager.createTopic2(
                 CLUSTER_ID,
                 TOPIC_1.getName(),
                 Optional.of(TOPIC_1.getPartitions().size()),
                 Optional.of(TOPIC_1.getReplicationFactor()),
                 /* replicasAssignments= */ Collections.emptyMap(),
-                singletonMap("cleanup.policy", Optional.of("compact"))))
+                singletonMap("cleanup.policy", Optional.of("compact")),
+                false))
         .andReturn(failedFuture(new NotFoundException()));
     replay(topicManager);
 
@@ -708,7 +747,7 @@ public class TopicsResourceTest {
     topicsResource.updatePartitionsCount(
         response, TOPIC_1.getClusterId(), TOPIC_1.getName(), request);
 
-    GetTopicResponse expected = GetTopicResponse.create(newTopicData("topic-1", true, 3, 3));
+    GetTopicResponse expected = GetTopicResponse.create(newTopicData("topic-1", false, 3, 3));
 
     assertEquals(expected, response.getValue());
   }
