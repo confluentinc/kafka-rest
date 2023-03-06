@@ -461,7 +461,7 @@ public class TopicsResourceTest {
   @Test
   public void createTopic_nonExistingTopic_createsTopic() {
     expect(
-            topicManager.createTopic(
+            topicManager.createTopic2(
                 CLUSTER_ID,
                 TOPIC_1.getName(),
                 Optional.of(TOPIC_1.getPartitions().size()),
@@ -501,7 +501,7 @@ public class TopicsResourceTest {
   @Test
   public void createTopic_nonExistingTopic_defaultPartitionsCount_createsTopic() {
     expect(
-            topicManager.createTopic(
+            topicManager.createTopic2(
                 CLUSTER_ID,
                 TOPIC_1.getName(),
                 /* partitionsCount= */ Optional.empty(),
@@ -540,7 +540,7 @@ public class TopicsResourceTest {
   @Test
   public void createTopic_nonExistingTopic_defaultReplicationFactor_createsTopic() {
     expect(
-            topicManager.createTopic(
+            topicManager.createTopic2(
                 CLUSTER_ID,
                 TOPIC_1.getName(),
                 Optional.of(TOPIC_1.getPartitions().size()),
@@ -589,7 +589,7 @@ public class TopicsResourceTest {
     responsePartitions.add(Partition.create(CLUSTER_ID, TOPIC_1.getName(), 2, emptyList()));
 
     expect(
-            topicManager.createTopic(
+            topicManager.createTopic2(
                 CLUSTER_ID,
                 TOPIC_1.getName(),
                 /* partitionsCount= */ Optional.empty(),
@@ -628,7 +628,7 @@ public class TopicsResourceTest {
   @Test
   public void createTopic_existingTopic_throwsTopicExists() {
     expect(
-            topicManager.createTopic(
+            topicManager.createTopic2(
                 CLUSTER_ID,
                 TOPIC_1.getName(),
                 Optional.of(TOPIC_1.getPartitions().size()),
@@ -657,7 +657,7 @@ public class TopicsResourceTest {
   @Test
   public void createTopic_nonExistingCluster_throwsNotFound() {
     expect(
-            topicManager.createTopic(
+            topicManager.createTopic2(
                 CLUSTER_ID,
                 TOPIC_1.getName(),
                 Optional.of(TOPIC_1.getPartitions().size()),

@@ -633,6 +633,7 @@ public class TopicManagerImplTest {
     assertFalse(topic.isPresent());
   }
 
+  // Test for the deprecated createTopic method making sure it work for successful completion
   @Test
   public void createTopic_nonExistingTopic_createsTopic() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
@@ -650,15 +651,14 @@ public class TopicManagerImplTest {
             Optional.of(TOPIC_1.getPartitions().size()),
             Optional.of(TOPIC_1.getReplicationFactor()),
             /* replicasAssignments= */ emptyMap(),
-            singletonMap("cleanup.policy", Optional.of("compact")),
-            false)
+            singletonMap("cleanup.policy", Optional.of("compact")))
         .get();
 
     verify(adminClient);
   }
 
   @Test
-  public void createTopic_nonExistingTopic_defaultPartitionsCount_createsTopic() throws Exception {
+  public void createTopic2_nonExistingTopic_createsTopic() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.createTopics(anyObject(), anyObject())).andReturn(createTopicsResult);
     expect(createTopicsResult.numPartitions(anyObject()))
@@ -668,7 +668,31 @@ public class TopicManagerImplTest {
     replay(clusterManager, adminClient, createTopicsResult);
 
     topicManager
-        .createTopic(
+        .createTopic2(
+            CLUSTER_ID,
+            TOPIC_1.getName(),
+            Optional.of(TOPIC_1.getPartitions().size()),
+            Optional.of(TOPIC_1.getReplicationFactor()),
+            /* replicasAssignments= */ emptyMap(),
+            singletonMap("cleanup.policy", Optional.of("compact")),
+            false)
+        .get();
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void createTopic2_nonExistingTopic_defaultPartitionsCount_createsTopic() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.createTopics(anyObject(), anyObject())).andReturn(createTopicsResult);
+    expect(createTopicsResult.numPartitions(anyObject()))
+        .andReturn(KafkaFuture.completedFuture(TOPIC_1.getPartitions().size()));
+    expect(createTopicsResult.replicationFactor(anyObject()))
+        .andReturn(KafkaFuture.completedFuture((int) (TOPIC_1.getReplicationFactor())));
+    replay(clusterManager, adminClient, createTopicsResult);
+
+    topicManager
+        .createTopic2(
             CLUSTER_ID,
             TOPIC_1.getName(),
             /* partitionsCount= */ Optional.empty(),
@@ -682,7 +706,7 @@ public class TopicManagerImplTest {
   }
 
   @Test
-  public void createTopic_nonExistingTopic_defaultReplicationFactor_createsTopic()
+  public void createTopic2_nonExistingTopic_defaultReplicationFactor_createsTopic()
       throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
     expect(adminClient.createTopics(anyObject(), anyObject())).andReturn(createTopicsResult);
@@ -693,7 +717,7 @@ public class TopicManagerImplTest {
     replay(clusterManager, adminClient, createTopicsResult);
 
     topicManager
-        .createTopic(
+        .createTopic2(
             CLUSTER_ID,
             TOPIC_1.getName(),
             Optional.of(TOPIC_1.getPartitions().size()),
@@ -707,7 +731,7 @@ public class TopicManagerImplTest {
   }
 
   @Test
-  public void createTopic_nonExistingTopic_customReplicasAssignments_createsTopic()
+  public void createTopic2_nonExistingTopic_customReplicasAssignments_createsTopic()
       throws Exception {
     List<Integer> allReplicas = new ArrayList<>();
     for (int replicaId = 1; replicaId <= TOPIC_1.getReplicationFactor(); replicaId++) {
@@ -730,7 +754,7 @@ public class TopicManagerImplTest {
     replay(clusterManager, adminClient, createTopicsResult);
 
     topicManager
-        .createTopic(
+        .createTopic2(
             CLUSTER_ID,
             TOPIC_1.getName(),
             /* partitionsCount= */ Optional.empty(),
@@ -743,6 +767,7 @@ public class TopicManagerImplTest {
     verify(adminClient);
   }
 
+  // Test for the deprecated createTopic method making sure it work for exceptional completion
   @Test
   public void createTopic_existingTopic_throwsTopicExists() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
@@ -761,6 +786,34 @@ public class TopicManagerImplTest {
               Optional.of(TOPIC_1.getPartitions().size()),
               Optional.of(TOPIC_1.getReplicationFactor()),
               /* replicasAssignments= */ emptyMap(),
+              singletonMap("cleanup.policy", Optional.of("compact")))
+          .get();
+      fail();
+    } catch (ExecutionException e) {
+      assertEquals(TopicExistsException.class, e.getCause().getClass());
+    }
+
+    verify(adminClient);
+  }
+
+  @Test
+  public void createTopic2_existingTopic_throwsTopicExists() throws Exception {
+    expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.of(CLUSTER)));
+    expect(adminClient.createTopics(anyObject(), anyObject())).andReturn(createTopicsResult);
+    expect(createTopicsResult.numPartitions(anyObject()))
+        .andReturn(failedFuture(new TopicExistsException("")));
+    expect(createTopicsResult.replicationFactor(anyObject()))
+        .andReturn(failedFuture(new TopicExistsException("")));
+    replay(clusterManager, adminClient, createTopicsResult);
+
+    try {
+      topicManager
+          .createTopic2(
+              CLUSTER_ID,
+              TOPIC_1.getName(),
+              Optional.of(TOPIC_1.getPartitions().size()),
+              Optional.of(TOPIC_1.getReplicationFactor()),
+              /* replicasAssignments= */ emptyMap(),
               singletonMap("cleanup.policy", Optional.of("compact")),
               false)
           .get();
@@ -773,13 +826,13 @@ public class TopicManagerImplTest {
   }
 
   @Test
-  public void createTopic_nonExistingCluster_throwsNotFound() throws Exception {
+  public void createTopic2_nonExistingCluster_throwsNotFound() throws Exception {
     expect(clusterManager.getCluster(CLUSTER_ID)).andReturn(completedFuture(Optional.empty()));
     replay(clusterManager);
 
     try {
       topicManager
-          .createTopic(
+          .createTopic2(
               CLUSTER_ID,
               TOPIC_1.getName(),
               Optional.of(TOPIC_1.getPartitions().size()),

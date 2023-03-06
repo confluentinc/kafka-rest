@@ -210,7 +210,7 @@ public final class TopicsResource {
 
     CompletableFuture<CreateTopicResponse> response =
         topicManager
-            .createTopic(
+            .createTopic2(
                 clusterId,
                 topicName,
                 partitionsCount,

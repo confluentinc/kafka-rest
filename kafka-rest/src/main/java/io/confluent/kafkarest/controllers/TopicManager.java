@@ -64,11 +64,24 @@ public interface TopicManager {
   CompletableFuture<Optional<Topic>> getLocalTopic(String topicName);
 
   /**
+   * The original method to create a new Kafka {@link Topic} which was not able to pass back a
+   * result. Now superseded by {@code createTopic2}.
+   */
+  @Deprecated
+  CompletableFuture<Void> createTopic(
+      String clusterId,
+      String topicName,
+      Optional<Integer> partitionsCount,
+      Optional<Short> replicationFactor,
+      Map<Integer, List<Integer>> replicasAssignments,
+      Map<String, Optional<String>> configs);
+
+  /**
    * Creates a new Kafka {@link Topic} with either partitions count and replication factor or
    * explicitly specified partition-to-replicas assignments. If the {@code validateOnly} flag is
    * set, the operation is only dry-run (a topic does not get created as a result).
    */
-  CompletableFuture<Topic> createTopic(
+  CompletableFuture<Topic> createTopic2(
       String clusterId,
       String topicName,
       Optional<Integer> partitionsCount,

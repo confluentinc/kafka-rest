@@ -197,7 +197,26 @@ final class TopicManagerImpl implements TopicManager {
   }
 
   @Override
-  public CompletableFuture<Topic> createTopic(
+  public CompletableFuture<Void> createTopic(
+      String clusterId,
+      String topicName,
+      Optional<Integer> partitionsCount,
+      Optional<Short> replicationFactor,
+      Map<Integer, List<Integer>> replicasAssignments,
+      Map<String, Optional<String>> configs) {
+    return createTopic2(
+            clusterId,
+            topicName,
+            partitionsCount,
+            replicationFactor,
+            replicasAssignments,
+            configs,
+            false)
+        .thenAccept(unused -> {});
+  }
+
+  @Override
+  public CompletableFuture<Topic> createTopic2(
       String clusterId,
       String topicName,
       Optional<Integer> partitionsCount,
