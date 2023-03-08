@@ -212,7 +212,9 @@ final class TopicManagerImpl implements TopicManager {
             replicasAssignments,
             configs,
             false)
-        .thenAccept(unused -> {});
+        .thenAccept(
+            unused -> {;
+            });
   }
 
   @Override
