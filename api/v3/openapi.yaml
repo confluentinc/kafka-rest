@@ -880,6 +880,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
+      - $ref: '#/components/parameters/IncludeAuthorizedOperations'
 
     get:
       summary: 'Get Topic'
@@ -1456,6 +1457,14 @@ components:
         type: string
       example: 'consumer-1'
 
+    IncludeAuthorizedOperations:
+      name: 'include_authorized_operations'
+      description: 'Specify if authorized operations should be included in the response.'
+      in: query
+      required: false
+      schema:
+        type: boolean
+
     PartitionId:
       name: 'partition_id'
       description: 'The partition ID.'
@@ -1624,6 +1633,24 @@ components:
 
     AnyValue:
       nullable: true
+
+    AuthorizedOperations:
+      type: array
+      items:
+        type: string
+        x-extensible-enum:
+          - UNKNOWN
+          - ALL
+          - READ
+          - WRITE
+          - CREATE
+          - DELETE
+          - ALTER
+          - DESCRIBE
+          - CLUSTER_ACTION
+          - DESCRIBE_CONFIGS
+          - ALTER_CONFIGS
+          - IDEMPOTENT_WRITE
 
     BrokerConfigData:
       allOf:
@@ -2431,13 +2458,15 @@ components:
             replication_factor:
               type: integer
             partitions_count:
-                type: integer
+              type: integer
             partitions:
               $ref: '#/components/schemas/Relationship'
             configs:
               $ref: '#/components/schemas/Relationship'
             partition_reassignments:
               $ref: '#/components/schemas/Relationship'
+            authorized_operations:
+              $ref: '#/components/schemas/AuthorizedOperations'
 
     TopicDataList:
       allOf:
