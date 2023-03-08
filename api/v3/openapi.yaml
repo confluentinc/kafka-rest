@@ -2574,20 +2574,11 @@ components:
                     value: 'gzip'
             explicit_replicas_assignments:
               value:
-                topic_name: 'topic-Y'
+                topic_name: 'topic-X'
                 replicas_assignments:
-                  - partition_id: 0
-                    broker_ids:
-                      - 1
-                      - 2
-                  - partition_id: 1
-                    broker_ids:
-                      - 2
-                      - 3
-                  - partition_id: 2
-                    broker_ids:
-                      - 3
-                      - 1
+                  - 0: [1,2]
+                  - 1: [2,3]
+                  - 2: [3,1]
                 configs:
                   - name: 'cleanup.policy'
                     value: 'compact'
@@ -2595,7 +2586,7 @@ components:
                     value: 'gzip'
             dry_run_create_topic:
               value:
-                topic_name: 'topic-Z'
+                topic_name: 'topic-X'
                 partitions_count: 64
                 replication_factor: 3
                 validate_only: true
