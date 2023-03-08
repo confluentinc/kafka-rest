@@ -394,11 +394,11 @@ paths:
       - $ref: '#/components/parameters/ClusterId'
 
     get:
-      summary: 'List All Broker Configs'
+      summary: 'List Dynamic Broker Configs'
       description: |-
         [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
-        Return the list of configuration parameters for all the brokers in the given Kafka cluster.
+        Return the list of dynamic configuration parameters for all the brokers in the given Kafka cluster.
       tags:
         - Configs
       responses:
