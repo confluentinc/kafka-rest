@@ -213,7 +213,8 @@ final class TopicManagerImpl implements TopicManager {
             configs,
             false)
         .thenAccept(
-            unused -> {;
+            unused -> {
+              return;
             });
   }
 
