@@ -2653,10 +2653,9 @@ components:
                 validate_only: true
 
     ProduceRequest:
-      description: 'A single record to be produced to Kafka. To produce multiple records on the same
-                    connection, simply concatenate all the records, e.g.:
-                    {"partition_id":1}{"partition_id":2}. Delivery reports will be concatenated on
-                    the same order as the records are sent. See examples for the options available.'
+      description: 'A single record to be produced to Kafka. To produce multiple records in the same
+                    request, simply concatenate the records. The delivery reports are concatenated
+                    in the same order as the records are sent.'
       content:
         application/json:
           schema:

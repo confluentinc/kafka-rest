@@ -1,10 +1,8 @@
-Kafka REST Proxy
-================
+# Kafka REST Proxy
 
-The Kafka REST Proxy provides a RESTful interface to a Kafka cluster. It makes it easy to produce and consume messages, view the state of the cluster, and perform administrative actions without using the native Kafka protocol or clients. Examples of use cases include reporting data to Kafka from any front-end app built in any language, ingesting messages into a stream processing framework that doesn't yet support Kafka, and scripting administrative actions.
+The Kafka REST Proxy provides a RESTful interface to a Kafka cluster. It makes it easy to produce and consume data, view the state of the cluster, and perform administrative actions without using the native Kafka protocol or clients. Examples of use cases include reporting data to Kafka from any front-end app built in any language, ingesting data into a stream processing framework that doesn't yet support Kafka, and scripting administrative actions.
 
-Installation
-------------
+## Installation
 
 You can download prebuilt versions of the Kafka REST Proxy as part of the [Confluent Platform](https://www.confluent.io/product/confluent-platform/). 
 
@@ -13,8 +11,7 @@ You can read our full [installation instructions](http://docs.confluent.io/curre
 
 To install from source, follow the instructions in the Development section below.
 
-Deployment
-----------
+## Deployment
 
 The Kafka REST Proxy includes a built-in Jetty server and can be deployed after being configured to connect to an existing Kafka cluster.
 
@@ -23,8 +20,7 @@ Running ``mvn clean package`` runs all 3 of its assembly targets.
 - The ``package`` target is meant to be used in shared dependency environments and omits some dependencies expected to be provided externally. It assembles the other dependencies in a ``kafka-rest/target`` subfolder as well as in distributable archives. The wrapper scripts ``bin/kafka-rest-start`` and ``bin/kafka-rest-stop`` can then be used to start and stop the service.
 - The ``standalone`` target packages all necessary dependencies as a distributable JAR that can be run as standard (``java -jar $base-dir/kafka-rest/target/kafka-rest-X.Y.Z-standalone.jar``).
 
-Quickstart (v3 API)
-----------
+## Quickstart (v3 API)
 
 The following assumes you have Kafka and an instance of the REST Proxy running using the default settings and some topics already created.
 
@@ -34,6 +30,7 @@ The v3 API is the latest version of the API. The cluster ID is a path parameter 
 ```bash
 $ curl http://localhost:8082/v3/clusters
 
+Response:
   {"kind":"KafkaClusterList",
    "metadata":{"self":"http://localhost:8082/v3/clusters","next":null},
    "data":[
@@ -99,7 +96,7 @@ Response:
   }
 ```
 
-### Produce a message with JSON data
+### Produce records with JSON data
 ```bash
 $ curl -X POST -H "Content-Type: application/json" \
        -d '{"value":{"type":"JSON","data":{"name":"testUser"}}}' \
@@ -116,7 +113,32 @@ Response:
   }
 ```
 
-In the response, the `error_code` of 200 is an HTTP status code (OK) which indicates the operation was successful. Because you can use this API to stream multiple records into a topic as part of the same request, each record produced has its own error code.
+In the response, the `error_code` of 200 is an HTTP status code (OK) which indicates the operation was successful. Because you can use this API to stream multiple records into a topic as part of the same request, each record produced has its own error code. To send multiple records, simply concatentate the records like this: 
+
+```bash
+$ curl -X POST -H "Content-Type: application/json" \
+       -d '{"value":{"type":"JSON","data":"ONE"}} {"value":{"type":"JSON","data":"TWO"}}' \
+       http://localhost:8082/v3/clusters/xFhUvurESIeeCI87SXWR-Q/topics/jsontest/records
+
+Response:
+  {"error_code":200,
+   "cluster_id":"xFhUvurESIeeCI87SXWR-Q",
+   "topic_name":"jsontest",
+   "partition_id":0,
+   "offset":1,
+   "timestamp":"2023-03-09T14:07:23.592Z",
+   "value":{"type":"JSON","size":5}
+  }
+  {"error_code":200,
+   "cluster_id":"xFhUvurESIeeCI87SXWR-Q",
+   "topic_name":"jsontest",
+   "partition_id":0,
+   "offset":2,
+   "timestamp":"2023-03-09T14:07:23.592Z",
+   "value":{"type":"JSON","size":5}
+  }
+```
+
 
 ## Quickstart (v2 API)
 The earlier v2 API is a bit more concise.
@@ -150,12 +172,12 @@ Response:
   }
 ```
 
-### Produce a message with JSON data
+### Produce records with JSON data
 ```bash
 $ curl -X POST -H "Content-Type: application/vnd.kafka.json.v2+json" \
        -d '{"records":[{"value":{"name": "testUser"}}]}' \
        http://localhost:8082/topics/jsontest
-      
+
 Response:
   {"offsets":[
     {"partition":0,
@@ -176,7 +198,7 @@ First, create a consumer for JSON data, starting at the beginning of the topic. 
 $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" -H "Accept: application/vnd.kafka.v2+json" \
        -d '{"name": "my_consumer_instance", "format": "json", "auto.offset.reset": "earliest"}' \
        http://localhost:8082/consumers/my_json_consumer
-      
+
 Response:
   {"instance_id":"my_consumer_instance",
    "base_uri":"http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance"
@@ -190,6 +212,7 @@ $ curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" \
        -d '{"topics":["jsontest"]}' \
       http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance/subscription
 
+Response:
   # No content in response
 ```
 
@@ -198,7 +221,7 @@ Then consume some data from a topic using the base URL in the first response.
 ```bash
 $ curl -X GET -H "Accept: application/vnd.kafka.json.v2+json" \
        http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance/records
-  
+
 Response:
   [
    {"key":null,
@@ -215,24 +238,21 @@ Finally, close the consumer with a DELETE to make it leave the group and clean u
 $ curl -X DELETE -H "Accept: application/vnd.kafka.v2+json" \
        http://localhost:8082/consumers/my_json_consumer/instances/my_consumer_instance
 
+Response:
   # No content in response
 ```
 
-Development
------------
+## Development
 
-To build a development version, you may need development versions of [common](https://github.com/confluentinc/common),
-[rest-utils](https://github.com/confluentinc/rest-utils), and [schema-registry](https://github.com/confluentinc/schema-registry).  After installing these, you can build the Kafka REST Proxy with Maven. All the standard lifecycle phases work.
+To build a development version, you may need development versions of [common](https://github.com/confluentinc/common), [rest-utils](https://github.com/confluentinc/rest-utils), and [schema-registry](https://github.com/confluentinc/schema-registry).  After installing these, you can build the Kafka REST Proxy with Maven. All the standard lifecycle phases work.
 
 You can avoid building development versions of dependencies by building on the latest (or earlier) release tag, or `<release>-post` branch, which will reference dependencies available pre-built from the [public repository](http://packages.confluent.io/maven/).  For example, branch `7.3.0-post` can be used as a base for patches for this version.
 
-Contribute
-----------
+## Contribute
 
 - Source Code: https://github.com/confluentinc/kafka-rest
 - Issue Tracker: https://github.com/confluentinc/kafka-rest/issues
 
-License
--------
+## License
 
 This project is licensed under the [Confluent Community License](LICENSE).
