@@ -197,6 +197,7 @@ final class TopicManagerImpl implements TopicManager {
   }
 
   @Override
+  @SuppressWarnings("WhitespaceAround")
   public CompletableFuture<Void> createTopic(
       String clusterId,
       String topicName,
@@ -212,9 +213,7 @@ final class TopicManagerImpl implements TopicManager {
             replicasAssignments,
             configs,
             false)
-        .thenAccept(
-            unused -> {;
-            });
+        .thenAccept(unused -> {});
   }
 
   @Override
