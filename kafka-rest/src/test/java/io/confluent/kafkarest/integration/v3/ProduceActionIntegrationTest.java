@@ -31,7 +31,6 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.Message;
@@ -3110,7 +3109,7 @@ public class ProduceActionIntegrationTest {
     // Kafka server and producer is configured to accept messages upto 20971520 Bytes (20MB) but
     // KafkaProducer calculates produced bytes including key, value, headers size and additional
     // record overhead bytes hence producing message of 20971420 bytes.
-    int valueSize = ((2<<20) * 10) - 100;
+    int valueSize = ((2 << 20) * 10) - 100;
     byte[] value = generateBinaryData(valueSize);
     ProduceRequest request =
         ProduceRequest.builder()
