@@ -193,13 +193,13 @@ paths:
       tags:
         - ACL (v3)
       parameters:
-        - $ref: '#/components/parameters/AclResourceType'
+        - $ref: '#/components/parameters/AclResourceTypeRequired'
         - $ref: '#/components/parameters/AclResourceName'
-        - $ref: '#/components/parameters/AclPatternType'
+        - $ref: '#/components/parameters/AclPatternTypeRequired'
         - $ref: '#/components/parameters/AclPrincipal'
         - $ref: '#/components/parameters/AclHost'
-        - $ref: '#/components/parameters/AclOperation'
-        - $ref: '#/components/parameters/AclPermission'
+        - $ref: '#/components/parameters/AclOperationRequired'
+        - $ref: '#/components/parameters/AclPermissionRequired'
       responses:
         '200':
           $ref: '#/components/responses/DeleteAclsResponse'
@@ -1372,6 +1372,14 @@ components:
       schema:
         $ref: '#/components/schemas/AclOperation'
 
+    AclOperationRequired:
+      name: 'operation'
+      description: 'The ACL operation.'
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/AclOperation'
+
     AclPatternType:
       name: 'pattern_type'
       description: 'The ACL pattern type.'
@@ -1380,11 +1388,27 @@ components:
       schema:
         $ref: '#/components/schemas/AclPatternType'
 
+    AclPatternTypeRequired:
+      name: 'pattern_type'
+      description: 'The ACL pattern type.'
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/AclPatternType'
+
     AclPermission:
       name: 'permission'
       description: 'The ACL permission.'
       in: query
       required: false
+      schema:
+        $ref: '#/components/schemas/AclPermission'
+
+    AclPermissionRequired:
+      name: 'permission'
+      description: 'The ACL permission.'
+      in: query
+      required: true
       schema:
         $ref: '#/components/schemas/AclPermission'
 
@@ -1409,6 +1433,14 @@ components:
       description: 'The ACL resource type.'
       in: query
       required: false
+      schema:
+        $ref: '#/components/schemas/AclResourceType'
+
+    AclResourceTypeRequired:
+      name: 'resource_type'
+      description: 'The ACL resource type.'
+      in: query
+      required: true
       schema:
         $ref: '#/components/schemas/AclResourceType'
 
