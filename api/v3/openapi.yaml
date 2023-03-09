@@ -72,6 +72,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -97,6 +99,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -117,11 +121,13 @@ paths:
         $ref: '#/components/requestBodies/BatchCreateAclRequest'
       responses:
         '201':
-          description: 'No Content'
+          description: 'Created'
         '400':
-          $ref: '#/components/responses/BadRequestErrorResponse'
+          $ref: '#/components/responses/BadRequestErrorResponse_CreateAcls'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -155,6 +161,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -173,11 +181,13 @@ paths:
         $ref: '#/components/requestBodies/CreateAclRequest'
       responses:
         '201':
-          description: 'No Content'
+          description: 'Created'
         '400':
-          $ref: '#/components/responses/BadRequestErrorResponse'
+          $ref: '#/components/responses/BadRequestErrorResponse_CreateAcls'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -204,9 +214,11 @@ paths:
         '200':
           $ref: '#/components/responses/DeleteAclsResponse'
         '400':
-          $ref: '#/components/responses/BadRequestErrorResponse'
+          $ref: '#/components/responses/BadRequestErrorResponse_DeleteAcls'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -233,6 +245,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -260,6 +274,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -286,6 +302,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -309,6 +327,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -331,6 +351,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -357,6 +379,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -383,6 +407,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -408,6 +434,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -434,6 +462,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -462,6 +492,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -489,6 +521,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -511,6 +545,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -531,6 +567,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -558,6 +596,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -584,6 +624,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -610,6 +652,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -637,6 +681,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -668,6 +714,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -699,6 +747,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -731,6 +781,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -758,6 +810,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -786,6 +840,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -817,6 +873,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -842,6 +900,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -868,9 +928,11 @@ paths:
         '201':
           $ref: '#/components/responses/CreateTopicResponse'
         '400':
-          $ref: '#/components/responses/BadRequestErrorResponse'
+          $ref: '#/components/responses/BadRequestErrorResponse_CreateTopic'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -898,6 +960,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
         '429':
@@ -920,9 +984,11 @@ paths:
         '200':
           $ref: '#/components/responses/GetTopicResponse'
         '400':
-          $ref: '#/components/responses/BadRequestErrorResponse'
+          $ref: '#/components/responses/BadRequestErrorResponse_UpdatePartitionCountTopic'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -944,6 +1010,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
         '429':
@@ -972,6 +1040,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
         '429':
@@ -1005,6 +1075,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
         '429':
@@ -1034,6 +1106,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
         '429':
@@ -1059,6 +1133,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
         '429':
@@ -1082,6 +1158,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
         '429':
@@ -1110,6 +1188,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
         '429':
@@ -1139,6 +1219,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
         '429':
@@ -1166,6 +1248,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
         '429':
@@ -1194,6 +1278,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
         '429':
@@ -1223,6 +1309,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
         '429':
@@ -1252,6 +1340,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
         '429':
@@ -1282,6 +1372,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '404':
           $ref: '#/components/responses/NotFoundErrorResponse'
         '429':
@@ -1310,6 +1402,8 @@ paths:
           $ref: '#/components/responses/BadRequestErrorResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -1323,6 +1417,7 @@ paths:
 
     post:
       summary: 'Produce records to the given topic.'
+      operationId: produceRecord
       description: |-
         [![Open Preview](https://img.shields.io/badge/Lifecycle%20Stage-Open%20Preview-%2300afba)](#section/Versioning/API-Lifecycle-Policy)
 
@@ -1343,12 +1438,14 @@ paths:
         '200':
           $ref: '#/components/responses/ProduceResponse'
         '400':
-          $ref: '#/components/responses/BadRequestErrorResponse'
+          $ref: '#/components/responses/BadRequestErrorResponse_ProduceRecord'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
         # Apparently trying to produce to non-existing topic with auto-create enabled doesn't
         # result in a successful message production/topic creation. Check if it throws 40403 if
         # auto-create is disabled.
+        '403':
+          $ref: '#/components/responses/ForbiddenErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -3968,8 +4065,35 @@ components:
 
     BadRequestErrorResponse:
       description: 'Indicates a bad request error. It could be caused by an unexpected request
-        body format or other forms of request validation failure. Usually serves application/json
-        content, although in some cases simple text/plain content can be returned.'
+        body format or other forms of request validation failure.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            bad_request_cannot_deserialize:
+              description: "Thrown when trying to deserialize an integer from non-integer data."
+              value:
+                error_code: 400
+                message: "Cannot deserialize value of type `java.lang.Integer` from String \"A\": not a valid `java.lang.Integer` value"
+
+    BadRequestErrorResponse_CreateAcls:
+      description: 'Indicates a bad request error. It could be caused by an unexpected request
+        body format or other forms of request validation failure.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            create_acls_cluster_name_invalid:
+              description: "Thrown when creating an ACL for a CLUSTER resource specifying the wrong resource name."
+              value:
+                error_code: 40002
+                message: The only valid name for the CLUSTER resource is kafka-cluster"
+
+    BadRequestErrorResponse_CreateTopic:
+      description: 'Indicates a bad request error. It could be caused by an unexpected request
+        body format or other forms of request validation failure.'
       content:
         application/json:
           schema:
@@ -3980,6 +4104,34 @@ components:
               value:
                 error_code: 40002
                 message: "Topic 'my-topic' already exists."
+            create_topic_replication_factor_too_large:
+              description: "Thrown when trying to create a topic with a replication factor larger than the number of brokers."
+              value:
+                error_code: 40002
+                message: "Replication factor: 2 larger than available brokers: 1."
+
+    BadRequestErrorResponse_DeleteAcls:
+      description: 'Indicates a bad request error. It could be caused by an unexpected request
+        body format or other forms of request validation failure.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            delete_acls_unspecified_resource_type:
+              description: "Thrown when trying to delete ACLs without specifying a valid resource type."
+              value:
+                error_code: 400
+                message: "resource_type cannot be unspecified or UNKNOWN"
+
+    BadRequestErrorResponse_ProduceRecord:
+      description: 'Indicates a bad request error. It could be caused by an unexpected request
+        body format or other forms of request validation failure.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
             produce_message_badly_escaped:
               description: "Thrown when using unescaped single quotes within a single-quote-delimited record."
               value:
@@ -3988,16 +4140,20 @@ components:
                   field name\n
                   at [Source: (org.glassfish.jersey.message.internal.ReaderInterceptorExecutor$UnCloseableInputStream);
                   line: 1, column: 3]"
-        text/plain:
+
+    BadRequestErrorResponse_UpdatePartitionCountTopic:
+      description: 'Indicates a bad request error. It could be caused by an unexpected request
+        body format or other forms of request validation failure.'
+      content:
+        application/json:
           schema:
-            type: string
-          example:
-            description: "Thrown when trying to create a topic and passing a string for the replication factor."
-            value: 'Cannot deserialize value of type `java.lang.Integer` from String "all": not a
-              valid Integer value\n
-              at [Source: (org.glassfish.jersey.message.internal.ReaderInterceptorExecutor$UnCloseableInputStream);
-              line: 1, column: 53]
-              (through reference chain: io.confluent.kafkarest.entities.v3.CreateTopicRequest["partitions_count"])'
+            $ref: '#/components/schemas/Error'
+          examples:
+            topic_update_partitions_invalid:
+              description: "Thrown when trying to update the number of partitions incorrectly."
+              value:
+                error_code: 40002
+                message: "Topic already has 1 partitions."
 
     UnauthorizedErrorResponse:
       description: 'Indicates a client authentication error. Kafka authentication failures will contain
@@ -4012,6 +4168,19 @@ components:
               value:
                 error_code: 40101
                 message: "Authentication failed"
+
+    ForbiddenErrorResponse:
+      description: 'Indicates a client authorization error. The client does not have the required permissions.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            kafka_authorization_failed:
+              description: "Thrown when the client does not have the permissions required for the request."
+              value:
+                error_code: 40301
+                message: "Request is not authorized"
 
     NotFoundErrorResponse:
       description: 'Indicates attempted access to an unreachable or non-existing resource like e.g. an unknown topic
@@ -4087,11 +4256,6 @@ components:
               value:
                 error_code: 500
                 message: "Internal Server Error"
-            produce_v3_missing_schema:
-              description: "Thrown when the specified schema cannot be fetched from Schema Registry."
-              value:
-                error_code: 50002
-                message: "Error when fetching latest schema version. subject = my-topic"
 
 tags:
   - name: Cluster (v3)
