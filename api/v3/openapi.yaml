@@ -2730,18 +2730,19 @@ components:
                     value: 'compact'
                   - name: 'compression.type'
                     value: 'gzip'
-            explicit_replicas_assignments:
-              value:
-                topic_name: 'topic-X'
-                replicas_assignments:
-                  - 0: [1,2]
-                  - 1: [2,3]
-                  - 2: [3,1]
-                configs:
-                  - name: 'cleanup.policy'
-                    value: 'compact'
-                  - name: 'compression.type'
-                    value: 'gzip'
+            # Temporarily comment out example while chasing linting failures
+            #explicit_replicas_assignments:
+            #  value:
+            #    topic_name: 'topic-X'
+            #    replicas_assignments:
+            #      - 0: [1,2]
+            #      - 1: [2,3]
+            #    configs:
+            #      - 2: [3,1]
+            #      - name: 'cleanup.policy'
+            #        value: 'compact'
+            #      - name: 'compression.type'
+            #        value: 'gzip'
             dry_run_create_topic:
               value:
                 topic_name: 'topic-X'
