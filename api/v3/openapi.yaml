@@ -1403,7 +1403,7 @@ paths:
       - $ref: '#/components/parameters/TopicName'
 
     post:
-      summary: 'Produce records to the given topic.'
+      summary: 'Produce Records'
       operationId: produceRecord
       description: |-
         [![Preview](https://img.shields.io/badge/Lifecycle%20Stage-Preview-%2300afba)](#section/Versioning/API-Lifecycle-Policy)
@@ -2283,8 +2283,10 @@ components:
           type: string
         partition_id:
           type: integer
+          format: int32
         offset:
           type: integer
+          format: int64
         timestamp:
           type: string
           format: date-time
@@ -2328,6 +2330,7 @@ components:
         partition_id:
           type: integer
           nullable: true
+          format: int32
         headers:
           type: array
           items:
