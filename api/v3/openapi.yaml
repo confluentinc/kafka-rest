@@ -689,19 +689,15 @@ paths:
           $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lag-summary:
-    x-lifecycle-stage: Early Access
-    x-request-access-name: Cluster Admin For Kafka v3
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
 
     get:
-      x-lifecycle-stage: Early Access
-      x-request-access-name: Cluster Admin For Kafka v3
-      summary: 'Get Consumer Group Lag Summary.'
+      summary: 'Get Consumer Group Lag Summary'
       operationId: getKafkaConsumerGroupLagSummary
       description: |-
-        [![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Request Access To Cluster Admin for Kafka (v3)](https://img.shields.io/badge/-Request%20Access%20To%20Cluster%20Admin%20For%20Kafka%20v3-%23bc8540)](mailto:ccloud-rest-api+consumer-lag-earlyaccess@confluent.io?subject=Request%20to%20join%20v3%20API%20Early%20Access&body=I%E2%80%99d%20like%20to%20join%20the%20Confluent%20Cluster%20Admin%20For%20Kafka%20v3%20Early%20Access%20to%20provide%20early%20feedback%20on%20consumer%20lag%20apis%21%20My%20Cloud%20Organization%20ID%20is%20%3Cretrieve%20from%20https%3A//confluent.cloud/settings/billing/payment%3E.)
+        [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Available in dedicated clusters only](https://img.shields.io/badge/-Available%20in%20dedicated%20clusters%20only-%23bc8540)](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#dedicated-cluster)
 
         Returns the max and total lag of the consumers belonging to the
         specified consumer group.
@@ -722,19 +718,15 @@ paths:
           $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags:
-    x-lifecycle-stage: Early Access
-    x-request-access-name: Cluster Admin For Kafka v3
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
 
     get:
-      x-lifecycle-stage: Early Access
-      x-request-access-name: Cluster Admin For Kafka v3
       operationId: listKafkaConsumerLags
       summary: 'List Consumer Lags'
       description: |-
-        [![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Request Access To Cluster Admin for Kafka (v3)](https://img.shields.io/badge/-Request%20Access%20To%20Cluster%20Admin%20For%20Kafka%20v3-%23bc8540)](mailto:ccloud-rest-api+consumer-lag-earlyaccess@confluent.io?subject=Request%20to%20join%20v3%20API%20Early%20Access&body=I%E2%80%99d%20like%20to%20join%20the%20Confluent%20Cluster%20Admin%20For%20Kafka%20v3%20Early%20Access%20to%20provide%20early%20feedback%20on%20consumer%20lag%20apis%21%20My%20Cloud%20Organization%20ID%20is%20%3Cretrieve%20from%20https%3A//confluent.cloud/settings/billing/payment%3E.)
+        [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Available in dedicated clusters only](https://img.shields.io/badge/-Available%20in%20dedicated%20clusters%20only-%23bc8540)](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#dedicated-cluster)
 
         Returns a list of consumer lags of the consumers belonging to the
         specified consumer group.
@@ -755,8 +747,6 @@ paths:
           $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/consumer-groups/{consumer_group_id}/lags/{topic_name}/partitions/{partition_id}:
-    x-lifecycle-stage: Early Access
-    x-request-access-name: Cluster Admin For Kafka v3
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/ConsumerGroupId'
@@ -764,16 +754,14 @@ paths:
       - $ref: '#/components/parameters/PartitionId'
 
     get:
-      x-lifecycle-stage: Early Access
-      x-request-access-name: Cluster Admin For Kafka v3
       operationId: getKafkaConsumerLag
       summary: 'Get Consumer Lag'
       description: |-
-        [![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Request Access To Cluster Admin for Kafka (v3)](https://img.shields.io/badge/-Request%20Access%20To%20Cluster%20Admin%20For%20Kafka%20v3-%23bc8540)](mailto:ccloud-rest-api+consumer-lag-earlyaccess@confluent.io?subject=Request%20to%20join%20v3%20API%20Early%20Access&body=I%E2%80%99d%20like%20to%20join%20the%20Confluent%20Cluster%20Admin%20For%20Kafka%20v3%20Early%20Access%20to%20provide%20early%20feedback%20on%20consumer%20lag%20apis%21%20My%20Cloud%20Organization%20ID%20is%20%3Cretrieve%20from%20https%3A//confluent.cloud/settings/billing/payment%3E.)
+        [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Available in dedicated clusters only](https://img.shields.io/badge/-Available%20in%20dedicated%20clusters%20only-%23bc8540)](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#dedicated-cluster)
 
         Returns the consumer lag on a partition with the given `partition_id`.
       tags:
-        - Partition (v3)
+        - Consumer Group (v3)
       responses:
         '200':
           $ref: '#/components/responses/GetConsumerLagResponse'
@@ -798,7 +786,7 @@ paths:
       summary: 'Get Consumer'
       operationId: getKafkaConsumer
       description: |-
-        [![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy) [![Request Access To Cluster Admin for Kafka (v3)](https://img.shields.io/badge/-Request%20Access%20To%20Cluster%20Admin%20For%20Kafka%20v3-%23bc8540)](mailto:ccloud-rest-api+consumer-lag-earlyaccess@confluent.io?subject=Request%20to%20join%20v3%20API%20Early%20Access&body=I%E2%80%99d%20like%20to%20join%20the%20Confluent%20Cluster%20Admin%20For%20Kafka%20v3%20Early%20Access%20to%20provide%20early%20feedback%20on%20consumer%20lag%20apis%21%20My%20Cloud%20Organization%20ID%20is%20%3Cretrieve%20from%20https%3A//confluent.cloud/settings/billing/payment%3E.)
+        [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
 
         Returns the consumer specified by the ``consumer_id``.
       tags:
@@ -1410,16 +1398,15 @@ paths:
           $ref: '#/components/responses/ServerErrorResponse'
 
   /clusters/{cluster_id}/topics/{topic_name}/records:
-    x-audience: component-internal
     parameters:
       - $ref: '#/components/parameters/ClusterId'
       - $ref: '#/components/parameters/TopicName'
 
     post:
-      summary: 'Produce records to the given topic.'
+      summary: 'Produce Records'
       operationId: produceRecord
       description: |-
-        [![Open Preview](https://img.shields.io/badge/Lifecycle%20Stage-Open%20Preview-%2300afba)](#section/Versioning/API-Lifecycle-Policy)
+        [![Preview](https://img.shields.io/badge/Lifecycle%20Stage-Preview-%2300afba)](#section/Versioning/API-Lifecycle-Policy)
 
         Produce records to the given topic, returning delivery reports for each
                     record produced. This API can be used in streaming mode by setting "Transfer-Encoding:
@@ -1437,15 +1424,14 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/ProduceResponse'
-        '400':
-          $ref: '#/components/responses/BadRequestErrorResponse_ProduceRecord'
         '401':
           $ref: '#/components/responses/UnauthorizedErrorResponse'
-        # Apparently trying to produce to non-existing topic with auto-create enabled doesn't
-        # result in a successful message production/topic creation. Check if it throws 40403 if
-        # auto-create is disabled.
         '403':
           $ref: '#/components/responses/ForbiddenErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundErrorResponse'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity_ProduceRecord'
         '429':
           $ref: '#/components/responses/TooManyRequestsErrorResponse'
         '5XX':
@@ -1961,19 +1947,12 @@ components:
         replication_factor:
           type: integer
         replicas_assignments:
-          type: array
-          items:
-            type: object
-            required:
-              - partition_id
-              - broker_ids
-            properties:
-              partition_id:
-                type: integer
-              broker_ids:
-                type: array
-                items:
-                  type: integer
+          # This is a map from partition id (string) to array of broker ids (integer)
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: integer
         configs:
           type: array
           items:
@@ -2292,22 +2271,22 @@ components:
       type: object
       required:
         - error_code
-        - cluster_id
-        - topic_name
-        - partition_id
-        - offset
       properties:
         error_code:
           type: integer
           format: int32
+        message:
+          type: string
         cluster_id:
           type: string
         topic_name:
           type: string
         partition_id:
           type: integer
+          format: int32
         offset:
           type: integer
+          format: int64
         timestamp:
           type: string
           format: date-time
@@ -2321,6 +2300,7 @@ components:
       type: object
       required:
         - size
+        - type
       properties:
         size:
           type: integer
@@ -2350,6 +2330,7 @@ components:
         partition_id:
           type: integer
           nullable: true
+          format: int32
         headers:
           type: array
           items:
@@ -2730,19 +2711,18 @@ components:
                     value: 'compact'
                   - name: 'compression.type'
                     value: 'gzip'
-            # Temporarily comment out example while chasing linting failures
-            #explicit_replicas_assignments:
-            #  value:
-            #    topic_name: 'topic-X'
-            #    replicas_assignments:
-            #      - 0: [1,2]
-            #      - 1: [2,3]
-            #    configs:
-            #      - 2: [3,1]
-            #      - name: 'cleanup.policy'
-            #        value: 'compact'
-            #      - name: 'compression.type'
-            #        value: 'gzip'
+            explicit_replicas_assignments:
+              value:
+                topic_name: 'topic-X'
+                replicas_assignments:
+                  "0": [1,2]
+                  "1": [2,3]
+                  "2": [3,1]
+                configs:
+                  - name: 'cleanup.policy'
+                    value: 'compact'
+                  - name: 'compression.type'
+                    value: 'gzip'
             dry_run_create_topic:
               value:
                 topic_name: 'topic-X'
@@ -2759,6 +2739,22 @@ components:
           schema:
             $ref: '#/components/schemas/ProduceRequest'
           examples:
+            binary_and_json:
+              description: 'If using type: "BINARY" or type: "JSON" type is required.'
+              value:
+                partition_id: 1
+                headers:
+                  - name: 'Header-1'
+                    value: 'SGVhZGVyLTE='
+                  - name: 'Header-2'
+                    value: 'SGVhZGVyLTI='
+                key:
+                  type: 'BINARY'
+                  data: 'Zm9vYmFy'
+                value:
+                  type: 'JSON'
+                  data: {"foo":"bar"}
+                timestamp: '2021-02-05T19:14:42Z'
             binary_and_avro_with_subject_and_raw_schema:
               description: 'If using type: "BINARY" or type: "JSON", or using the schema field, type
                             is required.'
@@ -3902,27 +3898,35 @@ components:
                   related: 'https://pkc-00000.region.provider.confluent.cloud/kafka/v3/clusters/cluster-1/topics/topic-3/partitions/-/reassignments'
 
     ProduceResponse:
-      description: ''
+      description: |-
+        The response containing a delivery report for a record produced to a topic. In streaming mode,
+        for each record sent, a separate delivery report will be returned, in the same order,
+        each with its own error_code.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ProduceResponse'
-          example:
-            error_code: 200
-            cluster_id: 'cluster-1'
-            topic_name: 'topic-1'
-            partition_id: 1
-            offset: 0
-            timestamp: '2021-02-05T19:14:42Z'
-            key:
-              type: BINARY
-              size: 7
-            value:
-              type: AVRO
-              subject: 'topic-1-value'
-              schema_id: 1
-              schema_version: 1
-              size: 7
+          examples:
+            produce_record_success:
+              description: The record was successfully produced to the topic.
+              value:
+                error_code: 200
+                cluster_id: 'cluster-1'
+                topic_name: 'topic-1'
+                partition_id: 1
+                offset: 0
+                timestamp: '2021-02-05T19:14:42Z'
+                key:
+                  type: BINARY
+                  size: 7
+                value:
+                  type: JSON
+                  size: 15
+            produce_record_bad_binary_data:
+              description: Thrown when sending a BINARY value which is not a base64-encoded string.
+              value:
+                error_code: 400
+                message: "Bad Request: data=1 is not a base64 string."
 
     SearchAclsResponse:
       description: 'The list of ACLs.'
@@ -4125,7 +4129,7 @@ components:
                 error_code: 400
                 message: "resource_type cannot be unspecified or UNKNOWN"
 
-    BadRequestErrorResponse_ProduceRecord:
+    UnprocessableEntity_ProduceRecord:
       description: 'Indicates a bad request error. It could be caused by an unexpected request
         body format or other forms of request validation failure.'
       content:
@@ -4133,14 +4137,11 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
           examples:
-            produce_message_badly_escaped:
-              description: "Thrown when using unescaped single quotes within a single-quote-delimited record."
+            produce_record_empty_request_body:
+              description: "Thrown when the request body is empty."
               value:
-                error_code: 400
-                message: "Unexpected character ('k' (code 107)): was expecting double-quote to start
-                  field name\n
-                  at [Source: (org.glassfish.jersey.message.internal.ReaderInterceptorExecutor$UnCloseableInputStream);
-                  line: 1, column: 3]"
+                error_code: 422
+                message: "Payload error. Request body is empty. Data is required."
 
     BadRequestErrorResponse_UpdatePartitionCountTopic:
       description: 'Indicates a bad request error. It could be caused by an unexpected request
@@ -4171,14 +4172,15 @@ components:
                 message: "Authentication failed"
 
     ForbiddenErrorResponse:
-      description: 'Indicates a client authorization error. The client does not have the required permissions.'
+      description: 'Indicates a client authorization error. Kafka authorization failures will contain
+            error code 40301 in the response body.'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
           examples:
             kafka_authorization_failed:
-              description: "Thrown when the client does not have the permissions required for the request."
+              description: "Thrown when the caller is not authorized to perform the underlying operation."
               value:
                 error_code: 40301
                 message: "Request is not authorized"
@@ -4285,4 +4287,4 @@ tags:
       [![Generally Available](https://img.shields.io/badge/Lifecycle%20Stage-Generally%20Available-%2345c6e8)](#section/Versioning/API-Lifecycle-Policy)
   - name: Records (v3)
     description: |-
-      [![Open Preview](https://img.shields.io/badge/Lifecycle%20Stage-Open%20Preview-%2300afba)](#section/Versioning/API-Lifecycle-Policy)
+      [![Preview](https://img.shields.io/badge/Lifecycle%20Stage-Preview-%2300afba)](#section/Versioning/API-Lifecycle-Policy)
