@@ -68,6 +68,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 public class TopicsResourceTest {
 
   private static final String CLUSTER_ID = "cluster-1";
+  private static final String TOPIC_INVALID_NAME = "<script>alert(1)</script>";
 
   private static final Topic TOPIC_1 =
       Topic.create(
@@ -692,6 +693,29 @@ public class TopicsResourceTest {
             RestConstraintViolationException.class,
             () -> topicsResource.createTopic(response, TOPIC_1.getClusterId(), null));
     assertEquals("Payload error. Request body is empty. Data is required.", e.getMessage());
+    assertEquals(42206, e.getErrorCode());
+  }
+
+  @Test
+  public void createTopic_invalidTopicName_throwsInvalidPayload() {
+    FakeAsyncResponse response = new FakeAsyncResponse();
+
+    RestConstraintViolationException e =
+        assertThrows(
+            RestConstraintViolationException.class,
+            () ->
+                topicsResource.createTopic(
+                    response,
+                    TOPIC_1.getClusterId(),
+                    CreateTopicRequest.builder()
+                        .setTopicName(TOPIC_INVALID_NAME)
+                        .setPartitionsCount(TOPIC_1.getPartitions().size())
+                        .setReplicationFactor(TOPIC_1.getReplicationFactor())
+                        .setConfigs(
+                            singletonList(
+                                CreateTopicRequest.ConfigEntry.create("cleanup.policy", "compact")))
+                        .build()));
+    assertEquals("Payload error. Invalid topic name.", e.getMessage());
     assertEquals(42206, e.getErrorCode());
   }
 

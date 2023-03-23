@@ -64,6 +64,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import org.apache.kafka.common.errors.InvalidTopicException;
 
 @Path("/v3/clusters/{clusterId}/topics")
 @ResourceName("api.v3.topics.*")
@@ -179,6 +180,12 @@ public final class TopicsResource {
     }
 
     String topicName = request.getTopicName();
+    try {
+      org.apache.kafka.common.internals.Topic.validate(topicName);
+    } catch (InvalidTopicException e) {
+      throw Errors.invalidPayloadException("Invalid topic name.");
+    }
+
     Optional<Integer> partitionsCount = request.getPartitionsCount();
     Optional<Short> replicationFactor = request.getReplicationFactor();
     Map<Integer, List<Integer>> replicasAssignments = request.getReplicasAssignments();
