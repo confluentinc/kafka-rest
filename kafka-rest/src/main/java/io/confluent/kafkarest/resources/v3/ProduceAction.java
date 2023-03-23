@@ -134,7 +134,7 @@ public final class ProduceAction {
       ProduceRequest request,
       ProduceController controller,
       ProducerMetrics metrics) {
-    long requestStartNs = System.nanoTime();
+    final long requestStartNs = System.nanoTime();
 
     try {
       produceRateLimiters.rateLimit(clusterId, request.getOriginalSize());
@@ -147,6 +147,15 @@ public final class ProduceAction {
     // Request metrics are recorded before we check the validity of the message body, but after
     // rate limiting, as these metrics are used for billing.
     recordRequestMetrics(metrics, request.getOriginalSize());
+
+    request
+        .getPartitionId()
+        .ifPresent(
+            (partitionId) -> {
+              if (partitionId < 0) {
+                throw Errors.partitionNotFoundException();
+              }
+            });
 
     Optional<RegisteredSchema> keySchema =
         request.getKey().flatMap(key -> getSchema(topicName, /* isKey= */ true, key));
