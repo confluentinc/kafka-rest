@@ -172,6 +172,82 @@ public class ProduceActionTest {
   }
 
   @Test
+  public void produceNegativePartitionId() throws Exception {
+    // config
+    final int totalNumberOfProduceCalls = 1;
+    Properties properties = new Properties();
+    properties.put(PRODUCE_MAX_REQUESTS_PER_SECOND, "100");
+    properties.put(PRODUCE_MAX_BYTES_PER_SECOND, Integer.toString(999999999));
+    properties.put(PRODUCE_RATE_LIMIT_ENABLED, "true");
+    properties.put(PRODUCE_RATE_LIMIT_CACHE_EXPIRY_MS, "3600000");
+
+    // setup
+    ChunkedOutputFactory chunkedOutputFactory = mock(ChunkedOutputFactory.class);
+    ChunkedOutput<ResultOrError> mockedChunkedOutput =
+        getChunkedOutput(chunkedOutputFactory, totalNumberOfProduceCalls);
+
+    Provider<RequestRateLimiter> countLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimitProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> countLimiterGlobalProvider = mock(Provider.class);
+    Provider<RequestRateLimiter> bytesLimiterGlobalProvider = mock(Provider.class);
+    RequestRateLimiter rateLimiterForCount = mock(RequestRateLimiter.class);
+    RequestRateLimiter rateLimiterForBytes = mock(RequestRateLimiter.class);
+    RequestRateLimiter countLimiterGlobal = mock(RequestRateLimiter.class);
+    RequestRateLimiter bytesLimiterGlobal = mock(RequestRateLimiter.class);
+
+    expect(countLimitProvider.get()).andReturn(rateLimiterForCount);
+    expect(bytesLimitProvider.get()).andReturn(rateLimiterForBytes);
+    expect(countLimiterGlobalProvider.get()).andReturn(countLimiterGlobal);
+    expect(bytesLimiterGlobalProvider.get()).andReturn(bytesLimiterGlobal);
+    rateLimiterForCount.rateLimit(anyInt());
+    rateLimiterForBytes.rateLimit(anyInt());
+    bytesLimiterGlobal.rateLimit(anyInt());
+    countLimiterGlobal.rateLimit(anyInt());
+
+    replay(
+        countLimitProvider,
+        bytesLimitProvider,
+        rateLimiterForCount,
+        rateLimiterForBytes,
+        countLimiterGlobal,
+        bytesLimiterGlobal,
+        countLimiterGlobalProvider,
+        bytesLimiterGlobalProvider);
+
+    ProduceAction produceAction =
+        getProduceAction(
+            properties,
+            chunkedOutputFactory,
+            1,
+            countLimitProvider,
+            bytesLimitProvider,
+            countLimiterGlobalProvider,
+            bytesLimiterGlobalProvider,
+            true);
+    MappingIterator<ProduceRequest> requests =
+        getProduceRequestsMappingIteratorWithNegativePartitionId();
+
+    // expected results
+
+    ErrorResponse err = ErrorResponse.create(40402, "Partition not found.");
+    ResultOrError resultOrErrorFail = ResultOrError.error(err);
+    expect(mockedChunkedOutput.isClosed()).andReturn(false);
+    mockedChunkedOutput.write(resultOrErrorFail);
+    mockedChunkedOutput.close();
+
+    replay(mockedChunkedOutput, chunkedOutputFactory);
+
+    // run test
+    FakeAsyncResponse fakeAsyncResponse = new FakeAsyncResponse();
+    produceAction.produce(
+        fakeAsyncResponse, "clusterId", "topicName", new JsonStream<>(() -> requests));
+
+    // check results
+    EasyMock.verify(requests);
+    EasyMock.verify(mockedChunkedOutput);
+  }
+
+  @Test
   public void streamingRequests() throws Exception {
     // config
     final int totalNumberOfProduceCallsProd1 = 1;
@@ -675,6 +751,22 @@ public class ProduceActionTest {
             .build();
 
     ProduceRequest request = ProduceRequest.builder().setKey(key).setOriginalSize(25L).build();
+
+    expect(requests.hasNext()).andReturn(true).times(1);
+    expect(requests.nextValue()).andReturn(request).times(1);
+    expect(requests.hasNext()).andReturn(false).times(1);
+    requests.close();
+
+    replay(requests);
+    return requests;
+  }
+
+  private static MappingIterator<ProduceRequest>
+      getProduceRequestsMappingIteratorWithNegativePartitionId() throws IOException {
+    MappingIterator<ProduceRequest> requests = mock(MappingIterator.class);
+
+    ProduceRequest request =
+        ProduceRequest.builder().setPartitionId(-1).setOriginalSize(25L).build();
 
     expect(requests.hasNext()).andReturn(true).times(1);
     expect(requests.nextValue()).andReturn(request).times(1);
