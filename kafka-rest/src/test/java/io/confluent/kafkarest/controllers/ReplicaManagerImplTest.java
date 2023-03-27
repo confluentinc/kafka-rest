@@ -31,6 +31,7 @@ import io.confluent.kafkarest.entities.Broker;
 import io.confluent.kafkarest.entities.Partition;
 import io.confluent.kafkarest.entities.PartitionReplica;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -39,10 +40,10 @@ import java.util.concurrent.ExecutionException;
 import javax.ws.rs.NotFoundException;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.DescribeLogDirsResult;
+import org.apache.kafka.clients.admin.LogDirDescription;
+import org.apache.kafka.clients.admin.ReplicaInfo;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.requests.DescribeLogDirsResponse.LogDirInfo;
-import org.apache.kafka.common.requests.DescribeLogDirsResponse.ReplicaInfo;
 import org.easymock.EasyMockExtension;
 import org.easymock.Mock;
 import org.junit.jupiter.api.BeforeEach;
@@ -236,15 +237,15 @@ public class ReplicaManagerImplTest {
         .andReturn(completedFuture(Optional.of(BROKER_1)));
     expect(adminClient.describeLogDirs(eq(singletonList(BROKER_ID_1)), anyObject()))
         .andReturn(describeLogDirsResult);
-    expect(describeLogDirsResult.values())
+    expect(describeLogDirsResult.descriptions())
         .andReturn(
             singletonMap(
                 BROKER_ID_1,
                 KafkaFuture.completedFuture(
-                    singletonMap(TOPIC_NAME, new LogDirInfo(null, partitions)))));
-    expect(partitionManager.getPartition(CLUSTER_ID, TOPIC_NAME, PARTITION_ID_1))
+                    singletonMap(null, new LogDirDescription(null, partitions)))));
+    expect(partitionManager.getPartitionAllowMissing(CLUSTER_ID, TOPIC_NAME, PARTITION_ID_1))
         .andReturn(completedFuture(Optional.of(PARTITION_1)));
-    expect(partitionManager.getPartition(CLUSTER_ID, TOPIC_NAME, PARTITION_ID_2))
+    expect(partitionManager.getPartitionAllowMissing(CLUSTER_ID, TOPIC_NAME, PARTITION_ID_2))
         .andReturn(completedFuture(Optional.of(PARTITION_2)));
     replay(adminClient, describeLogDirsResult, brokerManager, partitionManager);
 
@@ -252,6 +253,56 @@ public class ReplicaManagerImplTest {
         replicaManager.searchReplicasByBrokerId(CLUSTER_ID, BROKER_ID_1).get();
 
     assertEquals(new HashSet<>(Arrays.asList(REPLICA_1_1, REPLICA_2_1)), new HashSet<>(replicas));
+  }
+
+  @Test
+  public void searchByBrokerId_existingBroker_returnsReplicasTopicDeletionRace() throws Exception {
+    HashMap<TopicPartition, ReplicaInfo> partitions = new HashMap<>();
+    partitions.put(new TopicPartition(TOPIC_NAME, PARTITION_ID_1), null);
+    partitions.put(new TopicPartition(TOPIC_NAME, PARTITION_ID_2), null);
+    expect(brokerManager.getBroker(CLUSTER_ID, BROKER_ID_1))
+        .andReturn(completedFuture(Optional.of(BROKER_1)));
+    expect(adminClient.describeLogDirs(eq(singletonList(BROKER_ID_1)), anyObject()))
+        .andReturn(describeLogDirsResult);
+    expect(describeLogDirsResult.descriptions())
+        .andReturn(
+            singletonMap(
+                BROKER_ID_1,
+                KafkaFuture.completedFuture(
+                    singletonMap(null, new LogDirDescription(null, partitions)))));
+    // This is slightly fake but the idea is that the describeLogDirs returns information which
+    // subsequently can't be found by the partition manager. In this test, just one partition has
+    // evaporated.
+    expect(partitionManager.getPartitionAllowMissing(CLUSTER_ID, TOPIC_NAME, PARTITION_ID_1))
+        .andReturn(completedFuture(Optional.empty()));
+    expect(partitionManager.getPartitionAllowMissing(CLUSTER_ID, TOPIC_NAME, PARTITION_ID_2))
+        .andReturn(completedFuture(Optional.of(PARTITION_2)));
+    replay(adminClient, describeLogDirsResult, brokerManager, partitionManager);
+
+    List<PartitionReplica> replicas =
+        replicaManager.searchReplicasByBrokerId(CLUSTER_ID, BROKER_ID_1).get();
+
+    assertEquals(new HashSet<>(Arrays.asList(REPLICA_2_1)), new HashSet<>(replicas));
+  }
+
+  @Test
+  public void searchByBrokerId_existingBroker_returnsEmptyList() throws Exception {
+    expect(brokerManager.getBroker(CLUSTER_ID, BROKER_ID_1))
+        .andReturn(completedFuture(Optional.of(BROKER_1)));
+    expect(adminClient.describeLogDirs(eq(singletonList(BROKER_ID_1)), anyObject()))
+        .andReturn(describeLogDirsResult);
+    expect(describeLogDirsResult.descriptions())
+        .andReturn(
+            singletonMap(
+                BROKER_ID_1,
+                KafkaFuture.completedFuture(
+                    singletonMap(null, new LogDirDescription(null, Collections.emptyMap())))));
+    replay(adminClient, describeLogDirsResult, brokerManager);
+
+    List<PartitionReplica> replicas =
+        replicaManager.searchReplicasByBrokerId(CLUSTER_ID, BROKER_ID_1).get();
+
+    assertEquals(new HashSet<>(), new HashSet<>(replicas));
   }
 
   @Test

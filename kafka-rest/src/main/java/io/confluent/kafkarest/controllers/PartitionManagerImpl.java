@@ -21,6 +21,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
+import com.google.common.collect.ImmutableList;
 import io.confluent.kafkarest.common.CompletableFutures;
 import io.confluent.kafkarest.common.KafkaFutures;
 import io.confluent.kafkarest.entities.Partition;
@@ -104,6 +105,19 @@ final class PartitionManagerImpl implements PartitionManager {
               }
               throw new CompletionException(exception.getCause());
             });
+  }
+
+  @Override
+  public CompletableFuture<Optional<Partition>> getPartitionAllowMissing(
+      String clusterId, String topicName, int partitionId) {
+    return topicManager
+        .getTopic(clusterId, topicName)
+        .thenApply(topic -> topic.map(Topic::getPartitions).orElse(ImmutableList.of()))
+        .thenApply(
+            partitions ->
+                partitions.stream()
+                    .filter(partition -> partition.getPartitionId() == partitionId)
+                    .findAny());
   }
 
   @Override
