@@ -2309,6 +2309,7 @@ components:
           x-extensible-enum:
             - BINARY
             - JSON
+            - STRING
             - AVRO
             - JSONSCHEMA
             - PROTOBUF
@@ -2352,6 +2353,7 @@ components:
           x-extensible-enum:
             - BINARY
             - JSON
+            - STRING
             - AVRO
             - JSONSCHEMA
             - PROTOBUF
@@ -2740,7 +2742,7 @@ components:
             $ref: '#/components/schemas/ProduceRequest'
           examples:
             binary_and_json:
-              description: 'If using type: "BINARY" or type: "JSON" type is required.'
+              description: 'If using type, one of "BINARY", "JSON" or "STRING" is required.'
               value:
                 partition_id: 1
                 headers:
@@ -2756,8 +2758,7 @@ components:
                   data: {"foo":"bar"}
                 timestamp: '2021-02-05T19:14:42Z'
             binary_and_avro_with_subject_and_raw_schema:
-              description: 'If using type: "BINARY" or type: "JSON", or using the schema field, type
-                            is required.'
+              description: 'If using type, one of "BINARY", "JSON", "STRING", or using the schema field is required.'
               value:
                 partition_id: 1
                 headers:
@@ -2774,6 +2775,12 @@ components:
                   schema: '{\"type\":\"string\"}'
                   data: 'foobar'
                 timestamp: '2021-02-05T19:14:42Z'
+            binary_and_json:
+              description: 'If using type, one of "BINARY", "JSON" or "STRING" is required.'
+              value:
+                value:
+                  type: 'STRING'
+                  data: 'My message'
             schema_id_and_schema_version:
               description: 'If not setting type, the record is assumed to use a schema. The actual
                             schema is queried from Schema Registry based on the subject, schema_id

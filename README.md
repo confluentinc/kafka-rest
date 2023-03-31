@@ -139,6 +139,25 @@ Response:
   }
 ```
 
+### Produce records with string data
+```bash
+$ curl -X POST -H "Content-Type: application/json" \
+       -d '{"value":{"type":"STRING","data":"REST"}}' \
+       http://localhost:8082/v3/clusters/xFhUvurESIeeCI87SXWR-Q/topics/jsontest/records
+
+Response:
+  {"error_code":200,
+   "cluster_id":"xFhUvurESIeeCI87SXWR-Q",
+   "topic_name":"jsontest",
+   "partition_id":0,
+   "offset":2,
+   "timestamp":"2023-03-09T14:07:23.592Z",
+   "value":{"type":"STRING","size":4}
+  }
+```
+
+The data is treated as string in UTF-8 encoding and follows JSON rules for escaping special characters.
+
 
 ## Quickstart (v2 API)
 The earlier v2 API is a bit more concise.
