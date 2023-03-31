@@ -22,13 +22,14 @@ import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 
 /**
  * Permitted formats for ProduceRecords embedded in produce requests/consume responses, e.g.
- * base64-encoded binary, JSON-encoded Avro, etc. Each of these correspond to a content type, a
- * ProduceRecord implementation, a Serializer in RecordSerializer, a ConsumerRecord implementation,
- * and a serializer for any instantiated consumers.
+ * base64-encoded binary, JSON-encoded Avro, etc.
  *
- * <p>Note that for each type, it's assumed that the key and value can be handled by the same
- * serializer. This means each serializer should handle both it's complex type (e.g.
- * Indexed/Generic/SpecificRecord for Avro) and boxed primitive types (Integer, Boolean, etc.).
+ * <p>In the v2 API, each of these correspond to a content type, a ProduceRecord implementation, a
+ * Serializer in RecordSerializer, a ConsumerRecord implementation, and a serializer for any
+ * instantiated consumers. Note that for each type, it's assumed that the key and value can be
+ * handled by the same serializer. This means each serializer should handle both its complex type
+ * (e.g. Indexed/Generic/SpecificRecord for Avro) and boxed primitive types (Integer, Boolean,
+ * etc.).
  */
 public enum EmbeddedFormat {
   BINARY {
@@ -44,6 +45,18 @@ public enum EmbeddedFormat {
   },
 
   JSON {
+    @Override
+    public boolean requiresSchema() {
+      return false;
+    }
+
+    @Override
+    public SchemaProvider getSchemaProvider() {
+      throw new UnsupportedOperationException();
+    }
+  },
+
+  STRING {
     @Override
     public boolean requiresSchema() {
       return false;
