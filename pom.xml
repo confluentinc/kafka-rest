@@ -7,12 +7,13 @@
     <parent>
         <groupId>io.confluent</groupId>
         <artifactId>rest-utils-parent</artifactId>
-        <version>6.0.13-SNAPSHOT</version>
+        <version>[6.1.11-0, 6.1.12-0)</version>
     </parent>
 
     <artifactId>kafka-rest-parent</artifactId>
     <packaging>pom</packaging>
     <name>kafka-rest-parent</name>
+    <version>6.1.11-0</version>
     <organization>
         <name>Confluent, Inc.</name>
         <url>http://confluent.io</url>
@@ -47,13 +48,14 @@
     <properties>
         <confluent.maven.repo>https://packages.confluent.io/maven/</confluent.maven.repo>
         <checkstyle.suppressions.location>checkstyle/suppressions.xml</checkstyle.suppressions.location>
+        <io.confluent.kafka-rest.version>6.1.11-0</io.confluent.kafka-rest.version>
     </properties>
 
     <repositories>
         <repository>
             <id>confluent</id>
             <name>Confluent</name>
-            <url>${confluent.maven.repo}</url>
+            <url>https://packages.confluent.io/maven/</url>
         </repository>
     </repositories>
 
@@ -80,9 +82,23 @@
                 <version>${guava.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>${junit.jupiter.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit.jupiter.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.vintage</groupId>
+                <artifactId>junit-vintage-engine</artifactId>
+                <version>${junit.jupiter.version}</version>
+            </dependency>
                 <groupId>io.confluent</groupId>
                 <artifactId>kafka-schema-registry</artifactId>
-                <version>${project.version}</version>
+                <version>${io.confluent.schema-registry.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.yaml</groupId>

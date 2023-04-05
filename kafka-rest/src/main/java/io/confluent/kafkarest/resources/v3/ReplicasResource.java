@@ -25,6 +25,7 @@ import io.confluent.kafkarest.entities.v3.ReplicaData;
 import io.confluent.kafkarest.entities.v3.ReplicaDataList;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -43,6 +44,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/partitions/{partitionId}/replicas")
+@ResourceName("api.v3.replicas.*")
 public final class ReplicasResource {
 
   private final Provider<ReplicaManager> replicaManager;
@@ -60,6 +62,7 @@ public final class ReplicasResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.replicas.list")
+  @ResourceName("api.v3.replicas.list")
   public void listReplicas(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -99,6 +102,7 @@ public final class ReplicasResource {
   @Path("/{brokerId}")
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.replicas.get")
+  @ResourceName("api.v3.replicas.get")
   public void getReplica(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

@@ -16,8 +16,10 @@
 package io.confluent.kafkarest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.confluent.kafkarest.backends.BackendsModule;
 import io.confluent.kafkarest.config.ConfigModule;
 import io.confluent.kafkarest.controllers.ControllersModule;
@@ -27,6 +29,7 @@ import io.confluent.kafkarest.extension.ContextInvocationHandler;
 import io.confluent.kafkarest.extension.InstantConverterProvider;
 import io.confluent.kafkarest.extension.KafkaRestCleanupFilter;
 import io.confluent.kafkarest.extension.KafkaRestContextProvider;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature;
 import io.confluent.kafkarest.extension.RestResourceExtension;
 import io.confluent.kafkarest.resources.ResourcesFeature;
 import io.confluent.kafkarest.response.ResponseModule;
@@ -36,8 +39,10 @@ import io.confluent.rest.exceptions.ConstraintViolationExceptionMapper;
 import io.confluent.rest.exceptions.KafkaExceptionMapper;
 import io.confluent.rest.exceptions.WebApplicationExceptionMapper;
 import java.lang.reflect.Proxy;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Properties;
+import java.util.TimeZone;
 import javax.ws.rs.core.Configurable;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.StringUtil;
@@ -93,10 +98,13 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
       ProducerPool producerPool,
       KafkaConsumerManager kafkaConsumerManager
   ) {
-    if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))) {
-      throw new RuntimeException(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG + " must be configured");
+    if (StringUtil.isBlank(appConfig.getString(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG))
+        && StringUtil.isBlank(appConfig.getString(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG))) {
+      throw new RuntimeException("Atleast one of " + KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG + " "
+                                 + "or "
+                                    + KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG
+                                    + " needs to be configured");
     }
-
     KafkaRestContextProvider.initialize(config, appConfig, producerPool,
         kafkaConsumerManager);
     ContextInvocationHandler contextInvocationHandler = new ContextInvocationHandler();
@@ -114,6 +122,7 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
     config.register(new ResourcesFeature(context, appConfig));
     config.register(new ResponseModule());
 
+    config.register(ResourceBlocklistFeature.class);
     config.register(KafkaRestCleanupFilter.class);
 
     config.register(EnumConverterProvider.class);
@@ -128,7 +137,11 @@ public class KafkaRestApplication extends Application<KafkaRestConfig> {
   protected ObjectMapper getJsonMapper() {
     return super.getJsonMapper()
         .registerModule(new GuavaModule())
-        .registerModule(new Jdk8Module());
+        .registerModule(new Jdk8Module())
+        .registerModule(new JavaTimeModule())
+        .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+        .setDateFormat(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"))
+        .setTimeZone(TimeZone.getTimeZone("UTC"));
   }
 
   @Override

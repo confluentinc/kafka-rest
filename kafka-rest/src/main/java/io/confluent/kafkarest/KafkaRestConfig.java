@@ -27,8 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -68,11 +66,12 @@ public class KafkaRestConfig extends RestConfig {
   // ensures poll is frequently needed and called
   public static final String MAX_POLL_RECORDS_VALUE = "30";
 
+  @Deprecated
   public static final String HOST_NAME_CONFIG = "host.name";
   private static final String HOST_NAME_DOC =
       "The host name used to generate absolute URLs in responses. If empty, the default canonical"
       + " hostname is used";
-  public static final String HOST_NAME_DEFAULT = "";
+  private static final String HOST_NAME_DEFAULT = "";
 
   public static final String ADVERTISED_LISTENERS_CONFIG = "advertised.listeners";
   protected static final String ADVERTISED_LISTENERS_DOC =
@@ -86,6 +85,25 @@ public class KafkaRestConfig extends RestConfig {
       "The maximum number of threads to run consumer requests on."
       + " The value of -1 denotes unbounded thread creation";
   public static final String CONSUMER_MAX_THREADS_DEFAULT = "50";
+
+  public static final String ZOOKEEPER_CONNECT_CONFIG = "zookeeper.connect";
+  private static final String ZOOKEEPER_CONNECT_DOC =
+      "NOTE: Only required when using v1 Consumer API's. Specifies the ZooKeeper connection "
+      + "string in the form "
+      + "hostname:port where host and port are the host and port of a ZooKeeper server. To allow "
+      + "connecting "
+      + "through other ZooKeeper nodes when that ZooKeeper machine is down you can also specify "
+      + "multiple hosts "
+      + "in the form hostname1:port1,hostname2:port2,hostname3:port3.\n"
+      + "\n"
+      + "The server may also have a ZooKeeper chroot path as part of it's ZooKeeper connection "
+      + "string which puts "
+      + "its data under some path in the global ZooKeeper namespace. If so the consumer should "
+      + "use the same "
+      + "chroot path in its connection string. For example to give a chroot path of /chroot/path "
+      + "you would give "
+      + "the connection string as hostname1:port1,hostname2:port2,hostname3:port3/chroot/path. ";
+  public static final String ZOOKEEPER_CONNECT_DEFAULT = "";
 
   public static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
   private static final String BOOTSTRAP_SERVERS_DOC =
@@ -183,12 +201,18 @@ public class KafkaRestConfig extends RestConfig {
 
   private static final String METRICS_JMX_PREFIX_DEFAULT_OVERRIDE = "kafka.rest";
 
+  /**
+   * <code>client.zk.session.timeout.ms</code>
+   */
+  public static final String KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG
+      = "client.zk.session.timeout.ms";
   public static final String KAFKACLIENT_TIMEOUT_CONFIG = "client.timeout.ms";
   /**
    * <code>client.init.timeout.ms</code>
    */
   public static final String KAFKACLIENT_INIT_TIMEOUT_CONFIG = "client.init.timeout.ms";
 
+  public static final String ZOOKEEPER_SET_ACL_CONFIG = "zookeeper.set.acl";
   public static final String KAFKACLIENT_SECURITY_PROTOCOL_CONFIG =
       "client.security.protocol";
   public static final String KAFKACLIENT_SSL_TRUSTSTORE_LOCATION_CONFIG =
@@ -233,11 +257,19 @@ public class KafkaRestConfig extends RestConfig {
       "client.sasl.kerberos.ticket.renew.window.factor";
   public static final String KAFKA_REST_RESOURCE_EXTENSION_CONFIG =
       "kafka.rest.resource.extension.class";
+  protected static final String KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_DOC =
+      "Zookeeper session timeout";
   protected static final String KAFKACLIENT_INIT_TIMEOUT_DOC =
       "The timeout for initialization of the Kafka store, including creation of the Kafka topic "
       + "that stores schema data.";
   protected static final String KAFKACLIENT_TIMEOUT_DOC =
       "The timeout for an operation on the Kafka store";
+  protected static final String
+      ZOOKEEPER_SET_ACL_DOC =
+      "Whether or not to set an ACL in ZooKeeper when znodes are created and ZooKeeper SASL "
+      + "authentication is "
+      + "configured. IMPORTANT: if set to `true`, the SASL principal must be the same as the "
+      + "Kafka brokers.";
   protected static final String KAFKACLIENT_SECURITY_PROTOCOL_DOC =
       "The security protocol to use when connecting with Kafka, the underlying persistent storage. "
       + "Values can be `PLAINTEXT`, `SSL`, `SASL_PLAINTEXT`, or `SASL_SSL`.";
@@ -294,12 +326,20 @@ public class KafkaRestConfig extends RestConfig {
       + " <code>RestResourceExtension</code> allows you to inject user defined resources "
       + " like filters to Rest Proxy. Typically used to add custom capability like logging, "
       + " security, etc.";
+  private static final boolean ZOOKEEPER_SET_ACL_DEFAULT = false;
+
   public static final String CRN_AUTHORITY_CONFIG =
       "confluent.resource.name.authority";
   private static final String CONFLUENT_RESOURCE_NAME_AUTHORITY_DOC =
       "Authority to which the governance of the name space defined by the remainder of the CRN "
           + "should be delegated to. Examples: confluent.cloud, mds-01.example.com.";
   private static final String CONFLUENT_RESOURCE_NAME_AUTHORITY_DEFAULT = "";
+
+  public static final String API_ENDPOINTS_BLOCKLIST_CONFIG = "api.endpoints.blocklist";
+  public static final String API_ENDPOINTS_BLOCKLIST_DOC =
+      "List of endpoints to disable in this server. For example: \"api.v3.acls.*\" or "
+          + "\"api.v3.acls.create,api.v3.acls.delete\".";
+  public static final String API_ENDPOINTS_BLOCKLIST_DEFAULT = "";
 
   public static final String API_V2_ENABLE_CONFIG = "api.v2.enable";
   private static final String API_V2_ENABLE_DOC =
@@ -354,6 +394,13 @@ public class KafkaRestConfig extends RestConfig {
         CONSUMER_MAX_THREADS_DEFAULT,
         Importance.MEDIUM,
         CONSUMER_MAX_THREADS_DOC
+    )
+    .define(
+        ZOOKEEPER_CONNECT_CONFIG,
+        Type.STRING,
+        ZOOKEEPER_CONNECT_DEFAULT,
+        Importance.HIGH,
+        ZOOKEEPER_CONNECT_DOC
     )
     .define(
         BOOTSTRAP_SERVERS_CONFIG,
@@ -432,6 +479,14 @@ public class KafkaRestConfig extends RestConfig {
         SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DEFAULT,
         Importance.LOW,
         SIMPLE_CONSUMER_POOL_TIMEOUT_MS_DOC
+    )
+    .define(
+        KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_CONFIG,
+        Type.INT,
+        30000,
+        Range.atLeast(0),
+        Importance.LOW,
+        KAFKACLIENT_ZK_SESSION_TIMEOUT_MS_DOC
     )
     .define(
         KAFKACLIENT_INIT_TIMEOUT_CONFIG,
@@ -611,6 +666,13 @@ public class KafkaRestConfig extends RestConfig {
         CONFLUENT_RESOURCE_NAME_AUTHORITY_DOC
     )
     .define(
+        API_ENDPOINTS_BLOCKLIST_CONFIG,
+        Type.LIST,
+        API_ENDPOINTS_BLOCKLIST_DEFAULT,
+        Importance.LOW,
+        API_ENDPOINTS_BLOCKLIST_DOC
+    )
+    .define(
         API_V2_ENABLE_CONFIG,
         Type.BOOLEAN,
         API_V2_ENABLE_DEFAULT,
@@ -773,18 +835,6 @@ public class KafkaRestConfig extends RestConfig {
   @Override
   public RestMetricsContext getMetricsContext() {
     return metricsContext.metricsContext();
-  }
-
-  public int consumerPort(String scheme) throws URISyntaxException {
-    if (!getList(LISTENERS_CONFIG).isEmpty() && !getList(LISTENERS_CONFIG).get(0).isEmpty()) {
-      for (String listener : getList(LISTENERS_CONFIG)) {
-        URI uri = new URI(listener);
-        if (uri.getScheme().equals(scheme)) {
-          return uri.getPort();
-        }
-      }
-    }
-    return getInt(PORT_CONFIG);
   }
 
   public static KafkaRestConfig newConsumerConfig(KafkaRestConfig config,

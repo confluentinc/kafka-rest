@@ -25,6 +25,7 @@ import io.confluent.kafkarest.entities.v3.PartitionData;
 import io.confluent.kafkarest.entities.v3.PartitionDataList;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -43,6 +44,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 
 @Path("/v3/clusters/{clusterId}/topics/{topicName}/partitions")
+@ResourceName("api.v3.partitions.*")
 public final class PartitionsResource {
 
   private final Provider<PartitionManager> partitionManager;
@@ -63,6 +65,7 @@ public final class PartitionsResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.partitions.list")
+  @ResourceName("api.v3.partitions.list")
   public void listPartitions(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -98,6 +101,7 @@ public final class PartitionsResource {
   @Path("/{partitionId}")
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.partitions.get")
+  @ResourceName("api.v3.partitions.get")
   public void getPartition(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

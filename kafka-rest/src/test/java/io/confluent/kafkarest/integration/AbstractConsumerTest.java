@@ -33,6 +33,8 @@ import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceRequest;
 import io.confluent.kafkarest.entities.v2.CreateConsumerInstanceResponse;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +44,7 @@ import java.util.stream.Collectors;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.Assert;
 
@@ -211,6 +214,21 @@ public class AbstractConsumerTest extends ClusterTestHarness {
         "Consumer request should timeout approximately within the request timeout period",
         (elapsed - TIMEOUT) < TIMEOUT_SLACK
     );
+  }
+
+  protected void seekToTimestamp(
+      String instanceUri, String topicName, int partitionId, Instant timestamp) {
+    Response response =
+        request(instanceUri + "/positions")
+            .post(
+                Entity.entity(
+                    String.format(
+                        "{\"timestamps\":"
+                            +"[{\"topic\": \"%s\", \"partition\": %d, \"timestamp\": \"%s\"}]}",
+                        topicName, partitionId, DateTimeFormatter.ISO_INSTANT.format(timestamp)),
+                    Versions.KAFKA_V2_JSON));
+
+    assertEquals(Status.NO_CONTENT.getStatusCode(), response.getStatus());
   }
 
   protected void commitOffsets(String instanceUri) {

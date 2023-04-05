@@ -30,6 +30,7 @@ import io.confluent.kafkarest.entities.v3.DeleteAclsResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
 import io.confluent.kafkarest.entities.v3.SearchAclsResponse;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.resources.AsyncResponses.AsyncResponseBuilder;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -58,6 +59,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 @Path("/v3/clusters/{clusterId}/acls")
+@ResourceName("api.v3.acls.*")
 public final class AclsResource {
 
   private final Provider<AclManager> aclManager;
@@ -72,6 +74,7 @@ public final class AclsResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.acls.list")
+  @ResourceName("api.v3.acls.list")
   public void searchAcls(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -149,6 +152,7 @@ public final class AclsResource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.acls.create")
+  @ResourceName("api.v3.acls.create")
   public void createAcl(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -209,6 +213,7 @@ public final class AclsResource {
   @DELETE
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.acls.delete")
+  @ResourceName("api.v3.acls.delete")
   public void deleteAcls(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,

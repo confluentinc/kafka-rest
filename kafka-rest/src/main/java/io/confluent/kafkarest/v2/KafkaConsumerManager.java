@@ -35,7 +35,7 @@ import io.confluent.kafkarest.entities.v2.ConsumerCommittedRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerCommittedResponse;
 import io.confluent.kafkarest.entities.ConsumerInstanceConfig;
 import io.confluent.kafkarest.entities.v2.ConsumerOffsetCommitRequest;
-import io.confluent.kafkarest.entities.v2.ConsumerSeekToOffsetRequest;
+import io.confluent.kafkarest.entities.v2.ConsumerSeekRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSeekToRequest;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionRecord;
 import io.confluent.kafkarest.entities.v2.ConsumerSubscriptionResponse;
@@ -610,15 +610,11 @@ public class KafkaConsumerManager {
     }
   }
 
-  public void seekToOffset(
-      String group,
-      String instance,
-      ConsumerSeekToOffsetRequest seekToOffsetRequest
-  ) {
+  public void seek(String group, String instance, ConsumerSeekRequest request) {
     log.debug("seeking to offset " + instance + " in group " + group);
-    KafkaConsumerState state = getConsumerInstance(group, instance);
+    KafkaConsumerState<?, ?, ?, ?> state = getConsumerInstance(group, instance);
     if (state != null) {
-      state.seekToOffset(seekToOffsetRequest);
+      state.seek(request);
     }
   }
 

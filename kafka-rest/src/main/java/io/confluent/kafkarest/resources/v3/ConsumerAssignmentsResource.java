@@ -26,6 +26,7 @@ import io.confluent.kafkarest.entities.v3.ListConsumerAssignmentsResponse;
 import io.confluent.kafkarest.entities.v3.Resource;
 import io.confluent.kafkarest.entities.v3.Resource.Relationship;
 import io.confluent.kafkarest.entities.v3.ResourceCollection;
+import io.confluent.kafkarest.extension.ResourceBlocklistFeature.ResourceName;
 import io.confluent.kafkarest.resources.AsyncResponses;
 import io.confluent.kafkarest.response.CrnFactory;
 import io.confluent.kafkarest.response.UrlFactory;
@@ -47,6 +48,7 @@ import javax.ws.rs.core.MediaType;
 @Path(
     "/v3/clusters/{clusterId}/consumer-groups/{consumerGroupId}/consumers/{consumerId}/assignments"
 )
+@ResourceName("api.v3.consumer-assignments.*")
 public final class ConsumerAssignmentsResource {
 
   private final Provider<ConsumerAssignmentManager> consumerAssignmentManager;
@@ -67,6 +69,7 @@ public final class ConsumerAssignmentsResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.consumer-assignments.list")
+  @ResourceName("api.v3.consumer-assignments.list")
   public void listConsumerAssignments(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
@@ -109,6 +112,7 @@ public final class ConsumerAssignmentsResource {
   @Path("/{topicName}/partitions/{partitionId}")
   @Produces(MediaType.APPLICATION_JSON)
   @PerformanceMetric("v3.consumer-assignments.get")
+  @ResourceName("api.v3.consumer-assignments.get")
   public void getConsumerAssignment(
       @Suspended AsyncResponse asyncResponse,
       @PathParam("clusterId") String clusterId,
