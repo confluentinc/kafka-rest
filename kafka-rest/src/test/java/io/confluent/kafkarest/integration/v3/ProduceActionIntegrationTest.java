@@ -70,6 +70,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -3804,11 +3805,13 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
+  @DisplayName("test_whenGlobalByteLimitReached_thenCallerIsRateLimited")
   public void test_whenGlobalByteLimitReached_thenCallerIsRateLimited() throws Exception {
     doByteLimitReachedTest();
   }
 
   @Test
+  @DisplayName("test_whenClusterByteLimitReached_thenCallerIsRateLimited")
   public void test_whenClusterByteLimitReached_thenCallerIsRateLimited() throws Exception {
     doByteLimitReachedTest();
   }
@@ -3859,11 +3862,13 @@ public class ProduceActionIntegrationTest {
   }
 
   @Test
+  @DisplayName("test_whenGlobalRequestCountLimitReached_thenCallerIsRateLimited")
   public void test_whenGlobalRequestCountLimitReached_thenCallerIsRateLimited() throws Exception {
     doCountLimitTest();
   }
 
   @Test
+  @DisplayName("test_whenClusterRequestCountLimitReached_thenCallerIsRateLimited")
   public void test_whenClusterRequestCountLimitReached_thenCallerIsRateLimited() throws Exception {
     doCountLimitTest();
   }
