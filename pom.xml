@@ -96,6 +96,7 @@
                 <artifactId>junit-vintage-engine</artifactId>
                 <version>${junit.jupiter.version}</version>
             </dependency>
+            <dependency>
                 <groupId>io.confluent</groupId>
                 <artifactId>kafka-schema-registry</artifactId>
                 <version>${io.confluent.schema-registry.version}</version>
