@@ -92,12 +92,14 @@ public class ProduceActionIntegrationTest {
   @BeforeEach
   public void setUp(TestInfo testInfo) throws Exception {
     Properties restConfigs = new Properties();
+    // Adding custom KafkaRestConfigs for individual test-cases/test-methods below.
     if (testInfo.getDisplayName().contains("CallerIsRateLimited")) {
       restConfigs.put(KafkaRestConfig.RATE_LIMIT_ENABLE_CONFIG, "true");
       restConfigs.put(KafkaRestConfig.PRODUCE_RATE_LIMIT_ENABLED, "true");
       restConfigs.put(KafkaRestConfig.RATE_LIMIT_BACKEND_CONFIG, "resilience4j");
-      // For all rate-limit tests, threshold/limit is 1, so that 1/2 requests fail the test
-      // quickly, keeping it deterministic.
+      // The happy-path testing, i.e. rest calls below threshold succeed are already covered by the
+      // other existing tests. The 4 tests below, 1 per rate-limit config, set a very low rate-limit
+      // of "1", to deterministically make sure limits apply and rest-calls see 429s.
       if (testInfo
           .getDisplayName()
           .contains("test_whenGlobalByteLimitReached_thenCallerIsRateLimited")) {
@@ -129,7 +131,7 @@ public class ProduceActionIntegrationTest {
   }
 
   @AfterEach
-  public void cleanUp() {
+  public void tearDown() {
     testEnv.kafkaRest().closeApp();
   }
 
